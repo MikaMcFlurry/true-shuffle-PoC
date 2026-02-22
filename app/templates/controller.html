@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Controller — {{ playlist_name }} — true-shuffle{% endblock %}
+
+{% block content %}
+<div class="controller-panel">
+    <h1>🎛️ Controller Mode</h1>
+    <h2>{{ playlist_name }}</h2>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"
+            style="width: {{ (cursor / total_tracks * 100) if total_tracks > 0 else 0 }}%"></div>
+    </div>
+    <p class="progress-text">
+        Track <span id="cursorDisplay">{{ cursor + 1 }}</span> / {{ total_tracks }}
+        {% if skipped_count > 0 %}
+        <span class="muted">({{ skipped_count }} skipped)</span>
+        {% endif %}
+    </p>
+
+    <div class="now-playing" id="nowPlaying">
+        <p class="muted">Now playing track {{ cursor + 1 }}</p>
+        <p id="currentUri" class="track-uri">{{ current_track_uri or "—" }}</p>
+    </div>
+
+    {% if devices %}
+    <div class="device-selector">
+        <label for="deviceSelect">Device:</label>
+        <select id="deviceSelect">
+            {% for d in devices %}
+            <option value="{{ d.id }}" {% if active_device and d.id==active_device.id %}selected{% endif %}>
+                {{ d.name }} ({{ d.type }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% else %}
+    <p class="muted">⚠️ No active Spotify devices found. Open Spotify on a device first.</p>
+    {% endif %}
+
+    <div class="controller-buttons">
+        <button class="btn btn-primary btn-lg" id="nextBtn" onclick="advanceTrack()">
+            ⏭️ Next Track
+        </button>
+        <button class="btn btn-secondary" id="stopBtn" onclick="stopRun()">
+            ⏹️ Stop
+        </button>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
+    <a href="/playlists" class="btn btn-secondary" style="margin-top: 1rem;">← Back to Playlists</a>
+</div>
+
+<script>
+    const RUN_ID = {{ run_id }};
+    const TOTAL = {{ total_tracks }};
+
+    function getDeviceId() {
+        const sel = document.getElementById('deviceSelect');
+        return sel ? sel.value : null;
+    }
+
+    async function advanceTrack() {
+        const btn = document.getElementById('nextBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Loading...';
+
+        try {
+            const resp = await fetch('/controller/next', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    run_id: RUN_ID,
+                    device_id: getDeviceId()
+                })
+            });
+            const data = await resp.json();
+
+            if (data.status === 'completed') {
+                document.getElementById('statusMessage').textContent = '✅ Run completed!';
+                btn.textContent = '✅ Done';
+                btn.disabled = true;
+                return;
+            }
+
+            document.getElementById('cursorDisplay').textContent = data.cursor + 1;
+            document.getElementById('currentUri').textContent = data.current_uri;
+            document.getElementById('progressBar').style.width =
+                ((data.cursor / TOTAL) * 100) + '%';
+
+        } catch (err) {
+            document.getElementById('statusMessage').textContent = '❌ Error: ' + err.message;
+        } finally {
+            if (!btn.disabled || btn.textContent === '⏳ Loading...') {
+                btn.disabled = false;
+                btn.textContent = '⏭️ Next Track';
+            }
+        }
+    }
+
+    async function stopRun() {
+        try {
+            await fetch('/controller/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    run_id: RUN_ID,
+                    device_id: getDeviceId()
+                })
+            });
+            document.getElementById('statusMessage').textContent = '⏹️ Run stopped.';
+            document.getElementById('nextBtn').disabled = true;
+        } catch (err) {
+            document.getElementById('statusMessage').textContent = '❌ Error: ' + err.message;
+        }
+    }
+</script>
+{% endblock %}

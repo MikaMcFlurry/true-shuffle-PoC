@@ -20,10 +20,15 @@
         <div class="card-body">
             <h3 class="card-title">{{ p.name }}</h3>
             <p class="muted">{{ p.tracks.total }} tracks</p>
-            <form method="post" action="/utility/create">
+            <form method="post" action="/utility/create" class="card-action">
                 <input type="hidden" name="playlist_id" value="{{ p.id }}">
                 <input type="hidden" name="playlist_name" value="{{ p.name }}">
-                <button type="submit" class="btn btn-primary">🔀 Create Shuffled Copy</button>
+                <button type="submit" class="btn btn-primary">🔀 Shuffled Copy</button>
+            </form>
+            <form method="post" action="/controller/start" class="card-action">
+                <input type="hidden" name="playlist_id" value="{{ p.id }}">
+                <input type="hidden" name="playlist_name" value="{{ p.name }}">
+                <button type="submit" class="btn btn-secondary">🎛️ Controller</button>
             </form>
         </div>
     </div>

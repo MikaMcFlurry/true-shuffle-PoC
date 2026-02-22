@@ -41,6 +41,14 @@ CREATE TABLE IF NOT EXISTS runs (
     UNIQUE(user_id, playlist_id, mode, status)      -- one active run per combo
 );
 
+CREATE TABLE IF NOT EXISTS skipped_tracks (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id          INTEGER NOT NULL REFERENCES runs(id),
+    track_uri       TEXT    NOT NULL,
+    reason          TEXT    NOT NULL DEFAULT 'unavailable',
+    skipped_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_runs_user_playlist
     ON runs(user_id, playlist_id, mode);
 """
