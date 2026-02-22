@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
 from app.db import close_db, init_db
@@ -26,8 +27,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Session middleware (signed cookie — stores PKCE verifier + user id).
+app.add_middleware(SessionMiddleware, secret_key=get_settings().secret_key)
+
+# Routers
+from app.auth import router as auth_router  # noqa: E402
+
+app.include_router(auth_router)
+
 
 @app.get("/health")
 async def health():
     """Simple health-check endpoint."""
     return JSONResponse({"status": "ok", "version": app.version})
+
