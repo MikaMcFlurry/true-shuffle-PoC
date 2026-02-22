@@ -28,17 +28,18 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS runs (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id         INTEGER NOT NULL REFERENCES users(id),
-    playlist_id     TEXT    NOT NULL,
-    mode            TEXT    NOT NULL CHECK(mode IN ('utility', 'controller')),
-    shuffled_order  TEXT    NOT NULL DEFAULT '[]',  -- JSON array of track URIs
-    cursor          INTEGER NOT NULL DEFAULT 0,
-    status          TEXT    NOT NULL DEFAULT 'active'
-                        CHECK(status IN ('active', 'completed', 'cancelled')),
-    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at      TEXT    NOT NULL DEFAULT (datetime('now')),
-    UNIQUE(user_id, playlist_id, mode, status)      -- one active run per combo
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id             INTEGER NOT NULL REFERENCES users(id),
+    playlist_id         TEXT    NOT NULL,
+    mode                TEXT    NOT NULL CHECK(mode IN ('utility', 'controller')),
+    shuffled_order      TEXT    NOT NULL DEFAULT '[]',  -- JSON array of track URIs
+    cursor              INTEGER NOT NULL DEFAULT 0,
+    queued_until_index  INTEGER NOT NULL DEFAULT 0,     -- highest index queued
+    status              TEXT    NOT NULL DEFAULT 'active'
+                            CHECK(status IN ('active', 'completed', 'cancelled')),
+    created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, playlist_id, mode, status)          -- one active run per combo
 );
 
 CREATE INDEX IF NOT EXISTS idx_runs_user_playlist

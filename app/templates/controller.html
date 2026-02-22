@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>True Shuffle — Controller</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #1DB954;
+            --color-primary-dark: #1AA34A;
+            --color-bg: #121212;
+            --color-surface: #181818;
+            --color-surface-light: #282828;
+            --color-text: #FFFFFF;
+            --color-text-muted: #B3B3B3;
+            --color-accent: #1ED760;
+            --color-error: #E22134;
+            --color-warning: #F59B23;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.25rem;
+        }
+        .header .subtitle {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+        }
+
+        /* Now Playing Card */
+        .now-playing {
+            background: var(--color-surface);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.06);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .album-art-container {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 1.25rem;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--color-surface-light);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .album-art-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .album-art-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--color-text-muted);
+        }
+
+        .track-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .track-artist {
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Progress */
+        .progress-bar-container {
+            margin-bottom: 0.5rem;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--color-surface-light);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            margin-top: 0.35rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            border: none;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.7rem 1.4rem;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: #000;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: var(--color-accent);
+            box-shadow: 0 0 20px rgba(30,215,96,0.3);
+        }
+
+        .btn-secondary {
+            background: var(--color-surface-light);
+            color: var(--color-text);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #333;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--color-error);
+            border: 1px solid var(--color-error);
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: var(--color-error);
+            color: #fff;
+        }
+
+        .btn-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            padding: 0;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        /* State Badge */
+        .state-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+        .state-playing { background: rgba(30,215,96,0.15); color: var(--color-accent); }
+        .state-idle { background: rgba(179,179,179,0.15); color: var(--color-text-muted); }
+        .state-starting { background: rgba(245,155,35,0.15); color: var(--color-warning); }
+        .state-error { background: rgba(226,33,52,0.15); color: var(--color-error); }
+        .state-completed { background: rgba(30,215,96,0.15); color: var(--color-accent); }
+        .state-overriding { background: rgba(245,155,35,0.15); color: var(--color-warning); }
+
+        /* Error / Hint Banners */
+        .banner {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .banner-error {
+            background: rgba(226,33,52,0.12);
+            border: 1px solid rgba(226,33,52,0.3);
+            color: #ff6b7a;
+        }
+        .banner-warning {
+            background: rgba(245,155,35,0.12);
+            border: 1px solid rgba(245,155,35,0.3);
+            color: var(--color-warning);
+        }
+        .banner-info {
+            background: rgba(30,215,96,0.08);
+            border: 1px solid rgba(30,215,96,0.2);
+            color: var(--color-text-muted);
+        }
+
+        /* Playlist input */
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--color-surface-light);
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            border-color: var(--color-primary);
+        }
+        .input-group input::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .pulsing { animation: pulse 2s ease-in-out infinite; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinning { animation: spin 1s linear infinite; display: inline-block; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔀 True Shuffle Controller</h1>
+            <p class="subtitle">Queue-buffer playback with hard override</p>
+        </div>
+
+        <!-- Playlist Input (shown when no playlist active) -->
+        <div id="playlist-input" class="input-group">
+            <input type="text" id="playlist-id-input" placeholder="Spotify Playlist ID eingeben…"
+                   value="{{PLAYLIST_ID}}">
+            <button class="btn btn-primary" onclick="startController()">Start</button>
+        </div>
+
+        <!-- Error / Warning Banners -->
+        <div id="error-banner" class="banner banner-error hidden"></div>
+        <div id="device-banner" class="banner banner-warning hidden">
+            ⚠️ Kein aktives Spotify-Gerät gefunden.<br>
+            Öffne Spotify und drücke Play, dann klicke «Erneut versuchen».
+            <br><br>
+            <button class="btn btn-secondary" onclick="startController()" style="font-size:0.8rem;">
+                🔄 Erneut versuchen
+            </button>
+        </div>
+
+        <!-- Now Playing Card -->
+        <div id="now-playing" class="now-playing hidden">
+            <div id="state-badge" class="state-badge state-idle">IDLE</div>
+
+            <div class="album-art-container">
+                <img id="album-art" src="" alt="Album Art" class="hidden">
+                <div id="album-art-placeholder" class="album-art-placeholder">🎵</div>
+            </div>
+
+            <div class="track-name" id="track-name">—</div>
+            <div class="track-artist" id="track-artist">—</div>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text">Track 0 / 0</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls" class="controls hidden">
+            <button class="btn btn-secondary btn-icon" onclick="stopController()" title="Stop" id="btn-stop">⏹</button>
+            <button class="btn btn-primary btn-icon" onclick="resumeController()" title="Resume" id="btn-resume">▶</button>
+            <button class="btn btn-secondary btn-icon" onclick="nextTrack()" title="Nächster Track" id="btn-next">⏭</button>
+            <button class="btn btn-danger" onclick="refreshShuffle()" title="Neue Shuffle-Reihenfolge" id="btn-refresh">🔀 Neu mischen</button>
+        </div>
+
+        <!-- Info -->
+        <div id="info-banner" class="banner banner-info hidden">
+            ℹ️ Controller Mode erfordert <strong>Spotify Premium</strong>.
+            Tracks werden über die Spotify Queue gesteuert — kein fremder Song wird angespielt.
+        </div>
+    </div>
+
+    <script>
+        // ---------------------------------------------------------------------------
+        // State
+        // ---------------------------------------------------------------------------
+        let playlistId = '{{PLAYLIST_ID}}';
+        let pollInterval = null;
+        let currentState = 'idle';
+
+        // ---------------------------------------------------------------------------
+        // API helpers
+        // ---------------------------------------------------------------------------
+        async function api(method, path, body = null) {
+            const opts = {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+            };
+            if (body) opts.body = JSON.stringify(body);
+            const resp = await fetch('/controller' + path, opts);
+            if (resp.status === 401) {
+                window.location.href = '/login';
+                return null;
+            }
+            return resp.json();
+        }
+
+        // ---------------------------------------------------------------------------
+        // Actions
+        // ---------------------------------------------------------------------------
+        async function startController() {
+            const input = document.getElementById('playlist-id-input');
+            playlistId = input.value.trim();
+            if (!playlistId) {
+                showError('Bitte eine Playlist-ID eingeben.');
+                return;
+            }
+            hideError();
+            hideBanner('device-banner');
+
+            const data = await api('POST', '/start', { playlist_id: playlistId });
+            if (data) {
+                updateUI(data);
+                startPolling();
+            }
+        }
+
+        async function resumeController() {
+            if (!playlistId) return;
+            const data = await api('POST', '/start', { playlist_id: playlistId });
+            if (data) updateUI(data);
+        }
+
+        async function nextTrack() {
+            if (!playlistId) return;
+            const data = await api('POST', '/next', { playlist_id: playlistId });
+            if (data) updateUI(data);
+        }
+
+        async function stopController() {
+            if (!playlistId) return;
+            stopPolling();
+            const data = await api('POST', '/stop', { playlist_id: playlistId });
+            if (data) updateUI(data);
+        }
+
+        async function refreshShuffle() {
+            if (!playlistId) return;
+            if (!confirm('Neue Shuffle-Reihenfolge erstellen? Der aktuelle Fortschritt geht verloren.')) return;
+            const data = await api('POST', '/refresh', { playlist_id: playlistId });
+            if (data) {
+                updateUI(data);
+                startPolling();
+            }
+        }
+
+        // ---------------------------------------------------------------------------
+        // Polling
+        // ---------------------------------------------------------------------------
+        function startPolling() {
+            stopPolling();
+            pollInterval = setInterval(pollStatus, 3000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        async function pollStatus() {
+            if (!playlistId) return;
+            try {
+                const data = await api('GET', '/status?playlist_id=' + encodeURIComponent(playlistId));
+                if (data) updateUI(data);
+            } catch (e) {
+                console.error('Poll error:', e);
+            }
+        }
+
+        // ---------------------------------------------------------------------------
+        // UI Updates
+        // ---------------------------------------------------------------------------
+        function updateUI(data) {
+            currentState = data.state;
+
+            // Show/hide sections
+            const npCard = document.getElementById('now-playing');
+            const controls = document.getElementById('controls');
+            const inputGroup = document.getElementById('playlist-input');
+            const deviceBanner = document.getElementById('device-banner');
+
+            if (data.state === 'no_device') {
+                show(deviceBanner);
+                npCard.classList.add('hidden');
+                controls.classList.add('hidden');
+                return;
+            }
+            hideBanner('device-banner');
+
+            if (data.state !== 'idle' || data.total_tracks > 0) {
+                npCard.classList.remove('hidden');
+                controls.classList.remove('hidden');
+            }
+
+            // Error handling
+            if (data.error_message && data.state === 'error') {
+                showError(data.error_message);
+                if (data.error_message.includes('Premium')) {
+                    show(document.getElementById('info-banner'));
+                }
+            } else {
+                hideError();
+            }
+
+            // State badge
+            const badge = document.getElementById('state-badge');
+            badge.textContent = data.state.toUpperCase().replace('_', ' ');
+            badge.className = 'state-badge state-' + data.state.replace('_', '-');
+            if (data.state === 'overriding' || data.state === 'starting') {
+                badge.classList.add('pulsing');
+            }
+
+            // Track info
+            document.getElementById('track-name').textContent = data.current_track_name || '—';
+            document.getElementById('track-artist').textContent = data.current_artist || '—';
+
+            // Album art
+            const artImg = document.getElementById('album-art');
+            const artPlaceholder = document.getElementById('album-art-placeholder');
+            if (data.current_album_art) {
+                artImg.src = data.current_album_art;
+                artImg.classList.remove('hidden');
+                artPlaceholder.classList.add('hidden');
+            } else {
+                artImg.classList.add('hidden');
+                artPlaceholder.classList.remove('hidden');
+            }
+
+            // Progress
+            const total = data.total_tracks || 1;
+            const cursor = data.cursor || 0;
+            const pct = Math.min((cursor / total) * 100, 100);
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('progress-text').textContent =
+                `Track ${cursor + 1} / ${total}`;
+
+            // Button states
+            const isPlaying = ['playing', 'advancing', 'overriding'].includes(data.state);
+            document.getElementById('btn-stop').disabled = !isPlaying;
+            document.getElementById('btn-resume').disabled = isPlaying || data.state === 'completed';
+            document.getElementById('btn-next').disabled = !isPlaying || data.state === 'completed';
+
+            // Stop polling if completed
+            if (data.state === 'completed') {
+                stopPolling();
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-banner');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error-banner').classList.add('hidden');
+        }
+
+        function show(el) { el.classList.remove('hidden'); }
+        function hideBanner(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // ---------------------------------------------------------------------------
+        // Init
+        // ---------------------------------------------------------------------------
+        if (playlistId) {
+            // Auto-poll on page load if playlist_id is set.
+            pollStatus();
+            startPolling();
+        }
+    </script>
+</body>
+</html>
