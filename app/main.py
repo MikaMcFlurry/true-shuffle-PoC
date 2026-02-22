@@ -38,11 +38,13 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Routers
 from app.auth import router as auth_router  # noqa: E402
 from app.routes_controller import router as controller_router  # noqa: E402
+from app.routes_export import router as export_router  # noqa: E402
 from app.routes_utility import router as utility_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(utility_router)
 app.include_router(controller_router)
+app.include_router(export_router)
 
 
 @app.get("/health")
