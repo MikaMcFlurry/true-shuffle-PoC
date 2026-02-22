@@ -7,29 +7,26 @@
 
 ## ✅ Was wurde getan?
 
-- [x] Projektgrundlagen: `SPEC_TRUE_SHUFFLE_POC.md`, `STATUS.md`, `.gitignore`, `.env.example`, `requirements.txt`, `README.md`
-- [x] Ticket 1 — Project Scaffold: `app/__init__.py`, `app/config.py`, `app/main.py`
-- [x] Tests: `tests/test_health.py` (2/2 passed)
-- [x] Ruff lint: all checks passed
-- [x] Commits: `da93f72` (foundation), `924b8c4` (scaffold) — **nicht gepusht**
+- [x] Projektgrundlagen, scaffold und SQLite Setup (`app/db.py`, `app/models/`, `app/main.py`)
+- [x] Spotify OAuth (PKCE)
+- [x] Controller Mode implementiert: Queue-Buffer N=5, Polling, Hard Override, Skip-Handling, Device Handling (`app/controller.py`, `app/spotify_client.py`). Sequentielle Player-Calls integriert.
+- [x] Controller UI Template hinzugefügt (`app/templates/controller.html` und `/controller/ui` Route)
+- [x] `HANDOFF_agent-controller.md` im Root-Verzeichnis erstellt. Enthält alle Flow-Details und Risiken des Controller Mode.
 
 ---
 
-## 🔲 Was ist noch offen?
+## 🔲 Was ist noch offen? / Next Steps
 
-- [ ] Ticket 2 — SQLite Setup
-- [ ] Ticket 3 — Spotify OAuth (PKCE)
-- [ ] Tickets 4–10 (siehe `next_tickets.md`)
-
----
-
-## ➡️ Nächster Schritt
-
-> **Ticket 2**: `app/db.py` — async SQLite init, `users` + `runs` Tabellen, Startup-Hook in `main.py`
+- [ ] Abhängigkeit `itsdangerous` zur `requirements.txt` hinzufügen (fehlt aktuell für SessionMiddleware, Backend startet nicht).
+- [ ] Pytest & Typing-Fehler beheben (Pydantic <-> Python 3.9 Inkompatibilität bei Union Types `str | None`). Evtl. `eval_type_backport` nutzen oder Typing klassisch auf `typing.Optional` umstellen.
+- [ ] Tests ausführen, sobald die Dependencies/Typings fixiert sind (Mocks für den `_poll_playback()` Zyklus reparieren/ergänzen).
+- [ ] Smoke-Test in Runtime (`uvicorn`) mit einem echten Spotify Premium Account über `/controller/ui`.
+- [ ] Evaluieren, ob nach einem `_hard_override()` alte Lieder in der Spotify-internen Queue verbleiben und Probleme bereiten ("Rest-Queue").
 
 ---
 
 ## 🗒️ Notizen / Kontext
 
-- Python 3.9.6 auf dem System (via `py` launcher)
-- `pydantic-settings` wurde zu `requirements.txt` hinzugefügt (ab pydantic v2 separates Paket)
+- Python 3.9 Kompatibilität bereitet bei modernen Typ-Hinting in Pydantic BaseModels (`|` Pipe Operator statt `Union`) momentan Schwierigkeiten.
+- Der Controller nutzt ein hartes Polling-Intervall von 3 Sekunden. Das bedeutet, dass Fremd-Tracks bei einem fehlerhaften System minimal bis zu 3 Sekunden abspielen könnten.
+- Alle Controller-API-Aufrufe sind via `asyncio.Lock` per `spotify_user_id` sequenzialisiert, um `HTTP 429`-Limits auf Spotifys Player APIs vorzubeugen.
