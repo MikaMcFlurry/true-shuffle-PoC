@@ -12,6 +12,7 @@
 - [x] Tests: `tests/test_health.py` (2/2 passed)
 - [x] Ruff lint: all checks passed
 - [x] Commits: `da93f72` (foundation), `924b8c4` (scaffold) — **nicht gepusht**
+- [x] QA Handoff: `HANDOFF_agent-qa.md` erstellt
 
 ---
 
