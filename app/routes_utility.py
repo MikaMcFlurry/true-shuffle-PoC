@@ -58,9 +58,9 @@ async def playlists_page(request: Request):
     all_playlists = await client.get_all_playlists()
 
     return templates.TemplateResponse(
+        request,
         "playlists.html",
         {
-            "request": request,
             "playlists": all_playlists,
             "user_id": user_id,
         },
@@ -126,9 +126,9 @@ async def utility_create(request: Request):
         await db.commit()
 
     return templates.TemplateResponse(
+        request,
         "utility_result.html",
         {
-            "request": request,
             "playlist_name": new_name,
             "playlist_url": new_playlist_url,
             "total_tracks": len(shuffled_uris),

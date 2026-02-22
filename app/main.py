@@ -2,8 +2,9 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import get_settings
@@ -45,6 +46,18 @@ app.include_router(auth_router)
 app.include_router(utility_router)
 app.include_router(controller_router)
 app.include_router(export_router)
+
+
+_templates = Jinja2Templates(directory="app/templates")
+
+
+@app.get("/")
+async def home(request: Request):
+    """Landing page — shows login or link to playlists."""
+    logged_in = bool(request.session.get("spotify_user_id"))
+    return _templates.TemplateResponse(
+        request, "home.html", {"logged_in": logged_in}
+    )
 
 
 @app.get("/health")

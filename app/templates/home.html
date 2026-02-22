@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}true-shuffle{% endblock %}
+
+{% block content %}
+<div class="home-hero">
+    <h1>true-shuffle</h1>
+    <p class="muted">Deterministic, unbiased shuffle for your Spotify playlists.</p>
+
+    <div class="home-modes">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">Utility Mode</h3>
+                <p class="muted">Creates a new playlist with a true Fisher-Yates shuffled order. Works with all Spotify accounts.</p>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">Controller Mode</h3>
+                <p class="muted">Controls playback in real-time with hard-override. Requires Spotify Premium.</p>
+            </div>
+        </div>
+    </div>
+
+    {% if logged_in %}
+    <a href="/playlists" class="btn btn-primary btn-lg">Go to Playlists</a>
+    {% else %}
+    <a href="/login" class="btn btn-primary btn-lg">Login with Spotify</a>
+    {% endif %}
+</div>
+{% endblock %}

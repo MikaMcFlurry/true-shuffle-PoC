@@ -74,7 +74,7 @@ def test_login_fails_without_client_id(monkeypatch):
 
     resp = client.get("/login")
     assert resp.status_code == 500
-    assert "SPOTIFY_CLIENT_ID" in resp.json()["detail"]
+    assert "SPOTIFY_CLIENT_ID" in resp.text
 
 
 # ---------------------------------------------------------------------------
