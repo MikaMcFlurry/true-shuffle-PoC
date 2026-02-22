@@ -6,17 +6,18 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.db import close_db, init_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle hook."""
     settings = get_settings()
-    # TODO: Ticket 2 — init DB here
-    print(f"[startup] DB path: {settings.db_abs_path}")
+    await init_db()
+    print(f"[startup] DB ready at {settings.db_abs_path}")
     yield
-    # shutdown cleanup (if needed)
-    print("[shutdown] bye")
+    await close_db()
+    print("[shutdown] DB closed")
 
 
 app = FastAPI(
