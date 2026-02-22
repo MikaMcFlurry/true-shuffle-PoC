@@ -20,7 +20,7 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import get_settings
 from app.db import get_db
@@ -70,7 +70,13 @@ async def login(request: Request):
     settings = get_settings()
 
     if not settings.spotify_client_id:
-        raise HTTPException(status_code=500, detail="SPOTIFY_CLIENT_ID not set")
+        return HTMLResponse(
+            "<h1>Configuration Error</h1>"
+            "<p>SPOTIFY_CLIENT_ID is not set. "
+            "Copy <code>.env.example</code> to <code>.env</code> and add your Client ID.</p>"
+            '<p><a href="/">Back to Home</a></p>',
+            status_code=500,
+        )
 
     verifier = _generate_code_verifier()
     challenge = _generate_code_challenge(verifier)

@@ -198,9 +198,9 @@ async def controller_start(request: Request):
         )
 
     return templates.TemplateResponse(
+        request,
         "controller.html",
         {
-            "request": request,
             "run_id": run_id,
             "playlist_name": playlist_name,
             "playlist_id": playlist_id,
