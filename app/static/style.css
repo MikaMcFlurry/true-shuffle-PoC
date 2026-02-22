@@ -1,0 +1,235 @@
+/* true-shuffle PoC — Dark Mode CSS */
+
+:root {
+    --color-primary: #1DB954;
+    --color-primary-dark: #1AA34A;
+    --color-bg: #121212;
+    --color-surface: #181818;
+    --color-surface-light: #282828;
+    --color-text: #FFFFFF;
+    --color-text-muted: #B3B3B3;
+    --color-accent: #1ED760;
+    --color-error: #E22134;
+    --color-warning: #F59B23;
+    --radius: 8px;
+    --shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-surface-light);
+}
+
+.logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.nav-links a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    margin-left: 1.5rem;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover {
+    color: var(--color-text);
+}
+
+/* Container */
+.container {
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+h1 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Playlist grid */
+.playlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.card {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.card-img img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+
+.card-img-placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface-light);
+    font-size: 3rem;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.card-title {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 0.75rem;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: #000;
+}
+
+.btn-primary:hover {
+    background: var(--color-primary-dark);
+}
+
+.btn-secondary {
+    background: var(--color-surface-light);
+    color: var(--color-text);
+}
+
+.btn-secondary:hover {
+    background: #333;
+}
+
+.btn-lg {
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+}
+
+/* Result card */
+.result-card {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.result-card h2 {
+    color: var(--color-primary);
+    margin: 0.5rem 0 1.5rem;
+}
+
+/* Stats */
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+.stat-warning .stat-value {
+    color: var(--color-warning);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+/* Skipped details */
+.skipped-details {
+    text-align: left;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: var(--color-surface-light);
+    border-radius: var(--radius);
+}
+
+.skipped-details summary {
+    cursor: pointer;
+    color: var(--color-warning);
+    font-weight: 600;
+}
+
+.skipped-details ul {
+    margin-top: 0.75rem;
+    padding-left: 1.25rem;
+}
+
+.skipped-details li {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+/* Utility */
+.muted {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}

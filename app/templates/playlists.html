@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Playlists — true-shuffle{% endblock %}
+
+{% block content %}
+<h1>Your Playlists</h1>
+
+{% if not playlists %}
+<p class="muted">No playlists found.</p>
+{% else %}
+<div class="playlist-grid">
+    {% for p in playlists %}
+    <div class="card">
+        <div class="card-img">
+            {% if p.images %}
+            <img src="{{ p.images[0].url }}" alt="{{ p.name }}" loading="lazy">
+            {% else %}
+            <div class="card-img-placeholder">🎵</div>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h3 class="card-title">{{ p.name }}</h3>
+            <p class="muted">{{ p.tracks.total }} tracks</p>
+            <form method="post" action="/utility/create">
+                <input type="hidden" name="playlist_id" value="{{ p.id }}">
+                <input type="hidden" name="playlist_name" value="{{ p.name }}">
+                <button type="submit" class="btn btn-primary">🔀 Create Shuffled Copy</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

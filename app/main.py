@@ -30,10 +30,17 @@ app = FastAPI(
 # Session middleware (signed cookie — stores PKCE verifier + user id).
 app.add_middleware(SessionMiddleware, secret_key=get_settings().secret_key)
 
+# Static files
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 # Routers
 from app.auth import router as auth_router  # noqa: E402
+from app.routes_utility import router as utility_router  # noqa: E402
 
 app.include_router(auth_router)
+app.include_router(utility_router)
 
 
 @app.get("/health")

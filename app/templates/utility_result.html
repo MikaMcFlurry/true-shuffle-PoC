@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Shuffled! — true-shuffle{% endblock %}
+
+{% block content %}
+<div class="result-card">
+    <h1>✅ Shuffled Playlist Created</h1>
+    <h2>{{ playlist_name }}</h2>
+
+    <div class="stats">
+        <div class="stat">
+            <span class="stat-value">{{ total_tracks }}</span>
+            <span class="stat-label">Tracks</span>
+        </div>
+        {% if skipped_count > 0 %}
+        <div class="stat stat-warning">
+            <span class="stat-value">{{ skipped_count }}</span>
+            <span class="stat-label">Skipped</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if playlist_url %}
+    <a href="{{ playlist_url }}" target="_blank" class="btn btn-primary btn-lg">
+        ▶ Open in Spotify
+    </a>
+    {% endif %}
+
+    {% if skipped_tracks %}
+    <details class="skipped-details">
+        <summary>{{ skipped_count }} skipped tracks (unavailable / local / episodes)</summary>
+        <ul>
+            {% for t in skipped_tracks %}
+            <li>{{ t.name }} — {{ t.artist }} <span class="muted">({{ t.track_type }}{% if t.is_local %}, local{% endif
+                    %}{% if not t.is_playable %}, unavailable{% endif %})</span></li>
+            {% endfor %}
+        </ul>
+    </details>
+    {% endif %}
+
+    <a href="/playlists" class="btn btn-secondary">← Back to Playlists</a>
+</div>
+{% endblock %}
