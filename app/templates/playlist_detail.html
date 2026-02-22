@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ playlist.name }} — true-shuffle{% endblock %}
+{% block content %}
+<h1>{{ playlist.name }}</h1>
+<p class="progress-text" style="margin-bottom:0.5rem;">
+    {{ playlist.total_tracks }} tracks · by {{ playlist.owner }}
+</p>
+<p class="progress-text" style="margin-bottom:2rem;">
+    ID: <code style="color:var(--color-text-muted);">{{ playlist.id }}</code>
+</p>
+
+<h2>Actions</h2>
+
+<form method="POST" action="/utility/create?playlist_id={{ playlist.id }}" id="shuffle-form">
+    <button type="submit" class="btn" id="shuffle-btn">
+        🔀 Create Shuffled Copy
+    </button>
+</form>
+
+<p class="progress-text" style="margin-top:1rem;">
+    Creates a new playlist with all tracks in a truly random order.
+</p>
+
+<div style="margin-top:2rem;">
+    <a href="/playlists" class="btn btn-outline">← Back to Playlists</a>
+</div>
+
+<script>
+    document.getElementById('shuffle-form').addEventListener('submit', function () {
+        var btn = document.getElementById('shuffle-btn');
+        btn.textContent = '⏳ Shuffling… please wait';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+    });
+</script>
+{% endblock %}

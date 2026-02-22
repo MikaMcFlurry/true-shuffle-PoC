@@ -34,11 +34,14 @@ CREATE TABLE IF NOT EXISTS runs (
     mode            TEXT    NOT NULL CHECK(mode IN ('utility', 'controller')),
     shuffled_order  TEXT    NOT NULL DEFAULT '[]',  -- JSON array of track URIs
     cursor          INTEGER NOT NULL DEFAULT 0,
+    target_playlist_id TEXT NOT NULL DEFAULT '',     -- created playlist id
     status          TEXT    NOT NULL DEFAULT 'active'
                         CHECK(status IN ('active', 'completed', 'cancelled')),
+    excluded_count  INTEGER NOT NULL DEFAULT 0,
+    excluded_items  TEXT    NOT NULL DEFAULT '[]',   -- JSON [{uri, reason}]
     created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at      TEXT    NOT NULL DEFAULT (datetime('now')),
-    UNIQUE(user_id, playlist_id, mode, status)      -- one active run per combo
+    UNIQUE(user_id, playlist_id, mode, status)       -- one active run per combo
 );
 
 CREATE INDEX IF NOT EXISTS idx_runs_user_playlist

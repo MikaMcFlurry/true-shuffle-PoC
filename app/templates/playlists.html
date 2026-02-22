@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}My Playlists — true-shuffle{% endblock %}
+{% block content %}
+<h1>My Playlists</h1>
+<p class="progress-text" style="margin-bottom:1.5rem;">
+    {{ playlists | length }} playlists found
+</p>
+
+{% for pl in playlists %}
+<div class="card">
+    <a href="/playlists/{{ pl.id }}">
+        <strong>{{ pl.name }}</strong>
+        <div class="meta">
+            <span class="badge">{{ pl.total_tracks }} tracks</span>
+            <span style="margin-left:0.5rem;">by {{ pl.owner }}</span>
+        </div>
+    </a>
+</div>
+{% endfor %}
+
+{% if not playlists %}
+<p class="progress-text">No playlists found. Make sure your Spotify account has playlists.</p>
+{% endif %}
+{% endblock %}

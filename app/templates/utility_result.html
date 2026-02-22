@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Shuffle Complete — true-shuffle{% endblock %}
+{% block content %}
+
+{% if resumed %}
+<div class="alert-warning">
+    ⚡ An existing shuffled copy was found — showing previous result.
+</div>
+{% endif %}
+
+<div class="alert-success">
+    <h1 style="font-size:1.5rem;">✅ Shuffle Complete!</h1>
+    <p style="margin-top:0.75rem;">
+        <strong>{{ track_count }}</strong> tracks added to your new playlist.
+    </p>
+</div>
+
+<div style="margin-bottom:2rem;">
+    <a href="{{ target_url }}" target="_blank" rel="noopener" class="btn">
+        🎧 Open in Spotify
+    </a>
+</div>
+
+{% if excluded_count > 0 %}
+<div class="alert-warning">
+    <strong>{{ excluded_count }}</strong> items were skipped:
+    <ul style="margin-top:0.5rem; padding-left:1.25rem;">
+        {% for item in excluded_items[:20] %}
+        <li style="font-size:0.85rem;">
+            {{ item.uri or '(unknown)' }} — {{ item.reason }}
+        </li>
+        {% endfor %}
+        {% if excluded_count > 20 %}
+        <li style="font-size:0.85rem; color:var(--color-text-muted);">
+            … and {{ excluded_count - 20 }} more
+        </li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}
+
+<div style="margin-top:2rem;">
+    <a href="/playlists" class="btn btn-outline">← Back to Playlists</a>
+</div>
+{% endblock %}

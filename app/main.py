@@ -32,8 +32,12 @@ app.add_middleware(SessionMiddleware, secret_key=get_settings().secret_key)
 
 # Routers
 from app.auth import router as auth_router  # noqa: E402
+from app.playlists import router as playlists_router  # noqa: E402
+from app.utility import router as utility_router  # noqa: E402
 
 app.include_router(auth_router)
+app.include_router(playlists_router)
+app.include_router(utility_router)
 
 
 @app.get("/health")
