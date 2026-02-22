@@ -1,35 +1,56 @@
-# True-Shuffle PoC — Agent Handover Status
+# STATUS — true-shuffle PoC
 
-> **Last updated**: 2026-02-22  
-> **Agent / Author**: Antigravity
+## ✅ Completed
 
----
+| Ticket | Summary | Tests |
+|--------|---------|-------|
+| Foundation | SPEC, scaffold, SQLite, OAuth PKCE | 15 |
+| A — SpotifyClient | Retry/refresh/lock, 9 API methods | 8 |
+| B — Shuffle Engine | Fisher-Yates, dedup, similarity guard | 18 |
+| C — Utility Mode | `/playlists`, "Create Shuffled Copy", templates, CSS | 6 |
+| D — Controller Mode | Hard-override, queue buffer, cursor persist, controller UI | 5 |
+| E — Export/Import | Run state as JSON (no tokens), download/upload | 7 |
+| F — UI & Integration | `base.html`, `style.css`, all routers wired | — |
 
-## ✅ Was wurde getan?
+**Total Tests:** 59/59 passing · **Ruff:** clean
 
-- [x] Projektgrundlagen: `SPEC_TRUE_SHUFFLE_POC.md`, `STATUS.md`, `.gitignore`, `.env.example`, `requirements.txt`, `README.md`
-- [x] Ticket 1 — Project Scaffold: `app/__init__.py`, `app/config.py`, `app/main.py`
-- [x] Tests: `tests/test_health.py` (2/2 passed)
-- [x] Ruff lint: all checks passed
-- [x] Commits: `da93f72` (foundation), `924b8c4` (scaffold) — **nicht gepusht**
+## Project Structure
+```
+app/
+├── __init__.py
+├── auth.py             # Spotify OAuth PKCE
+├── config.py           # pydantic-settings
+├── db.py               # async SQLite (users, runs, skipped_tracks)
+├── main.py             # FastAPI app factory
+├── routes_controller.py # Controller Mode
+├── routes_export.py    # Export/Import
+├── routes_utility.py   # Utility Mode
+├── spotify_client.py   # Spotify API client
+├── static/style.css    # Dark-mode CSS
+└── templates/
+    ├── base.html
+    ├── controller.html
+    ├── playlists.html
+    └── utility_result.html
+core/
+├── __init__.py
+├── exporter.py         # JSON export/import
+├── models.py           # Pydantic models
+└── shuffle.py          # Fisher-Yates + guards
+tests/                  # 59 tests
+```
 
----
+## Git Commits (not pushed)
+- `da93f72` Foundation files
+- `924b8c4` Ticket 1 — Project scaffold
+- `4932400` Ticket 2 — SQLite setup
+- `419c138` Ticket A — SpotifyClient
+- `a0001a4` Ticket B — Shuffle engine
+- `ca2f48b` Ticket C — Utility Mode
+- `92db76d` Ticket D — Controller Mode
+- `acf8b1a` Ticket E — Export/Import
 
-## 🔲 Was ist noch offen?
-
-- [ ] Ticket 2 — SQLite Setup
-- [ ] Ticket 3 — Spotify OAuth (PKCE)
-- [ ] Tickets 4–10 (siehe `next_tickets.md`)
-
----
-
-## ➡️ Nächster Schritt
-
-> **Ticket 2**: `app/db.py` — async SQLite init, `users` + `runs` Tabellen, Startup-Hook in `main.py`
-
----
-
-## 🗒️ Notizen / Kontext
-
-- Python 3.9.6 auf dem System (via `py` launcher)
-- `pydantic-settings` wurde zu `requirements.txt` hinzugefügt (ab pydantic v2 separates Paket)
+## Next Steps
+- Browser integration testing with real Spotify credentials
+- Ticket F visual polish (optional)
+- Push to GitHub when approved
