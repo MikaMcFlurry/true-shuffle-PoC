@@ -9,6 +9,8 @@ Flow:
 
 from __future__ import annotations
 
+from typing import Optional
+
 import hashlib
 import json
 import secrets
@@ -88,7 +90,7 @@ async def login(request: Request):
 
 
 @router.get("/callback")
-async def callback(request: Request, code: str | None = None, error: str | None = None):
+async def callback(request: Request, code: Optional[str] = None, error: Optional[str] = None):
     """Handle Spotify's redirect after user authorizes."""
     if error:
         raise HTTPException(status_code=400, detail=f"Spotify auth error: {error}")
