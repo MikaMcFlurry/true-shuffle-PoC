@@ -51,6 +51,7 @@ tests/                  # 59 tests
 - `acf8b1a` Ticket E — Export/Import
 
 ## Next Steps
+- 👉 **See `HANDOFF.md`** for the current consolidated state, known issues, and immediately actionable tasks for the next steps.
 - Browser integration testing with real Spotify credentials
 - Ticket F visual polish (optional)
 - Push to GitHub when approved
