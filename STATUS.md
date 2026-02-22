@@ -33,3 +33,12 @@
 
 - Python 3.9.6 auf dem System (via `py` launcher)
 - `pydantic-settings` wurde zu `requirements.txt` hinzugefügt (ab pydantic v2 separates Paket)
+
+---
+
+## 🤖 Agent-Core Handoff
+
+Die Implementierung der Core-Basis (PKCE OAuth, Token Refresh, Spotify HTTP Client Wrapper, SQLite Token Store) ist abgeschlossen.
+Aktuell crashen pytest und uvicorn noch aufgrund einer fehlenden Dependency (`itsdangerous`) und inkompatibler Python 3.10+ Type Hints auf dem lokalen 3.9 Setup.
+
+👉 **Alle Details, Erkenntnisse & offene Tasks:** [HANDOFF_agent-core.md](./HANDOFF_agent-core.md)

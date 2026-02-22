@@ -3,8 +3,9 @@
 Flow:
   1. GET /login        → redirect to Spotify /authorize with code_challenge
   2. GET /callback     → exchange code for tokens via /api/token
-  3. Tokens stored in ``users.token_data`` (JSON blob)
+  3. Tokens stored in ``tokens`` table (dedicated columns)
   4. Session cookie holds ``spotify_user_id``
+  5. GET /me           → fetch current user profile via Spotify API
 """
 
 from __future__ import annotations
@@ -14,14 +15,21 @@ import json
 import secrets
 import time
 from base64 import urlsafe_b64encode
+from typing import Optional
 from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import get_settings
 from app.db import get_db
+from app.spotify_client import (
+    SpotifyAPIError,
+    _get_access_token,
+    _persist_tokens,
+    spotify_request,
+)
 
 router = APIRouter(tags=["auth"])
 
@@ -120,14 +128,15 @@ async def callback(request: Request, code: str | None = None, error: str | None 
         )
 
     token_data = resp.json()
-    # Annotate with an absolute expiry timestamp for easy refresh checks.
-    token_data["expires_at"] = int(time.time()) + token_data.get("expires_in", 3600)
+    access_token = token_data["access_token"]
+    refresh_token = token_data.get("refresh_token", "")
+    expires_at = int(time.time()) + token_data.get("expires_in", 3600)
 
-    # Fetch user profile.
+    # Fetch user profile to get spotify_user_id.
     async with httpx.AsyncClient() as client:
         me_resp = await client.get(
             _SPOTIFY_ME_URL,
-            headers={"Authorization": f"Bearer {token_data['access_token']}"},
+            headers={"Authorization": f"Bearer {access_token}"},
         )
 
     if me_resp.status_code != 200:
@@ -137,7 +146,7 @@ async def callback(request: Request, code: str | None = None, error: str | None 
     spotify_user_id = me["id"]
     display_name = me.get("display_name", "")
 
-    # Upsert user + tokens into DB.
+    # Upsert user row (profile data).
     db = get_db()
     await db.execute(
         """
@@ -152,10 +161,32 @@ async def callback(request: Request, code: str | None = None, error: str | None 
     )
     await db.commit()
 
+    # Persist tokens in dedicated tokens table.
+    await _persist_tokens(spotify_user_id, access_token, refresh_token, expires_at)
+
     # Set session cookie.
     request.session["spotify_user_id"] = spotify_user_id
 
-    return RedirectResponse("/playlists", status_code=303)
+    return RedirectResponse("/me", status_code=303)
+
+
+@router.get("/me")
+async def me(request: Request):
+    """Return current user's Spotify profile."""
+    spotify_user_id = request.session.get("spotify_user_id")
+    if not spotify_user_id:
+        raise HTTPException(status_code=401, detail="Not logged in — visit /login")
+
+    try:
+        resp = await spotify_request("GET", "/v1/me", spotify_user_id)
+    except SpotifyAPIError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail)
+
+    profile = resp.json()
+    return JSONResponse({
+        "user_id": profile["id"],
+        "display_name": profile.get("display_name", ""),
+    })
 
 
 @router.get("/logout")
@@ -174,55 +205,7 @@ async def get_valid_token(spotify_user_id: str) -> str:
 
     Raises ``HTTPException(401)`` if no token data found or refresh fails.
     """
-    db = get_db()
-    cursor = await db.execute(
-        "SELECT token_data FROM users WHERE spotify_user_id = ?",
-        (spotify_user_id,),
-    )
-    row = await cursor.fetchone()
-    if not row:
-        raise HTTPException(status_code=401, detail="User not found — please /login")
-
-    token_data: dict = json.loads(row[0])
-
-    # Check expiry (with 60s buffer).
-    if token_data.get("expires_at", 0) < time.time() + 60:
-        token_data = await _refresh_token(spotify_user_id, token_data)
-
-    return token_data["access_token"]
-
-
-async def _refresh_token(spotify_user_id: str, token_data: dict) -> dict:
-    """Use the refresh_token to get a new access_token."""
-    settings = get_settings()
-    refresh_token = token_data.get("refresh_token")
-    if not refresh_token:
-        raise HTTPException(status_code=401, detail="No refresh token — please /login")
-
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            _SPOTIFY_TOKEN_URL,
-            data={
-                "client_id": settings.spotify_client_id,
-                "grant_type": "refresh_token",
-                "refresh_token": refresh_token,
-            },
-        )
-
-    if resp.status_code != 200:
-        raise HTTPException(status_code=401, detail="Token refresh failed — please /login")
-
-    new_data = resp.json()
-    # Spotify may or may not return a new refresh_token.
-    new_data.setdefault("refresh_token", refresh_token)
-    new_data["expires_at"] = int(time.time()) + new_data.get("expires_in", 3600)
-
-    # Persist updated tokens.
-    db = get_db()
-    await db.execute(
-        "UPDATE users SET token_data = ?, updated_at = datetime('now') WHERE spotify_user_id = ?",
-        (json.dumps(new_data), spotify_user_id),
-    )
-    await db.commit()
-
-    return new_data
+    try:
+        return await _get_access_token(spotify_user_id)
+    except SpotifyAPIError as exc:
+        raise HTTPException(status_code=401, detail=exc.detail)

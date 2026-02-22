@@ -32,6 +32,7 @@ async def test_init_creates_tables(tmp_path, monkeypatch):
         tables = [row[0] for row in await cursor.fetchall()]
         assert "users" in tables
         assert "runs" in tables
+        assert "tokens" in tables
     finally:
         await close_db()
 

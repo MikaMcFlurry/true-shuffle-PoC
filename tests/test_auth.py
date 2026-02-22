@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -92,6 +93,17 @@ def test_callback_error_param():
 def test_callback_missing_code():
     resp = client.get("/callback")
     assert resp.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# /me endpoint
+# ---------------------------------------------------------------------------
+
+def test_me_requires_login():
+    """GET /me without a session should return 401."""
+    resp = client.get("/me")
+    assert resp.status_code == 401
+    assert "login" in resp.json()["detail"].lower()
 
 
 # ---------------------------------------------------------------------------

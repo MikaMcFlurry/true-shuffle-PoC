@@ -43,6 +43,14 @@ CREATE TABLE IF NOT EXISTS runs (
 
 CREATE INDEX IF NOT EXISTS idx_runs_user_playlist
     ON runs(user_id, playlist_id, mode);
+
+CREATE TABLE IF NOT EXISTS tokens (
+    user_id        TEXT    PRIMARY KEY,   -- spotify user id
+    access_token   TEXT    NOT NULL,
+    refresh_token  TEXT    NOT NULL,
+    expires_at     INTEGER NOT NULL,      -- unix epoch seconds
+    updated_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
