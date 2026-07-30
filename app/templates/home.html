@@ -2,29 +2,108 @@
 {% block title %}true-shuffle{% endblock %}
 
 {% block content %}
-<div class="home-hero">
-    <h1>true-shuffle</h1>
-    <p class="muted">Deterministic, unbiased shuffle for your Spotify playlists.</p>
-
-    <div class="home-modes">
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Utility Mode</h3>
-                <p class="muted">Creates a new playlist with a true Fisher-Yates shuffled order. Works with all Spotify accounts.</p>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Controller Mode</h3>
-                <p class="muted">Controls playback in real-time with hard-override. Requires Spotify Premium.</p>
-            </div>
-        </div>
+<section class="hero">
+    <p class="eyebrow">Proof of concept · v0.2</p>
+    <h1>Your playlist, dealt like a deck of cards.</h1>
+    <p class="lede">
+        Every playable, unique track exactly once per run. No repeats until the
+        deck is done — and when you come back, you pick up on the exact card you
+        stopped on.
+    </p>
+    <div class="deckviz" aria-hidden="true">
+        {% for i in range(24) %}<i class="{% if i < 9 %}dealt{% endif %}"></i>{% endfor %}
     </div>
+    <div class="row">
+        <a class="btn btn-primary btn-lg" href="/connect">Connect a service</a>
+        <a class="btn btn-lg" href="/library">Go to my playlists</a>
+    </div>
+</section>
 
-    {% if logged_in %}
-    <a href="/playlists" class="btn btn-primary btn-lg">Go to Playlists</a>
-    {% else %}
-    <a href="/login" class="btn btn-primary btn-lg">Login with Spotify</a>
-    {% endif %}
+{% if warnings %}
+<div class="notice notice-critical">
+    <strong>Configuration warning</strong>
+    {% for w in warnings %}<span>{{ w }}</span>{% endfor %}
 </div>
+{% endif %}
+
+<section class="stack">
+    <h2>Two ways to run a deck</h2>
+    <div class="grid">
+        <article class="card">
+            <h3>Live Mode</h3>
+            <p class="muted">
+                true-shuffle decides what plays next and moves the deck forward
+                on its own — when a track ends, and when you skip. Audio still
+                comes from the streaming service, not from us.
+            </p>
+            <p class="faint" style="font-size: var(--step--1)">
+                Needs a service that allows playback control.
+            </p>
+        </article>
+        <article class="card">
+            <h3>Copy Mode</h3>
+            <p class="muted">
+                Writes the shuffled order into a real playlist on the service.
+                You press play there and listen straight through. Works even
+                where playback control is not available.
+            </p>
+            <p class="faint" style="font-size: var(--step--1)">
+                Needs a service that allows creating playlists.
+            </p>
+        </article>
+    </div>
+</section>
+
+<section class="stack">
+    <h2>Services</h2>
+    <div class="grid">
+        {% for p in providers %}
+        <article class="card" data-brand style="--brand: {{ p.brand_color }}">
+            <div class="row" style="justify-content: space-between">
+                <h3>{{ p.display_name }}</h3>
+                {% if p.id in connected %}
+                    <span class="pill pill-on">Connected</span>
+                {% elif p.configured %}
+                    <span class="pill pill-off">Ready to connect</span>
+                {% else %}
+                    <span class="pill pill-warn">Needs setup</span>
+                {% endif %}
+            </div>
+            <p class="muted" style="font-size: var(--step--1)">
+                {% if p.supports_controller_mode %}Live Mode and Copy Mode{% else %}Copy Mode only{% endif %}
+                {%- if p.playback == 'web_player' %} · plays in the browser{% endif %}
+                {%- if p.playback == 'remote_device' %} · controls your existing app{% endif %}
+            </p>
+            {% if not p.configured %}
+            <p class="faint" style="font-size: var(--step--1)">
+                Set {{ p.missing_config | join(', ') }} in <code>.env</code>.
+            </p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="stack">
+    <h2>Not connected yet</h2>
+    <p class="muted">
+        Adding a service means writing one connector class. These are the
+        candidates, with what still has to be checked before writing them —
+        not claims that they work.
+    </p>
+    <div class="grid">
+        {% for p in planned %}
+        <article class="card" data-brand style="--brand: {{ p.brand_color }}">
+            <div class="row" style="justify-content: space-between">
+                <h3>{{ p.display_name }}</h3>
+                <span class="pill pill-off">Planned</span>
+            </div>
+            <p class="muted" style="font-size: var(--step--1)">{{ p.likely_mode }}</p>
+            <ul class="stack-s faint" style="font-size: var(--step--1)">
+                {% for q in p.open_questions %}<li>— {{ q }}</li>{% endfor %}
+            </ul>
+        </article>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}

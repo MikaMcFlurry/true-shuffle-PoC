@@ -1,6 +1,25 @@
 # True-Shuffle PoC — Product Specification
 
 > **Version**: 0.1-draft · **Date**: 2026-02-22
+>
+> ---
+>
+> ⚠️ **HISTORICAL — partly superseded as of 2026-07-30 (v0.2.0).**
+>
+> This document describes the original **Spotify-only** proof of concept. The
+> product rules it states (deck-of-cards run, Fisher–Yates, dedup, exact resume,
+> the skip semantics) are still correct and still implemented. Everything it
+> says about *architecture* is not:
+>
+> * true-shuffle is now multi-provider — Spotify, Apple Music and YouTube Music
+>   behind a `MusicProvider` abstraction, not direct Spotify calls;
+> * "Controller Mode" advances **automatically** on track end and native skip,
+>   rather than only via a manual `next` call;
+> * the database schema, routes and module layout have all changed.
+>
+> Read [README.md](README.md) for how the system works today, [STATUS.md](STATUS.md)
+> for what is verified, and [HANDOFF.md](HANDOFF.md) for the architecture
+> decisions. This file is kept for provenance.
 
 ---
 

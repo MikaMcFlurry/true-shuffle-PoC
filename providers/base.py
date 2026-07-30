@@ -1,0 +1,331 @@
+"""The connector contract every streaming service implements.
+
+Design notes
+------------
+Streaming services differ in one structural way that matters more than any
+API detail: **who holds the audio pipeline**.
+
+* Spotify exposes a remote-control API — the server can tell an already-running
+  Spotify app what to play.  We call that :attr:`PlaybackControl.REMOTE_DEVICE`.
+* Apple Music and YouTube expose a *browser* player (MusicKit JS, the YouTube
+  IFrame API).  The page holds the pipeline and reports events back to us.
+  That is :attr:`PlaybackControl.WEB_PLAYER`.
+* Some services only let us read and write playlists.  That is
+  :attr:`PlaybackControl.NONE`, and only Utility Mode works there.
+
+Everything else — pagination, batch sizes, whether a paid tier is required —
+is declared as data in :class:`ProviderCapabilities` so the UI and the run
+engine can adapt without special-casing provider names.
+"""
+
+from __future__ import annotations
+
+import abc
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, AsyncIterator, Dict, List, Optional
+
+from core.models import Device, PlaybackState, PlaylistRef, Track
+
+# ---------------------------------------------------------------------------
+# Errors
+# ---------------------------------------------------------------------------
+
+class ProviderError(Exception):
+    """Base class for connector failures."""
+
+    status_code = 502
+
+
+class ProviderNotConfigured(ProviderError):
+    """The operator has not supplied credentials for this provider."""
+
+    status_code = 503
+
+
+class ProviderAuthError(ProviderError):
+    """The user's tokens are missing, expired beyond repair, or rejected."""
+
+    status_code = 401
+
+
+class ProviderQuotaError(ProviderError):
+    """The provider refused the request for quota / rate-limit reasons."""
+
+    status_code = 429
+
+
+class Unsupported(ProviderError):
+    """The provider cannot do this (e.g. remote playback on a web-only API)."""
+
+    status_code = 400
+
+
+# ---------------------------------------------------------------------------
+# Capability declaration
+# ---------------------------------------------------------------------------
+
+class PlaybackControl(str, Enum):
+    """Who owns the audio pipeline for this provider."""
+
+    REMOTE_DEVICE = "remote_device"
+    WEB_PLAYER = "web_player"
+    NONE = "none"
+
+
+class AuthKind(str, Enum):
+    """How a user connects their account."""
+
+    OAUTH2_PKCE = "oauth2_pkce"          # Spotify
+    OAUTH2_CODE = "oauth2_code"          # Google / YouTube (confidential client)
+    BROWSER_SDK = "browser_sdk"          # Apple Music: token minted in the page
+
+
+@dataclass(frozen=True)
+class ProviderCapabilities:
+    """Static facts about a connector, surfaced to the UI and the engine."""
+
+    id: str
+    display_name: str
+    auth: AuthKind
+    playback: PlaybackControl
+
+    read_playlists: bool = True
+    create_playlist: bool = True
+    #: Provider-imposed maximum of track ids per playlist-write request.
+    write_batch_size: int = 100
+    #: Page size for reading playlist items.
+    read_page_size: int = 100
+    #: Playback control requires a paid subscription tier.
+    requires_paid_tier: bool = False
+    #: The provider can be told to pre-queue upcoming tracks.
+    supports_queue_prefetch: bool = False
+    #: Brand colour used only for the small service chip in the UI.
+    brand_color: str = "#8a8f98"
+    #: Honest, user-visible caveats.  Shown in the UI, not buried in a README.
+    notes: List[str] = field(default_factory=list)
+    #: Set when the connector is a documented placeholder rather than a
+    #: working integration.
+    experimental: bool = False
+
+    @property
+    def can_control_playback(self) -> bool:
+        return self.playback is not PlaybackControl.NONE
+
+    @property
+    def supports_controller_mode(self) -> bool:
+        return self.can_control_playback
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "display_name": self.display_name,
+            "auth": self.auth.value,
+            "playback": self.playback.value,
+            "read_playlists": self.read_playlists,
+            "create_playlist": self.create_playlist,
+            "write_batch_size": self.write_batch_size,
+            "requires_paid_tier": self.requires_paid_tier,
+            "supports_queue_prefetch": self.supports_queue_prefetch,
+            "supports_controller_mode": self.supports_controller_mode,
+            "brand_color": self.brand_color,
+            "notes": list(self.notes),
+            "experimental": self.experimental,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Auth payloads
+# ---------------------------------------------------------------------------
+
+@dataclass
+class AuthStart:
+    """Everything the app needs to begin a connect flow."""
+
+    #: Where to send the browser.  ``None`` for browser-SDK providers, which
+    #: are connected by a page rather than a redirect.
+    redirect_url: Optional[str] = None
+    #: Values to stash in the session until the callback comes back.
+    session_data: Dict[str, str] = field(default_factory=dict)
+    #: For BROWSER_SDK providers: config handed to the page (e.g. Apple's
+    #: developer token).  Never contains a user credential.
+    browser_config: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class TokenBundle:
+    """Normalised credentials for one connected account."""
+
+    access_token: str
+    refresh_token: Optional[str] = None
+    #: Absolute UNIX timestamp; ``None`` means "does not expire on its own".
+    expires_at: Optional[int] = None
+    scope: str = ""
+    extra: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "access_token": self.access_token,
+            "refresh_token": self.refresh_token,
+            "expires_at": self.expires_at,
+            "scope": self.scope,
+            "extra": self.extra,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> TokenBundle:
+        return cls(
+            access_token=data.get("access_token", ""),
+            refresh_token=data.get("refresh_token"),
+            expires_at=data.get("expires_at"),
+            scope=data.get("scope", ""),
+            extra=data.get("extra", {}) or {},
+        )
+
+
+@dataclass
+class AccountIdentity:
+    """Who the connected account belongs to."""
+
+    provider_user_id: str
+    display_name: str = ""
+    #: Storefront (Apple) / market (Spotify) — affects track availability.
+    market: str = ""
+    #: e.g. "premium" / "free"; used to explain why Controller Mode is off.
+    product_tier: str = ""
+
+
+# ---------------------------------------------------------------------------
+# The contract
+# ---------------------------------------------------------------------------
+
+class MusicProvider(abc.ABC):
+    """One streaming service.
+
+    Implementations are stateless: every method takes the caller's
+    :class:`TokenBundle` so a single instance serves all users.  When a method
+    refreshes credentials it returns the new bundle via ``on_refresh``.
+    """
+
+    capabilities: ProviderCapabilities
+
+    # -- configuration ----------------------------------------------------
+
+    @abc.abstractmethod
+    def is_configured(self) -> bool:
+        """True when the operator supplied the credentials this needs."""
+
+    def missing_config(self) -> List[str]:
+        """Names of the env vars that still need to be set."""
+        return []
+
+    # -- auth -------------------------------------------------------------
+
+    @abc.abstractmethod
+    async def begin_auth(self, *, redirect_uri: str, state: str) -> AuthStart:
+        """Start the connect flow."""
+
+    async def complete_auth(
+        self,
+        *,
+        code: str,
+        redirect_uri: str,
+        session_data: Dict[str, str],
+    ) -> TokenBundle:
+        """Exchange an OAuth callback for tokens."""
+        raise Unsupported(f"{self.capabilities.id} does not use an OAuth callback")
+
+    async def complete_browser_auth(self, payload: Dict[str, Any]) -> TokenBundle:
+        """Accept a credential minted in the browser (Apple MusicKit)."""
+        raise Unsupported(f"{self.capabilities.id} does not use browser auth")
+
+    async def refresh(self, token: TokenBundle) -> TokenBundle:
+        """Return a refreshed bundle.  Default: nothing to do."""
+        return token
+
+    def needs_refresh(self, token: TokenBundle, *, now: float, skew: int = 60) -> bool:
+        return bool(token.expires_at) and token.expires_at < now + skew  # type: ignore[operator]
+
+    @abc.abstractmethod
+    async def identify(self, token: TokenBundle) -> AccountIdentity:
+        """Fetch the connected account's identity."""
+
+    def browser_config(self, token: Optional[TokenBundle] = None) -> Dict[str, Any]:
+        """Non-secret configuration the front-end player needs."""
+        return {}
+
+    # -- library ----------------------------------------------------------
+
+    @abc.abstractmethod
+    async def list_playlists(self, token: TokenBundle) -> List[PlaylistRef]:
+        """Every playlist the user can shuffle."""
+
+    @abc.abstractmethod
+    async def iter_playlist_tracks(
+        self, token: TokenBundle, playlist_id: str
+    ) -> AsyncIterator[List[Track]]:
+        """Yield pages of tracks so huge playlists can stream with progress."""
+        raise NotImplementedError
+        yield []  # pragma: no cover - makes the signature an async generator
+
+    async def get_playlist(self, token: TokenBundle, playlist_id: str) -> PlaylistRef:
+        """Metadata for a single playlist.  Default: scan the user's list."""
+        for pl in await self.list_playlists(token):
+            if pl.id == playlist_id:
+                return pl
+        raise ProviderError(f"Playlist {playlist_id} not found")
+
+    async def create_playlist(
+        self, token: TokenBundle, *, name: str, description: str = ""
+    ) -> PlaylistRef:
+        raise Unsupported(f"{self.capabilities.id} cannot create playlists")
+
+    async def add_tracks(
+        self, token: TokenBundle, playlist_id: str, track_ids: List[str]
+    ) -> None:
+        raise Unsupported(f"{self.capabilities.id} cannot write playlists")
+
+    async def resolve_tracks(
+        self, token: TokenBundle, track_ids: List[str]
+    ) -> Dict[str, Track]:
+        """Look up display metadata for ids.  Default: nothing known."""
+        return {}
+
+    # -- playback (REMOTE_DEVICE providers) -------------------------------
+
+    async def list_devices(self, token: TokenBundle) -> List[Device]:
+        if self.capabilities.playback is not PlaybackControl.REMOTE_DEVICE:
+            return []
+        raise NotImplementedError
+
+    async def play(
+        self,
+        token: TokenBundle,
+        *,
+        track_id: str,
+        device_id: Optional[str] = None,
+        position_ms: int = 0,
+    ) -> None:
+        raise Unsupported(f"{self.capabilities.id} has no remote playback control")
+
+    async def enqueue(
+        self, token: TokenBundle, *, track_id: str, device_id: Optional[str] = None
+    ) -> None:
+        raise Unsupported(f"{self.capabilities.id} has no remote queue")
+
+    async def pause(
+        self, token: TokenBundle, *, device_id: Optional[str] = None
+    ) -> None:
+        raise Unsupported(f"{self.capabilities.id} has no remote playback control")
+
+    async def get_playback_state(self, token: TokenBundle) -> Optional[PlaybackState]:
+        """Poll what is playing.  ``None`` when the provider cannot tell us."""
+        return None
+
+    # -- misc -------------------------------------------------------------
+
+    def playlist_url(self, playlist_id: str) -> str:
+        return ""
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<{type(self).__name__} id={self.capabilities.id}>"

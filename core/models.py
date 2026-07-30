@@ -1,53 +1,242 @@
-"""Pydantic models shared across the application."""
+"""Provider-agnostic domain models.
+
+Nothing in this module knows about Spotify, Apple Music or YouTube.  A
+:class:`Track` is identified by ``(provider, id)``; every connector maps its
+own payloads onto these types.
+"""
 
 from __future__ import annotations
 
-from typing import List
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+# ---------------------------------------------------------------------------
+# Enumerations
+# ---------------------------------------------------------------------------
+
+class RunMode(str, Enum):
+    """How a run delivers audio to the listener."""
+
+    #: Write a shuffled copy playlist into the provider; the user presses play
+    #: there.  Works on every provider that can create playlists.
+    UTILITY = "utility"
+
+    #: true-shuffle drives playback itself and advances the cursor when a track
+    #: ends or the user skips natively.  Requires a playback-capable provider.
+    CONTROLLER = "controller"
+
+
+class RunStatus(str, Enum):
+    ACTIVE = "active"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class SkipReason(str, Enum):
+    """Why a playlist entry never entered the run.
+
+    These are *entries removed before shuffling* — they are NOT tracks the user
+    skipped.  See :class:`AdvanceReason` for that.
+    """
+
+    LOCAL_FILE = "local_file"
+    NOT_PLAYABLE = "not_playable"
+    WRONG_KIND = "wrong_kind"
+    DUPLICATE = "duplicate"
+    MISSING_ID = "missing_id"
+
+
+class AdvanceReason(str, Enum):
+    """Why the run cursor moved forward.
+
+    The product rule (handoff §2.2): a *user* skip consumes the track for this
+    run, an *unplayable entry* does not — it never made it into the order.
+    """
+
+    TRACK_ENDED = "track_ended"
+    USER_SKIP = "user_skip"
+    NATIVE_SKIP = "native_skip"   # skipped inside the provider's own app
+    MANUAL = "manual"             # "next" pressed in the true-shuffle UI
+    PLAYBACK_FAILED = "playback_failed"
+    RESYNC = "resync"             # provider drifted; we re-asserted our order
+
+
+class TrackKind(str, Enum):
+    TRACK = "track"
+    EPISODE = "episode"
+    VIDEO = "video"
+    UNKNOWN = "unknown"
+
+
+# ---------------------------------------------------------------------------
+# Content
+# ---------------------------------------------------------------------------
 
 class Track(BaseModel):
-    """Minimal representation of a Spotify track."""
+    """One playable item, normalised across providers."""
 
-    uri: str  # e.g. "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"
+    provider: str
+    id: str                       # provider-native identifier
     name: str = ""
     artist: str = ""
+    album: str = ""
+    duration_ms: int = 0
     is_playable: bool = True
     is_local: bool = False
-    track_type: str = "track"  # "track" | "episode"
+    kind: TrackKind = TrackKind.TRACK
+    artwork_url: str = ""
+
+    @property
+    def key(self) -> str:
+        """Stable cross-provider identity used for dedup and run order."""
+        return f"{self.provider}:{self.id}"
+
+    def invalid_reason(self) -> Optional[SkipReason]:
+        """Return why this track cannot enter a run, or ``None`` if it can."""
+        if not self.id:
+            return SkipReason.MISSING_ID
+        if self.is_local:
+            return SkipReason.LOCAL_FILE
+        if self.kind not in (TrackKind.TRACK, TrackKind.VIDEO):
+            return SkipReason.WRONG_KIND
+        if not self.is_playable:
+            return SkipReason.NOT_PLAYABLE
+        return None
 
     @property
     def is_valid(self) -> bool:
-        """True if the track can be shuffled and played."""
-        return (
-            self.is_playable
-            and not self.is_local
-            and self.track_type == "track"
-            and self.uri.startswith("spotify:track:")
-        )
+        return self.invalid_reason() is None
 
+
+class SkippedEntry(BaseModel):
+    """A playlist entry that was excluded before the shuffle."""
+
+    track: Track
+    reason: SkipReason
+
+
+class PlaylistRef(BaseModel):
+    """A playlist as listed by a provider."""
+
+    provider: str
+    id: str
+    name: str = ""
+    description: str = ""
+    track_count: int = 0
+    owner: str = ""
+    image_url: str = ""
+    url: str = ""
+    editable: bool = True
+
+
+class Device(BaseModel):
+    """A playback target (Spotify Connect device, browser web player, ...)."""
+
+    id: str
+    name: str
+    kind: str = "unknown"
+    is_active: bool = False
+    volume_percent: Optional[int] = None
+
+
+class PlaybackState(BaseModel):
+    """Normalised "what is playing right now" snapshot."""
+
+    is_playing: bool = False
+    track_id: Optional[str] = None
+    progress_ms: int = 0
+    duration_ms: int = 0
+    device_id: Optional[str] = None
+    device_name: str = ""
+    #: True when the provider reported no active session at all.
+    is_idle: bool = False
+
+    @property
+    def remaining_ms(self) -> int:
+        if not self.duration_ms:
+            return 0
+        return max(0, self.duration_ms - self.progress_ms)
+
+
+# ---------------------------------------------------------------------------
+# Runs
+# ---------------------------------------------------------------------------
 
 class RunState(BaseModel):
-    """Snapshot of a shuffle run (for persistence and export)."""
+    """Snapshot of a shuffle run — the deck of cards."""
 
     run_id: int = 0
     user_id: int = 0
+    provider: str = ""
     playlist_id: str = ""
-    mode: str = "utility"  # "utility" | "controller"
-    shuffled_order: List[str] = Field(default_factory=list)  # list of URIs
+    playlist_name: str = ""
+    mode: RunMode = RunMode.UTILITY
+    #: Provider-native track ids, in the exact order they will be played.
+    order: List[str] = Field(default_factory=list)
     cursor: int = 0
-    status: str = "active"  # "active" | "completed" | "cancelled"
+    status: RunStatus = RunStatus.ACTIVE
+    device_id: Optional[str] = None
+    seed: Optional[int] = None
+    created_at: str = ""
+    updated_at: str = ""
+
+    @property
+    def total(self) -> int:
+        return len(self.order)
+
+    @property
+    def remaining(self) -> int:
+        return max(0, self.total - self.cursor)
+
+    @property
+    def current_track_id(self) -> Optional[str]:
+        if 0 <= self.cursor < self.total:
+            return self.order[self.cursor]
+        return None
+
+    @property
+    def progress_pct(self) -> float:
+        if not self.total:
+            return 0.0
+        return round(100.0 * min(self.cursor, self.total) / self.total, 1)
+
+    def upcoming(self, count: int) -> List[str]:
+        """The next *count* track ids after the cursor."""
+        return self.order[self.cursor + 1 : self.cursor + 1 + count]
+
+
+class RunEvent(BaseModel):
+    """Audit trail entry — how the run actually progressed."""
+
+    run_id: int = 0
+    type: str = ""
+    cursor: int = 0
+    reason: Optional[str] = None
+    detail: Dict[str, Any] = Field(default_factory=dict)
+    created_at: str = ""
+
+
+# ---------------------------------------------------------------------------
+# Export / import
+# ---------------------------------------------------------------------------
+
+EXPORT_VERSION = 2
 
 
 class ExportPayload(BaseModel):
-    """JSON export of a run — never contains tokens."""
+    """Portable run state.  OAuth tokens are NEVER included."""
 
+    version: int = EXPORT_VERSION
+    provider: str
     playlist_id: str
-    mode: str
-    shuffled_order: List[str]
-    cursor: int
-    status: str
+    playlist_name: str = ""
+    mode: RunMode = RunMode.UTILITY
+    order: List[str] = Field(default_factory=list)
+    cursor: int = 0
+    status: RunStatus = RunStatus.ACTIVE
     exported_at: str = ""
 
     model_config = {

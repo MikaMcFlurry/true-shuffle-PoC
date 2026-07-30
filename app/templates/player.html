@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ playlist_name or 'Run' }} · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="stack-s">
+    <div class="row">
+        <span class="pill pill-plain" style="color: {{ provider.brand_color }}; border-color: {{ provider.brand_color }}">{{ provider.display_name }}</span>
+        <span class="pill" id="runStatus">…</span>
+        <span class="pill hidden" id="watchStatus"></span>
+    </div>
+    <h1>{{ playlist_name or 'Run' }}</h1>
+</section>
+
+<div class="notice hidden" id="playerNotice"></div>
+
+<section class="deck">
+    <div class="card-now">
+        <img class="now-art hidden" id="nowArt" alt="">
+
+        <div class="stack-s">
+            <p class="eyebrow">Now playing</p>
+            <div class="now-title" id="nowTitle">Loading…</div>
+            <div class="now-artist" id="nowArtist"></div>
+        </div>
+
+        <div class="stack-s">
+            <div class="deck-count">
+                <span class="big" id="deckDealt">0</span>
+                <span class="faint">/</span>
+                <span class="faint" id="deckTotal">0</span>
+                <span class="faint" style="margin-left: auto" id="deckLeft"></span>
+            </div>
+            <div class="deck-rail"><span id="deckRail"></span></div>
+        </div>
+
+        {% if provider.playback == 'remote_device' %}
+        <label class="stack-s" style="font-size: var(--step--1)">
+            <span class="faint">Play on</span>
+            <select id="deviceSelect"></select>
+        </label>
+        {% endif %}
+
+        {% if provider.id == 'youtube' %}
+        <div id="ytmount" style="border-radius: var(--radius); overflow: hidden"></div>
+        {% endif %}
+
+        <div class="transport">
+            <button class="btn btn-primary" id="startBtn" type="button">Start deck</button>
+            <button class="btn" id="prevBtn" type="button">Previous</button>
+            <button class="btn" id="nextBtn" type="button">Skip</button>
+            <button class="btn" id="pauseBtn" type="button" disabled>Pause</button>
+        </div>
+
+        <div class="row" style="gap: 18px; font-size: var(--step--1)">
+            <a href="/export/{{ run_id }}" class="muted">Export this deck</a>
+            <a href="/runs" class="muted">All runs</a>
+            <button class="btn btn-danger" id="cancelBtn" type="button" style="margin-left:auto">End run</button>
+        </div>
+    </div>
+
+    <div class="card stack">
+        <h2 style="font-size: var(--step-1)">Still in the deck</h2>
+        <ol class="upnext" id="upnext"></ol>
+        <p class="faint" style="font-size: var(--step--1)">
+            {% if provider.playback == 'web_player' %}
+            Audio plays in this tab through {{ provider.display_name }}. Closing
+            the tab stops playback — the deck keeps your place.
+            {% else %}
+            Audio plays in your {{ provider.display_name }} app. Skipping there
+            counts as one card, exactly like skipping here.
+            {% endif %}
+        </p>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $, api, setNotice } from "/static/app.js";
+import { RunPlayer } from "/static/player.js";
+
+const player = new RunPlayer({{ run_id }}, {{ provider | tojson }});
+
+$("#startBtn").addEventListener("click", () => guard(() => player.start()));
+$("#nextBtn").addEventListener("click",  () => guard(() => player.next()));
+$("#prevBtn").addEventListener("click",  () => guard(() => player.previous()));
+$("#pauseBtn").addEventListener("click", () => guard(() => player.pause()));
+
+$("#cancelBtn").addEventListener("click", () => guard(async () => {
+    if (!confirm("End this run? The deck is discarded and the next start deals a new one.")) return;
+    await api(`/api/runs/{{ run_id }}/cancel`, { method: "POST" });
+    location.href = "/runs";
+}));
+
+async function guard(fn) {
+    try {
+        setNotice($("#playerNotice"), "");
+        await fn();
+    } catch (err) {
+        setNotice($("#playerNotice"), err.message, "notice-critical");
+    }
+}
+
+guard(() => player.boot());
+</script>
+{% endblock %}

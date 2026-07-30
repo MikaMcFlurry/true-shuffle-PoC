@@ -8,6 +8,10 @@ aiosqlite>=0.21,<1
 itsdangerous>=2.0,<3
 jinja2>=3.1,<4
 
+# Token vault (AES-256-GCM at rest) and the Apple Music ES256 developer token
+cryptography>=42.0
+pyjwt[crypto]>=2.8,<3
+
 # Dev / Test
 pytest>=8.0,<9
 pytest-asyncio>=0.25,<1

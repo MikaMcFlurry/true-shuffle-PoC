@@ -1,115 +1,139 @@
-# True-Shuffle PoC – KI Handoff
+# HANDOFF — true-shuffle
 
-Dieses Dokument fasst den aktuellen Projektstand, die verschiedenen Modi und die nächsten operativen Schritte zusammen. Es dient zur nahtlosen Übergabe an Folge-Agenten (z. B. Claude Pro).
+**Updated 2026-07-30 · supersedes the February 2026 handoff entirely.**
 
-## TL;DR
-- **Basis-Architektur & Auth:** FastAPI, SQLite (`aiosqlite`), Spotify PKCE-Login inkl. Auto-Refresh sind aufgesetzt.
-- **Shuffle Engine:** Core Fisher-Yates Algorithmus, Deduplizierung und grundlegende Architektur stehen bereit.
-- **Utility Mode:** Paginierter Abruf von Playlists, Shufflen und Speichern in Batches (<100) als "neue" Spotify-Playlist ist implementiert (leidet noch unter synchronem Blocking).
-- **Controller Mode (Premium):** Strict-sequential Locks, N=5 Queue-Buffer, Hard-Override für flüssiges Abspielen ohne fremde Tracks sind entworfen, erfordern aber Feintuning.
-- **Export/Import:** Spezifikation für Token-freien JSON Dump/Import (für Run-State, ohne Credentials) ist definiert, Code aber noch nicht implementiert.
-
----
-
-## Current Repo State
-
-- **Features implementiert (theoretisch funktionsfähig):**
-  - Spotify PKCE Auth, SQLite Token Store, Session Middleware.
-  - Playlist Fetcher, Deduplizierung und Fisher-Yates Shuffle Engine.
-  - Controller Mode State-Machine (Buffer, Polling, Override).
-  - Web UI Templates (Base, Playlists, Controller).
-
-- **Läuft aktuell NICHT / Bricht ab (Blocker):**
-  - **Uvicorn Startup:** Bricht ab, da die Library `itsdangerous` in `requirements.txt` fehlt (notwendig für SessionMiddleware).
-  - **Pytest/Typing:** Python 3.9 Inkompatibilitäten (`str | None` in `app/auth.py`), weshalb FastAPI/Pydantic crasht und Pytest mit Collection Errors abbricht.
-  - **Utility Request Timeout:** Massive Playlists blockieren synchron den Browser/Server (Fehlen eines Background-Workers).
+> The previous version of this file described a codebase that could not start
+> (`itsdangerous` missing, Python 3.9 type-hint crashes, export/import absent).
+> All of that was already fixed by later commits, and the file was never
+> updated — which is exactly the failure mode this document now tries to avoid.
+> Treat [STATUS.md](STATUS.md) as the source of truth for *what is verified*,
+> and this file for *why the architecture looks the way it does*.
 
 ---
 
-## Open Tasks (Priority)
+## The one decision everything else follows from
 
-### Core
-1. **Dependencies heilen:** `itsdangerous` zur `requirements.txt` hinzufügen.
-2. **Type-Syntax fixen:** Python 3.9 kompatible Type-Hints sicherstellen (z. B. `Optional[str]` statt `str | None` in `app/auth.py`), damit die App bootet und Tests durchlaufen.
-3. **HTTP Client Wrapper implementieren:** Auto-Retry Logic (`Retry-After` Header) beim Aufruf der Spotify-API global anwenden.
+Streaming services differ in an API-detail way that does not matter much, and in
+one structural way that matters enormously: **who owns the audio pipeline.**
 
-### Controller
-1. **Multi-Skip Integration Tests:** Mocks in Tests simulieren (`cursor + 3`), um die Logik in `_poll_playback()` (Controller Advance/Override) zu verifizieren.
-2. **Spotify Premium Smoke-Test:** Begehen des Playbacks mit echtem Device, Evaluierung des Delays beim "Hard Override" in Reality.
-3. **Queue-Leftovers identifizieren:** Verhalten von Spotify analysieren, wenn Titel in der Queue nach einem Override stehen bleiben.
+| | Who plays the audio | What that means for us |
+|---|---|---|
+| `REMOTE_DEVICE` | The service's own app, which we can command | We poll playback and push the next track. We can also be *interrupted* by the user acting in that app. |
+| `WEB_PLAYER` | A browser SDK running in our page | We command it directly, and it tells us when a track ends. We cannot touch playback happening in the service's real app. |
+| `NONE` | The user, manually | Copy Mode only. |
 
-### Utility
-1. **Background Worker Refactor:** Die Erstellung der Playlists (Utility Mode) aus dem kritischen Request-Lifecycle nehmen und in einen Async-Task auslagern.
-2. **HTTP Client Async Wrapper:** Rate Limits (`429`) in den Spotify Client Requests sauber mittels Capped Backoff abfangen.
-3. **Polling / SSE UI (Progress):** `/utility/status/{run_id}` Endpunkt & Frontend-Status-Bar für lange Playlist-Kopiervorgänge implementieren.
+Spotify is `REMOTE_DEVICE`. Apple Music and YouTube Music are `WEB_PLAYER`.
+Everything else — whether Live Mode is offered, whether a queue is prefetched,
+whether a background watcher runs, what the player page renders — is derived
+from this one enum. No code branches on a provider *name*.
 
-### QA (Export/Import/Similarity)
-1. **Green-State Pytest:** Die Testumgebung bereinigen (File-Locks in SQLite Fixes), damit `pytest` jederzeit fehlerfrei funktioniert.
-2. **Export / Import Endpoints:** FastAPI-Endpunkte & Pydantic-Models erstellen (strikter Ausschluss von Tokens via `exclude={"access_token", "refresh_token"}`).
-3. **Similarity Check Logik:** Metrik (z.B. Nachbarschafts-Check) programmieren, die einen Neu-Shuffle triggert, falls die alte Liste zu ähnlich ist.
-
----
-
-## How to Run
-
-**1. Setup & Env Variables:**
-```bash
-python -m venv .venv
-source .venv/bin/activate  # macOS / Linux
-# Unter Windows: .venv\Scripts\Activate.ps1
-
-pip install -r requirements.txt
-cp .env.example .env
-```
-👉 *Passe die Werte in `.env` an (u. a. `SPOTIFY_CLIENT_ID`). Niemals Secrets nach Git committen.*
-
-**2. Start Application:**
-```bash
-uvicorn app.main:app --reload --port 8000
-```
-**URLs:**
-- Root: `http://localhost:8000/`
-- Login: `http://localhost:8000/login`
-- Utility/Playlists: `http://localhost:8000/playlists`
-- Controller UI: `http://localhost:8000/controller/ui` *(Unverified, genauer Pfad in routes überprüfen)*
+This is why the abstraction is `PlaybackControl` and not, say, a list of
+supported methods: getting this wrong would mean either pretending Apple can be
+remote-controlled (it cannot) or giving up on Live Mode for Apple entirely
+(unnecessary — the browser player is a perfectly good pipeline).
 
 ---
 
-## How to Test
+## The deck rules, and where they live
 
-**Automatisierte Tests:**
-```bash
-pytest
-```
-*(Achtung: Momentan schlägt Pytest beim Sammeln der Tests wegen des Typing-Fehlers fehl.)*
+`core/engine.py` is a pure state machine. It never does I/O, so the product
+rules are testable without a network:
 
-**Manuelle Browser-Schritte (Utility Mode):**
-1. Login über `/login` (PKCE Ablauf checken).
-2. Bei `/playlists` neben einer Liste auf "Shuffle (Utility Mode)" klicken.
-3. Warten, bis der Request beendet ist (aktuell synchrones Warten).
-4. `utility_result.html` Verifizierung: Stimmt die Song-Anzahl mit der neu in Spotify aufgetauchten Playlist überein?
+- A track is consumed **exactly once** per run. A user skip consumes a card;
+  so does a track playing to the end. This is the handoff's §2.2 distinction,
+  and it is the difference between "no repeats" being true and being a slogan.
+- An **unplayable entry** (local file, unavailable, episode, duplicate) never
+  enters the deck at all, and is recorded with its reason. This is what makes
+  the honest claim possible: *every playable, unique track*, not "0 skipped".
+- The cursor only moves forward, and only through `app/runs.py`. One
+  `asyncio.Lock` per run guarantees that the watcher and a browser event
+  reporting the same track end cannot burn two cards.
+- Resume re-asserts the stored cursor rather than restarting the deck.
 
-**Manuelle Browser-Schritte (Controller Mode - Premium Only):**
-1. Native Spotify App (Desktop/Mobile) öffnen und Titel starten (Device Activation).
-2. Im Controller-UI eine Playlist starten.
-3. In der *nativen* Spotify App Skip-Buttons verwenden (Multi-Skip oder Fremd-Titel starten).
-4. Beobachten, ob das Backend den `_hard_override()` erfolgreich triggert.
-
----
-
-## Known Issues / Risks
-
-- **429 Rate Limits / Browser Timeout:** Riesen-Playlists stürzen im Utility Mode derzeit ab. Batching läuft, ist aber nicht durch Background-Worker geschützt.
-- **Premium Required für Controller:** Das API-Feature "App-basiertes Playback" (`PUT /me/player/play`) sperrt Spotify-Free User aus.
-- **Device Activation:** Die Controller-API crasht oder fällt in einen endlosen `NO_DEVICE` State, sofern der Nutzer Spotify nicht anderweitig aktiv geöffnet/als Target deklariert hat.
-- **Spotify Queue Logic & Polling Delay:** Kein API Request für "Clear Queue" in Spotify vorhanden. Es kann bis zu ~3 Sekunden dauern, ehe ein fremder manueller Track-Klick im Controller per Override abgefangen wird (Polling Margin).
-- **SQLite Database Locked Fehler:** Unter Windows-basierten Test-Ausführungen (`pytest`) können fehlende "Session Cleanups" asynchrone File-Locks erzeugen (Flaky Tests).
+`core/engine.reconcile()` is the interesting one: it reads a polled playback
+snapshot and decides whether the deck ended a track, was skipped natively, or
+**drifted** (the listener is playing something we did not deal). Drift is
+deliberately not an advance — we stop driving and keep the cursor, because
+fighting the user for control of their own player is worse than pausing.
 
 ---
 
-## Next 60 Minutes Plan
+## Decisions taken, with reasons
 
-1. **Bugfixes & Baseline:** In `requirements.txt` das Paket `itsdangerous` eintragen und `app/auth.py` (oder wo relevant) Type-Hints von `str | None` auf `Optional[str]` ändern.
-2. **Verify Tests:** Validierung, dass `pytest` & `uvicorn` sauber und fehlerfrei initialisieren.
-3. **Utility Worker Refactoring:** Endpunkt für Playlists async umschreiben, damit kein Timeout die App blockiert.
-4. **Smoke-Test Setup:** Einen "richtigen" Controller-Lauf mit einem Spotify Premium-Account im integrierten Browser simulieren und Ergebnisse sichten.
+**Brand colour is mint `#42F5C8` on monochrome, not Spotify green.**
+The old PoC UI used `#1DB954` as its primary. For a product that now serves
+three services equally, colouring the whole product in one service's brand is
+wrong. Each service gets its own colour only as a 4px chip on its card. This
+follows the April 2026 direction in the master handoff; if a different palette
+has since been decided, only `app/static/style.css` needs to change.
+
+**A browser session is the identity.**
+No password login. Streaming accounts attach to an opaque random session handle.
+Right for a local PoC; the wrong shape for anything public, and `app/deps.py`
+says so.
+
+**Encryption at rest is real now, and its limits are stated.**
+AES-256-GCM keyed from `SECRET_KEY` via scrypt. It defeats a stolen database
+file. It does not defeat someone who also has the key, and `app/crypto.py` says
+that rather than implying more.
+
+**YouTube Copy Mode refuses impossible writes.**
+`playlistItems.insert` costs 50 quota units against a 10 000/day default. A
+1 500-track copy needs 75 000 and cannot succeed. Rather than discovering this
+at track 190, the connector does the arithmetic first and explains it. This is
+also why YouTube's `write_batch_size` is 1 — there is no batch endpoint, and
+declaring otherwise would silently drop tracks.
+
+**Planned connectors are data, not stubs.**
+`providers/planned.py` lists Deezer, TIDAL, Amazon Music and SoundCloud with the
+questions that must be answered before writing them. They appear in the UI as
+"planned" with those questions visible. The master handoff is explicit that a
+February 2026 policy read is not evidence about today, so nothing here states a
+conclusion about their current terms.
+
+---
+
+## Where the real risk still is
+
+Everything in this repo is tested against fakes. The behaviours that will
+decide whether the product works are all on the other side of a real account:
+
+1. **Spotify override latency and queue bleed.** We prefetch 5 tracks and hard-
+   override on advance. Whether an override leaves stale queue entries that
+   later bleed through is unmeasured. The watcher will correct it; how audible
+   the correction is, nobody knows yet.
+2. **Native-skip detection accuracy.** `reconcile()` distinguishes a skip from a
+   clean end using progress thresholds (`NEAR_END_MS`, `SKIP_PROGRESS_MS`).
+   Those numbers are reasoned, not measured. They are constants at the top of
+   `core/engine.py` precisely so they can be tuned against real data.
+3. **Apple MusicKit in practice.** Domain registration, whether a stored Music
+   User Token survives long enough to be worth storing, and how many library
+   items lack a catalog id.
+4. **Whether "keep the tab open" is acceptable** to a listener on Apple or
+   YouTube. This is a product question, not a technical one, and it is the main
+   reason Spotify remains the better closed-beta target.
+
+---
+
+## Open questions for Mika
+
+1. Is mint `#42F5C8` on monochrome the committed palette? The PoC now assumes so.
+2. Live Mode on Apple/YouTube requires an open browser tab. Is that acceptable
+   for the beta, or should those services ship Copy-Mode-only first?
+3. YouTube cannot see auto-generated playlists ("Liked Music", mixes). Is
+   user-created-playlists-only enough to be worth shipping?
+4. The website still shows service badges that this codebase cannot yet back up
+   with a live-credential run. Recommendation: change nothing publicly until
+   step 1–4 of STATUS.md's next steps are done.
+
+---
+
+## What was deliberately not touched
+
+The `true-shuffle-site` repository. The task was the MVP; changing public
+marketing claims — especially service status labels — before any live-credential
+verification would repeat the exact mistake the master handoff warns about.
+The site's known issues (the `true-shuffel` spelling in `README.md`, the
+`signup_success` event firing for review and contact submissions, `CLAUDE.md`
+describing an impressions slider that `main` no longer has) are real and worth
+fixing, but as their own piece of work.

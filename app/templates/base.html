@@ -4,18 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}true-shuffle{% endblock %}</title>
+    <meta name="color-scheme" content="dark light">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <a href="/playlists" class="logo">🔀 true-shuffle</a>
-        <div class="nav-links">
-            <a href="/playlists">Playlists</a>
-            <a href="/logout">Logout</a>
-        </div>
-    </nav>
-    <main class="container">
+    <header class="masthead">
+        <a class="wordmark" href="/"><span class="glyph">TS</span> true-shuffle</a>
+        <nav>
+            <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Library</a>
+            <a href="/runs" {% if request.url.path == '/runs' %}aria-current="page"{% endif %}>Runs</a>
+            <a href="/connect" {% if request.url.path == '/connect' %}aria-current="page"{% endif %}>Services</a>
+            <button class="btn" id="themeToggle" type="button" aria-label="Switch theme">Theme</button>
+        </nav>
+    </header>
+
+    <main class="page">
         {% block content %}{% endblock %}
     </main>
+
+    <script type="module" src="/static/app.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

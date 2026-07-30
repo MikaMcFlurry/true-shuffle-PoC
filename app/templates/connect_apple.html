@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Connect Apple Music · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="stack" style="max-width: 620px">
+    <p class="eyebrow">Apple Music</p>
+    <h1>Sign in with your Apple&nbsp;ID</h1>
+    <p class="muted">
+        Apple issues the permission inside your browser rather than through a
+        redirect, so this step opens an Apple window. true-shuffle receives a
+        token for your library and nothing else — no Apple ID password ever
+        reaches this server.
+    </p>
+
+    <div class="notice notice-accent">
+        <strong>What this enables</strong>
+        <span>Reading your library playlists, writing a shuffled copy, and
+        playing your deck in this browser tab through Apple's own player.</span>
+    </div>
+
+    <div class="row">
+        <button class="btn btn-primary btn-lg" id="appleConnect" type="button">
+            Sign in with Apple Music
+        </button>
+        <a class="btn" href="/connect">Cancel</a>
+    </div>
+
+    <div class="notice hidden" id="appleNotice"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $, api, setNotice } from "/static/app.js";
+
+const CONFIG = {{ browser_config | tojson }};
+const button = $("#appleConnect");
+const notice = $("#appleNotice");
+
+button.addEventListener("click", async () => {
+    button.disabled = true;
+    setNotice(notice, "Loading Apple MusicKit…", "notice-accent");
+
+    try {
+        await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error("Apple MusicKit could not be loaded. Check your connection and try again."));
+            document.head.append(script);
+        });
+
+        const music = await window.MusicKit.configure({
+            developerToken: CONFIG.developer_token,
+            app: { name: CONFIG.app_name, build: CONFIG.app_build },
+        });
+
+        setNotice(notice, "Waiting for Apple to confirm your permission…", "notice-accent");
+        const musicUserToken = await music.authorize();
+        if (!musicUserToken) throw new Error("Apple did not return a permission token.");
+
+        const result = await api("/auth/apple/browser", {
+            method: "POST",
+            body: { music_user_token: musicUserToken },
+        });
+        location.href = result.redirect || "/library";
+    } catch (err) {
+        button.disabled = false;
+        setNotice(notice, err.message, "notice-critical");
+    }
+});
+</script>
+{% endblock %}

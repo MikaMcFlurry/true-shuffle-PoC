@@ -1,4 +1,4 @@
-"""Tests for export/import (core/exporter.py and app/routes_export.py)."""
+"""Export/import: portability without leaking credentials."""
 
 from __future__ import annotations
 
@@ -6,84 +6,111 @@ import json
 
 import pytest
 
-from core.exporter import export_run, import_run
+from core.exporter import export_run, import_run, resume_status
+from core.models import EXPORT_VERSION, RunMode, RunStatus
 
 
-# ---------------------------------------------------------------------------
-# Core exporter logic
-# ---------------------------------------------------------------------------
-
-class TestExportRun:
-    def test_export_is_valid_json(self):
-        result = export_run("pid", "utility", ["uri:a", "uri:b"], 1, "active")
-        data = json.loads(result)
-        assert data["playlist_id"] == "pid"
-        assert data["mode"] == "utility"
-        assert data["shuffled_order"] == ["uri:a", "uri:b"]
-        assert data["cursor"] == 1
-        assert data["status"] == "active"
-        assert "exported_at" in data
-
-    def test_export_never_contains_tokens(self):
-        result = export_run("pid", "utility", [], 0, "active")
-        data = json.loads(result)
-        for key in ("token_data", "access_token", "refresh_token", "secret_key"):
-            assert key not in data
+def sample(**overrides) -> str:
+    payload = {
+        "provider": "spotify",
+        "playlist_id": "pl1",
+        "playlist_name": "Everything",
+        "mode": "controller",
+        "order": ["a", "b", "c"],
+        "cursor": 1,
+        "status": "active",
+    }
+    payload.update(overrides)
+    return export_run(**payload)
 
 
-class TestImportRun:
-    def test_import_roundtrip(self):
-        exported = export_run("pid", "controller", ["a", "b"], 0, "active")
-        payload = import_run(exported)
-        assert payload.playlist_id == "pid"
-        assert payload.mode == "controller"
-        assert payload.shuffled_order == ["a", "b"]
-
-    def test_import_strips_tokens(self):
-        raw = json.dumps({
-            "playlist_id": "p",
-            "mode": "utility",
-            "shuffled_order": [],
-            "cursor": 0,
-            "status": "active",
-            "access_token": "SHOULD_BE_STRIPPED",
-            "refresh_token": "SHOULD_BE_STRIPPED",
-        })
-        payload = import_run(raw)
-        # access_token / refresh_token should not be on the payload
-        raw_dict = json.loads(payload.model_dump_json())
-        assert "access_token" not in raw_dict
-        assert "refresh_token" not in raw_dict
-
-    def test_import_invalid_json_raises(self):
-        with pytest.raises(ValueError, match="Invalid JSON"):
-            import_run("not json")
+def test_export_round_trips():
+    payload = import_run(sample())
+    assert payload.provider == "spotify"
+    assert payload.order == ["a", "b", "c"]
+    assert payload.cursor == 1
+    assert payload.version == EXPORT_VERSION
 
 
-# ---------------------------------------------------------------------------
-# HTTP route tests
-# ---------------------------------------------------------------------------
-
-@pytest.fixture(autouse=True)
-def _use_tmp_db(monkeypatch, tmp_path):
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "test.db"))
-    monkeypatch.setenv("SPOTIFY_CLIENT_ID", "test_cid")
-    monkeypatch.setenv("SECRET_KEY", "test_secret")
-    from app.config import get_settings
-    get_settings.cache_clear()
+def test_export_records_a_timestamp():
+    assert json.loads(sample())["exported_at"]
 
 
-def test_export_requires_login():
-    from fastapi.testclient import TestClient
-    from app.main import app
-    client = TestClient(app)
-    resp = client.get("/export/1")
-    assert resp.status_code == 401
+def test_export_never_contains_tokens():
+    raw = sample().lower()
+    for secret in ("access_token", "refresh_token", "music_user_token", "client_secret"):
+        assert secret not in raw
 
 
-def test_import_requires_login():
-    from fastapi.testclient import TestClient
-    from app.main import app
-    client = TestClient(app)
-    resp = client.post("/export/import", content=b'{}')
-    assert resp.status_code == 401
+@pytest.mark.parametrize(
+    "key",
+    ["access_token", "refresh_token", "token_data", "music_user_token", "client_secret"],
+)
+def test_credentials_in_an_uploaded_file_are_stripped(key):
+    data = json.loads(sample())
+    data[key] = "leaked-value"
+    payload = import_run(json.dumps(data))
+    assert "leaked-value" not in payload.model_dump_json()
+
+
+# -- v1 compatibility --------------------------------------------------------
+
+def test_a_v1_spotify_export_still_imports():
+    """The old format stored full URIs under ``shuffled_order``."""
+    legacy = {
+        "playlist_id": "pl1",
+        "mode": "utility",
+        "shuffled_order": [
+            "spotify:track:aaa", "spotify:track:bbb", "spotify:track:ccc",
+        ],
+        "cursor": 2,
+        "status": "active",
+        "exported_at": "2026-02-22T01:14:00+00:00",
+    }
+    payload = import_run(json.dumps(legacy))
+    assert payload.provider == "spotify"
+    assert payload.order == ["aaa", "bbb", "ccc"]
+    assert payload.version == EXPORT_VERSION
+    assert payload.mode is RunMode.UTILITY
+
+
+# -- validation --------------------------------------------------------------
+
+def test_invalid_json_is_rejected():
+    with pytest.raises(ValueError):
+        import_run("{not json")
+
+
+def test_a_json_array_is_rejected():
+    with pytest.raises(ValueError):
+        import_run("[1, 2, 3]")
+
+
+def test_an_empty_deck_is_rejected():
+    with pytest.raises(ValueError, match="no tracks"):
+        import_run(json.dumps({"version": 2, "provider": "spotify",
+                               "playlist_id": "p", "order": [], "cursor": 0,
+                               "status": "active", "mode": "utility"}))
+
+
+def test_an_out_of_range_cursor_is_rejected():
+    data = json.loads(sample())
+    data["cursor"] = 99
+    with pytest.raises(ValueError, match="cursor"):
+        import_run(json.dumps(data))
+
+
+def test_a_cursor_at_the_very_end_is_allowed():
+    """Exporting a just-finished deck must not be treated as corruption."""
+    payload = import_run(sample(cursor=3))
+    assert payload.cursor == 3
+
+
+# -- resume semantics --------------------------------------------------------
+
+def test_an_unfinished_import_resumes_as_paused():
+    assert resume_status(import_run(sample(cursor=1))) is RunStatus.PAUSED
+
+
+def test_a_finished_import_stays_finished():
+    assert resume_status(import_run(sample(cursor=3))) is RunStatus.COMPLETED

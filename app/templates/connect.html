@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Services · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="stack">
+    <p class="eyebrow">Step 1</p>
+    <h1>Connect your streaming services</h1>
+    <p class="muted">
+        Connect as many as you like — each one keeps its own decks. Nothing is
+        shared between services, and true-shuffle never plays audio itself.
+    </p>
+</section>
+
+<section class="grid">
+    {% for p in providers %}
+    {% set account = connected.get(p.id) %}
+    <article class="card" data-brand style="--brand: {{ p.brand_color }}">
+        <div class="row" style="justify-content: space-between">
+            <h3>{{ p.display_name }}</h3>
+            {% if account %}<span class="pill pill-on">Connected</span>
+            {% elif p.configured %}<span class="pill pill-off">Not connected</span>
+            {% else %}<span class="pill pill-warn">Needs setup</span>{% endif %}
+        </div>
+
+        {% if account %}
+        <p class="muted" style="font-size: var(--step--1)">
+            {{ account.display_name or 'Account connected' }}
+            {%- if account.market %} · {{ account.market }}{% endif %}
+            {%- if account.product_tier %} · {{ account.product_tier }}{% endif %}
+        </p>
+        {% endif %}
+
+        <ul class="stack-s muted" style="font-size: var(--step--1)">
+            {% for note in p.notes %}<li>— {{ note }}</li>{% endfor %}
+        </ul>
+
+        {% if not p.configured %}
+        <div class="notice">
+            <strong>Not configured on this server</strong>
+            <span>Add {{ p.missing_config | join(', ') }} to <code>.env</code> and restart.</span>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            {% if p.configured %}
+            <a class="btn {% if not account %}btn-primary{% endif %}" href="/auth/{{ p.id }}/login">
+                {% if account %}Reconnect{% else %}Connect {{ p.display_name }}{% endif %}
+            </a>
+            {% endif %}
+            {% if account %}
+            <button class="btn btn-danger" type="button" data-disconnect="{{ p.id }}">Disconnect</button>
+            {% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="stack">
+    <h2>Planned connectors</h2>
+    <p class="muted">
+        Listed so the roadmap is visible, not to suggest they work. Each needs
+        its API terms re-checked before a connector is written.
+    </p>
+    <div class="grid">
+        {% for p in planned %}
+        <article class="card" data-brand style="--brand: {{ p.brand_color }}">
+            <div class="row" style="justify-content: space-between">
+                <h3>{{ p.display_name }}</h3>
+                <span class="pill pill-off">Planned</span>
+            </div>
+            <p class="muted" style="font-size: var(--step--1)">{{ p.likely_mode }}</p>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<div class="row">
+    <a class="btn" href="/library">Continue to my playlists</a>
+    <a class="btn" href="/auth/signout">Sign out of this browser session</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $$, api } from "/static/app.js";
+
+for (const button of $$("[data-disconnect]")) {
+    button.addEventListener("click", async () => {
+        const id = button.dataset.disconnect;
+        button.disabled = true;
+        try {
+            await api(`/auth/${id}/disconnect`, { method: "POST" });
+            location.reload();
+        } catch (err) {
+            button.disabled = false;
+            alert(err.message);
+        }
+    });
+}
+</script>
+{% endblock %}

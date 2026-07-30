@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}Library · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="stack">
+    <p class="eyebrow">Step 2</p>
+    <h1>Pick a playlist to deal</h1>
+    <p class="muted">
+        Size is not a problem — large playlists are read in the background and
+        you can watch the progress.
+    </p>
+</section>
+
+<div class="row">
+    <div class="seg" id="providerTabs" role="group" aria-label="Streaming service"></div>
+    <div class="seg" id="modeTabs" role="group" aria-label="Run mode">
+        <button type="button" data-mode="controller" aria-pressed="true">Live Mode</button>
+        <button type="button" data-mode="utility" aria-pressed="false">Copy Mode</button>
+    </div>
+</div>
+
+<div class="notice hidden" id="modeNote"></div>
+<div class="notice hidden" id="libNotice"></div>
+
+<section class="deck">
+    <div class="card">
+        <div class="row" style="justify-content: space-between">
+            <h2 style="font-size: var(--step-1)">Your playlists</h2>
+            <span class="faint num" id="plCount"></span>
+        </div>
+        <div class="pl-list" id="playlists" role="listbox" aria-label="Playlists">
+            <div class="joblog"><span class="spinner"></span> Loading playlists…</div>
+        </div>
+    </div>
+
+    <div class="card stack">
+        <h2 style="font-size: var(--step-1)">Deal the deck</h2>
+        <p class="muted" style="font-size: var(--step--1)" id="selectionHint">
+            Select a playlist on the left.
+        </p>
+        <label class="stack-s" style="font-size: var(--step--1)">
+            <span class="faint">If a deck is already running for this playlist</span>
+            <select id="reshuffle">
+                <option value="0">Continue where I left off</option>
+                <option value="1">Deal a new deck (discards the current one)</option>
+            </select>
+        </label>
+        <button class="btn btn-primary btn-lg" id="dealBtn" type="button" disabled>Deal</button>
+        <div class="joblog hidden" id="jobLog"></div>
+        <div class="notice hidden" id="jobResult"></div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $, api, el, followJob, formatCount, setNotice } from "/static/app.js";
+
+const PROVIDERS = {{ providers | tojson }};
+const CONNECTED = {{ connected | map(attribute='provider') | list | tojson }};
+
+const state = { provider: CONNECTED[0] || null, mode: "controller", playlist: null };
+const byId = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
+
+/* -- service tabs --------------------------------------------------------- */
+
+$("#providerTabs").replaceChildren(
+    ...CONNECTED.map((id) =>
+        el("button", {
+            type: "button",
+            "data-provider": id,
+            "aria-pressed": String(id === state.provider),
+            onClick: () => selectProvider(id),
+        }, byId[id]?.display_name || id))
+);
+
+function selectProvider(id) {
+    state.provider = id;
+    state.playlist = null;
+    for (const b of $("#providerTabs").children) {
+        b.setAttribute("aria-pressed", String(b.dataset.provider === id));
+    }
+    applyModeRules();
+    loadPlaylists();
+}
+
+/* -- mode tabs ------------------------------------------------------------ */
+
+for (const button of $("#modeTabs").children) {
+    button.addEventListener("click", () => {
+        if (button.disabled) return;
+        state.mode = button.dataset.mode;
+        for (const b of $("#modeTabs").children) {
+            b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode));
+        }
+        applyModeRules();
+    });
+}
+
+/** Disable modes the selected service genuinely cannot do, and say why. */
+function applyModeRules() {
+    const p = byId[state.provider];
+    if (!p) return;
+
+    const live = $("#modeTabs").querySelector('[data-mode="controller"]');
+    const copy = $("#modeTabs").querySelector('[data-mode="utility"]');
+    live.disabled = !p.supports_controller_mode;
+    copy.disabled = !p.create_playlist;
+
+    if (state.mode === "controller" && live.disabled) state.mode = "utility";
+    if (state.mode === "utility" && copy.disabled) state.mode = "controller";
+    for (const b of $("#modeTabs").children) {
+        b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode));
+    }
+
+    const notes = [];
+    if (state.mode === "controller") {
+        notes.push(p.playback === "remote_device"
+            ? `true-shuffle will take over the ${p.display_name} app you already have open, and move the deck forward when a track ends or you skip.`
+            : `Your deck plays in this browser tab through ${p.display_name}'s own player. Keep the tab open.`);
+        if (p.requires_paid_tier) notes.push(`Requires a paid ${p.display_name} subscription.`);
+    } else {
+        notes.push(`A new playlist is written to ${p.display_name} in the shuffled order. Press play there and listen straight through.`);
+        if (p.id === "youtube") {
+            notes.push("YouTube's API charges 50 quota units per added track against a daily budget of 10,000, so only small playlists can be copied. Use Live Mode for large ones.");
+        }
+    }
+    setNotice($("#modeNote"), notes.join(" "), "notice-accent");
+}
+
+/* -- playlists ------------------------------------------------------------ */
+
+async function loadPlaylists() {
+    const list = $("#playlists");
+    list.replaceChildren(el("div", { class: "joblog" }, el("span", { class: "spinner" }), "Loading playlists…"));
+    setNotice($("#libNotice"), "");
+
+    try {
+        const { playlists } = await api(`/api/playlists?provider=${state.provider}`);
+        $("#plCount").textContent = `${formatCount(playlists.length)} playlists`;
+
+        if (!playlists.length) {
+            list.replaceChildren(el("div", { class: "joblog" }, "No playlists found on this account."));
+            return;
+        }
+
+        list.replaceChildren(...playlists.map((pl) =>
+            el("button", {
+                class: "pl",
+                type: "button",
+                role: "option",
+                "aria-selected": "false",
+                dataset: { id: pl.id, name: pl.name },
+                onClick: (ev) => selectPlaylist(pl, ev.currentTarget),
+            },
+                pl.image_url
+                    ? el("img", { src: pl.image_url, alt: "" })
+                    : el("span", { class: "ph" }),
+                el("span", { class: "meta" },
+                    el("b", {}, pl.name || "Untitled"),
+                    el("span", { class: "faint", style: "font-size: var(--step--1)" },
+                        pl.track_count >= 0 ? `${formatCount(pl.track_count)} tracks` : "size unknown")),
+                el("span", { class: "faint num" }, pl.track_count >= 0 ? formatCount(pl.track_count) : "—")
+            )));
+    } catch (err) {
+        list.replaceChildren();
+        setNotice($("#libNotice"), err.message, "notice-critical");
+    }
+}
+
+function selectPlaylist(playlist, node) {
+    state.playlist = playlist;
+    for (const option of $("#playlists").children) option.setAttribute("aria-selected", "false");
+    node.setAttribute("aria-selected", "true");
+    $("#dealBtn").disabled = false;
+    $("#selectionHint").textContent =
+        `${playlist.name} — ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " tracks" : "size will be counted while reading"}.`;
+}
+
+/* -- dealing -------------------------------------------------------------- */
+
+$("#dealBtn").addEventListener("click", async () => {
+    if (!state.playlist) return;
+    const button = $("#dealBtn");
+    const log = $("#jobLog");
+
+    button.disabled = true;
+    setNotice($("#jobResult"), "");
+    log.classList.remove("hidden");
+    log.replaceChildren(el("span", { class: "spinner" }), "Starting…");
+
+    try {
+        const { job_id } = await api("/api/runs", {
+            method: "POST",
+            body: {
+                provider: state.provider,
+                playlist_id: state.playlist.id,
+                mode: state.mode,
+                reshuffle: $("#reshuffle").value === "1",
+            },
+        });
+
+        followJob(job_id, {
+            onProgress: (frame) => {
+                const detail = frame.total
+                    ? `${frame.phase} — ${formatCount(frame.processed)} of ${formatCount(frame.total)}`
+                    : frame.phase || "working…";
+                log.replaceChildren(el("span", { class: "spinner" }), detail);
+            },
+            onDone: (result) => {
+                log.classList.add("hidden");
+                button.disabled = false;
+                if (state.mode === "controller") {
+                    location.href = `/player/${result.run_id}`;
+                    return;
+                }
+                setNotice($("#jobResult"),
+                    `Wrote ${formatCount(result.written)} tracks to “${result.copy_playlist_name}”. ` +
+                    (result.skipped ? `${formatCount(result.skipped)} entries were left out (local files, unavailable, or duplicates).` : "Nothing had to be left out."),
+                    "notice-accent");
+                if (result.copy_playlist_url) {
+                    $("#jobResult").append(el("a", { class: "btn", href: result.copy_playlist_url, target: "_blank", rel: "noopener", style: "margin-top: 8px; align-self: flex-start" }, "Open the playlist"));
+                }
+            },
+            onError: (err) => {
+                log.classList.add("hidden");
+                button.disabled = false;
+                setNotice($("#jobResult"), err.message, "notice-critical");
+            },
+        });
+    } catch (err) {
+        log.classList.add("hidden");
+        button.disabled = false;
+        setNotice($("#jobResult"), err.message, "notice-critical");
+    }
+});
+
+if (state.provider) { applyModeRules(); loadPlaylists(); }
+</script>
+{% endblock %}
