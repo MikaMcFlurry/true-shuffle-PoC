@@ -14,6 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import jobs
 from app.config import get_settings
 from app.db import close_db, init_db
+from app.gate import register as register_gate
 from app.routes_api import router as api_router
 from app.routes_auth import router as auth_router
 from app.routes_export import router as export_router
@@ -53,6 +54,11 @@ app = FastAPI(
     version="0.2.0",
     lifespan=lifespan,
 )
+
+# Order matters and reads backwards: Starlette makes the LAST middleware added
+# the OUTERMOST one. The gate reads request.session, so SessionMiddleware has
+# to wrap it — which means the gate is registered first.
+register_gate(app)
 
 app.add_middleware(
     SessionMiddleware,

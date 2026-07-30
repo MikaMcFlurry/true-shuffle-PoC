@@ -256,7 +256,10 @@ app/           FastAPI: HTTP, persistence, background work
 - The app warns at startup and on the home page if `SECRET_KEY` is still the
   default.
 - This is a local proof of concept. It has no password login — a browser session
-  *is* the identity. Do not expose it to the internet as-is.
+  *is* the identity. Do not expose it to the internet as-is. If you do deploy it
+  for testers, set `ACCESS_CODE`: one shared code, asked once per browser,
+  compared in constant time. It keeps strangers out of a beta and is not a user
+  system. See [DEPLOY.md](DEPLOY.md).
 
 ---
 
@@ -264,6 +267,8 @@ app/           FastAPI: HTTP, persistence, background work
 
 - [TESTEN.md](TESTEN.md) — Schritt-für-Schritt-Anleitung zum Testen aller
   Funktionen; Teil A braucht kein einziges Konto
+- [DEPLOY.md](DEPLOY.md) — die App online stellen (Fly.io), mit der Begründung,
+  warum eine serverlose Plattform hier nicht funktioniert
 - [STATUS.md](STATUS.md) — what is built, what is verified, what is not
 - [DESIGN.md](DESIGN.md) — the interface's thesis and the rules that hold it up
 - [HANDOFF.md](HANDOFF.md) — architecture decisions and open questions

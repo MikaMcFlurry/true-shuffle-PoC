@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     #: is very likely against YouTube's terms.  Off unless deliberately set.
     enable_unofficial_ytmusic: bool = False
 
+    # -- access ------------------------------------------------------------
+    # A single shared code, asked for once per browser session. Empty means no
+    # gate, which is what local development wants. Set it when the app is
+    # reachable from the internet — see app/gate.py for what it does and does
+    # not protect.
+    access_code: str = ""
+
     # -- demo --------------------------------------------------------------
     # An in-memory connector so every function can be exercised without any
     # streaming credentials. Off by default; never a claim about a real service.
