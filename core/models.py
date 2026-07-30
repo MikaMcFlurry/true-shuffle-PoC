@@ -74,6 +74,13 @@ class TrackKind(str, Enum):
     UNKNOWN = "unknown"
 
 
+#: Sentinel for :attr:`PlaylistRef.track_count` when the service lists a
+#: playlist without saying how many entries it has.  Negative rather than zero,
+#: because "I do not know" and "it is empty" lead to different sentences on
+#: screen and different decisions in the run engine.
+UNKNOWN_TRACK_COUNT = -1
+
+
 # ---------------------------------------------------------------------------
 # Content
 # ---------------------------------------------------------------------------
@@ -132,11 +139,20 @@ class PlaylistRef(BaseModel):
     id: str
     name: str = ""
     description: str = ""
+    #: Number of entries, or ``UNKNOWN_TRACK_COUNT`` when the service lists the
+    #: playlist but will not say how big it is.
     track_count: int = 0
     owner: str = ""
     image_url: str = ""
     url: str = ""
     editable: bool = True
+    #: False when the service shows this playlist but refuses to hand out its
+    #: contents.  Spotify does that for every playlist the user neither owns nor
+    #: collaborates on, editorial playlists included, so the UI has to say so
+    #: rather than offer a deck it cannot deal.
+    readable: bool = True
+    #: Why it is not readable, in the interface's language.  Empty when it is.
+    unreadable_reason: str = ""
 
 
 class Device(BaseModel):

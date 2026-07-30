@@ -11,9 +11,18 @@ from typing import Any, Dict, List
 
 import pytest
 
+from core.models import UNKNOWN_TRACK_COUNT
 from providers import http as provider_http
+from providers import spotify
 from providers.apple import AppleMusicProvider
-from providers.base import ProviderAuthError, ProviderError, ProviderQuotaError, TokenBundle
+from providers.base import (
+    ProviderAuthError,
+    ProviderContentUnavailable,
+    ProviderError,
+    ProviderPaidTierRequired,
+    ProviderQuotaError,
+    TokenBundle,
+)
 from providers.spotify import SpotifyProvider
 from providers.youtube import YouTubeMusicProvider
 
@@ -35,6 +44,20 @@ class StubHTTP:
         if isinstance(payload, Exception):
             raise payload
         return payload
+
+
+@pytest.fixture(autouse=True)
+def _fresh_connector_state():
+    """Reset the two caches the Spotify connector keeps between calls.
+
+    Both exist because single-item lookups replaced batch reads in February
+    2026; both would otherwise leak one test's answers into the next.
+    """
+    TOKEN.extra.clear()
+    spotify._cache_clear()
+    yield
+    TOKEN.extra.clear()
+    spotify._cache_clear()
 
 
 @pytest.fixture
@@ -71,31 +94,183 @@ def apple(monkeypatch):
 # Spotify
 # ---------------------------------------------------------------------------
 
+#: What ``GET /me`` still answers for a Development Mode client created after
+#: February 2026: no ``country``, no ``product``, no ``email``.
+ME = {"id": "me-1", "display_name": "Listener"}
+
+
+def _playlist(pid: str, *, total: int | None = 3, owner: str = "me-1"):
+    """A playlist object in the post-February-2026 shape.
+
+    ``total=None`` models the case that broke the library: Spotify lists the
+    playlist but omits the whole ``items`` block because the user does not own
+    it.
+    """
+    p = {"id": pid, "name": pid.upper(), "owner": {"id": owner}}
+    if total is not None:
+        p["items"] = {"total": total}
+    return p
+
+
 async def test_spotify_paginates_playlists(stub):
     s = stub([
-        {"items": [{"id": "a", "name": "A", "tracks": {"total": 3}}], "next": "more"},
-        {"items": [{"id": "b", "name": "B", "tracks": {"total": 5}}], "next": None},
+        ME,
+        {"items": [_playlist("a", total=3)], "next": "more"},
+        {"items": [_playlist("b", total=5)], "next": None},
     ])
     playlists = await SpotifyProvider().list_playlists(TOKEN)
     assert [p.id for p in playlists] == ["a", "b"]
-    assert s.calls[1]["params"]["offset"] == 50
+    # calls[0] is the /me lookup that establishes ownership.
+    assert s.calls[2]["params"]["offset"] == 50
 
 
-async def test_spotify_paginates_tracks(stub):
+async def test_spotify_reads_the_track_count_from_items_not_tracks(stub):
+    """The February 2026 rename is why every playlist reported zero titles."""
     stub([
-        {"items": [{"track": {"id": f"t{i}", "type": "track"}} for i in range(2)],
-         "next": "more"},
-        {"items": [{"track": {"id": "t9", "type": "track"}}], "next": None},
+        ME,
+        {"items": [_playlist("a", total=42)], "next": None},
     ])
-    pages = [page async for page in
-             SpotifyProvider().iter_playlist_tracks(TOKEN, "pl1")]
+    playlists = await SpotifyProvider().list_playlists(TOKEN)
+    assert playlists[0].track_count == 42
+    assert playlists[0].readable is True
+
+
+async def test_spotify_reports_an_absent_item_count_as_unknown_not_zero(stub):
+    """A missing count is "we do not know", and must never render as 0 Titel."""
+    stub([
+        ME,
+        {"items": [_playlist("a", total=None)], "next": None},
+    ])
+    playlists = await SpotifyProvider().list_playlists(TOKEN)
+    assert playlists[0].track_count == UNKNOWN_TRACK_COUNT
+    assert playlists[0].track_count < 0
+
+
+async def test_spotify_marks_someone_elses_playlist_unreadable(stub):
+    """Editorial and followed playlists still list; their contents do not."""
+    stub([
+        ME,
+        {"items": [_playlist("mine", owner="me-1"),
+                   _playlist("radio", owner="spotify")], "next": None},
+    ])
+    mine, radio = await SpotifyProvider().list_playlists(TOKEN)
+    assert mine.readable is True
+    assert mine.unreadable_reason == ""
+    assert radio.readable is False
+    assert "Februar 2026" in radio.unreadable_reason
+    # Nothing may offer a write action on a playlist we cannot even read.
+    assert radio.editable is False
+
+
+async def test_spotify_treats_a_collaborative_playlist_as_readable(stub):
+    stub([
+        ME,
+        {"items": [dict(_playlist("shared", owner="someone-else"),
+                        collaborative=True)], "next": None},
+    ])
+    playlists = await SpotifyProvider().list_playlists(TOKEN)
+    assert playlists[0].readable is True
+
+
+async def test_spotify_reads_playlist_items_from_the_new_endpoint(stub):
+    s = stub([
+        {"items": [{"item": {"id": f"t{i}", "type": "track"}} for i in range(2)],
+         "next": "more"},
+        {"items": [{"item": {"id": "t9", "type": "track"}}], "next": None},
+    ])
+    provider = SpotifyProvider()
+    pages = [page async for page in provider.iter_playlist_tracks(TOKEN, "pl1")]
     assert [t.id for page in pages for t in page] == ["t0", "t1", "t9"]
+
+    # The endpoint rename is the whole point — pin the URL, not just the shape.
+    assert s.calls[0]["url"].endswith("/playlists/pl1/items")
+    assert not any(c["url"].endswith("/playlists/pl1/tracks") for c in s.calls)
+    assert s.calls[0]["params"]["limit"] <= 50
+
+
+def _http_error(status: int, message: str) -> ProviderError:
+    """A connector error carrying the status the service actually sent."""
+    exc = ProviderError(message)
+    exc.http_status = status
+    return exc
+
+
+async def test_spotify_explains_a_playlist_it_may_not_read(stub):
+    """A 403 on the items endpoint means "not yours", not "empty"."""
+    stub([_http_error(403, "spotify: refused (403) — Forbidden")])
+    provider = SpotifyProvider()
+    with pytest.raises(ProviderContentUnavailable, match="Februar 2026"):
+        [page async for page in provider.iter_playlist_tracks(TOKEN, "radio")]
+
+
+@pytest.mark.parametrize("status,label", [(404, "gone"), (503, "upstream down")])
+async def test_spotify_only_calls_a_403_a_permission_problem(stub, status, label):
+    """A missing playlist and an outage must each surface as themselves.
+
+    Reporting either as "not your playlist" would send someone hunting for a
+    permission problem they do not have.
+    """
+    stub([_http_error(status, f"spotify: HTTP {status} — {label}")])
+    provider = SpotifyProvider()
+    with pytest.raises(ProviderError) as caught:
+        [page async for page in provider.iter_playlist_tracks(TOKEN, "pl1")]
+    assert not isinstance(caught.value, ProviderContentUnavailable)
+
+
+@pytest.mark.parametrize("kind", [ProviderQuotaError, ProviderPaidTierRequired,
+                                  ProviderAuthError])
+async def test_spotify_keeps_the_truer_meaning_of_an_overloaded_403(stub, kind):
+    """403 says several different things; the specific ones must win.
+
+    An exhausted quota reported as "this playlist is not yours" would send
+    someone copying playlists to fix a problem copying cannot fix.
+    """
+    exc = kind("spotify: something more specific")
+    exc.http_status = 403
+    stub([exc])
+    provider = SpotifyProvider()
+    with pytest.raises(kind) as caught:
+        [page async for page in provider.iter_playlist_tracks(TOKEN, "pl1")]
+    assert not isinstance(caught.value, ProviderContentUnavailable)
+
+
+def test_the_service_status_travels_on_the_error(monkeypatch):
+    """``_is_content_refusal`` reads this, so it must actually get set."""
+    import httpx
+
+    tagged = provider_http._tagged(ProviderError("boom"), 403)
+    assert tagged.http_status == 403
+    # And a freshly built error has no status until one is attached.
+    assert ProviderError("boom").http_status is None
+    assert provider_http._auth_error("spotify", httpx.Response(403)).http_status is None
+
+
+async def test_spotify_does_not_call_an_empty_playlist_unreadable(stub):
+    """An empty playlist you own is empty — a different fact, a different answer.
+
+    Conflating the two would tell someone their own empty playlist belongs to
+    somebody else.  Ownership is settled before the read, on the PlaylistRef.
+    """
+    stub([{"items": [], "next": None}])
+    provider = SpotifyProvider()
+    pages = [page async for page in provider.iter_playlist_tracks(TOKEN, "mine")]
+    assert pages == []
 
 
 async def test_spotify_sends_a_bearer_token(stub):
-    s = stub([{"items": [], "next": None}])
+    s = stub([ME, {"items": [], "next": None}])
     await SpotifyProvider().list_playlists(TOKEN)
     assert s.calls[0]["headers"]["Authorization"] == "Bearer test-token"
+
+
+async def test_spotify_identify_no_longer_reports_market_or_tier(stub):
+    """``country`` and ``product`` left GET /me; empty is correct, not a bug."""
+    stub([ME])
+    identity = await SpotifyProvider().identify(TokenBundle(access_token="t"))
+    assert identity.provider_user_id == "me-1"
+    assert identity.display_name == "Listener"
+    assert identity.market == ""
+    assert identity.product_tier == ""
 
 
 async def test_spotify_writes_tracks_in_batches_of_100(stub):
@@ -105,13 +280,75 @@ async def test_spotify_writes_tracks_in_batches_of_100(stub):
     assert len(s.calls[0]["json_body"]["uris"]) == 100
     assert len(s.calls[1]["json_body"]["uris"]) == 50
     assert s.calls[0]["json_body"]["uris"][0].startswith("spotify:track:")
+    # POST /playlists/{id}/tracks was removed in February 2026.
+    assert s.calls[0]["url"].endswith("/playlists/pl1/items")
 
 
-async def test_spotify_resolves_track_metadata(stub):
-    stub([{"tracks": [{"id": "t1", "name": "Song", "type": "track",
-                       "artists": [{"name": "A"}], "album": {"name": "Al"}}]}])
-    found = await SpotifyProvider().resolve_tracks(TOKEN, ["t1"])
+async def test_spotify_creates_a_playlist_on_me_playlists(stub):
+    """POST /users/{id}/playlists is gone, and with it the identify() round trip."""
+    s = stub([{"id": "new", "name": "true-shuffle · X",
+               "external_urls": {"spotify": "https://open.spotify.com/playlist/new"}}])
+    created = await SpotifyProvider().create_playlist(
+        TokenBundle(access_token="t"), name="true-shuffle · X", description="d"
+    )
+    assert created.id == "new"
+    assert len(s.calls) == 1
+    assert s.calls[0]["url"].endswith("/me/playlists")
+    assert "/users/" not in s.calls[0]["url"]
+    assert s.calls[0]["json_body"] == {
+        "name": "true-shuffle · X", "public": False, "description": "d",
+    }
+
+
+async def test_spotify_resolves_track_metadata_one_request_per_id(stub):
+    """Batch reads were removed; ``GET /tracks/{id}`` is all that is left."""
+    spotify._cache_clear()
+    s = stub([
+        {"id": "t1", "name": "Song", "type": "track",
+         "artists": [{"name": "A"}], "album": {"name": "Al"}},
+        {"id": "t2", "name": "Other", "type": "track", "artists": []},
+    ])
+    found = await SpotifyProvider().resolve_tracks(TOKEN, ["t1", "t2"])
     assert found["t1"].name == "Song"
+    assert found["t2"].name == "Other"
+    assert [c["url"].rsplit("/", 1)[-1] for c in s.calls] == ["t1", "t2"]
+    assert all("ids" not in (c.get("params") or {}) for c in s.calls)
+
+
+async def test_spotify_caches_resolved_tracks(stub):
+    """The player asks for the same window every few seconds."""
+    spotify._cache_clear()
+    s = stub([{"id": "t1", "name": "Song", "type": "track"}])
+    provider = SpotifyProvider()
+    await provider.resolve_tracks(TOKEN, ["t1"])
+    again = await provider.resolve_tracks(TOKEN, ["t1"])
+    assert again["t1"].name == "Song"
+    assert len(s.calls) == 1
+
+
+async def test_spotify_resolve_survives_a_single_missing_track(stub):
+    """One unavailable title is a blank line, not a broken deck."""
+    stub([
+        ProviderError("spotify: HTTP 404 — not found"),
+        {"id": "t2", "name": "Other", "type": "track"},
+    ])
+    found = await SpotifyProvider().resolve_tracks(TOKEN, ["t1", "t2"])
+    assert "t1" not in found
+    assert found["t2"].name == "Other"
+
+
+async def test_spotify_stops_resolving_once_the_quota_is_gone(stub):
+    """Nine more single-track requests cannot succeed and only dig deeper."""
+    s = stub([
+        {"id": "t1", "name": "Song", "type": "track"},
+        ProviderQuotaError("spotify: quota exhausted (QUOTA_EXCEEDED)"),
+        {"id": "t3", "name": "Never asked for", "type": "track"},
+    ])
+    found = await SpotifyProvider().resolve_tracks(TOKEN, ["t1", "t2", "t3"])
+    # What was already resolved is kept — a partial "up next" beats a blank one.
+    assert found["t1"].name == "Song"
+    assert "t2" not in found and "t3" not in found
+    assert len(s.calls) == 2
 
 
 async def test_spotify_playback_state_is_normalised(stub):
@@ -296,6 +533,141 @@ def test_401_becomes_an_auth_error_and_403_does_not():
     assert isinstance(forbidden, ProviderError)
     assert not isinstance(forbidden, ProviderAuthError)
     assert "Premium" in str(forbidden)
+
+
+def test_a_premium_refusal_is_its_own_error_class():
+    """The only way left to learn a Spotify account has no Premium.
+
+    ``product`` left GET /me in February 2026, so nothing can gate Live Mode up
+    front — the player's refusal has to carry the meaning instead.
+    """
+    import httpx
+
+    for resp in (
+        httpx.Response(403, text="Player command failed: Premium required"),
+        httpx.Response(403, json={"error": {"status": 403, "message": "Forbidden",
+                                            "reason": "PREMIUM_REQUIRED"}}),
+    ):
+        error = provider_http._auth_error("spotify", resp)
+        assert isinstance(error, ProviderPaidTierRequired)
+        # It is not a credentials problem — reconnecting would not help.
+        assert not isinstance(error, ProviderAuthError)
+
+
+def test_the_paid_tier_refusal_reaches_the_listener_in_german():
+    from providers.base import user_message
+
+    text = user_message(ProviderPaidTierRequired("spotify: no premium — 403"))
+    assert "Handoff" in text
+    assert "Abo" in text
+
+
+def test_a_quota_reason_is_read_out_of_the_error_body():
+    """Spotify's July 2026 shape for "your allowance is gone"."""
+    import httpx
+
+    resp = httpx.Response(429, json={"error": {"status": 429,
+                                               "message": "Too many requests",
+                                               "reason": "QUOTA_EXCEEDED"}})
+    assert provider_http.error_reason(resp) == "QUOTA_EXCEEDED"
+    # A plain rate limit carries no reason, and must stay retryable.
+    assert provider_http.error_reason(httpx.Response(429, text="slow down")) == ""
+    assert provider_http.error_reason(httpx.Response(429, text="")) == ""
+
+
+async def test_quota_exceeded_is_not_retried(monkeypatch):
+    """Waiting cannot refill an exhausted allowance, so do not spend three tries."""
+    import httpx
+
+    attempts = 0
+
+    class _Client:
+        def __init__(self, *a, **k): pass
+        async def request(self, *a, **k):
+            nonlocal attempts
+            attempts += 1
+            return httpx.Response(429, json={"error": {"status": 429,
+                                                       "message": "Too many requests",
+                                                       "reason": "QUOTA_EXCEEDED"}})
+        async def aclose(self): pass
+
+    monkeypatch.setattr(provider_http.httpx, "AsyncClient", _Client)
+    with pytest.raises(ProviderQuotaError, match="QUOTA_EXCEEDED"):
+        await provider_http.request("GET", "https://api.spotify.com/v1/me",
+                                    provider="spotify")
+    assert attempts == 1
+
+
+async def test_a_plain_rate_limit_still_backs_off_and_retries(monkeypatch):
+    import httpx
+
+    responses = [
+        httpx.Response(429, headers={"Retry-After": "1"}),
+        httpx.Response(200, json={"ok": True}),
+    ]
+
+    class _Client:
+        def __init__(self, *a, **k): pass
+        async def request(self, *a, **k):
+            return responses.pop(0)
+        async def aclose(self): pass
+
+    slept: list[float] = []
+
+    async def _sleep(seconds):
+        slept.append(seconds)
+
+    monkeypatch.setattr(provider_http.httpx, "AsyncClient", _Client)
+    monkeypatch.setattr(provider_http.asyncio, "sleep", _sleep)
+    payload = await provider_http.request("GET", "https://api.spotify.com/v1/me",
+                                          provider="spotify")
+    assert payload == {"ok": True}
+    assert slept == [1]
+
+
+async def test_a_real_403_reaches_the_connector_carrying_its_status(monkeypatch):
+    """The seam: http.request tags the error, the connector branches on the tag.
+
+    Tested end to end because the two halves live in different modules and a
+    unit test of either would keep passing if the other stopped cooperating.
+    """
+    import httpx
+
+    class _Client:
+        def __init__(self, *a, **k): pass
+        async def request(self, *a, **k):
+            return httpx.Response(403, text="Forbidden")
+        async def aclose(self): pass
+
+    monkeypatch.setattr(provider_http.httpx, "AsyncClient", _Client)
+    with pytest.raises(ProviderError) as caught:
+        await provider_http.request(
+            "GET", "https://api.spotify.com/v1/playlists/radio/items",
+            provider="spotify",
+        )
+    assert caught.value.http_status == 403
+    assert SpotifyProvider._is_content_refusal(caught.value)
+
+
+async def test_the_throttle_spaces_requests_on_the_same_key(monkeypatch):
+    """Batch reads are gone; the spacer is what stops the replacement burst."""
+    slept: list[float] = []
+
+    async def _sleep(seconds):
+        slept.append(seconds)
+
+    monkeypatch.setattr(provider_http.asyncio, "sleep", _sleep)
+    provider_http.set_throttle("test:key", 0.5)
+    provider_http._throttle_last.pop("test:key", None)
+    try:
+        await provider_http.throttle("test:key")   # first one goes straight out
+        await provider_http.throttle("test:key")   # second one has to wait
+    finally:
+        provider_http.set_throttle("test:key", 0.0)
+        provider_http._throttle_last.pop("test:key", None)
+
+    assert len(slept) == 1
+    assert 0 < slept[0] <= 0.5
 
 
 def test_a_403_about_quota_is_classified_as_a_quota_error():

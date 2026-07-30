@@ -34,7 +34,15 @@ from core.models import Device, PlaybackState, PlayedTrack, PlaylistRef, Track
 class ProviderError(Exception):
     """Base class for connector failures."""
 
+    #: What *we* answer the browser with.
     status_code = 502
+
+    #: What the *service* answered us with, when it was an HTTP response at all.
+    #:
+    #: Set by :mod:`providers.http`.  Connectors branch on this rather than on
+    #: the message text, because a service that rewords an error must not be
+    #: able to change what our code decides.
+    http_status: Optional[int] = None
 
 
 class ProviderNotConfigured(ProviderError):
@@ -55,10 +63,63 @@ class ProviderQuotaError(ProviderError):
     status_code = 429
 
 
+class ProviderPaidTierRequired(ProviderError):
+    """The account lacks the subscription this operation needs.
+
+    Services used to let us read the tier up front and disable the feature
+    before the user pressed anything.  Spotify removed ``product`` from
+    ``GET /me`` in February 2026, so for that connector the only honest signal
+    is the refusal itself — which is why this is an error class and not a
+    capability flag.
+    """
+
+    status_code = 402
+
+
+class ProviderContentUnavailable(ProviderError):
+    """The item exists, but this account is not allowed to read its contents.
+
+    Distinct from :class:`ProviderAuthError` (credentials are fine) and from a
+    404 (the playlist is right there in the user's library).  Spotify stopped
+    handing out the items of playlists the user neither owns nor collaborates
+    on, and an empty deck is a worse answer than a stated reason.
+    """
+
+    status_code = 422
+
+
 class Unsupported(ProviderError):
     """The provider cannot do this (e.g. remote playback on a web-only API)."""
 
     status_code = 400
+
+
+#: Failures the listener can actually do something about, phrased in the
+#: interface's language.  Everything else keeps the connector's own words: a
+#: generic 502 is a bug report, and dressing it up in German would only hide
+#: which service said what.
+_USER_MESSAGES = {
+    ProviderPaidTierRequired: (
+        "Dieses Konto hat kein Abo. Der Live-Modus braucht eines — nimm den "
+        "Handoff-Modus, der schreibt das Fach als Playlist und läuft auch ohne."
+    ),
+    ProviderQuotaError: (
+        "Der Dienst nimmt gerade keine Anfragen mehr an — das Kontingent ist "
+        "aufgebraucht. Warte eine Weile und versuch es dann noch einmal."
+    ),
+}
+
+
+def user_message(exc: BaseException) -> str:
+    """A connector failure as the listener should read it.
+
+    Both entry points need this — HTTP handlers and background jobs — and the
+    listener does not care which one they were standing in when it broke.
+    """
+    for kind, text in _USER_MESSAGES.items():
+        if isinstance(exc, kind):
+            return text
+    return str(exc)
 
 
 # ---------------------------------------------------------------------------
@@ -99,6 +160,13 @@ class ProviderCapabilities:
     read_page_size: int = 100
     #: Playback control requires a paid subscription tier.
     requires_paid_tier: bool = False
+    #: The service will tell us the account's market and subscription tier.
+    #:
+    #: False means :attr:`AccountIdentity.market` and ``product_tier`` stay
+    #: empty *by design*, not because something failed — Spotify removed
+    #: ``country`` and ``product`` from ``GET /me`` in February 2026.  The UI
+    #: needs the difference to say "not available" instead of showing a gap.
+    reports_account_tier: bool = True
     #: The provider can be told to pre-queue upcoming tracks.
     supports_queue_prefetch: bool = False
     #: The provider exposes a recently-played history we can read back.
@@ -150,6 +218,7 @@ class ProviderCapabilities:
             "create_playlist": self.create_playlist,
             "write_batch_size": self.write_batch_size,
             "requires_paid_tier": self.requires_paid_tier,
+            "reports_account_tier": self.reports_account_tier,
             "supports_queue_prefetch": self.supports_queue_prefetch,
             "supports_controller_mode": self.supports_controller_mode,
             "supports_history_sync": self.supports_history_sync,

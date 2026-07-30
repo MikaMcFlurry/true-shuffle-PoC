@@ -44,6 +44,11 @@
                         <div><span class="k">Konto</span><span class="v">{{ account.display_name or 'verbunden' }}</span></div>
                         {% if account.market %}<div><span class="k">Markt</span><span class="v data">{{ account.market }}</span></div>{% endif %}
                         {% if account.product_tier %}<div><span class="k">Tarif</span><span class="v data">{{ account.product_tier }}</span></div>{% endif %}
+                        {# A missing row reads as a bug. Say that the service stopped
+                           handing these out, so the gap is an answer and not a hole. #}
+                        {% if not p.reports_account_tier %}
+                        <div><span class="k">Markt · Tarif</span><span class="v faint sm">gibt {{ p.display_name }} nicht mehr heraus</span></div>
+                        {% endif %}
                     </div>
                     {% endif %}
 

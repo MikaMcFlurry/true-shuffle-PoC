@@ -153,6 +153,17 @@ async def create_run(request: Request):
         )
 
     playlist = await runs.resolve_playlist(session, playlist_id)
+
+    # Refuse here rather than in the job: the listener pressed a button, and an
+    # answer in the same breath beats a progress bar that dies at 0 %.
+    if not playlist.readable:
+        raise HTTPException(
+            status_code=422,
+            detail=(playlist.unreadable_reason
+                    or f"{caps.display_name} gibt den Inhalt dieser Playlist "
+                       "nicht heraus."),
+        )
+
     job_id = jobs.new_job_id()
 
     async def work() -> Dict[str, Any]:

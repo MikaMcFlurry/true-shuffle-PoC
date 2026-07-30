@@ -128,6 +128,36 @@ land past the furthest matched card, never move backwards. The failure mode it
 guards against is a listener playing one deck track from an album and having the
 cursor jump hundreds of cards.
 
+**Spotify's subscription tier is an error class, not a capability flag.**
+Spotify removed `country` and `product` from `GET /me` in February 2026, and a
+Development Mode client created after that date gets the reduced endpoint set
+immediately — the postponement announced in March covers existing integrations
+only. So the app can no longer grey out Live Mode for a free account, because it
+cannot know. The choice was between guessing and being late; being late is
+honest, so `ProviderPaidTierRequired` is raised from the player's own 403 and
+carries the explanation to the listener. `ProviderCapabilities.reports_account_tier`
+exists purely so the connect page can say "not available" instead of quietly
+dropping two rows and looking broken.
+
+The same cut cost the connector its batch reads. `GET /tracks?ids=` fetched
+fifty at a time and is gone; `GET /tracks/{id}` is one. Since July 2026 the
+development-mode quota is counted per *developer account* rather than per Client
+ID, so exhausting it takes out every app the owner has. That is why
+`providers/spotify.py` carries a TTL cache and `providers/http.py` a request
+spacer, and why a 429 whose body says `"reason": "QUOTA_EXCEEDED"` is not
+retried: waiting three seconds cannot refill an allowance.
+
+**A playlist you cannot read is a stated reason, not an empty deck.**
+Spotify now returns playlist contents only for playlists the listener owns or
+collaborates on; editorial and followed playlists still list, but `GET
+/playlists/{id}/items` answers 403 and the playlist object omits `items`
+entirely. Three states had been collapsed into one integer, which is why every
+playlist reported zero titles: a size we know, a size we do not know
+(`UNKNOWN_TRACK_COUNT`, negative on purpose), and a playlist whose contents are
+withheld (`PlaylistRef.readable`). Ownership is settled before the read, so a
+playlist that is genuinely empty keeps saying it is empty rather than being told
+it belongs to somebody else.
+
 **Planned connectors are data, not stubs.**
 `providers/planned.py` lists Deezer, TIDAL, Amazon Music and SoundCloud with the
 questions that must be answered before writing them. They appear in the UI as

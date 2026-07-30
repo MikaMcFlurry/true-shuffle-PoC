@@ -13,19 +13,55 @@ developer app* to have Premium before an app in development mode works at all,
 and every other account has to be allowlisted in the dashboard (max 5). So a
 free-account listener can use Handoff — but only through an app whose owner
 pays. Verified against the official docs, July 2026.
+
+February 2026 API changes
+-------------------------
+This connector talks to a Development Mode client created after 11 February
+2026, so it gets the reduced endpoint set with no grace period — the
+postponement Spotify announced in March covers *existing* integrations only.
+What that costs us, and how each cost is paid:
+
+* ``GET /playlists/{id}/tracks`` and ``POST /playlists/{id}/tracks`` are gone;
+  the replacements end in ``/items``, and the entry inside a page is called
+  ``item`` rather than ``track``.  Page size dropped from 100 to 50.
+* On the playlist object itself, ``tracks`` was renamed to ``items`` — and it
+  is *absent* for playlists the user neither owns nor collaborates on.  Those
+  playlists still list, but their contents never arrive, so we mark them
+  unreadable up front instead of dealing an empty deck.
+* ``POST /users/{id}/playlists`` is gone; ``POST /me/playlists`` replaces it and
+  needs no user id, so creating a playlist is one request now, not two.
+* Every batch read went away.  ``GET /tracks?ids=`` was fifty tracks per
+  request; ``GET /tracks/{id}`` is one.  Hence the cache and the spacer below —
+  since July 2026 the quota is counted per developer account, and running it
+  dry takes out every client id at once.
+* ``country`` and ``product`` are gone from ``GET /me``.  We can no longer tell
+  a listener they need Premium *before* they press play, only when the player
+  endpoint refuses, so that refusal now carries the explanation.
+
+Sources: developer.spotify.com changelogs for February, March and July 2026,
+and the February 2026 migration guide.
 """
 
 from __future__ import annotations
 
 import hashlib
+import logging
 import secrets
 import time
 from base64 import urlsafe_b64encode
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 from app.config import get_settings
-from core.models import Device, PlaybackState, PlayedTrack, PlaylistRef, Track, TrackKind
+from core.models import (
+    UNKNOWN_TRACK_COUNT,
+    Device,
+    PlaybackState,
+    PlayedTrack,
+    PlaylistRef,
+    Track,
+    TrackKind,
+)
 from providers import http
 from providers.base import (
     AccountIdentity,
@@ -33,14 +69,50 @@ from providers.base import (
     AuthStart,
     MusicProvider,
     PlaybackControl,
+    ProviderAuthError,
     ProviderCapabilities,
+    ProviderContentUnavailable,
     ProviderError,
     ProviderNotConfigured,
+    ProviderPaidTierRequired,
+    ProviderQuotaError,
     TokenBundle,
 )
 
+logger = logging.getLogger(__name__)
+
 _ACCOUNTS = "https://accounts.spotify.com"
 _API = "https://api.spotify.com/v1"
+
+#: Spotify's own cap on ``GET /playlists/{id}/items`` since February 2026.  It
+#: was 100 before; asking for more now is a 400, not a silent clamp.
+_ITEMS_PAGE_SIZE = 50
+
+#: Least time between two single-track lookups.  ``GET /tracks?ids=`` used to
+#: fetch fifty in one go, so a 1 500-track deck cost 30 requests; one at a time
+#: it costs 1 500, and they must not all leave at once.
+_TRACK_LOOKUP_INTERVAL = 0.06
+
+#: One spacer for the whole connector, not one per user.  Since July 2026 the
+#: development-mode quota is counted per *developer account*, so the five
+#: allowlisted listeners share one allowance and must share one queue.
+_TRACK_THROTTLE_KEY = "spotify:tracks"
+
+http.set_throttle(_TRACK_THROTTLE_KEY, _TRACK_LOOKUP_INTERVAL)
+
+#: How long a resolved track stays cached.  Track metadata does not move, and
+#: the player polls the same handful of ids every few seconds — without this,
+#: watching one deck would spend more quota than reading the playlist did.
+_TRACK_CACHE_TTL = 3600.0
+
+#: Bound on the cache so a long-lived process cannot grow without limit.
+_TRACK_CACHE_MAX = 5000
+
+#: Shown when Spotify lists a playlist but will not hand out its contents.
+_FOREIGN_PLAYLIST_NOTE = (
+    "Spotify gibt die Titel dieser Playlist nicht mehr heraus — seit Februar "
+    "2026 nur noch für Playlists, die dir gehören oder an denen du mitarbeitest."
+)
 
 SCOPES = [
     "playlist-read-private",
@@ -65,6 +137,42 @@ def _code_challenge(verifier: str) -> str:
     return urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
 
 
+# ---------------------------------------------------------------------------
+# Track metadata cache
+# ---------------------------------------------------------------------------
+
+#: ``track id → (expires_at, Track)``.  Process-local on purpose: this is a
+#: single-process PoC, and a cache that outlives the process would have to
+#: answer questions about invalidation that a PoC should not be asking.
+_track_cache: Dict[str, Tuple[float, Track]] = {}
+
+
+def _cache_get(track_id: str) -> Optional[Track]:
+    entry = _track_cache.get(track_id)
+    if entry is None:
+        return None
+    expires_at, track = entry
+    if expires_at < time.monotonic():
+        _track_cache.pop(track_id, None)
+        return None
+    return track
+
+
+def _cache_put(track_id: str, track: Track) -> None:
+    if len(_track_cache) >= _TRACK_CACHE_MAX:
+        # Drop the entries closest to expiry rather than clearing everything:
+        # a full flush would re-fetch the ids the player is polling right now.
+        doomed = sorted(_track_cache, key=lambda k: _track_cache[k][0])
+        for key in doomed[: _TRACK_CACHE_MAX // 4]:
+            _track_cache.pop(key, None)
+    _track_cache[track_id] = (time.monotonic() + _TRACK_CACHE_TTL, track)
+
+
+def _cache_clear() -> None:
+    """Test hook — the cache is deliberately global."""
+    _track_cache.clear()
+
+
 class SpotifyProvider(MusicProvider):
     capabilities = ProviderCapabilities(
         id="spotify",
@@ -72,8 +180,11 @@ class SpotifyProvider(MusicProvider):
         auth=AuthKind.OAUTH2_PKCE,
         playback=PlaybackControl.REMOTE_DEVICE,
         write_batch_size=100,
-        read_page_size=100,
+        # Halved in February 2026 along with the move to /items.
+        read_page_size=_ITEMS_PAGE_SIZE,
         requires_paid_tier=True,
+        # country and product left GET /me in February 2026.
+        reports_account_tier=False,
         supports_queue_prefetch=True,
         supports_history_sync=True,
         brand_color="#1DB954",
@@ -86,6 +197,14 @@ class SpotifyProvider(MusicProvider):
             "Auf einem kostenlosen Konto nimm den Handoff-Modus: Das Fach wird "
             "als Playlist geschrieben, deine Position kommt aus deinem "
             "Hörverlauf zurück.",
+            "Nur eigene Playlists lassen sich mischen. Seit Februar 2026 gibt "
+            "Spotify die Titel fremder und redaktioneller Playlists nicht mehr "
+            "heraus — „Discover Weekly“, Radiosender und alles von anderen "
+            "Konten bleiben lesbar gelistet, aber leer. Kopier so eine Playlist "
+            "in Spotify in dein Konto, dann geht sie.",
+            "Spotify verrät nicht mehr, ob dein Konto Premium hat. Ob der "
+            "Live-Modus geht, zeigt sich beim ersten Abspielversuch — dann "
+            "steht hier, woran es lag.",
             "Achtung beim Einrichten: Spotify verlangt, dass der Besitzer der "
             "Developer-App selbst Premium hat, sonst funktioniert die App im "
             "Entwicklungsmodus gar nicht — auch Handoff nicht. Das ist Spotifys "
@@ -173,18 +292,45 @@ class SpotifyProvider(MusicProvider):
         )
 
     async def identify(self, token: TokenBundle) -> AccountIdentity:
+        """Who this token belongs to.
+
+        ``country`` and ``product`` were removed from ``GET /me`` in February
+        2026, so market and tier stay empty for Spotify and the UI simply omits
+        those rows.  Nothing may gate on ``product_tier`` for this connector —
+        Premium is discovered from a player refusal, not from the profile.
+        """
         me = await self._get(token, "/me")
+        user_id = me.get("id") or me.get("account_id") or ""
+        if not user_id:
+            raise ProviderError("spotify: /me returned no account id")
+        self._remember_user_id(token, user_id)
         return AccountIdentity(
-            provider_user_id=me["id"],
-            display_name=me.get("display_name") or me["id"],
-            market=me.get("country", ""),
-            product_tier=me.get("product", ""),
+            provider_user_id=user_id,
+            display_name=me.get("display_name") or user_id,
         )
 
     # -- request helpers --------------------------------------------------
 
     def _headers(self, token: TokenBundle) -> Dict[str, str]:
         return {"Authorization": f"Bearer {token.access_token}"}
+
+    def _account_key(self, token: TokenBundle) -> str:
+        return token.extra.get("account_key") or token.access_token[-12:]
+
+    @staticmethod
+    def _remember_user_id(token: TokenBundle, user_id: str) -> None:
+        """Stash the Spotify user id on the bundle.
+
+        Ownership decides whether a playlist's contents are readable at all,
+        and asking ``/me`` once per playlist to find out would be absurd.
+        """
+        token.extra["spotify_user_id"] = user_id
+
+    async def _user_id(self, token: TokenBundle) -> str:
+        cached = token.extra.get("spotify_user_id")
+        if cached:
+            return str(cached)
+        return (await self.identify(token)).provider_user_id
 
     async def _get(self, token: TokenBundle, path: str, **params: Any) -> Any:
         return await http.request(
@@ -196,8 +342,7 @@ class SpotifyProvider(MusicProvider):
         self, token: TokenBundle, method: str, path: str, **kwargs: Any
     ) -> Any:
         """Player calls, serialised per account (see providers.http)."""
-        account = token.extra.get("account_key", token.access_token[-12:])
-        async with http.sequential_lock(f"spotify:{account}"):
+        async with http.sequential_lock(f"spotify:{self._account_key(token)}"):
             return await http.request(
                 method, f"{_API}{path}", headers=self._headers(token),
                 provider="spotify", **kwargs,
@@ -206,6 +351,7 @@ class SpotifyProvider(MusicProvider):
     # -- library ----------------------------------------------------------
 
     async def list_playlists(self, token: TokenBundle) -> List[PlaylistRef]:
+        me_id = await self._user_id(token)
         items: List[PlaylistRef] = []
         offset = 0
         while True:
@@ -213,56 +359,113 @@ class SpotifyProvider(MusicProvider):
             for p in data.get("items", []):
                 if not p:
                     continue
-                images = p.get("images") or []
-                items.append(
-                    PlaylistRef(
-                        provider="spotify",
-                        id=p["id"],
-                        name=p.get("name", ""),
-                        description=p.get("description", ""),
-                        track_count=(p.get("tracks") or {}).get("total", 0),
-                        owner=(p.get("owner") or {}).get("display_name", ""),
-                        image_url=images[0]["url"] if images else "",
-                        url=(p.get("external_urls") or {}).get("spotify", ""),
-                    )
-                )
+                items.append(self._to_playlist_ref(p, me_id))
             if not data.get("next"):
                 break
             offset += 50
         return items
 
     async def get_playlist(self, token: TokenBundle, playlist_id: str) -> PlaylistRef:
+        me_id = await self._user_id(token)
         p = await self._get(token, f"/playlists/{playlist_id}")
+        return self._to_playlist_ref(p, me_id)
+
+    @staticmethod
+    def _to_playlist_ref(p: Dict[str, Any], me_id: str) -> PlaylistRef:
+        """Map one Spotify playlist object onto a :class:`PlaylistRef`.
+
+        Two February 2026 changes meet here.  The size lives under ``items``
+        now, not ``tracks`` — reading the old key is exactly why every playlist
+        reported zero.  And the field is missing altogether on playlists the
+        user does not own, so its absence means *unknown*, never *empty*.
+        """
+        owner = p.get("owner") or {}
         images = p.get("images") or []
+
+        # Ownership, not the presence of a count, decides readability: Spotify
+        # may list a size for a playlist whose contents it will still refuse.
+        owned = bool(me_id) and owner.get("id") == me_id
+        readable = owned or bool(p.get("collaborative"))
+
+        block = p.get("items")
+        if isinstance(block, dict) and isinstance(block.get("total"), int):
+            track_count = block["total"]
+        else:
+            track_count = UNKNOWN_TRACK_COUNT
+
         return PlaylistRef(
             provider="spotify",
             id=p["id"],
             name=p.get("name", ""),
             description=p.get("description", ""),
-            track_count=(p.get("tracks") or {}).get("total", 0),
-            owner=(p.get("owner") or {}).get("display_name", ""),
+            track_count=track_count,
+            owner=owner.get("display_name") or owner.get("id", ""),
             image_url=images[0]["url"] if images else "",
             url=(p.get("external_urls") or {}).get("spotify", ""),
+            editable=readable,
+            readable=readable,
+            unreadable_reason="" if readable else _FOREIGN_PLAYLIST_NOTE,
         )
 
     async def iter_playlist_tracks(
         self, token: TokenBundle, playlist_id: str
     ) -> AsyncIterator[List[Track]]:
+        """Page through ``GET /playlists/{id}/items``.
+
+        Spotify answers a playlist the user neither owns nor collaborates on
+        with ``403``, and that is turned into a stated reason rather than an
+        empty deck.  A playlist that is genuinely empty is *not* the same thing
+        and must keep saying so — which is why an empty page is left alone here
+        and the ownership check happens before the read, on the PlaylistRef.
+        """
+        page_size = self.capabilities.read_page_size
         offset = 0
         while True:
-            data = await self._get(
-                token, f"/playlists/{playlist_id}/tracks",
-                limit=self.capabilities.read_page_size, offset=offset,
-                additional_types="track",
-            )
-            yield [self._to_track(item) for item in data.get("items", [])]
+            try:
+                data = await self._get(
+                    token, f"/playlists/{playlist_id}/items",
+                    limit=page_size, offset=offset,
+                    additional_types="track",
+                )
+            except ProviderContentUnavailable:
+                raise
+            except ProviderError as exc:
+                if self._is_content_refusal(exc):
+                    raise ProviderContentUnavailable(_FOREIGN_PLAYLIST_NOTE) from exc
+                raise
+
+            page = data.get("items") or []
+            if page:
+                yield [self._to_track(item) for item in page]
             if not data.get("next"):
                 break
-            offset += self.capabilities.read_page_size
+            offset += page_size
+
+    @staticmethod
+    def _is_content_refusal(exc: ProviderError) -> bool:
+        """True when a read failed because we may not see the contents.
+
+        Deliberately just the one status Spotify documents for this: *"A 403
+        Forbidden status code will be returned if the user is neither the owner
+        nor a collaborator of the playlist."*  A 404 is a playlist that is not
+        there and a 5xx is an outage — reporting either as "not yours" would
+        send someone looking for a permission problem they do not have.
+
+        403 is overloaded, though: an exhausted quota and a rejected token can
+        both arrive with that status, and both already carry a truer meaning by
+        the time they get here.  Those keep it.
+        """
+        if isinstance(exc, (ProviderQuotaError, ProviderPaidTierRequired,
+                            ProviderAuthError)):
+            return False
+        return exc.http_status == 403
 
     @staticmethod
     def _to_track(item: Dict[str, Any]) -> Track:
-        t = item.get("track") or {}
+        # February 2026 renamed the entry inside a playlist page from ``track``
+        # to ``item``.  The old key is still emitted as a deprecated alias, so
+        # read the new one first and fall back rather than depending on either.
+        t = item.get("item") or item.get("track") or {}
         kind_raw = t.get("type", "track")
         kind = TrackKind.EPISODE if kind_raw == "episode" else (
             TrackKind.TRACK if kind_raw == "track" else TrackKind.UNKNOWN
@@ -276,8 +479,13 @@ class SpotifyProvider(MusicProvider):
             artist=", ".join(a.get("name", "") for a in (t.get("artists") or [])),
             album=album.get("name", ""),
             duration_ms=int(t.get("duration_ms") or 0),
-            # ``is_playable`` is only present when a market is applied; absent
-            # means "no restriction reported".
+            # Spotify applies the token's own market to every read, so
+            # ``is_playable`` is still populated — but ``available_markets``
+            # and ``linked_from`` are gone and ``/me`` no longer reports the
+            # market, so there is nothing left to cross-check it against.
+            # Absent therefore means "no restriction reported", and a track
+            # that turns out to be unplayable anyway is caught reactively, when
+            # playback fails (AdvanceReason.PLAYBACK_FAILED).
             is_playable=bool(t.get("is_playable", True)),
             is_local=bool(item.get("is_local") or t.get("is_local")),
             kind=kind,
@@ -287,24 +495,55 @@ class SpotifyProvider(MusicProvider):
     async def resolve_tracks(
         self, token: TokenBundle, track_ids: List[str]
     ) -> Dict[str, Track]:
+        """Look up display metadata, one request per track.
+
+        ``GET /tracks?ids=`` took fifty ids at a time and was removed in
+        February 2026, so this is now the most expensive read in the connector.
+        Three things keep it affordable: the cache (the player asks for the same
+        window every few seconds), the spacer in ``providers.http``, and giving
+        up on a single id instead of failing the whole lookup — a missing title
+        in the "up next" list is a blank line, not a broken deck.
+        """
         found: Dict[str, Track] = {}
-        for i in range(0, len(track_ids), 50):
-            batch = [tid for tid in track_ids[i : i + 50] if tid]
-            if not batch:
+        wanted: List[str] = []
+        for track_id in track_ids:
+            if not track_id or track_id in found or track_id in wanted:
                 continue
-            data = await self._get(token, "/tracks", ids=",".join(batch))
-            for t in data.get("tracks", []) or []:
-                if not t:
-                    continue
-                found[t["id"]] = self._to_track({"track": t})
+            cached = _cache_get(track_id)
+            if cached is not None:
+                found[track_id] = cached
+            else:
+                wanted.append(track_id)
+
+        for track_id in wanted:
+            try:
+                data = await http.request(
+                    "GET", f"{_API}/tracks/{track_id}",
+                    headers=self._headers(token), provider="spotify",
+                    throttle_key=_TRACK_THROTTLE_KEY,
+                )
+            except (ProviderQuotaError, ProviderAuthError) as exc:
+                # Not this track's problem, and the next nine ids would hit the
+                # same wall.  Stop and hand back what is already known.
+                logger.warning("spotify: stopping track lookups — %s", exc)
+                break
+            except ProviderError as exc:
+                logger.info("spotify: track %s unavailable — %s", track_id, exc)
+                continue
+            if not data or not data.get("id"):
+                continue
+            track = self._to_track({"item": data})
+            _cache_put(data["id"], track)
+            found[data["id"]] = track
         return found
 
     async def create_playlist(
         self, token: TokenBundle, *, name: str, description: str = ""
     ) -> PlaylistRef:
-        identity = await self.identify(token)
+        # POST /users/{id}/playlists is gone; /me/playlists needs no user id,
+        # so the identify() round trip this used to make is gone with it.
         data = await http.request(
-            "POST", f"{_API}/users/{identity.provider_user_id}/playlists",
+            "POST", f"{_API}/me/playlists",
             headers=self._headers(token),
             json_body={"name": name, "public": False, "description": description},
             provider="spotify",
@@ -323,7 +562,7 @@ class SpotifyProvider(MusicProvider):
         for i in range(0, len(track_ids), size):
             uris = [f"spotify:track:{tid}" for tid in track_ids[i : i + size]]
             await http.request(
-                "POST", f"{_API}/playlists/{playlist_id}/tracks",
+                "POST", f"{_API}/playlists/{playlist_id}/items",
                 headers=self._headers(token), json_body={"uris": uris},
                 provider="spotify",
             )

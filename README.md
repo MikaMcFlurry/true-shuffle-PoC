@@ -13,7 +13,7 @@ Audio always comes from the streaming service itself. true-shuffle decides
 
 | | Spotify | Apple Music | YouTube Music |
 |---|---|---|---|
-| Read playlists | ✅ | ✅ (library) | ✅ (playlists you created) |
+| Read playlists | ✅ (playlists you own or collaborate on) | ✅ (library) | ✅ (playlists you created) |
 | **Handoff Mode** — deck written as a playlist, you play it in the app | ✅ | ✅ | ⚠️ quota-limited, see below |
 | ↳ progress tracked with **nothing of ours open** | ✅ history sync | ✅ history sync | ❌ no history API exists |
 | **Live Mode** — true-shuffle drives playback | ✅ remote-controls your app | ✅ plays in the browser tab | ✅ plays in the browser tab |
@@ -27,8 +27,19 @@ Audio always comes from the streaming service itself. true-shuffle decides
 > *owner of the developer app* to have Premium for an app in development mode to
 > function at all, and every other account must be allowlisted in the dashboard
 > (max 5 users). A free-account listener can use Handoff Mode, but only through
-> an app whose owner pays. Checked against Spotify's own docs in July 2026;
-> re-check before relying on it.
+> an app whose owner pays. Since July 2026 the development-mode quota is counted
+> per developer account rather than per Client ID, so apps you own share one
+> budget and exhausting it answers HTTP 429 with `reason: QUOTA_EXCEEDED`; the
+> Client ID limit went the other way, from 1 to 25. Checked against Spotify's
+> own docs in July 2026; re-check before relying on it.
+
+> **Spotify's February 2026 cut is why the table above gained a qualifier.** A
+> Development Mode client created after 11 February 2026 gets a reduced endpoint
+> set with no grace period: playlist contents only for playlists the listener
+> owns or collaborates on, no batch reads at all, and no `country`/`product` on
+> `GET /me` — so the app cannot know a listener lacks Premium until playback is
+> refused. See `providers/spotify.py` for what each of those cost and how it is
+> paid.
 
 ### Does anything have to stay open?
 
@@ -75,7 +86,7 @@ with only one of the three.
 Run the checks:
 
 ```bash
-python -m pytest -q       # 226 tests
+python -m pytest -q       # all green, no failures
 ruff check .
 ```
 
