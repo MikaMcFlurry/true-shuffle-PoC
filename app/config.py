@@ -6,6 +6,7 @@ app — you can run true-shuffle with only Spotify configured, only Apple Music,
 or all three.
 """
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
@@ -116,7 +117,29 @@ class Settings(BaseSettings):
         return problems
 
 
+def _derive_base_url(settings: Settings) -> Settings:
+    """On Fly, work out the public URL instead of making someone type it.
+
+    ``BASE_URL`` builds the OAuth redirect URI, and it has to match what is
+    registered with Spotify character for character. The app name is chosen at
+    launch and is almost never the placeholder in ``fly.toml``, so the single
+    most likely way to end up stuck is a BASE_URL that still says
+    ``true-shuffle-mvp`` while the app is called something else — and the error
+    Spotify returns for that ("INVALID_CLIENT: Invalid redirect URI") does not
+    say which side is wrong.
+
+    Fly sets ``FLY_APP_NAME`` in every machine. If it is present and nobody
+    set BASE_URL explicitly, the public hostname follows from it. An explicit
+    BASE_URL always wins, so a custom domain still works.
+    """
+    fly_app = os.environ.get("FLY_APP_NAME", "").strip()
+    explicit = os.environ.get("BASE_URL", "").strip()
+    if fly_app and not explicit:
+        settings.base_url = f"https://{fly_app}.fly.dev"
+    return settings
+
+
 @lru_cache
 def get_settings() -> Settings:
     """Cached singleton so .env is read only once."""
-    return Settings()
+    return _derive_base_url(Settings())

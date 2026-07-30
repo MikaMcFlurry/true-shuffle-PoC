@@ -10,9 +10,10 @@ primary_region = "fra"          # Frankfurt — nearest to Bayreuth
 [build]
 
 [env]
-  # Must match the redirect URI registered with Spotify, exactly.
-  # Change this together with the app name above.
-  BASE_URL = "https://true-shuffle-mvp.fly.dev"
+  # BASE_URL is deliberately NOT set here. On Fly the app derives it from
+  # FLY_APP_NAME, so it is always https://<your-app>.fly.dev and can never
+  # drift from the name you actually chose. Set it explicitly only for a custom
+  # domain — an explicit value always wins.
   DB_PATH  = "/data/true_shuffle.db"
   LOG_LEVEL = "INFO"
 
