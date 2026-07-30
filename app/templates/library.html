@@ -128,10 +128,10 @@ function renderModes() {
             open: false,
             tracked: p.supports_history_sync,
             body: p.supports_history_sync
-                ? `Das Fach wird als Playlist in ${p.display_name} geschrieben. Du spielst sie dort — Handy, Auto, Box — und true-shuffle liest aus deinem Hörverlauf zurück, wie weit du bist.`
+                ? `Das Fach wird als Playlist in ${p.display_name} geschrieben. Du spielst sie dort (Handy, Auto, Box), und true-shuffle liest aus deinem Hörverlauf zurück, wie weit du bist.`
                 : `Das Fach wird als Playlist in ${p.display_name} geschrieben und dort abgespielt. ${p.display_name} gibt keinen Hörverlauf heraus, deine Position lässt sich danach nicht mitzählen.`,
             note: p.id === "youtube"
-                ? "YouTube berechnet 50 Kontingent-Einheiten pro hinzugefügtem Titel — nur kleine Playlists lassen sich so schreiben."
+                ? "YouTube berechnet 50 Kontingent-Einheiten pro hinzugefügtem Titel. Nur kleine Playlists lassen sich so schreiben."
                 : null,
         },
         {
@@ -142,7 +142,7 @@ function renderModes() {
             tracked: true,
             body: p.live_mode_needs_open_tab
                 ? `Spielt über den eigenen Player von ${p.display_name} in diesem Tab und rückt bei jedem Titelende und jedem Skip weiter. ${p.display_name} lässt keine fremde Steuerung zu, das läuft also nur bei offenem Tab.`
-                : `true-shuffle übernimmt die ${p.display_name}-App, die du ohnehin offen hast, und rückt bei jedem Titelende und Skip weiter — auch bei Skips, die du in ${p.display_name} selbst machst. Läuft auf dem Server, du kannst diese Seite schließen.`,
+                : `true-shuffle übernimmt die ${p.display_name}-App, die du ohnehin offen hast, und rückt bei jedem Titelende und Skip weiter, auch bei Skips, die du in ${p.display_name} selbst machst. Läuft auf dem Server, du kannst diese Seite schließen.`,
             note: p.requires_paid_tier ? `Braucht ein ${p.display_name}-Abo.` : null,
         },
     ];
@@ -255,7 +255,7 @@ function selectPlaylist(playlist, node) {
         ? `${formatCount(playlist.track_count)} TITEL`
         : "GRÖSSE UNBEKANNT";
     $("#selectionHint").textContent =
-        `${playlist.name} — ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
+        `${playlist.name}: ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
 }
 
 /* -- dealing -------------------------------------------------------------- */
@@ -287,7 +287,7 @@ $("#dealBtn").addEventListener("click", async () => {
             onProgress: (frame) => {
                 const phase = PHASE[frame.phase] || frame.phase || "Wird vorbereitet";
                 const detail = frame.total
-                    ? `${phase} — ${formatCount(frame.processed)} von ${formatCount(frame.total)}`
+                    ? `${phase}: ${formatCount(frame.processed)} von ${formatCount(frame.total)}`
                     : phase;
                 log.replaceChildren(el("span", { class: "spinner" }), detail);
             },
@@ -322,10 +322,10 @@ function showHandoffResult(result) {
         el("strong", {}, `„${result.copy_playlist_name}“ steht bereit`),
         el("span", {}, `${formatCount(result.written)} Titel in true-shuffle-Reihenfolge.` +
             (result.skipped
-                ? ` ${formatCount(result.skipped)} Einträge blieben draußen — lokale Dateien, nicht verfügbare Titel oder Doppelte.`
+                ? ` ${formatCount(result.skipped)} Einträge blieben draußen: lokale Dateien, nicht verfügbare Titel oder Doppelte.`
                 : " Nichts musste draußen bleiben.")),
         el("span", { class: "faint" }, result.tracked
-            ? "Spiel sie in der App. Deine Position kommt aus deinem Hörverlauf — hier muss nichts offen bleiben."
+            ? "Spiel sie in der App. Deine Position kommt aus deinem Hörverlauf, hier muss nichts offen bleiben."
             : "Spiel sie in der App. Dieser Dienst gibt keinen Hörverlauf heraus, die Position wird nicht mitgezählt."),
         el("span", { class: "row", style: "margin-top: 4px" },
             result.copy_playlist_url

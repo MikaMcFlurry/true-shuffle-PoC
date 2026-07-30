@@ -96,7 +96,7 @@
   --mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* Fixed scale. The display step exists for one figure: what is left. */
-  --t-xs:  0.6875rem;
+  --t-xs:  0.75rem;
   --t-sm:  0.8125rem;
   --t-md:  0.9375rem;
   --t-lg:  1.0625rem;
@@ -267,7 +267,7 @@ button, input, select { font: inherit; border-radius: 0; }
 .register a {
   display: flex;
   align-items: center;
-  padding: 0 18px;
+  padding: 17px 18px;
   min-height: 52px;
   text-decoration: none;
   color: var(--ink-2);
@@ -333,6 +333,20 @@ button, input, select { font: inherit; border-radius: 0; }
 }
 .section > .index b { display: block; color: var(--ink-2); font-size: var(--t-sm); font-weight: 700; }
 .section > .body { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* Shelf-label lists. The dash is drawn, not typed: as text content it read as
+   prose punctuation and pushed the copy into an em-dash cadence. */
+ul.stack-s > li { position: relative; padding-left: 18px; }
+ul.stack-s > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.72em;
+  width: 9px;
+  height: 1px;
+  background: currentColor;
+  opacity: .7;
+}
 
 .stack   { display: flex; flex-direction: column; gap: 14px; }
 .stack-s { display: flex; flex-direction: column; gap: 6px; }
@@ -423,8 +437,8 @@ button, input, select { font: inherit; border-radius: 0; }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 0 16px;
+  min-height: 44px;
+  padding: 11px 16px;
   border: 1px solid var(--rule-hard);
   background: transparent;
   color: var(--ink);
@@ -449,14 +463,14 @@ button, input, select { font: inherit; border-radius: 0; }
 .btn-stop { color: var(--stop); border-color: var(--rule-hard); }
 .btn-stop:hover:not(:disabled) { border-color: var(--stop); background: transparent; }
 
-.btn-lg { min-height: 46px; padding: 0 22px; font-size: var(--t-md); }
+.btn-lg { min-height: 48px; padding: 13px 22px; font-size: var(--t-md); }
 
 /* A control that lives in the fascia matches the fascia, not the page. */
 .shopfront .btn {
   border: 0;
   border-left: 1px solid var(--rule);
   min-height: 52px;
-  padding: 0 16px;
+  padding: 16px;
   color: var(--ink-2);
 }
 .shopfront .btn:hover { background: var(--bay-2); color: var(--ink); }
@@ -471,7 +485,7 @@ kbd {
 }
 
 select, input[type="text"], input[type="search"], input[type="file"], textarea {
-  min-height: 40px;
+  min-height: 44px;
   width: 100%;
   padding: 0 12px;
   border: 1px solid var(--rule-hard);
@@ -901,7 +915,10 @@ details.fold > summary {
   cursor: pointer;
   font-size: var(--t-sm);
   color: var(--ink-2);
-  padding: 6px 0;
+  /* A disclosure is a touch target like any other. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   list-style: none;
 }
 details.fold > summary::-webkit-details-marker { display: none; }
@@ -910,7 +927,14 @@ details.fold[open] > summary::before { content: "− "; }
 details.fold > summary:hover { color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+  /* Duration alone leaves these running forever at 0.001ms — no visible
+     motion, but two infinite animations the compositor still ticks. */
+  .skeleton i, .spinner { animation: none !important; }
+  .skeleton i { background: var(--bay-2); }
 }
 
 /* ==========================================================================
@@ -960,16 +984,16 @@ details.fold > summary:hover { color: var(--ink); }
 @media (max-width: 820px) {
   :root { --gutter: 0px; --t-3x: 2.125rem; --t-disp: 3.25rem; }
 
-  .sheet { padding: 0 14px 88px; }
+  .sheet { padding: 0 16px 88px; }
 
   .section { grid-template-columns: 1fr; gap: 10px; padding: 22px 0; }
   .section > .index { padding-top: 0; display: flex; gap: 10px; align-items: baseline; }
   .section > .index b { display: inline; font-size: var(--t-xs); }
 
   .wordmark { padding: 0 14px; font-size: var(--t-md); }
-  .register a { padding: 0 13px; min-height: 48px; }
-  .shopfront .btn { min-height: 48px; padding: 0 13px; }
-  .opsrail { gap: 6px 12px; padding: 7px 14px; }
+  .register a { padding: 15px 13px; min-height: 48px; }
+  .shopfront .btn { min-height: 48px; padding: 14px 13px; }
+  .opsrail { gap: 6px 12px; padding: 7px 16px; }
 
   .opening-say { padding: 22px; }
   .crate-row { height: 96px; }
@@ -997,18 +1021,28 @@ details.fold > summary:hover { color: var(--ink); }
      accessible name. */
   .wordmark { padding: 0 13px; gap: 0; }
   .wordmark-text { display: none; }
-  .register a { padding: 0 11px; font-size: var(--t-xs); letter-spacing: 0.03em; }
-  .shopfront .btn { padding: 0 11px; font-size: var(--t-xs); }
+  .register a { padding: 15px 11px; font-size: var(--t-xs); letter-spacing: 0.03em; }
+  .shopfront .btn { padding: 15px 11px; font-size: var(--t-xs); }
 
   /* Connector counts are a full page of their own under "Dienste"; the rail
      keeps the one line that has to be on every page. */
   .opsrail > span:not(:first-child):not(.push) { display: none; }
+
+  /* "Position zählt mit, ohne dass etwas offen bleibt" is 299px of nowrap
+     text, wider than a 320px viewport's content box. It wraps here; the
+     square stays with the first line. */
+  .openness {
+    white-space: normal;
+    max-width: 100%;
+    align-items: flex-start;
+  }
+  .openness::before { margin-top: 0.34em; }
 }
 
 /* The narrowest phone still in use. The strip does scroll, but a tab you have
    to discover by swiping is a tab most people never find. */
 @media (max-width: 340px) {
-  .wordmark { padding: 0 9px; }
-  .register a { padding: 0 8px; letter-spacing: normal; }
-  .shopfront .btn { padding: 0 9px; }
+  .wordmark { padding: 0 8px; }
+  .register a { padding: 16px 6px; letter-spacing: normal; font-size: 0.6875rem; }
+  .shopfront .btn { padding: 16px 8px; font-size: 0.6875rem; }
 }

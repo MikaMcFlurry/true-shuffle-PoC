@@ -13,9 +13,8 @@
                 <h1>Deine Playlist als Fach, das du wirklich durchhörst.</h1>
                 <p class="lede">
                     Jeder spielbare Titel genau einmal pro Durchlauf. Nichts
-                    wiederholt sich, bis das Fach leer ist — und wenn du
-                    zurückkommst, steht der Trennstreifen noch genau da, wo du
-                    aufgehört hast.
+                    wiederholt sich, bis das Fach leer ist. Wenn du zurückkommst, steht
+                    der Trennstreifen noch genau da, wo du aufgehört hast.
                 </p>
                 <div class="row">
                     <a class="btn btn-primary btn-lg" href="/connect">Dienst verbinden</a>
@@ -23,7 +22,7 @@
                 </div>
             </div>
             <div class="opening-show">
-                <span class="stencil">Ein Fach, zu einem Drittel gehört</span>
+                <span class="stencil">Beispiel</span>
                 <div class="crateviz" aria-hidden="true">
                     {% for i in range(9) %}<i class="played"></i>{% endfor %}
                     <i class="divider"></i>
@@ -61,7 +60,7 @@
                 <div class="bay-body">
                     <p class="dim sm">
                         Die gemischte Reihenfolge wird als echte Playlist in den
-                        Dienst geschrieben. Du spielst sie dort — Handy, Auto,
+                        Dienst geschrieben. Du spielst sie dort: Handy, Auto,
                         Box. Wo der Dienst einen Hörverlauf herausgibt, liest
                         true-shuffle daraus zurück, wie weit du bist. Der
                         Trennstreifen wandert mit, ohne dass hier etwas laufen
@@ -139,7 +138,7 @@
         <h2>Noch nicht im Fach</h2>
         <p class="dim sm">
             Ein weiterer Dienst ist eine Connector-Klasse. Das hier sind die
-            Kandidaten mit dem, was vorher zu klären ist — keine Behauptung, dass
+            Kandidaten mit dem, was vorher zu klären ist. Keine Behauptung, dass
             sie laufen.
         </p>
         <div class="grid">
@@ -152,7 +151,7 @@
                 <div class="bay-body">
                     <p class="dim sm">{{ p.likely_mode }}</p>
                     <ul class="stack-s faint sm">
-                        {% for q in p.open_questions %}<li>— {{ q }}</li>{% endfor %}
+                        {% for q in p.open_questions %}<li>{{ q }}</li>{% endfor %}
                     </ul>
                 </div>
             </article>

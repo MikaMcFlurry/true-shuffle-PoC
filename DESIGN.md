@@ -214,7 +214,40 @@ when it is not.* In practice:
 - A run that fails to load blanks its readings to `—` rather than leaving `0
   Karten übrig` next to dead buttons. An em dash is a smaller lie than a zero.
 
-### 4.8 German interface, English codebase
+### 4.8 The copy does not lean on the em dash
+
+The detector carries an advisory called `em-dash-overuse`, described as *"an AI
+cadence tell"*. It fired on `/connect` with **25 em dashes** — which is a
+pointed result on a build whose whole purpose is answering "this reads as
+AI-generated".
+
+Two causes, both fixed. The bullets in every capability list were literal `—`
+characters in the markup, so a shelf-label list counted as dash-heavy prose;
+the dash is now drawn by `ul.stack-s > li::before` and the DOM carries none.
+And the German copy genuinely over-used the dash where a full stop, a colon or
+a parenthesis said the same thing. Rendered pages are now at zero.
+
+The rule going forward: in German user-facing copy the dash is a last resort,
+not a rhythm. Comments and docstrings are English codebase and exempt.
+
+### 4.9 Touch targets and the legibility floor
+
+Both came out of measurement, not taste.
+
+**44px minimum.** Fifteen controls rendered at exactly 40px — `min-height: 40px`
+on `.btn` and on the form controls, plus a `summary` at 32.5px. Widths were
+never the problem; every box was at least 78px wide. All are 44px now, declared
+as *padding* rather than only `min-height`, so a label that wraps to two lines
+keeps its inset instead of touching the border.
+
+**12px, not 11px.** `--t-xs` was `0.6875rem`. The label voice — `.stencil`,
+`.chip`, `.bay-read`, `.openness`, `.signet` — is used heavily and tracked
+uppercase, which is the hardest case for small type. It is `0.75rem` now. Two
+labels that were really sentences got shortened rather than shrunk: a 36-char
+and a 32-char run of tracked uppercase are a paragraph wearing a label's
+clothes.
+
+### 4.10 German interface, English codebase
 
 All user-facing text is German, including provider capability notes, planned
 connector entries, every server `detail=` string, the engine's refusal
@@ -284,8 +317,15 @@ never find. The link keeps its accessible name via `aria-label`.
 | Lint | `.venv/bin/python -m ruff check .` | clean |
 | Anti-patterns | `npx impeccable detect app/` | 0 findings |
 | Contrast, both themes | `scratchpad/contrast.py` | all text passes; only §4.4's deliberate exception below threshold |
-| Horizontal overflow | 15 widths, 320–1920px | 0 everywhere |
+| Horizontal overflow | 5 pages × 2 themes × 9 widths | **0 of 90** |
+| Text contrast | 324 distinct styles, both themes | 0 failures, worst 4.73:1 |
+| Tap targets | every interactive element at 390px | **0 under 44×44** |
+| Console errors | 5 pages × 2 themes | 0 |
+| Keyboard | 23 tab stops | focus-visible on all; no trap; transport keys guarded in 12/12 field-focused trials |
+| Reduced motion | rendered frames, not computed styles | 1 distinct value per element over 24 frames |
+| Fonts | 3 files | 200, loaded, 65.6 KiB, cached for a week |
 | First viewport | 1440×900, 1440×800, 390×844 | crate, card and transport all above the fold |
+| Live-page detector | `/` and `/connect` | 0 findings, advisories included |
 
 The detector was verified to actually fire (it reports `transition: width` on a
 planted sample) before its clean result on this codebase was believed.
@@ -306,6 +346,15 @@ stays because it is keyboard-safe, focus-correct and unmistakably system-level
 for an irreversible act; a hand-built dialog would look more like the world and
 behave worse. The `alert()` that used to report disconnect *failures* is gone —
 a failure message is ours to render, a destructive confirmation is not.
+
+**Two detector findings were investigated and dismissed with evidence, not
+waved away.** `cramped-padding` on `.bay` and `.mode` reports zero-padding
+wrappers whose children carry the inset themselves — measured, the text sits
+9–14px from the border, so the children do not land flush. And a
+`text-occlusion` hit on the run page turned out to be content inside a *closed*
+`<details>`: Chromium gives collapsed-disclosure content a geometry box while
+skipping paint, so `checkVisibility()` returns false and forcing every
+`<details>` open drops the overlap count from 7 to 0.
 
 **A cancelled run keeps its row.** Its deck is discarded and its transport is
 disabled, but it is still listed, because silently removing something the

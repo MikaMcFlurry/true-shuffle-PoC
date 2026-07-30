@@ -97,19 +97,19 @@ class YouTubeMusicProvider(MusicProvider):
         brand_color="#FF0033",
         notes=[
             "Der Live-Modus spielt über den offiziellen YouTube-Player in "
-            "diesem Browser-Tab — der Tab muss beim Hören offen bleiben.",
+            "diesem Browser-Tab. Der Tab muss beim Hören offen bleiben.",
             "YouTube ist der einzige Dienst ohne Hörverlauf-API. Ein Fach, das "
             "du in der YouTube-App spielst, kann seinen Fortschritt also nicht "
             "zurückmelden. Nur der Live-Modus zählt hier deine Position mit.",
-            "Erreichbar über die YouTube Data API, den einzigen offiziellen Weg "
-            "— YouTube Music hat keine eigene öffentliche API. Playlists, die "
+            "Erreichbar über die YouTube Data API, den einzigen offiziellen Weg. "
+            "YouTube Music hat keine eigene öffentliche API. Playlists, die "
             "du in YouTube Music angelegt hast, tauchen hier auf, weil sie "
             "YouTube-Playlists sind.",
             "Nicht erreichbar: deine YouTube-Music-Mediathek, „Liked Music“, "
             "Uploads und die automatisch erzeugten Mixe. Keine öffentliche API "
             "gibt sie heraus.",
             "Einträge, die keine Musik sind, kommen nicht ins Fach und werden "
-            "gemeldet — ein Fach bleibt Musik.",
+            "gemeldet. Ein Fach bleibt Musik.",
             "Der Handoff-Modus ist durch das YouTube-Kontingent begrenzt: Jeder "
             "hinzugefügte Titel kostet 50 von 10 000 Einheiten pro Tag, große "
             "Playlists brauchen also den Live-Modus.",

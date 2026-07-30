@@ -11,8 +11,8 @@
         <h1>Deine Streamingdienste</h1>
         <p class="dim">
             Verbinde so viele du willst. Jeder Dienst führt sein eigenes Fach, nichts
-            wird zwischen ihnen geteilt, und true-shuffle spielt nie selbst Ton ab —
-            es entscheidet nur, was als Nächstes kommt.
+            wird zwischen ihnen geteilt. true-shuffle spielt nie selbst Ton ab; es
+            entscheidet nur, was als Nächstes kommt.
         </p>
 
         <div class="note hidden" id="connectNote"></div>
@@ -48,13 +48,13 @@
                     {% endif %}
 
                     <ul class="stack-s dim sm">
-                        {% for note in p.notes %}<li>— {{ note }}</li>{% endfor %}
+                        {% for note in p.notes %}<li>{{ note }}</li>{% endfor %}
                     </ul>
 
                     {% if not p.configured %}
                     <div class="note">
-                        <span class="stencil">Auf diesem Server nicht eingerichtet</span>
-                        <span>Trag <code>{{ p.missing_config | join(', ') }}</code> in <code>.env</code> ein und starte neu.</span>
+                        <span class="stencil">Einrichtung</span>
+                        <span>Auf diesem Server nicht eingerichtet. Trag <code>{{ p.missing_config | join(', ') }}</code> in <code>.env</code> ein und starte neu.</span>
                     </div>
                     {% endif %}
 
@@ -83,7 +83,7 @@
     <div class="body">
         <h2>Geplante Anbindungen</h2>
         <p class="dim sm">
-            Hier gelistet, damit der Fahrplan sichtbar ist — nicht als Behauptung,
+            Hier gelistet, damit der Fahrplan sichtbar ist, nicht als Behauptung,
             dass sie laufen. Bei jedem sind die API-Bedingungen vorher neu zu prüfen.
         </p>
         <div class="grid">

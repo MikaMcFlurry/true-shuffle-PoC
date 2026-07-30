@@ -67,9 +67,9 @@ class AppleMusicProvider(MusicProvider):
             "Der Handoff-Modus braucht nichts Offenes: Das Fach wird in deine "
             "Mediathek geschrieben, deine Position kommt aus deinem "
             "Apple-Music-Hörverlauf zurück.",
-            "Der Live-Modus spielt über MusicKit JS in diesem Browser-Tab, weil "
-            "Apple keine serverseitige Fernsteuerung anbietet — er läuft also "
-            "nur bei offenem Tab.",
+            "Der Live-Modus spielt über MusicKit JS in diesem Browser-Tab. Apple "
+            "bietet keine serverseitige Fernsteuerung an, er läuft also nur "
+            "bei offenem Tab.",
             "Mediathek-Einträge ohne Apple-Music-Katalogeintrag (eigene "
             "Uploads) lassen sich nicht in die Warteschlange legen und werden "
             "als übersprungen gemeldet.",

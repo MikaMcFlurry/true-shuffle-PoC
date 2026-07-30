@@ -72,7 +72,7 @@ class SpotifyProvider(MusicProvider):
         supports_history_sync=True,
         brand_color="#1DB954",
         notes=[
-            "Es muss nichts offen bleiben — true-shuffle steuert deine "
+            "Es muss nichts offen bleiben. true-shuffle steuert deine "
             "Spotify-App vom Server aus.",
             "Der Live-Modus übernimmt ein bestehendes Spotify-Gerät und braucht "
             "Premium. Öffne Spotify vorher irgendwo, damit es ein Gerät zu "

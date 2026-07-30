@@ -85,7 +85,8 @@ class UnofficialYouTubeMusicProvider(MusicProvider):
             "ytmusicapi. Kann jederzeit ohne Vorwarnung brechen und verstößt "
             "sehr wahrscheinlich gegen YouTubes Nutzungsbedingungen.",
             "Dafür erreichbar: deine Mediathek, „Liked Music“, Uploads und der "
-            "Hörverlauf — alles, was über die offizielle API unsichtbar ist.",
+            "Hörverlauf, also alles, was über die offizielle API unsichtbar "
+            "ist.",
             "Anmeldung über Zugangsdaten aus einer eingeloggten Browser-Sitzung, "
             "nicht über OAuth. Erzeugen mit: ytmusicapi browser",
             "Der offizielle YouTube-Music-Connector bleibt die Voreinstellung. "

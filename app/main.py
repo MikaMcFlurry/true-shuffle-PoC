@@ -61,7 +61,26 @@ app.add_middleware(
     https_only=get_settings().base_url.startswith("https://"),
 )
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+class _CachedStatic(StaticFiles):
+    """Let the browser keep the fonts.
+
+    Without this the three woff2 files (65.6 KiB) are revalidated on every
+    navigation. They are content-addressed by name and change only when the
+    build does, so a week is safe; everything else gets a short cache with
+    revalidation so a CSS edit is picked up on reload during development.
+    """
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        path = str(getattr(response, "path", ""))
+        response.headers["Cache-Control"] = (
+            "public, max-age=604800, immutable" if "/fonts/" in path
+            else "public, max-age=0, must-revalidate"
+        )
+        return response
+
+
+app.mount("/static", _CachedStatic(directory="app/static"), name="static")
 
 app.include_router(pages_router)
 app.include_router(auth_router)
