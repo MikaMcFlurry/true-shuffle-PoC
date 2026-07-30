@@ -64,14 +64,15 @@ class AppleMusicProvider(MusicProvider):
         supports_history_sync=True,
         brand_color="#FA243C",
         notes=[
-            "Handoff Mode needs nothing open: the deck is written to your "
-            "library and your progress is read back from your Apple Music "
-            "listening history.",
-            "Live Mode plays inside this browser tab via MusicKit JS, because "
-            "Apple exposes no server-side remote control — so it only runs "
-            "while the tab is open.",
-            "Library items without an Apple Music catalog entry (personal "
-            "uploads) cannot be queued and are reported as skipped.",
+            "Der Handoff-Modus braucht nichts Offenes: Das Fach wird in deine "
+            "Mediathek geschrieben, deine Position kommt aus deinem "
+            "Apple-Music-Hörverlauf zurück.",
+            "Der Live-Modus spielt über MusicKit JS in diesem Browser-Tab, weil "
+            "Apple keine serverseitige Fernsteuerung anbietet — er läuft also "
+            "nur bei offenem Tab.",
+            "Mediathek-Einträge ohne Apple-Music-Katalogeintrag (eigene "
+            "Uploads) lassen sich nicht in die Warteschlange legen und werden "
+            "als übersprungen gemeldet.",
         ],
     )
 

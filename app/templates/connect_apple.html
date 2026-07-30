@@ -1,31 +1,45 @@
 {% extends "base.html" %}
 {% block title %}Apple Music verbinden · true-shuffle{% endblock %}
+{% block railstate %}ANSCHLUSS · APPLE MUSIC{% endblock %}
 
 {% block content %}
-<section class="stack" style="max-width: 58ch">
-    <p class="stencil">Apple Music</p>
-    <h1>Mit deiner Apple-ID anmelden</h1>
-    <p class="dim">
-        Apple erteilt die Berechtigung im Browser statt über eine Weiterleitung,
-        dieser Schritt öffnet also ein Apple-Fenster. true-shuffle bekommt nur
-        einen Zugriffsschlüssel für deine Mediathek — dein Apple-ID-Passwort
-        erreicht diesen Server nie.
-    </p>
-
-    <div class="note note-ok">
-        <span class="stencil">Damit wird möglich</span>
-        <span>Deine Mediathek-Playlists lesen, ein gemischtes Fach hineinschreiben,
-        und dein Fach in diesem Tab über Apples eigenen Player abspielen.</span>
+<section class="section">
+    <div class="index">
+        <b>01</b>
+        Anmeldung
     </div>
+    <div class="body" style="max-width: 62ch">
+        <h1>Mit deiner Apple-ID anmelden</h1>
+        <p class="dim">
+            Apple erteilt die Berechtigung im Browser statt über eine Weiterleitung,
+            dieser Schritt öffnet also ein Apple-Fenster. true-shuffle bekommt nur
+            einen Zugriffsschlüssel für deine Mediathek — dein Apple-ID-Passwort
+            erreicht diesen Server nie.
+        </p>
 
-    <div class="row">
-        <button class="btn btn-primary btn-lg" id="appleConnect" type="button">
-            Bei Apple Music anmelden
-        </button>
-        <a class="btn btn-quiet" href="/connect">Abbrechen</a>
+        <div class="bay">
+            <div class="bay-head">
+                <span>Damit wird möglich</span>
+                <span class="bay-read">3 RECHTE</span>
+            </div>
+            <div class="bay-body">
+                <ul class="stack-s dim sm">
+                    <li>— Deine Mediathek-Playlists lesen</li>
+                    <li>— Ein gemischtes Fach als Playlist hineinschreiben</li>
+                    <li>— Dein Fach in diesem Tab über Apples eigenen Player abspielen</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row">
+            <button class="btn btn-primary btn-lg" id="appleConnect" type="button">
+                Bei Apple Music anmelden
+            </button>
+            <a class="btn btn-quiet" href="/connect">Abbrechen</a>
+        </div>
+
+        <div class="note hidden" id="appleNote"></div>
     </div>
-
-    <div class="note hidden" id="appleNote"></div>
 </section>
 {% endblock %}
 

@@ -2,98 +2,115 @@
 {% block title %}Dienste · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="stack-s">
-    <h1>Deine Streamingdienste</h1>
-    <p class="dim">
-        Verbinde so viele du willst. Jeder Dienst führt sein eigenes Fach, nichts
-        wird zwischen ihnen geteilt, und true-shuffle spielt nie selbst Ton ab —
-        es entscheidet nur, was als Nächstes kommt.
-    </p>
-</section>
-
-<section class="grid">
-    {% for p in providers %}
-    {% set account = connected.get(p.id) %}
-    <article class="crate">
-        <div class="spread">
-            <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
-            {% if account %}<span class="chip chip-ok">Verbunden</span>
-            {% elif p.configured %}<span class="chip chip-off">Nicht verbunden</span>
-            {% else %}<span class="chip chip-off">Nicht eingerichtet</span>{% endif %}
-        </div>
-
-        <div class="row">
-            {% if p.tracks_progress_without_tab %}
-            <span class="openness openness-free">Position zählt mit, ohne dass etwas offen bleibt</span>
-            {% else %}
-            <span class="openness openness-tab">Position zählt nur bei offenem Tab mit</span>
-            {% endif %}
-            {% if p.requires_paid_tier %}
-            <span class="chip chip-off">Abo für Live</span>
-            {% endif %}
-        </div>
-
-        {% if account %}
-        <p class="dim sm">
-            {{ account.display_name or 'Konto verbunden' }}
-            {%- if account.market %} · {{ account.market }}{% endif %}
-            {%- if account.product_tier %} · {{ account.product_tier }}{% endif %}
+<section class="section">
+    <div class="index">
+        <b>01</b>
+        Anschluss
+    </div>
+    <div class="body">
+        <h1>Deine Streamingdienste</h1>
+        <p class="dim">
+            Verbinde so viele du willst. Jeder Dienst führt sein eigenes Fach, nichts
+            wird zwischen ihnen geteilt, und true-shuffle spielt nie selbst Ton ab —
+            es entscheidet nur, was als Nächstes kommt.
         </p>
-        {% endif %}
 
-        <ul class="stack-s dim sm">
-            {% for note in p.notes %}<li>— {{ note }}</li>{% endfor %}
-        </ul>
+        <div class="note hidden" id="connectNote"></div>
 
-        {% if not p.configured %}
-        <div class="note">
-            <span class="stencil">Auf diesem Server nicht eingerichtet</span>
-            <span>Trag {{ p.missing_config | join(', ') }} in <code>.env</code> ein und starte neu.</span>
+        <div class="grid">
+            {% for p in providers %}
+            {% set account = connected.get(p.id) %}
+            <article class="bay">
+                <div class="bay-head">
+                    <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+                    {% if account %}<span class="chip chip-ok">Verbunden</span>
+                    {% elif p.configured %}<span class="chip chip-off">Nicht verbunden</span>
+                    {% else %}<span class="chip chip-off">Nicht eingerichtet</span>{% endif %}
+                </div>
+                <div class="bay-body">
+                    <div class="row">
+                        {% if p.tracks_progress_without_tab %}
+                        <span class="openness openness-free">Position zählt mit, ohne dass etwas offen bleibt</span>
+                        {% else %}
+                        <span class="openness openness-tab">Position zählt nur bei offenem Tab mit</span>
+                        {% endif %}
+                        {% if p.requires_paid_tier %}
+                        <span class="chip chip-off">Abo für Live</span>
+                        {% endif %}
+                    </div>
+
+                    {% if account %}
+                    <div class="ticket">
+                        <div><span class="k">Konto</span><span class="v">{{ account.display_name or 'verbunden' }}</span></div>
+                        {% if account.market %}<div><span class="k">Markt</span><span class="v data">{{ account.market }}</span></div>{% endif %}
+                        {% if account.product_tier %}<div><span class="k">Tarif</span><span class="v data">{{ account.product_tier }}</span></div>{% endif %}
+                    </div>
+                    {% endif %}
+
+                    <ul class="stack-s dim sm">
+                        {% for note in p.notes %}<li>— {{ note }}</li>{% endfor %}
+                    </ul>
+
+                    {% if not p.configured %}
+                    <div class="note">
+                        <span class="stencil">Auf diesem Server nicht eingerichtet</span>
+                        <span>Trag <code>{{ p.missing_config | join(', ') }}</code> in <code>.env</code> ein und starte neu.</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="row" style="margin-top: auto">
+                        {% if p.configured %}
+                        <a class="btn {% if not account %}btn-primary{% endif %}" href="/auth/{{ p.id }}/login">
+                            {% if account %}Neu verbinden{% else %}{{ p.display_name }} verbinden{% endif %}
+                        </a>
+                        {% endif %}
+                        {% if account %}
+                        <button class="btn btn-stop" type="button" data-disconnect="{{ p.id }}">Trennen</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
         </div>
-        {% endif %}
-
-        <div class="row" style="margin-top: auto">
-            {% if p.configured %}
-            <a class="btn {% if not account %}btn-primary{% endif %}" href="/auth/{{ p.id }}/login">
-                {% if account %}Neu verbinden{% else %}{{ p.display_name }} verbinden{% endif %}
-            </a>
-            {% endif %}
-            {% if account %}
-            <button class="btn btn-stop" type="button" data-disconnect="{{ p.id }}">Trennen</button>
-            {% endif %}
-        </div>
-    </article>
-    {% endfor %}
-</section>
-
-<section class="stack">
-    <h2>Geplante Anbindungen</h2>
-    <p class="dim sm">
-        Hier gelistet, damit der Fahrplan sichtbar ist — nicht als Behauptung,
-        dass sie laufen. Bei jedem sind die API-Bedingungen vorher neu zu prüfen.
-    </p>
-    <div class="grid">
-        {% for p in planned %}
-        <article class="crate">
-            <div class="spread">
-                <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
-                <span class="chip chip-off">Geplant</span>
-            </div>
-            <p class="dim sm">{{ p.likely_mode }}</p>
-        </article>
-        {% endfor %}
     </div>
 </section>
 
-<div class="row">
-    <a class="btn" href="/library">Weiter zu meinen Playlists</a>
-    <a class="btn btn-quiet" href="/auth/signout">Aus dieser Browser-Sitzung abmelden</a>
-</div>
+<section class="section">
+    <div class="index">
+        <b>02</b>
+        Fahrplan
+    </div>
+    <div class="body">
+        <h2>Geplante Anbindungen</h2>
+        <p class="dim sm">
+            Hier gelistet, damit der Fahrplan sichtbar ist — nicht als Behauptung,
+            dass sie laufen. Bei jedem sind die API-Bedingungen vorher neu zu prüfen.
+        </p>
+        <div class="grid">
+            {% for p in planned %}
+            <article class="bay">
+                <div class="bay-head">
+                    <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+                    <span class="chip chip-off">Geplant</span>
+                </div>
+                <div class="bay-body">
+                    <p class="dim sm">{{ p.likely_mode }}</p>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="row">
+            <a class="btn" href="/library">Weiter zu meinen Playlists</a>
+            <a class="btn btn-quiet" href="/auth/signout">Aus dieser Browser-Sitzung abmelden</a>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 <script type="module">
-import { $$, api } from "/static/app.js";
+import { $, $$, api, setNote } from "/static/app.js";
 
 for (const button of $$("[data-disconnect]")) {
     button.addEventListener("click", async () => {
@@ -105,7 +122,8 @@ for (const button of $$("[data-disconnect]")) {
             location.reload();
         } catch (err) {
             button.disabled = false;
-            alert(err.message);
+            // A native alert() is the one thing on this page that is not ours.
+            setNote($("#connectNote"), err.message, "note-stop", "Trennen fehlgeschlagen");
         }
     });
 }

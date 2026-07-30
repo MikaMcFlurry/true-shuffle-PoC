@@ -2,47 +2,75 @@
 {% block title %}Läufe · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="stack-s">
-    <h1>Deine Läufe</h1>
-    <p class="dim">
-        Jedes Fach, das du angelegt hast, und wie weit du darin bist. Ein
-        pausiertes Fach macht genau auf der Karte weiter, auf der du aufgehört hast.
-    </p>
-</section>
+<section class="section">
+    <div class="index">
+        <b>01</b>
+        Bestand
+    </div>
+    <div class="body">
+        <h1>Deine Läufe</h1>
+        <p class="dim">
+            Jedes Fach, das du angelegt hast, und wie weit du darin bist. Ein
+            pausiertes Fach macht genau auf der Karte weiter, auf der du aufgehört hast.
+        </p>
 
-<div class="note hidden" id="runsNote"></div>
+        <div class="note hidden" id="runsNote"></div>
 
-<section class="crate">
-    <div class="scroll-x">
-        <table>
-            <thead>
-                <tr>
-                    <th>Playlist</th>
-                    <th>Dienst</th>
-                    <th>Modus</th>
-                    <th>Zustand</th>
-                    <th class="n">Gespielt</th>
-                    <th class="n">Gesamt</th>
-                    <th>Zuletzt</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id="runRows">
-                <tr><td colspan="8"><div class="skeleton"><i></i><i></i><i></i></div></td></tr>
-            </tbody>
-        </table>
+        <div class="bay">
+            <div class="bay-head">
+                <span>Angelegte Fächer</span>
+                <span class="bay-read" id="runsCount">wird gelesen</span>
+            </div>
+            <div class="scroll-x">
+                <table>
+                    <thead id="runsHead">
+                        <tr>
+                            <th>Playlist</th>
+                            <th>Dienst</th>
+                            <th>Modus</th>
+                            <th>Zustand</th>
+                            <th class="n">Gespielt</th>
+                            <th class="n">Gesamt</th>
+                            <th>Zuletzt</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="runRows">
+                        <tr><td colspan="8" style="padding: 0"><div class="skeleton"><i></i><i></i><i></i></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </section>
 
-<section class="crate">
-    <span class="stencil">Fach übernehmen</span>
-    <p class="dim sm">
-        Einen Lauf fortsetzen, der auf einem anderen Rechner exportiert wurde.
-        Die Datei enthält Reihenfolge und Position — nie Zugangsdaten.
-    </p>
-    <div class="row">
-        <input type="file" id="importFile" accept="application/json" style="max-width: 320px">
-        <button class="btn" id="importBtn" type="button">Importieren</button>
+<section class="section">
+    <div class="index">
+        <b>02</b>
+        Übernahme
+    </div>
+    <div class="body">
+        <div class="bay">
+            <div class="bay-head">
+                <span>Fach übernehmen</span>
+                <span class="bay-read">JSON</span>
+            </div>
+            <div class="bay-body">
+                <p class="dim sm">
+                    Einen Lauf fortsetzen, der auf einem anderen Rechner exportiert
+                    wurde. Die Datei enthält Reihenfolge und Position — nie Zugangsdaten.
+                </p>
+                <div class="row">
+                    <!-- The native file control is the browser's widget, in the
+                         browser's language. The input still does the work; the
+                         label is what the listener sees. -->
+                    <input type="file" id="importFile" accept="application/json" class="sr-only">
+                    <label class="btn" for="importFile">Datei wählen</label>
+                    <span class="data sm faint" id="importName">keine Datei gewählt</span>
+                    <button class="btn btn-primary push" id="importBtn" type="button">Importieren</button>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}
@@ -61,12 +89,30 @@ const STATUS_CLASS = {
     completed: "chip-ok", cancelled: "chip-stop",
 };
 
+/** The table's own failure state, so every caller renders it identically. */
+function showTableError(message) {
+    $("#runsHead").hidden = false;
+    $("#runsCount").textContent = "nicht geladen";
+    $("#runRows").replaceChildren(el("tr", {},
+        el("td", { colspan: "8" },
+            el("div", { class: "empty" },
+                el("span", {}, "Läufe konnten nicht geladen werden."),
+                el("button", { class: "btn", type: "button", onClick: load }, "Erneut versuchen")))));
+    if (message) setNote($("#runsNote"), message, "note-stop", "Fehler");
+}
+
 async function load() {
     try {
         const { runs } = await api("/api/runs");
+
+        // The head is restored on every load: an import that succeeds after an
+        // empty state must not leave eight columns of data unlabelled.
+        $("#runsHead").hidden = runs.length === 0;
+        $("#runsCount").textContent = runs.length
+            ? `${formatCount(runs.length)} ${runs.length === 1 ? "FACH" : "FÄCHER"}`
+            : "KEINS";
+
         if (!runs.length) {
-            // An empty state under eight populated headers reads as broken.
-            document.querySelector("#runRows").closest("table").querySelector("thead").hidden = true;
             $("#runRows").replaceChildren(el("tr", {},
                 el("td", { colspan: "8" },
                     el("div", { class: "empty" },
@@ -98,14 +144,15 @@ async function load() {
             );
         }));
     } catch (err) {
-        $("#runRows").replaceChildren(el("tr", {},
-            el("td", { colspan: "8" },
-                el("div", { class: "empty" },
-                    el("span", {}, "Läufe konnten nicht geladen werden."),
-                    el("button", { class: "btn", type: "button", onClick: load }, "Erneut versuchen")))));
-        setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+        showTableError(err.message);
     }
 }
+
+$("#importFile").addEventListener("change", () => {
+    const file = $("#importFile").files?.[0];
+    $("#importName").textContent = file ? file.name : "keine Datei gewählt";
+    $("#importName").classList.toggle("faint", !file);
+});
 
 $("#importBtn").addEventListener("click", async () => {
     const file = $("#importFile").files?.[0];
@@ -119,12 +166,9 @@ $("#importBtn").addEventListener("click", async () => {
             "note-ok", "Übernommen");
         load();
     } catch (err) {
-        $("#runRows").replaceChildren(el("tr", {},
-            el("td", { colspan: "8" },
-                el("div", { class: "empty" },
-                    el("span", {}, "Läufe konnten nicht geladen werden."),
-                    el("button", { class: "btn", type: "button", onClick: load }, "Erneut versuchen")))));
-        setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+        // A failed import says the import failed. It must not wipe the table
+        // of runs that loaded perfectly well a moment ago.
+        setNote($("#runsNote"), err.message, "note-stop", "Import fehlgeschlagen");
     }
 });
 

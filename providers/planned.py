@@ -33,38 +33,38 @@ PLANNED: List[PlannedProvider] = [
         id="deezer",
         display_name="Deezer",
         brand_color="#A238FF",
-        likely_mode="Copy Mode (playlist read/write)",
+        likely_mode="Handoff-Modus (Playlists lesen und schreiben)",
         open_questions=[
-            "Confirm current OAuth scopes for playlist write.",
-            "Confirm whether any playback control is available to third parties.",
+            "Aktuelle OAuth-Scopes für das Schreiben von Playlists prüfen.",
+            "Klären, ob Dritte überhaupt die Wiedergabe steuern dürfen.",
         ],
     ),
     PlannedProvider(
         id="tidal",
         display_name="TIDAL",
         brand_color="#00FFFF",
-        likely_mode="Copy Mode, possibly Live Mode via the official SDK",
+        likely_mode="Handoff-Modus, Live-Modus eventuell über das offizielle SDK",
         open_questions=[
-            "Re-check the current developer programme terms.",
-            "Confirm whether third-party playback control is permitted.",
+            "Die aktuellen Bedingungen des Entwicklerprogramms neu prüfen.",
+            "Klären, ob Wiedergabesteuerung durch Dritte erlaubt ist.",
         ],
     ),
     PlannedProvider(
         id="amazon",
         display_name="Amazon Music",
         brand_color="#25D1DA",
-        likely_mode="Unknown — partner programme",
+        likely_mode="Unbekannt — Partnerprogramm",
         open_questions=[
-            "Determine whether a public developer programme exists at all.",
+            "Feststellen, ob es überhaupt ein öffentliches Entwicklerprogramm gibt.",
         ],
     ),
     PlannedProvider(
         id="soundcloud",
         display_name="SoundCloud",
         brand_color="#FF5500",
-        likely_mode="Copy Mode, plus an embeddable web player",
+        likely_mode="Handoff-Modus, dazu ein einbettbarer Web-Player",
         open_questions=[
-            "Confirm API application approval is still open to new apps.",
+            "Prüfen, ob neue Apps überhaupt noch freigeschaltet werden.",
         ],
     ),
 ]

@@ -2,50 +2,67 @@
 {% block title %}Sammlung · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="stack-s">
-    <h1>Ein Fach anlegen</h1>
-    <p class="dim">Große Playlists werden im Hintergrund gelesen; du siehst dabei zu.</p>
-</section>
+<section class="section">
+    <div class="index">
+        <b>01</b>
+        Auswahl
+    </div>
+    <div class="body">
+        <h1>Ein Fach anlegen</h1>
+        <p class="dim">
+            Eine Playlist, ein Modus, ein Fach. Große Playlists werden im
+            Hintergrund gelesen; du siehst dabei zu.
+        </p>
 
-<div class="row">
-    <div class="tabs" id="providerTabs" role="group" aria-label="Streamingdienst"></div>
-</div>
+        <div class="row">
+            <div class="tabs" id="providerTabs" role="group" aria-label="Streamingdienst"></div>
+        </div>
 
-<div class="deck-layout">
-    <div class="crate">
-        <div class="spread">
-            <span class="stencil">Deine Playlists</span>
-            <span class="faint num sm" id="plCount"></span>
-        </div>
-        <label class="sr-only" for="plFilter">Playlists filtern</label>
-        <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off">
-        <div class="browse" id="playlists" aria-label="Playlists">
-            <div class="skeleton"><i></i><i></i><i></i><i></i><i></i></div>
-        </div>
         <div class="note note-stop hidden" id="libNote"></div>
-    </div>
 
-    <div class="stack">
-        <div class="modes" id="modeCards"></div>
+        <div class="deck-layout">
+            <div class="bay">
+                <div class="bay-head">
+                    <span>Deine Playlists</span>
+                    <span class="bay-read" id="plCount">wird gelesen</span>
+                </div>
+                <div class="bay-body">
+                    <label class="sr-only" for="plFilter">Playlists filtern</label>
+                    <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off">
+                </div>
+                <div class="browse" id="playlists" aria-label="Playlists">
+                    <div class="skeleton"><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+            </div>
 
-        <div class="crate">
-            <span class="stencil">Auswahl</span>
-            <p class="dim sm" id="selectionHint">Wähl links eine Playlist.</p>
+            <div class="stack">
+                <div class="modes" id="modeCards"></div>
 
-            <label class="stack-s sm">
-                <span class="stencil">Wenn schon ein Fach läuft</span>
-                <select id="reshuffle">
-                    <option value="0">Dort weitermachen, wo ich war</option>
-                    <option value="1">Neu mischen (verwirft das laufende Fach)</option>
-                </select>
-            </label>
+                <div class="bay">
+                    <div class="bay-head">
+                        <span>Anlegen</span>
+                        <span class="bay-read" id="selectionRead">nichts gewählt</span>
+                    </div>
+                    <div class="bay-body">
+                        <p class="dim sm" id="selectionHint">Wähl links eine Playlist.</p>
 
-            <button class="btn btn-primary btn-lg" id="dealBtn" type="button" disabled>Fach anlegen</button>
-            <div class="status hidden" id="jobLog"></div>
-            <div class="note hidden" id="jobResult"></div>
+                        <label class="field">
+                            <span class="stencil">Wenn schon ein Fach läuft</span>
+                            <select id="reshuffle">
+                                <option value="0">Dort weitermachen, wo ich war</option>
+                                <option value="1">Neu mischen (verwirft das laufende Fach)</option>
+                            </select>
+                        </label>
+
+                        <button class="btn btn-primary btn-lg" id="dealBtn" type="button" disabled>Fach anlegen</button>
+                        <div class="status hidden" id="jobLog"></div>
+                        <div class="note hidden" id="jobResult"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -85,6 +102,7 @@ function selectProvider(id) {
     }
     $("#dealBtn").disabled = true;
     $("#selectionHint").textContent = "Wähl links eine Playlist.";
+    $("#selectionRead").textContent = "nichts gewählt";
     renderModes();
     loadPlaylists();
 }
@@ -145,16 +163,19 @@ function renderModes() {
             disabled: !o.available || null,
             onClick: () => { state.mode = o.id; renderModes(); },
         },
-            el("div", { class: "spread" },
+            el("div", { class: "mode-head" },
                 el("h3", {}, o.title),
-                el("span", { class: "row", style: "gap: 6px" },
+                el("span", { class: "stencil" },
+                    !o.available ? "nicht möglich" : state.mode === o.id ? "gewählt" : "wählen")),
+            el("div", { class: "mode-body" },
+                el("div", { class: "row" },
                     el("span", { class: `openness ${o.open ? "openness-tab" : "openness-free"}` },
                         o.open ? "Tab muss offen bleiben" : "Nichts bleibt offen"),
                     el("span", { class: `openness ${o.tracked ? "openness-free" : "openness-tab"}` },
-                        o.tracked ? "Position zählt mit" : "Position zählt nicht mit"))),
-            el("p", {}, o.body),
-            o.note ? el("p", { class: "faint sm" }, o.note) : null,
-            !o.available ? el("p", { class: "faint sm" }, `Bei ${p.display_name} nicht möglich.`) : null
+                        o.tracked ? "Position zählt mit" : "Position zählt nicht mit")),
+                el("p", {}, o.body),
+                o.note ? el("p", { class: "faint sm" }, o.note) : null,
+                !o.available ? el("p", { class: "faint sm" }, `Bei ${p.display_name} nicht möglich.`) : null)
         )));
 }
 
@@ -164,6 +185,7 @@ async function loadPlaylists() {
     const list = $("#playlists");
     list.replaceChildren(el("div", { class: "skeleton" },
         el("i"), el("i"), el("i"), el("i"), el("i")));
+    $("#plCount").textContent = "wird gelesen";
     setNote($("#libNote"), "");
 
     try {
@@ -175,6 +197,7 @@ async function loadPlaylists() {
         list.replaceChildren(el("div", { class: "empty" },
             el("span", {}, "Playlists konnten nicht geladen werden."),
             el("button", { class: "btn", type: "button", onClick: loadPlaylists }, "Erneut versuchen")));
+        $("#plCount").textContent = "nicht geladen";
         setNote($("#libNote"), err.message, "note-stop", "Fehler");
     }
 }
@@ -187,8 +210,8 @@ function renderPlaylists() {
 
     const n = state.all.length;
     $("#plCount").textContent = term
-        ? `${formatCount(shown.length)} von ${formatCount(n)}`
-        : `${formatCount(n)} ${n === 1 ? "Playlist" : "Playlists"}`;
+        ? `${formatCount(shown.length)} VON ${formatCount(n)}`
+        : `${formatCount(n)} ${n === 1 ? "PLAYLIST" : "PLAYLISTS"}`;
 
     const list = $("#playlists");
     if (!shown.length) {
@@ -223,6 +246,9 @@ function selectPlaylist(playlist, node) {
     for (const option of $("#playlists").children) option.setAttribute?.("aria-pressed", "false");
     node.setAttribute("aria-pressed", "true");
     $("#dealBtn").disabled = !state.mode;
+    $("#selectionRead").textContent = playlist.track_count >= 0
+        ? `${formatCount(playlist.track_count)} TITEL`
+        : "GRÖSSE UNBEKANNT";
     $("#selectionHint").textContent =
         `${playlist.name} — ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
 }

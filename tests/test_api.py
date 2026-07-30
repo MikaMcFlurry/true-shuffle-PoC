@@ -81,7 +81,16 @@ def test_home_page_renders(client):
     response = client.get("/")
     assert response.status_code == 200
     assert "true-shuffle" in response.text
-    assert "Plattenfach" in response.text
+    # The crate and its divider, not a line of copy: the page is allowed to be
+    # rewritten, but the entrance has to show the thing the product is about.
+    assert 'class="crateviz"' in response.text
+    assert 'class="divider"' in response.text
+
+
+def test_every_page_states_that_the_audio_is_never_ours(client):
+    """The one claim on the operating rail that must never quietly disappear."""
+    for path in ("/", "/connect"):
+        assert "IMMER ÜBER DEN DIENST" in client.get(path).text
 
 
 def test_providers_endpoint_lists_capabilities_and_connection_state(client, fake_provider):

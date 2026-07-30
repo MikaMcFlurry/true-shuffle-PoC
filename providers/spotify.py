@@ -72,12 +72,14 @@ class SpotifyProvider(MusicProvider):
         supports_history_sync=True,
         brand_color="#1DB954",
         notes=[
-            "Nothing needs to stay open — true-shuffle drives your Spotify app "
-            "from the server.",
-            "Live Mode controls an existing Spotify device and needs Premium. "
-            "Open Spotify somewhere first so there is a device to take over.",
-            "On a free account, use Handoff Mode: the deck is written as a "
-            "playlist and your progress is read back from your listening history.",
+            "Es muss nichts offen bleiben — true-shuffle steuert deine "
+            "Spotify-App vom Server aus.",
+            "Der Live-Modus übernimmt ein bestehendes Spotify-Gerät und braucht "
+            "Premium. Öffne Spotify vorher irgendwo, damit es ein Gerät zu "
+            "übernehmen gibt.",
+            "Auf einem kostenlosen Konto nimm den Handoff-Modus: Das Fach wird "
+            "als Playlist geschrieben, deine Position kommt aus deinem "
+            "Hörverlauf zurück.",
         ],
     )
 

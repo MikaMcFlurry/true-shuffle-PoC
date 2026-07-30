@@ -226,6 +226,7 @@ providers/     One class per streaming service
   http.py        Shared retries, rate limits, per-account serialisation
 
 app/           FastAPI: HTTP, persistence, background work
+  static/        One stylesheet, two ES modules, two self-hosted OFL fonts
   watcher.py     Two loops: poll remote playback (Live) and poll listening
                  history (Handoff, no tab needed)
   runs.py        The only place a cursor is allowed to move
@@ -254,6 +255,7 @@ app/           FastAPI: HTTP, persistence, background work
 ## Documents
 
 - [STATUS.md](STATUS.md) — what is built, what is verified, what is not
+- [DESIGN.md](DESIGN.md) — the interface's thesis and the rules that hold it up
 - [HANDOFF.md](HANDOFF.md) — architecture decisions and open questions
 - [SPEC_TRUE_SHUFFLE_POC.md](SPEC_TRUE_SHUFFLE_POC.md) — the original
   Spotify-only spec, kept for history and now partly superseded

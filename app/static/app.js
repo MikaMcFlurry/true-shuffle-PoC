@@ -121,22 +121,6 @@ export function setNote(node, text, variant = "", label = "Hinweis") {
   );
 }
 
-/**
- * Printed-card tint keyed to the ARTIST, 1–6.
- *
- * Keyed to the track id it looked like an encoding and meant nothing, which is
- * worse than no colour at all. Keyed to the artist it says something true and
- * checkable: two spines of the same tint ahead of you are the same artist.
- * Returns "" when the artist is unknown, so nothing is invented.
- */
-export function artistTint(artist) {
-  const key = (artist || "").trim().toLowerCase();
-  if (!key) return "";
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-  return String((hash % 6) + 1);
-}
-
 /* -- job progress --------------------------------------------------------- */
 
 /**

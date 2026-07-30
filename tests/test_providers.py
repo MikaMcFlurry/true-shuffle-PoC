@@ -282,7 +282,7 @@ def test_youtube_refuses_a_copy_that_cannot_fit_in_the_daily_quota():
     Failing in one second with an explanation beats dying at track 190.
     """
     provider = YouTubeMusicProvider()
-    with pytest.raises(ProviderQuotaError, match="Live Mode"):
+    with pytest.raises(ProviderQuotaError, match="Live-Modus"):
         provider.check_copy_quota(1500)
 
 

@@ -65,6 +65,11 @@ _PAGE = 50
 #: trailer or a lecture that happens to sit in a playlist — not a track.
 _MUSIC_CATEGORY = "10"
 
+
+def _de(value: int) -> str:
+    """Group thousands the German way, for messages the listener reads."""
+    return f"{value:,}".replace(",", ".")
+
 #: YouTube Music's catalogue tracks are served by auto-generated
 #: "<Artist> - Topic" channels. The suffix is plumbing, not an artist name.
 _TOPIC_SUFFIX = " - Topic"
@@ -91,21 +96,23 @@ class YouTubeMusicProvider(MusicProvider):
         supports_history_sync=False,
         brand_color="#FF0033",
         notes=[
-            "Live Mode plays in this browser tab through the official YouTube "
-            "player — keep the tab open while listening.",
-            "YouTube is the one service with no playback-history API, so a deck "
-            "played in the YouTube app cannot report its progress back. Live "
-            "Mode is the only mode here that tracks where you are.",
-            "Reached through the YouTube Data API, the only official route — "
-            "YouTube Music has no public API of its own. Playlists you made in "
-            "YouTube Music show up here because they are YouTube playlists.",
-            "Out of reach: your YouTube Music library, Liked Music, uploads and "
-            "the auto-generated mixes. No public API exposes them.",
-            "Non-music entries in a playlist are left out of the deck and "
-            "reported, so a deck stays music.",
-            "Copy Mode is limited by the YouTube API quota: each added track "
-            "costs 50 of 10 000 daily units, so large playlists must use Live "
-            "Mode instead.",
+            "Der Live-Modus spielt über den offiziellen YouTube-Player in "
+            "diesem Browser-Tab — der Tab muss beim Hören offen bleiben.",
+            "YouTube ist der einzige Dienst ohne Hörverlauf-API. Ein Fach, das "
+            "du in der YouTube-App spielst, kann seinen Fortschritt also nicht "
+            "zurückmelden. Nur der Live-Modus zählt hier deine Position mit.",
+            "Erreichbar über die YouTube Data API, den einzigen offiziellen Weg "
+            "— YouTube Music hat keine eigene öffentliche API. Playlists, die "
+            "du in YouTube Music angelegt hast, tauchen hier auf, weil sie "
+            "YouTube-Playlists sind.",
+            "Nicht erreichbar: deine YouTube-Music-Mediathek, „Liked Music“, "
+            "Uploads und die automatisch erzeugten Mixe. Keine öffentliche API "
+            "gibt sie heraus.",
+            "Einträge, die keine Musik sind, kommen nicht ins Fach und werden "
+            "gemeldet — ein Fach bleibt Musik.",
+            "Der Handoff-Modus ist durch das YouTube-Kontingent begrenzt: Jeder "
+            "hinzugefügte Titel kostet 50 von 10 000 Einheiten pro Tag, große "
+            "Playlists brauchen also den Live-Modus.",
         ],
     )
 
@@ -142,10 +149,11 @@ class YouTubeMusicProvider(MusicProvider):
         )
         read_only = needed - QUOTA_PLAYLIST_INSERT - track_count * QUOTA_PLAYLIST_ITEM_INSERT
         raise ProviderQuotaError(
-            f"youtube: copying {track_count} tracks needs about {needed:,} quota "
-            f"units but the daily budget is {budget:,}. YouTube's API allows "
-            f"roughly {affordable} tracks per day this way — use Live Mode, which "
-            f"reads the same playlist for about {read_only} units."
+            f"YouTube: {track_count} Titel zu schreiben kostet rund "
+            f"{_de(needed)} Kontingent-Einheiten, das Tagesbudget sind aber "
+            f"{_de(budget)}. So lassen sich pro Tag etwa {affordable} Titel "
+            f"schreiben — nimm den Live-Modus, der dieselbe Playlist für "
+            f"rund {read_only} Einheiten nur liest."
         )
 
     # -- auth -------------------------------------------------------------

@@ -15,7 +15,7 @@
  * page never decides what plays next on its own.
  */
 
-import { $, api, el, followJob, formatDuration, formatCount, setNote, artistTint } from "./app.js";
+import { $, api, el, followJob, formatDuration, formatCount, setNote } from "./app.js";
 
 /* ========================================================================== */
 /* Web players                                                                */
@@ -151,10 +151,17 @@ export class RunPlayer {
 
   async boot() {
     this.state = await api(`/api/runs/${this.runId}`);
-    // Returning to a deck that is already running is the product's core path.
-    // Without this the page claimed "LÄUFT" over frozen content, with Pause
-    // disabled while music was actually playing.
-    this.playing = this.state.status === "active";
+    // `active` in the database means "this is the live deck", NOT "audio is
+    // playing" — a deck is active from the moment it is dealt. Reading it as
+    // playing made a freshly dealt run claim LÄUFT with Pause enabled before
+    // anyone had pressed anything.
+    //
+    // Remote: the server only runs a watcher while it is actually driving
+    // playback, so that flag is the honest answer.
+    // Web player: this tab just loaded, so it is playing nothing, full stop.
+    this.playing = this.isRemote
+      && this.state.status === "active"
+      && Boolean(this.state.watcher?.watching);
     this.render();
     this.loadSkipped();
     if (this.isRemote && this.playing) this.startPolling();
@@ -180,12 +187,27 @@ export class RunPlayer {
     }
   }
 
-  /** A page that cannot load its run says so, and stops offering transport. */
+  /**
+   * A page that cannot load its run says so, and stops offering transport.
+   *
+   * The readings are blanked rather than left at their initial zeros: "0 Karten
+   * übrig" next to dead buttons is a worse lie than an em dash.
+   */
   failed(message) {
     this.playing = false;
     this.stopPolling();
     $("#nowTitle").textContent = "Lauf nicht geladen";
     $("#nowArtist").textContent = message;
+    for (const id of ["#deckLeft", "#deckTotal", "#deckAt", "#scaleEnd"]) {
+      const node = $(id);
+      if (node) node.textContent = "—";
+    }
+    for (const id of ["#deckRead", "#upnextRead", "#ticketPos"]) {
+      const node = $(id);
+      if (node) node.textContent = "nicht geladen";
+    }
+    const status = $("#runStatus");
+    if (status) { status.textContent = "Fehler"; status.className = "chip chip-stop"; }
     for (const id of ["#startBtn", "#prevBtn", "#nextBtn", "#pauseBtn"]) {
       const node = $(id);
       if (node) node.disabled = true;
@@ -304,54 +326,60 @@ export class RunPlayer {
 
   /** Entries that never entered the deck, with the reason each was left out. */
   async loadSkipped() {
-    const box = $("#skippedBox");
-    if (!box) return;
+    const bay = $("#skippedBay");
+    if (!bay) return;
     try {
       const { skipped } = await api(`/api/runs/${this.runId}/skipped`);
       if (!skipped.length) return;          // stays hidden — nothing was dropped
-      box.classList.remove("hidden");
-      $("#skippedSummary").textContent =
-        `${formatCount(skipped.length)} Einträge nicht ins Fach gekommen`;
+      bay.classList.remove("hidden");
+      $("#skippedRead").textContent = `${formatCount(skipped.length)} EINTRÄGE`;
       $("#skippedList").replaceChildren(
         ...skipped.map((s) =>
-          el("div", { class: "spread" },
-            el("span", { class: "dim" },
-              [s.name, s.artist].filter(Boolean).join(" — ") || s.track_id),
-            el("span", { class: "faint" }, REASON_TEXT[s.reason] || s.reason)))
+          el("div", {},
+            el("span", { class: "k" }, REASON_TEXT[s.reason] || s.reason),
+            el("span", { class: "v dim" },
+              [s.name, s.artist].filter(Boolean).join(" — ") || s.track_id)))
       );
     } catch {
-      box.classList.add("hidden");
+      bay.classList.add("hidden");
     }
   }
 
   /**
-   * The rack: one bar per card, and a divider that travels to the cursor.
+   * The crate: one bar per card, and a divider card that travels to the cursor.
    *
    * Bars are rebuilt only when the deck's size changes; an advance moves one
    * absolutely positioned element, because "moving that divider forward IS the
    * advance" and a teleporting divider does not say that.
    *
-   * The bar count is measured from the mount rather than fixed, so a
-   * 1,500-track deck does not overflow a phone and clip the cursor away.
+   * The divider is placed from a *measured bar offset*, not from a percentage.
+   * A percentage resolves against the row's own box, so with 83 bars it drifted
+   * several spines away from the bar it claimed to mark. Reading offsetLeft off
+   * the bar itself cannot drift, whatever the gap or the padding is.
+   *
+   * The bar count is measured from the row rather than fixed, so a 1,500-track
+   * deck does not overflow a phone and clip the cursor away. It is measured
+   * from the row's own content width — the row carries no padding, so nothing
+   * inflates the count into an overflow.
    */
   renderRack() {
-    const mount = $("#rack");
-    if (!mount || !this.state) return;
+    const row = $("#rack");
+    if (!row || !this.state) return;
     const { cursor, total } = this.state;
-    if (!total) return mount.replaceChildren();
+    if (!total) return row.replaceChildren();
 
-    const width = mount.clientWidth || 320;
-    const bars = Math.max(8, Math.min(total, Math.floor(width / 4)));
+    const width = row.clientWidth || 320;
+    const bars = Math.max(8, Math.min(total, Math.floor(width / 5)));
 
     if (this._rackBars !== bars || this._rackTotal !== total) {
       this._rackBars = bars;
       this._rackTotal = total;
-      this._divider = el("span", { class: "divider" });
-      mount.replaceChildren(
+      this._divider = el("span", { class: "crate-divider" });
+      row.replaceChildren(
         ...Array.from({ length: bars }, () => el("i")),
         this._divider
       );
-      this._bars = Array.from(mount.querySelectorAll("i"));
+      this._bars = Array.from(row.querySelectorAll("i"));
     }
 
     const played = Math.round((cursor / total) * bars);
@@ -359,8 +387,13 @@ export class RunPlayer {
       if (i < played) bar.setAttribute("data-played", "");
       else bar.removeAttribute("data-played");
     });
+
     if (this._divider) {
-      this._divider.style.left = `${(cursor / total) * 100}%`;
+      const at = Math.min(played, bars - 1);
+      const bar = this._bars[at];
+      // Past the last bar the divider stands at the crate's back wall.
+      const x = played >= bars ? row.clientWidth : (bar ? bar.offsetLeft : 0);
+      this._divider.style.transform = `translateX(${x}px)`;
     }
   }
 
@@ -378,38 +411,49 @@ export class RunPlayer {
       ? `Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
       : current?.artist || "";
 
-    $("#deckAt").textContent = formatCount(Math.min(s.cursor + (done ? 0 : 1), s.total));
+    const at = Math.min(s.cursor + (done ? 0 : 1), s.total);
+    $("#deckAt").textContent = `Karte ${formatCount(at)}`;
     $("#deckTotal").textContent = formatCount(s.total);
     $("#deckLeft").textContent = formatCount(s.remaining);
+    $("#scaleEnd").textContent = formatCount(s.total);
+    $("#deckRead").textContent = `${formatCount(s.cursor)} GESPIELT · ${formatCount(s.remaining)} OFFEN`;
+    $("#ticketPos").textContent = `${formatCount(at)} / ${formatCount(s.total)}`;
     this.renderRack();
 
+    // An active deck that nothing is playing is "Bereit", not "Läuft". The
+    // accent tab is spent only on a deck that is genuinely running.
     const statusChip = $("#runStatus");
-    statusChip.textContent = STATUS_TEXT[s.status] || s.status;
-    statusChip.className = `chip ${STATUS_CLASS[s.status] || ""}`;
+    const idle = s.status === "active" && !this.playing;
+    statusChip.textContent = idle ? "Bereit" : (STATUS_TEXT[s.status] || s.status);
+    statusChip.className = `chip ${idle ? "chip-off" : STATUS_CLASS[s.status] || ""}`;
 
+    // Whether the server is following playback belongs on the Laufzettel, not
+    // in a second badge next to the run's state: the accent marks one thing.
+    const watchRow = $("#watchRow");
     const watchChip = $("#watchStatus");
-    if (watchChip) {
+    if (watchRow && watchChip) {
       const w = s.watcher || {};
-      watchChip.classList.toggle("hidden", !this.isRemote);
+      watchRow.classList.toggle("hidden", !this.isRemote);
       watchChip.textContent = w.drifted
         ? `${this.provider.display_name} spielt etwas anderes`
         : w.watching ? "Rückt selbst weiter" : "Folgt nicht";
-      watchChip.className = `chip ${w.drifted ? "chip-stop" : w.watching ? "chip-live" : "chip-off"}`;
+      watchChip.className = `v ${w.drifted ? "stop" : w.watching ? "ok" : "faint"}`;
     }
 
     const upcoming = s.upcoming || [];
+    $("#upnextRead").textContent = upcoming.length
+      ? `${formatCount(upcoming.length)} VON ${formatCount(s.remaining)}`
+      : "—";
     $("#upnext").replaceChildren(
       ...(upcoming.length
         ? upcoming.map((t) =>
             el("li", {},
-              el("span", { class: "edge", "data-t": artistTint(t.artist) || null }),
-              el("span", { class: "pos" }, String(t.index + 1)),
+              el("span", { class: "pos" }, formatCount(t.index + 1)),
               el("span", {},
                 el("span", { class: "name" }, t.name || t.id),
                 el("span", { class: "who" },
                   [t.artist, formatDuration(t.duration_ms)].filter(Boolean).join(" · ")))))
         : [el("li", {},
-            el("span", { class: "edge" }),
             el("span", { class: "pos" }, "—"),
             el("span", { class: "name faint" },
               done ? "Nichts mehr im Fach" : "Wird geladen…"))])

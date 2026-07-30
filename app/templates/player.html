@@ -1,98 +1,150 @@
 {% extends "base.html" %}
 {% block title %}{{ playlist_name or 'Lauf' }} · true-shuffle{% endblock %}
+{% block railstate %}LAUF {{ '%04d' % run_id }}{% endblock %}
 
 {% block content %}
-<section class="stack-s">
-    <div class="row">
-        <span class="signet" style="--brand: {{ provider.brand_color }}">{{ provider.display_name }}</span>
-        <span class="chip" id="runStatus">…</span>
-        <span class="chip hidden" id="watchStatus"></span>
+<section class="section">
+    <div class="index">
+        <b>01</b>
+        Lauf
     </div>
-    <h1>{{ playlist_name or 'Lauf' }}</h1>
-    {% if provider.live_mode_needs_open_tab %}
-    <p class="dim sm">
-        {{ provider.display_name }} lässt nur den eigenen Player steuern, also
-        läuft der Live-Modus hier im Tab. Deine Position wird nach jedem Titel
-        gespeichert — diese Seite zu schließen stoppt die Musik, nicht den Lauf.
-    </p>
-    {% else %}
-    <p class="dim sm">
-        Läuft auf deinem {{ provider.display_name }}-Gerät. true-shuffle rückt den
-        Trennstreifen vom Server aus weiter, du kannst diese Seite also schließen.
-        Ein Skip in {{ provider.display_name }} zählt als eine Karte, genau wie ein
-        Skip hier.
-    </p>
-    {% endif %}
+    <div class="body">
+        <div class="row">
+            <span class="signet" style="--brand: {{ provider.brand_color }}">{{ provider.display_name }}</span>
+            <span class="chip" id="runStatus">…</span>
+            {% if provider.live_mode_needs_open_tab %}
+            <span class="openness openness-tab">Tab muss offen bleiben</span>
+            {% else %}
+            <span class="openness openness-free">Nichts muss offen bleiben</span>
+            {% endif %}
+        </div>
+        <h1>{{ playlist_name or 'Lauf' }}</h1>
+        {% if provider.live_mode_needs_open_tab %}
+        <p class="dim sm">
+            {{ provider.display_name }} lässt nur den eigenen Player steuern, also
+            läuft der Live-Modus hier im Tab. Deine Position wird nach jedem Titel
+            gespeichert — diese Seite zu schließen stoppt die Musik, nicht den Lauf.
+        </p>
+        {% else %}
+        <p class="dim sm">
+            Läuft auf deinem {{ provider.display_name }}-Gerät. true-shuffle rückt den
+            Trennstreifen vom Server aus weiter, du kannst diese Seite also schließen.
+            Ein Skip in {{ provider.display_name }} zählt als eine Karte, genau wie ein
+            Skip hier.
+        </p>
+        {% endif %}
+        <div class="note hidden" id="playerNote"></div>
+    </div>
 </section>
 
-<div class="note hidden" id="playerNote"></div>
+<section class="section">
+    <div class="index">
+        <b>02</b>
+        Das Fach
+    </div>
+    <div class="body">
+        <div class="deck-layout">
+            <div class="bay">
+                <div class="bay-head">
+                    <span>Im Fach</span>
+                    <span class="bay-read" id="deckRead">—</span>
+                </div>
+                <div class="bay-body">
+                    <!-- The reading. What is LEFT is the subject of this product. -->
+                    <div class="reading" aria-live="polite">
+                        <span class="figure" id="deckLeft">0</span>
+                        <span class="unit">Karten übrig</span>
+                        <span class="of">von <span id="deckTotal">0</span> im Fach</span>
+                    </div>
 
-<div class="deck-layout">
-    <div class="console">
-        <div class="tag" aria-live="polite">
-            <div class="tag-title" id="nowTitle">Wird geladen…</div>
-            <div class="tag-artist" id="nowArtist"></div>
-            <div class="tag-cat">
-                <span class="stencil">Karte</span>
-                <span class="n" id="deckAt">0</span>
-                <span class="of">von <span id="deckTotal">0</span></span>
+                    <div class="crate">
+                        <div class="crate-row" id="rack" aria-hidden="true"></div>
+                        <div class="crate-scale" aria-hidden="true">
+                            <span>1</span>
+                            <span id="scaleEnd">—</span>
+                        </div>
+                    </div>
+
+                    <div class="card-out" aria-live="polite">
+                        <span class="pos"><span id="deckAt">0</span> · aus dem Fach</span>
+                        <span class="title" id="nowTitle">Wird geladen…</span>
+                        <span class="who" id="nowArtist"></span>
+                    </div>
+
+                    {% if provider.playback == 'remote_device' %}
+                    <label class="field">
+                        <span class="stencil">Abspielen auf</span>
+                        <select id="deviceSelect"></select>
+                    </label>
+                    {% endif %}
+
+                    {% if provider.playback == 'web_player' and provider.id != 'apple' %}
+                    <div id="ytmount"></div>
+                    {% endif %}
+
+                    <div class="transport">
+                        <button class="btn btn-primary" id="startBtn" type="button">Lauf starten</button>
+                        <button class="btn" id="prevBtn" type="button">Zurück</button>
+                        <button class="btn" id="nextBtn" type="button">Überspringen</button>
+                        <button class="btn" id="pauseBtn" type="button" disabled>Pause</button>
+                        <button class="btn btn-stop push" id="cancelBtn" type="button">Lauf beenden</button>
+                    </div>
+
+                    <div class="keys" aria-hidden="true">
+                        <span><kbd>Leer</kbd> Start / Pause</span>
+                        <span><kbd>→</kbd> Überspringen</span>
+                        <span><kbd>←</kbd> Zurück</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stack">
+                <div class="bay">
+                    <div class="bay-head">
+                        <span>Laufzettel</span>
+                        <span class="bay-read">NR. {{ '%04d' % run_id }}</span>
+                    </div>
+                    <div class="bay-body">
+                        <div class="ticket">
+                            <div><span class="k">Dienst</span><span class="v">{{ provider.display_name }}</span></div>
+                            <div><span class="k">Modus</span><span class="v">{{ 'Live' if mode == 'controller' else 'Handoff' }}</span></div>
+                            <div><span class="k">Quelle</span><span class="v">{{ playlist_name or '—' }}</span></div>
+                            <div><span class="k">Position</span><span class="v data" id="ticketPos">—</span></div>
+                            <div class="hidden" id="watchRow"><span class="k">Nachführung</span><span class="v" id="watchStatus"></span></div>
+                        </div>
+                        <a class="btn" href="/export/{{ run_id }}">Lauf exportieren</a>
+                        <p class="faint sm">
+                            Reihenfolge und Position lassen sich auf einen anderen
+                            Rechner mitnehmen. Die Datei enthält nie Zugangsdaten.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bay">
+                    <div class="bay-head">
+                        <span>Als Nächstes</span>
+                        <span class="bay-read" id="upnextRead">—</span>
+                    </div>
+                    <ol class="sleeves bay-body flush" id="upnext"></ol>
+                </div>
+
+                <div class="bay hidden" id="skippedBay">
+                    <div class="bay-head">
+                        <span>Nicht ins Fach gekommen</span>
+                        <span class="bay-read" id="skippedRead">—</span>
+                    </div>
+                    <div class="bay-body">
+                        <p class="faint sm">
+                            Diese Einträge sind nie Karten geworden, also verbraucht
+                            keiner von ihnen einen Platz im Fach.
+                        </p>
+                        <div id="skippedList" class="ticket sm"></div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="stack-s">
-            <div class="spread">
-                <span class="stencil">Im Fach</span>
-                <span class="num sm faint"><span id="deckLeft">0</span> übrig</span>
-            </div>
-            <div class="rack" id="rack" aria-hidden="true"></div>
-        </div>
-
-        {% if provider.playback == 'remote_device' %}
-        <label class="stack-s sm">
-            <span class="stencil">Abspielen auf</span>
-            <select id="deviceSelect"></select>
-        </label>
-        {% endif %}
-
-        {% if provider.id == 'youtube' %}
-        <div id="ytmount" style="border-radius: var(--r); overflow: hidden"></div>
-        {% endif %}
-
-        <div class="transport">
-            <button class="btn btn-primary" id="startBtn" type="button">Lauf starten</button>
-            <button class="btn" id="prevBtn" type="button">Zurück</button>
-            <button class="btn" id="nextBtn" type="button">Überspringen</button>
-            <button class="btn" id="pauseBtn" type="button" disabled>Pause</button>
-            <button class="btn btn-stop push" id="cancelBtn" type="button">Lauf beenden</button>
-        </div>
-
-        <div class="keys" aria-hidden="true">
-            <span><kbd>Leer</kbd> Start / Pause</span>
-            <span><kbd>→</kbd> Überspringen</span>
-            <span><kbd>←</kbd> Zurück</span>
-        </div>
     </div>
-
-    <div class="stack">
-        <div class="crate">
-            <span class="stencil">Als Nächstes</span>
-            <ol class="sleeves" id="upnext"></ol>
-        </div>
-
-        <div class="crate">
-            <span class="stencil">Dieser Lauf</span>
-            <details class="fold hidden" id="skippedBox">
-                <summary id="skippedSummary">Nicht ins Fach gekommen</summary>
-                <div id="skippedList" class="stack-s sm"></div>
-            </details>
-            <p class="faint sm">
-                Reihenfolge und Position lassen sich auf einen anderen Rechner
-                mitnehmen. Die Datei enthält nie Zugangsdaten.
-            </p>
-            <a class="btn" href="/export/{{ run_id }}">Lauf exportieren</a>
-        </div>
-    </div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -133,6 +185,11 @@ async function guard(fn) {
     }
 }
 
-guard(() => player.boot());
+// A page whose run will not load must say so and stop offering transport,
+// rather than leaving dead buttons under a frozen "Wird geladen…".
+player.boot().catch((err) => {
+    player.failed(err.message);
+    setNote($("#playerNote"), err.message, "note-stop", "Lauf nicht geladen");
+});
 </script>
 {% endblock %}

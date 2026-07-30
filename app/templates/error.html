@@ -1,14 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Nicht gefunden · true-shuffle{% endblock %}
+{% block railstate %}FEHLER {{ status }}{% endblock %}
 
 {% block content %}
-<section class="stack" style="max-width: 52ch">
-    <p class="stencil num">Fehler {{ status }}</p>
-    <h1>{% if status == 404 %}Hier ist nichts{% elif status == 401 %}Nicht angemeldet{% elif status == 409 %}Dienst nicht verbunden{% else %}Da ist etwas schiefgegangen{% endif %}</h1>
-    <p class="dim">{{ detail }}</p>
-    <div class="row">
-        <a class="btn btn-primary" href="/library">Zurück zu meinen Playlists</a>
-        <a class="btn" href="/connect">Dienste</a>
+<section class="section">
+    <div class="index">
+        <b class="data">{{ status }}</b>
+        Fehler
+    </div>
+    <div class="body" style="max-width: 54ch">
+        <h1>{% if status == 404 %}Hier ist nichts{% elif status == 401 %}Nicht angemeldet{% elif status == 409 %}Dienst nicht verbunden{% else %}Da ist etwas schiefgegangen{% endif %}</h1>
+        <p class="dim">{{ detail }}</p>
+        <div class="row">
+            <a class="btn btn-primary" href="/library">Zurück zu meinen Playlists</a>
+            <a class="btn" href="/connect">Dienste</a>
+        </div>
     </div>
 </section>
 {% endblock %}

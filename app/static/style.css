@@ -1,131 +1,164 @@
 /* ==========================================================================
-   true-shuffle — DER PLATTENSCHRANK
+   true-shuffle — DER LAUFZETTEL
 
-   The world is a record crate, not a card table. A run is a row of spines you
-   are working through, and a shop divider marks exactly where you are:
-   everything behind it is played, everything in front is still to come.
-   Moving that divider forward IS the advance.
+   The whole surface is the shop's own apparatus for working through a crate,
+   not a product UI with record vocabulary sprinkled on top. That distinction is
+   the entire point of this file, so it is worth stating what it costs:
 
-   Operate mode, so the world supplies grammar — spines, divider, catalogue
-   numbering, stencilled shop labels — while the execution stays a fast,
-   familiar product UI. No wood textures, no skeuomorphic shelf.
+   · Nothing is rounded and nothing casts a shadow. Separation is done with
+     hairlines and with labelled bays, the way a shelf ticket separates fields.
+   · Every region carries a header strip: a name on the left, a reading on the
+     right. A region with nothing to read still says so.
+   · Two typefaces, and the split is a rule rather than a preference. Archivo
+     speaks; Space Mono is allowed only for data — counts, positions, catalogue
+     numbers, durations, times, config keys. If it is a sentence it is not mono.
+   · Sections are numbered in the left margin, because a shop's bays are.
 
-   Colour is restrained: cool painted-crate neutrals carry the chrome, and one
-   fluorescent divider-card yellow is reserved for the current position and the
-   primary action. Nothing else is allowed to be bright. Spine tints are muted
-   printed-card tones so the remaining deck reads as material, not confetti.
+   The thesis decides the type scale: this product is not about the current
+   song, it is about how much of the crate is left. So the remaining count is
+   the largest thing on the run page, set as a display figure, and the song
+   title is set at reading size. Inverting that would be a different product.
+
+   Colour is nearly absent by design. Cool painted-crate neutrals carry
+   everything; one fluorescent divider-card yellow is spent on exactly three
+   things — the divider, the current bay, the primary action — and nothing else
+   is permitted to be bright.
+   ========================================================================== */
+
+/* Self-hosted, SIL Open Font License. See fonts/README.md. */
+@font-face {
+  font-family: "Archivo";
+  src: url("/static/fonts/archivo-var-latin.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("/static/fonts/spacemono-400-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("/static/fonts/spacemono-700-latin.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+}
+
+/* ==========================================================================
+   TOKENS
    ========================================================================== */
 
 :root {
   color-scheme: dark;
 
-  /* Painted crate, cool and matte. */
-  --ground:      #15181c;
-  --crate:       #1b1f25;
-  --crate-2:     #232830;
-  --crate-3:     #2c323b;
-  --rule:        rgba(236, 234, 228, 0.11);
-  --rule-2:      rgba(236, 234, 228, 0.20);
+  /* Painted crate, cool and matte. Never wood, never cream paper. */
+  --ground:    #14171a;
+  --bay:       #1a1e22;
+  --bay-2:     #22272c;
+  --bay-3:     #2b3138;
 
-  /* Sleeve card and printed labels. */
-  --ink:         #eceae4;
-  --ink-2:       rgba(236, 234, 228, 0.64);
-  --ink-3:       rgba(236, 234, 228, 0.58);
+  --rule:      rgba(233, 231, 223, 0.13);
+  --rule-hard: rgba(233, 231, 223, 0.30);
 
-  /* The divider tab. Current position and primary action only. */
-  --tab:         #e4ff3f;
-  --tab-ink:     #1a1d08;
-  --tab-line:    #e4ff3f;
-  --tab-dim:     rgba(228, 255, 63, 0.14);
+  --ink:       #e9e7df;
+  --ink-2:     rgba(233, 231, 223, 0.72);
+  --ink-3:     rgba(233, 231, 223, 0.55);
 
-  --ok:          #6bd6a0;
-  --stop:        #ff6b6b;
+  /* The divider card. Current position, current bay, primary action. */
+  --tab:       #e8ff43;
+  --tab-ink:   #191d05;
+  --tab-line:  #e8ff43;
+  --tab-wash:  rgba(232, 255, 67, 0.13);
+  --tab-edge:  1px;
 
-  /* Printed card stock for spines — deliberately desaturated. */
-  --spine-1: #8c5a4a;
-  --spine-2: #97803f;
-  --spine-3: #5f7a5c;
-  --spine-4: #4e6b82;
-  --spine-5: #7a5f7d;
-  --spine-6: #8a8377;
+  /* Spines. What is LEFT is loud; what is played lies down and goes quiet. */
+  --spine:      #6a7681;
+  --spine-done: rgba(233, 231, 223, 0.16);
 
-  --r:  6px;
-  --r2: 10px;
+  --ok:   #74d9a5;
+  --stop: #ff7a72;
 
-  --measure: 66ch;
-  --page:    1180px;
+  --measure: 64ch;
+  --page:    1320px;
+  --gutter:  92px;
 
-  /* One family. Mono only where digits must line up. */
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Fixed product scale, ratio ~1.18. No fluid headings. */
-  --t-xs: 0.6875rem;
-  --t-sm: 0.8125rem;
-  --t-md: 0.9375rem;
-  --t-lg: 1.125rem;
-  --t-xl: 1.375rem;
-  --t-2x: 1.75rem;
-  --t-3x: 2.25rem;
+  /* Fixed scale. The display step exists for one figure: what is left. */
+  --t-xs:  0.6875rem;
+  --t-sm:  0.8125rem;
+  --t-md:  0.9375rem;
+  --t-lg:  1.0625rem;
+  --t-xl:  1.375rem;
+  --t-2x:  1.875rem;
+  --t-3x:  2.75rem;
+  --t-disp: 4.25rem;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
     color-scheme: light;
-    /* The same crate under shop daylight: cool painted ply, never cream paper. */
-    --ground:  #e4e7e5;
-    --crate:   #f3f5f4;
-    --crate-2: #d9dddb;
-    --crate-3: #c7cccb;
-    --rule:    rgba(18, 24, 22, 0.14);
-    --rule-2:  rgba(18, 24, 22, 0.26);
-    --ink:     #12181a;
-    --ink-2:   rgba(18, 24, 26, 0.68);
-    --ink-3:   rgba(18, 24, 26, 0.62);
-    /* The card stays fluorescent under daylight; only its ink darkens. */
-    --tab:      #e3f04a;
-    --tab-ink:  #23260a;
-    --tab-line: #63700a;
-    --tab-dim:  rgba(99, 112, 10, 0.14);
-    --ok:      #1c7a51;
-    --stop:    #b83232;
-    --spine-1: #a8705d;
-    --spine-2: #b09650;
-    --spine-3: #6f8f6b;
-    --spine-4: #5d7f99;
-    --spine-5: #8f728f;
-    --spine-6: #9d968a;
+    --ground:    #e5e8e3;
+    --bay:       #f5f6f3;
+    --bay-2:     #dcdfd8;
+    --bay-3:     #cbcfc7;
+    --rule:      rgba(17, 22, 24, 0.16);
+    --rule-hard: rgba(17, 22, 24, 0.34);
+    --ink:       #12171a;
+    --ink-2:     rgba(18, 23, 26, 0.74);
+    --ink-3:     rgba(18, 23, 26, 0.68);
+    --tab:       #e2ee46;
+    --tab-ink:   #1d2105;
+    --tab-line:  #4f5a06;
+    --tab-wash:  rgba(79, 90, 6, 0.14);
+    --tab-edge:  2px;
+    --spine:      #7c857d;
+    --spine-done: rgba(17, 22, 24, 0.16);
+    --ok:   #14663f;
+    --stop: #a82a26;
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ground: #15181c; --crate: #1b1f25; --crate-2: #232830; --crate-3: #2c323b;
-  --rule: rgba(236,234,228,.11); --rule-2: rgba(236,234,228,.20);
-  --ink: #eceae4; --ink-2: rgba(236,234,228,.64); --ink-3: rgba(236,234,228,.58);
-  --tab: #e4ff3f; --tab-ink: #1a1d08; --tab-line: #e4ff3f; --tab-dim: rgba(228,255,63,.14);
-  --ok: #6bd6a0; --stop: #ff6b6b;
-  --spine-1: #8c5a4a; --spine-2: #97803f; --spine-3: #5f7a5c;
-  --spine-4: #4e6b82; --spine-5: #7a5f7d; --spine-6: #8a8377;
+  --ground: #14171a; --bay: #1a1e22; --bay-2: #22272c; --bay-3: #2b3138;
+  --rule: rgba(233,231,223,.13); --rule-hard: rgba(233,231,223,.30);
+  --ink: #e9e7df; --ink-2: rgba(233,231,223,.72); --ink-3: rgba(233,231,223,.55);
+  --tab: #e8ff43; --tab-ink: #191d05; --tab-line: #e8ff43; --tab-wash: rgba(232,255,67,.13); --tab-edge: 1px;
+  --spine: #6a7681; --spine-done: rgba(233,231,223,.16);
+  --ok: #74d9a5; --stop: #ff7a72;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --ground: #e4e7e5; --crate: #f3f5f4; --crate-2: #d9dddb; --crate-3: #c7cccb;
-  --rule: rgba(18,24,22,.14); --rule-2: rgba(18,24,22,.26);
-  --ink: #12181a; --ink-2: rgba(18,24,26,.68); --ink-3: rgba(18,24,26,.62);
-  --tab: #e3f04a; --tab-ink: #23260a; --tab-line: #63700a; --tab-dim: rgba(99,112,10,.14);
-  --ok: #1c7a51; --stop: #b83232;
-  --spine-1: #a8705d; --spine-2: #b09650; --spine-3: #6f8f6b;
-  --spine-4: #5d7f99; --spine-5: #8f728f; --spine-6: #9d968a;
+  --ground: #e5e8e3; --bay: #f5f6f3; --bay-2: #dcdfd8; --bay-3: #cbcfc7;
+  --rule: rgba(17,22,24,.16); --rule-hard: rgba(17,22,24,.34);
+  --ink: #12171a; --ink-2: rgba(18,23,26,.74); --ink-3: rgba(18,23,26,.68);
+  --tab: #e2ee46; --tab-ink: #1d2105; --tab-line: #4f5a06; --tab-wash: rgba(79,90,6,.14); --tab-edge: 2px;
+  --spine: #7c857d; --spine-done: rgba(17,22,24,.16);
+  --ok: #14663f; --stop: #a82a26;
 }
 
-/* ========================================================================== */
+/* ==========================================================================
+   GROUND
+   ========================================================================== */
 
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
   margin: 0;
+  min-width: 320px;
   font-family: var(--sans);
   font-size: var(--t-md);
   line-height: 1.5;
@@ -134,40 +167,62 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { margin: 0; line-height: 1.18; letter-spacing: -0.018em; text-wrap: balance; }
+h1, h2, h3 {
+  margin: 0;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  text-wrap: balance;
+}
 h1 { font-size: var(--t-2x); }
 h2 { font-size: var(--t-xl); }
 h3 { font-size: var(--t-lg); }
 p  { margin: 0; max-width: var(--measure); }
 ul, ol { list-style: none; margin: 0; padding: 0; }
-a { color: inherit; }
+a  { color: inherit; }
+code { font-family: var(--mono); font-size: 0.9em; }
 
-:focus-visible { outline: 2px solid var(--tab-line); outline-offset: 2px; border-radius: 3px; }
+button, input, select { font: inherit; border-radius: 0; }
 
-/* Stencilled shop lettering: the crate's own label voice. */
+:focus-visible { outline: 3px solid var(--tab-line); outline-offset: 2px; }
+
+.hidden { display: none !important; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* -- the two voices ------------------------------------------------------- */
+
+/* Shop lettering: bay names, field keys, column heads. */
 .stencil {
   font-size: var(--t-xs);
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.17em;
   text-transform: uppercase;
   color: var(--ink-3);
+}
+
+/* Data. Mono is reserved for this and nothing else. */
+.data, .num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .dim   { color: var(--ink-2); }
 .faint { color: var(--ink-3); }
 .sm    { font-size: var(--t-sm); }
-.num   { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
-/* -- shell ---------------------------------------------------------------- */
+/* ==========================================================================
+   SHOPFRONT — the fascia and the operating rail
+   ========================================================================== */
 
-.masthead {
+.shopfront {
   display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 0 20px;
-  height: 54px;
-  border-bottom: 1px solid var(--rule);
-  background: var(--crate);
+  align-items: stretch;
+  border-bottom: 1px solid var(--rule-hard);
+  background: var(--bay);
   position: sticky;
   top: 0;
   z-index: 30;
@@ -176,196 +231,321 @@ a { color: inherit; }
 .wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  font-weight: 700;
-  font-size: var(--t-md);
-  letter-spacing: -0.02em;
+  gap: 11px;
+  padding: 0 20px;
+  font-weight: 800;
+  font-size: var(--t-lg);
+  letter-spacing: -0.03em;
   text-decoration: none;
   white-space: nowrap;
+  border-right: 1px solid var(--rule);
   flex: none;
 }
 
-/* Spines in a crate, one pulled proud: the product as a 20px mark. */
-.mark { display: flex; align-items: flex-end; gap: 2px; height: 17px; }
-.mark i { display: block; width: 3px; height: 12px; border-radius: 1px; background: var(--ink-3); }
-.mark i:nth-child(3) { height: 17px; background: var(--tab-line); }
+/* Spines in a crate, one pulled proud: the product as a 22px mark. */
+.mark { display: flex; align-items: flex-end; gap: 2px; height: 20px; }
+.mark i { display: block; width: 3px; height: 14px; background: var(--ink-3); }
+.mark i:nth-child(3) { height: 20px; background: var(--tab-line); }
 
-.masthead nav { display: flex; gap: 2px; margin-left: auto; align-items: center; min-width: 0; }
-.masthead .links { display: flex; gap: 2px; min-width: 0; }
-.masthead nav a {
+/* Register tabs, sitting on the fascia rather than floating above it. */
+.register { display: flex; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.register::-webkit-scrollbar { display: none; }
+.register a {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  min-height: 52px;
   text-decoration: none;
   color: var(--ink-2);
   font-size: var(--t-sm);
-  font-weight: 550;
-  padding: 6px 11px;
-  border-radius: var(--r);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-right: 1px solid var(--rule);
 }
-.masthead nav a:hover { color: var(--ink); background: var(--crate-2); }
-.masthead nav a[aria-current="page"] { color: var(--ink); background: var(--crate-2); }
+.register a:hover { color: var(--ink); background: var(--bay-2); }
+.register a[aria-current="page"] { color: var(--tab-ink); background: var(--tab); }
 
-.page {
+.shopfront .trailing { margin-left: auto; display: flex; align-items: stretch; }
+
+/* The operating rail: what this system is doing, stated in data. */
+.opsrail {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 7px 20px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--ground);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+.opsrail b { color: var(--ink-2); font-weight: 700; }
+.opsrail .push { margin-left: auto; }
+
+/* ==========================================================================
+   SHEET — the page, and its numbered margin
+   ========================================================================== */
+
+.sheet {
   max-width: var(--page);
   margin: 0 auto;
-  padding: 28px 20px 96px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+  padding: 0 20px 96px;
 }
 
-.stack  { display: flex; flex-direction: column; gap: 14px; }
-.stack-s{ display: flex; flex-direction: column; gap: 6px; }
-.row    { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-.spread { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/*
+ * A section is a numbered bay. The number lives in the margin, the way a shelf
+ * ticket carries it, and the heading keeps the full measure.
+ */
+.section {
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr);
+  gap: 0 24px;
+  padding: 30px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.section:last-child { border-bottom: 0; }
+.section > .index {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  color: var(--ink-3);
+  padding-top: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.section > .index b { display: block; color: var(--ink-2); font-size: var(--t-sm); font-weight: 700; }
+.section > .body { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
-/* -- controls ------------------------------------------------------------- */
+.stack   { display: flex; flex-direction: column; gap: 14px; }
+.stack-s { display: flex; flex-direction: column; gap: 6px; }
+.row     { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.spread  { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+
+/* ==========================================================================
+   BAY — every region is named and gives a reading
+   ========================================================================== */
+
+.bay {
+  border: 1px solid var(--rule);
+  background: var(--bay);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bay-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bay-2);
+}
+.bay-head > :first-child {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.bay-read {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+  text-align: right;
+  white-space: nowrap;
+}
+.bay-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.bay-body.flush { padding: 0; }
+
+.grid   { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
+.grid-2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); }
+
+/* ==========================================================================
+   TICKET — the Laufzettel: key/value rows, the shop's own record
+   ========================================================================== */
+
+.ticket { display: flex; flex-direction: column; }
+.ticket > div {
+  display: grid;
+  grid-template-columns: 13ch minmax(0, 1fr);
+  gap: 14px;
+  padding: 7px 0;
+  align-items: baseline;
+}
+.ticket > div + div { border-top: 1px solid var(--rule); }
+.ticket dt, .ticket .k {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ticket dd, .ticket .v { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.ticket .v.data { font-size: var(--t-sm); }
+.ticket .v.ok    { color: var(--ok); }
+.ticket .v.stop  { color: var(--stop); }
+.ticket .v.faint { color: var(--ink-3); }
+.ticket.sm > div { grid-template-columns: 16ch minmax(0, 1fr); font-size: var(--t-sm); }
+
+/* ==========================================================================
+   CONTROLS
+   ========================================================================== */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: var(--r);
-  border: 1px solid var(--rule-2);
-  background: var(--crate-2);
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--rule-hard);
+  background: transparent;
   color: var(--ink);
-  font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--t-sm);
+  letter-spacing: 0.03em;
   text-decoration: none;
   cursor: pointer;
   transition: background-color .12s ease, border-color .12s ease, color .12s ease;
 }
-.btn:hover:not(:disabled) { background: var(--crate-3); }
-.btn:active:not(:disabled) { background: var(--crate-3); transform: translateY(1px); }
-.btn:disabled {
-  cursor: not-allowed;
-  background: var(--crate-2);
-  border-color: var(--rule);
-  color: var(--ink-3);
-  filter: none;
-}
+.btn:hover:not(:disabled) { background: var(--bay-2); }
+.btn:active:not(:disabled) { background: var(--bay-3); }
+.btn:disabled { cursor: not-allowed; border-color: var(--rule); color: var(--ink-3); }
 
 .btn-primary { background: var(--tab); border-color: var(--tab); color: var(--tab-ink); }
-.btn-primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--tab); }
+.btn-primary:hover:not(:disabled) { background: var(--tab); border-color: var(--ink); }
+.btn-primary:disabled { background: var(--bay-2); border-color: var(--rule); color: var(--ink-3); }
 
-.btn-quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
-.btn-quiet:hover:not(:disabled) { color: var(--ink); background: var(--crate-2); }
+.btn-quiet { border-color: transparent; color: var(--ink-2); }
+.btn-quiet:hover:not(:disabled) { color: var(--ink); background: var(--bay-2); }
 
-.btn-stop { background: transparent; color: var(--stop); border-color: var(--rule-2); }
+.btn-stop { color: var(--stop); border-color: var(--rule-hard); }
 .btn-stop:hover:not(:disabled) { border-color: var(--stop); background: transparent; }
 
-.btn-lg { min-height: 42px; padding: 0 20px; font-size: var(--t-md); }
+.btn-lg { min-height: 46px; padding: 0 22px; font-size: var(--t-md); }
+
+/* A control that lives in the fascia matches the fascia, not the page. */
+.shopfront .btn {
+  border: 0;
+  border-left: 1px solid var(--rule);
+  min-height: 52px;
+  padding: 0 16px;
+  color: var(--ink-2);
+}
+.shopfront .btn:hover { background: var(--bay-2); color: var(--ink); }
 
 kbd {
   font-family: var(--mono);
   font-size: var(--t-xs);
   padding: 1px 5px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-2);
+  border: 1px solid var(--rule-hard);
   border-bottom-width: 2px;
-  background: var(--crate-2);
   color: var(--ink-2);
 }
 
-select, input[type="text"], input[type="search"], input[type="file"] {
-  min-height: 36px;
+select, input[type="text"], input[type="search"], input[type="file"], textarea {
+  min-height: 40px;
   width: 100%;
-  padding: 0 10px;
-  border-radius: var(--r);
-  border: 1px solid var(--rule-2);
-  background: var(--crate-2);
+  padding: 0 12px;
+  border: 1px solid var(--rule-hard);
+  background: var(--ground);
   color: var(--ink);
-  font: inherit;
   font-size: var(--t-sm);
 }
-input[type="file"] { padding: 6px 10px; }
-select:hover, input:hover { border-color: var(--rule-2); }
+textarea { padding: 10px 12px; font-family: var(--mono); line-height: 1.5; resize: vertical; }
+input[type="file"] { padding: 8px 12px; }
 
-/* -- crate panels ---------------------------------------------------------- */
+label.field { display: flex; flex-direction: column; gap: 5px; }
 
-.crate {
-  background: var(--crate);
-  border: 1px solid var(--rule);
-  border-radius: var(--r2);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* A label standing in for a file input needs the focus ring the input would
+   have had, since the input itself is off-screen. */
+input.sr-only:focus-visible + label.btn { outline: 3px solid var(--tab-line); outline-offset: 2px; }
+
+.row .push { margin-left: auto; }
+
+/* ==========================================================================
+   MARKS AND STATES
+   ========================================================================== */
+
+/* The service signet: a stamped square. Never an edge stripe on a panel. */
+.signet {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.signet::before {
+  content: "";
+  width: 10px; height: 10px;
+  flex: none;
+  background: var(--brand, var(--ink-3));
 }
 
-.grid   { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(292px, 1fr)); }
-.grid-2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--rule-hard);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.chip-live { color: var(--tab-ink); background: var(--tab); border-color: var(--tab); }
+.chip-ok   { color: var(--ok);   border-color: var(--ok); }
+.chip-stop { color: var(--stop); border-color: var(--stop); }
+.chip-off  { color: var(--ink-3); }
 
-/* The service signet: a stamped square, never an edge stripe. */
-.signet {
+/*
+ * Does anything have to stay open? The question this product hangs on, so it
+ * gets its own mark rather than being buried in a paragraph.
+ */
+.openness {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   font-size: var(--t-xs);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-}
-.signet::before {
-  content: "";
-  width: 9px; height: 9px;
-  border-radius: 2px;
-  background: var(--brand, var(--ink-3));
-}
-
-/* -- state chips ---------------------------------------------------------- */
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border: 1px solid var(--rule-2);
-  color: var(--ink-2);
+  padding: 4px 9px;
+  border: 1px solid transparent;
   white-space: nowrap;
 }
-.chip-live { color: var(--tab-line); border-color: var(--tab-line); background: transparent; }
-.chip-ok   { color: var(--ok);   border-color: var(--ok); }
-.chip-stop { color: var(--stop); border-color: var(--stop); }
-.chip-off  { color: var(--ink-3); }
+.openness::before { content: ""; width: 7px; height: 7px; flex: none; }
+.openness-free { color: var(--ok);  border-color: var(--ok); }
+.openness-free::before { background: var(--ok); }
+.openness-tab  { color: var(--ink-2); border-color: var(--rule-hard); }
+.openness-tab::before { background: var(--ink-3); }
 
-/* Does anything have to stay open — the question this product hangs on. */
-.openness {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 3px 8px;
-  border-radius: 3px;
-}
-.openness-free { color: var(--ok);  background: color-mix(in srgb, var(--ok) 15%, transparent); }
-.openness-tab  { color: var(--ink); background: var(--crate-3); }
-
-/* -- notices (no edge stripes) -------------------------------------------- */
-
+/* Notices. The stencilled label carries severity; no coloured edge stripes. */
 .note {
-  border: 1px solid var(--rule-2);
-  border-radius: var(--r);
-  padding: 11px 13px;
-  background: var(--crate);
+  border: 1px solid var(--rule-hard);
+  padding: 12px 14px;
+  background: var(--bay);
   font-size: var(--t-sm);
   color: var(--ink-2);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
-.note > .stencil { color: var(--ink-3); }
-.note strong { color: var(--ink); font-weight: 650; }
+.note strong { color: var(--ink); font-weight: 700; }
 .note-stop { border-color: var(--stop); }
 .note-stop > .stencil { color: var(--stop); }
 .note-ok { border-color: var(--ok); }
@@ -374,83 +554,134 @@ select:hover, input:hover { border-color: var(--rule-2); }
 /* ==========================================================================
    THE CRATE — the deck as spines, with a divider that travels
 
-   The divider is one absolutely positioned element, not a bar re-inserted into
-   a rebuilt row: "moving that divider forward IS the advance", so it has to
-   actually move. Bars are only re-rendered when the deck's size changes.
+   This is the largest element on the run page, because it is the subject. One
+   bar per card; what is still to come stands upright and solid, what is played
+   lies flat and goes quiet. The divider is a single absolutely positioned card
+   whose tab rises clear of the row: moving it forward IS the advance, so it
+   moves rather than being re-inserted into a rebuilt row.
 
-   No tint on the bars. Six hash-derived colours looked like an encoding and
-   meant nothing, which is worse than one colour. In the rack the divider is
-   the only colour, and it means exactly one thing: you are here.
+   The bars are the only geometry that matters, so the divider is placed from a
+   measured bar offset rather than a percentage of the padded box, and it
+   travels on `transform` rather than on `left`.
    ========================================================================== */
 
-.rack {
+.crate {
+  border: 1px solid var(--rule);
+  background: var(--ground);
+  padding: 22px 16px 14px;
+}
+
+.crate-row {
   position: relative;
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  height: 52px;
-  padding: 8px 10px;
-  border-radius: var(--r);
-  background: var(--ground);
-  overflow: hidden;
+  height: 132px;
 }
 
-.rack i {
+.crate-row i {
   display: block;
   flex: 1 1 0;
   min-width: 2px;
-  height: 24px;
-  border-radius: 1px 1px 0 0;
-  background: var(--crate-3);
+  /* A spine is thin. Without a ceiling a short deck renders fat blocks, which
+     read as a bar chart — the one thing this element must not look like. */
+  max-width: 13px;
+  height: 104px;
+  background: var(--spine);
 }
-/* Played sleeves lie flat behind the divider. */
-.rack i[data-played] { height: 11px; background: var(--rule-2); }
+/* Played sleeves lie flat behind the divider and stop competing. */
+.crate-row i[data-played] { height: 18px; background: var(--spine-done); }
 
-.rack .divider {
+.crate-divider {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  width: 4px;
+  top: -16px;
+  bottom: 0;
+  left: 0;
+  width: 5px;
   margin-left: -2px;
-  border-radius: 2px;
   background: var(--tab);
-  /* An outline so the cursor never depends on chroma alone. */
-  outline: 1px solid var(--tab-line);
-  transition: left .18s cubic-bezier(.2,.7,.3,1);
+  /* Outlined, so the cursor never depends on chroma alone. */
+  outline: var(--tab-edge) solid var(--tab-line);
+  transition: transform .2s cubic-bezier(.2,.7,.3,1);
 }
-@media (prefers-reduced-motion: reduce) { .rack .divider { transition: none; } }
+/* The divider card's tab, standing proud of the spines. */
+.crate-divider::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -11px;
+  width: 27px;
+  height: 11px;
+  background: var(--tab);
+  outline: var(--tab-edge) solid var(--tab-line);
+}
+@media (prefers-reduced-motion: reduce) { .crate-divider { transition: none; } }
 
-/* -- the catalogue tag: now playing ---------------------------------------- */
+.crate-scale {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 7px;
+  margin-top: 7px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
 
-.tag {
-  padding: 0 0 14px;
-  border-bottom: 1px solid var(--rule);
+/* ==========================================================================
+   THE READING — what is left, as the display figure
+   ========================================================================== */
+
+.reading {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px 16px;
-  align-items: start;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 6px 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule-hard);
 }
-.tag-title {
-  grid-column: 1;
-  font-size: var(--t-xl);
-  font-weight: 650;
-  letter-spacing: -0.02em;
+.reading .figure {
+  grid-row: 1 / span 2;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: var(--t-disp);
+  line-height: 0.82;
+  letter-spacing: -0.055em;
+  color: var(--ink);
+}
+.reading .unit {
+  grid-column: 2;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.reading .of {
+  grid-column: 2;
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  color: var(--ink-2);
+}
+
+/* The card currently out of the crate. Reading size — it is not the subject. */
+.card-out { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.card-out .title {
+  font-size: var(--t-lg);
+  font-weight: 700;
+  letter-spacing: -0.015em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.tag-artist { grid-column: 1; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Catalogue number, the way a sleeve carries it: top right, mono, quiet. */
-.tag-cat { grid-column: 2; grid-row: 1 / span 2; text-align: right; }
-.tag-cat .n { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: var(--t-2x); font-weight: 600; letter-spacing: -0.04em; display: block; line-height: 1; }
-.tag-cat .of { font-family: var(--mono); font-size: var(--t-sm); color: var(--ink-3); }
-
-.console {
-  background: var(--crate);
-  border: 1px solid var(--rule);
-  border-radius: var(--r2);
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.card-out .who {
+  color: var(--ink-2);
+  font-size: var(--t-sm);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-out .pos {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
 }
 
 .transport { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -458,106 +689,142 @@ select:hover, input:hover { border-color: var(--rule-2); }
 
 .keys { display: none; }
 @media (pointer: fine) {
-  .keys { display: flex; gap: 12px; flex-wrap: wrap; color: var(--ink-3); font-size: var(--t-xs); }
+  .keys {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    color: var(--ink-3); font-size: var(--t-xs);
+  }
 }
 
-.deck-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(272px, 1fr); gap: 20px; align-items: start; }
-@media (max-width: 900px) { .deck-layout { grid-template-columns: 1fr; } }
+.deck-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(min(290px, 100%), 1fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 940px) { .deck-layout { grid-template-columns: 1fr; } }
 
-/* -- the queue, read as sleeves in the crate ------------------------------ */
+/* ==========================================================================
+   SLEEVES — the queue, read as cards still in the crate
+   ========================================================================== */
 
 .sleeves li {
   display: grid;
-  grid-template-columns: 3px 3.5ch minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  padding: 7px 0;
+  grid-template-columns: 4.5ch minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 14px;
   font-size: var(--t-sm);
 }
 .sleeves li + li { border-top: 1px solid var(--rule); }
-/* Tinted by ARTIST, so a cluster of one artist ahead of you is visible. */
-.sleeves .edge { width: 3px; height: 26px; border-radius: 1px; background: var(--crate-3); }
-.sleeves .edge[data-t="1"] { background: var(--spine-1); }
-.sleeves .edge[data-t="2"] { background: var(--spine-2); }
-.sleeves .edge[data-t="3"] { background: var(--spine-3); }
-.sleeves .edge[data-t="4"] { background: var(--spine-4); }
-.sleeves .edge[data-t="5"] { background: var(--spine-5); }
-.sleeves .edge[data-t="6"] { background: var(--spine-6); }
-.sleeves .pos  { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-3); font-size: var(--t-xs); }
+.sleeves .pos {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
 .sleeves .name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sleeves .who  { display: block; color: var(--ink-3); font-size: var(--t-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sleeves .who {
+  display: block; color: var(--ink-3); font-size: var(--t-xs);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
-/* -- browsing the crate: playlist picker ---------------------------------- */
+/* ==========================================================================
+   BROWSING — the playlist picker, read as a shelf of records
+   ========================================================================== */
 
-.browse { display: flex; flex-direction: column; gap: 1px; max-height: 54vh; overflow-y: auto; }
+.browse { display: flex; flex-direction: column; max-height: 58vh; overflow-y: auto; }
 
 .record {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  padding: 9px 10px;
-  border: 1px solid transparent;
-  border-radius: var(--r);
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
   background: none;
   color: inherit;
-  font: inherit;
   text-align: left;
   cursor: pointer;
   width: 100%;
 }
-.record:hover { background: var(--crate-2); }
-.record[aria-pressed="true"] { background: var(--tab-dim); border-color: var(--tab-line); }
+.record:hover { background: var(--bay-2); }
+.record[aria-pressed="true"] { background: var(--tab-wash); }
+.record[aria-pressed="true"] .meta b { color: var(--ink); }
 .record .meta { min-width: 0; }
-.record .meta b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.record .meta b {
+  display: block; font-weight: 700; font-size: var(--t-sm);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .record .n { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-3); font-size: var(--t-sm); }
 
-/* -- mode choice ---------------------------------------------------------- */
+/* ==========================================================================
+   MODE CHOICE
+   ========================================================================== */
 
-.modes { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); }
+.modes { display: grid; gap: 12px; }
 
 .mode {
   text-align: left;
-  background: var(--crate);
-  border: 1px solid var(--rule-2);
-  border-radius: var(--r2);
-  padding: 14px;
-  font: inherit;
+  background: var(--bay);
+  border: 1px solid var(--rule);
+  padding: 0;
   color: inherit;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  transition: border-color .12s ease, background-color .12s ease;
+  transition: border-color .12s ease;
 }
-.mode:hover:not(:disabled) { background: var(--crate-2); }
-.mode[aria-pressed="true"] { border-color: var(--tab-line); background: var(--tab-dim); }
-.mode:disabled { opacity: .42; cursor: not-allowed; }
-.mode h3 { font-size: var(--t-md); }
-.mode p { font-size: var(--t-sm); color: var(--ink-2); }
+.mode:hover:not(:disabled) { border-color: var(--rule-hard); }
+.mode[aria-pressed="true"] { border-color: var(--tab-line); }
+.mode[aria-pressed="true"] .mode-head { background: var(--tab); color: var(--tab-ink); }
+.mode[aria-pressed="true"] .mode-head .stencil { color: var(--tab-ink); }
+.mode:disabled { opacity: .45; cursor: not-allowed; }
+.mode-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bay-2);
+}
+.mode-head h3 { font-size: var(--t-md); }
+.mode-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; }
+.mode-body p { font-size: var(--t-sm); color: var(--ink-2); }
 
-/* -- service tabs --------------------------------------------------------- */
+/* ==========================================================================
+   TABS, TABLES, PROGRESS
+   ========================================================================== */
 
-.tabs { display: inline-flex; padding: 2px; gap: 2px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--crate); }
+.tabs { display: inline-flex; border: 1px solid var(--rule-hard); }
 .tabs button {
-  border: 0; background: none; color: var(--ink-2);
-  font: inherit; font-size: var(--t-sm); font-weight: 600;
-  padding: 5px 12px; border-radius: 4px; cursor: pointer;
+  border: 0;
+  border-right: 1px solid var(--rule-hard);
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  cursor: pointer;
 }
-.tabs button:hover:not([aria-pressed="true"]) { color: var(--ink); background: var(--crate-2); }
+.tabs button:last-child { border-right: 0; }
+.tabs button:hover:not([aria-pressed="true"]) { color: var(--ink); background: var(--bay-2); }
 .tabs button[aria-pressed="true"] { background: var(--tab); color: var(--tab-ink); }
-.tabs button[aria-pressed="true"]:hover { background: var(--tab); }
-
-/* -- ledger tables -------------------------------------------------------- */
 
 .scroll-x { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-th { color: var(--ink-3); font-weight: 700; font-size: var(--t-xs); letter-spacing: 0.11em; text-transform: uppercase; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th {
+  color: var(--ink-3); font-weight: 700; font-size: var(--t-xs);
+  letter-spacing: 0.13em; text-transform: uppercase;
+  background: var(--bay-2);
+}
 td.n, th.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
 tbody tr:last-child td { border-bottom: 0; }
-
-/* -- progress & empty states ---------------------------------------------- */
+tbody tr:hover td { background: var(--bay-2); }
 
 .status {
   font-family: var(--mono);
@@ -565,21 +832,20 @@ tbody tr:last-child td { border-bottom: 0; }
   color: var(--ink-2);
   background: var(--ground);
   border: 1px solid var(--rule);
-  border-radius: var(--r);
-  padding: 10px 12px;
-  min-height: 40px;
+  padding: 11px 13px;
+  min-height: 42px;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 
-/* Skeleton rows, not a spinner adrift in the content area. */
-.skeleton { display: flex; flex-direction: column; gap: 1px; }
+/* Skeleton rows rather than a spinner adrift in an empty area. */
+.skeleton { display: flex; flex-direction: column; }
 .skeleton i {
   display: block;
-  height: 48px;
-  border-radius: var(--r);
-  background: linear-gradient(90deg, var(--crate-2) 0%, var(--crate-3) 50%, var(--crate-2) 100%);
+  height: 44px;
+  border-bottom: 1px solid var(--rule);
+  background: linear-gradient(90deg, var(--bay) 0%, var(--bay-2) 50%, var(--bay) 100%);
   background-size: 200% 100%;
   animation: sweep 1.4s linear infinite;
 }
@@ -587,21 +853,21 @@ tbody tr:last-child td { border-bottom: 0; }
 
 .spinner {
   width: 11px; height: 11px; flex: none;
-  border-radius: 50%;
-  border: 2px solid var(--rule-2);
+  border: 2px solid var(--rule-hard);
   border-top-color: var(--tab-line);
+  border-radius: 50%;
   animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .empty {
-  padding: 26px 18px;
+  padding: 30px 18px;
   text-align: center;
   color: var(--ink-3);
   font-size: var(--t-sm);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -609,7 +875,7 @@ details.fold > summary {
   cursor: pointer;
   font-size: var(--t-sm);
   color: var(--ink-2);
-  padding: 5px 0;
+  padding: 6px 0;
   list-style: none;
 }
 details.fold > summary::-webkit-details-marker { display: none; }
@@ -617,55 +883,104 @@ details.fold > summary::before { content: "+ "; font-family: var(--mono); color:
 details.fold[open] > summary::before { content: "− "; }
 details.fold > summary:hover { color: var(--ink); }
 
-.hidden { display: none !important; }
-.sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
 
-/* -- entrance ------------------------------------------------------------- */
+/* ==========================================================================
+   ENTRANCE — the crate stated at full size, before anything is connected
+   ========================================================================== */
 
-.hero { display: flex; flex-direction: column; gap: 16px; }
-.hero h1 { font-size: var(--t-3x); max-width: 17ch; }
-.hero .lede { font-size: var(--t-lg); color: var(--ink-2); max-width: 50ch; }
+.opening {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(min(300px, 100%), 380px);
+  gap: 0;
+  border: 1px solid var(--rule-hard);
+  background: var(--bay);
+}
+@media (max-width: 900px) { .opening { grid-template-columns: 1fr; } }
 
-/* The crate, seen from above: played sleeves flat, divider, the rest upright. */
-.crateviz {
+.opening-say { padding: 34px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.opening-say h1 { font-size: var(--t-3x); max-width: 15ch; }
+.opening-say .lede { font-size: var(--t-lg); color: var(--ink-2); max-width: 46ch; }
+
+.opening-show {
+  border-left: 1px solid var(--rule);
+  background: var(--ground);
+  padding: 20px;
   display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 62px;
-  padding: 0 2px;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
 }
-.crateviz i {
-  display: block;
-  width: 7px;
-  height: 46px;
-  border-radius: 1px 1px 0 0;
-  background: var(--crate-3);
-}
-.crateviz i.played { height: 22px; opacity: .55; }
-.crateviz i.divider { width: 5px; height: 62px; background: var(--tab); margin: 0 7px; }
+@media (max-width: 900px) { .opening-show { border-left: 0; border-top: 1px solid var(--rule); } }
 
-@media (max-width: 620px) {
-  .page { padding: 20px 14px 88px; gap: 22px; }
-  .masthead { padding: 0 12px; gap: 8px; }
-  /* Only the page links scroll; the theme control stays pinned and reachable. */
-  .masthead .links { overflow-x: auto; scrollbar-width: none; }
-  .masthead .links::-webkit-scrollbar { display: none; }
-  .masthead nav a { padding: 6px 8px; }
-  .masthead .btn { flex: none; }
-  /* A nested scroll region inside page scroll is wrong on a phone. */
-  .browse { max-height: none; }
-  .console { padding: 14px; }
-  .tag { padding: 12px; }
-  .tag-cat .n { font-size: var(--t-xl); }
+/* The same crate as the run page, at rest. */
+.crateviz { display: flex; align-items: flex-end; gap: 3px; height: 132px; position: relative; }
+.crateviz i { display: block; flex: 1 1 0; max-width: 13px; height: 88px; background: var(--spine); }
+.crateviz i.played { height: 18px; background: var(--spine-done); }
+.crateviz i.divider {
+  flex: 0 0 5px;
+  height: 132px;
+  margin: 0 9px;
+  background: var(--tab);
+  outline: var(--tab-edge) solid var(--tab-line);
+}
+
+/* ==========================================================================
+   NARROW
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  :root { --gutter: 0px; --t-3x: 2.125rem; --t-disp: 3.25rem; }
+
+  .sheet { padding: 0 14px 88px; }
+
+  .section { grid-template-columns: 1fr; gap: 10px; padding: 22px 0; }
+  .section > .index { padding-top: 0; display: flex; gap: 10px; align-items: baseline; }
+  .section > .index b { display: inline; font-size: var(--t-xs); }
+
+  .wordmark { padding: 0 14px; font-size: var(--t-md); }
+  .register a { padding: 0 13px; min-height: 48px; }
+  .shopfront .btn { min-height: 48px; padding: 0 13px; }
+  .opsrail { gap: 12px; padding: 7px 14px; }
+  .opsrail .push { margin-left: 0; }
+
+  .opening-say { padding: 22px; }
+  .crate-row { height: 96px; }
+  .crate-row i { height: 56px; }
+
+  .ticket > div { grid-template-columns: 1fr; gap: 2px; }
+
   .transport .btn { flex: 1 1 auto; }
   /* The destructive action never shares a row with Pause on a thumb-sized UI. */
   .transport .push { margin-left: 0; flex-basis: 100%; }
-  .hero h1 { font-size: var(--t-2x); }
+
+  /* A nested scroll region inside page scroll is wrong on a phone. */
+  .browse { max-height: none; }
+}
+
+@media (max-width: 560px) {
+  /* All three register tabs have to be reachable without discovering that the
+     strip scrolls, so the fascia gives up letter-spacing before it gives up a
+     tab. */
+  /* Below this width the three tabs and the wordmark cannot both fit. The
+     tabs win: the mark still identifies the product, and the link keeps its
+     accessible name. */
+  .wordmark { padding: 0 13px; gap: 0; }
+  .wordmark-text { display: none; }
+  .register a { padding: 0 11px; font-size: var(--t-xs); letter-spacing: 0.03em; }
+  .shopfront .btn { padding: 0 11px; font-size: var(--t-xs); }
+
+  /* Connector counts are a full page of their own under "Dienste"; the rail
+     keeps the one line that has to be on every page. */
+  .opsrail > span:not(:first-child):not(.push) { display: none; }
+}
+
+/* The narrowest phone still in use. The strip does scroll, but a tab you have
+   to discover by swiping is a tab most people never find. */
+@media (max-width: 340px) {
+  .wordmark { padding: 0 9px; }
+  .register a { padding: 0 8px; letter-spacing: normal; }
+  .shopfront .btn { padding: 0 9px; }
 }

@@ -1,49 +1,57 @@
 {% extends "base.html" %}
 {% block title %}{{ provider.display_name }} verbinden · true-shuffle{% endblock %}
+{% block railstate %}ANSCHLUSS · INOFFIZIELL{% endblock %}
 
 {% block content %}
-<section class="stack" style="max-width: 62ch">
-    <h1>{{ provider.display_name }} verbinden</h1>
-
-    <div class="note note-stop">
-        <span class="stencil">Inoffiziell</span>
-        <span>Dieser Connector spricht YouTubes interne Schnittstelle. Er kann
-        jederzeit ohne Vorwarnung brechen und verstößt sehr wahrscheinlich gegen
-        YouTubes Nutzungsbedingungen. Der offizielle YouTube-Music-Connector
-        bleibt die Voreinstellung.</span>
+<section class="section">
+    <div class="index">
+        <b>01</b>
+        Anschluss
     </div>
+    <div class="body" style="max-width: 66ch">
+        <h1>{{ provider.display_name }} verbinden</h1>
 
-    <p class="dim">
-        Er erreicht dafür, was keine öffentliche API hergibt: deine Mediathek,
-        „Liked Music“, Uploads und deinen Hörverlauf — und damit läuft Handoff
-        hier ebenfalls, ohne dass ein Tab offen bleiben muss.
-    </p>
+        <div class="note note-stop">
+            <span class="stencil">Inoffiziell</span>
+            <span>Dieser Connector spricht YouTubes interne Schnittstelle. Er kann
+            jederzeit ohne Vorwarnung brechen und verstößt sehr wahrscheinlich gegen
+            YouTubes Nutzungsbedingungen. Der offizielle YouTube-Music-Connector
+            bleibt die Voreinstellung.</span>
+        </div>
 
-    <div class="crate stack-s">
-        <span class="stencil">So bekommst du die Zugangsdaten</span>
-        <ol class="stack-s dim sm">
-            <li>1 — <code>pip install ytmusicapi</code></li>
-            <li>2 — <code>ytmusicapi browser</code> ausführen und der Anleitung folgen</li>
-            <li>3 — den kompletten Inhalt der erzeugten <code>browser.json</code> unten einfügen</li>
-        </ol>
+        <p class="dim">
+            Er erreicht dafür, was keine öffentliche API hergibt: deine Mediathek,
+            „Liked Music“, Uploads und deinen Hörverlauf — und damit läuft Handoff
+            hier ebenfalls, ohne dass ein Tab offen bleiben muss.
+        </p>
+
+        <div class="bay">
+            <div class="bay-head">
+                <span>So bekommst du die Zugangsdaten</span>
+                <span class="bay-read">3 SCHRITTE</span>
+            </div>
+            <div class="bay-body">
+                <div class="ticket">
+                    <div><span class="k">Schritt 1</span><span class="v"><code>pip install ytmusicapi</code></span></div>
+                    <div><span class="k">Schritt 2</span><span class="v"><code>ytmusicapi browser</code> ausführen und der Anleitung folgen</span></div>
+                    <div><span class="k">Schritt 3</span><span class="v">den kompletten Inhalt der erzeugten <code>browser.json</code> unten einfügen</span></div>
+                </div>
+            </div>
+        </div>
+
+        <label class="field">
+            <span class="stencil">Inhalt von browser.json</span>
+            <textarea id="credential" rows="8" spellcheck="false"
+                      placeholder='{ "cookie": "…", "user-agent": "…" }'></textarea>
+        </label>
+
+        <div class="row">
+            <button class="btn btn-primary btn-lg" id="pasteConnect" type="button">Verbinden</button>
+            <a class="btn btn-quiet" href="/connect">Abbrechen</a>
+        </div>
+
+        <div class="note hidden" id="pasteNote"></div>
     </div>
-
-    <label class="stack-s">
-        <span class="stencil">Inhalt von browser.json</span>
-        <textarea id="credential" rows="8" spellcheck="false"
-                  placeholder='{ "cookie": "…", "user-agent": "…" }'
-                  style="width:100%; font-family: var(--mono); font-size: var(--t-sm);
-                         padding:10px; border-radius: var(--r);
-                         border:1px solid var(--rule-2); background: var(--crate-2);
-                         color: var(--ink); resize: vertical;"></textarea>
-    </label>
-
-    <div class="row">
-        <button class="btn btn-primary btn-lg" id="pasteConnect" type="button">Verbinden</button>
-        <a class="btn btn-quiet" href="/connect">Abbrechen</a>
-    </div>
-
-    <div class="note hidden" id="pasteNote"></div>
 </section>
 {% endblock %}
 

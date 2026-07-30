@@ -118,7 +118,7 @@ def test_youtube_cannot_and_says_so():
     caps = YouTubeMusicProvider().capabilities
     assert caps.supports_history_sync is False
     assert caps.tracks_progress_without_tab is False
-    assert any("history" in note.lower() for note in caps.notes)
+    assert any("hörverlauf" in note.lower() for note in caps.notes)
 
 
 def test_only_browser_players_need_an_open_tab_for_live_mode():

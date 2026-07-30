@@ -1,22 +1,37 @@
 {% extends "base.html" %}
 {% block title %}Nicht verbunden · true-shuffle{% endblock %}
+{% block railstate %}ANSCHLUSS · NICHT EINGERICHTET{% endblock %}
 
 {% block content %}
-<section class="stack" style="max-width: 58ch">
-    <p class="stencil">{{ provider_id }}</p>
-    <h1>Dieser Dienst ist noch nicht eingerichtet</h1>
-    <p class="dim">{{ detail }}</p>
-
-    {% if missing %}
-    <div class="note">
-        <span class="stencil">In <code>.env</code> eintragen, dann neu starten</span>
-        {% for key in missing %}<span class="num">{{ key }}=…</span>{% endfor %}
-        <span class="faint">Wo die Werte herkommen, steht in <code>.env.example</code>.</span>
+<section class="section">
+    <div class="index">
+        <b>01</b>
+        {{ provider_id }}
     </div>
-    {% endif %}
+    <div class="body" style="max-width: 60ch">
+        <h1>Dieser Dienst ist noch nicht eingerichtet</h1>
+        <p class="dim">{{ detail }}</p>
 
-    <div class="row">
-        <a class="btn btn-primary" href="/connect">Zurück zu den Diensten</a>
+        {% if missing %}
+        <div class="bay">
+            <div class="bay-head">
+                <span>In .env eintragen, dann neu starten</span>
+                <span class="bay-read">{{ missing | length }} FEHLT</span>
+            </div>
+            <div class="bay-body">
+                <div class="ticket">
+                    {% for key in missing %}
+                    <div><span class="k data">{{ loop.index }}</span><span class="v data">{{ key }}=…</span></div>
+                    {% endfor %}
+                </div>
+                <p class="faint sm">Wo die Werte herkommen, steht in <code>.env.example</code>.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <a class="btn btn-primary" href="/connect">Zurück zu den Diensten</a>
+        </div>
     </div>
 </section>
 {% endblock %}
