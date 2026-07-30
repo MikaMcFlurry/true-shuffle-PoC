@@ -190,7 +190,13 @@ async def create_run(request: Request):
 
 
 async def _write_copy(session, state, playlist: PlaylistRef) -> Dict[str, Any]:
-    """Utility Mode: materialise the shuffled order as a real playlist."""
+    """Handoff Mode: materialise the shuffled order as a real playlist.
+
+    Where the service exposes a listening history, the run stays **active** and
+    a background watcher reconciles the cursor from it — so the deck keeps its
+    place with nothing of ours open. Where it does not (YouTube), there is
+    nothing to track and the run is closed on the spot rather than pretending.
+    """
     if isinstance(session.provider, YouTubeMusicProvider):
         session.provider.check_copy_quota(state.total)
 
@@ -212,16 +218,23 @@ async def _write_copy(session, state, playlist: PlaylistRef) -> Dict[str, Any]:
         )
         written += len(state.order[i : i + size])
 
-    await db.update_run(state.run_id, status=RunStatus.COMPLETED.value)
+    tracked = session.provider.capabilities.supports_history_sync
+    if not tracked:
+        await db.update_run(state.run_id, status=RunStatus.COMPLETED.value)
     await db.record_event(
-        state.run_id, "copy_written", cursor=state.total,
-        detail={"copy_playlist_id": created.id, "written": written},
+        state.run_id, "copy_written", cursor=state.cursor,
+        detail={"copy_playlist_id": created.id, "written": written,
+                "tracked": tracked},
     )
+    if tracked:
+        await watcher.ensure(state.run_id, state.user_id)
+
     return {
         "copy_playlist_id": created.id,
         "copy_playlist_name": created.name,
         "copy_playlist_url": created.url or session.provider.playlist_url(created.id),
         "written": written,
+        "tracked": tracked,
     }
 
 

@@ -14,12 +14,31 @@ Audio always comes from the streaming service itself. true-shuffle decides
 | | Spotify | Apple Music | YouTube Music |
 |---|---|---|---|
 | Read playlists | ✅ | ✅ (library) | ✅ (playlists you created) |
-| **Copy Mode** — write a shuffled playlist | ✅ | ✅ | ⚠️ quota-limited, see below |
+| **Handoff Mode** — deck written as a playlist, you play it in the app | ✅ | ✅ | ⚠️ quota-limited, see below |
+| ↳ progress tracked with **nothing of ours open** | ✅ history sync | ✅ history sync | ❌ no history API exists |
 | **Live Mode** — true-shuffle drives playback | ✅ remote-controls your app | ✅ plays in the browser tab | ✅ plays in the browser tab |
+| ↳ needs our page open | ❌ runs on the server | ✅ tab must stay open | ✅ tab must stay open |
 | Auto-advance when a track ends | ✅ server-side watcher | ✅ browser events | ✅ browser events |
 | Detect a skip made *inside the service's own app* | ✅ | n/a (we own the player) | n/a (we own the player) |
 | Exact resume | ✅ | ✅ | ✅ |
 | Paid tier required for Live Mode | Premium | subscription | no |
+
+### Does anything have to stay open?
+
+No — on Spotify and Apple Music, and that is a design goal rather than a
+side effect.
+
+- **Spotify** never needs it. The watcher runs on the server and drives the
+  Spotify app you already have open, so you can close the browser entirely.
+- **Apple Music** has no server-side remote control, so *Live Mode* genuinely
+  requires the tab. **Handoff Mode** does not: the deck is written into your
+  library, you play it in the Apple Music app, and the server reconciles your
+  position from `GET /v1/me/recent/played/tracks`. Same promise — every track
+  once, exact resume — with nothing of ours running.
+- **YouTube Music** is the one real gap. YouTube removed watch history from the
+  Data API years ago and never replaced it, so a deck played in the YouTube app
+  cannot report back. Live Mode in the tab is the only mode there that tracks
+  your position, and the UI says so instead of implying otherwise.
 
 **Verification status:** every path is covered by the automated suite against an
 in-memory connector, and the request/response shapes of all three services are
@@ -48,7 +67,7 @@ with only one of the three.
 Run the checks:
 
 ```bash
-python -m pytest -q       # 201 tests
+python -m pytest -q       # 226 tests
 ruff check .
 ```
 
@@ -56,15 +75,20 @@ ruff check .
 
 ## The two modes
 
-**Live Mode** — true-shuffle holds the deck and moves it forward on its own.
-When a track ends, or you skip, the cursor advances by exactly one card and the
-next one starts. Close the tab, come back tomorrow, and you resume on the same
-card. This is the actual product.
+**Handoff Mode** — the shuffled order is written into a real playlist on the
+service, and you play it there: phone, car, speaker, whatever you normally use.
+Where the service exposes a listening history, true-shuffle reads back how far
+you got, so the deck still keeps your place and still finishes exactly once.
+Nothing of ours runs while you listen.
 
-**Copy Mode** — the shuffled order is written into a new playlist on the
-service, and you press play there. No live control needed, so it works anywhere
-playlists can be created. The trade-off is that it produces an extra playlist
-and cannot track your position.
+**Live Mode** — true-shuffle holds the deck and moves it forward the moment a
+track ends or you skip. On Spotify this happens on the server, and a skip you
+make *inside Spotify* consumes exactly one card like any other. On Apple Music
+and YouTube it happens in the browser tab, because neither service lets anything
+else control playback.
+
+Both modes resume on exactly the card you stopped on. The difference is who is
+holding the remote.
 
 ---
 
@@ -90,11 +114,14 @@ detail: **who owns the audio pipeline.**
   This connector uses only official, documented endpoints — no scraping, no
   reverse-engineered internal calls. Playback is the official IFrame player.
 
-### Two YouTube limitations you should know before trying it
+### Three YouTube limitations you should know before trying it
 
 1. **Auto-generated playlists are invisible.** "Liked Music", "Your Supermix"
    and friends are not exposed by any public API. Playlists you created are.
-2. **Copy Mode is quota-bound.** `playlistItems.insert` costs 50 quota units per
+2. **No listening history.** YouTube removed watch history from the Data API and
+   never replaced it, so a YouTube deck can only be tracked in Live Mode, with
+   the tab open. Spotify and Apple Music have no such gap.
+3. **Handoff Mode is quota-bound.** `playlistItems.insert` costs 50 quota units per
    track against a default budget of 10 000 per day, so copying a 1 500-track
    playlist would need 75 000 units and cannot work. The connector *refuses such
    a write up front* with the arithmetic, instead of dying at track 190. Live
@@ -118,10 +145,12 @@ class DeezerProvider(MusicProvider):
     ...
 ```
 
-`PlaybackControl` is the important field: `REMOTE_DEVICE` (the server drives an
-app you already have open), `WEB_PLAYER` (the browser owns audio and reports
-events), or `NONE` (Copy Mode only). The run engine and the UI adapt from that
-declaration alone — no provider names are special-cased anywhere.
+Two capability fields carry most of the weight. `PlaybackControl` says who owns
+the audio pipeline: `REMOTE_DEVICE` (the server drives an app you already have
+open), `WEB_PLAYER` (the browser owns audio and reports events), or `NONE`
+(Handoff only). `supports_history_sync` says whether a deck can be tracked with
+nothing of ours open. The run engine, the watcher and the UI adapt from those
+declarations alone — no provider names are special-cased anywhere.
 
 Register it in `providers/registry.py`. Services that are *candidates* rather
 than connectors live in `providers/planned.py`, where each one records what
@@ -148,7 +177,8 @@ providers/     One class per streaming service
   http.py        Shared retries, rate limits, per-account serialisation
 
 app/           FastAPI: HTTP, persistence, background work
-  watcher.py     Polls remote playback → auto-advance, native-skip detection
+  watcher.py     Two loops: poll remote playback (Live) and poll listening
+                 history (Handoff, no tab needed)
   runs.py        The only place a cursor is allowed to move
   jobs.py        Background reads/writes with SSE progress
   crypto.py      AES-256-GCM token vault

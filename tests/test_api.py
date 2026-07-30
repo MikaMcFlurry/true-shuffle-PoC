@@ -499,7 +499,7 @@ def test_library_renders_once_connected(client, fake_provider):
     connect(client)
     response = client.get("/library")
     assert response.status_code == 200
-    assert "Pick a playlist" in response.text
+    assert "Deal a deck" in response.text
 
 
 def test_player_page_renders_for_your_own_run(client, fake_provider):

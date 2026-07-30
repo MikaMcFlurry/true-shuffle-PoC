@@ -69,10 +69,17 @@ class YouTubeMusicProvider(MusicProvider):
         read_page_size=_PAGE,
         requires_paid_tier=False,
         supports_queue_prefetch=False,
+        # YouTube removed watch-history from the Data API years ago, and there
+        # is no supported replacement.  Declaring this False is what stops the
+        # UI from promising tab-free progress tracking here.
+        supports_history_sync=False,
         brand_color="#FF0033",
         notes=[
             "Live Mode plays in this browser tab through the official YouTube "
             "player — keep the tab open while listening.",
+            "YouTube is the one service with no playback-history API, so a deck "
+            "played in the YouTube app cannot report its progress back. Live "
+            "Mode is the only mode here that tracks where you are.",
             "Only playlists you created are visible. YouTube's auto-generated "
             "mixes (Liked Music, Supermix, …) are not exposed by any public API.",
             "Copy Mode is limited by the YouTube API quota: each added track "

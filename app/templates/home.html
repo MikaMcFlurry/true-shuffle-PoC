@@ -3,15 +3,15 @@
 
 {% block content %}
 <section class="hero">
-    <p class="eyebrow">Proof of concept · v0.2</p>
+    <p class="label">Proof of concept · v0.3</p>
     <h1>Your playlist, dealt like a deck of cards.</h1>
     <p class="lede">
         Every playable, unique track exactly once per run. No repeats until the
         deck is done — and when you come back, you pick up on the exact card you
         stopped on.
     </p>
-    <div class="deckviz" aria-hidden="true">
-        {% for i in range(24) %}<i class="{% if i < 9 %}dealt{% endif %}"></i>{% endfor %}
+    <div class="deal" aria-hidden="true">
+        {% for i in range(26) %}<i class="{% if i < 9 %}dealt{% endif %}"></i>{% endfor %}
     </div>
     <div class="row">
         <a class="btn btn-primary btn-lg" href="/connect">Connect a service</a>
@@ -28,27 +28,31 @@
 
 <section class="stack">
     <h2>Two ways to run a deck</h2>
-    <div class="grid">
-        <article class="card">
-            <h3>Live Mode</h3>
-            <p class="muted">
-                true-shuffle decides what plays next and moves the deck forward
-                on its own — when a track ends, and when you skip. Audio still
-                comes from the streaming service, not from us.
-            </p>
-            <p class="faint" style="font-size: var(--step--1)">
-                Needs a service that allows playback control.
+    <div class="grid-2">
+        <article class="panel">
+            <div class="spread">
+                <h3>Handoff Mode</h3>
+                <span class="badge-tab badge-tab-free">Nothing stays open</span>
+            </div>
+            <p class="muted small">
+                The shuffled order is written into a real playlist on the service.
+                You press play there and listen however you normally do — phone,
+                car, speaker. Where the service exposes a listening history,
+                true-shuffle reads back how far you got, so the deck keeps your
+                place and finishes exactly once.
             </p>
         </article>
-        <article class="card">
-            <h3>Copy Mode</h3>
-            <p class="muted">
-                Writes the shuffled order into a real playlist on the service.
-                You press play there and listen straight through. Works even
-                where playback control is not available.
-            </p>
-            <p class="faint" style="font-size: var(--step--1)">
-                Needs a service that allows creating playlists.
+        <article class="panel">
+            <div class="spread">
+                <h3>Live Mode</h3>
+                <span class="badge-tab badge-tab-open">Depends on the service</span>
+            </div>
+            <p class="muted small">
+                true-shuffle decides what plays next and moves the deck forward
+                the moment a track ends or you skip. On Spotify this runs from
+                the server, so nothing of ours needs to be open. On Apple Music
+                and YouTube it runs in the browser tab, because neither service
+                lets anything else control playback.
             </p>
         </article>
     </div>
@@ -58,26 +62,31 @@
     <h2>Services</h2>
     <div class="grid">
         {% for p in providers %}
-        <article class="card" data-brand style="--brand: {{ p.brand_color }}">
-            <div class="row" style="justify-content: space-between">
+        <article class="panel" data-brand style="--brand: {{ p.brand_color }}">
+            <div class="spread">
                 <h3>{{ p.display_name }}</h3>
                 {% if p.id in connected %}
-                    <span class="pill pill-on">Connected</span>
+                    <span class="pill pill-ok">Connected</span>
                 {% elif p.configured %}
                     <span class="pill pill-off">Ready to connect</span>
                 {% else %}
-                    <span class="pill pill-warn">Needs setup</span>
+                    <span class="pill pill-off">Needs setup</span>
                 {% endif %}
             </div>
-            <p class="muted" style="font-size: var(--step--1)">
-                {% if p.supports_controller_mode %}Live Mode and Copy Mode{% else %}Copy Mode only{% endif %}
-                {%- if p.playback == 'web_player' %} · plays in the browser{% endif %}
-                {%- if p.playback == 'remote_device' %} · controls your existing app{% endif %}
+            <div class="row">
+                {% if p.tracks_progress_without_tab %}
+                <span class="badge-tab badge-tab-free">Runs without a tab open</span>
+                {% else %}
+                <span class="badge-tab badge-tab-open">Needs this tab open</span>
+                {% endif %}
+            </div>
+            <p class="faint small">
+                {% if p.playback == 'remote_device' %}Controls the app you already have open{% endif %}
+                {%- if p.playback == 'web_player' %}Plays through {{ p.display_name }}'s own browser player{% endif %}
+                {%- if p.requires_paid_tier %} · paid tier for Live Mode{% endif %}
             </p>
             {% if not p.configured %}
-            <p class="faint" style="font-size: var(--step--1)">
-                Set {{ p.missing_config | join(', ') }} in <code>.env</code>.
-            </p>
+            <p class="faint small">Set {{ p.missing_config | join(', ') }} in <code>.env</code>.</p>
             {% endif %}
         </article>
         {% endfor %}
@@ -86,20 +95,20 @@
 
 <section class="stack">
     <h2>Not connected yet</h2>
-    <p class="muted">
+    <p class="muted small">
         Adding a service means writing one connector class. These are the
-        candidates, with what still has to be checked before writing them —
-        not claims that they work.
+        candidates, with what still has to be checked before writing them — not
+        claims that they work.
     </p>
     <div class="grid">
         {% for p in planned %}
-        <article class="card" data-brand style="--brand: {{ p.brand_color }}">
-            <div class="row" style="justify-content: space-between">
+        <article class="panel" data-brand style="--brand: {{ p.brand_color }}">
+            <div class="spread">
                 <h3>{{ p.display_name }}</h3>
                 <span class="pill pill-off">Planned</span>
             </div>
-            <p class="muted" style="font-size: var(--step--1)">{{ p.likely_mode }}</p>
-            <ul class="stack-s faint" style="font-size: var(--step--1)">
+            <p class="muted small">{{ p.likely_mode }}</p>
+            <ul class="stack-s faint small">
                 {% for q in p.open_questions %}<li>— {{ q }}</li>{% endfor %}
             </ul>
         </article>

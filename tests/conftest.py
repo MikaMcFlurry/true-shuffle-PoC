@@ -19,7 +19,7 @@ os.environ["SECRET_KEY"] = TEST_SECRET
 import pytest
 import pytest_asyncio
 
-from core.models import Device, PlaybackState, PlaylistRef, Track, TrackKind
+from core.models import Device, PlaybackState, PlayedTrack, PlaylistRef, Track, TrackKind
 from providers.base import (
     AccountIdentity,
     AuthKind,
@@ -68,6 +68,8 @@ class FakeProvider(MusicProvider):
         self,
         provider_id: str = "fake",
         playback: PlaybackControl = PlaybackControl.REMOTE_DEVICE,
+        *,
+        history_sync: bool = False,
     ) -> None:
         self.capabilities = ProviderCapabilities(
             id=provider_id,
@@ -77,6 +79,7 @@ class FakeProvider(MusicProvider):
             write_batch_size=10,
             read_page_size=4,
             supports_queue_prefetch=playback is PlaybackControl.REMOTE_DEVICE,
+            supports_history_sync=history_sync,
         )
         self.tracks: List[Track] = [
             Track(provider=provider_id, id=f"t{i}", name=f"Track {i}",
@@ -88,6 +91,8 @@ class FakeProvider(MusicProvider):
         self.created: Dict[str, List[str]] = {}
         self.state = PlaybackState(is_idle=True)
         self.fail_enqueue = False
+        #: What ``get_recently_played`` will report, newest first.
+        self.history: List[str] = []
 
     # -- config / auth --
     def is_configured(self) -> bool:
@@ -151,6 +156,9 @@ class FakeProvider(MusicProvider):
     async def get_playback_state(self, token) -> Optional[PlaybackState]:
         return self.state
 
+    async def get_recently_played(self, token, limit: int = 50) -> List[PlayedTrack]:
+        return [PlayedTrack(track_id=tid) for tid in self.history[:limit]]
+
 
 @pytest.fixture
 def fake_provider(monkeypatch):
@@ -169,6 +177,20 @@ def fake_web_provider(monkeypatch):
 
     provider = FakeProvider("fakeweb", PlaybackControl.WEB_PLAYER)
     monkeypatch.setitem(registry._PROVIDERS, "fakeweb", provider)
+    return provider
+
+
+@pytest.fixture
+def fake_history_provider(monkeypatch):
+    """A connector that cannot be remote-controlled but exposes a history.
+
+    This is the Apple-Music shape, and the one that makes Handoff Mode work
+    with no browser tab open.
+    """
+    from providers import registry
+
+    provider = FakeProvider("fakehist", PlaybackControl.WEB_PLAYER, history_sync=True)
+    monkeypatch.setitem(registry._PROVIDERS, "fakehist", provider)
     return provider
 
 

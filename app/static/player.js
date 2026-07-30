@@ -152,6 +152,7 @@ export class RunPlayer {
   async boot() {
     this.state = await api(`/api/runs/${this.runId}`);
     this.render();
+    this.loadSkipped();
 
     if (!this.isRemote) {
       const { config } = await api(`/api/player-config?provider=${this.provider.id}`);
@@ -189,6 +190,13 @@ export class RunPlayer {
 
   async next()     { await this.move("advance", { reason: "user_skip" }); }
   async previous() { await this.move("previous", {}); }
+
+  /** Space bar: start the deck, or pause/resume once it is running. */
+  async toggle() {
+    if (this.state?.status === "completed") return;
+    if (!this.playing) return this.start();
+    return this.pause();
+  }
 
   async move(endpoint, body) {
     this.state = await api(`/api/runs/${this.runId}/${endpoint}`, { method: "POST", body });
@@ -265,7 +273,7 @@ export class RunPlayer {
       if (!devices.length) {
         this.notify(
           "No Spotify device is available. Open Spotify on a phone, computer or speaker and play anything for a second, then reload this page.",
-          "notice-accent"
+          "notice-ok"
         );
       }
     } catch (err) {
@@ -276,6 +284,46 @@ export class RunPlayer {
   /* -- rendering ----------------------------------------------------------- */
 
   notify(text, variant) { setNotice($("#playerNotice"), text, variant); }
+
+  /** Entries that never entered the deck, with the reason each was left out. */
+  async loadSkipped() {
+    const box = $("#skippedBox");
+    if (!box) return;
+    try {
+      const { skipped } = await api(`/api/runs/${this.runId}/skipped`);
+      if (!skipped.length) return;          // stays hidden — nothing was dropped
+      box.classList.remove("hidden");
+      $("#skippedSummary").textContent =
+        `${formatCount(skipped.length)} entries left out`;
+      $("#skippedList").replaceChildren(
+        ...skipped.map((s) =>
+          el("div", { class: "spread" },
+            el("span", { class: "muted" }, [s.name, s.artist].filter(Boolean).join(" — ") || s.track_id),
+            el("span", { class: "faint" }, REASON_TEXT[s.reason] || s.reason)))
+      );
+    } catch {
+      box.classList.add("hidden");
+    }
+  }
+
+  /** The remaining stack, drawn as cards rather than a percentage. */
+  renderStack() {
+    const mount = $("#stackviz");
+    if (!mount || !this.state) return;
+    const { cursor, total } = this.state;
+    if (!total) return mount.replaceChildren();
+
+    // One bar per card up to a cap, so a 1,500-track deck still reads.
+    const bars = Math.min(total, 90);
+    const scale = total / bars;
+    mount.replaceChildren(
+      ...Array.from({ length: bars }, (_, i) => {
+        const at = Math.floor(i * scale);
+        const cls = at < cursor ? "done" : at === Math.floor(cursor) ? "current" : "";
+        return el("i", cls ? { class: cls } : {});
+      })
+    );
+  }
 
   render() {
     const s = this.state;
@@ -301,8 +349,9 @@ export class RunPlayer {
 
     $("#deckDealt").textContent = formatCount(Math.min(s.cursor + (done ? 0 : 1), s.total));
     $("#deckTotal").textContent = formatCount(s.total);
-    $("#deckLeft").textContent = `${formatCount(s.remaining)} left`;
+    $("#deckLeft").textContent = formatCount(s.remaining);
     $("#deckRail").style.width = `${s.progress_pct}%`;
+    this.renderStack();
 
     const statusPill = $("#runStatus");
     statusPill.textContent = statusLabel(s);
@@ -313,9 +362,9 @@ export class RunPlayer {
       const w = s.watcher || {};
       watchPill.classList.toggle("hidden", !this.isRemote);
       watchPill.textContent = w.drifted
-        ? "Spotify is playing something else"
-        : w.watching ? "Auto-advance on" : "Auto-advance off";
-      watchPill.className = `pill ${w.drifted ? "pill-warn" : w.watching ? "pill-on" : "pill-off"}`;
+        ? `${this.provider.display_name} is playing something else`
+        : w.watching ? "Advancing on its own" : "Not following playback";
+      watchPill.className = `pill ${w.drifted ? "pill-critical" : w.watching ? "pill-live" : "pill-off"}`;
     }
 
     $("#upnext").replaceChildren(
@@ -341,6 +390,14 @@ export class RunPlayer {
   }
 }
 
+const REASON_TEXT = {
+  local_file: "local file",
+  not_playable: "not available here",
+  wrong_kind: "not a music track",
+  duplicate: "already in the deck",
+  missing_id: "no track id",
+};
+
 function statusLabel(s) {
   if (s.status === "completed") return "Complete";
   if (s.status === "paused") return "Paused";
@@ -348,10 +405,10 @@ function statusLabel(s) {
   return "Live";
 }
 function statusClass(s) {
-  if (s.status === "completed") return "pill-on";
+  if (s.status === "completed") return "pill-ok";
   if (s.status === "cancelled") return "pill-critical";
   if (s.status === "paused") return "pill-off";
-  return "pill-on";
+  return "pill-live";
 }
 
 export { followJob };

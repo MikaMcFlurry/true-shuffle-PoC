@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     queue_buffer_size: int = 5
     #: Base interval for the server-side playback watcher.
     watcher_poll_seconds: float = 4.0
+    #: How often to reconcile a Handoff-Mode deck against listening history.
+    #: Services only keep ~50 recent entries, so this has to be well inside the
+    #: time it takes to play 50 tracks (~2.5 hours) — a minute is generous.
+    history_poll_seconds: float = 60.0
     #: The watcher stops driving a run after this long without playback.
     watcher_idle_timeout_seconds: int = 900
 

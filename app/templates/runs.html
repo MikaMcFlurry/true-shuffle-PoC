@@ -2,17 +2,18 @@
 {% block title %}Runs · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="stack">
+<section class="stack-s">
+    <p class="label">History</p>
     <h1>Your runs</h1>
     <p class="muted">
-        Every deck you have dealt, with how far through it you are. A paused
-        deck resumes on exactly the card you stopped on.
+        Every deck you have dealt, and how far through it you are. A paused deck
+        resumes on exactly the card you stopped on.
     </p>
 </section>
 
 <div class="notice hidden" id="runsNotice"></div>
 
-<section class="card">
+<section class="panel">
     <div class="table-wrap">
         <table>
             <thead>
@@ -34,11 +35,11 @@
     </div>
 </section>
 
-<section class="card stack">
+<section class="panel stack">
     <h2 style="font-size: var(--step-1)">Import a deck</h2>
-    <p class="muted" style="font-size: var(--step--1)">
-        Continue a run exported from another browser or machine. The file
-        contains the order and your position — never any account credentials.
+    <p class="muted small">
+        Continue a run exported from another browser or machine. The file holds
+        the order and your position — never any account credentials.
     </p>
     <div class="row">
         <input type="file" id="importFile" accept="application/json">
@@ -54,8 +55,8 @@ import { $, api, el, formatCount, setNotice } from "/static/app.js";
 const PROVIDERS = Object.fromEntries({{ providers | tojson }}.map((p) => [p.id, p]));
 
 const STATUS_CLASS = {
-    active: "pill-on", paused: "pill-off",
-    completed: "pill-on", cancelled: "pill-critical",
+    active: "pill-live", paused: "pill-off",
+    completed: "pill-ok", cancelled: "pill-critical",
 };
 
 async function load() {
@@ -63,12 +64,14 @@ async function load() {
         const { runs } = await api("/api/runs");
         if (!runs.length) {
             $("#runRows").replaceChildren(el("tr", {},
-                el("td", { colspan: "8", class: "muted" }, "No runs yet. Pick a playlist to deal your first deck.")));
+                el("td", { colspan: "8" },
+                    el("div", { class: "empty" }, "No runs yet. Pick a playlist to deal your first deck."))));
             return;
         }
 
         $("#runRows").replaceChildren(...runs.map((r) => {
             const provider = PROVIDERS[r.provider];
+            const pct = r.total ? Math.round((r.cursor / r.total) * 100) : 0;
             return el("tr", {},
                 el("td", {}, r.playlist_name || r.playlist_id),
                 el("td", {},
@@ -76,16 +79,18 @@ async function load() {
                         class: "pill pill-plain",
                         style: `color: ${provider?.brand_color || "inherit"}; border-color: ${provider?.brand_color || "currentColor"}`,
                     }, provider?.display_name || r.provider)),
-                el("td", { class: "muted" }, r.mode === "controller" ? "Live" : "Copy"),
+                el("td", { class: "muted" }, r.mode === "controller" ? "Live" : "Handoff"),
                 el("td", {}, el("span", { class: `pill ${STATUS_CLASS[r.status] || ""}` }, r.status)),
-                el("td", { class: "n" }, formatCount(r.cursor)),
+                el("td", { class: "n" }, `${formatCount(r.cursor)} · ${pct}%`),
                 el("td", { class: "n" }, formatCount(r.total)),
                 el("td", { class: "muted" }, r.updated_at),
                 el("td", {},
-                    r.mode === "controller"
-                        ? el("a", { class: "btn", href: `/player/${r.id}` },
-                            r.status === "completed" ? "Review" : r.cursor > 0 ? "Resume" : "Open")
-                        : el("a", { class: "btn", href: `/export/${r.id}` }, "Export"))
+                    el("span", { class: "row", style: "gap: 6px; flex-wrap: nowrap" },
+                        r.mode === "controller"
+                            ? el("a", { class: "btn", href: `/player/${r.id}` },
+                                r.status === "completed" ? "Review" : r.cursor > 0 ? "Resume" : "Open")
+                            : null,
+                        el("a", { class: "btn btn-ghost", href: `/export/${r.id}` }, "Export")))
             );
         }));
     } catch (err) {
@@ -95,14 +100,14 @@ async function load() {
 
 $("#importBtn").addEventListener("click", async () => {
     const file = $("#importFile").files?.[0];
-    if (!file) return setNotice($("#runsNotice"), "Choose an exported run file first.", "notice-accent");
+    if (!file) return setNotice($("#runsNotice"), "Choose an exported run file first.", "");
     try {
         const res = await fetch("/export/import", { method: "POST", body: await file.text() });
         const payload = await res.json();
         if (!res.ok) throw new Error(payload.detail || "Import failed.");
         setNotice($("#runsNotice"),
             `Imported ${formatCount(payload.total)} tracks at position ${formatCount(payload.cursor)}.`,
-            "notice-accent");
+            "notice-ok");
         load();
     } catch (err) {
         setNotice($("#runsNotice"), err.message, "notice-critical");

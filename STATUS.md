@@ -1,6 +1,6 @@
 # STATUS — true-shuffle
 
-**Version 0.2.0 · multi-provider MVP**
+**Version 0.3.0 · multi-provider MVP, tab-free decks**
 
 This file separates three things that the project's older documents kept
 blurring: what is **built**, what is **verified**, and what is **not done**.
@@ -16,7 +16,7 @@ blurring: what is **built**, what is **verified**, and what is **not done**.
 | **UNVERIFIED** | Written against the published API; never run against a live account |
 | **NOT DONE** | Explicitly out of scope for this version |
 
-`python -m pytest -q` → **201 passed**. `ruff check .` → **clean**.
+`python -m pytest -q` → **226 passed**. `ruff check .` → **clean**.
 Reproduced on Python 3.11.15 on 2026-07-30.
 
 ---
@@ -41,6 +41,23 @@ queue prefetch) and the engine and UI adapt from the declaration.
 The developer-token signing, pagination, batching, quota arithmetic and payload
 parsing of all three are tested with stubbed HTTP. **What is not tested is
 whether the live services behave as documented** — that needs credentials.
+
+### Tab-free decks (Handoff Mode) — TESTED
+
+Answering "nothing should have to stay open":
+
+* **Spotify** never needed a tab — the watcher is server-side.
+* **Apple Music** now doesn't either. `GET /v1/me/recent/played/tracks` is
+  polled and the deck is reconciled against it, so you play the shuffled
+  playlist in the Apple Music app and true-shuffle still knows where you are.
+* **YouTube Music** is the honest exception: YouTube removed watch history from
+  the Data API and never replaced it, so `supports_history_sync` is False and
+  the UI says a YouTube deck played outside Live Mode is not tracked.
+
+`core.engine.reconcile_history()` is deliberately conservative: only a window
+ahead of the cursor is considered (so a song played from an album cannot yank
+the deck to the end), the cursor lands past the furthest matched card, and it
+never moves backwards.
 
 ### Auto-advance — TESTED
 
@@ -94,6 +111,10 @@ so a human had to press a button per track.
    often it has to.
 4. **YouTube quota in practice.** The refusal threshold uses Google's documented
    unit costs. The real budget of a given Cloud project may differ.
+4b. **History-sync latency and false positives.** The reconciliation window and
+   the 60-second poll are reasoned, not measured. A listener who plays a deck
+   track from somewhere else within the window could nudge the cursor early;
+   how often that happens in practice is unknown.
 5. **Apple library items without a catalog id.** Handled as unplayable-with-a-
    reason; how common they are in a real library is unknown.
 6. **Concurrency at scale.** One `asyncio.Lock` per run is correct for a
@@ -120,5 +141,6 @@ so a human had to press a button per track.
    bleed and how reliably native skips are caught.
 3. Live Mode on Apple and YouTube in a browser: confirm the end-of-track event
    fires reliably enough to drive the deck.
-4. Copy Mode against a genuinely large playlist (1 500+) on Spotify and Apple.
+4. Handoff Mode against a genuinely large playlist (1 500+) on Spotify and
+   Apple, including how quickly history sync notices progress.
 5. Only then update any public status labels on the website.

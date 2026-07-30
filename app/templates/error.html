@@ -3,7 +3,7 @@
 
 {% block content %}
 <section class="stack" style="max-width: 560px">
-    <p class="eyebrow num">Error {{ status }}</p>
+    <p class="label num">Error {{ status }}</p>
     <h1>{% if status == 404 %}Nothing here{% elif status == 401 %}You are not signed in{% elif status == 409 %}That service is not connected{% else %}Something went wrong{% endif %}</h1>
     <p class="muted">{{ detail }}</p>
     <div class="row">

@@ -19,7 +19,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 from urllib.parse import urlencode
 
 from app.config import get_settings
-from core.models import Device, PlaybackState, PlaylistRef, Track, TrackKind
+from core.models import Device, PlaybackState, PlayedTrack, PlaylistRef, Track, TrackKind
 from providers import http
 from providers.base import (
     AccountIdentity,
@@ -44,6 +44,9 @@ SCOPES = [
     "user-read-playback-state",
     "user-modify-playback-state",
     "user-read-currently-playing",
+    # Lets a deck advance from playback history when nothing of ours is open —
+    # and is the only tracking a free account can get.
+    "user-read-recently-played",
 ]
 
 
@@ -66,11 +69,15 @@ class SpotifyProvider(MusicProvider):
         read_page_size=100,
         requires_paid_tier=True,
         supports_queue_prefetch=True,
+        supports_history_sync=True,
         brand_color="#1DB954",
         notes=[
-            "Live Mode controls an existing Spotify device and needs Premium.",
-            "Open Spotify on a phone, desktop or speaker first so a device is "
-            "available to take over.",
+            "Nothing needs to stay open — true-shuffle drives your Spotify app "
+            "from the server.",
+            "Live Mode controls an existing Spotify device and needs Premium. "
+            "Open Spotify somewhere first so there is a device to take over.",
+            "On a free account, use Handoff Mode: the deck is written as a "
+            "playlist and your progress is read back from your listening history.",
         ],
     )
 
@@ -376,6 +383,28 @@ class SpotifyProvider(MusicProvider):
             device_name=device.get("name", ""),
             is_idle=not item,
         )
+
+    # -- history ----------------------------------------------------------
+
+    async def get_recently_played(
+        self, token: TokenBundle, limit: int = 50
+    ) -> List[PlayedTrack]:
+        """GET /me/player/recently-played — newest first, up to 50 entries.
+
+        Works on free accounts, which is what makes Handoff Mode useful there:
+        no playback control, but the deck still knows where you are.
+        """
+        data = await self._get(
+            token, "/me/player/recently-played", limit=min(50, max(1, limit))
+        )
+        played: List[PlayedTrack] = []
+        for item in (data or {}).get("items", []) or []:
+            track = item.get("track") or {}
+            if track.get("id"):
+                played.append(
+                    PlayedTrack(track_id=track["id"], played_at=item.get("played_at", ""))
+                )
+        return played
 
     def playlist_url(self, playlist_id: str) -> str:
         return f"https://open.spotify.com/playlist/{playlist_id}"

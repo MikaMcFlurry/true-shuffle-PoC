@@ -161,6 +161,18 @@ class PlaybackState(BaseModel):
         return max(0, self.duration_ms - self.progress_ms)
 
 
+class PlayedTrack(BaseModel):
+    """One entry from a service's recently-played history.
+
+    This is what makes a deck trackable *without* true-shuffle driving
+    playback: the listener plays the shuffled playlist in their own app, and we
+    read back what they got through.
+    """
+
+    track_id: str
+    played_at: str = ""
+
+
 # ---------------------------------------------------------------------------
 # Runs
 # ---------------------------------------------------------------------------

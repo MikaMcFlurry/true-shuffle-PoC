@@ -293,6 +293,37 @@ async def previous(
     return decision
 
 
+async def sync_from_history(
+    session: Session, state: RunState
+) -> Optional[engine.HistoryVerdict]:
+    """Advance a deck from the service's recently-played list.
+
+    This is the path that needs nothing of ours open: the listener plays the
+    shuffled playlist in Spotify or Apple Music directly, and we reconcile.
+    Returns ``None`` when the provider has no history to offer.
+    """
+    if not session.provider.capabilities.supports_history_sync:
+        return None
+
+    played = await session.provider.get_recently_played(session.token)
+    verdict = engine.reconcile_history(state, [p.track_id for p in played])
+    if not verdict.advanced:
+        return verdict
+
+    await db.update_run(state.run_id, cursor=verdict.cursor)
+    state.cursor = verdict.cursor
+    await db.record_event(
+        state.run_id, "history_sync", cursor=verdict.cursor,
+        reason=AdvanceReason.TRACK_ENDED.value,
+        detail={"matched": verdict.matched, "note": verdict.note},
+    )
+    if verdict.completed:
+        await _finish(state)
+        await db.record_event(state.run_id, "completed", cursor=verdict.cursor,
+                              reason="history_sync")
+    return verdict
+
+
 async def pause(session: Session, state: RunState) -> None:
     """Stop driving playback but keep the deck exactly where it is."""
     caps = session.provider.capabilities
@@ -336,7 +367,9 @@ async def describe(
     Metadata for the visible window only — resolving 1 500 titles to show 8 of
     them would be absurd.
     """
-    ids = state.order[max(0, state.cursor - 1) : state.cursor + window]
+    # +1 because the window below renders cursor+1 … cursor+window inclusive;
+    # without it the last row of "up next" shows a bare track id.
+    ids = state.order[max(0, state.cursor - 1) : state.cursor + window + 1]
     meta: Dict[str, Track] = {}
     if session and ids:
         try:

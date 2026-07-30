@@ -14,7 +14,7 @@ quirks live in the app layer, which makes all of this trivially testable.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from core.models import AdvanceReason, PlaybackState, RunState, RunStatus
 
@@ -221,3 +221,73 @@ def reconcile(
             note="provider jumped to another track from this playlist",
         )
     return Reconciliation(drifted=True, note="provider is playing outside the deck")
+
+
+# ---------------------------------------------------------------------------
+# Reconciliation from listening history — the no-open-tab path
+# ---------------------------------------------------------------------------
+
+#: How far ahead of the cursor a history match is still believed.  Services cap
+#: their history at ~50 entries, so a match further out than this is far more
+#: likely to be the same song played from somewhere else entirely.
+HISTORY_LOOKAHEAD = 60
+
+
+@dataclass
+class HistoryVerdict:
+    """How far a deck got, judged from the service's recently-played list."""
+
+    cursor: int
+    advanced: bool = False
+    matched: int = 0
+    completed: bool = False
+    note: str = ""
+
+
+def reconcile_history(
+    run: RunState,
+    played_track_ids: Sequence[str],
+    *,
+    lookahead: int = HISTORY_LOOKAHEAD,
+) -> HistoryVerdict:
+    """Advance the deck using what the service says was recently played.
+
+    This is what lets a deck progress with **nothing of ours open**: the
+    listener plays the shuffled playlist in Spotify or Apple Music directly,
+    and we read back how far they got.
+
+    The rule is deliberately conservative:
+
+    * only the window ``[cursor, cursor + lookahead)`` is considered, so a song
+      the listener happened to play from an album months later cannot yank the
+      cursor to the end of the deck;
+    * the cursor lands just past the **furthest** matched card, because playing
+      the copy in order means everything before it was played too;
+    * it never moves backwards — a deck only ever gets shorter.
+    """
+    if run.cursor >= run.total:
+        return HistoryVerdict(cursor=run.cursor, completed=True, note="deck complete")
+
+    played = {tid for tid in played_track_ids if tid}
+    if not played:
+        return HistoryVerdict(cursor=run.cursor, note="no history to read")
+
+    window = run.order[run.cursor : run.cursor + lookahead]
+    furthest = -1
+    matched = 0
+    for index, track_id in enumerate(window):
+        if track_id in played:
+            furthest = index
+            matched += 1
+
+    if furthest < 0:
+        return HistoryVerdict(cursor=run.cursor, note="nothing from this deck was played")
+
+    new_cursor = min(run.cursor + furthest + 1, run.total)
+    return HistoryVerdict(
+        cursor=new_cursor,
+        advanced=new_cursor > run.cursor,
+        matched=matched,
+        completed=new_cursor >= run.total,
+        note=f"{matched} card(s) played since the last check",
+    )

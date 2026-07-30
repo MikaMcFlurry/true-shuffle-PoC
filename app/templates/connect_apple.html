@@ -3,7 +3,7 @@
 
 {% block content %}
 <section class="stack" style="max-width: 620px">
-    <p class="eyebrow">Apple Music</p>
+    <p class="label">Apple Music</p>
     <h1>Sign in with your Apple&nbsp;ID</h1>
     <p class="muted">
         Apple issues the permission inside your browser rather than through a
@@ -12,7 +12,7 @@
         reaches this server.
     </p>
 
-    <div class="notice notice-accent">
+    <div class="notice notice-ok">
         <strong>What this enables</strong>
         <span>Reading your library playlists, writing a shuffled copy, and
         playing your deck in this browser tab through Apple's own player.</span>
@@ -39,7 +39,7 @@ const notice = $("#appleNotice");
 
 button.addEventListener("click", async () => {
     button.disabled = true;
-    setNotice(notice, "Loading Apple MusicKit…", "notice-accent");
+    setNotice(notice, "Loading Apple MusicKit…", "notice-ok");
 
     try {
         await new Promise((resolve, reject) => {
@@ -56,7 +56,7 @@ button.addEventListener("click", async () => {
             app: { name: CONFIG.app_name, build: CONFIG.app_build },
         });
 
-        setNotice(notice, "Waiting for Apple to confirm your permission…", "notice-accent");
+        setNotice(notice, "Waiting for Apple to confirm your permission…", "notice-ok");
         const musicUserToken = await music.authorize();
         if (!musicUserToken) throw new Error("Apple did not return a permission token.");
 

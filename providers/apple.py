@@ -29,7 +29,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 import jwt
 
 from app.config import get_settings
-from core.models import PlaylistRef, Track, TrackKind
+from core.models import PlayedTrack, PlaylistRef, Track, TrackKind
 from providers import http
 from providers.base import (
     AccountIdentity,
@@ -61,12 +61,15 @@ class AppleMusicProvider(MusicProvider):
         read_page_size=_PAGE,
         requires_paid_tier=True,
         supports_queue_prefetch=False,
+        supports_history_sync=True,
         brand_color="#FA243C",
         notes=[
-            "Live Mode plays inside this browser tab via MusicKit JS — keep the "
-            "tab open while listening.",
-            "Apple exposes no server-side remote control, so true-shuffle cannot "
-            "take over playback that is running in the Apple Music app itself.",
+            "Handoff Mode needs nothing open: the deck is written to your "
+            "library and your progress is read back from your Apple Music "
+            "listening history.",
+            "Live Mode plays inside this browser tab via MusicKit JS, because "
+            "Apple exposes no server-side remote control — so it only runs "
+            "while the tab is open.",
             "Library items without an Apple Music catalog entry (personal "
             "uploads) cannot be queued and are reported as skipped.",
         ],
@@ -322,6 +325,38 @@ class AppleMusicProvider(MusicProvider):
                     artwork_url=_artwork(artwork, 120),
                 )
         return found
+
+    # -- history ----------------------------------------------------------
+
+    async def get_recently_played(
+        self, token: TokenBundle, limit: int = 50
+    ) -> List[PlayedTrack]:
+        """GET /me/recent/played/tracks — newest first.
+
+        Apple caps this endpoint at **10 items per request** and 50 in total,
+        so a full read is five calls.  That is the whole mechanism behind
+        Handoff Mode on Apple: the listener plays the shuffled playlist in the
+        Apple Music app with nothing of ours open, and we reconcile the deck
+        from what comes back here.
+        """
+        wanted = min(50, max(1, limit))
+        played: List[PlayedTrack] = []
+
+        for offset in range(0, wanted, 10):
+            data = await self._get(
+                token, "/me/recent/played/tracks", limit=10, offset=offset
+            )
+            page = (data or {}).get("data") or []
+            for song in page:
+                attrs = song.get("attributes") or {}
+                play = attrs.get("playParams") or {}
+                track_id = str(play.get("catalogId") or song.get("id") or "")
+                if track_id:
+                    played.append(PlayedTrack(track_id=track_id))
+            if len(page) < 10:
+                break
+
+        return played[:wanted]
 
     def playlist_url(self, playlist_id: str) -> str:
         return f"https://music.apple.com/library/playlist/{playlist_id}"

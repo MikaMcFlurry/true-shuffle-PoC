@@ -1,7 +1,29 @@
-{% extends "base.html" %}
-{% block title %}Library · true-shuffle{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library · true-shuffle</title>
+    <meta name="color-scheme" content="dark light">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="masthead">
+        <a class="wordmark" href="/">
+            <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
+            true-shuffle
+        </a>
+        <nav>
+            <a href="/library" aria-current="page">Library</a>
+            <a href="/runs" >Runs</a>
+            <a href="/connect" >Services</a>
+            <button class="btn btn-ghost" id="themeToggle" type="button" aria-label="Switch colour theme">Theme</button>
+        </nav>
+    </header>
 
-{% block content %}
+    <main class="page">
+        
 <section class="stack-s">
     <p class="label">Step 2 — pick a playlist</p>
     <h1>Deal a deck</h1>
@@ -47,14 +69,16 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+    </main>
+
+    <script type="module" src="/static/app.js"></script>
+    
 <script type="module">
 import { $, api, el, followJob, formatCount, setNotice } from "/static/app.js";
 
-const PROVIDERS = {{ providers | tojson }};
-const CONNECTED = {{ connected | map(attribute='provider') | list | tojson }};
+const PROVIDERS = [{"auth": "oauth2_pkce", "brand_color": "#1DB954", "configured": false, "create_playlist": true, "display_name": "Spotify", "experimental": false, "id": "spotify", "live_mode_needs_open_tab": false, "missing_config": ["SPOTIFY_CLIENT_ID"], "notes": ["Nothing needs to stay open \u2014 true-shuffle drives your Spotify app from the server.", "Live Mode controls an existing Spotify device and needs Premium. Open Spotify somewhere first so there is a device to take over.", "On a free account, use Handoff Mode: the deck is written as a playlist and your progress is read back from your listening history."], "playback": "remote_device", "read_playlists": true, "requires_paid_tier": true, "supports_controller_mode": true, "supports_history_sync": true, "supports_queue_prefetch": true, "tracks_progress_without_tab": true, "write_batch_size": 100}, {"auth": "browser_sdk", "brand_color": "#FA243C", "configured": false, "create_playlist": true, "display_name": "Apple Music", "experimental": false, "id": "apple", "live_mode_needs_open_tab": true, "missing_config": ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY (or APPLE_PRIVATE_KEY_PATH)"], "notes": ["Handoff Mode needs nothing open: the deck is written to your library and your progress is read back from your Apple Music listening history.", "Live Mode plays inside this browser tab via MusicKit JS, because Apple exposes no server-side remote control \u2014 so it only runs while the tab is open.", "Library items without an Apple Music catalog entry (personal uploads) cannot be queued and are reported as skipped."], "playback": "web_player", "read_playlists": true, "requires_paid_tier": true, "supports_controller_mode": true, "supports_history_sync": true, "supports_queue_prefetch": false, "tracks_progress_without_tab": true, "write_batch_size": 50}, {"auth": "oauth2_code", "brand_color": "#FF0033", "configured": false, "create_playlist": true, "display_name": "YouTube Music", "experimental": false, "id": "youtube", "live_mode_needs_open_tab": true, "missing_config": ["YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET"], "notes": ["Live Mode plays in this browser tab through the official YouTube player \u2014 keep the tab open while listening.", "YouTube is the one service with no playback-history API, so a deck played in the YouTube app cannot report its progress back. Live Mode is the only mode here that tracks where you are.", "Only playlists you created are visible. YouTube\u0027s auto-generated mixes (Liked Music, Supermix, \u2026) are not exposed by any public API.", "Copy Mode is limited by the YouTube API quota: each added track costs 50 of 10 000 daily units, so large playlists must use Live Mode instead."], "playback": "web_player", "read_playlists": true, "requires_paid_tier": false, "supports_controller_mode": true, "supports_history_sync": false, "supports_queue_prefetch": false, "tracks_progress_without_tab": false, "write_batch_size": 1}, {"auth": "oauth2_pkce", "brand_color": "#8a8f98", "configured": true, "create_playlist": true, "display_name": "Fake fake", "experimental": false, "id": "fake", "live_mode_needs_open_tab": false, "missing_config": [], "notes": [], "playback": "remote_device", "read_playlists": true, "requires_paid_tier": false, "supports_controller_mode": true, "supports_history_sync": false, "supports_queue_prefetch": true, "tracks_progress_without_tab": true, "write_batch_size": 10}];
+const CONNECTED = ["fake"];
 
 const byId = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
 const state = { provider: CONNECTED[0] || null, mode: null, playlist: null, all: [] };
@@ -170,10 +194,9 @@ function renderPlaylists() {
         ? state.all.filter((p) => (p.name || "").toLowerCase().includes(term))
         : state.all;
 
-    const n = state.all.length;
     $("#plCount").textContent = term
-        ? `${formatCount(shown.length)} of ${formatCount(n)}`
-        : `${formatCount(n)} playlist${n === 1 ? "" : "s"}`;
+        ? `${formatCount(shown.length)} of ${formatCount(state.all.length)}`
+        : `${formatCount(state.all.length)} playlists`;
 
     const list = $("#playlists");
     if (!shown.length) {
@@ -287,4 +310,6 @@ function showHandoffResult(result) {
 
 if (state.provider) { renderModes(); loadPlaylists(); }
 </script>
-{% endblock %}
+
+</body>
+</html>

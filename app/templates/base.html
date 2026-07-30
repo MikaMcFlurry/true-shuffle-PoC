@@ -10,12 +10,15 @@
 </head>
 <body>
     <header class="masthead">
-        <a class="wordmark" href="/"><span class="glyph">TS</span> true-shuffle</a>
+        <a class="wordmark" href="/">
+            <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
+            true-shuffle
+        </a>
         <nav>
             <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Library</a>
             <a href="/runs" {% if request.url.path == '/runs' %}aria-current="page"{% endif %}>Runs</a>
             <a href="/connect" {% if request.url.path == '/connect' %}aria-current="page"{% endif %}>Services</a>
-            <button class="btn" id="themeToggle" type="button" aria-label="Switch theme">Theme</button>
+            <button class="btn btn-ghost" id="themeToggle" type="button" aria-label="Switch colour theme">Theme</button>
         </nav>
     </header>
 

@@ -34,7 +34,7 @@ from app import db, runs
 from app.accounts import AccountNotConnected, open_session
 from app.config import get_settings
 from core import engine
-from core.models import PlaybackState, RunStatus
+from core.models import PlaybackState, RunMode, RunStatus
 from providers.base import PlaybackControl, ProviderError
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,17 @@ class Watcher:
         return handle is not None and not handle.task.done()
 
     async def ensure(self, run_id: int, user_id: int) -> bool:
-        """Start watching *run_id* if it is a remote-playback run.
+        """Start watching *run_id*, if this run is one the server can follow.
+
+        Two kinds of run qualify, and they use different loops:
+
+        * **Live Mode on a remote-control service** — poll playback and drive it.
+        * **Handoff Mode on a service with a history API** — poll the
+          recently-played list and move the cursor to match. Nothing of ours
+          needs to be open for this one.
+
+        Live Mode on a browser-player service qualifies for neither: that page
+        owns the audio and reports its own events.
 
         Returns True when a watcher is running for this run afterwards.
         """
@@ -84,14 +94,21 @@ class Watcher:
         except (AccountNotConnected, ProviderError):
             return False
 
-        if session.provider.capabilities.playback is not PlaybackControl.REMOTE_DEVICE:
-            return False  # the browser reports these itself
+        caps = session.provider.capabilities
+        mode = run["mode"]
 
-        task = asyncio.create_task(
-            self._loop(run_id, user_id), name=f"ts-watch-{run_id}"
-        )
+        if mode == RunMode.CONTROLLER.value:
+            if caps.playback is not PlaybackControl.REMOTE_DEVICE:
+                return False  # the browser reports these itself
+            loop = self._playback_loop
+        elif caps.supports_history_sync:
+            loop = self._history_loop
+        else:
+            return False
+
+        task = asyncio.create_task(loop(run_id, user_id), name=f"ts-watch-{run_id}")
         self._handles[run_id] = WatchHandle(run_id=run_id, user_id=user_id, task=task)
-        logger.info("watching run %s", run_id)
+        logger.info("watching run %s via %s", run_id, loop.__name__)
         return True
 
     async def stop(self, run_id: int) -> None:
@@ -112,9 +129,65 @@ class Watcher:
             return {"watching": False, "drifted": False}
         return {"watching": True, "drifted": handle.drifted}
 
-    # -- the loop ---------------------------------------------------------
+    # -- history loop (Handoff Mode — nothing of ours is open) ------------
 
-    async def _loop(self, run_id: int, user_id: int) -> None:
+    async def _history_loop(self, run_id: int, user_id: int) -> None:
+        """Reconcile a deck against the service's recently-played list.
+
+        The listener is playing the shuffled playlist in their own app. We are
+        not driving anything — we are only reading back how far they got, so
+        the deck resumes correctly and finishes exactly once.
+        """
+        settings = get_settings()
+        quiet_rounds = 0
+        #: Give up after roughly this long with no deck activity at all.
+        max_quiet = max(
+            1, int(settings.watcher_idle_timeout_seconds / settings.history_poll_seconds)
+        )
+
+        try:
+            while True:
+                state = await runs.get_state(run_id, user_id)
+                if state is None or state.status is not RunStatus.ACTIVE:
+                    return
+
+                try:
+                    session = await open_session(user_id, state.provider)
+                    async with runs.advance_lock(run_id):
+                        fresh = await runs.get_state(run_id, user_id)
+                        if fresh is None or fresh.status is not RunStatus.ACTIVE:
+                            return
+                        verdict = await runs.sync_from_history(session, fresh)
+                except (AccountNotConnected, ProviderError) as exc:
+                    logger.warning("history watcher %s: %s", run_id, exc)
+                    await asyncio.sleep(settings.history_poll_seconds * 2)
+                    continue
+
+                if verdict is not None and verdict.advanced:
+                    quiet_rounds = 0
+                    if verdict.completed:
+                        logger.info("run %s completed from history", run_id)
+                        return
+                else:
+                    quiet_rounds += 1
+                    if quiet_rounds >= max_quiet:
+                        await db.record_event(
+                            run_id, "watcher_stopped", cursor=state.cursor,
+                            detail={"reason": "no deck activity in history"},
+                        )
+                        return
+
+                await asyncio.sleep(settings.history_poll_seconds)
+        except asyncio.CancelledError:  # pragma: no cover - shutdown path
+            raise
+        except Exception:
+            logger.exception("history watcher for run %s crashed", run_id)
+        finally:
+            self._handles.pop(run_id, None)
+
+    # -- playback loop (Live Mode on a remote-control service) ------------
+
+    async def _playback_loop(self, run_id: int, user_id: int) -> None:
         settings = get_settings()
         idle_since: Optional[float] = None
         previous_state: Optional[PlaybackState] = None

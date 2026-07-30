@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, AsyncIterator, Dict, List, Optional
 
-from core.models import Device, PlaybackState, PlaylistRef, Track
+from core.models import Device, PlaybackState, PlayedTrack, PlaylistRef, Track
 
 # ---------------------------------------------------------------------------
 # Errors
@@ -100,6 +100,12 @@ class ProviderCapabilities:
     requires_paid_tier: bool = False
     #: The provider can be told to pre-queue upcoming tracks.
     supports_queue_prefetch: bool = False
+    #: The provider exposes a recently-played history we can read back.
+    #:
+    #: This is what makes a deck trackable with **no browser tab open at all**:
+    #: the listener plays the shuffled playlist in the service's own app, and
+    #: the server reconciles how far they got from the history.
+    supports_history_sync: bool = False
     #: Brand colour used only for the small service chip in the UI.
     brand_color: str = "#8a8f98"
     #: Honest, user-visible caveats.  Shown in the UI, not buried in a README.
@@ -116,6 +122,23 @@ class ProviderCapabilities:
     def supports_controller_mode(self) -> bool:
         return self.can_control_playback
 
+    @property
+    def live_mode_needs_open_tab(self) -> bool:
+        """True when Live Mode only works while our page is open.
+
+        Browser-SDK services own the audio pipeline inside the page, so closing
+        the tab stops the music.  Remote-control services do not care.
+        """
+        return self.playback is PlaybackControl.WEB_PLAYER
+
+    @property
+    def tracks_progress_without_tab(self) -> bool:
+        """True when a deck can advance with nothing of ours open."""
+        return (
+            self.playback is PlaybackControl.REMOTE_DEVICE
+            or self.supports_history_sync
+        )
+
     def as_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
@@ -128,6 +151,9 @@ class ProviderCapabilities:
             "requires_paid_tier": self.requires_paid_tier,
             "supports_queue_prefetch": self.supports_queue_prefetch,
             "supports_controller_mode": self.supports_controller_mode,
+            "supports_history_sync": self.supports_history_sync,
+            "live_mode_needs_open_tab": self.live_mode_needs_open_tab,
+            "tracks_progress_without_tab": self.tracks_progress_without_tab,
             "brand_color": self.brand_color,
             "notes": list(self.notes),
             "experimental": self.experimental,
@@ -290,6 +316,21 @@ class MusicProvider(abc.ABC):
     ) -> Dict[str, Track]:
         """Look up display metadata for ids.  Default: nothing known."""
         return {}
+
+    # -- history (providers with supports_history_sync) -------------------
+
+    async def get_recently_played(
+        self, token: TokenBundle, limit: int = 50
+    ) -> List[PlayedTrack]:
+        """Most recently played tracks, newest first.
+
+        Only meaningful when
+        :attr:`ProviderCapabilities.supports_history_sync` is set.  This is how
+        a deck advances while nothing of ours is open: the listener plays the
+        shuffled playlist in the service's own app, and we read back how far
+        they got.
+        """
+        raise Unsupported(f"{self.capabilities.id} exposes no playback history")
 
     # -- playback (REMOTE_DEVICE providers) -------------------------------
 

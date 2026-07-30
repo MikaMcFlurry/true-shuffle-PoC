@@ -1,6 +1,6 @@
 # HANDOFF — true-shuffle
 
-**Updated 2026-07-30 · supersedes the February 2026 handoff entirely.**
+**Updated 2026-07-30 (v0.3.0) · supersedes the February 2026 handoff entirely.**
 
 > The previous version of this file described a codebase that could not start
 > (`itsdangerous` missing, Python 3.9 type-hint crashes, export/import absent).
@@ -60,12 +60,16 @@ fighting the user for control of their own player is worse than pausing.
 
 ## Decisions taken, with reasons
 
-**Brand colour is mint `#42F5C8` on monochrome, not Spotify green.**
-The old PoC UI used `#1DB954` as its primary. For a product that now serves
-three services equally, colouring the whole product in one service's brand is
-wrong. Each service gets its own colour only as a 4px chip on its card. This
-follows the April 2026 direction in the master handoff; if a different palette
-has since been decided, only `app/static/style.css` needs to change.
+**The interface is a hi-fi chassis, and the accent is amber.**
+The product's own pitch is "like the good old MP3 player, but with your
+streaming service", so the UI is built like a piece of hi-fi: graphite chassis,
+warm backlit-panel text, and one amber indicator colour borrowed from a VU
+meter. The deck position is a tape counter, not a percentage bar.
+
+Amber is also the practical choice: Spotify green, Apple red and YouTube red all
+sit on this screen at once, and the chrome must not look like any of them. Each
+service appears only as a 3px edge on its own card. All of it lives in
+`app/static/style.css` as tokens, so a different palette is one file.
 
 **A browser session is the identity.**
 No password login. Streaming accounts attach to an opaque random session handle.
@@ -83,6 +87,19 @@ that rather than implying more.
 at track 190, the connector does the arithmetic first and explains it. This is
 also why YouTube's `write_batch_size` is 1 — there is no batch endpoint, and
 declaring otherwise would silently drop tracks.
+
+**Handoff Mode tracks progress instead of just writing a playlist.**
+Writing a shuffled copy and calling the run "completed" was a cop-out: the
+listener got no-repeats but lost resume, which is half the product. Spotify and
+Apple Music both expose a recently-played endpoint, so the run now stays active
+and a slow watcher reconciles the cursor against it. That is what makes "nothing
+has to stay open" true rather than aspirational — and on a Spotify free account
+it is the only tracking available at all, since playback control needs Premium.
+
+`reconcile_history()` is conservative on purpose: a bounded look-ahead window,
+land past the furthest matched card, never move backwards. The failure mode it
+guards against is a listener playing one deck track from an album and having the
+cursor jump hundreds of cards.
 
 **Planned connectors are data, not stubs.**
 `providers/planned.py` lists Deezer, TIDAL, Amazon Music and SoundCloud with the
@@ -109,22 +126,29 @@ decide whether the product works are all on the other side of a real account:
 3. **Apple MusicKit in practice.** Domain registration, whether a stored Music
    User Token survives long enough to be worth storing, and how many library
    items lack a catalog id.
-4. **Whether "keep the tab open" is acceptable** to a listener on Apple or
-   YouTube. This is a product question, not a technical one, and it is the main
-   reason Spotify remains the better closed-beta target.
+4. **History-sync accuracy.** The look-ahead window and the 60-second poll are
+   reasoned, not measured. Two things need real data: how quickly each service
+   surfaces a play, and how often a listener plays a deck track from somewhere
+   else and nudges the cursor early.
+5. **Whether Live Mode's open tab matters at all** now that Handoff Mode is
+   tracked. On Apple Music the tab-free path may simply be the better product,
+   with Live Mode reserved for people at a desk.
 
 ---
 
 ## Open questions for Mika
 
-1. Is mint `#42F5C8` on monochrome the committed palette? The PoC now assumes so.
-2. Live Mode on Apple/YouTube requires an open browser tab. Is that acceptable
-   for the beta, or should those services ship Copy-Mode-only first?
-3. YouTube cannot see auto-generated playlists ("Liked Music", mixes). Is
+1. Is the amber-on-graphite hi-fi direction right? It is a deliberate move away
+   from generic dark-app styling and toward the "good old MP3 player" line in
+   the site's own copy. Tokens are in one file if not.
+2. YouTube is the only service where a deck cannot be tracked without an open
+   tab, because no public history API exists. Ship it Live-Mode-only, or hold
+   YouTube back until that reads better?
+3. YouTube also cannot see auto-generated playlists ("Liked Music", mixes). Is
    user-created-playlists-only enough to be worth shipping?
 4. The website still shows service badges that this codebase cannot yet back up
-   with a live-credential run. Recommendation: change nothing publicly until
-   step 1–4 of STATUS.md's next steps are done.
+   with a live-credential run. Recommendation unchanged: change nothing publicly
+   until STATUS.md's next steps are done.
 
 ---
 
