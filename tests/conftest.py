@@ -19,7 +19,22 @@ os.environ["SECRET_KEY"] = TEST_SECRET
 import pytest
 import pytest_asyncio
 
-from core.models import Device, PlaybackState, PlayedTrack, PlaylistRef, Track, TrackKind
+from core.models import (
+    UNKNOWN_TRACK_COUNT,
+    Device,
+    PlaybackState,
+    PlayedTrack,
+    PlaylistRef,
+    Track,
+    TrackKind,
+)
+
+#: What a connector says when a service lists a playlist but withholds its
+#: contents — Spotify's rule for everything the listener does not own.
+FOREIGN_PLAYLIST_REASON = (
+    "Dieser Dienst gibt die Titel dieser Playlist nicht heraus — nur eigene "
+    "Playlists lassen sich lesen."
+)
 from providers.base import (
     AccountIdentity,
     AuthKind,
@@ -70,6 +85,7 @@ class FakeProvider(MusicProvider):
         playback: PlaybackControl = PlaybackControl.REMOTE_DEVICE,
         *,
         history_sync: bool = False,
+        reports_account_tier: bool = True,
     ) -> None:
         self.capabilities = ProviderCapabilities(
             id=provider_id,
@@ -80,7 +96,9 @@ class FakeProvider(MusicProvider):
             read_page_size=4,
             supports_queue_prefetch=playback is PlaybackControl.REMOTE_DEVICE,
             supports_history_sync=history_sync,
+            reports_account_tier=reports_account_tier,
         )
+        self.reports_account_tier = reports_account_tier
         self.tracks: List[Track] = [
             Track(provider=provider_id, id=f"t{i}", name=f"Track {i}",
                   artist="Artist", duration_ms=180_000)
@@ -106,6 +124,12 @@ class FakeProvider(MusicProvider):
         return TokenBundle(access_token=f"token-{code}")
 
     async def identify(self, token: TokenBundle) -> AccountIdentity:
+        # A connector that cannot read the tier leaves both blank, exactly as
+        # Spotify's does since country/product left GET /me.
+        if not self.reports_account_tier:
+            return AccountIdentity(
+                provider_user_id="fake-user", display_name="Fake User",
+            )
         return AccountIdentity(
             provider_user_id="fake-user", display_name="Fake User",
             market="DE", product_tier="premium",
@@ -113,10 +137,29 @@ class FakeProvider(MusicProvider):
 
     # -- library --
     async def list_playlists(self, token) -> List[PlaylistRef]:
-        return [PlaylistRef(provider=self.capabilities.id, id="pl1",
-                            name="Everything", track_count=len(self.tracks))]
+        return [
+            PlaylistRef(provider=self.capabilities.id, id="pl1",
+                        name="Everything", track_count=len(self.tracks)),
+            # The Spotify shape since February 2026: listed, sized unknown, and
+            # its contents withheld because the listener does not own it.
+            PlaylistRef(provider=self.capabilities.id, id="pl-foreign",
+                        name="Radio Someone Else",
+                        track_count=UNKNOWN_TRACK_COUNT, owner="someone-else",
+                        readable=False, editable=False,
+                        unreadable_reason=FOREIGN_PLAYLIST_REASON),
+        ]
+
+    async def get_playlist(self, token, playlist_id) -> PlaylistRef:
+        for playlist in await self.list_playlists(token):
+            if playlist.id == playlist_id:
+                return playlist
+        from providers.base import ProviderError
+        raise ProviderError(f"fake: no playlist {playlist_id}")
 
     async def iter_playlist_tracks(self, token, playlist_id) -> AsyncIterator[List[Track]]:
+        if playlist_id == "pl-foreign":
+            from providers.base import ProviderContentUnavailable
+            raise ProviderContentUnavailable(FOREIGN_PLAYLIST_REASON)
         size = self.capabilities.read_page_size
         for i in range(0, len(self.tracks), size):
             yield self.tracks[i : i + size]
@@ -167,6 +210,20 @@ def fake_provider(monkeypatch):
 
     provider = FakeProvider()
     monkeypatch.setitem(registry._PROVIDERS, "fake", provider)
+    return provider
+
+
+@pytest.fixture
+def fake_tierless_provider(monkeypatch):
+    """A connector whose service stopped reporting market and subscription tier.
+
+    That is Spotify since February 2026, and the connect page has to stay
+    correct without those two rows.
+    """
+    from providers import registry
+
+    provider = FakeProvider("faketier", reports_account_tier=False)
+    monkeypatch.setitem(registry._PROVIDERS, "faketier", provider)
     return provider
 
 

@@ -26,7 +26,11 @@ from core.models import (
     Track,
 )
 from core.shuffle import prepare_shuffled_run
-from providers.base import PlaybackControl, ProviderError
+from providers.base import (
+    PlaybackControl,
+    ProviderContentUnavailable,
+    ProviderError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -102,10 +106,18 @@ async def build_run(
     if reshuffle and existing:
         await db.close_live_runs(user_id, provider_id, playlist.id, mode.value)
 
+    # A playlist the service will not open is a dead end, and finding that out
+    # after a progress bar and a spinner is worse than being told up front.
+    if not playlist.readable:
+        raise ProviderContentUnavailable(
+            playlist.unreadable_reason
+            or "Dieser Dienst gibt den Inhalt dieser Playlist nicht heraus."
+        )
+
     if tracks is None:
         tracks = await load_tracks(session, playlist, on_progress=on_progress)
     if not tracks:
-        raise ProviderError("This playlist has no tracks")
+        raise ProviderError("Diese Playlist enthält keine Titel.")
 
     if on_progress:
         await on_progress(len(tracks), len(tracks), "shuffling")
@@ -114,8 +126,8 @@ async def build_run(
     order, skipped, seed = prepare_shuffled_run(tracks, previous_order=previous)
     if not order:
         raise ProviderError(
-            "No playable tracks left after filtering — every entry was a local "
-            "file, unavailable, or not a music track."
+            "Nach dem Aussortieren blieb kein spielbarer Titel übrig — jeder "
+            "Eintrag war eine lokale Datei, nicht verfügbar oder kein Musiktitel."
         )
 
     run_id = await db.create_run(

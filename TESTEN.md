@@ -39,7 +39,8 @@ Prüfen, dass die Basis steht:
 python -m pytest -q
 ```
 
-**Erwartet:** `263 passed`. Wenn hier etwas rot ist, lohnt Teil A noch nicht.
+**Erwartet:** alles grün, kein einziger Fehlschlag. Wenn hier etwas rot ist,
+lohnt Teil A noch nicht.
 
 ---
 
@@ -308,7 +309,15 @@ Das heißt konkret:
   freischalten, höchstens 5 insgesamt. Ohne Freischaltung antwortet die API mit
   **403**.
 * Ein Konto *ohne* Premium kann Handoff nutzen — aber nur über eine App, deren
-  Besitzer zahlt.
+  Besitzer zahlt. **Die App kann das nicht mehr vorher prüfen:** Spotify hat
+  `product` im Februar 2026 aus `GET /me` entfernt, der Tarif zeigt sich erst,
+  wenn der Live-Modus abgelehnt wird.
+* **Das Kontingent zählt seit Juli 2026 pro Entwicklerkonto**, nicht mehr pro
+  Client ID. Betreibst du weitere Spotify-Apps, teilen sie sich ein Budget. Ist
+  es leer, antwortet die API mit **429** und `"reason":"QUOTA_EXCEEDED"`.
+* **Nur eigene Playlists lassen sich mischen.** Seit Februar 2026 gibt Spotify
+  den Inhalt fremder und redaktioneller Playlists nicht mehr heraus. Sie stehen
+  weiter in der Sammlung, aber ohne Titelzahl und ohne Inhalt.
 
 **Ohne Premium hat es keinen Zweck, hier weiterzumachen.** Nimm dann Teil A oder
 B2 (YouTube Music, kostenlos).
@@ -336,6 +345,13 @@ B2 (YouTube Music, kostenlos).
 Im Dashboard **Settings** öffnen und die **Client ID** kopieren. Ein *Client
 Secret* wird **nicht** gebraucht: true-shuffle nutzt PKCE und speichert deshalb
 gar kein Geheimnis.
+
+> **Seit Juli 2026 darf ein Entwicklerkonto bis zu 25 Client IDs anlegen**
+> (vorher genau eine). Du kannst also eine App für lokal und eine zweite für die
+> Fly-Adresse führen, statt beide Redirect-URIs in dieselbe App zu stopfen. Das
+> **Kontingent** teilen sich alle deine Apps trotzdem — es hängt am Konto, nicht
+> an der ID.
+> — Spotify, *Changelog Juli 2026*, geprüft im Juli 2026
 
 In `.env`:
 
@@ -365,7 +381,15 @@ uvicorn app.main:app --reload
 
 | | |
 |---|---|
-| ✅ **Erwartet** | Zurück in true-shuffle, Spotify auf **Verbunden**, im Laufzettel dein Kontoname, Markt (z. B. `DE`) und Tarif (`premium`). |
+| ✅ **Erwartet** | Zurück in true-shuffle, Spotify auf **Verbunden**, im Laufzettel dein Kontoname. Statt *Markt* und *Tarif* steht dort „gibt Spotify nicht mehr heraus". |
+
+> **Kein Tarif im Laufzettel ist kein Fehler.** Spotify hat `country` und
+> `product` im Februar 2026 aus `GET /me` entfernt; die App kann deinen Tarif
+> nicht mehr abfragen und behauptet deshalb auch nichts darüber. Ob dein Konto
+> Premium hat, zeigt sich erst beim ersten Live-Versuch — siehe *Wenn etwas
+> schiefgeht* weiter unten.
+> Der Demo-Dienst in A3 liefert Markt und Tarif weiterhin, weil er sie
+> frei erfindet. Der Unterschied ist Absicht, kein Zufall.
 
 ### Schritt 5 — Vor dem Live-Test: ein Gerät bereitstellen
 
@@ -375,10 +399,17 @@ true-shuffle-Seite neu laden — das Gerät muss unter *Abspielen auf* stehen.
 
 ### Schritt 6 — Die eigentlichen Tests
 
+> **Nimm eine Playlist, die dir selbst gehört.** Seit Februar 2026 gibt Spotify
+> den Inhalt fremder Playlists nicht mehr heraus — gefolgte, redaktionelle und
+> Radio-Playlists („Discover Weekly", „DIE NEUE 107.7", „Rainy Jazz") stehen
+> weiter in der Sammlung, lassen sich aber nicht mischen. Willst du so eine
+> Playlist trotzdem mischen: in Spotify kopieren, dann gehört sie dir.
+
 | Test | Vorgehen | Erwartet |
 |---|---|---|
-| **Playlists lesen** | Sammlung öffnen | Deine echten Playlists mit echten Titelzahlen |
-| **Großes Fach** | Deine größte Playlist wählen | Fortschritt beim Lesen; Ausschuss-Kasten listet lokale Dateien und nicht verfügbare Titel einzeln auf |
+| **Playlists lesen** | Sammlung öffnen | Deine echten Playlists mit echten Titelzahlen — nicht `0`. Bei fremden Playlists steht *Inhalt nicht lesbar* und `—` statt einer Zahl |
+| **Fremde Playlist** | Eine gefolgte oder redaktionelle Playlist anklicken | *NICHT LESBAR*; **Fach anlegen** bleibt grau, darunter steht der Grund und der Hinweis, sie erst zu kopieren |
+| **Großes Fach** | Deine größte **eigene** Playlist wählen | Fortschritt beim Lesen; Ausschuss-Kasten listet lokale Dateien und nicht verfügbare Titel einzeln auf |
 | **Live-Modus** | Live wählen → Fach anlegen → **Lauf starten** | Die Musik startet **in deiner Spotify-App**, nicht im Browser |
 | **Server rückt weiter** | Browser-Tab **schließen**, zwei Titel abwarten, `127.0.0.1:8000/runs` öffnen | Der Lauf ist weitergerückt — das ist der Kern von Live auf Spotify |
 | **Skip in Spotify selbst** | In der **Spotify-App** auf *Weiter* drücken | true-shuffle zählt das als **eine Karte**; es entsteht keine zweite Reihenfolge |
@@ -393,9 +424,11 @@ true-shuffle-Seite neu laden — das Gerät muss unter *Abspielen auf* stehen.
 |---|---|
 | `INVALID_CLIENT: Invalid redirect URI` | Die URI im Dashboard stimmt nicht zeichengenau mit `BASE_URL` + `/auth/spotify/callback` überein. Häufig: `localhost` statt `127.0.0.1`, fehlendes `http://`, anderer Port, oder **Add** nicht geklickt. |
 | **403** direkt nach dem Verbinden | Konto nicht freigeschaltet (Schritt 3) — oder der App-Besitzer hat kein Premium. |
-| **403** erst beim Abspielen | Live-Modus braucht Premium auf dem **hörenden** Konto. Handoff geht auch ohne. |
+| *„Dieses Konto hat kein Abo…"* beim **Lauf starten** | Der Live-Modus braucht Premium auf dem **hörenden** Konto. Seit Februar 2026 kann die App das nicht mehr vorher prüfen, deshalb kommt die Meldung erst hier. Nimm den Handoff-Modus, der geht auch ohne. |
 | *Kein Spotify-Gerät aktiv* | Schritt 5: in der Spotify-App erst etwas anspielen, dann hier neu laden. |
-| **429** | Spotify drosselt. Die App wartet und versucht es erneut; einfach laufen lassen. |
+| *„Spotify gibt die Titel dieser Playlist nicht mehr heraus…"* | Die Playlist gehört dir nicht. Seit Februar 2026 liefert Spotify nur noch Inhalte eigener oder mitbearbeiteter Playlists. In Spotify kopieren, dann geht sie. |
+| **429**, Text `Too many requests` | Spotify drosselt kurz. Die App wartet und versucht es erneut; einfach laufen lassen. |
+| **429** mit `"reason":"QUOTA_EXCEEDED"` | Das Kontingent ist aufgebraucht. Es zählt seit Juli 2026 **pro Entwicklerkonto**, nicht pro Client ID — deine anderen Spotify-Apps zählen mit. Die App versucht es hier bewusst **nicht** erneut. Warten hilft, weiterklicken nicht. |
 
 > Wenn du damit durch bist: **trag das Ergebnis in `STATUS.md` ein.** Spotify
 > steht dort bis dahin als *BERICHTET*, nicht als *VERIFIZIERT* — dein Test ist

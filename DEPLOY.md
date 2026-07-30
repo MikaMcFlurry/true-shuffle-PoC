@@ -167,6 +167,12 @@ https://true-shuffle-mika.fly.dev/auth/spotify/callback
 Die lokale `http://127.0.0.1:8000/auth/spotify/callback` kannst du daneben
 stehen lassen — Spotify erlaubt mehrere. Dann funktioniert beides.
 
+> Seit Juli 2026 erlaubt Spotify bis zu **25 Client IDs pro Entwicklerkonto**
+> (vorher genau eine). Du kannst also auch eine zweite App nur für die
+> Fly-Adresse anlegen — dann gehört zu jeder `BASE_URL` genau eine Client ID.
+> Das **Kontingent** teilen sich deine Apps trotzdem: es zählt seit Juli 2026
+> pro Entwicklerkonto, nicht pro Client ID.
+
 ## Schritt 7 — Bruder und Kumpel freischalten
 
 Das ist der Schritt, den man am leichtesten vergisst, und ohne ihn bekommen
@@ -184,6 +190,12 @@ mit Name und der **E-Mail-Adresse ihres Spotify-Kontos** (nicht irgendeiner).
 > funktioniert die App im Entwicklungsmodus für niemanden. Ob deine Tester
 > Premium haben, entscheidet nur, ob sie den **Live-Modus** nutzen können —
 > Handoff geht auch ohne.
+>
+> **Sag ihnen dazu:** Ihren Tarif kann die App ihnen nicht anzeigen. Spotify hat
+> `product` im Februar 2026 aus `GET /me` entfernt; im Laufzettel steht deshalb
+> nur der Kontoname. Wer kein Premium hat, erfährt das erst beim ersten
+> **Lauf starten** — und wird dort auf Handoff verwiesen. Das ist kein Fehler
+> deines Deployments.
 
 ## Schritt 8 — Verschicken
 
@@ -253,6 +265,10 @@ bleiben soll — `/runs` → **Exportieren**.
 |---|---|
 | `INVALID_CLIENT: Invalid redirect URI` | `BASE_URL` in `fly.toml` und die URI im Spotify-Dashboard stimmen nicht zeichengenau überein. Auf `https://` und den fehlenden Schrägstrich am Ende achten. |
 | Tester bekommt **403** beim Verbinden | Nicht im *User Management* freigeschaltet — oder du als Besitzer hast kein Premium. |
+| Im Laufzettel steht kein **Markt** und kein **Tarif** | Richtig so. Spotify hat `country` und `product` im Februar 2026 aus `GET /me` entfernt; die App schreibt dort jetzt „gibt Spotify nicht mehr heraus". Nichts zu reparieren. |
+| Tester meldet „meine Playlists haben alle 0 Titel" | Alter Stand. Seit Februar 2026 heißt das Feld `items` statt `tracks`; ein Deployment, das noch `tracks` liest, zählt überall null. `fly deploy` mit dem aktuellen Stand. |
+| Tester kann eine Playlist nicht mischen, **Fach anlegen** bleibt grau | Sie gehört ihm nicht. Seit Februar 2026 gibt Spotify nur noch Inhalte eigener oder mitbearbeiteter Playlists heraus — gefolgte und redaktionelle bleiben leer. In Spotify kopieren, dann geht es. |
+| Spotify antwortet **429** mit `"reason":"QUOTA_EXCEEDED"` | Das Kontingent des Entwicklungsmodus ist aufgebraucht. Es zählt seit Juli 2026 pro **Entwicklerkonto**, nicht pro Client ID — andere Apps von dir zählen mit. Warten; die App versucht es bei dieser Antwort bewusst nicht erneut. |
 | Nach `fly deploy` sind alle Konten weg | Volume nicht gemountet. `fly volumes list` prüfen; `[mounts]` in `fly.toml` muss auf `/data` zeigen und `DB_PATH` dorthin. |
 | Der Lauf rückt nicht weiter, wenn der Tab zu ist | `auto_stop_machines` steht auf `true` oder es laufen mehrere Maschinen. `fly status` prüfen; es darf **genau eine** sein. |
 | „Zugangscode nötig" bei jedem Klick | Der Browser blockt Cookies von Drittanbietern oder es ist ein privates Fenster mit strikten Einstellungen. |

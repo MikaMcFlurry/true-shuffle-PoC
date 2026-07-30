@@ -62,6 +62,23 @@ def test_capabilities_serialise_for_the_ui():
     assert payload["playback"] == "remote_device"
     assert payload["supports_controller_mode"] is True
     assert isinstance(payload["notes"], list)
+    # The connect page needs this to say "not available" rather than show a gap
+    # where the market and tier rows used to be.
+    assert payload["reports_account_tier"] is False
+
+
+def test_spotify_pages_within_the_limit_the_items_endpoint_allows():
+    """GET /playlists/{id}/items caps at 50; asking for 100 is a 400 now."""
+    caps = SpotifyProvider().capabilities
+    assert caps.read_page_size <= 50
+    # Writes were not capped down — POST /playlists/{id}/items still takes 100.
+    assert caps.write_batch_size == 100
+
+
+def test_only_spotify_stopped_reporting_the_account_tier():
+    assert SpotifyProvider().capabilities.reports_account_tier is False
+    assert AppleMusicProvider().capabilities.reports_account_tier is True
+    assert YouTubeMusicProvider().capabilities.reports_account_tier is True
 
 
 # ---------------------------------------------------------------------------
@@ -91,9 +108,10 @@ def test_only_spotify_can_prefetch_a_queue():
 # ---------------------------------------------------------------------------
 
 def test_spotify_track_parsing():
+    # February 2026 renamed the wrapper key from "track" to "item".
     track = SpotifyProvider._to_track({
         "is_local": False,
-        "track": {
+        "item": {
             "id": "abc123", "name": "Song", "type": "track", "duration_ms": 210000,
             "artists": [{"name": "A"}, {"name": "B"}],
             "album": {"name": "Album", "images": [{"url": "big"}, {"url": "small"}]},
@@ -106,21 +124,42 @@ def test_spotify_track_parsing():
     assert track.is_valid
 
 
+def test_spotify_still_reads_the_deprecated_track_key():
+    """Spotify kept emitting ``track`` as a deprecated alias beside ``item``."""
+    track = SpotifyProvider._to_track({"track": {"id": "old", "name": "Legacy",
+                                                 "type": "track"}})
+    assert track.id == "old"
+    assert track.name == "Legacy"
+
+
+def test_spotify_prefers_item_over_the_deprecated_track_key():
+    track = SpotifyProvider._to_track({
+        "item": {"id": "new", "type": "track"},
+        "track": {"id": "old", "type": "track"},
+    })
+    assert track.id == "new"
+
+
 def test_spotify_local_files_are_flagged():
-    track = SpotifyProvider._to_track({"is_local": True, "track": {"id": "x", "type": "track"}})
+    track = SpotifyProvider._to_track({"is_local": True, "item": {"id": "x", "type": "track"}})
     assert track.is_local
     assert not track.is_valid
 
 
 def test_spotify_episodes_are_flagged():
-    track = SpotifyProvider._to_track({"track": {"id": "e", "type": "episode"}})
+    track = SpotifyProvider._to_track({"item": {"id": "e", "type": "episode"}})
     assert track.kind is TrackKind.EPISODE
     assert not track.is_valid
 
 
 def test_spotify_unavailable_track_is_flagged():
-    track = SpotifyProvider._to_track({"track": {"id": "u", "type": "track",
-                                                 "is_playable": False}})
+    """``is_playable`` survived February 2026 and is now the only signal left.
+
+    ``available_markets`` and ``linked_from`` were removed from the Track
+    object, so there is nothing else to cross-check availability against.
+    """
+    track = SpotifyProvider._to_track({"item": {"id": "u", "type": "track",
+                                                "is_playable": False}})
     assert not track.is_valid
 
 

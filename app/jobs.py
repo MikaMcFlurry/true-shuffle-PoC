@@ -18,6 +18,7 @@ import secrets
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from app import db
+from providers.base import user_message
 
 logger = logging.getLogger(__name__)
 
@@ -91,8 +92,12 @@ async def start(
             raise
         except Exception as exc:
             logger.exception("job %s (%s) failed", job_id, kind)
-            await db.update_job(job_id, status="error", message=str(exc))
-            await publish(job_id, {"status": "error", "message": str(exc)})
+            # The log keeps the raw exception; the listener gets the sentence
+            # they can act on.  A job failure is the one error in this app that
+            # never passes through an HTTP handler, so it has to translate here.
+            message = user_message(exc)
+            await db.update_job(job_id, status="error", message=message)
+            await publish(job_id, {"status": "error", "message": message})
         finally:
             _tasks.pop(job_id, None)
 

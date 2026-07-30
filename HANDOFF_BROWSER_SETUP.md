@@ -137,8 +137,12 @@ Kumpels und trag beide ein.
    eingerichtet* — sonst fehlt `SPOTIFY_CLIENT_ID`).
 2. **Spotify verbinden** → Spotifys Zustimmungsseite → *Agree*.
 3. Zurück in der App muss Spotify auf **Verbunden** stehen, mit meinem
-   Kontonamen und Tarif.
-4. **Sammlung** → meine echten Playlists müssen erscheinen.
+   Kontonamen. **Ein Tarif wird nicht angezeigt** — Spotify liefert ihn seit
+   Februar 2026 nicht mehr aus. Das ist kein Fehler.
+4. **Sammlung** → meine echten Playlists müssen erscheinen, mit echten
+   Titelzahlen. Bei gefolgten und redaktionellen Playlists steht *Inhalt nicht
+   lesbar* statt einer Zahl — auch das ist seit Februar 2026 normal und **kein**
+   Fehler.
 
 Wenn das steht, sag mir:
 * die fertige URL,

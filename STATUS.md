@@ -16,7 +16,7 @@ blurring: what is **built**, what is **verified**, and what is **not done**.
 | **UNVERIFIED** | Written against the published API; never run against a live account |
 | **NOT DONE** | Explicitly out of scope for this version |
 
-`python -m pytest -q` → **249 passed**. `ruff check .` → **clean**.
+`python -m pytest -q` → **305 passed**. `ruff check .` → **clean**.
 Reproduced on Python 3.11.15 on 2026-07-30.
 
 ---
@@ -34,7 +34,7 @@ queue prefetch) and the engine and UI adapt from the declaration.
 
 | Connector | Auth | Playback | Status |
 |---|---|---|---|
-| Spotify | OAuth 2.0 PKCE | Spotify Connect remote control | Request paths TESTED, live account UNVERIFIED |
+| Spotify | OAuth 2.0 PKCE | Spotify Connect remote control | Request paths TESTED against the **February 2026** API, live account UNVERIFIED |
 | Apple Music | ES256 developer token + browser-minted Music User Token | MusicKit JS in-page player | Request paths TESTED, live account UNVERIFIED |
 | YouTube Music | Google OAuth 2.0 (confidential client) | YouTube IFrame player | Request paths TESTED, live account UNVERIFIED |
 | YouTube Music (unofficial, opt-in) | pasted browser credential | YouTube IFrame player | Mapping TESTED against a fake client, live account UNVERIFIED |
@@ -46,8 +46,11 @@ only path to the YouTube Music library, Liked Music, uploads and history — and
 the only connector here that is not built on a published contract.
 
 The developer-token signing, pagination, batching, quota arithmetic and payload
-parsing of all three are tested with stubbed HTTP. **What is not tested is
-whether the live services behave as documented** — that needs credentials.
+parsing of all three are tested with stubbed HTTP — for Spotify, against the
+post-February-2026 shapes: batch track reads no longer exist there,
+`/playlists/{id}/items` caps at 50 per page, and the playlist payload renamed
+`tracks` → `items` and `track` → `item`. **What is not tested is whether the
+live services behave as documented** — that needs credentials.
 
 ### Tab-free decks (Handoff Mode) — TESTED
 
@@ -131,6 +134,16 @@ so a human had to press a button per track.
    reason; how common they are in a real library is unknown.
 6. **Concurrency at scale.** One `asyncio.Lock` per run is correct for a
    single-process PoC and would need rethinking behind more than one worker.
+7. **Spotify's February/July 2026 API against a live account.** The connector
+   was migrated to the reduced endpoint set — `/playlists/{id}/items`,
+   `POST /me/playlists`, per-id `GET /tracks/{id}`, no `country`/`product` on
+   `/me` — and the stubs now encode those shapes. What no test can settle:
+   whether `is_playable` really is populated from the token's implicit market
+   now that `available_markets` is gone; whether a non-owned playlist answers
+   403 or an empty page (both are handled, only one happens); whether a
+   1 500-track deck's ≈30 reads and ≈15 writes trip the per-developer-account
+   quota; and what a real free account returns when Live Mode is refused, since
+   Spotify documents the Premium requirement but not the failure body.
 
 ---
 

@@ -115,6 +115,31 @@ def test_connect_flow_stores_an_account(client, fake_provider):
     assert fake["account_name"] == "Fake User"
 
 
+def test_a_service_that_hides_the_tier_still_shows_as_connected(
+    client, fake_tierless_provider
+):
+    """Spotify stopped reporting market and tier; the card must survive it.
+
+    A connector with nothing to say about the subscription is still connected,
+    and the page has to state that the values are unavailable rather than leave
+    a hole where two rows used to be.
+    """
+    connect(client, "faketier")
+
+    payload = client.get("/api/providers").json()
+    card = next(p for p in payload["providers"] if p["id"] == "faketier")
+    assert card["connected"] is True
+    assert card["account_name"] == "Fake User"
+    assert card["market"] == ""
+    assert card["product_tier"] == ""
+    assert card["reports_account_tier"] is False
+
+    page = client.get("/connect").text
+    assert "Verbunden" in page
+    assert "Fake User" in page
+    assert "gibt Fake faketier nicht mehr heraus" in page
+
+
 def test_callback_rejects_a_mismatched_state(client, fake_provider):
     """CSRF guard — the old PoC never checked the OAuth state."""
     client.get("/auth/fake/login", follow_redirects=False)
@@ -186,6 +211,31 @@ def test_playlists_are_listed_once_connected(client, fake_provider):
     connect(client)
     payload = client.get("/api/playlists", params={"provider": "fake"}).json()
     assert payload["playlists"][0]["name"] == "Everything"
+
+
+def test_an_unreadable_playlist_is_listed_with_its_reason(client, fake_provider):
+    """The library must show it and say why, not hide it and not lie about it."""
+    connect(client)
+    payload = client.get("/api/playlists", params={"provider": "fake"}).json()
+    foreign = next(p for p in payload["playlists"] if p["id"] == "pl-foreign")
+
+    assert foreign["readable"] is False
+    assert foreign["unreadable_reason"]
+    # Negative, not zero: the UI prints "—" for this and a digit for a real count.
+    assert foreign["track_count"] < 0
+
+
+def test_dealing_an_unreadable_playlist_explains_itself(client, fake_provider):
+    """A stated reason beats a progress bar that dies at nothing."""
+    connect(client)
+    response = client.post("/api/runs", json={
+        "provider": "fake", "playlist_id": "pl-foreign", "mode": "utility",
+    })
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "Playlist" in detail
+    # And nothing was created in the service on the way out.
+    assert fake_provider.created == {}
 
 
 def test_devices_are_listed_for_a_remote_provider(client, fake_provider):

@@ -238,10 +238,24 @@ function renderPlaylists() {
         },
             el("span", { class: "meta" },
                 el("b", {}, pl.name || "Ohne Titel"),
-                el("span", { class: "faint sm" },
-                    pl.track_count >= 0 ? `${formatCount(pl.track_count)} Titel` : "Größe unbekannt")),
+                el("span", { class: "faint sm" }, sizeLine(pl))),
+            // A digit only when there is one to print. Zero is a claim, and
+            // "the service will not tell us" is not zero.
             el("span", { class: "n" }, pl.track_count >= 0 ? formatCount(pl.track_count) : "—")
         )));
+}
+
+/**
+ * What a playlist row says under its name.
+ *
+ * Three distinct states, and collapsing any two of them was the bug: a size we
+ * know, a size we do not know, and a playlist whose contents the service flatly
+ * refuses to hand over.
+ */
+function sizeLine(pl) {
+    if (pl.readable === false) return "Inhalt nicht lesbar";
+    if (pl.track_count >= 0) return `${formatCount(pl.track_count)} Titel`;
+    return "Größe unbekannt";
 }
 
 $("#plFilter").addEventListener("input", renderPlaylists);
@@ -250,10 +264,24 @@ function selectPlaylist(playlist, node) {
     state.playlist = playlist;
     for (const option of $("#playlists").children) option.setAttribute?.("aria-pressed", "false");
     node.setAttribute("aria-pressed", "true");
-    $("#dealBtn").disabled = !state.mode;
-    $("#selectionRead").textContent = playlist.track_count >= 0
-        ? `${formatCount(playlist.track_count)} TITEL`
-        : "GRÖSSE UNBEKANNT";
+
+    const readable = playlist.readable !== false;
+    // Offering "Fach anlegen" for a playlist we cannot read would be an
+    // affordance for a guaranteed failure.
+    $("#dealBtn").disabled = !state.mode || !readable;
+
+    $("#selectionRead").textContent = !readable
+        ? "NICHT LESBAR"
+        : playlist.track_count >= 0
+            ? `${formatCount(playlist.track_count)} TITEL`
+            : "GRÖSSE UNBEKANNT";
+
+    if (!readable) {
+        $("#selectionHint").textContent = `„${playlist.name}“: ${playlist.unreadable_reason
+            || "Dieser Dienst gibt den Inhalt dieser Playlist nicht heraus."} `
+            + "Kopier sie in der App des Dienstes in dein eigenes Konto, dann lässt sie sich mischen.";
+        return;
+    }
     $("#selectionHint").textContent =
         `${playlist.name}: ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
 }
