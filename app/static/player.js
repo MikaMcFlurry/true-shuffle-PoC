@@ -15,7 +15,7 @@
  * page never decides what plays next on its own.
  */
 
-import { $, api, el, followJob, formatDuration, formatCount, setNote, spineTint } from "./app.js";
+import { $, api, el, followJob, formatDuration, formatCount, setNote, artistTint } from "./app.js";
 
 /* ========================================================================== */
 /* Web players                                                                */
@@ -151,8 +151,13 @@ export class RunPlayer {
 
   async boot() {
     this.state = await api(`/api/runs/${this.runId}`);
+    // Returning to a deck that is already running is the product's core path.
+    // Without this the page claimed "LÄUFT" over frozen content, with Pause
+    // disabled while music was actually playing.
+    this.playing = this.state.status === "active";
     this.render();
     this.loadSkipped();
+    if (this.isRemote && this.playing) this.startPolling();
 
     if (!this.isRemote) {
       const { config } = await api(`/api/player-config?provider=${this.provider.id}`);
@@ -172,6 +177,18 @@ export class RunPlayer {
       await this.web.init();
     } else {
       await this.loadDevices();
+    }
+  }
+
+  /** A page that cannot load its run says so, and stops offering transport. */
+  failed(message) {
+    this.playing = false;
+    this.stopPolling();
+    $("#nowTitle").textContent = "Lauf nicht geladen";
+    $("#nowArtist").textContent = message;
+    for (const id of ["#startBtn", "#prevBtn", "#nextBtn", "#pauseBtn"]) {
+      const node = $(id);
+      if (node) node.disabled = true;
     }
   }
 
@@ -308,31 +325,43 @@ export class RunPlayer {
   }
 
   /**
-   * The rack: one spine per card, the divider standing at the cursor.
-   * Played sleeves lie shorter and dimmer behind it; the rest stand upright.
+   * The rack: one bar per card, and a divider that travels to the cursor.
+   *
+   * Bars are rebuilt only when the deck's size changes; an advance moves one
+   * absolutely positioned element, because "moving that divider forward IS the
+   * advance" and a teleporting divider does not say that.
+   *
+   * The bar count is measured from the mount rather than fixed, so a
+   * 1,500-track deck does not overflow a phone and clip the cursor away.
    */
   renderRack() {
     const mount = $("#rack");
     if (!mount || !this.state) return;
-    const { cursor, total, order_sample } = this.state;
+    const { cursor, total } = this.state;
     if (!total) return mount.replaceChildren();
 
-    // One bar per card up to a cap, so a 1,500-track crate still reads.
-    const BARS = 96;
-    const bars = Math.min(total, BARS);
-    const scale = total / bars;
-    const dividerAt = Math.min(bars, Math.round(cursor / scale));
+    const width = mount.clientWidth || 320;
+    const bars = Math.max(8, Math.min(total, Math.floor(width / 4)));
 
-    const nodes = [];
-    for (let i = 0; i < bars; i++) {
-      if (i === dividerAt) nodes.push(el("i", { class: "divider" }));
-      const at = Math.floor(i * scale);
-      const props = { "data-t": spineTint((order_sample && order_sample[i]) || String(at)) };
-      if (at < cursor) props["data-played"] = "";
-      nodes.push(el("i", props));
+    if (this._rackBars !== bars || this._rackTotal !== total) {
+      this._rackBars = bars;
+      this._rackTotal = total;
+      this._divider = el("span", { class: "divider" });
+      mount.replaceChildren(
+        ...Array.from({ length: bars }, () => el("i")),
+        this._divider
+      );
+      this._bars = Array.from(mount.querySelectorAll("i"));
     }
-    if (dividerAt >= bars) nodes.push(el("i", { class: "divider" }));
-    mount.replaceChildren(...nodes);
+
+    const played = Math.round((cursor / total) * bars);
+    this._bars.forEach((bar, i) => {
+      if (i < played) bar.setAttribute("data-played", "");
+      else bar.removeAttribute("data-played");
+    });
+    if (this._divider) {
+      this._divider.style.left = `${(cursor / total) * 100}%`;
+    }
   }
 
   render() {
@@ -373,7 +402,7 @@ export class RunPlayer {
       ...(upcoming.length
         ? upcoming.map((t) =>
             el("li", {},
-              el("span", { class: "edge", "data-t": spineTint(t.id) }),
+              el("span", { class: "edge", "data-t": artistTint(t.artist) || null }),
               el("span", { class: "pos" }, String(t.index + 1)),
               el("span", {},
                 el("span", { class: "name" }, t.name || t.id),

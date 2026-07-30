@@ -1,0 +1,10 @@
+# Optional: the unofficial YouTube Music connector.
+#
+# Reaches the YouTube Music library, "Liked Music", uploads and listening
+# history that no public API exposes — by driving YouTube's INTERNAL API.
+# It can break without notice and its use is very likely against YouTube's
+# terms of service. The official connector (providers/youtube.py) needs none
+# of this and stays the default.
+#
+# Install it AND set ENABLE_UNOFFICIAL_YTMUSIC=true; either alone does nothing.
+ytmusicapi>=1.10,<2

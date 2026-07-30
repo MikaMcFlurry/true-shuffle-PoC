@@ -134,9 +134,26 @@ works.
 | Auto-generated mixes (Supermix, Discover Mix) | ❌ |
 | Playback | the YouTube player, not the YouTube Music player |
 
-Nothing public exposes the ❌ rows. Reaching them needs an unofficial,
-reverse-engineered client — a decision with terms-of-service consequences that
-belongs to the product owner, not to this codebase.
+Nothing public exposes the ❌ rows.
+
+There is an **opt-in second connector** that does reach them —
+`providers/ytmusic_unofficial.py`, built on `ytmusicapi`, which drives
+YouTube's *internal* API. It adds the library, Liked Music, uploads and
+listening history, and that last one also makes Handoff Mode work on YouTube
+with nothing of ours open. The trade is real and stated where it cannot be
+missed: it can break at any time without notice, and using it is very likely
+against YouTube's terms of service.
+
+It is off unless you switch it on deliberately — **both** of these, either alone
+does nothing:
+
+```bash
+pip install -r requirements-optional.txt
+ENABLE_UNOFFICIAL_YTMUSIC=true          # in .env
+```
+
+Then run `ytmusicapi browser` and paste the resulting `browser.json` into the
+connect page. The official connector stays the default path to YouTube Music.
 
 Because a YouTube playlist can hold anything, every entry is checked against
 YouTube's own **Music category (10)**, with an exemption for `<Artist> - Topic`

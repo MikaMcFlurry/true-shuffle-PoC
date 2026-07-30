@@ -30,7 +30,7 @@
   /* Sleeve card and printed labels. */
   --ink:         #eceae4;
   --ink-2:       rgba(236, 234, 228, 0.64);
-  --ink-3:       rgba(236, 234, 228, 0.40);
+  --ink-3:       rgba(236, 234, 228, 0.58);
 
   /* The divider tab. Current position and primary action only. */
   --tab:         #e4ff3f;
@@ -81,7 +81,7 @@
     --rule-2:  rgba(18, 24, 22, 0.26);
     --ink:     #12181a;
     --ink-2:   rgba(18, 24, 26, 0.68);
-    --ink-3:   rgba(18, 24, 26, 0.46);
+    --ink-3:   rgba(18, 24, 26, 0.62);
     /* The card stays fluorescent under daylight; only its ink darkens. */
     --tab:      #e3f04a;
     --tab-ink:  #23260a;
@@ -102,7 +102,7 @@
   color-scheme: dark;
   --ground: #15181c; --crate: #1b1f25; --crate-2: #232830; --crate-3: #2c323b;
   --rule: rgba(236,234,228,.11); --rule-2: rgba(236,234,228,.20);
-  --ink: #eceae4; --ink-2: rgba(236,234,228,.64); --ink-3: rgba(236,234,228,.40);
+  --ink: #eceae4; --ink-2: rgba(236,234,228,.64); --ink-3: rgba(236,234,228,.58);
   --tab: #e4ff3f; --tab-ink: #1a1d08; --tab-line: #e4ff3f; --tab-dim: rgba(228,255,63,.14);
   --ok: #6bd6a0; --stop: #ff6b6b;
   --spine-1: #8c5a4a; --spine-2: #97803f; --spine-3: #5f7a5c;
@@ -113,7 +113,7 @@
   color-scheme: light;
   --ground: #e4e7e5; --crate: #f3f5f4; --crate-2: #d9dddb; --crate-3: #c7cccb;
   --rule: rgba(18,24,22,.14); --rule-2: rgba(18,24,22,.26);
-  --ink: #12181a; --ink-2: rgba(18,24,26,.68); --ink-3: rgba(18,24,26,.46);
+  --ink: #12181a; --ink-2: rgba(18,24,26,.68); --ink-3: rgba(18,24,26,.62);
   --tab: #e3f04a; --tab-ink: #23260a; --tab-line: #63700a; --tab-dim: rgba(99,112,10,.14);
   --ok: #1c7a51; --stop: #b83232;
   --spine-1: #a8705d; --spine-2: #b09650; --spine-3: #6f8f6b;
@@ -142,7 +142,7 @@ p  { margin: 0; max-width: var(--measure); }
 ul, ol { list-style: none; margin: 0; padding: 0; }
 a { color: inherit; }
 
-:focus-visible { outline: 2px solid var(--tab); outline-offset: 2px; border-radius: 3px; }
+:focus-visible { outline: 2px solid var(--tab-line); outline-offset: 2px; border-radius: 3px; }
 
 /* Stencilled shop lettering: the crate's own label voice. */
 .stencil {
@@ -188,9 +188,10 @@ a { color: inherit; }
 /* Spines in a crate, one pulled proud: the product as a 20px mark. */
 .mark { display: flex; align-items: flex-end; gap: 2px; height: 17px; }
 .mark i { display: block; width: 3px; height: 12px; border-radius: 1px; background: var(--ink-3); }
-.mark i:nth-child(3) { height: 17px; background: var(--tab); }
+.mark i:nth-child(3) { height: 17px; background: var(--tab-line); }
 
-.masthead nav { display: flex; gap: 2px; margin-left: auto; align-items: center; }
+.masthead nav { display: flex; gap: 2px; margin-left: auto; align-items: center; min-width: 0; }
+.masthead .links { display: flex; gap: 2px; min-width: 0; }
 .masthead nav a {
   text-decoration: none;
   color: var(--ink-2);
@@ -371,56 +372,59 @@ select:hover, input:hover { border-color: var(--rule-2); }
 .note-ok > .stencil { color: var(--ok); }
 
 /* ==========================================================================
-   THE CRATE — the deck rendered as spines with a divider at the cursor
+   THE CRATE — the deck as spines, with a divider that travels
+
+   The divider is one absolutely positioned element, not a bar re-inserted into
+   a rebuilt row: "moving that divider forward IS the advance", so it has to
+   actually move. Bars are only re-rendered when the deck's size changes.
+
+   No tint on the bars. Six hash-derived colours looked like an encoding and
+   meant nothing, which is worse than one colour. In the rack the divider is
+   the only colour, and it means exactly one thing: you are here.
    ========================================================================== */
 
 .rack {
+  position: relative;
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  height: 56px;
+  height: 52px;
   padding: 8px 10px;
   border-radius: var(--r);
   background: var(--ground);
-  border: 1px solid var(--rule);
   overflow: hidden;
 }
 
-/* One spine per card, printed-card tint keyed to the track. */
 .rack i {
   display: block;
   flex: 1 1 0;
   min-width: 2px;
-  height: 26px;
+  height: 24px;
   border-radius: 1px 1px 0 0;
   background: var(--crate-3);
 }
-.rack i[data-played] { height: 14px; opacity: .5; }
-.rack i[data-t="1"] { background: var(--spine-1); }
-.rack i[data-t="2"] { background: var(--spine-2); }
-.rack i[data-t="3"] { background: var(--spine-3); }
-.rack i[data-t="4"] { background: var(--spine-4); }
-.rack i[data-t="5"] { background: var(--spine-5); }
-.rack i[data-t="6"] { background: var(--spine-6); }
+/* Played sleeves lie flat behind the divider. */
+.rack i[data-played] { height: 11px; background: var(--rule-2); }
 
-/* The shop divider: taller, fluorescent, cut with a tab. This is the cursor. */
-.rack i.divider {
-  height: 40px;
-  min-width: 4px;
-  flex-grow: 0;
-  flex-basis: 4px;
+.rack .divider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
   background: var(--tab);
-  border-radius: 1px;
-  margin: 0 3px;
+  /* An outline so the cursor never depends on chroma alone. */
+  outline: 1px solid var(--tab-line);
+  transition: left .18s cubic-bezier(.2,.7,.3,1);
 }
+@media (prefers-reduced-motion: reduce) { .rack .divider { transition: none; } }
 
 /* -- the catalogue tag: now playing ---------------------------------------- */
 
 .tag {
-  background: var(--crate-2);
-  border: 1px solid var(--rule-2);
-  border-radius: var(--r);
-  padding: 14px 16px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--rule);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px 16px;
@@ -452,7 +456,10 @@ select:hover, input:hover { border-color: var(--rule-2); }
 .transport { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .transport .push { margin-left: auto; }
 
-.keys { display: flex; gap: 12px; flex-wrap: wrap; color: var(--ink-3); font-size: var(--t-xs); }
+.keys { display: none; }
+@media (pointer: fine) {
+  .keys { display: flex; gap: 12px; flex-wrap: wrap; color: var(--ink-3); font-size: var(--t-xs); }
+}
 
 .deck-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(272px, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 900px) { .deck-layout { grid-template-columns: 1fr; } }
@@ -468,7 +475,8 @@ select:hover, input:hover { border-color: var(--rule-2); }
   font-size: var(--t-sm);
 }
 .sleeves li + li { border-top: 1px solid var(--rule); }
-.sleeves .edge { width: 3px; height: 24px; border-radius: 1px; background: var(--crate-3); }
+/* Tinted by ARTIST, so a cluster of one artist ahead of you is visible. */
+.sleeves .edge { width: 3px; height: 26px; border-radius: 1px; background: var(--crate-3); }
 .sleeves .edge[data-t="1"] { background: var(--spine-1); }
 .sleeves .edge[data-t="2"] { background: var(--spine-2); }
 .sleeves .edge[data-t="3"] { background: var(--spine-3); }
@@ -485,7 +493,7 @@ select:hover, input:hover { border-color: var(--rule-2); }
 
 .record {
   display: grid;
-  grid-template-columns: 3px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   padding: 9px 10px;
@@ -499,8 +507,7 @@ select:hover, input:hover { border-color: var(--rule-2); }
   width: 100%;
 }
 .record:hover { background: var(--crate-2); }
-.record[aria-selected="true"] { background: var(--tab-dim); border-color: var(--tab-line); }
-.record .edge { width: 3px; height: 30px; border-radius: 1px; background: var(--crate-3); }
+.record[aria-pressed="true"] { background: var(--tab-dim); border-color: var(--tab-line); }
 .record .meta { min-width: 0; }
 .record .meta b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .record .n { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-3); font-size: var(--t-sm); }
@@ -582,7 +589,7 @@ tbody tr:last-child td { border-bottom: 0; }
   width: 11px; height: 11px; flex: none;
   border-radius: 50%;
   border: 2px solid var(--rule-2);
-  border-top-color: var(--tab);
+  border-top-color: var(--tab-line);
   animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -647,10 +654,13 @@ details.fold > summary:hover { color: var(--ink); }
 @media (max-width: 620px) {
   .page { padding: 20px 14px 88px; gap: 22px; }
   .masthead { padding: 0 12px; gap: 8px; }
-  .masthead nav { overflow-x: auto; scrollbar-width: none; }
-  .masthead nav::-webkit-scrollbar { display: none; }
-  .masthead nav::after { content: ""; flex: none; width: 4px; }
+  /* Only the page links scroll; the theme control stays pinned and reachable. */
+  .masthead .links { overflow-x: auto; scrollbar-width: none; }
+  .masthead .links::-webkit-scrollbar { display: none; }
   .masthead nav a { padding: 6px 8px; }
+  .masthead .btn { flex: none; }
+  /* A nested scroll region inside page scroll is wrong on a phone. */
+  .browse { max-height: none; }
   .console { padding: 14px; }
   .tag { padding: 12px; }
   .tag-cat .n { font-size: var(--t-xl); }

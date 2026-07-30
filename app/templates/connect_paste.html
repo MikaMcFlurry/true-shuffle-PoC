@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ provider.display_name }} verbinden · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="stack" style="max-width: 62ch">
+    <h1>{{ provider.display_name }} verbinden</h1>
+
+    <div class="note note-stop">
+        <span class="stencil">Inoffiziell</span>
+        <span>Dieser Connector spricht YouTubes interne Schnittstelle. Er kann
+        jederzeit ohne Vorwarnung brechen und verstößt sehr wahrscheinlich gegen
+        YouTubes Nutzungsbedingungen. Der offizielle YouTube-Music-Connector
+        bleibt die Voreinstellung.</span>
+    </div>
+
+    <p class="dim">
+        Er erreicht dafür, was keine öffentliche API hergibt: deine Mediathek,
+        „Liked Music“, Uploads und deinen Hörverlauf — und damit läuft Handoff
+        hier ebenfalls, ohne dass ein Tab offen bleiben muss.
+    </p>
+
+    <div class="crate stack-s">
+        <span class="stencil">So bekommst du die Zugangsdaten</span>
+        <ol class="stack-s dim sm">
+            <li>1 — <code>pip install ytmusicapi</code></li>
+            <li>2 — <code>ytmusicapi browser</code> ausführen und der Anleitung folgen</li>
+            <li>3 — den kompletten Inhalt der erzeugten <code>browser.json</code> unten einfügen</li>
+        </ol>
+    </div>
+
+    <label class="stack-s">
+        <span class="stencil">Inhalt von browser.json</span>
+        <textarea id="credential" rows="8" spellcheck="false"
+                  placeholder='{ "cookie": "…", "user-agent": "…" }'
+                  style="width:100%; font-family: var(--mono); font-size: var(--t-sm);
+                         padding:10px; border-radius: var(--r);
+                         border:1px solid var(--rule-2); background: var(--crate-2);
+                         color: var(--ink); resize: vertical;"></textarea>
+    </label>
+
+    <div class="row">
+        <button class="btn btn-primary btn-lg" id="pasteConnect" type="button">Verbinden</button>
+        <a class="btn btn-quiet" href="/connect">Abbrechen</a>
+    </div>
+
+    <div class="note hidden" id="pasteNote"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $, api, setNote } from "/static/app.js";
+
+const button = $("#pasteConnect");
+const note = $("#pasteNote");
+
+button.addEventListener("click", async () => {
+    const credential = $("#credential").value.trim();
+    if (!credential) {
+        return setNote(note, "Füge zuerst den Inhalt der browser.json ein.", "", "Fehlt noch");
+    }
+    button.disabled = true;
+    setNote(note, "Zugangsdaten werden geprüft…", "", "Moment");
+    try {
+        const result = await api("/auth/{{ provider.id }}/browser", {
+            method: "POST",
+            body: { credential },
+        });
+        location.href = result.redirect || "/library";
+    } catch (err) {
+        button.disabled = false;
+        setNote(note, err.message, "note-stop", "Abgelehnt");
+    }
+});
+</script>
+{% endblock %}

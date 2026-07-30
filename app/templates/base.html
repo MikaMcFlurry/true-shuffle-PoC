@@ -32,10 +32,12 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             true-shuffle
         </a>
         <nav>
+            <span class="links">
             <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Sammlung</a>
             <a href="/runs" {% if request.url.path == '/runs' %}aria-current="page"{% endif %}>Läufe</a>
             <a href="/connect" {% if request.url.path == '/connect' %}aria-current="page"{% endif %}>Dienste</a>
-            <button class="btn btn-quiet" id="themeToggle" type="button" aria-label="Helligkeit umschalten">Ansicht</button>
+            </span>
+            <button class="btn btn-quiet" id="themeToggle" type="button">Ansicht</button>
         </nav>
     </header>
 

@@ -83,6 +83,16 @@ async def begin(request: Request, provider_id: str):
             },
         )
 
+    if provider.capabilities.auth is AuthKind.PASTED:
+        # The credential is produced outside the browser and pasted in.
+        return templates.TemplateResponse(
+            request, "connect_paste.html",
+            {
+                "provider": provider.capabilities.as_dict(),
+                "browser_config": start.browser_config,
+            },
+        )
+
     if not start.redirect_url:
         raise HTTPException(status_code=500, detail="Connector returned no redirect")
     return RedirectResponse(start.redirect_url, status_code=302)
@@ -153,7 +163,7 @@ async def callback(
 async def browser_callback(request: Request, provider_id: str):
     """Accept a credential minted in the page (Apple Music MusicKit)."""
     provider = get_provider(provider_id)
-    if provider.capabilities.auth is not AuthKind.BROWSER_SDK:
+    if provider.capabilities.auth not in (AuthKind.BROWSER_SDK, AuthKind.PASTED):
         raise HTTPException(status_code=400, detail="This provider uses a redirect flow")
 
     payload = await request.json()

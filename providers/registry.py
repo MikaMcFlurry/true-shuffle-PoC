@@ -8,12 +8,15 @@ from providers.apple import AppleMusicProvider
 from providers.base import MusicProvider, ProviderNotConfigured
 from providers.spotify import SpotifyProvider
 from providers.youtube import YouTubeMusicProvider
+from providers.ytmusic_unofficial import UnofficialYouTubeMusicProvider
 
 #: Order matters — this is the order the connect screen shows them in.
 _PROVIDERS: Dict[str, MusicProvider] = {
     "spotify": SpotifyProvider(),
     "apple": AppleMusicProvider(),
     "youtube": YouTubeMusicProvider(),
+    # Opt-in and last: unofficial, and never the default path to YouTube Music.
+    "ytmusic": UnofficialYouTubeMusicProvider(),
 }
 
 

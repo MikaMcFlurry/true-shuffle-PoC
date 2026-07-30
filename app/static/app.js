@@ -47,6 +47,13 @@ export async function api(path, { method = "GET", body } = {}) {
 
 const THEME_KEY = "true_shuffle_theme";
 
+/** The control names the state it will switch to, in the interface language. */
+function labelTheme(button, current) {
+  const next = current === "dark" ? "light" : "dark";
+  button.textContent = next === "dark" ? "Dunkel" : "Hell";
+  button.setAttribute("aria-label", `Zu ${next === "dark" ? "dunkler" : "heller"} Ansicht wechseln`);
+}
+
 export function initTheme() {
   const stored = localStorage.getItem(THEME_KEY);
   if (stored === "dark" || stored === "light") {
@@ -54,6 +61,8 @@ export function initTheme() {
   }
   const button = $("#themeToggle");
   if (!button) return;
+  labelTheme(button, document.documentElement.dataset.theme
+    || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
   button.addEventListener("click", () => {
     const current =
       document.documentElement.dataset.theme ||
@@ -61,7 +70,7 @@ export function initTheme() {
     const next = current === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     localStorage.setItem(THEME_KEY, next);
-    button.setAttribute("aria-label", `Switch to ${next === "dark" ? "light" : "dark"} theme`);
+    labelTheme(button, next);
   });
 }
 
@@ -76,7 +85,22 @@ export function formatDuration(ms) {
 }
 
 export function formatCount(value) {
-  return Number(value ?? 0).toLocaleString();
+  return Number(value ?? 0).toLocaleString("de-DE");
+}
+
+/** "2026-07-30 14:22:11" (UTC, from SQLite) → a legible local time. */
+export function formatWhen(value) {
+  if (!value) return "";
+  const at = new Date(`${value.replace(" ", "T")}Z`);
+  if (Number.isNaN(at.getTime())) return value;
+  const minutes = Math.round((Date.now() - at.getTime()) / 60000);
+  if (minutes < 1) return "gerade eben";
+  if (minutes < 60) return `vor ${minutes} Min.`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `vor ${hours} Std.`;
+  const days = Math.round(hours / 24);
+  if (days < 8) return `vor ${days} ${days === 1 ? "Tag" : "Tagen"}`;
+  return at.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 /**
@@ -97,12 +121,19 @@ export function setNote(node, text, variant = "", label = "Hinweis") {
   );
 }
 
-/** Deterministic printed-card tint for a track, 1–6. Never claims to be art. */
-export function spineTint(id) {
+/**
+ * Printed-card tint keyed to the ARTIST, 1–6.
+ *
+ * Keyed to the track id it looked like an encoding and meant nothing, which is
+ * worse than no colour at all. Keyed to the artist it says something true and
+ * checkable: two spines of the same tint ahead of you are the same artist.
+ * Returns "" when the artist is unknown, so nothing is invented.
+ */
+export function artistTint(artist) {
+  const key = (artist || "").trim().toLowerCase();
+  if (!key) return "";
   let hash = 0;
-  for (let i = 0; i < (id || "").length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  }
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
   return String((hash % 6) + 1);
 }
 

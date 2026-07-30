@@ -3,7 +3,6 @@
 
 {% block content %}
 <section class="stack-s">
-    <p class="stencil">Schritt 1 — verbinden</p>
     <h1>Deine Streamingdienste</h1>
     <p class="dim">
         Verbinde so viele du willst. Jeder Dienst führt sein eigenes Fach, nichts
@@ -25,9 +24,9 @@
 
         <div class="row">
             {% if p.tracks_progress_without_tab %}
-            <span class="openness openness-free">Läuft ohne offenen Tab</span>
+            <span class="openness openness-free">Position zählt mit, ohne dass etwas offen bleibt</span>
             {% else %}
-            <span class="openness openness-tab">Braucht diesen Tab</span>
+            <span class="openness openness-tab">Position zählt nur bei offenem Tab mit</span>
             {% endif %}
             {% if p.requires_paid_tier %}
             <span class="chip chip-off">Abo für Live</span>

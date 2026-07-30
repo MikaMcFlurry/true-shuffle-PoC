@@ -3,7 +3,6 @@
 
 {% block content %}
 <section class="stack-s">
-    <p class="stencil">Schritt 2 — Playlist wählen</p>
     <h1>Ein Fach anlegen</h1>
     <p class="dim">Große Playlists werden im Hintergrund gelesen; du siehst dabei zu.</p>
 </section>
@@ -20,7 +19,7 @@
         </div>
         <label class="sr-only" for="plFilter">Playlists filtern</label>
         <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off">
-        <div class="browse" id="playlists" role="listbox" aria-label="Playlists">
+        <div class="browse" id="playlists" aria-label="Playlists">
             <div class="skeleton"><i></i><i></i><i></i><i></i><i></i></div>
         </div>
         <div class="note note-stop hidden" id="libNote"></div>
@@ -31,7 +30,7 @@
 
         <div class="crate">
             <span class="stencil">Auswahl</span>
-            <p class="dim sm" id="selectionHint">Noch nichts gewählt.</p>
+            <p class="dim sm" id="selectionHint">Wähl links eine Playlist.</p>
 
             <label class="stack-s sm">
                 <span class="stencil">Wenn schon ein Fach läuft</span>
@@ -51,7 +50,7 @@
 
 {% block scripts %}
 <script type="module">
-import { $, api, el, followJob, formatCount, setNote, spineTint } from "/static/app.js";
+import { $, api, el, followJob, formatCount, setNote } from "/static/app.js";
 
 const PROVIDERS = {{ providers | tojson }};
 const CONNECTED = {{ connected | map(attribute='provider') | list | tojson }};
@@ -61,7 +60,13 @@ const state = { provider: CONNECTED[0] || null, mode: null, playlist: null, all:
 
 /* -- service tabs --------------------------------------------------------- */
 
-$("#providerTabs").replaceChildren(
+if (CONNECTED.length < 2) {
+    // One connected service needs no switcher; name it instead.
+    $("#providerTabs").outerHTML = CONNECTED.length
+        ? `<span class="signet" style="--brand: ${byId[CONNECTED[0]]?.brand_color || "currentColor"}">${byId[CONNECTED[0]]?.display_name || CONNECTED[0]}</span>`
+        : "";
+}
+$("#providerTabs")?.replaceChildren(
     ...CONNECTED.map((id) =>
         el("button", {
             type: "button",
@@ -75,11 +80,11 @@ function selectProvider(id) {
     state.provider = id;
     state.playlist = null;
     state.mode = null;
-    for (const b of $("#providerTabs").children) {
+    for (const b of $("#providerTabs")?.children || []) {
         b.setAttribute("aria-pressed", String(b.dataset.provider === id));
     }
     $("#dealBtn").disabled = true;
-    $("#selectionHint").textContent = "Noch nichts gewählt.";
+    $("#selectionHint").textContent = "Wähl links eine Playlist.";
     renderModes();
     loadPlaylists();
 }
@@ -99,7 +104,11 @@ function renderModes() {
             id: "utility",
             title: "Handoff",
             available: p.create_playlist,
-            free: p.supports_history_sync,
+            // Handoff never needs anything open: the deck is written into the
+            // service and played there. Whether your POSITION is counted is a
+            // separate fact, and depends on the service having a history API.
+            open: false,
+            tracked: p.supports_history_sync,
             body: p.supports_history_sync
                 ? `Das Fach wird als Playlist in ${p.display_name} geschrieben. Du spielst sie dort — Handy, Auto, Box — und true-shuffle liest aus deinem Hörverlauf zurück, wie weit du bist.`
                 : `Das Fach wird als Playlist in ${p.display_name} geschrieben und dort abgespielt. ${p.display_name} gibt keinen Hörverlauf heraus, deine Position lässt sich danach nicht mitzählen.`,
@@ -111,7 +120,8 @@ function renderModes() {
             id: "controller",
             title: "Live",
             available: p.supports_controller_mode,
-            free: !p.live_mode_needs_open_tab,
+            open: p.live_mode_needs_open_tab,
+            tracked: true,
             body: p.live_mode_needs_open_tab
                 ? `Spielt über den eigenen Player von ${p.display_name} in diesem Tab und rückt bei jedem Titelende und jedem Skip weiter. ${p.display_name} lässt keine fremde Steuerung zu, das läuft also nur bei offenem Tab.`
                 : `true-shuffle übernimmt die ${p.display_name}-App, die du ohnehin offen hast, und rückt bei jedem Titelende und Skip weiter — auch bei Skips, die du in ${p.display_name} selbst machst. Läuft auf dem Server, du kannst diese Seite schließen.`,
@@ -121,7 +131,8 @@ function renderModes() {
 
     // Default to whichever available mode needs nothing open.
     if (!state.mode) {
-        const preferred = options.find((o) => o.available && o.free)
+        const preferred = options.find((o) => o.available && !o.open && o.tracked)
+            || options.find((o) => o.available && !o.open)
             || options.find((o) => o.available);
         state.mode = preferred?.id || null;
     }
@@ -136,8 +147,11 @@ function renderModes() {
         },
             el("div", { class: "spread" },
                 el("h3", {}, o.title),
-                el("span", { class: `openness ${o.free ? "openness-free" : "openness-tab"}` },
-                    o.free ? "Nichts bleibt offen" : "Tab offen lassen")),
+                el("span", { class: "row", style: "gap: 6px" },
+                    el("span", { class: `openness ${o.open ? "openness-tab" : "openness-free"}` },
+                        o.open ? "Tab muss offen bleiben" : "Nichts bleibt offen"),
+                    el("span", { class: `openness ${o.tracked ? "openness-free" : "openness-tab"}` },
+                        o.tracked ? "Position zählt mit" : "Position zählt nicht mit"))),
             el("p", {}, o.body),
             o.note ? el("p", { class: "faint sm" }, o.note) : null,
             !o.available ? el("p", { class: "faint sm" }, `Bei ${p.display_name} nicht möglich.`) : null
@@ -157,7 +171,10 @@ async function loadPlaylists() {
         state.all = playlists;
         renderPlaylists();
     } catch (err) {
-        list.replaceChildren();
+        // Clear the skeleton: a shimmer that never resolves is a lying page.
+        list.replaceChildren(el("div", { class: "empty" },
+            el("span", {}, "Playlists konnten nicht geladen werden."),
+            el("button", { class: "btn", type: "button", onClick: loadPlaylists }, "Erneut versuchen")));
         setNote($("#libNote"), err.message, "note-stop", "Fehler");
     }
 }
@@ -188,11 +205,9 @@ function renderPlaylists() {
         el("button", {
             class: "record",
             type: "button",
-            role: "option",
-            "aria-selected": String(state.playlist?.id === pl.id),
+            "aria-pressed": String(state.playlist?.id === pl.id),
             onClick: (ev) => selectPlaylist(pl, ev.currentTarget),
         },
-            el("span", { class: "edge", "data-t": spineTint(pl.id) }),
             el("span", { class: "meta" },
                 el("b", {}, pl.name || "Ohne Titel"),
                 el("span", { class: "faint sm" },
@@ -205,8 +220,8 @@ $("#plFilter").addEventListener("input", renderPlaylists);
 
 function selectPlaylist(playlist, node) {
     state.playlist = playlist;
-    for (const option of $("#playlists").children) option.setAttribute?.("aria-selected", "false");
-    node.setAttribute("aria-selected", "true");
+    for (const option of $("#playlists").children) option.setAttribute?.("aria-pressed", "false");
+    node.setAttribute("aria-pressed", "true");
     $("#dealBtn").disabled = !state.mode;
     $("#selectionHint").textContent =
         `${playlist.name} — ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
@@ -239,7 +254,7 @@ $("#dealBtn").addEventListener("click", async () => {
 
         followJob(job_id, {
             onProgress: (frame) => {
-                const phase = PHASE[frame.phase] || frame.phase || "Arbeitet";
+                const phase = PHASE[frame.phase] || frame.phase || "Wird vorbereitet";
                 const detail = frame.total
                     ? `${phase} — ${formatCount(frame.processed)} von ${formatCount(frame.total)}`
                     : phase;

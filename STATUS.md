@@ -16,7 +16,7 @@ blurring: what is **built**, what is **verified**, and what is **not done**.
 | **UNVERIFIED** | Written against the published API; never run against a live account |
 | **NOT DONE** | Explicitly out of scope for this version |
 
-`python -m pytest -q` → **226 passed**. `ruff check .` → **clean**.
+`python -m pytest -q` → **249 passed**. `ruff check .` → **clean**.
 Reproduced on Python 3.11.15 on 2026-07-30.
 
 ---
@@ -37,6 +37,13 @@ queue prefetch) and the engine and UI adapt from the declaration.
 | Spotify | OAuth 2.0 PKCE | Spotify Connect remote control | Request paths TESTED, live account UNVERIFIED |
 | Apple Music | ES256 developer token + browser-minted Music User Token | MusicKit JS in-page player | Request paths TESTED, live account UNVERIFIED |
 | YouTube Music | Google OAuth 2.0 (confidential client) | YouTube IFrame player | Request paths TESTED, live account UNVERIFIED |
+| YouTube Music (unofficial, opt-in) | pasted browser credential | YouTube IFrame player | Mapping TESTED against a fake client, live account UNVERIFIED |
+
+The unofficial connector is **off by default** and needs both
+`ENABLE_UNOFFICIAL_YTMUSIC=true` and an installed `ytmusicapi`; the full suite
+passes with the package absent, so the dependency really is optional. It is the
+only path to the YouTube Music library, Liked Music, uploads and history — and
+the only connector here that is not built on a published contract.
 
 The developer-token signing, pagination, batching, quota arithmetic and payload
 parsing of all three are tested with stubbed HTTP. **What is not tested is

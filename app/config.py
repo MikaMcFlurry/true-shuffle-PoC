@@ -55,6 +55,14 @@ class Settings(BaseSettings):
     #: user *before* a large Utility-Mode write silently dies at unit 10 000.
     youtube_daily_quota: int = 10_000
 
+    # -- YouTube Music, unofficial (opt-in, off by default) ----------------
+    #: Enables a second YouTube Music connector built on ``ytmusicapi``, a
+    #: reverse-engineered client for YouTube's internal API.  It reaches the
+    #: library, Liked Music, uploads and listening history that no public API
+    #: exposes — and it is unofficial: it can break without notice and its use
+    #: is very likely against YouTube's terms.  Off unless deliberately set.
+    enable_unofficial_ytmusic: bool = False
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

@@ -79,6 +79,7 @@ class AuthKind(str, Enum):
     OAUTH2_PKCE = "oauth2_pkce"          # Spotify
     OAUTH2_CODE = "oauth2_code"          # Google / YouTube (confidential client)
     BROWSER_SDK = "browser_sdk"          # Apple Music: token minted in the page
+    PASTED = "pasted"                    # credential the user pastes in by hand
 
 
 @dataclass(frozen=True)

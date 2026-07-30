@@ -3,7 +3,6 @@
 
 {% block content %}
 <section class="hero">
-    <p class="stencil">Prototyp · v0.3</p>
     <h1>Deine Playlist als Plattenfach, das du wirklich durchhörst.</h1>
     <p class="lede">
         Jeder spielbare Titel genau einmal pro Durchlauf. Nichts wiederholt sich,
@@ -45,7 +44,7 @@
         <article class="crate">
             <div class="spread">
                 <h3>Live</h3>
-                <span class="openness openness-tab">Hängt vom Dienst ab</span>
+                <span class="openness openness-tab">Je nach Dienst</span>
             </div>
             <p class="dim sm">
                 true-shuffle bestimmt selbst, was als Nächstes läuft, und rückt
@@ -74,9 +73,9 @@
             </div>
             <div class="row">
                 {% if p.tracks_progress_without_tab %}
-                <span class="openness openness-free">Läuft ohne offenen Tab</span>
+                <span class="openness openness-free">Position zählt mit, ohne dass etwas offen bleibt</span>
                 {% else %}
-                <span class="openness openness-tab">Braucht diesen Tab</span>
+                <span class="openness openness-tab">Position zählt nur bei offenem Tab mit</span>
                 {% endif %}
             </div>
             <p class="faint sm">
