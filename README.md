@@ -269,6 +269,8 @@ app/           FastAPI: HTTP, persistence, background work
   Funktionen; Teil A braucht kein einziges Konto
 - [DEPLOY.md](DEPLOY.md) — die App online stellen (Fly.io), mit der Begründung,
   warum eine serverlose Plattform hier nicht funktioniert
+- [HANDOFF_BROWSER_SETUP.md](HANDOFF_BROWSER_SETUP.md) — fertiger Auftragstext
+  für einen Assistenten mit Browser-Zugriff, der Fly und Spotify einrichtet
 - [STATUS.md](STATUS.md) — what is built, what is verified, what is not
 - [DESIGN.md](DESIGN.md) — the interface's thesis and the rules that hold it up
 - [HANDOFF.md](HANDOFF.md) — architecture decisions and open questions
