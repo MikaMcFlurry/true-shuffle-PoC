@@ -17,6 +17,12 @@ env/
 .env.*
 !.env.example
 
+# Apple hands out the MusicKit .p8 key exactly once, and TESTEN.md tells people
+# to put it in ./secrets/. Committing it would be unrecoverable.
+secrets/
+*.p8
+*.pem
+
 # SQLite databases
 *.db
 *.sqlite3

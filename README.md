@@ -222,6 +222,7 @@ providers/     One class per streaming service
   spotify.py     Web API + Spotify Connect remote control
   apple.py       Apple Music API + MusicKit JS web player
   youtube.py     YouTube Data API v3 + IFrame player
+  demo.py        In-memory service for testing without credentials (opt-in)
   planned.py     Declared-but-not-implemented candidates
   http.py        Shared retries, rate limits, per-account serialisation
 
@@ -254,6 +255,8 @@ app/           FastAPI: HTTP, persistence, background work
 
 ## Documents
 
+- [TESTEN.md](TESTEN.md) — Schritt-für-Schritt-Anleitung zum Testen aller
+  Funktionen; Teil A braucht kein einziges Konto
 - [STATUS.md](STATUS.md) — what is built, what is verified, what is not
 - [DESIGN.md](DESIGN.md) — the interface's thesis and the rules that hold it up
 - [HANDOFF.md](HANDOFF.md) — architecture decisions and open questions

@@ -63,6 +63,11 @@ class Settings(BaseSettings):
     #: is very likely against YouTube's terms.  Off unless deliberately set.
     enable_unofficial_ytmusic: bool = False
 
+    # -- demo --------------------------------------------------------------
+    # An in-memory connector so every function can be exercised without any
+    # streaming credentials. Off by default; never a claim about a real service.
+    enable_demo_provider: bool = False
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 
 from providers.apple import AppleMusicProvider
 from providers.base import MusicProvider, ProviderNotConfigured
+from providers.demo import DemoProvider
 from providers.spotify import SpotifyProvider
 from providers.youtube import YouTubeMusicProvider
 from providers.ytmusic_unofficial import UnofficialYouTubeMusicProvider
@@ -17,6 +18,8 @@ _PROVIDERS: Dict[str, MusicProvider] = {
     "youtube": YouTubeMusicProvider(),
     # Opt-in and last: unofficial, and never the default path to YouTube Music.
     "ytmusic": UnofficialYouTubeMusicProvider(),
+    # Opt-in, and never mistakable for a real service.
+    "demo": DemoProvider(),
 }
 
 
