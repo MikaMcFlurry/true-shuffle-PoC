@@ -1,22 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Cannot connect · true-shuffle{% endblock %}
+{% block title %}Nicht verbunden · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="stack" style="max-width: 620px">
-    <p class="label">{{ provider_id }}</p>
-    <h1>This service is not ready yet</h1>
-    <p class="muted">{{ detail }}</p>
+<section class="stack" style="max-width: 58ch">
+    <p class="stencil">{{ provider_id }}</p>
+    <h1>Dieser Dienst ist noch nicht eingerichtet</h1>
+    <p class="dim">{{ detail }}</p>
 
     {% if missing %}
-    <div class="notice">
-        <strong>Add these to <code>.env</code>, then restart the server</strong>
+    <div class="note">
+        <span class="stencil">In <code>.env</code> eintragen, dann neu starten</span>
         {% for key in missing %}<span class="num">{{ key }}=…</span>{% endfor %}
-        <span class="faint">See <code>.env.example</code> for where each value comes from.</span>
+        <span class="faint">Wo die Werte herkommen, steht in <code>.env.example</code>.</span>
     </div>
     {% endif %}
 
     <div class="row">
-        <a class="btn btn-primary" href="/connect">Back to services</a>
+        <a class="btn btn-primary" href="/connect">Zurück zu den Diensten</a>
     </div>
 </section>
 {% endblock %}

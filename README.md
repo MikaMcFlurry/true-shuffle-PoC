@@ -60,7 +60,8 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"   # → SECRET_KEY
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-Open <http://127.0.0.1:8000>. Services you have not configured are shown as
+Open <http://127.0.0.1:8000>. The interface is German; the codebase is English.
+Services you have not configured are shown as
 "needs setup" with the exact environment variables they want — the app runs fine
 with only one of the three.
 
@@ -162,6 +163,9 @@ never as working.
 ## Layout
 
 ```
+PRODUCT.md     Product truth (users, job, mechanism, constraints)
+DESIGN.md      The built visual world, recorded after the build
+
 core/          Pure domain logic, zero I/O and zero provider knowledge
   models.py      Track, RunState, capabilities, enums
   shuffle.py     Fisher–Yates, filtering, dedup, similarity guard

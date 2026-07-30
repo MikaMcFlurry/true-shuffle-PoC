@@ -1,62 +1,65 @@
 {% extends "base.html" %}
-{% block title %}Runs · true-shuffle{% endblock %}
+{% block title %}Läufe · true-shuffle{% endblock %}
 
 {% block content %}
 <section class="stack-s">
-    <p class="label">History</p>
-    <h1>Your runs</h1>
-    <p class="muted">
-        Every deck you have dealt, and how far through it you are. A paused deck
-        resumes on exactly the card you stopped on.
+    <p class="stencil">Verlauf</p>
+    <h1>Deine Läufe</h1>
+    <p class="dim">
+        Jedes Fach, das du angelegt hast, und wie weit du darin bist. Ein
+        pausiertes Fach macht genau auf der Karte weiter, auf der du aufgehört hast.
     </p>
 </section>
 
-<div class="notice hidden" id="runsNotice"></div>
+<div class="note hidden" id="runsNote"></div>
 
-<section class="panel">
-    <div class="table-wrap">
+<section class="crate">
+    <div class="scroll-x">
         <table>
             <thead>
                 <tr>
                     <th>Playlist</th>
-                    <th>Service</th>
-                    <th>Mode</th>
-                    <th>Status</th>
-                    <th class="n">Dealt</th>
-                    <th class="n">Total</th>
-                    <th>Updated</th>
+                    <th>Dienst</th>
+                    <th>Modus</th>
+                    <th>Zustand</th>
+                    <th class="n">Gespielt</th>
+                    <th class="n">Gesamt</th>
+                    <th>Zuletzt</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody id="runRows">
-                <tr><td colspan="8" class="muted">Loading…</td></tr>
+                <tr><td colspan="8"><div class="skeleton"><i></i><i></i><i></i></div></td></tr>
             </tbody>
         </table>
     </div>
 </section>
 
-<section class="panel stack">
-    <h2 style="font-size: var(--step-1)">Import a deck</h2>
-    <p class="muted small">
-        Continue a run exported from another browser or machine. The file holds
-        the order and your position — never any account credentials.
+<section class="crate">
+    <span class="stencil">Fach übernehmen</span>
+    <p class="dim sm">
+        Einen Lauf fortsetzen, der auf einem anderen Rechner exportiert wurde.
+        Die Datei enthält Reihenfolge und Position — nie Zugangsdaten.
     </p>
     <div class="row">
-        <input type="file" id="importFile" accept="application/json">
-        <button class="btn" id="importBtn" type="button">Import</button>
+        <input type="file" id="importFile" accept="application/json" style="max-width: 320px">
+        <button class="btn" id="importBtn" type="button">Importieren</button>
     </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
 <script type="module">
-import { $, api, el, formatCount, setNotice } from "/static/app.js";
+import { $, api, el, formatCount, setNote } from "/static/app.js";
 
 const PROVIDERS = Object.fromEntries({{ providers | tojson }}.map((p) => [p.id, p]));
 
+const STATUS_TEXT = {
+    active: "Läuft", paused: "Pausiert", completed: "Durch", cancelled: "Beendet",
+};
 const STATUS_CLASS = {
-    active: "pill-live", paused: "pill-off",
-    completed: "pill-ok", cancelled: "pill-critical",
+    active: "chip-live", paused: "chip-off",
+    completed: "chip-ok", cancelled: "chip-stop",
 };
 
 async function load() {
@@ -65,7 +68,9 @@ async function load() {
         if (!runs.length) {
             $("#runRows").replaceChildren(el("tr", {},
                 el("td", { colspan: "8" },
-                    el("div", { class: "empty" }, "No runs yet. Pick a playlist to deal your first deck."))));
+                    el("div", { class: "empty" },
+                        el("span", {}, "Noch kein Fach angelegt."),
+                        el("a", { class: "btn btn-primary", href: "/library" }, "Playlist wählen")))));
             return;
         }
 
@@ -74,43 +79,41 @@ async function load() {
             const pct = r.total ? Math.round((r.cursor / r.total) * 100) : 0;
             return el("tr", {},
                 el("td", {}, r.playlist_name || r.playlist_id),
-                el("td", {},
-                    el("span", {
-                        class: "pill pill-plain",
-                        style: `color: ${provider?.brand_color || "inherit"}; border-color: ${provider?.brand_color || "currentColor"}`,
-                    }, provider?.display_name || r.provider)),
-                el("td", { class: "muted" }, r.mode === "controller" ? "Live" : "Handoff"),
-                el("td", {}, el("span", { class: `pill ${STATUS_CLASS[r.status] || ""}` }, r.status)),
+                el("td", {}, el("span", { class: "signet", style: `--brand: ${provider?.brand_color || "currentColor"}` },
+                    provider?.display_name || r.provider)),
+                el("td", { class: "dim" }, r.mode === "controller" ? "Live" : "Handoff"),
+                el("td", {}, el("span", { class: `chip ${STATUS_CLASS[r.status] || ""}` },
+                    STATUS_TEXT[r.status] || r.status)),
                 el("td", { class: "n" }, `${formatCount(r.cursor)} · ${pct}%`),
                 el("td", { class: "n" }, formatCount(r.total)),
-                el("td", { class: "muted" }, r.updated_at),
+                el("td", { class: "dim" }, r.updated_at),
                 el("td", {},
                     el("span", { class: "row", style: "gap: 6px; flex-wrap: nowrap" },
                         r.mode === "controller"
                             ? el("a", { class: "btn", href: `/player/${r.id}` },
-                                r.status === "completed" ? "Review" : r.cursor > 0 ? "Resume" : "Open")
+                                r.status === "completed" ? "Ansehen" : r.cursor > 0 ? "Fortsetzen" : "Öffnen")
                             : null,
-                        el("a", { class: "btn btn-ghost", href: `/export/${r.id}` }, "Export")))
+                        el("a", { class: "btn btn-quiet", href: `/export/${r.id}` }, "Export")))
             );
         }));
     } catch (err) {
-        setNotice($("#runsNotice"), err.message, "notice-critical");
+        setNote($("#runsNote"), err.message, "note-stop", "Fehler");
     }
 }
 
 $("#importBtn").addEventListener("click", async () => {
     const file = $("#importFile").files?.[0];
-    if (!file) return setNotice($("#runsNotice"), "Choose an exported run file first.", "");
+    if (!file) return setNote($("#runsNote"), "Wähl zuerst eine exportierte Lauf-Datei.", "", "Hinweis");
     try {
         const res = await fetch("/export/import", { method: "POST", body: await file.text() });
         const payload = await res.json();
-        if (!res.ok) throw new Error(payload.detail || "Import failed.");
-        setNotice($("#runsNotice"),
-            `Imported ${formatCount(payload.total)} tracks at position ${formatCount(payload.cursor)}.`,
-            "notice-ok");
+        if (!res.ok) throw new Error(payload.detail || "Import fehlgeschlagen.");
+        setNote($("#runsNote"),
+            `${formatCount(payload.total)} Titel übernommen, Position ${formatCount(payload.cursor)}.`,
+            "note-ok", "Übernommen");
         load();
     } catch (err) {
-        setNotice($("#runsNotice"), err.message, "notice-critical");
+        setNote($("#runsNote"), err.message, "note-stop", "Fehler");
     }
 });
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,16 +9,33 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+<!--
+THESIS: A run is a record crate you work through, and a shop divider marks
+exactly where you are. Refuses the category default: cover-art hero with a round
+play button. This product is not about the current song, it is about the shelf
+and how much of it is left.
+OWN-WORLD: Cool painted-crate neutrals; spines in muted printed-card tints keyed
+to each track; one fluorescent divider-card yellow, reserved for the current
+position and the primary action. Stencilled shop lettering, mono for catalogue
+numbers. No wood texture.
+STORY: The listener connects a service, picks one playlist, starts a run, and
+leaves. They return and continue on the same card.
+FIRST VIEWPORT: Player — catalogue tag with title and position, the rack of
+spines with the divider at the cursor, transport beneath.
+FORM: Plattenschrank; grounded candidate 4 (Zettelkasten), re-materialised to
+records at the user's direction; seed key 743b623c.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
     <header class="masthead">
         <a class="wordmark" href="/">
-            <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
             true-shuffle
         </a>
         <nav>
-            <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Library</a>
-            <a href="/runs" {% if request.url.path == '/runs' %}aria-current="page"{% endif %}>Runs</a>
-            <a href="/connect" {% if request.url.path == '/connect' %}aria-current="page"{% endif %}>Services</a>
-            <button class="btn btn-ghost" id="themeToggle" type="button" aria-label="Switch colour theme">Theme</button>
+            <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Sammlung</a>
+            <a href="/runs" {% if request.url.path == '/runs' %}aria-current="page"{% endif %}>Läufe</a>
+            <a href="/connect" {% if request.url.path == '/connect' %}aria-current="page"{% endif %}>Dienste</a>
+            <button class="btn btn-quiet" id="themeToggle" type="button" aria-label="Helligkeit umschalten">Ansicht</button>
         </nav>
     </header>
 

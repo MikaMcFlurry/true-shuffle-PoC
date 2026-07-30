@@ -356,11 +356,26 @@ async def _finish(state: RunState) -> None:
 # Presentation helpers
 # ---------------------------------------------------------------------------
 
+def _sample_order(order: List[str], bars: int) -> List[str]:
+    """Evenly spaced track ids, at most *bars* of them.
+
+    The rack draws one spine per bar; a 1 500-track deck must not ship 1 500
+    ids every four seconds just to colour them.
+    """
+    if not order:
+        return []
+    if len(order) <= bars:
+        return list(order)
+    step = len(order) / bars
+    return [order[int(i * step)] for i in range(bars)]
+
+
 async def describe(
     session: Optional[Session],
     state: RunState,
     *,
     window: int = 8,
+    rack_bars: int = 96,
 ) -> Dict[str, Any]:
     """Build the JSON payload the player UI renders.
 
@@ -403,6 +418,9 @@ async def describe(
         "remaining": state.remaining,
         "progress_pct": state.progress_pct,
         "device_id": state.device_id,
+        # Evenly spaced ids so the UI can tint one spine per bar without
+        # shipping 1 500 ids on every poll.
+        "order_sample": _sample_order(state.order, rack_bars),
         "current": _entry(state.cursor),
         "upcoming": [
             e for e in (_entry(i) for i in range(state.cursor + 1,

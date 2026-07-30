@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Something went wrong · true-shuffle{% endblock %}
+{% block title %}Nicht gefunden · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="stack" style="max-width: 560px">
-    <p class="label num">Error {{ status }}</p>
-    <h1>{% if status == 404 %}Nothing here{% elif status == 401 %}You are not signed in{% elif status == 409 %}That service is not connected{% else %}Something went wrong{% endif %}</h1>
-    <p class="muted">{{ detail }}</p>
+<section class="stack" style="max-width: 52ch">
+    <p class="stencil num">Fehler {{ status }}</p>
+    <h1>{% if status == 404 %}Hier ist nichts{% elif status == 401 %}Nicht angemeldet{% elif status == 409 %}Dienst nicht verbunden{% else %}Da ist etwas schiefgegangen{% endif %}</h1>
+    <p class="dim">{{ detail }}</p>
     <div class="row">
-        <a class="btn btn-primary" href="/library">Back to my playlists</a>
-        <a class="btn" href="/connect">Services</a>
+        <a class="btn btn-primary" href="/library">Zurück zu meinen Playlists</a>
+        <a class="btn" href="/connect">Dienste</a>
     </div>
 </section>
 {% endblock %}

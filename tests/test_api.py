@@ -81,7 +81,7 @@ def test_home_page_renders(client):
     response = client.get("/")
     assert response.status_code == 200
     assert "true-shuffle" in response.text
-    assert "deck of cards" in response.text
+    assert "Plattenfach" in response.text
 
 
 def test_providers_endpoint_lists_capabilities_and_connection_state(client, fake_provider):
@@ -499,7 +499,7 @@ def test_library_renders_once_connected(client, fake_provider):
     connect(client)
     response = client.get("/library")
     assert response.status_code == 200
-    assert "Deal a deck" in response.text
+    assert "Ein Fach anlegen" in response.text
 
 
 def test_player_page_renders_for_your_own_run(client, fake_provider):
@@ -507,7 +507,7 @@ def test_player_page_renders_for_your_own_run(client, fake_provider):
     run_id = deal(client)["run_id"]
     response = client.get(f"/player/{run_id}")
     assert response.status_code == 200
-    assert "Now playing" in response.text
+    assert "Als Nächstes" in response.text
 
 
 def test_player_page_for_a_foreign_run_is_a_404_page(client, fake_provider):
@@ -517,7 +517,7 @@ def test_player_page_for_a_foreign_run_is_a_404_page(client, fake_provider):
         stranger.get("/api/providers")
         response = stranger.get(f"/player/{run_id}")
         assert response.status_code == 404
-        assert "Nothing here" in response.text
+        assert "Hier ist nichts" in response.text
 
 
 def test_connect_page_lists_every_service(client):

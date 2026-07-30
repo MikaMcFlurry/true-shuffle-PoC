@@ -15,7 +15,7 @@
  * page never decides what plays next on its own.
  */
 
-import { $, api, el, followJob, formatDuration, formatCount, setNotice } from "./app.js";
+import { $, api, el, followJob, formatDuration, formatCount, setNote, spineTint } from "./app.js";
 
 /* ========================================================================== */
 /* Web players                                                                */
@@ -163,7 +163,7 @@ export class RunPlayer {
       this.web
         .on("ended", () => this.report("track_ended"))
         .on("error", (err) => {
-          this.notify(err.message, "notice-critical");
+          this.notify(err.message, "note-stop", "Wiedergabe");
           // A track that will not play must not stall the deck.
           this.report("playback_failed");
         })
@@ -213,7 +213,7 @@ export class RunPlayer {
       await this.syncWebPlayback();
       this.render();
     } catch (err) {
-      this.notify(err.message, "notice-critical");
+      this.notify(err.message, "note-stop", "Fehler");
     }
   }
 
@@ -235,7 +235,7 @@ export class RunPlayer {
     try {
       await this.web.play(trackId);
     } catch (err) {
-      this.notify(`Playback failed: ${err.message}`, "notice-critical");
+      this.notify(`Wiedergabe fehlgeschlagen: ${err.message}`, "note-stop", "Wiedergabe");
       await this.report("playback_failed");
     }
   }
@@ -267,23 +267,23 @@ export class RunPlayer {
         ...(devices.length
           ? devices.map((d) => el("option", { value: d.id, selected: d.is_active || null },
               `${d.name} · ${d.kind}`))
-          : [el("option", { value: "" }, "No device found — open Spotify first")])
+          : [el("option", { value: "" }, "Kein Gerät gefunden")])
       );
       $("#startBtn").disabled = devices.length === 0;
       if (!devices.length) {
         this.notify(
-          "No Spotify device is available. Open Spotify on a phone, computer or speaker and play anything for a second, then reload this page.",
-          "notice-ok"
+          `Kein ${this.provider.display_name}-Gerät aktiv. Öffne ${this.provider.display_name} auf Handy, Rechner oder Box, spiel dort kurz irgendetwas an und lade diese Seite neu.`,
+          "", "Kein Gerät"
         );
       }
     } catch (err) {
-      this.notify(err.message, "notice-critical");
+      this.notify(err.message, "note-stop", "Fehler");
     }
   }
 
   /* -- rendering ----------------------------------------------------------- */
 
-  notify(text, variant) { setNotice($("#playerNotice"), text, variant); }
+  notify(text, variant, label) { setNote($("#playerNote"), text, variant, label); }
 
   /** Entries that never entered the deck, with the reason each was left out. */
   async loadSkipped() {
@@ -294,11 +294,12 @@ export class RunPlayer {
       if (!skipped.length) return;          // stays hidden — nothing was dropped
       box.classList.remove("hidden");
       $("#skippedSummary").textContent =
-        `${formatCount(skipped.length)} entries left out`;
+        `${formatCount(skipped.length)} Einträge nicht ins Fach gekommen`;
       $("#skippedList").replaceChildren(
         ...skipped.map((s) =>
           el("div", { class: "spread" },
-            el("span", { class: "muted" }, [s.name, s.artist].filter(Boolean).join(" — ") || s.track_id),
+            el("span", { class: "dim" },
+              [s.name, s.artist].filter(Boolean).join(" — ") || s.track_id),
             el("span", { class: "faint" }, REASON_TEXT[s.reason] || s.reason)))
       );
     } catch {
@@ -306,23 +307,32 @@ export class RunPlayer {
     }
   }
 
-  /** The remaining stack, drawn as cards rather than a percentage. */
-  renderStack() {
-    const mount = $("#stackviz");
+  /**
+   * The rack: one spine per card, the divider standing at the cursor.
+   * Played sleeves lie shorter and dimmer behind it; the rest stand upright.
+   */
+  renderRack() {
+    const mount = $("#rack");
     if (!mount || !this.state) return;
-    const { cursor, total } = this.state;
+    const { cursor, total, order_sample } = this.state;
     if (!total) return mount.replaceChildren();
 
-    // One bar per card up to a cap, so a 1,500-track deck still reads.
-    const bars = Math.min(total, 90);
+    // One bar per card up to a cap, so a 1,500-track crate still reads.
+    const BARS = 96;
+    const bars = Math.min(total, BARS);
     const scale = total / bars;
-    mount.replaceChildren(
-      ...Array.from({ length: bars }, (_, i) => {
-        const at = Math.floor(i * scale);
-        const cls = at < cursor ? "done" : at === Math.floor(cursor) ? "current" : "";
-        return el("i", cls ? { class: cls } : {});
-      })
-    );
+    const dividerAt = Math.min(bars, Math.round(cursor / scale));
+
+    const nodes = [];
+    for (let i = 0; i < bars; i++) {
+      if (i === dividerAt) nodes.push(el("i", { class: "divider" }));
+      const at = Math.floor(i * scale);
+      const props = { "data-t": spineTint((order_sample && order_sample[i]) || String(at)) };
+      if (at < cursor) props["data-played"] = "";
+      nodes.push(el("i", props));
+    }
+    if (dividerAt >= bars) nodes.push(el("i", { class: "divider" }));
+    mount.replaceChildren(...nodes);
   }
 
   render() {
@@ -333,57 +343,52 @@ export class RunPlayer {
     const current = s.current;
 
     $("#nowTitle").textContent = done
-      ? "Deck complete"
-      : current?.name || `Track ${s.cursor + 1}`;
+      ? "Fach durchgehört"
+      : current?.name || `Karte ${s.cursor + 1}`;
     $("#nowArtist").textContent = done
-      ? `All ${formatCount(s.total)} tracks played exactly once.`
+      ? `Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
       : current?.artist || "";
 
-    const art = $("#nowArt");
-    if (current?.artwork_url) {
-      art.src = current.artwork_url;
-      art.classList.remove("hidden");
-    } else {
-      art.classList.add("hidden");
-    }
-
-    $("#deckDealt").textContent = formatCount(Math.min(s.cursor + (done ? 0 : 1), s.total));
+    $("#deckAt").textContent = formatCount(Math.min(s.cursor + (done ? 0 : 1), s.total));
     $("#deckTotal").textContent = formatCount(s.total);
     $("#deckLeft").textContent = formatCount(s.remaining);
-    $("#deckRail").style.width = `${s.progress_pct}%`;
-    this.renderStack();
+    this.renderRack();
 
-    const statusPill = $("#runStatus");
-    statusPill.textContent = statusLabel(s);
-    statusPill.className = `pill ${statusClass(s)}`;
+    const statusChip = $("#runStatus");
+    statusChip.textContent = STATUS_TEXT[s.status] || s.status;
+    statusChip.className = `chip ${STATUS_CLASS[s.status] || ""}`;
 
-    const watchPill = $("#watchStatus");
-    if (watchPill) {
+    const watchChip = $("#watchStatus");
+    if (watchChip) {
       const w = s.watcher || {};
-      watchPill.classList.toggle("hidden", !this.isRemote);
-      watchPill.textContent = w.drifted
-        ? `${this.provider.display_name} is playing something else`
-        : w.watching ? "Advancing on its own" : "Not following playback";
-      watchPill.className = `pill ${w.drifted ? "pill-critical" : w.watching ? "pill-live" : "pill-off"}`;
+      watchChip.classList.toggle("hidden", !this.isRemote);
+      watchChip.textContent = w.drifted
+        ? `${this.provider.display_name} spielt etwas anderes`
+        : w.watching ? "Rückt selbst weiter" : "Folgt nicht";
+      watchChip.className = `chip ${w.drifted ? "chip-stop" : w.watching ? "chip-live" : "chip-off"}`;
     }
 
+    const upcoming = s.upcoming || [];
     $("#upnext").replaceChildren(
-      ...(s.upcoming || []).map((t) =>
-        el("li", {},
-          el("span", { class: "pos" }, String(t.index + 1)),
-          el("span", {},
-            el("span", { class: "name" }, t.name || t.id),
-            el("span", { class: "who" }, [t.artist, formatDuration(t.duration_ms)].filter(Boolean).join(" · "))
-          )
-        )
-      )
+      ...(upcoming.length
+        ? upcoming.map((t) =>
+            el("li", {},
+              el("span", { class: "edge", "data-t": spineTint(t.id) }),
+              el("span", { class: "pos" }, String(t.index + 1)),
+              el("span", {},
+                el("span", { class: "name" }, t.name || t.id),
+                el("span", { class: "who" },
+                  [t.artist, formatDuration(t.duration_ms)].filter(Boolean).join(" · ")))))
+        : [el("li", {},
+            el("span", { class: "edge" }),
+            el("span", { class: "pos" }, "—"),
+            el("span", { class: "name faint" },
+              done ? "Nichts mehr im Fach" : "Wird geladen…"))])
     );
-    if (!s.upcoming?.length) {
-      $("#upnext").replaceChildren(el("li", {}, el("span", { class: "pos" }, "—"),
-        el("span", { class: "name muted" }, done ? "Nothing left to deal" : "Loading…")));
-    }
 
-    $("#startBtn").textContent = this.playing ? "Restart current track" : (s.cursor > 0 ? "Resume deck" : "Start deck");
+    $("#startBtn").textContent = this.playing
+      ? "Karte neu starten"
+      : (s.cursor > 0 ? "Lauf fortsetzen" : "Lauf starten");
     $("#nextBtn").disabled = done;
     $("#prevBtn").disabled = s.cursor === 0;
     $("#pauseBtn").disabled = !this.playing;
@@ -391,24 +396,21 @@ export class RunPlayer {
 }
 
 const REASON_TEXT = {
-  local_file: "local file",
-  not_playable: "not available here",
-  wrong_kind: "not a music track",
-  duplicate: "already in the deck",
-  missing_id: "no track id",
+  local_file: "lokale Datei",
+  not_playable: "hier nicht verfügbar",
+  wrong_kind: "kein Musiktitel",
+  duplicate: "schon im Fach",
+  missing_id: "keine Titel-ID",
 };
 
-function statusLabel(s) {
-  if (s.status === "completed") return "Complete";
-  if (s.status === "paused") return "Paused";
-  if (s.status === "cancelled") return "Cancelled";
-  return "Live";
-}
-function statusClass(s) {
-  if (s.status === "completed") return "pill-ok";
-  if (s.status === "cancelled") return "pill-critical";
-  if (s.status === "paused") return "pill-off";
-  return "pill-live";
-}
+const STATUS_TEXT = {
+  active: "Läuft", paused: "Pausiert",
+  completed: "Durch", cancelled: "Beendet",
+};
+
+const STATUS_CLASS = {
+  active: "chip-live", paused: "chip-off",
+  completed: "chip-ok", cancelled: "chip-stop",
+};
 
 export { followJob };

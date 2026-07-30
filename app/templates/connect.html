@@ -1,66 +1,66 @@
 {% extends "base.html" %}
-{% block title %}Services · true-shuffle{% endblock %}
+{% block title %}Dienste · true-shuffle{% endblock %}
 
 {% block content %}
 <section class="stack-s">
-    <p class="label">Step 1 — connect</p>
-    <h1>Your streaming services</h1>
-    <p class="muted">
-        Connect as many as you like. Each keeps its own decks, nothing is shared
-        between them, and true-shuffle never plays audio itself — it only decides
-        what comes next.
+    <p class="stencil">Schritt 1 — verbinden</p>
+    <h1>Deine Streamingdienste</h1>
+    <p class="dim">
+        Verbinde so viele du willst. Jeder Dienst führt sein eigenes Fach, nichts
+        wird zwischen ihnen geteilt, und true-shuffle spielt nie selbst Ton ab —
+        es entscheidet nur, was als Nächstes kommt.
     </p>
 </section>
 
 <section class="grid">
     {% for p in providers %}
     {% set account = connected.get(p.id) %}
-    <article class="panel" data-brand style="--brand: {{ p.brand_color }}">
+    <article class="crate">
         <div class="spread">
-            <h3>{{ p.display_name }}</h3>
-            {% if account %}<span class="pill pill-ok">Connected</span>
-            {% elif p.configured %}<span class="pill pill-off">Not connected</span>
-            {% else %}<span class="pill pill-off">Needs setup</span>{% endif %}
+            <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+            {% if account %}<span class="chip chip-ok">Verbunden</span>
+            {% elif p.configured %}<span class="chip chip-off">Nicht verbunden</span>
+            {% else %}<span class="chip chip-off">Nicht eingerichtet</span>{% endif %}
         </div>
 
         <div class="row">
             {% if p.tracks_progress_without_tab %}
-            <span class="badge-tab badge-tab-free">Runs without a tab open</span>
+            <span class="openness openness-free">Läuft ohne offenen Tab</span>
             {% else %}
-            <span class="badge-tab badge-tab-open">Needs this tab open</span>
+            <span class="openness openness-tab">Braucht diesen Tab</span>
             {% endif %}
             {% if p.requires_paid_tier %}
-            <span class="pill pill-off pill-plain">Paid tier for Live Mode</span>
+            <span class="chip chip-off">Abo für Live</span>
             {% endif %}
         </div>
 
         {% if account %}
-        <p class="muted small">
-            {{ account.display_name or 'Account connected' }}
+        <p class="dim sm">
+            {{ account.display_name or 'Konto verbunden' }}
             {%- if account.market %} · {{ account.market }}{% endif %}
             {%- if account.product_tier %} · {{ account.product_tier }}{% endif %}
         </p>
         {% endif %}
 
-        <ul class="stack-s muted small">
+        <ul class="stack-s dim sm">
             {% for note in p.notes %}<li>— {{ note }}</li>{% endfor %}
         </ul>
 
         {% if not p.configured %}
-        <div class="notice">
-            <strong>Not configured on this server</strong>
-            <span>Add {{ p.missing_config | join(', ') }} to <code>.env</code> and restart.</span>
+        <div class="note">
+            <span class="stencil">Auf diesem Server nicht eingerichtet</span>
+            <span>Trag {{ p.missing_config | join(', ') }} in <code>.env</code> ein und starte neu.</span>
         </div>
         {% endif %}
 
         <div class="row" style="margin-top: auto">
             {% if p.configured %}
             <a class="btn {% if not account %}btn-primary{% endif %}" href="/auth/{{ p.id }}/login">
-                {% if account %}Reconnect{% else %}Connect {{ p.display_name }}{% endif %}
+                {% if account %}Neu verbinden{% else %}{{ p.display_name }} verbinden{% endif %}
             </a>
             {% endif %}
             {% if account %}
-            <button class="btn btn-danger" type="button" data-disconnect="{{ p.id }}">Disconnect</button>
+            <button class="btn btn-stop" type="button" data-disconnect="{{ p.id }}">Trennen</button>
             {% endif %}
         </div>
     </article>
@@ -68,27 +68,27 @@
 </section>
 
 <section class="stack">
-    <h2>Planned connectors</h2>
-    <p class="muted small">
-        Listed so the roadmap is visible, not to suggest they work. Each needs
-        its API terms re-checked before a connector is written.
+    <h2>Geplante Anbindungen</h2>
+    <p class="dim sm">
+        Hier gelistet, damit der Fahrplan sichtbar ist — nicht als Behauptung,
+        dass sie laufen. Bei jedem sind die API-Bedingungen vorher neu zu prüfen.
     </p>
     <div class="grid">
         {% for p in planned %}
-        <article class="panel" data-brand style="--brand: {{ p.brand_color }}">
+        <article class="crate">
             <div class="spread">
-                <h3>{{ p.display_name }}</h3>
-                <span class="pill pill-off">Planned</span>
+                <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+                <span class="chip chip-off">Geplant</span>
             </div>
-            <p class="muted small">{{ p.likely_mode }}</p>
+            <p class="dim sm">{{ p.likely_mode }}</p>
         </article>
         {% endfor %}
     </div>
 </section>
 
 <div class="row">
-    <a class="btn" href="/library">Continue to my playlists</a>
-    <a class="btn btn-ghost" href="/auth/signout">Sign out of this browser session</a>
+    <a class="btn" href="/library">Weiter zu meinen Playlists</a>
+    <a class="btn btn-quiet" href="/auth/signout">Aus dieser Browser-Sitzung abmelden</a>
 </div>
 {% endblock %}
 
@@ -99,7 +99,7 @@ import { $$, api } from "/static/app.js";
 for (const button of $$("[data-disconnect]")) {
     button.addEventListener("click", async () => {
         const id = button.dataset.disconnect;
-        if (!confirm("Disconnect this service? Stored credentials are deleted; your runs stay.")) return;
+        if (!confirm("Diesen Dienst trennen? Die gespeicherten Zugangsdaten werden gelöscht, deine Läufe bleiben.")) return;
         button.disabled = true;
         try {
             await api(`/auth/${id}/disconnect`, { method: "POST" });

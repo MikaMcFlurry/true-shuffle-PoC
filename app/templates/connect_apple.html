@@ -1,45 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Connect Apple Music · true-shuffle{% endblock %}
+{% block title %}Apple Music verbinden · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="stack" style="max-width: 620px">
-    <p class="label">Apple Music</p>
-    <h1>Sign in with your Apple&nbsp;ID</h1>
-    <p class="muted">
-        Apple issues the permission inside your browser rather than through a
-        redirect, so this step opens an Apple window. true-shuffle receives a
-        token for your library and nothing else — no Apple ID password ever
-        reaches this server.
+<section class="stack" style="max-width: 58ch">
+    <p class="stencil">Apple Music</p>
+    <h1>Mit deiner Apple-ID anmelden</h1>
+    <p class="dim">
+        Apple erteilt die Berechtigung im Browser statt über eine Weiterleitung,
+        dieser Schritt öffnet also ein Apple-Fenster. true-shuffle bekommt nur
+        einen Zugriffsschlüssel für deine Mediathek — dein Apple-ID-Passwort
+        erreicht diesen Server nie.
     </p>
 
-    <div class="notice notice-ok">
-        <strong>What this enables</strong>
-        <span>Reading your library playlists, writing a shuffled copy, and
-        playing your deck in this browser tab through Apple's own player.</span>
+    <div class="note note-ok">
+        <span class="stencil">Damit wird möglich</span>
+        <span>Deine Mediathek-Playlists lesen, ein gemischtes Fach hineinschreiben,
+        und dein Fach in diesem Tab über Apples eigenen Player abspielen.</span>
     </div>
 
     <div class="row">
         <button class="btn btn-primary btn-lg" id="appleConnect" type="button">
-            Sign in with Apple Music
+            Bei Apple Music anmelden
         </button>
-        <a class="btn" href="/connect">Cancel</a>
+        <a class="btn btn-quiet" href="/connect">Abbrechen</a>
     </div>
 
-    <div class="notice hidden" id="appleNotice"></div>
+    <div class="note hidden" id="appleNote"></div>
 </section>
 {% endblock %}
 
 {% block scripts %}
 <script type="module">
-import { $, api, setNotice } from "/static/app.js";
+import { $, api, setNote } from "/static/app.js";
 
 const CONFIG = {{ browser_config | tojson }};
 const button = $("#appleConnect");
-const notice = $("#appleNotice");
+const note = $("#appleNote");
 
 button.addEventListener("click", async () => {
     button.disabled = true;
-    setNotice(notice, "Loading Apple MusicKit…", "notice-ok");
+    setNote(note, "Apple MusicKit wird geladen…", "", "Moment");
 
     try {
         await new Promise((resolve, reject) => {
@@ -47,7 +47,7 @@ button.addEventListener("click", async () => {
             script.src = "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
             script.async = true;
             script.onload = resolve;
-            script.onerror = () => reject(new Error("Apple MusicKit could not be loaded. Check your connection and try again."));
+            script.onerror = () => reject(new Error("Apple MusicKit konnte nicht geladen werden. Prüf deine Verbindung und versuch es erneut."));
             document.head.append(script);
         });
 
@@ -56,9 +56,9 @@ button.addEventListener("click", async () => {
             app: { name: CONFIG.app_name, build: CONFIG.app_build },
         });
 
-        setNotice(notice, "Waiting for Apple to confirm your permission…", "notice-ok");
+        setNote(note, "Warte auf Apples Bestätigung…", "", "Moment");
         const musicUserToken = await music.authorize();
-        if (!musicUserToken) throw new Error("Apple did not return a permission token.");
+        if (!musicUserToken) throw new Error("Apple hat keinen Zugriffsschlüssel zurückgegeben.");
 
         const result = await api("/auth/apple/browser", {
             method: "POST",
@@ -67,7 +67,7 @@ button.addEventListener("click", async () => {
         location.href = result.redirect || "/library";
     } catch (err) {
         button.disabled = false;
-        setNotice(notice, err.message, "notice-critical");
+        setNote(note, err.message, "note-stop", "Fehler");
     }
 });
 </script>

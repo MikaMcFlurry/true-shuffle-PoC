@@ -3,90 +3,89 @@
 
 {% block content %}
 <section class="hero">
-    <p class="label">Proof of concept · v0.3</p>
-    <h1>Your playlist, dealt like a deck of cards.</h1>
+    <p class="stencil">Prototyp · v0.3</p>
+    <h1>Deine Playlist als Plattenfach, das du wirklich durchhörst.</h1>
     <p class="lede">
-        Every playable, unique track exactly once per run. No repeats until the
-        deck is done — and when you come back, you pick up on the exact card you
-        stopped on.
+        Jeder spielbare Titel genau einmal pro Durchlauf. Nichts wiederholt sich,
+        bis das Fach leer ist — und wenn du zurückkommst, steht der Trennstreifen
+        noch genau da, wo du aufgehört hast.
     </p>
-    <div class="deal" aria-hidden="true">
-        {% for i in range(26) %}<i class="{% if i < 9 %}dealt{% endif %}"></i>{% endfor %}
+    <div class="crateviz" aria-hidden="true">
+        {% for i in range(30) %}<i class="{% if i < 9 %}played{% endif %}{% if i == 9 %}divider{% endif %}"></i>{% endfor %}
     </div>
     <div class="row">
-        <a class="btn btn-primary btn-lg" href="/connect">Connect a service</a>
-        <a class="btn btn-lg" href="/library">Go to my playlists</a>
+        <a class="btn btn-primary btn-lg" href="/connect">Dienst verbinden</a>
+        <a class="btn btn-lg" href="/library">Zu meinen Playlists</a>
     </div>
 </section>
 
 {% if warnings %}
-<div class="notice notice-critical">
-    <strong>Configuration warning</strong>
+<div class="note note-stop">
+    <span class="stencil">Konfiguration</span>
     {% for w in warnings %}<span>{{ w }}</span>{% endfor %}
 </div>
 {% endif %}
 
 <section class="stack">
-    <h2>Two ways to run a deck</h2>
+    <h2>Zwei Wege durch ein Fach</h2>
     <div class="grid-2">
-        <article class="panel">
+        <article class="crate">
             <div class="spread">
-                <h3>Handoff Mode</h3>
-                <span class="badge-tab badge-tab-free">Nothing stays open</span>
+                <h3>Handoff</h3>
+                <span class="openness openness-free">Nichts bleibt offen</span>
             </div>
-            <p class="muted small">
-                The shuffled order is written into a real playlist on the service.
-                You press play there and listen however you normally do — phone,
-                car, speaker. Where the service exposes a listening history,
-                true-shuffle reads back how far you got, so the deck keeps your
-                place and finishes exactly once.
+            <p class="dim sm">
+                Die gemischte Reihenfolge wird als echte Playlist in den Dienst
+                geschrieben. Du spielst sie dort — Handy, Auto, Box. Wo der Dienst
+                einen Hörverlauf herausgibt, liest true-shuffle daraus zurück, wie
+                weit du bist. Der Trennstreifen wandert mit, ohne dass hier etwas
+                laufen muss.
             </p>
         </article>
-        <article class="panel">
+        <article class="crate">
             <div class="spread">
-                <h3>Live Mode</h3>
-                <span class="badge-tab badge-tab-open">Depends on the service</span>
+                <h3>Live</h3>
+                <span class="openness openness-tab">Hängt vom Dienst ab</span>
             </div>
-            <p class="muted small">
-                true-shuffle decides what plays next and moves the deck forward
-                the moment a track ends or you skip. On Spotify this runs from
-                the server, so nothing of ours needs to be open. On Apple Music
-                and YouTube it runs in the browser tab, because neither service
-                lets anything else control playback.
+            <p class="dim sm">
+                true-shuffle bestimmt selbst, was als Nächstes läuft, und rückt
+                weiter, sobald ein Titel endet oder du überspringst. Bei Spotify
+                läuft das auf dem Server. Bei Apple Music und YouTube Music im
+                Browser-Tab, weil beide Dienste keine fremde Steuerung zulassen.
             </p>
         </article>
     </div>
 </section>
 
 <section class="stack">
-    <h2>Services</h2>
+    <h2>Dienste</h2>
     <div class="grid">
         {% for p in providers %}
-        <article class="panel" data-brand style="--brand: {{ p.brand_color }}">
+        <article class="crate">
             <div class="spread">
-                <h3>{{ p.display_name }}</h3>
+                <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
                 {% if p.id in connected %}
-                    <span class="pill pill-ok">Connected</span>
+                    <span class="chip chip-ok">Verbunden</span>
                 {% elif p.configured %}
-                    <span class="pill pill-off">Ready to connect</span>
+                    <span class="chip chip-off">Bereit</span>
                 {% else %}
-                    <span class="pill pill-off">Needs setup</span>
+                    <span class="chip chip-off">Nicht eingerichtet</span>
                 {% endif %}
             </div>
             <div class="row">
                 {% if p.tracks_progress_without_tab %}
-                <span class="badge-tab badge-tab-free">Runs without a tab open</span>
+                <span class="openness openness-free">Läuft ohne offenen Tab</span>
                 {% else %}
-                <span class="badge-tab badge-tab-open">Needs this tab open</span>
+                <span class="openness openness-tab">Braucht diesen Tab</span>
                 {% endif %}
             </div>
-            <p class="faint small">
-                {% if p.playback == 'remote_device' %}Controls the app you already have open{% endif %}
-                {%- if p.playback == 'web_player' %}Plays through {{ p.display_name }}'s own browser player{% endif %}
-                {%- if p.requires_paid_tier %} · paid tier for Live Mode{% endif %}
+            <p class="faint sm">
+                {% if p.playback == 'remote_device' %}Steuert die App, die du ohnehin offen hast{% endif %}
+                {%- if p.playback == 'web_player' %}Spielt über den eigenen Browser-Player von {{ p.display_name }}{% endif %}
+                {%- if p.requires_paid_tier %} · Live-Modus nur mit Abo{% endif %}
             </p>
             {% if not p.configured %}
-            <p class="faint small">Set {{ p.missing_config | join(', ') }} in <code>.env</code>.</p>
+            <p class="faint sm num">{{ p.missing_config | join(' · ') }}</p>
             {% endif %}
         </article>
         {% endfor %}
@@ -94,21 +93,21 @@
 </section>
 
 <section class="stack">
-    <h2>Not connected yet</h2>
-    <p class="muted small">
-        Adding a service means writing one connector class. These are the
-        candidates, with what still has to be checked before writing them — not
-        claims that they work.
+    <h2>Noch nicht im Fach</h2>
+    <p class="dim sm">
+        Ein weiterer Dienst ist eine Connector-Klasse. Das hier sind die
+        Kandidaten mit dem, was vorher zu klären ist — keine Behauptung, dass sie
+        laufen.
     </p>
     <div class="grid">
         {% for p in planned %}
-        <article class="panel" data-brand style="--brand: {{ p.brand_color }}">
+        <article class="crate">
             <div class="spread">
-                <h3>{{ p.display_name }}</h3>
-                <span class="pill pill-off">Planned</span>
+                <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+                <span class="chip chip-off">Geplant</span>
             </div>
-            <p class="muted small">{{ p.likely_mode }}</p>
-            <ul class="stack-s faint small">
+            <p class="dim sm">{{ p.likely_mode }}</p>
+            <ul class="stack-s faint sm">
                 {% for q in p.open_questions %}<li>— {{ q }}</li>{% endfor %}
             </ul>
         </article>

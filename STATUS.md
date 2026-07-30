@@ -93,7 +93,12 @@ so a human had to press a button per track.
 - Background job runner with live progress (`/api/jobs/{id}/stream`)
 - Run history, skipped-track reporting with reasons, per-run event log
 - Export/import, including automatic upgrade of v1 (Spotify-only) run files
-- Web UI: connect screen, playlist picker, deck player, run history, both themes
+- Web UI rebuilt as **Der Plattenschrank** (see HANDOFF.md): German interface,
+  the deck rendered as a crate of spines with the divider at the cursor, dark
+  and light both designed, desktop and mobile at parity, keyboard transport,
+  skeleton loading and real empty states
+- `npx impeccable detect app/` reports zero anti-patterns; the earlier build
+  tripped four, including the AI-tell card edge stripe
 
 ---
 

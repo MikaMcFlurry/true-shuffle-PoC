@@ -79,12 +79,31 @@ export function formatCount(value) {
   return Number(value ?? 0).toLocaleString();
 }
 
-/** Show a message in a `.notice` element, or hide it when text is empty. */
-export function setNotice(node, text, variant = "") {
+/**
+ * Show a message in a `.note` box, or hide it when the text is empty.
+ * The stencilled label carries the severity, so the box needs no edge stripe.
+ */
+export function setNote(node, text, variant = "", label = "Hinweis") {
   if (!node) return;
-  node.textContent = text || "";
-  node.className = `notice ${variant}`.trim();
+  node.className = `note ${variant}`.trim();
   node.classList.toggle("hidden", !text);
+  if (!text) {
+    node.replaceChildren();
+    return;
+  }
+  node.replaceChildren(
+    el("span", { class: "stencil" }, label),
+    el("span", {}, text)
+  );
+}
+
+/** Deterministic printed-card tint for a track, 1–6. Never claims to be art. */
+export function spineTint(id) {
+  let hash = 0;
+  for (let i = 0; i < (id || "").length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return String((hash % 6) + 1);
 }
 
 /* -- job progress --------------------------------------------------------- */

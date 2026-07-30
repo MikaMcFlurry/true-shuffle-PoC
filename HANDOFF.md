@@ -60,16 +60,43 @@ fighting the user for control of their own player is worse than pausing.
 
 ## Decisions taken, with reasons
 
-**The interface is a hi-fi chassis, and the accent is amber.**
-The product's own pitch is "like the good old MP3 player, but with your
-streaming service", so the UI is built like a piece of hi-fi: graphite chassis,
-warm backlit-panel text, and one amber indicator colour borrowed from a VU
-meter. The deck position is a tape counter, not a percentage bar.
+**The interface is a record crate, and the accent is a shop divider.**
+A run is a row of spines you work through, and the divider marks exactly where
+you are: everything behind it is played, everything in front is still to come.
+Moving that divider forward *is* the advance. This refuses the category default
+— cover-art hero with a round play button — because the product is not about
+the current song, it is about the shelf and how much of it is left.
 
-Amber is also the practical choice: Spotify green, Apple red and YouTube red all
-sit on this screen at once, and the chrome must not look like any of them. Each
-service appears only as a 3px edge on its own card. All of it lives in
-`app/static/style.css` as tokens, so a different palette is one file.
+The world supplies grammar (spines, divider, catalogue numbering, stencilled
+shop labels), not scenery: no wood textures, no skeuomorphic shelf. Operate mode
+means earned familiarity — the tool disappears into the task.
+
+Colour is restrained. Cool painted-crate neutrals carry the chrome; one
+fluorescent divider-card yellow is reserved for the current position and the
+primary action, and nothing else is allowed to be bright. Spine tints are muted
+printed-card tones derived deterministically from the track id — a shelf, never
+a claim to be album art. `--tab` is the card (a fill), `--tab-line` its printed
+ink (borders and text), which is what lets the same identity hold on a light
+ground.
+
+This replaced an amber-on-graphite "hi-fi console" that the user correctly
+called AI-looking. The Impeccable detector agreed and named the specific tell:
+the 3px coloured stripe on the edge of a card is "the most recognizable tell of
+AI-generated UIs". It is gone; services now carry a small stamped signet square
+instead. Everything lives in `app/static/style.css` as tokens.
+
+**Design work goes through Impeccable.**
+`PRODUCT.md` holds product truth; `DESIGN.md` records the built world. The
+direction was chosen through the skill's own derivation and roll (seed key
+`743b623c`, grounded candidate 4), then re-materialised from index cards to
+records at the user's direction — a user-pinned direction beats the roll. The
+direction contract is an HTML comment at the top of `<body>` in
+`app/templates/base.html`; it is the thing to re-read before editing the UI.
+Run `npx impeccable detect app/` before shipping UI changes.
+
+**The interface is German; the codebase is not.**
+User-facing copy is German because the listener is. Code, comments, commit
+messages, docs and API values stay English.
 
 **A browser session is the identity.**
 No password login. Streaming accounts attach to an opaque random session handle.

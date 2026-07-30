@@ -1,101 +1,95 @@
 {% extends "base.html" %}
-{% block title %}{{ playlist_name or 'Run' }} · true-shuffle{% endblock %}
+{% block title %}{{ playlist_name or 'Lauf' }} · true-shuffle{% endblock %}
 
 {% block content %}
 <section class="stack-s">
     <div class="row">
-        <span class="pill pill-plain" style="color: {{ provider.brand_color }}; border-color: {{ provider.brand_color }}">{{ provider.display_name }}</span>
-        <span class="pill" id="runStatus">…</span>
-        <span class="pill hidden" id="watchStatus"></span>
+        <span class="signet" style="--brand: {{ provider.brand_color }}">{{ provider.display_name }}</span>
+        <span class="chip" id="runStatus">…</span>
+        <span class="chip hidden" id="watchStatus"></span>
     </div>
-    <h1>{{ playlist_name or 'Run' }}</h1>
+    <h1>{{ playlist_name or 'Lauf' }}</h1>
     {% if provider.live_mode_needs_open_tab %}
-    <p class="muted small">
-        {{ provider.display_name }} lets nothing but its own player control
-        playback, so Live Mode runs here in the tab. Your place in the deck is
-        saved after every track — closing this page stops the music, not the run.
+    <p class="dim sm">
+        {{ provider.display_name }} lässt nur den eigenen Player steuern, also
+        läuft der Live-Modus hier im Tab. Deine Position wird nach jedem Titel
+        gespeichert — diese Seite zu schließen stoppt die Musik, nicht den Lauf.
     </p>
     {% else %}
-    <p class="muted small">
-        Playing on your {{ provider.display_name }} device. true-shuffle drives
-        the deck from the server, so you can close this page and keep listening —
-        and a skip you make in {{ provider.display_name }} counts as one card,
-        exactly like skipping here.
+    <p class="dim sm">
+        Läuft auf deinem {{ provider.display_name }}-Gerät. true-shuffle rückt den
+        Trennstreifen vom Server aus weiter, du kannst diese Seite also schließen.
+        Ein Skip in {{ provider.display_name }} zählt als eine Karte, genau wie ein
+        Skip hier.
     </p>
     {% endif %}
 </section>
 
-<div class="notice hidden" id="playerNotice"></div>
+<div class="note hidden" id="playerNote"></div>
 
 <div class="deck-layout">
     <div class="console">
-        <div class="now">
-            <img class="now-art hidden" id="nowArt" alt="">
-            <div class="now-text">
-                <p class="label">Now playing</p>
-                <div class="now-title" id="nowTitle">Loading…</div>
-                <div class="now-artist" id="nowArtist"></div>
+        <div class="tag">
+            <div class="tag-title" id="nowTitle">Wird geladen…</div>
+            <div class="tag-artist" id="nowArtist"></div>
+            <div class="tag-cat">
+                <span class="stencil">Karte</span>
+                <span class="n" id="deckAt">0</span>
+                <span class="of">von <span id="deckTotal">0</span></span>
             </div>
         </div>
 
-        <div class="readout">
-            <div class="readout-main">
-                <span class="big" id="deckDealt">0</span>
-                <span class="of">/</span>
-                <span class="of" id="deckTotal">0</span>
+        <div class="stack-s">
+            <div class="spread">
+                <span class="stencil">Im Fach</span>
+                <span class="num sm faint"><span id="deckLeft">0</span> übrig</span>
             </div>
-            <div class="readout-side">
-                <span class="label">Remaining</span>
-                <span class="n" id="deckLeft">0</span>
-            </div>
+            <div class="rack" id="rack" aria-hidden="true"></div>
         </div>
-
-        <div class="rail"><span id="deckRail"></span></div>
-        <div class="stackviz" id="stackviz" aria-hidden="true"></div>
 
         {% if provider.playback == 'remote_device' %}
-        <label class="stack-s small">
-            <span class="label">Play on</span>
+        <label class="stack-s sm">
+            <span class="stencil">Abspielen auf</span>
             <select id="deviceSelect"></select>
         </label>
         {% endif %}
 
         {% if provider.id == 'youtube' %}
-        <div id="ytmount" style="border-radius: 8px; overflow: hidden"></div>
+        <div id="ytmount" style="border-radius: var(--r); overflow: hidden"></div>
         {% endif %}
 
         <div class="transport">
-            <button class="btn btn-primary" id="startBtn" type="button">Start deck</button>
-            <button class="btn" id="prevBtn" type="button">Previous</button>
-            <button class="btn" id="nextBtn" type="button">Skip</button>
+            <button class="btn btn-primary" id="startBtn" type="button">Lauf starten</button>
+            <button class="btn" id="prevBtn" type="button">Zurück</button>
+            <button class="btn" id="nextBtn" type="button">Überspringen</button>
             <button class="btn" id="pauseBtn" type="button" disabled>Pause</button>
-            <button class="btn btn-danger spacer" id="cancelBtn" type="button">End run</button>
+            <button class="btn btn-stop push" id="cancelBtn" type="button">Lauf beenden</button>
         </div>
 
-        <div class="shortcuts" aria-hidden="true">
-            <span><kbd>Space</kbd> start / pause</span>
-            <span><kbd>→</kbd> skip</span>
-            <span><kbd>←</kbd> previous</span>
+        <div class="keys" aria-hidden="true">
+            <span><kbd>Leer</kbd> Start / Pause</span>
+            <span><kbd>→</kbd> Überspringen</span>
+            <span><kbd>←</kbd> Zurück</span>
         </div>
     </div>
 
     <div class="stack">
-        <div class="panel">
-            <p class="label">Still in the deck</p>
-            <ol class="upnext" id="upnext"></ol>
+        <div class="crate">
+            <span class="stencil">Als Nächstes</span>
+            <ol class="sleeves" id="upnext"></ol>
         </div>
 
-        <div class="panel">
-            <p class="label">This deck</p>
-            <details class="disclosure hidden" id="skippedBox">
-                <summary id="skippedSummary">Left out of this deck</summary>
-                <div id="skippedList" class="stack-s small"></div>
+        <div class="crate">
+            <span class="stencil">Dieser Lauf</span>
+            <details class="fold hidden" id="skippedBox">
+                <summary id="skippedSummary">Nicht ins Fach gekommen</summary>
+                <div id="skippedList" class="stack-s sm"></div>
             </details>
-            <p class="faint small">
-                The order and your position can be carried to another browser or
-                machine. The file never contains account credentials.
+            <p class="faint sm">
+                Reihenfolge und Position lassen sich auf einen anderen Rechner
+                mitnehmen. Die Datei enthält nie Zugangsdaten.
             </p>
-            <a class="btn" href="/export/{{ run_id }}">Export this deck</a>
+            <a class="btn" href="/export/{{ run_id }}">Lauf exportieren</a>
         </div>
     </div>
 </div>
@@ -103,7 +97,7 @@
 
 {% block scripts %}
 <script type="module">
-import { $, api, setNotice } from "/static/app.js";
+import { $, api, setNote } from "/static/app.js";
 import { RunPlayer } from "/static/player.js";
 
 const player = new RunPlayer({{ run_id }}, {{ provider | tojson }});
@@ -114,7 +108,7 @@ $("#prevBtn").addEventListener("click",  () => guard(() => player.previous()));
 $("#pauseBtn").addEventListener("click", () => guard(() => player.pause()));
 
 $("#cancelBtn").addEventListener("click", () => guard(async () => {
-    if (!confirm("End this run? The deck is discarded and the next start deals a new one.")) return;
+    if (!confirm("Lauf beenden? Das Fach wird verworfen, der nächste Start mischt neu.")) return;
     await api(`/api/runs/{{ run_id }}/cancel`, { method: "POST" });
     location.href = "/runs";
 }));
@@ -125,17 +119,17 @@ addEventListener("keydown", (ev) => {
     if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
 
-    if (ev.code === "Space")        { ev.preventDefault(); guard(() => player.toggle()); }
+    if (ev.code === "Space")          { ev.preventDefault(); guard(() => player.toggle()); }
     else if (ev.key === "ArrowRight") { ev.preventDefault(); guard(() => player.next()); }
     else if (ev.key === "ArrowLeft")  { ev.preventDefault(); guard(() => player.previous()); }
 });
 
 async function guard(fn) {
     try {
-        setNotice($("#playerNotice"), "");
+        setNote($("#playerNote"), "");
         await fn();
     } catch (err) {
-        setNotice($("#playerNotice"), err.message, "notice-critical");
+        setNote($("#playerNote"), err.message, "note-stop", "Fehler");
     }
 }
 

@@ -1,49 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Library · true-shuffle{% endblock %}
+{% block title %}Sammlung · true-shuffle{% endblock %}
 
 {% block content %}
 <section class="stack-s">
-    <p class="label">Step 2 — pick a playlist</p>
-    <h1>Deal a deck</h1>
-    <p class="muted">Large playlists are read in the background; you can watch it happen.</p>
+    <p class="stencil">Schritt 2 — Playlist wählen</p>
+    <h1>Ein Fach anlegen</h1>
+    <p class="dim">Große Playlists werden im Hintergrund gelesen; du siehst dabei zu.</p>
 </section>
 
 <div class="row">
-    <div class="tabs" id="providerTabs" role="group" aria-label="Streaming service"></div>
+    <div class="tabs" id="providerTabs" role="group" aria-label="Streamingdienst"></div>
 </div>
 
 <div class="deck-layout">
-    <div class="panel">
+    <div class="crate">
         <div class="spread">
-            <h2 style="font-size: var(--step-1)">Your playlists</h2>
-            <span class="faint num small" id="plCount"></span>
+            <span class="stencil">Deine Playlists</span>
+            <span class="faint num sm" id="plCount"></span>
         </div>
-        <label class="sr-only" for="plFilter">Filter playlists</label>
-        <input type="search" id="plFilter" placeholder="Filter by name…" autocomplete="off">
-        <div class="pl-list" id="playlists" role="listbox" aria-label="Playlists">
-            <div class="statusline"><span class="spinner"></span> Loading playlists…</div>
+        <label class="sr-only" for="plFilter">Playlists filtern</label>
+        <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off">
+        <div class="browse" id="playlists" role="listbox" aria-label="Playlists">
+            <div class="skeleton"><i></i><i></i><i></i><i></i><i></i></div>
         </div>
-        <div class="notice notice-critical hidden" id="libNotice"></div>
+        <div class="note note-stop hidden" id="libNote"></div>
     </div>
 
     <div class="stack">
         <div class="modes" id="modeCards"></div>
 
-        <div class="panel stack">
-            <p class="label">Selected</p>
-            <p class="muted small" id="selectionHint">Nothing selected yet.</p>
+        <div class="crate">
+            <span class="stencil">Auswahl</span>
+            <p class="dim sm" id="selectionHint">Noch nichts gewählt.</p>
 
-            <label class="stack-s small">
-                <span class="faint">If a deck is already running for this playlist</span>
+            <label class="stack-s sm">
+                <span class="stencil">Wenn schon ein Fach läuft</span>
                 <select id="reshuffle">
-                    <option value="0">Continue where I left off</option>
-                    <option value="1">Deal a new deck (discards the current one)</option>
+                    <option value="0">Dort weitermachen, wo ich war</option>
+                    <option value="1">Neu mischen (verwirft das laufende Fach)</option>
                 </select>
             </label>
 
-            <button class="btn btn-primary btn-lg" id="dealBtn" type="button" disabled>Deal the deck</button>
-            <div class="statusline hidden" id="jobLog"></div>
-            <div class="notice hidden" id="jobResult"></div>
+            <button class="btn btn-primary btn-lg" id="dealBtn" type="button" disabled>Fach anlegen</button>
+            <div class="status hidden" id="jobLog"></div>
+            <div class="note hidden" id="jobResult"></div>
         </div>
     </div>
 </div>
@@ -51,7 +51,7 @@
 
 {% block scripts %}
 <script type="module">
-import { $, api, el, followJob, formatCount, setNotice } from "/static/app.js";
+import { $, api, el, followJob, formatCount, setNote, spineTint } from "/static/app.js";
 
 const PROVIDERS = {{ providers | tojson }};
 const CONNECTED = {{ connected | map(attribute='provider') | list | tojson }};
@@ -79,7 +79,7 @@ function selectProvider(id) {
         b.setAttribute("aria-pressed", String(b.dataset.provider === id));
     }
     $("#dealBtn").disabled = true;
-    $("#selectionHint").textContent = "Nothing selected yet.";
+    $("#selectionHint").textContent = "Noch nichts gewählt.";
     renderModes();
     loadPlaylists();
 }
@@ -87,9 +87,8 @@ function selectProvider(id) {
 /* -- modes ---------------------------------------------------------------- */
 
 /**
- * Build the two mode cards for the selected service.
- * The card states, in the service's own terms, whether anything has to stay
- * open — that is the question people actually care about.
+ * The two mode cards, each stating in the service's own terms whether anything
+ * has to stay open — the question people actually care about.
  */
 function renderModes() {
     const p = byId[state.provider];
@@ -98,31 +97,31 @@ function renderModes() {
     const options = [
         {
             id: "utility",
-            title: "Handoff Mode",
+            title: "Handoff",
             available: p.create_playlist,
-            tabFree: p.supports_history_sync,
+            free: p.supports_history_sync,
             body: p.supports_history_sync
-                ? `The deck is written into ${p.display_name} as a playlist. Play it there — phone, car, speaker — and true-shuffle reads your listening history back to keep your place.`
-                : `The deck is written into ${p.display_name} as a playlist and you play it there. ${p.display_name} has no listening-history API, so your position cannot be tracked afterwards.`,
+                ? `Das Fach wird als Playlist in ${p.display_name} geschrieben. Du spielst sie dort — Handy, Auto, Box — und true-shuffle liest aus deinem Hörverlauf zurück, wie weit du bist.`
+                : `Das Fach wird als Playlist in ${p.display_name} geschrieben und dort abgespielt. ${p.display_name} gibt keinen Hörverlauf heraus, deine Position lässt sich danach nicht mitzählen.`,
             note: p.id === "youtube"
-                ? "YouTube charges 50 API quota units per added track, so only small playlists can be written this way."
+                ? "YouTube berechnet 50 Kontingent-Einheiten pro hinzugefügtem Titel — nur kleine Playlists lassen sich so schreiben."
                 : null,
         },
         {
             id: "controller",
-            title: "Live Mode",
+            title: "Live",
             available: p.supports_controller_mode,
-            tabFree: !p.live_mode_needs_open_tab,
+            free: !p.live_mode_needs_open_tab,
             body: p.live_mode_needs_open_tab
-                ? `Plays through ${p.display_name}'s own player in this browser tab, and moves the deck on every track end and skip. ${p.display_name} lets nothing else control playback, so this only runs while the tab is open.`
-                : `true-shuffle takes over the ${p.display_name} app you already have open and moves the deck on every track end and skip — including skips you make in ${p.display_name} itself. Runs on the server, so you can close this page.`,
-            note: p.requires_paid_tier ? `Requires a paid ${p.display_name} subscription.` : null,
+                ? `Spielt über den eigenen Player von ${p.display_name} in diesem Tab und rückt bei jedem Titelende und jedem Skip weiter. ${p.display_name} lässt keine fremde Steuerung zu, das läuft also nur bei offenem Tab.`
+                : `true-shuffle übernimmt die ${p.display_name}-App, die du ohnehin offen hast, und rückt bei jedem Titelende und Skip weiter — auch bei Skips, die du in ${p.display_name} selbst machst. Läuft auf dem Server, du kannst diese Seite schließen.`,
+            note: p.requires_paid_tier ? `Braucht ein ${p.display_name}-Abo.` : null,
         },
     ];
 
     // Default to whichever available mode needs nothing open.
     if (!state.mode) {
-        const preferred = options.find((o) => o.available && o.tabFree)
+        const preferred = options.find((o) => o.available && o.free)
             || options.find((o) => o.available);
         state.mode = preferred?.id || null;
     }
@@ -137,12 +136,11 @@ function renderModes() {
         },
             el("div", { class: "spread" },
                 el("h3", {}, o.title),
-                el("span", {
-                    class: `badge-tab ${o.tabFree ? "badge-tab-free" : "badge-tab-open"}`,
-                }, o.tabFree ? "Nothing stays open" : "Keep this tab open")),
+                el("span", { class: `openness ${o.free ? "openness-free" : "openness-tab"}` },
+                    o.free ? "Nichts bleibt offen" : "Tab offen lassen")),
             el("p", {}, o.body),
-            o.note ? el("p", { class: "faint small" }, o.note) : null,
-            !o.available ? el("p", { class: "faint small" }, `Not available on ${p.display_name}.`) : null
+            o.note ? el("p", { class: "faint sm" }, o.note) : null,
+            !o.available ? el("p", { class: "faint sm" }, `Bei ${p.display_name} nicht möglich.`) : null
         )));
 }
 
@@ -150,9 +148,9 @@ function renderModes() {
 
 async function loadPlaylists() {
     const list = $("#playlists");
-    list.replaceChildren(el("div", { class: "statusline" },
-        el("span", { class: "spinner" }), "Loading playlists…"));
-    setNotice($("#libNotice"), "");
+    list.replaceChildren(el("div", { class: "skeleton" },
+        el("i"), el("i"), el("i"), el("i"), el("i")));
+    setNote($("#libNote"), "");
 
     try {
         const { playlists } = await api(`/api/playlists?provider=${state.provider}`);
@@ -160,7 +158,7 @@ async function loadPlaylists() {
         renderPlaylists();
     } catch (err) {
         list.replaceChildren();
-        setNotice($("#libNotice"), err.message, "notice-critical");
+        setNote($("#libNote"), err.message, "note-stop", "Fehler");
     }
 }
 
@@ -172,31 +170,33 @@ function renderPlaylists() {
 
     const n = state.all.length;
     $("#plCount").textContent = term
-        ? `${formatCount(shown.length)} of ${formatCount(n)}`
-        : `${formatCount(n)} playlist${n === 1 ? "" : "s"}`;
+        ? `${formatCount(shown.length)} von ${formatCount(n)}`
+        : `${formatCount(n)} ${n === 1 ? "Playlist" : "Playlists"}`;
 
     const list = $("#playlists");
     if (!shown.length) {
         list.replaceChildren(el("div", { class: "empty" },
-            state.all.length ? "No playlist matches that filter."
-                             : "No playlists found on this account."));
+            el("span", {}, n ? "Keine Playlist passt zu diesem Filter."
+                             : "Auf diesem Konto liegen keine Playlists."),
+            n ? el("button", { class: "btn", type: "button",
+                    onClick: () => { $("#plFilter").value = ""; renderPlaylists(); } },
+                  "Filter zurücksetzen") : null));
         return;
     }
 
     list.replaceChildren(...shown.map((pl) =>
         el("button", {
-            class: "pl",
+            class: "record",
             type: "button",
             role: "option",
             "aria-selected": String(state.playlist?.id === pl.id),
             onClick: (ev) => selectPlaylist(pl, ev.currentTarget),
         },
-            pl.image_url ? el("img", { src: pl.image_url, alt: "", loading: "lazy" })
-                         : el("span", { class: "ph" }),
+            el("span", { class: "edge", "data-t": spineTint(pl.id) }),
             el("span", { class: "meta" },
-                el("b", {}, pl.name || "Untitled"),
-                el("span", { class: "faint small" },
-                    pl.track_count >= 0 ? `${formatCount(pl.track_count)} tracks` : "size unknown")),
+                el("b", {}, pl.name || "Ohne Titel"),
+                el("span", { class: "faint sm" },
+                    pl.track_count >= 0 ? `${formatCount(pl.track_count)} Titel` : "Größe unbekannt")),
             el("span", { class: "n" }, pl.track_count >= 0 ? formatCount(pl.track_count) : "—")
         )));
 }
@@ -209,7 +209,7 @@ function selectPlaylist(playlist, node) {
     node.setAttribute("aria-selected", "true");
     $("#dealBtn").disabled = !state.mode;
     $("#selectionHint").textContent =
-        `${playlist.name} — ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " tracks" : "size counted while reading"}.`;
+        `${playlist.name} — ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
 }
 
 /* -- dealing -------------------------------------------------------------- */
@@ -220,9 +220,11 @@ $("#dealBtn").addEventListener("click", async () => {
     const log = $("#jobLog");
 
     button.disabled = true;
-    setNotice($("#jobResult"), "");
+    setNote($("#jobResult"), "");
     log.classList.remove("hidden");
-    log.replaceChildren(el("span", { class: "spinner" }), "Starting…");
+    log.replaceChildren(el("span", { class: "spinner" }), "Startet…");
+
+    const PHASE = { "reading playlist": "Playlist wird gelesen", shuffling: "Wird gemischt" };
 
     try {
         const { job_id } = await api("/api/runs", {
@@ -237,9 +239,10 @@ $("#dealBtn").addEventListener("click", async () => {
 
         followJob(job_id, {
             onProgress: (frame) => {
+                const phase = PHASE[frame.phase] || frame.phase || "Arbeitet";
                 const detail = frame.total
-                    ? `${frame.phase} — ${formatCount(frame.processed)} of ${formatCount(frame.total)}`
-                    : frame.phase || "working…";
+                    ? `${phase} — ${formatCount(frame.processed)} von ${formatCount(frame.total)}`
+                    : phase;
                 log.replaceChildren(el("span", { class: "spinner" }), detail);
             },
             onDone: (result) => {
@@ -254,34 +257,35 @@ $("#dealBtn").addEventListener("click", async () => {
             onError: (err) => {
                 log.classList.add("hidden");
                 button.disabled = false;
-                setNotice($("#jobResult"), err.message, "notice-critical");
+                setNote($("#jobResult"), err.message, "note-stop", "Fehlgeschlagen");
             },
         });
     } catch (err) {
         log.classList.add("hidden");
         button.disabled = false;
-        setNotice($("#jobResult"), err.message, "notice-critical");
+        setNote($("#jobResult"), err.message, "note-stop", "Fehlgeschlagen");
     }
 });
 
 function showHandoffResult(result) {
     const box = $("#jobResult");
-    box.className = "notice notice-ok";
+    box.className = "note note-ok";
     box.classList.remove("hidden");
     box.replaceChildren(
-        el("strong", {}, `“${result.copy_playlist_name}” is ready`),
-        el("span", {}, `${formatCount(result.written)} tracks in true-shuffle order.` +
+        el("span", { class: "stencil" }, "Fertig"),
+        el("strong", {}, `„${result.copy_playlist_name}“ steht bereit`),
+        el("span", {}, `${formatCount(result.written)} Titel in true-shuffle-Reihenfolge.` +
             (result.skipped
-                ? ` ${formatCount(result.skipped)} entries were left out — local files, unavailable tracks or duplicates.`
-                : " Nothing had to be left out.")),
+                ? ` ${formatCount(result.skipped)} Einträge blieben draußen — lokale Dateien, nicht verfügbare Titel oder Doppelte.`
+                : " Nichts musste draußen bleiben.")),
         el("span", { class: "faint" }, result.tracked
-            ? "Play it in the app. Your position is picked up from your listening history — nothing needs to stay open."
-            : "Play it in the app. This service exposes no listening history, so your position is not tracked."),
-        el("span", { class: "row", style: "margin-top: 6px" },
+            ? "Spiel sie in der App. Deine Position kommt aus deinem Hörverlauf — hier muss nichts offen bleiben."
+            : "Spiel sie in der App. Dieser Dienst gibt keinen Hörverlauf heraus, die Position wird nicht mitgezählt."),
+        el("span", { class: "row", style: "margin-top: 4px" },
             result.copy_playlist_url
-                ? el("a", { class: "btn", href: result.copy_playlist_url, target: "_blank", rel: "noopener" }, "Open the playlist")
+                ? el("a", { class: "btn", href: result.copy_playlist_url, target: "_blank", rel: "noopener" }, "Playlist öffnen")
                 : null,
-            el("a", { class: "btn btn-ghost", href: "/runs" }, "All runs"))
+            el("a", { class: "btn btn-quiet", href: "/runs" }, "Alle Läufe"))
     );
 }
 
