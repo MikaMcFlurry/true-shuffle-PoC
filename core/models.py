@@ -47,6 +47,9 @@ class SkipReason(str, Enum):
     WRONG_KIND = "wrong_kind"
     DUPLICATE = "duplicate"
     MISSING_ID = "missing_id"
+    #: The entry plays fine but is not music — a talk, a trailer, a lecture.
+    #: Only a connector can judge this, so it is set by the connector.
+    NOT_MUSIC = "not_music"
 
 
 class AdvanceReason(str, Enum):
@@ -88,6 +91,8 @@ class Track(BaseModel):
     is_local: bool = False
     kind: TrackKind = TrackKind.TRACK
     artwork_url: str = ""
+    #: Set by a connector that knows something the generic rules cannot see.
+    exclude_reason: Optional[SkipReason] = None
 
     @property
     def key(self) -> str:
@@ -96,6 +101,8 @@ class Track(BaseModel):
 
     def invalid_reason(self) -> Optional[SkipReason]:
         """Return why this track cannot enter a run, or ``None`` if it can."""
+        if self.exclude_reason is not None:
+            return self.exclude_reason
         if not self.id:
             return SkipReason.MISSING_ID
         if self.is_local:

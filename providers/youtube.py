@@ -9,9 +9,17 @@ internal calls.
 
 Two consequences the user is told about in the UI rather than in a footnote:
 
-1. **Auto-generated playlists are invisible.**  "Liked Music", "Your
-   Supermix", "Discover Mix" and friends are not exposed by the Data API.
-   User-created playlists are.
+1. **What is reachable, precisely.**  Playlists *you created* — including the
+   ones you created inside YouTube Music, since those are YouTube playlists on
+   the same account.  What is **not** reachable through any public API: your
+   YouTube Music library, "Liked Music", uploads, and the auto-generated mixes
+   ("Supermix", "Discover Mix").  Playback is the YouTube player, not the
+   YouTube Music player.
+1b. **Music, not just video.**  A YouTube playlist can hold anything, so every
+   entry is checked against YouTube's own Music category (10) — with an
+   exemption for "<Artist> - Topic" channels, which are YouTube Music's own
+   catalogue uploads.  Anything else is reported as ``not_music`` rather than
+   dealt into a music deck.
 2. **Utility Mode is quota-bound.**  ``playlistItems.insert`` costs 50 quota
    units per track against a default budget of 10 000 units per day, so
    writing a shuffled copy of a 1 500-track playlist would need 75 000 units
@@ -27,7 +35,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 from urllib.parse import urlencode
 
 from app.config import get_settings
-from core.models import PlaylistRef, Track, TrackKind
+from core.models import PlaylistRef, SkipReason, Track, TrackKind
 from providers import http
 from providers.base import (
     AccountIdentity,
@@ -52,6 +60,14 @@ SCOPES = [
 ]
 
 _PAGE = 50
+
+#: YouTube's own category id for Music. An entry outside it is a talk, a
+#: trailer or a lecture that happens to sit in a playlist — not a track.
+_MUSIC_CATEGORY = "10"
+
+#: YouTube Music's catalogue tracks are served by auto-generated
+#: "<Artist> - Topic" channels. The suffix is plumbing, not an artist name.
+_TOPIC_SUFFIX = " - Topic"
 
 #: Documented quota costs (units per call) — used for the pre-flight estimate.
 QUOTA_LIST = 1
@@ -80,8 +96,13 @@ class YouTubeMusicProvider(MusicProvider):
             "YouTube is the one service with no playback-history API, so a deck "
             "played in the YouTube app cannot report its progress back. Live "
             "Mode is the only mode here that tracks where you are.",
-            "Only playlists you created are visible. YouTube's auto-generated "
-            "mixes (Liked Music, Supermix, …) are not exposed by any public API.",
+            "Reached through the YouTube Data API, the only official route — "
+            "YouTube Music has no public API of its own. Playlists you made in "
+            "YouTube Music show up here because they are YouTube playlists.",
+            "Out of reach: your YouTube Music library, Liked Music, uploads and "
+            "the auto-generated mixes. No public API exposes them.",
+            "Non-music entries in a playlist are left out of the deck and "
+            "reported, so a deck stays music.",
             "Copy Mode is limited by the YouTube API quota: each added track "
             "costs 50 of 10 000 daily units, so large playlists must use Live "
             "Mode instead.",
@@ -289,20 +310,26 @@ class YouTubeMusicProvider(MusicProvider):
             provider="youtube",
             id=video_id or "",
             name=title,
-            artist=(snippet.get("videoOwnerChannelTitle")
-                    or snippet.get("channelTitle") or ""),
+            artist=_artist_name(snippet.get("videoOwnerChannelTitle")
+                                or snippet.get("channelTitle") or ""),
             is_playable=bool(video_id) and not unavailable,
             kind=TrackKind.VIDEO,
             artwork_url=thumb.get("url", ""),
         )
 
     async def _enrich(self, token: TokenBundle, tracks: List[Track]) -> None:
-        """Fill in duration and embeddability for a page of tracks."""
+        """Fill in duration, embeddability and whether the entry is music.
+
+        ``videos.list`` costs one quota unit whatever parts are requested, so
+        asking for ``snippet`` as well is free and is what lets a YouTube
+        playlist be read as *music* rather than as whatever happens to be in it.
+        """
         ids = [t.id for t in tracks if t.id and t.is_playable]
         if not ids:
             return
         data = await self._get(
-            token, "/videos", part="contentDetails,status", id=",".join(ids[:_PAGE])
+            token, "/videos", part="snippet,contentDetails,status",
+            id=",".join(ids[:_PAGE]),
         )
         info = {
             v["id"]: v for v in (data or {}).get("items", []) or [] if v.get("id")
@@ -314,9 +341,21 @@ class YouTubeMusicProvider(MusicProvider):
                     # Requested but not returned → removed or region-blocked.
                     t.is_playable = False
                 continue
+
             status = v.get("status") or {}
             if status.get("embeddable") is False:
                 t.is_playable = False
+
+            snippet = v.get("snippet") or {}
+            category = str(snippet.get("categoryId") or "")
+            channel = snippet.get("channelTitle") or ""
+            # A "- Topic" channel is YouTube Music's own catalogue upload, so it
+            # is music even if the category is missing from the response.
+            if category and category != _MUSIC_CATEGORY and not channel.endswith(_TOPIC_SUFFIX):
+                t.exclude_reason = SkipReason.NOT_MUSIC
+            if not t.artist and channel:
+                t.artist = _artist_name(channel)
+
             t.duration_ms = _parse_iso8601_duration(
                 (v.get("contentDetails") or {}).get("duration", "")
             )
@@ -340,7 +379,7 @@ class YouTubeMusicProvider(MusicProvider):
                     provider="youtube",
                     id=v["id"],
                     name=snippet.get("title", ""),
-                    artist=snippet.get("channelTitle", ""),
+                    artist=_artist_name(snippet.get("channelTitle", "")),
                     duration_ms=_parse_iso8601_duration(
                         (v.get("contentDetails") or {}).get("duration", "")
                     ),
@@ -400,6 +439,13 @@ class YouTubeMusicProvider(MusicProvider):
 
     def playlist_url(self, playlist_id: str) -> str:
         return f"https://music.youtube.com/playlist?list={playlist_id}"
+
+
+def _artist_name(channel_title: str) -> str:
+    """``Boards of Canada - Topic`` → ``Boards of Canada``."""
+    if channel_title.endswith(_TOPIC_SUFFIX):
+        return channel_title[: -len(_TOPIC_SUFFIX)]
+    return channel_title
 
 
 def _parse_iso8601_duration(value: str) -> int:

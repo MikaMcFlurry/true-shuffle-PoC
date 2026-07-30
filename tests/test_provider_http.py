@@ -311,3 +311,80 @@ def test_the_sequential_lock_is_shared_per_account():
     a = provider_http.sequential_lock("spotify:1")
     assert provider_http.sequential_lock("spotify:1") is a
     assert provider_http.sequential_lock("spotify:2") is not a
+
+
+# ---------------------------------------------------------------------------
+# YouTube: is this actually music?
+# ---------------------------------------------------------------------------
+
+def _yt_page(video_id: str, title: str = "Song", channel: str = "Artist"):
+    return {"items": [{
+        "snippet": {"title": title, "videoOwnerChannelTitle": channel,
+                    "resourceId": {"videoId": video_id}},
+        "contentDetails": {"videoId": video_id},
+        "status": {"privacyStatus": "public"},
+    }]}
+
+
+async def test_youtube_keeps_music_category_entries(stub):
+    stub([
+        _yt_page("v1"),
+        {"items": [{"id": "v1", "snippet": {"categoryId": "10", "channelTitle": "Artist"},
+                    "contentDetails": {"duration": "PT3M"},
+                    "status": {"embeddable": True}}]},
+    ])
+    pages = [p async for p in YouTubeMusicProvider().iter_playlist_tracks(TOKEN, "pl1")]
+    assert pages[0][0].is_valid
+
+
+async def test_youtube_leaves_non_music_out_of_the_deck(stub):
+    """A playlist can hold a lecture or a trailer; a music deck should not."""
+    from core.models import SkipReason
+
+    stub([
+        _yt_page("v1", title="Two hour podcast", channel="Some Channel"),
+        {"items": [{"id": "v1", "snippet": {"categoryId": "22", "channelTitle": "Some Channel"},
+                    "contentDetails": {"duration": "PT2H"},
+                    "status": {"embeddable": True}}]},
+    ])
+    pages = [p async for p in YouTubeMusicProvider().iter_playlist_tracks(TOKEN, "pl1")]
+    track = pages[0][0]
+    assert not track.is_valid
+    assert track.invalid_reason() is SkipReason.NOT_MUSIC
+
+
+async def test_youtube_topic_channels_count_as_music_whatever_the_category(stub):
+    """"<Artist> - Topic" is YouTube Music's own catalogue upload."""
+    stub([
+        _yt_page("v1", channel="Boards of Canada - Topic"),
+        {"items": [{"id": "v1", "snippet": {"categoryId": "24",
+                                            "channelTitle": "Boards of Canada - Topic"},
+                    "contentDetails": {"duration": "PT2M29S"},
+                    "status": {"embeddable": True}}]},
+    ])
+    pages = [p async for p in YouTubeMusicProvider().iter_playlist_tracks(TOKEN, "pl1")]
+    assert pages[0][0].is_valid
+
+
+async def test_youtube_strips_the_topic_suffix_from_the_artist(stub):
+    stub([
+        _yt_page("v1", channel="Aphex Twin - Topic"),
+        {"items": [{"id": "v1", "snippet": {"categoryId": "10",
+                                            "channelTitle": "Aphex Twin - Topic"},
+                    "contentDetails": {"duration": "PT6M6S"},
+                    "status": {"embeddable": True}}]},
+    ])
+    pages = [p async for p in YouTubeMusicProvider().iter_playlist_tracks(TOKEN, "pl1")]
+    assert pages[0][0].artist == "Aphex Twin"
+
+
+async def test_youtube_asks_for_the_snippet_so_category_is_available(stub):
+    """videos.list costs one unit whatever the parts, so snippet is free."""
+    s = stub([
+        _yt_page("v1"),
+        {"items": [{"id": "v1", "snippet": {"categoryId": "10"},
+                    "contentDetails": {"duration": "PT3M"},
+                    "status": {"embeddable": True}}]},
+    ])
+    [p async for p in YouTubeMusicProvider().iter_playlist_tracks(TOKEN, "pl1")]
+    assert "snippet" in s.calls[1]["params"]["part"]

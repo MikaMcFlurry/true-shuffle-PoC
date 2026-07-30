@@ -115,14 +115,42 @@ detail: **who owns the audio pipeline.**
   This connector uses only official, documented endpoints — no scraping, no
   reverse-engineered internal calls. Playback is the official IFrame player.
 
-### Three YouTube limitations you should know before trying it
+### Is this YouTube, or YouTube Music?
 
-1. **Auto-generated playlists are invisible.** "Liked Music", "Your Supermix"
-   and friends are not exposed by any public API. Playlists you created are.
-2. **No listening history.** YouTube removed watch history from the Data API and
+Both, and the distinction matters enough to be precise about.
+
+**There is no public YouTube Music API.** The connector uses the YouTube Data
+API v3, which is the only official route. Playlists you created *inside YouTube
+Music* are reachable through it, because they are YouTube playlists on the same
+Google account — so for the everything-playlist this product exists for, it
+works.
+
+| | Reachable |
+|---|---|
+| Playlists you created (in YouTube **or** YouTube Music) | ✅ |
+| Your YouTube Music **library** (songs/albums added, not in a playlist) | ❌ |
+| **Liked Music** (the `LM` playlist) | ❌ |
+| **Uploads** (your own files in YouTube Music) | ❌ |
+| Auto-generated mixes (Supermix, Discover Mix) | ❌ |
+| Playback | the YouTube player, not the YouTube Music player |
+
+Nothing public exposes the ❌ rows. Reaching them needs an unofficial,
+reverse-engineered client — a decision with terms-of-service consequences that
+belongs to the product owner, not to this codebase.
+
+Because a YouTube playlist can hold anything, every entry is checked against
+YouTube's own **Music category (10)**, with an exemption for `<Artist> - Topic`
+channels, which are YouTube Music's own catalogue uploads. A podcast episode
+sitting in a playlist is reported as `not_music` rather than dealt into a music
+deck. `videos.list` costs one quota unit whatever parts you request, so this
+check is free.
+
+### Two more YouTube limits
+
+1. **No listening history.** YouTube removed watch history from the Data API and
    never replaced it, so a YouTube deck can only be tracked in Live Mode, with
    the tab open. Spotify and Apple Music have no such gap.
-3. **Handoff Mode is quota-bound.** `playlistItems.insert` costs 50 quota units per
+2. **Handoff Mode is quota-bound.** `playlistItems.insert` costs 50 quota units per
    track against a default budget of 10 000 per day, so copying a 1 500-track
    playlist would need 75 000 units and cannot work. The connector *refuses such
    a write up front* with the arithmetic, instead of dying at track 190. Live
