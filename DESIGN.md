@@ -109,17 +109,33 @@ Both are self-hosted from `app/static/fonts/` under the SIL Open Font License
 may be offline, and a webfont request to a third party would leak every page
 view. See `app/static/fonts/README.md`.
 
-### 4.2 The accent has a job list
+### 4.2 The accent has a job list, and the list is shorter than it looks
 
-`--tab` (fluorescent divider-card yellow) is spent on exactly three things:
+`--tab` (fluorescent divider-card yellow) is **filled** on exactly three things:
 
 1. the divider in the crate,
 2. the current register tab,
-3. the primary action.
+3. the one primary action on a screen.
 
-Nothing else is permitted to be bright. When the watcher state needed a mark it
-went onto the Laufzettel as a coloured *value*, not a second filled chip —
-because two filled yellow chips mean the accent has stopped meaning anything.
+An earlier draft of this section claimed the accent touched three things full
+stop. A review measured it and that was false: `--tab` / `--tab-line` /
+`--tab-wash` are referenced at eleven sites. The distinction that actually
+matters is **fill versus edge**, so state it properly. Permitted non-fill uses:
+the focus ring, the wordmark's proud spine, the spinner's leading arc, the
+`--tab-line` border on the run-state chip, the `--tab-wash` on a selected
+playlist row and a selected mode card. None of these is a filled block.
+
+The same review measured the filled areas on the run page and found the accent
+inverted: the primary button carried 4,501 px² of yellow, the state chip 1,480,
+and the divider — the thing the accent exists for — only 1,037. Three fixes
+followed: the state chip lost its fill, the selected mode card lost its filled
+header, and the divider gained mass (7px blade, 37×14px tab). The divider is
+now the second-largest filled mark on its page and the only one inside the
+crate.
+
+When the watcher state needed a mark it went onto the Laufzettel as a coloured
+*value*, not a second chip — because two filled yellow chips mean the accent has
+stopped meaning anything.
 
 ### 4.3 The crate is the largest thing, and it is spines
 
@@ -164,7 +180,25 @@ rests on its outline, which is 6.07:1 against the ground and 5.92:1 against its
 own fill. That is why `--tab-edge` exists: 1px in dark, **2px in light**. A
 future change that removes the outline removes the divider in light mode.
 
-### 4.6 Honesty about state
+### 4.6 A run's state is described in words it can support
+
+Two vocabulary rules, both of which existed as bugs first:
+
+**`active` is not `playing`.** In the database `active` means "this is the live
+deck" — a run is active from the moment it is dealt. The page read it as
+playing, so a freshly dealt run announced **LÄUFT** with Pause enabled before
+anyone had pressed anything. Playback is now derived from the watcher for
+remote providers, and from the plain fact that a just-loaded tab is playing
+nothing for web players. An active deck nobody is playing says **Bereit**.
+
+**"Durch" means played through.** A Handoff run on a service with no listening
+history is marked `completed` the instant the playlist is written — nothing more
+is knowable, so the run closes. Labelling that **Durch** claimed the listener
+had played 1,482 tracks that in fact nobody had touched. It now reads
+**Übergeben**, and its remaining count reads **nicht messbar** rather than a
+number we cannot know. A test pins the rule.
+
+### 4.7 Honesty about state
 
 From `PRODUCT.md`: *the interface must never imply a service is verified working
 when it is not.* In practice:
@@ -180,12 +214,17 @@ when it is not.* In practice:
 - A run that fails to load blanks its readings to `—` rather than leaving `0
   Karten übrig` next to dead buttons. An em dash is a smaller lie than a zero.
 
-### 4.7 German interface, English codebase
+### 4.8 German interface, English codebase
 
 All user-facing text is German, including provider capability notes, planned
-connector entries and API error messages, with German thousands separators
-(`_de()` in `providers/youtube.py`). All class names, ids, function names and
-comments are English. This split is from `PRODUCT.md` and is deliberate.
+connector entries, every server `detail=` string, the engine's refusal
+messages, and the client's own fallbacks (`HTTP_TEXT` in `app.js`), with German
+thousands separators (`_de()` in `providers/youtube.py`). Plurals agree:
+`1 Karte übrig` / `2 Karten übrig`, `1 EINTRAG` / `2 EINTRÄGE`, `1 FACH` /
+`2 FÄCHER`.
+
+All class names, ids, function names and comments are English. This split is
+from `PRODUCT.md` and is deliberate.
 
 ---
 
@@ -211,7 +250,25 @@ import showed eight columns of unlabelled data.
 
 **Grid floors are `minmax(min(300px, 100%), 1fr)`.** A hard 300px floor is wider
 than a 320px viewport minus padding, and pushed the whole page sideways. Chips
-in bay heads wrap for the same reason.
+in bay heads wrap for the same reason. A visually-hidden `input` also needs
+`input.sr-only` rather than `.sr-only` alone: `input[type="file"]` out-specifies
+a bare class, so the import control kept `width: 100%` and dragged the page
+210px sideways while being invisible.
+
+**`/runs` is a shelf of Laufzettel, not a table.** As an eight-column table it
+needed 1,465px and put `Fortsetzen` off-screen at *every* width measured —
+including 1440 — behind an `overflow-x` that overlay scrollbars make invisible.
+That broke the product's core job ("come back later and continue") on the one
+page that exists to serve it. Each run is now the same object the player page
+shows: a bay head with the playlist name and `741 / 1.482 · 50%`, a ticket, and
+its actions. It was also the page that committed least to the world, so this
+closed both problems with one move.
+
+**The run page is one section, not two.** The first viewport has to carry the
+reading, the crate, the card that is out and the transport. A separate title
+band pushed the transport below the fold on a 1440×800 laptop and on every
+phone. The explanatory paragraph — first-time-only copy that occupied permanent
+first-viewport space — moved into a fold on the Laufzettel.
 
 **Below 560px the fascia gives up letter-spacing, then the wordmark text, before
 it gives up a tab.** A tab you have to discover by swiping is a tab most people
@@ -228,13 +285,35 @@ never find. The link keeps its accessible name via `aria-label`.
 | Anti-patterns | `npx impeccable detect app/` | 0 findings |
 | Contrast, both themes | `scratchpad/contrast.py` | all text passes; only §4.4's deliberate exception below threshold |
 | Horizontal overflow | 15 widths, 320–1920px | 0 everywhere |
+| First viewport | 1440×900, 1440×800, 390×844 | crate, card and transport all above the fold |
 
 The detector was verified to actually fire (it reports `transition: width` on a
 planted sample) before its clean result on this codebase was believed.
 
 ---
 
-## 7. What is deliberately not done
+## 7. Known limits
+
+**320×700 and smaller.** The first-viewport contract holds at 1440×900,
+1440×800 and 390×844. At 320×700 the transport falls ~130px below the fold.
+Header, rail, chips, title, reading, crate, card-out and four buttons do not fit
+in 700px at any honest type size, so the page scrolls there. Stated rather than
+quietly claimed.
+
+**Native `confirm()` survives on two destructive actions** (ending a run,
+disconnecting a service). It is the one browser widget left on the surface. It
+stays because it is keyboard-safe, focus-correct and unmistakably system-level
+for an irreversible act; a hand-built dialog would look more like the world and
+behave worse. The `alert()` that used to report disconnect *failures* is gone —
+a failure message is ours to render, a destructive confirmation is not.
+
+**A cancelled run keeps its row.** Its deck is discarded and its transport is
+disabled, but it is still listed, because silently removing something the
+listener made is worse than showing it as ended.
+
+---
+
+## 8. What is deliberately not done
 
 - **No cover art anywhere.** It would make the current song the subject.
 - **No progress bar for the current track.** The unit of this product is the

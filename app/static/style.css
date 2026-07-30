@@ -186,6 +186,20 @@ button, input, select { font: inherit; border-radius: 0; }
 
 :focus-visible { outline: 3px solid var(--tab-line); outline-offset: 2px; }
 
+.skip-link {
+  position: fixed;
+  top: 8px; left: 8px;
+  z-index: 60;
+  padding: 10px 16px;
+  background: var(--tab);
+  color: var(--tab-ink);
+  font-weight: 700;
+  font-size: var(--t-sm);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: none; }
+
 .hidden { display: none !important; }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -348,11 +362,15 @@ button, input, select { font: inherit; border-radius: 0; }
   background: var(--bay-2);
 }
 .bay-head > :first-child {
+  margin: 0;
+  min-width: 0;
   font-size: var(--t-xs);
   font-weight: 700;
+  line-height: 1.5;
   letter-spacing: 0.17em;
   text-transform: uppercase;
   color: var(--ink-2);
+  overflow-wrap: anywhere;
 }
 .bay-read {
   font-family: var(--mono);
@@ -466,6 +484,12 @@ input[type="file"] { padding: 8px 12px; }
 
 label.field { display: flex; flex-direction: column; gap: 5px; }
 
+/* Must out-specify the control rules above, or a hidden input keeps their
+   width: 100% and drags the page sideways. */
+input.sr-only, select.sr-only, textarea.sr-only {
+  width: 1px; height: 1px; min-height: 0; padding: 0;
+}
+
 /* A label standing in for a file input needs the focus ring the input would
    have had, since the input itself is off-screen. */
 input.sr-only:focus-visible + label.btn { outline: 3px solid var(--tab-line); outline-offset: 2px; }
@@ -509,7 +533,7 @@ input.sr-only:focus-visible + label.btn { outline: 3px solid var(--tab-line); ou
   color: var(--ink-2);
   white-space: nowrap;
 }
-.chip-live { color: var(--tab-ink); background: var(--tab); border-color: var(--tab); }
+.chip-live { color: var(--ink); background: transparent; border-color: var(--tab-line); }
 .chip-ok   { color: var(--ok);   border-color: var(--ok); }
 .chip-stop { color: var(--stop); border-color: var(--stop); }
 .chip-off  { color: var(--ink-3); }
@@ -536,6 +560,7 @@ input.sr-only:focus-visible + label.btn { outline: 3px solid var(--tab-line); ou
 
 /* Notices. The stencilled label carries severity; no coloured edge stripes. */
 .note {
+  max-width: var(--measure);
   border: 1px solid var(--rule-hard);
   padding: 12px 14px;
   background: var(--bay);
@@ -594,11 +619,11 @@ input.sr-only:focus-visible + label.btn { outline: 3px solid var(--tab-line); ou
 
 .crate-divider {
   position: absolute;
-  top: -16px;
+  top: -20px;
   bottom: 0;
   left: 0;
-  width: 5px;
-  margin-left: -2px;
+  width: 7px;
+  margin-left: -3px;
   background: var(--tab);
   /* Outlined, so the cursor never depends on chroma alone. */
   outline: var(--tab-edge) solid var(--tab-line);
@@ -609,9 +634,9 @@ input.sr-only:focus-visible + label.btn { outline: 3px solid var(--tab-line); ou
   content: "";
   position: absolute;
   top: 0;
-  left: -11px;
-  width: 27px;
-  height: 11px;
+  left: -15px;
+  width: 37px;
+  height: 14px;
   background: var(--tab);
   outline: var(--tab-edge) solid var(--tab-line);
 }
@@ -777,8 +802,9 @@ input.sr-only:focus-visible + label.btn { outline: 3px solid var(--tab-line); ou
 }
 .mode:hover:not(:disabled) { border-color: var(--rule-hard); }
 .mode[aria-pressed="true"] { border-color: var(--tab-line); }
-.mode[aria-pressed="true"] .mode-head { background: var(--tab); color: var(--tab-ink); }
-.mode[aria-pressed="true"] .mode-head .stencil { color: var(--tab-ink); }
+.mode[aria-pressed="true"] { border-color: var(--tab-line); box-shadow: inset 0 0 0 1px var(--tab-line); }
+.mode[aria-pressed="true"] .mode-head { background: var(--tab-wash); }
+.mode[aria-pressed="true"] .mode-head .stencil { color: var(--ink-2); }
 .mode:disabled { opacity: .45; cursor: not-allowed; }
 .mode-head {
   display: flex;
@@ -920,7 +946,7 @@ details.fold > summary:hover { color: var(--ink); }
 .crateviz i { display: block; flex: 1 1 0; max-width: 13px; height: 88px; background: var(--spine); }
 .crateviz i.played { height: 18px; background: var(--spine-done); }
 .crateviz i.divider {
-  flex: 0 0 5px;
+  flex: 0 0 7px;
   height: 132px;
   margin: 0 9px;
   background: var(--tab);
@@ -943,8 +969,7 @@ details.fold > summary:hover { color: var(--ink); }
   .wordmark { padding: 0 14px; font-size: var(--t-md); }
   .register a { padding: 0 13px; min-height: 48px; }
   .shopfront .btn { min-height: 48px; padding: 0 13px; }
-  .opsrail { gap: 12px; padding: 7px 14px; }
-  .opsrail .push { margin-left: 0; }
+  .opsrail { gap: 6px 12px; padding: 7px 14px; }
 
   .opening-say { padding: 22px; }
   .crate-row { height: 96px; }
@@ -958,6 +983,9 @@ details.fold > summary:hover { color: var(--ink); }
 
   /* A nested scroll region inside page scroll is wrong on a phone. */
   .browse { max-height: none; }
+
+  /* A right-pushed action on a wrapped row lands alone and looks detached. */
+  .row .push { margin-left: 0; flex: 1 1 auto; }
 }
 
 @media (max-width: 560px) {

@@ -16,30 +16,18 @@
 
         <div class="note hidden" id="runsNote"></div>
 
-        <div class="bay">
-            <div class="bay-head">
-                <span>Angelegte Fächer</span>
-                <span class="bay-read" id="runsCount">wird gelesen</span>
-            </div>
-            <div class="scroll-x">
-                <table>
-                    <thead id="runsHead">
-                        <tr>
-                            <th>Playlist</th>
-                            <th>Dienst</th>
-                            <th>Modus</th>
-                            <th>Zustand</th>
-                            <th class="n">Gespielt</th>
-                            <th class="n">Gesamt</th>
-                            <th>Zuletzt</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="runRows">
-                        <tr><td colspan="8" style="padding: 0"><div class="skeleton"><i></i><i></i><i></i></div></td></tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="spread">
+            <span class="stencil">Angelegte Fächer</span>
+            <span class="bay-read" id="runsCount" aria-live="polite">wird gelesen</span>
+        </div>
+
+        <!-- Each run is its own ticket. As a table this needed 1,465px and put
+             "Fortsetzen" off-screen at every width tested, including 1440 —
+             which broke the product's core job on the page that exists to
+             serve it. -->
+        <div class="grid" id="runList">
+            <div class="bay"><div class="skeleton"><i></i><i></i><i></i></div></div>
+            <div class="bay"><div class="skeleton"><i></i><i></i><i></i></div></div>
         </div>
     </div>
 </section>
@@ -50,9 +38,9 @@
         Übernahme
     </div>
     <div class="body">
-        <div class="bay">
+        <section class="bay" aria-labelledby="bayImport">
             <div class="bay-head">
-                <span>Fach übernehmen</span>
+                <h2 id="bayImport">Fach übernehmen</h2>
                 <span class="bay-read">JSON</span>
             </div>
             <div class="bay-body">
@@ -70,7 +58,7 @@
                     <button class="btn btn-primary push" id="importBtn" type="button">Importieren</button>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 </section>
 {% endblock %}
@@ -81,70 +69,93 @@ import { $, api, el, formatCount, formatWhen, setNote } from "/static/app.js";
 
 const PROVIDERS = Object.fromEntries({{ providers | tojson }}.map((p) => [p.id, p]));
 
-const STATUS_TEXT = {
-    active: "Läuft", paused: "Pausiert", completed: "Durch", cancelled: "Beendet",
-};
 const STATUS_CLASS = {
     active: "chip-live", paused: "chip-off",
     completed: "chip-ok", cancelled: "chip-stop",
 };
 
-/** The table's own failure state, so every caller renders it identically. */
-function showTableError(message) {
-    $("#runsHead").hidden = false;
+/**
+ * "Durch" means played through. A Handoff run on a service with no listening
+ * history is marked completed the moment the playlist is written — nobody has
+ * played anything yet, and we will never find out whether they did. Calling
+ * that "Durch" is a claim we cannot support, so it says what actually
+ * happened: the deck was handed over.
+ */
+function statusText(r) {
+    if (r.status !== "completed") {
+        return { active: "Läuft", paused: "Pausiert", cancelled: "Beendet" }[r.status] || r.status;
+    }
+    return r.mode === "controller" ? "Durch" : "Übergeben";
+}
+
+/** What is left, when "what is left" is a thing we can honestly know. */
+function remainingText(r) {
+    if (r.status === "cancelled") return "—";
+    if (r.status === "completed" && r.mode !== "controller") return "nicht messbar";
+    return formatCount(Math.max(0, r.total - r.cursor));
+}
+
+/** One failure state, so every caller renders it identically. */
+function showListError(message) {
     $("#runsCount").textContent = "nicht geladen";
-    $("#runRows").replaceChildren(el("tr", {},
-        el("td", { colspan: "8" },
-            el("div", { class: "empty" },
-                el("span", {}, "Läufe konnten nicht geladen werden."),
-                el("button", { class: "btn", type: "button", onClick: load }, "Erneut versuchen")))));
+    $("#runList").replaceChildren(el("div", { class: "bay" },
+        el("div", { class: "empty" },
+            el("span", {}, "Läufe konnten nicht geladen werden."),
+            el("button", { class: "btn", type: "button", onClick: load }, "Erneut versuchen"))));
     if (message) setNote($("#runsNote"), message, "note-stop", "Fehler");
+}
+
+/** A run, as its own Laufzettel — the same object the player page shows. */
+function runTicket(r) {
+    const provider = PROVIDERS[r.provider];
+    const pct = r.total ? Math.round((r.cursor / r.total) * 100) : 0;
+    const live = r.mode === "controller";
+    return el("section", { class: "bay" },
+        el("div", { class: "bay-head" },
+            el("h2", {}, r.playlist_name || r.playlist_id),
+            el("span", { class: "bay-read" },
+                `${formatCount(r.cursor)} / ${formatCount(r.total)} · ${pct}%`)),
+        el("div", { class: "bay-body" },
+            el("div", { class: "row" },
+                el("span", { class: "signet", style: `--brand: ${provider?.brand_color || "currentColor"}` },
+                    provider?.display_name || r.provider),
+                el("span", { class: `chip ${STATUS_CLASS[r.status] || ""}` },
+                    statusText(r))),
+            el("div", { class: "ticket" },
+                el("div", {}, el("span", { class: "k" }, "Modus"),
+                              el("span", { class: "v" }, live ? "Live" : "Handoff")),
+                el("div", {}, el("span", { class: "k" }, "Übrig"),
+                              el("span", { class: "v data" }, remainingText(r))),
+                el("div", {}, el("span", { class: "k" }, "Zuletzt"),
+                              el("span", { class: "v" }, formatWhen(r.updated_at)))),
+            el("div", { class: "row" },
+                live
+                    ? el("a", { class: "btn", href: `/player/${r.id}` },
+                        r.status === "completed" || r.status === "cancelled" ? "Ansehen"
+                            : r.cursor > 0 ? "Fortsetzen" : "Öffnen")
+                    : null,
+                el("a", { class: "btn", href: `/export/${r.id}` }, "Exportieren"))));
 }
 
 async function load() {
     try {
         const { runs } = await api("/api/runs");
 
-        // The head is restored on every load: an import that succeeds after an
-        // empty state must not leave eight columns of data unlabelled.
-        $("#runsHead").hidden = runs.length === 0;
         $("#runsCount").textContent = runs.length
             ? `${formatCount(runs.length)} ${runs.length === 1 ? "FACH" : "FÄCHER"}`
             : "KEINS";
 
         if (!runs.length) {
-            $("#runRows").replaceChildren(el("tr", {},
-                el("td", { colspan: "8" },
-                    el("div", { class: "empty" },
-                        el("span", {}, "Noch kein Fach angelegt."),
-                        el("a", { class: "btn btn-primary", href: "/library" }, "Playlist wählen")))));
+            $("#runList").replaceChildren(el("div", { class: "bay" },
+                el("div", { class: "empty" },
+                    el("span", {}, "Noch kein Fach angelegt."),
+                    el("a", { class: "btn btn-primary", href: "/library" }, "Playlist wählen"))));
             return;
         }
 
-        $("#runRows").replaceChildren(...runs.map((r) => {
-            const provider = PROVIDERS[r.provider];
-            const pct = r.total ? Math.round((r.cursor / r.total) * 100) : 0;
-            return el("tr", {},
-                el("td", {}, r.playlist_name || r.playlist_id),
-                el("td", {}, el("span", { class: "signet", style: `--brand: ${provider?.brand_color || "currentColor"}` },
-                    provider?.display_name || r.provider)),
-                el("td", { class: "dim" }, r.mode === "controller" ? "Live" : "Handoff"),
-                el("td", {}, el("span", { class: `chip ${STATUS_CLASS[r.status] || ""}` },
-                    STATUS_TEXT[r.status] || r.status)),
-                el("td", { class: "n" }, `${formatCount(r.cursor)} · ${pct}%`),
-                el("td", { class: "n" }, formatCount(r.total)),
-                el("td", { class: "dim" }, formatWhen(r.updated_at)),
-                el("td", {},
-                    el("span", { class: "row", style: "gap: 6px; flex-wrap: nowrap" },
-                        r.mode === "controller"
-                            ? el("a", { class: "btn", href: `/player/${r.id}` },
-                                r.status === "completed" ? "Ansehen" : r.cursor > 0 ? "Fortsetzen" : "Öffnen")
-                            : null,
-                        el("a", { class: "btn btn-quiet", href: `/export/${r.id}` }, "Export")))
-            );
-        }));
+        $("#runList").replaceChildren(...runs.map(runTicket));
     } catch (err) {
-        showTableError(err.message);
+        showListError(err.message);
     }
 }
 

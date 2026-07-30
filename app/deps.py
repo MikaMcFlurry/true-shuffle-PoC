@@ -24,7 +24,7 @@ async def current_user_id(request: Request) -> Optional[int]:
 async def require_user_id(request: Request) -> int:
     user_id = await current_user_id(request)
     if user_id is None:
-        raise HTTPException(status_code=401, detail="Not signed in")
+        raise HTTPException(status_code=401, detail="Nicht angemeldet.")
     return user_id
 
 
@@ -53,7 +53,7 @@ async def require_run(request: Request, run_id: int) -> Dict[str, Any]:
     user_id = await require_user_id(request)
     run = await db.get_run(run_id, user_id=user_id)
     if run is None:
-        raise HTTPException(status_code=404, detail="Run not found")
+        raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
     return run
 
 

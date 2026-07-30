@@ -135,7 +135,7 @@ async def create_run(request: Request):
     reshuffle = bool(body.get("reshuffle"))
 
     if not provider_id or not playlist_id:
-        raise HTTPException(status_code=400, detail="provider and playlist_id required")
+        raise HTTPException(status_code=400, detail="provider und playlist_id werden gebraucht.")
 
     session = await _session(user_id, provider_id)
     caps = session.provider.capabilities
@@ -143,12 +143,13 @@ async def create_run(request: Request):
     if mode is RunMode.CONTROLLER and not caps.supports_controller_mode:
         raise HTTPException(
             status_code=400,
-            detail=f"{caps.display_name} offers no playback control — use Copy Mode.",
+            detail=(f"{caps.display_name} lässt keine Wiedergabesteuerung zu — "
+                    "nimm den Handoff-Modus."),
         )
     if mode is RunMode.UTILITY and not caps.create_playlist:
         raise HTTPException(
             status_code=400,
-            detail=f"{caps.display_name} cannot create playlists — use Live Mode.",
+            detail=f"{caps.display_name} kann keine Playlists anlegen — nimm den Live-Modus.",
         )
 
     playlist = await runs.resolve_playlist(session, playlist_id)
@@ -247,7 +248,7 @@ async def job_status(request: Request, job_id: str):
     user_id = await require_user_id(request)
     snap = await jobs.snapshot(job_id, user_id)
     if snap is None:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail="Diesen Auftrag gibt es nicht.")
     return JSONResponse(snap)
 
 
@@ -257,7 +258,7 @@ async def job_stream(request: Request, job_id: str):
     user_id = await require_user_id(request)
     snap = await jobs.snapshot(job_id, user_id)
     if snap is None:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail="Diesen Auftrag gibt es nicht.")
 
     queue = jobs.subscribe(job_id)
 
@@ -372,7 +373,7 @@ async def run_event(request: Request, run_id: int):
         )
         return JSONResponse({"status": "ok"})
 
-    raise HTTPException(status_code=400, detail=f"Unknown event type {event_type!r}")
+    raise HTTPException(status_code=400, detail=f"Unbekannter Ereignistyp {event_type!r}.")
 
 
 async def _advance(
@@ -390,12 +391,12 @@ async def _advance(
     async with runs.advance_lock(run_id):
         state = await runs.get_state(run_id, user_id)
         if state is None:
-            raise HTTPException(status_code=404, detail="Run not found")
+            raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
         if state.status is RunStatus.COMPLETED:
             return JSONResponse({"status": "completed", "cursor": state.cursor,
                                  "total": state.total})
         if state.status is RunStatus.CANCELLED:
-            raise HTTPException(status_code=409, detail="Run was cancelled")
+            raise HTTPException(status_code=409, detail="Dieser Lauf wurde beendet.")
 
         session = await _session(user_id, state.provider)
         try:
@@ -418,7 +419,7 @@ async def run_previous(request: Request, run_id: int):
     async with runs.advance_lock(run_id):
         state = await runs.get_state(run_id, run["user_id"])
         if state is None:
-            raise HTTPException(status_code=404, detail="Run not found")
+            raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
         try:
             decision = await runs.previous(session, state)
         except ProviderError as exc:
@@ -451,7 +452,7 @@ async def run_device(request: Request, run_id: int):
     body = await _json(request)
     device_id = body.get("device_id")
     if not device_id:
-        raise HTTPException(status_code=400, detail="device_id required")
+        raise HTTPException(status_code=400, detail="device_id wird gebraucht.")
 
     session = await _session(run["user_id"], run["provider"])
     state = runs._to_state(run)
@@ -473,7 +474,7 @@ async def _session(user_id: int, provider_id: str):
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except KeyError as exc:
         raise HTTPException(
-            status_code=404, detail=f"Unknown provider {provider_id}"
+            status_code=404, detail=f"Unbekannter Dienst {provider_id}."
         ) from exc
     except ProviderQuotaError as exc:
         raise http_error(exc) from exc

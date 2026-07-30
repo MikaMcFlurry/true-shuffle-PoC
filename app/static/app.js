@@ -20,6 +20,22 @@ export function el(tag, props = {}, ...children) {
   return node;
 }
 
+/**
+ * A response with no usable body still has to say something in the interface's
+ * language. These are last resorts — the server sends German details.
+ */
+const HTTP_TEXT = {
+  401: "Nicht angemeldet.",
+  403: "Dafür fehlt die Berechtigung.",
+  404: "Das gibt es nicht.",
+  409: "Das geht in diesem Zustand nicht.",
+  429: "Der Dienst bremst gerade — kurz warten und erneut versuchen.",
+  500: "Auf dem Server ist etwas schiefgegangen.",
+  502: "Der Streamingdienst hat nicht geantwortet.",
+  503: "Der Dienst ist gerade nicht erreichbar.",
+  504: "Der Streamingdienst hat zu lange gebraucht.",
+};
+
 /** Fetch JSON from the API, turning error responses into thrown Errors. */
 export async function api(path, { method = "GET", body } = {}) {
   const res = await fetch(path, {
@@ -35,7 +51,8 @@ export async function api(path, { method = "GET", body } = {}) {
   }
 
   if (!res.ok) {
-    const message = (payload && (payload.detail || payload.message)) || `HTTP ${res.status}`;
+    const message = (payload && (payload.detail || payload.message))
+      || HTTP_TEXT[res.status] || `HTTP ${res.status}`;
     const error = new Error(message);
     error.status = res.status;
     throw error;
@@ -140,10 +157,10 @@ export function followJob(jobId, { onProgress, onDone, onError }) {
       onDone?.(frame.result || {});
     } else if (frame.status === "error") {
       source.close();
-      onError?.(new Error(frame.message || "The job failed."));
+      onError?.(new Error(frame.message || "Der Auftrag ist fehlgeschlagen."));
     } else if (frame.status === "cancelled") {
       source.close();
-      onError?.(new Error("The job was cancelled."));
+      onError?.(new Error("Der Auftrag wurde abgebrochen."));
     } else {
       onProgress?.(frame);
     }
@@ -163,8 +180,8 @@ function pollJob(jobId, { onProgress, onDone, onError }) {
       try {
         const snap = await api(`/api/jobs/${jobId}`);
         if (snap.status === "done") return onDone?.(snap.result || {});
-        if (snap.status === "error") return onError?.(new Error(snap.message || "The job failed."));
-        if (snap.status === "cancelled") return onError?.(new Error("The job was cancelled."));
+        if (snap.status === "error") return onError?.(new Error(snap.message || "Der Auftrag ist fehlgeschlagen."));
+        if (snap.status === "cancelled") return onError?.(new Error("Der Auftrag wurde abgebrochen."));
         onProgress?.(snap);
       } catch (err) {
         return onError?.(err);

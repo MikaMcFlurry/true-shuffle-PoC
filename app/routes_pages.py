@@ -106,7 +106,7 @@ async def player(request: Request, run_id: int):
         (p for p in all_providers() if p.capabilities.id == run["provider"]), None
     )
     if provider is None:
-        raise HTTPException(status_code=404, detail="Provider no longer available")
+        raise HTTPException(status_code=404, detail="Diesen Dienst gibt es hier nicht mehr.")
     return templates.TemplateResponse(
         request,
         "player.html",

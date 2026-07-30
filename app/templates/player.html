@@ -6,7 +6,7 @@
 <section class="section">
     <div class="index">
         <b>01</b>
-        Lauf
+        Das Fach
     </div>
     <div class="body">
         <div class="row">
@@ -19,41 +19,20 @@
             {% endif %}
         </div>
         <h1>{{ playlist_name or 'Lauf' }}</h1>
-        {% if provider.live_mode_needs_open_tab %}
-        <p class="dim sm">
-            {{ provider.display_name }} lässt nur den eigenen Player steuern, also
-            läuft der Live-Modus hier im Tab. Deine Position wird nach jedem Titel
-            gespeichert — diese Seite zu schließen stoppt die Musik, nicht den Lauf.
-        </p>
-        {% else %}
-        <p class="dim sm">
-            Läuft auf deinem {{ provider.display_name }}-Gerät. true-shuffle rückt den
-            Trennstreifen vom Server aus weiter, du kannst diese Seite also schließen.
-            Ein Skip in {{ provider.display_name }} zählt als eine Karte, genau wie ein
-            Skip hier.
-        </p>
-        {% endif %}
-        <div class="note hidden" id="playerNote"></div>
-    </div>
-</section>
 
-<section class="section">
-    <div class="index">
-        <b>02</b>
-        Das Fach
-    </div>
-    <div class="body">
+        <div class="note hidden" id="playerNote"></div>
+
         <div class="deck-layout">
-            <div class="bay">
+            <section class="bay" aria-labelledby="bayDeck">
                 <div class="bay-head">
-                    <span>Im Fach</span>
+                    <h2 id="bayDeck">Im Fach</h2>
                     <span class="bay-read" id="deckRead">—</span>
                 </div>
                 <div class="bay-body">
                     <!-- The reading. What is LEFT is the subject of this product. -->
                     <div class="reading" aria-live="polite">
                         <span class="figure" id="deckLeft">0</span>
-                        <span class="unit">Karten übrig</span>
+                        <span class="unit" id="deckUnit">Karten übrig</span>
                         <span class="of">von <span id="deckTotal">0</span> im Fach</span>
                     </div>
 
@@ -65,7 +44,7 @@
                         </div>
                     </div>
 
-                    <div class="card-out" aria-live="polite">
+                    <div class="card-out">
                         <span class="pos"><span id="deckAt">0</span> · aus dem Fach</span>
                         <span class="title" id="nowTitle">Wird geladen…</span>
                         <span class="who" id="nowArtist"></span>
@@ -82,12 +61,15 @@
                     <div id="ytmount"></div>
                     {% endif %}
 
+                    <!-- Three ways to move the divider is two too many in one
+                         cluster. Start/Pause, forward, back — and the run-level
+                         actions live on the Laufzettel, not next to Pause. -->
                     <div class="transport">
                         <button class="btn btn-primary" id="startBtn" type="button">Lauf starten</button>
+                        <a class="btn btn-primary hidden" id="restartLink" href="/library">Neues Fach anlegen</a>
+                        <button class="btn" id="pauseBtn" type="button" disabled>Pause</button>
                         <button class="btn" id="prevBtn" type="button">Zurück</button>
                         <button class="btn" id="nextBtn" type="button">Überspringen</button>
-                        <button class="btn" id="pauseBtn" type="button" disabled>Pause</button>
-                        <button class="btn btn-stop push" id="cancelBtn" type="button">Lauf beenden</button>
                     </div>
 
                     <div class="keys" aria-hidden="true">
@@ -96,12 +78,12 @@
                         <span><kbd>←</kbd> Zurück</span>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <div class="stack">
-                <div class="bay">
+                <section class="bay" aria-labelledby="bayTicket">
                     <div class="bay-head">
-                        <span>Laufzettel</span>
+                        <h2 id="bayTicket">Laufzettel</h2>
                         <span class="bay-read">NR. {{ '%04d' % run_id }}</span>
                     </div>
                     <div class="bay-body">
@@ -111,26 +93,48 @@
                             <div><span class="k">Quelle</span><span class="v">{{ playlist_name or '—' }}</span></div>
                             <div><span class="k">Position</span><span class="v data" id="ticketPos">—</span></div>
                             <div class="hidden" id="watchRow"><span class="k">Nachführung</span><span class="v" id="watchStatus"></span></div>
+                            <div class="hidden" id="doneRow"><span class="k">Abschluss</span><span class="v ok" id="doneValue"></span></div>
                         </div>
-                        <a class="btn" href="/export/{{ run_id }}">Lauf exportieren</a>
-                        <p class="faint sm">
-                            Reihenfolge und Position lassen sich auf einen anderen
-                            Rechner mitnehmen. Die Datei enthält nie Zugangsdaten.
-                        </p>
-                    </div>
-                </div>
+                        <div class="row">
+                            <a class="btn" href="/export/{{ run_id }}">Exportieren</a>
+                            <button class="btn btn-stop" id="cancelBtn" type="button">Lauf beenden</button>
+                        </div>
 
-                <div class="bay">
+                        <details class="fold">
+                            <summary>Wie dieser Lauf abgespielt wird</summary>
+                            <p class="dim sm">
+                                {% if provider.live_mode_needs_open_tab %}
+                                {{ provider.display_name }} lässt nur den eigenen Player
+                                steuern, also läuft der Live-Modus hier im Tab. Deine
+                                Position wird nach jedem Titel gespeichert — diese Seite
+                                zu schließen stoppt die Musik, nicht den Lauf.
+                                {% else %}
+                                Läuft auf deinem {{ provider.display_name }}-Gerät.
+                                true-shuffle rückt den Trennstreifen vom Server aus
+                                weiter, du kannst diese Seite also schließen. Ein Skip in
+                                {{ provider.display_name }} zählt als eine Karte, genau
+                                wie ein Skip hier.
+                                {% endif %}
+                            </p>
+                            <p class="faint sm">
+                                Reihenfolge und Position lassen sich auf einen anderen
+                                Rechner mitnehmen. Die Datei enthält nie Zugangsdaten.
+                            </p>
+                        </details>
+                    </div>
+                </section>
+
+                <section class="bay" aria-labelledby="bayNext">
                     <div class="bay-head">
-                        <span>Als Nächstes</span>
+                        <h2 id="bayNext">Als Nächstes</h2>
                         <span class="bay-read" id="upnextRead">—</span>
                     </div>
                     <ol class="sleeves bay-body flush" id="upnext"></ol>
-                </div>
+                </section>
 
-                <div class="bay hidden" id="skippedBay">
+                <section class="bay hidden" id="skippedBay" aria-labelledby="baySkipped">
                     <div class="bay-head">
-                        <span>Nicht ins Fach gekommen</span>
+                        <h2 id="baySkipped">Nicht ins Fach gekommen</h2>
                         <span class="bay-read" id="skippedRead">—</span>
                     </div>
                     <div class="bay-body">
@@ -140,7 +144,7 @@
                         </p>
                         <div id="skippedList" class="ticket sm"></div>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     </div>

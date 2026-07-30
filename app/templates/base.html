@@ -8,6 +8,14 @@
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preload" href="/static/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/static/style.css">
+    <script>
+      // Inline and blocking on purpose: /static/app.js is a module and runs
+      // after first paint, so a stored preference flashed the wrong theme.
+      try {
+        var t = localStorage.getItem("true_shuffle_theme");
+        if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
+      } catch (e) { /* private mode: fall back to the media query */ }
+    </script>
 </head>
 <body>
 <!--
@@ -31,6 +39,8 @@ records at the user's direction; seed key 743b623c. Craft level set against the
 reference portfolio: the whole surface commits, not one component.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
+    <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+
     <header class="shopfront">
         <a class="wordmark" href="/" aria-label="true-shuffle, zur Startseite">
             <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
@@ -55,7 +65,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         <span class="push">{% block railstate %}TRUE-SHUFFLE 0.2.0{% endblock %}</span>
     </div>
 
-    <main class="sheet">
+    <main class="sheet" id="inhalt" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
 

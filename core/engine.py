@@ -51,10 +51,20 @@ class Decision:
 _LIVE_STATUSES = (RunStatus.ACTIVE, RunStatus.PAUSED)
 
 
+#: What each terminal status means to the listener. These reach the browser,
+#: so they are written in the interface's language rather than the log's.
+_TERMINAL_TEXT = {
+    RunStatus.COMPLETED: "Dieses Fach ist durchgehört — leg ein neues an.",
+    RunStatus.CANCELLED: "Dieser Lauf wurde beendet.",
+}
+
+
 def ensure_live(run: RunState) -> None:
     """Raise unless the run can still progress."""
     if run.status not in _LIVE_STATUSES:
-        raise RunError(f"Run {run.run_id} is {run.status.value} and cannot progress")
+        raise RunError(
+            _TERMINAL_TEXT.get(run.status, "Dieser Lauf kann nicht weiterlaufen.")
+        )
 
 
 # ---------------------------------------------------------------------------

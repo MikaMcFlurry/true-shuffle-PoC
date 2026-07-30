@@ -283,7 +283,8 @@ def test_live_mode_is_refused_on_a_provider_that_cannot_control_playback(
         "provider": "copyonly", "playlist_id": "pl1", "mode": "controller",
     })
     assert response.status_code == 400
-    assert "Copy Mode" in response.json()["detail"]
+    # The refusal names the mode that WOULD work, in the interface language.
+    assert "Handoff-Modus" in response.json()["detail"]
 
 
 # ---------------------------------------------------------------------------
@@ -534,3 +535,48 @@ def test_connect_page_lists_every_service(client):
     assert response.status_code == 200
     for name in ("Spotify", "Apple Music", "YouTube Music"):
         assert name in response.text
+
+
+def test_a_finished_deck_refuses_transport_in_german_and_not_with_a_500(
+    client, fake_provider
+):
+    """A finished deck's transport used to be reachable by click, and the
+    engine's refusal was never mapped — so a legal press returned a bare
+    "Internal Server Error". It must be a 409 with a German sentence.
+
+    (`advance` is deliberately idempotent here instead: the watcher and the
+    browser can both report the last track ending, and neither is an error.)"""
+    connect(client)
+    run_id = deal(client)["run_id"]
+    client.post(f"/api/runs/{run_id}/start")
+    for _ in range(len(fake_provider.tracks)):
+        client.post(f"/api/runs/{run_id}/advance", json={"reason": "user_skip"})
+
+    assert client.get(f"/api/runs/{run_id}").json()["status"] == "completed"
+
+    for path in ("start", "previous"):
+        response = client.post(f"/api/runs/{run_id}/{path}")
+        assert response.status_code == 409, f"{path} → {response.status_code}"
+        assert "durchgehört" in response.json()["detail"], path
+
+
+def test_a_handoff_deck_is_never_reported_as_played_through(client, fake_provider):
+    """"Durch" means played through.
+
+    A Handoff run on a service with no listening history is marked completed
+    the instant the playlist is written — nobody has played anything, and we
+    will never learn whether they did. The word for that is "Übergeben", and
+    the rule lives in runs.html where the label is chosen.
+    """
+    connect(client)
+    result = deal(client, mode="utility")
+    run = next(r for r in client.get("/api/runs").json()["runs"]
+               if r["id"] == result["run_id"])
+
+    assert run["mode"] == "utility"
+    assert run["status"] == "completed"      # nothing more is knowable
+    assert run["cursor"] == 0                # and nothing was played
+
+    page = client.get("/runs").text
+    assert "Übergeben" in page
+    assert 'r.mode === "controller" ? "Durch" : "Übergeben"' in page

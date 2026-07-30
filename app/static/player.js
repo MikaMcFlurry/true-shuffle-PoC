@@ -91,7 +91,7 @@ class YouTubeWebPlayer extends WebPlayerBase {
           },
         },
       });
-      setTimeout(() => reject(new Error("The YouTube player did not load.")), 15000);
+      setTimeout(() => reject(new Error("Der YouTube-Player wurde nicht geladen.")), 15000);
     });
 
     this.timer = setInterval(() => {
@@ -106,10 +106,10 @@ class YouTubeWebPlayer extends WebPlayerBase {
 }
 
 function youtubeErrorText(code) {
-  if (code === 101 || code === 150) return "The video's owner does not allow it to be played outside YouTube.";
-  if (code === 100) return "This video was removed or made private.";
-  if (code === 2) return "YouTube rejected the video id.";
-  return `The YouTube player reported error ${code}.`;
+  if (code === 101 || code === 150) return "Der Rechteinhaber erlaubt keine Wiedergabe außerhalb von YouTube.";
+  if (code === 100) return "Dieses Video wurde entfernt oder auf privat gestellt.";
+  if (code === 2) return "YouTube hat die Video-ID abgelehnt.";
+  return `Der YouTube-Player meldet Fehler ${code}.`;
 }
 
 function loadScript(src, isReady) {
@@ -118,7 +118,7 @@ function loadScript(src, isReady) {
     const existing = document.querySelector(`script[src="${src}"]`);
     const node = existing || Object.assign(document.createElement("script"), { src, async: true });
     node.addEventListener("load", () => resolve());
-    node.addEventListener("error", () => reject(new Error(`Could not load ${src}`)));
+    node.addEventListener("error", () => reject(new Error(`${src} konnte nicht geladen werden.`)));
     if (!existing) document.head.append(node);
   });
 }
@@ -149,6 +149,15 @@ export class RunPlayer {
 
   get isRemote() { return this.provider.playback === "remote_device"; }
 
+  /** Re-measure the crate when the viewport changes; px offsets go stale. */
+  watchResize() {
+    if (this._resize) return;
+    const row = $("#rack");
+    if (!row || typeof ResizeObserver === "undefined") return;
+    this._resize = new ResizeObserver(() => this.renderRack());
+    this._resize.observe(row);
+  }
+
   async boot() {
     this.state = await api(`/api/runs/${this.runId}`);
     // `active` in the database means "this is the live deck", NOT "audio is
@@ -163,6 +172,7 @@ export class RunPlayer {
       && this.state.status === "active"
       && Boolean(this.state.watcher?.watching);
     this.render();
+    this.watchResize();
     this.loadSkipped();
     if (this.isRemote && this.playing) this.startPolling();
 
@@ -208,6 +218,8 @@ export class RunPlayer {
     }
     const status = $("#runStatus");
     if (status) { status.textContent = "Fehler"; status.className = "chip chip-stop"; }
+    $("#restartLink")?.classList.add("hidden");
+    $("#startBtn")?.classList.remove("hidden");
     for (const id of ["#startBtn", "#prevBtn", "#nextBtn", "#pauseBtn"]) {
       const node = $(id);
       if (node) node.disabled = true;
@@ -332,7 +344,8 @@ export class RunPlayer {
       const { skipped } = await api(`/api/runs/${this.runId}/skipped`);
       if (!skipped.length) return;          // stays hidden — nothing was dropped
       bay.classList.remove("hidden");
-      $("#skippedRead").textContent = `${formatCount(skipped.length)} EINTRÄGE`;
+      $("#skippedRead").textContent =
+        `${formatCount(skipped.length)} ${skipped.length === 1 ? "EINTRAG" : "EINTRÄGE"}`;
       $("#skippedList").replaceChildren(
         ...skipped.map((s) =>
           el("div", {},
@@ -369,7 +382,8 @@ export class RunPlayer {
     if (!total) return row.replaceChildren();
 
     const width = row.clientWidth || 320;
-    const bars = Math.max(8, Math.min(total, Math.floor(width / 5)));
+    // No floor: a one-card deck must draw one spine, not eight.
+    const bars = Math.max(1, Math.min(total, Math.floor(width / 5)));
 
     if (this._rackBars !== bars || this._rackTotal !== total) {
       this._rackBars = bars;
@@ -401,20 +415,26 @@ export class RunPlayer {
     const s = this.state;
     if (!s) return;
 
+    // Cancelled is just as terminal as completed: a cancelled deck was
+    // discarded, so its transport must not offer to move a cursor that no
+    // longer means anything. Only `done` claims the deck was played through.
     const done = s.status === "completed";
+    const terminal = done || s.status === "cancelled";
     const current = s.current;
 
-    $("#nowTitle").textContent = done
-      ? "Fach durchgehört"
-      : current?.name || `Karte ${s.cursor + 1}`;
-    $("#nowArtist").textContent = done
-      ? `Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
-      : current?.artist || "";
+    $("#nowTitle").textContent = s.status === "cancelled"
+      ? "Lauf beendet"
+      : done ? "Fach durchgehört" : (current?.name || `Karte ${s.cursor + 1}`);
+    $("#nowArtist").textContent = s.status === "cancelled"
+      ? "Das Fach wurde verworfen. Der nächste Start mischt neu."
+      : done ? `Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
+             : (current?.artist || "");
 
     const at = Math.min(s.cursor + (done ? 0 : 1), s.total);
     $("#deckAt").textContent = `Karte ${formatCount(at)}`;
     $("#deckTotal").textContent = formatCount(s.total);
     $("#deckLeft").textContent = formatCount(s.remaining);
+    $("#deckUnit").textContent = s.remaining === 1 ? "Karte übrig" : "Karten übrig";
     $("#scaleEnd").textContent = formatCount(s.total);
     $("#deckRead").textContent = `${formatCount(s.cursor)} GESPIELT · ${formatCount(s.remaining)} OFFEN`;
     $("#ticketPos").textContent = `${formatCount(at)} / ${formatCount(s.total)}`;
@@ -423,6 +443,16 @@ export class RunPlayer {
     // An active deck that nothing is playing is "Bereit", not "Läuft". The
     // accent tab is spent only on a deck that is genuinely running.
     const statusChip = $("#runStatus");
+    const doneRow = $("#doneRow");
+    if (doneRow) {
+      doneRow.classList.toggle("hidden", !terminal);
+      const value = $("#doneValue");
+      if (value) {
+        value.textContent = done ? "durchgehört" : "beendet";
+        value.className = `v ${done ? "ok" : "faint"}`;
+      }
+    }
+
     const idle = s.status === "active" && !this.playing;
     statusChip.textContent = idle ? "Bereit" : (STATUS_TEXT[s.status] || s.status);
     statusChip.className = `chip ${idle ? "chip-off" : STATUS_CLASS[s.status] || ""}`;
@@ -459,12 +489,24 @@ export class RunPlayer {
               done ? "Nichts mehr im Fach" : "Wird geladen…"))])
     );
 
-    $("#startBtn").textContent = this.playing
+    // A finished deck has nothing left to advance to. Offering "Lauf
+    // fortsetzen" on it was not just wrong copy: the click reached the engine,
+    // which refuses, and the listener got a bare 500. The payoff of a finished
+    // 1,482-card deck is also worth acknowledging, so the primary action
+    // becomes the only thing that makes sense next — deal a new one.
+    const start = $("#startBtn");
+    const again = $("#restartLink");
+    start.classList.toggle("hidden", terminal);
+    again.classList.toggle("hidden", !terminal);
+    start.textContent = this.playing
       ? "Karte neu starten"
       : (s.cursor > 0 ? "Lauf fortsetzen" : "Lauf starten");
-    $("#nextBtn").disabled = done;
-    $("#prevBtn").disabled = s.cursor === 0;
-    $("#pauseBtn").disabled = !this.playing;
+    start.disabled = terminal;
+    $("#nextBtn").disabled = terminal;
+    $("#prevBtn").disabled = terminal || s.cursor === 0;
+    $("#pauseBtn").disabled = terminal || !this.playing;
+    const cancel = $("#cancelBtn");
+    if (cancel) cancel.disabled = terminal;
   }
 }
 

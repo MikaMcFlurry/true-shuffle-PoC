@@ -21,26 +21,26 @@
         <div class="note note-stop hidden" id="libNote"></div>
 
         <div class="deck-layout">
-            <div class="bay">
+            <section class="bay" aria-labelledby="bayPl">
                 <div class="bay-head">
-                    <span>Deine Playlists</span>
+                    <h2 id="bayPl">Deine Playlists</h2>
                     <span class="bay-read" id="plCount">wird gelesen</span>
                 </div>
-                <div class="bay-body">
+                <div class="bay-body" id="filterRow">
                     <label class="sr-only" for="plFilter">Playlists filtern</label>
                     <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off">
                 </div>
                 <div class="browse" id="playlists" aria-label="Playlists">
                     <div class="skeleton"><i></i><i></i><i></i><i></i><i></i></div>
                 </div>
-            </div>
+            </section>
 
             <div class="stack">
                 <div class="modes" id="modeCards"></div>
 
-                <div class="bay">
+                <section class="bay" aria-labelledby="bayDeal">
                     <div class="bay-head">
-                        <span>Anlegen</span>
+                        <h2 id="bayDeal">Anlegen</h2>
                         <span class="bay-read" id="selectionRead">nichts gewählt</span>
                     </div>
                     <div class="bay-body">
@@ -58,7 +58,7 @@
                         <div class="status hidden" id="jobLog"></div>
                         <div class="note hidden" id="jobResult"></div>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     </div>
@@ -213,14 +213,19 @@ function renderPlaylists() {
         ? `${formatCount(shown.length)} VON ${formatCount(n)}`
         : `${formatCount(n)} ${n === 1 ? "PLAYLIST" : "PLAYLISTS"}`;
 
+    // Nothing to filter means no filter: an input above an empty list is an
+    // affordance for nothing.
+    $("#filterRow").classList.toggle("hidden", n === 0);
+
     const list = $("#playlists");
     if (!shown.length) {
         list.replaceChildren(el("div", { class: "empty" },
             el("span", {}, n ? "Keine Playlist passt zu diesem Filter."
-                             : "Auf diesem Konto liegen keine Playlists."),
+                             : `In diesem Konto liegen keine Playlists, die true-shuffle lesen kann.`),
             n ? el("button", { class: "btn", type: "button",
                     onClick: () => { $("#plFilter").value = ""; renderPlaylists(); } },
-                  "Filter zurücksetzen") : null));
+                  "Filter zurücksetzen")
+              : el("a", { class: "btn", href: "/connect" }, "Anderen Dienst verbinden")));
         return;
     }
 

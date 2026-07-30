@@ -19,6 +19,7 @@ from app.routes_auth import router as auth_router
 from app.routes_export import router as export_router
 from app.routes_pages import router as pages_router
 from app.watcher import watcher
+from core.engine import RunError
 from providers.base import ProviderError
 
 logger = logging.getLogger("true_shuffle")
@@ -79,6 +80,21 @@ async def provider_error_handler(request: Request, exc: ProviderError):
     return _templates.TemplateResponse(
         request, "error.html", {"status": status, "detail": str(exc)},
         status_code=status,
+    )
+
+
+@app.exception_handler(RunError)
+async def run_error_handler(request: Request, exc: RunError):
+    """A move that is illegal for the run's state is a 409, not a crash.
+
+    Every one of these is reachable from a click — a finished deck's transport,
+    a cancelled run's resume — so leaving it unmapped turned a legitimate press
+    into a bare "Internal Server Error" in the listener's own language.
+    """
+    if request.url.path.startswith(("/api/", "/export/")):
+        return JSONResponse({"detail": str(exc)}, status_code=409)
+    return _templates.TemplateResponse(
+        request, "error.html", {"status": 409, "detail": str(exc)}, status_code=409,
     )
 
 

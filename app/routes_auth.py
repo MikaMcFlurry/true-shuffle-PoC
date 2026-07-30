@@ -45,7 +45,7 @@ async def begin(request: Request, provider_id: str):
         provider = get_provider(provider_id)
     except KeyError as exc:
         raise HTTPException(
-            status_code=404, detail=f"Unknown provider {provider_id}"
+            status_code=404, detail=f"Unbekannter Dienst {provider_id}."
         ) from exc
     except ProviderNotConfigured as exc:
         return templates.TemplateResponse(
@@ -94,7 +94,10 @@ async def begin(request: Request, provider_id: str):
         )
 
     if not start.redirect_url:
-        raise HTTPException(status_code=500, detail="Connector returned no redirect")
+        raise HTTPException(
+            status_code=500,
+            detail="Der Connector hat keine Weiterleitung zurückgegeben.",
+        )
     return RedirectResponse(start.redirect_url, status_code=302)
 
 
@@ -115,7 +118,7 @@ async def callback(
             status_code=400,
         )
     if not code:
-        raise HTTPException(status_code=400, detail="Missing authorization code")
+        raise HTTPException(status_code=400, detail="Es fehlt der Autorisierungscode.")
 
     expected = request.session.pop(_STATE_KEY, None)
     pending = request.session.pop(_PENDING_KEY, {}) or {}
@@ -123,10 +126,12 @@ async def callback(
         # CSRF guard: the old PoC never checked this.
         raise HTTPException(
             status_code=400,
-            detail="OAuth state mismatch — restart the connect flow",
+            detail="Der OAuth-state passt nicht — starte das Verbinden neu.",
         )
     if pending.get("provider") != provider_id:
-        raise HTTPException(status_code=400, detail="OAuth flow/provider mismatch")
+        raise HTTPException(
+            status_code=400, detail="OAuth-Ablauf und Dienst passen nicht zusammen."
+        )
 
     provider = get_provider(provider_id)
     settings = get_settings()
@@ -164,7 +169,10 @@ async def browser_callback(request: Request, provider_id: str):
     """Accept a credential minted in the page (Apple Music MusicKit)."""
     provider = get_provider(provider_id)
     if provider.capabilities.auth not in (AuthKind.BROWSER_SDK, AuthKind.PASTED):
-        raise HTTPException(status_code=400, detail="This provider uses a redirect flow")
+        raise HTTPException(
+            status_code=400,
+            detail="Dieser Dienst verbindet sich über eine Weiterleitung.",
+        )
 
     payload = await request.json()
     try:
