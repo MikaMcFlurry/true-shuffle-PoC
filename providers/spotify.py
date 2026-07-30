@@ -7,6 +7,12 @@ Spotify app, and true-shuffle decides what comes next.
 
 Requires Spotify Premium for anything under "playback"; reading playlists and
 Utility Mode work on free accounts.
+
+Separate from that, and easy to miss: Spotify requires the *owner of the
+developer app* to have Premium before an app in development mode works at all,
+and every other account has to be allowlisted in the dashboard (max 5). So a
+free-account listener can use Handoff — but only through an app whose owner
+pays. Verified against the official docs, July 2026.
 """
 
 from __future__ import annotations
@@ -80,6 +86,11 @@ class SpotifyProvider(MusicProvider):
             "Auf einem kostenlosen Konto nimm den Handoff-Modus: Das Fach wird "
             "als Playlist geschrieben, deine Position kommt aus deinem "
             "Hörverlauf zurück.",
+            "Achtung beim Einrichten: Spotify verlangt, dass der Besitzer der "
+            "Developer-App selbst Premium hat, sonst funktioniert die App im "
+            "Entwicklungsmodus gar nicht — auch Handoff nicht. Das ist Spotifys "
+            "Regel, nicht unsere. Andere Konten müssen zusätzlich im Dashboard "
+            "freigeschaltet werden (höchstens 5).",
         ],
     )
 

@@ -280,44 +280,126 @@ Diese Fälle sind schnell und decken erfahrungsgemäß die meisten Probleme auf.
 # TEIL B — Echte Streamingdienste
 
 Ab hier brauchst du Konten. **Reihenfolge nach Aufwand**: Spotify (10 min,
-kostenlos) → YouTube Music (20 min, kostenlos) → Apple Music (teuer).
+**setzt aber Premium voraus**) → YouTube Music (20 min, wirklich kostenlos)
+→ Apple Music (teuer).
 
 Für jeden Dienst gilt: nach dem Eintragen in `.env` **den Server neu starten**.
 Die Werte werden beim Start gelesen.
 
 ## B1. Spotify (empfohlen zuerst)
 
-**Voraussetzung:** Spotify-Konto. Für den **Live-Modus** brauchst du
-**Premium** — Handoff funktioniert auch mit einem kostenlosen Konto.
+**Aufwand:** etwa 10 Minuten. **Kosten:** keine — *wenn* die Voraussetzung
+unten erfüllt ist.
 
-1. https://developer.spotify.com/dashboard öffnen, einloggen, **Create app**.
-2. Beliebiger Name. Bei **Redirect URI** exakt eintragen:
-   ```
-   http://127.0.0.1:8000/auth/spotify/callback
-   ```
-   (Exakt. `localhost` statt `127.0.0.1` ist eine andere URI und schlägt fehl.)
-3. **Web API** als API auswählen, speichern.
-4. Die **Client ID** kopieren. Ein Client Secret wird **nicht** gebraucht — die
-   App nutzt PKCE.
-5. In `.env`:
-   ```ini
-   SPOTIFY_CLIENT_ID=deine_client_id
-   ```
-6. Server neu starten, **Dienste** → **Spotify verbinden**.
+### Voraussetzung, die Spotify seit Kurzem stellt
 
-**Vor dem Live-Test:** Spotify auf Handy, Rechner oder Box öffnen und dort kurz
-irgendetwas anspielen — sonst gibt es kein Gerät zu übernehmen. Danach die
-true-shuffle-Seite neu laden; das Gerät muss in der Liste *Abspielen auf*
-auftauchen.
+> „The app owner must have a Spotify Premium account for apps in development
+> mode to function."
+> „Up to 5 authenticated Spotify users can use an app that is in development
+> mode."
+> — Spotify, *Quota modes*, geprüft im Juli 2026
 
-| Test | Erwartet |
+Das heißt konkret:
+
+* **Du brauchst Spotify Premium**, um die Developer-App überhaupt zu betreiben —
+  auch dann, wenn du nur den Handoff-Modus testen willst. Das ist Spotifys
+  Regel, nicht unsere.
+* Jedes **weitere** Konto (Freunde, Beta-Tester) musst du im Dashboard einzeln
+  freischalten, höchstens 5 insgesamt. Ohne Freischaltung antwortet die API mit
+  **403**.
+* Ein Konto *ohne* Premium kann Handoff nutzen — aber nur über eine App, deren
+  Besitzer zahlt.
+
+**Ohne Premium hat es keinen Zweck, hier weiterzumachen.** Nimm dann Teil A oder
+B2 (YouTube Music, kostenlos).
+
+### Schritt 1 — App bei Spotify anlegen
+
+1. https://developer.spotify.com/dashboard öffnen und einloggen.
+2. **Create app**.
+3. Ausfüllen:
+   * **App name / description:** beliebig, z. B. `true-shuffle lokal`.
+   * **Redirect URI:** zeichengenau
+     ```
+     http://127.0.0.1:8000/auth/spotify/callback
+     ```
+     Danach auf **Add** klicken, sonst wird sie nicht gespeichert.
+   * **Which API/SDKs are you planning to use:** **Web API** ankreuzen.
+4. **Save**.
+
+> **`localhost` funktioniert nicht.** Spotify verbietet es ausdrücklich und
+> erlaubt HTTP nur für ausdrückliche Loopback-Adressen — also `127.0.0.1`.
+> Deshalb steht überall `127.0.0.1` und nicht `localhost`.
+
+### Schritt 2 — Client ID eintragen
+
+Im Dashboard **Settings** öffnen und die **Client ID** kopieren. Ein *Client
+Secret* wird **nicht** gebraucht: true-shuffle nutzt PKCE und speichert deshalb
+gar kein Geheimnis.
+
+In `.env`:
+
+```ini
+BASE_URL=http://127.0.0.1:8000
+SPOTIFY_CLIENT_ID=deine_client_id
+```
+
+> `BASE_URL` und die Redirect URI müssen zusammenpassen. Läuft der Server auf
+> einem anderen Port, muss **beides** geändert werden — auch im Dashboard.
+
+### Schritt 3 — dich selbst freischalten (falls nötig)
+
+Dashboard → deine App → **Settings** → **User Management** → **Add new user**,
+mit deinem Namen und der **E-Mail-Adresse deines Spotify-Kontos**.
+
+Als Besitzer bist du meist schon zugelassen. Falls beim ersten Verbinden ein
+**403** kommt, ist das hier die Ursache.
+
+### Schritt 4 — starten und verbinden
+
+```bash
+uvicorn app.main:app --reload
+```
+
+**Dienste** → **Spotify verbinden** → Spotifys Zustimmungsseite → *Agree*.
+
+| | |
 |---|---|
-| Playlist-Liste | Deine echten Playlists |
-| Live-Modus starten | Die Musik startet **in deiner Spotify-App** |
-| Tab schließen, 2 Titel abwarten, `/runs` öffnen | Der Lauf ist weitergerückt |
-| In der **Spotify-App** auf *Weiter* drücken | true-shuffle zählt das als eine Karte (im Laufzettel sichtbar) — es entsteht keine zweite Reihenfolge |
-| In Spotify etwas völlig anderes spielen | Laufzettel meldet *Spotify spielt etwas anderes* statt dagegen anzukämpfen |
-| Handoff-Modus | Eine neue Playlist `true-shuffle · <Name>` erscheint in deinem Spotify |
+| ✅ **Erwartet** | Zurück in true-shuffle, Spotify auf **Verbunden**, im Laufzettel dein Kontoname, Markt (z. B. `DE`) und Tarif (`premium`). |
+
+### Schritt 5 — Vor dem Live-Test: ein Gerät bereitstellen
+
+**Öffne Spotify** auf Handy, Rechner oder Box und **spiel dort kurz irgendetwas
+an**. Spotify meldet ein Gerät erst, wenn es aktiv ist. Danach die
+true-shuffle-Seite neu laden — das Gerät muss unter *Abspielen auf* stehen.
+
+### Schritt 6 — Die eigentlichen Tests
+
+| Test | Vorgehen | Erwartet |
+|---|---|---|
+| **Playlists lesen** | Sammlung öffnen | Deine echten Playlists mit echten Titelzahlen |
+| **Großes Fach** | Deine größte Playlist wählen | Fortschritt beim Lesen; Ausschuss-Kasten listet lokale Dateien und nicht verfügbare Titel einzeln auf |
+| **Live-Modus** | Live wählen → Fach anlegen → **Lauf starten** | Die Musik startet **in deiner Spotify-App**, nicht im Browser |
+| **Server rückt weiter** | Browser-Tab **schließen**, zwei Titel abwarten, `127.0.0.1:8000/runs` öffnen | Der Lauf ist weitergerückt — das ist der Kern von Live auf Spotify |
+| **Skip in Spotify selbst** | In der **Spotify-App** auf *Weiter* drücken | true-shuffle zählt das als **eine Karte**; es entsteht keine zweite Reihenfolge |
+| **Abweichung** | In Spotify etwas ganz anderes spielen | Laufzettel meldet *„Spotify spielt etwas anderes"* statt dagegen anzukämpfen |
+| **Handoff** | Handoff wählen → Fach anlegen | In deinem Spotify erscheint eine Playlist `true-shuffle · <Name>` |
+| **Position ohne offenen Tab** | Diese Playlist in Spotify abspielen, true-shuffle komplett schließen, nach ein paar Titeln `/runs` öffnen | Der Zähler ist gewandert — gelesen aus deinem Hörverlauf |
+| **Keine Wiederholung** | Einen Lauf möglichst weit durchhören | Kein Titel kommt zweimal, bis das Fach leer ist |
+
+### Wenn etwas schiefgeht
+
+| Meldung | Ursache |
+|---|---|
+| `INVALID_CLIENT: Invalid redirect URI` | Die URI im Dashboard stimmt nicht zeichengenau mit `BASE_URL` + `/auth/spotify/callback` überein. Häufig: `localhost` statt `127.0.0.1`, fehlendes `http://`, anderer Port, oder **Add** nicht geklickt. |
+| **403** direkt nach dem Verbinden | Konto nicht freigeschaltet (Schritt 3) — oder der App-Besitzer hat kein Premium. |
+| **403** erst beim Abspielen | Live-Modus braucht Premium auf dem **hörenden** Konto. Handoff geht auch ohne. |
+| *Kein Spotify-Gerät aktiv* | Schritt 5: in der Spotify-App erst etwas anspielen, dann hier neu laden. |
+| **429** | Spotify drosselt. Die App wartet und versucht es erneut; einfach laufen lassen. |
+
+> Wenn du damit durch bist: **trag das Ergebnis in `STATUS.md` ein.** Spotify
+> steht dort bis dahin als *BERICHTET*, nicht als *VERIFIZIERT* — dein Test ist
+> genau das, was daraus einen belegten Zustand macht.
 
 ## B2. YouTube Music
 
@@ -411,6 +493,6 @@ was nicht — mit Datum. Alles andere bleibt **BERICHTET**, nicht **VERIFIZIERT*
 | `.env`-Änderung wirkt nicht | Server nicht neu gestartet. `uvicorn --reload` lädt Code neu, aber nicht die Einstellungen. |
 | Nach Ändern von `SECRET_KEY` sind alle Dienste getrennt | Richtig so: der Schlüssel entschlüsselt die gespeicherten Tokens. Einfach neu verbinden. |
 | Spotify: „Kein Gerät gefunden“ | In der Spotify-App erst irgendetwas anspielen, dann hier neu laden. |
-| Spotify meldet 403 beim Abspielen | Live-Modus braucht Premium. Handoff geht auch ohne. |
+| Spotify meldet 403 | Beim **Verbinden**: Konto nicht freigeschaltet, oder der App-Besitzer hat kein Premium. Beim **Abspielen**: Live-Modus braucht Premium auf dem hörenden Konto. Siehe B1. |
 | OAuth bricht mit *redirect_uri mismatch* ab | Die URI beim Dienst muss zeichengenau zu `BASE_URL` + `/auth/<dienst>/callback` passen. |
 | Sauber neu anfangen | Server stoppen, `data/true_shuffle.db` löschen, starten. Alle Läufe und Verbindungen sind weg. |

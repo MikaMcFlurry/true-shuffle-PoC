@@ -23,6 +23,13 @@ Audio always comes from the streaming service itself. true-shuffle decides
 | Exact resume | ✅ | ✅ | ✅ |
 | Paid tier required for Live Mode | Premium | subscription | no |
 
+> **Setting Spotify up is a separate gate from using it.** Spotify requires the
+> *owner of the developer app* to have Premium for an app in development mode to
+> function at all, and every other account must be allowlisted in the dashboard
+> (max 5 users). A free-account listener can use Handoff Mode, but only through
+> an app whose owner pays. Checked against Spotify's own docs in July 2026;
+> re-check before relying on it.
+
 ### Does anything have to stay open?
 
 No — on Spotify and Apple Music, and that is a design goal rather than a
