@@ -120,6 +120,66 @@ export function formatWhen(value) {
   return at.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
+/** "2026-07-30 14:22:11" (UTC, from SQLite) → a German day heading. */
+export function formatDay(value) {
+  if (!value) return "";
+  const at = new Date(`${value.replace(" ", "T")}Z`);
+  if (Number.isNaN(at.getTime())) return value;
+  return at.toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+}
+
+/** Local clock time only — pair with formatDay(), which already carries the date. */
+export function formatClock(value) {
+  if (!value) return "";
+  const at = new Date(`${value.replace(" ", "T")}Z`);
+  if (Number.isNaN(at.getTime())) return value;
+  return at.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+}
+
+/* -- icons -------------------------------------------------------------
+   A handful of chip/banner glyphs get built from JS (dashboard cards,
+   player state). document.createElement("svg") never yields a real
+   SVGElement — its children silently fail to render — so this goes through
+   createElementNS instead. `inner` is always a hard-coded, trusted string. */
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+export function svgIcon(viewBox, inner, attrs = {}) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", viewBox);
+  svg.setAttribute("aria-hidden", "true");
+  for (const [key, value] of Object.entries(attrs)) svg.setAttribute(key, value);
+  svg.innerHTML = inner;
+  return svg;
+}
+
+/**
+ * The three system-state glyphs Phase 1 can reach (A/B/D — C has no producer
+ * yet, ADR-001). Colour + chip shape already carry the meaning on their own;
+ * the icon is the ADR's "additionally", never the only signal.
+ */
+export const STATE_ICON = {
+  a: {
+    viewBox: "0 0 16 16", attrs: { fill: "currentColor" },
+    inner: '<rect x="1.5" y="6" width="2.6" height="5" rx="1.3"/><rect x="6.7" y="2.5" width="2.6" height="11" rx="1.3"/><rect x="11.9" y="4.5" width="2.6" height="8" rx="1.3"/>',
+  },
+  b: {
+    viewBox: "0 0 16 16",
+    attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" },
+    inner: '<path d="M5.5 7.5V3.2a1.2 1.2 0 0 1 2.4 0v3.6m0-1.6a1.2 1.2 0 0 1 2.4 0v1.9m0-.9a1.2 1.2 0 0 1 2.4.4v2.9c0 2.6-1.9 4.3-4.5 4.3S4 12.6 3.4 10.6L2.3 7.4a1.1 1.1 0 0 1 2-.8l1.2 1.9"/>',
+  },
+  d: {
+    viewBox: "0 0 16 16",
+    attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" },
+    inner: '<rect x="4.5" y="1.8" width="7" height="12.4" rx="1.6"/><circle cx="8" cy="10.6" r="1.7"/><path d="M2 2l12 12"/>',
+  },
+};
+
+/** Contract vocabulary — shared by the dashboard cards and the player header. */
+export const CONTRACT_TEXT = {
+  active: "aktiv", paused: "pausiert", completed: "abgeschlossen", cancelled: "beendet",
+};
+
 /**
  * Show a message in a `.note` box, or hide it when the text is empty.
  * The stencilled label carries the severity, so the box needs no edge stripe.

@@ -1,21 +1,22 @@
 /*
- * Run player.
+ * Run player — Control-Center.
  *
  * Two very different worlds meet here, behind one interface:
  *
  *  - REMOTE_DEVICE (Spotify): the *server* drives an app the listener already
- *    has open, and a background watcher advances the deck. This page only
+ *    has open, and a background watcher advances the run. This page only
  *    reflects that state, so it polls.
  *
  *  - WEB_PLAYER (Apple Music, YouTube Music): *this tab* owns the audio, so it
  *    is the only thing that can know a track ended. It reports every end and
- *    every skip to the server, which owns the deck and the cursor.
+ *    every skip to the server, which owns the run and the cursor.
  *
  * The server is the single source of truth for the cursor in both cases; the
- * page never decides what plays next on its own.
+ * page never decides what plays next on its own. It also never claims a
+ * system state it has not confirmed — see _deriveSystemState().
  */
 
-import { $, api, el, followJob, formatDuration, formatCount, setNote } from "./app.js";
+import { $, api, el, formatDuration, formatCount, setNote, svgIcon, STATE_ICON, CONTRACT_TEXT } from "./app.js";
 
 /* ========================================================================== */
 /* Web players                                                                */
@@ -133,6 +134,40 @@ function loadYouTubeApi() {
 }
 
 /* ========================================================================== */
+/* Icons the player builds itself (chip/banner/transport glyphs change with   */
+/* state; everything static lives as markup in player.html).                 */
+/* ========================================================================== */
+
+const ICON_PLAY = { viewBox: "0 0 24 24", attrs: { fill: "currentColor" }, inner: '<path d="M8 5.5v13l11-6.5z"/>' };
+const ICON_PAUSE = {
+  viewBox: "0 0 24 24", attrs: { fill: "currentColor" },
+  inner: '<rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/>',
+};
+const ICON_NO_COVER = { viewBox: "0 0 24 24", attrs: { fill: "currentColor" }, inner: '<path d="M9 3v10.6A3.5 3.5 0 1 0 11 17V7h6.5a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H9z"/>' };
+const ICON_ATTRIBUTION = {
+  viewBox: "0 0 16 16", attrs: { fill: "currentColor" },
+  inner: '<path d="M9.5 1.8v8a2.8 2.8 0 1 0 1.4 2.4V5.4l3-.8V2l-4.4 1.2z" opacity=".9"/><path d="M2 4.5h5v1.4H2zM2 7.3h5v1.4H2zM2 10.1h3.4v1.4H2z"/>',
+};
+const ICON_DONE = {
+  viewBox: "0 0 24 24",
+  attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" },
+  inner: '<path d="M4 12.5 9.5 18 20 6"/>',
+};
+const ICON_STOPPED = {
+  viewBox: "0 0 24 24",
+  attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" },
+  inner: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
+};
+
+const REASON_TEXT = {
+  local_file: "lokale Datei",
+  not_playable: "hier nicht verfügbar",
+  wrong_kind: "kein Musiktitel",
+  duplicate: "schon im Hörvorgang",
+  missing_id: "keine Titel-ID",
+};
+
+/* ========================================================================== */
 /* Run controller                                                             */
 /* ========================================================================== */
 
@@ -145,25 +180,21 @@ export class RunPlayer {
     this.poller = null;
     this.playing = false;
     this.lastPlayedId = null;
+    //: Set once a device fetch has actually run — null means "not checked
+    //: yet", never treated as "no device" (that would fake system state D).
+    this.noDevices = null;
+    this.position = { ms: 0, at: 0, known: false };
+    this._posTimer = null;
   }
 
   get isRemote() { return this.provider.playback === "remote_device"; }
 
-  /** Re-measure the crate when the viewport changes; px offsets go stale. */
-  watchResize() {
-    if (this._resize) return;
-    const row = $("#rack");
-    if (!row || typeof ResizeObserver === "undefined") return;
-    this._resize = new ResizeObserver(() => this.renderRack());
-    this._resize.observe(row);
-  }
-
   async boot() {
     this.state = await api(`/api/runs/${this.runId}`);
-    // `active` in the database means "this is the live deck", NOT "audio is
-    // playing" — a deck is active from the moment it is dealt. Reading it as
-    // playing made a freshly dealt run claim LÄUFT with Pause enabled before
-    // anyone had pressed anything.
+    // `active` in the database means "this is the live run", NOT "audio is
+    // playing" — a run is active from the moment it is dealt. Reading it as
+    // playing made a freshly dealt run claim it was running with Pause
+    // enabled before anyone had pressed anything.
     //
     // Remote: the server only runs a watcher while it is actually driving
     // playback, so that flag is the honest answer.
@@ -172,11 +203,12 @@ export class RunPlayer {
       && this.state.status === "active"
       && Boolean(this.state.watcher?.watching);
     this.render();
-    this.watchResize();
     this.loadSkipped();
     if (this.isRemote && this.playing) this.startPolling();
 
-    if (!this.isRemote) {
+    if (this.isRemote) {
+      await this.loadDevices();
+    } else if (this.provider.playback === "web_player") {
       const { config } = await api(`/api/player-config?provider=${this.provider.id}`);
       this.web = this.provider.id === "apple"
         ? new AppleWebPlayer(config)
@@ -186,44 +218,45 @@ export class RunPlayer {
         .on("ended", () => this.report("track_ended"))
         .on("error", (err) => {
           this.notify(err.message, "note-stop", "Wiedergabe");
-          // A track that will not play must not stall the deck.
+          // A track that will not play must not stall the run.
           this.report("playback_failed");
         })
-        .on("progress", () => {});
+        .on("progress", (payload) => this.trackPosition(payload.position_ms));
 
       await this.web.init();
     } else {
-      await this.loadDevices();
+      this.notify(
+        `${this.provider.display_name} unterstützt keine Wiedergabesteuerung durch true-shuffle — die Playlist läuft eigenständig in der App.`,
+        "", "Hinweis"
+      );
     }
   }
 
   /**
    * A page that cannot load its run says so, and stops offering transport.
    *
-   * The readings are blanked rather than left at their initial zeros: "0 Karten
-   * übrig" next to dead buttons is a worse lie than an em dash.
+   * The readings are blanked rather than left at their initial state: a
+   * frozen "Wird geladen…" next to dead buttons is a worse lie than an em
+   * dash.
    */
   failed(message) {
     this.playing = false;
     this.stopPolling();
-    $("#nowTitle").textContent = "Lauf nicht geladen";
-    $("#nowArtist").textContent = message;
-    for (const id of ["#deckLeft", "#deckTotal", "#deckAt", "#scaleEnd"]) {
+    this.stopPositionTimer();
+    $("#trackTitle").textContent = "Hörvorgang nicht geladen";
+    $("#trackArtist").textContent = message;
+    $("#trackPosition").textContent = "–:– / –:–";
+    $("#coverWrap")?.replaceChildren();
+    $("#runProgressLine")?.replaceChildren(el("span", {}, "—"), el("span", {}, "—"));
+    const contract = $("#contractChip");
+    if (contract) { contract.textContent = "Fehler"; contract.className = "chip chip-error"; }
+    $("#stateChip")?.classList.add("hidden");
+    for (const id of ["#prevBtn", "#mainBtn", "#nextBtn"]) {
       const node = $(id);
-      if (node) node.textContent = "—";
+      if (node) node.setAttribute("aria-disabled", "true");
     }
-    for (const id of ["#deckRead", "#upnextRead", "#ticketPos"]) {
-      const node = $(id);
-      if (node) node.textContent = "nicht geladen";
-    }
-    const status = $("#runStatus");
-    if (status) { status.textContent = "Fehler"; status.className = "chip chip-stop"; }
-    $("#restartLink")?.classList.add("hidden");
-    $("#startBtn")?.classList.remove("hidden");
-    for (const id of ["#startBtn", "#prevBtn", "#nextBtn", "#pauseBtn"]) {
-      const node = $(id);
-      if (node) node.disabled = true;
-    }
+    const cancel = $("#cancelBtn");
+    if (cancel) cancel.disabled = true;
   }
 
   /* -- transport ---------------------------------------------------------- */
@@ -242,15 +275,16 @@ export class RunPlayer {
   async next()     { await this.move("advance", { reason: "user_skip" }); }
   async previous() { await this.move("previous", {}); }
 
-  /** Space bar: start the deck, or pause/resume once it is running. */
+  /** Space bar / main button: start the run, or pause/resume once running. */
   async toggle() {
-    if (this.state?.status === "completed") return;
+    if (this.state?.status === "completed" || this.state?.status === "cancelled") return;
     if (!this.playing) return this.start();
     return this.pause();
   }
 
   async move(endpoint, body) {
     this.state = await api(`/api/runs/${this.runId}/${endpoint}`, { method: "POST", body });
+    this.resetPosition();
     await this.syncWebPlayback();
     this.render();
   }
@@ -261,6 +295,7 @@ export class RunPlayer {
       this.state = await api(`/api/runs/${this.runId}/event`, {
         method: "POST", body: { type },
       });
+      this.resetPosition();
       await this.syncWebPlayback();
       this.render();
     } catch (err) {
@@ -273,11 +308,16 @@ export class RunPlayer {
     await this.web?.pause();
     this.playing = false;
     this.stopPolling();
+    this.stopPositionTimer();
     this.state = await api(`/api/runs/${this.runId}`);
     this.render();
   }
 
-  /** Push the server's current card into the in-tab player, if it changed. */
+  async cancel() {
+    await api(`/api/runs/${this.runId}/cancel`, { method: "POST" });
+  }
+
+  /** Push the server's current track into the in-tab player, if it changed. */
   async syncWebPlayback() {
     if (this.isRemote || !this.web || !this.playing) return;
     const trackId = this.state?.current?.id;
@@ -298,10 +338,11 @@ export class RunPlayer {
     this.poller = setInterval(async () => {
       try {
         const next = await api(`/api/runs/${this.runId}`);
-        if (next.cursor !== this.state?.cursor || next.status !== this.state?.status) {
-          this.state = next;
-          this.render();
-        }
+        const changed = next.cursor !== this.state?.cursor || next.status !== this.state?.status
+          || next.watcher?.watching !== this.state?.watcher?.watching
+          || next.watcher?.drifted !== this.state?.watcher?.drifted;
+        this.state = next;
+        if (changed) this.render();
         if (next.status !== "active") this.stopPolling();
       } catch { /* transient; the next tick retries */ }
     }, 4000);
@@ -311,221 +352,317 @@ export class RunPlayer {
 
   async loadDevices() {
     const select = $("#deviceSelect");
-    if (!select) return;
     try {
       const { devices } = await api(`/api/devices?provider=${this.provider.id}`);
-      select.replaceChildren(
-        ...(devices.length
-          ? devices.map((d) => el("option", { value: d.id, selected: d.is_active || null },
-              `${d.name} · ${d.kind}`))
-          : [el("option", { value: "" }, "Kein Gerät gefunden")])
-      );
-      $("#startBtn").disabled = devices.length === 0;
-      if (!devices.length) {
-        this.notify(
-          `Kein ${this.provider.display_name}-Gerät aktiv. Öffne ${this.provider.display_name} auf Handy, Rechner oder Box, spiel dort kurz irgendetwas an und lade diese Seite neu.`,
-          "", "Kein Gerät"
+      this.noDevices = devices.length === 0;
+      if (select) {
+        select.replaceChildren(
+          ...(devices.length
+            ? devices.map((d) => el("option", { value: d.id, selected: d.is_active || null },
+                `${d.name} · ${d.kind}`))
+            : [el("option", { value: "" }, "Kein Gerät gefunden")])
         );
       }
     } catch (err) {
       this.notify(err.message, "note-stop", "Fehler");
     }
+    this.render();
   }
 
   /* -- rendering ----------------------------------------------------------- */
 
+  async guard(fn) {
+    try {
+      this.notify("");
+      await fn();
+    } catch (err) {
+      this.notify(err.message, "note-stop", "Fehler");
+    }
+  }
+
   notify(text, variant, label) { setNote($("#playerNote"), text, variant, label); }
 
-  /** Entries that never entered the deck, with the reason each was left out. */
+  /** Entries that never entered the run, with the reason each was left out. */
   async loadSkipped() {
-    const bay = $("#skippedBay");
-    if (!bay) return;
+    const card = $("#skippedCard");
+    if (!card) return;
     try {
       const { skipped } = await api(`/api/runs/${this.runId}/skipped`);
       if (!skipped.length) return;          // stays hidden — nothing was dropped
-      bay.classList.remove("hidden");
+      card.classList.remove("hidden");
       $("#skippedRead").textContent =
-        `${formatCount(skipped.length)} ${skipped.length === 1 ? "EINTRAG" : "EINTRÄGE"}`;
+        `${formatCount(skipped.length)} ${skipped.length === 1 ? "Eintrag" : "Einträge"}`;
       $("#skippedList").replaceChildren(
         ...skipped.map((s) =>
           el("div", {},
             el("span", { class: "k" }, REASON_TEXT[s.reason] || s.reason),
-            el("span", { class: "v dim" },
+            el("span", { class: "v dim wrap-anywhere" },
               [s.name, s.artist].filter(Boolean).join(" — ") || s.track_id)))
       );
     } catch {
-      bay.classList.add("hidden");
+      card.classList.add("hidden");
     }
   }
 
+  /* -- position tracking ----------------------------------------------------
+     Remote (Spotify) never hands the client a position, so the elapsed side
+     stays an honest "–:–" for that mode. Web players report real progress
+     events; between events the clock is interpolated so it does not stall. */
+
+  trackPosition(ms) {
+    this.position = { ms, at: Date.now(), known: true };
+    this.renderPosition();
+    if (this.playing && !this._posTimer) {
+      this._posTimer = setInterval(() => this.renderPosition(), 500);
+    }
+  }
+
+  resetPosition() {
+    this.position = { ms: 0, at: 0, known: false };
+    this.stopPositionTimer();
+  }
+
+  stopPositionTimer() {
+    clearInterval(this._posTimer);
+    this._posTimer = null;
+  }
+
+  renderPosition() {
+    const node = $("#trackPosition");
+    if (!node) return;
+    const totalMs = this.state?.current?.duration_ms || 0;
+    const totalLabel = totalMs ? formatDuration(totalMs) : "–:–";
+    if (!this.position.known || !this.playing) {
+      node.textContent = `–:– / ${totalLabel}`;
+      return;
+    }
+    const elapsedMs = Math.max(0, Math.min(totalMs || Infinity, this.position.ms + (Date.now() - this.position.at)));
+    node.textContent = `${formatDuration(elapsedMs) || "0:00"} / ${totalLabel}`;
+  }
+
   /**
-   * The crate: one bar per card, and a divider card that travels to the cursor.
-   *
-   * Bars are rebuilt only when the deck's size changes; an advance moves one
-   * absolutely positioned element, because "moving that divider forward IS the
-   * advance" and a teleporting divider does not say that.
-   *
-   * The divider is placed from a *measured bar offset*, not from a percentage.
-   * A percentage resolves against the row's own box, so with 83 bars it drifted
-   * several spines away from the bar it claimed to mark. Reading offsetLeft off
-   * the bar itself cannot drift, whatever the gap or the padding is.
-   *
-   * The bar count is measured from the row rather than fixed, so a 1,500-track
-   * deck does not overflow a phone and clip the cursor away. It is measured
-   * from the row's own content width — the row carries no padding, so nothing
-   * inflates the count into an overflow.
+   * A/B/D, derived only from data this page has actually confirmed
+   * (UX_IMPL_SPEC.md, "Player-Systemzustands-Ableitung"). C has no producer
+   * in this phase and is intentionally never returned here.
    */
-  renderRack() {
-    const row = $("#rack");
-    if (!row || !this.state) return;
-    const { cursor, total } = this.state;
-    if (!total) return row.replaceChildren();
+  _deriveSystemState() {
+    const s = this.state;
+    if (!s || s.status !== "active") return null;
+    if (this.isRemote && this.noDevices === true) return "d";
+    const w = s.watcher || {};
+    if (w.drifted) return "b";
+    if (w.watching) return "a";
+    return "ready";
+  }
 
-    const width = row.clientWidth || 320;
-    // No floor: a one-card deck must draw one spine, not eight.
-    const bars = Math.max(1, Math.min(total, Math.floor(width / 5)));
-
-    if (this._rackBars !== bars || this._rackTotal !== total) {
-      this._rackBars = bars;
-      this._rackTotal = total;
-      this._divider = el("span", { class: "crate-divider" });
-      row.replaceChildren(
-        ...Array.from({ length: bars }, () => el("i")),
-        this._divider
-      );
-      this._bars = Array.from(row.querySelectorAll("i"));
+  renderCover() {
+    const wrap = $("#coverWrap");
+    if (!wrap) return;
+    const url = this.state?.current?.artwork_url;
+    if (url) {
+      wrap.replaceChildren(el("div", { class: "player-cover" }, el("img", { src: url, alt: "" })));
+    } else {
+      wrap.replaceChildren(
+        el("div", { class: "player-cover player-cover-fallback", role: "img", "aria-label": "Kein Cover verfügbar" },
+          svgIcon(ICON_NO_COVER.viewBox, ICON_NO_COVER.inner, ICON_NO_COVER.attrs),
+          el("span", {}, "Ohne Cover")));
     }
+  }
 
-    const played = Math.round((cursor / total) * bars);
-    this._bars.forEach((bar, i) => {
-      if (i < played) bar.setAttribute("data-played", "");
-      else bar.removeAttribute("data-played");
-    });
+  renderBanner(systemState) {
+    const banner = $("#stateBanner");
+    if (!banner) return;
+    const s = this.state;
 
-    if (this._divider) {
-      const at = Math.min(played, bars - 1);
-      const bar = this._bars[at];
-      // Past the last bar the divider stands at the crate's back wall.
-      const x = played >= bars ? row.clientWidth : (bar ? bar.offsetLeft : 0);
-      this._divider.style.transform = `translateX(${x}px)`;
+    if (systemState === "b") {
+      banner.className = "banner banner-b";
+      banner.setAttribute("role", "status");
+      banner.replaceChildren(
+        svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs),
+        el("div", {},
+          el("p", { class: "banner-title" }, "Spotify wurde manuell übernommen"),
+          el("p", { class: "banner-body" },
+            `Du hast in ${this.provider.display_name} selbst etwas gestartet. Dein Hörvorgang ist angehalten und merkt sich deinen Stand: `,
+            el("b", {}, `${formatCount(s.cursor)} von ${formatCount(s.total)} Titeln`), ". Nichts geht verloren."),
+          el("div", { class: "banner-actions" },
+            el("button", { class: "btn btn-primary", type: "button", onClick: () => this.guard(() => this.start()) }, "Hörvorgang fortsetzen"),
+            el("button", { class: "btn btn-secondary", type: "button", onClick: () => this.guard(() => this.pause()) }, "Pausiert lassen")),
+          el("p", { class: "banner-policy" }, `Sobald du „Hörvorgang fortsetzen" wählst, übernimmt True Shuffle die Wiedergabe wieder.`)));
+    } else if (systemState === "d") {
+      banner.className = "banner banner-d";
+      banner.setAttribute("role", "status");
+      banner.replaceChildren(
+        svgIcon(STATE_ICON.d.viewBox, STATE_ICON.d.inner, STATE_ICON.d.attrs),
+        el("div", {},
+          el("p", { class: "banner-title" }, "Kein aktives Gerät"),
+          el("p", { class: "banner-body" }, `Öffne ${this.provider.display_name} auf einem deiner Geräte, spiel dort kurz irgendetwas an — danach geht es hier sofort weiter.`),
+          el("div", { class: "banner-actions" },
+            el("button", { class: "btn btn-secondary", type: "button", onClick: () => this.guard(() => this.loadDevices()) }, "Geräteliste aktualisieren"))));
+    } else {
+      banner.classList.add("hidden");
+      banner.replaceChildren();
+      return;
     }
+    banner.classList.remove("hidden");
+  }
+
+  renderCompletion(terminal) {
+    const panel = $("#completionPanel");
+    const upnextWrap = $("#upnextWrap");
+    if (!panel || !upnextWrap) return;
+    const s = this.state;
+
+    if (!terminal) {
+      panel.classList.add("hidden");
+      panel.replaceChildren();
+      upnextWrap.classList.remove("hidden");
+      return;
+    }
+    upnextWrap.classList.add("hidden");
+    panel.classList.remove("hidden");
+
+    const done = s.status === "completed";
+    const title = done ? "Hörvorgang abgeschlossen" : "Hörvorgang beendet";
+    const body = done
+      ? (s.mode === "controller"
+          ? `Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
+          : "Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.")
+      : "Dieser Hörvorgang wurde verworfen. Ein neuer Start mischt neu.";
+
+    panel.replaceChildren(
+      el("div", { class: "empty-state" },
+        el("span", { class: "empty-glyph" }, svgIcon((done ? ICON_DONE : ICON_STOPPED).viewBox, (done ? ICON_DONE : ICON_STOPPED).inner, (done ? ICON_DONE : ICON_STOPPED).attrs)),
+        el("h3", {}, title),
+        el("p", {}, body),
+        el("div", { class: "empty-actions" },
+          el("a", { class: "btn btn-primary", href: "/library" }, "Neuer Hörvorgang"),
+          el("a", { class: "btn btn-secondary", href: `/runs/${this.runId}/verlauf` }, "Verlauf ansehen"))));
   }
 
   render() {
     const s = this.state;
     if (!s) return;
 
-    // Cancelled is just as terminal as completed: a cancelled deck was
+    // Cancelled is just as terminal as completed: a cancelled run was
     // discarded, so its transport must not offer to move a cursor that no
-    // longer means anything. Only `done` claims the deck was played through.
+    // longer means anything. Only `completed` claims the run was played through.
     const done = s.status === "completed";
-    const terminal = done || s.status === "cancelled";
+    const cancelled = s.status === "cancelled";
+    const terminal = done || cancelled;
     const current = s.current;
+    const systemState = this._deriveSystemState();
 
-    $("#nowTitle").textContent = s.status === "cancelled"
-      ? "Lauf beendet"
-      : done ? "Fach durchgehört" : (current?.name || `Karte ${s.cursor + 1}`);
-    $("#nowArtist").textContent = s.status === "cancelled"
-      ? "Das Fach wurde verworfen. Der nächste Start mischt neu."
-      : done ? `Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
-             : (current?.artist || "");
+    // -- contract chip (always) --------------------------------------------
+    const contract = $("#contractChip");
+    contract.textContent = CONTRACT_TEXT[s.status] || s.status;
+    contract.className = "chip chip-neutral";
 
-    const at = Math.min(s.cursor + (done ? 0 : 1), s.total);
-    $("#deckAt").textContent = `Karte ${formatCount(at)}`;
-    $("#deckTotal").textContent = formatCount(s.total);
-    $("#deckLeft").textContent = formatCount(s.remaining);
-    $("#deckUnit").textContent = s.remaining === 1 ? "Karte übrig" : "Karten übrig";
-    $("#scaleEnd").textContent = formatCount(s.total);
-    $("#deckRead").textContent = `${formatCount(s.cursor)} GESPIELT · ${formatCount(s.remaining)} OFFEN`;
-    $("#ticketPos").textContent = `${formatCount(at)} / ${formatCount(s.total)}`;
-    this.renderRack();
-
-    // An active deck that nothing is playing is "Bereit", not "Läuft". The
-    // accent tab is spent only on a deck that is genuinely running.
-    const statusChip = $("#runStatus");
-    const doneRow = $("#doneRow");
-    if (doneRow) {
-      doneRow.classList.toggle("hidden", !terminal);
-      const value = $("#doneValue");
-      if (value) {
-        value.textContent = done ? "durchgehört" : "beendet";
-        value.className = `v ${done ? "ok" : "faint"}`;
+    // -- system-state chip (active only — "Bereit ≠ Läuft") -----------------
+    const stateChip = $("#stateChip");
+    if (s.status !== "active") {
+      stateChip.classList.add("hidden");
+    } else {
+      stateChip.classList.remove("hidden");
+      if (systemState === "a") {
+        stateChip.className = "chip chip-a";
+        stateChip.replaceChildren(svgIcon(STATE_ICON.a.viewBox, STATE_ICON.a.inner, STATE_ICON.a.attrs), "True Shuffle steuert");
+      } else if (systemState === "b") {
+        stateChip.className = "chip chip-b";
+        stateChip.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), "Spotify manuell übernommen");
+      } else if (systemState === "d") {
+        stateChip.className = "chip chip-d";
+        stateChip.replaceChildren(svgIcon(STATE_ICON.d.viewBox, STATE_ICON.d.inner, STATE_ICON.d.attrs), "Kein aktives Gerät");
+      } else {
+        stateChip.className = "chip chip-neutral";
+        stateChip.replaceChildren("Bereit");
       }
     }
 
-    const idle = s.status === "active" && !this.playing;
-    statusChip.textContent = idle ? "Bereit" : (STATUS_TEXT[s.status] || s.status);
-    statusChip.className = `chip ${idle ? "chip-off" : STATUS_CLASS[s.status] || ""}`;
+    const zoneRun = $("#zoneRun");
+    zoneRun?.classList.toggle("is-b", systemState === "b");
+    zoneRun?.classList.toggle("is-d", systemState === "d");
 
-    // Whether the server is following playback belongs on the Laufzettel, not
-    // in a second badge next to the run's state: the accent marks one thing.
-    const watchRow = $("#watchRow");
-    const watchChip = $("#watchStatus");
-    if (watchRow && watchChip) {
-      const w = s.watcher || {};
-      watchRow.classList.toggle("hidden", !this.isRemote);
-      watchChip.textContent = w.drifted
-        ? `${this.provider.display_name} spielt etwas anderes`
-        : w.watching ? "Rückt selbst weiter" : "Folgt nicht";
-      watchChip.className = `v ${w.drifted ? "stop" : w.watching ? "ok" : "faint"}`;
+    this.renderBanner(systemState);
+    this.renderCover();
+
+    // -- now playing ----------------------------------------------------------
+    $("#trackTitle").textContent = cancelled ? "Hörvorgang beendet"
+      : done ? "Hörvorgang abgeschlossen"
+      : (current?.name || `Titel ${formatCount(s.cursor + 1)}`);
+    $("#trackArtist").textContent = cancelled ? "Dieser Hörvorgang wurde verworfen."
+      : done ? "Kein Titel spielt mehr."
+      : (current?.artist || "");
+    this.renderPosition();
+
+    const attributionWrap = $("#attributionWrap");
+    if (!terminal && this.playing && current?.id) {
+      const spotifyHref = this.provider.id === "spotify" ? `https://open.spotify.com/track/${current.id}` : null;
+      const tag = spotifyHref ? "a" : "p";
+      const attrs = { class: "attribution" };
+      if (spotifyHref) Object.assign(attrs, { href: spotifyHref, target: "_blank", rel: "noopener" });
+      attributionWrap.replaceChildren(
+        el(tag, attrs, svgIcon(ICON_ATTRIBUTION.viewBox, ICON_ATTRIBUTION.inner, ICON_ATTRIBUTION.attrs),
+          `Wiedergabe über ${this.provider.display_name}`));
+    } else {
+      attributionWrap.replaceChildren();
     }
 
-    const upcoming = s.upcoming || [];
-    $("#upnextRead").textContent = upcoming.length
-      ? `${formatCount(upcoming.length)} VON ${formatCount(s.remaining)}`
-      : "—";
-    $("#upnext").replaceChildren(
-      ...(upcoming.length
-        ? upcoming.map((t) =>
-            el("li", {},
-              el("span", { class: "pos" }, formatCount(t.index + 1)),
-              el("span", {},
-                el("span", { class: "name" }, t.name || t.id),
-                el("span", { class: "who" },
-                  [t.artist, formatDuration(t.duration_ms)].filter(Boolean).join(" · ")))))
-        : [el("li", {},
-            el("span", { class: "pos" }, "—"),
-            el("span", { class: "name faint" },
-              done ? "Nichts mehr im Fach" : "Wird geladen…"))])
-    );
+    // -- transport --------------------------------------------------------
+    const blockedByDrift = systemState === "b";
+    const blockedByNoDevice = systemState === "d";
+    const disabled = terminal || blockedByDrift || blockedByNoDevice;
+    let reason = "";
+    if (done) reason = "Dieser Hörvorgang ist abgeschlossen — nichts mehr zu spielen.";
+    else if (cancelled) reason = "Dieser Hörvorgang wurde beendet.";
+    else if (blockedByDrift) reason = `Die Steuerung liegt gerade bei ${this.provider.display_name} — setze den Hörvorgang fort, um sie zurückzuholen.`;
+    else if (blockedByNoDevice) reason = `Kein ${this.provider.display_name}-Gerät aktiv. Aktualisiere die Geräteliste oben.`;
 
-    // A finished deck has nothing left to advance to. Offering "Lauf
-    // fortsetzen" on it was not just wrong copy: the click reached the engine,
-    // which refuses, and the listener got a bare 500. The payoff of a finished
-    // 1,482-card deck is also worth acknowledging, so the primary action
-    // becomes the only thing that makes sense next — deal a new one.
-    const start = $("#startBtn");
-    const again = $("#restartLink");
-    start.classList.toggle("hidden", terminal);
-    again.classList.toggle("hidden", !terminal);
-    start.textContent = this.playing
-      ? "Karte neu starten"
-      : (s.cursor > 0 ? "Lauf fortsetzen" : "Lauf starten");
-    start.disabled = terminal;
-    $("#nextBtn").disabled = terminal;
-    $("#prevBtn").disabled = terminal || s.cursor === 0;
-    $("#pauseBtn").disabled = terminal || !this.playing;
+    const mainBtn = $("#mainBtn");
+    mainBtn.replaceChildren(svgIcon((this.playing ? ICON_PAUSE : ICON_PLAY).viewBox, (this.playing ? ICON_PAUSE : ICON_PLAY).inner, (this.playing ? ICON_PAUSE : ICON_PLAY).attrs));
+    mainBtn.setAttribute("aria-disabled", String(disabled));
+    mainBtn.setAttribute("aria-label", disabled
+      ? `${this.playing ? "Pause" : "Start"} – ${reason}`
+      : (this.playing ? "Pause" : (s.cursor > 0 ? "Hörvorgang fortsetzen" : "Hörvorgang starten")));
+
+    const prevDisabled = disabled || s.cursor === 0;
+    const prevBtn = $("#prevBtn");
+    prevBtn.setAttribute("aria-disabled", String(prevDisabled));
+    prevBtn.setAttribute("aria-label", prevDisabled && reason ? `Vorheriger Titel – ${reason}` : "Vorheriger Titel");
+
+    const nextBtn = $("#nextBtn");
+    nextBtn.setAttribute("aria-disabled", String(disabled));
+    nextBtn.setAttribute("aria-label", disabled && reason ? `Nächster Titel – ${reason}` : "Nächster regelkonformer Titel");
+
+    $("#transportHint").textContent = reason || `„Weiter" wählt immer den nächsten regelkonformen Titel.`;
+
+    // -- progress -----------------------------------------------------------
+    const pct = s.total ? Math.round((s.cursor / s.total) * 100) : 0;
+    const meter = $("#runMeter");
+    meter.setAttribute("aria-valuenow", String(pct));
+    meter.setAttribute("aria-label", `Fortschritt ${pct} Prozent`);
+    meter.querySelector("i").style.width = `${pct}%`;
+    $("#runProgressLine").replaceChildren(
+      el("span", {}, el("b", { style: "color:var(--ink)" }, formatCount(s.cursor)), ` von ${formatCount(s.total)} gespielt`),
+      el("span", {}, `${pct} %`));
+
+    // -- completion panel / upcoming list -----------------------------------
+    this.renderCompletion(terminal);
+    if (!terminal) {
+      const upcoming = s.upcoming || [];
+      $("#upnextRead").textContent = upcoming.length ? ` · ${formatCount(upcoming.length)} von ${formatCount(s.remaining)}` : "";
+      $("#upnext").replaceChildren(
+        ...(upcoming.length
+          ? upcoming.map((t) =>
+              el("li", {},
+                el("span", { class: "u-pos tabular" }, formatCount(t.index + 1)),
+                el("div", {},
+                  el("span", { class: "u-name" }, t.name || `Titel ${formatCount(t.index + 1)}`),
+                  el("span", { class: "u-meta" }, [t.artist, formatDuration(t.duration_ms)].filter(Boolean).join(" · ")))))
+          : [el("li", {}, el("span", { class: "u-meta" }, "Keine weiteren Titel in der Vorschau."))])
+      );
+    }
+
     const cancel = $("#cancelBtn");
     if (cancel) cancel.disabled = terminal;
   }
 }
-
-const REASON_TEXT = {
-  local_file: "lokale Datei",
-  not_playable: "hier nicht verfügbar",
-  wrong_kind: "kein Musiktitel",
-  duplicate: "schon im Fach",
-  missing_id: "keine Titel-ID",
-};
-
-const STATUS_TEXT = {
-  active: "Läuft", paused: "Pausiert",
-  completed: "Durch", cancelled: "Beendet",
-};
-
-const STATUS_CLASS = {
-  active: "chip-live", paused: "chip-off",
-  completed: "chip-ok", cancelled: "chip-stop",
-};
-
-export { followJob };

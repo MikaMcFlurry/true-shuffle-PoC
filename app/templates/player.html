@@ -1,171 +1,150 @@
 {% extends "base.html" %}
-{% block title %}{{ playlist_name or 'Lauf' }} · true-shuffle{% endblock %}
-{% block railstate %}LAUF {{ '%04d' % run_id }}{% endblock %}
+{% block title %}{{ playlist_name or 'Hörvorgang' }} · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="section">
-    <div class="index">
-        <b>01</b>
-        Das Fach
+<section class="section-head" aria-labelledby="playerTitle">
+    <div class="row">
+        <span class="signet" style="--brand: {{ provider.brand_color }}">{{ provider.display_name }}</span>
+        <span class="chip chip-neutral" id="contractChip">…</span>
+        {% if provider.live_mode_needs_open_tab %}
+        <span class="openness openness-tab">Tab muss offen bleiben</span>
+        {% else %}
+        <span class="openness openness-free">Nichts muss offen bleiben</span>
+        {% endif %}
     </div>
-    <div class="body">
-        <div class="row">
-            <span class="signet" style="--brand: {{ provider.brand_color }}">{{ provider.display_name }}</span>
-            <span class="chip" id="runStatus">…</span>
-            {% if provider.live_mode_needs_open_tab %}
-            <span class="openness openness-tab">Tab muss offen bleiben</span>
-            {% else %}
-            <span class="openness openness-free">Nichts muss offen bleiben</span>
-            {% endif %}
-        </div>
-        <h1>{{ playlist_name or 'Lauf' }}</h1>
+    <h1 id="playerTitle" class="wrap-anywhere" lang="de">{{ playlist_name or 'Hörvorgang' }}</h1>
+</section>
 
-        <div class="note hidden" id="playerNote"></div>
+<div class="note hidden" id="playerNote"></div>
 
-        <div class="deck-layout">
-            <section class="bay" aria-labelledby="bayDeck">
-                <div class="bay-head">
-                    <h2 id="bayDeck">Im Fach</h2>
-                    <span class="bay-read" id="deckRead">—</span>
+<div class="banner hidden" id="stateBanner"></div>
+
+<div class="player-grid">
+    <section class="zone zone-playback" id="zonePlayback" aria-label="Wiedergabe über {{ provider.display_name }}">
+        <p class="zone-caption">Wiedergabe · <b>{{ provider.display_name }}</b></p>
+        <div class="nowplaying">
+            <div id="coverWrap"></div>
+            <div class="nowplaying-text">
+                <h2 class="track-title wrap-anywhere" id="trackTitle" lang="de">Wird geladen…</h2>
+                <p class="track-artist" id="trackArtist"></p>
+                <p class="track-position tabular" id="trackPosition">–:– / –:–</p>
+                <div id="attributionWrap"></div>
+
+                <div class="transport" role="group" aria-label="Wiedergabesteuerung" id="transport">
+                    <button class="t-btn" id="prevBtn" type="button" aria-label="Vorheriger Titel">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2.4v14H6zM18.6 5.8v12.4a.8.8 0 0 1-1.25.66L9 13.5v-3l8.35-5.36a.8.8 0 0 1 1.25.66z"/></svg>
+                    </button>
+                    <button class="t-btn t-btn-main" id="mainBtn" type="button" aria-label="Start"></button>
+                    <button class="t-btn" id="nextBtn" type="button" aria-label="Nächster regelkonformer Titel">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5h-2.4v14H18zM5.4 5.8v12.4a.8.8 0 0 0 1.25.66L15 13.5v-3L6.65 5.14a.8.8 0 0 0-1.25.66z"/></svg>
+                    </button>
                 </div>
-                <div class="bay-body">
-                    <!-- The reading. What is LEFT is the subject of this product. -->
-                    <div class="reading" aria-live="polite">
-                        <span class="figure" id="deckLeft">0</span>
-                        <span class="unit" id="deckUnit">Karten übrig</span>
-                        <span class="of">von <span id="deckTotal">0</span> im Fach</span>
-                    </div>
+                <p class="transport-hint" id="transportHint">„Weiter" wählt immer den nächsten regelkonformen Titel.</p>
 
-                    <div class="crate">
-                        <div class="crate-row" id="rack" aria-hidden="true"></div>
-                        <div class="crate-scale" aria-hidden="true">
-                            <span>1</span>
-                            <span id="scaleEnd">—</span>
-                        </div>
-                    </div>
+                {% if provider.playback == 'remote_device' %}
+                <label class="field" style="margin-top: var(--space-4)">
+                    <span class="field-label">Abspielen auf</span>
+                    <select id="deviceSelect"></select>
+                </label>
+                {% endif %}
 
-                    <div class="card-out">
-                        <span class="pos"><span id="deckAt">0</span> · aus dem Fach</span>
-                        <span class="title" id="nowTitle">Wird geladen…</span>
-                        <span class="who" id="nowArtist"></span>
-                    </div>
+                {% if provider.playback == 'web_player' and provider.id != 'apple' %}
+                <div id="ytmount" style="margin-top: var(--space-4)"></div>
+                {% endif %}
 
-                    {% if provider.playback == 'remote_device' %}
-                    <label class="field">
-                        <span class="stencil">Abspielen auf</span>
-                        <select id="deviceSelect"></select>
-                    </label>
-                    {% endif %}
-
-                    {% if provider.playback == 'web_player' and provider.id != 'apple' %}
-                    <div id="ytmount"></div>
-                    {% endif %}
-
-                    <!-- Three ways to move the divider is two too many in one
-                         cluster. Start/Pause, forward, back — and the run-level
-                         actions live on the Laufzettel, not next to Pause. -->
-                    <div class="transport">
-                        <button class="btn btn-primary" id="startBtn" type="button">Lauf starten</button>
-                        <a class="btn btn-primary hidden" id="restartLink" href="/library">Neues Fach anlegen</a>
-                        <button class="btn" id="pauseBtn" type="button" disabled>Pause</button>
-                        <button class="btn" id="prevBtn" type="button">Zurück</button>
-                        <button class="btn" id="nextBtn" type="button">Überspringen</button>
-                    </div>
-
-                    <div class="keys" aria-hidden="true">
-                        <span><kbd>Leer</kbd> Start / Pause</span>
-                        <span><kbd>→</kbd> Überspringen</span>
-                        <span><kbd>←</kbd> Zurück</span>
-                    </div>
-                </div>
-            </section>
-
-            <div class="stack">
-                <section class="bay" aria-labelledby="bayTicket">
-                    <div class="bay-head">
-                        <h2 id="bayTicket">Laufzettel</h2>
-                        <span class="bay-read">NR. {{ '%04d' % run_id }}</span>
-                    </div>
-                    <div class="bay-body">
-                        <div class="ticket">
-                            <div><span class="k">Dienst</span><span class="v">{{ provider.display_name }}</span></div>
-                            <div><span class="k">Modus</span><span class="v">{{ 'Live' if mode == 'controller' else 'Handoff' }}</span></div>
-                            <div><span class="k">Quelle</span><span class="v">{{ playlist_name or '—' }}</span></div>
-                            <div><span class="k">Position</span><span class="v data" id="ticketPos">—</span></div>
-                            <div class="hidden" id="watchRow"><span class="k">Nachführung</span><span class="v" id="watchStatus"></span></div>
-                            <div class="hidden" id="doneRow"><span class="k">Abschluss</span><span class="v ok" id="doneValue"></span></div>
-                        </div>
-                        <div class="row">
-                            <a class="btn" href="/export/{{ run_id }}">Exportieren</a>
-                            <button class="btn btn-stop" id="cancelBtn" type="button">Lauf beenden</button>
-                        </div>
-
-                        <details class="fold">
-                            <summary>Wie dieser Lauf abgespielt wird</summary>
-                            <p class="dim sm">
-                                {% if provider.live_mode_needs_open_tab %}
-                                {{ provider.display_name }} lässt nur den eigenen Player
-                                steuern, also läuft der Live-Modus hier im Tab. Deine
-                                Position wird nach jedem Titel gespeichert. Diese Seite
-                                zu schließen stoppt die Musik, nicht den Lauf.
-                                {% else %}
-                                Läuft auf deinem {{ provider.display_name }}-Gerät.
-                                true-shuffle rückt den Trennstreifen vom Server aus
-                                weiter, du kannst diese Seite also schließen. Ein Skip in
-                                {{ provider.display_name }} zählt als eine Karte, genau
-                                wie ein Skip hier.
-                                {% endif %}
-                            </p>
-                            <p class="faint sm">
-                                Reihenfolge und Position lassen sich auf einen anderen
-                                Rechner mitnehmen. Die Datei enthält nie Zugangsdaten.
-                            </p>
-                        </details>
-                    </div>
-                </section>
-
-                <section class="bay" aria-labelledby="bayNext">
-                    <div class="bay-head">
-                        <h2 id="bayNext">Als Nächstes</h2>
-                        <span class="bay-read" id="upnextRead">—</span>
-                    </div>
-                    <ol class="sleeves bay-body flush" id="upnext"></ol>
-                </section>
-
-                <section class="bay hidden" id="skippedBay" aria-labelledby="baySkipped">
-                    <div class="bay-head">
-                        <h2 id="baySkipped">Nicht ins Fach gekommen</h2>
-                        <span class="bay-read" id="skippedRead">—</span>
-                    </div>
-                    <div class="bay-body">
-                        <p class="faint sm">
-                            Diese Einträge sind nie Karten geworden, also verbraucht
-                            keiner von ihnen einen Platz im Fach.
-                        </p>
-                        <div id="skippedList" class="ticket sm"></div>
-                    </div>
-                </section>
+                <p class="keys" aria-hidden="true" style="margin-top: var(--space-4)">
+                    <span><kbd>Leer</kbd> Start / Pause</span>
+                    <span><kbd>→</kbd> Überspringen</span>
+                    <span><kbd>←</kbd> Zurück</span>
+                </p>
             </div>
         </div>
+    </section>
+
+    <section class="zone zone-run" id="zoneRun" aria-label="Hörvorgang von True Shuffle">
+        <p class="zone-caption">Hörvorgang · <b>True Shuffle</b></p>
+        <span class="chip hidden" id="stateChip"></span>
+        <p class="run-context">
+            <b>Ohne Wiederholungen</b> · <span class="wrap-anywhere">{{ playlist_name or '—' }}</span>
+        </p>
+        <div style="margin-top: var(--space-4)">
+            <div class="mini-meter" style="height: 8px" id="runMeter" role="progressbar"
+                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Fortschritt">
+                <i style="width:0%"></i>
+            </div>
+            <p class="run-progressline tabular" id="runProgressLine"><span>–</span><span>–</span></p>
+        </div>
+
+        <div id="completionPanel" class="hidden"></div>
+
+        <div id="upnextWrap">
+            <p class="fieldset-label" style="margin-top: var(--space-5)">Als Nächstes<span class="rh-state" id="upnextRead"></span></p>
+            <ul class="upnext-list" id="upnext"></ul>
+        </div>
+
+        <details class="fold">
+            <summary>Wie dieser Hörvorgang abgespielt wird</summary>
+            <p class="dim sm">
+                {% if provider.live_mode_needs_open_tab %}
+                {{ provider.display_name }} lässt nur den eigenen Player steuern, also läuft
+                die Steuerung hier im Tab. Deine Position wird nach jedem Titel gespeichert.
+                Diese Seite zu schließen stoppt die Musik, nicht den Hörvorgang.
+                {% else %}
+                True Shuffle steuert {{ provider.display_name }} über den Server weiter — du
+                kannst diese Seite schließen. Ein Skip in {{ provider.display_name }} zählt
+                genauso wie ein Skip hier.
+                {% endif %}
+            </p>
+            <p class="faint sm">
+                Reihenfolge und Position lassen sich exportieren und auf einem anderen Rechner
+                fortsetzen. Die Datei enthält nie Zugangsdaten.
+            </p>
+        </details>
+
+        <div class="run-actions" style="margin-top: var(--space-4)">
+            <a class="btn btn-secondary" href="/runs/{{ run_id }}/verlauf">Verlauf ansehen</a>
+            <a class="btn btn-quiet" href="/export/{{ run_id }}">Exportieren</a>
+            <button class="btn btn-stop" id="cancelBtn" type="button">Hörvorgang beenden</button>
+        </div>
+    </section>
+</div>
+
+<section class="card hidden" id="skippedCard" aria-labelledby="skippedHead">
+    <div class="card-head">
+        <h2 id="skippedHead">Nicht in den Hörvorgang gekommen</h2>
+        <span class="card-read" id="skippedRead">—</span>
+    </div>
+    <div class="card-body">
+        <p class="dim sm">
+            Diese Einträge sind nie Teil der Reihenfolge geworden — keiner von
+            ihnen zählt zum Fortschritt.
+        </p>
+        <div class="kv" id="skippedList"></div>
     </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
 <script type="module">
-import { $, api, setNote } from "/static/app.js";
+import { $ } from "/static/app.js";
 import { RunPlayer } from "/static/player.js";
 
 const player = new RunPlayer({{ run_id }}, {{ provider | tojson }});
 
-$("#startBtn").addEventListener("click", () => guard(() => player.start()));
-$("#nextBtn").addEventListener("click",  () => guard(() => player.next()));
-$("#prevBtn").addEventListener("click",  () => guard(() => player.previous()));
-$("#pauseBtn").addEventListener("click", () => guard(() => player.pause()));
+function bindTransport(id, fn) {
+    $(id).addEventListener("click", () => {
+        if ($(id).getAttribute("aria-disabled") === "true") return;
+        player.guard(fn);
+    });
+}
+bindTransport("#mainBtn", () => player.toggle());
+bindTransport("#nextBtn", () => player.next());
+bindTransport("#prevBtn", () => player.previous());
 
-$("#cancelBtn").addEventListener("click", () => guard(async () => {
-    if (!confirm("Lauf beenden? Das Fach wird verworfen, der nächste Start mischt neu.")) return;
-    await api(`/api/runs/{{ run_id }}/cancel`, { method: "POST" });
+$("#cancelBtn").addEventListener("click", () => player.guard(async () => {
+    if ($("#cancelBtn").disabled) return;
+    if (!confirm("Hörvorgang beenden? Er wird verworfen, der nächste Start mischt neu.")) return;
+    await player.cancel();
     location.href = "/runs";
 }));
 
@@ -175,25 +154,23 @@ addEventListener("keydown", (ev) => {
     if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
 
-    if (ev.code === "Space")          { ev.preventDefault(); guard(() => player.toggle()); }
-    else if (ev.key === "ArrowRight") { ev.preventDefault(); guard(() => player.next()); }
-    else if (ev.key === "ArrowLeft")  { ev.preventDefault(); guard(() => player.previous()); }
-});
-
-async function guard(fn) {
-    try {
-        setNote($("#playerNote"), "");
-        await fn();
-    } catch (err) {
-        setNote($("#playerNote"), err.message, "note-stop", "Fehler");
+    if (ev.code === "Space") {
+        ev.preventDefault();
+        if ($("#mainBtn").getAttribute("aria-disabled") !== "true") player.guard(() => player.toggle());
+    } else if (ev.key === "ArrowRight") {
+        ev.preventDefault();
+        if ($("#nextBtn").getAttribute("aria-disabled") !== "true") player.guard(() => player.next());
+    } else if (ev.key === "ArrowLeft") {
+        ev.preventDefault();
+        if ($("#prevBtn").getAttribute("aria-disabled") !== "true") player.guard(() => player.previous());
     }
-}
+});
 
 // A page whose run will not load must say so and stop offering transport,
 // rather than leaving dead buttons under a frozen "Wird geladen…".
 player.boot().catch((err) => {
     player.failed(err.message);
-    setNote($("#playerNote"), err.message, "note-stop", "Lauf nicht geladen");
+    player.notify(err.message, "note-stop", "Hörvorgang nicht geladen");
 });
 </script>
 {% endblock %}
