@@ -17,11 +17,13 @@ Documented facts modelled here (source: ``docs/ts-fable-01/PHASE0_REAUDIT.md``
   reorder.  The simulator therefore offers no way to delete queue entries.
 * ``PUT /me/player/play`` accepts ``context_uri`` **or** a ``uris`` array,
   plus ``offset`` and ``position_ms`` — a complete "set the order" primitive.
-* The user queue plays **before** the context continues (documented Spotify
-  behaviour of the play queue: manually queued items pre-empt the context).
+  ``offset`` is an **object** (``{"position": N}``); an out-of-range position
+  is an error, not a silent clamp.
 * Player endpoints answer **429 with Retry-After** under quota pressure
   (rolling 30 s window); injectable here via ``rate_limit_every`` /
-  ``fail_next_with_429``.
+  ``fail_next_with_429``.  BASE-05 documents the window for the API as a
+  whole; whether *reads* count against it is switchable
+  (``rate_limit_reads``), so the quota model can be exercised both ways.
 * ``GET /me/player`` returns **204 (no content)** when there is no active
   device; modelled as ``None`` from :meth:`SimulatedSpotifyPlayer.get_playback_state`.
 * Spotify warns that the **order of execution of combined player calls is not
@@ -34,18 +36,34 @@ AN-1  ``play(uris=[...])`` replaces the playback **context** but does **not**
       clear manually queued items.  Consistent with the append-only queue
       model (no clear endpoint exists), but the interaction of a play override
       with an already-filled queue is not documented → assumption.
+      **Testable in both directions** via the constructor flag
+      ``clear_queue_on_play`` (default ``False`` = AN-1 holds; ``True`` =
+      AN-1 negated: a play override drops the manual queue).  Live: LT-7.
 AN-2  What happens when the queue **and** the context are both exhausted
       (the "Titel 6 = Titel 1" candidate mechanism) is not documented.
       Configurable via ``exhausted_context_policy``:
       ``'replay_context'`` — the context restarts from its first item;
       ``'stop'``           — playback stops (idle).
-      Both are testable; neither is asserted as live truth.
+      Both are testable; neither is asserted as live truth.  Live: LT-1.
 AN-3  Latency and reordering between commands are injectable
       (``command_latency_ms``, ``swap_next_two()``) because Spotify documents
       the non-guarantee but not the actual interleavings.
 AN-4  ``get_queue()`` blends the manual queue (first) with the upcoming
       context continuation — matching how the live endpoint is commonly
       observed to behave, but the exact composition is not documented.
+AN-5  The user queue plays **before** the context continues (manually queued
+      items pre-empt the context).  Real-Spotify-plausible and consistently
+      observed, but NOT part of the BASE-05 documented facts — the entire
+      queue-multiplication mechanism rests on it.  Live: LT-10.
+AN-6  ``POST /me/player/queue`` accepts the **same URI multiple times** as
+      separate entries (no dedup).  Silently load-bearing for the duplication
+      proof: were the live API to collapse identical URIs, SP-008 would shrink
+      to mis-ordering + wasted commands.  Live: LT-11.
+AN-7  Player *commands* without any active device fail with
+      **404 NO_ACTIVE_DEVICE** (play, enqueue, next, pause alike), and
+      ``GET /me/player/queue`` yields no usable body (modelled as ``None``).
+      BASE-05 only documents the 204 for ``GET /me/player``; the 404 for
+      commands and the queue-read behaviour are assumptions.  Live: LT-12.
 
 Additional deliberate simplifications (not Spotify claims): enqueueing while
 nothing is playing parks the item in the queue instead of starting playback,
@@ -120,8 +138,10 @@ class SimulatedSpotifyPlayer:
         exhausted_context_policy: str = "replay_context",
         command_latency_ms: int = 0,
         rate_limit_every: Optional[int] = None,
+        rate_limit_reads: bool = False,
         retry_after_s: int = 1,
         has_active_device: bool = True,
+        clear_queue_on_play: bool = False,
     ) -> None:
         if exhausted_context_policy not in ("replay_context", "stop"):
             raise ValueError(
@@ -132,8 +152,11 @@ class SimulatedSpotifyPlayer:
         self.exhausted_context_policy = exhausted_context_policy
         self.command_latency_ms = command_latency_ms
         self.rate_limit_every = rate_limit_every
+        self.rate_limit_reads = rate_limit_reads
         self.retry_after_s = retry_after_s
         self.has_active_device = has_active_device
+        # AN-1 negation switch: True = a play override drops the manual queue.
+        self.clear_queue_on_play = clear_queue_on_play
         self.fail_next_with_429 = False
 
         #: Registered context playlists: context_uri -> track ids.
@@ -202,7 +225,8 @@ class SimulatedSpotifyPlayer:
 
     # -- command intake (429s documented; latency/reorder = AN-3) ---------
 
-    def _submit(self, kind: str, **payload: Any) -> None:
+    def _quota_gate(self, kind: str) -> None:
+        """The shared 429 intake — commands always, reads via rate_limit_reads."""
         self._command_attempts += 1
         if self.fail_next_with_429:
             self.fail_next_with_429 = False
@@ -212,6 +236,8 @@ class SimulatedSpotifyPlayer:
             self._log("rate_limited", command=kind)
             raise SimRateLimited(self.retry_after_s)
 
+    def _submit(self, kind: str, **payload: Any) -> None:
+        self._quota_gate(kind)
         self.counts[kind] += 1
         cmd = _PendingCommand(self.now_ms + self.command_latency_ms, kind, payload)
         self._pending.append(cmd)
@@ -233,31 +259,53 @@ class SimulatedSpotifyPlayer:
         *,
         uris: Optional[List[str]] = None,
         context_uri: Optional[str] = None,
-        offset: int = 0,
+        offset: Optional[Dict[str, Any]] = None,
         position_ms: int = 0,
         device_id: Optional[str] = None,
     ) -> None:
-        """``PUT /me/player/play`` — uris array OR context_uri, plus offset."""
+        """``PUT /me/player/play`` — uris array OR context_uri, plus offset.
+
+        ``offset`` takes the documented **object form** ``{"position": N}``
+        (BASE-05); a bare int is rejected, an out-of-range position is an
+        error at application time — no silent clamping.
+        """
         if not self.has_active_device and not device_id:
-            raise SimNoActiveDevice()
+            raise SimNoActiveDevice()                  # AN-7
         if (uris is None) == (context_uri is None):
             raise ProviderError("play needs exactly one of uris / context_uri")
+        position = 0
+        if offset is not None:
+            if not isinstance(offset, dict) or set(offset) != {"position"}:
+                raise ProviderError(
+                    'offset must use the object form {"position": N} (BASE-05)'
+                )
+            position = int(offset["position"])
+            if position < 0:
+                raise ProviderError(f"offset position {position} out of range")
         self._submit(
             "play", uris=uris, context_uri=context_uri,
-            offset=offset, position_ms=position_ms,
+            offset=position, position_ms=position_ms,
         )
 
     def add_to_queue(self, uri: str, device_id: Optional[str] = None) -> None:
-        """``POST /me/player/queue`` — appends exactly one item, append-only."""
+        """``POST /me/player/queue`` — appends exactly one item, append-only.
+
+        AN-6: the same URI is accepted repeatedly as separate entries (no
+        dedup) — load-bearing for the duplication proof, live check LT-11.
+        """
         if not self.has_active_device and not device_id:
-            raise SimNoActiveDevice()
+            raise SimNoActiveDevice()                  # AN-7
         self._submit("enqueue", uri=uri)
 
     def next(self) -> None:
         """``POST /me/player/next`` issued by *our* app (counts as a command)."""
+        if not self.has_active_device:
+            raise SimNoActiveDevice()                  # AN-7: all player commands 404
         self._submit("next")
 
     def pause(self) -> None:
+        if not self.has_active_device:
+            raise SimNoActiveDevice()                  # AN-7: all player commands 404
         self._submit("pause")
 
     # User actions inside the Spotify app itself — not Web API commands from
@@ -283,7 +331,11 @@ class SimulatedSpotifyPlayer:
         offset: int,
         position_ms: int,
     ) -> None:
-        # AN-1: the context is replaced, the manual queue is NOT cleared.
+        # AN-1: the context is replaced; whether the manual queue survives is
+        # the assumption — default keeps it, clear_queue_on_play negates it.
+        if self.clear_queue_on_play and self._queue:
+            self._log("queue_cleared_by_play", dropped=list(self._queue))
+            self._queue.clear()
         if uris is not None:
             self._context = [_uri_to_id(u) for u in uris]
             self._context_uri = None
@@ -295,7 +347,12 @@ class SimulatedSpotifyPlayer:
             self._context_uri = context_uri
         if not self._context:
             raise ProviderError("empty context")
-        self._context_pos = min(max(0, offset), len(self._context) - 1)
+        if not (0 <= offset < len(self._context)):
+            raise ProviderError(
+                f"offset position {offset} out of range for context of "
+                f"{len(self._context)} items"
+            )
+        self._context_pos = offset
         self._start_track(self._context[self._context_pos], source="play",
                           position_ms=position_ms)
 
@@ -322,7 +379,7 @@ class SimulatedSpotifyPlayer:
         self._log("track_started", track=track_id, source=source)
 
     def _advance(self, *, skipped: bool) -> None:
-        """Move to whatever plays next: queue first, then context (documented)."""
+        """Move to whatever plays next: queue first, then context (AN-5)."""
         if self._current is not None:
             self._log(
                 "track_skipped" if skipped else "track_ended",
@@ -372,6 +429,8 @@ class SimulatedSpotifyPlayer:
 
     def get_playback_state(self) -> Optional[Dict[str, Any]]:
         """``GET /me/player`` — ``None`` models the documented 204 (no device)."""
+        if self.rate_limit_reads:
+            self._quota_gate("get_state")
         self.counts["get_state"] += 1
         if not self.has_active_device:
             return None
@@ -387,7 +446,14 @@ class SimulatedSpotifyPlayer:
         }
 
     def get_queue(self) -> Optional[Dict[str, Any]]:
-        """``GET /me/player/queue`` — currently playing plus upcoming (AN-4)."""
+        """``GET /me/player/queue`` — currently playing plus upcoming (AN-4).
+
+        Without an active device this returns ``None`` — part of AN-7: only
+        the 204 for ``GET /me/player`` is documented, the queue-read behaviour
+        without a device is an assumption (live check LT-12).
+        """
+        if self.rate_limit_reads:
+            self._quota_gate("get_queue")
         self.counts["get_queue"] += 1
         if not self.has_active_device:
             return None

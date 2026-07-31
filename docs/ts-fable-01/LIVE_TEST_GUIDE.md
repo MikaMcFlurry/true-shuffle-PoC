@@ -8,8 +8,9 @@ Phase-2-Instrumentierungsplan §3 und `handoffs/TS-FABLE-01/05_SPOTIFY_LIVE_WORK
 (§„Zuerst instrumentiert reproduzieren“, §Live-Testkern). Die simulierten Gegenstücke
 (Evidenzklasse `VERIFIED_AUTOMATED`) liegen in `tests/test_queue_regression.py`,
 `tests/test_strategy_candidates.py` und `tests/forensics/strategy_bench.py`; jeder
-Live-Fall bestätigt oder falsifiziert dort deklarierte Annahmen (AN-1..AN-4,
-`tests/sim_spotify.py`).
+Live-Fall bestätigt oder falsifiziert dort deklarierte Annahmen (AN-1..AN-7,
+`tests/sim_spotify.py`). Zuordnung: AN-1→LT-7 · AN-2→LT-1 · AN-3→LT-3/LT-4 ·
+AN-4→LT-2 (Queue-Snapshots) · AN-5→LT-10 · AN-6→LT-11 · AN-7→LT-12.
 
 ## 1. Voraussetzungen
 
@@ -141,8 +142,12 @@ Formular aus §5.
    (Titel, die nicht im Run sind); Snapshot: manuelle Titel sichtbar.
 2. In True Shuffle „Weiter“ drücken (löst `PUT /me/player/play` aus); Snapshot.
 - **Ergebnis dokumentieren:** Überleben die manuellen Titel den Override
-  (AN-1 bestätigt) oder sind sie weg (AN-1 falsifiziert → Simulator und
-  Strategiebewertung anpassen)? Wann spielen sie?
+  (AN-1 bestätigt) oder sind sie weg (AN-1 falsifiziert → Simulator-Default auf
+  `clear_queue_on_play=True` stellen und Suite/Bench neu laufen lassen)? Wann
+  spielen sie? Achtung: der Skip-Pfad-Rotbeweis
+  (`test_native_skip_reappends`) ist **AN-1-BEDINGT** — bei Falsifikation
+  entfällt er (siehe `test_native_skip_dup_proof_is_an1_conditional`), der
+  Naturallauf-Beweis bleibt davon unberührt.
 - **PASS (nach Fix):** manuelle Titel werden nicht überfahren; Verhalten entspricht
   der dokumentierten Manual-Use-Policy.
 
@@ -160,6 +165,63 @@ UI-Meldung), Pause in Spotify und in True Shuffle, Gerätewechsel während des R
 Tokenrefresh nach >1 h, 100+-Track-Playlist (Quota/429 beobachten: `Retry-After`
 notieren, strukturierter Body `reason: QUOTA_EXCEEDED` seit Juli 2026), Ende eines
 No-Repeat-Durchlaufs, Resume nach mehrstündigem Unterbruch.
+
+### LT-10 · Queue-Vorrang vor Kontext (klärt AN-5)
+
+Der gesamte Vervielfachungsmechanismus (SP-008) ruht auf der Annahme, dass die
+manuelle Queue **vor** der Kontextfortsetzung spielt. Das ist real-Spotify-plausibel,
+steht aber **nicht** in den BASE-05-Dokumenten.
+
+1. In der Spotify-App eine Playlist normal starten (kein True Shuffle nötig);
+   Snapshot `T0`.
+2. Während Titel 1 läuft **einen fremden Titel** (nicht aus der Playlist) manuell
+   in die Queue legen; Snapshot.
+3. Titel 1 natürlich zu Ende spielen lassen; Snapshot.
+- **AN-5 bestätigt:** der manuell gequeuete Titel spielt VOR dem nächsten
+  Playlist-Titel.
+- **AN-5 falsifiziert:** der Kontext läuft weiter und die Queue kommt später/nie →
+  `tests/sim_spotify.py::_advance` anpassen und Suite + Bench neu laufen lassen —
+  Szenario (c)/(g) der Messtabelle und die SP-008-Mechanik hängen an dieser Annahme.
+
+### LT-11 · Kein Dedup identischer URIs in der Queue (klärt AN-6)
+
+Bislang stillschweigend tragend für den Duplikat-Beweis: nimmt
+`POST /me/player/queue` denselben URI mehrfach als **getrennte Einträge** an?
+
+1. Wiedergabe läuft (beliebiger Titel); Snapshot `T0`.
+2. Denselben Titel **3× hintereinander** per API in die Queue legen:
+   ```bash
+   for i in 1 2 3; do
+     curl -s -X POST -H "Authorization: Bearer $SPOTIFY_TOKEN" \
+          "https://api.spotify.com/v1/me/player/queue?uri=spotify:track:<id>"
+   done
+   ```
+3. Queue-Snapshot (§2.2): erscheint der Titel 3× (AN-6 bestätigt) oder 1×
+   (AN-6 falsifiziert — Dedup)?
+- **Konsequenz bei Falsifikation:** SP-008 schrumpft von „Vervielfachung“ auf
+  „Fehlordnung + Command-Verschwendung“; `test_start_then_natural_ends_duplicates_queue`
+  und die max.-Queue-Dup-Spalten der Messtabelle sind dann neu zu interpretieren;
+  Simulator-`_apply_enqueue` mit Dedup nachrüsten und alles neu messen.
+
+### LT-12 · Player-Commands ohne aktives Gerät (klärt AN-7)
+
+BASE-05 dokumentiert nur `GET /me/player` → 204. Angenommen (AN-7): alle
+Player-**Commands** (play, enqueue, next, pause) antworten ohne aktives Gerät mit
+**404 NO_ACTIVE_DEVICE**, und `GET /me/player/queue` liefert keinen nutzbaren Body.
+
+1. Alle Spotify-Clients schließen bzw. >5 min warten, bis kein Gerät mehr aktiv ist;
+   `GET /me/player` muss 204 liefern (Snapshot).
+2. Je einen Command absetzen und Status + Body notieren:
+   `PUT /me/player/play`, `POST /me/player/queue?uri=...`, `POST /me/player/next`,
+   `PUT /me/player/pause`.
+3. `GET /me/player/queue` aufrufen; Status + Body notieren (204? 200 mit leerer
+   Queue? Fehler?).
+- **AN-7 bestätigt:** alle vier Commands → 404 `NO_ACTIVE_DEVICE`; Queue-Read ohne
+  nutzbaren Body.
+- **Teilweise/falsifiziert:** exaktes Verhalten je Endpoint dokumentieren →
+  Simulator (`play`/`add_to_queue`/`next`/`pause`/`get_queue`) und die
+  Szenario-(h)-Interpretation (`device_loss_survived`, `Api.queue_ids`-Mapping
+  auf `[]`) entsprechend anpassen.
 
 ## 5. Ergebnisformular (je Testfall kopieren)
 
@@ -182,8 +244,9 @@ Rohdaten (falls Token-berührt) verbleiben lokal und werden **nicht** eingecheck
 
 ## 6. Nach dem Lauf
 
-1. AN-1/AN-2-Ergebnisse in `tests/sim_spotify.py` (Docstring) und im ADR vermerken;
-   falls falsifiziert: Simulator-Default ändern und Suite erneut laufen lassen.
+1. AN-1/AN-2/AN-5/AN-6/AN-7-Ergebnisse in `tests/sim_spotify.py` (Docstring) und im
+   ADR vermerken; falls falsifiziert: Simulator-Default ändern (für AN-1 existiert
+   der Schalter `clear_queue_on_play`) und Suite + Bench erneut laufen lassen.
 2. SP-Matrix (`handoffs/TS-FABLE-01/08_ACCEPTANCE_TEST_MATRIX.md`, G3) mit
    PASS/FAIL + Evidenzverweis füllen; Evidenzklasse der betroffenen Gates von
    `VERIFIED_AUTOMATED`/`BLOCKED` auf `VERIFIED_LIVE` heben.
