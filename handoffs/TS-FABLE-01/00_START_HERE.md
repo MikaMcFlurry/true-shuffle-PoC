@@ -56,11 +56,10 @@ Der direkt kopierbare Orchestrator-Startprompt liegt in `10_START_PROMPT.md`.
 ## Erwartete Ergebnisartefakte des nächsten Laufs
 
 - eigener Implementierungsbranch auf Basis dieses Handoff-Branches,
-- UX Source Manifest mit Mika-IDs, Revisionen und Auswahlbegründung,
+- öffentliches UX Source Manifest mit freigegebenen Quellaliasen und Auswahlbegründung; exakte private Herkunft nur im geschützten Arbeitsnachweis,
 - Architekturentscheidungen als kurze ADRs,
 - Use-Case-Coverage-Matrix mit PASS/BLOCKED/FAIL und Evidenzlinks,
 - automatisierte Unit-, Integrations-, Browser- und Zustandsmodelltests,
 - redigierter Spotify-Live-Testbericht,
 - Migrations-/Rollback-Hinweise,
 - Abschlussbericht einschließlich tatsächlicher Modell- und Agentennutzung.
-
