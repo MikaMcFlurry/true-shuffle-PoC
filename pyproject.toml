@@ -1,6 +1,15 @@
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "browser: end-to-end acceptance test that drives a real Chromium against a real server (tests/browser)",
+]
+# The browser suite starts a server and a browser and takes minutes, so it is
+# not part of the default run. It is opt-in and reproducible with
+#     python -m pytest tests/browser -m browser -q
+# On a machine without Playwright or Chromium every test in it skips itself
+# (see tests/browser/conftest.py), so the opt-in command stays safe too.
+addopts = "-m 'not browser'"
 filterwarnings = [
     # Starlette's TestClient warns about httpx; nothing we control.
     "ignore::DeprecationWarning:starlette.*",
