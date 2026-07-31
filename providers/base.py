@@ -169,6 +169,11 @@ class ProviderCapabilities:
     reports_account_tier: bool = True
     #: The provider can be told to pre-queue upcoming tracks.
     supports_queue_prefetch: bool = False
+    #: The provider's playback queue can be read back (Spotify:
+    #: ``GET /me/player/queue``).  Reading is the only queue introspection the
+    #: Spotify Web API has — the queue itself is append-only (no remove, clear
+    #: or reorder), so any dedup/reconciliation strategy starts with this flag.
+    supports_queue_read: bool = False
     #: The provider exposes a recently-played history we can read back.
     #:
     #: This is what makes a deck trackable with **no browser tab open at all**:
@@ -220,6 +225,7 @@ class ProviderCapabilities:
             "requires_paid_tier": self.requires_paid_tier,
             "reports_account_tier": self.reports_account_tier,
             "supports_queue_prefetch": self.supports_queue_prefetch,
+            "supports_queue_read": self.supports_queue_read,
             "supports_controller_mode": self.supports_controller_mode,
             "supports_history_sync": self.supports_history_sync,
             "live_mode_needs_open_tab": self.live_mode_needs_open_tab,
@@ -432,6 +438,18 @@ class MusicProvider(abc.ABC):
     async def get_playback_state(self, token: TokenBundle) -> Optional[PlaybackState]:
         """Poll what is playing.  ``None`` when the provider cannot tell us."""
         return None
+
+    async def get_queue(self, token: TokenBundle) -> Optional[Dict[str, Any]]:
+        """Read back the provider's playback queue.
+
+        Only meaningful when :attr:`ProviderCapabilities.supports_queue_read`
+        is set.  Returns ``{"currently_playing_id": Optional[str],
+        "queue_ids": List[str]}``, or ``None`` when there is no playback
+        session to read.  This is a *read* — the Spotify Web API offers no way
+        to remove, clear or reorder queue entries, so observing the queue is
+        the whole toolbox.
+        """
+        raise Unsupported(f"{self.capabilities.id} cannot read back its queue")
 
     # -- misc -------------------------------------------------------------
 

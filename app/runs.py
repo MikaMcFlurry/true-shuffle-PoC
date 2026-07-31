@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import uuid
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from app import db
@@ -33,6 +34,13 @@ from providers.base import (
 )
 
 logger = logging.getLogger(__name__)
+
+#: Structured trail of every command we send to a provider player.  One
+#: correlation id per :func:`_apply` call groups the play with its prefetch
+#: appends, so a live log can be lined up 1:1 against ``/me/player/queue``
+#: snapshots.  Never logs tokens, account ids or device names — run ids,
+#: cursors and track ids only (track ids are public catalogue data).
+_command_log = logging.getLogger("ts.provider.command")
 
 ProgressFn = Callable[[int, int, str], Awaitable[None]]
 
@@ -207,13 +215,23 @@ async def _apply(
     if not decision.play_track_id:
         return
 
+    correlation_id = uuid.uuid4().hex[:8]
+
     if decision.needs_override or force_override:
+        _command_log.info(
+            "corr=%s run=%s kind=play target=%s cursor=%s",
+            correlation_id, state.run_id, decision.play_track_id, state.cursor,
+        )
         await session.provider.play(
             session.token, track_id=decision.play_track_id, device_id=device_id
         )
 
     if caps.supports_queue_prefetch and decision.queue_track_ids:
         for track_id in decision.queue_track_ids:
+            _command_log.info(
+                "corr=%s run=%s kind=enqueue target=%s cursor=%s",
+                correlation_id, state.run_id, track_id, state.cursor,
+            )
             try:
                 await session.provider.enqueue(
                     session.token, track_id=track_id, device_id=device_id

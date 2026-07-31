@@ -186,6 +186,7 @@ class SpotifyProvider(MusicProvider):
         # country and product left GET /me in February 2026.
         reports_account_tier=False,
         supports_queue_prefetch=True,
+        supports_queue_read=True,
         supports_history_sync=True,
         brand_color="#1DB954",
         notes=[
@@ -635,6 +636,24 @@ class SpotifyProvider(MusicProvider):
             device_name=device.get("name", ""),
             is_idle=not item,
         )
+
+    async def get_queue(self, token: TokenBundle) -> Optional[Dict[str, Any]]:
+        """``GET /me/player/queue`` — currently playing plus the queue, read-only.
+
+        This is the forensic primitive the connector was missing: the Web API
+        queue is append-only (add + read; no remove/clear/reorder exists), so
+        reading it back is the only way to learn what previous appends actually
+        did — and the precondition for any idempotent queue strategy.  Returns
+        ``None`` when Spotify reports no playback session.
+        """
+        data = await self._player(token, "GET", "/me/player/queue")
+        if not data:
+            return None
+        currently = (data.get("currently_playing") or {}).get("id")
+        queue_ids = [
+            t["id"] for t in (data.get("queue") or []) if t and t.get("id")
+        ]
+        return {"currently_playing_id": currently, "queue_ids": queue_ids}
 
     # -- history ----------------------------------------------------------
 

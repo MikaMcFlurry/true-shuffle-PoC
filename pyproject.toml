@@ -3,6 +3,10 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
     "browser: end-to-end acceptance test that drives a real Chromium against a real server (tests/browser)",
+    # Deliberately NOT deselected below: the queue-forensics suite is part of
+    # the default run, so the SP-008 evidence (xfail before the fix, green
+    # after) is produced on every `python -m pytest -q`.
+    "queue_forensics: Spotify queue-duplication forensics against the honest player simulator (tests/sim_spotify.py)",
 ]
 # The browser suite starts a server and a browser and takes minutes, so it is
 # not part of the default run. It is opt-in and reproducible with
