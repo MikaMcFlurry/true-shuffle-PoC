@@ -13,6 +13,16 @@
         {% endif %}
     </div>
     <h1 id="playerTitle" class="wrap-anywhere" lang="de">{{ playlist_name or 'Hörvorgang' }}</h1>
+    <!-- Mirrors #stateChip in the Hörvorgang zone below. On a phone that zone
+         sits well past the first screen (measured: 390x844 puts it ~1100px
+         down, under the cover art + transport), so "who is in charge" would
+         otherwise be invisible until scrolled to. Its own line, right under
+         the title, so it cannot push the .row above into an extra wrap —
+         that pushed the transport button below the fold when it was tried
+         inside that row instead. aria-hidden so a screen reader is not told
+         twice — #stateChip further down remains the one accessible
+         announcement. -->
+    <span class="chip chip-mini hidden" id="stateChipMini" aria-hidden="true"></span>
 </section>
 
 <div class="note hidden" id="playerNote"></div>

@@ -123,7 +123,7 @@
     --signal:      #6C46D6;  /* 6.03:1 vs surface; white text 6.03:1 */
     --signal-ink:  #FFFFFF;
 
-    --state-b:     #B8432A;  /* 5.42:1 */
+    --state-b:     #B03D25;  /* 4.83:1 vs banner-b tint, 5.93:1 vs surface (was #B8432A/4.42:1 vs tint — QA G2) */
     --state-c:     #7A5E10;  /* 6.11:1 */
     --state-d:     #556070;  /* 6.38:1 */
     --ember:       #C22F3E;  /* 5.57:1 */
@@ -149,6 +149,15 @@
   --line: #312B4C; --line-strong: #726B99;
   --ink: #F2EFFB; --muted: #A9A1C2;
   --signal: #B49BFA; --signal-ink: #160F2E;
+  /* --state-a is re-declared here (not just inherited from :root's alias) so
+     a *nested* [data-theme] container — the styleguide's side-by-side
+     preview panes — resolves var(--signal) against ITS OWN theme rather than
+     freezing whatever --signal was on the ancestor that first defined
+     --state-a. Custom-property aliases do not re-resolve through
+     inheritance; only a same-element re-declaration does (QA G2, "Styleguide-
+     Token-Leck"). Confirmed empirically: without this, a nested
+     data-theme="light" pane's .chip-a kept the dark --signal. */
+  --state-a: var(--signal);
   --state-b: #FF8E77; --state-c: #E7C15E; --state-d: #A6AEC0; --ember: #FF6D75;
   --tint-a: rgba(180,155,250,.10); --tint-b: rgba(255,142,119,.09);
   --tint-c: rgba(231,193,94,.09); --tint-d: rgba(166,174,192,.08);
@@ -163,7 +172,8 @@
   --line: rgba(34,28,54,.14); --line-strong: #847E70;
   --ink: #221C36; --muted: #5F5876;
   --signal: #6C46D6; --signal-ink: #FFFFFF;
-  --state-b: #B8432A; --state-c: #7A5E10; --state-d: #556070; --ember: #C22F3E;
+  --state-a: var(--signal);  /* see [data-theme="dark"] above for why this is repeated here */
+  --state-b: #B03D25; --state-c: #7A5E10; --state-d: #556070; --ember: #C22F3E;
   --tint-a: rgba(108,70,214,.08); --tint-b: rgba(184,67,42,.08);
   --tint-c: rgba(122,94,16,.08); --tint-d: rgba(85,96,112,.08);
   --tint-ember: rgba(194,47,62,.07);

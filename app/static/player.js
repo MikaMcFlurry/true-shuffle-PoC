@@ -536,6 +536,14 @@ export class RunPlayer {
           : `${label}: Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.`)
       : "Dieser Hörvorgang wurde verworfen. Ein neuer Start mischt neu.";
 
+    // "Neu mischen und von vorn" reuses the existing /library reshuffle flow
+    // rather than a new API: it deep-links back with this playlist and
+    // "Neu mischen" already picked, so pressing "Hörvorgang starten" there
+    // does exactly what re-dealing this run by hand would do.
+    const reshuffleHref = s.playlist_id
+      ? `/library?provider=${encodeURIComponent(this.provider.id)}&playlist=${encodeURIComponent(s.playlist_id)}&reshuffle=1`
+      : "/library";
+
     panel.replaceChildren(
       el("div", { class: "empty-state" },
         el("span", { class: "empty-glyph" }, svgIcon((done ? ICON_DONE : ICON_STOPPED).viewBox, (done ? ICON_DONE : ICON_STOPPED).inner, (done ? ICON_DONE : ICON_STOPPED).attrs)),
@@ -543,7 +551,12 @@ export class RunPlayer {
         el("p", {}, body),
         el("div", { class: "empty-actions" },
           el("a", { class: "btn btn-primary", href: "/library" }, "Neuer Hörvorgang"),
-          el("a", { class: "btn btn-secondary", href: `/runs/${this.runId}/verlauf` }, "Verlauf ansehen"))));
+          el("a", { class: "btn btn-secondary", href: reshuffleHref }, "Neu mischen und von vorn"),
+          el("button", {
+            class: "btn btn-secondary", type: "button", "aria-disabled": "true",
+            "aria-label": "Regeln ändern – kommt mit dem nächsten Ausbau",
+          }, "Regeln ändern"),
+          el("a", { class: "btn btn-quiet", href: `/runs/${this.runId}/verlauf` }, "Verlauf ansehen"))));
   }
 
   render() {
@@ -565,23 +578,33 @@ export class RunPlayer {
     contract.className = "chip chip-neutral";
 
     // -- system-state chip (active only — "Bereit ≠ Läuft") -----------------
+    // #stateChipMini (in the header, aria-hidden) always mirrors this one —
+    // same class, same text — so the state is visible above the fold on a
+    // phone without a second accessible announcement.
     const stateChip = $("#stateChip");
+    const stateChipMini = $("#stateChipMini");
     if (s.status !== "active") {
       stateChip.classList.add("hidden");
+      stateChipMini?.classList.add("hidden");
     } else {
       stateChip.classList.remove("hidden");
+      stateChipMini?.classList.remove("hidden");
       if (systemState === "a") {
         stateChip.className = "chip chip-a";
         stateChip.replaceChildren(svgIcon(STATE_ICON.a.viewBox, STATE_ICON.a.inner, STATE_ICON.a.attrs), "True Shuffle steuert");
+        if (stateChipMini) { stateChipMini.className = "chip chip-a"; stateChipMini.replaceChildren(svgIcon(STATE_ICON.a.viewBox, STATE_ICON.a.inner, STATE_ICON.a.attrs), "True Shuffle steuert"); }
       } else if (systemState === "b") {
         stateChip.className = "chip chip-b";
         stateChip.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), `${this.provider.display_name} manuell übernommen`);
+        if (stateChipMini) { stateChipMini.className = "chip chip-b"; stateChipMini.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), `${this.provider.display_name} manuell übernommen`); }
       } else if (systemState === "d") {
         stateChip.className = "chip chip-d";
         stateChip.replaceChildren(svgIcon(STATE_ICON.d.viewBox, STATE_ICON.d.inner, STATE_ICON.d.attrs), "Kein aktives Gerät");
+        if (stateChipMini) { stateChipMini.className = "chip chip-d"; stateChipMini.replaceChildren(svgIcon(STATE_ICON.d.viewBox, STATE_ICON.d.inner, STATE_ICON.d.attrs), "Kein aktives Gerät"); }
       } else {
         stateChip.className = "chip chip-neutral";
         stateChip.replaceChildren("Bereit");
+        if (stateChipMini) { stateChipMini.className = "chip chip-neutral"; stateChipMini.replaceChildren("Bereit"); }
       }
     }
 
@@ -631,10 +654,15 @@ export class RunPlayer {
       ? `${this.playing ? "Pause" : "Start"} – ${reason}`
       : (this.playing ? "Pause" : (s.cursor > 0 ? "Hörvorgang fortsetzen" : "Hörvorgang starten")));
 
-    const prevDisabled = disabled || s.cursor === 0;
+    const atStart = s.cursor === 0;
+    const prevDisabled = disabled || atStart;
+    // aria-disabled without a reason in the name is a dead end for anyone
+    // not looking at the screen — cursor 0 has no "reason" of its own (it is
+    // not blocked, terminal or drifted), so it needs its own explanation.
+    const prevReason = reason || (atStart ? "du bist am Anfang" : "");
     const prevBtn = $("#prevBtn");
     prevBtn.setAttribute("aria-disabled", String(prevDisabled));
-    prevBtn.setAttribute("aria-label", prevDisabled && reason ? `Vorheriger Titel – ${reason}` : "Vorheriger Titel");
+    prevBtn.setAttribute("aria-label", prevDisabled && prevReason ? `Vorheriger Titel – ${prevReason}` : "Vorheriger Titel");
 
     const nextBtn = $("#nextBtn");
     nextBtn.setAttribute("aria-disabled", String(disabled));

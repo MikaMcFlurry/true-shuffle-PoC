@@ -176,16 +176,16 @@
         <summary><span>Favoriten <span class="rh-state">· noch nicht verfügbar</span></span></summary>
         <div class="rule-body">
             <div class="radio-row" data-preview>
-                <input type="radio" name="favoriten" disabled>
-                <label><span class="r-name">Kein Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten laufen wie alle anderen Titel mit.</span></label>
+                <input type="radio" name="favoriten" id="r-fav-none" disabled>
+                <label for="r-fav-none"><span class="r-name">Kein Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten laufen wie alle anderen Titel mit.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="favoriten" disabled>
-                <label><span class="r-name">Leichter Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten erscheinen etwas häufiger als der Durchschnitt.</span></label>
+                <input type="radio" name="favoriten" id="r-fav-light" disabled>
+                <label for="r-fav-light"><span class="r-name">Leichter Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten erscheinen etwas häufiger als der Durchschnitt.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="favoriten" disabled>
-                <label><span class="r-name">Nur Favoriten <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ausschließlich markierte Titel werden gespielt.</span></label>
+                <input type="radio" name="favoriten" id="r-fav-only" disabled>
+                <label for="r-fav-only"><span class="r-name">Nur Favoriten <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ausschließlich markierte Titel werden gespielt.</span></label>
             </div>
             <p class="field-hint">Favoriten kennt true-shuffle noch nicht — diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
         </div>
@@ -195,20 +195,20 @@
         <summary><span>Skip-Verhalten <span class="rh-state">· noch nicht verfügbar</span></span></summary>
         <div class="rule-body">
             <div class="radio-row" data-preview>
-                <input type="radio" name="skip" disabled>
-                <label><span class="r-name">Skip zählt nicht als gespielt <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Übersprungene Titel bleiben offen und kommen später wieder.</span></label>
+                <input type="radio" name="skip" id="r-skip-open" disabled>
+                <label for="r-skip-open"><span class="r-name">Skip zählt nicht als gespielt <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Übersprungene Titel bleiben offen und kommen später wieder.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="skip" disabled>
-                <label><span class="r-name">Skip zählt als gespielt <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ein übersprungener Titel gilt als erledigt.</span></label>
+                <input type="radio" name="skip" id="r-skip-played" disabled>
+                <label for="r-skip-played"><span class="r-name">Skip zählt als gespielt <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ein übersprungener Titel gilt als erledigt.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="skip" disabled>
-                <label><span class="r-name">Nach mehreren Skips ausschließen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ein Titel, der mehrfach übersprungen wird, fliegt aus dem Hörvorgang.</span></label>
+                <input type="radio" name="skip" id="r-skip-exclude" disabled>
+                <label for="r-skip-exclude"><span class="r-name">Nach mehreren Skips ausschließen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ein Titel, der mehrfach übersprungen wird, fliegt aus dem Hörvorgang.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="skip" disabled>
-                <label><span class="r-name">Skip fragt nach <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">true-shuffle merkt sich den Skip, entscheidet aber erst am Ende, ob er zählt.</span></label>
+                <input type="radio" name="skip" id="r-skip-ask" disabled>
+                <label for="r-skip-ask"><span class="r-name">Skip fragt nach <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">true-shuffle merkt sich den Skip, entscheidet aber erst am Ende, ob er zählt.</span></label>
             </div>
             <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau. Heute rückt ein Skip den Hörvorgang wie jedes andere Titelende weiter.</p>
         </div>
@@ -218,16 +218,16 @@
         <summary><span>Manuelle Nutzung <span class="rh-state">· noch nicht verfügbar</span></span></summary>
         <div class="rule-body">
             <div class="radio-row" data-preview>
-                <input type="radio" name="manuell" disabled>
-                <label><span class="r-name">Nachfragen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">true-shuffle hält an und lässt dich entscheiden — fortsetzen oder pausiert lassen.</span></label>
+                <input type="radio" name="manuell" id="r-man-ask" disabled>
+                <label for="r-man-ask"><span class="r-name">Nachfragen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">true-shuffle hält an und lässt dich entscheiden — fortsetzen oder pausiert lassen.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="manuell" disabled>
-                <label><span class="r-name">Automatisch fortsetzen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Sobald du zu Spotify zurückkehrst, übernimmt true-shuffle wieder.</span></label>
+                <input type="radio" name="manuell" id="r-man-auto" disabled>
+                <label for="r-man-auto"><span class="r-name">Automatisch fortsetzen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Sobald du zu Spotify zurückkehrst, übernimmt true-shuffle wieder.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="manuell" disabled>
-                <label><span class="r-name">Manuell zählt mit <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Was du selbst spielst, zählt als gespielt im Hörvorgang.</span></label>
+                <input type="radio" name="manuell" id="r-man-counts" disabled>
+                <label for="r-man-counts"><span class="r-name">Manuell zählt mit <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Was du selbst spielst, zählt als gespielt im Hörvorgang.</span></label>
             </div>
             <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
         </div>
@@ -237,16 +237,16 @@
         <summary><span>Neue Titel in der Playlist <span class="rh-state">· noch nicht verfügbar</span></span></summary>
         <div class="rule-body">
             <div class="radio-row" data-preview>
-                <input type="radio" name="neuetitel" disabled>
-                <label><span class="r-name">Hinten einreihen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel kommen ans Ende der Reihenfolge.</span></label>
+                <input type="radio" name="neuetitel" id="r-new-append" disabled>
+                <label for="r-new-append"><span class="r-name">Hinten einreihen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel kommen ans Ende der Reihenfolge.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="neuetitel" disabled>
-                <label><span class="r-name">Sofort einmischen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel werden sofort in die verbleibende Reihenfolge gemischt.</span></label>
+                <input type="radio" name="neuetitel" id="r-new-mix" disabled>
+                <label for="r-new-mix"><span class="r-name">Sofort einmischen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel werden sofort in die verbleibende Reihenfolge gemischt.</span></label>
             </div>
             <div class="radio-row" data-preview>
-                <input type="radio" name="neuetitel" disabled>
-                <label><span class="r-name">Ignorieren <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel werden für diesen Hörvorgang nicht berücksichtigt.</span></label>
+                <input type="radio" name="neuetitel" id="r-new-ignore" disabled>
+                <label for="r-new-ignore"><span class="r-name">Ignorieren <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel werden für diesen Hörvorgang nicht berücksichtigt.</span></label>
             </div>
             <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
         </div>
@@ -263,6 +263,22 @@ const CONNECTED = {{ connected | map(attribute='provider') | list | tojson }};
 
 const byId = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
 const state = { provider: CONNECTED[0] || null, mode: null, playlist: null, all: [] };
+
+/* -- deep link from the player's "Neu mischen und von vorn" -----------------
+   /library?provider=..&playlist=..&reshuffle=1 — the honest existing path:
+   this only ever pre-fills the same selection a listener would make by hand,
+   no new API. `deepLink.playlist` is applied once the matching playlist has
+   actually loaded (see applyDeepLink(), called from loadPlaylists()). */
+const deepLinkParams = new URLSearchParams(location.search);
+const deepLink = {
+    provider: deepLinkParams.get("provider"),
+    playlist: deepLinkParams.get("playlist"),
+    reshuffle: deepLinkParams.get("reshuffle") === "1",
+    applied: false,
+};
+if (deepLink.provider && CONNECTED.includes(deepLink.provider)) {
+    state.provider = deepLink.provider;
+}
 
 /* -- service tabs --------------------------------------------------------- */
 
@@ -380,6 +396,7 @@ async function loadPlaylists() {
         const { playlists } = await api(`/api/playlists?provider=${state.provider}`);
         state.all = playlists;
         renderPlaylists();
+        applyDeepLink();
     } catch (err) {
         // Clear the skeleton: a shimmer that never resolves is a lying page.
         list.replaceChildren(el("div", { class: "empty" },
@@ -421,6 +438,7 @@ function renderPlaylists() {
         el("button", {
             class: "record",
             type: "button",
+            dataset: { plId: String(pl.id) },
             "aria-pressed": String(state.playlist?.id === pl.id),
             onClick: (ev) => selectPlaylist(pl, ev.currentTarget),
         },
@@ -444,6 +462,22 @@ function sizeLine(pl) {
     if (pl.readable === false) return "Inhalt nicht lesbar";
     if (pl.track_count >= 0) return `${formatCount(pl.track_count)} Titel`;
     return "Größe unbekannt";
+}
+
+/**
+ * Apply the ?playlist= deep link once, after the matching provider's
+ * playlists have actually loaded. Runs again on every `loadPlaylists()`
+ * resolution (provider switches call it too) but only ever acts once —
+ * `deepLink.applied` — so it never fights a listener's own later choice.
+ */
+function applyDeepLink() {
+    if (deepLink.applied || !deepLink.playlist) return;
+    const match = state.all.find((p) => String(p.id) === deepLink.playlist);
+    if (!match) return; // wrong provider tab still selected, or list still loading
+    deepLink.applied = true;
+    const node = $(`#playlists button[data-pl-id="${CSS.escape(deepLink.playlist)}"]`);
+    if (node) selectPlaylist(match, node);
+    if (deepLink.reshuffle) $("#reshuffle").value = "1";
 }
 
 $("#plFilter").addEventListener("input", renderPlaylists);

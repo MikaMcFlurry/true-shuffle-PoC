@@ -71,6 +71,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   position: fixed;
   top: 10px; left: 10px;
   z-index: 80;
+  display: inline-flex; align-items: center;
+  min-height: var(--tap-min);
   padding: 12px 18px;
   border-radius: var(--radius-full);
   background: var(--signal);
@@ -93,7 +95,11 @@ input.sr-only:focus-visible + label.btn,
 input.sr-only:focus-visible + label { outline: 2px solid var(--signal); outline-offset: 2px; }
 
 .dim   { color: var(--muted); }
-.faint { color: var(--muted); opacity: .82; }
+/* Was `opacity: .82` — that dropped light-theme text to 4.34:1, under AA
+   (QA G2, ".fold .faint"). --muted is already the deliberately-quieter tone;
+   fading it further with opacity is what broke contrast, so the opacity is
+   simply gone rather than replaced with a new token. */
+.faint { color: var(--muted); }
 .sm    { font-size: var(--text-sm); }
 .tabular { font-variant-numeric: tabular-nums; }
 
@@ -116,6 +122,7 @@ input.sr-only:focus-visible + label { outline: 2px solid var(--signal); outline-
 }
 .wordmark {
   display: inline-flex; align-items: center;
+  min-height: var(--tap-min);
   font-weight: 700; font-size: var(--text-lg); letter-spacing: -0.01em;
   color: var(--ink); text-decoration: none;
   padding: var(--space-2) 0;
@@ -157,13 +164,26 @@ input.sr-only:focus-visible + label { outline: 2px solid var(--signal); outline-
 }
 .status-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); flex: none; }
 
-/* Below 640px the wordmark, the nav and the trail cannot all fit at once —
-   the nav wins (it scrolls, per the inherited register-tabs pattern) and the
-   status pill shrinks to its dot, still with the full text on aria-label. */
+/* Below 640px the wordmark, the nav and the trail cannot all fit on one row.
+   The status pill shrinks to its dot (full text stays on its aria-label),
+   and the nav drops to its own full-width second row and wraps instead of
+   scrolling sideways — a sideways-scrolling bar has no visible affordance at
+   this width (QA G2: only ~45px of it showed at 320px, and nothing on
+   screen hints that a swipe reveals more). Wrapping means every destination
+   is on screen without knowing any gesture. */
 @media (max-width: 639px) {
   .status-pill { padding: 0; width: 10px; height: 10px; border-radius: 50%; border: 0; background: var(--signal); }
   .status-pill .status-text { display: none; }
   .status-pill::before { content: none; }
+
+  .appbar { flex-wrap: wrap; row-gap: var(--space-2); }
+  .appnav {
+    order: 3;
+    flex: 1 1 100%;
+    margin-left: 0;
+    overflow-x: visible;
+    flex-wrap: wrap;
+  }
 }
 
 .theme-toggle {
@@ -354,6 +374,11 @@ input[type="file"] { padding: 8px var(--space-3); }
   white-space: nowrap;
 }
 .chip svg { width: 14px; height: 14px; flex: none; }
+
+/* Compact header mirror of #stateChip (player.html) — smaller so it reads as
+   a small aside next to the title, not a second full-size chip. */
+.chip-mini { padding: 3px 9px; font-size: var(--text-2xs); }
+.chip-mini svg { width: 11px; height: 11px; }
 
 .chip-a { background: var(--state-a); color: var(--signal-ink); }              /* filled */
 .chip-b { border: 1.5px solid var(--state-b); color: var(--state-b); }         /* solid ring */
@@ -883,6 +908,14 @@ details.fold .fold-body { padding: var(--space-2) 0 var(--space-2) 0; color: var
 @media (max-width: 480px) {
   .run-actions .btn { flex: 1 1 auto; }
   .banner-actions .btn { flex: 1 1 auto; }
+
+  /* The mobile nav fix (QA G2 — wrapping to a second row instead of a
+     scroll with no affordance) makes the sticky header taller. Give that
+     height back from the one big element above the transport, so the main
+     button — the control this page is built around — still lands above the
+     844px fold on a 390-wide phone (test_transport_sits_in_the_first_
+     screen_on_a_phone). The cover is decorative content, not a control. */
+  .player-cover { width: min(176px, 46vw); }
 }
 
 /* ==========================================================================
