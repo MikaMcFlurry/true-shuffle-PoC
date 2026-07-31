@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 
 import pytest
@@ -598,6 +599,31 @@ def test_connect_page_lists_every_service(client):
         assert name in response.text
 
 
+def test_history_page_renders_for_your_own_run(client, fake_provider):
+    connect(client)
+    run_id = deal(client)["run_id"]
+    response = client.get(f"/runs/{run_id}/verlauf")
+    assert response.status_code == 200
+    assert 'id="inhalt"' in response.text
+    assert "Verlauf" in response.text
+
+
+def test_history_page_for_a_foreign_run_is_a_404(client, fake_provider):
+    connect(client)
+    run_id = deal(client)["run_id"]
+    with TestClient(app) as stranger:
+        stranger.get("/api/providers")
+        response = stranger.get(f"/runs/{run_id}/verlauf")
+        assert response.status_code == 404
+
+
+def test_configurations_page_renders(client):
+    response = client.get("/konfigurationen")
+    assert response.status_code == 200
+    assert 'id="inhalt"' in response.text
+    assert "Ohne Wiederholungen" in response.text
+
+
 def test_a_finished_deck_refuses_transport_in_german_and_not_with_a_500(
     client, fake_provider
 ):
@@ -626,8 +652,17 @@ def test_a_handoff_deck_is_never_reported_as_played_through(client, fake_provide
 
     A Handoff run on a service with no listening history is marked completed
     the instant the playlist is written — nobody has played anything, and we
-    will never learn whether they did. The word for that is "Übergeben", and
-    the rule lives in runs.html where the label is chosen.
+    will never learn whether they did. The word for that is "Übergeben".
+
+    UI-Erneuerung TS-FABLE-01 (ADR-001): visuelle Fixture ersetzt durch
+    semantisches Äquivalent. Das Run-Dashboard rendert Karten inzwischen rein
+    clientseitig aus /api/runs, ein Literal-Match auf den alten Inline-Script-
+    Text ("r.mode === ... ? "Durch" : "Übergeben"") gibt es also nicht mehr.
+    Die Ehrlichkeitsregel selbst bleibt aber serverseitig verankert: /runs
+    rendert das Vertragsvokabular als JSON-Block (siehe runs.html,
+    <script type="application/json" id="statusVocab">), aus dem app.js liest.
+    Dieser Test prüft genau dieses Vokabular server-seitig, statt sich auf den
+    Wortlaut des Client-Codes zu verlassen.
     """
     connect(client)
     result = deal(client, mode="utility")
@@ -639,5 +674,12 @@ def test_a_handoff_deck_is_never_reported_as_played_through(client, fake_provide
     assert run["cursor"] == 0                # and nothing was played
 
     page = client.get("/runs").text
+    match = re.search(
+        r'<script type="application/json" id="statusVocab">(.*?)</script>',
+        page, re.DOTALL,
+    )
+    assert match, "runs.html muss das Status-Vokabular serverseitig rendern."
+    vocab = json.loads(match.group(1))
+    assert vocab["completed_controller"] == "Durch"
+    assert vocab["completed_utility"] == "Übergeben"
     assert "Übergeben" in page
-    assert 'r.mode === "controller" ? "Durch" : "Übergeben"' in page

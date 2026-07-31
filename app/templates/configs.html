@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Konfigurationen · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="section-head" aria-labelledby="configsTitle">
+    <span class="eyebrow">Konfigurationen</span>
+    <h1 id="configsTitle">Deine Konfigurationen</h1>
+    <p>
+        Eine Konfiguration ist ein benannter Satz Regeln — Wiederholungsabstand,
+        Skip-Verhalten, Umgang mit manueller Nutzung und mehr. Heute mischt
+        true-shuffle mit genau einer davon; die übrigen sind hier als
+        Vorschau zu sehen, damit der Fahrplan sichtbar ist.
+    </p>
+</section>
+
+<div class="grid">
+    <article class="card" aria-labelledby="cfgNorepeat">
+        <div class="card-head">
+            <h2 id="cfgNorepeat">Ohne Wiederholungen</h2>
+            <span class="chip chip-neutral">aktiv</span>
+        </div>
+        <div class="card-body">
+            <p class="dim sm">
+                Jeder spielbare Titel genau einmal, bis der Hörvorgang
+                abgeschlossen ist — danach beginnt ein neuer Durchlauf neu.
+            </p>
+            <p class="sm" id="usageLine" aria-live="polite">Wird für alle deine Hörvorgänge verwendet.</p>
+            <div class="row" style="margin-top: auto">
+                <a class="btn btn-primary" href="/library">In der Bibliothek anwenden</a>
+                <button class="btn btn-quiet" type="button" aria-disabled="true" title="Bearbeiten kommt mit dem nächsten Ausbau">Bearbeiten</button>
+            </div>
+            <p class="field-hint">Bearbeiten kommt mit dem nächsten Ausbau — die Regeln stehen bis dahin fest.</p>
+        </div>
+    </article>
+
+    {% for name, desc in [
+        ("Lange Autofahrt", "Große Abstände zwischen Wiederholungen, Favoriten leicht bevorzugt."),
+        ("Entdeckermodus", "Neue und selten gespielte Titel zuerst."),
+        ("Nur Favoriten", "Ausschließlich markierte Titel."),
+        ("Feierabend-Mix", "Ruhige Auswahl, Skips zählen nicht als gespielt."),
+    ] %}
+    <article class="card" aria-labelledby="cfg{{ loop.index }}">
+        <div class="card-head">
+            <h2 id="cfg{{ loop.index }}">{{ name }}</h2>
+            <span class="chip chip-preview">Vorschau</span>
+        </div>
+        <div class="card-body">
+            <p class="dim sm">{{ desc }}</p>
+            <p class="field-hint">Kommt mit dem nächsten Ausbau — heute mischt jeder Hörvorgang mit „Ohne Wiederholungen“, unabhängig von dieser Karte.</p>
+            <div class="row" style="margin-top: auto">
+                <button class="btn btn-secondary" type="button" aria-disabled="true" title="Kommt mit dem nächsten Ausbau">Anwenden</button>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<section aria-labelledby="upcomingTitle">
+    <div class="section-head">
+        <span class="eyebrow">Fahrplan</span>
+        <h2 id="upcomingTitle">Duplizieren &amp; Übertragen</h2>
+        <p>Zwei angekündigte Funktionen, damit klar ist, was kommt — keine Behauptung, dass sie schon laufen.</p>
+    </div>
+    <div class="grid-2">
+        <article class="card">
+            <div class="card-head">
+                <h3>Konfiguration duplizieren</h3>
+                <span class="chip chip-preview">Vorschau</span>
+            </div>
+            <div class="card-body">
+                <p class="dim sm">
+                    Eine Konfiguration als Ausgangspunkt für eine eigene Variante
+                    kopieren, statt sie von Grund auf neu einzustellen.
+                </p>
+                <button class="btn btn-quiet" type="button" aria-disabled="true" title="Kommt mit dem nächsten Ausbau" style="align-self: flex-start">Duplizieren</button>
+                <p class="field-hint">Kommt mit dem nächsten Ausbau — es gibt noch keine zweite Konfiguration, die man duplizieren könnte.</p>
+            </div>
+        </article>
+        <article class="card">
+            <div class="card-head">
+                <h3>Auf andere Playlist übertragen</h3>
+                <span class="chip chip-preview">Vorschau</span>
+            </div>
+            <div class="card-body">
+                <p class="dim sm">
+                    Eine Konfiguration für eine zweite Playlist übernehmen, statt
+                    sie dort erneut einzustellen.
+                </p>
+                <p class="field-hint">
+                    Trackbezogene Regeln — Ausschlüsse, Favoriten — gelten pro
+                    Playlist und werden dabei nicht mit übertragen.
+                </p>
+                <button class="btn btn-quiet" type="button" aria-disabled="true" title="Kommt mit dem nächsten Ausbau" style="align-self: flex-start">Übertragen</button>
+                <p class="field-hint">Kommt mit dem nächsten Ausbau.</p>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $, api, formatCount } from "/static/app.js";
+
+// A real number when we can honestly say one: every run today was dealt with
+// "Ohne Wiederholungen" (it is the only functional preset), so the count of
+// all of this listener's runs IS the usage count — no separate bookkeeping
+// exists to fake, and none is needed.
+(async () => {
+    try {
+        const { runs } = await api("/api/runs");
+        const line = $("#usageLine");
+        if (!line) return;
+        line.textContent = runs.length
+            ? `Verwendet in ${formatCount(runs.length)} ${runs.length === 1 ? "deinem Hörvorgang" : "deinen Hörvorgängen"}.`
+            : "Noch in keinem Hörvorgang verwendet.";
+    } catch {
+        // Not signed in, or the call failed — the static sentence in the
+        // template already says something true, just without a number.
+    }
+})();
+</script>
+{% endblock %}

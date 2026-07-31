@@ -125,11 +125,17 @@
 {% endblock %}
 
 {% block scripts %}
+<!--
+  UI-Erneuerung TS-FABLE-01 (ADR-001): dieselbe serverseitige Vokabel-Quelle
+  wie /runs — siehe dort für die Begründung.
+-->
+<script type="application/json" id="statusVocab">{{ status_vocab | tojson }}</script>
 <script type="module">
 import { $ } from "/static/app.js";
 import { RunPlayer } from "/static/player.js";
 
-const player = new RunPlayer({{ run_id }}, {{ provider | tojson }});
+const statusVocab = JSON.parse($("#statusVocab").textContent);
+const player = new RunPlayer({{ run_id }}, {{ provider | tojson }}, statusVocab);
 
 function bindTransport(id, fn) {
     $(id).addEventListener("click", () => {

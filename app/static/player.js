@@ -172,9 +172,10 @@ const REASON_TEXT = {
 /* ========================================================================== */
 
 export class RunPlayer {
-  constructor(runId, provider) {
+  constructor(runId, provider, statusVocab = {}) {
     this.runId = runId;
     this.provider = provider;
+    this.vocab = statusVocab;
     this.state = null;
     this.web = null;
     this.poller = null;
@@ -480,7 +481,7 @@ export class RunPlayer {
       banner.replaceChildren(
         svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs),
         el("div", {},
-          el("p", { class: "banner-title" }, "Spotify wurde manuell übernommen"),
+          el("p", { class: "banner-title" }, `${this.provider.display_name} wurde manuell übernommen`),
           el("p", { class: "banner-body" },
             `Du hast in ${this.provider.display_name} selbst etwas gestartet. Dein Hörvorgang ist angehalten und merkt sich deinen Stand: `,
             el("b", {}, `${formatCount(s.cursor)} von ${formatCount(s.total)} Titeln`), ". Nichts geht verloren."),
@@ -523,10 +524,16 @@ export class RunPlayer {
 
     const done = s.status === "completed";
     const title = done ? "Hörvorgang abgeschlossen" : "Hörvorgang beendet";
+    // "Durch"/"Übergeben" comes from the server (player.html), the same
+    // honesty rule /runs uses — a Handoff run is never reported as played
+    // through just because its playlist was written.
+    const label = s.mode === "controller"
+      ? (this.vocab.completed_controller || "Durch")
+      : (this.vocab.completed_utility || "Übergeben");
     const body = done
       ? (s.mode === "controller"
-          ? `Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
-          : "Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.")
+          ? `${label}: Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
+          : `${label}: Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.`)
       : "Dieser Hörvorgang wurde verworfen. Ein neuer Start mischt neu.";
 
     panel.replaceChildren(
@@ -568,7 +575,7 @@ export class RunPlayer {
         stateChip.replaceChildren(svgIcon(STATE_ICON.a.viewBox, STATE_ICON.a.inner, STATE_ICON.a.attrs), "True Shuffle steuert");
       } else if (systemState === "b") {
         stateChip.className = "chip chip-b";
-        stateChip.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), "Spotify manuell übernommen");
+        stateChip.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), `${this.provider.display_name} manuell übernommen`);
       } else if (systemState === "d") {
         stateChip.className = "chip chip-d";
         stateChip.replaceChildren(svgIcon(STATE_ICON.d.viewBox, STATE_ICON.d.inner, STATE_ICON.d.attrs), "Kein aktives Gerät");

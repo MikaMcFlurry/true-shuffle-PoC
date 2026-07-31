@@ -49,8 +49,18 @@
 {% endblock %}
 
 {% block scripts %}
+<!--
+  UI-Erneuerung TS-FABLE-01 (ADR-001): the "Durch"/"Übergeben" distinction —
+  a Handoff run that merely handed a playlist over is never reported as
+  played through — is safety-relevant honesty, not styling. It is rendered
+  here as data rather than baked into the script below, so the rule stays
+  defined, and testable, on the server.
+-->
+<script type="application/json" id="statusVocab">{{ status_vocab | tojson }}</script>
 <script type="module">
 import { $, api, el, formatCount, formatWhen, setNote, svgIcon, STATE_ICON, CONTRACT_TEXT } from "/static/app.js";
+
+const STATUS_VOCAB = JSON.parse($("#statusVocab").textContent);
 
 /**
  * Loading /api/runs/{id} for every card would mean one request per Karte —
@@ -64,13 +74,17 @@ const ACTIVE_STATE_FETCH_LIMIT = 6;
  * A Handoff run marked "abgeschlossen" the instant its playlist was written —
  * nobody has necessarily played a single track, and this page has no way to
  * find out. Saying "durchgehört" for that would be a claim we cannot support,
- * so the note under the contract chip says what actually happened.
+ * so the note under the contract chip leads with the server's own word for
+ * it ("Durch" vs. "Übergeben") and spells out what that word means.
  */
 function completionNote(r) {
     if (r.status === "completed") {
+        const label = r.mode === "controller"
+            ? STATUS_VOCAB.completed_controller
+            : STATUS_VOCAB.completed_utility;
         return r.mode === "controller"
-            ? `Alle ${formatCount(r.total)} Titel genau einmal gespielt.`
-            : "Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.";
+            ? `${label}: Alle ${formatCount(r.total)} Titel genau einmal gespielt.`
+            : `${label}: Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.`;
     }
     if (r.status === "cancelled") {
         return "Hörvorgang wurde beendet. Ein neuer Start mischt neu.";
@@ -145,7 +159,7 @@ function applySystemState(runId, watcher) {
     if (watcher.drifted) {
         card.classList.add("is-b");
         chip.className = "chip chip-b";
-        chip.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), "Spotify manuell übernommen");
+        chip.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), "Manuell übernommen");
     } else if (watcher.watching) {
         card.classList.add("is-a");
         chip.className = "chip chip-a";

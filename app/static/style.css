@@ -884,3 +884,68 @@ details.fold .fold-body { padding: var(--space-2) 0 var(--space-2) 0; color: var
   .run-actions .btn { flex: 1 1 auto; }
   .banner-actions .btn { flex: 1 1 auto; }
 }
+
+/* ==========================================================================
+   TEIL 2 — Player-Feinheiten (Cover-Fallback, Titelposition, Als-Nächstes-
+   Liste) und Verlauf-Zeilen. Reines Ergänzen — nichts oben wird umgebaut.
+   ========================================================================== */
+
+/* Player cover: a service that gives no artwork gets an honest panel
+   instead of a stretched placeholder image, sized like the real cover. */
+.player-cover.player-cover-fallback {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  aspect-ratio: 1 / 1;
+  border: 1.5px dashed var(--line-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+  box-shadow: none;
+}
+.player-cover.player-cover-fallback svg { width: 40px; height: 40px; }
+.player-cover.player-cover-fallback span { font-size: var(--text-sm); font-weight: 600; }
+.player-cover img { width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
+
+/* Track position ("elapsed / total") — tabular-nums lives on the .tabular
+   utility class already applied where this is used. */
+.track-position { color: var(--muted); font-size: var(--text-sm); margin-top: 6px; }
+
+/* .attribution is a <p> when nothing is playing yet and an <a> once the
+   service actually has the track queued (player.js decides which). */
+a.attribution { text-decoration: none; }
+a.attribution:hover { background: var(--surface-2); }
+
+/* "Als Nächstes" — the run's own upcoming list, distinct from the segmented
+   progress meter; a plain row list keeps 1 500-track runs legible. */
+.upnext-list { display: flex; flex-direction: column; margin-top: var(--space-3); }
+.upnext-list li {
+  display: flex; gap: var(--space-3); align-items: baseline;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.upnext-list li:last-child { border-bottom: 0; }
+.upnext-list li > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.upnext-list .u-pos {
+  flex: none; width: 2.6ch; text-align: right;
+  color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums;
+}
+.upnext-list .u-name { font-weight: 600; overflow-wrap: anywhere; hyphens: auto; }
+.upnext-list .u-meta { color: var(--muted); font-size: var(--text-sm); }
+
+/* Verlauf (history) — one row per event, grouped under a day heading that
+   reuses .fieldset-label; chronological ascending, newest group last. */
+.day-group + .day-group { margin-top: var(--space-6); }
+.event-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3);
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.event-row:last-child { border-bottom: 0; }
+.event-row .e-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.event-row .e-type { font-weight: 600; overflow-wrap: anywhere; }
+.event-row .e-detail { font-size: var(--text-sm); color: var(--muted); overflow-wrap: anywhere; }
+.event-row .e-time { font-size: var(--text-sm); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; flex: none; }
+
+/* FORMS' `input[type="file"]` rule (width:100%) and the reset's
+   `input.sr-only` rule (width:1px) tie in specificity, so the later one in
+   source order quietly won and /runs's hidden file picker rendered at full
+   viewport width — a real horizontal-overflow bug the Teil-1 overflow check
+   never caught because no Teil-1 page used a file input. Fixed here with a
+   more specific selector rather than touching either existing rule. */
+input[type="file"].sr-only { width: 1px; min-height: 0; }

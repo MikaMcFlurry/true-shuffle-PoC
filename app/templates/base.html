@@ -24,9 +24,10 @@
         <a class="wordmark" href="/" aria-label="true-shuffle, zur Startseite">True<b>Shuffle</b></a>
         <nav class="appnav" aria-label="Hauptnavigation">
             <a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Start</a>
-            <a href="/runs" {% if request.url.path == '/runs' %}aria-current="page"{% endif %}>Hörvorgänge</a>
+            <a href="/runs" {% if request.url.path == '/runs' or request.url.path.startswith('/runs/') %}aria-current="page"{% endif %}>Hörvorgänge</a>
             <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Bibliothek</a>
             <a href="/connect" {% if request.url.path == '/connect' %}aria-current="page"{% endif %}>Dienste</a>
+            <a href="/konfigurationen" {% if request.url.path == '/konfigurationen' %}aria-current="page"{% endif %}>Konfigurationen</a>
         </nav>
         <span class="appbar-trail">
             {% if rail and rail.connected %}

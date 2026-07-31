@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Verlauf · {{ playlist_name or 'Hörvorgang' }} · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="section-head" aria-labelledby="historyTitle">
+    <span class="eyebrow">Verlauf</span>
+    <h1 id="historyTitle" class="wrap-anywhere" lang="de">{{ playlist_name or 'Hörvorgang' }}</h1>
+    <p>Jedes Ereignis dieses Hörvorgangs, chronologisch von alt nach neu, gruppiert nach Tag.</p>
+</section>
+
+<div class="row">
+    <a class="btn btn-secondary" href="/player/{{ run_id }}">Zum Player</a>
+</div>
+
+<div class="note hidden" id="historyNote"></div>
+
+<div id="eventGroups">
+    <div class="skeleton"><i></i><i></i><i></i></div>
+</div>
+
+<p class="small-print hidden" id="capNote"></p>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $, api, el, formatCount, formatDay, formatClock, setNote } from "/static/app.js";
+
+const RUN_ID = {{ run_id }};
+
+/**
+ * GET /api/runs/{id}/events has no caller-adjustable limit (it always hands
+ * back the newest 100) — this page is Phase-1 frontend only and does not
+ * touch app/routes_api.py, so there is no "load more" to build honestly.
+ * Instead of a button that would silently do nothing, hitting the cap gets
+ * an explanatory note (#capNote below).
+ */
+const KNOWN_API_CAP = 100;
+
+const REASON_TEXT = {
+    track_ended: "Titel zu Ende gespielt",
+    user_skip: "Titel übersprungen",
+    native_skip: "In Spotify übersprungen",
+    manual: "Manuell weitergeschaltet",
+    playback_failed: "Wiedergabe fehlgeschlagen, weitergeschaltet",
+    resync: "Neu synchronisiert",
+};
+
+const WATCHER_STOP_TEXT = {
+    "idle timeout": "Kein Signal mehr vom Gerät",
+    "no deck activity in history": "Keine Aktivität im Hörverlauf",
+};
+
+const EVENT_TITLE = {
+    run_created: "Hörvorgang angelegt",
+    started: "Gestartet",
+    paused: "Pausiert",
+    previous: "Zurückgesprungen",
+    completed: "Abgeschlossen",
+    cancelled: "Beendet",
+    drift: "Spotify hat übernommen",
+    drift_resolved: "True Shuffle hat die Steuerung zurück",
+    queue_failed: "Titel konnte nicht vorgemerkt werden",
+    watcher_stopped: "Nachführung gestoppt",
+    history_sync: "Verlauf abgeglichen",
+    copy_written: "Playlist geschrieben",
+    imported: "Hörvorgang übernommen",
+    client_detail: "Rückmeldung vom Player",
+};
+
+/**
+ * A German title + detail line for one event.
+ *
+ * Track names are never guessable here: /api/runs/{id}/events carries no
+ * track metadata, and resolving one id per row against the provider would be
+ * a request per event on a 1 500-track run. Where the old UI would have named
+ * a track, this shows the honest thing it actually has — the cursor position.
+ */
+function eventLine(e) {
+    const position = `Titel ${formatCount(e.cursor)}`;
+    if (e.type === "advanced") {
+        const reason = REASON_TEXT[e.reason] || e.reason || "unbekannter Grund";
+        return { title: "Weitergerückt", detail: `${reason} · ${position}` };
+    }
+    const title = EVENT_TITLE[e.type] || e.type;
+    if (e.type === "run_created") {
+        const total = e.detail?.total;
+        const skipped = e.detail?.skipped;
+        return {
+            title,
+            detail: total != null
+                ? `${formatCount(total)} Titel` + (skipped ? `, ${formatCount(skipped)} übersprungen` : "")
+                : position,
+        };
+    }
+    if (e.type === "copy_written") {
+        return { title, detail: e.detail?.written != null ? `${formatCount(e.detail.written)} Titel geschrieben` : position };
+    }
+    if (e.type === "imported") {
+        return { title, detail: e.detail?.total != null ? `${formatCount(e.detail.total)} Titel übernommen` : position };
+    }
+    if (e.type === "watcher_stopped") {
+        // detail.reason is an internal English note (core/watcher.py) —
+        // only ever show it translated, never verbatim, so the Verlauf
+        // stays fully German (ADR-001, deutsche Produkttexte).
+        const reason = e.detail?.reason;
+        return { title, detail: (reason && WATCHER_STOP_TEXT[reason]) || position };
+    }
+    // "queue_failed"'s error text and "drift"'s note are internal, English
+    // debugging strings (core/engine.py, providers/*) with no translation
+    // table — better an honest cursor position than a leaked English
+    // sentence in an otherwise German page.
+    return { title, detail: position };
+}
+
+function groupByDay(events) {
+    const groups = [];
+    let current = null;
+    for (const e of events) {
+        const day = formatDay(e.created_at);
+        if (!current || current.day !== day) {
+            current = { day, items: [] };
+            groups.push(current);
+        }
+        current.items.push(e);
+    }
+    return groups;
+}
+
+function renderGroups(events) {
+    const wrap = $("#eventGroups");
+    if (!events.length) {
+        wrap.replaceChildren(el("div", { class: "empty-state" },
+            el("h3", {}, "Noch keine Ereignisse"),
+            el("p", {}, "Sobald dieser Hörvorgang startet, erscheinen hier seine Schritte.")));
+        return;
+    }
+    wrap.replaceChildren(...groupByDay(events).map((g) =>
+        el("section", { class: "day-group" },
+            el("p", { class: "fieldset-label" }, g.day),
+            el("ul", {}, ...g.items.map((e) => {
+                const { title, detail } = eventLine(e);
+                return el("li", { class: "event-row" },
+                    el("div", { class: "e-main" },
+                        el("span", { class: "e-type" }, title),
+                        el("span", { class: "e-detail" }, detail)),
+                    el("span", { class: "e-time" }, formatClock(e.created_at)));
+            })))));
+}
+
+async function load() {
+    setNote($("#historyNote"), "");
+    try {
+        const { events } = await api(`/api/runs/${RUN_ID}/events`);
+        renderGroups([...events].reverse());   // API sends newest-first
+        const capNote = $("#capNote");
+        capNote.classList.toggle("hidden", events.length < KNOWN_API_CAP);
+        capNote.textContent = `Zeigt die letzten ${formatCount(KNOWN_API_CAP)} Ereignisse — ältere liefert die Schnittstelle derzeit nicht aus.`;
+    } catch (err) {
+        $("#eventGroups").replaceChildren(el("div", { class: "empty-state is-error" },
+            el("h3", {}, "Verlauf konnte nicht geladen werden"),
+            el("div", { class: "empty-actions" },
+                el("button", { class: "btn btn-primary", type: "button", onClick: load }, "Erneut versuchen"))));
+        setNote($("#historyNote"), err.message, "note-stop", "Fehler");
+    }
+}
+
+load();
+</script>
+{% endblock %}

@@ -15,6 +15,17 @@ from providers.registry import all_providers
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory="app/templates")
 
+# UI-Erneuerung TS-FABLE-01 (ADR-001): the "Durch"/"Übergeben" distinction is
+# safety-relevant honesty, not styling — a Handoff run that merely handed a
+# playlist over must never claim to have been played through. It is shipped
+# to the client as server-rendered data (a JSON blob the page's own script
+# reads), not baked into a client-side string, so the rule stays defined —
+# and testable — on the server, the same way it was before the rewrite.
+RUN_STATUS_VOCAB = {
+    "completed_controller": "Durch",
+    "completed_utility": "Übergeben",
+}
+
 
 def _provider_cards() -> list[dict]:
     return [
@@ -115,6 +126,7 @@ async def player(request: Request, run_id: int):
             "provider": provider.capabilities.as_dict(),
             "playlist_name": run.get("playlist_name", ""),
             "mode": run.get("mode", ""),
+            "status_vocab": RUN_STATUS_VOCAB,
             "rail": _rail(_provider_cards(), len(accounts)),
         },
     )
@@ -130,7 +142,50 @@ async def run_history(request: Request):
     return templates.TemplateResponse(
         request,
         "runs.html",
-        {"providers": cards, "rail": _rail(cards, len(accounts))},
+        {
+            "providers": cards,
+            "status_vocab": RUN_STATUS_VOCAB,
+            "rail": _rail(cards, len(accounts)),
+        },
+    )
+
+
+@router.get("/runs/{run_id}/verlauf", response_class=HTMLResponse)
+async def run_events_page(request: Request, run_id: int):
+    """Chronological event list for one run (UX_IMPL_SPEC.md, /runs/{id}/verlauf).
+
+    Events themselves come from ``GET /api/runs/{id}/events`` at render time —
+    this route only establishes ownership and hands the page its context.
+    """
+    run = await require_run(request, run_id)
+    cards = _provider_cards()
+    accounts = await db.list_provider_accounts(await current_user_id(request) or 0)
+    return templates.TemplateResponse(
+        request,
+        "history.html",
+        {
+            "run_id": run_id,
+            "playlist_name": run.get("playlist_name", ""),
+            "rail": _rail(cards, len(accounts)),
+        },
+    )
+
+
+@router.get("/konfigurationen", response_class=HTMLResponse)
+async def configurations(request: Request):
+    """Config Library preview — honest, no functionality it does not have.
+
+    "Ohne Wiederholungen" is the only preset the engine runs today; every
+    other card here is a declared preview (ADR-001, /library carries the
+    same rule for the run builder's preset grid).
+    """
+    user_id = await current_user_id(request)
+    cards = _provider_cards()
+    accounts = await db.list_provider_accounts(user_id) if user_id else []
+    return templates.TemplateResponse(
+        request,
+        "configs.html",
+        {"rail": _rail(cards, len(accounts))},
     )
 
 
