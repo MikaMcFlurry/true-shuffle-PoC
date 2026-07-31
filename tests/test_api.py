@@ -350,15 +350,24 @@ def test_live_mode_is_refused_on_a_provider_that_cannot_control_playback(
 # Playing a deck
 # ---------------------------------------------------------------------------
 
-def test_starting_a_run_plays_the_first_card_and_prefetches_the_queue(
+def test_starting_a_run_hands_over_the_whole_uris_window(
     client, fake_provider
 ):
+    """ADR-002: start is ONE play call carrying the window — never an enqueue.
+
+    (Replaces the pre-ADR-002 assertion of five queue-prefetch appends; the
+    additive prefetch provably multiplied the queue, SP-008.)
+    """
     connect(client)
     run_id = deal(client)["run_id"]
     payload = client.post(f"/api/runs/{run_id}/start", json={"device_id": "dev1"}).json()
 
     assert fake_provider.played[0] == payload["current"]["id"]
-    assert len(fake_provider.queued) == 5     # QUEUE_BUFFER_SIZE
+    # The deck (12 titles) fits into one window (default 250) entirely.
+    assert len(fake_provider.play_windows) == 1
+    assert len(fake_provider.play_windows[0]) == len(fake_provider.tracks)
+    assert fake_provider.play_windows[0][0] == payload["current"]["id"]
+    assert fake_provider.queued == []         # the user's queue stays the user's
 
 
 def test_skipping_consumes_one_card(client, fake_provider):
@@ -370,6 +379,11 @@ def test_skipping_consumes_one_card(client, fake_provider):
                           json={"reason": "user_skip"}).json()
     assert payload["cursor"] == 1
     assert payload["advanced"] is True
+    # ADR-002: inside the asserted window a TS-skip is ONE lightweight next
+    # command, not a re-sent window and never a queue append.
+    assert fake_provider.skips == 1
+    assert len(fake_provider.play_windows) == 1   # only the start's window
+    assert fake_provider.queued == []
 
 
 def test_a_browser_player_reports_track_ends(client, fake_web_provider):
@@ -471,14 +485,23 @@ def test_advancing_a_cancelled_run_is_a_conflict(client, fake_provider):
     assert response.status_code == 409
 
 
-def test_a_failed_queue_prefetch_is_recorded_not_swallowed(client, fake_provider):
+def test_a_failed_play_surfaces_and_consumes_nothing(client, fake_provider):
+    """ADR-002 Auflage 1 at the API surface: a play the device refuses is an
+    error the caller sees, and the deck does not move.
+
+    (Replaces the pre-ADR-002 ``queue_failed`` test: there is no enqueue loop
+    left whose partial failure could need recording.)
+    """
     connect(client)
     run_id = deal(client)["run_id"]
-    fake_provider.fail_enqueue = True
-    client.post(f"/api/runs/{run_id}/start", json={"device_id": "dev1"})
+    fake_provider.fail_play = True
+    response = client.post(f"/api/runs/{run_id}/start", json={"device_id": "dev1"})
+    assert response.status_code >= 500        # the provider refusal is not hidden
 
-    events = client.get(f"/api/runs/{run_id}/events").json()["events"]
-    assert any(e["type"] == "queue_failed" for e in events)
+    assert client.get(f"/api/runs/{run_id}").json()["cursor"] == 0
+    fake_provider.fail_play = False
+    payload = client.post(f"/api/runs/{run_id}/start", json={"device_id": "dev1"}).json()
+    assert payload["cursor"] == 0             # same card, nothing was burnt
 
 
 def test_run_events_record_the_reason_for_every_move(client, fake_provider):

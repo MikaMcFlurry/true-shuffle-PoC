@@ -11,6 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings
 
 
@@ -24,8 +25,17 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # -- run behaviour -----------------------------------------------------
-    #: How many upcoming tracks to push into a provider queue ahead of time.
-    queue_buffer_size: int = 5
+    #: ADR-002: how many titles one play command hands to the service as its
+    #: uris window.  The service plays through the window on its own; True
+    #: Shuffle only speaks up again at the window boundary.  Conservative
+    #: default 250 — the documented body limit of PUT /play is unknown (live
+    #: measurement LT-13 before raising it).  The pre-ADR-002 name
+    #: ``QUEUE_BUFFER_SIZE`` is still read as an alias so existing deployments
+    #: do not break.
+    context_window_size: int = Field(
+        250,
+        validation_alias=AliasChoices("context_window_size", "queue_buffer_size"),
+    )
     #: Base interval for the server-side playback watcher.
     watcher_poll_seconds: float = 4.0
     #: How often to reconcile a Handoff-Mode deck against listening history.

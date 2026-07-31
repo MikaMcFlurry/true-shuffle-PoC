@@ -41,6 +41,7 @@ from providers.base import (
     MusicProvider,
     PlaybackControl,
     ProviderCapabilities,
+    ProviderError,
     ProviderNotConfigured,
     TokenBundle,
 )
@@ -109,7 +110,9 @@ class DemoProvider(MusicProvider):
         write_batch_size=100,
         read_page_size=_PAGE,
         requires_paid_tier=False,
-        supports_queue_prefetch=True,
+        # ADR-002: the demo device takes the whole uris window in one play call
+        # and plays through it by itself, exactly like Spotify's context.
+        supports_context_window=True,
         # The Spotify shape: the server can drive playback *and* read a
         # listening history, so both modes are demonstrable.
         supports_history_sync=True,
@@ -263,15 +266,45 @@ class DemoProvider(MusicProvider):
                    is_active=False),
         ]
 
-    async def play(self, token, *, track_id, device_id=None, position_ms=0) -> None:
-        self._current = track_id
+    async def play(
+        self, token, *, track_ids, offset_position=0, device_id=None, position_ms=0
+    ) -> None:
+        """Set the device's context to the uris window (ADR-002).
+
+        The window replaces whatever the device was lined up to do; the
+        remainder becomes the device's own line-up, which
+        :meth:`get_playback_state` walks through by itself — natural
+        transitions included, no further command needed.
+        """
+        if not track_ids:
+            raise ProviderError("demo: play braucht mindestens einen Titel")
+        if not 0 <= offset_position < len(track_ids):
+            raise ProviderError(
+                f"demo: offset position {offset_position} out of range"
+            )
+        self._current = track_ids[offset_position]
         self._started_at = time.monotonic() - (position_ms / 1000.0)
         self._paused = False
+        self._held_ms = 0
         self._device = device_id or self._device
         # An explicit play replaces whatever the device was lined up to do.
-        self._queue.clear()
+        self._queue = list(track_ids[offset_position + 1 :])
+
+    async def skip_next(self, token, *, device_id=None) -> None:
+        """Jump to the window's next title now (the TS-skip inside the window)."""
+        if self._queue:
+            self._current = self._queue.pop(0)
+            self._started_at = time.monotonic()
+        else:
+            # End of the window: sit at the end of the last title instead of
+            # inventing one — the same honesty as the played-through case.
+            self._started_at = time.monotonic() - (TRACK_MS / 1000.0)
+        self._paused = False
+        self._held_ms = 0
 
     async def enqueue(self, token, *, track_id, device_id=None) -> None:
+        # Deprecated (ADR-002): no True-Shuffle code path calls this any more;
+        # kept so the demo stays a faithful stand-in for the full contract.
         self._queue.append(track_id)
 
     async def pause(self, token, *, device_id=None) -> None:

@@ -167,8 +167,13 @@ class ProviderCapabilities:
     #: ``country`` and ``product`` from ``GET /me`` in February 2026.  The UI
     #: needs the difference to say "not available" instead of showing a gap.
     reports_account_tier: bool = True
-    #: The provider can be told to pre-queue upcoming tracks.
-    supports_queue_prefetch: bool = False
+    #: ADR-002: the provider's play command accepts a whole *uris window* (a
+    #: list of track ids plus an offset) and then plays through it on its own.
+    #: This replaced ``supports_queue_prefetch`` — True Shuffle no longer
+    #: touches the user's queue; the context window is the execution strategy.
+    #: True for remote-control services (Spotify, Demo), False for web players
+    #: (the page owns the pipeline and plays one title at a time).
+    supports_context_window: bool = False
     #: The provider's playback queue can be read back (Spotify:
     #: ``GET /me/player/queue``).  Reading is the only queue introspection the
     #: Spotify Web API has — the queue itself is append-only (no remove, clear
@@ -224,7 +229,7 @@ class ProviderCapabilities:
             "write_batch_size": self.write_batch_size,
             "requires_paid_tier": self.requires_paid_tier,
             "reports_account_tier": self.reports_account_tier,
-            "supports_queue_prefetch": self.supports_queue_prefetch,
+            "supports_context_window": self.supports_context_window,
             "supports_queue_read": self.supports_queue_read,
             "supports_controller_mode": self.supports_controller_mode,
             "supports_history_sync": self.supports_history_sync,
@@ -419,15 +424,44 @@ class MusicProvider(abc.ABC):
         self,
         token: TokenBundle,
         *,
-        track_id: str,
+        track_ids: List[str],
+        offset_position: int = 0,
         device_id: Optional[str] = None,
         position_ms: int = 0,
     ) -> None:
+        """Set the playback context to *track_ids*, starting at *offset_position*.
+
+        ADR-002: ONE call carries the whole uris window.  The service then
+        plays through the window on its own; within the window True Shuffle
+        sends no further command.  Single-title playback is the degenerate
+        case ``track_ids=[one_id]``.
+        """
         raise Unsupported(f"{self.capabilities.id} has no remote playback control")
+
+    async def skip_next(
+        self, token: TokenBundle, *, device_id: Optional[str] = None
+    ) -> None:
+        """Advance the player to the next item of its current context.
+
+        ADR-002: used for a TS-initiated skip while the provider is inside our
+        window — one lightweight command instead of re-sending the window.
+        Optional; callers fall back to :meth:`play` when this raises
+        :class:`Unsupported`.
+        """
+        raise Unsupported(f"{self.capabilities.id} cannot skip to the next item")
 
     async def enqueue(
         self, token: TokenBundle, *, track_id: str, device_id: Optional[str] = None
     ) -> None:
+        """Append one item to the provider's user queue.
+
+        .. deprecated:: ADR-002
+           True Shuffle no longer calls this anywhere — the additive queue
+           prefetch provably multiplied the queue (SP-008), and the user's
+           queue belongs to the user.  The method stays in the protocol only
+           so connectors can describe the capability honestly; do not build
+           new execution paths on it.
+        """
         raise Unsupported(f"{self.capabilities.id} has no remote queue")
 
     async def pause(

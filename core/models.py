@@ -217,6 +217,12 @@ class RunState(BaseModel):
     seed: Optional[int] = None
     created_at: str = ""
     updated_at: str = ""
+    #: ADR-002 (uris window): the cursor at which the *currently set* playback
+    #: window starts, or ``None`` when no window is known to be set (fresh
+    #: process, web-player run, drifted device).  In-memory only — populated by
+    #: :mod:`app.runs` from its per-process registry, never persisted: after a
+    #: restart the first start/advance simply asserts a fresh window.
+    window_anchor: Optional[int] = None
 
     @property
     def total(self) -> int:

@@ -368,10 +368,26 @@ async def test_spotify_reports_an_empty_player_as_idle(stub):
     assert (await SpotifyProvider().get_playback_state(TOKEN)).is_idle is True
 
 
-async def test_spotify_play_sends_a_track_uri(stub):
+async def test_spotify_play_sends_the_uris_window_with_object_offset(stub):
+    # ADR-002: one PUT /play carries the whole uris window; the offset uses
+    # the documented object form {"position": N} (BASE-05).
     s = stub([None])
-    await SpotifyProvider().play(TOKEN, track_id="t1", device_id="dev1")
-    assert s.calls[0]["json_body"]["uris"] == ["spotify:track:t1"]
+    await SpotifyProvider().play(
+        TOKEN, track_ids=["t1", "t2", "t3"], offset_position=0, device_id="dev1"
+    )
+    assert s.calls[0]["json_body"]["uris"] == [
+        "spotify:track:t1", "spotify:track:t2", "spotify:track:t3",
+    ]
+    assert s.calls[0]["json_body"]["offset"] == {"position": 0}
+    assert s.calls[0]["params"]["device_id"] == "dev1"
+
+
+async def test_spotify_skip_next_posts_to_the_next_endpoint(stub):
+    # ADR-002: a TS-skip inside our window is one lightweight POST /next.
+    s = stub([None])
+    await SpotifyProvider().skip_next(TOKEN, device_id="dev1")
+    assert s.calls[0]["method"] == "POST"
+    assert s.calls[0]["url"].endswith("/me/player/next")
     assert s.calls[0]["params"]["device_id"] == "dev1"
 
 

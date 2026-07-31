@@ -31,16 +31,31 @@ from providers.base import (
     PlaybackControl,
     ProviderContentUnavailable,
     ProviderError,
+    Unsupported,
 )
 
 logger = logging.getLogger(__name__)
 
 #: Structured trail of every command we send to a provider player.  One
-#: correlation id per :func:`_apply` call groups the play with its prefetch
-#: appends, so a live log can be lined up 1:1 against ``/me/player/queue``
-#: snapshots.  Never logs tokens, account ids or device names — run ids,
-#: cursors and track ids only (track ids are public catalogue data).
+#: correlation id per :func:`_apply` call, so a live log can be lined up 1:1
+#: against playback observations.  Never logs tokens, account ids or device
+#: names — run ids, cursors and track ids only (track ids are public
+#: catalogue data).
 _command_log = logging.getLogger("ts.provider.command")
+
+#: ADR-002 window tracking: ``run_id → cursor`` at which the last uris window
+#: was asserted on the provider.  Deliberately in-memory (like the advance
+#: locks): after a restart nothing is known to be set, so the first
+#: start/advance simply asserts a fresh window.
+_window_anchors: Dict[int, int] = {}
+
+
+def _remember_window(run_id: int, anchor: int) -> None:
+    _window_anchors[run_id] = anchor
+
+
+def _forget_window(run_id: int) -> None:
+    _window_anchors.pop(run_id, None)
 
 ProgressFn = Callable[[int, int, str], Awaitable[None]]
 
@@ -184,6 +199,8 @@ def _to_state(row: Dict[str, Any]) -> RunState:
         seed=row.get("seed"),
         created_at=row.get("created_at", ""),
         updated_at=row.get("updated_at", ""),
+        # ADR-002: which window this process last asserted, if any.
+        window_anchor=_window_anchors.get(row["id"]),
     )
 
 
@@ -203,48 +220,63 @@ async def _apply(
     *,
     device_id: Optional[str],
     force_override: bool = False,
-) -> None:
+) -> Optional[str]:
     """Push a decision to a REMOTE_DEVICE provider.
 
-    Web-player providers get the decision as JSON instead; the browser does the
-    playing, so there is nothing to push.
+    ADR-002: at most ONE command leaves here — either a play carrying the
+    whole uris window, or the lightweight ``next`` for a TS skip inside the
+    window.  ``POST /queue`` is never used any more; the user's queue belongs
+    to the user.  Returns which command was sent (``"play"`` / ``"skip"``) so
+    the caller can track the asserted window, or ``None``.
+
+    Web-player providers get the decision as JSON instead; the browser does
+    the playing, so there is nothing to push.
     """
     caps = session.provider.capabilities
     if caps.playback is not PlaybackControl.REMOTE_DEVICE:
-        return
+        return None
     if not decision.play_track_id:
-        return
+        return None
 
     correlation_id = uuid.uuid4().hex[:8]
+    window = decision.play_window or [decision.play_track_id]
 
     if decision.needs_override or force_override:
         _command_log.info(
-            "corr=%s run=%s kind=play target=%s cursor=%s",
-            correlation_id, state.run_id, decision.play_track_id, state.cursor,
+            "corr=%s run=%s kind=play target=%s cursor=%s window=%s offset=0",
+            correlation_id, state.run_id, decision.play_track_id,
+            decision.cursor, len(window),
         )
         await session.provider.play(
-            session.token, track_id=decision.play_track_id, device_id=device_id
+            session.token, track_ids=window, offset_position=0,
+            device_id=device_id,
         )
+        return "play"
 
-    if caps.supports_queue_prefetch and decision.queue_track_ids:
-        for track_id in decision.queue_track_ids:
+    if decision.use_skip_next:
+        try:
             _command_log.info(
-                "corr=%s run=%s kind=enqueue target=%s cursor=%s",
-                correlation_id, state.run_id, track_id, state.cursor,
+                "corr=%s run=%s kind=next target=%s cursor=%s",
+                correlation_id, state.run_id, decision.play_track_id,
+                decision.cursor,
             )
-            try:
-                await session.provider.enqueue(
-                    session.token, track_id=track_id, device_id=device_id
-                )
-            except ProviderError as exc:
-                # A queue slot that fails is recoverable — the watcher will
-                # hard-override when the track actually comes up.  Record it
-                # instead of swallowing it, which is what the old code did.
-                logger.warning("queue prefetch failed for %s: %s", track_id, exc)
-                await db.record_event(
-                    state.run_id, "queue_failed", cursor=state.cursor,
-                    detail={"track_id": track_id, "error": str(exc)},
-                )
+            await session.provider.skip_next(session.token, device_id=device_id)
+            return "skip"
+        except Unsupported:
+            # No skip command on this provider — assert the window instead.
+            _command_log.info(
+                "corr=%s run=%s kind=play target=%s cursor=%s window=%s offset=0 "
+                "note=skip_next-unsupported",
+                correlation_id, state.run_id, decision.play_track_id,
+                decision.cursor, len(window),
+            )
+            await session.provider.play(
+                session.token, track_ids=window, offset_position=0,
+                device_id=device_id,
+            )
+            return "play"
+
+    return None
 
 
 async def start(
@@ -255,7 +287,7 @@ async def start(
 ) -> Decision:
     """Begin or resume a run and, for remote providers, take over the device."""
     settings = get_settings()
-    decision = engine.start(state, queue_buffer=settings.queue_buffer_size)
+    decision = engine.start(state, window_size=settings.context_window_size)
 
     if decision.completed:
         await _finish(state)
@@ -269,8 +301,11 @@ async def start(
         await db.update_run(state.run_id, device_id=device_id)
         state.device_id = device_id
 
-    await _apply(session, state, decision, device_id=device_id or state.device_id,
-                 force_override=True)
+    command = await _apply(session, state, decision,
+                           device_id=device_id or state.device_id,
+                           force_override=True)
+    if command == "play":
+        _remember_window(state.run_id, state.cursor)
     await db.record_event(
         state.run_id, "started", cursor=state.cursor,
         detail={"device_id": device_id or state.device_id, "note": decision.note},
@@ -289,20 +324,29 @@ async def advance(
     """Consume the current card and move to the next one."""
     settings = get_settings()
     decision = engine.advance(
-        state, reason=reason, queue_buffer=settings.queue_buffer_size, steps=steps
+        state, reason=reason, window_size=settings.context_window_size, steps=steps
     )
 
-    await db.update_run(state.run_id, cursor=decision.cursor)
-    state.cursor = decision.cursor
-
     if decision.completed:
+        await db.update_run(state.run_id, cursor=decision.cursor)
+        state.cursor = decision.cursor
         await _finish(state)
         await db.record_event(
             state.run_id, "completed", cursor=decision.cursor, reason=reason.value
         )
         return decision
 
-    await _apply(session, state, decision, device_id=device_id or state.device_id)
+    # ADR-002 Auflage 1: the command goes out BEFORE the cursor is persisted.
+    # A device that is gone (404 / no active device) fails the command, the
+    # cursor stays put, and no card is consumed — the watcher then sees idle
+    # (Zustand D) instead of a silently burnt title.
+    command = await _apply(session, state, decision,
+                           device_id=device_id or state.device_id)
+    await db.update_run(state.run_id, cursor=decision.cursor)
+    state.cursor = decision.cursor
+    if command == "play":
+        _remember_window(state.run_id, decision.cursor)
+
     await db.record_event(
         state.run_id, "advanced", cursor=decision.cursor, reason=reason.value,
         detail={"track_id": decision.play_track_id},
@@ -314,11 +358,15 @@ async def previous(
     session: Session, state: RunState, *, device_id: Optional[str] = None
 ) -> Decision:
     settings = get_settings()
-    decision = engine.previous(state, queue_buffer=settings.queue_buffer_size)
+    decision = engine.previous(state, window_size=settings.context_window_size)
+    # Same order as advance(): command first, cursor second (ADR-002 Auflage 1).
+    command = await _apply(session, state, decision,
+                           device_id=device_id or state.device_id,
+                           force_override=True)
     await db.update_run(state.run_id, cursor=decision.cursor)
     state.cursor = decision.cursor
-    await _apply(session, state, decision, device_id=device_id or state.device_id,
-                 force_override=True)
+    if command == "play":
+        _remember_window(state.run_id, decision.cursor)
     await db.record_event(state.run_id, "previous", cursor=decision.cursor)
     return decision
 
@@ -374,12 +422,14 @@ async def cancel(session: Session, state: RunState) -> None:
         with contextlib.suppress(ProviderError):
             await session.provider.pause(session.token, device_id=state.device_id)
     await db.update_run(state.run_id, status=RunStatus.CANCELLED.value)
+    _forget_window(state.run_id)
     await db.record_event(state.run_id, "cancelled", cursor=state.cursor)
 
 
 async def _finish(state: RunState) -> None:
     await db.update_run(state.run_id, status=RunStatus.COMPLETED.value)
     state.status = RunStatus.COMPLETED
+    _forget_window(state.run_id)
 
 
 # ---------------------------------------------------------------------------

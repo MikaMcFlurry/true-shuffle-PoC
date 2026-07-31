@@ -516,7 +516,9 @@ async def _decision_payload(session, run_id: int, user_id: int, decision) -> Dic
             "completed": decision.completed,
             "advanced": decision.advanced,
             "play_track_id": decision.play_track_id,
-            "queue_track_ids": decision.queue_track_ids,
+            # ADR-002: the uris window replaced the queue prefetch; empty when
+            # the already-set context simply keeps playing.
+            "play_window": decision.play_window,
             "watcher": watcher.status(run_id),
         }
     )

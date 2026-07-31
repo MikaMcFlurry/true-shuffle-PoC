@@ -60,6 +60,19 @@ def _isolated_settings(monkeypatch, tmp_path):
     get_settings.cache_clear()
 
 
+@pytest.fixture(autouse=True)
+def _fresh_window_registry():
+    """ADR-002: the window-anchor registry is process-global (like the advance
+    locks), but run ids restart at 1 with every per-test database — clear it
+    so a stale anchor from one test cannot leak "a window is set" into the
+    next test's run of the same id."""
+    from app import runs
+
+    runs._window_anchors.clear()
+    yield
+    runs._window_anchors.clear()
+
+
 @pytest_asyncio.fixture
 async def database():
     """An initialised database, torn down afterwards."""
@@ -94,7 +107,9 @@ class FakeProvider(MusicProvider):
             playback=playback,
             write_batch_size=10,
             read_page_size=4,
-            supports_queue_prefetch=playback is PlaybackControl.REMOTE_DEVICE,
+            # ADR-002: remote providers take the whole uris window in one play
+            # call (supports_queue_prefetch was retired with the queue path).
+            supports_context_window=playback is PlaybackControl.REMOTE_DEVICE,
             supports_history_sync=history_sync,
             reports_account_tier=reports_account_tier,
         )
@@ -105,10 +120,16 @@ class FakeProvider(MusicProvider):
             for i in range(12)
         ]
         self.played: List[str] = []
+        #: ADR-002: every play call's full uris window, newest last.
+        self.play_windows: List[List[str]] = []
+        #: How often the lightweight skip command was used (TS-skip in window).
+        self.skips: int = 0
+        #: Still recorded so tests can PROVE the app never enqueues (ADR-002).
         self.queued: List[str] = []
         self.created: Dict[str, List[str]] = {}
         self.state = PlaybackState(is_idle=True)
-        self.fail_enqueue = False
+        #: Makes the next play command fail, the way a vanished device does.
+        self.fail_play = False
         #: What ``get_recently_played`` will report, newest first.
         self.history: List[str] = []
 
@@ -180,17 +201,28 @@ class FakeProvider(MusicProvider):
     async def list_devices(self, token) -> List[Device]:
         return [Device(id="dev1", name="Fake Speaker", kind="speaker", is_active=True)]
 
-    async def play(self, token, *, track_id, device_id=None, position_ms=0) -> None:
-        self.played.append(track_id)
+    async def play(
+        self, token, *, track_ids, offset_position=0, device_id=None, position_ms=0
+    ) -> None:
+        # ADR-002 signature: one call carries the whole uris window.
+        if self.fail_play:
+            from providers.base import ProviderError
+            raise ProviderError("fake: no active device")
+        current = track_ids[offset_position]
+        self.play_windows.append(list(track_ids))
+        self.played.append(current)
         self.state = PlaybackState(
-            is_playing=True, track_id=track_id, progress_ms=0,
+            is_playing=True, track_id=current, progress_ms=0,
             duration_ms=180_000, device_id=device_id,
         )
 
+    async def skip_next(self, token, *, device_id=None) -> None:
+        # ADR-002: the lightweight TS-skip inside an asserted window.
+        self.skips += 1
+
     async def enqueue(self, token, *, track_id, device_id=None) -> None:
-        if self.fail_enqueue:
-            from providers.base import ProviderError
-            raise ProviderError("fake: queue is full")
+        # Deprecated (ADR-002): the app must never call this — tests assert
+        # ``queued == []`` to pin exactly that.
         self.queued.append(track_id)
 
     async def pause(self, token, *, device_id=None) -> None:

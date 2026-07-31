@@ -96,11 +96,14 @@ def test_all_three_support_live_mode():
         assert provider.capabilities.supports_controller_mode
 
 
-def test_only_spotify_can_prefetch_a_queue():
-    """Apple and YouTube have no third-party queue to fill ahead of time."""
-    assert SpotifyProvider().capabilities.supports_queue_prefetch is True
-    assert AppleMusicProvider().capabilities.supports_queue_prefetch is False
-    assert YouTubeMusicProvider().capabilities.supports_queue_prefetch is False
+def test_only_spotify_takes_a_context_window():
+    """ADR-002: ``supports_queue_prefetch`` was retired with the additive
+    queue path (SP-008) — the uris window is the execution strategy now.
+    Apple and YouTube play in the browser, one title at a time, so their
+    connectors have no server-side context to hand a window to."""
+    assert SpotifyProvider().capabilities.supports_context_window is True
+    assert AppleMusicProvider().capabilities.supports_context_window is False
+    assert YouTubeMusicProvider().capabilities.supports_context_window is False
 
 
 # ---------------------------------------------------------------------------
@@ -268,8 +271,9 @@ def test_apple_has_no_remote_playback_control():
 
     with pytest.raises(Unsupported):
         import asyncio
+        # ADR-002 signature: play takes the uris window (here one title).
         asyncio.run(AppleMusicProvider().play(TokenBundle(access_token="t"),
-                                              track_id="1"))
+                                              track_ids=["1"]))
 
 
 # ---------------------------------------------------------------------------

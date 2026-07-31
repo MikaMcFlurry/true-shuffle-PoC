@@ -78,7 +78,8 @@ async def test_live_mode_reports_a_finished_track_so_the_deck_advances(demo, mon
     clock = {"t": 1_000.0}
     monkeypatch.setattr("providers.demo.time.monotonic", lambda: clock["t"])
 
-    await demo.play(TOKEN, track_id="demo-00000", device_id="demo-speaker")
+    # ADR-002 play signature: one call carries the (here: one-title) window.
+    await demo.play(TOKEN, track_ids=["demo-00000"], device_id="demo-speaker")
     state = await demo.get_playback_state(TOKEN)
     assert state.is_playing and state.progress_ms == 0
 
@@ -114,20 +115,19 @@ def test_it_is_shaped_like_spotify_so_both_modes_are_demonstrable(demo):
     assert demo.capabilities.live_mode_needs_open_tab is False
 
 
-async def test_the_demo_device_plays_through_its_queue_by_itself(demo, monkeypatch):
+async def test_the_demo_device_plays_through_its_window_by_itself(demo, monkeypatch):
     """The property Live Mode depends on.
 
-    true-shuffle does not push the next track on a timer: it queues ahead, the
-    service's own device plays through, and the watcher notices the device has
-    moved on. A demo device that sat on one track forever would show a run
-    that never advances — which is exactly what happened before this.
+    true-shuffle does not push the next track on a timer: ADR-002 hands the
+    device the whole uris window in ONE play call, the service's own device
+    plays through it, and the watcher notices the device has moved on. A demo
+    device that sat on one track forever would show a run that never advances
+    — which is exactly what happened before this.
     """
     clock = {"t": 0.0}
     monkeypatch.setattr("providers.demo.time.monotonic", lambda: clock["t"])
 
-    await demo.play(TOKEN, track_id="a")
-    await demo.enqueue(TOKEN, track_id="b")
-    await demo.enqueue(TOKEN, track_id="c")
+    await demo.play(TOKEN, track_ids=["a", "b", "c"])
 
     assert (await demo.get_playback_state(TOKEN)).track_id == "a"
 
@@ -137,8 +137,29 @@ async def test_the_demo_device_plays_through_its_queue_by_itself(demo, monkeypat
     clock["t"] += TRACK_MS / 1000
     assert (await demo.get_playback_state(TOKEN)).track_id == "c"
 
-    # Queue exhausted: it holds on the last card instead of inventing one.
+    # Window exhausted: it holds on the last card instead of inventing one.
     clock["t"] += TRACK_MS / 1000 * 5
+    end = await demo.get_playback_state(TOKEN)
+    assert end.track_id == "c"
+    assert end.progress_ms == TRACK_MS
+
+
+async def test_the_demo_device_takes_a_ts_skip_as_one_next_command(demo, monkeypatch):
+    """ADR-002: a TS-skip inside the window is skip_next, not a fresh window."""
+    clock = {"t": 0.0}
+    monkeypatch.setattr("providers.demo.time.monotonic", lambda: clock["t"])
+
+    await demo.play(TOKEN, track_ids=["a", "b", "c"])
+    clock["t"] += 3
+    await demo.skip_next(TOKEN)
+
+    state = await demo.get_playback_state(TOKEN)
+    assert state.track_id == "b"
+    assert state.progress_ms == 0            # the skip starts the next title fresh
+
+    # At the end of the window a skip sits at the end instead of inventing.
+    await demo.skip_next(TOKEN)
+    await demo.skip_next(TOKEN)
     end = await demo.get_playback_state(TOKEN)
     assert end.track_id == "c"
     assert end.progress_ms == TRACK_MS
@@ -148,8 +169,7 @@ async def test_pausing_the_demo_device_stops_its_clock(demo, monkeypatch):
     clock = {"t": 0.0}
     monkeypatch.setattr("providers.demo.time.monotonic", lambda: clock["t"])
 
-    await demo.play(TOKEN, track_id="a")
-    await demo.enqueue(TOKEN, track_id="b")
+    await demo.play(TOKEN, track_ids=["a", "b"])
     clock["t"] += 3
     await demo.pause(TOKEN)
 

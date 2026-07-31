@@ -185,7 +185,8 @@ class SpotifyProvider(MusicProvider):
         requires_paid_tier=True,
         # country and product left GET /me in February 2026.
         reports_account_tier=False,
-        supports_queue_prefetch=True,
+        # ADR-002: PUT /me/player/play takes the whole uris window in one call.
+        supports_context_window=True,
         supports_queue_read=True,
         supports_history_sync=True,
         brand_color="#1DB954",
@@ -588,11 +589,20 @@ class SpotifyProvider(MusicProvider):
         self,
         token: TokenBundle,
         *,
-        track_id: str,
+        track_ids: List[str],
+        offset_position: int = 0,
         device_id: Optional[str] = None,
         position_ms: int = 0,
     ) -> None:
-        body: Dict[str, Any] = {"uris": [f"spotify:track:{track_id}"]}
+        """``PUT /me/player/play`` with the whole uris window (ADR-002).
+
+        ``offset`` uses the documented object form ``{"position": N}``; an
+        out-of-range position is Spotify's error to raise, not ours to clamp.
+        """
+        body: Dict[str, Any] = {
+            "uris": [f"spotify:track:{tid}" for tid in track_ids],
+            "offset": {"position": offset_position},
+        }
         if position_ms:
             body["position_ms"] = position_ms
         await self._player(
@@ -602,9 +612,23 @@ class SpotifyProvider(MusicProvider):
             expect_json=False,
         )
 
+    async def skip_next(
+        self, token: TokenBundle, *, device_id: Optional[str] = None
+    ) -> None:
+        """``POST /me/player/next`` — the lightweight TS-skip inside our window."""
+        await self._player(
+            token, "POST", "/me/player/next",
+            params={"device_id": device_id} if device_id else None,
+            expect_json=False,
+        )
+
     async def enqueue(
         self, token: TokenBundle, *, track_id: str, device_id: Optional[str] = None
     ) -> None:
+        # Deprecated (ADR-002): no True-Shuffle code path calls this any more —
+        # the additive prefetch multiplied the queue (SP-008) and the queue is
+        # append-only, so damage was irreversible.  Kept only as an honest
+        # description of what the API offers.
         params: Dict[str, Any] = {"uri": f"spotify:track:{track_id}"}
         if device_id:
             params["device_id"] = device_id

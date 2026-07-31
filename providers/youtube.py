@@ -89,7 +89,7 @@ class YouTubeMusicProvider(MusicProvider):
         write_batch_size=1,          # playlistItems.insert takes one item
         read_page_size=_PAGE,
         requires_paid_tier=False,
-        supports_queue_prefetch=False,
+        supports_context_window=False,
         # YouTube removed watch-history from the Data API years ago, and there
         # is no supported replacement.  Declaring this False is what stops the
         # UI from promising tab-free progress tracking here.

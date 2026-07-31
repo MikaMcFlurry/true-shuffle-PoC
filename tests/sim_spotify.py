@@ -492,7 +492,9 @@ class SimulatedSpotifyProvider(MusicProvider):
             read_page_size=50,
             requires_paid_tier=True,
             reports_account_tier=False,
-            supports_queue_prefetch=True,
+            # ADR-002: the uris window is the execution strategy; the queue is
+            # never written any more (only read, forensically).
+            supports_context_window=True,
             supports_queue_read=True,
         )
 
@@ -537,13 +539,24 @@ class SimulatedSpotifyProvider(MusicProvider):
         return [Device(id="sim-device", name="Simulated Device",
                        kind="computer", is_active=True)]
 
-    async def play(self, token, *, track_id, device_id=None, position_ms=0) -> None:
+    async def play(
+        self, token, *, track_ids, offset_position=0, device_id=None, position_ms=0
+    ) -> None:
+        # ADR-002: the whole uris window in one PUT /play, offset in the
+        # documented object form — exactly what providers/spotify.py sends.
         self.player.play(
-            uris=[f"spotify:track:{track_id}"],
+            uris=[f"spotify:track:{tid}" for tid in track_ids],
+            offset={"position": offset_position},
             position_ms=position_ms, device_id=device_id,
         )
 
+    async def skip_next(self, token, *, device_id=None) -> None:
+        # POST /me/player/next — the lightweight TS-skip inside the window.
+        self.player.next()
+
     async def enqueue(self, token, *, track_id, device_id=None) -> None:
+        # Deprecated (ADR-002): no app code path calls this any more; kept so
+        # the simulator can still prove that fact (enqueue count stays 0).
         self.player.add_to_queue(f"spotify:track:{track_id}", device_id=device_id)
 
     async def pause(self, token, *, device_id=None) -> None:

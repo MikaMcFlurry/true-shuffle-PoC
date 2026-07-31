@@ -73,7 +73,7 @@ class UnofficialYouTubeMusicProvider(MusicProvider):
         write_batch_size=100,
         read_page_size=_PAGE,
         requires_paid_tier=False,
-        supports_queue_prefetch=False,
+        supports_context_window=False,
         # The internal API does expose listening history, so unlike the
         # official connector a Handoff deck here can be tracked with nothing
         # of ours open.

@@ -60,7 +60,7 @@ class AppleMusicProvider(MusicProvider):
         write_batch_size=_WRITE_BATCH,
         read_page_size=_PAGE,
         requires_paid_tier=True,
-        supports_queue_prefetch=False,
+        supports_context_window=False,
         supports_history_sync=True,
         brand_color="#FA243C",
         notes=[

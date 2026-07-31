@@ -160,7 +160,7 @@ class Watcher:
                         verdict = await runs.sync_from_history(session, fresh)
                 except (AccountNotConnected, ProviderError) as exc:
                     logger.warning("history watcher %s: %s", run_id, exc)
-                    await asyncio.sleep(settings.history_poll_seconds * 2)
+                    await asyncio.sleep(_backoff(exc, settings.history_poll_seconds))
                     continue
 
                 if verdict is not None and verdict.advanced:
@@ -204,11 +204,15 @@ class Watcher:
                     playback = await session.provider.get_playback_state(session.token)
                 except (AccountNotConnected, ProviderError) as exc:
                     logger.warning("watcher %s: %s", run_id, exc)
-                    await asyncio.sleep(settings.watcher_poll_seconds * 2)
+                    await asyncio.sleep(_backoff(exc, settings.watcher_poll_seconds))
                     continue
 
+                # window_size lets reconcile recognise the AN-2 window-end
+                # patterns (ADR-002 Auflage 2); state.window_anchor carries
+                # which window this process last asserted.
                 verdict = engine.reconcile(
-                    state, playback, previous_state=previous_state
+                    state, playback, previous_state=previous_state,
+                    window_size=settings.context_window_size,
                 )
                 handle = self._handles.get(run_id)
 
@@ -240,21 +244,33 @@ class Watcher:
                     )
 
                 if verdict.should_advance:
-                    async with runs.advance_lock(run_id):
-                        # Re-read under the lock: a browser event may have
-                        # advanced this run while we were polling.
-                        fresh = await runs.get_state(run_id, user_id)
-                        if (
-                            fresh is not None
-                            and fresh.status is RunStatus.ACTIVE
-                            and fresh.cursor == state.cursor
-                        ):
-                            assert verdict.reason is not None
-                            await runs.advance(
-                                session, fresh, reason=verdict.reason,
-                                device_id=fresh.device_id,
-                            )
-                            state = fresh
+                    try:
+                        async with runs.advance_lock(run_id):
+                            # Re-read under the lock: a browser event may have
+                            # advanced this run while we were polling.
+                            fresh = await runs.get_state(run_id, user_id)
+                            if (
+                                fresh is not None
+                                and fresh.status is RunStatus.ACTIVE
+                                and fresh.cursor == state.cursor
+                            ):
+                                assert verdict.reason is not None
+                                await runs.advance(
+                                    session, fresh, reason=verdict.reason,
+                                    device_id=fresh.device_id,
+                                )
+                                state = fresh
+                    except ProviderError as exc:
+                        # ADR-002 Auflagen 1 + 5: a command that failed (device
+                        # gone → 404, quota → 429) consumed nothing — runs.advance
+                        # persists the cursor only after the command landed.
+                        # Back off (respecting Retry-After when the provider
+                        # sent one) and re-poll instead of doubling commands.
+                        logger.warning("watcher %s: advance failed: %s", run_id, exc)
+                        await asyncio.sleep(
+                            _backoff(exc, settings.watcher_poll_seconds)
+                        )
+                        continue
 
                 previous_state = playback
                 if handle is not None:
@@ -270,6 +286,22 @@ class Watcher:
             logger.exception("watcher for run %s crashed", run_id)
         finally:
             self._handles.pop(run_id, None)
+
+
+def _backoff(exc: BaseException, base: float) -> float:
+    """How long to sleep after a provider failure.
+
+    ADR-002 Auflage 5: a 429 carries ``Retry-After`` — respect it instead of
+    hammering.  ``providers.http`` already waits Retry-After out for transient
+    429s inside one request; what surfaces here is the give-up case (or a
+    simulator-injected 429 whose ``retry_after_s`` rides on the exception).
+    """
+    retry_after = getattr(exc, "retry_after_s", None)
+    try:
+        retry_after = float(retry_after) if retry_after is not None else 0.0
+    except (TypeError, ValueError):
+        retry_after = 0.0
+    return max(retry_after, base * 2, MIN_SLEEP)
 
 
 def _next_delay(
