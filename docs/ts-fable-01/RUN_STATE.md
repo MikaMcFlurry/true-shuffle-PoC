@@ -15,7 +15,7 @@ Letzte Aktualisierung: 2026-07-31 ~18:40 UTC · Branch `claude/true-shuffle-fabl
 | WP3-A | Schema v3 + Migrations-Runner M001–M010 (M009 gated) | ✅ committed `70d7b81`, 441 Tests grün |
 | ADR-003 | 10 Produktfragen entschieden | ✅ `2b74e2e` |
 | WP3-C | Reine Auswahl-Engine core/selection.py nach Vertrag `worknotes/WP3C_SELECTION_CONTRACT.md` | ✅ committed `7452790`, 57 Tests; Angriffspunkte für Property-Lauf im Agentenbericht (Quota-Fenster, Relaxations-Kanten, Float-Gewichte, P1×keep_open) |
-| WP3-D1 | Import/Snapshot/Sync-Dienst (UC-03/04) — app/library_service.py, API, minimale library.html-Verdrahtung | 🔄 Agent läuft; Teilstand bereits im Tree (10 Tests grün), uncommitted |
+| WP3-D1 | Import/Snapshot/Sync-Dienst (UC-03/04) — app/library_service.py, API, minimale library.html-Verdrahtung | ✅ final in `9b10db8` (WIP-Commit = Endstand; 10 Service-Tests, 4 API-Routen, apply_sync_to_run-Vertrag für D3 im Docstring fixiert). Phase-4-Notiz: Browser-Vollsuite zeigt sporadische Fixture-Setup-Flakiness bei Ganz-Modul-Läufen (Einzelläufe grün). |
 | WP3-D2 | Run-Lifecycle v3: explizite Run-ID statt find_live_run-Auto-Resume, Stop/Reset(cycle++)/Archiv-Delete, mehrere Runs, Export v3, latest_completed_order auf (Playlist,Config) einschränken, previous()=Replay | ⏳ nach D1 |
 | WP3-D3 | Selection-Integration (run_plan/run_selections, deterministische event_keys F5), Configs/Favoriten/Ausschlüsse-API, Skip-/Manual-Use-/NewTracks-Policies (F8-Zustandsautomat im Watcher), apply_sync_to_run | ⏳ nach C+D2 |
 | WP3-D4 | Frontend-Verdrahtung: Builder/Configs echt statt Vorschau, Dashboard mehrere Runs, Player Policy-UI/Zustand C, Progress/History mit Trackdaten | ⏳ nach D3 |
