@@ -61,11 +61,18 @@ class Decision:
 _LIVE_STATUSES = (RunStatus.ACTIVE, RunStatus.PAUSED)
 
 
-#: What each terminal status means to the listener. These reach the browser,
+#: What each non-live status means to the listener. These reach the browser,
 #: so they are written in the interface's language rather than the log's.
+#: 'stopped' (F1, ADR-003) is deliberately NOT terminal: it is not live — the
+#: watcher is gone, the device released — but its text invites resumption
+#: instead of declaring the run dead.
 _TERMINAL_TEXT = {
     RunStatus.COMPLETED: "Dieses Fach ist durchgehört — leg ein neues an.",
     RunStatus.CANCELLED: "Dieser Lauf wurde beendet.",
+    RunStatus.STOPPED: (
+        "Dieser Lauf ist gestoppt — setze ihn fort, um genau an dieser "
+        "Karte weiterzuhören."
+    ),
 }
 
 
@@ -75,6 +82,21 @@ def ensure_live(run: RunState) -> None:
         raise RunError(
             _TERMINAL_TEXT.get(run.status, "Dieser Lauf kann nicht weiterlaufen.")
         )
+
+
+def resume_status(run: RunState) -> RunStatus:
+    """The status a resume request results in (F1: ``stopped → active``).
+
+    Pure decision, no mutation: ``stopped`` and the live statuses resume to
+    ``active``; the truly terminal statuses (completed / cancelled) raise with
+    their listener-facing text — resuming them is what ``ensure_live`` has
+    always refused.
+    """
+    if run.status is RunStatus.STOPPED or run.status in _LIVE_STATUSES:
+        return RunStatus.ACTIVE
+    raise RunError(
+        _TERMINAL_TEXT.get(run.status, "Dieser Lauf kann nicht weiterlaufen.")
+    )
 
 
 # ---------------------------------------------------------------------------

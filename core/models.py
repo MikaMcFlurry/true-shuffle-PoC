@@ -31,6 +31,10 @@ class RunMode(str, Enum):
 class RunStatus(str, Enum):
     ACTIVE = "active"
     PAUSED = "paused"
+    #: F1 (ADR-003): a deliberate session end.  Not live (watcher deregisters,
+    #: device is released), but fully resumable — the run reappears under
+    #: "Fortsetzen" and ``resume`` lifts it back to ACTIVE at the same card.
+    STOPPED = "stopped"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 

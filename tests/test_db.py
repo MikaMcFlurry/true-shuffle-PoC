@@ -18,6 +18,13 @@ async def test_init_creates_the_v2_schema(database):
     tables = {row[0] for row in await cur.fetchall()}
     assert {"users", "provider_accounts", "runs", "run_events",
             "skipped_tracks", "jobs"} <= tables
+    # Schema v3 (WP3-A): init_db always runs the migration chain, so a fresh
+    # database lands on the full v3 table set as well.
+    assert {"schema_migrations", "tracks", "playlists", "playlist_snapshots",
+            "snapshot_items", "snapshot_diffs", "run_configs",
+            "run_config_versions", "run_rule_bindings", "run_tracks",
+            "run_plan", "run_selections", "provider_commands",
+            "provider_observations", "deletion_requests"} <= tables
 
 
 async def test_get_db_before_init_raises():
@@ -104,12 +111,30 @@ async def make_run(user_id: int, **kw) -> int:
     return await db.create_run(**params)
 
 
-async def test_only_one_live_run_per_playlist_and_mode(database):
-    """Two live decks for the same playlist would mean two conflicting orders."""
+async def test_two_live_runs_of_the_same_playlist_are_allowed(database):
+    """RUN-01 acceptance evidence (replaces
+    ``test_only_one_live_run_per_playlist_and_mode``).
+
+    UC-16 / ADR-003: several decks of the same playlist may be live side by
+    side — v2's ``idx_runs_one_live`` enforced the opposite and was removed
+    in M005.  The *real* conflict is two runs fighting over one playback
+    device, so what v3 enforces instead is: at most ONE actively playing
+    controller run per (user, provider) — ``idx_runs_one_playing``.
+    """
     user_id = await db.get_or_create_user("local-1")
-    await make_run(user_id)
+    first = await make_run(user_id)                       # active controller
+    second = await make_run(user_id, status="paused")     # same playlist+mode, live
+    assert first != second
+
+    # The one constraint that remains: a SECOND actively playing controller
+    # run for the same (user, provider) — even on another playlist — is
+    # rejected, because two runs cannot drive one device (SP-003).
     with pytest.raises(aiosqlite.IntegrityError):
-        await make_run(user_id)
+        await make_run(user_id, playlist_id="pl2")
+
+    # Another provider or utility mode does not touch that slot.
+    await make_run(user_id, provider="apple")
+    await make_run(user_id, playlist_id="pl2", mode="utility")
 
 
 async def test_many_completed_runs_of_the_same_playlist_are_allowed(database):
@@ -122,11 +147,29 @@ async def test_many_completed_runs_of_the_same_playlist_are_allowed(database):
     assert len(runs) == 3
 
 
-async def test_a_cancelled_run_frees_the_slot(database):
+async def test_cancelling_one_run_leaves_its_siblings_untouched(database):
+    """Run-isolation invariant (replaces ``test_a_cancelled_run_frees_the_slot``).
+
+    There is no per-playlist "slot" any more (UC-16, Blueprint §5.1): closing
+    a run must only end THAT run and leave other live runs of the same
+    playlist alone.  What cancelling does free is the one-active-controller
+    slot per (user, provider) — the constraint that replaced it.
+    """
     user_id = await db.get_or_create_user("local-1")
-    run_id = await make_run(user_id)
-    await db.close_live_runs(user_id, "spotify", "pl1", "controller")
-    assert await make_run(user_id) != run_id
+    active = await make_run(user_id)                      # active controller
+    parked = await make_run(user_id, status="paused")     # sibling, same playlist
+
+    await db.close_live_runs(user_id, "spotify", "pl1", "controller",
+                             run_id=active)
+
+    closed = await db.get_run(active, user_id=user_id)
+    sibling = await db.get_run(parked, user_id=user_id)
+    assert closed["status"] == "cancelled"
+    assert sibling["status"] == "paused"        # untouched — isolation holds
+
+    # The controller slot is free again: a fresh active run may start.
+    fresh = await make_run(user_id)
+    assert fresh not in (active, parked)
 
 
 async def test_the_same_playlist_can_run_on_two_services_at_once(database):

@@ -1,15 +1,18 @@
 """Async SQLite persistence.
 
-Schema v2 is multi-provider: one local user can connect Spotify, Apple Music
-and YouTube Music side by side, and every run belongs to exactly one of those
-accounts.
+Schema v3 (WP3-A): the v2 baseline below is only ever executed on an EMPTY
+database; everything after that is the job of the versioned migration runner
+in :mod:`app.migrations` (M001–M010).  Re-running the baseline script on a
+migrated database would silently recreate ``idx_runs_one_live`` via
+``CREATE INDEX IF NOT EXISTS`` and re-block UC-16 — Blueprint risk 1.
 
-Two bugs from the Spotify-only schema are fixed here:
+Two bugs from the Spotify-only schema remain fixed here:
 
 * ``UNIQUE(user_id, playlist_id, mode, status)`` made a *second completed run*
-  of the same playlist impossible.  It is replaced by a partial unique index
-  that only constrains **active** runs — which is the rule that was actually
-  intended.
+  of the same playlist impossible.  v2 replaced it with a partial unique
+  index on live runs; v3 (M005) replaces that again with
+  ``idx_runs_one_playing`` — at most one actively playing controller run per
+  (user, provider), any number of live decks per playlist (UC-16).
 * Tokens were stored as plain JSON.  They now go through
   :class:`~app.crypto.TokenVault`.
 """
@@ -18,10 +21,12 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 from typing import Any, Dict, List, Optional
 
 import aiosqlite
 
+from app import migrations
 from app.config import get_settings
 from app.crypto import TokenVault
 
@@ -29,10 +34,10 @@ from app.crypto import TokenVault
 _db: Optional[aiosqlite.Connection] = None
 _vault: Optional[TokenVault] = None
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = migrations.TARGET_SCHEMA_VERSION
 
 # ---------------------------------------------------------------------------
-# Schema
+# Schema — the frozen v2 BASELINE (fresh databases only; see module docstring)
 # ---------------------------------------------------------------------------
 
 _SCHEMA_SQL = """
@@ -145,7 +150,7 @@ CREATE INDEX IF NOT EXISTS idx_jobs_user ON jobs(user_id, created_at DESC);
 # ---------------------------------------------------------------------------
 
 async def init_db() -> aiosqlite.Connection:
-    """Open (or create) the SQLite database and ensure the schema exists."""
+    """Open (or create) the SQLite database and bring it to schema v3."""
     global _db, _vault
     settings = get_settings()
 
@@ -155,7 +160,23 @@ async def init_db() -> aiosqlite.Connection:
     await _db.execute("PRAGMA journal_mode = WAL")
 
     await _migrate_legacy(_db)
-    await _db.executescript(_SCHEMA_SQL)
+
+    # Blueprint risk 1: the v2 baseline script runs ONLY on an empty database
+    # (no ``users`` table yet).  On anything else it would resurrect
+    # ``idx_runs_one_live`` (CREATE INDEX IF NOT EXISTS) on every restart and
+    # silently re-block UC-16.  A fresh database therefore takes the same
+    # road as an old one: baseline v2, then the versioned steps M001–M010.
+    cur = await _db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+    )
+    if await cur.fetchone() is None:
+        await _db.executescript(_SCHEMA_SQL)
+        await _db.commit()
+
+    await migrations.run(_db, db_path=settings.db_abs_path)
+
+    # schema_meta stays in sync with the migration ledger — it is the value
+    # v2-era code reads (Blueprint risk 8).
     await _db.execute(
         "INSERT INTO schema_meta (key, value) VALUES ('version', ?) "
         "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
@@ -361,19 +382,38 @@ async def create_run(
     status: str = "active",
     cursor: int = 0,
     copy_playlist_id: Optional[str] = None,
+    name: str = "",
+    config_id: Optional[int] = None,
+    snapshot_id: Optional[int] = None,
 ) -> int:
+    """Create a run.
+
+    v3 additions are backwards compatible: ``config_id=None`` binds the run
+    to the user's behaviour-neutral legacy preset („Ohne Wiederholungen",
+    M003), so every pre-v3 caller keeps exactly today's behaviour.
+    """
     db = get_db()
-    cur = await db.execute(
-        """
-        INSERT INTO runs (user_id, provider, playlist_id, playlist_name, mode,
-                          order_json, cursor, status, seed, copy_playlist_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            user_id, provider, playlist_id, playlist_name, mode,
-            json.dumps(order), cursor, status, seed, copy_playlist_id,
-        ),
-    )
+    try:
+        if config_id is None:
+            config_id = await migrations.ensure_legacy_config(db, user_id)
+        cur = await db.execute(
+            """
+            INSERT INTO runs (user_id, provider, playlist_id, playlist_name, mode,
+                              order_json, cursor, status, seed, copy_playlist_id,
+                              name, config_id, snapshot_id, selection_seq)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id, provider, playlist_id, playlist_name, mode,
+                json.dumps(order), cursor, status, seed, copy_playlist_id,
+                name, config_id, snapshot_id, cursor,
+            ),
+        )
+    except aiosqlite.Error:
+        # e.g. idx_runs_one_playing: leave no half-open transaction behind
+        # (a fresh user's just-created preset rolls back with it).
+        await db.rollback()
+        raise
     await db.commit()
     return int(cur.lastrowid or 0)
 
@@ -445,6 +485,7 @@ async def list_runs(user_id: int, limit: int = 50) -> List[Dict[str, Any]]:
         """
         SELECT id, provider, playlist_id, playlist_name, mode, cursor, status,
                created_at, updated_at, completed_at,
+               name, config_id, snapshot_id, cycle, stopped_at, archived_at,
                json_array_length(order_json) AS total
         FROM runs WHERE user_id = ?
         ORDER BY updated_at DESC LIMIT ?
@@ -472,6 +513,10 @@ async def update_run(
         params.append(status)
         if status == "completed":
             sets.append("completed_at = datetime('now')")
+        # F1 (ADR-003): 'stopped' is a deliberate session end — stamped, fully
+        # resumable, and NOT live (find_live_run ignores it).
+        if status == "stopped":
+            sets.append("stopped_at = datetime('now')")
     if device_id is not None:
         sets.append("device_id = ?")
         params.append(device_id)
@@ -486,18 +531,31 @@ async def update_run(
 
 
 async def close_live_runs(
-    user_id: int, provider: str, playlist_id: str, mode: str
+    user_id: int,
+    provider: str,
+    playlist_id: str,
+    mode: str,
+    *,
+    run_id: Optional[int] = None,
 ) -> None:
-    """Cancel any live run for this combination (used before a re-shuffle)."""
+    """Cancel live run(s) for this combination (used before a re-shuffle).
+
+    v3 (UC-16): several live runs per playlist are legal, so pass ``run_id``
+    to close exactly one and leave its siblings untouched — the run-isolation
+    invariant (Blueprint §5.1).  Without ``run_id`` the v2 behaviour remains:
+    every live run of the combination is cancelled.
+    """
     db = get_db()
-    await db.execute(
-        f"""
+    sql = f"""
         UPDATE runs SET status = 'cancelled', updated_at = datetime('now')
         WHERE user_id = ? AND provider = ? AND playlist_id = ? AND mode = ?
           AND status IN ({','.join('?' * len(_LIVE))})
-        """,
-        (user_id, provider, playlist_id, mode, *_LIVE),
-    )
+        """
+    params: List[Any] = [user_id, provider, playlist_id, mode, *_LIVE]
+    if run_id is not None:
+        sql += " AND id = ?"
+        params.append(run_id)
+    await db.execute(sql, params)
     await db.commit()
 
 
@@ -506,6 +564,13 @@ async def close_live_runs(
 # ---------------------------------------------------------------------------
 
 async def record_skipped(run_id: int, entries: List[Dict[str, str]]) -> None:
+    """Persist import exclusions.
+
+    M008 (v3.0): dual-write.  ``skipped_tracks`` keeps its v2 shape so every
+    existing reader stays green, and each exclusion is mirrored into
+    ``run_tracks`` (state='excluded_rule') so UC-22 can show it.  OR IGNORE:
+    a 'duplicate' exclusion collides with its own deck row by design.
+    """
     if not entries:
         return
     db = get_db()
@@ -518,6 +583,21 @@ async def record_skipped(run_id: int, entries: List[Dict[str, str]]) -> None:
             for e in entries
         ],
     )
+    cur = await db.execute("SELECT provider FROM runs WHERE id = ?", (run_id,))
+    row = await cur.fetchone()
+    if row is not None:
+        provider = str(row[0])
+        for e in entries:
+            track_pk = await migrations.ensure_track(
+                db, provider, e.get("id", ""),
+                name=e.get("name", ""), artist=e.get("artist", ""),
+            )
+            await db.execute(
+                "INSERT OR IGNORE INTO run_tracks (run_id, track_id, state, "
+                "admitted, excluded_reason, excluded_at) "
+                "VALUES (?, ?, 'excluded_rule', 0, ?, datetime('now'))",
+                (run_id, track_pk, e.get("reason", "not_playable")),
+            )
     await db.commit()
 
 
@@ -538,12 +618,31 @@ async def record_event(
     cursor: int = 0,
     reason: Optional[str] = None,
     detail: Optional[Dict[str, Any]] = None,
+    event_key: Optional[str] = None,
+    correlation_id: str = "",
+    source: str = "system",
+    applied: bool = True,
+    seq: int = 0,
+    run_track_id: Optional[int] = None,
 ) -> None:
+    """Append to the run ledger.
+
+    M007: every event carries an ``event_key`` under ``UNIQUE(run_id,
+    event_key)``.  Callers with a deterministic transition key (ADR-003 F5:
+    ``run:planversion:seq:from:to``) pass it and treat the IntegrityError as
+    "already applied"; everyone else gets a generated unique key, which keeps
+    the v2 call sites append-only as before.
+    """
     db = get_db()
+    if event_key is None:
+        event_key = f"evt:{uuid.uuid4().hex}"
     await db.execute(
-        "INSERT INTO run_events (run_id, type, cursor, reason, detail) "
-        "VALUES (?, ?, ?, ?, ?)",
-        (run_id, type_, cursor, reason, json.dumps(detail or {})),
+        "INSERT INTO run_events (run_id, type, cursor, reason, detail, "
+        "event_key, correlation_id, source, applied, seq, run_track_id) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (run_id, type_, cursor, reason, json.dumps(detail or {}),
+         event_key, correlation_id, source, 1 if applied else 0, seq,
+         run_track_id),
     )
     await db.commit()
 

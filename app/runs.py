@@ -414,6 +414,21 @@ async def pause(session: Session, state: RunState) -> None:
     await db.record_event(state.run_id, "paused", cursor=state.cursor)
 
 
+async def resume(session: Session, state: RunState) -> RunState:
+    """Lift a stopped run back to active at exactly the same card (F1).
+
+    Minimal on purpose (WP3-A): the status transition plus its ledger entry.
+    Re-asserting playback on a device is what the caller's subsequent
+    :func:`start` does — a stopped run has no device any more.
+    """
+    new_status = engine.resume_status(state)
+    if state.status is not new_status:
+        await db.update_run(state.run_id, status=new_status.value)
+        state.status = new_status
+        await db.record_event(state.run_id, "resumed", cursor=state.cursor)
+    return state
+
+
 async def cancel(session: Session, state: RunState) -> None:
     """Abandon the deck.  A future start deals a new one."""
     caps = session.provider.capabilities
