@@ -5,7 +5,7 @@ Stand: 2026-07-31 · Regel: `BLOCKED` ist kein Release-PASS.
 | Gate | Inhalt | Status | Nachweis |
 |---|---|---|---|
 | G0 Re-Audit | BASE-01…BASE-06 | **PASS** | `PHASE0_REAUDIT.md` |
-| G1 UX-Konzept | 3 Single-Source-Konzepte, Source Manifest, unabhängiger Review | OFFEN | — |
+| G1 UX-Konzept | 3 Single-Source-Konzepte, Source Manifest, unabhängiger Review | **PASS** | ADR-001, UX_SOURCE_MANIFEST.md; 123/123 Einträge gelesen; Fremdmodell-Review mit nachgerechneten Kontrasten; Auflagen in ADR-001 §Auflagen (fließen als Pflichtspezifikation in G2) |
 | G2 UX-Implementierung | Pflicht-Screen-Set, responsive, A11y, Browserbelege | OFFEN | — |
 | G3 Spotify-Forensik & Strategie | Repro, ≥2 Strategien, ADR, Regressionstest rot→grün | OFFEN | — |
 | G4 Spotify-Use-Cases | UC-01…UC-30, Migrationen, Tests | OFFEN | — |

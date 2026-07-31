@@ -32,3 +32,7 @@ Regeln: Erzeuger und Abnehmer kritischer Arbeit sind nie derselbe Agentenlauf. K
 | # | Arbeitspaket | Modell/Effort | Ergebnis | Reviewer |
 |---|---|---|---|---|
 | 1 | BASE-05: 4 parallele Doc-Audits (Player-Referenzen, Feb-2026-Guide, Juli-2026-Changelog, Policy/Terms) | Workflow, 4 Agenten, Session-Modell, effort=low | strukturierte, datierte Quellbefunde; siehe PHASE0_REAUDIT.md | Lead (Fable 5) — plausibilisiert gegen Handoff-Angaben, keine Widersprüche |
+| 2 | Library-Retrieval: 7 Kategorie-Volltextleser (123/123 Einträge) + Ist-Inventar der Alt-UI | Workflow, 8 Agenten, Fable 5 | Kategorie-Shortlists mit F1–F8-Scores; vollständiges UI-/Semantik-/Test-Inventar | Lead — Finalisten selbst vollständig gegengelesen |
+| 3 | Domänenmodell-/Migrationsanalyse (Phase-3-Vorarbeit) | Plan-Agent, **Opus** | v3-Zielschema (4 Schichten), 10-Schritte-Migrationspfad, Vorschläge zu den 10 offenen Produktfragen | Lead — Entscheidung in Phase 3 als ADRs |
+| 4 | 3 unabhängige Single-Source-UX-Konzepte (Leitstand/Nachtpult/Cobalt-Kabinett) | Workflow, 3 getrennte Agenten, Fable 5 | Konzeptdokumente + responsive HTML-Mocks mit berechneten Kontrasten | unabhängiger Opus-Review (#5) |
+| 5 | Unabhängiger Fidelity-/Usability-/A11y-Review der 3 Konzepte | **Opus** (kein Erzeugungskontext) | Alle Kontrastwerte nachgerechnet (keiner geschönt), Browser-Audit, CVD-Simulation; Ranking B>A>C mit kritischen Funden | Lead — Entscheidung ADR-001 inkl. verbindlicher Auflagen |
