@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "handoff_id": "TS-FABLE-01",
+  "created_at": "2026-07-31T00:00:00+02:00",
+  "language": "de",
+  "target_repository": "MikaMcFlurry/true-shuffle-PoC",
+  "verified_base_branch": "claude/true-shuffle-mvp-streaming-52jofw",
+  "verified_base_commit": "d626505ba63ab5a3a4d884b434bc32d58f9c0edc",
+  "handoff_branch": "handoff/fable5-true-shuffle-v1",
+  "source_repositories": [
+    {
+      "repository": "MikaMcFlurry/true-shuffle-site",
+      "commit": "9048f5b35096c1a1f70a947a63656ba3b210ede5",
+      "role": "historical landing-page, copy, logo and product-visual reference"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "00_START_HERE.md",
+      "sha256": "29b6a2eb9a96c1573f8eb8bb40163002d5ae044546b955d0c0d79c90e5cadd2f"
+    },
+    {
+      "path": "01_VERIFIED_CURRENT_STATE.md",
+      "sha256": "7db40ebc37cf5b96d6e8931345212dac827e4dcb05a4c033e9a870c926a8bfea"
+    },
+    {
+      "path": "02_SOURCE_PRIORITY_AND_CONFLICT_RULES.md",
+      "sha256": "a8fc54cb35b3095e455533afb309b7582e5434facab8b75052b510ef61a07e80"
+    },
+    {
+      "path": "03_PRODUCT_USE_CASES_AND_COVERAGE.md",
+      "sha256": "c7421a8af454d04f94b98a4adb50bd7670492430503df7e1aa00ebe2ebf058f9"
+    },
+    {
+      "path": "03A_CANONICAL_USE_CASES.md",
+      "sha256": "9e75c8c3e89d429254a44f078983185ffbfbeef2684f733e3a8ab00fbd5b6f5c"
+    },
+    {
+      "path": "04_UX_RENEWAL_WORK_PACKAGE.md",
+      "sha256": "90494bdd176bed83e273b74cc11f5678e4332612f0741d7c38d6d40de31c1934"
+    },
+    {
+      "path": "05_SPOTIFY_LIVE_WORK_PACKAGE.md",
+      "sha256": "05e45249788723ce92f1bcf0c0bc05eaed07f66cacc8c5c4e8b6b5ef273614cd"
+    },
+    {
+      "path": "06_OPTIONAL_PROVIDER_EXPANSION.md",
+      "sha256": "508eeb619b9f91154bd86293f1aacfef9b9678f4074139bd6e6ab0801fac47a3"
+    },
+    {
+      "path": "07_MULTI_AGENT_ORCHESTRATION.md",
+      "sha256": "38368a1dc504fc229e1258a8246e2f02da894d38aefbc7e832c613bbc1e5bd91"
+    },
+    {
+      "path": "08_ACCEPTANCE_TEST_MATRIX.md",
+      "sha256": "a12b5a4f473df3270768e41fb259fe45f66f305a66fc00715ef2dd9cf0ffb5a7"
+    },
+    {
+      "path": "09_RISKS_AND_OPEN_QUESTIONS.md",
+      "sha256": "82aed87172a9e7e363a90479a006128e5f5bd864e696a267f7b67f90903182f9"
+    },
+    {
+      "path": "10_START_PROMPT.md",
+      "sha256": "c6a039509e70a7f4b01271a2de47e842c32ff77a0a2e9a9bda9522121f99ef23"
+    }
+  ],
+  "private_inputs_published": false
+}
