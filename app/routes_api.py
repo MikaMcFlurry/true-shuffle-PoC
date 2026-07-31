@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from app import accounts, db, jobs, runs
+from app import accounts, db, jobs, library_service, runs
 from app.accounts import AccountNotConnected
 from app.deps import ensure_session_user, http_error, require_run, require_user_id
 from app.watcher import watcher
@@ -65,7 +65,13 @@ async def list_providers(request: Request):
 
 @router.get("/playlists")
 async def list_playlists(request: Request, provider: str):
-    """Playlists for one connected service."""
+    """Playlists for one connected service, each with its import status.
+
+    ``import_status`` says what the content layer actually knows: never
+    imported, or imported at X with N titles.  ``sync_available`` appears
+    only when staleness is cheaply provable via source_etag; otherwise the
+    field is honestly absent (see :func:`library_service.import_status_field`).
+    """
     user_id = await require_user_id(request)
     session = await _session(user_id, provider)
     try:
@@ -73,12 +79,115 @@ async def list_playlists(request: Request, provider: str):
     except ProviderError as exc:
         raise http_error(exc) from exc
 
-    return JSONResponse(
-        {
-            "provider": provider,
-            "playlists": [p.model_dump() for p in playlists],
-        }
-    )
+    overview = await library_service.import_overview(user_id, provider)
+    items = []
+    for playlist in playlists:
+        entry = playlist.model_dump()
+        entry["import_status"] = library_service.import_status_field(
+            playlist, overview.get(playlist.id)
+        )
+        items.append(entry)
+
+    return JSONResponse({"provider": provider, "playlists": items})
+
+
+# ---------------------------------------------------------------------------
+# Playlist import / snapshot / sync (UC-03, UC-04, RUN-09 basis)
+# ---------------------------------------------------------------------------
+
+async def _importable_playlist(session, playlist_id: str) -> PlaylistRef:
+    """Resolve a playlist and refuse the unreadable ones up front.
+
+    Same rule as run creation: the listener pressed a button, and an answer
+    in the same breath beats a progress bar that dies at 0 %.
+    """
+    playlist = await runs.resolve_playlist(session, playlist_id)
+    if not playlist.readable:
+        raise HTTPException(
+            status_code=422,
+            detail=(playlist.unreadable_reason
+                    or f"{session.provider.capabilities.display_name} gibt den "
+                       "Inhalt dieser Playlist nicht heraus."),
+        )
+    return playlist
+
+
+@router.post("/playlists/{provider}/{playlist_id}/import")
+async def playlist_import(request: Request, provider: str, playlist_id: str):
+    """Import a playlist as a new versioned snapshot — returns a job to watch."""
+    user_id = await require_user_id(request)
+    session = await _session(user_id, provider)
+    playlist = await _importable_playlist(session, playlist_id)
+
+    job_id = jobs.new_job_id()
+
+    async def work() -> Dict[str, Any]:
+        return await library_service.import_playlist(
+            session, playlist, job_id=job_id
+        )
+
+    await jobs.start(job_id, user_id, f"import:{provider}", work)
+    return JSONResponse({"job_id": job_id}, status_code=202)
+
+
+@router.get("/playlists/{provider}/{playlist_id}/snapshot")
+async def playlist_snapshot(request: Request, provider: str, playlist_id: str):
+    """Newest snapshot of the caller's playlist: status, counters, version."""
+    user_id = await require_user_id(request)
+    info = await library_service.snapshot_status(user_id, provider, playlist_id)
+    if info is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Diese Playlist wurde noch nicht importiert.",
+        )
+    return JSONResponse(info)
+
+
+@router.post("/playlists/{provider}/{playlist_id}/sync")
+async def playlist_sync(request: Request, provider: str, playlist_id: str):
+    """Sync = fresh import + diff against the previous snapshot (RUN-09).
+
+    The job result shows the diff BEFORE anything is applied; applying it to
+    a run is WP3-D3 (:func:`library_service.apply_sync_to_run`).
+    """
+    user_id = await require_user_id(request)
+    session = await _session(user_id, provider)
+    playlist = await _importable_playlist(session, playlist_id)
+
+    job_id = jobs.new_job_id()
+
+    async def work() -> Dict[str, Any]:
+        imported = await library_service.import_playlist(
+            session, playlist, job_id=job_id
+        )
+        await jobs.report(
+            job_id, imported["item_count"], imported["item_count"], "diffing"
+        )
+        diff = await library_service.compute_sync_diff(imported["playlist_id"])
+        return {"import": imported, "diff": diff}
+
+    await jobs.start(job_id, user_id, f"sync:{provider}", work)
+    return JSONResponse({"job_id": job_id}, status_code=202)
+
+
+@router.get("/playlists/{provider}/{playlist_id}/sync/latest")
+async def playlist_sync_latest(request: Request, provider: str, playlist_id: str):
+    """The latest computed diff (newest ready snapshot vs. the one before)."""
+    user_id = await require_user_id(request)
+    row = await library_service.get_playlist_row(user_id, provider, playlist_id)
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Diese Playlist wurde noch nicht importiert.",
+        )
+    diff = await library_service.compute_sync_diff(int(row["id"]))
+    if diff is None:
+        raise HTTPException(
+            status_code=404,
+            detail=("Noch kein Vergleichsstand — dafür braucht es mindestens "
+                    "zwei erfolgreiche Importe."),
+        )
+    return JSONResponse(diff)
 
 
 @router.get("/devices")

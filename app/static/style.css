@@ -549,6 +549,16 @@ input[type="file"] { padding: 8px var(--space-3); }
 .record .r-sub { display: block; color: var(--muted); font-size: var(--text-sm); margin-top: 2px; }
 .record .r-count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: var(--text-sm); white-space: nowrap; }
 
+/* Import status + action under each playlist row (WP3-D1, UC-03). The wrap
+   carries the divider so row and strip read as one entry. */
+.record-wrap { border-bottom: 1px solid var(--line); }
+.record-wrap .record { border-bottom: 0; }
+.import-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-3); padding: 0 var(--space-4) var(--space-3);
+}
+.import-strip .import-line { color: var(--muted); font-size: var(--text-sm); min-width: 0; overflow-wrap: anywhere; }
+
 /* ==========================================================================
    PLAYER ZONES
    ========================================================================== */

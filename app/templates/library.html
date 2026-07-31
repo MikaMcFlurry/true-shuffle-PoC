@@ -24,7 +24,6 @@
             <div class="row">
                 <label class="sr-only" for="plFilter">Playlists filtern</label>
                 <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off" style="flex: 1 1 220px">
-                <span class="chip chip-preview" title="Sync kommt mit dem nächsten Ausbau">Sync: Vorschau</span>
             </div>
         </div>
         <div class="browse" id="playlists" aria-label="Playlists">
@@ -256,7 +255,7 @@
 
 {% block scripts %}
 <script type="module">
-import { $, api, el, followJob, formatCount, setNote } from "/static/app.js";
+import { $, $$, api, el, followJob, formatCount, formatWhen, setNote } from "/static/app.js";
 
 const PROVIDERS = {{ providers | tojson }};
 const CONNECTED = {{ connected | map(attribute='provider') | list | tojson }};
@@ -434,8 +433,8 @@ function renderPlaylists() {
         return;
     }
 
-    list.replaceChildren(...shown.map((pl) =>
-        el("button", {
+    list.replaceChildren(...shown.map((pl) => {
+        const row = el("button", {
             class: "record",
             type: "button",
             dataset: { plId: String(pl.id) },
@@ -447,8 +446,71 @@ function renderPlaylists() {
                 el("span", { class: "r-sub" }, sizeLine(pl))),
             // A digit only when there is one to print. Zero is a claim, and
             // "the service will not tell us" is not zero.
-            el("span", { class: "r-count tabular" }, pl.track_count >= 0 ? formatCount(pl.track_count) : "—")
-        )));
+            el("span", { class: "r-count tabular" }, pl.track_count >= 0 ? formatCount(pl.track_count) : "—"));
+
+        // The real import status (UC-03) plus the per-playlist import action.
+        const status = el("span", { class: "import-line" }, importStatusText(pl));
+        const strip = el("div", { class: "import-strip" }, status);
+        if (pl.readable !== false) {
+            strip.append(el("button", {
+                class: "btn btn-quiet", type: "button",
+                "aria-label": `„${pl.name || pl.id}“ importieren`,
+                onClick: (ev) => importPlaylist(pl, status, ev.currentTarget),
+            }, pl.import_status?.imported ? "Neu importieren" : "Importieren"));
+        }
+        return el("div", { class: "record-wrap" }, row, strip);
+    }));
+}
+
+/**
+ * The honest status line under a playlist row. "Sync verfügbar" appears only
+ * when the server could cheaply prove staleness (source_etag differs) — the
+ * API omits the field otherwise, and so does this line.
+ */
+function importStatusText(pl) {
+    if (pl.readable === false) return "Import nicht möglich — Inhalt nicht lesbar";
+    const st = pl.import_status;
+    if (!st || !st.imported) return "Noch nicht importiert";
+    let text = `Importiert ${formatWhen(st.imported_at)} · ${formatCount(st.item_count)} Titel`;
+    if (st.sync_available === true) text += " · Sync verfügbar";
+    return text;
+}
+
+async function importPlaylist(pl, statusNode, button) {
+    if (button.disabled) return;
+    button.disabled = true;
+    statusNode.textContent = "Import startet…";
+    const fail = (err) => {
+        button.disabled = false;
+        statusNode.textContent = `Import fehlgeschlagen: ${err.message}`;
+    };
+    try {
+        const { job_id } = await api(
+            `/api/playlists/${encodeURIComponent(state.provider)}/${encodeURIComponent(pl.id)}/import`,
+            { method: "POST" });
+        followJob(job_id, {
+            onProgress: (frame) => {
+                statusNode.textContent = frame.total
+                    ? `Import: ${formatCount(frame.processed)} von ${formatCount(frame.total)} Titeln`
+                    : "Import läuft…";
+            },
+            onDone: (result) => {
+                button.disabled = false;
+                button.textContent = "Neu importieren";
+                pl.import_status = {
+                    imported: true,
+                    version: result.version,
+                    imported_at: result.imported_at,
+                    item_count: result.item_count,
+                    playable_count: result.playable_count,
+                };
+                statusNode.textContent = importStatusText(pl);
+            },
+            onError: fail,
+        });
+    } catch (err) {
+        fail(err);
+    }
 }
 
 /**
@@ -484,7 +546,7 @@ $("#plFilter").addEventListener("input", renderPlaylists);
 
 function selectPlaylist(playlist, node) {
     state.playlist = playlist;
-    for (const option of $("#playlists").children) option.setAttribute?.("aria-pressed", "false");
+    for (const option of $$(".record", $("#playlists"))) option.setAttribute("aria-pressed", "false");
     node.setAttribute("aria-pressed", "true");
 
     const readable = playlist.readable !== false;
