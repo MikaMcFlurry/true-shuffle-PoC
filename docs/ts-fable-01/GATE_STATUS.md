@@ -6,7 +6,7 @@ Stand: 2026-07-31 · Regel: `BLOCKED` ist kein Release-PASS.
 |---|---|---|---|
 | G0 Re-Audit | BASE-01…BASE-06 | **PASS** | `PHASE0_REAUDIT.md` |
 | G1 UX-Konzept | 3 Single-Source-Konzepte, Source Manifest, unabhängiger Review | **PASS** | ADR-001, UX_SOURCE_MANIFEST.md; 123/123 Einträge gelesen; Fremdmodell-Review mit nachgerechneten Kontrasten; Auflagen in ADR-001 §Auflagen (fließen als Pflichtspezifikation in G2) |
-| G2 UX-Implementierung | Pflicht-Screen-Set, responsive, A11y, Browserbelege | OFFEN | — |
+| G2 UX-Implementierung | Pflicht-Screen-Set, responsive, A11y, Browserbelege | **PASS** | Commits `50703cf`…`4f8e386`; unabhängige Browser-Suite `tests/browser/` (46 Tests: Flows, echter Drift, Keyboard, Touch-Ziele, Overflow 320–1280, Reduced Motion, Theme-Matrix, A11y-Struktur, 80 Kontrast-Stichproben) **46/46 grün** nach Fix-Pass; QA-Blocker (ungelabelte Radios, Banner-Kontrast Light, Mobil-Nav) behoben und durch die unveränderte Suite verifiziert. Ehrliche Restnotizen: „gestoppt"-Status, mehrere Live-Runs je Playlist, Regel-Editor, Sync und Config-Funktionen sind deklarierte Vorschau bis zum Phase-3-Backend; Track-Metadaten im Verlauf folgen mit v3-Schema; Spotify-Attribution live erst mit Credentials prüfbar. |
 | G3 Spotify-Forensik & Strategie | Repro, ≥2 Strategien, ADR, Regressionstest rot→grün | OFFEN | — |
 | G4 Spotify-Use-Cases | UC-01…UC-30, Migrationen, Tests | OFFEN | — |
 | G5 Hardening | Testmatrix, Security/Privacy, Evidence Matrix, Release-Review | OFFEN | — |
