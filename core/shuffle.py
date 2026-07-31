@@ -11,9 +11,24 @@ from __future__ import annotations
 
 import random
 import secrets
-from typing import List, Optional, Sequence, Set, Tuple
+from typing import List, Optional, Protocol, Sequence, Set, Tuple, TypeVar
 
 from core.models import SkippedEntry, SkipReason, Track
+
+# WP3-C: core/selection.py reuses the Fisher–Yates shuffle and the similarity
+# guard for run_track_id ints and a hashlib-backed PRNG.  These functions were
+# always generic at runtime; the TypeVar/Protocol annotations below make that
+# official WITHOUT changing behaviour for the existing str/random.Random
+# callers (contract: "minimal parametrisieren, ohne bestehende Aufrufer zu
+# brechen").
+ShuffleItem = TypeVar("ShuffleItem")
+
+
+class RandomLike(Protocol):
+    """The single method the shuffle draws on — satisfied by ``random.Random``
+    and by :class:`core.selection.HashPRNG`."""
+
+    def randint(self, a: int, b: int) -> int: ...
 
 # ---------------------------------------------------------------------------
 # Filtering
@@ -74,9 +89,9 @@ def dedup_by_uri(tracks: Sequence[Track]) -> List[Track]:
 # ---------------------------------------------------------------------------
 
 def fisher_yates_shuffle(
-    items: List[str],
-    rng: Optional[random.Random] = None,
-) -> List[str]:
+    items: List[ShuffleItem],
+    rng: Optional[RandomLike] = None,
+) -> List[ShuffleItem]:
     """In-place unbiased Fisher–Yates (Knuth) shuffle.
 
     Parameters
@@ -102,7 +117,9 @@ def fisher_yates_shuffle(
 # Similarity Guard
 # ---------------------------------------------------------------------------
 
-def _first_n_similarity(a: Sequence[str], b: Sequence[str], n: int = 10) -> float:
+def _first_n_similarity(
+    a: Sequence[ShuffleItem], b: Sequence[ShuffleItem], n: int = 10
+) -> float:
     """Fraction of matching positions in the first *n* elements.
 
     Returns 0.0 if either list has fewer than *n* elements.
@@ -114,14 +131,14 @@ def _first_n_similarity(a: Sequence[str], b: Sequence[str], n: int = 10) -> floa
 
 
 def shuffle_with_guard(
-    ids: List[str],
+    ids: List[ShuffleItem],
     *,
-    previous_order: Optional[List[str]] = None,
+    previous_order: Optional[Sequence[ShuffleItem]] = None,
     similarity_threshold: float = 0.5,
     similarity_window: int = 10,
     max_retries: int = 5,
-    rng: Optional[random.Random] = None,
-) -> List[str]:
+    rng: Optional[RandomLike] = None,
+) -> List[ShuffleItem]:
     """Shuffle ids with an optional similarity guard.
 
     If *previous_order* is provided, re-shuffles up to *max_retries* times when
