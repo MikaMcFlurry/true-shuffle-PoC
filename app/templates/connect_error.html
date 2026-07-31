@@ -1,37 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Nicht verbunden · true-shuffle{% endblock %}
-{% block railstate %}ANSCHLUSS · NICHT EINGERICHTET{% endblock %}
 
 {% block content %}
-<section class="section">
-    <div class="index">
-        <b>01</b>
-        {{ provider_id }}
-    </div>
-    <div class="body" style="max-width: 60ch">
-        <h1>Dieser Dienst ist noch nicht eingerichtet</h1>
-        <p class="dim">{{ detail }}</p>
-
-        {% if missing %}
-        <div class="bay">
-            <div class="bay-head">
-                <span>Fehlende Werte</span>
-                <span class="bay-read">{{ missing | length }} FEHLT</span>
-            </div>
-            <div class="bay-body">
-                <div class="ticket">
-                    {% for key in missing %}
-                    <div><span class="k data">{{ loop.index }}</span><span class="v data">{{ key }}=…</span></div>
-                    {% endfor %}
-                </div>
-                <p class="faint sm">Wo die Werte herkommen, steht in <code>.env.example</code>.</p>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="row">
-            <a class="btn btn-primary" href="/connect">Zurück zu den Diensten</a>
-        </div>
-    </div>
+<section class="section-head narrow" aria-labelledby="errTitle">
+    <span class="eyebrow">Anschluss · {{ provider_id }}</span>
+    <h1 id="errTitle">Dieser Dienst ist noch nicht eingerichtet</h1>
+    <p>{{ detail }}</p>
 </section>
+
+{% if missing %}
+<div class="card narrow">
+    <div class="card-head">
+        <h2>Fehlende Werte</h2>
+        <span class="card-read">{{ missing | length }} fehlt</span>
+    </div>
+    <div class="card-body">
+        <div class="kv">
+            {% for key in missing %}
+            <div><span class="k tabular">{{ loop.index }}</span><span class="v tabular">{{ key }}=…</span></div>
+            {% endfor %}
+        </div>
+        <p class="faint sm">Wo die Werte herkommen, steht in <code>.env.example</code>.</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <a class="btn btn-primary" href="/connect">Zurück zu den Diensten</a>
+</div>
 {% endblock %}

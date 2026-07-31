@@ -1,46 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Apple Music verbinden · true-shuffle{% endblock %}
-{% block railstate %}ANSCHLUSS · APPLE MUSIC{% endblock %}
 
 {% block content %}
-<section class="section">
-    <div class="index">
-        <b>01</b>
-        Anmeldung
-    </div>
-    <div class="body" style="max-width: 62ch">
-        <h1>Mit deiner Apple-ID anmelden</h1>
-        <p class="dim">
-            Apple erteilt die Berechtigung im Browser statt über eine Weiterleitung,
-            dieser Schritt öffnet also ein Apple-Fenster. true-shuffle bekommt nur
-            einen Zugriffsschlüssel für deine Mediathek. Dein Apple-ID-Passwort
-            erreicht diesen Server nie.
-        </p>
-
-        <div class="bay">
-            <div class="bay-head">
-                <span>Damit wird möglich</span>
-                <span class="bay-read">3 RECHTE</span>
-            </div>
-            <div class="bay-body">
-                <ul class="stack-s dim sm">
-                    <li>Deine Mediathek-Playlists lesen</li>
-                    <li>Ein gemischtes Fach als Playlist hineinschreiben</li>
-                    <li>Dein Fach in diesem Tab über Apples eigenen Player abspielen</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="row">
-            <button class="btn btn-primary btn-lg" id="appleConnect" type="button">
-                Bei Apple Music anmelden
-            </button>
-            <a class="btn btn-quiet" href="/connect">Abbrechen</a>
-        </div>
-
-        <div class="note hidden" id="appleNote"></div>
-    </div>
+<section class="section-head narrow" aria-labelledby="appleTitle">
+    <span class="eyebrow">Anschluss · Apple Music</span>
+    <h1 id="appleTitle">Mit deiner Apple-ID anmelden</h1>
+    <p>
+        Apple erteilt die Berechtigung im Browser statt über eine Weiterleitung,
+        dieser Schritt öffnet also ein Apple-Fenster. true-shuffle bekommt nur
+        einen Zugriffsschlüssel für deine Mediathek. Dein Apple-ID-Passwort
+        erreicht diesen Server nie.
+    </p>
 </section>
+
+<div class="card narrow">
+    <div class="card-head">
+        <h2>Damit wird möglich</h2>
+        <span class="card-read">3 Rechte</span>
+    </div>
+    <div class="card-body">
+        <ul class="stack-s dim sm">
+            <li>Deine Mediathek-Playlists lesen</li>
+            <li>Eine gemischte Reihenfolge als Playlist hineinschreiben</li>
+            <li>Deinen Hörvorgang in diesem Tab über Apples eigenen Player abspielen</li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <button class="btn btn-primary btn-lg" id="appleConnect" type="button">
+        Bei Apple Music anmelden
+    </button>
+    <a class="btn btn-quiet" href="/connect">Abbrechen</a>
+</div>
+
+<div class="note hidden" id="appleNote"></div>
 {% endblock %}
 
 {% block scripts %}

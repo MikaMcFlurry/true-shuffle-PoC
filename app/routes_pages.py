@@ -132,3 +132,23 @@ async def run_history(request: Request):
         "runs.html",
         {"providers": cards, "rail": _rail(cards, len(accounts))},
     )
+
+
+@router.get("/styleguide", response_class=HTMLResponse)
+async def styleguide(request: Request):
+    """Every "Nachtpult" component, both themes, all states — dev only.
+
+    Some states (system state C, error/empty edges) are not reachable through
+    the demo flow in this phase, so this page is the acceptance surface for
+    them (UX_IMPL_SPEC.md, "Styleguide-Seite"). Gated the same way the demo
+    connector is: there is no ``debug`` flag in Settings, so a DEBUG log level
+    stands in for it.
+    """
+    settings = get_settings()
+    if not (settings.enable_demo_provider or settings.log_level.upper() == "DEBUG"):
+        raise HTTPException(
+            status_code=404,
+            detail="Der Styleguide ist nur mit ENABLE_DEMO_PROVIDER=true "
+            "oder LOG_LEVEL=DEBUG erreichbar.",
+        )
+    return templates.TemplateResponse(request, "styleguide.html", {})

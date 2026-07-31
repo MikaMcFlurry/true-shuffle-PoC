@@ -1,58 +1,55 @@
 {% extends "base.html" %}
 {% block title %}{{ provider.display_name }} verbinden · true-shuffle{% endblock %}
-{% block railstate %}ANSCHLUSS · INOFFIZIELL{% endblock %}
 
 {% block content %}
-<section class="section">
-    <div class="index">
-        <b>01</b>
-        Anschluss
-    </div>
-    <div class="body" style="max-width: 66ch">
-        <h1>{{ provider.display_name }} verbinden</h1>
-
-        <div class="note note-stop">
-            <span class="stencil">Inoffiziell</span>
-            <span>Dieser Connector spricht YouTubes interne Schnittstelle. Er kann
-            jederzeit ohne Vorwarnung brechen und verstößt sehr wahrscheinlich gegen
-            YouTubes Nutzungsbedingungen. Der offizielle YouTube-Music-Connector
-            bleibt die Voreinstellung.</span>
-        </div>
-
-        <p class="dim">
-            Er erreicht dafür, was keine öffentliche API hergibt: deine Mediathek,
-            „Liked Music“, Uploads und deinen Hörverlauf. Damit läuft Handoff
-            hier ebenfalls, ohne dass ein Tab offen bleiben muss.
-        </p>
-
-        <div class="bay">
-            <div class="bay-head">
-                <span>So bekommst du die Zugangsdaten</span>
-                <span class="bay-read">3 SCHRITTE</span>
-            </div>
-            <div class="bay-body">
-                <div class="ticket">
-                    <div><span class="k">Schritt 1</span><span class="v"><code>pip install ytmusicapi</code></span></div>
-                    <div><span class="k">Schritt 2</span><span class="v"><code>ytmusicapi browser</code> ausführen und der Anleitung folgen</span></div>
-                    <div><span class="k">Schritt 3</span><span class="v">den kompletten Inhalt der erzeugten <code>browser.json</code> unten einfügen</span></div>
-                </div>
-            </div>
-        </div>
-
-        <label class="field">
-            <span class="stencil">Inhalt von browser.json</span>
-            <textarea id="credential" rows="8" spellcheck="false"
-                      placeholder='{ "cookie": "…", "user-agent": "…" }'></textarea>
-        </label>
-
-        <div class="row">
-            <button class="btn btn-primary btn-lg" id="pasteConnect" type="button">Verbinden</button>
-            <a class="btn btn-quiet" href="/connect">Abbrechen</a>
-        </div>
-
-        <div class="note hidden" id="pasteNote"></div>
-    </div>
+<section class="section-head narrow" aria-labelledby="pasteTitle">
+    <span class="eyebrow">Anschluss · Inoffiziell</span>
+    <h1 id="pasteTitle">{{ provider.display_name }} verbinden</h1>
 </section>
+
+<div class="banner banner-error narrow" role="status">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 22 20H2z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+    <div>
+        <p class="banner-title">Inoffiziell</p>
+        <p class="banner-body">Dieser Connector spricht YouTubes interne Schnittstelle. Er kann
+        jederzeit ohne Vorwarnung brechen und verstößt sehr wahrscheinlich gegen
+        YouTubes Nutzungsbedingungen. Der offizielle YouTube-Music-Connector
+        bleibt die Voreinstellung.</p>
+    </div>
+</div>
+
+<p class="narrow">
+    Er erreicht dafür, was keine öffentliche API hergibt: deine Mediathek,
+    „Liked Music“, Uploads und deinen Hörverlauf. Damit funktioniert der
+    Handoff-Modus auch hier, ohne dass ein Tab offen bleiben muss.
+</p>
+
+<div class="card narrow">
+    <div class="card-head">
+        <h2>So bekommst du die Zugangsdaten</h2>
+        <span class="card-read">3 Schritte</span>
+    </div>
+    <div class="card-body">
+        <div class="kv">
+            <div><span class="k">Schritt 1</span><span class="v"><code>pip install ytmusicapi</code></span></div>
+            <div><span class="k">Schritt 2</span><span class="v"><code>ytmusicapi browser</code> ausführen und der Anleitung folgen</span></div>
+            <div><span class="k">Schritt 3</span><span class="v">den kompletten Inhalt der erzeugten <code>browser.json</code> unten einfügen</span></div>
+        </div>
+    </div>
+</div>
+
+<label class="field narrow">
+    <span class="field-label">Inhalt von browser.json</span>
+    <textarea id="credential" rows="8" spellcheck="false"
+              placeholder='{ "cookie": "…", "user-agent": "…" }'></textarea>
+</label>
+
+<div class="row">
+    <button class="btn btn-primary btn-lg" id="pasteConnect" type="button">Verbinden</button>
+    <a class="btn btn-quiet" href="/connect">Abbrechen</a>
+</div>
+
+<div class="note hidden" id="pasteNote"></div>
 {% endblock %}
 
 {% block scripts %}

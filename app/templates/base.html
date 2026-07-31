@@ -6,7 +6,7 @@
     <title>{% block title %}true-shuffle{% endblock %}</title>
     <meta name="color-scheme" content="dark light">
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-    <link rel="preload" href="/static/fonts/archivo-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/tokens.css">
     <link rel="stylesheet" href="/static/style.css">
     <script>
       // Inline and blocking on purpose: /static/app.js is a module and runs
@@ -18,56 +18,34 @@
     </script>
 </head>
 <body>
-<!--
-THESIS: A run is a record crate you work through, and a shop divider marks
-exactly where you are. Refuses the category default: cover-art hero with a round
-play button. This product is not about the current song, it is about the shelf
-and how much of it is left — so the remaining count is the display figure and
-the song title is set at reading size.
-OWN-WORLD: The shop's own apparatus, not a product UI wearing record vocabulary.
-Painted-crate neutrals; one fluorescent divider-card yellow spent on exactly
-three things — the divider, the current register tab, the primary action.
-Nothing rounded, nothing shadowed; hairlines and named bays do the separating.
-Archivo speaks, Space Mono is allowed only for data. Bays are numbered in the
-margin, because a shop's bays are.
-STORY: The listener connects a service, picks one playlist, starts a run, and
-leaves. They return and continue on the same card.
-FIRST VIEWPORT: Player — the reading (what is left), the crate at full height
-with the divider standing in it, the card currently out, transport beneath.
-FORM: Plattenschrank; grounded candidate 4 (Zettelkasten), re-materialised to
-records at the user's direction; seed key 743b623c. Craft level set against the
-reference portfolio: the whole surface commits, not one component.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
--->
     <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
 
-    <header class="shopfront">
-        <a class="wordmark" href="/" aria-label="true-shuffle, zur Startseite">
-            <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-            <span class="wordmark-text">true-shuffle</span>
-        </a>
-        <nav class="register" aria-label="Bereiche">
-            <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Sammlung</a>
-            <a href="/runs" {% if request.url.path == '/runs' %}aria-current="page"{% endif %}>Läufe</a>
+    <header class="appbar">
+        <a class="wordmark" href="/" aria-label="true-shuffle, zur Startseite">True<b>Shuffle</b></a>
+        <nav class="appnav" aria-label="Hauptnavigation">
+            <a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Start</a>
+            <a href="/runs" {% if request.url.path == '/runs' %}aria-current="page"{% endif %}>Hörvorgänge</a>
+            <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Bibliothek</a>
             <a href="/connect" {% if request.url.path == '/connect' %}aria-current="page"{% endif %}>Dienste</a>
         </nav>
-        <span class="trailing">
-            <button class="btn" id="themeToggle" type="button">Ansicht</button>
+        <span class="appbar-trail">
+            {% if rail and rail.connected %}
+            <span class="status-pill" aria-label="{{ rail.connected }} {{ 'Dienst' if rail.connected == 1 else 'Dienste' }} verbunden">
+                <span class="status-text">{{ rail.connected }} {{ 'Dienst' if rail.connected == 1 else 'Dienste' }} verbunden</span>
+            </span>
+            {% endif %}
+            <button class="theme-toggle" id="themeToggle" type="button">Ansicht</button>
         </span>
     </header>
 
-    <div class="opsrail">
-        <span>TON&nbsp;·&nbsp;<b>IMMER ÜBER DEN DIENST</b></span>
-        {% if rail %}
-        <span>CONNECTOREN&nbsp;·&nbsp;<b>{{ rail.ready }}/{{ rail.total }} EINGERICHTET</b></span>
-        <span>KONTEN&nbsp;·&nbsp;<b>{{ rail.connected }} VERBUNDEN</b></span>
-        {% endif %}
-        <span class="push">{% block railstate %}TRUE-SHUFFLE 0.2.0{% endblock %}</span>
-    </div>
-
-    <main class="sheet" id="inhalt" tabindex="-1">
+    <main class="page" id="inhalt" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="app-footer">
+        <span class="claim">Wiedergabe läuft immer über den verbundenen Dienst — true-shuffle spielt nie selbst Ton ab, es bestimmt nur die Reihenfolge.</span>
+        <span>{% block footer_note %}true-shuffle · Version 0.2.0{% endblock %}</span>
+    </footer>
 
     <script type="module" src="/static/app.js"></script>
     {% block scripts %}{% endblock %}

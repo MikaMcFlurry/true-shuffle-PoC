@@ -81,16 +81,24 @@ def test_home_page_renders(client):
     response = client.get("/")
     assert response.status_code == 200
     assert "true-shuffle" in response.text
-    # The crate and its divider, not a line of copy: the page is allowed to be
-    # rewritten, but the entrance has to show the thing the product is about.
-    assert 'class="crateviz"' in response.text
-    assert 'class="divider"' in response.text
+    # UI-Erneuerung TS-FABLE-01 (ADR-001): visuelle Fixture ersetzt durch
+    # semantisches Äquivalent. Die Karteikasten-Visualisierung (crateviz /
+    # divider) gehörte zur abgeschafften Alt-UI ("Plattenschrank"); das neue
+    # Nachtpult-System zeigt stattdessen die Landmark und das neu getextete,
+    # ehrliche Produktversprechen (Hörvorgang/Wiedergabe-Trennung).
+    assert 'id="inhalt"' in response.text
+    assert "Hörvorgang" in response.text
+    assert "spielt nie selbst Ton ab" in response.text
 
 
 def test_every_page_states_that_the_audio_is_never_ours(client):
-    """The one claim on the operating rail that must never quietly disappear."""
+    """The one claim that must never quietly disappear."""
+    # UI-Erneuerung TS-FABLE-01 (ADR-001): visuelle Fixture ersetzt durch
+    # semantisches Äquivalent. Der Operating-Rail-Slogan ("... IMMER ÜBER DEN
+    # DIENST") gehörte zur abgeschafften Fascia-Kopfzeile; dieselbe Zusicherung
+    # lebt jetzt als Footer-Claim (base.html) auf jeder Seite weiter.
     for path in ("/", "/connect"):
-        assert "IMMER ÜBER DEN DIENST" in client.get(path).text
+        assert "spielt nie selbst Ton ab" in client.get(path).text
 
 
 def test_providers_endpoint_lists_capabilities_and_connection_state(client, fake_provider):
@@ -559,7 +567,10 @@ def test_library_renders_once_connected(client, fake_provider):
     connect(client)
     response = client.get("/library")
     assert response.status_code == 200
-    assert "Ein Fach anlegen" in response.text
+    # UI-Erneuerung TS-FABLE-01 (ADR-001): visuelle Fixture ersetzt durch
+    # semantisches Äquivalent — "Ein Fach anlegen" war Alt-Wortschatz; die
+    # neue Überschrift heißt "Neuer Hörvorgang".
+    assert "Neuer Hörvorgang" in response.text
 
 
 def test_player_page_renders_for_your_own_run(client, fake_provider):

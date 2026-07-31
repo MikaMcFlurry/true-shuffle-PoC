@@ -2,113 +2,106 @@
 {% block title %}Dienste · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="section">
-    <div class="index">
-        <b>01</b>
-        Anschluss
-    </div>
-    <div class="body">
-        <h1>Deine Streamingdienste</h1>
-        <p class="dim">
-            Verbinde so viele du willst. Jeder Dienst führt sein eigenes Fach, nichts
-            wird zwischen ihnen geteilt. true-shuffle spielt nie selbst Ton ab; es
-            entscheidet nur, was als Nächstes kommt.
-        </p>
-
-        <div class="note hidden" id="connectNote"></div>
-
-        <div class="grid">
-            {% for p in providers %}
-            {% set account = connected.get(p.id) %}
-            <article class="bay">
-                <div class="bay-head">
-                    <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
-                    {% if account %}<span class="chip chip-ok">Verbunden</span>
-                    {% elif p.configured %}<span class="chip chip-off">Nicht verbunden</span>
-                    {% else %}<span class="chip chip-off">Nicht eingerichtet</span>{% endif %}
-                </div>
-                <div class="bay-body">
-                    <div class="row">
-                        {% if p.tracks_progress_without_tab %}
-                        <span class="openness openness-free">Position zählt mit, ohne dass etwas offen bleibt</span>
-                        {% else %}
-                        <span class="openness openness-tab">Position zählt nur bei offenem Tab mit</span>
-                        {% endif %}
-                        {% if p.requires_paid_tier %}
-                        <span class="chip chip-off">Abo für Live</span>
-                        {% endif %}
-                    </div>
-
-                    {% if account %}
-                    <div class="ticket">
-                        <div><span class="k">Konto</span><span class="v">{{ account.display_name or 'verbunden' }}</span></div>
-                        {% if account.market %}<div><span class="k">Markt</span><span class="v data">{{ account.market }}</span></div>{% endif %}
-                        {% if account.product_tier %}<div><span class="k">Tarif</span><span class="v data">{{ account.product_tier }}</span></div>{% endif %}
-                        {# A missing row reads as a bug. Say that the service stopped
-                           handing these out, so the gap is an answer and not a hole. #}
-                        {% if not p.reports_account_tier %}
-                        <div><span class="k">Markt · Tarif</span><span class="v faint sm">gibt {{ p.display_name }} nicht mehr heraus</span></div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <ul class="stack-s dim sm">
-                        {% for note in p.notes %}<li>{{ note }}</li>{% endfor %}
-                    </ul>
-
-                    {% if not p.configured %}
-                    <div class="note">
-                        <span class="stencil">Einrichtung</span>
-                        <span>Auf diesem Server nicht eingerichtet. Trag <code>{{ p.missing_config | join(', ') }}</code> in <code>.env</code> ein und starte neu.</span>
-                    </div>
-                    {% endif %}
-
-                    <div class="row" style="margin-top: auto">
-                        {% if p.configured %}
-                        <a class="btn {% if not account %}btn-primary{% endif %}" href="/auth/{{ p.id }}/login">
-                            {% if account %}Neu verbinden{% else %}{{ p.display_name }} verbinden{% endif %}
-                        </a>
-                        {% endif %}
-                        {% if account %}
-                        <button class="btn btn-stop" type="button" data-disconnect="{{ p.id }}">Trennen</button>
-                        {% endif %}
-                    </div>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </div>
+<section class="section-head" aria-labelledby="connectTitle">
+    <span class="eyebrow">Anschluss</span>
+    <h1 id="connectTitle">Deine Streamingdienste</h1>
+    <p>
+        Verbinde so viele du willst. Jeder Dienst führt seine eigene Bibliothek,
+        nichts wird zwischen ihnen geteilt. true-shuffle spielt nie selbst Ton
+        ab — es entscheidet nur, was als Nächstes kommt.
+    </p>
 </section>
 
-<section class="section">
-    <div class="index">
-        <b>02</b>
-        Fahrplan
-    </div>
-    <div class="body">
-        <h2>Geplante Anbindungen</h2>
-        <p class="dim sm">
-            Hier gelistet, damit der Fahrplan sichtbar ist, nicht als Behauptung,
-            dass sie laufen. Bei jedem sind die API-Bedingungen vorher neu zu prüfen.
-        </p>
-        <div class="grid">
-            {% for p in planned %}
-            <article class="bay">
-                <div class="bay-head">
-                    <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
-                    <span class="chip chip-off">Geplant</span>
-                </div>
-                <div class="bay-body">
-                    <p class="dim sm">{{ p.likely_mode }}</p>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
+<div class="note hidden" id="connectNote"></div>
 
-        <div class="row">
-            <a class="btn" href="/library">Weiter zu meinen Playlists</a>
-            <a class="btn btn-quiet" href="/auth/signout">Aus dieser Browser-Sitzung abmelden</a>
+<div class="grid">
+    {% for p in providers %}
+    {% set account = connected.get(p.id) %}
+    <article class="card">
+        <div class="card-head">
+            <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+            {% if account %}
+            <span class="chip chip-neutral">Verbunden</span>
+            {% elif p.configured %}
+            <span class="chip chip-neutral">Nicht verbunden</span>
+            {% else %}
+            <span class="chip chip-neutral">Nicht eingerichtet</span>
+            {% endif %}
         </div>
+        <div class="card-body">
+            <div class="row">
+                <span class="openness {{ 'openness-free' if p.tracks_progress_without_tab else 'openness-tab' }}">
+                    {{ 'Position zählt mit, ohne dass etwas offen bleibt' if p.tracks_progress_without_tab else 'Position zählt nur bei offenem Tab mit' }}
+                </span>
+                {% if p.requires_paid_tier %}
+                <span class="chip chip-neutral">Abo für Live-Modus</span>
+                {% endif %}
+            </div>
+
+            {% if account %}
+            <div class="kv">
+                <div><span class="k">Konto</span><span class="v">{{ account.display_name or 'verbunden' }}</span></div>
+                {% if account.market %}<div><span class="k">Markt</span><span class="v tabular">{{ account.market }}</span></div>{% endif %}
+                {% if account.product_tier %}<div><span class="k">Tarif</span><span class="v tabular">{{ account.product_tier }}</span></div>{% endif %}
+                {# A missing row reads as a bug. Say that the service stopped
+                   handing these out, so the gap is an answer and not a hole. #}
+                {% if not p.reports_account_tier %}
+                <div><span class="k">Markt · Tarif</span><span class="v faint">gibt {{ p.display_name }} nicht mehr heraus</span></div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if p.notes %}
+            <ul class="stack-s dim sm">
+                {% for note in p.notes %}<li>{{ note }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if not p.configured %}
+            <div class="note">
+                <span class="stencil">Einrichtung fehlt</span>
+                <span>Auf diesem Server nicht eingerichtet. Trag <code>{{ p.missing_config | join(', ') }}</code> in <code>.env</code> ein und starte neu.</span>
+            </div>
+            {% endif %}
+
+            <div class="row" style="margin-top: auto">
+                {% if p.configured %}
+                <a class="btn {% if not account %}btn-primary{% endif %}" href="/auth/{{ p.id }}/login">
+                    {% if account %}Neu verbinden{% else %}{{ p.display_name }} verbinden{% endif %}
+                </a>
+                {% endif %}
+                {% if account %}
+                <button class="btn btn-stop" type="button" data-disconnect="{{ p.id }}">Trennen</button>
+                {% endif %}
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<section aria-labelledby="plannedTitle">
+    <div class="section-head">
+        <span class="eyebrow">Fahrplan</span>
+        <h2 id="plannedTitle">Geplante Anbindungen</h2>
+        <p>Hier gelistet, damit der Fahrplan sichtbar ist — nicht als Behauptung, dass sie laufen. Bei jedem sind die API-Bedingungen vorher neu zu prüfen.</p>
+    </div>
+    <div class="grid">
+        {% for p in planned %}
+        <article class="card">
+            <div class="card-head">
+                <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+                <span class="chip chip-preview">Geplant</span>
+            </div>
+            <div class="card-body">
+                <p class="dim sm">{{ p.likely_mode }}</p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <div class="row" style="margin-top: var(--space-4)">
+        <a class="btn" href="/library">Weiter zu meiner Bibliothek</a>
+        <a class="btn btn-quiet" href="/auth/signout">Aus dieser Browser-Sitzung abmelden</a>
     </div>
 </section>
 {% endblock %}
@@ -120,7 +113,7 @@ import { $, $$, api, setNote } from "/static/app.js";
 for (const button of $$("[data-disconnect]")) {
     button.addEventListener("click", async () => {
         const id = button.dataset.disconnect;
-        if (!confirm("Diesen Dienst trennen? Die gespeicherten Zugangsdaten werden gelöscht, deine Läufe bleiben.")) return;
+        if (!confirm("Diesen Dienst trennen? Die gespeicherten Zugangsdaten werden gelöscht, deine Hörvorgänge bleiben.")) return;
         button.disabled = true;
         try {
             await api(`/auth/${id}/disconnect`, { method: "POST" });

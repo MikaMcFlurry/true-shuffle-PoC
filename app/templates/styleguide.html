@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% block title %}Styleguide · true-shuffle{% endblock %}
+
+{% block content %}
+{#
+  Every "Nachtpult" component, in every reachable state, both themes,
+  side by side. Dev-only acceptance surface (UX_IMPL_SPEC.md), and the one
+  place system state C and the error/empty edges can be reviewed — the demo
+  flow in this phase cannot reach them (see ADR-001).
+
+  Each section is written once as a macro and rendered twice, inside a
+  data-theme="dark" and a data-theme="light" container, so the two themes are
+  guaranteed to be pixel-identical markup and only differ by the tokens the
+  attribute scopes (see tokens.css).
+#}
+{% macro pair(inner) %}
+<div class="preview-pair">
+    <div class="theme-preview" data-theme="dark"><span class="tp-label">Night</span>{{ inner }}</div>
+    <div class="theme-preview" data-theme="light"><span class="tp-label">Paper</span>{{ inner }}</div>
+</div>
+{% endmacro %}
+
+<section class="section-head" aria-labelledby="sgTitle">
+    <span class="eyebrow">Nur Entwicklung</span>
+    <h1 id="sgTitle">Styleguide — Nachtpult</h1>
+    <p>Alle Komponenten in allen Zuständen, beide Themes nebeneinander. Zustand C und die Fehler-/Leerzustände sind hier zu prüfen — der Demo-Fluss erreicht sie in dieser Phase noch nicht.</p>
+</section>
+
+{% macro sec_buttons() %}
+<div class="sg-block">
+    <h3>Buttons</h3>
+    <div class="sg-row">
+        <button class="btn btn-primary">Primär</button>
+        <button class="btn btn-secondary">Sekundär</button>
+        <button class="btn btn-quiet">Zurückhaltend</button>
+        <button class="btn btn-stop">Trennen</button>
+        <button class="btn btn-primary btn-lg">Groß</button>
+    </div>
+    <div class="sg-row">
+        <button class="btn btn-primary" aria-disabled="true">Hörvorgang starten</button>
+        <span class="field-hint">Deaktiviert über <code>aria-disabled</code>: bleibt fokussierbar, keine Opacity, ≥4.5:1 Text. Löse zuerst den Regelkonflikt, dann kann es losgehen.</span>
+    </div>
+</div>
+{% endmacro %}
+{{ pair(sec_buttons()) }}
+
+{% macro sec_chips() %}
+<div class="sg-block">
+    <h3>Zustands-Chips A–D (Farbe + Form + Text)</h3>
+    <div class="sg-row">
+        <span class="chip chip-a"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="1.5" y="6" width="2.6" height="5" rx="1.3"/><rect x="6.7" y="2.5" width="2.6" height="11" rx="1.3"/><rect x="11.9" y="4.5" width="2.6" height="8" rx="1.3"/></svg>True Shuffle steuert</span>
+        <span class="chip chip-b"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 7.5V3.2a1.2 1.2 0 0 1 2.4 0v3.6m0-1.6a1.2 1.2 0 0 1 2.4 0v1.9m0-.9a1.2 1.2 0 0 1 2.4.4v2.9c0 2.6-1.9 4.3-4.5 4.3S4 12.6 3.4 10.6L2.3 7.4a1.1 1.1 0 0 1 2-.8l1.2 1.9"/></svg>Spotify manuell übernommen</span>
+        <span class="chip chip-c"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.4 1.7"/></svg>Wartet auf deine Entscheidung</span>
+        <span class="chip chip-d"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="1.8" width="7" height="12.4" rx="1.6"/><circle cx="8" cy="10.6" r="1.7"/><path d="M2 2l12 12"/></svg>Kein aktives Gerät</span>
+    </div>
+    <h3>Vertragsvokabular &amp; sonstige Chips</h3>
+    <div class="sg-row">
+        <span class="chip chip-neutral">aktiv</span>
+        <span class="chip chip-neutral">pausiert</span>
+        <span class="chip chip-neutral">abgeschlossen</span>
+        <span class="chip chip-preview">Vorschau</span>
+        <span class="chip chip-error">Fehler</span>
+    </div>
+    <h3>Openness-Badges</h3>
+    <div class="sg-row">
+        <span class="openness openness-free">Nichts bleibt offen</span>
+        <span class="openness openness-tab">Tab muss offen bleiben</span>
+    </div>
+</div>
+{% endmacro %}
+{{ pair(sec_chips()) }}
+
+{% macro sec_cards() %}
+<div class="sg-block">
+    <h3>Run-Karten — Systemzustände A–D</h3>
+    <div class="card-grid">
+        <article class="run-card is-a">
+            <div class="run-head">
+                <span class="cover" aria-hidden="true" style="background:#0E7C86"></span>
+                <div>
+                    <h2 class="run-title" lang="de">Autobahn-Dauerbrenner-Sammlung Vol.&nbsp;3</h2>
+                    <p class="run-config">Konfiguration: Ohne Wiederholungen</p>
+                </div>
+            </div>
+            <div class="run-meta">
+                <span class="chip chip-a"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="1.5" y="6" width="2.6" height="5" rx="1.3"/><rect x="6.7" y="2.5" width="2.6" height="11" rx="1.3"/><rect x="11.9" y="4.5" width="2.6" height="8" rx="1.3"/></svg>True Shuffle steuert</span>
+                <span class="chip chip-neutral">aktiv</span>
+            </div>
+            <div class="mini-meter" role="img" aria-label="Fortschritt 53 Prozent"><i style="width:53%"></i></div>
+            <p class="run-progressline tabular"><span>812 von 1543 gespielt</span><span>zuletzt: gerade eben</span></p>
+            <div class="run-actions"><button class="btn btn-primary">Weiterhören</button><button class="btn btn-quiet">Details</button></div>
+        </article>
+        <article class="run-card is-b">
+            <div class="run-head">
+                <span class="cover" aria-hidden="true" style="background:#1E5AD7"></span>
+                <div>
+                    <h2 class="run-title" lang="de">Indie-Entdeckungen aus zehn Jahren Festivalsommer</h2>
+                    <p class="run-config">Konfiguration: Lange Autofahrt</p>
+                </div>
+            </div>
+            <div class="run-meta">
+                <span class="chip chip-b"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 7.5V3.2a1.2 1.2 0 0 1 2.4 0v3.6m0-1.6a1.2 1.2 0 0 1 2.4 0v1.9m0-.9a1.2 1.2 0 0 1 2.4.4v2.9c0 2.6-1.9 4.3-4.5 4.3S4 12.6 3.4 10.6L2.3 7.4a1.1 1.1 0 0 1 2-.8l1.2 1.9"/></svg>Spotify manuell übernommen</span>
+                <span class="chip chip-neutral">pausiert</span>
+            </div>
+            <div class="mini-meter" role="img" aria-label="Fortschritt 42 Prozent"><i style="width:42%;background:var(--state-b)"></i></div>
+            <p class="run-progressline tabular"><span>203 von 489 gespielt</span><span>zuletzt: vor 18 Minuten</span></p>
+            <p class="run-note">Dein Hörstand ist gesichert. Sobald du zurückkommst, geht es beim 204. Titel weiter.</p>
+            <div class="run-actions"><button class="btn btn-secondary">Zum Player</button></div>
+        </article>
+        <article class="run-card is-c">
+            <div class="run-head">
+                <span class="cover-fallback" role="img" aria-label="Kein Cover verfügbar"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 3v10.6A3.5 3.5 0 1 0 11 17V7h6.5a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H9z"/></svg></span>
+                <div>
+                    <h2 class="run-title" lang="de">Abendliche Klaviermusik für lange Regentage</h2>
+                    <p class="run-config">Konfiguration: Feierabend-Mix</p>
+                </div>
+            </div>
+            <div class="run-meta">
+                <span class="chip chip-c"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.4 1.7"/></svg>Wartet auf deine Entscheidung</span>
+            </div>
+            <div class="mini-meter" role="img" aria-label="Fortschritt 52 Prozent"><i style="width:52%;background:var(--state-c)"></i></div>
+            <p class="run-progressline tabular"><span>58 von 112 gespielt</span><span>zuletzt: vor 3 Wochen</span></p>
+            <p class="run-note">Du hattest zwischendurch selbst bei Spotify gehört. Fortsetzen oder pausiert lassen?</p>
+            <div class="run-actions"><button class="btn btn-secondary">Entscheidung treffen</button></div>
+        </article>
+        <article class="run-card is-d">
+            <div class="run-head">
+                <span class="cover" aria-hidden="true" style="background:#D9531E"></span>
+                <div>
+                    <h2 class="run-title" lang="de">Lauftraining: Tempo &amp; Intervalle</h2>
+                    <p class="run-config">Konfiguration: Nur Favoriten</p>
+                </div>
+            </div>
+            <div class="run-meta">
+                <span class="chip chip-d"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="1.8" width="7" height="12.4" rx="1.6"/><circle cx="8" cy="10.6" r="1.7"/><path d="M2 2l12 12"/></svg>Kein aktives Gerät</span>
+            </div>
+            <div class="mini-meter" role="img" aria-label="Fortschritt 79 Prozent"><i style="width:79%;background:var(--state-d)"></i></div>
+            <p class="run-progressline tabular"><span>977 von 1240 gespielt</span><span>zuletzt: gestern Abend</span></p>
+            <p class="run-note">Öffne Spotify auf einem deiner Geräte — danach geht es hier sofort weiter.</p>
+            <div class="run-actions"><button class="btn btn-secondary">Gerät wählen</button><button class="btn btn-quiet">Geräteliste aktualisieren</button></div>
+        </article>
+    </div>
+</div>
+{% endmacro %}
+{{ pair(sec_cards()) }}
+
+{% macro sec_banners() %}
+<div class="sg-block">
+    <h3>Banner — persistent, nie modal</h3>
+    <div class="banner banner-b" role="status">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 7.5V3.2a1.2 1.2 0 0 1 2.4 0v3.6m0-1.6a1.2 1.2 0 0 1 2.4 0v1.9m0-.9a1.2 1.2 0 0 1 2.4.4v2.9c0 2.6-1.9 4.3-4.5 4.3S4 12.6 3.4 10.6L2.3 7.4a1.1 1.1 0 0 1 2-.8l1.2 1.9"/></svg>
+        <div>
+            <p class="banner-title">Spotify wurde manuell übernommen</p>
+            <p class="banner-body">Dein Hörvorgang ist angehalten und merkt sich deinen Stand: <b>812 von 1543 Titeln</b>. Nichts geht verloren.</p>
+            <div class="banner-actions"><button class="btn btn-primary">Hörvorgang fortsetzen</button><button class="btn btn-secondary">Pausiert lassen</button></div>
+            <p class="banner-policy">Deine Regel für manuelle Nutzung: „Nachfragen“. Änderbar in der Konfiguration.</p>
+        </div>
+    </div>
+    <div class="banner banner-c" role="alert">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.4 1.7"/></svg>
+        <div>
+            <p class="banner-title">Wartet auf deine Entscheidung</p>
+            <p class="banner-body">Du hattest zwischendurch selbst bei Spotify gehört. Fortsetzen oder pausiert lassen?</p>
+            <div class="banner-actions"><button class="btn btn-primary">Fortsetzen</button><button class="btn btn-secondary">Pausiert lassen</button></div>
+        </div>
+    </div>
+    <div class="banner banner-d" role="status">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="1.8" width="7" height="12.4" rx="1.6"/><circle cx="8" cy="10.6" r="1.7"/><path d="M2 2l12 12"/></svg>
+        <div>
+            <p class="banner-title">Kein aktives Gerät</p>
+            <p class="banner-body">Öffne Spotify auf einem deiner Geräte — danach geht es hier sofort weiter.</p>
+            <div class="banner-actions"><button class="btn btn-secondary">Geräteliste aktualisieren</button></div>
+        </div>
+    </div>
+    <div class="banner banner-error" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 22 20H2z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+        <div>
+            <p class="banner-title">Anmeldung abgelaufen</p>
+            <p class="banner-body">Deine Verbindung zu Spotify ist abgelaufen. Dein Hörstand ist gespeichert — <b>nichts geht verloren</b>. Melde dich neu an, um weiterzuhören.</p>
+            <div class="banner-actions"><button class="btn btn-primary">Neu bei Spotify anmelden</button><button class="btn btn-quiet">Später</button></div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+{{ pair(sec_banners()) }}
+
+{% macro sec_player() %}
+<div class="sg-block">
+    <h3>Player-Zonen — Zustand A</h3>
+    <section class="zone zone-run">
+        <p class="zone-caption">Hörvorgang · <b>True Shuffle</b></p>
+        <span class="chip chip-a"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="1.5" y="6" width="2.6" height="5" rx="1.3"/><rect x="6.7" y="2.5" width="2.6" height="11" rx="1.3"/><rect x="11.9" y="4.5" width="2.6" height="8" rx="1.3"/></svg>True Shuffle steuert</span>
+        <p class="run-context"><b>Ohne Wiederholungen</b> · Autobahn-Dauerbrenner-Sammlung Vol.&nbsp;3</p>
+        <div style="margin-top:14px">
+            <div class="mini-meter" style="height:8px" role="img" aria-label="812 von 1543 Titeln gespielt, 53 Prozent"><i style="width:53%"></i></div>
+            <p class="run-progressline tabular"><span><b style="color:var(--ink)">812</b> von 1543 gespielt</span><span>53&nbsp;%</span></p>
+        </div>
+        <div class="next-up">
+            <p class="nu-label">Als Nächstes regelkonform</p>
+            <p class="nu-track" lang="de">„Herz aus Stahl“ – Die Ärzte</p>
+            <p class="nu-why">Seit 214 Titeln nicht gespielt · Mindestabstand 50 erfüllt</p>
+        </div>
+    </section>
+
+    <h3 style="margin-top:8px">Transport (56 / 72&nbsp;px) &amp; Attribution</h3>
+    <div class="transport" role="group" aria-label="Wiedergabesteuerung">
+        <button class="t-btn" aria-label="Vorheriger Titel"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2.4v14H6zM18.6 5.8v12.4a.8.8 0 0 1-1.25.66L9 13.5v-3l8.35-5.36a.8.8 0 0 1 1.25.66z"/></svg></button>
+        <button class="t-btn t-btn-main" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg></button>
+        <button class="t-btn" aria-label="Nächster regelkonformer Titel"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5h-2.4v14H18zM5.4 5.8v12.4a.8.8 0 0 0 1.25.66L15 13.5v-3L6.65 5.14a.8.8 0 0 0-1.25.66z"/></svg></button>
+    </div>
+    <p class="attribution"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M9.5 1.8v8a2.8 2.8 0 1 0 1.4 2.4V5.4l3-.8V2l-4.4 1.2z" opacity=".9"/><path d="M2 4.5h5v1.4H2zM2 7.3h5v1.4H2zM2 10.1h3.4v1.4H2z"/></svg>Wiedergabe über Spotify</p>
+
+    <h3 style="margin-top:8px">Transport deaktiviert (Zustand B — nie Opacity)</h3>
+    <div class="transport" role="group" aria-label="Wiedergabesteuerung (liegt gerade bei Spotify)">
+        <button class="t-btn" aria-disabled="true" aria-label="Vorheriger Titel – Steuerung liegt gerade bei Spotify"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2.4v14H6zM18.6 5.8v12.4a.8.8 0 0 1-1.25.66L9 13.5v-3l8.35-5.36a.8.8 0 0 1 1.25.66z"/></svg></button>
+        <button class="t-btn t-btn-main" aria-disabled="true" aria-label="Pause – Steuerung liegt gerade bei Spotify"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg></button>
+        <button class="t-btn" aria-disabled="true" aria-label="Nächster Titel – Steuerung liegt gerade bei Spotify"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5h-2.4v14H18zM5.4 5.8v12.4a.8.8 0 0 0 1.25.66L15 13.5v-3L6.65 5.14a.8.8 0 0 0-1.25.66z"/></svg></button>
+    </div>
+    <p class="transport-hint">Die Steuerung liegt gerade bei Spotify — setze den Hörvorgang fort, um sie zurückzuholen.</p>
+    <p class="device-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="4.5" y="1.8" width="7" height="12.4" rx="1.6"/><circle cx="8" cy="10.6" r="1.7"/><circle cx="8" cy="4.6" r=".9" fill="currentColor" stroke="none"/></svg>Gerät: Küchenlautsprecher · verbunden</p>
+</div>
+{% endmacro %}
+{{ pair(sec_player()) }}
+
+{% macro sec_progress() %}
+<div class="sg-block">
+    <h3>Fortschritt — Ink-Achse + Signal, Track immer sichtbar</h3>
+    <div class="hero-number">
+        <span class="big tabular">53&nbsp;%</span>
+        <span class="sub"><b style="color:var(--ink)">812</b> von 1543 Titeln regelkonform gespielt</span>
+    </div>
+    <div class="meter" role="img" aria-label="Fortschrittsbalken: 812 gespielt, 47 übersprungen, 36 ausgeschlossen, 648 offen">
+        <i class="seg-played" style="width:52.6%"></i><i class="seg-skipped" style="width:3.1%"></i><i class="seg-excluded" style="width:2.3%"></i><i class="seg-open" style="width:42%"></i>
+    </div>
+    <ul class="legend">
+        <li><span class="sw" style="background:var(--state-a)"></span>gespielt <b>812</b></li>
+        <li><span class="sw" style="background:var(--state-c)"></span>übersprungen <b>47</b></li>
+        <li><span class="sw" style="background:repeating-linear-gradient(45deg,var(--state-d) 0 3px,rgba(166,174,192,.45) 3px 6px)"></span>ausgeschlossen <b>36</b></li>
+        <li><span class="sw" style="background:var(--meter-track);box-shadow:inset 0 0 0 1px var(--line-strong)"></span>offen <b>648</b></li>
+    </ul>
+    <div class="stat-tiles">
+        <div class="tile"><p class="t-num tabular">812</p><p class="t-label"><span class="sw" style="background:var(--state-a)"></span>gespielt</p></div>
+        <div class="tile"><p class="t-num tabular">648</p><p class="t-label"><span class="sw" style="background:var(--meter-track);box-shadow:inset 0 0 0 1px var(--line-strong)"></span>offen</p></div>
+        <div class="tile"><p class="t-num tabular">47</p><p class="t-label"><span class="sw" style="background:var(--state-c)"></span>übersprungen</p></div>
+        <div class="tile"><p class="t-num tabular">36</p><p class="t-label"><span class="sw" style="background:repeating-linear-gradient(45deg,var(--state-d) 0 3px,rgba(166,174,192,.45) 3px 6px)"></span>ausgeschlossen</p></div>
+        <div class="tile"><p class="t-num tabular">12</p><p class="t-label">Wiederholungen</p></div>
+    </div>
+    <h3 style="margin-top:8px">Job-Fortschritt — role="progressbar"</h3>
+    <div class="job-status">
+        <div class="job-line"><span class="spinner"></span>Playlist wird gelesen: 340 von 1543</div>
+        <div class="job-bar" role="progressbar" aria-valuenow="22" aria-valuemin="0" aria-valuemax="100" aria-label="Playlist wird gelesen"><i style="width:22%"></i></div>
+    </div>
+</div>
+{% endmacro %}
+{{ pair(sec_progress()) }}
+
+{% macro sec_builder() %}
+<div class="sg-block">
+    <h3>Presets — fieldset + echte Radios</h3>
+    <fieldset class="presets">
+        <legend class="sr-only">Konfiguration (Beispiel)</legend>
+        <div class="preset-grid">
+            <label class="preset-row">
+                <input type="radio" name="sgpreset" checked>
+                <span class="p-body"><span class="p-name">Ohne Wiederholungen</span><span class="p-desc">Aktiv, funktioniert heute.</span></span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="sgpreset" disabled>
+                <span class="p-body"><span class="p-name">Entdeckermodus <span class="chip chip-preview">Vorschau</span></span><span class="p-desc">Kommt mit dem nächsten Ausbau.</span></span>
+            </label>
+        </div>
+    </fieldset>
+
+    <h3 style="margin-top:8px">Regel-Akkordeon + Konfliktbox</h3>
+    <details class="rule-group" open>
+        <summary><span>Wiederholungsabstand <span class="rh-state">· Mindestabstand: 12</span></span></summary>
+        <div class="rule-body">
+            <div class="radio-row">
+                <input type="radio" name="sgabstand" checked>
+                <label><span class="r-name">Mindestabstand zwischen Wiederholungen</span><span class="r-desc">Ein Titel darf erst wiederkommen, nachdem so viele andere gespielt wurden.</span></label>
+            </div>
+            <div class="stepper" role="group" aria-label="Mindestabstand einstellen">
+                <button type="button" aria-label="Abstand verringern">−</button>
+                <output aria-live="polite">12</output>
+                <button type="button" aria-label="Abstand erhöhen">+</button>
+            </div>
+            <div class="conflict" role="alert">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8 15 13.6H1z"/><path d="M8 6.2v3.4"/><circle cx="8" cy="11.6" r=".4" fill="currentColor"/></svg>
+                <div>
+                    <p class="c-title">Regelkonflikt</p>
+                    <p class="c-body">Bei 8 Titeln sind höchstens 7 Abstand möglich. Mit Abstand 12 hätte true-shuffle irgendwann keinen regelkonformen Titel mehr zur Auswahl.</p>
+                    <div class="c-actions"><button class="btn btn-secondary">Auf 7 begrenzen</button></div>
+                </div>
+            </div>
+        </div>
+    </details>
+    <details class="rule-group">
+        <summary><span>Skip-Verhalten <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <div class="rule-body"><p class="field-hint">Eingeklappt per Default — Wert-Zusammenfassung im Kopf.</p></div>
+    </details>
+
+    <div class="builder-footer">
+        <button class="btn btn-primary" aria-disabled="true">Hörvorgang starten</button>
+        <p class="foot-note">Löse zuerst den Regelkonflikt beim Wiederholungsabstand — dann kann es losgehen.</p>
+    </div>
+</div>
+{% endmacro %}
+{{ pair(sec_builder()) }}
+
+{% macro sec_forms() %}
+<div class="sg-block">
+    <h3>Formulare</h3>
+    <div class="row">
+        <label class="field" style="max-width:260px">
+            <span class="field-label">Playlist filtern</span>
+            <input type="search" placeholder="Nach Namen filtern…">
+        </label>
+        <label class="field" style="max-width:260px">
+            <span class="field-label">Wenn schon läuft</span>
+            <select><option>Dort weitermachen</option><option>Neu mischen</option></select>
+        </label>
+    </div>
+    <div class="tabs" role="group" aria-label="Beispiel-Tabs">
+        <button type="button" aria-pressed="true">Spotify</button>
+        <button type="button" aria-pressed="false">Apple Music</button>
+    </div>
+    <p class="keys"><span><kbd>Leer</kbd> Start / Pause</span><span><kbd>→</kbd> Überspringen</span><span><kbd>←</kbd> Zurück</span></p>
+</div>
+{% endmacro %}
+{{ pair(sec_forms()) }}
+
+{% macro sec_edges() %}
+<div class="sg-block">
+    <h3>Leer- &amp; Fehlerzustand, Skeleton</h3>
+    <div class="grid-2">
+        <div class="empty-state">
+            <span class="empty-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 17c2.5-2.2 4-6.5 5.5-6.5S12.5 15 14 15s3-7 4.5-7S21 11 21.5 12"/><circle cx="4" cy="17" r="1.2" fill="currentColor" stroke="none"/></svg></span>
+            <h3>Noch kein Hörvorgang</h3>
+            <p>Wähle eine Playlist und eine Konfiguration — true-shuffle merkt sich ab dann jeden gespielten Titel, auch über Wochen.</p>
+            <div class="empty-actions"><button class="btn btn-primary">Ersten Hörvorgang anlegen</button></div>
+        </div>
+        <div class="empty-state is-error">
+            <span class="empty-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 22 20H2z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></span>
+            <h3>Anmeldung abgelaufen</h3>
+            <p>Deine Verbindung zu Spotify ist abgelaufen. Dein Hörstand ist gespeichert — nichts geht verloren.</p>
+            <div class="empty-actions"><button class="btn btn-primary">Neu bei Spotify anmelden</button></div>
+        </div>
+    </div>
+    <div class="skeleton"><i></i><i></i><i></i></div>
+</div>
+{% endmacro %}
+{{ pair(sec_edges()) }}
+{% endblock %}

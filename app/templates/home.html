@@ -1,162 +1,143 @@
 {% extends "base.html" %}
-{% block title %}true-shuffle{% endblock %}
+{% block title %}true-shuffle — ein Hörvorgang, der sich merkt, wo du warst{% endblock %}
 
 {% block content %}
-<section class="section">
-    <div class="index">
-        <b>00</b>
-        Das Fach
-    </div>
-    <div class="body">
-        <div class="opening">
-            <div class="opening-say">
-                <h1>Deine Playlist als Fach, das du wirklich durchhörst.</h1>
-                <p class="lede">
-                    Jeder spielbare Titel genau einmal pro Durchlauf. Nichts
-                    wiederholt sich, bis das Fach leer ist. Wenn du zurückkommst, steht
-                    der Trennstreifen noch genau da, wo du aufgehört hast.
-                </p>
-                <div class="row">
-                    <a class="btn btn-primary btn-lg" href="/connect">Dienst verbinden</a>
-                    <a class="btn btn-lg" href="/library">Zu meinen Playlists</a>
-                </div>
-            </div>
-            <div class="opening-show">
-                <span class="stencil">Beispiel</span>
-                <div class="crateviz" aria-hidden="true">
-                    {% for i in range(9) %}<i class="played"></i>{% endfor %}
-                    <i class="divider"></i>
-                    {% for i in range(20) %}<i></i>{% endfor %}
-                </div>
-                <div class="crate-scale" aria-hidden="true">
-                    <span>9 gespielt</span>
-                    <span>20 übrig</span>
-                </div>
-            </div>
-        </div>
-
-        {% if warnings %}
-        <div class="note note-stop">
-            <span class="stencil">Konfiguration</span>
-            {% for w in warnings %}<span>{{ w }}</span>{% endfor %}
-        </div>
-        {% endif %}
-    </div>
-</section>
-
-<section class="section">
-    <div class="index">
-        <b>01</b>
-        Wege
-    </div>
-    <div class="body">
-        <h2>Zwei Wege durch ein Fach</h2>
-        <div class="grid-2">
-            <article class="bay">
-                <div class="bay-head">
-                    <span>Handoff</span>
-                    <span class="bay-read">NICHTS BLEIBT OFFEN</span>
-                </div>
-                <div class="bay-body">
-                    <p class="dim sm">
-                        Die gemischte Reihenfolge wird als echte Playlist in den
-                        Dienst geschrieben. Du spielst sie dort: Handy, Auto,
-                        Box. Wo der Dienst einen Hörverlauf herausgibt, liest
-                        true-shuffle daraus zurück, wie weit du bist. Der
-                        Trennstreifen wandert mit, ohne dass hier etwas laufen
-                        muss.
-                    </p>
-                </div>
-            </article>
-            <article class="bay">
-                <div class="bay-head">
-                    <span>Live</span>
-                    <span class="bay-read">JE NACH DIENST</span>
-                </div>
-                <div class="bay-body">
-                    <p class="dim sm">
-                        true-shuffle bestimmt selbst, was als Nächstes läuft, und
-                        rückt weiter, sobald ein Titel endet oder du überspringst.
-                        Bei Spotify läuft das auf dem Server. Bei Apple Music und
-                        YouTube Music im Browser-Tab, weil beide Dienste keine
-                        fremde Steuerung zulassen.
-                    </p>
-                </div>
-            </article>
-        </div>
-    </div>
-</section>
-
-<section class="section">
-    <div class="index">
-        <b>02</b>
-        Dienste
-    </div>
-    <div class="body">
-        <div class="grid">
-            {% for p in providers %}
-            <article class="bay">
-                <div class="bay-head">
-                    <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
-                    {% if p.id in connected %}
-                        <span class="chip chip-ok">Verbunden</span>
-                    {% elif p.configured %}
-                        <span class="chip chip-off">Bereit</span>
-                    {% else %}
-                        <span class="chip chip-off">Nicht eingerichtet</span>
-                    {% endif %}
-                </div>
-                <div class="bay-body">
-                    <div class="row">
-                        {% if p.tracks_progress_without_tab %}
-                        <span class="openness openness-free">Position zählt mit, ohne dass etwas offen bleibt</span>
-                        {% else %}
-                        <span class="openness openness-tab">Position zählt nur bei offenem Tab mit</span>
-                        {% endif %}
-                    </div>
-                    <p class="faint sm">
-                        {% if p.playback == 'remote_device' %}Steuert die App, die du ohnehin offen hast{% endif %}
-                        {%- if p.playback == 'web_player' %}Spielt über den eigenen Browser-Player von {{ p.display_name }}{% endif %}
-                        {%- if p.requires_paid_tier %} · Live-Modus nur mit Abo{% endif %}
-                    </p>
-                    {% if not p.configured %}
-                    <p class="faint sm data">{{ p.missing_config | join(' · ') }}</p>
-                    {% endif %}
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<section class="section">
-    <div class="index">
-        <b>03</b>
-        Kandidaten
-    </div>
-    <div class="body">
-        <h2>Noch nicht im Fach</h2>
-        <p class="dim sm">
-            Ein weiterer Dienst ist eine Connector-Klasse. Das hier sind die
-            Kandidaten mit dem, was vorher zu klären ist. Keine Behauptung, dass
-            sie laufen.
+<section class="hero" aria-labelledby="heroTitle">
+    <div class="aurora" aria-hidden="true"></div>
+    <div class="hero-text">
+        <h1 id="heroTitle" lang="de">Ein Hörvorgang, der sich merkt, wo du warst.</h1>
+        <p class="lede">
+            true-shuffle bestimmt die Reihenfolge deiner Playlist und merkt sich
+            jeden gespielten Titel — auch über Wochen hinweg. Gehört wird trotzdem
+            bei Spotify: true-shuffle spielt nie selbst Ton ab, es entscheidet nur,
+            was als Nächstes kommt.
         </p>
-        <div class="grid">
-            {% for p in planned %}
-            <article class="bay">
-                <div class="bay-head">
-                    <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
-                    <span class="chip chip-off">Geplant</span>
-                </div>
-                <div class="bay-body">
-                    <p class="dim sm">{{ p.likely_mode }}</p>
-                    <ul class="stack-s faint sm">
-                        {% for q in p.open_questions %}<li>{{ q }}</li>{% endfor %}
-                    </ul>
-                </div>
-            </article>
-            {% endfor %}
+    </div>
+    <div class="hero-actions row">
+        <a class="btn btn-primary btn-lg" href="/connect">Dienst verbinden</a>
+        <a class="btn btn-secondary btn-lg" href="/library">Zur Bibliothek</a>
+    </div>
+</section>
+
+{% if warnings %}
+<div class="banner banner-error" role="status">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 22 20H2z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+    <div>
+        <p class="banner-title">Konfiguration prüfen</p>
+        {% for w in warnings %}<p class="banner-body">{{ w }}</p>{% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<section aria-labelledby="waysTitle">
+    <div class="section-head">
+        <span class="eyebrow">Aufgabenteilung</span>
+        <h2 id="waysTitle">Zwei Systeme, klar getrennt</h2>
+        <p>true-shuffle und Spotify tun unterschiedliche Dinge — und sagen dir jederzeit, wer gerade was macht.</p>
+    </div>
+    <div class="grid-2">
+        <article class="card">
+            <div class="card-head">
+                <h3>Das steuert true-shuffle</h3>
+                <span class="chip chip-a"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="1.5" y="6" width="2.6" height="5" rx="1.3"/><rect x="6.7" y="2.5" width="2.6" height="11" rx="1.3"/><rect x="11.9" y="4.5" width="2.6" height="8" rx="1.3"/></svg>Hörvorgang</span>
+            </div>
+            <div class="card-body">
+                <ul class="stack-s sm">
+                    <li>Die Reihenfolge deiner Titel und der Wiederholungsabstand</li>
+                    <li>Der Fortschritt — auch wenn du erst in drei Wochen weiterhörst</li>
+                    <li>Ob gerade true-shuffle steuert oder du selbst bei Spotify weitergeklickt hast</li>
+                </ul>
+            </div>
+        </article>
+        <article class="card">
+            <div class="card-head">
+                <h3>Das bleibt bei Spotify</h3>
+                <span class="chip chip-neutral">Wiedergabe</span>
+            </div>
+            <div class="card-body">
+                <ul class="stack-s sm">
+                    <li>Tonwiedergabe, Lautstärke und das abspielende Gerät</li>
+                    <li>Dein Konto, deine Playlists, deine Downloads</li>
+                    <li>Empfehlungen und alles, was Spotifys eigener Algorithmus vorschlägt</li>
+                </ul>
+            </div>
+        </article>
+    </div>
+</section>
+
+<section aria-labelledby="limitsTitle">
+    <div class="section-head">
+        <span class="eyebrow">Ehrliche Grenzen</span>
+        <h2 id="limitsTitle">Was true-shuffle nicht kann</h2>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <ul class="stack-s sm">
+                <li><b>Live-Modus braucht Spotify Premium.</b> Ohne Abo läuft nur der Handoff-Modus — deine Playlist wird gemischt und in Spotify geschrieben, dort spielst du sie ganz normal ab.</li>
+                <li><b>Nur eigene und kollaborative Playlists lassen sich mischen.</b> Fremde oder gefolgte Playlists geben die Dienste inhaltlich nicht heraus.</li>
+                <li><b>true-shuffle spielt selbst nie Ton ab.</b> Es steuert Reihenfolge und Fortschritt, gehört wird immer über den verbundenen Dienst.</li>
+            </ul>
         </div>
+    </div>
+</section>
+
+<section aria-labelledby="servicesTitle">
+    <div class="section-head">
+        <span class="eyebrow">Dienste</span>
+        <h2 id="servicesTitle">Verfügbar auf diesem Server</h2>
+    </div>
+    <div class="grid">
+        {% for p in providers %}
+        <article class="card">
+            <div class="card-head">
+                <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+                {% if p.id in connected %}
+                <span class="chip chip-neutral">Verbunden</span>
+                {% elif p.configured %}
+                <span class="chip chip-neutral">Bereit</span>
+                {% else %}
+                <span class="chip chip-neutral">Nicht eingerichtet</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <span class="openness {{ 'openness-free' if p.tracks_progress_without_tab else 'openness-tab' }}">
+                    {{ 'Position zählt mit, ohne dass etwas offen bleibt' if p.tracks_progress_without_tab else 'Position zählt nur bei offenem Tab mit' }}
+                </span>
+                <p class="faint sm">
+                    {% if p.playback == 'remote_device' %}Steuert die App, die du ohnehin offen hast.{% endif %}
+                    {%- if p.playback == 'web_player' %}Spielt über den eigenen Browser-Player von {{ p.display_name }}.{% endif %}
+                    {%- if p.requires_paid_tier %} Live-Modus nur mit Abo.{% endif %}
+                </p>
+                {% if not p.configured %}
+                <p class="faint sm">Fehlt: <code>{{ p.missing_config | join(', ') }}</code></p>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section aria-labelledby="plannedTitle">
+    <div class="section-head">
+        <span class="eyebrow">Fahrplan</span>
+        <h2 id="plannedTitle">Noch nicht angebunden</h2>
+        <p>Ein weiterer Dienst braucht einen eigenen Connector. Das hier sind die Kandidaten mit dem, was vorher zu klären ist — keine Behauptung, dass sie schon laufen.</p>
+    </div>
+    <div class="grid">
+        {% for p in planned %}
+        <article class="card">
+            <div class="card-head">
+                <span class="signet" style="--brand: {{ p.brand_color }}">{{ p.display_name }}</span>
+                <span class="chip chip-preview">Geplant</span>
+            </div>
+            <div class="card-body">
+                <p class="dim sm">{{ p.likely_mode }}</p>
+                <ul class="stack-s faint sm">
+                    {% for q in p.open_questions %}<li>{{ q }}</li>{% endfor %}
+                </ul>
+            </div>
+        </article>
+        {% endfor %}
     </div>
 </section>
 {% endblock %}

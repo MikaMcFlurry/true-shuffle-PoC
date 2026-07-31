@@ -1,67 +1,256 @@
 {% extends "base.html" %}
-{% block title %}Sammlung · true-shuffle{% endblock %}
+{% block title %}Bibliothek · true-shuffle{% endblock %}
 
 {% block content %}
-<section class="section">
-    <div class="index">
-        <b>01</b>
-        Auswahl
-    </div>
-    <div class="body">
-        <h1>Ein Fach anlegen</h1>
-        <p class="dim">
-            Eine Playlist, ein Modus, ein Fach. Große Playlists werden im
-            Hintergrund gelesen; du siehst dabei zu.
-        </p>
+<section class="section-head" aria-labelledby="libTitle">
+    <span class="eyebrow">Bibliothek</span>
+    <h1 id="libTitle">Neuer Hörvorgang</h1>
+    <p>Eine Playlist, eine Konfiguration, ein Hörvorgang. Große Playlists werden im Hintergrund gelesen; du siehst dabei zu.</p>
+</section>
 
-        <div class="row">
-            <div class="tabs" id="providerTabs" role="group" aria-label="Streamingdienst"></div>
+<div class="row">
+    <div class="tabs" id="providerTabs" role="group" aria-label="Streamingdienst"></div>
+</div>
+
+<div class="note note-stop hidden" id="libNote"></div>
+
+<div class="grid-2" style="align-items: start">
+    <section class="card" aria-labelledby="bibHead">
+        <div class="card-head">
+            <h2 id="bibHead">Deine Playlists</h2>
+            <span class="card-read" id="plCount">wird gelesen</span>
         </div>
-
-        <div class="note note-stop hidden" id="libNote"></div>
-
-        <div class="deck-layout">
-            <section class="bay" aria-labelledby="bayPl">
-                <div class="bay-head">
-                    <h2 id="bayPl">Deine Playlists</h2>
-                    <span class="bay-read" id="plCount">wird gelesen</span>
-                </div>
-                <div class="bay-body" id="filterRow">
-                    <label class="sr-only" for="plFilter">Playlists filtern</label>
-                    <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off">
-                </div>
-                <div class="browse" id="playlists" aria-label="Playlists">
-                    <div class="skeleton"><i></i><i></i><i></i><i></i><i></i></div>
-                </div>
-            </section>
-
-            <div class="stack">
-                <div class="modes" id="modeCards"></div>
-
-                <section class="bay" aria-labelledby="bayDeal">
-                    <div class="bay-head">
-                        <h2 id="bayDeal">Anlegen</h2>
-                        <span class="bay-read" id="selectionRead">nichts gewählt</span>
-                    </div>
-                    <div class="bay-body">
-                        <p class="dim sm" id="selectionHint">Wähl links eine Playlist.</p>
-
-                        <label class="field">
-                            <span class="stencil">Wenn schon ein Fach läuft</span>
-                            <select id="reshuffle">
-                                <option value="0">Dort weitermachen, wo ich war</option>
-                                <option value="1">Neu mischen (verwirft das laufende Fach)</option>
-                            </select>
-                        </label>
-
-                        <button class="btn btn-primary btn-lg" id="dealBtn" type="button" disabled>Fach anlegen</button>
-                        <div class="status hidden" id="jobLog"></div>
-                        <div class="note hidden" id="jobResult"></div>
-                    </div>
-                </section>
+        <div class="card-body" id="filterRow">
+            <div class="row">
+                <label class="sr-only" for="plFilter">Playlists filtern</label>
+                <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off" style="flex: 1 1 220px">
+                <span class="chip chip-preview" title="Sync kommt mit dem nächsten Ausbau">Sync: Vorschau</span>
             </div>
         </div>
+        <div class="browse" id="playlists" aria-label="Playlists">
+            <div class="skeleton"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+    </section>
+
+    <div class="stack">
+        <div class="stack-s">
+            <p class="fieldset-label" id="modeLabel">Modus</p>
+            <div class="modes" id="modeCards" role="group" aria-labelledby="modeLabel"></div>
+        </div>
+
+        <section class="card" aria-labelledby="createHead">
+            <div class="card-head">
+                <h2 id="createHead">Anlegen</h2>
+                <span class="card-read" id="selectionRead">nichts gewählt</span>
+            </div>
+            <div class="card-body">
+                <p class="dim sm" id="selectionHint">Wähl links eine Playlist.</p>
+
+                <label class="field">
+                    <span class="field-label">Wenn schon ein Hörvorgang läuft</span>
+                    <select id="reshuffle">
+                        <option value="0">Dort weitermachen, wo ich war</option>
+                        <option value="1">Neu mischen (verwirft den laufenden Hörvorgang)</option>
+                    </select>
+                </label>
+
+                <button class="btn btn-primary btn-lg" id="dealBtn" type="button" aria-disabled="true">Hörvorgang starten</button>
+                <p class="field-hint" id="dealHint">Wähl links eine Playlist und oben einen Modus.</p>
+
+                <div class="job-status hidden" id="jobLog"></div>
+                <div class="note hidden" id="jobResult"></div>
+            </div>
+        </section>
     </div>
+</div>
+
+<section aria-labelledby="rulesHead">
+    <div class="section-head">
+        <span class="eyebrow">Konfiguration</span>
+        <h2 id="rulesHead">Konfiguration &amp; Regeln</h2>
+        <p>
+            Wähl eine Konfiguration für den Hörvorgang. Nur <b style="color: var(--ink)">Ohne Wiederholungen</b>
+            ist heute aktiv — sie beschreibt, wie true-shuffle jetzt schon mischt: jeder spielbare Titel
+            genau einmal, bis der Hörvorgang abgeschlossen ist.
+        </p>
+    </div>
+
+    <fieldset class="presets">
+        <legend class="sr-only">Konfiguration wählen</legend>
+        <div class="preset-grid">
+            <label class="preset-row">
+                <input type="radio" name="preset" id="presetNorepeat" value="norepeat" checked>
+                <span class="p-body">
+                    <span class="p-name">Ohne Wiederholungen</span>
+                    <span class="p-desc">Jeder Titel genau einmal, bis alles gespielt ist. Aktiv.</span>
+                </span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="preset" id="presetAutobahn" value="autobahn" disabled>
+                <span class="p-body">
+                    <span class="p-name">Lange Autofahrt <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="p-desc">Große Abstände, Favoriten leicht bevorzugt. Kommt mit dem nächsten Ausbau.</span>
+                </span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="preset" id="presetEntdecker" value="entdecker" disabled>
+                <span class="p-body">
+                    <span class="p-name">Entdeckermodus <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="p-desc">Neue und selten gespielte Titel zuerst. Kommt mit dem nächsten Ausbau.</span>
+                </span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="preset" id="presetFavoriten" value="favoriten" disabled>
+                <span class="p-body">
+                    <span class="p-name">Nur Favoriten <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="p-desc">Ausschließlich markierte Titel. Kommt mit dem nächsten Ausbau.</span>
+                </span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="preset" id="presetFeierabend" value="feierabend" disabled>
+                <span class="p-body">
+                    <span class="p-name">Feierabend-Mix <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="p-desc">Ruhige Auswahl, Skips zählen nicht. Kommt mit dem nächsten Ausbau.</span>
+                </span>
+            </label>
+        </div>
+    </fieldset>
+
+    <div class="note" style="margin-top: var(--space-5)">
+        <span class="stencil">Vorschau</span>
+        <span>
+            Die Regeln unten zeigen, wie sich künftige Konfigurationen einstellen lassen.
+            Sie wirken sich noch nicht auf den Start aus — dein Hörvorgang startet mit
+            <b>Ohne Wiederholungen</b>, unabhängig von der Auswahl hier. Probier sie ruhig aus.
+        </span>
+    </div>
+
+    <details class="rule-group" open>
+        <summary>
+            <span>Wiederholungsabstand <span class="rh-state" id="abstandState">· Keine Wiederholungen</span></span>
+        </summary>
+        <div class="rule-body">
+            <div class="radio-row">
+                <input type="radio" id="r-norepeat" name="abstand" checked>
+                <label for="r-norepeat">
+                    <span class="r-name">Keine Wiederholungen</span>
+                    <span class="r-desc">Jeder Titel höchstens einmal, bis der Hörvorgang abgeschlossen ist. So mischt true-shuffle heute.</span>
+                </label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" id="r-abstand" name="abstand">
+                <label for="r-abstand">
+                    <span class="r-name">Mindestabstand zwischen Wiederholungen <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="r-desc">Ein Titel darf erst wiederkommen, nachdem so viele andere gespielt wurden. Probier die Regelkonflikt-Erkennung unten schon jetzt aus.</span>
+                </label>
+            </div>
+
+            <div class="stepper" role="group" aria-label="Mindestabstand einstellen (Vorschau)">
+                <button type="button" id="gapMinus" aria-label="Abstand verringern">−</button>
+                <output id="gapValue" aria-live="polite">8</output>
+                <button type="button" id="gapPlus" aria-label="Abstand erhöhen">+</button>
+            </div>
+
+            <div class="conflict hidden" id="conflictBox" role="alert">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8 15 13.6H1z"/><path d="M8 6.2v3.4"/><circle cx="8" cy="11.6" r=".4" fill="currentColor"/></svg>
+                <div>
+                    <p class="c-title">Regelkonflikt</p>
+                    <p class="c-body" id="conflictBody"></p>
+                    <div class="c-actions">
+                        <button class="btn btn-secondary" type="button" id="conflictFix">Auf <span id="conflictMax">–</span> begrenzen</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="radio-row" data-preview style="margin-top: 4px">
+                <input type="radio" id="r-quote" name="abstand" disabled>
+                <label for="r-quote">
+                    <span class="r-name">Quote &amp; Gewichtung <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="r-desc">Wiederholungen erlaubt, seltener gespielte Titel werden bevorzugt. Kommt mit dem nächsten Ausbau.</span>
+                </label>
+            </div>
+        </div>
+    </details>
+
+    <details class="rule-group">
+        <summary><span>Favoriten <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <div class="rule-body">
+            <div class="radio-row" data-preview>
+                <input type="radio" name="favoriten" disabled>
+                <label><span class="r-name">Kein Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten laufen wie alle anderen Titel mit.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="favoriten" disabled>
+                <label><span class="r-name">Leichter Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten erscheinen etwas häufiger als der Durchschnitt.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="favoriten" disabled>
+                <label><span class="r-name">Nur Favoriten <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ausschließlich markierte Titel werden gespielt.</span></label>
+            </div>
+            <p class="field-hint">Favoriten kennt true-shuffle noch nicht — diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
+        </div>
+    </details>
+
+    <details class="rule-group">
+        <summary><span>Skip-Verhalten <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <div class="rule-body">
+            <div class="radio-row" data-preview>
+                <input type="radio" name="skip" disabled>
+                <label><span class="r-name">Skip zählt nicht als gespielt <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Übersprungene Titel bleiben offen und kommen später wieder.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="skip" disabled>
+                <label><span class="r-name">Skip zählt als gespielt <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ein übersprungener Titel gilt als erledigt.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="skip" disabled>
+                <label><span class="r-name">Nach mehreren Skips ausschließen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ein Titel, der mehrfach übersprungen wird, fliegt aus dem Hörvorgang.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="skip" disabled>
+                <label><span class="r-name">Skip fragt nach <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">true-shuffle merkt sich den Skip, entscheidet aber erst am Ende, ob er zählt.</span></label>
+            </div>
+            <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau. Heute rückt ein Skip den Hörvorgang wie jedes andere Titelende weiter.</p>
+        </div>
+    </details>
+
+    <details class="rule-group">
+        <summary><span>Manuelle Nutzung <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <div class="rule-body">
+            <div class="radio-row" data-preview>
+                <input type="radio" name="manuell" disabled>
+                <label><span class="r-name">Nachfragen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">true-shuffle hält an und lässt dich entscheiden — fortsetzen oder pausiert lassen.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="manuell" disabled>
+                <label><span class="r-name">Automatisch fortsetzen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Sobald du zu Spotify zurückkehrst, übernimmt true-shuffle wieder.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="manuell" disabled>
+                <label><span class="r-name">Manuell zählt mit <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Was du selbst spielst, zählt als gespielt im Hörvorgang.</span></label>
+            </div>
+            <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
+        </div>
+    </details>
+
+    <details class="rule-group">
+        <summary><span>Neue Titel in der Playlist <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <div class="rule-body">
+            <div class="radio-row" data-preview>
+                <input type="radio" name="neuetitel" disabled>
+                <label><span class="r-name">Hinten einreihen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel kommen ans Ende der Reihenfolge.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="neuetitel" disabled>
+                <label><span class="r-name">Sofort einmischen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel werden sofort in die verbleibende Reihenfolge gemischt.</span></label>
+            </div>
+            <div class="radio-row" data-preview>
+                <input type="radio" name="neuetitel" disabled>
+                <label><span class="r-name">Ignorieren <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel werden für diesen Hörvorgang nicht berücksichtigt.</span></label>
+            </div>
+            <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
+        </div>
+    </details>
 </section>
 {% endblock %}
 
@@ -100,19 +289,17 @@ function selectProvider(id) {
     for (const b of $("#providerTabs")?.children || []) {
         b.setAttribute("aria-pressed", String(b.dataset.provider === id));
     }
-    $("#dealBtn").disabled = true;
     $("#selectionHint").textContent = "Wähl links eine Playlist.";
     $("#selectionRead").textContent = "nichts gewählt";
     renderModes();
     loadPlaylists();
+    updateStartGate();
 }
 
-/* -- modes ---------------------------------------------------------------- */
+/* -- modes ------------------------------------------------------------------
+   The two mode cards, each stating in the service's own terms whether
+   anything has to stay open — the question people actually care about. */
 
-/**
- * The two mode cards, each stating in the service's own terms whether anything
- * has to stay open — the question people actually care about.
- */
 function renderModes() {
     const p = byId[state.provider];
     if (!p) return;
@@ -122,14 +309,14 @@ function renderModes() {
             id: "utility",
             title: "Handoff",
             available: p.create_playlist,
-            // Handoff never needs anything open: the deck is written into the
+            // Handoff never needs anything open: the run is written into the
             // service and played there. Whether your POSITION is counted is a
             // separate fact, and depends on the service having a history API.
             open: false,
             tracked: p.supports_history_sync,
             body: p.supports_history_sync
-                ? `Das Fach wird als Playlist in ${p.display_name} geschrieben. Du spielst sie dort (Handy, Auto, Box), und true-shuffle liest aus deinem Hörverlauf zurück, wie weit du bist.`
-                : `Das Fach wird als Playlist in ${p.display_name} geschrieben und dort abgespielt. ${p.display_name} gibt keinen Hörverlauf heraus, deine Position lässt sich danach nicht mitzählen.`,
+                ? `Die Reihenfolge wird als Playlist in ${p.display_name} geschrieben. Du spielst sie dort (Handy, Auto, Box), und true-shuffle liest aus deinem Hörverlauf zurück, wie weit du bist.`
+                : `Die Reihenfolge wird als Playlist in ${p.display_name} geschrieben und dort abgespielt. ${p.display_name} gibt keinen Hörverlauf heraus, deine Position lässt sich danach nicht mitzählen.`,
             note: p.id === "youtube"
                 ? "YouTube berechnet 50 Kontingent-Einheiten pro hinzugefügtem Titel. Nur kleine Playlists lassen sich so schreiben."
                 : null,
@@ -161,11 +348,11 @@ function renderModes() {
             type: "button",
             "aria-pressed": String(state.mode === o.id),
             disabled: !o.available || null,
-            onClick: () => { state.mode = o.id; renderModes(); },
+            onClick: () => { state.mode = o.id; renderModes(); updateStartGate(); },
         },
             el("div", { class: "mode-head" },
                 el("h3", {}, o.title),
-                el("span", { class: "stencil" },
+                el("span", { class: "mode-state" },
                     !o.available ? "nicht möglich" : state.mode === o.id ? "gewählt" : "wählen")),
             el("div", { class: "mode-body" },
                 el("div", { class: "row" },
@@ -177,6 +364,7 @@ function renderModes() {
                 o.note ? el("p", { class: "faint sm" }, o.note) : null,
                 !o.available ? el("p", { class: "faint sm" }, `Bei ${p.display_name} nicht möglich.`) : null)
         )));
+    updateStartGate();
 }
 
 /* -- playlists ------------------------------------------------------------ */
@@ -210,8 +398,8 @@ function renderPlaylists() {
 
     const n = state.all.length;
     $("#plCount").textContent = term
-        ? `${formatCount(shown.length)} VON ${formatCount(n)}`
-        : `${formatCount(n)} ${n === 1 ? "PLAYLIST" : "PLAYLISTS"}`;
+        ? `${formatCount(shown.length)} von ${formatCount(n)}`
+        : `${formatCount(n)} ${n === 1 ? "Playlist" : "Playlists"}`;
 
     // Nothing to filter means no filter: an input above an empty list is an
     // affordance for nothing.
@@ -236,12 +424,12 @@ function renderPlaylists() {
             "aria-pressed": String(state.playlist?.id === pl.id),
             onClick: (ev) => selectPlaylist(pl, ev.currentTarget),
         },
-            el("span", { class: "meta" },
-                el("b", {}, pl.name || "Ohne Titel"),
-                el("span", { class: "faint sm" }, sizeLine(pl))),
+            el("span", { class: "r-meta" },
+                el("span", { class: "r-name" }, pl.name || "Ohne Titel"),
+                el("span", { class: "r-sub" }, sizeLine(pl))),
             // A digit only when there is one to print. Zero is a claim, and
             // "the service will not tell us" is not zero.
-            el("span", { class: "n" }, pl.track_count >= 0 ? formatCount(pl.track_count) : "—")
+            el("span", { class: "r-count tabular" }, pl.track_count >= 0 ? formatCount(pl.track_count) : "—")
         )));
 }
 
@@ -266,37 +454,108 @@ function selectPlaylist(playlist, node) {
     node.setAttribute("aria-pressed", "true");
 
     const readable = playlist.readable !== false;
-    // Offering "Fach anlegen" for a playlist we cannot read would be an
-    // affordance for a guaranteed failure.
-    $("#dealBtn").disabled = !state.mode || !readable;
-
     $("#selectionRead").textContent = !readable
-        ? "NICHT LESBAR"
+        ? "Nicht lesbar"
         : playlist.track_count >= 0
-            ? `${formatCount(playlist.track_count)} TITEL`
-            : "GRÖSSE UNBEKANNT";
+            ? `${formatCount(playlist.track_count)} Titel`
+            : "Größe unbekannt";
 
     if (!readable) {
         $("#selectionHint").textContent = `„${playlist.name}“: ${playlist.unreadable_reason
             || "Dieser Dienst gibt den Inhalt dieser Playlist nicht heraus."} `
             + "Kopier sie in der App des Dienstes in dein eigenes Konto, dann lässt sie sich mischen.";
-        return;
+    } else {
+        $("#selectionHint").textContent =
+            `${playlist.name}: ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
     }
-    $("#selectionHint").textContent =
-        `${playlist.name}: ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
+
+    updateStartGate();
+    renderStepper();
 }
 
-/* -- dealing -------------------------------------------------------------- */
+/* -- start gate -------------------------------------------------------------
+   The primary action is never dimmed with opacity when it cannot run yet
+   (ADR-001 Auflage 2): it stays focusable, aria-disabled carries the state,
+   and the reason sits right next to it in plain text. */
+
+function selectedPresetIsFunctional() {
+    return document.querySelector('input[name="preset"]:checked')?.value === "norepeat";
+}
+
+function updateStartGate() {
+    const btn = $("#dealBtn");
+    const hint = $("#dealHint");
+    const readable = state.playlist ? state.playlist.readable !== false : true;
+
+    let reason = "";
+    if (!state.playlist) reason = "Wähl links eine Playlist.";
+    else if (!readable) reason = "Diese Playlist lässt sich nicht lesen — wähl eine andere.";
+    else if (!state.mode) reason = "Wähl oben einen Modus.";
+    else if (!selectedPresetIsFunctional()) reason = "Diese Konfiguration ist eine Vorschau — wähl „Ohne Wiederholungen“, um jetzt zu starten.";
+
+    btn.setAttribute("aria-disabled", String(!!reason));
+    hint.textContent = reason || "Bereit zum Start.";
+}
+
+for (const input of document.querySelectorAll('input[name="preset"]')) {
+    input.addEventListener("change", updateStartGate);
+}
+
+/* -- repeat-distance demo (client-side only; ADR-001 Auflage 6) ------------ */
+
+const gap = { value: 8 };
+
+function playlistTrackCount() {
+    return state.playlist && state.playlist.track_count >= 0 ? state.playlist.track_count : null;
+}
+
+function renderAbstandState() {
+    const norepeat = $("#r-norepeat").checked;
+    $("#abstandState").textContent = norepeat ? "· Keine Wiederholungen" : `· Mindestabstand: ${gap.value}`;
+}
+
+function renderStepper() {
+    $("#gapValue").textContent = String(gap.value);
+    $("#gapMinus").disabled = gap.value <= 0;
+    renderAbstandState();
+
+    const total = playlistTrackCount();
+    const box = $("#conflictBox");
+    if (total !== null && gap.value > Math.max(0, total - 1)) {
+        const max = Math.max(0, total - 1);
+        box.classList.remove("hidden");
+        $("#conflictBody").textContent =
+            `Bei ${formatCount(total)} Titeln ${total === 1 ? "ist" : "sind"} höchstens ${formatCount(max)} Abstand möglich. `
+            + `Mit Abstand ${formatCount(gap.value)} hätte true-shuffle irgendwann keinen regelkonformen Titel mehr zur Auswahl.`;
+        $("#conflictMax").textContent = formatCount(max);
+    } else {
+        box.classList.add("hidden");
+    }
+}
+
+$("#gapMinus").addEventListener("click", () => { gap.value = Math.max(0, gap.value - 1); renderStepper(); });
+$("#gapPlus").addEventListener("click", () => { gap.value = gap.value + 1; renderStepper(); });
+$("#conflictFix").addEventListener("click", () => {
+    const total = playlistTrackCount();
+    if (total !== null) gap.value = Math.max(0, total - 1);
+    renderStepper();
+});
+$("#r-norepeat").addEventListener("change", renderAbstandState);
+$("#r-abstand").addEventListener("change", renderAbstandState);
+renderStepper();
+
+/* -- dealing ---------------------------------------------------------------- */
 
 $("#dealBtn").addEventListener("click", async () => {
+    if ($("#dealBtn").getAttribute("aria-disabled") === "true") return;
     if (!state.playlist || !state.mode) return;
     const button = $("#dealBtn");
     const log = $("#jobLog");
 
-    button.disabled = true;
+    button.setAttribute("aria-disabled", "true");
     setNote($("#jobResult"), "");
     log.classList.remove("hidden");
-    log.replaceChildren(el("span", { class: "spinner" }), "Startet…");
+    log.replaceChildren(el("div", { class: "job-line" }, el("span", { class: "spinner" }), "Startet…"));
 
     const PHASE = { "reading playlist": "Playlist wird gelesen", shuffling: "Wird gemischt" };
 
@@ -314,14 +573,23 @@ $("#dealBtn").addEventListener("click", async () => {
         followJob(job_id, {
             onProgress: (frame) => {
                 const phase = PHASE[frame.phase] || frame.phase || "Wird vorbereitet";
-                const detail = frame.total
-                    ? `${phase}: ${formatCount(frame.processed)} von ${formatCount(frame.total)}`
-                    : phase;
-                log.replaceChildren(el("span", { class: "spinner" }), detail);
+                if (frame.total) {
+                    const pct = Math.max(0, Math.min(100, Math.round((frame.processed / frame.total) * 100)));
+                    log.replaceChildren(
+                        el("div", { class: "job-line" }, el("span", { class: "spinner" } ),
+                            `${phase}: ${formatCount(frame.processed)} von ${formatCount(frame.total)}`),
+                        el("div", {
+                            class: "job-bar", role: "progressbar",
+                            "aria-valuenow": pct, "aria-valuemin": 0, "aria-valuemax": 100,
+                            "aria-label": phase,
+                        }, el("i", { style: `width:${pct}%` })));
+                } else {
+                    log.replaceChildren(el("div", { class: "job-line" }, el("span", { class: "spinner" }), phase));
+                }
             },
             onDone: (result) => {
                 log.classList.add("hidden");
-                button.disabled = false;
+                updateStartGate();
                 if (state.mode === "controller") {
                     location.href = `/player/${result.run_id}`;
                     return;
@@ -330,13 +598,13 @@ $("#dealBtn").addEventListener("click", async () => {
             },
             onError: (err) => {
                 log.classList.add("hidden");
-                button.disabled = false;
+                updateStartGate();
                 setNote($("#jobResult"), err.message, "note-stop", "Fehlgeschlagen");
             },
         });
     } catch (err) {
         log.classList.add("hidden");
-        button.disabled = false;
+        updateStartGate();
         setNote($("#jobResult"), err.message, "note-stop", "Fehlgeschlagen");
     }
 });
@@ -359,10 +627,11 @@ function showHandoffResult(result) {
             result.copy_playlist_url
                 ? el("a", { class: "btn", href: result.copy_playlist_url, target: "_blank", rel: "noopener" }, "Playlist öffnen")
                 : null,
-            el("a", { class: "btn btn-quiet", href: "/runs" }, "Alle Läufe"))
+            el("a", { class: "btn btn-quiet", href: "/runs" }, "Alle Hörvorgänge"))
     );
 }
 
 if (state.provider) { renderModes(); loadPlaylists(); }
+updateStartGate();
 </script>
 {% endblock %}
