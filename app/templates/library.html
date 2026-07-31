@@ -46,6 +46,13 @@
                 <p class="dim sm" id="selectionHint">Wähl links eine Playlist.</p>
 
                 <label class="field">
+                    <span class="field-label">Name des Hörvorgangs</span>
+                    <input type="text" id="runName" maxlength="120" autocomplete="off"
+                           placeholder="Playlist-Name">
+                    <span class="field-hint">Mehrere Hörvorgänge derselben Playlist brauchen Namen — vergebene Namen bekommen automatisch einen Zusatz.</span>
+                </label>
+
+                <label class="field">
                     <span class="field-label">Wenn schon ein Hörvorgang läuft</span>
                     <select id="reshuffle">
                         <option value="0">Dort weitermachen, wo ich war</option>
@@ -543,11 +550,19 @@ function applyDeepLink() {
 }
 
 $("#plFilter").addEventListener("input", renderPlaylists);
+$("#runName").addEventListener("input", (ev) => { ev.target.dataset.touched = "1"; });
 
 function selectPlaylist(playlist, node) {
     state.playlist = playlist;
     for (const option of $$(".record", $("#playlists"))) option.setAttribute("aria-pressed", "false");
     node.setAttribute("aria-pressed", "true");
+
+    // WP3-D2 (UC-16): default the run name to the playlist name, but never
+    // overwrite something the listener typed themselves.
+    const nameField = $("#runName");
+    if (nameField && !nameField.dataset.touched) {
+        nameField.value = playlist.name || "";
+    }
 
     const readable = playlist.readable !== false;
     $("#selectionRead").textContent = !readable
@@ -663,6 +678,10 @@ $("#dealBtn").addEventListener("click", async () => {
                 playlist_id: state.playlist.id,
                 mode: state.mode,
                 reshuffle: $("#reshuffle").value === "1",
+                // WP3-D2 (UC-16): the run's own name. The server resumes a
+                // single live run regardless (the name applies only when a
+                // run is actually created) and de-duplicates taken names.
+                name: $("#runName").value.trim() || state.playlist.name || "",
             },
         });
 

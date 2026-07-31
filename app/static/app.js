@@ -175,9 +175,12 @@ export const STATE_ICON = {
   },
 };
 
-/** Contract vocabulary — shared by the dashboard cards and the player header. */
+/** Contract vocabulary — shared by the dashboard cards and the player header.
+ *  "gestoppt" (F1, ADR-003) is a deliberate session end: not live, but fully
+ *  resumable — the card offers "Fortsetzen", never "Details". */
 export const CONTRACT_TEXT = {
-  active: "aktiv", paused: "pausiert", completed: "abgeschlossen", cancelled: "beendet",
+  active: "aktiv", paused: "pausiert", stopped: "gestoppt",
+  completed: "abgeschlossen", cancelled: "beendet",
 };
 
 /**

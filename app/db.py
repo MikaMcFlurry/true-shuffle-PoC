@@ -443,55 +443,125 @@ async def get_run(run_id: int, *, user_id: Optional[int] = None) -> Optional[Dic
 async def find_live_run(
     user_id: int, provider: str, playlist_id: str, mode: str
 ) -> Optional[Dict[str, Any]]:
+    rows = await list_live_runs(user_id, provider, playlist_id, mode)
+    return rows[0] if rows else None
+
+
+async def list_live_runs(
+    user_id: int, provider: str, playlist_id: str, mode: str
+) -> List[Dict[str, Any]]:
+    """ALL live (active/paused) runs of the combination, newest first.
+
+    WP3-D2: since M005 removed ``idx_runs_one_live`` there may legally be
+    several (UC-16).  The deprecated ``build_run`` wrapper auto-resumes only
+    when exactly one exists — with two or more, "the" live run is ambiguous
+    (Blueprint §5.2) and the caller must name a run id.
+    """
     db = get_db()
     cur = await db.execute(
         f"""
         SELECT * FROM runs
         WHERE user_id = ? AND provider = ? AND playlist_id = ? AND mode = ?
           AND status IN ({','.join('?' * len(_LIVE))})
-        ORDER BY updated_at DESC LIMIT 1
+          AND archived_at IS NULL
+        ORDER BY updated_at DESC
         """,
         (user_id, provider, playlist_id, mode, *_LIVE),
     )
-    row = await cur.fetchone()
-    if row is None:
-        return None
-    data = dict(row)
-    data["order"] = json.loads(data.pop("order_json") or "[]")
-    return data
+    rows = []
+    for row in await cur.fetchall():
+        data = dict(row)
+        data["order"] = json.loads(data.pop("order_json") or "[]")
+        rows.append(data)
+    return rows
+
+
+async def count_active_controller_runs(user_id: int, provider: str) -> int:
+    """How many runs currently occupy the one-playing-controller slot.
+
+    ``idx_runs_one_playing`` allows at most ONE active controller run per
+    (user, provider) — two runs cannot drive one device (SP-003).  Creation
+    and resume check this up front so the answer is a German sentence or a
+    paused run instead of a bare IntegrityError.
+    """
+    db = get_db()
+    cur = await db.execute(
+        "SELECT count(*) FROM runs WHERE user_id = ? AND provider = ? "
+        "AND status = 'active' AND mode = 'controller'",
+        (user_id, provider),
+    )
+    return int((await cur.fetchone())[0])
+
+
+async def unique_run_name(user_id: int, playlist_id: str, base: str) -> str:
+    """A run name that satisfies ``idx_runs_name`` (unique per user+playlist
+    among non-archived runs).  ``base`` is used verbatim when free; otherwise
+    the smallest ``base · N`` suffix is chosen (same convention as the M004
+    backfill)."""
+    db = get_db()
+    cur = await db.execute(
+        "SELECT name FROM runs WHERE user_id = ? AND playlist_id = ? "
+        "AND archived_at IS NULL AND name != ''",
+        (user_id, playlist_id),
+    )
+    taken = {str(r[0]) for r in await cur.fetchall()}
+    if base not in taken:
+        return base
+    n = 2
+    while f"{base} · {n}" in taken:
+        n += 1
+    return f"{base} · {n}"
 
 
 async def latest_completed_order(
-    user_id: int, provider: str, playlist_id: str
+    user_id: int,
+    provider: str,
+    playlist_id: str,
+    config_id: Optional[int] = None,
 ) -> Optional[List[str]]:
-    """Order of the most recent finished run — feeds the similarity guard."""
+    """Order of the most recent finished run — feeds the similarity guard.
+
+    WP3-D2 (Blueprint §5.3): the guard is scoped to (user, provider, playlist,
+    **config**).  Two runs of the same playlist under different configurations
+    are independent by the run-isolation invariant — without the scope, run B's
+    finished cycle would bias run A's next shuffle, i.e. two differently
+    configured runs would influence each other.  ``config_id=None`` keeps the
+    pre-v3 behaviour (no config filter) for legacy callers and legacy rows.
+    """
     db = get_db()
-    cur = await db.execute(
-        """
+    sql = """
         SELECT order_json FROM runs
         WHERE user_id = ? AND provider = ? AND playlist_id = ?
           AND status = 'completed'
-        ORDER BY updated_at DESC LIMIT 1
-        """,
-        (user_id, provider, playlist_id),
-    )
+        """
+    params: List[Any] = [user_id, provider, playlist_id]
+    if config_id is not None:
+        sql += " AND config_id = ?"
+        params.append(config_id)
+    sql += " ORDER BY updated_at DESC LIMIT 1"
+    cur = await db.execute(sql, params)
     row = await cur.fetchone()
     return json.loads(row[0]) if row else None
 
 
-async def list_runs(user_id: int, limit: int = 50) -> List[Dict[str, Any]]:
+async def list_runs(
+    user_id: int, limit: int = 50, *, include_archived: bool = False
+) -> List[Dict[str, Any]]:
+    """The dashboard listing.  Archived (soft-deleted, UC-26) runs are hidden
+    by default — they await their confirmed hard deletion and must not look
+    resumable."""
     db = get_db()
-    cur = await db.execute(
-        """
+    sql = """
         SELECT id, provider, playlist_id, playlist_name, mode, cursor, status,
                created_at, updated_at, completed_at,
                name, config_id, snapshot_id, cycle, stopped_at, archived_at,
                json_array_length(order_json) AS total
         FROM runs WHERE user_id = ?
-        ORDER BY updated_at DESC LIMIT ?
-        """,
-        (user_id, limit),
-    )
+        """
+    if not include_archived:
+        sql += " AND archived_at IS NULL"
+    sql += " ORDER BY updated_at DESC LIMIT ?"
+    cur = await db.execute(sql, (user_id, limit))
     return [dict(r) for r in await cur.fetchall()]
 
 
@@ -502,7 +572,22 @@ async def update_run(
     status: Optional[str] = None,
     device_id: Optional[str] = None,
     order: Optional[List[str]] = None,
+    cycle: Optional[int] = None,
+    plan_version: Optional[int] = None,
+    clear_device: bool = False,
+    archive: bool = False,
 ) -> None:
+    """Mutate one run row.
+
+    WP3-D2 additions: ``cycle``/``plan_version`` (F2 reset), ``clear_device``
+    (F1 stop releases the device — ``device_id=None`` has always meant "leave
+    it alone", so clearing needs its own flag) and ``archive`` (UC-26 soft
+    delete stamps ``archived_at``).
+
+    May raise ``aiosqlite.IntegrityError`` (e.g. ``idx_runs_one_playing`` on a
+    resume to 'active'); the failed statement is rolled back before re-raising
+    so no half-open transaction leaks into the next caller.
+    """
     sets: List[str] = ["updated_at = datetime('now')"]
     params: List[Any] = []
     if cursor is not None:
@@ -520,13 +605,40 @@ async def update_run(
     if device_id is not None:
         sets.append("device_id = ?")
         params.append(device_id)
+    if clear_device:
+        sets.append("device_id = NULL")
     if order is not None:
         sets.append("order_json = ?")
         params.append(json.dumps(order))
+    if cycle is not None:
+        sets.append("cycle = ?")
+        params.append(cycle)
+    if plan_version is not None:
+        sets.append("plan_version = ?")
+        params.append(plan_version)
+    if archive:
+        sets.append("archived_at = datetime('now')")
     params.append(run_id)
 
     db = get_db()
-    await db.execute(f"UPDATE runs SET {', '.join(sets)} WHERE id = ?", params)
+    try:
+        await db.execute(f"UPDATE runs SET {', '.join(sets)} WHERE id = ?", params)
+    except aiosqlite.Error:
+        await db.rollback()
+        raise
+    await db.commit()
+
+
+async def hard_delete_run(run_id: int) -> None:
+    """UC-26 hard deletion: remove exactly this run and (via the FK cascades)
+    its run_tracks / run_plan / run_selections / run_events / skipped_tracks.
+
+    Content stays: ``playlists`` / ``playlist_snapshots`` / ``tracks`` are
+    referenced BY the run, never owned by it — deleting a run must leave the
+    imported library untouched (RUN-12).
+    """
+    db = get_db()
+    await db.execute("DELETE FROM runs WHERE id = ?", (run_id,))
     await db.commit()
 
 
@@ -557,6 +669,233 @@ async def close_live_runs(
         params.append(run_id)
     await db.execute(sql, params)
     await db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Configs (rule layer — read side; the write side comes with WP3-D3)
+# ---------------------------------------------------------------------------
+
+async def get_config(config_id: int) -> Optional[Dict[str, Any]]:
+    """One ``run_configs`` row plus the frozen rules of its current version.
+
+    ``rules_json`` / ``rules_hash`` come from ``run_config_versions`` at
+    ``current_version`` — the immutable, hash-verifiable document that
+    :class:`core.selection.Rules` loads (reproducibility invariant).
+    """
+    db = get_db()
+    cur = await db.execute(
+        """
+        SELECT c.*, v.id AS config_version_id, v.rules_json, v.rules_hash
+        FROM run_configs c
+        JOIN run_config_versions v
+          ON v.config_id = c.id AND v.version = c.current_version
+        WHERE c.id = ?
+        """,
+        (config_id,),
+    )
+    row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+# ---------------------------------------------------------------------------
+# Run deck & plan (v3 run layer — WP3-D2)
+# ---------------------------------------------------------------------------
+
+async def create_run_deck(
+    run_id: int, entries: List[Dict[str, Any]]
+) -> List[int]:
+    """Materialise the run's candidate set as ``run_tracks`` rows (state open).
+
+    ``entries``: ``{"track_pk", "entry_uid" (optional), "source_snapshot_id"
+    (optional)}`` in deck order.  One transaction, one commit — a 10 000-track
+    deck must not pay 10 000 fsyncs.  Returns the new run_track ids in input
+    order.
+    """
+    db = get_db()
+    ids: List[int] = []
+    try:
+        for e in entries:
+            cur = await db.execute(
+                "INSERT INTO run_tracks (run_id, track_id, entry_uid, state, "
+                "source_snapshot_id) VALUES (?, ?, ?, 'open', ?)",
+                (run_id, e["track_pk"], e.get("entry_uid", ""),
+                 e.get("source_snapshot_id")),
+            )
+            ids.append(int(cur.lastrowid or 0))
+    except aiosqlite.Error:
+        await db.rollback()
+        raise
+    await db.commit()
+    return ids
+
+
+async def list_run_tracks(
+    run_id: int,
+    *,
+    states: Optional[List[str]] = None,
+    admitted_only: bool = False,
+) -> List[Dict[str, Any]]:
+    """Deck rows of one run, joined with their track identity."""
+    db = get_db()
+    sql = """
+        SELECT rt.id, rt.run_id, rt.track_id, rt.entry_uid, rt.state,
+               rt.play_count, rt.last_played_seq, rt.favorite, rt.weight,
+               rt.admitted, rt.added_in_cycle, rt.source_snapshot_id,
+               rt.removed_from_snapshot, rt.excluded_reason,
+               t.provider_track_id, t.name, t.artist
+        FROM run_tracks rt JOIN tracks t ON t.id = rt.track_id
+        WHERE rt.run_id = ?
+        """
+    params: List[Any] = [run_id]
+    if states:
+        sql += f" AND rt.state IN ({','.join('?' * len(states))})"
+        params.extend(states)
+    if admitted_only:
+        sql += " AND rt.admitted = 1"
+    sql += " ORDER BY rt.id"
+    cur = await db.execute(sql, params)
+    return [dict(r) for r in await cur.fetchall()]
+
+
+async def reopen_run_tracks(run_id: int) -> int:
+    """F2 (ADR-003) reset: every admitted deck card back to 'open'.
+
+    ``play_count`` stays cumulative across cycles and ``excluded_*`` states
+    stay excluded — a reset re-opens the deck, it never rewrites history or
+    lifts a user exclusion.  ``last_played_seq`` clears so the new cycle
+    starts distance-free (F2).  Returns the number of re-opened rows.
+    """
+    db = get_db()
+    cur = await db.execute(
+        "UPDATE run_tracks SET state = 'open', last_played_seq = NULL "
+        "WHERE run_id = ? AND admitted = 1 "
+        "AND state IN ('open', 'played', 'deferred')",
+        (run_id,),
+    )
+    await db.commit()
+    return int(cur.rowcount or 0)
+
+
+async def write_run_plan(
+    run_id: int,
+    run_track_ids: List[int],
+    *,
+    plan_version: int,
+    start_seq: int,
+    live: bool = True,
+) -> None:
+    """Persist one materialised cycle plan.
+
+    ``seq`` is the run's monotonic plan clock (PRIMARY KEY(run_id, seq)): a
+    reset does NOT reuse old positions, it appends the new plan after
+    ``max(seq)`` — discarded rows keep their history (RUN-04/05 evidence).
+    The first row of a live run's plan is 'current', the rest 'planned'
+    (same convention as the M006 backfill).
+    """
+    db = get_db()
+    try:
+        for offset, run_track_id in enumerate(run_track_ids):
+            state = "current" if (live and offset == 0) else "planned"
+            await db.execute(
+                "INSERT INTO run_plan (run_id, seq, run_track_id, plan_version, "
+                "state) VALUES (?, ?, ?, ?, ?)",
+                (run_id, start_seq + offset, run_track_id, plan_version, state),
+            )
+    except aiosqlite.Error:
+        await db.rollback()
+        raise
+    await db.commit()
+
+
+async def list_run_plan(
+    run_id: int, *, plan_version: Optional[int] = None
+) -> List[Dict[str, Any]]:
+    db = get_db()
+    sql = "SELECT * FROM run_plan WHERE run_id = ?"
+    params: List[Any] = [run_id]
+    if plan_version is not None:
+        sql += " AND plan_version = ?"
+        params.append(plan_version)
+    sql += " ORDER BY seq"
+    cur = await db.execute(sql, params)
+    return [dict(r) for r in await cur.fetchall()]
+
+
+async def discard_run_plan(run_id: int) -> int:
+    """Mark every not-yet-discarded plan row 'discarded' (F2 reset).
+
+    Discard, never delete: the old plan is evidence of what was planned and
+    played (Blueprint §2.3 — 'discarded' statt Löschung).
+    """
+    db = get_db()
+    cur = await db.execute(
+        "UPDATE run_plan SET state = 'discarded' "
+        "WHERE run_id = ? AND state != 'discarded'",
+        (run_id,),
+    )
+    await db.commit()
+    return int(cur.rowcount or 0)
+
+
+async def max_plan_seq(run_id: int) -> int:
+    """Highest used plan seq for this run, or -1 when no plan exists yet."""
+    db = get_db()
+    cur = await db.execute(
+        "SELECT COALESCE(MAX(seq), -1) FROM run_plan WHERE run_id = ?", (run_id,)
+    )
+    return int((await cur.fetchone())[0])
+
+
+async def set_plan_state(run_id: int, seq: int, state: str) -> None:
+    db = get_db()
+    await db.execute(
+        "UPDATE run_plan SET state = ? WHERE run_id = ? AND seq = ?",
+        (state, run_id, seq),
+    )
+    await db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Snapshot read side for run creation (content layer is app/library_service.py)
+# ---------------------------------------------------------------------------
+
+async def latest_ready_snapshot(
+    user_id: int, provider: str, provider_playlist_id: str
+) -> Optional[Dict[str, Any]]:
+    """Newest READY snapshot of the caller's playlist, or None.
+
+    Ownership is part of the query (via the ``playlists`` row) — the same rule
+    every accessor follows.
+    """
+    db = get_db()
+    cur = await db.execute(
+        """
+        SELECT s.* FROM playlist_snapshots s
+        JOIN playlists p ON p.id = s.playlist_id
+        WHERE p.user_id = ? AND p.provider = ? AND p.provider_playlist_id = ?
+          AND s.status = 'ready'
+        ORDER BY s.id DESC LIMIT 1
+        """,
+        (user_id, provider, provider_playlist_id),
+    )
+    row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+async def snapshot_items_with_tracks(snapshot_id: int) -> List[Dict[str, Any]]:
+    """Every entry of a snapshot, in playlist order, with its track identity."""
+    db = get_db()
+    cur = await db.execute(
+        """
+        SELECT si.position, si.entry_uid, si.availability,
+               si.track_id AS track_pk,
+               t.provider_track_id, t.name, t.artist, t.album, t.duration_ms
+        FROM snapshot_items si JOIN tracks t ON t.id = si.track_id
+        WHERE si.snapshot_id = ? ORDER BY si.position
+        """,
+        (snapshot_id,),
+    )
+    return [dict(r) for r in await cur.fetchall()]
 
 
 # ---------------------------------------------------------------------------

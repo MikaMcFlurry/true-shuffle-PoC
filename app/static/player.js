@@ -536,13 +536,32 @@ export class RunPlayer {
           : `${label}: Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.`)
       : "Dieser Hörvorgang wurde verworfen. Ein neuer Start mischt neu.";
 
-    // "Neu mischen und von vorn" reuses the existing /library reshuffle flow
-    // rather than a new API: it deep-links back with this playlist and
-    // "Neu mischen" already picked, so pressing "Hörvorgang starten" there
-    // does exactly what re-dealing this run by hand would do.
-    const reshuffleHref = s.playlist_id
-      ? `/library?provider=${encodeURIComponent(this.provider.id)}&playlist=${encodeURIComponent(s.playlist_id)}&reshuffle=1`
-      : "/library";
+    // WP3-D2: "Neuer Durchlauf" is real now — POST /reset (F2, ADR-003)
+    // starts cycle n+1 on THIS run: deck re-opened, fresh order, history and
+    // play counts kept. Only a completed run offers it; a cancelled run was
+    // discarded and cannot cycle.
+    const resetBtn = done
+      ? el("button", {
+          class: "btn btn-primary", type: "button",
+          onClick: (ev) => {
+            ev.currentTarget.setAttribute("aria-disabled", "true");
+            this.guard(async () => {
+              await api(`/api/runs/${this.runId}/reset`, {
+                method: "POST", body: { confirm: true },
+              });
+              this.playing = false;
+              this.lastPlayedId = null;
+              this.resetPosition();
+              this.state = await api(`/api/runs/${this.runId}`);
+              this.render();
+              this.notify(
+                `Durchlauf ${formatCount(this.state.cycle || 2)} gestartet — gleiche Titel, neue Reihenfolge. Der Verlauf bleibt erhalten.`,
+                "note-ok", "Neuer Durchlauf"
+              );
+            });
+          },
+        }, "Neuer Durchlauf")
+      : null;
 
     panel.replaceChildren(
       el("div", { class: "empty-state" },
@@ -550,8 +569,8 @@ export class RunPlayer {
         el("h3", {}, title),
         el("p", {}, body),
         el("div", { class: "empty-actions" },
-          el("a", { class: "btn btn-primary", href: "/library" }, "Neuer Hörvorgang"),
-          el("a", { class: "btn btn-secondary", href: reshuffleHref }, "Neu mischen und von vorn"),
+          resetBtn,
+          el("a", { class: `btn ${done ? "btn-secondary" : "btn-primary"}`, href: "/library" }, "Neuer Hörvorgang"),
           el("button", {
             class: "btn btn-secondary", type: "button", "aria-disabled": "true",
             "aria-label": "Regeln ändern – kommt mit dem nächsten Ausbau",

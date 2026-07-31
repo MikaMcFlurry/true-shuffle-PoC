@@ -234,6 +234,14 @@ async def create_run(request: Request):
 
     Reading a huge playlist happens in the background so the request returns
     immediately and the UI can show real progress.
+
+    WP3-D2 body additions (both optional): ``name`` — the run's own name
+    (UC-16: several runs per playlist need names; defaults to the playlist
+    name, collisions get an automatic ``· N`` suffix) — and ``config_id`` —
+    the run configuration (defaults to the user's legacy preset „Ohne
+    Wiederholungen").  Resolution stays the deprecated-wrapper rule: exactly
+    one live run resumes, none creates, several is a 409 that asks for an
+    explicit choice, ``reshuffle`` keeps its v2 meaning.
     """
     user_id = await require_user_id(request)
     body = await request.json()
@@ -242,6 +250,14 @@ async def create_run(request: Request):
     playlist_id = body.get("playlist_id", "")
     mode = RunMode(body.get("mode", RunMode.CONTROLLER.value))
     reshuffle = bool(body.get("reshuffle"))
+    name = str(body.get("name") or "").strip() or None
+    raw_config = body.get("config_id")
+    try:
+        config_id = int(raw_config) if raw_config is not None else None
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400, detail="config_id muss eine Zahl sein."
+        ) from exc
 
     if not provider_id or not playlist_id:
         raise HTTPException(status_code=400, detail="provider und playlist_id werden gebraucht.")
@@ -287,7 +303,8 @@ async def create_run(request: Request):
             session.provider.check_copy_quota(playlist.track_count)
 
         state, skipped = await runs.build_run(
-            session, playlist, mode, on_progress=on_progress, reshuffle=reshuffle
+            session, playlist, mode, on_progress=on_progress,
+            reshuffle=reshuffle, name=name, config_id=config_id,
         )
 
         result: Dict[str, Any] = {
@@ -412,6 +429,11 @@ async def job_stream(request: Request, job_id: str):
 
 @router.get("/runs")
 async def run_history(request: Request):
+    """Every run of the caller — with its v3 identity (name, cycle).
+
+    Archived runs (UC-26 soft delete) are hidden: they await their confirmed
+    deletion and must not look resumable.
+    """
     user_id = await require_user_id(request)
     return JSONResponse({"runs": await db.list_runs(user_id)})
 
@@ -424,6 +446,9 @@ async def run_state(request: Request, run_id: int):
     payload = await runs.describe(session, state)
     payload["watcher"] = watcher.status(run_id)
     payload["skipped_count"] = len(await db.list_skipped(run_id))
+    # WP3-D2: the run's own identity (UC-16) and cycle count (UC-15/F2).
+    payload["name"] = run.get("name", "")
+    payload["cycle"] = run.get("cycle", 1)
     return JSONResponse(payload)
 
 
@@ -563,6 +588,75 @@ async def run_cancel(request: Request, run_id: int):
     await watcher.stop(run_id)
     await runs.cancel(session, runs._to_state(run))
     return JSONResponse({"status": "cancelled"})
+
+
+@router.post("/runs/{run_id}/stop")
+async def run_stop(request: Request, run_id: int):
+    """F1 (ADR-003): deliberate session end — watcher off, device released,
+    fully resumable.  Illegal states answer 409 via the RunError handler."""
+    run = await require_run(request, run_id)
+    session = await _session(run["user_id"], run["provider"])
+    state = await runs.stop_run(session, runs._to_state(run))
+    return JSONResponse({"status": state.status.value, "cursor": state.cursor})
+
+
+@router.post("/runs/{run_id}/resume")
+async def run_resume(request: Request, run_id: int):
+    """Explicit resume by run id (WP3-D2): stopped/paused → active.
+
+    Does NOT start playback — that stays ``POST …/start``, which re-asserts a
+    device.  Completed/cancelled answer 409 (RunError handler)."""
+    run = await require_run(request, run_id)
+    session = await _session(run["user_id"], run["provider"])
+    state = await runs.resume_run(session, run_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+    return JSONResponse({"status": state.status.value, "cursor": state.cursor})
+
+
+@router.post("/runs/{run_id}/reset")
+async def run_reset(request: Request, run_id: int):
+    """F2 (ADR-003) / UC-15: next cycle — history stays, deck re-opens.
+
+    Requires ``{"confirm": true}``: a reset discards the current order and
+    position (not the history), so it must never happen on a stray click.
+    """
+    run = await require_run(request, run_id)
+    body = await _json(request)
+    if body.get("confirm") is not True:
+        raise HTTPException(
+            status_code=400,
+            detail=("Ein neuer Durchlauf verwirft die aktuelle Reihenfolge und "
+                    "Position (der Verlauf bleibt). Zum Bestätigen "
+                    "confirm: true mitsenden."),
+        )
+    session = await _session(run["user_id"], run["provider"])
+    # Same lock as advance: a watcher tick must not move the cursor while the
+    # plan underneath it is being replaced.
+    async with runs.advance_lock(run_id):
+        state = await runs.get_state(run_id, run["user_id"])
+        if state is None:
+            raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+        summary = await runs.reset_run(session, state)
+    return JSONResponse(summary)
+
+
+@router.delete("/runs/{run_id}")
+async def run_delete(request: Request, run_id: int, confirm: bool = False):
+    """UC-26, two steps: DELETE archives (soft, reversible in the data),
+    DELETE ?confirm=true is the confirmed hard deletion of exactly this run.
+    The imported library (playlist, snapshots, tracks) stays untouched
+    (RUN-12); only the run and its own history go."""
+    user_id = await require_user_id(request)
+    if confirm:
+        deleted = await runs.hard_delete_run(user_id, run_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+        return JSONResponse({"status": "deleted", "run_id": run_id})
+    archived = await runs.delete_run(user_id, run_id)
+    if not archived:
+        raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+    return JSONResponse({"status": "archived", "run_id": run_id})
 
 
 @router.post("/runs/{run_id}/device")

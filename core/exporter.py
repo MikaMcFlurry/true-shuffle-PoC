@@ -3,6 +3,15 @@
 The export format is versioned.  v1 was Spotify-only and stored full
 ``spotify:track:...`` URIs under ``shuffled_order``; v2 is provider-aware and
 stores provider-native ids under ``order``.  :func:`import_run` accepts both.
+
+**v2 is a LOSSY legacy export against the v3 run model** (WP3-D2): it carries
+only order + cursor + status.  The v3 run layer's config binding, per-track
+states (``run_tracks``: play counts, favourites, exclusions, deferrals),
+cycle number and plan/ledger history are NOT exported — an imported run is a
+fresh order_json-only run bound to the legacy preset.  A v3 export format
+that round-trips ``run_tracks`` comes later; until then ``EXPORT_VERSION``
+stays 2 and this limitation is deliberate and documented rather than half
+solved.
 """
 
 from __future__ import annotations

@@ -89,21 +89,60 @@ function completionNote(r) {
     if (r.status === "cancelled") {
         return "Hörvorgang wurde beendet. Ein neuer Start mischt neu.";
     }
+    if (r.status === "stopped") {
+        return "Gestoppt — dein Stand bleibt erhalten. „Fortsetzen“ macht genau hier weiter.";
+    }
     return null;
 }
 
 /**
  * The player page drives playback — it only makes sense for Live-Modus runs.
  * A Handoff run's own app plays the copy; here the only honest destination
- * is its Verlauf.
+ * is its Verlauf. A stopped run (F1, ADR-003) resumes explicitly by id —
+ * POST /resume lifts it back to active, then the player takes over.
  */
 function primaryAction(r) {
     if (r.mode === "controller") {
+        if (r.status === "stopped") {
+            return el("button", {
+                class: "btn btn-primary", type: "button",
+                onClick: async (ev) => {
+                    ev.currentTarget.setAttribute("aria-disabled", "true");
+                    try {
+                        await api(`/api/runs/${r.id}/resume`, { method: "POST" });
+                        location.href = `/player/${r.id}`;
+                    } catch (err) {
+                        setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+                        load();
+                    }
+                },
+            }, "Fortsetzen");
+        }
         const live = r.status === "active" || r.status === "paused";
         return el("a", { class: `btn ${live ? "btn-primary" : "btn-secondary"}`, href: `/player/${r.id}` },
             live ? (r.cursor > 0 ? "Weiterhören" : "Öffnen") : "Details");
     }
     return el("a", { class: "btn btn-secondary", href: `/runs/${r.id}/verlauf` }, "Details");
+}
+
+/** F1: a live Live-Modus run can be stopped from the dashboard — deliberate
+ *  session end, device released, resumable later. */
+function stopAction(r) {
+    if (r.mode !== "controller") return null;
+    if (r.status !== "active" && r.status !== "paused") return null;
+    return el("button", {
+        class: "btn btn-quiet", type: "button",
+        "aria-label": `Hörvorgang „${r.name || r.playlist_name || r.playlist_id}“ stoppen`,
+        onClick: async (ev) => {
+            ev.currentTarget.setAttribute("aria-disabled", "true");
+            try {
+                await api(`/api/runs/${r.id}/stop`, { method: "POST" });
+            } catch (err) {
+                setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+            }
+            load();
+        },
+    }, "Stoppen");
 }
 
 function coverFallback() {
@@ -128,8 +167,14 @@ function runCard(r) {
         el("div", { class: "run-head" },
             coverFallback(),
             el("div", {},
-                el("h2", { class: "run-title wrap-anywhere", lang: "de" }, r.playlist_name || r.playlist_id),
-                el("p", { class: "run-config" }, r.mode === "controller" ? "Modus: Live" : "Modus: Handoff"))),
+                // UC-16: the run's OWN name leads — several runs of one
+                // playlist must be tellable apart. Cycle > 1 says which
+                // Durchlauf this deck is on (F2).
+                el("h2", { class: "run-title wrap-anywhere", lang: "de" }, r.name || r.playlist_name || r.playlist_id),
+                el("p", { class: "run-config" },
+                    (r.mode === "controller" ? "Modus: Live" : "Modus: Handoff")
+                    + (r.name && r.playlist_name && r.name !== r.playlist_name ? ` · ${r.playlist_name}` : "")
+                    + (r.cycle > 1 ? ` · Durchlauf ${formatCount(r.cycle)}` : "")))),
         el("div", { class: "run-meta" },
             showSystemState
                 ? el("span", { class: "chip chip-neutral", dataset: { role: "systemchip" } }, "Bereit")
@@ -147,6 +192,7 @@ function runCard(r) {
         note ? el("p", { class: "run-note" }, note) : null,
         el("div", { class: "run-actions" },
             primaryAction(r),
+            stopAction(r),
             el("a", { class: "btn btn-quiet", href: `/export/${r.id}` }, "Exportieren")));
 }
 
