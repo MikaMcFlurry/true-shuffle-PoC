@@ -1033,17 +1033,24 @@ async def _replan_tail(
 
     # Performance-Fast-Path (Phase 4, 10k-Profil): der no_repeat-Draw-Loop
     # ist O(n²) — 54 s für 10 000 Karten, UNTER dem advance_lock.  Im reinen
-    # Fall (nur offene Karten, keine deferred-Fristen, keine Favoriten/
-    # Gewichte) ist der Loop distributionsgleich mit einer geseedeten
-    # Permutation — plan_cycle liefert sie in O(n log n) mit identischen
-    # P1/P5-Garantien.  Fristen (P6) und Gewichtung (P4) erzwingen weiter
-    # den Draw-Loop.
+    # Fall (nur offene Karten OHNE Hör-Historie, keine deferred-Fristen,
+    # keine Favoriten/Gewichte) ist der Loop distributionsgleich mit einer
+    # geseedeten Permutation — plan_cycle liefert sie in O(n log n) mit
+    # identischen P1/P5-Garantien.  Fristen (P6), Gewichtung (P4) UND der
+    # Mindestabstand (P2: eine keep_open-Karte mit last_played_seq darf nie
+    # innerhalb ihres min_gap-Fensters zurückkommen — plan_cycle ist
+    # gap-blind; adversarialer Befund B1, 2026-08-01) erzwingen weiter den
+    # Draw-Loop.
     open_cards = [c for c in sim.values() if c.state == "open"]
     deferred_cards = [c for c in sim.values() if c.state == "deferred"]
     pure_no_repeat = (
         rules.repeat_mode == "no_repeat"
         and not deferred_cards
         and all(not c.favorite and c.weight == 1.0 for c in open_cards)
+        and (
+            rules.min_gap == 0
+            or all(c.last_played_seq is None for c in open_cards)
+        )
     )
     if pure_no_repeat:
         tail = plan_cycle(

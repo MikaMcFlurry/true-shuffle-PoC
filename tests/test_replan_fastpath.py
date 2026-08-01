@@ -102,6 +102,39 @@ async def test_deferred_deadlines_still_use_the_draw_loop(
     assert called["n"] > 0
 
 
+async def test_keep_open_history_with_min_gap_forces_the_draw_loop(
+    database, service, monkeypatch,
+):
+    """P2-Schutz (adversarialer Befund B1, 2026-08-01): eine offene Karte MIT
+    Hör-Historie (keep_open-Skip stempelt last_played_seq) und gesetztem
+    min_gap MUSS den gap-bewussten Draw-Loop erzwingen — der Fast Path wäre
+    abstandsblind (gemessen: 11–18/25 P2-Verletzungen vor diesem Guard)."""
+    state = await _run(service, skip_policy="keep_open", min_gap=6)
+    await runs.advance(service.session, state, reason=AdvanceReason.USER_SKIP)
+    skipped = state.order[0]
+    card = await db.find_run_track(state.run_id, provider_track_id=skipped)
+    assert card["state"] == "open" and card["last_played_seq"] is not None
+
+    called = {"n": 0}
+    original = core_selection.select_next
+
+    def counting(*args, **kwargs):
+        called["n"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(runs, "select_next", counting)
+    victim = await db.find_run_track(state.run_id,
+                                     provider_track_id=state.order[4])
+    await runs.set_track_exclusion(state, int(victim["id"]), True)
+    assert called["n"] > 0
+
+    # P2 hält über den echten Replan: die geskippte Karte kommt nicht
+    # innerhalb ihres Abstandsfensters zurück.
+    tail = state.order[state.cursor:]
+    if skipped in tail:
+        assert tail.index(skipped) >= 6 or len(tail) <= 6
+
+
 async def test_favorites_still_use_the_draw_loop(
     database, service, monkeypatch,
 ):
