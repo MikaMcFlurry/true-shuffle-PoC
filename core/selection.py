@@ -29,6 +29,7 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import json
+import math
 import struct
 from dataclasses import dataclass, replace
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -275,8 +276,11 @@ class Rules:
             bad("min_gap", self.min_gap, ">= 0")
         if not 0 <= self.repeat_quota_pct <= 100:
             bad("repeat_quota_pct", self.repeat_quota_pct, "0..100")
-        if self.favorite_weight < 1.0:
-            bad("favorite_weight", self.favorite_weight, ">= 1.0")
+        # NaN/inf must be rejected here: NaN passes every `<` comparison and
+        # inf survives multiplication — both would silently break the weighted
+        # draw in _weighted_pick (P4) and turn into a silent exclusion (P5).
+        if not math.isfinite(self.favorite_weight) or self.favorite_weight < 1.0:
+            bad("favorite_weight", self.favorite_weight, "endlich und >= 1.0")
         if self.manual_wait_seconds < 0:
             bad("manual_wait_seconds", self.manual_wait_seconds, ">= 0")
         if self.played_threshold_seconds < 0:
@@ -317,6 +321,15 @@ class Candidate:
             )
         if self.play_count < 0:
             raise ValueError(f"{self.track_key}: play_count muss >= 0 sein")
+        if not math.isfinite(self.weight):
+            # NaN <= 0 is False, so NaN/inf would pass the sign check below and
+            # then make every comparison in _weighted_pick False — the draw
+            # would silently collapse onto the fallback card (P4/P5).
+            raise ValueError(
+                f"{self.track_key}: weight muss endlich sein (kein NaN/inf) — "
+                "nicht-endliche Gewichte machen die gewichtete Ziehung "
+                "unbrauchbar und schließen alle anderen Karten still aus (P4/P5)"
+            )
         if self.weight <= 0:
             raise ValueError(
                 f"{self.track_key}: weight muss > 0 sein — Gewicht 0 wäre ein "
@@ -331,11 +344,14 @@ class Selection:
     ``filtered_by`` documents every exclusion of this draw (only non-zero
     counters are recorded).  Keys:
 
-    * ``gap`` — played candidates blocked by the *effective* (possibly
-      relaxed) min-gap check,
+    * ``gap`` — candidates with a play history (any state) blocked by the
+      *effective* (possibly relaxed) min-gap check,
     * ``quota_blocked`` — played candidates blocked by the repeat quota (P7),
     * ``deferred`` — deferred candidates held back while other candidates
       exist (P6),
+    * ``requeue_wait`` — deferred candidates with a play history held back in
+      the endgame because their requeue deadline
+      (:data:`REQUEUE_AFTER_DRAWS`) has not passed yet (P6),
     * ``played`` — played candidates that are structurally out because
       ``repeat_mode='no_repeat'``,
     * ``gap_relaxed_from`` / ``gap_relaxed_to`` — the F6 relaxation ladder,
@@ -400,6 +416,43 @@ def _require_valid_rules(rules: Rules) -> None:
         raise ValueError("ungültige Regeln: " + "; ".join(c.message for c in conflicts))
 
 
+def _require_collapsed(candidates: Sequence[Candidate], rules: Rules) -> None:
+    """``duplicate_policy='collapse'``, defensively (P1 on the track level).
+
+    Collapsing duplicate playlist entries is the CALLER's job (snapshot /
+    deck materialisation) — the engine cannot merge rows.  Like the P5 check
+    it refuses loudly instead of silently playing the same track twice: with
+    ``collapse`` every ``track_key`` must be unique.  ``keep_entries``
+    deliberately accepts duplicate keys (each entry is its own card).
+    """
+    if rules.duplicate_policy != "collapse":
+        return
+    first_seen: Dict[str, int] = {}
+    for c in candidates:
+        first = first_seen.setdefault(c.track_key, c.run_track_id)
+        if first != c.run_track_id:
+            raise ValueError(
+                f"track_key {c.track_key!r} ist doppelt (run_track_ids {first} "
+                f"und {c.run_track_id}) — duplicate_policy='collapse' verlangt, "
+                "dass der Aufrufer Duplikate vor der Auswahl kollabiert (P1)"
+            )
+
+
+def _quota_allows_repeat(window_repeats: int, quota_pct: int) -> bool:
+    """P7 gate in integer arithmetic — no IEEE-754 leniency (29/57/58).
+
+    A further repeat is admitted only while the window count is strictly
+    below the quota: ``window_repeats * 100 < quota_pct * QUOTA_WINDOW``.
+    Exception, exact by construction: a window of :data:`QUOTA_WINDOW` draws
+    can never hold more than ``QUOTA_WINDOW`` repeats, so ``quota_pct >= 100``
+    ("everything may be a repeat") admits always — reporting exhaustion there
+    would be a false negative (P8).
+    """
+    if quota_pct >= 100:
+        return True
+    return window_repeats * 100 < quota_pct * QUOTA_WINDOW
+
+
 def _effective_weight(candidate: Candidate, rules: Rules) -> float:
     """P4: ``weight × favorite_weight`` for favourites, plain weight otherwise."""
     if candidate.favorite:
@@ -436,39 +489,62 @@ def select_next(
 
     The draw seed is ``draw_seed(seed, seq)`` — hashlib, never ``hash()``.
 
+    Semantics: ``state`` encodes CONSUMPTION for this cycle, ``last_played_seq``
+    encodes LISTENING HISTORY — and every card with a history is gap-checked
+    (P2), whatever its state.  A kept-open or requeued card is unconsumed, so
+    it stays structurally eligible even under ``no_repeat`` (P1/P6: keep_open
+    keeps the card in the pool, requeue_later cards come back) — but never
+    inside its min-gap window without a documented relaxation.
+
     Pipeline (contract §Funktionen 2):
 
-    1. **Hard filters.**  ``state='open'`` cards are always eligible.  With
-       ``limited_repeat`` / ``free_repeat``, played cards join the pool when
-       ``seq - last_played_seq > min_gap`` (P2, strict) AND the quota allows
-       another repeat.  The quota check is strict (< not ≤): the caller
-       passes the repeat share of the last :data:`QUOTA_WINDOW` draws, and
-       only a share strictly below ``repeat_quota_pct`` guarantees the
-       ceiling still holds after this draw (P7).  ``free_repeat`` ignores
-       the quota.  Deferred cards are counted, not pooled (P6).
+    1. **Hard filters.**
+       * Fresh ``open`` cards (no history) are always eligible; ``open``
+         cards with a history (keep_open partial plays) are eligible once
+         ``seq - last_played_seq > min_gap`` (P2, strict).  Repeat mode and
+         quota do not apply to them — they were never consumed.
+       * ``played`` cards join the pool only with ``limited_repeat`` /
+         ``free_repeat``, when the gap holds AND the quota allows another
+         repeat.  The quota gate is pure integer arithmetic
+         (:func:`_quota_allows_repeat`): the caller's share is converted
+         back to the window count and admitted only strictly below the
+         quota (P7); ``repeat_quota_pct=100`` always admits — a
+         :data:`QUOTA_WINDOW` window cannot exceed 100 % repeats (P8).
+         ``free_repeat`` ignores the quota.
+       * Deferred cards are counted, not pooled, while the pool is
+         non-empty (P6).
     2. **Deferred endgame** (P6): when step 1 leaves nothing, deferred cards
        become the pool — defer_to_end plays them after the open cards are
        through; a requeue_later card the caller has not re-opened yet is
-       played out here rather than lost.
-    3. **Relaxation ladder, min_gap ONLY** (ADR-003 F6, P2): when nothing is
-       left AND repeats are allowed AND the quota permits, ``min_gap`` drops
-       to the largest satisfiable ``k`` (the maximum observed distance minus
-       one, never below 0) and the draw is taken from the cards at maximum
-       distance.  Always recorded as ``gap_relaxed_from`` / ``gap_relaxed_to``
-       — never a silent rule violation.  User exclusions are never relaxed
-       (they are not candidates, P5); the quota is never relaxed.
+       played out here rather than lost.  A deferred card WITH a history
+       additionally honours the requeue deadline (eligible only once
+       ``seq - last_played_seq >= REQUEUE_AFTER_DRAWS``) and the min-gap;
+       held-back cards are documented as ``requeue_wait`` / ``gap``.
+    3. **Relaxation ladder, min_gap ONLY** (ADR-003 F6, P2): when steps 1–2
+       leave nothing, ``min_gap`` drops to the largest satisfiable ``k``
+       (the maximum observed distance minus one, never below 0) over every
+       card blocked ONLY by the gap — open replays always (P1: a cycle must
+       not strand an unconsumed card), played replays only with repeat mode
+       and quota headroom, deferred replays only past their requeue
+       deadline.  Always recorded as ``gap_relaxed_from`` /
+       ``gap_relaxed_to`` — never a silent rule violation.  User exclusions
+       are never relaxed (they are not candidates, P5); the quota and the
+       requeue deadline are never relaxed.
     4. **Weighted draw** over the pool with the draw seed
        (``weight × favorite_weight`` for favourites, P4).
     5. **Exhaustion** (P8): ``exhausted=True`` exactly when steps 1–3 leave
-       no admissible candidate — under ``no_repeat`` that means no open and
-       no deferred admitted card remains.
+       no admissible candidate — under ``no_repeat`` that means no
+       unconsumed (open or deferred) admitted card is currently playable.
 
     ``recent_repeat_share`` keeps the function pure: the caller supplies the
     repeat share of its last :data:`QUOTA_WINDOW` draws as a float in
-    ``[0, 1]`` (contract: repeat_count_window as a parameter).
+    ``[0, 1]`` — by convention ``window_repeats / QUOTA_WINDOW``, which the
+    gate converts back to the exact integer count (contract:
+    repeat_count_window as a parameter).
     """
     _require_candidates(candidates)
     _require_valid_rules(rules)
+    _require_collapsed(candidates, rules)
     if not 0.0 <= recent_repeat_share <= 1.0:
         raise ValueError(
             f"recent_repeat_share muss in [0, 1] liegen, nicht {recent_repeat_share!r}"
@@ -482,26 +558,41 @@ def select_next(
     played_pool = [c for c in candidates if c.state == "played"]
 
     allow_repeats = rules.repeat_mode in ("limited_repeat", "free_repeat")
+    # round() recovers the caller's integer window count exactly (the share is
+    # window_repeats / QUOTA_WINDOW), so the gate never compares floats.
+    window_repeats = round(recent_repeat_share * QUOTA_WINDOW)
     quota_ok = True
     if rules.repeat_mode == "limited_repeat":
-        quota_ok = recent_repeat_share * 100.0 < rules.repeat_quota_pct
+        quota_ok = _quota_allows_repeat(window_repeats, rules.repeat_quota_pct)
 
-    pool: List[Candidate] = list(open_pool)
+    def distance(c: Candidate) -> int:
+        # Only called for cards with a history.
+        return seq - int(c.last_played_seq)  # type: ignore[arg-type]
+
+    pool: List[Candidate] = []
+    relaxable: List[Candidate] = []  # blocked ONLY by the gap — F6 may rescue
+    gap_failed = quota_blocked = 0
+
+    for c in open_pool:
+        if c.last_played_seq is None or distance(c) > rules.min_gap:
+            pool.append(c)
+        else:
+            # keep_open replay inside its gap window: unconsumed, so the
+            # ladder must keep it reachable (P1) — but never silently (P2).
+            gap_failed += 1
+            relaxable.append(c)
+
     if allow_repeats:
-        gap_failed = quota_blocked = 0
         for c in played_pool:
             # last_played_seq is never None for state='played' (Candidate invariant)
-            distance = seq - int(c.last_played_seq)  # type: ignore[arg-type]
-            if distance <= rules.min_gap:
+            if distance(c) <= rules.min_gap:
                 gap_failed += 1  # P2: strict ">" — distance == min_gap is a violation
+                if quota_ok:
+                    relaxable.append(c)
             elif not quota_ok:
                 quota_blocked += 1
             else:
                 pool.append(c)
-        if gap_failed:
-            filtered["gap"] = gap_failed
-        if quota_blocked:
-            filtered["quota_blocked"] = quota_blocked
     elif played_pool:
         filtered["played"] = len(played_pool)  # no_repeat: structurally out
 
@@ -509,21 +600,35 @@ def select_next(
         if deferred_pool:
             filtered["deferred"] = len(deferred_pool)
     elif deferred_pool:
-        # Step 2 — deferred endgame (P6).
-        pool = list(deferred_pool)
-    elif allow_repeats and played_pool and quota_ok:
+        # Step 2 — deferred endgame (P6).  Cards with a listening history
+        # honour the requeue deadline and the min-gap; fresh deferred cards
+        # play immediately.  The deadline is never relaxed.
+        requeue_wait = 0
+        for c in deferred_pool:
+            if c.last_played_seq is None:
+                pool.append(c)
+            elif distance(c) < REQUEUE_AFTER_DRAWS:
+                requeue_wait += 1
+            elif distance(c) <= rules.min_gap:
+                gap_failed += 1
+                relaxable.append(c)
+            else:
+                pool.append(c)
+        if requeue_wait:
+            filtered["requeue_wait"] = requeue_wait
+
+    if gap_failed:
+        filtered["gap"] = gap_failed
+    if quota_blocked:
+        filtered["quota_blocked"] = quota_blocked
+
+    if not pool and relaxable:
         # Step 3 — F6 relaxation ladder, min_gap only, always recorded.
-        max_distance = max(
-            seq - int(c.last_played_seq)  # type: ignore[arg-type]
-            for c in played_pool
-        )
+        max_distance = max(distance(c) for c in relaxable)
         if max_distance >= 1:  # a repeat needs at least one draw of distance
             relaxed = max_distance - 1
-            pool = [
-                c for c in played_pool
-                if seq - int(c.last_played_seq) > relaxed  # type: ignore[arg-type]
-            ]
-            still_blocked = len(played_pool) - len(pool)
+            pool = [c for c in relaxable if distance(c) > relaxed]
+            still_blocked = gap_failed - len(pool)
             if still_blocked:
                 filtered["gap"] = still_blocked
             else:
@@ -563,6 +668,7 @@ def plan_cycle(
     seed: int,
     *,
     previous_order: Optional[Sequence[int]] = None,
+    start_seq: Optional[int] = None,
 ) -> List[int]:
     """Plan a cycle; returns ``run_track_id`` values in play order.
 
@@ -574,22 +680,37 @@ def plan_cycle(
     themselves (P6: defer_to_end plays them once the open cards are
     through).  Already-played candidates of the current cycle are not
     planned again (P1: every admitted open title exactly once).
+    ``start_seq`` is irrelevant here — a permutation has no clock.
 
     ``limited_repeat`` / ``free_repeat``: a rolling horizon of length
     ``min(PLAN_HORIZON, n)`` built by repeated :func:`select_next` draws
-    against a local simulation (seq starts at 1).  P2/P7 hold inside the
-    plan because every draw enforces them; the repeat share is tracked over
-    a :data:`QUOTA_WINDOW`-sized window whose empty slots count as
-    non-repeats.  ``previous_order`` is ignored here — a rolling horizon
-    has no cycle opening to guard.
+    against a local simulation.  Draw ``k`` of the plan is simulated at seq
+    ``start_seq + k`` — pass the run's real clock (``selection_seq + 1``) so
+    a mid-run replan sees the true distances of already-played candidates;
+    without ``start_seq`` the plan starts right after the youngest recorded
+    play (``max(last_played_seq) + 1``, i.e. ``1`` for a fresh deck), never
+    at a clock that would give absolute histories a distance <= 0 and
+    silently drop those cards from the plan.  P2/P7 hold inside the plan
+    because every draw enforces them; the repeat share is tracked over a
+    :data:`QUOTA_WINDOW`-sized window whose empty slots count as
+    non-repeats, a repeat being a draw of a card with a listening history —
+    the same convention an honest caller books.  ``previous_order`` is
+    ignored here — a rolling horizon has no cycle opening to guard.
 
     Determinism (P3): the permutation stream is domain-separated from the
     per-draw stream (``draw_seed(seed, 0, label="plan")``), and candidates
     are canonically sorted first, so the caller's ordering cannot change
     the plan.
+
+    Note (P2): the plan carries ids only; the per-draw ``filtered_by`` of
+    the simulation (including F6 relaxations) is re-derived and recorded at
+    booking time — see the contract, §Funktionen 1.
     """
     _require_candidates(candidates)
     _require_valid_rules(rules)
+    _require_collapsed(candidates, rules)
+    if start_seq is not None and start_seq < 1:
+        raise ValueError(f"start_seq muss >= 1 sein, nicht {start_seq!r}")
 
     if rules.repeat_mode == "no_repeat":
         rng = HashPRNG(draw_seed(seed, 0, label="plan"))
@@ -601,11 +722,15 @@ def plan_cycle(
         return order
 
     by_id: Dict[int, Candidate] = {c.run_track_id: c for c in candidates}
+    if start_seq is None:
+        start_seq = 1 + max(
+            ((c.last_played_seq or 0) for c in by_id.values()), default=0
+        )
     horizon = min(PLAN_HORIZON, len(by_id))
     repeat_window: List[int] = []
     plan: List[int] = []
     for step in range(horizon):
-        seq = step + 1
+        seq = start_seq + step
         share = sum(repeat_window[-QUOTA_WINDOW:]) / float(QUOTA_WINDOW)
         selection = select_next(
             list(by_id.values()), rules, seed, seq, recent_repeat_share=share
@@ -613,9 +738,11 @@ def plan_cycle(
         if selection.exhausted or selection.run_track_id is None:
             break
         chosen = by_id[selection.run_track_id]
-        # A repeat is a draw of a card already played in this cycle — state,
-        # not play_count: play_count is cumulative across cycles (ADR-003 F2).
-        repeat_window.append(1 if chosen.state == "played" else 0)
+        # A repeat is a draw of a card with a listening history — not
+        # play_count (cumulative across cycles, ADR-003 F2), and not state:
+        # a kept-open partial play counts exactly like the honest caller's
+        # quota window counts it.
+        repeat_window.append(1 if chosen.last_played_seq is not None else 0)
         by_id[chosen.run_track_id] = replace(
             chosen,
             state="played",

@@ -371,6 +371,9 @@ async def create_run_v3(
         plan = plan_cycle(
             candidates, rules, seed,
             previous_order=_translate_previous_order(previous, by_provider_id),
+            # Real selection clock (WP3-C, Befund 6): a fresh run books its
+            # first draw at selection_seq=1, so the plan simulates from 1.
+            start_seq=1,
         )
         order = [by_run_track[rt_id] for rt_id in plan]
         await db.write_run_plan(run_id, plan, plan_version=1, start_seq=0)
@@ -961,7 +964,11 @@ async def _replan_tail(
     repeat_window: List[int] = []
     step = 0
     while len(tail) < limit:
-        share = sum(repeat_window[-QUOTA_WINDOW:]) / float(QUOTA_WINDOW)
+        # The quota window is led in integers; window_repeats / QUOTA_WINDOW
+        # is the convention select_next converts back to the exact count —
+        # the P7 gate itself never compares floats (WP3-C, Befund 1).
+        window_repeats = sum(repeat_window[-QUOTA_WINDOW:])
+        share = window_repeats / QUOTA_WINDOW
         selection = select_next(
             list(sim.values()), rules, master_seed, base_seq + 1 + step,
             recent_repeat_share=share,
@@ -970,7 +977,9 @@ async def _replan_tail(
         if selection.exhausted or selection.run_track_id is None:
             break
         chosen = sim[selection.run_track_id]
-        repeat_window.append(1 if chosen.state == "played" else 0)
+        # A repeat is a draw of a card with a listening history — the same
+        # convention core.selection.plan_cycle books into its window.
+        repeat_window.append(1 if chosen.last_played_seq is not None else 0)
         sim[chosen.run_track_id] = replace(
             chosen, state="played", play_count=chosen.play_count + 1,
             last_played_seq=base_seq + step,
@@ -1572,6 +1581,10 @@ async def reset_run(session: Session, state: RunState) -> Dict[str, Any]:
         # The finished cycle's own order is the similarity reference: the next
         # cycle must not open like the last one did (same guard as creation).
         previous_order=_translate_previous_order(run["order"], by_provider_id),
+        # Real selection clock (WP3-C, Befund 6): draw k of the new cycle is
+        # booked at selection_seq + k, so the repeat-mode plan simulates
+        # under exactly that clock (no_repeat plans have no clock).
+        start_seq=int(run.get("selection_seq") or 0) + 1,
     )
     order = [by_run_track[rt_id] for rt_id in plan]
 

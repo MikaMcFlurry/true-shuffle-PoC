@@ -14,44 +14,37 @@ draws) are marked ``@pytest.mark.slow`` and deselected by default via the
 
     python -m pytest tests/test_selection_properties.py -m slow -q
 
-**Found violations are checked in, not fixed** (``core/`` is off limits for
-this run): every one is a ``@pytest.mark.xfail(strict=True)`` test in the
-last section, with a minimal deterministic repro.  ``strict=True`` means the
-suite turns red the moment the engine is fixed — the xfails are regression
-markers, not excuses.
+**The nine violations this run found are FIXED** (WP3-C fix pass): the
+former ``@pytest.mark.xfail(strict=True)`` repros in the last section lost
+their markers when the fixes landed and now run as ordinary regression pins.
+In short, the engine now
 
-Checked-in violations (all ``test_violation_*``, all with a minimal repro):
+1. gates the repeat quota in integer arithmetic (P7 — no IEEE-754 leniency
+   at 29 / 57 / 58) and admits ``repeat_quota_pct=100`` always (P8: a
+   100-draw window cannot exceed 100 % repeats);
+2. gap-checks EVERY card with a ``last_played_seq``, whatever its state —
+   kept-open and deferred replays included, F6-relaxed only documented (P2);
+3. honours the requeue_later deadline in the deferred endgame: a deferred
+   card with a stamped history waits ``>= REQUEUE_AFTER_DRAWS`` draws (P6);
+4. plans under a real clock: ``plan_cycle(..., start_seq=...)``, defaulting
+   to ``max(last_played_seq) + 1``, so mid-run replans keep played
+   candidates (§Funktionen 1) and plans contain no undocumented
+   gap-violating repeats (P2);
+5. rejects non-finite weights and favourite weights (P4/P5);
+6. refuses duplicate ``track_key`` values under ``duplicate_policy=
+   'collapse'`` — collapsing stays the caller's job, but loudly (P1).
 
-1. P7 — the quota gate ``share * 100.0 < quota`` is float-lenient at quota
-   29 / 57 / 58, so a 100-draw window ends up with ``quota + 1`` repeats.
-2. P2 — ``min_gap`` is only checked against ``state='played'``: a deferred or
-   kept-open card carrying ``last_played_seq`` is replayed at distance 1 with
-   an empty ``filtered_by`` (two separate repros).
-3. P6 — the deferred endgame hands a ``requeue_later`` card back after 2
-   draws although ``apply_skip`` promises ``>= 10``.
-4. P2 — ``plan_cycle`` drops the per-draw ``filtered_by``, so a plan can
-   contain a relaxed (gap-violating) repeat with no channel to report it.
-5. §Funktionen 1 — ``plan_cycle`` simulates from ``seq=1`` while candidates
-   carry absolute ``last_played_seq``; a mid-run replan silently drops every
-   played candidate.
-6. P8 — ``repeat_quota_pct=100`` with a fully repeated window reports
-   exhaustion although 100 % <= 100 % is rule-conformant.
-7. P4/P5 — ``weight=nan`` / ``inf`` pass ``Candidate`` validation and make the
-   highest ``run_track_id`` win every draw.
-8. P1 — ``duplicate_policy='collapse'`` is never enforced (nothing in the
-   engine reads ``track_key``), so one cycle can play the same track twice.
-
-Scope notes for the generic properties (each restriction is deliberate and
-points at the xfail that covers the excluded region):
+Scope notes for the generic properties:
 
 * ``clean`` candidate sets carry ``last_played_seq`` only on ``state='played'``
-  cards.  ``open`` / ``deferred`` cards with a play history bypass the gap
-  check — see ``test_violation_p2_*``.
-* Quotas 29 / 57 / 58 are excluded from the generic P7/P8 strategies: at
-  exactly those values the float gate is lenient — see
-  ``test_violation_p7_quota_float_leniency`` and
-  ``test_float_lenient_quota_set_is_exactly_the_known_three``, which pins the
-  set so the exclusion cannot rot silently.
+  cards — that is what a correct caller materialises at the start of a draw;
+  open/deferred cards WITH history are covered by the former violation repros
+  (``test_violation_p2_*``).
+* Quotas 29 / 57 / 58 stay excluded from the generic P7/P8 strategies: the
+  exclusion documents the root cause of the fixed float-gate finding, and
+  ``test_float_lenient_quota_set_is_exactly_the_known_three`` pins the set so
+  the historical record cannot rot silently.  The integer gate treats these
+  values like any other — the former xfail repros prove it.
 """
 
 from __future__ import annotations
@@ -93,10 +86,12 @@ settings.register_profile(
 )
 settings.load_profile("wp3c_properties")
 
-#: Quota percentages where ``share * 100.0 < quota`` is lenient in IEEE-754
-#: doubles for ``share = quota / 100``.  Excluded from the generic strategies,
-#: covered by their own xfail.  Pinned by
-#: ``test_float_lenient_quota_set_is_exactly_the_known_three``.
+#: Quota percentages where the FORMER float gate ``share * 100.0 < quota``
+#: was lenient in IEEE-754 doubles for ``share = quota / 100`` (fixed: the
+#: gate is integer arithmetic now).  Kept excluded from the generic
+#: strategies as a historical record; the former xfail repro
+#: ``test_violation_p7_quota_float_leniency`` covers exactly these values.
+#: Pinned by ``test_float_lenient_quota_set_is_exactly_the_known_three``.
 FLOAT_LENIENT_QUOTAS = frozenset({29, 57, 58})
 
 #: Weight ladder for the generated candidate sets — deliberately mixes 1.0
@@ -766,8 +761,11 @@ def test_p6_requeue_later_card_returns_exactly_once(n, seed):
 
     The caller re-opens it after :data:`REQUEUE_AFTER_DRAWS` draws, as
     :func:`apply_skip` instructs, and only while it is still deferred.  The
-    resubmission window is only honoured when the open pool lasts that long;
-    otherwise the deferred endgame hands the card back early — pinned by
+    skipped card here carries NO stamped listening history (the caller did
+    not record a partial play), so the engine-side deadline — which hangs on
+    ``last_played_seq`` — cannot bind, and the deferred endgame hands the
+    card back as soon as the open pool is empty.  The stamped case, where
+    the deadline DOES hold the card back, is
     ``test_violation_p6_requeue_later_returns_before_ten_draws``.
     """
     pool = {i: make(i) for i in range(1, n + 1)}
@@ -796,8 +794,8 @@ def test_p6_requeue_later_card_returns_exactly_once(n, seed):
         assert return_seq >= reopen_seq
     else:
         # Too few open cards: the deferred endgame returns it at the first
-        # draw after the open pool is empty, possibly long before its due
-        # draw — that is the violation.
+        # draw after the open pool is empty — no stamped history, so no
+        # enforceable deadline (contract §Funktionen 2/3).
         assert return_seq == n + 1
 
 
@@ -824,10 +822,12 @@ def test_p6_defer_to_end_cards_play_only_after_the_open_pool(n_open, n_deferred,
 @settings(max_examples=40)
 def test_p6_skip_and_duplicate_policy_do_not_influence_the_draw(candidates, seed, seq):
     """The engine's draw is invariant under ``skip_policy`` and
-    ``duplicate_policy`` — proof that neither is consulted in the selection
-    path.  For ``skip_policy`` that is correct (apply_skip owns it); for
-    ``duplicate_policy`` it is the gap documented in
-    ``test_violation_p1_duplicate_policy_collapse_is_never_enforced``.
+    ``duplicate_policy``.  For ``skip_policy`` that is correct (apply_skip
+    owns it — the endgame deadline reads ``last_played_seq``, never the
+    policy).  For ``duplicate_policy`` the engine consults the rule only for
+    the defensive collapse check
+    (``test_violation_p1_duplicate_policy_collapse_is_never_enforced``);
+    with unique track keys, as here, the draw itself never changes.
     """
     base = Rules(repeat_mode="free_repeat", min_gap=1)
     results = [
@@ -1044,19 +1044,26 @@ def test_attack_quota_window_denominator_is_lenient_for_short_runs():
 
 
 @given(
-    quota=st.integers(0, 100).filter(lambda q: q not in FLOAT_LENIENT_QUOTAS),
+    quota=st.integers(0, 100),
     share_pct=st.integers(0, 100),
     seed=seeds,
 )
 @settings(max_examples=100)
 def test_attack_quota_gate_matches_the_integer_reading(quota, share_pct, seed):
-    """The gate must behave like integer arithmetic on the window count."""
+    """The gate must behave like integer arithmetic on the window count.
+
+    Amended with the fix (WP3-C Befunde 1+7): the formerly float-lenient
+    quotas are back in the strategy — the integer gate treats them like any
+    other value — and the post-draw window count is capped at
+    :data:`QUOTA_WINDOW`, so ``quota == 100`` admits even a fully repeated
+    window (the oldest repeat slides out; contract §Funktionen 2).
+    """
     candidate = played(1, last_played_seq=1)
     rules = Rules(repeat_mode="limited_repeat", min_gap=0, repeat_quota_pct=quota)
     selection = select_next(
         [candidate], rules, seed, 50, recent_repeat_share=share_pct / 100.0
     )
-    admitted_by_integer_reading = share_pct + 1 <= quota
+    admitted_by_integer_reading = min(share_pct + 1, QUOTA_WINDOW) <= quota
     assert (not selection.exhausted) is admitted_by_integer_reading
 
 
@@ -1106,7 +1113,9 @@ def test_attack_relaxation_edge_max_distance_exactly_one(gap, seed):
 @given(
     n=st.integers(1, 8),
     gap=st.integers(5, 40),
-    quota=st.integers(1, 100).filter(lambda q: q not in FLOAT_LENIENT_QUOTAS),
+    # quota < 100 on purpose: with the quota=100 fix (WP3-C Befund 7) a full
+    # window can never exhaust 100 % — "the quota blocks" is unreachable there.
+    quota=st.integers(1, 99),
     seed=seeds,
 )
 @settings(max_examples=60)
@@ -1215,8 +1224,10 @@ def test_attack_extreme_weights_stay_deterministic(weight, favorite_weight, seed
 @settings(max_examples=40)
 def test_attack_keep_open_card_is_not_consumed(n, seed):
     """keep_open (contract §3): the card stays in the pool and the cycle does
-    not lose it.  The engine ignores ``last_played_seq`` on open cards, which
-    is what ``test_violation_p2_keep_open_ignores_min_gap`` pins down.
+    not lose it.  With the P2 fix the engine gap-checks open cards with a
+    history too (``test_violation_p2_keep_open_ignores_min_gap``); min_gap=0
+    here, so the kept-open card stays immediately eligible and the cycle
+    completes around it.
     """
     candidates = [make(i) for i in range(1, n + 1)]
     run = Run(candidates, Rules(skip_policy="keep_open"), seed)
@@ -1239,33 +1250,36 @@ def test_attack_keep_open_card_is_not_consumed(n, seed):
 
 
 def test_attack_keep_open_card_can_be_redrawn_immediately_in_no_repeat():
-    """The engine treats an ``open`` card as fresh, whatever its history: the
-    just-skipped title can be the very next draw.  Documented here as
-    behaviour; the rule consequence (min_gap not applied) is the xfail below.
+    """Amended with the P2 fix (this pin used to document the old behaviour:
+    an ``open`` card was treated as fresh whatever its history).  Now the
+    kept-open card is gap-checked like every card with a history; as the
+    only unconsumed card it may still be the very next draw — but only via
+    the documented F6 ladder, never silently (P1 keeps it reachable, P2
+    keeps the relaxation visible).
     """
     candidates = [
         make(1, state="open", play_count=1, last_played_seq=4),      # kept open
         make(2, state="played", play_count=1, last_played_seq=3),
     ]
     selection = select_next(candidates, Rules(min_gap=10), seed=1, seq=5)
-    assert selection.run_track_id == 1                # distance 1 to its own last play
-    assert selection.filtered_by == {"played": 1}     # nothing about the gap
+    assert selection.run_track_id == 1        # distance 1 — but relaxed, documented
+    assert selection.filtered_by == {
+        "played": 1,                          # no_repeat: card 2 structurally out
+        "gap_relaxed_from": 10,
+        "gap_relaxed_to": 0,                  # max distance 1 ⇒ largest satisfiable k
+    }
 
 
 # ---------------------------------------------------------------------------
-# CHECKED-IN VIOLATIONS — xfail(strict=True), minimal deterministic repros.
-# core/ is off limits for this run: these document, they do not fix.
+# FORMER CHECKED-IN VIOLATIONS — the nine findings of this run, fixed in the
+# WP3-C fix pass.  The strict xfail markers flipped to XPASS when the fixes
+# landed and were removed; the minimal repros stay as regression pins.
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("quota", sorted(FLOAT_LENIENT_QUOTAS))
-@pytest.mark.xfail(strict=True, reason=(
-    "P7-Verletzung: die Quota-Schranke ist `recent_repeat_share * 100.0 < "
-    "repeat_quota_pct`. Fuer share = k/100 liegt das Produkt in IEEE-754 bei "
-    "k = 29, 57, 58 unter k (0.29*100 == 28.999999999999996), also laesst die "
-    "Engine bei exakt ausgeschoepfter Quote eine weitere Wiederholung zu: das "
-    "100-Zuege-Fenster enthaelt danach quota+1 Wiederholungen."
-))
 def test_violation_p7_quota_float_leniency(quota):
+    """FIXED (Befund 1): the quota gate is integer arithmetic — at the
+    formerly float-lenient quotas an exactly exhausted window blocks."""
     candidate = played(1, last_played_seq=1)
     rules = Rules(repeat_mode="limited_repeat", min_gap=0, repeat_quota_pct=quota)
     selection = select_next(
@@ -1277,12 +1291,9 @@ def test_violation_p7_quota_float_leniency(quota):
     )
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "P7-Verletzung (Folgenebene): 400 Zuege mit ehrlich gefuehrtem Fenster und "
-    "repeat_quota_pct=29 enthalten ein 100-Zuege-Fenster mit 30 Wiederholungen "
-    "— gleiche Ursache wie test_violation_p7_quota_float_leniency."
-))
 def test_violation_p7_ceiling_breaks_over_a_long_sequence():
+    """FIXED (Befund 1, consequence level): 400 honestly windowed draws at
+    quota 29 never exceed 29 repeats in any 100-draw window."""
     candidates = [make(i) for i in range(1, 11)]
     rules = Rules(repeat_mode="limited_repeat", min_gap=0, repeat_quota_pct=29)
     run = Run(candidates, rules, seed=5).drain(400, stop_on_exhaustion=False)
@@ -1290,14 +1301,10 @@ def test_violation_p7_ceiling_breaks_over_a_long_sequence():
     assert breach is None, f"window at draw {breach[0]} holds {breach[1]} repeats"
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "P2-Verletzung: min_gap wird nur gegen state='played' geprueft. Eine "
-    "deferred Karte mit gesetztem last_played_seq (realistisch: "
-    "played_threshold='on_start' + Skip mit requeue_later/defer_to_end) wird im "
-    "Deferred-Endspiel ohne Gap-Pruefung gezogen — Abstand 1 bei min_gap=50, "
-    "und filtered_by dokumentiert nichts (keine gap_relaxed_*-Schluessel)."
-))
 def test_violation_p2_deferred_endgame_ignores_min_gap():
+    """FIXED (Befunde 2+3): a deferred card with a stamped history is held
+    back in the endgame (requeue deadline + gap) instead of being replayed
+    at distance 1 with an empty ``filtered_by``."""
     card = make(1, state="deferred", play_count=1, last_played_seq=9)
     rules = Rules(repeat_mode="free_repeat", min_gap=50)
     selection = select_next([card], rules, seed=1, seq=10)
@@ -1308,13 +1315,10 @@ def test_violation_p2_deferred_endgame_ignores_min_gap():
     )
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "P2-Verletzung: min_gap wird nicht gegen 'open' Karten geprueft. Mit "
-    "skip_policy='keep_open' bleibt die gerade angespielte Karte offen und "
-    "traegt last_played_seq; sie kann im naechsten Zug erneut gezogen werden "
-    "(Abstand 1 bei min_gap=10), ohne dokumentierte Relaxation."
-))
 def test_violation_p2_keep_open_ignores_min_gap():
+    """FIXED (Befunde 2+4): a kept-open card with a history is gap-checked;
+    if it is the only reachable card the F6 ladder redraws it with a
+    documented relaxation — never silently inside the gap."""
     kept_open = make(1, state="open", play_count=1, last_played_seq=4)
     rules = Rules(repeat_mode="limited_repeat", min_gap=10, repeat_quota_pct=50)
     selection = select_next([kept_open], rules, seed=1, seq=5, recent_repeat_share=0.0)
@@ -1325,13 +1329,11 @@ def test_violation_p2_keep_open_ignores_min_gap():
     )
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "P6-Verletzung: apply_skip verspricht fuer requeue_later eine Wiedervorlage "
-    "nach >= REQUEUE_AFTER_DRAWS (10) Zuegen, das Deferred-Endspiel in "
-    "select_next gibt die Karte aber schon nach 2 Zuegen zurueck, sobald der "
-    "offene Pool leer ist — die Wiedervorlagefrist ist nicht durchsetzbar."
-))
 def test_violation_p6_requeue_later_returns_before_ten_draws():
+    """FIXED (Befund 3): the deferred endgame enforces the requeue deadline
+    derived from ``last_played_seq`` — the card stamped at seq 1 is NOT
+    handed back at seq 3 (the draw reports exhaustion instead; the deadline
+    is never relaxed)."""
     pool = {1: make(1), 2: make(2)}
     first = select_next(list(pool.values()), Rules(), seed=3, seq=1)
     skipped_id = first.run_track_id
@@ -1353,14 +1355,12 @@ def test_violation_p6_requeue_later_returns_before_ten_draws():
     )
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "P2-Verletzung (Dokumentation): plan_cycle verwirft die filtered_by-Daten "
-    "der Einzelzuege. Ein Plan im Wiederholungsmodus kann die F6-Relaxation "
-    "enthalten (hier Wiederholung mit Abstand 2 bei min_gap=10), ohne dass der "
-    "Aufrufer irgendeinen Kanal haette, das zu erfahren — P2 verlangt "
-    "'Relaxation nur dokumentiert'."
-))
 def test_violation_p2_plan_cycle_hides_the_relaxation():
+    """FIXED (Befunde 5+6): under the real plan clock the F6 ladder always
+    prefers the least recently played card, so a plan can no longer contain
+    a repeat within ``min_gap`` positions of itself — the relaxations that
+    do occur concern pre-plan history and are recorded at booking time
+    (contract §Funktionen 1)."""
     candidates = [make(1)] + [played(i, last_played_seq=i - 1) for i in range(2, 6)]
     rules = Rules(repeat_mode="free_repeat", min_gap=10)
     plan = plan_cycle(candidates, rules, seed=4)
@@ -1376,16 +1376,11 @@ def test_violation_p2_plan_cycle_hides_the_relaxation():
     )
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "Vertrag §Funktionen 1 / P2-Konsistenz: plan_cycle simuliert den "
-    "Wiederholungshorizont ab seq=1, die Kandidaten tragen aber absolute "
-    "last_played_seq aus dem laufenden Run. Jede Karte mit last_played_seq >= "
-    "Plan-seq hat damit Abstand <= 0 und faellt komplett aus dem Plan; "
-    "stattdessen werden die offenen Karten innerhalb des Horizonts wiederholt. "
-    "Ein Replan mitten im Run liefert so einen Plan, der von dem abweicht, was "
-    "select_next beim echten seq zulaesst (dort ist die Karte zulaessig)."
-))
 def test_violation_plan_cycle_local_clock_drops_played_candidates():
+    """FIXED (Befund 6): without an explicit ``start_seq`` the plan clock
+    starts at ``max(last_played_seq) + 1`` (call sites pass the run's real
+    ``selection_seq + 1``), so absolute histories keep their true distance
+    and a mid-run replan no longer drops played candidates."""
     candidates = [make(1), played(2, last_played_seq=100)]
     rules = Rules(repeat_mode="free_repeat", min_gap=0)
     plan = plan_cycle(candidates, rules, seed=7)
@@ -1398,13 +1393,10 @@ def test_violation_plan_cycle_local_clock_drops_played_candidates():
     )
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "P8-Verletzung (Randfall): bei repeat_quota_pct=100 ist jede Wiederholung "
-    "regelkonform (Anteil 100 % <= 100 %), die strikte Schranke "
-    "'share*100 < quota' meldet aber exhausted — falsche Erschoepfung, obwohl "
-    "ein regelkonformer Kandidat existiert."
-))
 def test_violation_p8_quota_hundred_reports_false_exhaustion():
+    """FIXED (Befund 7): ``repeat_quota_pct=100`` admits always — a
+    100-draw window cannot exceed 100 % repeats, so exhaustion there was a
+    false negative."""
     candidate = played(1, last_played_seq=1)
     rules = Rules(repeat_mode="limited_repeat", min_gap=0, repeat_quota_pct=100)
     selection = select_next([candidate], rules, seed=1, seq=50, recent_repeat_share=1.0)
@@ -1414,46 +1406,45 @@ def test_violation_p8_quota_hundred_reports_false_exhaustion():
 
 
 @pytest.mark.parametrize("bad_weight", [float("nan"), float("inf")])
-@pytest.mark.xfail(strict=True, reason=(
-    "P4/P5-Verletzung (Robustheit): Candidate prueft nur `weight <= 0`, also "
-    "passieren NaN und inf die Validierung (NaN <= 0 ist False). In "
-    "_weighted_pick werden dann alle Vergleiche False und die Ziehung faellt "
-    "still auf ordered[-1] zurueck: die hoechste run_track_id gewinnt immer, "
-    "jede andere Karte ist still ausgeschlossen. Gleiches gilt fuer "
-    "weight*favorite_weight == inf (validiert, weil favorite_weight nur >= 1.0 "
-    "geprueft wird)."
-))
 def test_violation_p4_non_finite_weight_silently_excludes_everything_else(bad_weight):
-    candidates = [make(1, weight=bad_weight), make(2, weight=1.0), make(3, weight=1.0)]
-    rules = Rules(repeat_mode="free_repeat", min_gap=0)
-    winners = {
-        select_next(candidates, rules, seed, 1).run_track_id for seed in range(40)
-    }
-    assert winners != {3}, (
-        f"weight={bad_weight!r} makes the highest run_track_id win every draw "
-        f"(winners={winners}) — every other card is silently excluded"
-    )
+    """FIXED (Befund 8) — repro rewritten with the fix: non-finite weights
+    no longer reach ``_weighted_pick`` (where they made the highest
+    ``run_track_id`` win every draw); ``Candidate`` refuses them at
+    construction and ``Rules.validate`` flags a non-finite
+    ``favorite_weight``, so the silent exclusion is now a loud ``ValueError``.
+    """
+    with pytest.raises(ValueError, match="endlich"):
+        make(1, weight=bad_weight)
+    conflicts = Rules(favorite_weight=bad_weight).validate()
+    assert [c.field for c in conflicts] == ["favorite_weight"]
+    assert all(c.code == "invalid_value" for c in conflicts)
+    # Finite extremes stay valid — the fix must not narrow the domain.
+    assert select_next(
+        [make(1, weight=1e9), make(2, weight=1e-6)], Rules(), seed=1, seq=1
+    ).run_track_id in {1, 2}
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "P1-Verletzung (Titel-Ebene): Rules.duplicate_policy wird von der Engine "
-    "nie ausgewertet (weder select_next noch plan_cycle lesen track_key). Mit "
-    "duplicate_policy='collapse' spielt ein Zyklus denselben Titel zweimal, "
-    "sobald zwei run_tracks-Zeilen denselben track_key tragen — anders als bei "
-    "excluded/admitted gibt es hier keinen defensiven Check, der den kaputten "
-    "Vorfilter des Aufrufers sichtbar macht."
-))
 def test_violation_p1_duplicate_policy_collapse_is_never_enforced():
+    """FIXED (Befund 9) — repro rewritten with the fix: collapsing stays the
+    CALLER's job, but the engine now checks it defensively, exactly like the
+    P5 pre-filter check — with ``duplicate_policy='collapse'`` a duplicate
+    ``track_key`` is a loud ``ValueError`` in both selection functions
+    instead of the same track playing twice in one cycle.
+    ``keep_entries`` keeps accepting duplicates (each entry is its own card).
+    """
     candidates = [
         Candidate(run_track_id=1, track_key="spotify:same"),
         Candidate(run_track_id=2, track_key="spotify:same"),
         Candidate(run_track_id=3, track_key="spotify:other"),
     ]
     rules = Rules(duplicate_policy="collapse")
-    run = Run(candidates, rules, seed=5).drain(6)
+    with pytest.raises(ValueError, match="doppelt"):
+        select_next(candidates, rules, seed=5, seq=1)
+    with pytest.raises(ValueError, match="doppelt"):
+        plan_cycle(candidates, rules, seed=5)
+
+    # keep_entries: duplicate keys are legitimate — both entries play.
+    run = Run(candidates, Rules(duplicate_policy="keep_entries"), seed=5).drain(6)
     by_id = {c.run_track_id: c.track_key for c in candidates}
     keys = [by_id[t] for t in run.picked_ids]
-    assert len(keys) == len(set(keys)), (
-        f"duplicate_policy='collapse' but the cycle played {keys} — the same "
-        "track twice, and select_next accepted the set without complaint"
-    )
+    assert sorted(keys) == ["spotify:other", "spotify:same", "spotify:same"]
