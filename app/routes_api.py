@@ -712,6 +712,51 @@ async def run_state(request: Request, run_id: int):
     return JSONResponse(payload)
 
 
+#: The deck-listing filter vocabulary — code-side constants, never SQL input.
+_TRACK_STATE_FILTERS = {
+    "excluded": ["excluded_user", "excluded_rule"],
+    "excluded_user": ["excluded_user"],
+    "open": ["open"],
+    "played": ["played"],
+    "deferred": ["deferred"],
+}
+
+
+@router.get("/runs/{run_id}/tracks")
+async def run_tracks(request: Request, run_id: int, state: Optional[str] = None):
+    """UC-21: the run's deck rows — e.g. ``?state=excluded`` for the
+    reactivation view.  ``excluded_user`` rows are user-revocable
+    (DELETE …/exclude); ``excluded_rule`` rows are import exclusions and
+    deliberately are not.
+    """
+    await require_run(request, run_id)
+    states = None
+    if state is not None:
+        states = _TRACK_STATE_FILTERS.get(state)
+        if states is None:
+            raise HTTPException(
+                status_code=400,
+                detail=("state muss eines von "
+                        f"{sorted(_TRACK_STATE_FILTERS)} sein."),
+            )
+    rows = await db.list_run_tracks(run_id, states=states)
+    return JSONResponse({"tracks": [
+        {
+            "run_track_id": r["id"],
+            "id": r["provider_track_id"],
+            "name": r["name"],
+            "artist": r["artist"],
+            "state": r["state"],
+            "favorite": bool(r["favorite"]),
+            "weight": float(r["weight"]),
+            "play_count": r["play_count"],
+            "excluded_reason": r["excluded_reason"],
+            "removed_from_snapshot": bool(r["removed_from_snapshot"]),
+        }
+        for r in rows
+    ]})
+
+
 @router.get("/runs/{run_id}/skipped")
 async def run_skipped(request: Request, run_id: int):
     await require_run(request, run_id)
