@@ -7,13 +7,14 @@ markers = [
     # the default run, so the SP-008 evidence (xfail before the fix, green
     # after) is produced on every `python -m pytest -q`.
     "queue_forensics: Spotify queue-duplication forensics against the honest player simulator (tests/sim_spotify.py)",
+    "slow: deep property runs (n up to 500, thousands of draws) — opt-in with `python -m pytest -m slow -q`",
 ]
 # The browser suite starts a server and a browser and takes minutes, so it is
 # not part of the default run. It is opt-in and reproducible with
 #     python -m pytest tests/browser -m browser -q
 # On a machine without Playwright or Chromium every test in it skips itself
 # (see tests/browser/conftest.py), so the opt-in command stays safe too.
-addopts = "-m 'not browser'"
+addopts = "-m 'not browser and not slow'"
 filterwarnings = [
     # Starlette's TestClient warns about httpx; nothing we control.
     "ignore::DeprecationWarning:starlette.*",
