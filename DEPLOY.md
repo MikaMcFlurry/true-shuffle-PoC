@@ -225,6 +225,15 @@ in der signierten Sitzung gemerkt, in konstanter Zeit verglichen.
 Was er **nicht** leistet: er ist kein Benutzersystem. Alle Tester teilen sich
 einen Code. Er hält Fremde aus einer Beta heraus — mehr nicht.
 
+> **Auflage (Security-Review SEC-10, 2026-08-01):** Es gibt **kein**
+> Rate-Limiting und **kein** Lockout — gemessen ~544 Rateversuche/Sekunde
+> gegen `/zugang`. Der Beispielwert oben (`ein-code-den-du-verschickst`) ist
+> dafür zu schwach. Verwende einen Code mit **mindestens 24 zufälligen
+> Zeichen** (z. B. `python -c "import secrets; print(secrets.token_urlsafe(18))"`).
+> Ein Rate-Limiter ist als Restrisiko für eine öffentliche Version notiert
+> (`docs/ts-fable-01/SECURITY_PRIVACY_STATUS.md`), nicht für den Beta-Betrieb
+> mit einem starken Code.
+
 Die Sitzungen der Tester sind voneinander getrennt: jede Lauf- und
 Job-Abfrage ist auf den Besitzer eingegrenzt, ein fremder Lauf ist ein 404
 (nicht 403 — das würde bestätigen, dass die ID existiert). Dein Bruder sieht
