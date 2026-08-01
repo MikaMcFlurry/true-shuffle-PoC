@@ -19,7 +19,10 @@ Letzte Aktualisierung: 2026-07-31 ~18:40 UTC · Branch `claude/true-shuffle-fabl
 | WP3-D2 | Run-Lifecycle v3: explizite Run-ID, Stop/Resume (F1), Reset=Zyklus (F2), Soft/Hard-Delete (UC-26), Import→unabhängiger Run, Guard-Scoping, previous=Replay, run_tracks/run_plan-Materialisierung | ✅ committed `fa19bc4`, 525 Tests, 0 Bestandstest-Änderungen. Bekannt: Takeover-Browser-Fixture kollidiert mit idx_runs_one_playing (2. Controller-Run startet jetzt paused) — wird durch F8-Zustandsautomat in D3 gelöst, danach Browser-Fixture anpassen. advance() verbucht noch nicht in run_tracks/run_plan (D3); reset für Legacy-Import-Runs ohne Deck verweigert ehrlich. |
 | WP3-D3 | Selection-Ledger + F5-event_keys, F8-Manual-State-Machine (inkl. Zustand-C-API), Config-CRUD/Versionierung/effective_from, Favoriten/Ausschlüsse, Preflight, apply_sync (alle 3 Policies) | ✅ committed `2ad8069`; 551 Unit/API + 46/46 Browser (Takeover-Fixture auf F8 umgestellt); zwei Limit-Abbrüche überstanden, Endstand vom Lead verifiziert |
 | WP3-D4 | Frontend-Verdrahtung: Builder/Configs echt statt Vorschau, Dashboard mehrere Runs, Player Policy-UI/Zustand C, Progress/History mit Trackdaten | ⏳ nach D3 |
-| WP3-E | Unabhängige Property-Tests (Opus, P1–P8 aus Vertrag) + Review + UC-Evidence-Matrix | ⏳ nach C…D4 |
+| WP3-E1 | Unabhängige Property-Tests (Opus): 9 Verletzungen gefunden (`1a8de05`), alle per separatem Fix-Lauf geschlossen — 13 strict-xfails zu Passes geflippt (`55550f3`, 612 passed) | ✅ |
+| WP3-E2 | Adversarialer Gesamt-Review + UC-01–30-Evidence-Matrix + G4-Gate | ⏳ nach D4 |
+
+**Offene Punkte für Phase-3-Abschluss/E2:** (a) Verbuchungspfad stempelt `last_played_seq` bei Skips nicht — Engine-Requeue-Frist greift produktiv erst nach diesem Stempel (Vertragslücke dokumentiert in WP3C_SELECTION_CONTRACT); (b) M009 (order_json-Drop) bleibt gated bis v3-Pfad produktiv bestätigt; (c) 3 E501 in tests/browser/test_phase3_flows.py (D4-in-flight).
 
 ## Nächste Schritte (wenn hier wieder aufgesetzt wird)
 
