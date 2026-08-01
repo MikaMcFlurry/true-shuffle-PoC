@@ -726,7 +726,18 @@ async def _book_advance(
     order: Optional[List[str]] = None
     if card is not None and card["state"] in ("open", "played", "deferred"):
         outcome = apply_skip(card["state"], policy)
-        track_update = {"state": outcome.new_state, "count_play": outcome.consumed}
+        # Skip-touch stamp (WP3-C contract §Funktionen 3, deferral-time
+        # convention): every skip stamps ``last_played_seq`` with the skip's
+        # selection seq — the title was just offered to the ear, and that
+        # recency is exactly what the engine's min_gap check (keep_open) and
+        # requeue deadline (requeue_later/defer_to_end) measure.  ``state``
+        # keeps encoding consumption; ``play_count`` stays untouched for
+        # unconsumed cards (the consume branch counts the play itself).
+        track_update = {
+            "state": outcome.new_state,
+            "count_play": outcome.consumed,
+            "stamp_seq": True,
+        }
         wants_requeue = outcome.requeue_after_draws or outcome.requeue_at_cycle_end
         if wants_requeue and consumed_rows and not completed:
             # Plan extension instead of an immediate replan: the deferred
@@ -734,12 +745,25 @@ async def _book_advance(
             # order_json (the two stay index-identical).  Skipping the LAST
             # card cannot extend (the decision already completed the deck) —
             # the card stays 'deferred' and the next cycle re-opens it (F2).
-            plan_append = {
-                "seq": await db.max_plan_seq(run_id) + 1,
-                "run_track_id": int(card["id"]),
-                "plan_version": plan_version,
-            }
-            order = [*state.order, from_track]
+            # requeue_later additionally honours its deadline HERE: the
+            # appended row would be consumed ``len(order) - cursor + 1``
+            # draws after this skip (one row per draw); if the plan end is
+            # closer than REQUEUE_AFTER_DRAWS, appending would book the
+            # comeback inside the deadline window — so the card is NOT
+            # appended and stays 'deferred' with its stamp: a later replan
+            # pools it once the deadline has passed, otherwise the F2 reset
+            # lifts the deadline (same outcome as the last-card case).
+            comeback_distance = len(state.order) - decision.cursor + 1
+            if (
+                outcome.requeue_after_draws is None
+                or comeback_distance >= outcome.requeue_after_draws
+            ):
+                plan_append = {
+                    "seq": await db.max_plan_seq(run_id) + 1,
+                    "run_track_id": int(card["id"]),
+                    "plan_version": plan_version,
+                }
+                order = [*state.order, from_track]
 
     selection = {
         "run_track_id": int(card["id"]) if card else None,

@@ -39,7 +39,13 @@ import pytest_asyncio
 from app import db, library_service, runs
 from core import engine
 from core.models import AdvanceReason, PlaylistRef, RunMode, Track
-from core.selection import QUOTA_WINDOW, Candidate, Rules, select_next
+from core.selection import (
+    QUOTA_WINDOW,
+    REQUEUE_AFTER_DRAWS,
+    Candidate,
+    Rules,
+    select_next,
+)
 from providers.base import TokenBundle
 from tests.conftest import FakeProvider
 
@@ -227,6 +233,101 @@ async def test_skip_policy_deferral_extends_the_plan_at_the_end(
     final = await db.find_run_track(state.run_id, provider_track_id=skipped_track)
     assert final["state"] == "played" and final["play_count"] == 1
     assert (await db.get_run(state.run_id))["status"] == "completed"
+
+
+async def test_requeue_later_returns_no_earlier_than_the_deadline(database, service):
+    """RUN-06 × P6: over the REAL advance path a requeue_later card is
+    consumed again no earlier than :data:`REQUEUE_AFTER_DRAWS` draws after
+    the skip — or not at all in this cycle.
+
+    Regression (WP3-C Anbindungslücke): the booking path used to stamp no
+    ``last_played_seq`` on the deferral AND to append the card blindly to
+    the plan end — skipped with only three rows left, the card came back a
+    mere four draws later.  Now the skip stamps the deferral seq, and an
+    extension that would land inside the deadline window is NOT appended:
+    the card stays parked as 'deferred', the cycle completes without it,
+    and F2's reset lifts the deadline (contract §Funktionen 3).
+    """
+    config_id = await _config(service, "Requeue", skip_policy="requeue_later")
+    state = await _run(service, name="requeue-deadline", config_id=config_id)
+
+    for _ in range(8):                          # seqs 1..8 — natural ends
+        await runs.advance(service.session, state,
+                           reason=AdvanceReason.TRACK_ENDED)
+    skipped_track = state.order[8]
+    await runs.advance(service.session, state, reason=AdvanceReason.USER_SKIP)
+    skip_seq = (await db.get_run(state.run_id))["selection_seq"]
+    assert skip_seq == 9
+    card = await db.find_run_track(state.run_id, provider_track_id=skipped_track)
+    assert card["state"] == "deferred"
+
+    for _ in range(20):                         # play the cycle out
+        if (await db.get_run(state.run_id))["status"] == "completed":
+            break
+        await runs.advance(service.session, state,
+                           reason=AdvanceReason.TRACK_ENDED)
+    assert (await db.get_run(state.run_id))["status"] == "completed"
+
+    # The deadline: every consumption after the skip happens >= 10 draws
+    # later — this cycle has no room for that, so there must be none at all.
+    cur = await database.execute(
+        "SELECT seq FROM run_selections WHERE run_id = ? AND run_track_id = ? "
+        "AND seq > ?", (state.run_id, card["id"], skip_seq))
+    comebacks = [row[0] for row in await cur.fetchall()]
+    assert all(
+        seq - skip_seq >= REQUEUE_AFTER_DRAWS for seq in comebacks
+    ), comebacks
+
+    final = await db.find_run_track(state.run_id, provider_track_id=skipped_track)
+    assert final["state"] == "deferred"             # parked, not burnt …
+    assert final["play_count"] == 0
+    assert final["last_played_seq"] == skip_seq     # … the deferral stamped
+
+    # F2: the next cycle lifts the deadline — the card comes back openly.
+    await runs.reset_run(service.session, state)
+    reopened = await db.find_run_track(
+        state.run_id, provider_track_id=skipped_track
+    )
+    assert reopened["state"] == "open"
+    assert reopened["last_played_seq"] is None
+    assert skipped_track in state.order
+
+
+async def test_keep_open_skip_stamps_the_touch_for_the_gap_check(database, service):
+    """RUN-06 × P2: a keep_open skip stamps ``last_played_seq`` (skip-touch
+    convention) while the card stays open and unconsumed — ``state`` is
+    consumption, ``last_played_seq`` is listening history (contract
+    §Datentypen), and the skipped title WAS just offered to the ear.
+
+    Productive effect over the real path: in a replan where every card is
+    gap-blocked, the F6 ladder prefers the least recently heard card — the
+    just-skipped title comes back LAST.  Regression: without the stamp the
+    skipped card looked box-fresh and the replanned tail opened with exactly
+    the title the user just skipped away.
+    """
+    config_id = await _config(service, "KeepOpen Gap", skip_policy="keep_open")
+    state = await _run(service, name="keep-open-gap", config_id=config_id)
+
+    for _ in range(10):                         # seqs 1..10 — natural ends
+        await runs.advance(service.session, state,
+                           reason=AdvanceReason.TRACK_ENDED)
+    skipped_track = state.order[10]
+    await runs.advance(service.session, state, reason=AdvanceReason.USER_SKIP)
+    card = await db.find_run_track(state.run_id, provider_track_id=skipped_track)
+    assert card["state"] == "open"              # NOT consumed (P1) …
+    assert card["play_count"] == 0              # … and no play counted
+
+    # Every other card carries a played history; min_gap=20 blocks them all,
+    # so the ladder must order the tail by "longest not heard" (deterministic:
+    # each relaxation step frees exactly the oldest card).
+    await runs.change_run_rules(
+        state, {"repeat_mode": "free_repeat", "min_gap": 20}
+    )
+    tail = state.order[12:]
+    assert len(tail) == 11
+    assert tail[0] != skipped_track             # never right back …
+    assert tail[-1] == skipped_track            # … but last of the rotation
+    assert card["last_played_seq"] == 11        # the skip stamped the touch
 
 
 # ---------------------------------------------------------------------------

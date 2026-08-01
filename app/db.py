@@ -1289,6 +1289,16 @@ async def book_advance(
                     "last_played_seq = ? WHERE id = ?",
                     (track_update["state"], seq, run_track_id),
                 )
+            elif track_update.get("stamp_seq"):
+                # Unconsumed skip (keep_open / requeue_later / defer_to_end):
+                # no play is counted, but the skip-touch is stamped — the
+                # engine's min_gap check and requeue deadline measure from
+                # ``last_played_seq`` (WP3-C deferral-time convention).
+                await db.execute(
+                    "UPDATE run_tracks SET state = ?, last_played_seq = ? "
+                    "WHERE id = ?",
+                    (track_update["state"], seq, run_track_id),
+                )
             else:
                 await db.execute(
                     "UPDATE run_tracks SET state = ? WHERE id = ?",
