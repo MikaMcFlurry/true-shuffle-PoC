@@ -1,15 +1,16 @@
-# UC-01–30 Evidence Matrix — TS-FABLE-01 (G4/E2 + §A-Abschluss)
+# UC-01–30 Evidence Matrix — TS-FABLE-01 (G4/E2 + §A-Abschluss + Phase 4)
 
-**Datum:** 2026-08-01 · **Branch:** `claude/true-shuffle-fable5-lead-928f25` · **HEAD:** `7ae2520`
-(*feat(ux): §A UI package — reactivation view, real favourite priority, per-track weight, honest requeue text*)
+**Datum:** 2026-08-01 · **Branch:** `claude/true-shuffle-fable5-lead-928f25` · **HEAD:** `aa64e7b`
+(Kopfzeile nach dem Release-Review auf den finalen Stand nachgezogen — AUF-2;
+die Zeilen-/Zitat-Details wurden auf ihrem jeweiligen Entstehungs-HEAD geprüft und mit Commit benannt.)
 
-**Suiten (auf diesem HEAD vom Lead ausgeführt, nicht zitiert):**
+**Suiten (auf dem finalen HEAD vom Lead **und** unabhängig im Release-Review ausgeführt, nicht zitiert):**
 
 | Lauf | Kommando | Ergebnis |
 |---|---|---|
-| Unit/API/Property/Sim (Default) | `python -m pytest -q` | **649 passed**, 62 deselected (`addopts = "-m 'not browser and not slow'"`, `pyproject.toml`), 78 s — enthält die §A-Neuzugänge `test_window_reassert.py` (5), `test_completion_flows.py` (3), `test_progress_stats.py` (8), `test_restart_e2e.py` (3), `test_apply_sync_http.py` (6), `test_retention.py` (6), `test_replan_fastpath.py` (4) |
-| Browser (Playwright) | `ENABLE_DEMO_PROVIDER=true python -m pytest tests/browser -m browser -q` | **54 passed**, 351 s (50 + 4 aus `test_phase3_ui_controls.py`) |
-| Slow (im Default-Lauf deselektiert) | `python -m pytest -m slow -q` | **8 passed**, ~2–3 s — deckt u. a. die als UC-06/UC-07-Beleg zitierten `test_p1_deep_cycles_up_to_500_cards` und `test_p7_quota_ceiling_over_five_thousand_draws[…]` ab |
+| Unit/API/Property/Sim (Default) | `python -m pytest -q` | **704 passed**, 62 deselected (`addopts = "-m 'not browser and not slow'"`, `pyproject.toml`), ~90 s — die §A-Neuzugänge (`test_window_reassert.py`, `test_completion_flows.py`, `test_progress_stats.py`, `test_restart_e2e.py`, `test_apply_sync_http.py`, `test_retention.py`, `test_replan_fastpath.py`, `test_track_weight.py`) plus Phase 4 (`test_error_matrix.py`, `test_manual_matrix.py`, `test_concurrency.py`, `test_security_hardening.py`) |
+| Browser (Playwright, **nur Chromium** — s. Querschnittsnotiz 15) | `ENABLE_DEMO_PROVIDER=true python -m pytest tests/browser -m browser -q` | **54 passed**, ~340 s (50 + 4 aus `test_phase3_ui_controls.py`) |
+| Slow (im Default-Lauf deselektiert) | `python -m pytest -m slow -q` | **8 passed**, ~2–3 s — deckt u. a. `test_p1_deep_cycles_up_to_500_cards` und `test_p7_quota_ceiling_over_five_thousand_draws[…]` ab |
 
 **Evidenzklassen** (aus `handoffs/TS-FABLE-01/02_SOURCE_PRIORITY_AND_CONFLICT_RULES.md`):
 `VERIFIED_CODE` (im Code nachgewiesen) · `VERIFIED_AUTOMATED` (durch automatisierte Tests) ·
@@ -100,6 +101,7 @@ Simulator-Annahmen AN-1…AN-7 (`tests/sim_spotify.py`), die live unbestätigt s
 12. **No-Repeat-Vollständigkeit hat eine dokumentierte Ausnahme** (RUN-03, UC-06, UC-19, UC-24): ein `requeue_later`-Skip nahe Zyklusende kann eine Karte `deferred`/`play_count 0` zurücklassen, während der Run trotzdem `completed`/100 % meldet. Bewusstes, getestetes Verhalten — seit §A zusätzlich end-to-end gepinnt (`test_progress_stats.py::test_requeue_later_endgame_completes_at_100_percent_with_an_unplayed_card`); der Builder-Text ist seit §A7 ehrlich formuliert. Die Karte kehrt im Folgezyklus/Replan zurück.
 13. **`tests/forensics/strategy_bench.py` / `test_strategy_candidates.py` sind nicht in `app`/`core` integriert** (Modul-Docstring: „nothing is integrated into the app code“). Als Evidenz für UC-11, UC-17, UC-30 und RUN-02 nur mit diesem Vorbehalt zu lesen — die App-seitige Kernaussage der jeweiligen Zeile ruht auf den übrigen, echten Tests; für RUN-02/UC-30 (Restart+DB-Persistenz) fehlt dagegen ein tragfähiger benannter Test, daher dort auf TEILWEISE korrigiert.
 14. **Aufgelöst (§A1/ADR-004, 2026-08-01):** Ausschluss, Reaktivierung, Regeländerung und Sync-Anwendung re-asserten das uris-Fenster jetzt sofort (nahtlos, `position_ms` erhalten), mit Anker-Invalidierung als Sicherheitsnetz und Watcher-Selbstheilung; rot-zuerst-Suite `tests/test_window_reassert.py`. Live-Bestätigung des `position_ms`-Verhaltens: LT-14. Zusätzlich (Phase-4-Profil): der Replan selbst war bei 10k Tracks 54,6 s unter dem `advance_lock` — reiner no_repeat-Fall jetzt O(n log n)/1,4 s (`test_replan_fastpath.py`); der gewichtete Fall bleibt O(n²) (Worknote PHASE4_PERF_PROFILE.md). **Runde-2-Befund B1 (kritisch, behoben):** die erste Fast-Path-Fassung (`16a12b1`) war gap-blind — offene Karten MIT Hör-Historie (keep_open-Skip) konnten innerhalb ihres min_gap-Fensters zurückkommen (gemessen 11–18/25 P2-Verletzungen). Seit dem Guard (min_gap>0 + Historie ⇒ Draw-Loop, gepinnt in `test_keep_open_history_with_min_gap_forces_the_draw_loop`) wieder 0 Verletzungen; betrifft rückwirkend keine ausgelieferte Version (beide Commits liegen im selben unreleased Branch-Abschnitt).
+15. **Browsermatrix ist Einzel-Engine (Chromium), offengelegt (Release-Review-Auflage AUF-1, 2026-08-01):** `08_ACCEPTANCE_TEST_MATRIX.md` fordert „Chromium plus ein zweiter relevanter Browser". Die Playwright-Suite (`tests/browser/`, 54 Tests) läuft ausschließlich gegen Chromium — in DIESER Umgebung ist kein zweiter Engine-Binary (Firefox/WebKit) verfügbar und `playwright install` ist untersagt. Das Produkt ist server-gerendertes HTML/Vanilla-CSS/ES-Modules ohne Engine-spezifische APIs, und die eine Engine ist breit geprüft (Viewports 320–1280, Theme-Matrix, Reduced Motion, 80 Kontraststichproben, A11y-Struktur, Keyboard, Touch-Ziele). Der zweite-Engine-Nachweis bleibt dennoch **offen** und ist erst nachholbar, wenn ein Firefox-/WebKit-Binary bereitsteht — bis dahin ehrlich als einzige nicht vollständig erfüllte Akzeptanz-Zeile geführt (nicht still übergangen).
 
 ---
 

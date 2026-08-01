@@ -6,7 +6,9 @@ Letzte Aktualisierung: 2026-08-01 (§A-Abschluss + Phase 4 weitgehend) · Branch
 
 ## Gate-Stand (Details: GATE_STATUS.md)
 
-- G0 ✅ · G1 ✅ · G2 ✅ · G3 ✅ automatisiert / Live BLOCKED · **G4 ✅ PASS(automated)** (§A abgeschlossen, Runde-2-adversarial verifiziert) / Live BLOCKED · **G5 TEILWEISE** (ERR/MAN + Security + Perf + Concurrency erledigt; offen: unabhängiger Release-Gesamt-Review + Abschlussbericht) · G6 gesperrt bis Spotify-Live-PASS.
+- G0 ✅ · G1 ✅ · G2 ✅ · G3 ✅ automatisiert / Live BLOCKED · **G4 ✅ PASS(automated)** (§A abgeschlossen, Runde-2-adversarial verifiziert) / Live BLOCKED · **G5 ✅ PASS(automated) mit 2 Doku-Auflagen** (unabhängiger Release-Review, 0 Blocker; AUF-1/AUF-2 eingearbeitet) / Live BLOCKED · G6 gesperrt bis Spotify-Live-PASS.
+
+**Alle automatisierten/dokumentarischen Gates (G0–G5) sind durch.** Offen nur noch extern: Live-Verifikation (Credentials/Gerät), Merge/Deploy (Freigabe), Phase 5 (nach Live-PASS).
 
 ## Suiten-Stand (auf HEAD vom Lead ausgeführt)
 

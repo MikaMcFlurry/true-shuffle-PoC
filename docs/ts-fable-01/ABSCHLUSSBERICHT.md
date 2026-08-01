@@ -25,7 +25,7 @@ Credentials geprüft — dieser Nachweis bleibt der externe Blocker.
 | G2 UX-Implementierung | PASS | Nachtpult-System, Browser-Suite 54/54 |
 | G3 Spotify-Forensik & Strategie | PASS(automated) / Live BLOCKED | `ADR-002`, SP-008 rot→grün |
 | G4 Alle 30 Use-Cases | **PASS(automated) / Live BLOCKED** | `UC_EVIDENCE_MATRIX.md` (Runde-2-verifiziert) |
-| G5 Hardening | **TEILWEISE / Live BLOCKED** | ERR/MAN + Security + Perf + Concurrency erledigt; Release-Gesamt-Review offen |
+| G5 Hardening | **PASS(automated) mit 2 Doku-Auflagen / Live BLOCKED** | ERR/MAN + Security + Perf + Concurrency erledigt; unabhängiger Release-Gesamt-Review: PASS(automated), 0 Blocker (AUF-1/AUF-2 eingearbeitet) |
 | G6 Weitere Provider | GESPERRT | bis Spotify-Live-PASS |
 
 ## Artefakte (Auftrags-Checkliste)
@@ -36,7 +36,7 @@ Credentials geprüft — dieser Nachweis bleibt der externe Blocker.
 - **UC-01–30 + RUN-01–12 Evidence Matrix:** `UC_EVIDENCE_MATRIX.md` — 28 UC + 11 RUN PASS(automated), 2 UC + 1 RUN TEILWEISE (dieselbe bewusste Endgame-Ausnahme), 0 NEIN, 0 VERIFIED_LIVE.
 - **Automatisierte Testberichte:** 704 Unit/API/Property/Sim, 54 Browser, 8 slow — alle grün, Ruff clean (Kommandos in der Matrix-Kopfzeile).
 - **Redigierter Spotify-Live-Testbericht:** `LIVE_TEST_GUIDE.md` (LT-1…14) + Ergebnisformular; Status je Zeile **BLOCKED/„nicht ausgeführt"** (kein Konto/Gerät).
-- **Browser-/Accessibility-Nachweise:** `tests/browser/` (54 Tests: Flows, Drift, Keyboard, Touch-Ziele, Overflow, Reduced Motion, Theme, A11y-Struktur, Kontrast).
+- **Browser-/Accessibility-Nachweise:** `tests/browser/` (54 Tests: Flows, Drift, Keyboard, Touch-Ziele, Overflow, Reduced Motion, Theme, A11y-Struktur, Kontrast) — **nur Chromium**; der von `08` geforderte zweite Engine ist mangels Firefox/WebKit-Binary in dieser Umgebung offen und ehrlich als einzige nicht voll erfüllte Akzeptanz-Zeile geführt (Matrix-Querschnittsnotiz 15, AUF-1).
 - **Migrations-/Rollback-Hinweise:** `app/migrations.py` (M001–M011, M009 gated; Docstrings + `rollback_m007`); v3-Schema.
 - **Security-/Privacy-/Policy-Status:** `SECURITY_PRIVACY_STATUS.md`, `POLICY_COMMERCIAL_STATUS.md`.
 - **Model Ledger:** `MODEL_LEDGER.md` (Routing + Erzeuger≠Abnehmer-Protokoll, 27 Einträge).
@@ -52,7 +52,10 @@ Credentials geprüft — dieser Nachweis bleibt der externe Blocker.
 
 **Bewusste TEILWEISE (getestet, dokumentiert, kein Mangel):**
 - UC-06 / UC-24 / RUN-03: No-Repeat-Endgame-Ausnahme — ein `requeue_later`-Skip nahe Zyklusende lässt eine Karte `deferred`/`play_count 0`, der Run meldet trotzdem `completed`/100 %; die Karte kehrt im Folgezyklus zurück. Builder-Text ehrlich, end-to-end gepinnt.
-- G5: unabhängiger Release-Gesamt-Review steht aus (letzter PASS-Baustein).
+
+**Release-Review-Auflagen (Doku, 2026-08-01, eingearbeitet):**
+- AUF-1: Browsermatrix Chromium-only statt „Chromium + zweiter Browser" (`08`) — offengelegt (Matrix-Notiz 15), zweiter Engine mangels Binary offen.
+- AUF-2: Matrix-Kopfzahl auf 704/finalen HEAD nachgezogen (war 649/`7ae2520`, stale nicht unehrlich, da HEAD benannt).
 
 **Offene Restrisiken (dokumentiert, für ÖFFENTLICHE Version, nicht Beta):**
 Cookie-Identität statt echter Konten (SEC-02/08), Rate-Limiting (SEC-10, mit `ACCESS_CODE`-Entropie-Auflage entschärft), Import-Größenlimit (SEC-11), CSP/`signout`-POST (SEC-09/16-Rest), gewichteter Replan O(n²) (Perf-Folgeoption).
@@ -66,5 +69,9 @@ Cookie-Identität statt echter Konten (SEC-02/08), Rate-Limiting (SEC-10, mit `A
 
 ## Nächster Schritt
 
-Unabhängiger Release-Gesamt-Review (G5-Entscheidung), dann — nur mit Freigabe und
-sobald Credentials/Gerät vorliegen — die Live-Zeilen gemäß `LIVE_TEST_GUIDE.md`.
+Die automatisierten und dokumentarischen Gates sind durch (G0–G5). Offen bleiben
+nur die extern blockierten Schritte — beide brauchen den Nutzer bzw. eine Freigabe:
+1. **Live-Verifikation** gemäß `LIVE_TEST_GUIDE.md` (LT-1…14), sobald Spotify-Credentials
+   + Premium-Testkonto + reales Gerät vorliegen.
+2. **Merge/Deploy** — nur mit ausdrücklicher Freigabe.
+3. **Phase 5** (weitere Provider) — erst nach Spotify-Live-PASS.
