@@ -1,6 +1,6 @@
 # Live-Testanleitung Spotify (redigiert) — Phase 2
 
-Lauf: TS-FABLE-01 · Stand: 2026-07-31 · Status des Live-Gates: **BLOCKED** (keine Credentials in der Umgebung)
+Lauf: TS-FABLE-01 · Stand: 2026-08-01 (LT-13/LT-14 ergänzt) · Status des Live-Gates: **BLOCKED** (keine Credentials in der Umgebung)
 
 Diese Anleitung macht die `VERIFIED_LIVE`-Beweise nachholbar, sobald eine Person mit
 Premium-Testkonto und realem Gerät zur Verfügung steht. Sie folgt dem
@@ -222,6 +222,65 @@ Player-**Commands** (play, enqueue, next, pause) antworten ohne aktives Gerät m
   Simulator (`play`/`add_to_queue`/`next`/`pause`/`get_queue`) und die
   Szenario-(h)-Interpretation (`device_loss_survived`, `Api.queue_ids`-Mapping
   auf `[]`) entsprechend anpassen.
+
+### LT-13 · uris-Body-Limit messen (ADR-002, vor jeder Erhöhung von N_MAX)
+
+Das dokumentierte Limit für die Größe des `uris`-Arrays in `PUT /me/player/play`
+ist unbekannt; der Default `context_window_size = 250` ist eine konservative
+Annahme, keine Messung.
+
+1. Eigene Test-Playlist mit ≥ 1 000 Titeln importieren (oder Track-IDs
+   synthetisch sammeln — nur öffentliche Katalog-IDs, keine Nutzerdaten).
+2. `PUT /me/player/play` mit wachsendem `uris`-Array absetzen: 50 → 100 → 250
+   → 500 → 750 → 1 000. Je Stufe notieren: HTTP-Status, Fehlerbody
+   (redigiert), Latenz, ob die Wiedergabe startet und `GET /me/player/queue`
+   die erwarteten nächsten Titel zeigt.
+3. Erste fehlschlagende Stufe binär eingrenzen (z. B. 250 ok, 500 fail →
+   375 …), 3 Wiederholungen an der Grenze (Flakes ausschließen).
+- **Ergebnisverwendung:** gemessenes Limit < 250 → `context_window_size`
+  senken (Config, kein Codeänderungsbedarf) und ADR-002/S4-Abwägung neu
+  bewerten; Limit ≥ 500 → optionale Erhöhung dokumentieren, nicht automatisch
+  ausrollen.
+
+### LT-14 · Ausschluss/Regeländerung während laufender Wiedergabe (ADR-004; UC-20/21/25/27, RUN-08/09)
+
+Automatisiert belegt (`tests/test_window_reassert.py`, Simulator mit
+AN-1…AN-7); live unbestätigt sind das reale Verhalten von `PUT /play` mit
+`uris` + `position_ms` mitten im Titel und die Hörbarkeit des Übergangs.
+
+1. Run mit ≥ 15 Titeln starten; Titel 1 bis ca. 1:00 spielen lassen.
+2. **Ausschluss:** In True Shuffle den ANGEZEIGTEN nächsten Titel ausschließen.
+   Erwartung: API-Antwort `window: "reasserted"`; Command-Log zeigt genau EIN
+   `kind=play` mit `position_ms ≈` aktueller Position; der laufende Titel
+   läuft hörbar weiter (kein Neustart, allenfalls minimaler Versatz —
+   Versatzdauer notieren); `GET /me/player/queue` zeigt den ausgeschlossenen
+   Titel NICHT mehr; am Trackende spielt der neue Folgetitel.
+3. **Reaktivieren:** denselben Titel wieder aufnehmen → erneut
+   `window: "reasserted"`, Titel wieder in der Queue-Vorschau.
+4. **Regeländerung:** `min_gap`/`repeat_mode` im laufenden Run ändern.
+   Erwartung: `window: "reasserted"` bei geändertem hörbarem Fenster, sonst
+   `"unchanged"` (dann KEIN neues Command im Log).
+5. **Sync mit include_now** (RUN-09): Playlist in Spotify um 2 Titel
+   erweitern, Sync + Anwenden während der Wiedergabe → `window`-Ausgang
+   notieren; neue Titel müssen ohne Neustart in der Queue-Vorschau landen.
+6. **Manuelle Episode:** Fremden Titel in Spotify starten (Drift), DANN einen
+   Titel ausschließen. Erwartung: `window: "not_driving"`, KEIN Command
+   (beobachten statt kämpfen, F8); nach Rückkehr gemäß Policy greift der
+   neue Plan.
+7. **Gerät weg:** aktives Gerät schließen, Titel ausschließen. Erwartung:
+   `window: "failed"` oder `"not_driving"` (je nachdem, ob der Playback-Read
+   noch antwortet), Event `window_reassert_failed` bzw. kein Command; nach
+   Geräte-Rückkehr setzt der nächste Start/Advance das frische Fenster.
+8. **Reopen nach Abschluss (UC-24):** einen kleinen Run bis `completed`
+   durchhören, dann Wiederholungen erlauben (`repeat_mode: free_repeat`).
+   Erwartung: Antwort `reopened: true`/`status: "stopped"`; Fortsetzen +
+   Start spielen die neuen Titel; Verlauf des ersten Durchgangs unangetastet.
+- **Falsifikationsfolgen:** Startet `PUT /play` mit `position_ms` den Titel
+  hörbar neu bzw. ignoriert es die Position, ist der „nahtlose" Sofortpfad
+  live wertlos → ADR-004 auf Lazy-Only (nur Anker-Invalidierung) zurückbauen
+  und die UI-Erwartung („wirkt ab dem nächsten Titel") entsprechend ehrlich
+  umformulieren; die Tests in `tests/test_window_reassert.py` sind dann auf
+  die Lazy-Semantik umzuschreiben (dokumentierte Teständerung).
 
 ## 5. Ergebnisformular (je Testfall kopieren)
 

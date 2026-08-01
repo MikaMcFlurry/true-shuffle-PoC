@@ -43,3 +43,20 @@ Regeln: Erzeuger und Abnehmer kritischer Arbeit sind nie derselbe Agentenlauf. K
 | 10 | Adversariale Verifikation des Forensik-Pakets (3 Linsen) | Workflow, 3× **Opus** effort=high | Kernbeweis bestätigt (echter Watcher-Pfad unabhängig reproduziert); Messmethodik als FLAWED entlarvt (Lücken-/429-Metrik, S3-Idempotenz hohl, S3 im Deck-Titel-Queue-Fall schlechtester Kandidat) — kippte das Ranking | Lead — Reparaturauftrag + ADR-002 |
 | 11 | Forensik-Reparatur (12 Punkte, Szenarien g/h, Silence-/Quota-Metrik, AN-5/6/7) | Fable 5 (nach Session-Limit-Abbruch fortgesetzt) | Commit `0ccb413`; 408 passed + 2 strict-xfail | Lead (Pins + Suite) |
 | 12 | ADR-002 Strategieentscheidung | **Lead (Fable 5)** auf verifizierter Messlage | Commit `fd2a3ce`: uris-Fenster Default; S3 verworfen (irreversible Queue), S4 Option, S2 Notmodus, SDK qualitativ abgelehnt | adversariale Evidenz #10 |
+| 13* | WP3-A Schema v3 + Migrations-Runner; ADR-003 | Fable 5 (Lead) auf Opus-Blueprint (#3) | `70d7b81`, `2b74e2e` | Lead + spätere Property-Suite (#16) |
+| 14* | WP3-C Selection-Engine nach Vertrag | Agentenlauf (Session-Modell) | `7452790`, 57 Tests | Lead + unabhängige Property-Suite (#16) |
+| 15* | WP3-D1–D4 Import/Snapshot, Run-Lifecycle v3, Policies/Ledger/F8, Frontend-Verdrahtung | Agentenläufe (Session-Modell, je WP getrennt; 2 Limit-Abbrüche überstanden) | `9b10db8`, `fa19bc4`, `2ad8069`, `0314439` | Lead-Diff-Review je WP; Browser-Suite (Opus-Artefakt) 50/50 |
+| 16* | WP3-E1 unabhängige Property-Tests | **Opus** (kein Implementierungskontext) | `1a8de05`: 9 Verletzungen gefunden; Fix-Lauf `55550f3` (getrennt), 13 strict-xfails → Passes | Lead |
+| 17* | WP3-E2 Evidence-Matrix + adversariale Verifikation | Bau: Session-Modell; Verifikation: 3 getrennte Linsen (**Opus**, effort=high) | `52910af`/`1abd4fe`: 13 Widerlegungen eingearbeitet, Statuskorrekturen UC-24/RUN-02/RUN-03 | Lead |
+
+\* Einträge 13–17 nachgetragen am 2026-08-01 durch die Fortsetzungssession (rekonstruiert aus RUN_STATE.md, GATE_STATUS.md und Commit-Historie — die Vorsession hatte das Protokoll ab WP3 nicht fortgeschrieben).
+
+### Fortsetzungssession (2026-08-01, Branch `claude/true-shuffle-fable5-lead-928f25`)
+
+| # | Arbeitspaket | Modell/Effort | Ergebnis | Reviewer |
+|---|---|---|---|---|
+| 18 | Session-Re-Audit: Baseline-Reproduktion (614+50+8 grün, Ruff clean) + Doku-Freshness-Check Spotify (Changelog/Policy/Player-Referenz/Migrationsguide, Stand 01.08. unverändert) | Lead (Fable 5); Freshness: Haiku-Agent, effort low | Baseline exakt reproduziert; Phase-0-Befunde weiter gültig | Lead |
+| 19 | §A1 Fenster-Re-Assert (ADR-004): rot-zuerst-Suite `test_window_reassert.py`, Hybrid-Fix (Anker-Invalidierung + nahtloser Sofort-Re-Assert + Watcher-Selbstheilung) | Lead (Fable 5) | `c86ed42`; 5 Tests rot→grün, 619 grün | vorgesehen: adversarialer Opus-Review des §A-Deltas (#22) |
+| 20 | §A2/A5/A6-Backend: UC-24-Reopen, UC-07-Gewichts-API, UC-22-Zählsemantik (Vorgänge), Deck-Listing-Route | Lead (Fable 5) | `b856d0e`, `a97987c`; test_completion_flows rot→grün, 622 grün | Opus-Testagent (#21, unabhängige Assertions) + Review #22 |
+| 21 | §A2/A8/A9 unabhängige Tests (Progress-Stats, Restart-E2E, apply-sync HTTP) | **Opus** (kein Implementierungskontext) | dispatched | Lead |
+| 22 | §A3/A4/A5-UI/A7 Frontend (Reaktivieren-Ansicht, favorite_weight im Builder, Pro-Titel-Gewicht, requeue_later-Text) + Browser-Tests | Sonnet | dispatched | Lead-Diff-Review + adversarialer Opus-Review |
