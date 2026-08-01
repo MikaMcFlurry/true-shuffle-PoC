@@ -258,7 +258,18 @@ async def import_playlist(
     )
     imported_at = str((await cur.fetchone())[0])
 
+    # F10 Stufe 3 (Reconnect-Weg): frisch importierte Titel wieder mit
+    # anonymisierten Karten früherer Disconnects verknüpfen.  Lazy import —
+    # retention importiert db, nicht umgekehrt, aber ein Modul-Toplevel-Halo
+    # bleibt vermeidbar klein.
+    from app import retention
+
+    relinked = await retention.relink_after_import(
+        session.user_id, playlist_ref.provider, snapshot_id
+    )
+
     return {
+        "relinked": relinked,
         "playlist_id": playlist_pk,
         "provider": playlist_ref.provider,
         "provider_playlist_id": playlist_ref.id,

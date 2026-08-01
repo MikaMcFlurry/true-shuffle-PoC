@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 from contextlib import asynccontextmanager
 
@@ -37,8 +39,27 @@ async def lifespan(app: FastAPI):
     for warning in settings.insecure_defaults():
         logger.warning("%s", warning)
 
+    # F10 (ADR-003): fällige Löschanträge beim Start und dann täglich —
+    # die 5-Tage-Frist muss auch nach einem Neustart nachweisbar halten.
+    from app import retention
+
+    async def _retention_tick():
+        while True:
+            try:
+                outcomes = await retention.run_due_deletions()
+                if outcomes:
+                    logger.info("retention: %s request(s) processed", len(outcomes))
+            except Exception:
+                logger.exception("retention tick failed")
+            await asyncio.sleep(24 * 3600)
+
+    retention_task = asyncio.create_task(_retention_tick(), name="ts-retention")
+
     yield
 
+    retention_task.cancel()
+    with contextlib.suppress(BaseException):
+        await retention_task
     await watcher.stop_all()
     await jobs.cancel_all()
     await close_db()

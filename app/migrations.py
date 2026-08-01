@@ -961,6 +961,21 @@ async def _m010_deletion_requests(db: aiosqlite.Connection) -> None:
     )
 
 
+async def _m011_deletion_salt(db: aiosqlite.Connection) -> None:
+    """M011 — Stufe-3-Matching-Salt am Löschantrag (ADR-003 F10).
+
+    Der Opaque-Hash der anonymisierten Titel-Referenzen ist
+    HMAC(salt, provider_track_id); der Salt lebt am ``deletion_requests``-
+    Antrag, damit ein Reconnect denselben Hörstand wieder verknüpfen kann
+    (:func:`app.retention.relink_after_import`).  Rollback: schlichtes
+    ``ALTER TABLE deletion_requests DROP COLUMN salt`` — kein Index, keine
+    Constraint, keine View referenziert die Spalte.
+    """
+    await db.execute(
+        "ALTER TABLE deletion_requests ADD COLUMN salt TEXT NOT NULL DEFAULT ''"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Rollbacks (per-step, for the steps that need scripted reversal)
 # ---------------------------------------------------------------------------
@@ -1016,6 +1031,7 @@ MIGRATIONS: Tuple[Migration, ...] = (
     Migration(308, "m008_skipped_compat", _m008_skipped_compat),
     Migration(309, "m009_drop_order_json", _m009_drop_order_json, optional=True),
     Migration(310, "m010_deletion_requests", _m010_deletion_requests),
+    Migration(311, "m011_deletion_salt", _m011_deletion_salt),
 )
 
 

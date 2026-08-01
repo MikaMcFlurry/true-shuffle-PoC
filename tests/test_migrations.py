@@ -152,8 +152,12 @@ async def test_fresh_database_lands_on_complete_v3(database):
     ) == "3"
     cur = await database.execute("SELECT version FROM schema_migrations")
     versions = {row[0] for row in await cur.fetchall()}
-    # Baseline + M001..M008 + M010.  M009 (order_json drop) is gated.
-    assert versions == {2, 301, 302, 303, 304, 305, 306, 307, 308, 310}
+    # Baseline + M001..M008 + M010 + M011.  M009 (order_json drop) is gated.
+    # Teständerung 2026-08-01 (dokumentierte fachliche Begründung): M011
+    # (deletion_requests.salt, F10-Stufe-3-Matching — app/retention.py) kam
+    # als neue, nicht-destruktive Migration hinzu; der Versions-Pin wächst
+    # exakt um diese eine erwartete Nummer.
+    assert versions == {2, 301, 302, 303, 304, 305, 306, 307, 308, 310, 311}
     assert 309 not in versions
 
 

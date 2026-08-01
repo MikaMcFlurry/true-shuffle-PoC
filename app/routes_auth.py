@@ -199,10 +199,32 @@ async def browser_callback(request: Request, provider_id: str):
 
 @router.post("/{provider_id}/disconnect")
 async def disconnect(request: Request, provider_id: str):
-    """Remove stored credentials for one service."""
+    """Disconnect ein service — F10 (ADR-003), dreistufig.
+
+    Sofort: Tokens/Account, rohe Beobachtungen, Command-Payloads.  Binnen
+    5 Tagen (``deletion_requests``-Job): alle Provider-Inhalte; der
+    Hörfortschritt bleibt anonymisiert erhalten, damit ein Reconnect
+    fortsetzen kann.  Body ``{"full": true}`` löscht stattdessen alles,
+    ``{"immediate": true}`` zieht die Stufe 2 sofort vor (kein Export mehr
+    möglich — die Frist ist eine Obergrenze, kein Mindestalter).
+    """
+    from app import retention
+
     user_id = await require_user_id(request)
-    await db.delete_provider_account(user_id, provider_id)
-    return JSONResponse({"status": "disconnected", "provider": provider_id})
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    full = bool(body.get("full"))
+    outcome = await retention.schedule_provider_deletion(
+        user_id, provider_id, full=full
+    )
+    if body.get("immediate"):
+        await retention.run_due_deletions(include_not_due=True)
+        outcome["executed"] = "immediate"
+    return JSONResponse({
+        "status": "disconnected", "provider": provider_id, **outcome,
+    })
 
 
 @router.get("/signout")
