@@ -34,14 +34,17 @@ Privater Provenienz-Nachweis (Mika-Library-IDs/Hashes): NICHT im Repo; liegt im 
 
 ## Nächste Aufgaben in Reihenfolge
 
-### A. Phase-3-Rest (die 5 TEILWEISE-UCs schließen) — je klein, einzeln committen
-1. **UC-22:** Automatisierte Tests für `db.deck_stats` (repeat_count/excluded_count) + API-Assertion in test_api.
-2. **UC-21:** UI-Weg zum Reaktivieren — Ansicht ausgeschlossener Titel (Player-Sektion oder Verlauf) + Reaktivieren-Knopf (API existiert: DELETE /api/runs/{id}/tracks/{run_track_id}/exclude).
-3. **UC-08:** `favorite_weight` im Builder/Config-Editor einstellbar machen (Backend existiert: Rules-Feld; UI-Radios sind data-preview in library.html:209ff) + Browser-Test.
-4. **UC-07:** Per-Track-Gewichte: Entscheidung treffen (Lead): entweder kleine API (PATCH run_tracks.weight) + minimale UI, ODER als dokumentierte Nicht-Funktion aus dem Builder-Versprechen nehmen. Ehrlichkeit vor Umfang.
-5. **UC-19-Textfix:** Builder-Text zu requeue_later an die echte Semantik anpassen (bei spätem Skip erst im Folgezyklus — siehe Matrix-Einschränkung).
-6. **UC-30:** Komposit-E2E (Browser, Demo-Provider): anlegen → hören → stoppen → App-„Neustart" (neue Session) → fortsetzen → abschließen; plus Simulator-Restart-Test existiert schon.
-7. Danach: **G4-Gate-Eintrag** in GATE_STATUS (PASS(automated) mit dokumentierten Einschränkungen + Live BLOCKED), RUN_STATE + MODEL_LEDGER aktualisieren.
+### A. Phase-3-Rest (6 TEILWEISE-UCs + 2 RUN-Zeilen schließen; Details je Zeile in UC_EVIDENCE_MATRIX.md) — je klein, einzeln committen
+1. **Fenster-Re-Assert (Code, prioritär):** Exclude/Reaktivieren/Regeländerung während aktiver Wiedergabe müssen das uris-Fenster neu setzen (`_window_anchors`-Re-Assert in den betroffenen Pfaden) — Matrix stuft UC-20/27/RUN-08 sonst als hohes Live-Divergenzrisiko ein. Mit Test über den Watcher-Pfad (Simulator).
+2. **UC-22:** Tests für `db.deck_stats` (repeat_count/excluded_count) + `skipped_count`/`progress_pct`-Assertions; Zählsemantik von `repeats` festlegen (Karten vs. Vorgänge) und dokumentieren.
+3. **UC-21:** UI-Weg zum Reaktivieren (Ansicht ausgeschlossener Titel + Knopf; API existiert) + Browser-Test.
+4. **UC-08:** `favorite_weight` im Builder/Config-Editor einstellbar (Backend existiert) + Browser-Test.
+5. **UC-07:** Lead-Entscheidung per-Track-Gewichte: kleine API+UI ODER ehrlich aus dem Builder-Versprechen nehmen.
+6. **UC-24:** Completion-Folgeaktionen entstören — „Neuer Durchlauf" nach Abschluss darf nicht am Playing-Slot-409 scheitern (Matrix R2); Flow-Test.
+7. **UC-19-Textfix:** Builder-Text requeue_later an echte Semantik anpassen (später Skip → Folgezyklus).
+8. **RUN-02/UC-30:** Dauerhafter Restart-E2E gegen echte DB+App (nicht nur Bench): anlegen → hören → Prozess-Neustart → fortsetzen → abschließen (Demo-Provider, Browser oder TestClient mit neuem App-Kontext).
+9. **RUN-09/UC-25:** HTTP-Ebenen-Test für POST /api/runs/{id}/apply-sync; LIVE_TEST_GUIDE um LT-Abschnitt „Ausschluss/Regeländerung während Wiedergabe" ergänzen.
+10. Danach: **G4-Eintrag aktualisieren** (Ziel: PASS(automated) ohne TEILWEISE-Zeilen, Live weiter BLOCKED), RUN_STATE + MODEL_LEDGER fortschreiben.
 
 ### B. Phase 4 — Hardening & Abnahme (08_ACCEPTANCE_TEST_MATRIX.md vollständig)
 1. **ERR-01…08**: gezielte Tests (kein Gerät, Premium fehlt/402, 401/Refresh, 429 Retry-After, 5xx/Timeout-Backoff, Track unverfügbar, Disconnect, DB/Prozess-Restart ohne halbe Transitionen). Simulator + Fakes; Live-Zeilen BLOCKED mit LT-Verweis.

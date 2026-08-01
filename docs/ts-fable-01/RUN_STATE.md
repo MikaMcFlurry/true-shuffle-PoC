@@ -20,7 +20,11 @@ Letzte Aktualisierung: 2026-07-31 ~18:40 UTC · Branch `claude/true-shuffle-fabl
 | WP3-D3 | Selection-Ledger + F5-event_keys, F8-Manual-State-Machine (inkl. Zustand-C-API), Config-CRUD/Versionierung/effective_from, Favoriten/Ausschlüsse, Preflight, apply_sync (alle 3 Policies) | ✅ committed `2ad8069`; 551 Unit/API + 46/46 Browser (Takeover-Fixture auf F8 umgestellt); zwei Limit-Abbrüche überstanden, Endstand vom Lead verifiziert |
 | WP3-D4 | Frontend-Verdrahtung: Builder/Configs echt statt Vorschau, Dashboard mehrere Runs, Player Policy-UI/Zustand C, Progress/History mit Trackdaten | ⏳ nach D3 |
 | WP3-E1 | Unabhängige Property-Tests (Opus): 9 Verletzungen gefunden (`1a8de05`), alle per separatem Fix-Lauf geschlossen — 13 strict-xfails zu Passes geflippt (`55550f3`, 612 passed) | ✅ |
-| WP3-E2 | Adversarialer Gesamt-Review + UC-01–30-Evidence-Matrix + G4-Gate | ⏳ nach D4 |
+| WP3-D4 | Frontend-Vollverdrahtung (Builder/Configs/Sync-UI/Player/Verlauf) | ✅ `0314439` (+D3-Bugfix Transport-Payload); 612→614 Unit, 50 Browser |
+| Skip-Stempel | last_played_seq bei Skips + Fristen-Fix in Plan-Verlängerung (rot-vor-Fix belegt) | ✅ `946ac45`, 614 passed |
+| WP3-E2 | Evidence-Matrix gebaut + 3-Linsen-adversarial verifiziert + Korrekturen eingearbeitet; G4 = TEILWEISE(automatisiert)/Live BLOCKED | ✅ Matrix committed; Restliste = HANDOFF_CONTINUATION §A (10 Punkte, prioritär: Fenster-Re-Assert bei Exclude/Regeländerung) |
+
+**FORTSETZUNG IN NEUER SESSION:** ab hier gilt `HANDOFF_CONTINUATION.md` — Startprompt dort. Dieser Chat wird aus Token-Gründen übergeben.
 
 **Offene Punkte für Phase-3-Abschluss/E2:** (a) Verbuchungspfad stempelt `last_played_seq` bei Skips nicht — Engine-Requeue-Frist greift produktiv erst nach diesem Stempel (Vertragslücke dokumentiert in WP3C_SELECTION_CONTRACT); (b) M009 (order_json-Drop) bleibt gated bis v3-Pfad produktiv bestätigt; (c) 3 E501 in tests/browser/test_phase3_flows.py (D4-in-flight).
 
