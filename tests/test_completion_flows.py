@@ -106,6 +106,7 @@ def test_allowing_repeats_after_completion_reopens_the_run(fake_provider):
         assert "reopened" in events
 
         # F1: stopped → resume → start actually plays the new titles.
+        windows_before = len(fake_provider.play_windows)
         assert client.post(f"/api/runs/{run_id}/resume").status_code == 200
         started = client.post(f"/api/runs/{run_id}/start",
                               json={"device_id": "dev1"})
@@ -116,6 +117,10 @@ def test_allowing_repeats_after_completion_reopens_the_run(fake_provider):
         assert fresh["remaining"] > 0
         # The listening history of the finished pass is untouched.
         assert fresh["cursor"] == len(fake_provider.tracks)
+        # B8 (Runde 2): der Provider bekam das frische Fenster der NEUEN
+        # Titel wirklich zu hören — nicht nur eine 200er-Antwort.
+        assert len(fake_provider.play_windows) == windows_before + 1
+        assert fake_provider.play_windows[-1][0] == fresh["current"]["id"]
 
 
 def test_a_rule_change_that_opens_nothing_stays_honestly_completed(

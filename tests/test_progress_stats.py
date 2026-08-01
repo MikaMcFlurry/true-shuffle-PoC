@@ -507,3 +507,29 @@ def test_repeat_count_over_the_wire_grows_with_the_real_repeats(fake_provider):
         assert second["repeat_count"] > first["repeat_count"]
         assert second["excluded_count"] == 0
         assert second["skipped_count"] == 0
+
+
+async def test_repeats_count_across_cycle_boundaries_by_design(
+    database, service,
+):
+    """B5-Pin (Runde 2, dokumentierte Ergänzung 2026-08-01): ``repeats``
+    zählt über Zyklusgrenzen — ein zweiter voller no_repeat-Durchlauf nach
+    F2-Reset meldet deck_size Wiederhol-Vorgänge, obwohl innerhalb jedes
+    Zyklus nie wiederholt wurde.  Entschieden und begründet im
+    ``db.deck_stats``-Docstring; wer Zyklus-lokale Zahlen will, liest den
+    Fortschritt."""
+    state = await _run(service, name="cycles")
+    await runs.start(service.session, state, device_id="dev1")
+    for _ in range(len(state.order)):
+        await runs.advance(service.session, state,
+                           reason=AdvanceReason.TRACK_ENDED)
+    assert (await db.deck_stats(state.run_id))["repeats"] == 0
+
+    await runs.reset_run(service.session, state)
+    await runs.start(service.session, state, device_id="dev1")
+    for _ in range(len(state.order)):
+        await runs.advance(service.session, state,
+                           reason=AdvanceReason.TRACK_ENDED)
+
+    stats = await db.deck_stats(state.run_id)
+    assert stats["repeats"] == stats["deck_size"] == 12

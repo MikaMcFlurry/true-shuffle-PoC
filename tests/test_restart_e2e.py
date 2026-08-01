@@ -287,9 +287,16 @@ def test_restart_over_http_resumes_the_same_run_and_plays_it_to_the_end(
         current_before = before["current"]["id"]
         session_cookie = client.cookies.get("session")
 
-    # --- Prozessneustart: neue Lifespan, dieselbe Datei, leerer Fensterspeicher
+    # --- SIMULIERTER Prozessneustart (Präzisierung nach Runde-2-Befund B6,
+    # dokumentierte Teständerung 2026-08-01): der Lifespan-Zyklus erneuert
+    # die DB-Verbindung, aber die prozesslokalen Register überleben ihn —
+    # ein echter Neustart leert sie automatisch, hier tun wir es explizit
+    # (Anker UND Locks) und pinnen die Ausgangslage, damit die
+    # Fenster-Assertion unten wirklich am Neustartzustand hängt.
     assert session_cookie
     runs._window_anchors.clear()
+    runs._advance_locks.clear()
+    assert run_id not in runs._window_anchors
     windows_before = len(fake_provider.play_windows)
 
     with TestClient(app) as client:

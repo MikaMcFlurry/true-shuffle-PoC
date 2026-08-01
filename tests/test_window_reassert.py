@@ -164,6 +164,31 @@ def test_a_rule_change_reasserts_only_when_the_audible_window_changed(
             assert len(fake_provider.play_windows) == windows_before
 
 
+def test_a_repeated_identical_rule_change_is_unchanged_and_sends_nothing(
+    fake_provider,
+):
+    """B4 (Runde 2): der ``unchanged``-Pfad, deterministisch erzwungen.
+
+    Regeländerungen ticken die seq-Uhr nicht — zwei Replans unter derselben
+    Uhr, demselben Master-Seed und denselben Regeln ziehen denselben Tail.
+    Der ZWEITE identische Patch muss darum ``unchanged`` melden und darf
+    nachweislich kein Kommando senden."""
+    with TestClient(app) as client:
+        _connect(client)
+        run_id, payload = _deal_and_start(client, fake_provider)
+        _playing_mid_track(fake_provider, payload["current"]["id"], 20_000)
+
+        patch = {"rules": {"skip_policy": "defer_to_end", "min_gap": 2}}
+        first = client.post(f"/api/runs/{run_id}/rules", json=patch)
+        assert first.status_code == 200, first.text
+        windows_after_first = len(fake_provider.play_windows)
+
+        second = client.post(f"/api/runs/{run_id}/rules", json=patch)
+        assert second.status_code == 200, second.text
+        assert second.json()["window"] == "unchanged"
+        assert len(fake_provider.play_windows) == windows_after_first
+
+
 def test_reassert_observes_instead_of_fighting_when_the_listener_took_over(
     fake_provider,
 ):

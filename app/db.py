@@ -925,6 +925,13 @@ async def deck_stats(run_id: int) -> Dict[str, Optional[int]]:
     kanonischen „bisherigen Wiederholungen" (03A §22): wie oft insgesamt
     wiederholt wurde, nicht wie viele Titel je wiederholt wurden.
 
+    ÜBER ALLE ZYKLEN (Präzisierung nach Runde-2-Befund B5, 2026-08-01):
+    ``play_count`` bleibt beim F2-Reset absichtlich kumulativ, also zählt
+    ``repeats`` über Zyklusgrenzen hinweg — ein zweimal komplett gehörter
+    12-Titel-no_repeat-Lauf zeigt ehrlich „12": jeder Titel wurde einmal
+    wiederholt gehört.  Wer nur den laufenden Zyklus wissen will, liest den
+    Fortschritt (cursor/remaining), nicht diese Kachel.
+
     ``deck_size`` says whether ``run_tracks`` was ever materialised for this
     run at all — legacy/imported runs without a deck (WP3-D2: "reset für
     Legacy-Import-Runs ohne Deck verweigert ehrlich") have ``deck_size == 0``,
