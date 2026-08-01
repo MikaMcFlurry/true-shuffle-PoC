@@ -927,7 +927,8 @@ async def _mark_plan_replay(run_id: int, new_cursor: int, old_cursor: int) -> No
 # ---------------------------------------------------------------------------
 
 async def _replan_tail(
-    run: Dict[str, Any], state: RunState, rules: Rules
+    run: Dict[str, Any], state: RunState, rules: Rules,
+    *, allow_completed: bool = False,
 ) -> int:
     """Rebuild the FUTURE of the plan under *rules* (UC-27 'tail_only').
 
@@ -953,7 +954,12 @@ async def _replan_tail(
             "Dieser Hörvorgang hat keinen materialisierten Plan — "
             "Regeländerungen im Lauf brauchen ein v3-Deck."
         )
-    if run["status"] in (RunStatus.COMPLETED.value, RunStatus.CANCELLED.value):
+    if run["status"] == RunStatus.CANCELLED.value:
+        return 0
+    # UC-24: a rule change may deliberately re-open a COMPLETED run
+    # (``allow_completed``, change_run_rules only).  Every other caller keeps
+    # the old refusal — an exclusion on a finished run must not grow a tail.
+    if run["status"] == RunStatus.COMPLETED.value and not allow_completed:
         return 0
 
     await db.discard_planned_rows(run_id)
@@ -1071,7 +1077,8 @@ async def change_run_rules(
     await db.upsert_rule_binding(
         state.run_id, int(version["config_version_id"]), seq_next, "tail_only"
     )
-    replanned = await _replan_tail(run, state, merged)
+    completed_before = run["status"] == RunStatus.COMPLETED.value
+    replanned = await _replan_tail(run, state, merged, allow_completed=True)
     await db.record_event(
         state.run_id, "rules_changed", cursor=state.cursor,
         detail={
@@ -1083,6 +1090,23 @@ async def change_run_rules(
             "changed": sorted(patch),
         },
     )
+    # UC-24 „Wiederholungen erlauben und weiterhören": when the new rules
+    # actually open further titles on a finished run, it re-opens as
+    # 'stopped' (F1: resumable, not playing) — resume + start take it from
+    # there.  ``completed_at`` stays stamped: the finished no-repeat pass
+    # remains a fact of the history.
+    reopened = False
+    if completed_before and replanned > 0:
+        await db.update_run(state.run_id, status=RunStatus.STOPPED.value)
+        state.status = RunStatus.STOPPED
+        reopened = True
+        await db.record_event(
+            state.run_id, "reopened", cursor=state.cursor,
+            detail={
+                "replanned": replanned,
+                "config_version_id": version["config_version_id"],
+            },
+        )
     return {
         "run_id": state.run_id,
         "config_id": version["config_id"],
@@ -1090,6 +1114,8 @@ async def change_run_rules(
         "version": version["version"],
         "effective_from_seq": seq_next,
         "replanned": replanned,
+        "reopened": reopened,
+        "status": state.status.value,
         "rules": merged.to_dict(),
         "rules_hash": merged.rules_hash(),
     }
@@ -1121,6 +1147,53 @@ async def mark_favorite(
         )
     return {
         "run_id": run_id, "run_track_id": run_track_id, "favorite": favorite,
+    }
+
+
+#: UC-07: user-settable per-track draw weight — bounded so a typo cannot turn
+#: one song into a de-facto exclusive loop (engine itself only demands > 0).
+TRACK_WEIGHT_MIN = 0.1
+TRACK_WEIGHT_MAX = 10.0
+
+
+async def set_track_weight(
+    user_id: int, run_id: int, run_track_id: int, weight: float
+) -> Optional[Dict[str, Any]]:
+    """UC-07: how often THIS song may come around — run-scoped (F7).
+
+    Same visibility contract as :func:`mark_favorite`: the weight takes
+    effect wherever :func:`core.selection.select_next` draws — rolling
+    repeat-mode plans and every tail replan; a pre-dealt no_repeat
+    permutation is membership-only, so its ORDER changes on the next
+    replan/reset.  ``None`` = foreign or missing run/card (the caller's
+    404); a weight outside ``[TRACK_WEIGHT_MIN, TRACK_WEIGHT_MAX]`` raises
+    ``ValueError`` (the caller's 400).
+    """
+    weight = float(weight)
+    if (
+        weight != weight  # NaN
+        or not (TRACK_WEIGHT_MIN <= weight <= TRACK_WEIGHT_MAX)
+    ):
+        raise ValueError(
+            f"weight muss zwischen {TRACK_WEIGHT_MIN} und {TRACK_WEIGHT_MAX} "
+            "liegen."
+        )
+    run = await db.get_run(run_id, user_id=user_id)
+    if run is None:
+        return None
+    card = await db.find_run_track(run_id, run_track_id=run_track_id)
+    if card is None:
+        return None
+    if float(card["weight"]) != weight:
+        await db.set_run_track(run_track_id, weight=weight)
+        await db.record_event(
+            run_id, "track_weighted",
+            cursor=int(run["cursor"]), run_track_id=run_track_id,
+            detail={"track": card["provider_track_id"], "name": card["name"],
+                    "weight": weight},
+        )
+    return {
+        "run_id": run_id, "run_track_id": run_track_id, "weight": weight,
     }
 
 

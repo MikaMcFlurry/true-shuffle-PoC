@@ -919,6 +919,12 @@ async def create_run_deck(
 async def deck_stats(run_id: int) -> Dict[str, Optional[int]]:
     """Repeats and exclusions of one run's materialised deck (WP3-D4).
 
+    Zählsemantik (UC-22, TS-FABLE-01 §A, entschieden 2026-08-01): ``repeats``
+    zählt Wiederhol-VORGÄNGE, nicht wiederholte Karten — eine fünfmal
+    gespielte Karte trägt 4 bei (``play_count - 1``).  Das ist die Lesart der
+    kanonischen „bisherigen Wiederholungen" (03A §22): wie oft insgesamt
+    wiederholt wurde, nicht wie viele Titel je wiederholt wurden.
+
     ``deck_size`` says whether ``run_tracks`` was ever materialised for this
     run at all — legacy/imported runs without a deck (WP3-D2: "reset für
     Legacy-Import-Runs ohne Deck verweigert ehrlich") have ``deck_size == 0``,
@@ -928,7 +934,7 @@ async def deck_stats(run_id: int) -> Dict[str, Optional[int]]:
     db = get_db()
     cur = await db.execute(
         "SELECT count(*) AS deck_size, "
-        "SUM(CASE WHEN play_count > 1 THEN 1 ELSE 0 END) AS repeats, "
+        "SUM(CASE WHEN play_count > 1 THEN play_count - 1 ELSE 0 END) AS repeats, "
         "SUM(CASE WHEN state IN ('excluded_user', 'excluded_rule') THEN 1 ELSE 0 END) AS excluded "
         "FROM run_tracks WHERE run_id = ?",
         (run_id,),
@@ -1187,7 +1193,8 @@ async def run_tracks_by_provider_ids(
     db = get_db()
     cur = await db.execute(
         f"""
-        SELECT rt.id, rt.state, rt.favorite, rt.admitted, t.provider_track_id
+        SELECT rt.id, rt.state, rt.favorite, rt.weight, rt.admitted,
+               t.provider_track_id
         FROM run_tracks rt JOIN tracks t ON t.id = rt.track_id
         WHERE rt.run_id = ? AND t.provider_track_id IN ({','.join('?' * len(ids))})
         ORDER BY rt.id

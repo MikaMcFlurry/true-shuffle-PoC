@@ -685,6 +685,7 @@ async def _attach_deck_info(payload: Dict[str, Any], run_id: int) -> None:
             entry["run_track_id"] = card["id"]
             entry["favorite"] = bool(card["favorite"])
             entry["state"] = card["state"]
+            entry["weight"] = float(card["weight"])
 
 
 @router.get("/runs/{run_id}")
@@ -932,6 +933,32 @@ async def run_track_favorite(request: Request, run_id: int, run_track_id: int):
     result = await runs.mark_favorite(
         run["user_id"], run_id, run_track_id, favorite
     )
+    if result is None:
+        raise HTTPException(status_code=404, detail="Diesen Titel gibt es hier nicht.")
+    return JSONResponse(result)
+
+
+@router.put("/runs/{run_id}/tracks/{run_track_id}/weight")
+async def run_track_weight(request: Request, run_id: int, run_track_id: int):
+    """UC-07: per-track draw weight — häufiger (>1), normal (1), selten (<1).
+
+    Body: ``{"weight": 0.1 … 10.0}``.  Effect parity with the favourite
+    star: future draws and replans, never the already-played history.
+    """
+    run = await require_run(request, run_id)
+    body = await _json(request)
+    try:
+        weight = float(body.get("weight"))
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400, detail="weight (eine Zahl) wird gebraucht."
+        ) from exc
+    try:
+        result = await runs.set_track_weight(
+            run["user_id"], run_id, run_track_id, weight
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     if result is None:
         raise HTTPException(status_code=404, detail="Diesen Titel gibt es hier nicht.")
     return JSONResponse(result)
