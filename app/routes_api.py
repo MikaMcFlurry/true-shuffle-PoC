@@ -671,6 +671,12 @@ async def run_state(request: Request, run_id: int):
     payload = await runs.describe(session, state)
     payload["watcher"] = watcher.status(run_id)
     payload["skipped_count"] = len(await db.list_skipped(run_id))
+    # WP3-D4: real "Wiederholungen" / "Ausgeschlossene" counters for the
+    # Fortschritt tiles — None (→ "—") for legacy runs without a materialised
+    # deck, never a fake 0 (see db.deck_stats docstring).
+    deck_totals = await db.deck_stats(run_id)
+    payload["repeat_count"] = deck_totals["repeats"]
+    payload["excluded_count"] = deck_totals["excluded"]
     # WP3-D2: the run's own identity (UC-16) and cycle count (UC-15/F2).
     payload["name"] = run.get("name", "")
     payload["cycle"] = run.get("cycle", 1)

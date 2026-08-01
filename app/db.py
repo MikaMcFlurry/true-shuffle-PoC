@@ -549,20 +549,37 @@ async def list_runs(
 ) -> List[Dict[str, Any]]:
     """The dashboard listing.  Archived (soft-deleted, UC-26) runs are hidden
     by default — they await their confirmed hard deletion and must not look
-    resumable."""
+    resumable.
+
+    WP3-D4: ``sync_available`` is a cheap boolean — a plain id comparison
+    against the run's own bound ``snapshot_id``, no diff computed — present
+    and true only when a NEWER ready snapshot of the same playlist already
+    exists. Absent for runs never bound to a snapshot; the dashboard card
+    only ever renders the hint when the field is literally present and true.
+    """
     db = get_db()
     sql = """
         SELECT id, provider, playlist_id, playlist_name, mode, cursor, status,
                created_at, updated_at, completed_at,
                name, config_id, snapshot_id, cycle, stopped_at, archived_at,
-               json_array_length(order_json) AS total
+               json_array_length(order_json) AS total,
+               (SELECT MAX(s2.id) FROM playlist_snapshots s1
+                JOIN playlist_snapshots s2 ON s2.playlist_id = s1.playlist_id
+                WHERE s1.id = runs.snapshot_id AND s2.status = 'ready') AS latest_ready_snapshot_id
         FROM runs WHERE user_id = ?
         """
     if not include_archived:
         sql += " AND archived_at IS NULL"
     sql += " ORDER BY updated_at DESC LIMIT ?"
     cur = await db.execute(sql, (user_id, limit))
-    return [dict(r) for r in await cur.fetchall()]
+    rows = []
+    for row in await cur.fetchall():
+        data = dict(row)
+        latest = data.pop("latest_ready_snapshot_id")
+        if data["snapshot_id"] is not None and latest is not None:
+            data["sync_available"] = latest > data["snapshot_id"]
+        rows.append(data)
+    return rows
 
 
 async def update_run(
@@ -894,6 +911,34 @@ async def create_run_deck(
         raise
     await db.commit()
     return ids
+
+
+async def deck_stats(run_id: int) -> Dict[str, Optional[int]]:
+    """Repeats and exclusions of one run's materialised deck (WP3-D4).
+
+    ``deck_size`` says whether ``run_tracks`` was ever materialised for this
+    run at all — legacy/imported runs without a deck (WP3-D2: "reset für
+    Legacy-Import-Runs ohne Deck verweigert ehrlich") have ``deck_size == 0``,
+    and the caller must show "—", not "0": a materialised deck of zero
+    repeats is a fact, an unmaterialised one is simply unknown here.
+    """
+    db = get_db()
+    cur = await db.execute(
+        "SELECT count(*) AS deck_size, "
+        "SUM(CASE WHEN play_count > 1 THEN 1 ELSE 0 END) AS repeats, "
+        "SUM(CASE WHEN state IN ('excluded_user', 'excluded_rule') THEN 1 ELSE 0 END) AS excluded "
+        "FROM run_tracks WHERE run_id = ?",
+        (run_id,),
+    )
+    row = await cur.fetchone()
+    deck_size = int(row["deck_size"] or 0)
+    if deck_size == 0:
+        return {"deck_size": 0, "repeats": None, "excluded": None}
+    return {
+        "deck_size": deck_size,
+        "repeats": int(row["repeats"] or 0),
+        "excluded": int(row["excluded"] or 0),
+    }
 
 
 async def list_run_tracks(
@@ -1499,10 +1544,25 @@ async def get_event_by_key(run_id: int, event_key: str) -> Optional[Dict[str, An
 
 
 async def list_events(run_id: int, limit: int = 100) -> List[Dict[str, Any]]:
+    """The run's ledger, newest first.
+
+    WP3-D4: LEFT JOINs the deck card the event was booked against (when it
+    named one — see ``run_track_id`` on :func:`record_event` /
+    :func:`book_advance`) down to its track identity, so history.html can
+    show a real title instead of only a cursor position. Events with no
+    ``run_track_id`` (most lifecycle events) honestly carry ``track_name =
+    NULL`` — the page falls back to the position for those, same as before.
+    """
     db = get_db()
     cur = await db.execute(
-        "SELECT type, cursor, reason, detail, created_at FROM run_events "
-        "WHERE run_id = ? ORDER BY id DESC LIMIT ?",
+        """
+        SELECT e.type, e.cursor, e.reason, e.detail, e.created_at,
+               t.name AS track_name, t.artist AS track_artist
+        FROM run_events e
+        LEFT JOIN run_tracks rt ON rt.id = e.run_track_id
+        LEFT JOIN tracks t ON t.id = rt.track_id
+        WHERE e.run_id = ? ORDER BY e.id DESC LIMIT ?
+        """,
         (run_id, limit),
     )
     rows = [dict(r) for r in await cur.fetchall()]

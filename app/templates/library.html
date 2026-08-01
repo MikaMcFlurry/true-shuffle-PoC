@@ -45,6 +45,8 @@
             <div class="card-body">
                 <p class="dim sm" id="selectionHint">Wähl links eine Playlist.</p>
 
+                <div id="syncDiffWrap" class="hidden"></div>
+
                 <label class="field">
                     <span class="field-label">Name des Hörvorgangs</span>
                     <input type="text" id="runName" maxlength="120" autocomplete="off"
@@ -78,8 +80,17 @@
             <b style="color: var(--ink)">Ohne Wiederholungen</b> ist die Voreinstellung: jeder spielbare
             Titel genau einmal, bis der Hörvorgang abgeschlossen ist. Die Regelgruppen darunter zählen
             beim Start — eine Auswahl abseits der Voreinstellung wird als eigene Konfiguration
-            gespeichert und der Hörvorgang läuft damit.
+            gespeichert und der Hörvorgang läuft damit. Vor dem Start prüft true-shuffle die Regeln
+            gegen die Playlist und zeigt Konflikte mit einer Ein-Klick-Korrektur (RUN-05).
         </p>
+    </div>
+
+    <div class="stack-s" style="margin-top: var(--space-2)">
+        <label class="field">
+            <span class="field-label" id="configPickerLabel">Konfiguration verwenden</span>
+            <select id="configPicker" aria-labelledby="configPickerLabel"></select>
+            <span class="field-hint" id="configPickerHint">Eigene Regeln unten einstellen — abweichend von der Voreinstellung wird daraus beim Start automatisch eine neue Konfiguration.</span>
+        </label>
     </div>
 
     <fieldset class="presets">
@@ -89,7 +100,7 @@
                 <input type="radio" name="preset" id="presetNorepeat" value="norepeat" checked>
                 <span class="p-body">
                     <span class="p-name">Ohne Wiederholungen</span>
-                    <span class="p-desc">Jeder Titel genau einmal, bis alles gespielt ist. Aktiv.</span>
+                    <span class="p-desc">Jeder Titel genau einmal, bis alles gespielt ist — der Startpunkt unten in „Wiederholungsmodus“.</span>
                 </span>
             </label>
             <label class="preset-row" aria-disabled="true">
@@ -123,61 +134,78 @@
         </div>
     </fieldset>
 
-<!-- WP3-D3: die Regelgruppen Wiederholungen / Skip / Manuell / Neue Titel
-     sind ECHT — eine Auswahl abseits der Voreinstellung erzeugt beim Start
-     eine Konfiguration (POST /api/configs) und der Hörvorgang läuft damit.
-     Favoriten bleiben Vorschau: sie sind laufgebunden und leben im Player. -->
+<!-- WP3-D4: alle vier Regelgruppen sind ECHT (Wiederholungsmodus inkl.
+     Begrenzte Wiederholungen/Quote, Skip, Manuell, Neue Titel). Eine
+     Auswahl abseits der Voreinstellung erzeugt beim Start eine Konfiguration
+     (POST /api/configs) und der Hörvorgang läuft damit — oder eine bestehende
+     Konfiguration wird über "Konfiguration verwenden" direkt gewählt.
+     Favoriten bleiben Vorschau: die Markierung selbst lebt im Player
+     (laufgebunden, UC-08); ein Vorrang schon beim Start fehlt noch. -->
 
     <details class="rule-group" open>
         <summary>
-            <span>Wiederholungsabstand <span class="rh-state" id="abstandState">· Keine Wiederholungen</span></span>
+            <span>Wiederholungsmodus <span class="rh-state" id="abstandState">· Keine Wiederholungen</span></span>
         </summary>
         <div class="rule-body">
             <div class="radio-row">
-                <input type="radio" id="r-norepeat" name="abstand" checked>
+                <input type="radio" id="r-norepeat" name="abstand" value="no_repeat" checked>
                 <label for="r-norepeat">
                     <span class="r-name">Keine Wiederholungen</span>
                     <span class="r-desc">Jeder Titel höchstens einmal, bis der Hörvorgang abgeschlossen ist.</span>
                 </label>
             </div>
             <div class="radio-row">
-                <input type="radio" id="r-abstand" name="abstand">
-                <label for="r-abstand">
-                    <span class="r-name">Mindestabstand zwischen Wiederholungen</span>
-                    <span class="r-desc">Titel dürfen wiederkommen — aber erst, nachdem so viele andere gespielt wurden.</span>
+                <input type="radio" id="r-limited" name="abstand" value="limited_repeat">
+                <label for="r-limited">
+                    <span class="r-name">Begrenzte Wiederholungen</span>
+                    <span class="r-desc">Titel dürfen wiederkommen — aber nur bis zu einer Quote, und erst nach dem Mindestabstand.</span>
+                </label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" id="r-free" name="abstand" value="free_repeat">
+                <label for="r-free">
+                    <span class="r-name">Wiederholungen mit Mindestabstand</span>
+                    <span class="r-desc">Titel dürfen beliebig oft wiederkommen — nur der Mindestabstand zählt.</span>
                 </label>
             </div>
 
-            <div class="stepper" role="group" aria-label="Mindestabstand einstellen">
-                <button type="button" id="gapMinus" aria-label="Abstand verringern">−</button>
-                <output id="gapValue" aria-live="polite">8</output>
-                <button type="button" id="gapPlus" aria-label="Abstand erhöhen">+</button>
+            <div class="stack-s hidden" id="gapGroup" style="margin-top: 4px">
+                <span class="field-label">Mindestabstand</span>
+                <div class="stepper" role="group" aria-label="Mindestabstand einstellen">
+                    <button type="button" id="gapMinus" aria-label="Abstand verringern">−</button>
+                    <output id="gapValue" aria-live="polite">8</output>
+                    <button type="button" id="gapPlus" aria-label="Abstand erhöhen">+</button>
+                </div>
+            </div>
+
+            <div class="stack-s hidden" id="quotaGroup" style="margin-top: 4px">
+                <span class="field-label">Wiederholungsquote</span>
+                <div class="stepper" role="group" aria-label="Wiederholungsquote einstellen">
+                    <button type="button" id="quotaMinus" aria-label="Quote verringern">−</button>
+                    <output id="quotaValue" aria-live="polite">20 %</output>
+                    <button type="button" id="quotaPlus" aria-label="Quote erhöhen">+</button>
+                </div>
+                <span class="field-hint">Höchstens dieser Anteil der letzten Auswahlen darf eine Wiederholung sein.</span>
             </div>
 
             <div class="conflict hidden" id="conflictBox" role="alert">
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8 15 13.6H1z"/><path d="M8 6.2v3.4"/><circle cx="8" cy="11.6" r=".4" fill="currentColor"/></svg>
                 <div>
                     <p class="c-title">Regelkonflikt</p>
-                    <p class="c-body" id="conflictBody"></p>
-                    <div class="c-actions">
-                        <button class="btn btn-secondary" type="button" id="conflictFix">Auf <span id="conflictMax">–</span> begrenzen</button>
-                    </div>
+                    <div class="stack-s" id="conflictList"></div>
                 </div>
-            </div>
-
-            <div class="radio-row" data-preview style="margin-top: 4px">
-                <input type="radio" id="r-quote" name="abstand" disabled>
-                <label for="r-quote">
-                    <span class="r-name">Quote &amp; Gewichtung <span class="chip chip-preview">Vorschau</span></span>
-                    <span class="r-desc">Wiederholungen erlaubt, seltener gespielte Titel werden bevorzugt. Kommt mit dem nächsten Ausbau.</span>
-                </label>
             </div>
         </div>
     </details>
 
     <details class="rule-group">
-        <summary><span>Favoriten <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <summary><span>Favoriten-Vorrang <span class="rh-state">· noch nicht verfügbar</span></span></summary>
         <div class="rule-body">
+            <p class="dim sm">
+                Favoriten selbst gibt es schon: markiere Titel während des Hörens
+                über den Stern bei „Als Nächstes“ im Player. Was hier noch fehlt,
+                ist ein Vorrang schon beim Start dieses Hörvorgangs.
+            </p>
             <div class="radio-row" data-preview>
                 <input type="radio" name="favoriten" id="r-fav-none" disabled>
                 <label for="r-fav-none"><span class="r-name">Kein Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten laufen wie alle anderen Titel mit.</span></label>
@@ -190,7 +218,7 @@
                 <input type="radio" name="favoriten" id="r-fav-only" disabled>
                 <label for="r-fav-only"><span class="r-name">Nur Favoriten <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ausschließlich markierte Titel werden gespielt.</span></label>
             </div>
-            <p class="field-hint">Favoriten kennt true-shuffle noch nicht — diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
+            <p class="field-hint">Der Vorrang-Regler für Favoriten kommt mit dem nächsten Ausbau.</p>
         </div>
     </details>
 
@@ -252,6 +280,15 @@
             </div>
         </div>
     </details>
+
+    <div class="builder-footer">
+        <label class="field" style="flex: 1 1 240px; margin: 0">
+            <span class="field-label">Name für „Als Konfiguration speichern“</span>
+            <input type="text" id="configSaveName" maxlength="120" placeholder="z. B. Lange Autofahrt" autocomplete="off">
+        </label>
+        <button class="btn btn-secondary" id="saveConfigBtn" type="button">Als Konfiguration speichern</button>
+        <span class="foot-note" id="saveConfigNote" aria-live="polite"></span>
+    </div>
 </section>
 {% endblock %}
 
@@ -263,19 +300,26 @@ const PROVIDERS = {{ providers | tojson }};
 const CONNECTED = {{ connected | map(attribute='provider') | list | tojson }};
 
 const byId = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
-const state = { provider: CONNECTED[0] || null, mode: null, playlist: null, all: [] };
+const state = {
+    provider: CONNECTED[0] || null, mode: null, playlist: null, all: [],
+    configs: [], selectedConfigId: null, preflight: null,
+};
 
-/* -- deep link from the player's "Neu mischen und von vorn" -----------------
-   /library?provider=..&playlist=..&reshuffle=1 — the honest existing path:
-   this only ever pre-fills the same selection a listener would make by hand,
-   no new API. `deepLink.playlist` is applied once the matching playlist has
-   actually loaded (see applyDeepLink(), called from loadPlaylists()). */
+/* -- deep link from the player's "Neu mischen und von vorn" and from the
+   Konfigurationen-Seite's "Auf Playlist anwenden" -----------------------
+   /library?provider=..&playlist=..&reshuffle=1&config_id=..&sync=1 — the
+   honest existing path: this only ever pre-fills the same selections a
+   listener would make by hand, no new API. Each part applies once its
+   dependency has actually loaded (see applyDeepLink() / applyConfigDeepLink()). */
 const deepLinkParams = new URLSearchParams(location.search);
 const deepLink = {
     provider: deepLinkParams.get("provider"),
     playlist: deepLinkParams.get("playlist"),
     reshuffle: deepLinkParams.get("reshuffle") === "1",
+    configId: deepLinkParams.get("config_id"),
+    sync: deepLinkParams.get("sync") === "1",
     applied: false,
+    configApplied: false,
 };
 if (deepLink.provider && CONNECTED.includes(deepLink.provider)) {
     state.provider = deepLink.provider;
@@ -308,6 +352,7 @@ function selectProvider(id) {
     }
     $("#selectionHint").textContent = "Wähl links eine Playlist.";
     $("#selectionRead").textContent = "nichts gewählt";
+    hideSyncDiff();
     renderModes();
     loadPlaylists();
     updateStartGate();
@@ -507,6 +552,8 @@ async function importPlaylist(pl, statusNode, button) {
                     playable_count: result.playable_count,
                 };
                 statusNode.textContent = importStatusText(pl);
+                // A fresh import may have just produced a new diff.
+                if (state.playlist?.id === pl.id) loadSyncDiff(pl);
             },
             onError: fail,
         });
@@ -577,16 +624,17 @@ function selectPlaylist(playlist, node) {
 
     updateStartGate();
     renderStepper();
+    loadSyncDiff(playlist);
+    schedulePreflight(0);
 }
 
 /* -- start gate -------------------------------------------------------------
    The primary action is never dimmed with opacity when it cannot run yet
    (ADR-001 Auflage 2): it stays focusable, aria-disabled carries the state,
-   and the reason sits right next to it in plain text. */
-
-function selectedPresetIsFunctional() {
-    return document.querySelector('input[name="preset"]:checked')?.value === "norepeat";
-}
+   and the reason sits right next to it in plain text. RUN-05: a confirmed
+   rule conflict from the server preflight blocks the start the same way a
+   missing playlist or mode does — the conflict box above explains why and
+   offers a one-click correction. */
 
 function updateStartGate() {
     const btn = $("#dealBtn");
@@ -597,85 +645,173 @@ function updateStartGate() {
     if (!state.playlist) reason = "Wähl links eine Playlist.";
     else if (!readable) reason = "Diese Playlist lässt sich nicht lesen — wähl eine andere.";
     else if (!state.mode) reason = "Wähl oben einen Modus.";
-    else if (!selectedPresetIsFunctional()) reason = "Diese Konfiguration ist eine Vorschau — wähl „Ohne Wiederholungen“, um jetzt zu starten.";
+    else if (state.preflight && state.preflight.conflicts.length) {
+        reason = "Regelkonflikt oben lösen, bevor der Hörvorgang startet.";
+    }
 
     btn.setAttribute("aria-disabled", String(!!reason));
     hint.textContent = reason || "Bereit zum Start.";
 }
 
-for (const input of document.querySelectorAll('input[name="preset"]')) {
-    input.addEventListener("change", updateStartGate);
+/* -- server preflight (RUN-05) ----------------------------------------------
+   Debounced on every rule change and on playlist selection; the existing
+   conflict box renders whatever the server actually found, each conflict
+   with an inline one-click fix when the server (or an obvious fallback for
+   quota) has a suggestion. Network failures never block the start — only a
+   CONFIRMED conflict does. Declared before the rule groups below because
+   their own top-level renderStepper()/renderQuota() calls reach schedulePreflight()
+   immediately on page load. */
+
+let preflightTimer = null;
+
+function schedulePreflight(delay = 300) {
+    clearTimeout(preflightTimer);
+    preflightTimer = setTimeout(() => { runPreflight(); }, delay);
 }
 
-/* -- repeat-distance demo (client-side only; ADR-001 Auflage 6) ------------ */
+async function runPreflight() {
+    if (!state.playlist || state.playlist.readable === false) {
+        state.preflight = null;
+        renderConflicts([]);
+        updateStartGate();
+        return;
+    }
+    const body = { provider: state.provider, playlist_id: state.playlist.id };
+    if (state.selectedConfigId) {
+        body.config_id = state.selectedConfigId;
+    } else {
+        body.rules = collectRules();
+    }
+    if (state.playlist.track_count >= 0) body.track_count = state.playlist.track_count;
+
+    try {
+        state.preflight = await api("/api/runs/preflight", { method: "POST", body });
+    } catch (err) {
+        // A preflight that could not be reached is unknown, not a conflict —
+        // it must never turn into a false block on the start button.
+        state.preflight = null;
+    }
+    renderConflicts(state.preflight?.conflicts || []);
+    updateStartGate();
+}
+
+function renderConflicts(conflicts) {
+    const box = $("#conflictBox");
+    const list = $("#conflictList");
+    if (!conflicts.length) {
+        box.classList.add("hidden");
+        list.replaceChildren();
+        return;
+    }
+    box.classList.remove("hidden");
+    list.replaceChildren(...conflicts.map((c) => {
+        const row = el("div", {}, el("p", { class: "c-body" }, c.message));
+        const fixTarget = c.field === "min_gap" || c.field === "repeat_quota_pct";
+        if (fixTarget) {
+            const label = c.suggestion !== null && c.suggestion !== undefined
+                ? `Auf ${formatCount(c.suggestion)}${c.field === "repeat_quota_pct" ? " %" : ""} setzen`
+                : "Quote erhöhen";
+            row.append(el("div", { class: "c-actions" },
+                el("button", { class: "btn btn-secondary", type: "button", onClick: () => applySuggestion(c) }, label)));
+        }
+        return row;
+    }));
+}
+
+function applySuggestion(conflict) {
+    if (conflict.field === "min_gap") {
+        const value = conflict.suggestion !== null && conflict.suggestion !== undefined
+            ? Number(conflict.suggestion) : gap.value;
+        gap.value = Math.max(0, value);
+        renderStepper();
+    } else if (conflict.field === "repeat_quota_pct") {
+        const value = conflict.suggestion !== null && conflict.suggestion !== undefined
+            ? Number(conflict.suggestion) : Math.min(100, quota.value + 10 || 10);
+        quota.value = Math.max(0, Math.min(100, value));
+        renderQuota();
+    }
+    schedulePreflight(50);
+}
+
+/* -- Wiederholungsmodus: no_repeat / limited_repeat / free_repeat ----------
+   min_gap gilt für begrenzte UND freie Wiederholungen, die Quote nur für
+   die begrenzte Variante (core/selection.py Rules — select_next). */
 
 const gap = { value: 8 };
+const quota = { value: 20 };
 
 function playlistTrackCount() {
     return state.playlist && state.playlist.track_count >= 0 ? state.playlist.track_count : null;
 }
 
+function currentRepeatMode() {
+    return document.querySelector('input[name="abstand"]:checked')?.value || "no_repeat";
+}
+
+function repeatModeLabel(mode) {
+    if (mode === "limited_repeat") return `Begrenzte Wiederholungen · Quote ${quota.value} % · Abstand ${gap.value}`;
+    if (mode === "free_repeat") return `Mindestabstand ${gap.value}`;
+    return "Keine Wiederholungen";
+}
+
 function renderAbstandState() {
-    const norepeat = $("#r-norepeat").checked;
-    $("#abstandState").textContent = norepeat ? "· Keine Wiederholungen" : `· Mindestabstand: ${gap.value}`;
+    const mode = currentRepeatMode();
+    $("#abstandState").textContent = `· ${repeatModeLabel(mode)}`;
+    $("#gapGroup").classList.toggle("hidden", mode === "no_repeat");
+    $("#quotaGroup").classList.toggle("hidden", mode !== "limited_repeat");
 }
 
 function renderStepper() {
     $("#gapValue").textContent = String(gap.value);
     $("#gapMinus").disabled = gap.value <= 0;
     renderAbstandState();
+    schedulePreflight();
+}
 
-    const total = playlistTrackCount();
-    const box = $("#conflictBox");
-    if (total !== null && gap.value > Math.max(0, total - 1)) {
-        const max = Math.max(0, total - 1);
-        box.classList.remove("hidden");
-        $("#conflictBody").textContent =
-            `Bei ${formatCount(total)} Titeln ${total === 1 ? "ist" : "sind"} höchstens ${formatCount(max)} Abstand möglich. `
-            + `Mit Abstand ${formatCount(gap.value)} hätte true-shuffle irgendwann keinen regelkonformen Titel mehr zur Auswahl.`;
-        $("#conflictMax").textContent = formatCount(max);
-    } else {
-        box.classList.add("hidden");
-    }
+function renderQuota() {
+    $("#quotaValue").textContent = `${quota.value} %`;
+    $("#quotaMinus").disabled = quota.value <= 0;
+    $("#quotaPlus").disabled = quota.value >= 100;
+    renderAbstandState();
+    schedulePreflight();
 }
 
 $("#gapMinus").addEventListener("click", () => { gap.value = Math.max(0, gap.value - 1); renderStepper(); });
 $("#gapPlus").addEventListener("click", () => { gap.value = gap.value + 1; renderStepper(); });
-$("#conflictFix").addEventListener("click", () => {
-    const total = playlistTrackCount();
-    if (total !== null) gap.value = Math.max(0, total - 1);
-    renderStepper();
-});
-$("#r-norepeat").addEventListener("change", renderAbstandState);
-$("#r-abstand").addEventListener("change", renderAbstandState);
+$("#quotaMinus").addEventListener("click", () => { quota.value = Math.max(0, quota.value - 5); renderQuota(); });
+$("#quotaPlus").addEventListener("click", () => { quota.value = Math.min(100, quota.value + 5); renderQuota(); });
+for (const input of document.querySelectorAll('input[name="abstand"]')) {
+    input.addEventListener("change", () => { renderAbstandState(); schedulePreflight(); });
+}
 renderStepper();
+renderQuota();
 
-/* -- real rule groups (WP3-D3) ----------------------------------------------
-   The four enabled groups map onto the run_configs rule columns. Defaults
-   equal the behaviour-neutral preset, so an untouched form creates NO config
-   and the run binds to "Ohne Wiederholungen" exactly as before. */
+for (const input of document.querySelectorAll('input[name="preset"]')) {
+    input.addEventListener("change", updateStartGate);
+}
 
-// Each group's summary mirrors the checked option, so a collapsed group
-// still says what it will do.
+/* -- Skip / Manuell / Neue-Titel-Regelgruppen (WP3-D3, echt seit D3) -------
+   Each group's summary mirrors the checked option, so a collapsed group
+   still says what it will do. */
+
 for (const group of ["skip", "manuell", "neuetitel"]) {
     for (const input of document.querySelectorAll(`input[name="${group}"]:not(:disabled)`)) {
         input.addEventListener("change", () => {
             const label = document.querySelector(`label[for="${input.id}"] .r-name`);
-            const state = document.querySelector(`[data-group-state="${group}"]`);
-            if (label && state) state.textContent = `· ${label.textContent.trim()}`;
+            const stateEl = document.querySelector(`[data-group-state="${group}"]`);
+            if (label && stateEl) stateEl.textContent = `· ${label.textContent.trim()}`;
+            schedulePreflight();
         });
     }
 }
 
 function collectRules() {
     const rules = {};
-    if ($("#r-abstand").checked) {
-        // "Mindestabstand zwischen Wiederholungen": repeats allowed, the
-        // distance is the hard rule — free_repeat + min_gap (F6 guards the
-        // unsatisfiable cases, client-side via the conflict box, server-side
-        // via preflight).
-        rules.repeat_mode = "free_repeat";
+    const mode = currentRepeatMode();
+    if (mode !== "no_repeat") {
+        rules.repeat_mode = mode;
         rules.min_gap = gap.value;
+        if (mode === "limited_repeat") rules.repeat_quota_pct = quota.value;
     }
     const pick = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
     const skip = pick("skip");
@@ -702,9 +838,251 @@ async function createConfigFor(rules) {
     throw new Error("Kein freier Name für die Konfiguration gefunden.");
 }
 
+/* -- Konfiguration verwenden (Direktstart mit config_id) -------------------
+   Choosing an existing preset here locks the rule groups (read-only, so the
+   listener can still see what it does) and the run starts bound to exactly
+   that config_id — no new config is created. */
+
+const REAL_RULE_SELECTOR = 'input[name="abstand"], input[name="skip"], input[name="manuell"], '
+    + 'input[name="neuetitel"], #gapMinus, #gapPlus, #quotaMinus, #quotaPlus';
+
+function setRuleInputsLocked(locked) {
+    for (const node of document.querySelectorAll(REAL_RULE_SELECTOR)) node.disabled = locked;
+    $("#saveConfigBtn").disabled = locked;
+}
+
+function applyRulesToForm(rules) {
+    const radio = document.querySelector(`input[name="abstand"][value="${rules.repeat_mode || "no_repeat"}"]`);
+    if (radio) radio.checked = true;
+    gap.value = rules.min_gap || 0;
+    quota.value = rules.repeat_quota_pct || 0;
+    renderStepper();
+    renderQuota();
+
+    const setChecked = (name, value) => {
+        const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+        if (radio) radio.checked = true;
+    };
+    setChecked("skip", rules.skip_policy || "consume");
+    setChecked("manuell", rules.manual_use_policy || "auto_resume");
+    setChecked("neuetitel", rules.new_tracks_policy || "ignore");
+    for (const group of ["skip", "manuell", "neuetitel"]) {
+        const checked = document.querySelector(`input[name="${group}"]:checked`);
+        const label = checked && document.querySelector(`label[for="${checked.id}"] .r-name`);
+        const stateEl = document.querySelector(`[data-group-state="${group}"]`);
+        if (label && stateEl) stateEl.textContent = `· ${label.textContent.trim()}`;
+    }
+}
+
+function ruleSummaryShort(rules) {
+    if (rules.repeat_mode === "limited_repeat") return `Begrenzt · Quote ${rules.repeat_quota_pct} %`;
+    if (rules.repeat_mode === "free_repeat") return `Abstand ${rules.min_gap}`;
+    return "Keine Wiederholungen";
+}
+
+function populateConfigPicker() {
+    const select = $("#configPicker");
+    const current = select.value;
+    select.replaceChildren(
+        el("option", { value: "" }, "Eigene Regeln (unten einstellen)"),
+        ...state.configs.map((c) => el("option", { value: String(c.id) }, `${c.name} — ${ruleSummaryShort(c.rules)}`))
+    );
+    if (state.configs.some((c) => String(c.id) === current)) select.value = current;
+}
+
+function selectConfig(idRaw) {
+    const id = idRaw || null;
+    state.selectedConfigId = id;
+    const config = id ? state.configs.find((c) => String(c.id) === String(id)) : null;
+    setRuleInputsLocked(Boolean(config));
+    if (config) {
+        applyRulesToForm(config.rules);
+        $("#configPickerHint").textContent =
+            `„${config.name}“ wird verwendet — die Regeln unten sind zur Ansicht gesperrt. `
+            + `Für eigene Regeln oben „Eigene Regeln“ wählen.`;
+    } else {
+        $("#configPickerHint").textContent =
+            "Eigene Regeln unten einstellen — abweichend von der Voreinstellung wird daraus beim Start automatisch eine neue Konfiguration.";
+    }
+    schedulePreflight();
+}
+
+$("#configPicker").addEventListener("change", (ev) => selectConfig(ev.target.value));
+
+async function loadConfigs() {
+    try {
+        const { configs } = await api("/api/configs");
+        state.configs = configs;
+        populateConfigPicker();
+        applyConfigDeepLink();
+    } catch (err) {
+        // The picker just stays at "Eigene Regeln" — starting a run does not
+        // depend on this list having loaded.
+    }
+}
+
+function applyConfigDeepLink() {
+    if (deepLink.configApplied || !deepLink.configId) return;
+    const match = state.configs.find((c) => String(c.id) === deepLink.configId);
+    if (!match) return;
+    deepLink.configApplied = true;
+    $("#configPicker").value = String(match.id);
+    selectConfig(String(match.id));
+}
+
+$("#saveConfigBtn").addEventListener("click", async () => {
+    const button = $("#saveConfigBtn");
+    if (button.disabled) return;
+    const note = $("#saveConfigNote");
+    const name = $("#configSaveName").value.trim();
+    if (!name) {
+        note.textContent = "Erst einen Namen eintragen.";
+        return;
+    }
+    button.disabled = true;
+    note.textContent = "Wird gespeichert…";
+    try {
+        const rules = collectRules();
+        const created = await api("/api/configs", { method: "POST", body: { name, rules } });
+        state.configs.push(created);
+        populateConfigPicker();
+        $("#configPicker").value = String(created.id);
+        selectConfig(String(created.id));
+        note.textContent = `Gespeichert — „${created.name}“ ist jetzt gewählt.`;
+    } catch (err) {
+        note.textContent = err.message;
+    } finally {
+        button.disabled = Boolean(state.selectedConfigId);
+    }
+});
+
+/* -- Sync-Diff-Anzeige (RUN-09) ---------------------------------------------
+   GET …/sync/latest is honestly absent until two imports exist to compare —
+   that 404 is the common case and stays silent. When a diff exists, it opens
+   as a fold with added/removed/re-available titles and, if a run of this
+   exact playlist already exists, a form to apply it (POST apply-sync). */
+
+function hideSyncDiff() {
+    $("#syncDiffWrap").classList.add("hidden");
+    $("#syncDiffWrap").replaceChildren();
+}
+
+function diffEntryLine(e) {
+    return [e.name, e.artist].filter(Boolean).join(" — ") || e.track_id || "Titel ohne Namen";
+}
+
+async function loadSyncDiff(pl) {
+    hideSyncDiff();
+    if (!pl || pl.readable === false) return;
+    // A diff needs a SECOND ready snapshot to compare against — below that,
+    // the endpoint honestly 404s every time. Skipping the call in the
+    // common case (never imported, or imported exactly once) means a
+    // brand-new playlist never fires a request that is guaranteed to fail;
+    // the browser's own network log would otherwise mark that as an error
+    // regardless of this page's try/catch.
+    if (!pl.import_status?.imported || !(pl.import_status.version >= 2)) return;
+    try {
+        const diff = await api(`/api/playlists/${encodeURIComponent(state.provider)}/${encodeURIComponent(pl.id)}/sync/latest`);
+        await renderSyncDiff(diff);
+    } catch (err) {
+        // A version >= 2 is necessary but not sufficient (an earlier import
+        // could have failed) — still honestly hide on the rare remaining 404.
+    }
+}
+
+async function renderSyncDiff(diff) {
+    const readded = diff.availability_changed.filter((e) => e.readded);
+    if (diff.unchanged || (!diff.added.length && !diff.removed.length && !readded.length)) {
+        hideSyncDiff();
+        return;
+    }
+    const summary = [
+        diff.added.length ? `${formatCount(diff.added.length)} neu` : null,
+        diff.removed.length ? `${formatCount(diff.removed.length)} entfernt` : null,
+        readded.length ? `${formatCount(readded.length)} wieder verfügbar` : null,
+    ].filter(Boolean).join(" · ") || "Playlist geändert";
+
+    const list = (label, entries) => entries.length
+        ? el("div", {},
+            el("p", { class: "field-label" }, label),
+            el("ul", { class: "kv" }, ...entries.slice(0, 8).map((e) =>
+                el("div", {}, el("span", { class: "v wrap-anywhere" }, diffEntryLine(e))))),
+            entries.length > 8
+                ? el("p", { class: "field-hint" }, `… und ${formatCount(entries.length - 8)} weitere.`)
+                : null)
+        : null;
+
+    const details = el("details", { class: "fold", id: "syncDiffDetails" },
+        el("summary", {}, `Playlist-Änderungen verfügbar · ${summary}`),
+        el("div", { class: "fold-body" },
+            list("Neu", diff.added),
+            list("Entfernt", diff.removed),
+            list("Wieder verfügbar", readded),
+            el("div", { id: "syncApplyArea" })));
+
+    $("#syncDiffWrap").replaceChildren(details);
+    $("#syncDiffWrap").classList.remove("hidden");
+    if (deepLink.sync) details.open = true;
+    await renderSyncApplyArea(diff);
+}
+
+async function renderSyncApplyArea(diff) {
+    const area = $("#syncApplyArea");
+    if (!area) return;
+    let matchingRuns = [];
+    try {
+        const { runs } = await api("/api/runs");
+        matchingRuns = runs.filter((r) =>
+            r.provider === state.provider && String(r.playlist_id) === String(state.playlist.id));
+    } catch (err) {
+        // The apply form just stays informational when the run list fails.
+    }
+
+    if (!matchingRuns.length) {
+        area.replaceChildren(el("p", { class: "field-hint" },
+            "Noch kein Hörvorgang dieser Playlist — der nächste Start berücksichtigt diesen Stand automatisch."));
+        return;
+    }
+
+    const runSelect = el("select", { id: "syncRunSelect", "aria-label": "Hörvorgang wählen" },
+        ...matchingRuns.map((r) => el("option", { value: String(r.id) }, r.name || r.playlist_name || `Lauf ${r.id}`)));
+    const policySelect = el("select", { id: "syncPolicySelect", "aria-label": "Umgang mit neuen Titeln" },
+        el("option", { value: "" }, "Regel des Hörvorgangs verwenden"),
+        el("option", { value: "include_now" }, "Sofort einmischen"),
+        el("option", { value: "after_cycle" }, "Nächster Durchlauf"),
+        el("option", { value: "ignore" }, "Ignorieren"));
+    const note = el("p", { class: "field-hint", id: "syncApplyNote" }, "");
+    const applyBtn = el("button", { class: "btn btn-secondary", type: "button" }, "Auf Hörvorgang anwenden");
+    applyBtn.addEventListener("click", async () => {
+        if (applyBtn.disabled) return;
+        applyBtn.disabled = true;
+        note.textContent = "Wird angewendet…";
+        try {
+            const result = await api(`/api/runs/${runSelect.value}/apply-sync`, {
+                method: "POST",
+                body: { diff_id: diff.diff_id, policy: policySelect.value || undefined },
+            });
+            note.textContent = `Angewendet: ${formatCount(result.added)} neu, ${formatCount(result.removed)} entfernt`
+                + (result.reopened ? `, ${formatCount(result.reopened)} wieder aufgenommen` : "")
+                + (result.already_applied ? " (war schon angewendet)." : ".");
+        } catch (err) {
+            note.textContent = err.message;
+        } finally {
+            applyBtn.disabled = false;
+        }
+    });
+    area.replaceChildren(
+        el("div", { class: "row", style: "margin-top: var(--space-3)" }, runSelect, policySelect, applyBtn),
+        note);
+}
+
 /* -- dealing ---------------------------------------------------------------- */
 
 $("#dealBtn").addEventListener("click", async () => {
+    // RUN-05: one last, synchronous-feeling preflight right at the press —
+    // debounced background checks cover every earlier edit, this covers the
+    // gap between the last edit and the click.
+    await runPreflight();
     if ($("#dealBtn").getAttribute("aria-disabled") === "true") return;
     if (!state.playlist || !state.mode) return;
     const button = $("#dealBtn");
@@ -718,10 +1096,14 @@ $("#dealBtn").addEventListener("click", async () => {
     const PHASE = { "reading playlist": "Playlist wird gelesen", shuffling: "Wird gemischt" };
 
     try {
-        // WP3-D3: rules chosen away from the defaults become a real config
-        // first; the run is then created bound to it (UC-07/10).
-        const rules = collectRules();
-        const configId = Object.keys(rules).length ? await createConfigFor(rules) : null;
+        // A saved/picked config starts the run directly (Direktstart); rules
+        // chosen away from the defaults without saving become a new config
+        // first (UC-07/10) — the same fallback the section-head text promises.
+        let configId = state.selectedConfigId;
+        if (!configId) {
+            const rules = collectRules();
+            configId = Object.keys(rules).length ? await createConfigFor(rules) : null;
+        }
 
         const { job_id } = await api("/api/runs", {
             method: "POST",
@@ -800,6 +1182,7 @@ function showHandoffResult(result) {
 }
 
 if (state.provider) { renderModes(); loadPlaylists(); }
+loadConfigs();
 updateStartGate();
 </script>
 {% endblock %}

@@ -6,6 +6,9 @@
     <div class="row">
         <span class="signet" style="--brand: {{ provider.brand_color }}">{{ provider.display_name }}</span>
         <span class="chip chip-neutral" id="contractChip">…</span>
+        <!-- WP3-D4 (F2/UC-15): the cycle only appears once it says something —
+             "Durchlauf 1" would just repeat what "aktiv" already implies. -->
+        <span class="chip chip-neutral hidden" id="cycleChip"></span>
         {% if provider.live_mode_needs_open_tab %}
         <span class="openness openness-tab">Tab muss offen bleiben</span>
         {% else %}

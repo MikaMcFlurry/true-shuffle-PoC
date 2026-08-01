@@ -221,6 +221,7 @@ export class RunPlayer {
 
     if (this.isRemote) {
       await this.loadDevices();
+      await this.explainIfBlockedBySlot();
     } else if (this.provider.playback === "web_player") {
       const { config } = await api(`/api/player-config?provider=${this.provider.id}`);
       this.web = this.provider.id === "apple"
@@ -380,6 +381,35 @@ export class RunPlayer {
       this.notify(err.message, "note-stop", "Fehler");
     }
     this.render();
+  }
+
+  /**
+   * A second Live run of the same provider is honestly dealt 'paused'
+   * (idx_runs_one_playing / SP-003 — only one controller run may actively
+   * drive a device). Without an explanation this reads as an unexplained
+   * "pausiert" on a run nobody paused. Confirmed, not guessed: this only
+   * speaks up once it has actually found the run that holds the slot — the
+   * same 409 sentence pressing Start would show (runs.py `_slot_conflict`),
+   * offered here proactively instead of waiting for that press.
+   */
+  async explainIfBlockedBySlot() {
+    if (!this.isRemote || this.state?.status !== "paused" || (this.state?.cursor || 0) > 0) return;
+    const noteBox = $("#playerNote");
+    if (noteBox && !noteBox.classList.contains("hidden")) return; // never clobber an existing message
+    try {
+      const { runs } = await api("/api/runs");
+      const blocker = runs.find((r) =>
+        r.id !== this.runId && r.provider === this.provider.id
+        && r.mode === "controller" && r.status === "active");
+      if (blocker) {
+        const who = blocker.name || blocker.playlist_name || "Ein anderer Hörvorgang";
+        this.notify(
+          `„${who}“ steuert gerade ${this.provider.display_name} — nur einer kann gleichzeitig `
+          + `steuern. Stoppe oder pausiere ihn zuerst, dann lässt sich dieser Hörvorgang hier starten.`,
+          "", "Pausiert"
+        );
+      }
+    } catch { /* best effort — a page that cannot confirm the blocker stays silent */ }
   }
 
   /* -- rendering ----------------------------------------------------------- */
@@ -636,10 +666,11 @@ export class RunPlayer {
         el("div", { class: "empty-actions" },
           resetBtn,
           el("a", { class: `btn ${done ? "btn-secondary" : "btn-primary"}`, href: "/library" }, "Neuer Hörvorgang"),
-          el("button", {
-            class: "btn btn-secondary", type: "button", "aria-disabled": "true",
-            "aria-label": "Regeln ändern – kommt mit dem nächsten Ausbau",
-          }, "Regeln ändern"),
+          // WP3-D4: real navigation to the Config Library (UC-27 preset
+          // side) — pick, edit or duplicate a configuration there, then
+          // "Auf Playlist anwenden" returns to the builder with it
+          // preselected (config_id deep link).
+          el("a", { class: "btn btn-secondary", href: "/konfigurationen" }, "Regeln ändern"),
           el("a", { class: "btn btn-quiet", href: `/runs/${this.runId}/verlauf` }, "Verlauf ansehen"))));
   }
 
@@ -660,6 +691,14 @@ export class RunPlayer {
     const contract = $("#contractChip");
     contract.textContent = CONTRACT_TEXT[s.status] || s.status;
     contract.className = "chip chip-neutral";
+
+    // -- cycle chip (F2/UC-15): "Durchlauf N" from the second lap on --------
+    const cycleChip = $("#cycleChip");
+    if (cycleChip) {
+      const cycle = s.cycle || 1;
+      cycleChip.classList.toggle("hidden", cycle <= 1);
+      if (cycle > 1) cycleChip.textContent = `Durchlauf ${formatCount(cycle)}`;
+    }
 
     // -- system-state chip (active only — "Bereit ≠ Läuft") -----------------
     // #stateChipMini (in the header, aria-hidden) always mirrors this one —

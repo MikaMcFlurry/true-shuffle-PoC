@@ -95,6 +95,11 @@ function usageLine(count) {
     return `Verwendet in ${formatCount(count)} ${count === 1 ? "Hörvorgang" : "Hörvorgängen"}.`;
 }
 
+/* WP3-D4: "Bearbeiten" toggles one card into an inline form; state.editingId
+   tracks which one so a re-render (after Speichern, or a Duplizieren
+   elsewhere on the page) keeps exactly that card open. */
+const state = { editingId: null, configs: [] };
+
 async function duplicate(config, button) {
     button.setAttribute("aria-disabled", "true");
     try {
@@ -106,12 +111,106 @@ async function duplicate(config, button) {
     }
 }
 
+const REPEAT_OPTIONS = [
+    ["no_repeat", "Keine Wiederholungen"],
+    ["limited_repeat", "Begrenzte Wiederholungen"],
+    ["free_repeat", "Wiederholungen mit Mindestabstand"],
+];
+const SKIP_OPTIONS = [
+    ["consume", "Skip zählt als gespielt"],
+    ["keep_open", "Skip zählt nicht als gespielt"],
+    ["requeue_later", "Später erneut einreihen"],
+    ["defer_to_end", "Ans Ende stellen"],
+];
+const MANUAL_OPTIONS = [
+    ["auto_resume", "Automatisch fortsetzen"],
+    ["auto_pause", "Pausieren"],
+    ["ask", "Nachfragen"],
+];
+const NEW_TRACKS_OPTIONS = [
+    ["ignore", "Ignorieren"],
+    ["include_now", "Sofort einmischen"],
+    ["after_cycle", "Nächster Durchlauf"],
+];
+
+function selectField(labelText, options, value, id) {
+    return el("label", { class: "field" },
+        el("span", { class: "field-label" }, labelText),
+        el("select", { id },
+            ...options.map(([v, text]) => el("option", { value: v, selected: v === value || null }, text))));
+}
+
+function numberField(labelText, value, id, { min = 0, max = null } = {}) {
+    const attrs = { type: "number", id, min: String(min), value: String(value) };
+    if (max !== null) attrs.max = String(max);
+    return el("label", { class: "field" }, el("span", { class: "field-label" }, labelText), el("input", attrs));
+}
+
+/** UC-27 (preset side): a rules patch freezes a NEW version — the running
+ *  card explains that up front, so "Speichern" never reads as a silent
+ *  rewrite of a config runs already used. */
+function editForm(config) {
+    const r = config.rules;
+    const nameInput = el("input", { type: "text", id: "editName", maxlength: "120", value: config.name });
+    const repeatSelect = selectField("Wiederholungsmodus", REPEAT_OPTIONS, r.repeat_mode, "editRepeat");
+    const gapField = numberField("Mindestabstand", r.min_gap || 0, "editGap");
+    const quotaField = numberField("Wiederholungsquote (%)", r.repeat_quota_pct || 0, "editQuota", { max: 100 });
+    const skipSelect = selectField("Skip-Verhalten", SKIP_OPTIONS, r.skip_policy, "editSkip");
+    const manualSelect = selectField("Manuelle Nutzung", MANUAL_OPTIONS, r.manual_use_policy, "editManual");
+    const newSelect = selectField("Neue Titel", NEW_TRACKS_OPTIONS, r.new_tracks_policy, "editNew");
+    const note = el("p", { class: "field-hint", id: "editNote", "aria-live": "polite" }, "");
+
+    const saveBtn = el("button", { class: "btn btn-primary", type: "button" }, "Speichern");
+    const cancelBtn = el("button", { class: "btn btn-quiet", type: "button" }, "Abbrechen");
+    cancelBtn.addEventListener("click", () => { state.editingId = null; render(); });
+    saveBtn.addEventListener("click", async () => {
+        if (saveBtn.getAttribute("aria-disabled") === "true") return;
+        saveBtn.setAttribute("aria-disabled", "true");
+        note.textContent = "Wird gespeichert…";
+        const name = nameInput.value.trim();
+        const rules = {
+            repeat_mode: $("#editRepeat").value,
+            min_gap: Math.max(0, parseInt($("#editGap").value, 10) || 0),
+            repeat_quota_pct: Math.max(0, Math.min(100, parseInt($("#editQuota").value, 10) || 0)),
+            skip_policy: $("#editSkip").value,
+            manual_use_policy: $("#editManual").value,
+            new_tracks_policy: $("#editNew").value,
+        };
+        try {
+            await api(`/api/configs/${config.id}`, { method: "PATCH", body: { name, rules } });
+            state.editingId = null;
+            await load();
+        } catch (err) {
+            note.textContent = err.message;
+            saveBtn.setAttribute("aria-disabled", "false");
+        }
+    });
+
+    return el("div", { class: "card-body" },
+        el("label", { class: "field" }, el("span", { class: "field-label" }, "Name"), nameInput),
+        repeatSelect, gapField, quotaField, skipSelect, manualSelect, newSelect,
+        el("p", { class: "field-hint" },
+            "Speichern friert eine neue Version ein — sie gilt für neue Auswahlen ab jetzt. " +
+            "Hörvorgänge, die schon mit dieser Konfiguration laufen, behalten ihre bisherige Version."),
+        note,
+        el("div", { class: "row" }, saveBtn, cancelBtn));
+}
+
 function card(config) {
+    if (state.editingId === config.id) {
+        return el("article", { class: "card" },
+            el("div", { class: "card-head" },
+                el("h2", { class: "wrap-anywhere" }, config.name),
+                el("span", { class: "chip chip-neutral" }, `Version ${formatCount(config.current_version)}`)),
+            editForm(config));
+    }
     const dupBtn = el("button", { class: "btn btn-secondary", type: "button" }, "Duplizieren");
     dupBtn.addEventListener("click", () => {
         if (dupBtn.getAttribute("aria-disabled") === "true") return;
         duplicate(config, dupBtn);
     });
+    const editBtn = el("button", { class: "btn btn-secondary", type: "button" }, "Bearbeiten");
+    editBtn.addEventListener("click", () => { state.editingId = config.id; render(); });
     return el("article", { class: "card" },
         el("div", { class: "card-head" },
             el("h2", { class: "wrap-anywhere" }, config.name),
@@ -124,25 +223,33 @@ function card(config) {
                 : null,
             el("p", { class: "field-hint" }, `Zuletzt geändert ${formatWhen(config.updated_at || config.created_at)}.`),
             el("div", { class: "row", style: "margin-top: auto" },
-                el("a", { class: "btn btn-primary", href: "/library" }, "In der Bibliothek anwenden"),
-                dupBtn)));
+                // WP3-D4: real deep link — the query param preselects this
+                // config in the builder (Direktstart mit config_id).
+                el("a", { class: "btn btn-primary", href: `/library?config_id=${config.id}` }, "Auf Playlist anwenden"),
+                editBtn, dupBtn)));
+}
+
+function render() {
+    const grid = $("#configGrid");
+    if (!state.configs.length) {
+        grid.replaceChildren(el("article", { class: "card" },
+            el("div", { class: "card-head" }, el("h2", {}, "Noch keine Konfiguration")),
+            el("div", { class: "card-body" },
+                el("p", { class: "dim sm" },
+                    "Die erste entsteht in der Bibliothek: Voreinstellung „Ohne Wiederholungen“ beim ersten Hörvorgang, eigene Regeln über die Regelgruppen darunter."),
+                el("div", { class: "row", style: "margin-top: auto" },
+                    el("a", { class: "btn btn-primary", href: "/library" }, "Zur Bibliothek")))));
+        return;
+    }
+    grid.replaceChildren(...state.configs.map(card));
 }
 
 async function load() {
     const grid = $("#configGrid");
     try {
         const { configs } = await api("/api/configs");
-        if (!configs.length) {
-            grid.replaceChildren(el("article", { class: "card" },
-                el("div", { class: "card-head" }, el("h2", {}, "Noch keine Konfiguration")),
-                el("div", { class: "card-body" },
-                    el("p", { class: "dim sm" },
-                        "Die erste entsteht in der Bibliothek: Voreinstellung „Ohne Wiederholungen“ beim ersten Hörvorgang, eigene Regeln über die Regelgruppen darunter."),
-                    el("div", { class: "row", style: "margin-top: auto" },
-                        el("a", { class: "btn btn-primary", href: "/library" }, "Zur Bibliothek")))));
-            return;
-        }
-        grid.replaceChildren(...configs.map(card));
+        state.configs = configs;
+        render();
     } catch (err) {
         grid.replaceChildren(el("div", { class: "empty-state is-error" },
             el("h3", {}, "Konfigurationen nicht geladen"),

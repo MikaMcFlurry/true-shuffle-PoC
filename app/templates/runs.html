@@ -145,6 +145,87 @@ function stopAction(r) {
     }, "Stoppen");
 }
 
+/**
+ * WP3-D4: a cheap, honest sync hint — ``sync_available`` is only present
+ * when db.list_runs could prove it with a plain id comparison (a newer READY
+ * snapshot already exists for this run's playlist). Absent or false means
+ * "nothing known", never "nothing changed" — the hint stays off in both
+ * cases rather than guessing.
+ */
+function syncNote(r) {
+    if (r.sync_available !== true) return null;
+    return el("p", { class: "run-note" },
+        "Die Playlist hat sich seit dem letzten Import geändert. ",
+        el("a", {
+            href: `/library?provider=${encodeURIComponent(r.provider)}&playlist=${encodeURIComponent(r.playlist_id)}&sync=1`,
+        }, "Abgleich in der Bibliothek ansehen"));
+}
+
+/**
+ * UC-26, Papierkorb-Zweitschritt: DELETE archives (soft, reversible in the
+ * data) without asking — the destructive step is the SECOND one. This map
+ * keeps an archived run's last known data visible in THIS session (the API
+ * hides archived runs from GET /api/runs the moment they are archived), so
+ * "Endgültig löschen" has something to render its confirmation against
+ * without a dedicated archived-runs endpoint.
+ */
+const archivedRuns = new Map();
+
+function deleteAction(r) {
+    return el("button", {
+        class: "btn btn-quiet", type: "button",
+        "aria-label": `Hörvorgang „${r.name || r.playlist_name || r.playlist_id}“ in den Papierkorb legen`,
+        onClick: async (ev) => {
+            ev.currentTarget.setAttribute("aria-disabled", "true");
+            try {
+                await api(`/api/runs/${r.id}`, { method: "DELETE" });
+                archivedRuns.set(r.id, r);
+            } catch (err) {
+                setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+            }
+            load();
+        },
+    }, "Löschen");
+}
+
+/** The archived card: only "Endgültig löschen" (with a real confirm()) —
+ *  nothing here pretends the run can quietly come back. */
+function archivedCard(r) {
+    const label = r.name || r.playlist_name || r.playlist_id;
+    return el("article", {
+        class: "run-card",
+        dataset: { runId: String(r.id) },
+        "aria-label": `Hörvorgang „${label}“, im Papierkorb`,
+    },
+        el("div", { class: "run-head" },
+            coverFallback(),
+            el("div", {},
+                el("h2", { class: "run-title wrap-anywhere", lang: "de" }, label),
+                el("p", { class: "run-config" }, "Im Papierkorb"))),
+        el("p", { class: "run-note" },
+            "In den Papierkorb gelegt. Der Fortschritt bleibt erhalten, aber der Hörvorgang taucht in dieser Liste nicht mehr auf, sobald du die Seite neu lädst — bis dahin lässt er sich hier endgültig löschen."),
+        el("div", { class: "run-actions" },
+            el("button", {
+                class: "btn btn-stop", type: "button",
+                onClick: async (ev) => {
+                    if (ev.currentTarget.getAttribute("aria-disabled") === "true") return;
+                    if (!confirm(
+                        `„${label}“ endgültig löschen? Das entfernt Fortschritt und Verlauf dieses `
+                        + "Hörvorgangs unwiderruflich. Die importierte Playlist bleibt erhalten."
+                    )) return;
+                    ev.currentTarget.setAttribute("aria-disabled", "true");
+                    try {
+                        await api(`/api/runs/${r.id}?confirm=true`, { method: "DELETE" });
+                        archivedRuns.delete(r.id);
+                        setNote($("#runsNote"), `„${label}“ wurde endgültig gelöscht.`, "note-ok", "Gelöscht");
+                    } catch (err) {
+                        setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+                    }
+                    load();
+                },
+            }, "Endgültig löschen")));
+}
+
 function coverFallback() {
     return el("span", { class: "cover-fallback", role: "img", "aria-label": "Kein Cover verfügbar" },
         svgIcon("0 0 24 24", '<path d="M9 3v10.6A3.5 3.5 0 1 0 11 17V7h6.5a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H9z"/>', { fill: "currentColor" }));
@@ -190,10 +271,12 @@ function runCard(r) {
                 el("span", {}, `${formatCount(r.cursor)} von ${formatCount(r.total)} gespielt`),
                 el("span", {}, `zuletzt: ${formatWhen(r.updated_at)}`))),
         note ? el("p", { class: "run-note" }, note) : null,
+        syncNote(r),
         el("div", { class: "run-actions" },
             primaryAction(r),
             stopAction(r),
-            el("a", { class: "btn btn-quiet", href: `/export/${r.id}` }, "Exportieren")));
+            el("a", { class: "btn btn-quiet", href: `/export/${r.id}` }, "Exportieren"),
+            deleteAction(r)));
 }
 
 /** Upgrade one card's neutral "Bereit" chip once its live state is known. */
@@ -241,12 +324,19 @@ function showListError(message) {
 async function load() {
     try {
         const { runs } = await api("/api/runs");
+        // Runs the listener archived earlier in THIS page load: the API
+        // already hides them (archived_at IS NULL filter), so they only
+        // survive here — a page reload lets them go, exactly as promised.
+        for (const id of [...archivedRuns.keys()]) {
+            if (runs.some((r) => r.id === id)) archivedRuns.delete(id); // resurrected elsewhere — trust the API
+        }
+        const trashed = [...archivedRuns.values()];
 
         $("#runsCount").textContent = runs.length
             ? `${formatCount(runs.length)} ${runs.length === 1 ? "Hörvorgang" : "Hörvorgänge"}`
             : "keiner angelegt";
 
-        if (!runs.length) {
+        if (!runs.length && !trashed.length) {
             $("#runList").replaceChildren(el("div", { class: "empty-state" },
                 el("span", { class: "empty-glyph" },
                     svgIcon("0 0 24 24", '<path d="M4 17c2.5-2.2 4-6.5 5.5-6.5S12.5 15 14 15s3-7 4.5-7S21 11 21.5 12"/><circle cx="4" cy="17" r="1.2" fill="currentColor" stroke="none"/>',
@@ -258,7 +348,7 @@ async function load() {
             return;
         }
 
-        $("#runList").replaceChildren(...runs.map(runCard));
+        $("#runList").replaceChildren(...runs.map(runCard), ...trashed.map(archivedCard));
 
         const active = runs.filter((r) => r.status === "active").slice(0, ACTIVE_STATE_FETCH_LIMIT);
         for (const r of active) refreshSystemState(r.id);

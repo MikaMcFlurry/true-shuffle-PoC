@@ -30,10 +30,14 @@
             <p class="t-num tabular">—</p>
             <p class="t-label"><span class="sw" style="background:var(--muted)"></span>übersprungen</p>
         </div>
-    </div>
-    <div class="note">
-        <span class="stencil">Vorschau</span>
-        <span>Wiederholungen &amp; Ausgeschlossene als eigene Kacheln kommen mit dem nächsten Ausbau.</span>
+        <div class="tile" id="tileRepeats" role="progressbar" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0" aria-label="Wiederholungen: wird geladen">
+            <p class="t-num tabular">—</p>
+            <p class="t-label"><span class="sw" style="background:var(--ink)"></span>Wiederholungen</p>
+        </div>
+        <div class="tile" id="tileExcluded" role="progressbar" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0" aria-label="Ausgeschlossene: wird geladen">
+            <p class="t-num tabular">—</p>
+            <p class="t-label"><span class="sw" style="background:var(--muted)"></span>ausgeschlossen</p>
+        </div>
     </div>
 </section>
 
@@ -113,11 +117,19 @@ const EVENT_TITLE = {
 /**
  * A German title + detail line for one event.
  *
- * Track names are never guessable here: /api/runs/{id}/events carries no
- * track metadata, and resolving one id per row against the provider would be
- * a request per event on a 1 500-track run. Where the old UI would have named
- * a track, this shows the honest thing it actually has — the cursor position.
+ * WP3-D4: the events API now resolves the deck card an event was booked
+ * against (db.list_events LEFT JOINs run_tracks → tracks) — where that
+ * exists, the real title leads. Events with no run_track_id (most lifecycle
+ * events, and legacy runs without a materialised deck) fall back to the
+ * honest cursor position exactly as before; resolving one id per event
+ * against the provider live would still be a request per row on a
+ * 1 500-track run, so that part of the old reasoning stands.
  */
+function trackLabel(e) {
+    if (!e.track_name) return null;
+    return [e.track_name, e.track_artist].filter(Boolean).join(" — ");
+}
+
 function eventLine(e) {
     // e.cursor is the 0-based index of the current/next track — the same
     // number player.js shows as "Titel N" by adding 1 (cursor 0 is the first
@@ -126,9 +138,10 @@ function eventLine(e) {
     // (nonexistent) track. "am Anfang" says the same thing honestly; past
     // that, the number stays cursor + 1 to match the player's own count.
     const position = e.cursor > 0 ? `Titel ${formatCount(e.cursor + 1)}` : "am Anfang";
+    const track = trackLabel(e);
     if (e.type === "advanced") {
         const reason = REASON_TEXT[e.reason] || e.reason || "unbekannter Grund";
-        return { title: "Weitergerückt", detail: `${reason} · ${position}` };
+        return { title: "Weitergerückt", detail: track ? `${reason} · ${track}` : `${reason} · ${position}` };
     }
     const title = EVENT_TITLE[e.type] || e.type;
     if (e.type === "run_created") {
@@ -154,11 +167,20 @@ function eventLine(e) {
         const reason = e.detail?.reason;
         return { title, detail: (reason && WATCHER_STOP_TEXT[reason]) || position };
     }
+    // track_favorited / track_unfavorited / track_excluded / track_reactivated
+    // already carry a name in detail.name (runs.py mark_favorite /
+    // set_track_exclusion) — the joined track_name is the same fact from a
+    // more reliable source (the current track row, not a detail snapshot),
+    // so it leads when present; detail.name is the fallback for older rows.
+    if (["track_favorited", "track_unfavorited", "track_excluded", "track_reactivated"].includes(e.type)) {
+        const name = track || e.detail?.name;
+        return { title, detail: name ? `„${name}“` : position };
+    }
     // "queue_failed"'s error text and "drift"'s note are internal, English
     // debugging strings (core/engine.py, providers/*) with no translation
     // table — better an honest cursor position than a leaked English
     // sentence in an otherwise German page.
-    return { title, detail: position };
+    return { title, detail: track || position };
 }
 
 function groupByDay(events) {
@@ -216,15 +238,18 @@ async function load() {
 /**
  * "Fortschritt" tiles — gespielt/offen from the run's own cursor/total,
  * übersprungen from the existing skipped-API (`/api/runs/{id}/skipped`, the
- * same one the player's "Nicht in den Hörvorgang gekommen" card reads). No
- * new endpoint: both calls already exist elsewhere in the product.
+ * same one the player's "Nicht in den Hörvorgang gekommen" card reads).
+ * Wiederholungen/Ausgeschlossene (WP3-D4) come from GET /api/runs/{id}
+ * itself (repeat_count/excluded_count) — real counts of the materialised
+ * deck, or "—" (never a fake 0) for a legacy run without one.
  */
 function fillTile(id, value, max, label) {
     const node = $(id);
     if (!node) return;
-    node.querySelector(".t-num").textContent = formatCount(value);
+    const known = value !== null && value !== undefined;
+    node.querySelector(".t-num").textContent = known ? formatCount(value) : "—";
     node.setAttribute("aria-valuemax", String(Math.max(max, 1)));
-    node.setAttribute("aria-valuenow", String(value));
+    node.setAttribute("aria-valuenow", String(known ? value : 0));
     node.setAttribute("aria-label", label);
 }
 
@@ -242,6 +267,14 @@ async function loadProgress() {
         fillTile("#tileOpen", open, total, `Offen: ${formatCount(open)} von ${formatCount(total)} Titeln`);
         fillTile("#tileSkipped", skipped.length, total,
             `Übersprungen: ${formatCount(skipped.length)} ${skipped.length === 1 ? "Eintrag" : "Einträge"}`);
+        fillTile("#tileRepeats", state.repeat_count, total,
+            state.repeat_count === null
+                ? "Wiederholungen: unbekannt — dieser Hörvorgang hat kein ausgewertetes Deck"
+                : `Wiederholungen: ${formatCount(state.repeat_count)} Titel mehrfach gespielt`);
+        fillTile("#tileExcluded", state.excluded_count, total,
+            state.excluded_count === null
+                ? "Ausgeschlossene: unbekannt — dieser Hörvorgang hat kein ausgewertetes Deck"
+                : `Ausgeschlossene: ${formatCount(state.excluded_count)} Titel`);
         $("#progressSection").classList.remove("hidden");
     } catch {
         // The event list is the page's real job; a progress fetch failing
