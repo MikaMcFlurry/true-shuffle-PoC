@@ -994,6 +994,42 @@ async def _replan_tail(
 
     master_seed = int(run["seed"]) if run.get("seed") is not None else 0
     base_seq = int(run.get("selection_seq") or 0)
+
+    # Performance-Fast-Path (Phase 4, 10k-Profil): der no_repeat-Draw-Loop
+    # ist O(n²) — 54 s für 10 000 Karten, UNTER dem advance_lock.  Im reinen
+    # Fall (nur offene Karten, keine deferred-Fristen, keine Favoriten/
+    # Gewichte) ist der Loop distributionsgleich mit einer geseedeten
+    # Permutation — plan_cycle liefert sie in O(n log n) mit identischen
+    # P1/P5-Garantien.  Fristen (P6) und Gewichtung (P4) erzwingen weiter
+    # den Draw-Loop.
+    open_cards = [c for c in sim.values() if c.state == "open"]
+    deferred_cards = [c for c in sim.values() if c.state == "deferred"]
+    pure_no_repeat = (
+        rules.repeat_mode == "no_repeat"
+        and not deferred_cards
+        and all(not c.favorite and c.weight == 1.0 for c in open_cards)
+    )
+    if pure_no_repeat:
+        tail = plan_cycle(
+            open_cards, rules, draw_seed(master_seed, base_seq + 1),
+        )
+        new_pv = int(run["plan_version"]) + 1
+        if tail:
+            start_seq = await db.max_plan_seq(run_id) + 1
+            await db.write_run_plan(
+                run_id, tail, plan_version=new_pv, start_seq=start_seq,
+                live=False,
+            )
+        order = state.order[: state.cursor + 1] + [
+            provider_by_rt[rt] for rt in tail
+        ]
+        await db.update_run(run_id, order=order, plan_version=new_pv)
+        state.order = order
+        run["plan_version"] = new_pv
+        run["order"] = order
+        _forget_window(run_id)
+        return len(tail)
+
     limit = len(sim) if rules.repeat_mode == "no_repeat" else min(
         PLAN_HORIZON, len(sim)
     )
