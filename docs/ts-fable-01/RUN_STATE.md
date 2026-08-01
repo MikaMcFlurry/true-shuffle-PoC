@@ -2,11 +2,26 @@
 
 **Zweck:** Nach einem Session-/Limit-Abbruch hier weiterlesen statt Kontext teuer zu rekonstruieren. Wird bei jedem Meilenstein aktualisiert und gepusht.
 
-Letzte Aktualisierung: 2026-07-31 ~18:40 UTC · Branch `claude/true-shuffle-fable5-run-z2eqzb` · HEAD siehe git log.
+Letzte Aktualisierung: 2026-08-01 · Branch **`claude/true-shuffle-fable5-lead-928f25`** (mandatierter Branch dieser Fortsetzungssession; `run-z2eqzb` war beim Start identisch und wird nicht mehr fortgeschrieben) · HEAD siehe git log.
 
 ## Gate-Stand (Details: GATE_STATUS.md)
 
-- G0 ✅ · G1 ✅ · G2 ✅ (Browser-Suite 46/46) · G3 ✅ automatisiert / Live BLOCKED (LT-1…13) · G4 IN ARBEIT · G5/G6 offen.
+- G0 ✅ · G1 ✅ · G2 ✅ (Browser-Suite 46/46) · G3 ✅ automatisiert / Live BLOCKED (LT-1…14) · G4 IN ARBEIT (§A-Rest in Umsetzung, s. u.) · G5 VORGEZOGEN TEILWEISE (F10-Löschpfad, 10k-Perf-Profil+Fix, Policy-Status) · G6 offen.
+
+## Fortsetzungssession 2026-08-01 — Stand §A und vorgezogene Phase 4
+
+| Punkt | Inhalt | Stand |
+|---|---|---|
+| Re-Audit | Baseline 614+50+8 grün reproduziert; Ruff clean; Spotify-Doku-Freshness unverändert | ✅ |
+| §A1 | Fenster-Re-Assert (ADR-004): Sofort-Re-Assert positions-erhaltend + Anker-Invalidierung + Watcher-Selbstheilung; rot-zuerst-Suite | ✅ `c86ed42` |
+| §A6/A5/A2-Backend | UC-24-Reopen, UC-07-Gewichts-API, UC-22-Semantik (Vorgänge) | ✅ `b856d0e`, `a97987c` |
+| §A2/A8/A9-Tests | Unabhängige Opus-Runde: 17 Tests (Progress-Stats, Restart-E2E echte DB+App+HTTP, apply-sync-Draht) | ✅ `e3cd78b` |
+| §A3/A4/A5-UI/A7 | Sonnet-UI-Lauf (Reaktivieren-Ansicht, favorite_weight-Builder, Pro-Titel-Gewicht, requeue_later-Text) + Browser-Tests | ⏳ läuft |
+| §A10 | Matrix-/Gate-Update nach UI-Integration + adversarialem Review | ⏳ danach |
+| Phase 4 vorgezogen | F10-Löschpfad komplett (M011, retention.py, Relink, 6 Tests) ✅ `6d45dee`; 10k-Perf-Profil + O(n log n)-Replan-Fastpath ✅ `16a12b1`; Policy-/Kommerz-Status ✅; LT-13/LT-14 ✅ | ✅ |
+| Phase 4 §B1/B2 | ERR-01…08/MAN-01…05-Testrunde (unabhängiger Opus-Lauf) | ⏳ läuft |
+
+**Neue Befunde für G5:** (a) Lokale Identität ist Cookie-gebunden — Cookie-Verlust verwaist Läufe trotz gleichem Spotify-Konto (Security-Review-Punkt); (b) gewichteter no_repeat-Replan bleibt O(n²) (Worknote PHASE4_PERF_PROFILE.md); (c) Matrix-Notiz 9 beschreibt die Vor-Entscheidungs-Semantik von deck_stats.repeats und wird mit A10 korrigiert.
 
 ## Phase 3 — Arbeitspaket-Stand
 
