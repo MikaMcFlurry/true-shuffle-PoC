@@ -113,7 +113,7 @@ import { $, $$, api, setNote } from "/static/app.js";
 for (const button of $$("[data-disconnect]")) {
     button.addEventListener("click", async () => {
         const id = button.dataset.disconnect;
-        if (!confirm("Diesen Dienst trennen? Die gespeicherten Zugangsdaten werden gelöscht, deine Hörvorgänge bleiben.")) return;
+        if (!confirm("Diesen Dienst trennen? Zugangsdaten werden sofort gelöscht, laufende Hörvorgänge gestoppt. Alle importierten Inhalte des Dienstes werden binnen 5 Tagen gelöscht (bis dahin ist ein Export noch möglich); dein Hörfortschritt bleibt pseudonymisiert erhalten und verbindet sich beim erneuten Verbinden wieder.")) return;
         button.disabled = true;
         try {
             await api(`/auth/${id}/disconnect`, { method: "POST" });

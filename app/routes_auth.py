@@ -18,6 +18,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import db
 from app.config import get_settings
+from app.crypto import VaultError
 from app.deps import ensure_session_user, require_user_id
 from providers.base import (
     AuthKind,
@@ -120,8 +121,10 @@ async def callback(
     if not code:
         raise HTTPException(status_code=400, detail="Es fehlt der Autorisierungscode.")
 
-    expected = request.session.pop(_STATE_KEY, None)
-    pending = request.session.pop(_PENDING_KEY, {}) or {}
+    # SEC-09: read first, POP only on a match — a cross-site GET with a wrong
+    # state must not be able to destroy the victim's pending connect flow.
+    expected = request.session.get(_STATE_KEY)
+    pending = request.session.get(_PENDING_KEY) or {}
     if not expected or state != expected:
         # CSRF guard: the old PoC never checked this.
         raise HTTPException(
@@ -132,6 +135,8 @@ async def callback(
         raise HTTPException(
             status_code=400, detail="OAuth-Ablauf und Dienst passen nicht zusammen."
         )
+    request.session.pop(_STATE_KEY, None)
+    request.session.pop(_PENDING_KEY, None)
 
     provider = get_provider(provider_id)
     settings = get_settings()
@@ -167,7 +172,13 @@ async def callback(
 @router.post("/{provider_id}/browser")
 async def browser_callback(request: Request, provider_id: str):
     """Accept a credential minted in the page (Apple Music MusicKit)."""
-    provider = get_provider(provider_id)
+    try:
+        provider = get_provider(provider_id)
+    except KeyError as exc:
+        # SEC-13: an unknown service is a 404, not an unhandled KeyError 500.
+        raise HTTPException(
+            status_code=404, detail=f"Unbekannter Dienst {provider_id}."
+        ) from exc
     if provider.capabilities.auth not in (AuthKind.BROWSER_SDK, AuthKind.PASTED):
         raise HTTPException(
             status_code=400,
@@ -211,6 +222,23 @@ async def disconnect(request: Request, provider_id: str):
     from app import retention
 
     user_id = await require_user_id(request)
+    # SEC-12: validate the service and require something to disconnect —
+    # deletion_requests is the provable compliance ledger (ADR-003 F10) and
+    # must not be spammable with fantasy providers or no-op rows.
+    try:
+        get_provider(provider_id)
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"Unbekannter Dienst {provider_id}."
+        ) from exc
+    try:
+        account = await db.get_provider_account(user_id, provider_id)
+    except VaultError:
+        account = True  # unlesbarer Blob (SEC-07): erst recht löschen
+    if account is None:
+        raise HTTPException(
+            status_code=404, detail="Hier ist nichts verbunden."
+        )
     try:
         body = await request.json()
     except Exception:

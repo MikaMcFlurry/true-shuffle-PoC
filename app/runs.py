@@ -1423,7 +1423,9 @@ async def reassert_window(
     except ProviderError as exc:
         await db.record_event(
             state.run_id, "window_reassert_failed", cursor=state.cursor,
-            detail={"cause": cause, "error": str(exc)},
+            # SEC-17: provider error text is service-controlled — persist a
+            # bounded slice, never the unbounded raw message.
+            detail={"cause": cause, "error": str(exc)[:200]},
         )
         return "failed"
     if command != "play":

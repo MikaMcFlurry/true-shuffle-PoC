@@ -1,11 +1,15 @@
 """Datenlöschung bei Disconnect — das dreistufige F10-Modell (ADR-003).
 
 Stufe 1 (sofort, im Disconnect-Request): Tokens/Account-Zeile weg, rohe
-Provider-Beobachtungen weg, Command-Payloads redigiert.  Stufe 2 (binnen
-5 Tagen, nachweisbar über ``deletion_requests``): alle Provider-Inhalte —
-Playlists, Snapshots, gecachte Titel-Metadaten.  Stufe 3 (behalten,
-anonymisiert): der abstrakte Hörfortschritt — Titel-Referenzen werden zu
-lokalen Opaque-Hashes (HMAC über einen pro Antrag gewürfelten Salt), damit
+Provider-Beobachtungen weg, Command-Payloads redigiert, Watcher gestoppt
+und die Läufe des Providers auf ``stopped`` (SEC-06: kein verwaister
+Poll-Loop).  Stufe 2 (binnen 5 Tagen, nachweisbar über
+``deletion_requests``): alle Provider-Inhalte — Playlists, Snapshots,
+gecachte Titel-Metadaten, Job-Reste.  Stufe 3 (behalten,
+**pseudonymisiert** — nicht „anonymisiert": der HMAC-Salt bleibt für den
+Reconnect-Weg in ``deletion_requests.salt`` in derselben Datenbank, die
+Referenzen sind also mit DB-Zugriff rückrechenbar; SEC-05): der abstrakte
+Hörfortschritt — Titel-Referenzen werden zu lokalen Opaque-Hashes, damit
 ein späterer Reconnect denselben Hörstand wieder verknüpfen kann
 (:func:`relink_after_import`).  ``scope='full'`` löscht stattdessen alles.
 
@@ -65,6 +69,34 @@ async def schedule_provider_deletion(
 
     # Stufe 1a — Tokens/Account-Zeile sofort weg.
     await db.delete_provider_account(user_id, provider)
+
+    # Stufe 1d (SEC-06) — kein verwaister Betrieb: Watcher der betroffenen
+    # Läufe stoppen und aktive/pausierte Läufe ehrlich auf 'stopped' setzen
+    # (F1: fortsetzbar nach einem Reconnect, aber nichts pollt mehr ins
+    # Leere).  Lazy import — app.watcher importiert app.runs, nicht dieses
+    # Modul; der Kreis bleibt offen.
+    from app.watcher import watcher
+
+    cur = await conn.execute(
+        "SELECT id, cursor FROM runs WHERE user_id = ? AND provider = ? "
+        "AND status IN ('active', 'paused')",
+        (user_id, provider),
+    )
+    live_runs = [dict(r) for r in await cur.fetchall()]
+    for row in live_runs:
+        await watcher.stop(int(row["id"]))
+    if live_runs:
+        await conn.execute(
+            "UPDATE runs SET status = 'stopped', device_id = NULL "
+            "WHERE user_id = ? AND provider = ? "
+            "AND status IN ('active', 'paused')",
+            (user_id, provider),
+        )
+        for row in live_runs:
+            await db.record_event(
+                int(row["id"]), "stopped", cursor=int(row["cursor"]),
+                reason="disconnect",
+            )
 
     # Stufe 1b — rohe Player-/Queue-Beobachtungen dieses Nutzers und
     # Providers sofort weg (sie tragen Wiedergabe-Payloads).
@@ -199,39 +231,55 @@ def _rewrite_order(order_json: str, mapping: Dict[str, str]) -> str:
     return json.dumps([mapping.get(tid, tid) for tid in order])
 
 
-async def _redact_run_texts(run_ids: List[int], mapping: Dict[str, str]) -> None:
-    """Events + Skip-Liste der betroffenen Runs: Namen weg, Ids → Hashes."""
+#: SEC-03 (Runde-2-Security-Review): Ereignis-Details werden über eine
+#: ALLOWLIST redigiert, nicht über Muster — jedes neue Detail-Feld ist sonst
+#: ein neues Leck.  Erlaubt sind ausschließlich abstrakte Zustandsfelder.
+_DETAIL_ALLOWLIST = frozenset({
+    "cursor", "note", "policy", "action", "reason", "cycle", "plan_version",
+    "total", "reopened", "replanned", "version", "effective_from_seq",
+    "matched", "waited_seconds", "manual_wait_seconds", "admitted", "status",
+    "window", "position_ms", "cause", "from", "rules_hash", "changed",
+    "config_version_id", "seed", "duplicate_of", "since",
+})
+
+
+async def _redact_run_texts(
+    run_ids: List[int], mapping: Dict[str, str], salt: str
+) -> None:
+    """Alles Identifizierende aus den bleibenden Runs entfernen (SEC-03).
+
+    Namen und Interpreten weg; Provider-Ids (Playlist, Tracks, Geräte,
+    Kopien) weg; ``event_key`` trägt rohe Track-Ids im Transitionsformat und
+    wird deterministisch gehasht (Eindeutigkeit je Run bleibt erhalten);
+    Ereignis-Details werden auf die Allowlist reduziert.
+    """
     if not run_ids:
         return
     conn = db.get_db()
     marks = ",".join("?" * len(run_ids))
     await conn.execute(
-        f"UPDATE skipped_tracks SET name = '', artist = '' "
+        f"UPDATE skipped_tracks SET name = '', artist = '', track_id = '' "
         f"WHERE run_id IN ({marks})",
         run_ids,
     )
     cur = await conn.execute(
-        f"SELECT id, detail FROM run_events WHERE run_id IN ({marks}) "
-        f"AND (detail LIKE '%\"name\"%' OR detail LIKE '%\"track\"%')",
+        f"SELECT id, detail, event_key FROM run_events "
+        f"WHERE run_id IN ({marks})",
         run_ids,
     )
     for row in await cur.fetchall():
         try:
             detail = json.loads(row["detail"] or "{}")
         except json.JSONDecodeError:
-            continue
-        changed = False
-        if "name" in detail:
-            detail.pop("name")
-            changed = True
-        if "track" in detail and detail["track"] in mapping:
-            detail["track"] = mapping[detail["track"]]
-            changed = True
-        if changed:
-            await conn.execute(
-                "UPDATE run_events SET detail = ? WHERE id = ?",
-                (json.dumps(detail), row["id"]),
-            )
+            detail = {}
+        kept = {k: v for k, v in detail.items() if k in _DETAIL_ALLOWLIST}
+        new_key = row["event_key"]
+        if new_key and not str(new_key).startswith("redacted:"):
+            new_key = "redacted:" + opaque_ref(salt, str(new_key))[len(HASH_PREFIX):]
+        await conn.execute(
+            "UPDATE run_events SET detail = ?, event_key = ? WHERE id = ?",
+            (json.dumps(kept), new_key, row["id"]),
+        )
     for run_id in run_ids:
         cur2 = await conn.execute(
             "SELECT order_json FROM runs WHERE id = ?", (run_id,)
@@ -240,7 +288,7 @@ async def _redact_run_texts(run_ids: List[int], mapping: Dict[str, str]) -> None
         if row2 is not None:
             await conn.execute(
                 "UPDATE runs SET order_json = ?, playlist_name = '', "
-                "device_id = NULL WHERE id = ?",
+                "playlist_id = '', name = '', device_id = NULL WHERE id = ?",
                 (_rewrite_order(row2["order_json"], mapping), run_id),
             )
 
@@ -262,7 +310,7 @@ async def execute_request(request: Dict[str, Any]) -> Dict[str, Any]:
             mapping = await _anonymise_tracks(
                 run_ids, user_id, str(request["salt"] or "")
             )
-            await _redact_run_texts(run_ids, mapping)
+            await _redact_run_texts(run_ids, mapping, str(request["salt"] or ""))
             # Die bleibenden Runs dürfen die zu löschenden Inhalte nicht mehr
             # referenzieren (FKs ohne Cascade — die Spalten sind nullable).
             await conn.execute(
@@ -284,6 +332,10 @@ async def execute_request(request: Dict[str, Any]) -> Dict[str, Any]:
             "DELETE FROM playlists WHERE user_id = ? AND provider = ?",
             (user_id, provider),
         )
+        # SEC-04: die Job-Zeilen tragen Playlist-Ids/-Namen im result_json —
+        # ohne diesen Schritt wäre „alle Provider-Inhalte" faktisch falsch.
+        # Jobs sind transiente UI-Artefakte; die des Nutzers gehen komplett.
+        await conn.execute("DELETE FROM jobs WHERE user_id = ?", (user_id,))
         # Verwaiste Katalog-Zeilen (von niemandem mehr referenziert) weg.
         await conn.execute(
             """

@@ -158,7 +158,17 @@ class Watcher:
                         if fresh is None or fresh.status is not RunStatus.ACTIVE:
                             return
                         verdict = await runs.sync_from_history(session, fresh)
-                except (AccountNotConnected, ProviderError) as exc:
+                except AccountNotConnected:
+                    # SEC-06: the account is gone — endless retries would
+                    # never succeed.  Say so once and stop.
+                    await db.record_event(
+                        run_id, "watcher_stopped", cursor=state.cursor,
+                        detail={"reason": "account disconnected"},
+                    )
+                    logger.info("run %s: account disconnected — stopping "
+                                "history watcher", run_id)
+                    return
+                except ProviderError as exc:
                     logger.warning("history watcher %s: %s", run_id, exc)
                     await asyncio.sleep(_backoff(exc, settings.history_poll_seconds))
                     continue
@@ -202,7 +212,17 @@ class Watcher:
                 try:
                     session = await open_session(user_id, state.provider)
                     playback = await session.provider.get_playback_state(session.token)
-                except (AccountNotConnected, ProviderError) as exc:
+                except AccountNotConnected:
+                    # SEC-06: no account, no polling — a disconnect must not
+                    # leave an orphaned loop warning every few seconds.
+                    await db.record_event(
+                        run_id, "watcher_stopped", cursor=state.cursor,
+                        detail={"reason": "account disconnected"},
+                    )
+                    logger.info("run %s: account disconnected — stopping "
+                                "watcher", run_id)
+                    return
+                except ProviderError as exc:
                     logger.warning("watcher %s: %s", run_id, exc)
                     await asyncio.sleep(_backoff(exc, settings.watcher_poll_seconds))
                     continue

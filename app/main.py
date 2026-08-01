@@ -34,6 +34,15 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
 
+    # SEC-01 (fail closed): a default SECRET_KEY on anything but pure local
+    # use makes session forgery and a gate bypass trivial — refuse to boot.
+    refusal = settings.refuse_to_start_reason()
+    if refusal:
+        raise RuntimeError(refusal)
+    # SEC-14: at DEBUG, aiosqlite logs every statement WITH bound parameters
+    # (token blobs, account names) — pin it to INFO whatever LOG_LEVEL says.
+    logging.getLogger("aiosqlite").setLevel(logging.INFO)
+
     await init_db()
     logger.info("database ready at %s", settings.db_abs_path)
     for warning in settings.insecure_defaults():
@@ -75,6 +84,17 @@ app = FastAPI(
     version="0.2.0",
     lifespan=lifespan,
 )
+
+# SEC-16: baseline security headers on every response — cheap second line of
+# defence for the two provider-controlled URL sinks (artwork, copy link).
+@app.middleware("http")
+async def _security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    return response
+
 
 # Order matters and reads backwards: Starlette makes the LAST middleware added
 # the OUTERMOST one. The gate reads request.session, so SessionMiddleware has

@@ -126,6 +126,27 @@ class Settings(BaseSettings):
             )
         return problems
 
+    def refuse_to_start_reason(self) -> Optional[str]:
+        """SEC-01 (fail closed): the default SECRET_KEY signs the session AND
+        derives the token-vault key — anyone can forge a session and walk
+        past the ACCESS_CODE gate.  A log line does not stop that; refusing
+        to boot does.  Local-only use (localhost base URL, no access code)
+        keeps working so development stays friction-free.
+        """
+        if not self.insecure_defaults():
+            return None
+        from urllib.parse import urlsplit
+
+        host = (urlsplit(self.base_url).hostname or "").lower()
+        local = host in ("127.0.0.1", "localhost", "::1", "testserver", "")
+        if self.access_code or not local:
+            return (
+                "SECRET_KEY ist noch der Default, aber die App ist nicht rein "
+                "lokal (BASE_URL/ACCESS_CODE gesetzt) — Start verweigert. "
+                "Setze SECRET_KEY auf einen zufälligen Wert mit 32+ Zeichen."
+            )
+        return None
+
 
 def _derive_base_url(settings: Settings) -> Settings:
     """On Fly, work out the public URL instead of making someone type it.

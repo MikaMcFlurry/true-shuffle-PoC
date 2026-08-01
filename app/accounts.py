@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from app import db
+from app.crypto import VaultError
 from providers.base import (
     MusicProvider,
     ProviderAuthError,
@@ -45,7 +46,16 @@ class Session:
 async def open_session(user_id: int, provider_id: str) -> Session:
     """Load credentials for *user_id* on *provider_id*, refreshing if stale."""
     provider = get_provider(provider_id)
-    account = await db.get_provider_account(user_id, provider_id)
+    try:
+        account = await db.get_provider_account(user_id, provider_id)
+    except VaultError as exc:
+        # SEC-07: an unreadable token blob (SECRET_KEY rotation with a
+        # surviving session, restored backup under another key, bit rot)
+        # must be a "reconnect please", never an unhandled 500.
+        raise AccountNotConnected(
+            "Die gespeicherten Zugangsdaten sind nicht mehr lesbar "
+            "(Schlüssel geändert?) — bitte den Dienst neu verbinden."
+        ) from exc
     if account is None:
         raise AccountNotConnected(
             f"{provider.capabilities.display_name} is not connected for this user"
