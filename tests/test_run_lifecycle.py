@@ -97,15 +97,26 @@ async def test_two_independent_runs_of_the_same_playlist_and_mode(database, serv
     assert two["cursor"] == 0
 
     # Each run has its own full deck and plan (12 valid demo tracks).
+    # Teständerung WP3-D3 (ADR-003 F4/F5): advance() verbucht seither die
+    # konsumierte Karte im Ledger — der USER_SKIP oben zählt unter der
+    # Legacy-Policy 'consume' als gespielt, Run 1 hat also 11 offene Karten
+    # und 1 gespielte.  Run 2 bleibt unberührt (Run-Isolation).
+    expected_open = {first.run_id: 11, second.run_id: 12}
     for run_id in (first.run_id, second.run_id):
         assert await _one(
             database,
             "SELECT count(*) FROM run_tracks WHERE run_id = ? AND state = 'open'",
             (run_id,),
-        ) == 12
+        ) == expected_open[run_id]
         assert await _one(
             database, "SELECT count(*) FROM run_plan WHERE run_id = ?", (run_id,)
         ) == 12
+    assert await _one(
+        database,
+        "SELECT count(*) FROM run_tracks WHERE run_id = ? AND state = 'played' "
+        "AND play_count = 1",
+        (first.run_id,),
+    ) == 1
 
     # UC-16: several runs per playlist need distinguishable names.
     assert one["name"] == "Everything"

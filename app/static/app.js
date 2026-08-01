@@ -154,14 +154,20 @@ export function svgIcon(viewBox, inner, attrs = {}) {
 }
 
 /**
- * The three system-state glyphs Phase 1 can reach (A/B/D — C has no producer
- * yet, ADR-001). Colour + chip shape already carry the meaning on their own;
- * the icon is the ADR's "additionally", never the only signal.
+ * The four system-state glyphs (A/B/C/D). C gained its producer with WP3-D3:
+ * the F8 'ask' policy parks a run in awaiting_decision and the player renders
+ * the decision banner. Colour + chip shape already carry the meaning on their
+ * own; the icon is the ADR's "additionally", never the only signal.
  */
 export const STATE_ICON = {
   a: {
     viewBox: "0 0 16 16", attrs: { fill: "currentColor" },
     inner: '<rect x="1.5" y="6" width="2.6" height="5" rx="1.3"/><rect x="6.7" y="2.5" width="2.6" height="11" rx="1.3"/><rect x="11.9" y="4.5" width="2.6" height="8" rx="1.3"/>',
+  },
+  c: {
+    viewBox: "0 0 16 16",
+    attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" },
+    inner: '<path d="M5.4 5.3a2.7 2.7 0 1 1 3.7 3c-.8.4-1.1.9-1.1 1.7v.3"/><circle cx="8" cy="13" r=".5" fill="currentColor" stroke="none"/>',
   },
   b: {
     viewBox: "0 0 16 16",

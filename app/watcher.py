@@ -243,6 +243,43 @@ class Watcher:
                         run_id, "drift_resolved", cursor=state.cursor
                     )
 
+                # F8 (WP3-D3): every observation feeds the manual-use state
+                # machine.  While an episode is open (detected / awaiting /
+                # suspended) True Shuffle only observes — no advance, no
+                # commands; the machine itself decides resume/pause/suspend
+                # per manual_use_policy.  A pure idle poll outside an episode
+                # is NOT a manual observation (Zustand D handling above).
+                manual_state = runs.MANUAL_NONE
+                try:
+                    manual_state = await runs.manual_tick(
+                        session, state,
+                        drifted=verdict.drifted,
+                        idle=verdict.idle,
+                        advancing=verdict.should_advance,
+                    )
+                except ProviderError as exc:
+                    # The auto_resume window assert can fail like any other
+                    # command (device gone) — observe on, next poll retries.
+                    logger.warning("watcher %s: manual resume failed: %s",
+                                   run_id, exc)
+                    await asyncio.sleep(
+                        _backoff(exc, settings.watcher_poll_seconds)
+                    )
+                    continue
+                if manual_state != runs.MANUAL_NONE:
+                    if manual_state == runs.MANUAL_SUSPENDED:
+                        # The run was paused in a controlled way — the top of
+                        # the next loop iteration ends this watcher.
+                        logger.info("run %s suspended after manual use", run_id)
+                    previous_state = playback
+                    if handle is not None:
+                        handle.last_state = playback
+                    await asyncio.sleep(
+                        _next_delay(playback, settings.watcher_poll_seconds,
+                                    paused=True)
+                    )
+                    continue
+
                 if verdict.should_advance:
                     try:
                         async with runs.advance_lock(run_id):

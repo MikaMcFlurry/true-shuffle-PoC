@@ -287,10 +287,17 @@ async def test_provider_failure_mid_stream_marks_the_snapshot_failed(content):
 # ---------------------------------------------------------------------------
 
 
-async def test_apply_sync_to_run_is_reserved_for_wp3_d3(content):
-    with pytest.raises(NotImplementedError):
+async def test_apply_sync_to_run_refuses_missing_run_and_diff(content):
+    # Teständerung WP3-D3: der D1-Platzhalter pinnte NotImplementedError —
+    # apply_sync_to_run ist jetzt implementiert (UC-04/RUN-10, Verhaltens-
+    # Tests in tests/test_policies.py).  Hier bleibt der Vertragsrand: ein
+    # fremder/fehlender Lauf oder Diff ist ein RunError (409), nie ein
+    # Teil-Apply.
+    from core.engine import RunError
+
+    with pytest.raises(RunError):
         await library_service.apply_sync_to_run(
-            1, diff_id=1, user_id=content.user_id, new_tracks_policy="ignore"
+            999, diff_id=1, user_id=content.user_id, new_tracks_policy="ignore"
         )
 
 

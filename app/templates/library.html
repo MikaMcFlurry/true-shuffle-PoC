@@ -75,9 +75,10 @@
         <span class="eyebrow">Konfiguration</span>
         <h2 id="rulesHead">Konfiguration &amp; Regeln</h2>
         <p>
-            Wähl eine Konfiguration für den Hörvorgang. Nur <b style="color: var(--ink)">Ohne Wiederholungen</b>
-            ist heute aktiv — sie beschreibt, wie true-shuffle jetzt schon mischt: jeder spielbare Titel
-            genau einmal, bis der Hörvorgang abgeschlossen ist.
+            <b style="color: var(--ink)">Ohne Wiederholungen</b> ist die Voreinstellung: jeder spielbare
+            Titel genau einmal, bis der Hörvorgang abgeschlossen ist. Die Regelgruppen darunter zählen
+            beim Start — eine Auswahl abseits der Voreinstellung wird als eigene Konfiguration
+            gespeichert und der Hörvorgang läuft damit.
         </p>
     </div>
 
@@ -122,14 +123,10 @@
         </div>
     </fieldset>
 
-    <div class="note" style="margin-top: var(--space-5)">
-        <span class="stencil">Vorschau</span>
-        <span>
-            Die Regeln unten zeigen, wie sich künftige Konfigurationen einstellen lassen.
-            Sie wirken sich noch nicht auf den Start aus — dein Hörvorgang startet mit
-            <b>Ohne Wiederholungen</b>, unabhängig von der Auswahl hier. Probier sie ruhig aus.
-        </span>
-    </div>
+<!-- WP3-D3: die Regelgruppen Wiederholungen / Skip / Manuell / Neue Titel
+     sind ECHT — eine Auswahl abseits der Voreinstellung erzeugt beim Start
+     eine Konfiguration (POST /api/configs) und der Hörvorgang läuft damit.
+     Favoriten bleiben Vorschau: sie sind laufgebunden und leben im Player. -->
 
     <details class="rule-group" open>
         <summary>
@@ -140,18 +137,18 @@
                 <input type="radio" id="r-norepeat" name="abstand" checked>
                 <label for="r-norepeat">
                     <span class="r-name">Keine Wiederholungen</span>
-                    <span class="r-desc">Jeder Titel höchstens einmal, bis der Hörvorgang abgeschlossen ist. So mischt true-shuffle heute.</span>
+                    <span class="r-desc">Jeder Titel höchstens einmal, bis der Hörvorgang abgeschlossen ist.</span>
                 </label>
             </div>
             <div class="radio-row">
                 <input type="radio" id="r-abstand" name="abstand">
                 <label for="r-abstand">
-                    <span class="r-name">Mindestabstand zwischen Wiederholungen <span class="chip chip-preview">Vorschau</span></span>
-                    <span class="r-desc">Ein Titel darf erst wiederkommen, nachdem so viele andere gespielt wurden. Probier die Regelkonflikt-Erkennung unten schon jetzt aus.</span>
+                    <span class="r-name">Mindestabstand zwischen Wiederholungen</span>
+                    <span class="r-desc">Titel dürfen wiederkommen — aber erst, nachdem so viele andere gespielt wurden.</span>
                 </label>
             </div>
 
-            <div class="stepper" role="group" aria-label="Mindestabstand einstellen (Vorschau)">
+            <div class="stepper" role="group" aria-label="Mindestabstand einstellen">
                 <button type="button" id="gapMinus" aria-label="Abstand verringern">−</button>
                 <output id="gapValue" aria-live="polite">8</output>
                 <button type="button" id="gapPlus" aria-label="Abstand erhöhen">+</button>
@@ -198,63 +195,61 @@
     </details>
 
     <details class="rule-group">
-        <summary><span>Skip-Verhalten <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <summary><span>Skip-Verhalten <span class="rh-state" data-group-state="skip">· Skip zählt als gespielt</span></span></summary>
         <div class="rule-body">
-            <div class="radio-row" data-preview>
-                <input type="radio" name="skip" id="r-skip-open" disabled>
-                <label for="r-skip-open"><span class="r-name">Skip zählt nicht als gespielt <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Übersprungene Titel bleiben offen und kommen später wieder.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="skip" id="r-skip-played" value="consume" checked>
+                <label for="r-skip-played"><span class="r-name">Skip zählt als gespielt</span><span class="r-desc">Ein übersprungener Titel gilt für diesen Durchlauf als erledigt.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="skip" id="r-skip-played" disabled>
-                <label for="r-skip-played"><span class="r-name">Skip zählt als gespielt <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ein übersprungener Titel gilt als erledigt.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="skip" id="r-skip-open" value="keep_open">
+                <label for="r-skip-open"><span class="r-name">Skip zählt nicht als gespielt</span><span class="r-desc">Übersprungene Titel bleiben offen und kommen in einer späteren Planung wieder.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="skip" id="r-skip-exclude" disabled>
-                <label for="r-skip-exclude"><span class="r-name">Nach mehreren Skips ausschließen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ein Titel, der mehrfach übersprungen wird, fliegt aus dem Hörvorgang.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="skip" id="r-skip-requeue" value="requeue_later">
+                <label for="r-skip-requeue"><span class="r-name">Später erneut einreihen</span><span class="r-desc">Der übersprungene Titel wird zurückgestellt und erneut in die Reihenfolge aufgenommen.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="skip" id="r-skip-ask" disabled>
-                <label for="r-skip-ask"><span class="r-name">Skip fragt nach <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">true-shuffle merkt sich den Skip, entscheidet aber erst am Ende, ob er zählt.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="skip" id="r-skip-defer" value="defer_to_end">
+                <label for="r-skip-defer"><span class="r-name">Ans Ende stellen</span><span class="r-desc">Der übersprungene Titel kommt ganz ans Ende des Durchlaufs.</span></label>
             </div>
-            <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau. Heute rückt ein Skip den Hörvorgang wie jedes andere Titelende weiter.</p>
         </div>
     </details>
 
     <details class="rule-group">
-        <summary><span>Manuelle Nutzung <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <summary><span>Manuelle Nutzung <span class="rh-state" data-group-state="manuell">· Automatisch fortsetzen</span></span></summary>
         <div class="rule-body">
-            <div class="radio-row" data-preview>
-                <input type="radio" name="manuell" id="r-man-ask" disabled>
-                <label for="r-man-ask"><span class="r-name">Nachfragen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">true-shuffle hält an und lässt dich entscheiden — fortsetzen oder pausiert lassen.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="manuell" id="r-man-auto" value="auto_resume" checked>
+                <label for="r-man-auto"><span class="r-name">Automatisch fortsetzen</span><span class="r-desc">Sobald deine eigene Wiedergabe endet oder zur Reihenfolge zurückkehrt, übernimmt true-shuffle wieder.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="manuell" id="r-man-auto" disabled>
-                <label for="r-man-auto"><span class="r-name">Automatisch fortsetzen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Sobald du zu Spotify zurückkehrst, übernimmt true-shuffle wieder.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="manuell" id="r-man-pause" value="auto_pause">
+                <label for="r-man-pause"><span class="r-name">Pausieren</span><span class="r-desc">Nach manueller Nutzung bleibt der Hörvorgang pausiert, bis du ihn fortsetzt.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="manuell" id="r-man-counts" disabled>
-                <label for="r-man-counts"><span class="r-name">Manuell zählt mit <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Was du selbst spielst, zählt als gespielt im Hörvorgang.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="manuell" id="r-man-ask" value="ask">
+                <label for="r-man-ask"><span class="r-name">Nachfragen</span><span class="r-desc">true-shuffle hält an und lässt dich entscheiden — fortsetzen oder pausiert lassen.</span></label>
             </div>
-            <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
+            <p class="field-hint">Solange du selbst etwas abspielst, beobachtet true-shuffle nur und sendet keine Kommandos.</p>
         </div>
     </details>
 
     <details class="rule-group">
-        <summary><span>Neue Titel in der Playlist <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <summary><span>Neue Titel in der Playlist <span class="rh-state" data-group-state="neuetitel">· Ignorieren</span></span></summary>
         <div class="rule-body">
-            <div class="radio-row" data-preview>
-                <input type="radio" name="neuetitel" id="r-new-append" disabled>
-                <label for="r-new-append"><span class="r-name">Hinten einreihen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel kommen ans Ende der Reihenfolge.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="neuetitel" id="r-new-ignore" value="ignore" checked>
+                <label for="r-new-ignore"><span class="r-name">Ignorieren</span><span class="r-desc">Neue Titel werden für diesen Hörvorgang nicht berücksichtigt.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="neuetitel" id="r-new-mix" disabled>
-                <label for="r-new-mix"><span class="r-name">Sofort einmischen <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel werden sofort in die verbleibende Reihenfolge gemischt.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="neuetitel" id="r-new-mix" value="include_now">
+                <label for="r-new-mix"><span class="r-name">Sofort einmischen</span><span class="r-desc">Beim Übernehmen eines Playlist-Abgleichs werden neue Titel sofort in die verbleibende Reihenfolge gemischt.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="neuetitel" id="r-new-ignore" disabled>
-                <label for="r-new-ignore"><span class="r-name">Ignorieren <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Neue Titel werden für diesen Hörvorgang nicht berücksichtigt.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="neuetitel" id="r-new-append" value="after_cycle">
+                <label for="r-new-append"><span class="r-name">Nächster Durchlauf</span><span class="r-desc">Neue Titel warten bis zum nächsten Durchlauf und mischen dann mit.</span></label>
             </div>
-            <p class="field-hint">Diese Regelgruppe kommt mit dem nächsten Ausbau.</p>
         </div>
     </details>
 </section>
@@ -655,6 +650,58 @@ $("#r-norepeat").addEventListener("change", renderAbstandState);
 $("#r-abstand").addEventListener("change", renderAbstandState);
 renderStepper();
 
+/* -- real rule groups (WP3-D3) ----------------------------------------------
+   The four enabled groups map onto the run_configs rule columns. Defaults
+   equal the behaviour-neutral preset, so an untouched form creates NO config
+   and the run binds to "Ohne Wiederholungen" exactly as before. */
+
+// Each group's summary mirrors the checked option, so a collapsed group
+// still says what it will do.
+for (const group of ["skip", "manuell", "neuetitel"]) {
+    for (const input of document.querySelectorAll(`input[name="${group}"]:not(:disabled)`)) {
+        input.addEventListener("change", () => {
+            const label = document.querySelector(`label[for="${input.id}"] .r-name`);
+            const state = document.querySelector(`[data-group-state="${group}"]`);
+            if (label && state) state.textContent = `· ${label.textContent.trim()}`;
+        });
+    }
+}
+
+function collectRules() {
+    const rules = {};
+    if ($("#r-abstand").checked) {
+        // "Mindestabstand zwischen Wiederholungen": repeats allowed, the
+        // distance is the hard rule — free_repeat + min_gap (F6 guards the
+        // unsatisfiable cases, client-side via the conflict box, server-side
+        // via preflight).
+        rules.repeat_mode = "free_repeat";
+        rules.min_gap = gap.value;
+    }
+    const pick = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+    const skip = pick("skip");
+    if (skip && skip !== "consume") rules.skip_policy = skip;
+    const manual = pick("manuell");
+    if (manual && manual !== "auto_resume") rules.manual_use_policy = manual;
+    const fresh = pick("neuetitel");
+    if (fresh && fresh !== "ignore") rules.new_tracks_policy = fresh;
+    return rules;
+}
+
+/** Create (or reuse a free name for) the config carrying the chosen rules. */
+async function createConfigFor(rules) {
+    const base = `${(state.playlist?.name || "Hörvorgang").slice(0, 90)} – Regeln`;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        const name = attempt === 0 ? base : `${base} · ${attempt + 1}`;
+        try {
+            const created = await api("/api/configs", { method: "POST", body: { name, rules } });
+            return created.id;
+        } catch (err) {
+            if (err.status !== 409) throw err;   // 409 = name taken, try the next
+        }
+    }
+    throw new Error("Kein freier Name für die Konfiguration gefunden.");
+}
+
 /* -- dealing ---------------------------------------------------------------- */
 
 $("#dealBtn").addEventListener("click", async () => {
@@ -671,6 +718,11 @@ $("#dealBtn").addEventListener("click", async () => {
     const PHASE = { "reading playlist": "Playlist wird gelesen", shuffling: "Wird gemischt" };
 
     try {
+        // WP3-D3: rules chosen away from the defaults become a real config
+        // first; the run is then created bound to it (UC-07/10).
+        const rules = collectRules();
+        const configId = Object.keys(rules).length ? await createConfigFor(rules) : null;
+
         const { job_id } = await api("/api/runs", {
             method: "POST",
             body: {
@@ -682,6 +734,7 @@ $("#dealBtn").addEventListener("click", async () => {
                 // single live run regardless (the name applies only when a
                 // run is actually created) and de-duplicates taken names.
                 name: $("#runName").value.trim() || state.playlist.name || "",
+                config_id: configId,
             },
         });
 

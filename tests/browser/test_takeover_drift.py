@@ -3,20 +3,25 @@
 How the takeover is provoked
 ============================
 
-``providers/demo.py`` models exactly one simulated speaker, shared by every
-run on the process. Starting a *second* Live run therefore makes that speaker
-play a different playlist's track — which is precisely what happens when
-somebody opens Spotify and presses play on something else. The first run's
-watcher notices on its next poll and marks the run drifted. This is real
-engine behaviour (``core/engine.py`` reconcile / ``app/watcher.py``), not a
-mocked flag.
+WP3-D3 / F8 (ADR-003): the pre-D3 version of this fixture started a SECOND
+Live run to steal the shared demo speaker.  That path died with
+``idx_runs_one_playing`` — a second controller run now honestly starts
+'paused' and can no longer claim the device (SP-003: one driver per device).
+That is the product being MORE correct, not the scenario disappearing: the
+real-world trigger for state B was never "another True-Shuffle run", it was
+the LISTENER pressing play in the service's own app.
 
-The one flaky edge is that both demo playlists are prefixes of the same
-library, so run B's own advance can coincidentally land on the track run A
-had queued next, which resolves the drift as an ordinary advance. The helper
-below re-pokes run B until the banner is confirmed, the same way the design
-review's screenshot script does — a drift that has already healed is not a
-test failure, it is a race that has to be re-run.
+So the fixture now does exactly that: ``POST /api/demo/manual-play`` makes
+the demo provider's one global speaker play a track outside the run's deck —
+the same call path a real listener's manual play takes through the provider.
+The run's watcher observes it on its next poll, ``engine.reconcile`` reports
+real drift, and the F8 state machine books ``manual_detected``.  Nothing is
+mocked: reconcile, watcher, state machine and player all run production code.
+
+The legacy preset's ``manual_use_policy='auto_resume'`` only resumes when the
+foreign playback ends or returns to the plan — the simulated manual track
+keeps playing, so the drifted state holds exactly like a listener who is
+still doing their own thing (the resume/pause buttons remain the way back).
 """
 
 from __future__ import annotations
@@ -28,53 +33,53 @@ from tests.browser.conftest import DESKTOP, write_artifact_json
 
 pytestmark = pytest.mark.browser
 
+#: A library track that belongs to NO demo playlist deck under test
+#: (DEMO_PLAYLIST_SMALL = tracks[:12]); playing it is unambiguous drift.
+FOREIGN_TRACK = "demo-01000"
 
-def _provoke_takeover(page_a, page_b, run_a: int, run_b: int, attempts: int = 6) -> bool:
+
+def _provoke_takeover(page_a, run_a: int, attempts: int = 6) -> bool:
     """Return True once run A's player shows the takeover state."""
     for _ in range(attempts):
-        page_a.reload(wait_until="networkidle")
+        # The listener presses play in the service's own app (simulated).
+        page_a.evaluate(
+            """([track]) => fetch('/api/demo/manual-play', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ track_id: track }),
+               })""",
+            [FOREIGN_TRACK],
+        )
         try:
             helpers.wait_for_state_chip(page_a, helpers.STATE_B_TEXT, timeout=9_000)
             return True
         except Exception:
-            # Re-press start on run B — the same call its own button makes.
-            page_b.evaluate(
-                """([id]) => fetch(`/api/runs/${id}/start`, {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify({ device_id: 'demo-speaker' }),
-                   })""",
-                [str(run_b)],
-            )
-            page_a.wait_for_timeout(4_000)
+            page_a.wait_for_timeout(1_000)
     return False
 
 
 def _build_takeover(new_page):
-    """Two Live runs on the same demo speaker; the first one ends up drifted."""
+    """One Live run; a simulated manual play on its speaker drifts it."""
     page_a = new_page()
     run_a = helpers.start_live_run(page_a, helpers.DEMO_PLAYLIST_SMALL)
 
-    page_b = new_page()
-    run_b = helpers.start_live_run(page_b, helpers.DEMO_PLAYLIST_DIRTY)
-
-    if not _provoke_takeover(page_a, page_b, run_a, run_b):
+    if not _provoke_takeover(page_a, run_a):
         pytest.fail(
-            f"run {run_a} never reported the manual takeover after run {run_b} "
-            f"claimed the demo speaker — chip reads "
+            f"run {run_a} never reported the manual takeover after the demo "
+            f"speaker was claimed manually — chip reads "
             f"{page_a.locator('#stateChip').inner_text()!r}"
         )
-    return page_a, run_a, page_b, run_b
+    return page_a, run_a
 
 
 @pytest.fixture(scope="module")
 def taken_over(browser, demo_storage_state, live_server):
     """Set up the takeover once for the read-only assertions below.
 
-    Module scope on purpose: provoking a real drift costs two dealt runs and
-    a couple of watcher polls, and the three tests that only *read* the
-    resulting screen must not each pay for it. The two tests that resolve the
-    state use ``fresh_takeover`` instead.
+    Module scope on purpose: provoking a real drift costs a dealt run and a
+    couple of watcher polls, and the tests that only *read* the resulting
+    screen must not each pay for it. The tests that resolve the state use
+    ``fresh_takeover`` instead.
     """
     contexts = []
 
@@ -97,7 +102,7 @@ def fresh_takeover(context_factory):
 
 
 def test_takeover_banner_explains_the_state_and_offers_both_ways_out(taken_over, artifact_dir):
-    page_a, run_a, _page_b, _run_b = taken_over
+    page_a, run_a = taken_over
 
     chip = page_a.locator("#stateChip").inner_text()
     assert helpers.STATE_B_TEXT in chip, chip
@@ -126,7 +131,7 @@ def test_takeover_banner_explains_the_state_and_offers_both_ways_out(taken_over,
 
 
 def test_transport_is_blocked_while_the_service_is_in_charge(taken_over):
-    page_a, _run_a, _page_b, _run_b = taken_over
+    page_a, _run_a = taken_over
     for button in ("#mainBtn", "#nextBtn", "#prevBtn"):
         assert page_a.locator(button).get_attribute("aria-disabled") == "true", (
             f"{button} still offers to move a run the service is driving"
@@ -142,7 +147,7 @@ def test_takeover_banner_text_meets_wcag_aa_in_both_themes(taken_over):
     styleguide specimen, because only the real page proves what the listener
     sees.
     """
-    page_a, _run_a, _page_b, _run_b = taken_over
+    page_a, _run_a = taken_over
     results = []
     problems = []
     for theme in helpers.THEMES:
@@ -172,7 +177,7 @@ def test_takeover_banner_text_meets_wcag_aa_in_both_themes(taken_over):
 
 
 def test_dashboard_shows_the_takeover_on_the_run_card(taken_over):
-    page_a, run_a, _page_b, _run_b = taken_over
+    page_a, run_a = taken_over
     page_a.goto("/runs", wait_until="networkidle")
     page_a.wait_for_selector(f'[data-run-id="{run_a}"]')
     page_a.wait_for_function(
@@ -192,7 +197,7 @@ def test_dashboard_shows_the_takeover_on_the_run_card(taken_over):
 
 
 def test_resume_takes_the_control_back_to_state_a(fresh_takeover):
-    page_a, run_a, _page_b, _run_b = fresh_takeover
+    page_a, run_a = fresh_takeover
     page_a.click('#stateBanner button:has-text("Hörvorgang fortsetzen")')
     helpers.wait_for_state_chip(page_a, helpers.STATE_A_TEXT, timeout=25_000)
     assert not page_a.locator("#stateBanner").is_visible(), "the banner survived the resume"
@@ -208,7 +213,7 @@ def test_resume_takes_the_control_back_to_state_a(fresh_takeover):
 
 
 def test_leaving_it_paused_keeps_the_position(fresh_takeover):
-    page_a, run_a, _page_b, _run_b = fresh_takeover
+    page_a, run_a = fresh_takeover
     before = page_a.locator("#runMeter").get_attribute("aria-valuenow")
     page_a.click('#stateBanner button:has-text("Pausiert lassen")')
     page_a.wait_for_function(

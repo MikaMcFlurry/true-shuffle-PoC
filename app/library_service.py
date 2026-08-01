@@ -503,9 +503,9 @@ async def apply_sync_to_run(
     user_id: int,
     new_tracks_policy: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Apply a computed snapshot diff to a live run.  **WP3-D3 implements this.**
+    """Apply a computed snapshot diff to a live run (WP3-D3; UC-04/25).
 
-    The contract is fixed here so D3 extends behaviour, not the surface:
+    The D1 contract, delivered:
 
     * ``run_id`` / ``user_id`` — the run whose deck is updated; ownership is
       part of the query (a foreign run behaves like a missing one, exactly as
@@ -513,31 +513,220 @@ async def apply_sync_to_run(
     * ``diff_id`` — a ``snapshot_diffs`` row as returned by
       :func:`compute_sync_diff`; its ``to_snapshot_id`` must be a READY
       snapshot of the run's playlist, otherwise the call is a 409-shaped
-      error, never a partial apply.
+      error (``RunError``), never a partial apply.
     * ``new_tracks_policy`` — ``'include_now' | 'after_cycle' | 'ignore'``;
-      ``None`` reads the run's config (``run_configs.new_tracks_policy``,
-      legacy preset default: ``'ignore'``).
+      ``None`` reads the run's effective rules (legacy preset: ``'ignore'``).
 
-    Behaviour D3 must deliver:
+    Behaviour (RUN-09/10):
 
-    * *added* entries become ``run_tracks`` rows (``admitted`` per policy,
-      ``added_in_cycle`` = current cycle, ``source_snapshot_id`` = the diff's
-      target snapshot);
+    * *added* playable entries become ``run_tracks`` rows — ``include_now``:
+      admitted, this cycle, tail replanned right after; ``after_cycle``:
+      ``admitted=0, added_in_cycle=cycle+1`` (the F2 reset admits them);
+      ``ignore``: not created at all;
     * *removed* entries set ``run_tracks.removed_from_snapshot = 1`` — the
-      play history stays (UC-04), nothing is deleted;
-    * *re-available* entries (``availability_changed`` with ``readded``)
-      re-open their excluded rows when the run's ``unplayable_policy`` is
-      ``'retry_next_cycle'``;
-    * ``runs.snapshot_id`` moves to the diff's ``to_snapshot_id`` and
-      ``snapshot_diffs.applied_at`` is stamped — exactly once; a second apply
-      of the same diff is a no-op answered with the first result (idempotent,
-      like every v3 mutation);
-    * returns ``{"added": n, "removed": n, "reopened": n, "policy": str}``.
+      play history stays (UC-04), nothing is deleted; the tail replan takes
+      them out of the remaining order;
+    * *re-available* entries (excluded on import, playable in the target
+      snapshot) re-open — parked for the NEXT cycle — when the run's
+      ``unplayable_policy`` is ``'retry_next_cycle'`` (ERR-06);
+    * ``runs.snapshot_id`` moves to ``to_snapshot_id``;
+      ``snapshot_diffs.applied_at`` is stamped exactly once;
+    * idempotent: everything above lands in ONE transaction whose gate is a
+      ``run_events`` row under the key ``sync:{diff_id}`` — a second apply
+      of the same diff to the same run changes nothing and answers with the
+      first result.
+
+    Returns ``{"added": n, "removed": n, "reopened": n, "policy": str, …}``.
     """
-    raise NotImplementedError(
-        "apply_sync_to_run kommt mit WP3-D3 — der Diff wird bis dahin nur "
-        "angezeigt (RUN-09), nie angewendet."
+    from app import runs as runs_service  # lazy: no import cycle at module load
+    from core.engine import RunError
+    from core.selection import NEW_TRACKS_POLICIES
+
+    conn = db.get_db()
+    run = await db.get_run(run_id, user_id=user_id)
+    if run is None:
+        raise RunError("Diesen Lauf gibt es nicht.")
+
+    cur = await conn.execute(
+        """
+        SELECT d.id, d.to_snapshot_id, d.added_json, d.removed_json,
+               d.applied_at, s.status AS to_status,
+               p.user_id AS owner_id, p.provider, p.provider_playlist_id
+        FROM snapshot_diffs d
+        JOIN playlist_snapshots s ON s.id = d.to_snapshot_id
+        JOIN playlists p ON p.id = s.playlist_id
+        WHERE d.id = ?
+        """,
+        (diff_id,),
     )
+    diff = await cur.fetchone()
+    if diff is None or int(diff["owner_id"]) != user_id:
+        raise RunError("Diesen Abgleich gibt es nicht.")
+    if (
+        diff["provider"] != run["provider"]
+        or str(diff["provider_playlist_id"]) != str(run["playlist_id"])
+        or diff["to_status"] != "ready"
+    ):
+        raise RunError(
+            "Dieser Abgleich gehört nicht zur Playlist dieses Laufs — "
+            "es wurde nichts angewendet."
+        )
+
+    seq_next = int(run.get("selection_seq") or 0) + 1
+    _, _, rules = await runs_service._effective_rules(run, seq_next)
+    policy = new_tracks_policy or rules.new_tracks_policy
+    if policy not in NEW_TRACKS_POLICIES:
+        raise RunError(
+            f"Unbekannte Policy für neue Titel: {policy!r} "
+            f"(erlaubt: {', '.join(NEW_TRACKS_POLICIES)})."
+        )
+
+    # Idempotent replay: the first apply left its result in the ledger.
+    event_key = f"sync:{diff_id}"
+    existing = await db.get_event_by_key(run_id, event_key)
+    if existing is not None:
+        return {**existing["detail"], "already_applied": True}
+
+    to_snapshot = int(diff["to_snapshot_id"])
+    cycle = int(run.get("cycle") or 1)
+    keep_entries = rules.duplicate_policy == "keep_entries"
+    added_entries = json.loads(diff["added_json"] or "[]")
+    removed_entries = json.loads(diff["removed_json"] or "[]")
+
+    added = removed = reopened = 0
+    try:
+        # -- added entries (per new_tracks_policy) --------------------------
+        if policy != "ignore":
+            seen_pks: set[int] = set()
+            for entry in added_entries:
+                if entry.get("availability") != "playable":
+                    continue  # unplayable additions stay snapshot-only facts
+                track_pk = await migrations.ensure_track(
+                    conn, run["provider"], entry.get("track_id", ""),
+                    name=entry.get("name", ""), artist=entry.get("artist", ""),
+                )
+                entry_uid = entry.get("entry_uid", "") if keep_entries else ""
+                if not keep_entries:
+                    if track_pk in seen_pks:
+                        continue  # collapse: one card per title (F3)
+                    seen_pks.add(track_pk)
+                cur = await conn.execute(
+                    "SELECT id FROM run_tracks WHERE run_id = ? AND track_id = ? "
+                    "AND entry_uid = ?",
+                    (run_id, track_pk, entry_uid),
+                )
+                existing_card = await cur.fetchone()
+                admitted = 1 if policy == "include_now" else 0
+                in_cycle = cycle if policy == "include_now" else cycle + 1
+                if existing_card is not None:
+                    # The title was in the run before (e.g. removed by an
+                    # earlier sync) — it is BACK, history intact (UC-04).
+                    await conn.execute(
+                        "UPDATE run_tracks SET removed_from_snapshot = 0, "
+                        "admitted = ?, added_in_cycle = ?, source_snapshot_id = ? "
+                        "WHERE id = ?",
+                        (admitted, in_cycle, to_snapshot, int(existing_card[0])),
+                    )
+                else:
+                    await conn.execute(
+                        "INSERT INTO run_tracks (run_id, track_id, entry_uid, "
+                        "state, admitted, added_in_cycle, source_snapshot_id) "
+                        "VALUES (?, ?, ?, 'open', ?, ?, ?)",
+                        (run_id, track_pk, entry_uid, admitted, in_cycle,
+                         to_snapshot),
+                    )
+                added += 1
+
+        # -- removed entries: history stays, plan membership ends -----------
+        for entry in removed_entries:
+            cur = await conn.execute(
+                "SELECT rt.id FROM run_tracks rt JOIN tracks t ON t.id = rt.track_id "
+                "WHERE rt.run_id = ? AND t.provider = ? AND t.provider_track_id = ? "
+                "AND rt.removed_from_snapshot = 0",
+                (run_id, run["provider"], entry.get("track_id", "")),
+            )
+            for card in await cur.fetchall():
+                await conn.execute(
+                    "UPDATE run_tracks SET removed_from_snapshot = 1 WHERE id = ?",
+                    (int(card[0]),),
+                )
+                removed += 1
+
+        # -- re-available entries (ERR-06): excluded on import, playable now -
+        if rules.unplayable_policy == "retry_next_cycle":
+            cur = await conn.execute(
+                """
+                SELECT DISTINCT rt.id FROM run_tracks rt
+                JOIN snapshot_items si ON si.track_id = rt.track_id
+                WHERE rt.run_id = ? AND rt.state = 'excluded_rule'
+                  AND si.snapshot_id = ? AND si.availability = 'playable'
+                """,
+                (run_id, to_snapshot),
+            )
+            for card in await cur.fetchall():
+                await conn.execute(
+                    "UPDATE run_tracks SET state = 'open', admitted = 0, "
+                    "added_in_cycle = ?, excluded_reason = '', "
+                    "removed_from_snapshot = 0, source_snapshot_id = ? "
+                    "WHERE id = ?",
+                    (cycle + 1, to_snapshot, int(card[0])),
+                )
+                reopened += 1
+
+        # -- the run now works on the new snapshot ---------------------------
+        await conn.execute(
+            "UPDATE runs SET snapshot_id = ?, updated_at = datetime('now') "
+            "WHERE id = ?",
+            (to_snapshot, run_id),
+        )
+        # applied_at exactly once — a later apply (or another run applying
+        # the same diff) never re-stamps it.
+        await conn.execute(
+            "UPDATE snapshot_diffs SET applied_at = datetime('now') "
+            "WHERE id = ? AND applied_at IS NULL",
+            (diff_id,),
+        )
+
+        result = {
+            "run_id": run_id,
+            "diff_id": diff_id,
+            "added": added,
+            "removed": removed,
+            "reopened": reopened,
+            "policy": policy,
+            "snapshot_id": to_snapshot,
+            "replanned": 0,
+        }
+        # The gate, LAST in the transaction: if a concurrent apply won the
+        # race, this insert collides and the whole transaction rolls back.
+        await conn.execute(
+            "INSERT INTO run_events (run_id, type, cursor, reason, detail, "
+            "event_key, applied, seq) VALUES (?, 'sync_applied', ?, NULL, ?, "
+            "?, 1, ?)",
+            (run_id, int(run.get("cursor") or 0), json.dumps(result),
+             event_key, int(run.get("selection_seq") or 0)),
+        )
+        await conn.commit()
+    except Exception:
+        await conn.rollback()
+        stored = await db.get_event_by_key(run_id, event_key)
+        if stored is not None:  # lost the race — answer with the winner's result
+            return {**stored["detail"], "already_applied": True}
+        raise
+
+    # Immediate effect on the remaining order (RUN-10): new admitted cards
+    # mix in, removed cards leave.  Runs without a materialised plan (legacy
+    # imports) keep order_json as-is — honest, not partial.
+    if (policy == "include_now" and added) or removed:
+        state = runs_service._to_state(run)
+        try:
+            result["replanned"] = await runs_service._replan_tail(
+                run, state, rules
+            )
+        except RunError:
+            result["replanned"] = 0
+
+    return result
 
 
 __all__ = [

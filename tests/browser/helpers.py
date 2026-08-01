@@ -67,11 +67,36 @@ def connect_demo(page) -> None:
     page.wait_for_load_state("networkidle")
 
 
+def release_playing_slot(page) -> None:
+    """Pause whatever run currently holds the one-playing slot (WP3-D3).
+
+    Since schema v3, ``idx_runs_one_playing`` allows at most ONE actively
+    playing controller run per account (SP-003: two runs cannot drive one
+    device).  Every test in this suite shares one demo account, so a run an
+    earlier test left active would make the next dealt run start 'paused'
+    and the next start answer 409 — exactly the sentence the product gives a
+    real listener: „stoppe oder pausiere ihn zuerst".  This helper does that
+    listener's step with the product's own pause endpoint, nothing else.
+    """
+    page.evaluate(
+        """async () => {
+             const res = await fetch('/api/runs');
+             if (!res.ok) return;
+             const { runs } = await res.json();
+             for (const r of runs) {
+               if (r.status === 'active' && r.mode === 'controller') {
+                 await fetch(`/api/runs/${r.id}/pause`, { method: 'POST' });
+               }
+             }
+           }"""
+    )
+
+
 def deal_live_run(page, playlist: str = DEMO_PLAYLIST_SMALL, *, fresh: bool = True) -> int:
     """Walk /library the way a listener does and return the run's id.
 
-    Two product behaviours make this less obvious than it looks, and both are
-    deliberate in the app:
+    Three product behaviours make this less obvious than it looks, and all
+    are deliberate in the app:
 
     * Live Mode has to be chosen explicitly. Handoff needs nothing open and is
       what the mode list offers first, so a test that just presses "start"
@@ -81,8 +106,13 @@ def deal_live_run(page, playlist: str = DEMO_PLAYLIST_SMALL, *, fresh: bool = Tr
       "Neu mischen", which is the UI's own way to say "deal again" — without
       it a second call would hand back the first run, in whatever state an
       earlier test left it.
+    * At most one actively playing controller run per account (SP-003, v3):
+      the slot is released first — see :func:`release_playing_slot` — so the
+      new deck deals 'aktiv'/"Bereit" instead of being born paused behind a
+      run some earlier test left running.
     """
     page.goto("/library", wait_until="networkidle")
+    release_playing_slot(page)
     page.wait_for_selector("button.record")
     page.click('#modeCards button:has-text("Live")')
     page.click(f'button.record:has-text("{playlist}")')

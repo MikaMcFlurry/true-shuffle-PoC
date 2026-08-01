@@ -7,6 +7,7 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
+import aiosqlite
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -15,6 +16,8 @@ from app.accounts import AccountNotConnected
 from app.deps import ensure_session_user, http_error, require_run, require_user_id
 from app.watcher import watcher
 from core.models import AdvanceReason, PlaylistRef, RunMode, RunStatus
+from core.selection import NEW_TRACKS_POLICIES, Candidate, Rules
+from core.selection import preflight as rules_preflight
 from providers import planned
 from providers.base import PlaybackControl, ProviderError, ProviderQuotaError
 from providers.registry import all_providers
@@ -222,6 +225,228 @@ async def player_config(request: Request, provider: str):
             "config": session.provider.browser_config(session.token),
         }
     )
+
+
+# ---------------------------------------------------------------------------
+# Configs — the rule layer's write side (WP3-D3: UC-07..10, 27..29)
+# ---------------------------------------------------------------------------
+
+def _config_payload(row: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "kind": row["kind"],
+        "origin_config_id": row.get("origin_config_id"),
+        "current_version": row["current_version"],
+        "config_version_id": row["config_version_id"],
+        "rules": json.loads(row["rules_json"]),
+        "rules_hash": row["rules_hash"],
+        "created_at": row.get("created_at", ""),
+        "updated_at": row.get("updated_at", ""),
+        "used_by_runs": row.get("used_by_runs", 0),
+    }
+
+
+def _merge_rules(base: Rules, patch: Any) -> Rules:
+    """Merge a partial rules dict over *base* and validate — 400 on nonsense.
+
+    Unknown keys, wrong types and out-of-domain values are all client
+    errors with the engine's own German sentences; nothing invalid ever
+    reaches ``run_config_versions``.
+    """
+    if patch is None:
+        patch = {}
+    if not isinstance(patch, dict):
+        raise HTTPException(
+            status_code=400, detail="rules muss ein JSON-Objekt sein."
+        )
+    try:
+        merged = Rules.from_dict({**base.to_dict(), **patch})
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    conflicts = merged.validate()
+    if conflicts:
+        raise HTTPException(
+            status_code=400,
+            detail="; ".join(c.message for c in conflicts),
+        )
+    return merged
+
+
+async def _owned_config(user_id: int, config_id: int) -> Dict[str, Any]:
+    """Ownership is part of the lookup — a foreign config is a 404, not a 403
+    (the same rule as require_run: never confirm that the id exists)."""
+    cfg = await db.get_config(config_id)
+    if cfg is None or int(cfg["user_id"]) != user_id:
+        raise HTTPException(
+            status_code=404, detail="Diese Konfiguration gibt es nicht."
+        )
+    return cfg
+
+
+@router.get("/configs")
+async def list_configs(request: Request):
+    """Every preset of the caller, with frozen current rules + usage count."""
+    user_id = await require_user_id(request)
+    rows = await db.list_configs(user_id)
+    return JSONResponse({"configs": [_config_payload(r) for r in rows]})
+
+
+@router.post("/configs")
+async def create_config(request: Request):
+    """Create a preset (UC-07/10): ``{"name": …, "rules": {…}}``.
+
+    ``rules`` is a partial dict over the behaviour-neutral defaults; the new
+    preset gets its frozen version 1.  A taken name answers 409.
+    """
+    user_id = await require_user_id(request)
+    body = await _json(request)
+    name = str(body.get("name") or "").strip()[:120]
+    if not name:
+        raise HTTPException(status_code=400, detail="name wird gebraucht.")
+    rules = _merge_rules(Rules(), body.get("rules"))
+    try:
+        config_id = await db.create_config(user_id, name, rules)
+    except aiosqlite.IntegrityError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Eine Konfiguration namens „{name}“ gibt es schon.",
+        ) from exc
+    cfg = await db.get_config(config_id)
+    return JSONResponse(_config_payload({**cfg, "used_by_runs": 0}),
+                        status_code=201)
+
+
+@router.get("/configs/{config_id}")
+async def get_config(request: Request, config_id: int):
+    user_id = await require_user_id(request)
+    cfg = await _owned_config(user_id, config_id)
+    return JSONResponse(_config_payload(cfg))
+
+
+@router.patch("/configs/{config_id}")
+async def patch_config(request: Request, config_id: int):
+    """Edit a preset (UC-27 preset side): a rules patch freezes a NEW version
+    and bumps ``current_version`` — old versions stay for reproducibility.
+    Runs already bound to an older version keep it (their bindings decide)."""
+    user_id = await require_user_id(request)
+    cfg = await _owned_config(user_id, config_id)
+    body = await _json(request)
+
+    if "rules" in body:
+        merged = _merge_rules(Rules.from_json(cfg["rules_json"]), body["rules"])
+        await db.add_config_version(config_id, merged)
+    name = str(body.get("name") or "").strip()[:120]
+    if name and name != cfg["name"]:
+        try:
+            await db.rename_config(config_id, name)
+        except aiosqlite.IntegrityError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Eine Konfiguration namens „{name}“ gibt es schon.",
+            ) from exc
+    fresh = await db.get_config(config_id)
+    return JSONResponse(_config_payload(fresh))
+
+
+@router.post("/configs/{config_id}/duplicate")
+async def duplicate_config(request: Request, config_id: int):
+    """UC-28: copy a preset as the starting point for a variant.
+
+    The copy records its ancestry (``origin_config_id``) and starts at
+    version 1 with the source's CURRENT rules.  Track-bound facts
+    (favourites, exclusions) live on runs and never travel (F7/UC-29).
+    """
+    user_id = await require_user_id(request)
+    source = await _owned_config(user_id, config_id)
+    body = await _json(request)
+    base_name = (
+        str(body.get("name") or "").strip()[:110] or f"{source['name']} (Kopie)"
+    )
+    rules = Rules.from_json(source["rules_json"])
+
+    name = base_name
+    for attempt in range(2, 30):
+        try:
+            new_id = await db.create_config(
+                user_id, name, rules, origin_config_id=config_id
+            )
+            break
+        except aiosqlite.IntegrityError:
+            name = f"{base_name} · {attempt}"
+    else:  # pragma: no cover — 28 collisions in a row
+        raise HTTPException(
+            status_code=409, detail="Kein freier Name für die Kopie gefunden."
+        )
+    cfg = await db.get_config(new_id)
+    return JSONResponse(_config_payload({**cfg, "used_by_runs": 0}),
+                        status_code=201)
+
+
+@router.post("/runs/preflight")
+async def run_preflight(request: Request):
+    """RUN-05: rule conflicts BEFORE a run starts, with concrete corrections.
+
+    Body: ``{"provider", "playlist_id", "config_id"?, "rules"?,
+    "track_count"?}`` — rules patch over the config (or the defaults).  The
+    candidate count comes from the newest ready snapshot when one exists
+    (collapse-aware); otherwise from the client's ``track_count`` hint;
+    otherwise only the value-domain checks can run — said honestly via
+    ``candidate_source``.
+    """
+    user_id = await require_user_id(request)
+    body = await _json(request)
+    provider = str(body.get("provider") or "")
+    playlist_id = str(body.get("playlist_id") or "")
+
+    base = Rules()
+    raw_config = body.get("config_id")
+    if raw_config is not None:
+        try:
+            cfg = await _owned_config(user_id, int(raw_config))
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=400, detail="config_id muss eine Zahl sein."
+            ) from exc
+        base = Rules.from_json(cfg["rules_json"])
+    rules = _merge_rules(base, body.get("rules"))
+
+    count: Optional[int] = None
+    source = None
+    if provider and playlist_id:
+        snapshot = await db.latest_ready_snapshot(user_id, provider, playlist_id)
+        if snapshot is not None:
+            items = await db.snapshot_items_with_tracks(int(snapshot["id"]))
+            playable = [i for i in items if i["availability"] == "playable"]
+            if rules.duplicate_policy == "collapse":
+                count = len({i["track_pk"] for i in playable})
+            else:
+                count = len(playable)
+            source = "snapshot"
+    if count is None:
+        hint = body.get("track_count")
+        if isinstance(hint, int) and not isinstance(hint, bool) and hint >= 0:
+            count = hint
+            source = "hint"
+
+    candidates = [
+        Candidate(run_track_id=i, track_key=f"preflight:{i}")
+        for i in range(count or 0)
+    ]
+    conflicts = (
+        rules_preflight(candidates, rules) if count is not None
+        else rules.validate()
+    )
+    return JSONResponse({
+        "conflicts": [
+            {"code": c.code, "field": c.field, "message": c.message,
+             "suggestion": c.suggestion}
+            for c in conflicts
+        ],
+        "candidate_count": count,
+        "candidate_source": source,
+        "rules": rules.to_dict(),
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -449,6 +674,21 @@ async def run_state(request: Request, run_id: int):
     # WP3-D2: the run's own identity (UC-16) and cycle count (UC-15/F2).
     payload["name"] = run.get("name", "")
     payload["cycle"] = run.get("cycle", 1)
+    # WP3-D3 (F8): the manual-use state — 'awaiting_decision' is UX-Zustand C
+    # and the player renders the decision banner from exactly this field.
+    payload["manual_state"] = run.get("manual_state") or "none"
+    # Deck identity for the "Als Nächstes" actions (UC-08/20/21): the
+    # favourite / exclude buttons need the run_track_id behind each row.
+    ids = [e["id"] for e in [payload.get("current"), *payload.get("upcoming", [])] if e]
+    deck = await db.run_tracks_by_provider_ids(run_id, ids)
+    for entry in [payload.get("current"), *payload.get("upcoming", [])]:
+        if not entry:
+            continue
+        card = deck.get(entry["id"])
+        if card:
+            entry["run_track_id"] = card["id"]
+            entry["favorite"] = bool(card["favorite"])
+            entry["state"] = card["state"]
     return JSONResponse(payload)
 
 
@@ -614,6 +854,130 @@ async def run_resume(request: Request, run_id: int):
     return JSONResponse({"status": state.status.value, "cursor": state.cursor})
 
 
+@router.post("/runs/{run_id}/rules")
+async def run_rules(request: Request, run_id: int):
+    """UC-27: change the rules of THIS run — versioned, effective-from-seq.
+
+    Body: ``{"rules": {…partial…}}``.  Freezes a run-local config version,
+    binds it from the next selection on, and replans only the tail — played
+    history and the running card stay untouched.
+    """
+    run = await require_run(request, run_id)
+    body = await _json(request)
+    patch = body.get("rules")
+    if not isinstance(patch, dict) or not patch:
+        raise HTTPException(
+            status_code=400,
+            detail="rules (ein nicht-leeres JSON-Objekt) wird gebraucht.",
+        )
+    # Same lock as advance/reset: the watcher must not consume plan rows
+    # while the tail underneath them is being replaced.
+    async with runs.advance_lock(run_id):
+        state = await runs.get_state(run_id, run["user_id"])
+        if state is None:
+            raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+        try:
+            result = await runs.change_run_rules(state, patch)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return JSONResponse(result)
+
+
+@router.post("/runs/{run_id}/tracks/{run_track_id}/favorite")
+@router.delete("/runs/{run_id}/tracks/{run_track_id}/favorite")
+async def run_track_favorite(request: Request, run_id: int, run_track_id: int):
+    """UC-08: POST marks the card as a favourite, DELETE unmarks it."""
+    run = await require_run(request, run_id)
+    favorite = request.method == "POST"
+    result = await runs.mark_favorite(
+        run["user_id"], run_id, run_track_id, favorite
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail="Diesen Titel gibt es hier nicht.")
+    return JSONResponse(result)
+
+
+@router.post("/runs/{run_id}/tracks/{run_track_id}/exclude")
+@router.delete("/runs/{run_id}/tracks/{run_track_id}/exclude")
+async def run_track_exclude(request: Request, run_id: int, run_track_id: int):
+    """UC-20/21: POST excludes the card for this run, DELETE takes it back.
+
+    Immediate effect (RUN-08): the remaining order is replanned right away.
+    Import exclusions are not user-revocable here (409 via RunError).
+    """
+    run = await require_run(request, run_id)
+    excluded = request.method == "POST"
+    async with runs.advance_lock(run_id):
+        state = await runs.get_state(run_id, run["user_id"])
+        if state is None:
+            raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+        result = await runs.set_track_exclusion(state, run_track_id, excluded)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Diesen Titel gibt es hier nicht.")
+    return JSONResponse(result)
+
+
+@router.post("/runs/{run_id}/apply-sync")
+async def run_apply_sync(request: Request, run_id: int):
+    """UC-04 / RUN-10: apply a computed sync diff to THIS run.
+
+    Body: ``{"diff_id": …, "policy"?: "include_now"|"after_cycle"|"ignore"}``
+    — without ``policy`` the run's effective ``new_tracks_policy`` decides.
+    Idempotent: a second apply of the same diff answers with the first
+    result.  A diff of another playlist answers 409 (RunError handler).
+    """
+    run = await require_run(request, run_id)
+    body = await _json(request)
+    try:
+        diff_id = int(body.get("diff_id"))
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400, detail="diff_id (eine Zahl) wird gebraucht."
+        ) from exc
+    policy = body.get("policy")
+    if policy is not None and policy not in NEW_TRACKS_POLICIES:
+        raise HTTPException(
+            status_code=400,
+            detail=("policy muss include_now, after_cycle oder ignore sein — "
+                    "oder weggelassen werden."),
+        )
+    # Same lock as advance/reset: the tail replan must not race the watcher.
+    async with runs.advance_lock(run_id):
+        result = await library_service.apply_sync_to_run(
+            run_id, diff_id=diff_id, user_id=run["user_id"],
+            new_tracks_policy=policy,
+        )
+    return JSONResponse(result)
+
+
+@router.post("/runs/{run_id}/manual-decision")
+async def run_manual_decision(request: Request, run_id: int):
+    """UX-Zustand C (F8, ADR-003): answer the 'ask' policy's question.
+
+    ``{"action": "resume"}`` → True Shuffle takes playback back;
+    ``{"action": "pause"}`` → the run pauses at exactly this card.
+    A run that is not awaiting a decision answers 409 (RunError handler)."""
+    run = await require_run(request, run_id)
+    body = await _json(request)
+    action = str(body.get("action") or "")
+    if action not in ("resume", "pause"):
+        raise HTTPException(
+            status_code=400,
+            detail="action muss 'resume' oder 'pause' sein.",
+        )
+    session = await _session(run["user_id"], run["provider"])
+    try:
+        result = await runs.manual_decision(session, run_id, run["user_id"], action)
+    except ProviderError as exc:
+        raise http_error(exc) from exc
+    if result is None:
+        raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+    if action == "resume":
+        await watcher.ensure(run_id, run["user_id"])
+    result["watcher"] = watcher.status(run_id)
+    return JSONResponse(result)
+
+
 @router.post("/runs/{run_id}/reset")
 async def run_reset(request: Request, run_id: int):
     """F2 (ADR-003) / UC-15: next cycle — history stays, deck re-opens.
@@ -726,6 +1090,32 @@ async def _decision_payload(session, run_id: int, user_id: int, decision) -> Dic
         }
     )
     return payload
+
+
+@router.post("/demo/manual-play")
+async def demo_manual_play(request: Request):
+    """Demo-only: simulate the listener starting a track in the service's
+    OWN app — the honest trigger for the F8 manual-use detection.
+
+    The demo device is one global simulated speaker; playing something on it
+    is exactly what a real listener does when they take Spotify over by
+    hand, so the takeover browser tests provoke REAL drift through
+    ``engine.reconcile`` instead of mocking a flag.  404 unless the demo
+    connector is enabled — this surface does not exist in a real build.
+    """
+    from app.config import get_settings
+    from providers.registry import try_get_provider
+
+    if not get_settings().enable_demo_provider:
+        raise HTTPException(status_code=404, detail="Das gibt es nicht.")
+    await require_user_id(request)
+    provider = try_get_provider("demo")
+    if provider is None:  # pragma: no cover — registry always carries demo
+        raise HTTPException(status_code=404, detail="Das gibt es nicht.")
+    body = await _json(request)
+    track_id = str(body.get("track_id") or "demo-01000")
+    await provider.play(None, track_ids=[track_id], device_id="demo-speaker")
+    return JSONResponse({"status": "ok", "track_id": track_id})
 
 
 @router.get("/health")

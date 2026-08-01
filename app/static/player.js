@@ -159,6 +159,18 @@ const ICON_STOPPED = {
   inner: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
 };
 
+/* WP3-D3 (UC-08/20): per-row favourite / exclude glyphs in "Als Nächstes". */
+const ICON_STAR = {
+  viewBox: "0 0 24 24",
+  attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linejoin": "round" },
+  inner: '<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
+};
+const ICON_BAN = {
+  viewBox: "0 0 24 24",
+  attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round" },
+  inner: '<circle cx="12" cy="12" r="8.2"/><path d="M6.4 6.4l11.2 11.2"/>',
+};
+
 const REASON_TEXT = {
   local_file: "lokale Datei",
   not_playable: "hier nicht verfügbar",
@@ -442,18 +454,55 @@ export class RunPlayer {
   }
 
   /**
-   * A/B/D, derived only from data this page has actually confirmed
-   * (UX_IMPL_SPEC.md, "Player-Systemzustands-Ableitung"). C has no producer
-   * in this phase and is intentionally never returned here.
+   * A/B/C/D, derived only from data this page has actually confirmed
+   * (UX_IMPL_SPEC.md, "Player-Systemzustands-Ableitung"). C gained its
+   * producer with WP3-D3: the server's F8 state machine parks a run in
+   * manual_state='awaiting_decision' under the 'ask' policy, and only that
+   * confirmed field ever yields "c" here.
    */
   _deriveSystemState() {
     const s = this.state;
     if (!s || s.status !== "active") return null;
+    if (s.manual_state === "awaiting_decision") return "c";
     if (this.isRemote && this.noDevices === true) return "d";
     const w = s.watcher || {};
     if (w.drifted) return "b";
     if (w.watching) return "a";
     return "ready";
+  }
+
+  /** UX-Zustand C: answer the 'ask' policy's question (F8, WP3-D3). */
+  async decideManual(action) {
+    await api(`/api/runs/${this.runId}/manual-decision`, {
+      method: "POST", body: { action },
+    });
+    this.playing = action === "resume";
+    if (!this.playing) { this.stopPolling(); this.stopPositionTimer(); }
+    this.state = await api(`/api/runs/${this.runId}`);
+    this.render();
+    if (this.playing) this.startPolling();
+  }
+
+  /** UC-08: run-scoped favourite toggle for one "Als Nächstes" row. */
+  async toggleFavorite(entry) {
+    await api(`/api/runs/${this.runId}/tracks/${entry.run_track_id}/favorite`, {
+      method: entry.favorite ? "DELETE" : "POST",
+    });
+    this.state = await api(`/api/runs/${this.runId}`);
+    this.render();
+  }
+
+  /** UC-20: exclude one row for this run — effective immediately (RUN-08). */
+  async excludeTrack(entry) {
+    await api(`/api/runs/${this.runId}/tracks/${entry.run_track_id}/exclude`, {
+      method: "POST",
+    });
+    this.state = await api(`/api/runs/${this.runId}`);
+    this.render();
+    this.notify(
+      `„${entry.name || "Titel"}“ ist für diesen Hörvorgang ausgeschlossen und kommt nicht mehr an die Reihe.`,
+      "note-ok", "Ausgeschlossen"
+    );
   }
 
   renderCover() {
@@ -489,6 +538,22 @@ export class RunPlayer {
             el("button", { class: "btn btn-primary", type: "button", onClick: () => this.guard(() => this.start()) }, "Hörvorgang fortsetzen"),
             el("button", { class: "btn btn-secondary", type: "button", onClick: () => this.guard(() => this.pause()) }, "Pausiert lassen")),
           el("p", { class: "banner-policy" }, `Sobald du „Hörvorgang fortsetzen" wählst, übernimmt True Shuffle die Wiedergabe wieder.`)));
+    } else if (systemState === "c") {
+      // UX-Zustand C (F8 'ask'): the run holds until the listener decides.
+      banner.className = "banner banner-c";
+      banner.setAttribute("role", "status");
+      banner.replaceChildren(
+        svgIcon(STATE_ICON.c.viewBox, STATE_ICON.c.inner, STATE_ICON.c.attrs),
+        el("div", {},
+          el("p", { class: "banner-title" }, "Wie soll es weitergehen?"),
+          el("p", { class: "banner-body" },
+            `Du hast ${this.provider.display_name} zwischendurch selbst genutzt; das ist vorbei. Dein Hörvorgang steht bei `,
+            el("b", {}, `${formatCount(s.cursor)} von ${formatCount(s.total)} Titeln`),
+            " und wartet auf deine Entscheidung. Nichts geht verloren."),
+          el("div", { class: "banner-actions" },
+            el("button", { class: "btn btn-primary", type: "button", onClick: () => this.guard(() => this.decideManual("resume")) }, "Hörvorgang fortsetzen"),
+            el("button", { class: "btn btn-secondary", type: "button", onClick: () => this.guard(() => this.decideManual("pause")) }, "Pausiert lassen")),
+          el("p", { class: "banner-policy" }, `Deine Regel „Nachfragen“: True Shuffle übernimmt erst wieder, wenn du es sagst.`)));
     } else if (systemState === "d") {
       banner.className = "banner banner-d";
       banner.setAttribute("role", "status");
@@ -616,6 +681,10 @@ export class RunPlayer {
         stateChip.className = "chip chip-b";
         stateChip.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), `${this.provider.display_name} manuell übernommen`);
         if (stateChipMini) { stateChipMini.className = "chip chip-b"; stateChipMini.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), `${this.provider.display_name} manuell übernommen`); }
+      } else if (systemState === "c") {
+        stateChip.className = "chip chip-c";
+        stateChip.replaceChildren(svgIcon(STATE_ICON.c.viewBox, STATE_ICON.c.inner, STATE_ICON.c.attrs), "Wartet auf deine Entscheidung");
+        if (stateChipMini) { stateChipMini.className = "chip chip-c"; stateChipMini.replaceChildren(svgIcon(STATE_ICON.c.viewBox, STATE_ICON.c.inner, STATE_ICON.c.attrs), "Wartet auf deine Entscheidung"); }
       } else if (systemState === "d") {
         stateChip.className = "chip chip-d";
         stateChip.replaceChildren(svgIcon(STATE_ICON.d.viewBox, STATE_ICON.d.inner, STATE_ICON.d.attrs), "Kein aktives Gerät");
@@ -658,12 +727,14 @@ export class RunPlayer {
 
     // -- transport --------------------------------------------------------
     const blockedByDrift = systemState === "b";
+    const blockedByAsk = systemState === "c";
     const blockedByNoDevice = systemState === "d";
-    const disabled = terminal || blockedByDrift || blockedByNoDevice;
+    const disabled = terminal || blockedByDrift || blockedByAsk || blockedByNoDevice;
     let reason = "";
     if (done) reason = "Dieser Hörvorgang ist abgeschlossen — nichts mehr zu spielen.";
     else if (cancelled) reason = "Dieser Hörvorgang wurde beendet.";
     else if (blockedByDrift) reason = `Die Steuerung liegt gerade bei ${this.provider.display_name} — setze den Hörvorgang fort, um sie zurückzuholen.`;
+    else if (blockedByAsk) reason = "Dein Hörvorgang wartet auf deine Entscheidung — oben im Banner.";
     else if (blockedByNoDevice) reason = `Kein ${this.provider.display_name}-Gerät aktiv. Aktualisiere die Geräteliste oben.`;
 
     const mainBtn = $("#mainBtn");
@@ -706,12 +777,34 @@ export class RunPlayer {
       $("#upnextRead").textContent = upcoming.length ? ` · ${formatCount(upcoming.length)} von ${formatCount(s.remaining)}` : "";
       $("#upnext").replaceChildren(
         ...(upcoming.length
-          ? upcoming.map((t) =>
-              el("li", {},
+          ? upcoming.map((t) => {
+              const row = el("li", {},
                 el("span", { class: "u-pos tabular" }, formatCount(t.index + 1)),
                 el("div", {},
                   el("span", { class: "u-name" }, t.name || `Titel ${formatCount(t.index + 1)}`),
-                  el("span", { class: "u-meta" }, [t.artist, formatDuration(t.duration_ms)].filter(Boolean).join(" · ")))))
+                  el("span", { class: "u-meta" }, [t.artist, formatDuration(t.duration_ms)].filter(Boolean).join(" · "))));
+              // WP3-D3 (UC-08/20): per-row favourite / exclude, only when the
+              // server named the deck card behind the row (v3 runs do; a
+              // legacy import has no cards and honestly shows no buttons).
+              if (t.run_track_id) {
+                const label = t.name || `Titel ${formatCount(t.index + 1)}`;
+                row.append(el("span", { class: "u-actions" },
+                  el("button", {
+                    class: `u-act${t.favorite ? " is-on" : ""}`, type: "button",
+                    "aria-pressed": String(Boolean(t.favorite)),
+                    "aria-label": t.favorite ? `Favorit entfernen: ${label}` : `Als Favorit markieren: ${label}`,
+                    title: t.favorite ? "Favorit entfernen" : "Als Favorit markieren",
+                    onClick: () => this.guard(() => this.toggleFavorite(t)),
+                  }, svgIcon(ICON_STAR.viewBox, ICON_STAR.inner, ICON_STAR.attrs)),
+                  el("button", {
+                    class: "u-act", type: "button",
+                    "aria-label": `Titel ausschließen: ${label}`,
+                    title: "Für diesen Hörvorgang ausschließen",
+                    onClick: () => this.guard(() => this.excludeTrack(t)),
+                  }, svgIcon(ICON_BAN.viewBox, ICON_BAN.inner, ICON_BAN.attrs))));
+              }
+              return row;
+            })
           : [el("li", {}, el("span", { class: "u-meta" }, "Keine weiteren Titel in der Vorschau."))])
       );
     }

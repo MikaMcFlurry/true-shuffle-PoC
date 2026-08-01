@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import aiosqlite
 
@@ -574,6 +574,9 @@ async def update_run(
     order: Optional[List[str]] = None,
     cycle: Optional[int] = None,
     plan_version: Optional[int] = None,
+    manual_state: Optional[str] = None,
+    manual_since: Optional[str] = None,
+    clear_manual_since: bool = False,
     clear_device: bool = False,
     archive: bool = False,
 ) -> None:
@@ -582,7 +585,9 @@ async def update_run(
     WP3-D2 additions: ``cycle``/``plan_version`` (F2 reset), ``clear_device``
     (F1 stop releases the device — ``device_id=None`` has always meant "leave
     it alone", so clearing needs its own flag) and ``archive`` (UC-26 soft
-    delete stamps ``archived_at``).
+    delete stamps ``archived_at``).  WP3-D3 adds ``manual_state`` /
+    ``manual_since`` (the F8 state machine; clearing ``manual_since`` needs
+    its own flag for the same reason ``clear_device`` does).
 
     May raise ``aiosqlite.IntegrityError`` (e.g. ``idx_runs_one_playing`` on a
     resume to 'active'); the failed statement is rolled back before re-raising
@@ -616,6 +621,14 @@ async def update_run(
     if plan_version is not None:
         sets.append("plan_version = ?")
         params.append(plan_version)
+    if manual_state is not None:
+        sets.append("manual_state = ?")
+        params.append(manual_state)
+    if manual_since is not None:
+        sets.append("manual_since = ?")
+        params.append(manual_since)
+    if clear_manual_since:
+        sets.append("manual_since = NULL")
     if archive:
         sets.append("archived_at = datetime('now')")
     params.append(run_id)
@@ -672,8 +685,162 @@ async def close_live_runs(
 
 
 # ---------------------------------------------------------------------------
-# Configs (rule layer — read side; the write side comes with WP3-D3)
+# Configs (rule layer — UC-07..10, 27..29; WP3-D3)
 # ---------------------------------------------------------------------------
+
+async def list_configs(user_id: int) -> List[Dict[str, Any]]:
+    """Every preset of this user, with its frozen current rules and how many
+    (non-archived) runs use it.  Run-local rule containers (kind='run_local',
+    UC-27) are deliberately not listed — they are bookkeeping, not presets."""
+    db = get_db()
+    cur = await db.execute(
+        """
+        SELECT c.*, v.id AS config_version_id, v.rules_json, v.rules_hash,
+               (SELECT count(*) FROM runs r
+                WHERE r.config_id = c.id AND r.archived_at IS NULL) AS used_by_runs
+        FROM run_configs c
+        JOIN run_config_versions v
+          ON v.config_id = c.id AND v.version = c.current_version
+        WHERE c.user_id = ? AND c.kind = 'preset'
+        ORDER BY c.name
+        """,
+        (user_id,),
+    )
+    return [dict(r) for r in await cur.fetchall()]
+
+
+async def create_config(
+    user_id: int,
+    name: str,
+    rules: Any,
+    *,
+    kind: str = "preset",
+    origin_config_id: Optional[int] = None,
+) -> int:
+    """Create a config: rule columns + frozen version 1 in one transaction.
+
+    *rules* is a :class:`core.selection.Rules` — its field names ARE the rule
+    columns of ``run_configs`` (Blueprint §2.2), and its canonical JSON/hash
+    become the immutable ``run_config_versions`` row.  Raises
+    ``aiosqlite.IntegrityError`` when the preset name is taken
+    (``idx_configs_name``) — the caller's 409.
+    """
+    db = get_db()
+    fields = rules.to_dict()
+    columns = ", ".join(fields)
+    placeholders = ", ".join("?" * len(fields))
+    try:
+        cur = await db.execute(
+            f"INSERT INTO run_configs (user_id, name, kind, origin_config_id, "
+            f"{columns}) VALUES (?, ?, ?, ?, {placeholders})",
+            (user_id, name, kind, origin_config_id, *fields.values()),
+        )
+        config_id = int(cur.lastrowid or 0)
+        await db.execute(
+            "INSERT INTO run_config_versions (config_id, version, rules_json, "
+            "rules_hash) VALUES (?, 1, ?, ?)",
+            (config_id, rules.to_json(), rules.rules_hash()),
+        )
+    except aiosqlite.Error:
+        await db.rollback()
+        raise
+    await db.commit()
+    return config_id
+
+
+async def add_config_version(config_id: int, rules: Any) -> Dict[str, Any]:
+    """Freeze a NEW rule version and make it current (PATCH semantics, UC-27).
+
+    The previous version rows stay untouched — a rule change never mutates
+    the past, it appends (reproducibility invariant).  Returns
+    ``{"config_version_id", "version"}``.
+    """
+    db = get_db()
+    cur = await db.execute(
+        "SELECT COALESCE(MAX(version), 0) + 1 FROM run_config_versions "
+        "WHERE config_id = ?",
+        (config_id,),
+    )
+    version = int((await cur.fetchone())[0])
+    fields = rules.to_dict()
+    sets = ", ".join(f"{column} = ?" for column in fields)
+    try:
+        cur = await db.execute(
+            "INSERT INTO run_config_versions (config_id, version, rules_json, "
+            "rules_hash) VALUES (?, ?, ?, ?)",
+            (config_id, version, rules.to_json(), rules.rules_hash()),
+        )
+        version_id = int(cur.lastrowid or 0)
+        await db.execute(
+            f"UPDATE run_configs SET {sets}, current_version = ?, "
+            "updated_at = datetime('now') WHERE id = ?",
+            (*fields.values(), version, config_id),
+        )
+    except aiosqlite.Error:
+        await db.rollback()
+        raise
+    await db.commit()
+    return {"config_version_id": version_id, "version": version}
+
+
+async def rename_config(config_id: int, name: str) -> None:
+    """Rename a config.  ``idx_configs_name`` may reject (caller's 409)."""
+    db = get_db()
+    try:
+        await db.execute(
+            "UPDATE run_configs SET name = ?, updated_at = datetime('now') "
+            "WHERE id = ?",
+            (name, config_id),
+        )
+    except aiosqlite.Error:
+        await db.rollback()
+        raise
+    await db.commit()
+
+
+async def run_local_config_version(
+    user_id: int,
+    run_id: int,
+    rules: Any,
+    *,
+    origin_config_id: Optional[int] = None,
+) -> Dict[str, Any]:
+    """The run-local rule container for UC-27 rule changes.
+
+    One ``run_configs`` row (kind='run_local') per run holds every mid-run
+    rule version; the run's preset binding (``runs.config_id``) stays
+    untouched, so the preset itself is never mutated by a run-local change
+    (F7: presets stay transferable).  Returns the NEW frozen version:
+    ``{"config_id", "config_version_id", "version"}``.
+    """
+    db = get_db()
+    name = f"Lauf {run_id} – eigene Regeln"
+    cur = await db.execute(
+        "SELECT id FROM run_configs WHERE user_id = ? AND kind = 'run_local' "
+        "AND name = ?",
+        (user_id, name),
+    )
+    row = await cur.fetchone()
+    if row is None:
+        config_id = await create_config(
+            user_id, name, rules, kind="run_local",
+            origin_config_id=origin_config_id,
+        )
+        cur = await db.execute(
+            "SELECT id FROM run_config_versions WHERE config_id = ? AND version = 1",
+            (config_id,),
+        )
+        version_row = await cur.fetchone()
+        assert version_row is not None
+        return {
+            "config_id": config_id,
+            "config_version_id": int(version_row[0]),
+            "version": 1,
+        }
+    config_id = int(row[0])
+    added = await add_config_version(config_id, rules)
+    return {"config_id": config_id, **added}
+
 
 async def get_config(config_id: int) -> Optional[Dict[str, Any]]:
     """One ``run_configs`` row plus the frozen rules of its current version.
@@ -755,6 +922,26 @@ async def list_run_tracks(
     sql += " ORDER BY rt.id"
     cur = await db.execute(sql, params)
     return [dict(r) for r in await cur.fetchall()]
+
+
+async def admit_pending_tracks(run_id: int, cycle: int) -> int:
+    """Admit cards that were parked for a later cycle (WP3-D3).
+
+    UC-25 'after_cycle' and ERR-06 'retry_next_cycle' both park a card as
+    ``state='open', admitted=0, added_in_cycle=N`` — when cycle N starts
+    (F2 reset), they join the deck.  Import exclusions carry ``excluded_*``
+    states and are untouched; removed-from-snapshot cards stay out.
+    Returns the number of newly admitted cards.
+    """
+    db = get_db()
+    cur = await db.execute(
+        "UPDATE run_tracks SET admitted = 1 WHERE run_id = ? AND admitted = 0 "
+        "AND state = 'open' AND removed_from_snapshot = 0 "
+        "AND added_in_cycle <= ?",
+        (run_id, cycle),
+    )
+    await db.commit()
+    return int(cur.rowcount or 0)
 
 
 async def reopen_run_tracks(run_id: int) -> int:
@@ -853,6 +1040,313 @@ async def set_plan_state(run_id: int, seq: int, state: str) -> None:
         (state, run_id, seq),
     )
     await db.commit()
+
+
+async def plan_row_at(run_id: int, index: int) -> Optional[Dict[str, Any]]:
+    """The plan row cursor position *index* maps onto (WP3-D3).
+
+    Cursor N is the N-th NON-DISCARDED row ordered by seq: a reset discards
+    everything and writes a fresh plan (cursor 0 = first new row), a tail
+    replan discards only the future rows and appends the new tail after
+    ``max(seq)`` — either way the surviving rows in seq order ARE the current
+    ``order_json``, index for index.  ``None`` for runs without plan rows
+    (pre-D2 fixtures, imported runs): order_json stays their only order.
+    """
+    db = get_db()
+    cur = await db.execute(
+        "SELECT * FROM run_plan WHERE run_id = ? AND state != 'discarded' "
+        "ORDER BY seq LIMIT 1 OFFSET ?",
+        (run_id, index),
+    )
+    row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+async def list_active_plan(run_id: int) -> List[Dict[str, Any]]:
+    """Every non-discarded plan row in seq order — the plan twin of order_json."""
+    db = get_db()
+    cur = await db.execute(
+        "SELECT * FROM run_plan WHERE run_id = ? AND state != 'discarded' "
+        "ORDER BY seq",
+        (run_id,),
+    )
+    return [dict(r) for r in await cur.fetchall()]
+
+
+async def discard_planned_rows(run_id: int) -> int:
+    """Discard the FUTURE of the plan (state='planned') — tail replan (UC-27).
+
+    Consumed and current rows keep their state: what was played stays played,
+    and the card that is playing right now is not yanked mid-track.  Discard,
+    never delete — the old tail remains evidence (RUN-04/05).
+    """
+    db = get_db()
+    cur = await db.execute(
+        "UPDATE run_plan SET state = 'discarded' "
+        "WHERE run_id = ? AND state = 'planned'",
+        (run_id,),
+    )
+    await db.commit()
+    return int(cur.rowcount or 0)
+
+
+async def find_run_track(
+    run_id: int,
+    *,
+    run_track_id: Optional[int] = None,
+    provider_track_id: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """One deck card by its own id or by its provider track id.
+
+    The provider-id lookup exists for legacy runs whose advance has no plan
+    row to name the card; with ``duplicate_policy='keep_entries'`` several
+    cards share a provider id and the oldest wins — good enough for a
+    bookkeeping fallback, and plan-backed runs never take this path.
+    """
+    db = get_db()
+    if run_track_id is not None:
+        cur = await db.execute(
+            "SELECT rt.*, t.provider_track_id, t.name, t.artist "
+            "FROM run_tracks rt JOIN tracks t ON t.id = rt.track_id "
+            "WHERE rt.run_id = ? AND rt.id = ?",
+            (run_id, run_track_id),
+        )
+    elif provider_track_id is not None:
+        cur = await db.execute(
+            "SELECT rt.*, t.provider_track_id, t.name, t.artist "
+            "FROM run_tracks rt JOIN tracks t ON t.id = rt.track_id "
+            "WHERE rt.run_id = ? AND t.provider_track_id = ? ORDER BY rt.id LIMIT 1",
+            (run_id, provider_track_id),
+        )
+    else:
+        raise ValueError("find_run_track braucht run_track_id oder provider_track_id")
+    row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+async def run_tracks_by_provider_ids(
+    run_id: int, provider_track_ids: Sequence[str]
+) -> Dict[str, Dict[str, Any]]:
+    """Deck cards keyed by provider track id — one query for a player window.
+
+    With ``keep_entries`` several cards share a provider id; the OLDEST wins,
+    which is good enough for the per-row favourite/exclude buttons (they act
+    on run_track_id, so nothing is ambiguous once pressed).
+    """
+    ids = [tid for tid in dict.fromkeys(provider_track_ids) if tid]
+    if not ids:
+        return {}
+    db = get_db()
+    cur = await db.execute(
+        f"""
+        SELECT rt.id, rt.state, rt.favorite, rt.admitted, t.provider_track_id
+        FROM run_tracks rt JOIN tracks t ON t.id = rt.track_id
+        WHERE rt.run_id = ? AND t.provider_track_id IN ({','.join('?' * len(ids))})
+        ORDER BY rt.id
+        """,
+        (run_id, *ids),
+    )
+    out: Dict[str, Dict[str, Any]] = {}
+    for row in await cur.fetchall():
+        out.setdefault(str(row["provider_track_id"]), dict(row))
+    return out
+
+
+async def set_run_track(run_track_id: int, **fields: Any) -> None:
+    """Mutate one deck card (favorite, state, admitted, exclusion columns …).
+
+    Column names are code-side constants at every call site, never user
+    input — the allowlist below makes that a hard guarantee instead of a
+    convention.
+    """
+    allowed = {
+        "state", "favorite", "weight", "admitted", "added_in_cycle",
+        "removed_from_snapshot", "excluded_reason", "excluded_at",
+        "last_played_seq", "source_snapshot_id",
+    }
+    unknown = set(fields) - allowed
+    if unknown:
+        raise ValueError(f"set_run_track: unbekannte Spalten {sorted(unknown)}")
+    if not fields:
+        return
+    sets = ", ".join(f"{column} = ?" for column in fields)
+    db = get_db()
+    await db.execute(
+        f"UPDATE run_tracks SET {sets} WHERE id = ?",
+        (*fields.values(), run_track_id),
+    )
+    await db.commit()
+
+
+async def book_advance(
+    run_id: int,
+    *,
+    event_key: str,
+    event_type: str,
+    seq: int,
+    cursor: int,
+    reason: Optional[str] = None,
+    detail: Optional[Dict[str, Any]] = None,
+    status: Optional[str] = None,
+    order: Optional[List[str]] = None,
+    consumed_plan_seqs: Sequence[int] = (),
+    next_plan_seq: Optional[int] = None,
+    run_track_id: Optional[int] = None,
+    track_update: Optional[Dict[str, Any]] = None,
+    plan_append: Optional[Dict[str, Any]] = None,
+    selection: Optional[Dict[str, Any]] = None,
+) -> bool:
+    """Book one applied advance in the v3 ledger — atomically (WP3-D3, F5).
+
+    ONE transaction, ONE commit: the ``run_events`` row under its
+    deterministic ``event_key`` is the gate — when ``UNIQUE(run_id,
+    event_key)`` rejects it, NOTHING else is applied and the caller records
+    the duplicate as ``applied=0``/stale (ADR-003 F5; restart-fest, unlike
+    the in-process advance lock it complements, Blueprint §5.3).
+
+    On success, in the same transaction: the consumed plan row(s) flip to
+    'consumed' and the next one to 'current'; the consumed card gets its
+    skip-policy outcome (``track_update``); a requeue/defer appends the card
+    to the plan end (``plan_append``) and rewrites ``order_json`` (dual
+    source until M009); the ``run_selections`` row lands under the same seq;
+    and the run row moves cursor + ``selection_seq`` (+status) in one step.
+    """
+    db = get_db()
+    try:
+        await db.execute(
+            "INSERT INTO run_events (run_id, type, cursor, reason, detail, "
+            "event_key, correlation_id, source, applied, seq, run_track_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, '', 'system', 1, ?, ?)",
+            (run_id, event_type, cursor, reason, json.dumps(detail or {}),
+             event_key, seq, run_track_id),
+        )
+    except aiosqlite.IntegrityError:
+        await db.rollback()
+        return False
+    try:
+        for plan_seq in consumed_plan_seqs:
+            await db.execute(
+                "UPDATE run_plan SET state = 'consumed' WHERE run_id = ? AND seq = ?",
+                (run_id, plan_seq),
+            )
+        if next_plan_seq is not None:
+            await db.execute(
+                "UPDATE run_plan SET state = 'current' WHERE run_id = ? AND seq = ?",
+                (run_id, next_plan_seq),
+            )
+        if run_track_id is not None and track_update is not None:
+            if track_update.get("count_play"):
+                await db.execute(
+                    "UPDATE run_tracks SET state = ?, play_count = play_count + 1, "
+                    "last_played_seq = ? WHERE id = ?",
+                    (track_update["state"], seq, run_track_id),
+                )
+            else:
+                await db.execute(
+                    "UPDATE run_tracks SET state = ? WHERE id = ?",
+                    (track_update["state"], run_track_id),
+                )
+        if plan_append is not None:
+            await db.execute(
+                "INSERT INTO run_plan (run_id, seq, run_track_id, plan_version, "
+                "state) VALUES (?, ?, ?, ?, 'planned')",
+                (run_id, plan_append["seq"], plan_append["run_track_id"],
+                 plan_append["plan_version"]),
+            )
+        if selection is not None:
+            await db.execute(
+                "INSERT INTO run_selections (run_id, seq, run_track_id, "
+                "config_version_id, rules_hash, seed, candidate_count, "
+                "filtered_by_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (run_id, seq, selection.get("run_track_id"),
+                 selection.get("config_version_id"),
+                 selection.get("rules_hash", ""), selection.get("seed", 0),
+                 selection.get("candidate_count", 0),
+                 selection.get("filtered_by_json", "{}")),
+            )
+        sets = ["cursor = ?", "selection_seq = ?",
+                "updated_at = datetime('now')",
+                "last_activity_at = datetime('now')"]
+        params: List[Any] = [cursor, seq]
+        if status is not None:
+            sets.append("status = ?")
+            params.append(status)
+            if status == "completed":
+                sets.append("completed_at = datetime('now')")
+        if order is not None:
+            sets.append("order_json = ?")
+            params.append(json.dumps(order))
+        params.append(run_id)
+        await db.execute(f"UPDATE runs SET {', '.join(sets)} WHERE id = ?", params)
+    except aiosqlite.Error:
+        await db.rollback()
+        raise
+    await db.commit()
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Rule bindings (UC-27 — run-local rule versions with effective-from)
+# ---------------------------------------------------------------------------
+
+async def latest_rule_binding(run_id: int, seq: int) -> Optional[Dict[str, Any]]:
+    """The rule version governing draw *seq*: newest binding with
+    ``effective_from_seq <= seq``.  ``None`` = the run follows its config."""
+    db = get_db()
+    cur = await db.execute(
+        """
+        SELECT b.config_version_id, b.effective_from_seq, b.replan,
+               v.version, v.rules_json, v.rules_hash
+        FROM run_rule_bindings b
+        JOIN run_config_versions v ON v.id = b.config_version_id
+        WHERE b.run_id = ? AND b.effective_from_seq <= ?
+        ORDER BY b.effective_from_seq DESC LIMIT 1
+        """,
+        (run_id, seq),
+    )
+    row = await cur.fetchone()
+    return dict(row) if row else None
+
+
+async def upsert_rule_binding(
+    run_id: int, config_version_id: int, effective_from_seq: int,
+    replan: str = "tail_only",
+) -> None:
+    """Bind a rule version to a run from *effective_from_seq* on (UC-27).
+
+    Two rule changes without an advance in between land on the same seq —
+    then the later change supersedes the earlier one in place (the earlier
+    version row itself stays, history is never rewritten).
+    """
+    db = get_db()
+    await db.execute(
+        """
+        INSERT INTO run_rule_bindings (run_id, config_version_id,
+            effective_from_seq, replan)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(run_id, effective_from_seq) DO UPDATE SET
+            config_version_id = excluded.config_version_id,
+            replan            = excluded.replan,
+            applied_at        = datetime('now')
+        """,
+        (run_id, config_version_id, effective_from_seq, replan),
+    )
+    await db.commit()
+
+
+async def active_controller_run(user_id: int, provider: str) -> Optional[Dict[str, Any]]:
+    """THE run occupying the one-playing-controller slot, if any (SP-003).
+
+    Used to name the blocker in the 409 sentence — "ein anderer Hörvorgang"
+    without saying which one sends the listener hunting."""
+    db = get_db()
+    cur = await db.execute(
+        "SELECT id, name, playlist_name FROM runs WHERE user_id = ? AND "
+        "provider = ? AND status = 'active' AND mode = 'controller' LIMIT 1",
+        (user_id, provider),
+    )
+    row = await cur.fetchone()
+    return dict(row) if row else None
 
 
 # ---------------------------------------------------------------------------
@@ -984,6 +1478,24 @@ async def record_event(
          run_track_id),
     )
     await db.commit()
+
+
+async def get_event_by_key(run_id: int, event_key: str) -> Optional[Dict[str, Any]]:
+    """One ledger row by its deterministic key — the idempotent-replay read.
+
+    ``apply_sync_to_run`` answers a second apply of the same diff with the
+    FIRST result, which lives in this row's ``detail`` (RUN-10)."""
+    db = get_db()
+    cur = await db.execute(
+        "SELECT * FROM run_events WHERE run_id = ? AND event_key = ?",
+        (run_id, event_key),
+    )
+    row = await cur.fetchone()
+    if row is None:
+        return None
+    data = dict(row)
+    data["detail"] = json.loads(data.get("detail") or "{}")
+    return data
 
 
 async def list_events(run_id: int, limit: int = 100) -> List[Dict[str, Any]]:

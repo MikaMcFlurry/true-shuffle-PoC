@@ -971,6 +971,27 @@ a.attribution:hover { background: var(--surface-2); }
 }
 .upnext-list .u-name { font-weight: 600; overflow-wrap: anywhere; hyphens: auto; }
 .upnext-list .u-meta { color: var(--muted); font-size: var(--text-sm); }
+.upnext-list li > div { flex: 1 1 auto; }
+
+/* WP3-D3 (UC-08/20): per-row favourite / exclude actions.  44px targets —
+   the same WCAG 2.5.5 AAA rule as the transport; at 320px the text column
+   shrinks (min-width: 0 above), never the buttons. */
+.upnext-list .u-actions {
+  flex: none; display: flex; gap: 4px; align-self: center; margin-left: auto;
+}
+.upnext-list .u-act {
+  width: var(--tap-target, 44px); height: var(--tap-target, 44px);
+  min-width: 44px; min-height: 44px;
+  display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: var(--radius-full);
+  background: transparent; color: var(--muted); cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-standard),
+              color var(--motion-fast) var(--ease-standard);
+}
+.upnext-list .u-act:hover { background: var(--surface-2); color: var(--ink); }
+.upnext-list .u-act svg { width: 18px; height: 18px; }
+.upnext-list .u-act.is-on { color: var(--signal); }
+.upnext-list .u-act.is-on svg { fill: currentColor; }
 
 /* Verlauf (history) — one row per event, grouped under a day heading that
    reuses .fieldset-label; chronological ascending, newest group last. */
