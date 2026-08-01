@@ -147,6 +147,72 @@ async def test_many_completed_runs_of_the_same_playlist_are_allowed(database):
     assert len(runs) == 3
 
 
+async def _ready_snapshot(database, user_id: int, *, provider_playlist_id: str = "pl1") -> int:
+    """A minimal ``playlists`` + READY ``playlist_snapshots`` row, for the
+    ``sync_available`` tests below — deliberately raw SQL (WP3-D4 touches
+    only ``db.list_runs``, not the whole content-layer fixture machinery
+    ``tests/test_library_service.py`` builds for its own, larger surface)."""
+    cur = await database.execute(
+        "INSERT INTO playlists (user_id, provider, provider_playlist_id, name) "
+        "VALUES (?, 'spotify', ?, 'Everything') "
+        "ON CONFLICT(user_id, provider, provider_playlist_id) DO UPDATE SET name = excluded.name",
+        (user_id, provider_playlist_id),
+    )
+    cur = await database.execute(
+        "SELECT id FROM playlists WHERE user_id = ? AND provider = 'spotify' "
+        "AND provider_playlist_id = ?",
+        (user_id, provider_playlist_id),
+    )
+    playlist_pk = (await cur.fetchone())[0]
+    cur = await database.execute(
+        "INSERT INTO playlist_snapshots (playlist_id, version, status) "
+        "VALUES (?, (SELECT COALESCE(MAX(version), 0) + 1 FROM playlist_snapshots "
+        "WHERE playlist_id = ?), 'ready')",
+        (playlist_pk, playlist_pk),
+    )
+    await database.commit()
+    return int(cur.lastrowid)
+
+
+async def test_sync_available_is_false_when_bound_to_the_newest_ready_snapshot(database):
+    """WP3-D4: same convention as library_service.import_status_field's own
+    ``sync_available`` — present (computable) whenever the run carries a
+    baseline snapshot to compare against, ``False`` here because that
+    baseline already IS the newest ready one, absent only when there is no
+    baseline at all (see the next test)."""
+    user_id = await db.get_or_create_user("local-1")
+    snap = await _ready_snapshot(database, user_id)
+    run_id = await make_run(user_id, snapshot_id=snap)
+
+    runs = await db.list_runs(user_id)
+    mine = next(r for r in runs if r["id"] == run_id)
+    assert mine["sync_available"] is False
+
+
+async def test_sync_available_is_true_once_a_newer_ready_snapshot_exists(database):
+    """The cheap id-comparison signal runs.html reads to show a sync hint."""
+    user_id = await db.get_or_create_user("local-1")
+    snap1 = await _ready_snapshot(database, user_id)
+    run_id = await make_run(user_id, snapshot_id=snap1)
+    snap2 = await _ready_snapshot(database, user_id)
+    assert snap2 > snap1
+
+    runs = await db.list_runs(user_id)
+    mine = next(r for r in runs if r["id"] == run_id)
+    assert mine["sync_available"] is True
+
+
+async def test_sync_available_is_absent_for_a_run_never_bound_to_a_snapshot(database):
+    """Most runs (a live playlist read, no prior import) carry no
+    ``snapshot_id`` at all — there is no baseline to compare against."""
+    user_id = await db.get_or_create_user("local-1")
+    run_id = await make_run(user_id)   # default snapshot_id=None
+
+    runs = await db.list_runs(user_id)
+    mine = next(r for r in runs if r["id"] == run_id)
+    assert "sync_available" not in mine
+
+
 async def test_cancelling_one_run_leaves_its_siblings_untouched(database):
     """Run-isolation invariant (replaces ``test_a_cancelled_run_frees_the_slot``).
 

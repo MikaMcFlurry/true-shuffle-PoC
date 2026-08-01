@@ -552,10 +552,13 @@ async def list_runs(
     resumable.
 
     WP3-D4: ``sync_available`` is a cheap boolean — a plain id comparison
-    against the run's own bound ``snapshot_id``, no diff computed — present
-    and true only when a NEWER ready snapshot of the same playlist already
-    exists. Absent for runs never bound to a snapshot; the dashboard card
-    only ever renders the hint when the field is literally present and true.
+    against the run's own bound ``snapshot_id``, no diff computed. Present
+    (``True``/``False``) whenever the run has a baseline snapshot to compare
+    against; absent only for a run never bound to one (a live playlist read,
+    never imported) — the same "computable vs. not" convention
+    :func:`library_service.import_status_field` already uses for its own
+    ``sync_available``. The dashboard card only ever renders the hint when
+    the field is literally present and true.
     """
     db = get_db()
     sql = """

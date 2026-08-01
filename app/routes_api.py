@@ -663,6 +663,30 @@ async def run_history(request: Request):
     return JSONResponse({"runs": await db.list_runs(user_id)})
 
 
+async def _attach_deck_info(payload: Dict[str, Any], run_id: int) -> None:
+    """Deck identity for the "Als Nächstes" actions (UC-08/20/21): the
+    favourite / exclude buttons need the run_track_id behind each row.
+
+    WP3-D4: factored out of ``run_state`` so ``_decision_payload`` (the
+    response every transport action — start/advance/previous/device —
+    replaces ``this.state`` with) carries it too. Without this, the D3
+    buttons rendered correctly right after a page load, then silently
+    vanished from "Als Nächstes" the moment a run was started or advanced —
+    the exact "sofortiges Re-Render" the buttons are for, undone by their
+    own success.
+    """
+    ids = [e["id"] for e in [payload.get("current"), *payload.get("upcoming", [])] if e]
+    deck = await db.run_tracks_by_provider_ids(run_id, ids)
+    for entry in [payload.get("current"), *payload.get("upcoming", [])]:
+        if not entry:
+            continue
+        card = deck.get(entry["id"])
+        if card:
+            entry["run_track_id"] = card["id"]
+            entry["favorite"] = bool(card["favorite"])
+            entry["state"] = card["state"]
+
+
 @router.get("/runs/{run_id}")
 async def run_state(request: Request, run_id: int):
     run = await require_run(request, run_id)
@@ -683,18 +707,7 @@ async def run_state(request: Request, run_id: int):
     # WP3-D3 (F8): the manual-use state — 'awaiting_decision' is UX-Zustand C
     # and the player renders the decision banner from exactly this field.
     payload["manual_state"] = run.get("manual_state") or "none"
-    # Deck identity for the "Als Nächstes" actions (UC-08/20/21): the
-    # favourite / exclude buttons need the run_track_id behind each row.
-    ids = [e["id"] for e in [payload.get("current"), *payload.get("upcoming", [])] if e]
-    deck = await db.run_tracks_by_provider_ids(run_id, ids)
-    for entry in [payload.get("current"), *payload.get("upcoming", [])]:
-        if not entry:
-            continue
-        card = deck.get(entry["id"])
-        if card:
-            entry["run_track_id"] = card["id"]
-            entry["favorite"] = bool(card["favorite"])
-            entry["state"] = card["state"]
+    await _attach_deck_info(payload, run_id)
     return JSONResponse(payload)
 
 
@@ -1095,6 +1108,12 @@ async def _decision_payload(session, run_id: int, user_id: int, decision) -> Dic
             "watcher": watcher.status(run_id),
         }
     )
+    # WP3-D4: same deck-identity attachment as GET /runs/{id} — every
+    # transport action replaces the player's this.state with THIS payload,
+    # so without it the favourite/exclude buttons disappeared from "Als
+    # Nächstes" right after the button that is supposed to keep them working.
+    if state is not None:
+        await _attach_deck_info(payload, run_id)
     return payload
 
 

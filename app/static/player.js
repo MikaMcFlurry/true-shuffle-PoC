@@ -196,6 +196,10 @@ export class RunPlayer {
     //: Set once a device fetch has actually run — null means "not checked
     //: yet", never treated as "no device" (that would fake system state D).
     this.noDevices = null;
+    //: Confirmed name of the run currently holding the one-playing slot
+    //: (idx_runs_one_playing) while THIS run sits paused-at-birth. null
+    //: until explainIfBlockedBySlot() has actually checked.
+    this.slotBlockerName = null;
     this.position = { ms: 0, at: 0, known: false };
     this._posTimer = null;
   }
@@ -390,26 +394,27 @@ export class RunPlayer {
    * "pausiert" on a run nobody paused. Confirmed, not guessed: this only
    * speaks up once it has actually found the run that holds the slot — the
    * same 409 sentence pressing Start would show (runs.py `_slot_conflict`),
-   * offered here proactively instead of waiting for that press.
+   * surfaced here proactively instead of waiting for that press.
+   *
+   * Renders into #transportHint (BELOW the transport), not the #playerNote
+   * banner above it: that banner sits ahead of .player-grid, and on a phone
+   * viewport its extra lines push the transport button below the fold —
+   * exactly the control ADR-001 requires to stay reachable without
+   * scrolling. The hint line already exists for every other "why can't I
+   * press this" case (drift, awaiting-decision, no device); this is simply
+   * one more.
    */
   async explainIfBlockedBySlot() {
+    this.slotBlockerName = null;
     if (!this.isRemote || this.state?.status !== "paused" || (this.state?.cursor || 0) > 0) return;
-    const noteBox = $("#playerNote");
-    if (noteBox && !noteBox.classList.contains("hidden")) return; // never clobber an existing message
     try {
       const { runs } = await api("/api/runs");
       const blocker = runs.find((r) =>
         r.id !== this.runId && r.provider === this.provider.id
         && r.mode === "controller" && r.status === "active");
-      if (blocker) {
-        const who = blocker.name || blocker.playlist_name || "Ein anderer Hörvorgang";
-        this.notify(
-          `„${who}“ steuert gerade ${this.provider.display_name} — nur einer kann gleichzeitig `
-          + `steuern. Stoppe oder pausiere ihn zuerst, dann lässt sich dieser Hörvorgang hier starten.`,
-          "", "Pausiert"
-        );
-      }
+      this.slotBlockerName = blocker ? (blocker.name || blocker.playlist_name || "Ein anderer Hörvorgang") : null;
     } catch { /* best effort — a page that cannot confirm the blocker stays silent */ }
+    if (this.slotBlockerName) this.render();
   }
 
   /* -- rendering ----------------------------------------------------------- */
@@ -775,6 +780,11 @@ export class RunPlayer {
     else if (blockedByDrift) reason = `Die Steuerung liegt gerade bei ${this.provider.display_name} — setze den Hörvorgang fort, um sie zurückzuholen.`;
     else if (blockedByAsk) reason = "Dein Hörvorgang wartet auf deine Entscheidung — oben im Banner.";
     else if (blockedByNoDevice) reason = `Kein ${this.provider.display_name}-Gerät aktiv. Aktualisiere die Geräteliste oben.`;
+    // Paused-at-birth second run (SP-003): Start stays pressable — pressing
+    // it re-checks the slot for real — this only explains WHY it is paused.
+    else if (s.status === "paused" && s.cursor === 0 && this.slotBlockerName) {
+      reason = `„${this.slotBlockerName}“ steuert gerade ${this.provider.display_name} — Start prüft, ob der Platz inzwischen frei ist.`;
+    }
 
     const mainBtn = $("#mainBtn");
     mainBtn.replaceChildren(svgIcon((this.playing ? ICON_PAUSE : ICON_PLAY).viewBox, (this.playing ? ICON_PAUSE : ICON_PLAY).inner, (this.playing ? ICON_PAUSE : ICON_PLAY).attrs));
