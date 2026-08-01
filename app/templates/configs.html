@@ -133,15 +133,20 @@ const NEW_TRACKS_OPTIONS = [
     ["after_cycle", "Nächster Durchlauf"],
 ];
 
+// box-sizing: border-box is explicit here (not left to the sheet-wide
+// reset) — a content-box text/number input adds its own padding+border on
+// top of an already-100%-wide box and can push a narrow container (a
+// single-column card at 320px) past the viewport edge; WP3-D4 hit exactly
+// this on /library's own new input and this form carries the same risk.
 function selectField(labelText, options, value, id) {
     return el("label", { class: "field" },
         el("span", { class: "field-label" }, labelText),
-        el("select", { id },
+        el("select", { id, style: "box-sizing: border-box" },
             ...options.map(([v, text]) => el("option", { value: v, selected: v === value || null }, text))));
 }
 
 function numberField(labelText, value, id, { min = 0, max = null } = {}) {
-    const attrs = { type: "number", id, min: String(min), value: String(value) };
+    const attrs = { type: "number", id, min: String(min), value: String(value), style: "box-sizing: border-box" };
     if (max !== null) attrs.max = String(max);
     return el("label", { class: "field" }, el("span", { class: "field-label" }, labelText), el("input", attrs));
 }
@@ -151,12 +156,19 @@ function numberField(labelText, value, id, { min = 0, max = null } = {}) {
  *  rewrite of a config runs already used. */
 function editForm(config) {
     const r = config.rules;
-    const nameInput = el("input", { type: "text", id: "editName", maxlength: "120", value: config.name });
+    const nameInput = el("input", {
+        type: "text", id: "editName", maxlength: "120", value: config.name,
+        style: "box-sizing: border-box",
+    });
     const repeatSelect = selectField("Wiederholungsmodus", REPEAT_OPTIONS, r.repeat_mode, "editRepeat");
     const gapField = numberField("Mindestabstand", r.min_gap || 0, "editGap");
     const quotaField = numberField("Wiederholungsquote (%)", r.repeat_quota_pct || 0, "editQuota", { max: 100 });
     const skipSelect = selectField("Skip-Verhalten", SKIP_OPTIONS, r.skip_policy, "editSkip");
     const manualSelect = selectField("Manuelle Nutzung", MANUAL_OPTIONS, r.manual_use_policy, "editManual");
+    const waitField = numberField(
+        "Wartezeit bei Fremdwiedergabe (Minuten)",
+        Math.max(1, Math.round((r.manual_wait_seconds || 900) / 60)), "editWait", { min: 1, max: 120 },
+    );
     const newSelect = selectField("Neue Titel", NEW_TRACKS_OPTIONS, r.new_tracks_policy, "editNew");
     const note = el("p", { class: "field-hint", id: "editNote", "aria-live": "polite" }, "");
 
@@ -174,6 +186,7 @@ function editForm(config) {
             repeat_quota_pct: Math.max(0, Math.min(100, parseInt($("#editQuota").value, 10) || 0)),
             skip_policy: $("#editSkip").value,
             manual_use_policy: $("#editManual").value,
+            manual_wait_seconds: Math.max(60, (parseInt($("#editWait").value, 10) || 15) * 60),
             new_tracks_policy: $("#editNew").value,
         };
         try {
@@ -188,7 +201,7 @@ function editForm(config) {
 
     return el("div", { class: "card-body" },
         el("label", { class: "field" }, el("span", { class: "field-label" }, "Name"), nameInput),
-        repeatSelect, gapField, quotaField, skipSelect, manualSelect, newSelect,
+        repeatSelect, gapField, quotaField, skipSelect, manualSelect, waitField, newSelect,
         el("p", { class: "field-hint" },
             "Speichern friert eine neue Version ein — sie gilt für neue Auswahlen ab jetzt. " +
             "Hörvorgänge, die schon mit dieser Konfiguration laufen, behalten ihre bisherige Version."),

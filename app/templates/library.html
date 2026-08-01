@@ -260,6 +260,16 @@
                 <label for="r-man-ask"><span class="r-name">Nachfragen</span><span class="r-desc">true-shuffle hält an und lässt dich entscheiden — fortsetzen oder pausiert lassen.</span></label>
             </div>
             <p class="field-hint">Solange du selbst etwas abspielst, beobachtet true-shuffle nur und sendet keine Kommandos.</p>
+
+            <div class="stack-s" style="margin-top: 12px">
+                <span class="field-label">Wartezeit bei durchgehender Fremdwiedergabe</span>
+                <div class="stepper" role="group" aria-label="Wartezeit in Minuten einstellen">
+                    <button type="button" id="waitMinus" aria-label="Wartezeit verringern">−</button>
+                    <output id="waitValue" aria-live="polite">15 Min.</output>
+                    <button type="button" id="waitPlus" aria-label="Wartezeit erhöhen">+</button>
+                </div>
+                <span class="field-hint">Läuft deine eigene Wiedergabe länger als das am Stück, pausiert true-shuffle kontrolliert — der Dienst meldet nicht, wann eine manuelle Wiedergabe endet, das ist die harte Obergrenze dafür (gilt für alle drei Optionen oben).</span>
+            </div>
         </div>
     </details>
 
@@ -787,6 +797,23 @@ for (const input of document.querySelectorAll('input[name="abstand"]')) {
 renderStepper();
 renderQuota();
 
+/* -- Manuelle Nutzung: Wartezeit (manual_wait_seconds, Default 900 s) ------
+   Applies regardless of which of the three policies above is chosen — the
+   hard upper bound before true-shuffle gives up observing and pauses. */
+
+const waitMinutes = { value: 15 };
+
+function renderWait() {
+    $("#waitValue").textContent = `${formatCount(waitMinutes.value)} Min.`;
+    $("#waitMinus").disabled = waitMinutes.value <= 1;
+    $("#waitPlus").disabled = waitMinutes.value >= 120;
+    schedulePreflight();
+}
+
+$("#waitMinus").addEventListener("click", () => { waitMinutes.value = Math.max(1, waitMinutes.value - 1); renderWait(); });
+$("#waitPlus").addEventListener("click", () => { waitMinutes.value = Math.min(120, waitMinutes.value + 1); renderWait(); });
+renderWait();
+
 for (const input of document.querySelectorAll('input[name="preset"]')) {
     input.addEventListener("change", updateStartGate);
 }
@@ -819,6 +846,7 @@ function collectRules() {
     if (skip && skip !== "consume") rules.skip_policy = skip;
     const manual = pick("manuell");
     if (manual && manual !== "auto_resume") rules.manual_use_policy = manual;
+    if (waitMinutes.value !== 15) rules.manual_wait_seconds = waitMinutes.value * 60;
     const fresh = pick("neuetitel");
     if (fresh && fresh !== "ignore") rules.new_tracks_policy = fresh;
     return rules;
@@ -845,7 +873,7 @@ async function createConfigFor(rules) {
    that config_id — no new config is created. */
 
 const REAL_RULE_SELECTOR = 'input[name="abstand"], input[name="skip"], input[name="manuell"], '
-    + 'input[name="neuetitel"], #gapMinus, #gapPlus, #quotaMinus, #quotaPlus';
+    + 'input[name="neuetitel"], #gapMinus, #gapPlus, #quotaMinus, #quotaPlus, #waitMinus, #waitPlus';
 
 function setRuleInputsLocked(locked) {
     for (const node of document.querySelectorAll(REAL_RULE_SELECTOR)) node.disabled = locked;
@@ -867,6 +895,8 @@ function applyRulesToForm(rules) {
     setChecked("skip", rules.skip_policy || "consume");
     setChecked("manuell", rules.manual_use_policy || "auto_resume");
     setChecked("neuetitel", rules.new_tracks_policy || "ignore");
+    waitMinutes.value = Math.max(1, Math.round((rules.manual_wait_seconds || 900) / 60));
+    renderWait();
     for (const group of ["skip", "manuell", "neuetitel"]) {
         const checked = document.querySelector(`input[name="${group}"]:checked`);
         const label = checked && document.querySelector(`label[for="${checked.id}"] .r-name`);
@@ -1045,9 +1075,15 @@ async function renderSyncApplyArea(diff) {
         return;
     }
 
-    const runSelect = el("select", { id: "syncRunSelect", "aria-label": "Hörvorgang wählen" },
-        ...matchingRuns.map((r) => el("option", { value: String(r.id) }, r.name || r.playlist_name || `Lauf ${r.id}`)));
-    const policySelect = el("select", { id: "syncPolicySelect", "aria-label": "Umgang mit neuen Titeln" },
+    // box-sizing: border-box explicit here for the same reason as the
+    // configSaveName input above — a narrow flex row is where the app's
+    // default content-box sizing on form controls has actually overflowed.
+    const runSelect = el("select", {
+        id: "syncRunSelect", "aria-label": "Hörvorgang wählen", style: "box-sizing: border-box",
+    }, ...matchingRuns.map((r) => el("option", { value: String(r.id) }, r.name || r.playlist_name || `Lauf ${r.id}`)));
+    const policySelect = el("select", {
+        id: "syncPolicySelect", "aria-label": "Umgang mit neuen Titeln", style: "box-sizing: border-box",
+    },
         el("option", { value: "" }, "Regel des Hörvorgangs verwenden"),
         el("option", { value: "include_now" }, "Sofort einmischen"),
         el("option", { value: "after_cycle" }, "Nächster Durchlauf"),
