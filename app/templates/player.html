@@ -135,6 +135,25 @@
         <div class="kv" id="skippedList"></div>
     </div>
 </section>
+
+<!-- UC-21: run-scoped exclusions (excluded_user is reactivatable via DELETE
+     …/exclude; excluded_rule came from the import and stays put). A real
+     <button> toggle (not <details>/<summary>) so aria-expanded is an
+     explicit, JS-owned state rather than the browser's implicit one. -->
+<section class="card excl-card" id="excludedSection" aria-labelledby="excludedHead">
+    <h2 class="sr-only" id="excludedHead">Ausgeschlossene Titel</h2>
+    <button class="excl-toggle" id="excludedToggle" type="button"
+            aria-expanded="false" aria-controls="excludedBody">
+        <span>Ausgeschlossene Titel <span class="card-read" id="excludedRead">—</span></span>
+    </button>
+    <div class="card-body excl-body hidden" id="excludedBody">
+        <p class="dim sm">
+            Ausgeschlossene Titel zählen nicht zum Fortschritt und kommen nicht
+            mehr an die Reihe — außer du nimmst sie hier wieder auf.
+        </p>
+        <ul class="excluded-list" id="excludedList"></ul>
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -190,6 +209,15 @@ addEventListener("keydown", (ev) => {
 player.boot().catch((err) => {
     player.failed(err.message);
     player.notify(err.message, "note-stop", "Hörvorgang nicht geladen");
+});
+
+// UC-21: the "Ausgeschlossene Titel" disclosure — a real <button> with an
+// explicit aria-expanded this script owns, not <details>'s implicit state.
+$("#excludedToggle").addEventListener("click", () => {
+    const btn = $("#excludedToggle");
+    const expanded = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", String(!expanded));
+    $("#excludedBody").classList.toggle("hidden", expanded);
 });
 </script>
 {% endblock %}

@@ -1013,3 +1013,36 @@ a.attribution:hover { background: var(--surface-2); }
    never caught because no Teil-1 page used a file input. Fixed here with a
    more specific selector rather than touching either existing rule. */
 input[type="file"].sr-only { width: 1px; min-height: 0; }
+
+/* ==========================================================================
+   UC-21 — "Ausgeschlossene Titel" (Player). A real <button> disclosure, not
+   <details>/<summary>: the same visual language as .rule-group's summary
+   (border, +/− glyph, hover) but with an aria-expanded this script owns
+   explicitly rather than the browser's implicit one.
+   ========================================================================== */
+
+.excl-toggle {
+  width: 100%; display: flex; align-items: center; gap: 10px; justify-content: space-between;
+  padding: var(--space-4); min-height: var(--tap-min);
+  font-size: var(--text-base); font-weight: 600; color: var(--ink);
+  background: none; border: 0; cursor: pointer; text-align: left;
+}
+.excl-toggle::after {
+  content: "+"; font-size: var(--text-lg); color: var(--muted); flex: none; line-height: 1;
+}
+.excl-toggle[aria-expanded="true"]::after { content: "\2212"; }
+.excl-toggle:hover { background: var(--surface-2); }
+.excl-body.card-body { border-top: 1px solid var(--line); }
+
+.excluded-list { display: flex; flex-direction: column; margin-top: var(--space-1); }
+.excluded-list li {
+  display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.excluded-list li:last-child { border-bottom: 0; }
+.excluded-list li > div { min-width: 0; flex: 1 1 220px; display: flex; flex-direction: column; gap: 2px; }
+.excluded-list .u-name { font-weight: 600; overflow-wrap: anywhere; hyphens: auto; }
+.excluded-list .u-meta { color: var(--muted); font-size: var(--text-sm); }
+.excluded-list .excluded-reason { flex: none; max-width: 260px; text-align: right; }
+.excluded-list .btn { flex: none; }
+.excluded-list .excluded-empty { color: var(--muted); font-size: var(--text-sm); justify-content: center; border-bottom: 0; }

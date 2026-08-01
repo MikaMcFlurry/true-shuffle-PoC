@@ -79,6 +79,19 @@ const NEW_TEXT = {
     after_cycle: "Neue Titel: nächster Durchlauf",
 };
 
+/* UC-08: favorite_weight is a free float (API allows >= 1.0) but the
+   builder and this editor only ever offer three stages — "nearest" matters
+   for a config whose value came from somewhere else. */
+const FAVORITE_WEIGHT_LEVELS = [1, 2, 4];
+const FAVORITE_WEIGHT_TEXT = { 1: "Favoriten-Vorrang: Aus", 2: "Favoriten-Vorrang: Leicht", 4: "Favoriten-Vorrang: Stark" };
+
+function nearestFavoriteWeight(weight) {
+    return FAVORITE_WEIGHT_LEVELS.reduce(
+        (best, level) => (Math.abs(level - weight) < Math.abs(best - weight) ? level : best),
+        FAVORITE_WEIGHT_LEVELS[0]
+    );
+}
+
 function ruleLine(rules) {
     const parts = [REPEAT_TEXT[rules.repeat_mode] || rules.repeat_mode];
     if (rules.repeat_mode !== "no_repeat" && rules.min_gap > 0) {
@@ -87,6 +100,9 @@ function ruleLine(rules) {
     parts.push(SKIP_TEXT[rules.skip_policy] || rules.skip_policy);
     parts.push(MANUAL_TEXT[rules.manual_use_policy] || rules.manual_use_policy);
     parts.push(NEW_TEXT[rules.new_tracks_policy] || rules.new_tracks_policy);
+    if (rules.favorite_weight && rules.favorite_weight !== 1) {
+        parts.push(FAVORITE_WEIGHT_TEXT[nearestFavoriteWeight(rules.favorite_weight)]);
+    }
     return parts.join(" · ");
 }
 
@@ -132,6 +148,11 @@ const NEW_TRACKS_OPTIONS = [
     ["include_now", "Sofort einmischen"],
     ["after_cycle", "Nächster Durchlauf"],
 ];
+const FAVORITE_WEIGHT_OPTIONS = [
+    ["1", "Aus"],
+    ["2", "Leicht"],
+    ["4", "Stark"],
+];
 
 // box-sizing: border-box is explicit here (not left to the sheet-wide
 // reset) — a content-box text/number input adds its own padding+border on
@@ -170,6 +191,10 @@ function editForm(config) {
         Math.max(1, Math.round((r.manual_wait_seconds || 900) / 60)), "editWait", { min: 1, max: 120 },
     );
     const newSelect = selectField("Neue Titel", NEW_TRACKS_OPTIONS, r.new_tracks_policy, "editNew");
+    const favWeightSelect = selectField(
+        "Favoriten-Vorrang", FAVORITE_WEIGHT_OPTIONS,
+        String(nearestFavoriteWeight(r.favorite_weight || 1)), "editFavoriteWeight"
+    );
     const note = el("p", { class: "field-hint", id: "editNote", "aria-live": "polite" }, "");
 
     const saveBtn = el("button", { class: "btn btn-primary", type: "button" }, "Speichern");
@@ -188,6 +213,7 @@ function editForm(config) {
             manual_use_policy: $("#editManual").value,
             manual_wait_seconds: Math.max(60, (parseInt($("#editWait").value, 10) || 15) * 60),
             new_tracks_policy: $("#editNew").value,
+            favorite_weight: parseFloat($("#editFavoriteWeight").value) || 1,
         };
         try {
             await api(`/api/configs/${config.id}`, { method: "PATCH", body: { name, rules } });
@@ -201,7 +227,7 @@ function editForm(config) {
 
     return el("div", { class: "card-body" },
         el("label", { class: "field" }, el("span", { class: "field-label" }, "Name"), nameInput),
-        repeatSelect, gapField, quotaField, skipSelect, manualSelect, waitField, newSelect,
+        repeatSelect, gapField, quotaField, skipSelect, manualSelect, waitField, newSelect, favWeightSelect,
         el("p", { class: "field-hint" },
             "Speichern friert eine neue Version ein — sie gilt für neue Auswahlen ab jetzt. " +
             "Hörvorgänge, die schon mit dieser Konfiguration laufen, behalten ihre bisherige Version."),

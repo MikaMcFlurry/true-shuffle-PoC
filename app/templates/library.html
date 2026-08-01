@@ -134,13 +134,14 @@
         </div>
     </fieldset>
 
-<!-- WP3-D4: alle vier Regelgruppen sind ECHT (Wiederholungsmodus inkl.
-     Begrenzte Wiederholungen/Quote, Skip, Manuell, Neue Titel). Eine
-     Auswahl abseits der Voreinstellung erzeugt beim Start eine Konfiguration
-     (POST /api/configs) und der Hörvorgang läuft damit — oder eine bestehende
-     Konfiguration wird über "Konfiguration verwenden" direkt gewählt.
-     Favoriten bleiben Vorschau: die Markierung selbst lebt im Player
-     (laufgebunden, UC-08); ein Vorrang schon beim Start fehlt noch. -->
+<!-- WP3-D4/UC-08: alle fünf Regelgruppen sind ECHT (Wiederholungsmodus inkl.
+     Begrenzte Wiederholungen/Quote, Favoriten-Vorrang, Skip, Manuell, Neue
+     Titel). Eine Auswahl abseits der Voreinstellung erzeugt beim Start eine
+     Konfiguration (POST /api/configs) und der Hörvorgang läuft damit — oder
+     eine bestehende Konfiguration wird über "Konfiguration verwenden" direkt
+     gewählt. Die Favoriten-Markierung selbst bleibt laufgebunden im Player
+     (UC-08 Sterne bei "Als Nächstes"); der Vorrang hier wirkt nur, wenn
+     mindestens ein Titel im laufenden Hörvorgang markiert ist. -->
 
     <details class="rule-group" open>
         <summary>
@@ -199,26 +200,25 @@
     </details>
 
     <details class="rule-group">
-        <summary><span>Favoriten-Vorrang <span class="rh-state">· noch nicht verfügbar</span></span></summary>
+        <summary><span>Favoriten-Vorrang <span class="rh-state" data-group-state="favoriten" id="favoritenState">· Aus</span></span></summary>
         <div class="rule-body">
             <p class="dim sm">
-                Favoriten selbst gibt es schon: markiere Titel während des Hörens
-                über den Stern bei „Als Nächstes“ im Player. Was hier noch fehlt,
-                ist ein Vorrang schon beim Start dieses Hörvorgangs.
+                Favoriten markierst du beim Hören über den Stern bei „Als Nächstes“
+                im Player. Der Vorrang bestimmt, wie viel häufiger sie beim Mischen
+                gezogen werden — ohne markierte Favoriten hat er keine Wirkung.
             </p>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="favoriten" id="r-fav-none" disabled>
-                <label for="r-fav-none"><span class="r-name">Kein Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten laufen wie alle anderen Titel mit.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="favoriten" id="r-fav-off" value="1" checked>
+                <label for="r-fav-off"><span class="r-name">Aus</span><span class="r-desc">Favoriten laufen wie alle anderen Titel mit.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="favoriten" id="r-fav-light" disabled>
-                <label for="r-fav-light"><span class="r-name">Leichter Vorrang <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Favoriten erscheinen etwas häufiger als der Durchschnitt.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="favoriten" id="r-fav-light" value="2">
+                <label for="r-fav-light"><span class="r-name">Leicht</span><span class="r-desc">Favoriten erscheinen etwa doppelt so oft wie im Durchschnitt.</span></label>
             </div>
-            <div class="radio-row" data-preview>
-                <input type="radio" name="favoriten" id="r-fav-only" disabled>
-                <label for="r-fav-only"><span class="r-name">Nur Favoriten <span class="chip chip-preview">Vorschau</span></span><span class="r-desc">Ausschließlich markierte Titel werden gespielt.</span></label>
+            <div class="radio-row">
+                <input type="radio" name="favoriten" id="r-fav-strong" value="4">
+                <label for="r-fav-strong"><span class="r-name">Stark</span><span class="r-desc">Favoriten erscheinen etwa viermal so oft wie im Durchschnitt.</span></label>
             </div>
-            <p class="field-hint">Der Vorrang-Regler für Favoriten kommt mit dem nächsten Ausbau.</p>
         </div>
     </details>
 
@@ -235,7 +235,7 @@
             </div>
             <div class="radio-row">
                 <input type="radio" name="skip" id="r-skip-requeue" value="requeue_later">
-                <label for="r-skip-requeue"><span class="r-name">Später erneut einreihen</span><span class="r-desc">Der übersprungene Titel wird zurückgestellt und erneut in die Reihenfolge aufgenommen.</span></label>
+                <label for="r-skip-requeue"><span class="r-name">Später erneut einreihen</span><span class="r-desc">Der übersprungene Titel wird zurückgestellt und kommt frühestens nach einer kurzen Karenz zurück — liegt der Skip zu nah am Ende, schafft er es nicht mehr in diesen Durchlauf, sondern erst in den nächsten.</span></label>
             </div>
             <div class="radio-row">
                 <input type="radio" name="skip" id="r-skip-defer" value="defer_to_end">
@@ -822,7 +822,7 @@ for (const input of document.querySelectorAll('input[name="preset"]')) {
    Each group's summary mirrors the checked option, so a collapsed group
    still says what it will do. */
 
-for (const group of ["skip", "manuell", "neuetitel"]) {
+for (const group of ["skip", "manuell", "neuetitel", "favoriten"]) {
     for (const input of document.querySelectorAll(`input[name="${group}"]:not(:disabled)`)) {
         input.addEventListener("change", () => {
             const label = document.querySelector(`label[for="${input.id}"] .r-name`);
@@ -831,6 +831,18 @@ for (const group of ["skip", "manuell", "neuetitel"]) {
             schedulePreflight();
         });
     }
+}
+
+/* UC-08: favorite_weight only ever takes one of these three UI stages —
+   "nearest" matters when a config was loaded whose value came from
+   somewhere else (the API allows any float >= 1.0). */
+const FAVORITE_WEIGHT_LEVELS = [1, 2, 4];
+
+function nearestFavoriteWeight(weight) {
+    return FAVORITE_WEIGHT_LEVELS.reduce(
+        (best, level) => (Math.abs(level - weight) < Math.abs(best - weight) ? level : best),
+        FAVORITE_WEIGHT_LEVELS[0]
+    );
 }
 
 function collectRules() {
@@ -842,6 +854,8 @@ function collectRules() {
         if (mode === "limited_repeat") rules.repeat_quota_pct = quota.value;
     }
     const pick = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+    const favoriten = parseFloat(pick("favoriten") || "1");
+    if (favoriten !== 1) rules.favorite_weight = favoriten;
     const skip = pick("skip");
     if (skip && skip !== "consume") rules.skip_policy = skip;
     const manual = pick("manuell");
@@ -873,7 +887,7 @@ async function createConfigFor(rules) {
    that config_id — no new config is created. */
 
 const REAL_RULE_SELECTOR = 'input[name="abstand"], input[name="skip"], input[name="manuell"], '
-    + 'input[name="neuetitel"], #gapMinus, #gapPlus, #quotaMinus, #quotaPlus, #waitMinus, #waitPlus';
+    + 'input[name="neuetitel"], input[name="favoriten"], #gapMinus, #gapPlus, #quotaMinus, #quotaPlus, #waitMinus, #waitPlus';
 
 function setRuleInputsLocked(locked) {
     for (const node of document.querySelectorAll(REAL_RULE_SELECTOR)) node.disabled = locked;
@@ -895,9 +909,10 @@ function applyRulesToForm(rules) {
     setChecked("skip", rules.skip_policy || "consume");
     setChecked("manuell", rules.manual_use_policy || "auto_resume");
     setChecked("neuetitel", rules.new_tracks_policy || "ignore");
+    setChecked("favoriten", String(nearestFavoriteWeight(rules.favorite_weight || 1)));
     waitMinutes.value = Math.max(1, Math.round((rules.manual_wait_seconds || 900) / 60));
     renderWait();
-    for (const group of ["skip", "manuell", "neuetitel"]) {
+    for (const group of ["skip", "manuell", "neuetitel", "favoriten"]) {
         const checked = document.querySelector(`input[name="${group}"]:checked`);
         const label = checked && document.querySelector(`label[for="${checked.id}"] .r-name`);
         const stateEl = document.querySelector(`[data-group-state="${group}"]`);

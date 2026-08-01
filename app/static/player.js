@@ -171,6 +171,50 @@ const ICON_BAN = {
   inner: '<circle cx="12" cy="12" r="8.2"/><path d="M6.4 6.4l11.2 11.2"/>',
 };
 
+/* UC-07: per-track draw weight, cycled through three honest stages —
+   shape communicates direction (down / level / up), colour is reserved for
+   the one stage that is not the default (ADR-001 Auflage 4: no invented
+   state colours, only the existing --signal "on" tone the star already
+   uses). The exact value always lives in the title tooltip; the rounded
+   stage carries the icon + aria-label. */
+const ICON_WEIGHT_LOW = {
+  viewBox: "0 0 24 24",
+  attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" },
+  inner: '<path d="M12 5v11M7 12l5 5 5-5"/>',
+};
+const ICON_WEIGHT_MID = {
+  viewBox: "0 0 24 24",
+  attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round" },
+  inner: '<path d="M6 9h12M6 15h12"/>',
+};
+const ICON_WEIGHT_HIGH = {
+  viewBox: "0 0 24 24",
+  attrs: { fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" },
+  inner: '<path d="M12 19V8M7 12l5-5 5 5"/>',
+};
+
+//: value → { label, icon }, in cycle order (Selten → Normal → Öfter → …).
+const WEIGHT_LEVELS = [
+  { value: 0.4, label: "Selten", icon: ICON_WEIGHT_LOW },
+  { value: 1.0, label: "Normal", icon: ICON_WEIGHT_MID },
+  { value: 2.0, label: "Öfter", icon: ICON_WEIGHT_HIGH },
+];
+
+/** Continuous weight → nearest of the three UI stages (server allows 0.1..10). */
+function nearestWeightLevel(weight) {
+  let best = WEIGHT_LEVELS[1];
+  let bestDiff = Infinity;
+  for (const level of WEIGHT_LEVELS) {
+    const diff = Math.abs((weight ?? 1.0) - level.value);
+    if (diff < bestDiff) { bestDiff = diff; best = level; }
+  }
+  return best;
+}
+
+function formatWeightValue(weight) {
+  return Number(weight ?? 1.0).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+}
+
 const REASON_TEXT = {
   local_file: "lokale Datei",
   not_playable: "hier nicht verfügbar",
@@ -221,6 +265,7 @@ export class RunPlayer {
       && Boolean(this.state.watcher?.watching);
     this.render();
     this.loadSkipped();
+    this.loadExcluded();
     if (this.isRemote && this.playing) this.startPolling();
 
     if (this.isRemote) {
@@ -452,6 +497,83 @@ export class RunPlayer {
     }
   }
 
+  /**
+   * UC-21: the run's excluded rows — ``excluded_user`` (revocable, this
+   * run's own exclusion) and ``excluded_rule`` (import-time, never
+   * revocable here — see runs.set_track_exclusion / RunError 409). The
+   * section itself always stays visible (a run with nothing excluded is
+   * still an honest, expected state, not an error), only its *body* is a
+   * disclosure the listener opens.
+   */
+  async loadExcluded() {
+    const section = $("#excludedSection");
+    if (!section) return;
+    try {
+      const { tracks } = await api(`/api/runs/${this.runId}/tracks?state=excluded`);
+      this.excludedTracks = tracks;
+    } catch {
+      this.excludedTracks = [];
+    }
+    this.renderExcluded();
+  }
+
+  renderExcluded() {
+    const list = $("#excludedList");
+    const read = $("#excludedRead");
+    if (!list || !read) return;
+    const tracks = this.excludedTracks || [];
+    read.textContent = tracks.length
+      ? `${formatCount(tracks.length)} ${tracks.length === 1 ? "Titel" : "Titel"}`
+      : "Keine";
+
+    if (!tracks.length) {
+      list.replaceChildren(
+        el("li", { class: "excluded-empty" }, "Keine ausgeschlossenen Titel in diesem Hörvorgang.")
+      );
+      return;
+    }
+
+    list.replaceChildren(
+      ...tracks.map((t) => {
+        const label = [t.name, t.artist].filter(Boolean).join(" — ") || "Titel ohne Namen";
+        const row = el("li", { class: "excluded-row" },
+          el("div", {},
+            el("span", { class: "u-name wrap-anywhere" }, t.name || "Titel ohne Namen"),
+            el("span", { class: "u-meta wrap-anywhere" }, t.artist || "")));
+        if (t.state === "excluded_user") {
+          row.append(el("button", {
+            class: "btn btn-secondary", type: "button",
+            onClick: () => this.guard(() => this.reactivateTrack(t)),
+          }, "Wieder aufnehmen"));
+        } else {
+          // excluded_rule: an honest, non-interactive explanation — never a
+          // disabled-looking button that promises an action it will 409 on.
+          row.append(el("span", { class: "excluded-reason dim sm" },
+            "Beim Import ausgeschlossen — nicht wieder aufnehmbar"));
+        }
+        return row;
+      })
+    );
+  }
+
+  /** UC-21: revoke this run's own exclusion — 404/409 surface via guard(). */
+  async reactivateTrack(entry) {
+    await api(`/api/runs/${this.runId}/tracks/${entry.run_track_id}/exclude`, {
+      method: "DELETE",
+    });
+    this.state = await api(`/api/runs/${this.runId}`);
+    this.render();
+    await this.loadExcluded();
+    // The pressed button's row is gone from the DOM now — send focus
+    // somewhere still meaningful instead of letting it fall back to <body>.
+    const nextButton = $("#excludedList button.btn");
+    (nextButton || $("#excludedToggle"))?.focus();
+    this.notify(
+      `„${entry.name || "Titel"}“ ist wieder Teil dieses Hörvorgangs.`,
+      "note-ok", "Wieder aufgenommen"
+    );
+  }
+
   /* -- position tracking ----------------------------------------------------
      Remote (Spotify) never hands the client a position, so the elapsed side
      stays an honest "–:–" for that mode. Web players report real progress
@@ -534,10 +656,22 @@ export class RunPlayer {
     });
     this.state = await api(`/api/runs/${this.runId}`);
     this.render();
+    await this.loadExcluded();   // UC-21: newly excluded row appears there right away
     this.notify(
       `„${entry.name || "Titel"}“ ist für diesen Hörvorgang ausgeschlossen und kommt nicht mehr an die Reihe.`,
       "note-ok", "Ausgeschlossen"
     );
+  }
+
+  /** UC-07: cycle one row's draw weight Selten → Normal → Öfter → Selten. */
+  async cycleWeight(entry) {
+    const current = nearestWeightLevel(entry.weight);
+    const next = WEIGHT_LEVELS[(WEIGHT_LEVELS.indexOf(current) + 1) % WEIGHT_LEVELS.length];
+    await api(`/api/runs/${this.runId}/tracks/${entry.run_track_id}/weight`, {
+      method: "PUT", body: { weight: next.value },
+    });
+    this.state = await api(`/api/runs/${this.runId}`);
+    this.render();
   }
 
   renderCover() {
@@ -837,6 +971,12 @@ export class RunPlayer {
               // legacy import has no cards and honestly shows no buttons).
               if (t.run_track_id) {
                 const label = t.name || `Titel ${formatCount(t.index + 1)}`;
+                // UC-07: third control, the draw-weight cycle. Rounds the
+                // (possibly continuous, server allows 0.1..10) weight to the
+                // nearest of the three UI stages for icon + aria-label; the
+                // title tooltip always carries the exact value.
+                const level = nearestWeightLevel(t.weight);
+                const nextLevel = WEIGHT_LEVELS[(WEIGHT_LEVELS.indexOf(level) + 1) % WEIGHT_LEVELS.length];
                 row.append(el("span", { class: "u-actions" },
                   el("button", {
                     class: `u-act${t.favorite ? " is-on" : ""}`, type: "button",
@@ -845,6 +985,12 @@ export class RunPlayer {
                     title: t.favorite ? "Favorit entfernen" : "Als Favorit markieren",
                     onClick: () => this.guard(() => this.toggleFavorite(t)),
                   }, svgIcon(ICON_STAR.viewBox, ICON_STAR.inner, ICON_STAR.attrs)),
+                  el("button", {
+                    class: `u-act${level.value > 1 ? " is-on" : ""}`, type: "button",
+                    "aria-label": `Gewicht für ${label}: aktuell ${level.label}`,
+                    title: `Gewicht ${formatWeightValue(t.weight)}× · Klick für „${nextLevel.label}“`,
+                    onClick: () => this.guard(() => this.cycleWeight(t)),
+                  }, svgIcon(level.icon.viewBox, level.icon.inner, level.icon.attrs)),
                   el("button", {
                     class: "u-act", type: "button",
                     "aria-label": `Titel ausschließen: ${label}`,
