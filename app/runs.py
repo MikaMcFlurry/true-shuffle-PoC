@@ -24,6 +24,7 @@ from core import engine
 from core.engine import Decision
 from core.models import (
     AdvanceReason,
+    PlaybackState,
     PlaylistRef,
     RunMode,
     RunState,
@@ -495,6 +496,7 @@ async def _apply(
     *,
     device_id: Optional[str],
     force_override: bool = False,
+    position_ms: int = 0,
 ) -> Optional[str]:
     """Push a decision to a REMOTE_DEVICE provider.
 
@@ -503,6 +505,10 @@ async def _apply(
     window.  ``POST /queue`` is never used any more; the user's queue belongs
     to the user.  Returns which command was sent (``"play"`` / ``"skip"``) so
     the caller can track the asserted window, or ``None``.
+
+    ``position_ms`` rides on the play command (ADR-004): a window re-assert
+    of the ALREADY PLAYING title continues at the listener's position instead
+    of restarting the song.
 
     Web-player providers get the decision as JSON instead; the browser does
     the playing, so there is nothing to push.
@@ -518,13 +524,14 @@ async def _apply(
 
     if decision.needs_override or force_override:
         _command_log.info(
-            "corr=%s run=%s kind=play target=%s cursor=%s window=%s offset=0",
+            "corr=%s run=%s kind=play target=%s cursor=%s window=%s offset=0 "
+            "position_ms=%s",
             correlation_id, state.run_id, decision.play_track_id,
-            decision.cursor, len(window),
+            decision.cursor, len(window), position_ms,
         )
         await session.provider.play(
             session.token, track_ids=window, offset_position=0,
-            device_id=device_id,
+            device_id=device_id, position_ms=position_ms,
         )
         return "play"
 
@@ -1021,6 +1028,11 @@ async def _replan_tail(
     state.order = order
     run["plan_version"] = new_pv
     run["order"] = order
+    # ADR-004: the plan underneath the asserted uris window just changed, so
+    # nothing is known to be correctly set any more.  Forgetting the anchor is
+    # the safety net — the next command re-asserts a fresh window even when
+    # the immediate re-assert below (routes) cannot run or fails.
+    _forget_window(run_id)
     return len(tail)
 
 
@@ -1174,6 +1186,106 @@ async def set_track_exclusion(
         "excluded": excluded,
         "replanned": replanned,
     }
+
+
+def audible_window(state: RunState) -> List[str]:
+    """The uris window a listener would hear from here — for change detection.
+
+    ADR-004: captured BEFORE a tail replan and handed to
+    :func:`reassert_window` as ``previous_window``, so a redraw that leaves
+    the audible future identical wastes no provider command.
+    """
+    ws = max(1, get_settings().context_window_size)
+    return list(state.order[state.cursor : state.cursor + ws])
+
+
+async def reassert_window(
+    session: Optional[Session],
+    state: RunState,
+    *,
+    cause: str,
+    previous_window: Optional[List[str]] = None,
+    playback: Optional[PlaybackState] = None,
+) -> str:
+    """ADR-004: push the CURRENT plan to an actively driven provider, now.
+
+    After a tail replan (exclusion, reactivation, rule change, sync apply)
+    the asserted uris window no longer matches the plan.  ``_replan_tail``
+    already forgot the anchor, so the next boundary converges in any case;
+    this closes the AUDIBLE gap for the driven case: when the provider is
+    demonstrably playing the run's current card, the fresh window is asserted
+    immediately and seamlessly — same title, position preserved.
+
+    Beobachten statt kämpfen (F8): during a manual episode, drift, idle or on
+    a paused/completed run nothing is sent.  Outcomes:
+
+    * ``"reasserted"`` — one play command carried the fresh window;
+    * ``"unchanged"`` — the audible future did not change, no command;
+    * ``"not_driving"`` — no session/remote provider, run not ACTIVE, manual
+      episode open, or the provider does not currently play our title;
+    * ``"failed"`` — the command failed (device gone, 429 …); the anchor
+      stays forgotten and ``window_reassert_failed`` is in the ledger — the
+      next advance re-asserts.
+    """
+    if session is None:
+        return "not_driving"
+    if session.provider.capabilities.playback is not PlaybackControl.REMOTE_DEVICE:
+        return "not_driving"
+    if state.status is not RunStatus.ACTIVE:
+        return "not_driving"
+
+    fresh_window = audible_window(state)
+    if previous_window is not None and fresh_window == previous_window:
+        return "unchanged"
+
+    run = await db.get_run(state.run_id)
+    if run is None:
+        return "not_driving"
+    if str(run.get("manual_state") or MANUAL_NONE) != MANUAL_NONE:
+        return "not_driving"
+
+    if playback is None:
+        try:
+            playback = await session.provider.get_playback_state(session.token)
+        except ProviderError:
+            # We cannot even see the player — no blind commands (F8).
+            return "not_driving"
+    if (
+        playback is None
+        or not playback.is_playing
+        or playback.track_id != state.current_track_id
+    ):
+        return "not_driving"
+
+    decision = engine.start(
+        state, window_size=get_settings().context_window_size
+    )
+    if decision.completed or not decision.play_track_id:
+        return "not_driving"
+    try:
+        command = await _apply(
+            session, state, decision,
+            device_id=state.device_id, force_override=True,
+            position_ms=int(playback.progress_ms or 0),
+        )
+    except ProviderError as exc:
+        await db.record_event(
+            state.run_id, "window_reassert_failed", cursor=state.cursor,
+            detail={"cause": cause, "error": str(exc)},
+        )
+        return "failed"
+    if command != "play":
+        return "not_driving"
+    _remember_window(state.run_id, state.cursor)
+    await db.record_event(
+        state.run_id, "window_reasserted", cursor=state.cursor,
+        detail={
+            "cause": cause,
+            "position_ms": int(playback.progress_ms or 0),
+            "window": len(decision.play_window or []),
+        },
+    )
+    return "reasserted"
 
 
 # ---------------------------------------------------------------------------

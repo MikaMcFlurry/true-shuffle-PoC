@@ -873,13 +873,30 @@ async def run_resume(request: Request, run_id: int):
     return JSONResponse({"status": state.status.value, "cursor": state.cursor})
 
 
+async def _reassert_after_replan(
+    run: Dict[str, Any], state, before_window: Optional[List[str]], cause: str
+) -> str:
+    """ADR-004: after a tail replan, close the audible gap immediately.
+
+    Best-effort by design — the replan already forgot the window anchor, so
+    even ``not_driving``/``failed`` outcomes converge at the next boundary.
+    """
+    if state is None:
+        return "not_driving"
+    session = await accounts.try_open_session(run["user_id"], run["provider"])
+    return await runs.reassert_window(
+        session, state, cause=cause, previous_window=before_window,
+    )
+
+
 @router.post("/runs/{run_id}/rules")
 async def run_rules(request: Request, run_id: int):
     """UC-27: change the rules of THIS run — versioned, effective-from-seq.
 
     Body: ``{"rules": {…partial…}}``.  Freezes a run-local config version,
     binds it from the next selection on, and replans only the tail — played
-    history and the running card stay untouched.
+    history and the running card stay untouched.  ``window`` in the answer
+    says whether a driven provider got the fresh plan immediately (ADR-004).
     """
     run = await require_run(request, run_id)
     body = await _json(request)
@@ -895,10 +912,14 @@ async def run_rules(request: Request, run_id: int):
         state = await runs.get_state(run_id, run["user_id"])
         if state is None:
             raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+        before_window = runs.audible_window(state)
         try:
             result = await runs.change_run_rules(state, patch)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        result["window"] = await _reassert_after_replan(
+            run, state, before_window, "rules_change"
+        )
     return JSONResponse(result)
 
 
@@ -930,7 +951,13 @@ async def run_track_exclude(request: Request, run_id: int, run_track_id: int):
         state = await runs.get_state(run_id, run["user_id"])
         if state is None:
             raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+        before_window = runs.audible_window(state)
         result = await runs.set_track_exclusion(state, run_track_id, excluded)
+        if result is not None:
+            result["window"] = await _reassert_after_replan(
+                run, state, before_window,
+                "exclude" if excluded else "reactivate",
+            )
     if result is None:
         raise HTTPException(status_code=404, detail="Diesen Titel gibt es hier nicht.")
     return JSONResponse(result)
@@ -962,9 +989,16 @@ async def run_apply_sync(request: Request, run_id: int):
         )
     # Same lock as advance/reset: the tail replan must not race the watcher.
     async with runs.advance_lock(run_id):
+        state = await runs.get_state(run_id, run["user_id"])
+        before_window = runs.audible_window(state) if state else None
         result = await library_service.apply_sync_to_run(
             run_id, diff_id=diff_id, user_id=run["user_id"],
             new_tracks_policy=policy,
+        )
+        # Re-read: include_now rewrites the order underneath the old state.
+        fresh = await runs.get_state(run_id, run["user_id"])
+        result["window"] = await _reassert_after_replan(
+            run, fresh, before_window, "apply_sync"
         )
     return JSONResponse(result)
 

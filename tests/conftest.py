@@ -122,6 +122,9 @@ class FakeProvider(MusicProvider):
         self.played: List[str] = []
         #: ADR-002: every play call's full uris window, newest last.
         self.play_windows: List[List[str]] = []
+        #: ADR-004: the ``position_ms`` each play call carried — a seamless
+        #: re-assert preserves the listening position instead of restarting.
+        self.play_positions: List[int] = []
         #: How often the lightweight skip command was used (TS-skip in window).
         self.skips: int = 0
         #: Still recorded so tests can PROVE the app never enqueues (ADR-002).
@@ -210,9 +213,10 @@ class FakeProvider(MusicProvider):
             raise ProviderError("fake: no active device")
         current = track_ids[offset_position]
         self.play_windows.append(list(track_ids))
+        self.play_positions.append(position_ms)
         self.played.append(current)
         self.state = PlaybackState(
-            is_playing=True, track_id=current, progress_ms=0,
+            is_playing=True, track_id=current, progress_ms=position_ms,
             duration_ms=180_000, device_id=device_id,
         )
 

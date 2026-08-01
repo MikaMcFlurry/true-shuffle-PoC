@@ -280,6 +280,41 @@ class Watcher:
                     )
                     continue
 
+                # ADR-004 self-healing: the expected title demonstrably plays
+                # but no window is known to be set (process restart, or a
+                # failed immediate re-assert after a replan).  Assert the
+                # fresh window now, position preserved — instead of waiting
+                # for the next boundary and hard-restarting a title there
+                # (the old SP-006 residue).
+                if (
+                    not verdict.should_advance
+                    and not verdict.drifted
+                    and not verdict.idle
+                    and state.window_anchor is None
+                    and playback is not None
+                    and playback.is_playing
+                    and playback.track_id == state.current_track_id
+                ):
+                    async with runs.advance_lock(run_id):
+                        fresh = await runs.get_state(run_id, user_id)
+                        if (
+                            fresh is not None
+                            and fresh.status is RunStatus.ACTIVE
+                            and fresh.cursor == state.cursor
+                            and fresh.window_anchor is None
+                        ):
+                            outcome = await runs.reassert_window(
+                                session, fresh, cause="watcher",
+                                playback=playback,
+                            )
+                            if outcome == "failed":
+                                # Like any failed command: back off, re-poll.
+                                await asyncio.sleep(
+                                    max(settings.watcher_poll_seconds * 2,
+                                        MIN_SLEEP)
+                                )
+                                continue
+
                 if verdict.should_advance:
                     try:
                         async with runs.advance_lock(run_id):
