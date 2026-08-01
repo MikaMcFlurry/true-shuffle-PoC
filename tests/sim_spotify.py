@@ -85,6 +85,7 @@ from providers.base import (
     PlaybackControl,
     ProviderCapabilities,
     ProviderError,
+    ProviderNoActiveDevice,
     ProviderQuotaError,
     TokenBundle,
 )
@@ -101,8 +102,15 @@ class SimRateLimited(ProviderQuotaError):
         self.http_status = 429
 
 
-class SimNoActiveDevice(ProviderError):
-    """404 NO_ACTIVE_DEVICE — a player command without any active device."""
+class SimNoActiveDevice(ProviderNoActiveDevice):
+    """404 NO_ACTIVE_DEVICE — a player command without any active device.
+
+    Teständerung 2026-08-01 (dokumentierte fachliche Begründung, ERR-01):
+    subclasst jetzt die neue Produktions-Fehlerklasse
+    ``ProviderNoActiveDevice`` — der Simulator modelliert exakt die
+    Bedingung, für die die Klasse eingeführt wurde, und die Fehlerwege
+    (409 + deutsche Geräteaktion) laufen damit über denselben Typ wie live.
+    """
 
     def __init__(self) -> None:
         super().__init__("simulated 404 — NO_ACTIVE_DEVICE")

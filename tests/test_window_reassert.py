@@ -275,3 +275,39 @@ async def test_watcher_reasserts_a_missing_window_while_the_expected_track_plays
     assert runs._window_anchors.get(run_id) == 0
     events = [e["type"] for e in await db.list_events(run_id)]
     assert "window_reasserted" in events
+
+
+async def test_auto_resume_preserves_the_position_when_the_plan_title_plays(
+    database, fake_provider,
+):
+    """F8/ADR-004-Parität: kehrt die Wiedergabe auf den erwarteten Titel
+    zurück, setzt auto_resume das Fenster positions-erhaltend — kein
+    Neustart bei 0 ms mehr (Phase-4-Fix nach ERR/MAN-Befund 8)."""
+    from app import db as app_db
+    from app.accounts import Session
+    from providers.base import TokenBundle
+
+    user_id = await app_db.get_or_create_user("local-autoresume")
+    session = Session(user_id=user_id, provider=fake_provider,
+                      token=TokenBundle(access_token="t"))
+    playlist = (await fake_provider.list_playlists(None))[0]
+    from core.models import RunMode
+    state, _ = await runs.create_run_v3(
+        session, playlist, RunMode.CONTROLLER, name="auto-resume-pos",
+    )
+    await runs.start(session, state, device_id="dev1")
+    current = state.current_track_id
+
+    # Manuelle Episode: Drift erkannt, dann Rückkehr auf den Plan-Titel
+    # mitten im Song — beobachtet vom Watcher als playback-Snapshot.
+    assert await runs.manual_tick(
+        session, state, drifted=True, now=1_000.0
+    ) == runs.MANUAL_DETECTED
+    _playing_mid_track(fake_provider, current, 33_000)
+    assert await runs.manual_tick(
+        session, state, drifted=False, now=1_010.0,
+        playback=fake_provider.state,
+    ) == runs.MANUAL_NONE
+
+    assert fake_provider.play_windows[-1][0] == current
+    assert fake_provider.play_positions[-1] == 33_000

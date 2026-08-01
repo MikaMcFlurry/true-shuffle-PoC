@@ -250,3 +250,44 @@ def test_poll_never_goes_below_the_floor():
     state = PlaybackState(is_playing=True, progress_ms=200_000, duration_ms=200_000)
     assert _next_delay(state, base=4.0) >= 1.0
     assert _next_delay(None, base=0.1) >= 1.0
+
+
+# ---------------------------------------------------------------------------
+# MAN-05 (Phase 4): the watcher follows a deliberate device change
+# ---------------------------------------------------------------------------
+
+async def test_the_watcher_follows_playback_to_a_new_device(
+    database, fake_provider,
+):
+    """MAN-05: derselbe Plan-Titel läuft weiter, nur auf einem anderen Gerät —
+    das ist bewusste Nutzung, keine Übernahme.  Der Watcher zieht die
+    ``device_id`` des Runs nach (spätere Kommandos erreichen das Gerät, das
+    der Hörer wirklich hört) und protokolliert das einmal (Event
+    ``device_changed``); eine F8-Episode entsteht nicht."""
+    run_id, user_id, order = await setup_run(fake_provider)
+    await db.update_run(run_id, device_id="dev1")
+    fake_provider.state = PlaybackState(
+        is_playing=True, track_id=order[0], progress_ms=30_000,
+        duration_ms=180_000, device_id="dev-neu",
+    )
+
+    watcher = Watcher()
+    try:
+        await watcher.ensure(run_id, user_id)
+        deadline = asyncio.get_event_loop().time() + 3.0
+        device = None
+        while asyncio.get_event_loop().time() < deadline:
+            run = await db.get_run(run_id, user_id=user_id)
+            device = run["device_id"] if run else None
+            if device == "dev-neu":
+                break
+            await asyncio.sleep(0.02)
+    finally:
+        await watcher.stop_all()
+
+    assert device == "dev-neu"
+    events = await db.list_events(run_id)
+    assert [e["type"] for e in events].count("device_changed") == 1
+    run = await db.get_run(run_id, user_id=user_id)
+    assert run["manual_state"] in (None, "", "none")
+    assert run["status"] == "active"

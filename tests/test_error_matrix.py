@@ -252,6 +252,10 @@ def test_err01_no_active_device_refuses_and_moves_nothing(controlled_provider):
     ist die halbe Matrixzeile: „keine stille Endlosschleife".  Die andere
     Hälfte („klare Geräteaktion") prüft der xfail-Test darunter.
     """
+    # Teständerung 2026-08-01 (dokumentierte fachliche Begründung, ERR-01-Fix):
+    # „kein aktives Gerät" hat jetzt eine eigene Fehlerklasse
+    # (providers.base.ProviderNoActiveDevice, 409 + deutsche Geräteaktion) —
+    # der frühere Pin auf den rohen 502 beschrieb den Vor-Fix-Zustand.
     controlled_provider.play_error = SimNoActiveDevice
     with TestClient(app) as client:
         _connect(client)
@@ -259,13 +263,13 @@ def test_err01_no_active_device_refuses_and_moves_nothing(controlled_provider):
 
         started = client.post(f"/api/runs/{run_id}/start",
                               json={"device_id": "dev1"})
-        assert started.status_code == 502, started.text
+        assert started.status_code == 409, started.text
         assert started.json()["detail"]
         assert started.status_code != 500
 
         advanced = client.post(f"/api/runs/{run_id}/advance",
                                json={"reason": "track_ended"})
-        assert advanced.status_code == 502, advanced.text
+        assert advanced.status_code == 409, advanced.text
 
         payload = client.get(f"/api/runs/{run_id}").json()
         assert payload["cursor"] == 0
@@ -276,22 +280,16 @@ def test_err01_no_active_device_refuses_and_moves_nothing(controlled_provider):
         assert controlled_provider.queued == []
 
 
-@pytest.mark.xfail(strict=True, reason="ERR-01: keine Geräte-Fehlerklasse")
 def test_err01_the_refusal_names_a_device_action_in_german(controlled_provider):
-    """ERR-01 verlangt „klare Geräteaktion" — der Code liefert sie NICHT.
+    """ERR-01: die Verweigerung trägt eine klare deutsche Geräteaktion.
 
-    Ist-Zustand (Fundstelle ``providers/base.py::_USER_MESSAGES`` und
-    ``app/deps.py::http_error``): ``_USER_MESSAGES`` kennt nur
-    ``ProviderPaidTierRequired`` und ``ProviderQuotaError``; jeder andere
-    Connector-Fehler reist mit ``str(exc)`` weiter.  „Kein aktives Gerät" hat
-    keine eigene Fehlerklasse (``providers/base.py`` Zeilen 34-95), also
-    landet der Rohtext des Dienstes als HTTP 502 im Browser — auf Englisch
-    und ohne die Handlung, die der Hörer braucht („öffne Spotify irgendwo").
-    Der Hinweis existiert im Produkt nur als statische Connector-Notiz
-    (``providers/spotify.py`` Zeilen 196-198), nicht im Fehlerweg.
-
-    Dieser Test formuliert die Matrix-Erwartung und ist darum strict-xfail:
-    er wird grün, sobald der Fehlerweg eine deutsche Geräteanweisung trägt.
+    Rot-vor-Fix-Historie: dieser Test war strict-xfail, solange „kein
+    aktives Gerät" keine eigene Fehlerklasse hatte und der Rohtext des
+    Dienstes als 502 durchgereicht wurde.  Seit dem ERR-01-Fix
+    (``providers/base.py::ProviderNoActiveDevice`` + ``_USER_MESSAGES``,
+    Mapping in ``providers/http.py`` auf ``404 NO_ACTIVE_DEVICE``) ist die
+    Matrix-Erwartung erfüllt — der xfail-Marker wurde mit dem Fix entfernt
+    (dokumentierte Teständerung 2026-08-01).
     """
     controlled_provider.play_error = SimNoActiveDevice
     with TestClient(app) as client:
@@ -665,59 +663,57 @@ async def test_err05_the_failed_attempt_leaves_no_ledger_trace(
 # ERR-06 — Track unverfügbar (Laufzeitfall)
 # ---------------------------------------------------------------------------
 
-async def test_err06_an_unplayable_title_stalls_the_deck_without_a_policy(
+async def test_err06_a_permanent_failure_consumes_one_failure_hop_per_call(
     database, service,
 ):
-    """ERR-06, Ist-Zustand: zur LAUFZEIT gibt es keine Skip-/Fehlerpolicy.
+    """ERR-06 nach dem Fix: genau EIN Fehler-Hop je Advance-Aufruf.
 
-    Import-seitig kennt der Code den Fall (``excluded_rule`` /
-    ``SkipReason.NOT_PLAYABLE`` in ``app/runs.py::create_run_v3``).  Meldet
-    der Dienst dagegen ERST beim Abspielen, dass dieser Titel nicht geht,
-    passiert Folgendes — und mehr nicht: das Kommando wirft, der Advance
-    bricht ab, der Cursor bleibt stehen, die Karte bleibt ``open`` und
-    ``current``.  Es gibt keinen automatischen Skip, keine Ausschlussmarkierung
-    und keinen ``playback_failed``-Advance (die Ursache ``PLAYBACK_FAILED``
-    existiert in ``core/models.py``, wird aber von keinem Pfad ausgelöst).
-
-    Der Lauf stürzt nicht ab und bleibt bedienbar — deshalb gepinnter
-    Ist-Zustand statt xfail; die fehlende Policy ist ein Bericht-Befund.
+    Teständerung 2026-08-01 (dokumentierte fachliche Begründung): die alte
+    Fassung pinnte den Vor-Fix-Stillstand („Deck steht, keine Policy").
+    Seit dem reaktiven ``PLAYBACK_FAILED``-Zweig in ``app/runs.py::advance``
+    gilt: die echte Transition wird verbucht, die unspielbare Karte wird
+    reaktiv konsumiert, die Folgekarte wird angespielt — und scheitert AUCH
+    sie, ist nach genau einem Hop Schluss (kein Durchballern durchs Deck;
+    die nächste Beobachtung oder ein manueller Start versucht es erneut).
     """
     state = await _new_run(service, "unspielbar")
     await runs.start(service.session, state, device_id="dev1")
     blocked = state.order[1]
-    # Fenstergrenze/Neustartlage: der Advance muss ein Kommando schicken,
-    # sonst gäbe es nichts, woran der Titel scheitern könnte (ADR-002).
     runs._window_anchors.clear()
     state = await runs.get_state(state.run_id, service.user_id)
 
     service.provider.play_error = _track_unavailable
-    with pytest.raises(ProviderError):
-        await runs.advance(
-            service.session, state, reason=AdvanceReason.TRACK_ENDED
-        )
+    attempts_before = service.provider.play_attempts
+    decision = await runs.advance(
+        service.session, state, reason=AdvanceReason.TRACK_ENDED
+    )
 
     run = await db.get_run(state.run_id)
-    assert run["cursor"] == 0                       # Deck steht
+    assert run["cursor"] == 2                       # Transition + 1 Hop
     assert run["status"] == "active"
     card = await db.find_run_track(state.run_id, provider_track_id=blocked)
-    assert card["state"] == "open"                  # nicht ausgeschlossen
-    assert card["play_count"] == 0
-    plan = await db.list_active_plan(state.run_id)
-    assert plan[0]["state"] == "current"            # nichts konsumiert
+    assert card["play_count"] == 1                  # reaktiv konsumiert (F4)
+    assert card["state"] != "open"
+    # Kein Ausschluss — ein Wiedersehen im nächsten Zyklus bleibt möglich.
     assert await _one(
         "SELECT count(*) FROM run_tracks WHERE run_id = ? AND state LIKE "
         "'excluded%'",
         (state.run_id,),
     ) == 0
+    # Genau zwei Kommandoversuche (Karte 1, dann Karte 2) — kein weiterer.
+    assert service.provider.play_attempts == attempts_before + 2
+    reasons = [e["reason"] for e in await db.list_events(state.run_id)]
+    assert reasons.count(AdvanceReason.PLAYBACK_FAILED.value) >= 1
+    assert decision.advanced is True
 
-    # Der Ausweg ist manuell: sobald der Titel wieder geht, läuft alles weiter.
+    # Sobald der Dienst wieder spielt, läuft das Deck normal weiter.
     service.provider.play_error = None
     fresh = await runs.get_state(state.run_id, service.user_id)
-    decision = await runs.advance(
+    ok = await runs.advance(
         service.session, fresh, reason=AdvanceReason.TRACK_ENDED
     )
-    assert decision.advanced is True
-    assert (await db.get_run(state.run_id))["cursor"] == 1
+    assert ok.advanced is True
+    assert (await db.get_run(state.run_id))["cursor"] == 3
 
 
 def test_err06_over_http_the_run_survives_an_unplayable_title(
@@ -745,29 +741,19 @@ def test_err06_over_http_the_run_survives_an_unplayable_title(
         assert all(t["state"] == "open" for t in tracks)
 
 
-@pytest.mark.xfail(strict=True,
-                   reason="ERR-06: reaktives playback_failed fehlt serverseitig")
 async def test_err06_a_failed_playback_is_caught_reactively_as_promised(
     database, service,
 ):
-    """ERR-06: der Code VERSPRICHT die reaktive Behandlung — und hält sie nur
-    für den Browser-Player.
+    """ERR-06: die reaktive Behandlung gilt jetzt auch serverseitig.
 
-    Fundstelle des Versprechens: ``providers/spotify.py`` Zeilen 483-490 —
-    „a track that turns out to be unplayable anyway is caught reactively, when
-    playback fails (AdvanceReason.PLAYBACK_FAILED)".  Umgesetzt ist genau die
-    Hälfte davon: der Web-Player meldet ``playback_failed`` selbst
-    (``app/static/player.js`` Zeilen 285/393 → ``app/routes_api.py`` Zeile 812
-    → Advance mit ``PLAYBACK_FAILED``, das als Konsum zählt, ``app/runs.py``
-    Zeile 141).  Für den ferngesteuerten Weg (Spotify) gibt es diesen Melder
-    nicht: ``app/runs.py::_apply`` lässt den ``ProviderError`` durch, und
-    weder ``runs.advance`` noch ``app/watcher.py`` machen daraus einen
-    ``PLAYBACK_FAILED``-Advance — das Deck bleibt auf der unspielbaren Karte
-    stehen.
-
-    Dieser Test formuliert das Versprechen (Deck läuft weiter, Ereignis mit
-    Grund ``playback_failed``) und ist strict-xfail, bis der serverseitige
-    Zweig existiert.
+    Rot-vor-Fix-Historie: strict-xfail, solange nur der Web-Player-Zweig
+    ``playback_failed`` melden konnte und der ferngesteuerte Weg auf der
+    unspielbaren Karte stehen blieb.  Seit dem ERR-06-Fix in
+    ``app/runs.py::advance`` (track-level ProviderError ⇒ Transition
+    verbuchen, Karte reaktiv als ``PLAYBACK_FAILED`` konsumieren, Folgekarte
+    anspielen) ist das Versprechen aus ``providers/spotify.py`` eingelöst —
+    xfail-Marker mit dem Fix entfernt (dokumentierte Teständerung
+    2026-08-01).
     """
     state = await _new_run(service, "err06-reaktiv")
     await runs.start(service.session, state, device_id="dev1")

@@ -855,8 +855,44 @@ async def advance(
     # A device that is gone (404 / no active device) fails the command, the
     # cursor stays put, and no card is consumed — the watcher then sees idle
     # (Zustand D) instead of a silently burnt title.
-    command = await _apply(session, state, decision,
-                           device_id=device_id or state.device_id)
+    try:
+        command = await _apply(session, state, decision,
+                               device_id=device_id or state.device_id)
+    except ProviderError as exc:
+        # ERR-06: a TRACK-level refusal (plain 4xx command error — device,
+        # auth, quota and tier failures all carry their own subclass and
+        # re-raise) means the NEW card is unplayable, not that the device is
+        # gone.  The transition itself is real — the previous card did end —
+        # so it is booked, the unplayable card is then consumed reactively
+        # as PLAYBACK_FAILED (F4) and the following card is asserted.  One
+        # failure hop per call: a second track-level failure returns with
+        # the window unasserted instead of machine-gunning through the deck.
+        track_level = (
+            type(exc) is ProviderError
+            and exc.http_status is not None
+            and 400 <= exc.http_status < 500
+        )
+        if not track_level:
+            raise
+        if run is not None:
+            if not await _book_advance(run, state, decision, reason):
+                return _stale_decision(state, reason)
+        else:  # pragma: no cover — run vanished mid-flight
+            await db.update_run(state.run_id, cursor=decision.cursor)
+        state.cursor = decision.cursor
+        _forget_window(state.run_id)
+        await db.record_event(
+            state.run_id, "playback_failed", cursor=state.cursor,
+            reason=AdvanceReason.PLAYBACK_FAILED.value,
+            detail={"track": decision.play_track_id,
+                    "error": str(exc)[:200]},
+        )
+        if reason is AdvanceReason.PLAYBACK_FAILED:
+            return decision
+        return await advance(
+            session, state, reason=AdvanceReason.PLAYBACK_FAILED,
+            device_id=device_id,
+        )
     if run is not None:
         if not await _book_advance(run, state, decision, reason):
             return _stale_decision(state, reason)
@@ -1461,6 +1497,7 @@ async def manual_tick(
     idle: bool = False,
     advancing: bool = False,
     now: Optional[float] = None,
+    playback: Optional[PlaybackState] = None,
 ) -> str:
     """Feed one playback observation into the F8 state machine.
 
@@ -1548,9 +1585,20 @@ async def manual_tick(
                 decision = engine.start(
                     state, window_size=settings.context_window_size
                 )
+                # ADR-004 parity: when the return-to-plan is the expected
+                # title ALREADY playing, the re-assert continues at the
+                # listener's position instead of restarting the song.
+                position_ms = 0
+                if (
+                    playback is not None
+                    and playback.is_playing
+                    and playback.track_id == state.current_track_id
+                ):
+                    position_ms = int(playback.progress_ms or 0)
                 command = await _apply(
                     session, state, decision,
                     device_id=state.device_id, force_override=True,
+                    position_ms=position_ms,
                 )
                 if command == "play":
                     _remember_window(state.run_id, state.cursor)

@@ -76,6 +76,18 @@ class ProviderPaidTierRequired(ProviderError):
     status_code = 402
 
 
+class ProviderNoActiveDevice(ProviderError):
+    """A player command found no active device to land on (ERR-01).
+
+    Spotify answers player commands with ``404 NO_ACTIVE_DEVICE`` once every
+    client has been closed for a while.  The listener can fix this in
+    seconds — but only if we say so instead of relaying a raw English 404.
+    409 because the refusal is a state conflict, not a broken gateway.
+    """
+
+    status_code = 409
+
+
 class ProviderContentUnavailable(ProviderError):
     """The item exists, but this account is not allowed to read its contents.
 
@@ -106,6 +118,10 @@ _USER_MESSAGES = {
     ProviderQuotaError: (
         "Der Dienst nimmt gerade keine Anfragen mehr an — das Kontingent ist "
         "aufgebraucht. Warte eine Weile und versuch es dann noch einmal."
+    ),
+    ProviderNoActiveDevice: (
+        "Kein aktives Gerät gefunden. Öffne Spotify auf deinem Gerät und "
+        "starte dort kurz die Wiedergabe — dann übernimmt True Shuffle wieder."
     ),
 }
 

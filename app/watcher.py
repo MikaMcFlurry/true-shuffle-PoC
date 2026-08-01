@@ -256,6 +256,7 @@ class Watcher:
                         drifted=verdict.drifted,
                         idle=verdict.idle,
                         advancing=verdict.should_advance,
+                        playback=playback,
                     )
                 except ProviderError as exc:
                     # The auto_resume window assert can fail like any other
@@ -279,6 +280,30 @@ class Watcher:
                                     paused=True)
                     )
                     continue
+
+                # MAN-05 (Phase 4): the listener moved OUR playback to another
+                # device — same title, new device_id.  That is deliberate use,
+                # not a takeover: follow the playback so later commands reach
+                # the device the listener is actually hearing, instead of
+                # yanking audio back to the old one.  Ledger says so once.
+                if (
+                    playback is not None
+                    and playback.is_playing
+                    and not verdict.drifted
+                    and playback.track_id == state.current_track_id
+                    and playback.device_id
+                    and state.device_id
+                    and playback.device_id != state.device_id
+                ):
+                    await db.update_run(run_id, device_id=playback.device_id)
+                    state.device_id = playback.device_id
+                    await db.record_event(
+                        run_id, "device_changed", cursor=state.cursor,
+                        detail={"note": "playback moved to another device — "
+                                        "following it"},
+                    )
+                    logger.info("run %s followed playback to a new device",
+                                run_id)
 
                 # ADR-004 self-healing: the expected title demonstrably plays
                 # but no window is known to be set (process restart, or a

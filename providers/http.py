@@ -17,6 +17,7 @@ import httpx
 from providers.base import (
     ProviderAuthError,
     ProviderError,
+    ProviderNoActiveDevice,
     ProviderPaidTierRequired,
     ProviderQuotaError,
 )
@@ -170,6 +171,16 @@ async def request(
             raise _tagged(_auth_error(provider, resp), resp.status_code)
 
         if resp.status_code >= 400:
+            # ERR-01: the one 4xx the listener can fix in seconds — say so
+            # with its own class instead of a raw relayed 404 (AN-7 shape:
+            # player commands without any active device).
+            if resp.status_code == 404 and error_reason(resp) == "NO_ACTIVE_DEVICE":
+                raise _tagged(
+                    ProviderNoActiveDevice(
+                        f"{provider}: no active device — {_snippet(resp)}"
+                    ),
+                    resp.status_code,
+                )
             raise _tagged(
                 ProviderError(f"{provider}: HTTP {resp.status_code} — {_snippet(resp)}"),
                 resp.status_code,
