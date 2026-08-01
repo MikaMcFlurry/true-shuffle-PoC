@@ -1,6 +1,61 @@
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "browser: end-to-end acceptance test that drives a real Chromium against a real server (tests/browser)",
+    # Deliberately NOT deselected below: the queue-forensics suite is part of
+    # the default run, so the SP-008 evidence (xfail before the fix, green
+    # after) is produced on every `python -m pytest -q`.
+    "queue_forensics: Spotify queue-duplication forensics against the honest player simulator (tests/sim_spotify.py)",
+    "slow: deep property runs (n up to 500, thousands of draws) — opt-in with `python -m pytest -m slow -q`",
+]
+# The browser suite starts a server and a browser and takes minutes, so it is
+# not part of the default run. It is opt-in and reproducible with
+#     python -m pytest tests/browser -m browser -q
+# On a machine without Playwright or Chromium every test in it skips itself
+# (see tests/browser/conftest.py), so the opt-in command stays safe too.
+addopts = "-m 'not browser and not slow'"
+filterwarnings = [
+    # Starlette's TestClient warns about httpx; nothing we control.
+    "ignore::DeprecationWarning:starlette.*",
+]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.ruff.lint]
+# Pinned explicitly so "ruff clean" means the same thing on every ruff version.
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # import sorting
+    "UP",     # pyupgrade
+    "B",      # bugbear
+    "SIM",    # simplify
+    "ASYNC",  # async correctness
+    "RUF",    # ruff-specific
+]
+ignore = [
+    # `from __future__ import annotations` is in place everywhere; the runtime
+    # never evaluates these, and typing.List/Optional read more clearly in the
+    # public provider contract.
+    "UP006",
+    "UP035",
+    "UP045",
+    # `class X(str, Enum)` is kept over StrEnum: pydantic serialises both by
+    # value, and this form is what every reader of a FastAPI codebase expects.
+    "UP042",
+    # Typographic characters are deliberate throughout: "Fisher–Yates" uses an
+    # en dash, and the UI copy uses · and — on purpose.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# conftest sets SECRET_KEY before importing the app on purpose (see the file);
+# the polling helpers are how you assert on a background task from a test.
+"tests/conftest.py" = ["E402"]
+"tests/*" = ["SLF001", "RUF059", "ASYNC109", "ASYNC110", "E402"]

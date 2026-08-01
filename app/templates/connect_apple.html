@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Apple Music verbinden · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="section-head narrow" aria-labelledby="appleTitle">
+    <span class="eyebrow">Anschluss · Apple Music</span>
+    <h1 id="appleTitle">Mit deiner Apple-ID anmelden</h1>
+    <p>
+        Apple erteilt die Berechtigung im Browser statt über eine Weiterleitung,
+        dieser Schritt öffnet also ein Apple-Fenster. true-shuffle bekommt nur
+        einen Zugriffsschlüssel für deine Mediathek. Dein Apple-ID-Passwort
+        erreicht diesen Server nie.
+    </p>
+</section>
+
+<div class="card narrow">
+    <div class="card-head">
+        <h2>Damit wird möglich</h2>
+        <span class="card-read">3 Rechte</span>
+    </div>
+    <div class="card-body">
+        <ul class="stack-s dim sm">
+            <li>Deine Mediathek-Playlists lesen</li>
+            <li>Eine gemischte Reihenfolge als Playlist hineinschreiben</li>
+            <li>Deinen Hörvorgang in diesem Tab über Apples eigenen Player abspielen</li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <button class="btn btn-primary btn-lg" id="appleConnect" type="button">
+        Bei Apple Music anmelden
+    </button>
+    <a class="btn btn-quiet" href="/connect">Abbrechen</a>
+</div>
+
+<div class="note hidden" id="appleNote"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $, api, setNote } from "/static/app.js";
+
+const CONFIG = {{ browser_config | tojson }};
+const button = $("#appleConnect");
+const note = $("#appleNote");
+
+button.addEventListener("click", async () => {
+    button.disabled = true;
+    setNote(note, "Apple MusicKit wird geladen…", "", "Moment");
+
+    try {
+        await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error("Apple MusicKit konnte nicht geladen werden. Prüf deine Verbindung und versuch es erneut."));
+            document.head.append(script);
+        });
+
+        const music = await window.MusicKit.configure({
+            developerToken: CONFIG.developer_token,
+            app: { name: CONFIG.app_name, build: CONFIG.app_build },
+        });
+
+        setNote(note, "Warte auf Apples Bestätigung…", "", "Moment");
+        const musicUserToken = await music.authorize();
+        if (!musicUserToken) throw new Error("Apple hat keinen Zugriffsschlüssel zurückgegeben.");
+
+        const result = await api("/auth/apple/browser", {
+            method: "POST",
+            body: { music_user_token: musicUserToken },
+        });
+        location.href = result.redirect || "/library";
+    } catch (err) {
+        button.disabled = false;
+        setNote(note, err.message, "note-stop", "Fehler");
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Nicht gefunden · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="section-head narrow" aria-labelledby="errTitle">
+    <span class="eyebrow tabular">Fehler {{ status }}</span>
+    <h1 id="errTitle">{% if status == 404 %}Hier ist nichts{% elif status == 401 %}Nicht angemeldet{% elif status == 409 %}Dienst nicht verbunden{% else %}Da ist etwas schiefgegangen{% endif %}</h1>
+    <p>{{ detail }}</p>
+</section>
+
+<div class="row">
+    <a class="btn btn-primary" href="/library">Zurück zu meiner Bibliothek</a>
+    <a class="btn btn-secondary" href="/connect">Dienste</a>
+</div>
+{% endblock %}

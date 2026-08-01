@@ -1,0 +1,1240 @@
+{% extends "base.html" %}
+{% block title %}Bibliothek · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="section-head" aria-labelledby="libTitle">
+    <span class="eyebrow">Bibliothek</span>
+    <h1 id="libTitle">Neuer Hörvorgang</h1>
+    <p>Eine Playlist, eine Konfiguration, ein Hörvorgang. Große Playlists werden im Hintergrund gelesen; du siehst dabei zu.</p>
+</section>
+
+<div class="row">
+    <div class="tabs" id="providerTabs" role="group" aria-label="Streamingdienst"></div>
+</div>
+
+<div class="note note-stop hidden" id="libNote"></div>
+
+<div class="grid-2" style="align-items: start">
+    <section class="card" aria-labelledby="bibHead">
+        <div class="card-head">
+            <h2 id="bibHead">Deine Playlists</h2>
+            <span class="card-read" id="plCount">wird gelesen</span>
+        </div>
+        <div class="card-body" id="filterRow">
+            <div class="row">
+                <label class="sr-only" for="plFilter">Playlists filtern</label>
+                <input type="search" id="plFilter" placeholder="Nach Namen filtern…" autocomplete="off" style="flex: 1 1 220px">
+            </div>
+        </div>
+        <div class="browse" id="playlists" aria-label="Playlists">
+            <div class="skeleton"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+    </section>
+
+    <div class="stack">
+        <div class="stack-s">
+            <p class="fieldset-label" id="modeLabel">Modus</p>
+            <div class="modes" id="modeCards" role="group" aria-labelledby="modeLabel"></div>
+        </div>
+
+        <section class="card" aria-labelledby="createHead">
+            <div class="card-head">
+                <h2 id="createHead">Anlegen</h2>
+                <span class="card-read" id="selectionRead">nichts gewählt</span>
+            </div>
+            <div class="card-body">
+                <p class="dim sm" id="selectionHint">Wähl links eine Playlist.</p>
+
+                <div id="syncDiffWrap" class="hidden"></div>
+
+                <label class="field">
+                    <span class="field-label">Name des Hörvorgangs</span>
+                    <input type="text" id="runName" maxlength="120" autocomplete="off"
+                           placeholder="Playlist-Name">
+                    <span class="field-hint">Mehrere Hörvorgänge derselben Playlist brauchen Namen — vergebene Namen bekommen automatisch einen Zusatz.</span>
+                </label>
+
+                <label class="field">
+                    <span class="field-label">Wenn schon ein Hörvorgang läuft</span>
+                    <select id="reshuffle">
+                        <option value="0">Dort weitermachen, wo ich war</option>
+                        <option value="1">Neu mischen (verwirft den laufenden Hörvorgang)</option>
+                    </select>
+                </label>
+
+                <button class="btn btn-primary btn-lg" id="dealBtn" type="button" aria-disabled="true">Hörvorgang starten</button>
+                <p class="field-hint" id="dealHint">Wähl links eine Playlist und oben einen Modus.</p>
+
+                <div class="job-status hidden" id="jobLog"></div>
+                <div class="note hidden" id="jobResult"></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<section aria-labelledby="rulesHead">
+    <div class="section-head">
+        <span class="eyebrow">Konfiguration</span>
+        <h2 id="rulesHead">Konfiguration &amp; Regeln</h2>
+        <p>
+            <b style="color: var(--ink)">Ohne Wiederholungen</b> ist die Voreinstellung: jeder spielbare
+            Titel genau einmal, bis der Hörvorgang abgeschlossen ist. Die Regelgruppen darunter zählen
+            beim Start — eine Auswahl abseits der Voreinstellung wird als eigene Konfiguration
+            gespeichert und der Hörvorgang läuft damit. Vor dem Start prüft true-shuffle die Regeln
+            gegen die Playlist und zeigt Konflikte mit einer Ein-Klick-Korrektur (RUN-05).
+        </p>
+    </div>
+
+    <div class="stack-s" style="margin-top: var(--space-2)">
+        <label class="field">
+            <span class="field-label" id="configPickerLabel">Konfiguration verwenden</span>
+            <select id="configPicker" aria-labelledby="configPickerLabel"></select>
+            <span class="field-hint" id="configPickerHint">Eigene Regeln unten einstellen — abweichend von der Voreinstellung wird daraus beim Start automatisch eine neue Konfiguration.</span>
+        </label>
+    </div>
+
+    <fieldset class="presets">
+        <legend class="sr-only">Konfiguration wählen</legend>
+        <div class="preset-grid">
+            <label class="preset-row">
+                <input type="radio" name="preset" id="presetNorepeat" value="norepeat" checked>
+                <span class="p-body">
+                    <span class="p-name">Ohne Wiederholungen</span>
+                    <span class="p-desc">Jeder Titel genau einmal, bis alles gespielt ist — der Startpunkt unten in „Wiederholungsmodus“.</span>
+                </span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="preset" id="presetAutobahn" value="autobahn" disabled>
+                <span class="p-body">
+                    <span class="p-name">Lange Autofahrt <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="p-desc">Große Abstände, Favoriten leicht bevorzugt. Kommt mit dem nächsten Ausbau.</span>
+                </span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="preset" id="presetEntdecker" value="entdecker" disabled>
+                <span class="p-body">
+                    <span class="p-name">Entdeckermodus <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="p-desc">Neue und selten gespielte Titel zuerst. Kommt mit dem nächsten Ausbau.</span>
+                </span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="preset" id="presetFavoriten" value="favoriten" disabled>
+                <span class="p-body">
+                    <span class="p-name">Nur Favoriten <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="p-desc">Ausschließlich markierte Titel. Kommt mit dem nächsten Ausbau.</span>
+                </span>
+            </label>
+            <label class="preset-row" aria-disabled="true">
+                <input type="radio" name="preset" id="presetFeierabend" value="feierabend" disabled>
+                <span class="p-body">
+                    <span class="p-name">Feierabend-Mix <span class="chip chip-preview">Vorschau</span></span>
+                    <span class="p-desc">Ruhige Auswahl, Skips zählen nicht. Kommt mit dem nächsten Ausbau.</span>
+                </span>
+            </label>
+        </div>
+    </fieldset>
+
+<!-- WP3-D4/UC-08: alle fünf Regelgruppen sind ECHT (Wiederholungsmodus inkl.
+     Begrenzte Wiederholungen/Quote, Favoriten-Vorrang, Skip, Manuell, Neue
+     Titel). Eine Auswahl abseits der Voreinstellung erzeugt beim Start eine
+     Konfiguration (POST /api/configs) und der Hörvorgang läuft damit — oder
+     eine bestehende Konfiguration wird über "Konfiguration verwenden" direkt
+     gewählt. Die Favoriten-Markierung selbst bleibt laufgebunden im Player
+     (UC-08 Sterne bei "Als Nächstes"); der Vorrang hier wirkt nur, wenn
+     mindestens ein Titel im laufenden Hörvorgang markiert ist. -->
+
+    <details class="rule-group" open>
+        <summary>
+            <span>Wiederholungsmodus <span class="rh-state" id="abstandState">· Keine Wiederholungen</span></span>
+        </summary>
+        <div class="rule-body">
+            <div class="radio-row">
+                <input type="radio" id="r-norepeat" name="abstand" value="no_repeat" checked>
+                <label for="r-norepeat">
+                    <span class="r-name">Keine Wiederholungen</span>
+                    <span class="r-desc">Jeder Titel höchstens einmal, bis der Hörvorgang abgeschlossen ist.</span>
+                </label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" id="r-limited" name="abstand" value="limited_repeat">
+                <label for="r-limited">
+                    <span class="r-name">Begrenzte Wiederholungen</span>
+                    <span class="r-desc">Titel dürfen wiederkommen — aber nur bis zu einer Quote, und erst nach dem Mindestabstand.</span>
+                </label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" id="r-free" name="abstand" value="free_repeat">
+                <label for="r-free">
+                    <span class="r-name">Wiederholungen mit Mindestabstand</span>
+                    <span class="r-desc">Titel dürfen beliebig oft wiederkommen — nur der Mindestabstand zählt.</span>
+                </label>
+            </div>
+
+            <div class="stack-s hidden" id="gapGroup" style="margin-top: 4px">
+                <span class="field-label">Mindestabstand</span>
+                <div class="stepper" role="group" aria-label="Mindestabstand einstellen">
+                    <button type="button" id="gapMinus" aria-label="Abstand verringern">−</button>
+                    <output id="gapValue" aria-live="polite">8</output>
+                    <button type="button" id="gapPlus" aria-label="Abstand erhöhen">+</button>
+                </div>
+            </div>
+
+            <div class="stack-s hidden" id="quotaGroup" style="margin-top: 4px">
+                <span class="field-label">Wiederholungsquote</span>
+                <div class="stepper" role="group" aria-label="Wiederholungsquote einstellen">
+                    <button type="button" id="quotaMinus" aria-label="Quote verringern">−</button>
+                    <output id="quotaValue" aria-live="polite">20 %</output>
+                    <button type="button" id="quotaPlus" aria-label="Quote erhöhen">+</button>
+                </div>
+                <span class="field-hint">Höchstens dieser Anteil der letzten Auswahlen darf eine Wiederholung sein.</span>
+            </div>
+
+            <div class="conflict hidden" id="conflictBox" role="alert">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8 15 13.6H1z"/><path d="M8 6.2v3.4"/><circle cx="8" cy="11.6" r=".4" fill="currentColor"/></svg>
+                <div>
+                    <p class="c-title">Regelkonflikt</p>
+                    <div class="stack-s" id="conflictList"></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details class="rule-group">
+        <summary><span>Favoriten-Vorrang <span class="rh-state" data-group-state="favoriten" id="favoritenState">· Aus</span></span></summary>
+        <div class="rule-body">
+            <p class="dim sm">
+                Favoriten markierst du beim Hören über den Stern bei „Als Nächstes“
+                im Player. Der Vorrang bestimmt, wie viel häufiger sie beim Mischen
+                gezogen werden — ohne markierte Favoriten hat er keine Wirkung.
+            </p>
+            <div class="radio-row">
+                <input type="radio" name="favoriten" id="r-fav-off" value="1" checked>
+                <label for="r-fav-off"><span class="r-name">Aus</span><span class="r-desc">Favoriten laufen wie alle anderen Titel mit.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="favoriten" id="r-fav-light" value="2">
+                <label for="r-fav-light"><span class="r-name">Leicht</span><span class="r-desc">Favoriten erscheinen etwa doppelt so oft wie im Durchschnitt.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="favoriten" id="r-fav-strong" value="4">
+                <label for="r-fav-strong"><span class="r-name">Stark</span><span class="r-desc">Favoriten erscheinen etwa viermal so oft wie im Durchschnitt.</span></label>
+            </div>
+        </div>
+    </details>
+
+    <details class="rule-group">
+        <summary><span>Skip-Verhalten <span class="rh-state" data-group-state="skip">· Skip zählt als gespielt</span></span></summary>
+        <div class="rule-body">
+            <div class="radio-row">
+                <input type="radio" name="skip" id="r-skip-played" value="consume" checked>
+                <label for="r-skip-played"><span class="r-name">Skip zählt als gespielt</span><span class="r-desc">Ein übersprungener Titel gilt für diesen Durchlauf als erledigt.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="skip" id="r-skip-open" value="keep_open">
+                <label for="r-skip-open"><span class="r-name">Skip zählt nicht als gespielt</span><span class="r-desc">Übersprungene Titel bleiben offen und kommen in einer späteren Planung wieder.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="skip" id="r-skip-requeue" value="requeue_later">
+                <label for="r-skip-requeue"><span class="r-name">Später erneut einreihen</span><span class="r-desc">Der übersprungene Titel wird zurückgestellt und kommt frühestens nach einer kurzen Karenz zurück — liegt der Skip zu nah am Ende, schafft er es nicht mehr in diesen Durchlauf, sondern erst in den nächsten.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="skip" id="r-skip-defer" value="defer_to_end">
+                <label for="r-skip-defer"><span class="r-name">Ans Ende stellen</span><span class="r-desc">Der übersprungene Titel kommt ganz ans Ende des Durchlaufs.</span></label>
+            </div>
+        </div>
+    </details>
+
+    <details class="rule-group">
+        <summary><span>Manuelle Nutzung <span class="rh-state" data-group-state="manuell">· Automatisch fortsetzen</span></span></summary>
+        <div class="rule-body">
+            <div class="radio-row">
+                <input type="radio" name="manuell" id="r-man-auto" value="auto_resume" checked>
+                <label for="r-man-auto"><span class="r-name">Automatisch fortsetzen</span><span class="r-desc">Sobald deine eigene Wiedergabe endet oder zur Reihenfolge zurückkehrt, übernimmt true-shuffle wieder.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="manuell" id="r-man-pause" value="auto_pause">
+                <label for="r-man-pause"><span class="r-name">Pausieren</span><span class="r-desc">Nach manueller Nutzung bleibt der Hörvorgang pausiert, bis du ihn fortsetzt.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="manuell" id="r-man-ask" value="ask">
+                <label for="r-man-ask"><span class="r-name">Nachfragen</span><span class="r-desc">true-shuffle hält an und lässt dich entscheiden — fortsetzen oder pausiert lassen.</span></label>
+            </div>
+            <p class="field-hint">Solange du selbst etwas abspielst, beobachtet true-shuffle nur und sendet keine Kommandos.</p>
+
+            <div class="stack-s" style="margin-top: 12px">
+                <span class="field-label">Wartezeit bei durchgehender Fremdwiedergabe</span>
+                <div class="stepper" role="group" aria-label="Wartezeit in Minuten einstellen">
+                    <button type="button" id="waitMinus" aria-label="Wartezeit verringern">−</button>
+                    <output id="waitValue" aria-live="polite">15 Min.</output>
+                    <button type="button" id="waitPlus" aria-label="Wartezeit erhöhen">+</button>
+                </div>
+                <span class="field-hint">Läuft deine eigene Wiedergabe länger als das am Stück, pausiert true-shuffle kontrolliert — der Dienst meldet nicht, wann eine manuelle Wiedergabe endet, das ist die harte Obergrenze dafür (gilt für alle drei Optionen oben).</span>
+            </div>
+        </div>
+    </details>
+
+    <details class="rule-group">
+        <summary><span>Neue Titel in der Playlist <span class="rh-state" data-group-state="neuetitel">· Ignorieren</span></span></summary>
+        <div class="rule-body">
+            <div class="radio-row">
+                <input type="radio" name="neuetitel" id="r-new-ignore" value="ignore" checked>
+                <label for="r-new-ignore"><span class="r-name">Ignorieren</span><span class="r-desc">Neue Titel werden für diesen Hörvorgang nicht berücksichtigt.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="neuetitel" id="r-new-mix" value="include_now">
+                <label for="r-new-mix"><span class="r-name">Sofort einmischen</span><span class="r-desc">Beim Übernehmen eines Playlist-Abgleichs werden neue Titel sofort in die verbleibende Reihenfolge gemischt.</span></label>
+            </div>
+            <div class="radio-row">
+                <input type="radio" name="neuetitel" id="r-new-append" value="after_cycle">
+                <label for="r-new-append"><span class="r-name">Nächster Durchlauf</span><span class="r-desc">Neue Titel warten bis zum nächsten Durchlauf und mischen dann mit.</span></label>
+            </div>
+        </div>
+    </details>
+
+    <div class="builder-footer">
+        <label class="field" style="flex: 1 1 240px; min-width: 0; margin: 0">
+            <span class="field-label">Name für „Als Konfiguration speichern“</span>
+            <input type="text" id="configSaveName" maxlength="120" placeholder="z. B. Lange Autofahrt"
+                   autocomplete="off" style="min-width: 0; box-sizing: border-box">
+        </label>
+        <button class="btn btn-secondary" id="saveConfigBtn" type="button">Als Konfiguration speichern</button>
+        <span class="foot-note" id="saveConfigNote" aria-live="polite"></span>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { $, $$, api, el, followJob, formatCount, formatWhen, setNote } from "/static/app.js";
+
+const PROVIDERS = {{ providers | tojson }};
+const CONNECTED = {{ connected | map(attribute='provider') | list | tojson }};
+
+const byId = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
+const state = {
+    provider: CONNECTED[0] || null, mode: null, playlist: null, all: [],
+    configs: [], selectedConfigId: null, preflight: null,
+};
+
+/* -- deep link from the player's "Neu mischen und von vorn" and from the
+   Konfigurationen-Seite's "Auf Playlist anwenden" -----------------------
+   /library?provider=..&playlist=..&reshuffle=1&config_id=..&sync=1 — the
+   honest existing path: this only ever pre-fills the same selections a
+   listener would make by hand, no new API. Each part applies once its
+   dependency has actually loaded (see applyDeepLink() / applyConfigDeepLink()). */
+const deepLinkParams = new URLSearchParams(location.search);
+const deepLink = {
+    provider: deepLinkParams.get("provider"),
+    playlist: deepLinkParams.get("playlist"),
+    reshuffle: deepLinkParams.get("reshuffle") === "1",
+    configId: deepLinkParams.get("config_id"),
+    sync: deepLinkParams.get("sync") === "1",
+    applied: false,
+    configApplied: false,
+};
+if (deepLink.provider && CONNECTED.includes(deepLink.provider)) {
+    state.provider = deepLink.provider;
+}
+
+/* -- service tabs --------------------------------------------------------- */
+
+if (CONNECTED.length < 2) {
+    // One connected service needs no switcher; name it instead.
+    $("#providerTabs").outerHTML = CONNECTED.length
+        ? `<span class="signet" style="--brand: ${byId[CONNECTED[0]]?.brand_color || "currentColor"}">${byId[CONNECTED[0]]?.display_name || CONNECTED[0]}</span>`
+        : "";
+}
+$("#providerTabs")?.replaceChildren(
+    ...CONNECTED.map((id) =>
+        el("button", {
+            type: "button",
+            dataset: { provider: id },
+            "aria-pressed": String(id === state.provider),
+            onClick: () => selectProvider(id),
+        }, byId[id]?.display_name || id))
+);
+
+function selectProvider(id) {
+    state.provider = id;
+    state.playlist = null;
+    state.mode = null;
+    for (const b of $("#providerTabs")?.children || []) {
+        b.setAttribute("aria-pressed", String(b.dataset.provider === id));
+    }
+    $("#selectionHint").textContent = "Wähl links eine Playlist.";
+    $("#selectionRead").textContent = "nichts gewählt";
+    hideSyncDiff();
+    renderModes();
+    loadPlaylists();
+    updateStartGate();
+}
+
+/* -- modes ------------------------------------------------------------------
+   The two mode cards, each stating in the service's own terms whether
+   anything has to stay open — the question people actually care about. */
+
+function renderModes() {
+    const p = byId[state.provider];
+    if (!p) return;
+
+    const options = [
+        {
+            id: "utility",
+            title: "Handoff",
+            available: p.create_playlist,
+            // Handoff never needs anything open: the run is written into the
+            // service and played there. Whether your POSITION is counted is a
+            // separate fact, and depends on the service having a history API.
+            open: false,
+            tracked: p.supports_history_sync,
+            body: p.supports_history_sync
+                ? `Die Reihenfolge wird als Playlist in ${p.display_name} geschrieben. Du spielst sie dort (Handy, Auto, Box), und true-shuffle liest aus deinem Hörverlauf zurück, wie weit du bist.`
+                : `Die Reihenfolge wird als Playlist in ${p.display_name} geschrieben und dort abgespielt. ${p.display_name} gibt keinen Hörverlauf heraus, deine Position lässt sich danach nicht mitzählen.`,
+            note: p.id === "youtube"
+                ? "YouTube berechnet 50 Kontingent-Einheiten pro hinzugefügtem Titel. Nur kleine Playlists lassen sich so schreiben."
+                : null,
+        },
+        {
+            id: "controller",
+            title: "Live",
+            available: p.supports_controller_mode,
+            open: p.live_mode_needs_open_tab,
+            tracked: true,
+            body: p.live_mode_needs_open_tab
+                ? `Spielt über den eigenen Player von ${p.display_name} in diesem Tab und rückt bei jedem Titelende und jedem Skip weiter. ${p.display_name} lässt keine fremde Steuerung zu, das läuft also nur bei offenem Tab.`
+                : `true-shuffle übernimmt die ${p.display_name}-App, die du ohnehin offen hast, und rückt bei jedem Titelende und Skip weiter, auch bei Skips, die du in ${p.display_name} selbst machst. Läuft auf dem Server, du kannst diese Seite schließen.`,
+            note: p.requires_paid_tier ? `Braucht ein ${p.display_name}-Abo.` : null,
+        },
+    ];
+
+    // Default to whichever available mode needs nothing open.
+    if (!state.mode) {
+        const preferred = options.find((o) => o.available && !o.open && o.tracked)
+            || options.find((o) => o.available && !o.open)
+            || options.find((o) => o.available);
+        state.mode = preferred?.id || null;
+    }
+
+    $("#modeCards").replaceChildren(...options.map((o) =>
+        el("button", {
+            class: "mode",
+            type: "button",
+            "aria-pressed": String(state.mode === o.id),
+            disabled: !o.available || null,
+            onClick: () => { state.mode = o.id; renderModes(); updateStartGate(); },
+        },
+            el("div", { class: "mode-head" },
+                el("h3", {}, o.title),
+                el("span", { class: "mode-state" },
+                    !o.available ? "nicht möglich" : state.mode === o.id ? "gewählt" : "wählen")),
+            el("div", { class: "mode-body" },
+                el("div", { class: "row" },
+                    el("span", { class: `openness ${o.open ? "openness-tab" : "openness-free"}` },
+                        o.open ? "Tab muss offen bleiben" : "Nichts bleibt offen"),
+                    el("span", { class: `openness ${o.tracked ? "openness-free" : "openness-tab"}` },
+                        o.tracked ? "Position zählt mit" : "Position zählt nicht mit")),
+                el("p", {}, o.body),
+                o.note ? el("p", { class: "faint sm" }, o.note) : null,
+                !o.available ? el("p", { class: "faint sm" }, `Bei ${p.display_name} nicht möglich.`) : null)
+        )));
+    updateStartGate();
+}
+
+/* -- playlists ------------------------------------------------------------ */
+
+async function loadPlaylists() {
+    const list = $("#playlists");
+    list.replaceChildren(el("div", { class: "skeleton" },
+        el("i"), el("i"), el("i"), el("i"), el("i")));
+    $("#plCount").textContent = "wird gelesen";
+    setNote($("#libNote"), "");
+
+    try {
+        const { playlists } = await api(`/api/playlists?provider=${state.provider}`);
+        state.all = playlists;
+        renderPlaylists();
+        applyDeepLink();
+    } catch (err) {
+        // Clear the skeleton: a shimmer that never resolves is a lying page.
+        list.replaceChildren(el("div", { class: "empty" },
+            el("span", {}, "Playlists konnten nicht geladen werden."),
+            el("button", { class: "btn", type: "button", onClick: loadPlaylists }, "Erneut versuchen")));
+        $("#plCount").textContent = "nicht geladen";
+        setNote($("#libNote"), err.message, "note-stop", "Fehler");
+    }
+}
+
+function renderPlaylists() {
+    const term = $("#plFilter").value.trim().toLowerCase();
+    const shown = term
+        ? state.all.filter((p) => (p.name || "").toLowerCase().includes(term))
+        : state.all;
+
+    const n = state.all.length;
+    $("#plCount").textContent = term
+        ? `${formatCount(shown.length)} von ${formatCount(n)}`
+        : `${formatCount(n)} ${n === 1 ? "Playlist" : "Playlists"}`;
+
+    // Nothing to filter means no filter: an input above an empty list is an
+    // affordance for nothing.
+    $("#filterRow").classList.toggle("hidden", n === 0);
+
+    const list = $("#playlists");
+    if (!shown.length) {
+        list.replaceChildren(el("div", { class: "empty" },
+            el("span", {}, n ? "Keine Playlist passt zu diesem Filter."
+                             : `In diesem Konto liegen keine Playlists, die true-shuffle lesen kann.`),
+            n ? el("button", { class: "btn", type: "button",
+                    onClick: () => { $("#plFilter").value = ""; renderPlaylists(); } },
+                  "Filter zurücksetzen")
+              : el("a", { class: "btn", href: "/connect" }, "Anderen Dienst verbinden")));
+        return;
+    }
+
+    list.replaceChildren(...shown.map((pl) => {
+        const row = el("button", {
+            class: "record",
+            type: "button",
+            dataset: { plId: String(pl.id) },
+            "aria-pressed": String(state.playlist?.id === pl.id),
+            onClick: (ev) => selectPlaylist(pl, ev.currentTarget),
+        },
+            el("span", { class: "r-meta" },
+                el("span", { class: "r-name" }, pl.name || "Ohne Titel"),
+                el("span", { class: "r-sub" }, sizeLine(pl))),
+            // A digit only when there is one to print. Zero is a claim, and
+            // "the service will not tell us" is not zero.
+            el("span", { class: "r-count tabular" }, pl.track_count >= 0 ? formatCount(pl.track_count) : "—"));
+
+        // The real import status (UC-03) plus the per-playlist import action.
+        const status = el("span", { class: "import-line" }, importStatusText(pl));
+        const strip = el("div", { class: "import-strip" }, status);
+        if (pl.readable !== false) {
+            strip.append(el("button", {
+                class: "btn btn-quiet", type: "button",
+                "aria-label": `„${pl.name || pl.id}“ importieren`,
+                onClick: (ev) => importPlaylist(pl, status, ev.currentTarget),
+            }, pl.import_status?.imported ? "Neu importieren" : "Importieren"));
+        }
+        return el("div", { class: "record-wrap" }, row, strip);
+    }));
+}
+
+/**
+ * The honest status line under a playlist row. "Sync verfügbar" appears only
+ * when the server could cheaply prove staleness (source_etag differs) — the
+ * API omits the field otherwise, and so does this line.
+ */
+function importStatusText(pl) {
+    if (pl.readable === false) return "Import nicht möglich — Inhalt nicht lesbar";
+    const st = pl.import_status;
+    if (!st || !st.imported) return "Noch nicht importiert";
+    let text = `Importiert ${formatWhen(st.imported_at)} · ${formatCount(st.item_count)} Titel`;
+    if (st.sync_available === true) text += " · Sync verfügbar";
+    return text;
+}
+
+async function importPlaylist(pl, statusNode, button) {
+    if (button.disabled) return;
+    button.disabled = true;
+    statusNode.textContent = "Import startet…";
+    const fail = (err) => {
+        button.disabled = false;
+        statusNode.textContent = `Import fehlgeschlagen: ${err.message}`;
+    };
+    try {
+        const { job_id } = await api(
+            `/api/playlists/${encodeURIComponent(state.provider)}/${encodeURIComponent(pl.id)}/import`,
+            { method: "POST" });
+        followJob(job_id, {
+            onProgress: (frame) => {
+                statusNode.textContent = frame.total
+                    ? `Import: ${formatCount(frame.processed)} von ${formatCount(frame.total)} Titeln`
+                    : "Import läuft…";
+            },
+            onDone: (result) => {
+                button.disabled = false;
+                button.textContent = "Neu importieren";
+                pl.import_status = {
+                    imported: true,
+                    version: result.version,
+                    imported_at: result.imported_at,
+                    item_count: result.item_count,
+                    playable_count: result.playable_count,
+                };
+                statusNode.textContent = importStatusText(pl);
+                // A fresh import may have just produced a new diff.
+                if (state.playlist?.id === pl.id) loadSyncDiff(pl);
+            },
+            onError: fail,
+        });
+    } catch (err) {
+        fail(err);
+    }
+}
+
+/**
+ * What a playlist row says under its name.
+ *
+ * Three distinct states, and collapsing any two of them was the bug: a size we
+ * know, a size we do not know, and a playlist whose contents the service flatly
+ * refuses to hand over.
+ */
+function sizeLine(pl) {
+    if (pl.readable === false) return "Inhalt nicht lesbar";
+    if (pl.track_count >= 0) return `${formatCount(pl.track_count)} Titel`;
+    return "Größe unbekannt";
+}
+
+/**
+ * Apply the ?playlist= deep link once, after the matching provider's
+ * playlists have actually loaded. Runs again on every `loadPlaylists()`
+ * resolution (provider switches call it too) but only ever acts once —
+ * `deepLink.applied` — so it never fights a listener's own later choice.
+ */
+function applyDeepLink() {
+    if (deepLink.applied || !deepLink.playlist) return;
+    const match = state.all.find((p) => String(p.id) === deepLink.playlist);
+    if (!match) return; // wrong provider tab still selected, or list still loading
+    deepLink.applied = true;
+    const node = $(`#playlists button[data-pl-id="${CSS.escape(deepLink.playlist)}"]`);
+    if (node) selectPlaylist(match, node);
+    if (deepLink.reshuffle) $("#reshuffle").value = "1";
+}
+
+$("#plFilter").addEventListener("input", renderPlaylists);
+$("#runName").addEventListener("input", (ev) => { ev.target.dataset.touched = "1"; });
+
+function selectPlaylist(playlist, node) {
+    state.playlist = playlist;
+    for (const option of $$(".record", $("#playlists"))) option.setAttribute("aria-pressed", "false");
+    node.setAttribute("aria-pressed", "true");
+
+    // WP3-D2 (UC-16): default the run name to the playlist name, but never
+    // overwrite something the listener typed themselves.
+    const nameField = $("#runName");
+    if (nameField && !nameField.dataset.touched) {
+        nameField.value = playlist.name || "";
+    }
+
+    const readable = playlist.readable !== false;
+    $("#selectionRead").textContent = !readable
+        ? "Nicht lesbar"
+        : playlist.track_count >= 0
+            ? `${formatCount(playlist.track_count)} Titel`
+            : "Größe unbekannt";
+
+    if (!readable) {
+        $("#selectionHint").textContent = `„${playlist.name}“: ${playlist.unreadable_reason
+            || "Dieser Dienst gibt den Inhalt dieser Playlist nicht heraus."} `
+            + "Kopier sie in der App des Dienstes in dein eigenes Konto, dann lässt sie sich mischen.";
+    } else {
+        $("#selectionHint").textContent =
+            `${playlist.name}: ${playlist.track_count >= 0 ? formatCount(playlist.track_count) + " Titel" : "Größe wird beim Lesen gezählt"}.`;
+    }
+
+    updateStartGate();
+    renderStepper();
+    loadSyncDiff(playlist);
+    schedulePreflight(0);
+}
+
+/* -- start gate -------------------------------------------------------------
+   The primary action is never dimmed with opacity when it cannot run yet
+   (ADR-001 Auflage 2): it stays focusable, aria-disabled carries the state,
+   and the reason sits right next to it in plain text. RUN-05: a confirmed
+   rule conflict from the server preflight blocks the start the same way a
+   missing playlist or mode does — the conflict box above explains why and
+   offers a one-click correction. */
+
+function updateStartGate() {
+    const btn = $("#dealBtn");
+    const hint = $("#dealHint");
+    const readable = state.playlist ? state.playlist.readable !== false : true;
+
+    let reason = "";
+    if (!state.playlist) reason = "Wähl links eine Playlist.";
+    else if (!readable) reason = "Diese Playlist lässt sich nicht lesen — wähl eine andere.";
+    else if (!state.mode) reason = "Wähl oben einen Modus.";
+    else if (state.preflight && state.preflight.conflicts.length) {
+        reason = "Regelkonflikt oben lösen, bevor der Hörvorgang startet.";
+    }
+
+    btn.setAttribute("aria-disabled", String(!!reason));
+    hint.textContent = reason || "Bereit zum Start.";
+}
+
+/* -- server preflight (RUN-05) ----------------------------------------------
+   Debounced on every rule change and on playlist selection; the existing
+   conflict box renders whatever the server actually found, each conflict
+   with an inline one-click fix when the server (or an obvious fallback for
+   quota) has a suggestion. Network failures never block the start — only a
+   CONFIRMED conflict does. Declared before the rule groups below because
+   their own top-level renderStepper()/renderQuota() calls reach schedulePreflight()
+   immediately on page load. */
+
+let preflightTimer = null;
+
+function schedulePreflight(delay = 300) {
+    clearTimeout(preflightTimer);
+    preflightTimer = setTimeout(() => { runPreflight(); }, delay);
+}
+
+async function runPreflight() {
+    if (!state.playlist || state.playlist.readable === false) {
+        state.preflight = null;
+        renderConflicts([]);
+        updateStartGate();
+        return;
+    }
+    const body = { provider: state.provider, playlist_id: state.playlist.id };
+    if (state.selectedConfigId) {
+        body.config_id = state.selectedConfigId;
+    } else {
+        body.rules = collectRules();
+    }
+    if (state.playlist.track_count >= 0) body.track_count = state.playlist.track_count;
+
+    try {
+        state.preflight = await api("/api/runs/preflight", { method: "POST", body });
+    } catch (err) {
+        // A preflight that could not be reached is unknown, not a conflict —
+        // it must never turn into a false block on the start button.
+        state.preflight = null;
+    }
+    renderConflicts(state.preflight?.conflicts || []);
+    updateStartGate();
+}
+
+function renderConflicts(conflicts) {
+    const box = $("#conflictBox");
+    const list = $("#conflictList");
+    if (!conflicts.length) {
+        box.classList.add("hidden");
+        list.replaceChildren();
+        return;
+    }
+    box.classList.remove("hidden");
+    list.replaceChildren(...conflicts.map((c) => {
+        const row = el("div", {}, el("p", { class: "c-body" }, c.message));
+        const fixTarget = c.field === "min_gap" || c.field === "repeat_quota_pct";
+        if (fixTarget) {
+            const label = c.suggestion !== null && c.suggestion !== undefined
+                ? `Auf ${formatCount(c.suggestion)}${c.field === "repeat_quota_pct" ? " %" : ""} setzen`
+                : "Quote erhöhen";
+            row.append(el("div", { class: "c-actions" },
+                el("button", { class: "btn btn-secondary", type: "button", onClick: () => applySuggestion(c) }, label)));
+        }
+        return row;
+    }));
+}
+
+function applySuggestion(conflict) {
+    if (conflict.field === "min_gap") {
+        const value = conflict.suggestion !== null && conflict.suggestion !== undefined
+            ? Number(conflict.suggestion) : gap.value;
+        gap.value = Math.max(0, value);
+        renderStepper();
+    } else if (conflict.field === "repeat_quota_pct") {
+        const value = conflict.suggestion !== null && conflict.suggestion !== undefined
+            ? Number(conflict.suggestion) : Math.min(100, quota.value + 10 || 10);
+        quota.value = Math.max(0, Math.min(100, value));
+        renderQuota();
+    }
+    schedulePreflight(50);
+}
+
+/* -- Wiederholungsmodus: no_repeat / limited_repeat / free_repeat ----------
+   min_gap gilt für begrenzte UND freie Wiederholungen, die Quote nur für
+   die begrenzte Variante (core/selection.py Rules — select_next). */
+
+const gap = { value: 8 };
+const quota = { value: 20 };
+
+function playlistTrackCount() {
+    return state.playlist && state.playlist.track_count >= 0 ? state.playlist.track_count : null;
+}
+
+function currentRepeatMode() {
+    return document.querySelector('input[name="abstand"]:checked')?.value || "no_repeat";
+}
+
+function repeatModeLabel(mode) {
+    if (mode === "limited_repeat") return `Begrenzte Wiederholungen · Quote ${quota.value} % · Abstand ${gap.value}`;
+    if (mode === "free_repeat") return `Mindestabstand ${gap.value}`;
+    return "Keine Wiederholungen";
+}
+
+function renderAbstandState() {
+    const mode = currentRepeatMode();
+    $("#abstandState").textContent = `· ${repeatModeLabel(mode)}`;
+    $("#gapGroup").classList.toggle("hidden", mode === "no_repeat");
+    $("#quotaGroup").classList.toggle("hidden", mode !== "limited_repeat");
+}
+
+function renderStepper() {
+    $("#gapValue").textContent = String(gap.value);
+    $("#gapMinus").disabled = gap.value <= 0;
+    renderAbstandState();
+    schedulePreflight();
+}
+
+function renderQuota() {
+    $("#quotaValue").textContent = `${quota.value} %`;
+    $("#quotaMinus").disabled = quota.value <= 0;
+    $("#quotaPlus").disabled = quota.value >= 100;
+    renderAbstandState();
+    schedulePreflight();
+}
+
+$("#gapMinus").addEventListener("click", () => { gap.value = Math.max(0, gap.value - 1); renderStepper(); });
+$("#gapPlus").addEventListener("click", () => { gap.value = gap.value + 1; renderStepper(); });
+$("#quotaMinus").addEventListener("click", () => { quota.value = Math.max(0, quota.value - 5); renderQuota(); });
+$("#quotaPlus").addEventListener("click", () => { quota.value = Math.min(100, quota.value + 5); renderQuota(); });
+for (const input of document.querySelectorAll('input[name="abstand"]')) {
+    input.addEventListener("change", () => { renderAbstandState(); schedulePreflight(); });
+}
+renderStepper();
+renderQuota();
+
+/* -- Manuelle Nutzung: Wartezeit (manual_wait_seconds, Default 900 s) ------
+   Applies regardless of which of the three policies above is chosen — the
+   hard upper bound before true-shuffle gives up observing and pauses. */
+
+const waitMinutes = { value: 15 };
+
+function renderWait() {
+    $("#waitValue").textContent = `${formatCount(waitMinutes.value)} Min.`;
+    $("#waitMinus").disabled = waitMinutes.value <= 1;
+    $("#waitPlus").disabled = waitMinutes.value >= 120;
+    schedulePreflight();
+}
+
+$("#waitMinus").addEventListener("click", () => { waitMinutes.value = Math.max(1, waitMinutes.value - 1); renderWait(); });
+$("#waitPlus").addEventListener("click", () => { waitMinutes.value = Math.min(120, waitMinutes.value + 1); renderWait(); });
+renderWait();
+
+for (const input of document.querySelectorAll('input[name="preset"]')) {
+    input.addEventListener("change", updateStartGate);
+}
+
+/* -- Skip / Manuell / Neue-Titel-Regelgruppen (WP3-D3, echt seit D3) -------
+   Each group's summary mirrors the checked option, so a collapsed group
+   still says what it will do. */
+
+for (const group of ["skip", "manuell", "neuetitel", "favoriten"]) {
+    for (const input of document.querySelectorAll(`input[name="${group}"]:not(:disabled)`)) {
+        input.addEventListener("change", () => {
+            const label = document.querySelector(`label[for="${input.id}"] .r-name`);
+            const stateEl = document.querySelector(`[data-group-state="${group}"]`);
+            if (label && stateEl) stateEl.textContent = `· ${label.textContent.trim()}`;
+            schedulePreflight();
+        });
+    }
+}
+
+/* UC-08: favorite_weight only ever takes one of these three UI stages —
+   "nearest" matters when a config was loaded whose value came from
+   somewhere else (the API allows any float >= 1.0). */
+const FAVORITE_WEIGHT_LEVELS = [1, 2, 4];
+
+function nearestFavoriteWeight(weight) {
+    return FAVORITE_WEIGHT_LEVELS.reduce(
+        (best, level) => (Math.abs(level - weight) < Math.abs(best - weight) ? level : best),
+        FAVORITE_WEIGHT_LEVELS[0]
+    );
+}
+
+function collectRules() {
+    const rules = {};
+    const mode = currentRepeatMode();
+    if (mode !== "no_repeat") {
+        rules.repeat_mode = mode;
+        rules.min_gap = gap.value;
+        if (mode === "limited_repeat") rules.repeat_quota_pct = quota.value;
+    }
+    const pick = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+    const favoriten = parseFloat(pick("favoriten") || "1");
+    if (favoriten !== 1) rules.favorite_weight = favoriten;
+    const skip = pick("skip");
+    if (skip && skip !== "consume") rules.skip_policy = skip;
+    const manual = pick("manuell");
+    if (manual && manual !== "auto_resume") rules.manual_use_policy = manual;
+    if (waitMinutes.value !== 15) rules.manual_wait_seconds = waitMinutes.value * 60;
+    const fresh = pick("neuetitel");
+    if (fresh && fresh !== "ignore") rules.new_tracks_policy = fresh;
+    return rules;
+}
+
+/** Create (or reuse a free name for) the config carrying the chosen rules. */
+async function createConfigFor(rules) {
+    const base = `${(state.playlist?.name || "Hörvorgang").slice(0, 90)} – Regeln`;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        const name = attempt === 0 ? base : `${base} · ${attempt + 1}`;
+        try {
+            const created = await api("/api/configs", { method: "POST", body: { name, rules } });
+            return created.id;
+        } catch (err) {
+            if (err.status !== 409) throw err;   // 409 = name taken, try the next
+        }
+    }
+    throw new Error("Kein freier Name für die Konfiguration gefunden.");
+}
+
+/* -- Konfiguration verwenden (Direktstart mit config_id) -------------------
+   Choosing an existing preset here locks the rule groups (read-only, so the
+   listener can still see what it does) and the run starts bound to exactly
+   that config_id — no new config is created. */
+
+const REAL_RULE_SELECTOR = 'input[name="abstand"], input[name="skip"], input[name="manuell"], '
+    + 'input[name="neuetitel"], input[name="favoriten"], #gapMinus, #gapPlus, #quotaMinus, #quotaPlus, #waitMinus, #waitPlus';
+
+function setRuleInputsLocked(locked) {
+    for (const node of document.querySelectorAll(REAL_RULE_SELECTOR)) node.disabled = locked;
+    $("#saveConfigBtn").disabled = locked;
+}
+
+function applyRulesToForm(rules) {
+    const radio = document.querySelector(`input[name="abstand"][value="${rules.repeat_mode || "no_repeat"}"]`);
+    if (radio) radio.checked = true;
+    gap.value = rules.min_gap || 0;
+    quota.value = rules.repeat_quota_pct || 0;
+    renderStepper();
+    renderQuota();
+
+    const setChecked = (name, value) => {
+        const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+        if (radio) radio.checked = true;
+    };
+    setChecked("skip", rules.skip_policy || "consume");
+    setChecked("manuell", rules.manual_use_policy || "auto_resume");
+    setChecked("neuetitel", rules.new_tracks_policy || "ignore");
+    setChecked("favoriten", String(nearestFavoriteWeight(rules.favorite_weight || 1)));
+    waitMinutes.value = Math.max(1, Math.round((rules.manual_wait_seconds || 900) / 60));
+    renderWait();
+    for (const group of ["skip", "manuell", "neuetitel", "favoriten"]) {
+        const checked = document.querySelector(`input[name="${group}"]:checked`);
+        const label = checked && document.querySelector(`label[for="${checked.id}"] .r-name`);
+        const stateEl = document.querySelector(`[data-group-state="${group}"]`);
+        if (label && stateEl) stateEl.textContent = `· ${label.textContent.trim()}`;
+    }
+}
+
+function ruleSummaryShort(rules) {
+    if (rules.repeat_mode === "limited_repeat") return `Begrenzt · Quote ${rules.repeat_quota_pct} %`;
+    if (rules.repeat_mode === "free_repeat") return `Abstand ${rules.min_gap}`;
+    return "Keine Wiederholungen";
+}
+
+function populateConfigPicker() {
+    const select = $("#configPicker");
+    const current = select.value;
+    select.replaceChildren(
+        el("option", { value: "" }, "Eigene Regeln (unten einstellen)"),
+        ...state.configs.map((c) => el("option", { value: String(c.id) }, `${c.name} — ${ruleSummaryShort(c.rules)}`))
+    );
+    if (state.configs.some((c) => String(c.id) === current)) select.value = current;
+}
+
+function selectConfig(idRaw) {
+    const id = idRaw || null;
+    state.selectedConfigId = id;
+    const config = id ? state.configs.find((c) => String(c.id) === String(id)) : null;
+    setRuleInputsLocked(Boolean(config));
+    if (config) {
+        applyRulesToForm(config.rules);
+        $("#configPickerHint").textContent =
+            `„${config.name}“ wird verwendet — die Regeln unten sind zur Ansicht gesperrt. `
+            + `Für eigene Regeln oben „Eigene Regeln“ wählen.`;
+    } else {
+        $("#configPickerHint").textContent =
+            "Eigene Regeln unten einstellen — abweichend von der Voreinstellung wird daraus beim Start automatisch eine neue Konfiguration.";
+    }
+    schedulePreflight();
+}
+
+$("#configPicker").addEventListener("change", (ev) => selectConfig(ev.target.value));
+
+async function loadConfigs() {
+    try {
+        const { configs } = await api("/api/configs");
+        state.configs = configs;
+        populateConfigPicker();
+        applyConfigDeepLink();
+    } catch (err) {
+        // The picker just stays at "Eigene Regeln" — starting a run does not
+        // depend on this list having loaded.
+    }
+}
+
+function applyConfigDeepLink() {
+    if (deepLink.configApplied || !deepLink.configId) return;
+    const match = state.configs.find((c) => String(c.id) === deepLink.configId);
+    if (!match) return;
+    deepLink.configApplied = true;
+    $("#configPicker").value = String(match.id);
+    selectConfig(String(match.id));
+}
+
+$("#saveConfigBtn").addEventListener("click", async () => {
+    const button = $("#saveConfigBtn");
+    if (button.disabled) return;
+    const note = $("#saveConfigNote");
+    const name = $("#configSaveName").value.trim();
+    if (!name) {
+        note.textContent = "Erst einen Namen eintragen.";
+        return;
+    }
+    button.disabled = true;
+    note.textContent = "Wird gespeichert…";
+    try {
+        const rules = collectRules();
+        const created = await api("/api/configs", { method: "POST", body: { name, rules } });
+        state.configs.push(created);
+        populateConfigPicker();
+        $("#configPicker").value = String(created.id);
+        selectConfig(String(created.id));
+        note.textContent = `Gespeichert — „${created.name}“ ist jetzt gewählt.`;
+    } catch (err) {
+        note.textContent = err.message;
+    } finally {
+        button.disabled = Boolean(state.selectedConfigId);
+    }
+});
+
+/* -- Sync-Diff-Anzeige (RUN-09) ---------------------------------------------
+   GET …/sync/latest is honestly absent until two imports exist to compare —
+   that 404 is the common case and stays silent. When a diff exists, it opens
+   as a fold with added/removed/re-available titles and, if a run of this
+   exact playlist already exists, a form to apply it (POST apply-sync). */
+
+function hideSyncDiff() {
+    $("#syncDiffWrap").classList.add("hidden");
+    $("#syncDiffWrap").replaceChildren();
+}
+
+function diffEntryLine(e) {
+    return [e.name, e.artist].filter(Boolean).join(" — ") || e.track_id || "Titel ohne Namen";
+}
+
+async function loadSyncDiff(pl) {
+    hideSyncDiff();
+    if (!pl || pl.readable === false) return;
+    // A diff needs a SECOND ready snapshot to compare against — below that,
+    // the endpoint honestly 404s every time. Skipping the call in the
+    // common case (never imported, or imported exactly once) means a
+    // brand-new playlist never fires a request that is guaranteed to fail;
+    // the browser's own network log would otherwise mark that as an error
+    // regardless of this page's try/catch.
+    if (!pl.import_status?.imported || !(pl.import_status.version >= 2)) return;
+    try {
+        const diff = await api(`/api/playlists/${encodeURIComponent(state.provider)}/${encodeURIComponent(pl.id)}/sync/latest`);
+        await renderSyncDiff(diff);
+    } catch (err) {
+        // A version >= 2 is necessary but not sufficient (an earlier import
+        // could have failed) — still honestly hide on the rare remaining 404.
+    }
+}
+
+async function renderSyncDiff(diff) {
+    const readded = diff.availability_changed.filter((e) => e.readded);
+    if (diff.unchanged || (!diff.added.length && !diff.removed.length && !readded.length)) {
+        hideSyncDiff();
+        return;
+    }
+    const summary = [
+        diff.added.length ? `${formatCount(diff.added.length)} neu` : null,
+        diff.removed.length ? `${formatCount(diff.removed.length)} entfernt` : null,
+        readded.length ? `${formatCount(readded.length)} wieder verfügbar` : null,
+    ].filter(Boolean).join(" · ") || "Playlist geändert";
+
+    const list = (label, entries) => entries.length
+        ? el("div", {},
+            el("p", { class: "field-label" }, label),
+            el("ul", { class: "kv" }, ...entries.slice(0, 8).map((e) =>
+                el("div", {}, el("span", { class: "v wrap-anywhere" }, diffEntryLine(e))))),
+            entries.length > 8
+                ? el("p", { class: "field-hint" }, `… und ${formatCount(entries.length - 8)} weitere.`)
+                : null)
+        : null;
+
+    const details = el("details", { class: "fold", id: "syncDiffDetails" },
+        el("summary", {}, `Playlist-Änderungen verfügbar · ${summary}`),
+        el("div", { class: "fold-body" },
+            list("Neu", diff.added),
+            list("Entfernt", diff.removed),
+            list("Wieder verfügbar", readded),
+            el("div", { id: "syncApplyArea" })));
+
+    $("#syncDiffWrap").replaceChildren(details);
+    $("#syncDiffWrap").classList.remove("hidden");
+    if (deepLink.sync) details.open = true;
+    await renderSyncApplyArea(diff);
+}
+
+async function renderSyncApplyArea(diff) {
+    const area = $("#syncApplyArea");
+    if (!area) return;
+    let matchingRuns = [];
+    try {
+        const { runs } = await api("/api/runs");
+        matchingRuns = runs.filter((r) =>
+            r.provider === state.provider && String(r.playlist_id) === String(state.playlist.id));
+    } catch (err) {
+        // The apply form just stays informational when the run list fails.
+    }
+
+    if (!matchingRuns.length) {
+        area.replaceChildren(el("p", { class: "field-hint" },
+            "Noch kein Hörvorgang dieser Playlist — der nächste Start berücksichtigt diesen Stand automatisch."));
+        return;
+    }
+
+    // box-sizing: border-box explicit here for the same reason as the
+    // configSaveName input above — a narrow flex row is where the app's
+    // default content-box sizing on form controls has actually overflowed.
+    const runSelect = el("select", {
+        id: "syncRunSelect", "aria-label": "Hörvorgang wählen", style: "box-sizing: border-box",
+    }, ...matchingRuns.map((r) => el("option", { value: String(r.id) }, r.name || r.playlist_name || `Lauf ${r.id}`)));
+    const policySelect = el("select", {
+        id: "syncPolicySelect", "aria-label": "Umgang mit neuen Titeln", style: "box-sizing: border-box",
+    },
+        el("option", { value: "" }, "Regel des Hörvorgangs verwenden"),
+        el("option", { value: "include_now" }, "Sofort einmischen"),
+        el("option", { value: "after_cycle" }, "Nächster Durchlauf"),
+        el("option", { value: "ignore" }, "Ignorieren"));
+    const note = el("p", { class: "field-hint", id: "syncApplyNote" }, "");
+    const applyBtn = el("button", { class: "btn btn-secondary", type: "button" }, "Auf Hörvorgang anwenden");
+    applyBtn.addEventListener("click", async () => {
+        if (applyBtn.disabled) return;
+        applyBtn.disabled = true;
+        note.textContent = "Wird angewendet…";
+        try {
+            const result = await api(`/api/runs/${runSelect.value}/apply-sync`, {
+                method: "POST",
+                body: { diff_id: diff.diff_id, policy: policySelect.value || undefined },
+            });
+            note.textContent = `Angewendet: ${formatCount(result.added)} neu, ${formatCount(result.removed)} entfernt`
+                + (result.reopened ? `, ${formatCount(result.reopened)} wieder aufgenommen` : "")
+                + (result.already_applied ? " (war schon angewendet)." : ".");
+        } catch (err) {
+            note.textContent = err.message;
+        } finally {
+            applyBtn.disabled = false;
+        }
+    });
+    area.replaceChildren(
+        el("div", { class: "row", style: "margin-top: var(--space-3)" }, runSelect, policySelect, applyBtn),
+        note);
+}
+
+/* -- dealing ---------------------------------------------------------------- */
+
+$("#dealBtn").addEventListener("click", async () => {
+    // RUN-05: one last, synchronous-feeling preflight right at the press —
+    // debounced background checks cover every earlier edit, this covers the
+    // gap between the last edit and the click.
+    await runPreflight();
+    if ($("#dealBtn").getAttribute("aria-disabled") === "true") return;
+    if (!state.playlist || !state.mode) return;
+    const button = $("#dealBtn");
+    const log = $("#jobLog");
+
+    button.setAttribute("aria-disabled", "true");
+    setNote($("#jobResult"), "");
+    log.classList.remove("hidden");
+    log.replaceChildren(el("div", { class: "job-line" }, el("span", { class: "spinner" }), "Startet…"));
+
+    const PHASE = { "reading playlist": "Playlist wird gelesen", shuffling: "Wird gemischt" };
+
+    try {
+        // A saved/picked config starts the run directly (Direktstart); rules
+        // chosen away from the defaults without saving become a new config
+        // first (UC-07/10) — the same fallback the section-head text promises.
+        let configId = state.selectedConfigId;
+        if (!configId) {
+            const rules = collectRules();
+            configId = Object.keys(rules).length ? await createConfigFor(rules) : null;
+        }
+
+        const { job_id } = await api("/api/runs", {
+            method: "POST",
+            body: {
+                provider: state.provider,
+                playlist_id: state.playlist.id,
+                mode: state.mode,
+                reshuffle: $("#reshuffle").value === "1",
+                // WP3-D2 (UC-16): the run's own name. The server resumes a
+                // single live run regardless (the name applies only when a
+                // run is actually created) and de-duplicates taken names.
+                name: $("#runName").value.trim() || state.playlist.name || "",
+                config_id: configId,
+            },
+        });
+
+        followJob(job_id, {
+            onProgress: (frame) => {
+                const phase = PHASE[frame.phase] || frame.phase || "Wird vorbereitet";
+                if (frame.total) {
+                    const pct = Math.max(0, Math.min(100, Math.round((frame.processed / frame.total) * 100)));
+                    log.replaceChildren(
+                        el("div", { class: "job-line" }, el("span", { class: "spinner" } ),
+                            `${phase}: ${formatCount(frame.processed)} von ${formatCount(frame.total)}`),
+                        el("div", {
+                            class: "job-bar", role: "progressbar",
+                            "aria-valuenow": pct, "aria-valuemin": 0, "aria-valuemax": 100,
+                            "aria-label": phase,
+                        }, el("i", { style: `width:${pct}%` })));
+                } else {
+                    log.replaceChildren(el("div", { class: "job-line" }, el("span", { class: "spinner" }), phase));
+                }
+            },
+            onDone: (result) => {
+                log.classList.add("hidden");
+                updateStartGate();
+                if (state.mode === "controller") {
+                    location.href = `/player/${result.run_id}`;
+                    return;
+                }
+                showHandoffResult(result);
+            },
+            onError: (err) => {
+                log.classList.add("hidden");
+                updateStartGate();
+                setNote($("#jobResult"), err.message, "note-stop", "Fehlgeschlagen");
+            },
+        });
+    } catch (err) {
+        log.classList.add("hidden");
+        updateStartGate();
+        setNote($("#jobResult"), err.message, "note-stop", "Fehlgeschlagen");
+    }
+});
+
+function showHandoffResult(result) {
+    const box = $("#jobResult");
+    box.className = "note note-ok";
+    box.classList.remove("hidden");
+    box.replaceChildren(
+        el("span", { class: "stencil" }, "Fertig"),
+        el("strong", {}, `„${result.copy_playlist_name}“ steht bereit`),
+        el("span", {}, `${formatCount(result.written)} Titel in true-shuffle-Reihenfolge.` +
+            (result.skipped
+                ? ` ${formatCount(result.skipped)} Einträge blieben draußen: lokale Dateien, nicht verfügbare Titel oder Doppelte.`
+                : " Nichts musste draußen bleiben.")),
+        el("span", { class: "faint" }, result.tracked
+            ? "Spiel sie in der App. Deine Position kommt aus deinem Hörverlauf, hier muss nichts offen bleiben."
+            : "Spiel sie in der App. Dieser Dienst gibt keinen Hörverlauf heraus, die Position wird nicht mitgezählt."),
+        el("span", { class: "row", style: "margin-top: 4px" },
+            result.copy_playlist_url
+                ? el("a", { class: "btn", href: result.copy_playlist_url, target: "_blank", rel: "noopener" }, "Playlist öffnen")
+                : null,
+            el("a", { class: "btn btn-quiet", href: "/runs" }, "Alle Hörvorgänge"))
+    );
+}
+
+if (state.provider) { renderModes(); loadPlaylists(); }
+loadConfigs();
+updateStartGate();
+</script>
+{% endblock %}

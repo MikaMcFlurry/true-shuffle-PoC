@@ -17,6 +17,12 @@ env/
 .env.*
 !.env.example
 
+# Apple hands out the MusicKit .p8 key exactly once, and TESTEN.md tells people
+# to put it in ./secrets/. Committing it would be unrecoverable.
+secrets/
+*.p8
+*.pem
+
 # SQLite databases
 *.db
 *.sqlite3
@@ -40,3 +46,9 @@ Thumbs.db
 
 # mypy
 .mypy_cache/
+
+# Screenshot/preview scratch written into static/ by the design workflow
+app/static/_preview_*.html
+
+# Local harness settings (impeccable design hook, permissions)
+.claude/settings.local.json

@@ -1,108 +1,337 @@
-"""Tests for the SQLite database layer (app/db.py)."""
+"""Persistence: schema, the live-run constraint, and ownership."""
 
 from __future__ import annotations
 
-import pytest
 import aiosqlite
+import pytest
 
-from app.db import init_db, close_db, get_db
+from app import db
+from app.crypto import TokenVault
 
-
-@pytest.fixture(autouse=True)
-def _override_db_path(monkeypatch, tmp_path):
-    """Use a temporary database for every test."""
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "test.db"))
-    # Clear the cached settings so it picks up the new env var.
-    from app.config import get_settings
-    get_settings.cache_clear()
+# pytest-asyncio auto mode (pyproject.toml) marks async tests automatically.
 
 
-@pytest.mark.asyncio
-async def test_init_creates_tables(tmp_path, monkeypatch):
-    """init_db should create users and runs tables."""
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "test.db"))
-    from app.config import get_settings
-    get_settings.cache_clear()
-
-    db = await init_db()
-    try:
-        cursor = await db.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-        )
-        tables = [row[0] for row in await cursor.fetchall()]
-        assert "users" in tables
-        assert "runs" in tables
-    finally:
-        await close_db()
+async def test_init_creates_the_v2_schema(database):
+    cur = await database.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+    )
+    tables = {row[0] for row in await cur.fetchall()}
+    assert {"users", "provider_accounts", "runs", "run_events",
+            "skipped_tracks", "jobs"} <= tables
+    # Schema v3 (WP3-A): init_db always runs the migration chain, so a fresh
+    # database lands on the full v3 table set as well.
+    assert {"schema_migrations", "tracks", "playlists", "playlist_snapshots",
+            "snapshot_items", "snapshot_diffs", "run_configs",
+            "run_config_versions", "run_rule_bindings", "run_tracks",
+            "run_plan", "run_selections", "provider_commands",
+            "provider_observations", "deletion_requests"} <= tables
 
 
-@pytest.mark.asyncio
 async def test_get_db_before_init_raises():
-    """get_db should raise RuntimeError if called before init_db."""
-    # Ensure db is closed from any prior test.
-    await close_db()
-    with pytest.raises(RuntimeError, match="not initialised"):
-        get_db()
+    await db.close_db()
+    with pytest.raises(RuntimeError):
+        db.get_db()
 
 
-@pytest.mark.asyncio
-async def test_insert_user_and_run(tmp_path, monkeypatch):
-    """Verify basic insert into users and runs tables."""
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "test.db"))
-    from app.config import get_settings
-    get_settings.cache_clear()
+# ---------------------------------------------------------------------------
+# Accounts
+# ---------------------------------------------------------------------------
 
-    db = await init_db()
-    try:
-        await db.execute(
-            "INSERT INTO users (spotify_user_id, display_name) VALUES (?, ?)",
-            ("user123", "Test User"),
+async def test_one_user_can_connect_several_services(database):
+    user_id = await db.get_or_create_user("local-1")
+    for provider in ("spotify", "apple", "youtube"):
+        await db.upsert_provider_account(
+            user_id=user_id, provider=provider, provider_user_id=f"{provider}-id",
+            display_name=provider.title(), market="DE", product_tier="premium",
+            token={"access_token": f"{provider}-token"},
         )
-        await db.commit()
+    accounts = await db.list_provider_accounts(user_id)
+    assert {a["provider"] for a in accounts} == {"spotify", "apple", "youtube"}
 
-        cursor = await db.execute(
-            "SELECT id, spotify_user_id FROM users WHERE spotify_user_id = ?",
-            ("user123",),
+
+async def test_reconnecting_replaces_credentials_rather_than_duplicating(database):
+    user_id = await db.get_or_create_user("local-1")
+    for token in ("first", "second"):
+        await db.upsert_provider_account(
+            user_id=user_id, provider="spotify", provider_user_id="u",
+            display_name="U", market="DE", product_tier="premium",
+            token={"access_token": token},
         )
-        user = await cursor.fetchone()
-        assert user is not None
-        user_id = user[0]
-
-        await db.execute(
-            "INSERT INTO runs (user_id, playlist_id, mode, shuffled_order) VALUES (?, ?, ?, ?)",
-            (user_id, "playlist_abc", "utility", '["track1","track2"]'),
-        )
-        await db.commit()
-
-        cursor = await db.execute(
-            "SELECT cursor, status FROM runs WHERE user_id = ?", (user_id,)
-        )
-        run = await cursor.fetchone()
-        assert run is not None
-        assert run[0] == 0       # default cursor
-        assert run[1] == "active" # default status
-    finally:
-        await close_db()
+    assert len(await db.list_provider_accounts(user_id)) == 1
+    account = await db.get_provider_account(user_id, "spotify")
+    assert account["token"]["access_token"] == "second"
 
 
-@pytest.mark.asyncio
-async def test_runs_mode_check_constraint(tmp_path, monkeypatch):
-    """runs.mode must be 'utility' or 'controller'."""
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "test.db"))
-    from app.config import get_settings
-    get_settings.cache_clear()
+async def test_tokens_are_encrypted_on_disk(database, tmp_path):
+    user_id = await db.get_or_create_user("local-1")
+    await db.upsert_provider_account(
+        user_id=user_id, provider="spotify", provider_user_id="u",
+        display_name="U", market="DE", product_tier="premium",
+        token={"access_token": "plaintext-would-leak"},
+    )
 
-    db = await init_db()
-    try:
-        await db.execute(
-            "INSERT INTO users (spotify_user_id) VALUES (?)", ("u1",)
-        )
-        await db.commit()
+    cur = await database.execute("SELECT token_blob FROM provider_accounts")
+    blob = (await cur.fetchone())[0]
+    assert "plaintext-would-leak" not in blob
+    assert TokenVault.is_sealed(blob)
 
-        with pytest.raises(aiosqlite.IntegrityError):
-            await db.execute(
-                "INSERT INTO runs (user_id, playlist_id, mode) VALUES (1, 'p1', 'invalid_mode')"
-            )
-            await db.commit()
-    finally:
-        await close_db()
+
+async def test_account_listing_never_returns_credentials(database):
+    user_id = await db.get_or_create_user("local-1")
+    await db.upsert_provider_account(
+        user_id=user_id, provider="spotify", provider_user_id="u",
+        display_name="U", market="DE", product_tier="premium",
+        token={"access_token": "secret"},
+    )
+    for account in await db.list_provider_accounts(user_id):
+        assert "token" not in account
+        assert "token_blob" not in account
+
+
+async def test_disconnecting_removes_the_account(database):
+    user_id = await db.get_or_create_user("local-1")
+    await db.upsert_provider_account(
+        user_id=user_id, provider="spotify", provider_user_id="u",
+        display_name="U", market="", product_tier="", token={"access_token": "t"},
+    )
+    await db.delete_provider_account(user_id, "spotify")
+    assert await db.get_provider_account(user_id, "spotify") is None
+
+
+# ---------------------------------------------------------------------------
+# Runs
+# ---------------------------------------------------------------------------
+
+async def make_run(user_id: int, **kw) -> int:
+    params = dict(
+        user_id=user_id, provider="spotify", playlist_id="pl1",
+        playlist_name="Everything", mode="controller", order=["a", "b", "c"],
+    )
+    params.update(kw)
+    return await db.create_run(**params)
+
+
+async def test_two_live_runs_of_the_same_playlist_are_allowed(database):
+    """RUN-01 acceptance evidence (replaces
+    ``test_only_one_live_run_per_playlist_and_mode``).
+
+    UC-16 / ADR-003: several decks of the same playlist may be live side by
+    side — v2's ``idx_runs_one_live`` enforced the opposite and was removed
+    in M005.  The *real* conflict is two runs fighting over one playback
+    device, so what v3 enforces instead is: at most ONE actively playing
+    controller run per (user, provider) — ``idx_runs_one_playing``.
+    """
+    user_id = await db.get_or_create_user("local-1")
+    first = await make_run(user_id)                       # active controller
+    second = await make_run(user_id, status="paused")     # same playlist+mode, live
+    assert first != second
+
+    # The one constraint that remains: a SECOND actively playing controller
+    # run for the same (user, provider) — even on another playlist — is
+    # rejected, because two runs cannot drive one device (SP-003).
+    with pytest.raises(aiosqlite.IntegrityError):
+        await make_run(user_id, playlist_id="pl2")
+
+    # Another provider or utility mode does not touch that slot.
+    await make_run(user_id, provider="apple")
+    await make_run(user_id, playlist_id="pl2", mode="utility")
+
+
+async def test_many_completed_runs_of_the_same_playlist_are_allowed(database):
+    """The old UNIQUE(user, playlist, mode, status) made a second finished run
+    impossible — you could never listen to the same playlist twice."""
+    user_id = await db.get_or_create_user("local-1")
+    for _ in range(3):
+        await make_run(user_id, status="completed")
+    runs = await db.list_runs(user_id)
+    assert len(runs) == 3
+
+
+async def _ready_snapshot(database, user_id: int, *, provider_playlist_id: str = "pl1") -> int:
+    """A minimal ``playlists`` + READY ``playlist_snapshots`` row, for the
+    ``sync_available`` tests below — deliberately raw SQL (WP3-D4 touches
+    only ``db.list_runs``, not the whole content-layer fixture machinery
+    ``tests/test_library_service.py`` builds for its own, larger surface)."""
+    cur = await database.execute(
+        "INSERT INTO playlists (user_id, provider, provider_playlist_id, name) "
+        "VALUES (?, 'spotify', ?, 'Everything') "
+        "ON CONFLICT(user_id, provider, provider_playlist_id) DO UPDATE SET name = excluded.name",
+        (user_id, provider_playlist_id),
+    )
+    cur = await database.execute(
+        "SELECT id FROM playlists WHERE user_id = ? AND provider = 'spotify' "
+        "AND provider_playlist_id = ?",
+        (user_id, provider_playlist_id),
+    )
+    playlist_pk = (await cur.fetchone())[0]
+    cur = await database.execute(
+        "INSERT INTO playlist_snapshots (playlist_id, version, status) "
+        "VALUES (?, (SELECT COALESCE(MAX(version), 0) + 1 FROM playlist_snapshots "
+        "WHERE playlist_id = ?), 'ready')",
+        (playlist_pk, playlist_pk),
+    )
+    await database.commit()
+    return int(cur.lastrowid)
+
+
+async def test_sync_available_is_false_when_bound_to_the_newest_ready_snapshot(database):
+    """WP3-D4: same convention as library_service.import_status_field's own
+    ``sync_available`` — present (computable) whenever the run carries a
+    baseline snapshot to compare against, ``False`` here because that
+    baseline already IS the newest ready one, absent only when there is no
+    baseline at all (see the next test)."""
+    user_id = await db.get_or_create_user("local-1")
+    snap = await _ready_snapshot(database, user_id)
+    run_id = await make_run(user_id, snapshot_id=snap)
+
+    runs = await db.list_runs(user_id)
+    mine = next(r for r in runs if r["id"] == run_id)
+    assert mine["sync_available"] is False
+
+
+async def test_sync_available_is_true_once_a_newer_ready_snapshot_exists(database):
+    """The cheap id-comparison signal runs.html reads to show a sync hint."""
+    user_id = await db.get_or_create_user("local-1")
+    snap1 = await _ready_snapshot(database, user_id)
+    run_id = await make_run(user_id, snapshot_id=snap1)
+    snap2 = await _ready_snapshot(database, user_id)
+    assert snap2 > snap1
+
+    runs = await db.list_runs(user_id)
+    mine = next(r for r in runs if r["id"] == run_id)
+    assert mine["sync_available"] is True
+
+
+async def test_sync_available_is_absent_for_a_run_never_bound_to_a_snapshot(database):
+    """Most runs (a live playlist read, no prior import) carry no
+    ``snapshot_id`` at all — there is no baseline to compare against."""
+    user_id = await db.get_or_create_user("local-1")
+    run_id = await make_run(user_id)   # default snapshot_id=None
+
+    runs = await db.list_runs(user_id)
+    mine = next(r for r in runs if r["id"] == run_id)
+    assert "sync_available" not in mine
+
+
+async def test_cancelling_one_run_leaves_its_siblings_untouched(database):
+    """Run-isolation invariant (replaces ``test_a_cancelled_run_frees_the_slot``).
+
+    There is no per-playlist "slot" any more (UC-16, Blueprint §5.1): closing
+    a run must only end THAT run and leave other live runs of the same
+    playlist alone.  What cancelling does free is the one-active-controller
+    slot per (user, provider) — the constraint that replaced it.
+    """
+    user_id = await db.get_or_create_user("local-1")
+    active = await make_run(user_id)                      # active controller
+    parked = await make_run(user_id, status="paused")     # sibling, same playlist
+
+    await db.close_live_runs(user_id, "spotify", "pl1", "controller",
+                             run_id=active)
+
+    closed = await db.get_run(active, user_id=user_id)
+    sibling = await db.get_run(parked, user_id=user_id)
+    assert closed["status"] == "cancelled"
+    assert sibling["status"] == "paused"        # untouched — isolation holds
+
+    # The controller slot is free again: a fresh active run may start.
+    fresh = await make_run(user_id)
+    assert fresh not in (active, parked)
+
+
+async def test_the_same_playlist_can_run_on_two_services_at_once(database):
+    user_id = await db.get_or_create_user("local-1")
+    await make_run(user_id, provider="spotify")
+    await make_run(user_id, provider="apple")
+    assert len(await db.list_runs(user_id)) == 2
+
+
+async def test_find_live_run_returns_active_and_paused(database):
+    user_id = await db.get_or_create_user("local-1")
+    run_id = await make_run(user_id, status="paused")
+    found = await db.find_live_run(user_id, "spotify", "pl1", "controller")
+    assert found is not None and found["id"] == run_id
+
+
+async def test_find_live_run_ignores_finished_decks(database):
+    user_id = await db.get_or_create_user("local-1")
+    await make_run(user_id, status="completed")
+    assert await db.find_live_run(user_id, "spotify", "pl1", "controller") is None
+
+
+async def test_a_run_is_only_visible_to_its_owner(database):
+    """Ownership is part of the query, not an afterthought."""
+    owner = await db.get_or_create_user("local-owner")
+    stranger = await db.get_or_create_user("local-stranger")
+    run_id = await make_run(owner)
+
+    assert await db.get_run(run_id, user_id=owner) is not None
+    assert await db.get_run(run_id, user_id=stranger) is None
+
+
+async def test_completing_a_run_stamps_completed_at(database):
+    user_id = await db.get_or_create_user("local-1")
+    run_id = await make_run(user_id)
+    await db.update_run(run_id, status="completed", cursor=3)
+    run = await db.get_run(run_id, user_id=user_id)
+    assert run["status"] == "completed"
+    assert run["completed_at"]
+
+
+async def test_latest_completed_order_feeds_the_similarity_guard(database):
+    user_id = await db.get_or_create_user("local-1")
+    await make_run(user_id, status="completed", order=["x", "y", "z"])
+    assert await db.latest_completed_order(user_id, "spotify", "pl1") == ["x", "y", "z"]
+
+
+# ---------------------------------------------------------------------------
+# Skipped tracks & events
+# ---------------------------------------------------------------------------
+
+async def test_skipped_entries_keep_their_reason(database):
+    user_id = await db.get_or_create_user("local-1")
+    run_id = await make_run(user_id)
+    await db.record_skipped(run_id, [
+        {"id": "loc", "name": "Home recording", "artist": "Me", "reason": "local_file"},
+        {"id": "dup", "name": "Twice", "artist": "Band", "reason": "duplicate"},
+    ])
+    skipped = await db.list_skipped(run_id)
+    assert {s["reason"] for s in skipped} == {"local_file", "duplicate"}
+
+
+async def test_events_record_how_the_cursor_moved(database):
+    user_id = await db.get_or_create_user("local-1")
+    run_id = await make_run(user_id)
+    await db.record_event(run_id, "advanced", cursor=1, reason="native_skip",
+                          detail={"track_id": "b"})
+    events = await db.list_events(run_id)
+    assert events[0]["reason"] == "native_skip"
+    assert events[0]["detail"]["track_id"] == "b"
+
+
+async def test_deleting_a_user_cascades_to_their_runs(database):
+    user_id = await db.get_or_create_user("local-1")
+    await make_run(user_id)
+    await database.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    await database.commit()
+    assert await db.list_runs(user_id) == []
+
+
+# ---------------------------------------------------------------------------
+# Jobs
+# ---------------------------------------------------------------------------
+
+async def test_job_progress_is_persisted(database):
+    user_id = await db.get_or_create_user("local-1")
+    await db.create_job("job1", user_id, "utility:spotify")
+    await db.update_job("job1", status="running", processed=50, total=100,
+                        phase="reading playlist")
+    job = await db.get_job("job1", user_id)
+    assert job["processed"] == 50
+    assert job["phase"] == "reading playlist"
+
+
+async def test_a_job_is_only_visible_to_its_owner(database):
+    owner = await db.get_or_create_user("local-owner")
+    stranger = await db.get_or_create_user("local-stranger")
+    await db.create_job("job1", owner, "utility:spotify")
+    assert await db.get_job("job1", stranger) is None

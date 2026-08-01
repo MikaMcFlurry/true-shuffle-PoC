@@ -1,21 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}true-shuffle{% endblock %}</title>
+    <meta name="color-scheme" content="dark light">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/tokens.css">
     <link rel="stylesheet" href="/static/style.css">
+    <script>
+      // Inline and blocking on purpose: /static/app.js is a module and runs
+      // after first paint, so a stored preference flashed the wrong theme.
+      try {
+        var t = localStorage.getItem("true_shuffle_theme");
+        if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
+      } catch (e) { /* private mode: fall back to the media query */ }
+    </script>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="/playlists" class="logo">🔀 true-shuffle</a>
-        <div class="nav-links">
-            <a href="/playlists">Playlists</a>
-            <a href="/logout">Logout</a>
-        </div>
-    </nav>
-    <main class="container">
+    <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+
+    <header class="appbar">
+        <a class="wordmark" href="/" aria-label="true-shuffle, zur Startseite">True<b>Shuffle</b></a>
+        <nav class="appnav" aria-label="Hauptnavigation">
+            <a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Start</a>
+            <a href="/runs" {% if request.url.path == '/runs' or request.url.path.startswith('/runs/') or request.url.path.startswith('/player/') %}aria-current="page"{% endif %}>Hörvorgänge</a>
+            <a href="/library" {% if request.url.path == '/library' %}aria-current="page"{% endif %}>Bibliothek</a>
+            <a href="/connect" {% if request.url.path == '/connect' %}aria-current="page"{% endif %}>Dienste</a>
+            <a href="/konfigurationen" {% if request.url.path == '/konfigurationen' %}aria-current="page"{% endif %}>Konfigurationen</a>
+        </nav>
+        <span class="appbar-trail">
+            {% if rail and rail.connected %}
+            <span class="status-pill" aria-label="{{ rail.connected }} {{ 'Dienst' if rail.connected == 1 else 'Dienste' }} verbunden">
+                <span class="status-text">{{ rail.connected }} {{ 'Dienst' if rail.connected == 1 else 'Dienste' }} verbunden</span>
+            </span>
+            {% endif %}
+            <button class="theme-toggle" id="themeToggle" type="button">Ansicht</button>
+        </span>
+    </header>
+
+    <main class="page" id="inhalt" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="app-footer">
+        <span class="claim">Wiedergabe läuft immer über den verbundenen Dienst — true-shuffle spielt nie selbst Ton ab, es bestimmt nur die Reihenfolge.</span>
+        <span>{% block footer_note %}true-shuffle · Version 0.2.0{% endblock %}</span>
+    </footer>
+
+    <script type="module" src="/static/app.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

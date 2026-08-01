@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Nicht verbunden · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="section-head narrow" aria-labelledby="errTitle">
+    <span class="eyebrow">Anschluss · {{ provider_id }}</span>
+    <h1 id="errTitle">Dieser Dienst ist noch nicht eingerichtet</h1>
+    <p>{{ detail }}</p>
+</section>
+
+{% if missing %}
+<div class="card narrow">
+    <div class="card-head">
+        <h2>Fehlende Werte</h2>
+        <span class="card-read">{{ missing | length }} fehlt</span>
+    </div>
+    <div class="card-body">
+        <div class="kv">
+            {% for key in missing %}
+            <div><span class="k tabular">{{ loop.index }}</span><span class="v tabular">{{ key }}=…</span></div>
+            {% endfor %}
+        </div>
+        <p class="faint sm">Wo die Werte herkommen, steht in <code>.env.example</code>.</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <a class="btn btn-primary" href="/connect">Zurück zu den Diensten</a>
+</div>
+{% endblock %}

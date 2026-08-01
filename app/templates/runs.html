@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}Hörvorgänge · true-shuffle{% endblock %}
+
+{% block content %}
+<section class="section-head" aria-labelledby="runsTitle">
+    <span class="eyebrow">Übersicht</span>
+    <h1 id="runsTitle">Deine Hörvorgänge</h1>
+    <p>
+        Jeder Hörvorgang merkt sich seinen Fortschritt für sich — auch über
+        Wochen. Wähl einen aus, um genau dort weiterzuhören, wo du aufgehört hast.
+    </p>
+</section>
+
+<div class="note hidden" id="runsNote"></div>
+
+<div class="spread">
+    <span class="card-read" id="runsCount" aria-live="polite">wird geladen</span>
+    <a class="btn btn-primary" href="/library">Neuer Hörvorgang</a>
+</div>
+
+<div class="card-grid" id="runList">
+    <div class="run-card"><div class="skeleton"><i></i><i></i><i></i></div></div>
+    <div class="run-card"><div class="skeleton"><i></i><i></i><i></i></div></div>
+</div>
+
+<section aria-labelledby="importHead">
+    <div class="section-head">
+        <span class="eyebrow">Übernahme</span>
+        <h2 id="importHead">Hörvorgang übernehmen</h2>
+        <p>
+            Einen Hörvorgang fortsetzen, der auf einem anderen Rechner exportiert
+            wurde. Die Datei enthält Reihenfolge und Position, nie Zugangsdaten.
+        </p>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <!-- The native file control is the browser's widget, in the
+                     browser's language. The input still does the work; the
+                     label is what the listener sees. -->
+                <input type="file" id="importFile" accept="application/json" class="sr-only">
+                <label class="btn" for="importFile">Datei wählen</label>
+                <span class="sm faint" id="importName">keine Datei gewählt</span>
+                <button class="btn btn-primary push" id="importBtn" type="button">Importieren</button>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<!--
+  UI-Erneuerung TS-FABLE-01 (ADR-001): the "Durch"/"Übergeben" distinction —
+  a Handoff run that merely handed a playlist over is never reported as
+  played through — is safety-relevant honesty, not styling. It is rendered
+  here as data rather than baked into the script below, so the rule stays
+  defined, and testable, on the server.
+-->
+<script type="application/json" id="statusVocab">{{ status_vocab | tojson }}</script>
+<script type="module">
+import { $, api, el, formatCount, formatWhen, setNote, svgIcon, STATE_ICON, CONTRACT_TEXT } from "/static/app.js";
+
+const STATUS_VOCAB = JSON.parse($("#statusVocab").textContent);
+
+/**
+ * Loading /api/runs/{id} for every card would mean one request per Karte —
+ * fine for four Hörvorgänge, not for forty. The live system state (A/B) is
+ * only worth its own fetch on the handful of cards someone is actually
+ * about to look at; the rest stay honestly "Bereit" until visited.
+ */
+const ACTIVE_STATE_FETCH_LIMIT = 6;
+
+/**
+ * A Handoff run marked "abgeschlossen" the instant its playlist was written —
+ * nobody has necessarily played a single track, and this page has no way to
+ * find out. Saying "durchgehört" for that would be a claim we cannot support,
+ * so the note under the contract chip leads with the server's own word for
+ * it ("Durch" vs. "Übergeben") and spells out what that word means.
+ */
+function completionNote(r) {
+    if (r.status === "completed") {
+        const label = r.mode === "controller"
+            ? STATUS_VOCAB.completed_controller
+            : STATUS_VOCAB.completed_utility;
+        return r.mode === "controller"
+            ? `${label}: Alle ${formatCount(r.total)} Titel genau einmal gespielt.`
+            : `${label}: Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.`;
+    }
+    if (r.status === "cancelled") {
+        return "Hörvorgang wurde beendet. Ein neuer Start mischt neu.";
+    }
+    if (r.status === "stopped") {
+        return "Gestoppt — dein Stand bleibt erhalten. „Fortsetzen“ macht genau hier weiter.";
+    }
+    return null;
+}
+
+/**
+ * The player page drives playback — it only makes sense for Live-Modus runs.
+ * A Handoff run's own app plays the copy; here the only honest destination
+ * is its Verlauf. A stopped run (F1, ADR-003) resumes explicitly by id —
+ * POST /resume lifts it back to active, then the player takes over.
+ */
+function primaryAction(r) {
+    if (r.mode === "controller") {
+        if (r.status === "stopped") {
+            return el("button", {
+                class: "btn btn-primary", type: "button",
+                onClick: async (ev) => {
+                    ev.currentTarget.setAttribute("aria-disabled", "true");
+                    try {
+                        await api(`/api/runs/${r.id}/resume`, { method: "POST" });
+                        location.href = `/player/${r.id}`;
+                    } catch (err) {
+                        setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+                        load();
+                    }
+                },
+            }, "Fortsetzen");
+        }
+        const live = r.status === "active" || r.status === "paused";
+        return el("a", { class: `btn ${live ? "btn-primary" : "btn-secondary"}`, href: `/player/${r.id}` },
+            live ? (r.cursor > 0 ? "Weiterhören" : "Öffnen") : "Details");
+    }
+    return el("a", { class: "btn btn-secondary", href: `/runs/${r.id}/verlauf` }, "Details");
+}
+
+/** F1: a live Live-Modus run can be stopped from the dashboard — deliberate
+ *  session end, device released, resumable later. */
+function stopAction(r) {
+    if (r.mode !== "controller") return null;
+    if (r.status !== "active" && r.status !== "paused") return null;
+    return el("button", {
+        class: "btn btn-quiet", type: "button",
+        "aria-label": `Hörvorgang „${r.name || r.playlist_name || r.playlist_id}“ stoppen`,
+        onClick: async (ev) => {
+            ev.currentTarget.setAttribute("aria-disabled", "true");
+            try {
+                await api(`/api/runs/${r.id}/stop`, { method: "POST" });
+            } catch (err) {
+                setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+            }
+            load();
+        },
+    }, "Stoppen");
+}
+
+/**
+ * WP3-D4: a cheap, honest sync hint — ``sync_available`` is only present
+ * when db.list_runs could prove it with a plain id comparison (a newer READY
+ * snapshot already exists for this run's playlist). Absent or false means
+ * "nothing known", never "nothing changed" — the hint stays off in both
+ * cases rather than guessing.
+ */
+function syncNote(r) {
+    if (r.sync_available !== true) return null;
+    return el("p", { class: "run-note" },
+        "Die Playlist hat sich seit dem letzten Import geändert. ",
+        el("a", {
+            href: `/library?provider=${encodeURIComponent(r.provider)}&playlist=${encodeURIComponent(r.playlist_id)}&sync=1`,
+        }, "Abgleich in der Bibliothek ansehen"));
+}
+
+/**
+ * UC-26, Papierkorb-Zweitschritt: DELETE archives (soft, reversible in the
+ * data) without asking — the destructive step is the SECOND one. This map
+ * keeps an archived run's last known data visible in THIS session (the API
+ * hides archived runs from GET /api/runs the moment they are archived), so
+ * "Endgültig löschen" has something to render its confirmation against
+ * without a dedicated archived-runs endpoint.
+ */
+const archivedRuns = new Map();
+
+function deleteAction(r) {
+    return el("button", {
+        class: "btn btn-quiet", type: "button",
+        "aria-label": `Hörvorgang „${r.name || r.playlist_name || r.playlist_id}“ in den Papierkorb legen`,
+        onClick: async (ev) => {
+            ev.currentTarget.setAttribute("aria-disabled", "true");
+            try {
+                await api(`/api/runs/${r.id}`, { method: "DELETE" });
+                archivedRuns.set(r.id, r);
+            } catch (err) {
+                setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+            }
+            load();
+        },
+    }, "Löschen");
+}
+
+/** The archived card: only "Endgültig löschen" (with a real confirm()) —
+ *  nothing here pretends the run can quietly come back. */
+function archivedCard(r) {
+    const label = r.name || r.playlist_name || r.playlist_id;
+    return el("article", {
+        class: "run-card",
+        dataset: { runId: String(r.id) },
+        "aria-label": `Hörvorgang „${label}“, im Papierkorb`,
+    },
+        el("div", { class: "run-head" },
+            coverFallback(),
+            el("div", {},
+                el("h2", { class: "run-title wrap-anywhere", lang: "de" }, label),
+                el("p", { class: "run-config" }, "Im Papierkorb"))),
+        el("p", { class: "run-note" },
+            "In den Papierkorb gelegt. Der Fortschritt bleibt erhalten, aber der Hörvorgang taucht in dieser Liste nicht mehr auf, sobald du die Seite neu lädst — bis dahin lässt er sich hier endgültig löschen."),
+        el("div", { class: "run-actions" },
+            el("button", {
+                class: "btn btn-stop", type: "button",
+                onClick: async (ev) => {
+                    if (ev.currentTarget.getAttribute("aria-disabled") === "true") return;
+                    if (!confirm(
+                        `„${label}“ endgültig löschen? Das entfernt Fortschritt und Verlauf dieses `
+                        + "Hörvorgangs unwiderruflich. Die importierte Playlist bleibt erhalten."
+                    )) return;
+                    ev.currentTarget.setAttribute("aria-disabled", "true");
+                    try {
+                        await api(`/api/runs/${r.id}?confirm=true`, { method: "DELETE" });
+                        archivedRuns.delete(r.id);
+                        setNote($("#runsNote"), `„${label}“ wurde endgültig gelöscht.`, "note-ok", "Gelöscht");
+                    } catch (err) {
+                        setNote($("#runsNote"), err.message, "note-stop", "Fehler");
+                    }
+                    load();
+                },
+            }, "Endgültig löschen")));
+}
+
+function coverFallback() {
+    return el("span", { class: "cover-fallback", role: "img", "aria-label": "Kein Cover verfügbar" },
+        svgIcon("0 0 24 24", '<path d="M9 3v10.6A3.5 3.5 0 1 0 11 17V7h6.5a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H9z"/>', { fill: "currentColor" }));
+}
+
+/**
+ * A run card. /api/runs never sends artwork, so every card gets the honest
+ * "kein Cover" panel — inventing one from stale metadata would be worse.
+ */
+function runCard(r) {
+    const pct = r.total ? Math.round((r.cursor / r.total) * 100) : 0;
+    const note = completionNote(r);
+    const showSystemState = r.status === "active";
+
+    return el("article", {
+        class: "run-card",
+        dataset: { runId: String(r.id) },
+        "aria-label": `Hörvorgang: ${r.playlist_name || r.playlist_id}, ${CONTRACT_TEXT[r.status] || r.status}`,
+    },
+        el("div", { class: "run-head" },
+            coverFallback(),
+            el("div", {},
+                // UC-16: the run's OWN name leads — several runs of one
+                // playlist must be tellable apart. Cycle > 1 says which
+                // Durchlauf this deck is on (F2).
+                el("h2", { class: "run-title wrap-anywhere", lang: "de" }, r.name || r.playlist_name || r.playlist_id),
+                el("p", { class: "run-config" },
+                    (r.mode === "controller" ? "Modus: Live" : "Modus: Handoff")
+                    + (r.name && r.playlist_name && r.name !== r.playlist_name ? ` · ${r.playlist_name}` : "")
+                    + (r.cycle > 1 ? ` · Durchlauf ${formatCount(r.cycle)}` : "")))),
+        el("div", { class: "run-meta" },
+            showSystemState
+                ? el("span", { class: "chip chip-neutral", dataset: { role: "systemchip" } }, "Bereit")
+                : null,
+            el("span", { class: "chip chip-neutral" }, CONTRACT_TEXT[r.status] || r.status)),
+        el("div", {},
+            el("div", {
+                class: "mini-meter", role: "progressbar",
+                "aria-valuenow": String(pct), "aria-valuemin": "0", "aria-valuemax": "100",
+                "aria-label": `Fortschritt ${pct} Prozent`,
+            }, el("i", { style: `width:${pct}%` })),
+            el("p", { class: "run-progressline tabular" },
+                el("span", {}, `${formatCount(r.cursor)} von ${formatCount(r.total)} gespielt`),
+                el("span", {}, `zuletzt: ${formatWhen(r.updated_at)}`))),
+        note ? el("p", { class: "run-note" }, note) : null,
+        syncNote(r),
+        el("div", { class: "run-actions" },
+            primaryAction(r),
+            stopAction(r),
+            el("a", { class: "btn btn-quiet", href: `/export/${r.id}` }, "Exportieren"),
+            deleteAction(r)));
+}
+
+/** Upgrade one card's neutral "Bereit" chip once its live state is known. */
+function applySystemState(runId, watcher) {
+    const card = $(`[data-run-id="${runId}"]`);
+    const chip = card?.querySelector('[data-role="systemchip"]');
+    if (!card || !chip) return;
+    card.classList.remove("is-a", "is-b");
+    if (watcher.drifted) {
+        card.classList.add("is-b");
+        chip.className = "chip chip-b";
+        chip.replaceChildren(svgIcon(STATE_ICON.b.viewBox, STATE_ICON.b.inner, STATE_ICON.b.attrs), "Manuell übernommen");
+    } else if (watcher.watching) {
+        card.classList.add("is-a");
+        chip.className = "chip chip-a";
+        chip.replaceChildren(svgIcon(STATE_ICON.a.viewBox, STATE_ICON.a.inner, STATE_ICON.a.attrs), "True Shuffle steuert");
+    } else {
+        chip.className = "chip chip-neutral";
+        chip.replaceChildren("Bereit");
+    }
+}
+
+async function refreshSystemState(runId) {
+    try {
+        const state = await api(`/api/runs/${runId}`);
+        applySystemState(runId, state.watcher || {});
+    } catch {
+        // A card that could not be confirmed keeps its neutral "Bereit" chip
+        // rather than guessing — the dashboard never fakes a system state.
+    }
+}
+
+function showListError(message) {
+    $("#runsCount").textContent = "nicht geladen";
+    $("#runList").replaceChildren(el("div", { class: "empty-state is-error" },
+        el("span", { class: "empty-glyph" },
+            svgIcon("0 0 24 24", '<path d="M12 3 22 20H2z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/>',
+                { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" })),
+        el("h3", {}, "Hörvorgänge konnten nicht geladen werden"),
+        el("div", { class: "empty-actions" },
+            el("button", { class: "btn btn-primary", type: "button", onClick: load }, "Erneut versuchen"))));
+    if (message) setNote($("#runsNote"), message, "note-stop", "Fehler");
+}
+
+async function load() {
+    try {
+        const { runs } = await api("/api/runs");
+        // Runs the listener archived earlier in THIS page load: the API
+        // already hides them (archived_at IS NULL filter), so they only
+        // survive here — a page reload lets them go, exactly as promised.
+        for (const id of [...archivedRuns.keys()]) {
+            if (runs.some((r) => r.id === id)) archivedRuns.delete(id); // resurrected elsewhere — trust the API
+        }
+        const trashed = [...archivedRuns.values()];
+
+        $("#runsCount").textContent = runs.length
+            ? `${formatCount(runs.length)} ${runs.length === 1 ? "Hörvorgang" : "Hörvorgänge"}`
+            : "keiner angelegt";
+
+        if (!runs.length && !trashed.length) {
+            $("#runList").replaceChildren(el("div", { class: "empty-state" },
+                el("span", { class: "empty-glyph" },
+                    svgIcon("0 0 24 24", '<path d="M4 17c2.5-2.2 4-6.5 5.5-6.5S12.5 15 14 15s3-7 4.5-7S21 11 21.5 12"/><circle cx="4" cy="17" r="1.2" fill="currentColor" stroke="none"/>',
+                        { fill: "none", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round" })),
+                el("h3", {}, "Noch kein Hörvorgang"),
+                el("p", {}, "Wähl eine Playlist und eine Konfiguration — true-shuffle merkt sich ab dann jeden gespielten Titel, auch über Wochen."),
+                el("div", { class: "empty-actions" },
+                    el("a", { class: "btn btn-primary", href: "/library" }, "Ersten Hörvorgang anlegen"))));
+            return;
+        }
+
+        $("#runList").replaceChildren(...runs.map(runCard), ...trashed.map(archivedCard));
+
+        const active = runs.filter((r) => r.status === "active").slice(0, ACTIVE_STATE_FETCH_LIMIT);
+        for (const r of active) refreshSystemState(r.id);
+    } catch (err) {
+        showListError(err.message);
+    }
+}
+
+$("#importFile").addEventListener("change", () => {
+    const file = $("#importFile").files?.[0];
+    $("#importName").textContent = file ? file.name : "keine Datei gewählt";
+    $("#importName").classList.toggle("faint", !file);
+});
+
+$("#importBtn").addEventListener("click", async () => {
+    const file = $("#importFile").files?.[0];
+    if (!file) return setNote($("#runsNote"), "Wähl zuerst eine exportierte Hörvorgang-Datei.", "", "Hinweis");
+    try {
+        const res = await fetch("/export/import", { method: "POST", body: await file.text() });
+        const payload = await res.json();
+        if (!res.ok) throw new Error(payload.detail || "Import fehlgeschlagen.");
+        setNote($("#runsNote"),
+            `${formatCount(payload.total)} Titel übernommen, Position ${formatCount(payload.cursor)}.`,
+            "note-ok", "Übernommen");
+        load();
+    } catch (err) {
+        // A failed import says the import failed. It must not wipe the list
+        // of runs that loaded perfectly well a moment ago.
+        setNote($("#runsNote"), err.message, "note-stop", "Import fehlgeschlagen");
+    }
+});
+
+load();
+</script>
+{% endblock %}

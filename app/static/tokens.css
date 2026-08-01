@@ -1,0 +1,182 @@
+/* ==========================================================================
+   true-shuffle — DESIGN TOKENS — "Nachtpult" (Konzept dir-b, ADR-001)
+
+   Single source of truth for colour, type, spacing, radius and motion.
+   Loaded before style.css. No component rules live here.
+
+   Provenance
+   ----------
+   Night (dark, primary theme) and the "state colour" derivation rule come
+   verbatim from concepts/dir-b/concept.md — every text/background pair in
+   that table was independently recomputed against WCAG 2.x during review
+   (ADR-001, Gate G1). Paper (light theme) reuses the subset of tokens the
+   concept measured (canvas/surface/ink/muted/signal/state-b/state-c/state-d/
+   ember/line-strong) and extends the *undocumented* remainder — surface-2,
+   line, meter-track, tints, shadow — using the same relationships the Night
+   table establishes (elevation, low-alpha washes, non-text borders). Those
+   extended values are marked below; they carry no independently reviewed
+   contrast number of their own, but nothing built from them is a text/
+   background pair, so AA is not at stake for them.
+
+   Status-colour rule (concept.md, "Ableitungsregel Status-Tokens"): all four
+   run-state colours are samples on ONE Aurora hue arc (violet → coral → gold),
+   normalised to a shared lightness band. They are reserved for the four
+   system states (A–D) and for the error/"ember" case — never for statistics,
+   meters or decoration. See style.css's state-colour comment for the same
+   rule enforced in the component layer.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* -- Night (default) ----------------------------------------------------- */
+  --canvas:      #0F0D18;
+  --surface:     #171424;
+  --surface-2:   #201B33;
+  --line:        #312B4C;   /* decorative hairline — non-text, 1.36:1, never meaning-bearing */
+  --line-strong: #726B99;   /* meaning-bearing borders — 3.68:1 vs surface, AA non-text */
+  --ink:         #F2EFFB;   /* 15.93:1 vs surface / 16.97:1 vs canvas */
+  --muted:       #A9A1C2;   /* 7.37:1 vs surface / 6.76:1 vs surface-2 */
+
+  --signal:      #B49BFA;   /* Aurora violet — the one brand accent AND state A. 7.75:1 vs surface */
+  --signal-ink:  #160F2E;   /* text on signal fill — 7.89:1 */
+
+  --state-a:     var(--signal);
+  --state-b:     #FF8E77;   /* coral — "Spotify manuell übernommen". 8.08:1 */
+  --state-c:     #E7C15E;   /* gold — "wartet auf Entscheidung" + form warnings. 10.49:1 */
+  --state-d:     #A6AEC0;   /* slate — "kein aktives Gerät", the arc gone out. 8.12:1 */
+  --ember:       #FF6D75;   /* NOT a system state — error edges/headlines only. 6.62:1 */
+
+  --tint-a:      rgba(180, 155, 250, .10);
+  --tint-b:      rgba(255, 142, 119, .09);
+  --tint-c:      rgba(231, 193, 94, .09);
+  --tint-d:      rgba(166, 174, 192, .08);
+  --tint-ember:  rgba(255, 109, 117, .08);
+
+  --meter-track: #2A2542;   /* "offen" segment / track — paired with a 1px border in component CSS */
+
+  --disabled-bg:     var(--surface-2);
+  --disabled-border: var(--line-strong);
+  --disabled-text:   var(--muted);     /* non-opacity disabled text, ADR-001 Auflage 2 */
+
+  --shadow: 0 10px 28px rgba(0, 0, 0, .38);
+
+  /* -- Type ------------------------------------------------------------- */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+          "Helvetica Neue", Arial, sans-serif;
+  --fs-root:  16px;   /* Grundgröße */
+  --lh-root:  1.5;
+
+  --text-2xs: 0.719rem;  /* 11.5px — zone captions, legends */
+  --text-xs:  0.75rem;   /* 12px   — chips, stat labels */
+  --text-sm:  0.8125rem; /* 13px   — meta, secondary body */
+  --text-md:  0.875rem;  /* 14px   — form labels, descriptions */
+  --text-base: 0.9375rem;/* 15px   — body copy inside components */
+  --text-lg:  1.0625rem; /* 17px   — card/track titles */
+  --text-xl:  1.1875rem; /* 19px   — section sub-heads */
+  --text-2xl: 1.375rem;  /* 22px   — page h2 */
+  --text-3xl: 1.5rem;    /* 24px   — page h1 (mobile) */
+  --text-4xl: 1.875rem;  /* 30px   — page h1 (desktop) */
+  --text-hero: 3.25rem;  /* 52px   — hero percentage / big figures */
+
+  /* -- Spacing ------------------------------------------------------------ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+
+  /* -- Radius / Motion ------------------------------------------------------ */
+  --radius-l:    14px;   /* cards, zones, banners */
+  --radius-m:    9px;    /* inner surfaces, thumbnails */
+  --radius-full: 999px;  /* chips, buttons */
+
+  --motion-fast:   150ms;
+  --motion-medium: 220ms;
+  --motion-aurora: 26s;
+  --ease-standard: ease;
+  --ease-aurora:   ease-in-out;
+
+  /* -- Touch targets -------------------------------------------------------- */
+  --tap-min:      44px;
+  --tap-transport: 56px;
+  --tap-transport-main: 72px;
+}
+
+/* -- Paper (light) — OS preference, unless a stored choice overrides it --- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+
+    --canvas:      #F6F4EF;
+    --surface:     #FFFFFF;
+    --surface-2:   #EFEAE0;  /* extended: not in concept.md's measured set */
+    --line:        rgba(34, 28, 54, .14);   /* extended */
+    --line-strong: #847E70;  /* 4.04:1 non-text */
+    --ink:         #221C36;  /* 16.31:1 vs surface */
+    --muted:       #5F5876;  /* 6.68:1 vs surface */
+
+    --signal:      #6C46D6;  /* 6.03:1 vs surface; white text 6.03:1 */
+    --signal-ink:  #FFFFFF;
+
+    --state-b:     #B03D25;  /* 4.83:1 vs banner-b tint, 5.93:1 vs surface (was #B8432A/4.42:1 vs tint — QA G2) */
+    --state-c:     #7A5E10;  /* 6.11:1 */
+    --state-d:     #556070;  /* 6.38:1 */
+    --ember:       #C22F3E;  /* 5.57:1 */
+
+    --tint-a:      rgba(108, 70, 214, .08);   /* extended */
+    --tint-b:      rgba(184, 67, 42, .08);    /* extended */
+    --tint-c:      rgba(122, 94, 16, .08);    /* extended */
+    --tint-d:      rgba(85, 96, 112, .08);    /* extended */
+    --tint-ember:  rgba(194, 47, 62, .07);    /* extended */
+
+    --meter-track: #EAE5D8;  /* extended — always paired with a 1px line-strong inner border */
+
+    --shadow: 0 10px 24px rgba(30, 24, 12, .12);
+  }
+}
+
+/* -- Explicit theme override — wins over prefers-color-scheme, and applies
+   to ANY element carrying the attribute (root toggle AND styleguide's
+   side-by-side theme-preview containers use the same rule). ------------- */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #0F0D18; --surface: #171424; --surface-2: #201B33;
+  --line: #312B4C; --line-strong: #726B99;
+  --ink: #F2EFFB; --muted: #A9A1C2;
+  --signal: #B49BFA; --signal-ink: #160F2E;
+  /* --state-a is re-declared here (not just inherited from :root's alias) so
+     a *nested* [data-theme] container — the styleguide's side-by-side
+     preview panes — resolves var(--signal) against ITS OWN theme rather than
+     freezing whatever --signal was on the ancestor that first defined
+     --state-a. Custom-property aliases do not re-resolve through
+     inheritance; only a same-element re-declaration does (QA G2, "Styleguide-
+     Token-Leck"). Confirmed empirically: without this, a nested
+     data-theme="light" pane's .chip-a kept the dark --signal. */
+  --state-a: var(--signal);
+  --state-b: #FF8E77; --state-c: #E7C15E; --state-d: #A6AEC0; --ember: #FF6D75;
+  --tint-a: rgba(180,155,250,.10); --tint-b: rgba(255,142,119,.09);
+  --tint-c: rgba(231,193,94,.09); --tint-d: rgba(166,174,192,.08);
+  --tint-ember: rgba(255,109,117,.08);
+  --meter-track: #2A2542;
+  --shadow: 0 10px 28px rgba(0,0,0,.38);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --canvas: #F6F4EF; --surface: #FFFFFF; --surface-2: #EFEAE0;
+  --line: rgba(34,28,54,.14); --line-strong: #847E70;
+  --ink: #221C36; --muted: #5F5876;
+  --signal: #6C46D6; --signal-ink: #FFFFFF;
+  --state-a: var(--signal);  /* see [data-theme="dark"] above for why this is repeated here */
+  --state-b: #B03D25; --state-c: #7A5E10; --state-d: #556070; --ember: #C22F3E;
+  --tint-a: rgba(108,70,214,.08); --tint-b: rgba(184,67,42,.08);
+  --tint-c: rgba(122,94,16,.08); --tint-d: rgba(85,96,112,.08);
+  --tint-ember: rgba(194,47,62,.07);
+  --meter-track: #EAE5D8;
+  --shadow: 0 10px 24px rgba(30,24,12,.12);
+}
