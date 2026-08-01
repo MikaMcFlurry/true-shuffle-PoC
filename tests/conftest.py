@@ -65,12 +65,21 @@ def _fresh_window_registry():
     """ADR-002: the window-anchor registry is process-global (like the advance
     locks), but run ids restart at 1 with every per-test database — clear it
     so a stale anchor from one test cannot leak "a window is set" into the
-    next test's run of the same id."""
+    next test's run of the same id.
+
+    Phase 4 (§B5): the ADVANCE LOCKS leak the same way, and worse — an
+    ``asyncio.Lock`` created inside one test's event loop raises
+    ``RuntimeError`` when the next test's loop awaits it for the same
+    recycled run id.  That was the sporadic full-module "fixture flakiness"
+    RUN_STATE recorded during D1.  Production has one loop per process, so
+    clearing per test is the correct, honest fix."""
     from app import runs
 
     runs._window_anchors.clear()
+    runs._advance_locks.clear()
     yield
     runs._window_anchors.clear()
+    runs._advance_locks.clear()
 
 
 @pytest_asyncio.fixture
