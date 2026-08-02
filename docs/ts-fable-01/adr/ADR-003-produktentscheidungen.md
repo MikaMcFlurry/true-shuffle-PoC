@@ -15,6 +15,32 @@ Status: Entschieden (Lead), 2026-07-31 · Grundlage: unabhängige Domänenmodell
 | F9 | Sichtbarer Ausführungskontext in Spotify | **Default nein** (uris-Fenster gemäß ADR-002 erzeugt keine sichtbaren Artefakte); **Kontext-Playlist als beschriftete Opt-in-Option je Run** (`true-shuffle · <Name>`) mit Cleanup-Pfad — zugleich die Großplaylist-Alternative aus ADR-002. | Beide Pfade koexistieren als Datenwert (`execution_strategy`) — exakt die Struktur, die SP-007 messbar hält. |
 | F10 | Datenlöschung bei Disconnect | **Dreistufig:** (1) sofort: Tokens/Account-Zeile, Provider-Beobachtungen, Command-Payloads redigiert; (2) binnen **5 Tagen** (Frist aus Terms, nachweisbar über `deletion_requests`-Job): alle Provider-Inhalte (Snapshots, Playlists, Track-Metadaten); (3) behalten, **pseudonymisiert** (Nachtrag 2026-08-01, Security-Review SEC-05: der HMAC-Salt bleibt für den Reconnect-Weg in derselben Datenbank — mit DB-Zugriff sind die Referenzen rückrechenbar; „anonymisiert" wäre eine falsche Zusicherung): der abstrakte Hörfortschritt (Titel-Referenzen → lokale Opaque-Hashes), damit ein Reconnect fortsetzen kann. Volllöschung (`{"full": true}`) ist derzeit ein API-Schalter, kein UI-Element (SEC-20). Export vor Löschung wird angeboten. Ein Schalter für Volllöschung existiert, falls die Rechtsprüfung es verlangt. | Erfüllt die Policy-Frist prüfbar und erhält den Nutzerwert; jede Stufe einzeln testbar (ERR-07). |
 
+## Nachträge 2026-08-02 (ADR-005)
+
+**F4 — „gespielt" war nie implementiert.** `played_threshold` und
+`played_threshold_seconds` standen im Schema (`run_configs`) und in `Rules`,
+aber keine Codezeile las sie: gebucht wurde ausschließlich über die
+Trackende-Klassifikation in `engine.reconcile`. Genau die 30-Sekunden-Regel,
+die hier „schützt gegen verpasste Trackenden" begründet wurde, hätte den
+gemeldeten Live-Fehler aufgefangen — sie fehlte.
+
+Jetzt implementiert als `core.engine.is_played`, mit einer Präzisierung, die
+den Zeilentext oben schärft: die Regel kennt **ausschließlich
+`progress_ms`**, nie eine Uhr. „≥ 30 s gehörte Zeit" heißt beobachteter
+Fortschritt im Titel, nicht verstrichene Zeit seit dem Start — Spotify-Policy
+II.2 verbietet künstliche Abspielzahlen, und eine Karte, die sich nach 30
+Sekunden Wanduhr selbst weiterschaltet, wäre genau das. `on_track_end` bleibt
+der Default; die Wahl steht in der Regel-UI.
+
+**F9 — der Default hat sich gedreht.** Die Kontext-Playlist war hier eine
+Opt-in-Option je Lauf, weil das uris-Fenster „keine sichtbaren Artefakte"
+erzeugt. Das stimmt — es spielt auf manchen Clients nur die erste URI. Seit
+ADR-005 wird gemessen statt angenommen: bleibt das Fenster erhalten, ändert
+sich nichts; geht es verloren, wechselt der Lauf selbsttätig auf die
+Kontext-Playlist. Die Struktur bleibt exakt die hier gewählte — ein Datenwert
+`execution_strategy` —, nur der Weg dorthin ist nicht mehr ein Schalter, den
+der Nutzer finden muss.
+
 ## Konsequenz
 
 Diese Entscheidungen sind die fachliche Spezifikation für Schema v3 und die Phase-3-Implementierung. Die zugehörigen technischen Verträge (Tabellen, Schlüsselkonstruktionen, Migrationsschritte M001–M010 mit Rollback je Schritt) folgen der unabhängigen Domänenanalyse; Abweichungen während der Implementierung werden hier nachgetragen.

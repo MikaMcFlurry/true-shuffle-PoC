@@ -119,11 +119,21 @@ so a human had to press a button per track.
    documented contract and our fakes".
 2. **Apple Music domain registration.** MusicKit requires the serving domain to
    be registered against the MusicKit identifier. Untested.
-3. **Spotify queue behaviour in the field.** Whether prefetched queue entries
-   survive a hard override, how much latency an override adds, and whether stale
-   queue entries bleed through — all still open, exactly as the handoff said.
-   The watcher is designed to correct drift, but only a real device shows how
-   often it has to.
+3. **Spotify playback behaviour in the field — partly settled, badly.** The
+   first real session falsified an assumption this list did not even flag: that
+   handing Spotify a `uris` array reliably sets an order. On at least some
+   clients only the first entry is played and the service continues with its
+   own recommendations. The deck read that as "the listener took over", stopped
+   booking, and every attempt to continue replayed the same track (ADR-005).
+   Fixed and covered by tests against a simulator that reproduces the defect —
+   but *which* clients do it is still unknown and only a real device can say
+   (LT-15). Open with it: whether appended items reach a playing playlist
+   context (LT-16), whether unfollowing really removes a helper playlist
+   (LT-17), and how reliable `GET /me/player/queue` is on a short queue (LT-19).
+3b. **Spotify's own Autoplay and Smart Shuffle.** Neither is switchable through
+   the Web API. true-shuffle keeps its context from running out and reports
+   Smart Shuffle when it sees it; while either is on in the listener's app, the
+   order promise does not hold. That is a stated limit, not a bug to be fixed.
 4. **YouTube quota in practice.** The refusal threshold uses Google's documented
    unit costs. The real budget of a given Cloud project may differ.
 4b. **History-sync latency and false positives.** The reconciliation window and
