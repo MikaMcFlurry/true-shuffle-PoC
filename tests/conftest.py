@@ -266,9 +266,6 @@ class FakeProvider(MusicProvider):
     async def list_devices(self, token) -> List[Device]:
         return [Device(id="dev1", name="Fake Speaker", kind="speaker", is_active=True)]
 
-    async def replace_playlist_items(self, token, playlist_id, track_ids) -> None:
-        self.created[playlist_id] = list(track_ids)
-
     async def delete_playlist(self, token, playlist_id) -> None:
         self.created.pop(playlist_id, None)
         self.deleted_playlists.append(playlist_id)

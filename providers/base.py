@@ -421,16 +421,6 @@ class MusicProvider(abc.ABC):
     ) -> None:
         raise Unsupported(f"{self.capabilities.id} cannot write playlists")
 
-    async def replace_playlist_items(
-        self, token: TokenBundle, playlist_id: str, track_ids: List[str]
-    ) -> None:
-        """Make the playlist hold exactly *track_ids*, in that order.
-
-        Needed by the context-playlist strategy (ADR-005) when a plan change
-        invalidates a helper playlist.  An empty list clears it.
-        """
-        raise Unsupported(f"{self.capabilities.id} cannot rewrite playlists")
-
     async def delete_playlist(self, token: TokenBundle, playlist_id: str) -> None:
         """Take a playlist back out of the listener's library.
 

@@ -30,7 +30,9 @@ den Zeilentext oben schärft: die Regel kennt **ausschließlich
 Fortschritt im Titel, nicht verstrichene Zeit seit dem Start — Spotify-Policy
 II.2 verbietet künstliche Abspielzahlen, und eine Karte, die sich nach 30
 Sekunden Wanduhr selbst weiterschaltet, wäre genau das. `on_track_end` bleibt
-der Default; die Wahl steht in der Regel-UI.
+der Default. Ehrlich dazu: die Wahl ist bisher nur über die API erreichbar
+(`POST /api/runs/{id}/rules`, `POST /api/configs`) — in der Regel-Oberfläche
+gibt es dafür noch kein Bedienelement.
 
 **F9 — der Default hat sich gedreht.** Die Kontext-Playlist war hier eine
 Opt-in-Option je Lauf, weil das uris-Fenster „keine sichtbaren Artefakte"

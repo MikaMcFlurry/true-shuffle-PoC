@@ -657,25 +657,6 @@ class SpotifyProvider(MusicProvider):
             expect_json=False,
         )
 
-    async def replace_playlist_items(
-        self, token: TokenBundle, playlist_id: str, track_ids: List[str]
-    ) -> None:
-        """``PUT /playlists/{id}/items`` for the first batch, appends for the rest.
-
-        Replace takes at most 100 uris and cannot be combined with reorder, so
-        "make the playlist exactly this" is one PUT followed by ``add_tracks``
-        for everything beyond the first hundred.  An empty list clears it.
-        """
-        size = self.capabilities.write_batch_size
-        head = [f"spotify:track:{tid}" for tid in track_ids[:size]]
-        await http.request(
-            "PUT", f"{_API}/playlists/{playlist_id}/items",
-            headers=self._headers(token), json_body={"uris": head},
-            provider="spotify",
-        )
-        if len(track_ids) > size:
-            await self.add_tracks(token, playlist_id, track_ids[size:])
-
     async def delete_playlist(self, token: TokenBundle, playlist_id: str) -> None:
         """Remove a playlist from the account.
 

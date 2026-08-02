@@ -46,6 +46,10 @@ END_MARGIN = 0.75
 #: Consecutive provider failures before a watcher gives up visibly instead of
 #: retrying into an exhausted quota for ever.
 MAX_CONSECUTIVE_ERRORS = 10
+#: How often we try to put the service's own shuffle/repeat back to off before
+#: accepting that this device will not have it.  A correction that never takes
+#: would otherwise cost two writes and a ledger row per poll, indefinitely.
+MAX_MODE_CORRECTIONS = 3
 
 
 @dataclass
@@ -56,6 +60,9 @@ class WatchHandle:
     started_at: float = field(default_factory=time.time)
     drifted: bool = False
     last_state: Optional[PlaybackState] = None
+    #: How often we have tried to switch the service's own shuffle/repeat off
+    #: on this device without it sticking (see MAX_MODE_CORRECTIONS).
+    mode_fixes: int = 0
 
 
 class Watcher:
@@ -307,8 +314,13 @@ class Watcher:
 
                 # Player modes are checked every poll, not just at start: the
                 # listener can flip Spotify's own shuffle back on mid-run, and
-                # from then on our order means nothing.
-                await self._check_playback_modes(state, session, playback)
+                # from then on our order means nothing.  Not while they are
+                # playing their own music, though — F8 is "beobachten statt
+                # kämpfen", and their shuffle is theirs then.
+                if not verdict.drifted:
+                    await self._check_playback_modes(
+                        state, session, playback, handle,
+                    )
 
                 if verdict.idle:
                     idle_since = idle_since or time.time()
@@ -558,11 +570,6 @@ class Watcher:
         if playback.track_id != state.current_track_id:
             return
 
-        state.context_confirmed = (
-            state.asserted_context_uri is None
-            or playback.context_uri == state.asserted_context_uri
-        )
-
         rules = await runs.rules_for_state(state)
         satisfied = engine.is_played(
             rules.played_threshold, rules.played_threshold_seconds,
@@ -598,6 +605,7 @@ class Watcher:
         state: RunState,
         session: Session,
         playback: Optional[PlaybackState],
+        handle: Optional[WatchHandle] = None,
     ) -> None:
         """Keep the service's own shuffle off, and be honest about Smart Shuffle.
 
@@ -605,6 +613,13 @@ class Watcher:
         Smart Shuffle we cannot: it is undocumented in the Web API and there is
         no endpoint to switch it off, so all we can do is record that it is on
         and let the interface say what that means for the promise.
+
+        Correcting is bounded.  A device that accepts the command and keeps
+        reporting shuffle on would otherwise cost two writes and a ledger row
+        on *every* poll, for ever — a correction that does not converge is not
+        a correction, it is a loop.  After a few tries we say so once and leave
+        it alone; the player page already tells the listener what a service-side
+        shuffle does to the order.
         """
         if playback is None or playback.is_idle:
             return
@@ -624,13 +639,23 @@ class Watcher:
         wrong_shuffle = playback.shuffle_state is True
         wrong_repeat = playback.repeat_state not in (None, "off")
         if not (wrong_shuffle or wrong_repeat):
+            if handle is not None:
+                handle.mode_fixes = 0     # it took — start counting afresh
             return
+        if handle is not None:
+            if handle.mode_fixes >= MAX_MODE_CORRECTIONS:
+                return
+            handle.mode_fixes += 1
         detail = await runs.force_playback_modes(session, state)
         await db.record_event(
             state.run_id, "playback_mode_drift", cursor=state.cursor,
             detail={
                 "shuffle_was": playback.shuffle_state,
                 "repeat_was": playback.repeat_state,
+                "attempt": handle.mode_fixes if handle else None,
+                "giving_up": bool(
+                    handle and handle.mode_fixes >= MAX_MODE_CORRECTIONS
+                ),
                 **detail,
             },
         )
@@ -655,9 +680,16 @@ class Watcher:
             await db.record_event(
                 run_id, "context_lost", cursor=fresh.cursor,
                 detail={"note": verdict.note,
+                        "foreign_playing": verdict.foreign_playing,
                         "strategy": fresh.execution_strategy},
             )
-            await runs.downgrade_strategy(fresh, cause=verdict.note)
+            # Only a foreign title audibly playing is evidence that the service
+            # did not keep our order.  Silence is not — the listener may simply
+            # have closed the app — and neither is our own card starting over.
+            # Downgrading on those would write a playlist into the account of
+            # someone whose client was fine all along, and it is one-way.
+            if verdict.foreign_playing:
+                await runs.downgrade_strategy(fresh, cause=verdict.note)
             assert verdict.reason is not None
             await runs.advance(
                 session, fresh, reason=verdict.reason,
@@ -706,7 +738,9 @@ def _next_delay(
     # apply to it.
     if paused:
         return max(base * 2, MIN_SLEEP)
-    ceiling = max_poll if max_poll is not None else float("inf")
+    # A configured 0 is how an operator writes "no cap"; taken literally it
+    # would collapse the sleep to MIN_SLEEP and poll 3 600 times an hour.
+    ceiling = float("inf") if not max_poll else max(max_poll, base)
     if playback is None or not playback.is_playing:
         return max(min(base, ceiling), MIN_SLEEP)
     remaining = playback.remaining_ms / 1000.0

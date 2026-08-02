@@ -12,12 +12,15 @@ seine Hilfsdateien im Konto des Hörers wieder aufräumt.
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 
 import pytest_asyncio
 
 from app import db, execution, runs
+from core import engine
 from core.models import AdvanceReason, PlaybackState, PlaylistRef, RunMode
+from core.selection import Rules
 from providers.base import TokenBundle
 from tests.conftest import FakeProvider
 
@@ -367,6 +370,133 @@ async def test_smart_shuffle_is_reported_because_it_cannot_be_switched_off(
     assert fresh.smart_shuffle_seen is True
     types = [e["type"] for e in await db.list_events(state.run_id)]
     assert "smart_shuffle_detected" in types
+
+
+async def test_silence_after_a_track_does_not_downgrade_anything(service):
+    """Ein zu Ende gehörter Titel plus Stille ist KEIN Beweis über den Client.
+
+    Der Hörer hat vielleicht einfach Spotify geschlossen. Herabzustufen würde
+    ihm beim nächsten Start eine Playlist ins Konto schreiben, obwohl sein
+    Client die Reihenfolge tadellos gehalten hat — und die Herabstufung ist
+    einbahnig.
+    """
+    from app.watcher import Watcher
+
+    state = await _run(service, name="Stille")
+    await runs.start(service.session, state, device_id="dev1")
+    await db.record_observation(
+        state.run_id, track_id=state.order[0], progress_ms=179_900,
+        duration_ms=180_000, satisfied=True,
+    )
+    state = await runs.get_state(state.run_id, service.user_id)
+
+    verdict = engine.reconcile(state, PlaybackState(is_idle=True),
+                               window_size=250)
+    assert verdict.reason is AdvanceReason.TRACK_ENDED   # Karte verbraucht
+    assert verdict.context_lost is True                  # neu setzen nötig
+    assert verdict.foreign_playing is False              # …aber kein Beweis
+
+    watcher = Watcher()
+    await watcher._advance_context_lost(
+        service.session, state.run_id, service.user_id, state, verdict,
+    )
+
+    fresh = await runs.get_state(state.run_id, service.user_id)
+    assert fresh.execution_strategy == execution.URIS_WINDOW
+    assert service.provider.created == {}
+    types = [e["type"] for e in await db.list_events(state.run_id)]
+    assert "strategy_downgraded" not in types
+
+
+async def test_the_configured_strategy_is_not_a_no_op(service):
+    """`execution_strategy` war seit Schema v3 validiert, akzeptiert — und
+    wirkungslos: niemand las den Wert in den Lauf."""
+    config_id = await db.create_config(
+        service.user_id, "Ohne Spuren",
+        Rules(execution_strategy=execution.NO_PREFETCH),
+    )
+    state, _ = await runs.create_run_v3(
+        service.session, service.playlist, RunMode.CONTROLLER,
+        name="Konfiguriert", config_id=config_id,
+    )
+    fresh = await runs.get_state(state.run_id, service.user_id)
+    assert fresh.execution_strategy == execution.NO_PREFETCH
+
+    await runs.start(service.session, fresh, device_id="dev1")
+    assert service.provider.play_windows[-1] == [fresh.order[0]]
+
+
+async def test_a_downgraded_run_is_not_talked_back_by_a_rule_change(service):
+    """Die Herabstufung ist eine Messung, keine Voreinstellung."""
+    state = await _run(service, name="Bleibt unten")
+    await runs.downgrade_strategy(state, cause="test")
+
+    await runs.change_run_rules(
+        state, {"execution_strategy": execution.URIS_WINDOW},
+    )
+
+    fresh = await runs.get_state(state.run_id, service.user_id)
+    assert fresh.execution_strategy == execution.CONTEXT_PLAYLIST
+
+
+async def test_the_service_shuffle_is_left_alone_while_the_listener_drifts(
+    service,
+):
+    """F8: beobachten statt kämpfen. Ihre Musik, ihr Shuffle."""
+    from app.watcher import Watcher, WatchHandle
+
+    state = await _run(service, name="Fremdnutzung")
+    await runs.start(service.session, state, device_id="dev1")
+    state = await runs.get_state(state.run_id, service.user_id)
+    service.provider.mode_commands.clear()
+
+    handle = WatchHandle(run_id=state.run_id, user_id=service.user_id,
+                         task=asyncio.get_event_loop().create_future())
+    drifting = PlaybackState(
+        is_playing=True, track_id="ihr-eigener-titel", progress_ms=5_000,
+        duration_ms=200_000, shuffle_state=True,
+    )
+    # Wie der Watcher es tut: bei Drift gar nicht erst fragen.
+    verdict = engine.reconcile(state, drifting, window_size=250)
+    assert verdict.drifted is True
+    if not verdict.drifted:                       # pragma: no cover
+        await Watcher()._check_playback_modes(
+            state, service.session, drifting, handle,
+        )
+    assert service.provider.mode_commands == []
+
+
+async def test_a_shuffle_that_never_sticks_is_not_corrected_for_ever(service):
+    """Eine Korrektur, die nicht konvergiert, ist keine Korrektur.
+
+    Ohne Obergrenze kostet ein Gerät, das den Befehl annimmt und trotzdem
+    weiter Shuffle meldet, zwei Schreibzugriffe und eine Ledger-Zeile — bei
+    jedem Poll, für immer.
+    """
+    from app.watcher import MAX_MODE_CORRECTIONS, Watcher, WatchHandle
+
+    state = await _run(service, name="Stures Gerät")
+    await runs.start(service.session, state, device_id="dev1")
+    state = await runs.get_state(state.run_id, service.user_id)
+    service.provider.mode_commands.clear()
+
+    watcher = Watcher()
+    handle = WatchHandle(run_id=state.run_id, user_id=service.user_id,
+                         task=asyncio.get_event_loop().create_future())
+    stubborn = PlaybackState(
+        is_playing=True, track_id=state.current_track_id, progress_ms=1_000,
+        duration_ms=180_000, shuffle_state=True,
+    )
+    for _ in range(10):
+        await watcher._check_playback_modes(
+            state, service.session, stubborn, handle,
+        )
+        service.provider.shuffle_state = True     # es hält einfach nicht
+
+    assert len(service.provider.mode_commands) == 2 * MAX_MODE_CORRECTIONS
+    events = [e for e in await db.list_events(state.run_id)
+              if e["type"] == "playback_mode_drift"]
+    assert len(events) == MAX_MODE_CORRECTIONS
 
 
 async def test_the_run_payload_says_which_strategy_is_really_in_use(service):

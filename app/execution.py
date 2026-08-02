@@ -191,10 +191,6 @@ async def force_playback_modes(
 # Helper playlist (context_playlist)
 # ---------------------------------------------------------------------------
 
-def _other_slot(slot: str) -> str:
-    return "b" if slot == "a" else "a"
-
-
 async def _fill_tail(
     session: Session,
     run_id: int,
@@ -219,18 +215,20 @@ async def _fill_tail(
             await session.provider.add_tracks(session.token, playlist_id, batch)
             done.extend(batch)
             written += len(batch)
-            await db.update_run_context(
-                context_id, item_count=written, fingerprint=_fingerprint(done),
-            )
     except (ProviderError, Unsupported) as exc:
         # The head chunk is playing; a short runway is a smaller problem than a
-        # dead run.  The watcher's refill will try again as the cursor nears
-        # the end of what did get written.
+        # dead run.  Correct the row DOWN to what really made it into the
+        # playlist — the refill margin reasons about that number, and an
+        # optimistic one would let the service reach the end of our cards.
         logger.warning("run %s: context playlist fill stopped at %s — %s",
                        run_id, written, exc)
+        await db.update_run_context(
+            context_id, item_count=written, fingerprint=_fingerprint(done),
+        )
         await db.record_event(
             run_id, "context_fill_failed", cursor=0,
-            detail={"written": written, "error": str(exc)[:200]},
+            detail={"written": written, "planned": len(head) + len(tail),
+                    "error": str(exc)[:200]},
         )
 
 
@@ -304,9 +302,8 @@ async def ensure_context_playlist(
     if not chunk:
         raise ProviderError("execution: nothing left to put into a context")
 
-    slot = "a"
-    if contexts:
-        slot = _other_slot(str(contexts[-1]["slot"]))
+    live_slots = {str(c["slot"]) for c in contexts}
+    slot = next((s for s in ("a", "b") if s not in live_slots), "a")
 
     name = state.playlist_name or state.playlist_id
     playlist = await session.provider.create_playlist(
@@ -316,10 +313,15 @@ async def ensure_context_playlist(
     )
     head = chunk[:HEAD_ITEMS]
     await session.provider.add_tracks(session.token, playlist.id, head)
+    # Recorded for the WHOLE chunk, not just the head that is already written:
+    # the tail is being appended right now, and reading the row back before it
+    # lands would make every context look HEAD_ITEMS long — which would trigger
+    # a refill at card 50 of a 2 000-card context, every time.  A fill that
+    # fails corrects this back down (see _fill_tail).
     context_id = await db.create_run_context(
         state.run_id, state.provider, playlist.id,
-        slot=slot, anchor=anchor, item_count=len(head),
-        fingerprint=_fingerprint(head),
+        slot=slot, anchor=anchor, item_count=len(chunk),
+        fingerprint=_fingerprint(chunk),
     )
 
     # The superseded ones go back out of the account.  Doing it AFTER the new
@@ -338,38 +340,60 @@ async def ensure_context_playlist(
             session, state.run_id, context_id, playlist.id, tail, head
         )
         if background_fill:
-            task = asyncio.create_task(coro)
-            # Nothing awaits this task; without a reference it can be garbage
-            # collected mid-flight, and without a done callback a failure would
-            # be swallowed by the loop.
-            _FILL_TASKS.add(task)
-            task.add_done_callback(_FILL_TASKS.discard)
+            _track_fill(state.run_id, asyncio.create_task(coro))
         else:
             await coro
 
-    row = next(
-        (c for c in await db.list_run_contexts(state.run_id)
-         if int(c["id"]) == context_id),
-        None,
-    )
     return {
         "playlist_id": playlist.id,
         "uri": _context_uri(state.provider, playlist.id),
         "anchor": anchor,
-        "item_count": int(row["item_count"]) if row else len(head),
+        "item_count": len(chunk),
         "context_id": context_id,
         "reused": False,
     }
 
 
-#: Strong references to in-flight fill tasks (see ensure_context_playlist).
-_FILL_TASKS: set = set()
+#: ``run_id → in-flight fill tasks``.  Strong references, because a task
+#: nobody holds can be garbage collected mid-write; keyed by run, because a
+#: cleanup has to be able to stop the task that is filling the very playlist it
+#: is about to unfollow.
+_FILL_TASKS: Dict[int, set] = {}
+
+
+def _track_fill(run_id: int, task: asyncio.Task) -> None:
+    _FILL_TASKS.setdefault(run_id, set()).add(task)
+
+    def _done(finished: asyncio.Task) -> None:
+        tasks = _FILL_TASKS.get(run_id)
+        if tasks is None:
+            return
+        tasks.discard(finished)
+        if not tasks:
+            _FILL_TASKS.pop(run_id, None)
+
+    task.add_done_callback(_done)
+
+
+async def cancel_fills(run_id: int) -> None:
+    """Stop filling a run's helper playlists.
+
+    Called before removing them: a fill that keeps appending to an unfollowed
+    playlist writes into the listener's account for no reason, and updates a
+    row that is already gone.
+    """
+    for task in list(_FILL_TASKS.get(run_id, ())):
+        task.cancel()
+        with contextlib.suppress(BaseException):
+            await task
+    _FILL_TASKS.pop(run_id, None)
 
 
 async def drain_fill_tasks() -> None:
-    """Test/shutdown hook: wait for the background playlist fills."""
-    if _FILL_TASKS:
-        await asyncio.gather(*list(_FILL_TASKS), return_exceptions=True)
+    """Shutdown/test hook: wait for the background playlist fills to settle."""
+    tasks = [t for group in _FILL_TASKS.values() for t in group]
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def cleanup_contexts(
@@ -381,6 +405,7 @@ async def cleanup_contexts(
     gone leaves litter in the listener's account, and the only honest thing we
     can do then is name it so they can delete it by hand.
     """
+    await cancel_fills(run_id)
     rows = await db.list_run_contexts(run_id)
     stuck: List[str] = []
     for row in rows:
@@ -459,11 +484,16 @@ async def assert_playback(
     device_id: Optional[str],
     position_ms: int,
     correlation_id: str,
-    force_modes: bool = True,
 ) -> Assertion:
-    """Send exactly ONE play command in the given strategy and report it back."""
+    """Send exactly ONE play command in the given strategy and report it back.
+
+    Every play is preceded by putting the service's own shuffle and repeat back
+    to off: true-shuffle computes the order, and a service that re-shuffles it
+    defeats the whole point.  Two writes, and only where the connector says it
+    can do them.
+    """
     detail: Dict[str, Any] = {}
-    if force_modes and session.provider.capabilities.supports_playback_modes:
+    if session.provider.capabilities.supports_playback_modes:
         detail["modes"] = await force_playback_modes(session, device_id=device_id)
 
     if strategy == CONTEXT_PLAYLIST:

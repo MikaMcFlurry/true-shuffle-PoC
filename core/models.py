@@ -250,12 +250,6 @@ class RunState(BaseModel):
     #: The context uri we asserted (``spotify:playlist:…``), or ``None`` for
     #: the uris-window strategy, which has no addressable context.
     asserted_context_uri: Optional[str] = None
-    #: True once a poll has actually seen the service inside that context.
-    #: Reported to the interface ("wir steuern gerade wirklich") and used by
-    #: the watcher; command suppression deliberately does NOT depend on it —
-    #: a context that is no longer ours shows up as ``context_lost`` on the
-    #: very next poll, which is the stronger guarantee.
-    context_confirmed: bool = False
     #: Which execution strategy this run really uses — the effective value
     #: after any probe/downgrade, not the configured wish.
     execution_strategy: str = "uris_window"

@@ -312,12 +312,17 @@ class Reconciliation:
     drifted: bool = False
     #: True when playback stopped entirely.
     idle: bool = False
-    #: True when our card demonstrably played out and the service then went
-    #: somewhere we did not send it — an autoplay/recommendation track, or a
-    #: context that silently dropped everything after its first entry.  It is
-    #: NOT drift: the listener did nothing, the service did.  The card is
-    #: consumed and the caller must assert the next one immediately.
+    #: True when the context we set is no longer carrying the deck forward, so
+    #: the caller must assert the next card itself instead of assuming the
+    #: service will.  Silence after a finished card, a context that replayed
+    #: our own card, and a foreign title all set this.
     context_lost: bool = False
+    #: True only for the last of those: something we never handed the service
+    #: is audibly playing.  That — and only that — is evidence the service did
+    #: not keep the order we set, which is what may downgrade the execution
+    #: strategy.  Silence is not evidence (the listener may simply have closed
+    #: the app), and a replayed card of ours is not either.
+    foreign_playing: bool = False
     note: str = ""
 
     @property
@@ -398,6 +403,18 @@ def reconcile(
         and expected is not None
         and run.observed_track_id == expected
     )
+    # Did the OBSERVATION reach the end of the track?  Deliberately not the
+    # same question as ``card_satisfied``: under ``played_threshold`` =
+    # ``on_min_seconds`` a card counts as played after thirty seconds, and a
+    # device that disappears at 0:31 must still not consume it — that is
+    # ADR-002 Auflage 1, and reading the F4 verdict here would quietly repeal
+    # it.  Reaching the end is a stronger, separate fact.
+    observed_end = bool(
+        expected is not None
+        and run.observed_track_id == expected
+        and run.observed_duration_ms > 0
+        and run.observed_duration_ms - run.observed_progress_ms <= NEAR_END_MS
+    )
     played_out_before = bool(
         expected is not None
         and previous_state is not None
@@ -405,6 +422,7 @@ def reconcile(
         and previous_state.duration_ms > 0
         and previous_state.remaining_ms <= NEAR_END_MS
     )
+    reached_end = observed_end or played_out_before
     card_finished = satisfied or played_out_before
 
     if state is None or state.is_idle:
@@ -416,7 +434,7 @@ def reconcile(
         # to have played out and is followed by silence has ended, whether or
         # not we happen to know where the context boundary was.  Requiring the
         # boundary is what made a run stall for good once the anchor was lost.
-        if card_finished:
+        if reached_end:
             return Reconciliation(
                 reason=AdvanceReason.TRACK_ENDED,
                 context_lost=True,
@@ -429,12 +447,18 @@ def reconcile(
 
     # Still on the expected track.
     if state.track_id == expected:
-        # …unless the context restarted it: the card is already booked-worthy,
-        # progress fell back to the beginning, and the previous poll was
-        # further in.  That is a replay, not "nothing happened" — without this
-        # the run would sit on the same title for ever.
+        # …unless the card started over: it had already played out, progress
+        # fell back to the beginning, and the previous poll was further in.
+        # That is a replay, not "nothing happened" — without this the run
+        # would sit on the same title for ever.
+        #
+        # Not ``foreign_playing``: our own title is audible.  This is also how
+        # a legitimately adjacent duplicate looks (``min_gap`` 0 lets a repeat
+        # mode plan ``order[N] == order[N+1]``), and how a listener who
+        # restarts the current track by hand looks — neither is evidence about
+        # the service's handling of our order.
         if (
-            satisfied
+            reached_end
             and state.progress_ms < SKIP_PROGRESS_MS
             and previous_state is not None
             and previous_state.track_id == expected
@@ -443,7 +467,7 @@ def reconcile(
             return Reconciliation(
                 reason=AdvanceReason.TRACK_ENDED,
                 context_lost=True,
-                note="context replayed our own card",
+                note="the current card started over",
             )
         return Reconciliation(note="on expected track")
 
@@ -495,6 +519,7 @@ def reconcile(
         return Reconciliation(
             reason=AdvanceReason.TRACK_ENDED,
             context_lost=True,
+            foreign_playing=True,
             note="foreign title after our card played out — context not honoured",
         )
 

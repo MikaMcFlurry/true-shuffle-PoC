@@ -91,6 +91,23 @@ async def _forget_window(run_id: int) -> None:
     await db.update_run(run_id, clear_window=True)
 
 
+async def _drop_observation(state: RunState) -> None:
+    """Forget how far the previous card got.
+
+    Every reader gates on ``observed_track_id == current_track_id``, so a stale
+    observation is usually harmless — usually.  A cycle reset can legitimately
+    deal the same title to position 0, and then the id matches and a card is
+    booked unheard.  Cheaper to drop it wherever the cursor moves outside
+    :func:`_book_advance`.
+    """
+    await db.clear_observation(state.run_id)
+    state.observed_track_id = None
+    state.observed_progress_ms = 0
+    state.observed_duration_ms = 0
+    state.observed_at = ""
+    state.card_satisfied = False
+
+
 ProgressFn = Callable[[int, int, str], Awaitable[None]]
 
 
@@ -370,6 +387,14 @@ async def create_run_v3(
         config_id=config_id,
         snapshot_id=snapshot_id,
     )
+    # The configured strategy is honoured from the start.  It has been a
+    # validated, accepted, silently ignored knob since schema v3: nothing read
+    # `Rules.execution_strategy` into the run, so choosing `no_prefetch`
+    # („keine Spuren im Konto") changed nothing at all.
+    configured = execution.normalise(rules.execution_strategy)
+    if configured != execution.URIS_WINDOW:
+        await db.update_run(run_id, execution_strategy=configured)
+
     try:
         run_track_ids = await db.create_run_deck(run_id, deck)
         by_run_track: Dict[int, str] = {}
@@ -660,9 +685,6 @@ async def _record_assertion(
     state.window_anchor = assertion.anchor
     state.window_size = max(1, assertion.size)
     state.asserted_context_uri = assertion.context_uri
-    # A fresh assert is a belief, not an observation: only a poll that sees the
-    # context may license us to skip sending commands (ADR-005).
-    state.context_confirmed = False
     if assertion.detail:
         await db.record_event(
             state.run_id, "context_asserted", cursor=assertion.anchor,
@@ -716,7 +738,17 @@ async def start(
     # start itself then force-asserts the next one, because „fortsetzen" is a
     # deliberate take-over of the device: pressing it and hearing nothing would
     # be its own bug.
-    await _settle_satisfied_card(state)
+    if await _settle_satisfied_card(state) and state.status is RunStatus.COMPLETED:
+        # That card was the last one.  ``engine.start`` would refuse a finished
+        # run with a RunError, so the deck would never be handed back properly:
+        # no pause (Autoplay takes the device) and no cleanup (our helper
+        # playlist stays in the account).  Finish it here instead.
+        await _finish(state, session)
+        return Decision(
+            cursor=state.cursor, completed=True, advanced=True,
+            needs_override=False,
+            note="last card had already played out — deck finished on resume",
+        )
 
     decision = engine.start(state, window_size=settings.context_window_size)
 
@@ -1121,7 +1153,6 @@ async def advance(
         state.window_anchor = None
         state.window_size = None
         state.asserted_context_uri = None
-        state.context_confirmed = False
     decision = engine.advance(
         state, reason=reason, window_size=settings.context_window_size, steps=steps
     )
@@ -1223,6 +1254,10 @@ async def previous(
                  force_override=True)
     await db.update_run(state.run_id, cursor=decision.cursor)
     state.cursor = decision.cursor
+    # The observation described the card we stepped away from.  Only the id
+    # check keeps it from being read as "the card under the cursor already
+    # played" — do not rely on that when we know it is stale.
+    await _drop_observation(state)
     if decision.advanced:
         await _mark_plan_replay(state.run_id, decision.cursor, old_cursor)
         await db.record_event(
@@ -1310,6 +1345,11 @@ def _draw_tail(
 #: horizon is extended.  Twenty cards is over an hour of audio — enough for a
 #: failed extension to be retried several times before it could ever be felt.
 HORIZON_REFILL_MARGIN = 20
+
+#: ``run_id → plan length at which the draw loop came up empty``.  Purely a
+#: cost guard (see :func:`maybe_extend_plan`); losing it on a restart costs one
+#: extra attempt, nothing else.
+_EXTENSION_EXHAUSTED: Dict[int, int] = {}
 
 
 async def _extend_plan(
@@ -1431,15 +1471,30 @@ async def maybe_extend_plan(state: RunState) -> int:
     )
     if rules.repeat_mode == "no_repeat":
         return 0  # already a full permutation of the deck
-    stats = await db.deck_stats(state.run_id)
-    deck_size = int(stats.get("deck_size") or 0)
+    # The same "cards that can still be dealt" count the interface shows.
+    # Counting excluded or removed rows here would keep asking _extend_plan for
+    # draws it cannot make — an O(deck × horizon) loop under the advance lock,
+    # returning zero, on every single advance near the end of a run.
+    deck_size = await db.playable_deck_size(state.run_id)
     missing = deck_size - len(state.order)
     if missing <= 0:
         return 0
+    # The draw loop can legitimately come up empty — every remaining card is
+    # inside its minimum gap, the quota is spent.  Retrying that on every
+    # advance means an O(deck × horizon) loop under the advance lock returning
+    # zero, over and over.  One attempt per plan length is enough; the next
+    # booked card changes the length and unlocks a fresh attempt.
+    if _EXTENSION_EXHAUSTED.get(state.run_id) == len(state.order):
+        return 0
     try:
-        return await _extend_plan(
+        added = await _extend_plan(
             run, state, rules, count=min(PLAN_HORIZON, missing)
         )
+        if added == 0:
+            _EXTENSION_EXHAUSTED[state.run_id] = len(state.order)
+        else:
+            _EXTENSION_EXHAUSTED.pop(state.run_id, None)
+        return added
     except Exception as exc:  # pragma: no cover — never block playback
         logger.warning("run %s: plan extension failed: %s", state.run_id, exc)
         await db.record_event(
@@ -1621,6 +1676,16 @@ async def change_run_rules(
     )
     completed_before = run["status"] == RunStatus.COMPLETED.value
     replanned = await _replan_tail(run, state, merged, allow_completed=True)
+    # A mid-run strategy change takes effect — unless this run was already
+    # DOWNGRADED.  That downgrade is a measurement of what the listener's
+    # client actually does; letting a configuration edit undo it would bring
+    # the reported failure straight back (ADR-005, "herabstufen, nie hoch").
+    wanted = execution.normalise(merged.execution_strategy)
+    current_strategy = execution.normalise(state.execution_strategy)
+    if wanted != current_strategy and current_strategy != execution.CONTEXT_PLAYLIST:
+        await db.update_run(state.run_id, execution_strategy=wanted)
+        state.execution_strategy = wanted
+        await _forget_window(state.run_id)
     await db.record_event(
         state.run_id, "rules_changed", cursor=state.cursor,
         detail={
@@ -2172,6 +2237,7 @@ async def sync_from_history(
 
     await db.update_run(state.run_id, cursor=verdict.cursor)
     state.cursor = verdict.cursor
+    await _drop_observation(state)
     await db.record_event(
         state.run_id, "history_sync", cursor=verdict.cursor,
         reason=AdvanceReason.TRACK_ENDED.value,
@@ -2378,6 +2444,11 @@ async def reset_run(session: Session, state: RunState) -> Dict[str, Any]:
     state.cursor = 0
     state.status = status
     await _forget_window(state.run_id)
+    # A fresh cycle starts on a fresh card.  Without this, the reset's own
+    # shuffle could put the just-finished title at position 0 again — and the
+    # surviving observation would have the next start book it unheard.
+    await _drop_observation(state)
+    _EXTENSION_EXHAUSTED.pop(state.run_id, None)
     await db.record_event(
         state.run_id, "cycle_reset", cursor=0,
         detail={
@@ -2549,10 +2620,11 @@ async def describe(
     # rolling horizon of PLAN_HORIZON cards that gets topped up as the cursor
     # moves; showing its length as „Titel im Hörvorgang" is what made a
     # 9 000-track deck look like a 50-track one.
-    stats = await db.deck_stats(state.run_id)
-    # deck_size is 0 for legacy/imported runs without a materialised deck —
-    # there the plan IS all we know, and saying so beats inventing a number.
-    deck_size = int(stats.get("deck_size") or 0) or state.total
+    # Only cards that can still be dealt.  A run with an excluded title used to
+    # report "Alle 10 Titel genau einmal gespielt" for a deck that played 9.
+    # 0 means a legacy/imported run without a materialised deck — there the
+    # plan IS all we know, and saying so beats inventing a number.
+    deck_size = await db.playable_deck_size(state.run_id) or state.total
     run_row = await db.get_run(state.run_id)
     repeat_mode = "no_repeat"
     if run_row is not None:

@@ -957,22 +957,22 @@ export class RunPlayer {
     // eines mit 50 aussehen -- genau der gemeldete Fehler.
     const deckSize = s.deck_size || s.total;
     const rolling = Boolean(s.plan_is_rolling);
-    const endless = s.repeat_mode === "free_repeat";
     const pct = deckSize ? Math.round((s.cursor / deckSize) * 100) : 0;
     const meter = $("#runMeter");
-    // Ein freier Wiederholungs-Lauf hat kein Ende; ein Balken wuerde eines
-    // behaupten. Er wird darum ausgeblendet statt zu luegen.
-    meter.hidden = endless;
     meter.setAttribute("aria-valuenow", String(pct));
     meter.setAttribute("aria-label", `Fortschritt ${pct} Prozent`);
     meter.querySelector("i").style.width = `${pct}%`;
+    // Auch mit Wiederholungen hat ein Lauf ein Ende: so viele Zuege wie Karten
+    // im Fach (maybe_extend_plan deckelt den Horizont genau dort). Der Balken
+    // darf das also zeigen -- nur der Satz muss anders lauten, weil die Zuege
+    // nicht deckungsgleich mit den Titeln sind.
     $("#runProgressLine").replaceChildren(
       el("span", {},
         el("b", { style: "color:var(--ink)" }, formatCount(s.cursor)),
-        endless
-          ? ` gespielt · ${formatCount(deckSize)} Titel im Fach`
+        rolling
+          ? ` von ${formatCount(deckSize)} gespielt · Wiederholungen erlaubt`
           : ` von ${formatCount(deckSize)} gespielt`),
-      el("span", {}, endless ? "läuft" : `${pct} %`));
+      el("span", {}, `${pct} %`));
     const planLine = $("#runPlanNote");
     if (planLine) {
       planLine.hidden = !rolling;

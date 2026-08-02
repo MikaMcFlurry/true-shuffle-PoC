@@ -584,8 +584,15 @@ async def list_runs(
                -- and only the second one answers "wie viele Titel sind drin".
                -- Under a repeat mode the plan is a rolling horizon of 50; a
                -- dashboard that shows it as the deck size is simply wrong.
+               -- Counted here are only cards that can still be dealt:
+               -- excluded, un-admitted and removed-from-playlist rows stay in
+               -- run_tracks for the history, but showing them would promise
+               -- titles this run will never play.
                (SELECT count(*) FROM run_tracks rt
-                WHERE rt.run_id = runs.id) AS deck_size,
+                WHERE rt.run_id = runs.id
+                  AND rt.admitted = 1
+                  AND rt.removed_from_snapshot = 0
+                  AND rt.state IN ('open', 'played', 'deferred')) AS deck_size,
                (SELECT MAX(s2.id) FROM playlist_snapshots s1
                 JOIN playlist_snapshots s2 ON s2.playlist_id = s1.playlist_id
                 WHERE s1.id = runs.snapshot_id AND s2.status = 'ready') AS latest_ready_snapshot_id
@@ -1110,6 +1117,24 @@ async def create_run_deck(
         raise
     await db.commit()
     return ids
+
+
+async def playable_deck_size(run_id: int) -> int:
+    """How many cards this run can still deal.
+
+    NOT ``count(*) FROM run_tracks``: excluded cards (UC-20), cards the
+    listener's playlist no longer contains, and cards awaiting admission stay
+    in the table for the history, but counting them would promise titles the
+    run will never play — and the number is shown as „Titel im Fach".
+    """
+    db = get_db()
+    cur = await db.execute(
+        "SELECT count(*) FROM run_tracks WHERE run_id = ? AND admitted = 1 "
+        "AND removed_from_snapshot = 0 "
+        "AND state IN ('open', 'played', 'deferred')",
+        (run_id,),
+    )
+    return int((await cur.fetchone())[0])
 
 
 async def deck_stats(run_id: int) -> Dict[str, Optional[int]]:
