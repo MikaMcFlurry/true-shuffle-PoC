@@ -298,6 +298,107 @@ async def test_the_observation_is_dropped_when_the_cursor_moves(service):
     assert fresh.observed_track_id is None
 
 
+async def test_the_reported_sequence_end_to_end_through_the_watcher(service):
+    """Der gemeldete Ablauf, vom Watcher getrieben — der eigentliche Beweis.
+
+    1. true-shuffle startet Titel 1.
+    2. Titel 1 läuft zu Ende.
+    3. Spotify spielt einen Titel, den wir nie gegeben haben (Autoplay, oder
+       der Rest eines uris-Fensters, das der Client verworfen hat).
+
+    Vorher: Drift → F8-Episode → kein Advance → Karte unverbucht → „fortsetzen"
+    startet Titel 1 erneut, endlos.
+
+    Jetzt: Karte verbucht, Strategie herabgestuft, Titel 2 läuft — ohne dass
+    der Hörer irgendetwas bestätigen muss.
+    """
+    from app.watcher import Watcher
+
+    await db.upsert_provider_account(
+        user_id=service.user_id, provider="fake", provider_user_id="u",
+        display_name="U", market="DE", product_tier="premium",
+        token={"access_token": "t"},
+    )
+    from providers import registry
+    registry._PROVIDERS["fake"] = service.provider
+    try:
+        state, _ = await runs.create_run_v3(
+            service.session, service.playlist, RunMode.CONTROLLER,
+            name="Der gemeldete Fall",
+        )
+        await runs.start(service.session, state, device_id="dev1")
+        first, second = state.order[0], state.order[1]
+
+        watcher = Watcher()
+        try:
+            # (2) Titel 1 läuft aus — der Watcher sieht ihn kurz vor dem Ende.
+            service.provider.state = PlaybackState(
+                is_playing=True, track_id=first, progress_ms=179_500,
+                duration_ms=180_000, device_id="dev1",
+            )
+            assert await watcher.ensure(state.run_id, service.user_id) is True
+            await _wait_until(lambda: _satisfied(state.run_id))
+
+            # (3) …und Spotify spielt etwas Eigenes.
+            service.provider.state = PlaybackState(
+                is_playing=True, track_id="spotify:radio:fremd",
+                progress_ms=1_000, duration_ms=210_000, device_id="dev1",
+            )
+            cursor = await _wait_for_cursor(state.run_id, 1)
+        finally:
+            await watcher.stop_all()
+
+        assert cursor == 1, "die zu Ende gehörte Karte wurde nicht verbucht"
+        assert service.provider.played[-1] == second, (
+            "nach dem Fremdtitel muss der GEPLANTE zweite Titel laufen"
+        )
+
+        run = await db.get_run(state.run_id)
+        assert run["manual_state"] == "none", (
+            "ein Kontextende ist keine Fremdnutzung — es darf keine "
+            "Bestätigung verlangt werden"
+        )
+        assert run["execution_strategy"] == "context_playlist", (
+            "der Dienst hat die Reihenfolge nicht behalten — der Lauf muss "
+            "auf den tragfähigen Weg wechseln"
+        )
+        types = [e["type"] for e in await db.list_events(state.run_id)]
+        assert "context_lost" in types
+        assert "strategy_downgraded" in types
+    finally:
+        registry._PROVIDERS.pop("fake", None)
+
+
+async def _satisfied(run_id: int) -> bool:
+    run = await db.get_run(run_id)
+    return bool(run and run["card_satisfied"])
+
+
+async def _wait_until(predicate, timeout: float = 3.0) -> None:
+    import asyncio
+
+    deadline = asyncio.get_event_loop().time() + timeout
+    while asyncio.get_event_loop().time() < deadline:
+        if await predicate():
+            return
+        await asyncio.sleep(0.02)
+    raise AssertionError("Bedingung wurde nicht erreicht")
+
+
+async def _wait_for_cursor(run_id: int, expected: int, timeout: float = 3.0) -> int:
+    import asyncio
+
+    deadline = asyncio.get_event_loop().time() + timeout
+    cursor = -1
+    while asyncio.get_event_loop().time() < deadline:
+        run = await db.get_run(run_id)
+        cursor = int(run["cursor"]) if run else -1
+        if cursor >= expected:
+            return cursor
+        await asyncio.sleep(0.02)
+    return cursor
+
+
 async def test_a_lost_context_books_the_card_and_asserts_the_next_one(service):
     """Der volle Weg: Fremdtitel → Karte verbucht → nächste Karte gesetzt."""
     state, _ = await runs.create_run_v3(
