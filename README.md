@@ -60,9 +60,39 @@ side effect.
 
 **Verification status:** every path is covered by the automated suite against an
 in-memory connector, and the request/response shapes of all three services are
-tested with stubbed HTTP. **None of it has been run against real Spotify, Apple
-or Google credentials yet** — that is the next step, and no claim here should be
-treated as field-proven until it is. See [STATUS.md](STATUS.md).
+tested with stubbed HTTP. The first real Spotify session found two things the
+suite could not: see below. No claim here should be treated as field-proven
+until the live protocol in
+[LIVE_TEST_GUIDE.md](docs/ts-fable-01/LIVE_TEST_GUIDE.md) has been run. See also
+[STATUS.md](STATUS.md).
+
+### Three things Spotify does that we cannot switch off
+
+These are the service's, not ours, and the interface says so where it matters
+rather than hiding it (ADR-005).
+
+- **Autoplay.** When a context genuinely ends, Spotify starts recommending
+  music — in your account and your listening history. It is an account setting
+  in the desktop/mobile app and there is no API for it. true-shuffle keeps its
+  context from running out and pauses the device the moment a deck is through,
+  which shortens the window; it cannot close it. If you want it gone, switch
+  Autoplay off in the Spotify app.
+- **Smart Shuffle.** It mixes recommendations *that are not in your playlist*
+  into playback, it is undocumented in the Web API, and switching plain shuffle
+  off does not switch it off. true-shuffle detects it and says so — while it is
+  on, the order true-shuffle computed does not hold. Switch it off in the app.
+- **How a client treats a list of track URIs.** The cheap way to hand Spotify an
+  order is a `uris` array; some clients honour only its first entry and discard
+  the rest. true-shuffle now measures whether the order survived and, if it did
+  not, plays a **private helper playlist** (`true-shuffle · <name>`) instead —
+  which every client plays correctly. That playlist is visible in your account
+  while the run lives and is removed when it ends. If you would rather have no
+  artifacts at all, the `no_prefetch` strategy avoids them, at the price of a
+  short gap between tracks.
+
+Plain shuffle and repeat *are* controllable, and true-shuffle switches both off
+before it plays — it computes the order itself, so the service shuffling it
+again would defeat the whole point.
 
 ---
 

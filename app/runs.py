@@ -712,9 +712,11 @@ async def start(
     """
     settings = get_settings()
 
-    settled = await _settle_satisfied_card(session, state, device_id=device_id)
-    if settled is not None:
-        return settled
+    # Book a card that already played out BEFORE deciding what to start.  The
+    # start itself then force-asserts the next one, because „fortsetzen" is a
+    # deliberate take-over of the device: pressing it and hearing nothing would
+    # be its own bug.
+    await _settle_satisfied_card(state)
 
     decision = engine.start(state, window_size=settings.context_window_size)
 
@@ -770,7 +772,58 @@ async def start(
             if execution.is_remote(session) else None,
         },
     )
+    await _probe_execution(session, state, decision,
+                           device_id=device_id or state.device_id)
     return decision
+
+
+async def _probe_execution(
+    session: Session,
+    state: RunState,
+    decision: Decision,
+    *,
+    device_id: Optional[str],
+) -> None:
+    """Check once whether the cheap strategy is actually being honoured.
+
+    ADR-005 deliberately makes this weak evidence and uses it in one direction
+    only.  ``GET /me/player/queue`` returns about twenty entries, is reported
+    to pad or loop when the real queue is shorter, and answers per device — so
+    a "looks fine" proves nothing and must never promote a run back to the
+    uris window.  A clear miss, on the other hand, is worth acting on
+    immediately instead of letting the listener discover it one track later.
+
+    The stronger signal is free and arrives on its own: ``context_lost`` from
+    :func:`core.engine.reconcile`.  This is the head start, not the guarantee.
+    """
+    if not execution.is_remote(session):
+        return
+    if execution.effective_strategy(state, session) != execution.URIS_WINDOW:
+        return
+    window = decision.play_window or []
+    try:
+        probe = await execution.probe_uris_window(session, window)
+    except ProviderError:
+        return
+    if probe is None:
+        return
+    await db.record_event(
+        state.run_id, "strategy_probe", cursor=state.cursor, detail=probe,
+    )
+    if probe.get("honoured"):
+        return
+    if not await downgrade_strategy(
+        state, cause="queue probe: the window was not honoured"
+    ):
+        return
+    # Re-assert straight away — the listener is one track away from hearing
+    # something we did not plan.
+    fresh = engine.start(state, window_size=get_settings().context_window_size)
+    if fresh.completed or not fresh.play_track_id:
+        return
+    with contextlib.suppress(ProviderError, Unsupported):
+        await _apply(session, state, fresh, device_id=device_id,
+                     force_override=True)
 
 
 def _resume_position_ms(state: RunState) -> int:
@@ -799,44 +852,46 @@ def _observation_age_seconds(state: RunState) -> Optional[float]:
     return max(0.0, datetime.now(tz=UTC).timestamp() - stamp.replace(tzinfo=UTC).timestamp())
 
 
-async def _settle_satisfied_card(
-    session: Optional[Session],
-    state: RunState,
-    *,
-    device_id: Optional[str] = None,
-) -> Optional[Decision]:
+async def _settle_satisfied_card(state: RunState) -> bool:
     """Book the card under the cursor if it already played out.
 
-    Returns the resulting decision when something was settled, ``None`` when
-    the cursor was already on an unheard card.  Booking goes through the normal
-    :func:`advance` path, so the F5 event key makes a race with the watcher a
-    no-op rather than a double advance.
+    This is the fix for „Hörvorgang fortsetzen startet wieder den ersten Song".
+    The old resume path went straight to ``order[cursor]`` with the sole guard
+    ``cursor >= total``, so a card that had been heard without the deck booking
+    it — because the service jumped to an autoplay title, because the watcher
+    was gone, because the process restarted — was simply played again.
+
+    No provider command leaves here: the caller force-asserts right afterwards,
+    which is what „fortsetzen" means.  Booking goes through :func:`_book_advance`
+    directly for the same reason, and its F5 event key turns a race with the
+    watcher into a no-op instead of a double advance.
     """
     if not state.card_satisfied:
-        return None
+        return False
     if state.observed_track_id != state.current_track_id:
-        return None
-    if state.status not in (RunStatus.ACTIVE, RunStatus.PAUSED, RunStatus.STOPPED):
-        return None
-    if state.status is not RunStatus.ACTIVE:
-        try:
-            await db.update_run(state.run_id, status=RunStatus.ACTIVE.value)
-        except aiosqlite.IntegrityError as exc:
-            raise await _slot_conflict(state.user_id, state.provider) from exc
-        state.status = RunStatus.ACTIVE
+        return False
+    run = await db.get_run(state.run_id)
+    if run is None:
+        return False
+    decision = engine.advance(
+        state, reason=AdvanceReason.TRACK_ENDED,
+        window_size=get_settings().context_window_size,
+    )
+    if not await _book_advance(run, state, decision, AdvanceReason.TRACK_ENDED):
+        return False
+    state.cursor = decision.cursor
+    if decision.completed:
+        state.status = RunStatus.COMPLETED
     await db.record_event(
         state.run_id, "resume_settled", cursor=state.cursor,
         detail={
-            "track": state.observed_track_id,
-            "progress_ms": state.observed_progress_ms,
-            "note": "card had already played out — booked before resuming",
+            "track": run.get("observed_track_id"),
+            "progress_ms": int(run.get("observed_progress_ms") or 0),
+            "note": "Karte war schon zu Ende gehört — vor dem Fortsetzen verbucht",
         },
     )
-    return await advance(
-        session, state,
-        reason=AdvanceReason.TRACK_ENDED,
-        device_id=device_id or state.device_id,
-    )
+    await maybe_extend_plan(state)
+    return True
 
 
 def _signed64(value: int) -> int:
@@ -2491,7 +2546,9 @@ async def describe(
     # moves; showing its length as „Titel im Hörvorgang" is what made a
     # 9 000-track deck look like a 50-track one.
     stats = await db.deck_stats(state.run_id)
-    deck_size = int(stats.get("total") or 0) or state.total
+    # deck_size is 0 for legacy/imported runs without a materialised deck —
+    # there the plan IS all we know, and saying so beats inventing a number.
+    deck_size = int(stats.get("deck_size") or 0) or state.total
     run_row = await db.get_run(state.run_id)
     repeat_mode = "no_repeat"
     if run_row is not None:

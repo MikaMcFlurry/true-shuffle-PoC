@@ -149,6 +149,11 @@ class FakeProvider(MusicProvider):
             supports_context_window=playback is PlaybackControl.REMOTE_DEVICE,
             supports_history_sync=history_sync,
             reports_account_tier=reports_account_tier,
+            # ADR-005: a remote service can be handed a playlist context and
+            # told to stop shuffling on its own.
+            supports_queue_read=playback is PlaybackControl.REMOTE_DEVICE,
+            supports_context_playlist=playback is PlaybackControl.REMOTE_DEVICE,
+            supports_playback_modes=playback is PlaybackControl.REMOTE_DEVICE,
         )
         self.reports_account_tier = reports_account_tier
         self.tracks: List[Track] = [
@@ -172,6 +177,26 @@ class FakeProvider(MusicProvider):
         self.fail_play = False
         #: What ``get_recently_played`` will report, newest first.
         self.history: List[str] = []
+        # -- ADR-005: what a real client may or may not honour ---------------
+        #: The failure mode the live report described: only ``uris[0]`` is
+        #: played, everything after it is discarded.
+        self.drops_extra_uris = False
+        #: ``(context_uri, offset)`` of every playlist-context play command.
+        self.context_plays: List[tuple] = []
+        #: The context the fake service believes it is playing from.
+        self.playing_context: Optional[str] = None
+        #: What ``get_queue`` will report as coming up.
+        self.queue_after_play: List[str] = []
+        #: Player modes, as the service reports and accepts them.
+        self.shuffle_state: Optional[bool] = None
+        self.repeat_state: Optional[str] = None
+        self.smart_shuffle: Optional[bool] = None
+        #: Every ``set_shuffle``/``set_repeat`` command, in order.
+        self.mode_commands: List[tuple] = []
+        #: Helper playlists the app removed again.
+        self.deleted_playlists: List[str] = []
+        #: How often the app pressed pause.
+        self.paused = 0
 
     # -- config / auth --
     def is_configured(self) -> bool:
@@ -241,6 +266,13 @@ class FakeProvider(MusicProvider):
     async def list_devices(self, token) -> List[Device]:
         return [Device(id="dev1", name="Fake Speaker", kind="speaker", is_active=True)]
 
+    async def replace_playlist_items(self, token, playlist_id, track_ids) -> None:
+        self.created[playlist_id] = list(track_ids)
+
+    async def delete_playlist(self, token, playlist_id) -> None:
+        self.created.pop(playlist_id, None)
+        self.deleted_playlists.append(playlist_id)
+
     async def play(
         self, token, *, track_ids, offset_position=0, device_id=None, position_ms=0
     ) -> None:
@@ -249,13 +281,52 @@ class FakeProvider(MusicProvider):
             from providers.base import ProviderError
             raise ProviderError("fake: no active device")
         current = track_ids[offset_position]
+        # ADR-005: some real clients honour only the FIRST uri of a list and
+        # then play their own recommendations.  ``drops_extra_uris`` models
+        # exactly that, so a test can prove the app copes.
+        honoured = [current] if self.drops_extra_uris else list(track_ids)
         self.play_windows.append(list(track_ids))
         self.play_positions.append(position_ms)
         self.played.append(current)
+        self.queue_after_play = honoured[1:]
+        self.playing_context = None
         self.state = PlaybackState(
             is_playing=True, track_id=current, progress_ms=position_ms,
             duration_ms=180_000, device_id=device_id,
+            shuffle_state=self.shuffle_state, repeat_state=self.repeat_state,
+            smart_shuffle=self.smart_shuffle,
         )
+
+    async def play_context(
+        self, token, *, context_uri, offset_position=0, device_id=None, position_ms=0
+    ) -> None:
+        if self.fail_play:
+            from providers.base import ProviderError
+            raise ProviderError("fake: no active device")
+        items = self.created.get(context_uri, [])
+        if not items:
+            from providers.base import ProviderError
+            raise ProviderError(f"fake: unknown context {context_uri}")
+        current = items[offset_position]
+        self.context_plays.append((context_uri, offset_position))
+        self.play_positions.append(position_ms)
+        self.played.append(current)
+        self.playing_context = context_uri
+        self.queue_after_play = items[offset_position + 1:]
+        self.state = PlaybackState(
+            is_playing=True, track_id=current, progress_ms=position_ms,
+            duration_ms=180_000, device_id=device_id, context_uri=context_uri,
+            shuffle_state=self.shuffle_state, repeat_state=self.repeat_state,
+            smart_shuffle=self.smart_shuffle,
+        )
+
+    async def set_shuffle(self, token, *, state, device_id=None) -> None:
+        self.shuffle_state = bool(state)
+        self.mode_commands.append(("shuffle", bool(state)))
+
+    async def set_repeat(self, token, *, state, device_id=None) -> None:
+        self.repeat_state = state
+        self.mode_commands.append(("repeat", state))
 
     async def skip_next(self, token, *, device_id=None) -> None:
         # ADR-002: the lightweight TS-skip inside an asserted window.
@@ -267,10 +338,19 @@ class FakeProvider(MusicProvider):
         self.queued.append(track_id)
 
     async def pause(self, token, *, device_id=None) -> None:
+        self.paused += 1
         self.state = PlaybackState(is_playing=False, track_id=self.state.track_id)
 
     async def get_playback_state(self, token) -> Optional[PlaybackState]:
         return self.state
+
+    async def get_queue(self, token) -> Optional[Dict[str, object]]:
+        if self.state.is_idle:
+            return None
+        return {
+            "currently_playing_id": self.state.track_id,
+            "queue_ids": list(self.queue_after_play),
+        }
 
     async def get_recently_played(self, token, limit: int = 50) -> List[PlayedTrack]:
         return [PlayedTrack(track_id=tid) for tid in self.history[:limit]]

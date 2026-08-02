@@ -2,6 +2,29 @@
 
 Status: Entschieden (Lead), 2026-07-31 · Gate G3 · Evidenzklasse VERIFIED_AUTOMATED (Simulator mit deklarierten Annahmen AN-1…AN-7, je einem Live-Testfall zugeordnet); Live-Bestätigung BLOCKED (kein Testkonto/Gerät — siehe LIVE_TEST_GUIDE.md).
 
+> **Nachtrag 2026-08-02 — der Default ist überholt (ADR-005).**
+>
+> Die Analyse unten steht: der additive Queue-Prefetch war defekt, und das
+> uris-Fenster ist die richtige Antwort darauf. Was der erste Live-Betrieb
+> widerlegt hat, ist die *stillschweigende* Voraussetzung des Fensters —
+> dass jeder Client eine Liste von uris vollständig übernimmt. Es gibt
+> Clients, die nur `uris[0]` spielen, den Rest verwerfen und danach eigene
+> Empfehlungen anhängen (`spotify/web-api#1437`,
+> `spotify/web-playback-sdk#95`). Genau der dort genannte Workaround ist die
+> unten als S4 dokumentierte Kontext-Playlist.
+>
+> Zwei weitere Lücken in dieser ADR, beide unabhängig vom Fenster: Spotifys
+> **eigenes Shuffle** wurde nie ausgeschaltet (der `LIVE_TEST_GUIDE` machte
+> daraus eine manuelle Vorbedingung statt einer Zusicherung im Code), und
+> **Smart Shuffle** kommt in AN-1…AN-7 gar nicht vor, obwohl es fremde
+> Empfehlungen in die Wiedergabe mischt und per API nicht abschaltbar ist.
+>
+> **ADR-005** ersetzt darum den Default für den Spotify-Live-Modus: Das
+> uris-Fenster bleibt der billigste Weg und die erste Wahl, aber true-shuffle
+> *misst* jetzt, ob es ankommt, und stuft sonst auf `context_playlist` herab.
+> Diese ADR bleibt gültig für alles, was sie belegt — sie ist nur nicht mehr
+> allein maßgeblich für die Frage „welches Kommando geht raus".
+
 ## Problem (bewiesen)
 
 Der bisherige Pfad (ein Titel per `PUT /play` mit einzelner URI, danach fünf additive `POST /queue`-Appends, bei jedem Advance erneut) vervielfacht die Spotify-Queue. Beweisführung:

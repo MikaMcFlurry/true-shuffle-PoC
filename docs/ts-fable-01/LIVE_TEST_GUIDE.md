@@ -1,6 +1,6 @@
 # Live-Testanleitung Spotify (redigiert) — Phase 2
 
-Lauf: TS-FABLE-01 · Stand: 2026-08-01 (LT-13/LT-14 ergänzt) · Status des Live-Gates: **BLOCKED** (keine Credentials in der Umgebung)
+Lauf: TS-FABLE-01 · Stand: 2026-08-02 (LT-15…LT-19 ergänzt, ADR-005) · Status des Live-Gates: **BLOCKED** (keine Credentials in der Umgebung)
 
 Diese Anleitung macht die `VERIFIED_LIVE`-Beweise nachholbar, sobald eine Person mit
 Premium-Testkonto und realem Gerät zur Verfügung steht. Sie folgt dem
@@ -282,6 +282,83 @@ AN-1…AN-7); live unbestätigt sind das reale Verhalten von `PUT /play` mit
   umformulieren; die Tests in `tests/test_window_reassert.py` sind dann auf
   die Lazy-Semantik umzuschreiben (dokumentierte Teständerung).
 
+### LT-15 · Die Prämisse selbst: übernimmt der Client das uris-Fenster? (ADR-005; AN-neu)
+
+**Der wichtigste Fall dieser Anleitung.** ADR-002 hat das uris-Fenster unter der
+stillschweigenden Voraussetzung gewählt, dass jeder Client eine Liste von uris
+vollständig übernimmt. Fremdberichte (`spotify/web-api#1437`) sagen: der
+Web-Player spielt nur `uris[0]` und füllt danach mit eigenen Empfehlungen.
+Der Live-Fehlerbericht passt dazu. Diese Frage ist **je Client** zu beantworten.
+
+Vorbereitung: `execution_strategy` des Testlaufs auf `uris_window` festnageln,
+`CONTEXT_WINDOW_SIZE=5`, Test-Playlist mit ≥ 8 Titeln.
+**Wichtig:** Shuffle, Smart Shuffle und Autoplay in der Spotify-App
+kontrolliert AUS — sonst misst der Fall etwas anderes.
+
+Je Client (Desktop-App, Handy-App, Web-Player, Connect-Lautsprecher) einzeln:
+
+1. Lauf starten, Gerät auswählen.
+2. Sofort `GET /me/player/queue` protokollieren (redigiert: nur Track-Ids).
+3. Titel 1 **unberührt** auslaufen lassen — nichts drücken.
+4. Bei Trackende + 2 s `GET /me/player` protokollieren.
+
+| Beobachtung | Bedeutung |
+|---|---|
+| `item.id` = Fenster-Titel 2, `context` = null | Fenster wird übernommen — `uris_window` trägt auf diesem Client |
+| `item.id` = fremder Titel | **Fenster wird verworfen** — Herabstufung ist richtig; Ledger muss `context_lost` und `strategy_downgraded` zeigen |
+| Wiedergabe stoppt | Fenster war ein Titel lang, Autoplay ist aus — Ledger muss trotzdem die Karte verbuchen (`playback stopped after our card played out`) |
+
+Ergebnis in ADR-005 eintragen; falls **alle** Clients das Fenster übernehmen,
+bleibt `uris_window` Default und die Herabstufung ist reine Absicherung.
+
+### LT-16 · Angehängte Titel im laufenden Kontext (ADR-005, `context_playlist`)
+
+Die Kontext-Playlist wird mit 100 Titeln angelegt und im Hintergrund
+weitergefüllt. Ob Spotify an einen **laufenden** Playlist-Kontext angehängte
+Titel übernimmt, ist nicht zugesichert.
+
+1. Kontext-Playlist mit 5 Titeln anlegen, abspielen.
+2. Bei t + 10 s 5 weitere anhängen (`POST /playlists/{id}/items`).
+3. `GET /me/player/queue` lesen — stehen sie in „Next up"?
+4. Grenze **kommandolos** durchlaufen lassen.
+
+Falsifiziert (angehängte Titel erscheinen nicht): `CHUNK_ITEMS` auf die
+Kopfgröße senken und stattdessen an der Chunk-Grenze bewusst in Slot B
+umschalten — der Code kann beides, es ändert sich nur, wann.
+
+### LT-17 · Entfernt `DELETE /playlists/{id}/followers` die Hilfs-Playlist? (ADR-005)
+
+Wir legen Playlists im Konto des Hörers an; wir müssen sie auch wieder
+wegnehmen können. Spotify hat kein „delete", nur „unfollow".
+
+1. Playlist anlegen, füllen, abspielen.
+2. Lauf beenden (Fach durchhören oder abbrechen).
+3. `GET /me/playlists` prüfen — ist sie weg? Erscheint sie in der App noch?
+
+Falsifiziert: der Aufräumpfad muss die Playlist stattdessen leeren und
+umbenennen, und die UI muss sagen, dass sie im Konto bleibt.
+
+### LT-18 · Greift Autoplay in einen NICHT beendeten Kontext ein? (ADR-005)
+
+1. Kontext-Playlist mit 200 Titeln, Autoplay in der App **an** lassen.
+2. 30 min beobachten, `context.uri` bei jedem Poll protokollieren.
+
+Erwartung: `context.uri` bleibt unsere Playlist. Ändert sie sich, ohne dass der
+Kontext zu Ende war, ist das ein neuer, bisher nicht modellierter Fall — exakt
+dokumentieren und ADR-005 ergänzen.
+
+### LT-19 · Wie verlässlich ist die Queue-Probe? (ADR-005)
+
+`GET /me/player/queue` liefert ~20 Einträge und füllt bei kürzerer Queue
+angeblich auf. Genau deshalb darf die Probe nur herabstufen.
+
+1. 3-Titel-`uris`-Fenster spielen.
+2. Queue lesen: 2 Einträge, oder 20 mit Wiederholungen?
+3. Gegen `window[1:]` vergleichen.
+
+Ergebnis entscheidet, ob die Probe als Diagnose bleibt oder ganz entfällt
+(`context_lost` allein trägt die Herabstufung).
+
 ## 5. Ergebnisformular (je Testfall kopieren)
 
 ```
@@ -306,6 +383,8 @@ Rohdaten (falls Token-berührt) verbleiben lokal und werden **nicht** eingecheck
 1. AN-1/AN-2/AN-5/AN-6/AN-7-Ergebnisse in `tests/sim_spotify.py` (Docstring) und im
    ADR vermerken; falls falsifiziert: Simulator-Default ändern (für AN-1 existiert
    der Schalter `clear_queue_on_play`) und Suite + Bench erneut laufen lassen.
+   Für LT-15 gilt dasselbe mit `FakeProvider.drops_extra_uris` in
+   `tests/conftest.py` — der Schalter bildet den gemeldeten Client-Defekt nach.
 2. SP-Matrix (`handoffs/TS-FABLE-01/08_ACCEPTANCE_TEST_MATRIX.md`, G3) mit
    PASS/FAIL + Evidenzverweis füllen; Evidenzklasse der betroffenen Gates von
    `VERIFIED_AUTOMATED`/`BLOCKED` auf `VERIFIED_LIVE` heben.
