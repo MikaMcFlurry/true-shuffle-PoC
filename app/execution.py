@@ -40,6 +40,8 @@ and the ``context_lost`` downgrade in :mod:`app.runs`.
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import hashlib
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -199,7 +201,7 @@ async def _fill_tail(
     context_id: int,
     playlist_id: str,
     tail: List[str],
-    already: int,
+    head: List[str],
 ) -> None:
     """Append the rest of the chunk after playback has already started.
 
@@ -208,14 +210,18 @@ async def _fill_tail(
     runway behind it.  Appending is the *safe* playlist mutation — we never
     replace or reorder a playlist the service is currently playing.
     """
-    written = already
+    done = list(head)
+    written = len(done)
     try:
         size = session.provider.capabilities.write_batch_size
         for i in range(0, len(tail), size):
             batch = tail[i:i + size]
             await session.provider.add_tracks(session.token, playlist_id, batch)
+            done.extend(batch)
             written += len(batch)
-            await db.update_run_context(context_id, item_count=written)
+            await db.update_run_context(
+                context_id, item_count=written, fingerprint=_fingerprint(done),
+            )
     except (ProviderError, Unsupported) as exc:
         # The head chunk is playing; a short runway is a smaller problem than a
         # dead run.  The watcher's refill will try again as the cursor nears
@@ -228,6 +234,19 @@ async def _fill_tail(
         )
 
 
+def _fingerprint(ids: List[str]) -> str:
+    """Short, stable hash of the ids a helper playlist was built from."""
+    digest = hashlib.sha256("|".join(ids).encode("utf-8")).hexdigest()
+    return digest[:16]
+
+
+def _context_uri(provider: str, playlist_id: str) -> str:
+    return (
+        f"spotify:playlist:{playlist_id}" if provider == "spotify"
+        else playlist_id
+    )
+
+
 async def ensure_context_playlist(
     session: Session,
     state: RunState,
@@ -235,37 +254,59 @@ async def ensure_context_playlist(
     anchor: int,
     background_fill: bool = True,
 ) -> Dict[str, Any]:
-    """Make sure a helper playlist holds ``order[anchor:anchor+CHUNK_ITEMS]``.
+    """Make sure a helper playlist covers the cursor and matches the plan.
 
     Returns ``{"playlist_id", "uri", "anchor", "item_count", "reused"}``.
 
-    An existing playlist for the same anchor is reused as-is — re-writing it
-    would be a mutation of the context the service is playing right now, which
-    is exactly the class of operation we refuse to perform.  A *different*
-    anchor (chunk boundary, plan change) goes into the other slot, so the
-    running context is never touched; the caller then switches to it with one
-    play command.
+    Two rules, and both exist because getting them wrong is expensive in the
+    listener's account rather than in ours:
+
+    * **Reuse whatever already covers this position.**  Every re-assert
+      (a step back, a device change, a recovered context) would otherwise mint
+      another playlist — one run could leave a dozen behind.  A covering
+      context is played at an offset instead.
+    * **Never reuse a playlist the plan has moved on from.**  An exclusion or a
+      rule change rewrites the order underneath a playlist that is already in
+      the account; the anchor would still fit, and we would happily keep
+      playing the old order.  The fingerprint of the ids we wrote is what
+      catches that.
+
+    Playlists that no longer cover the cursor are unfollowed as we go, so at
+    most two exist at any time.
     """
     contexts = await db.list_run_contexts(state.run_id)
+    stale: List[Dict[str, Any]] = []
     for row in contexts:
-        if int(row["anchor"]) == anchor and int(row["item_count"]) > 0:
+        row_anchor = int(row["anchor"])
+        count = int(row["item_count"])
+        end = row_anchor + count
+        covers = count > 0 and row_anchor <= anchor < end
+        written = state.order[row_anchor:end]
+        matches = str(row["fingerprint"] or "") == _fingerprint(written)
+        # Reusing a context that is about to run out defeats the refill it was
+        # called for: the point of asserting early is that the service must
+        # never reach the end of our cards, because that is the moment Autoplay
+        # takes the device.  A context that reaches the end of the plan has no
+        # such problem — there is nothing left to run into.
+        has_runway = end >= len(state.order) or (end - anchor) > REFILL_MARGIN
+        if covers and matches and has_runway:
             return {
                 "playlist_id": row["playlist_id"],
-                "uri": f"spotify:playlist:{row['playlist_id']}"
-                if state.provider == "spotify" else row["playlist_id"],
-                "anchor": anchor,
-                "item_count": int(row["item_count"]),
+                "uri": _context_uri(state.provider, str(row["playlist_id"])),
+                "anchor": row_anchor,
+                "item_count": count,
                 "context_id": int(row["id"]),
                 "reused": True,
             }
-
-    slot = "a"
-    if contexts:
-        slot = _other_slot(str(contexts[-1]["slot"]))
+        stale.append(row)
 
     chunk = state.order[anchor:anchor + CHUNK_ITEMS]
     if not chunk:
         raise ProviderError("execution: nothing left to put into a context")
+
+    slot = "a"
+    if contexts:
+        slot = _other_slot(str(contexts[-1]["slot"]))
 
     name = state.playlist_name or state.playlist_id
     playlist = await session.provider.create_playlist(
@@ -278,12 +319,23 @@ async def ensure_context_playlist(
     context_id = await db.create_run_context(
         state.run_id, state.provider, playlist.id,
         slot=slot, anchor=anchor, item_count=len(head),
+        fingerprint=_fingerprint(head),
     )
+
+    # The superseded ones go back out of the account.  Doing it AFTER the new
+    # playlist exists means a failure here leaves a stray playlist, not a run
+    # with nothing to play.
+    for row in stale:
+        with contextlib.suppress(ProviderError, Unsupported):
+            await session.provider.delete_playlist(
+                session.token, str(row["playlist_id"])
+            )
+            await db.mark_context_deleted(int(row["id"]))
 
     tail = chunk[HEAD_ITEMS:]
     if tail:
         coro = _fill_tail(
-            session, state.run_id, context_id, playlist.id, tail, len(head)
+            session, state.run_id, context_id, playlist.id, tail, head
         )
         if background_fill:
             task = asyncio.create_task(coro)
@@ -302,8 +354,7 @@ async def ensure_context_playlist(
     )
     return {
         "playlist_id": playlist.id,
-        "uri": f"spotify:playlist:{playlist.id}"
-        if state.provider == "spotify" else playlist.id,
+        "uri": _context_uri(state.provider, playlist.id),
         "anchor": anchor,
         "item_count": int(row["item_count"]) if row else len(head),
         "context_id": context_id,

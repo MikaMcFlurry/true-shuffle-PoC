@@ -778,13 +778,13 @@ async def clear_observation(run_id: int) -> None:
 
 async def create_run_context(
     run_id: int, provider: str, playlist_id: str, *, slot: str,
-    anchor: int = 0, item_count: int = 0,
+    anchor: int = 0, item_count: int = 0, fingerprint: str = "",
 ) -> int:
     db = get_db()
     cur = await db.execute(
         "INSERT INTO run_contexts (run_id, provider, playlist_id, slot, "
-        "anchor, item_count) VALUES (?, ?, ?, ?, ?, ?)",
-        (run_id, provider, playlist_id, slot, anchor, item_count),
+        "anchor, item_count, fingerprint) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (run_id, provider, playlist_id, slot, anchor, item_count, fingerprint),
     )
     await db.commit()
     return int(cur.lastrowid)
@@ -792,7 +792,7 @@ async def create_run_context(
 
 async def update_run_context(
     context_id: int, *, anchor: Optional[int] = None,
-    item_count: Optional[int] = None,
+    item_count: Optional[int] = None, fingerprint: Optional[str] = None,
 ) -> None:
     sets: List[str] = []
     params: List[Any] = []
@@ -802,6 +802,9 @@ async def update_run_context(
     if item_count is not None:
         sets.append("item_count = ?")
         params.append(item_count)
+    if fingerprint is not None:
+        sets.append("fingerprint = ?")
+        params.append(fingerprint)
     if not sets:
         return
     params.append(context_id)

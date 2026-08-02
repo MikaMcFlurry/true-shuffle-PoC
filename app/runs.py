@@ -870,6 +870,10 @@ async def _settle_satisfied_card(state: RunState) -> bool:
         return False
     if state.observed_track_id != state.current_track_id:
         return False
+    # engine.advance refuses anything but a live run, and rightly so — a
+    # stopped or cancelled deck must not book cards behind the listener's back.
+    if state.status not in (RunStatus.ACTIVE, RunStatus.PAUSED):
+        return False
     run = await db.get_run(state.run_id)
     if run is None:
         return False

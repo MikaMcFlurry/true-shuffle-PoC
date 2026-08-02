@@ -30,7 +30,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
-from app import db, runs
+from app import db, execution, runs
 from app.accounts import AccountNotConnected, Session, open_session
 from app.config import get_settings
 from core import engine
@@ -419,6 +419,38 @@ class Watcher:
                     )
                     logger.info("run %s followed playback to a new device",
                                 run_id)
+
+                # ADR-005: the running context is about to run out of OUR
+                # cards.  Letting it reach the end is exactly how Autoplay gets
+                # the device, so the next chunk is asserted while there is
+                # still runway — position preserved, one command.
+                if (
+                    not verdict.should_advance
+                    and not verdict.drifted
+                    and not verdict.idle
+                    and execution.needs_refill(state)
+                    and playback is not None
+                    and playback.is_playing
+                    and playback.track_id == state.current_track_id
+                ):
+                    async with runs.advance_lock(run_id):
+                        fresh = await runs.get_state(run_id, user_id)
+                        if (
+                            fresh is not None
+                            and fresh.status is RunStatus.ACTIVE
+                            and fresh.cursor == state.cursor
+                            and execution.needs_refill(fresh)
+                        ):
+                            await db.record_event(
+                                run_id, "context_refill", cursor=fresh.cursor,
+                                detail={"anchor": fresh.window_anchor,
+                                        "size": fresh.window_size},
+                            )
+                            await runs.reassert_window(
+                                session, fresh, cause="refill",
+                                playback=playback, previous_window=None,
+                            )
+                            state = fresh
 
                 # ADR-004 self-healing: the expected title demonstrably plays
                 # but no window is known to be set (process restart, or a

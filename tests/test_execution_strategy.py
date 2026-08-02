@@ -167,6 +167,92 @@ async def test_the_helper_playlist_is_removed_when_the_deck_is_through(service):
     assert await db.list_run_contexts(state.run_id) == []
 
 
+async def test_re_asserting_reuses_the_playlist_that_covers_the_cursor(service):
+    """Sonst hinterlässt ein Lauf eine Playlist je Re-Assert im Konto.
+
+    Jeder Schritt zurück, jeder Gerätewechsel, jede Kontext-Rettung würde eine
+    neue anlegen — nach einem Abend wären es ein Dutzend.
+    """
+    state = await _run(service, name="Wiederverwenden")
+    await db.update_run(state.run_id,
+                        execution_strategy=execution.CONTEXT_PLAYLIST)
+    state = await runs.get_state(state.run_id, service.user_id)
+    await runs.start(service.session, state, device_id="dev1")
+    await execution.drain_fill_tasks()
+    first = service.provider.context_plays[0][0]
+
+    # Drei Kommandos an drei verschiedenen Positionen des SELBEN Kontexts.
+    for _ in range(3):
+        await runs.advance(service.session, state,
+                           reason=AdvanceReason.USER_SKIP, device_id="dev1")
+        await runs.start(service.session, state, device_id="dev1")
+
+    assert len(await db.list_run_contexts(state.run_id)) == 1
+    assert {uri for uri, _ in service.provider.context_plays} == {first}
+    # …und zwar an der richtigen Stelle gespielt, nicht von vorn.
+    assert service.provider.context_plays[-1][1] == state.cursor
+
+
+async def test_a_plan_change_is_not_played_from_the_stale_playlist(service):
+    """Ein Ausschluss schreibt die Reihenfolge um — die Playlist im Konto
+    kennt sie noch nicht.  Der Anker würde weiter passen; ohne Fingerabdruck
+    liefe der alte Plan bis zum Laufende einfach weiter."""
+    state = await _run(service, name="Ausschluss")
+    await db.update_run(state.run_id,
+                        execution_strategy=execution.CONTEXT_PLAYLIST)
+    state = await runs.get_state(state.run_id, service.user_id)
+    await runs.start(service.session, state, device_id="dev1")
+    await execution.drain_fill_tasks()
+    stale = service.provider.context_plays[0][0]
+
+    # Der Plan ändert sich unter der laufenden Playlist.
+    state.order = list(state.order)
+    state.order[3], state.order[4] = state.order[4], state.order[3]
+    await db.update_run(state.run_id, order=state.order)
+    state = await runs.get_state(state.run_id, service.user_id)
+
+    context = await execution.ensure_context_playlist(
+        service.session, state, anchor=state.cursor, background_fill=False,
+    )
+    assert context["reused"] is False
+    assert context["playlist_id"] != stale
+    assert stale in service.provider.deleted_playlists
+    assert len(await db.list_run_contexts(state.run_id)) == 1
+
+
+async def test_a_context_that_is_running_out_is_replaced_not_reused(
+    service, monkeypatch,
+):
+    """Der Nachschub muss wirklich Nachschub sein.
+
+    Wird der fast aufgebrauchte Kontext einfach wiederverwendet, erreicht der
+    Dienst doch das Ende unserer Karten — und genau in dieser Sekunde übernimmt
+    Autoplay das Gerät.
+    """
+    monkeypatch.setattr(execution, "HEAD_ITEMS", 4)
+    monkeypatch.setattr(execution, "CHUNK_ITEMS", 4)
+    monkeypatch.setattr(execution, "REFILL_MARGIN", 2)
+
+    state = await _run(service, name="Nachschub")
+    await db.update_run(state.run_id,
+                        execution_strategy=execution.CONTEXT_PLAYLIST)
+    state = await runs.get_state(state.run_id, service.user_id)
+    await runs.start(service.session, state, device_id="dev1")
+    await execution.drain_fill_tasks()
+    first = service.provider.context_plays[0][0]
+
+    # Zwei Karten vor dem Ende des Chunks: ab hier ist Nachschub fällig.
+    state.cursor = 3
+    assert execution.needs_refill(state) is True
+
+    context = await execution.ensure_context_playlist(
+        service.session, state, anchor=state.cursor, background_fill=False,
+    )
+    assert context["reused"] is False
+    assert context["playlist_id"] != first
+    assert context["anchor"] == 3
+
+
 async def test_a_stopped_run_keeps_its_helper_playlist(service):
     """Ein gestoppter Lauf ist fortsetzbar — die Playlist bei jedem Fortsetzen
     neu zu schreiben wäre langsam und im Konto sichtbares Rauschen."""

@@ -1032,6 +1032,11 @@ async def _m012_execution_and_observation(db: aiosqlite.Connection) -> None:
             slot        TEXT    NOT NULL CHECK(slot IN ('a','b')),
             anchor      INTEGER NOT NULL DEFAULT 0,
             item_count  INTEGER NOT NULL DEFAULT 0,
+            -- Hash of the ids actually written.  A plan change (exclusion,
+            -- rule change) rewrites order_json underneath a playlist that is
+            -- already in the account; without this we would happily keep
+            -- playing the old order because the anchor still fits.
+            fingerprint TEXT    NOT NULL DEFAULT '',
             created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
             deleted_at  TEXT
         )
