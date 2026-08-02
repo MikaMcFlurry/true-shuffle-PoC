@@ -170,6 +170,18 @@
                 </label>
             </div>
 
+            {# Genau dieser Satz hätte den Fehlerbericht „nimmt nur 50 Songs"
+               verhindert: bei erlaubten Wiederholungen plant true-shuffle
+               rollierend, weil ein vollständiger Plan in dem Moment eine
+               Fiktion wäre, in dem einmal geskippt wird. Das Fach bleibt
+               vollständig im Spiel. #}
+            <p class="dim sm" style="margin-top: var(--space-2)">
+                Bei erlaubten Wiederholungen plant true-shuffle rollierend die
+                nächsten 50 Titel und füllt automatisch nach. Dein ganzes Fach
+                bleibt im Spiel — der Hörvorgang ist erst durch, wenn so viele
+                Titel gespielt wurden, wie im Fach liegen.
+            </p>
+
             <div class="stack-s hidden" id="gapGroup" style="margin-top: 4px">
                 <span class="field-label">Mindestabstand</span>
                 <div class="stepper" role="group" aria-label="Mindestabstand einstellen">

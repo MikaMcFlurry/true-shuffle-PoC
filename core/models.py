@@ -180,6 +180,21 @@ class PlaybackState(BaseModel):
     device_name: str = ""
     #: True when the provider reported no active session at all.
     is_idle: bool = False
+    #: What the service says it is playing *from* — a playlist/album uri, or
+    #: ``None`` for an ad-hoc list of tracks and for providers that have no
+    #: such notion.  This is the single most reliable "is the service still
+    #: inside the thing we asserted?" signal there is: a track id can coincide
+    #: by accident, a context uri cannot.
+    context_uri: Optional[str] = None
+    #: Player modes, as reported.  ``None`` means "the provider does not say".
+    #: True Shuffle sets its own order, so the service's own shuffle must be
+    #: OFF — see :meth:`MusicProvider.set_shuffle`.
+    shuffle_state: Optional[bool] = None
+    repeat_state: Optional[str] = None
+    #: Spotify's "Smart Shuffle", which mixes *recommendations that are not in
+    #: the playlist* into playback.  Undocumented in the Web API and NOT
+    #: switchable through it — we can only read it and say so.
+    smart_shuffle: Optional[bool] = None
 
     @property
     def remaining_ms(self) -> int:
@@ -221,12 +236,33 @@ class RunState(BaseModel):
     seed: Optional[int] = None
     created_at: str = ""
     updated_at: str = ""
-    #: ADR-002 (uris window): the cursor at which the *currently set* playback
-    #: window starts, or ``None`` when no window is known to be set (fresh
-    #: process, web-player run, drifted device).  In-memory only — populated by
-    #: :mod:`app.runs` from its per-process registry, never persisted: after a
-    #: restart the first start/advance simply asserts a fresh window.
+    #: ADR-002/ADR-005: the cursor at which the *currently set* playback context
+    #: starts, or ``None`` when nothing is known to be set (web-player run,
+    #: drifted device, after any plan change).  Persisted since M012 — it used
+    #: to be process-local, which silently disabled both end-of-context
+    #: patterns in :func:`core.engine.reconcile` after every restart.
     window_anchor: Optional[int] = None
+    #: How many cards that context actually carries.  NOT the configured
+    #: window size: a context playlist holds thousands where the setting says
+    #: 250, and the end-of-context detection has to reason about what was
+    #: really asserted.
+    window_size: Optional[int] = None
+    #: The context uri we asserted (``spotify:playlist:…``), or ``None`` for
+    #: the uris-window strategy, which has no addressable context.
+    asserted_context_uri: Optional[str] = None
+    #: Which execution strategy this run really uses — the effective value
+    #: after any probe/downgrade, not the configured wish.
+    execution_strategy: str = "uris_window"
+    #: Last observation of the card under the cursor.  ``observed_progress_ms``
+    #: is the *furthest* progress seen, so a seek backwards cannot un-play a
+    #: track.  ``card_satisfied`` is the ADR-003 F4 verdict for that card.
+    observed_track_id: Optional[str] = None
+    observed_progress_ms: int = 0
+    observed_duration_ms: int = 0
+    observed_at: str = ""
+    card_satisfied: bool = False
+    #: Sticky: Smart Shuffle was seen at least once on this run.
+    smart_shuffle_seen: bool = False
 
     @property
     def total(self) -> int:

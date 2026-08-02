@@ -86,7 +86,27 @@
                 <i style="width:0%"></i>
             </div>
             <p class="run-progressline tabular" id="runProgressLine"><span>–</span><span>–</span></p>
+            {# Wiederholungs-Modi planen rollierend. Ohne diesen Satz sieht ein
+               Fach mit 9000 Titeln aus wie eines mit 50 — genau der Grund für
+               den Fehlerbericht. #}
+            <p class="dim sm" id="runPlanNote" hidden></p>
         </div>
+
+        {# Zwei Dinge, die true-shuffle NICHT abschalten kann. Sie gehören
+           sichtbar auf diese Seite, nicht in ein Log. #}
+        <p class="dim sm" id="runSmartShuffle" hidden>
+            Spotifys <b>Smart Shuffle</b> ist aktiv und mischt eigene
+            Empfehlungen in die Wiedergabe. Das lässt sich über die
+            Spotify-API nicht abschalten — bitte in der Spotify-App
+            ausschalten, sonst kann true-shuffle die Reihenfolge nicht
+            garantieren.
+        </p>
+        <p class="dim sm" id="runHelperPlaylist" hidden>
+            Für diesen Hörvorgang liegt eine private Playlist
+            „true-shuffle · …“ in deinem Spotify-Konto. Nur so hält sich
+            Spotify zuverlässig an die Reihenfolge; sie wird beim Beenden des
+            Hörvorgangs wieder entfernt.
+        </p>
 
         <div id="completionPanel" class="hidden"></div>
 

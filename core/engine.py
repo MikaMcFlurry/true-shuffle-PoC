@@ -115,15 +115,25 @@ def _window(run: RunState, start_cursor: int, window_size: int) -> List[str]:
 
 
 def _in_window(run: RunState, cursor: int, window_size: int) -> bool:
-    """True when *cursor* is covered by the window the caller last set.
+    """True when *cursor* is covered by the context the run last asserted.
 
-    ``window_anchor`` is ``None`` after a restart (or for web-player runs) —
-    then nothing is known to be set and every move re-asserts a fresh window.
+    ``window_anchor`` is ``None`` for web-player runs and whenever a plan
+    change or a lost context invalidated it — then nothing is known to be set
+    and every move re-asserts.
+
+    Since M012 the anchor survives a restart, so a resumed process no longer
+    hard-restarts the running title at the next boundary (the old SP-006
+    residue).  Trusting a persisted anchor is safe because it is not the last
+    line of defence: if the service is in fact no longer playing our context,
+    the very next poll classifies that as ``context_lost`` and re-asserts.
+
+    The size that counts is the one actually asserted — a context playlist
+    carries thousands of cards where the configured window says 250.
     """
-    return (
-        run.window_anchor is not None
-        and run.window_anchor <= cursor < run.window_anchor + max(1, window_size)
-    )
+    if run.window_anchor is None:
+        return False
+    size = run.window_size or window_size
+    return run.window_anchor <= cursor < run.window_anchor + max(1, size)
 
 
 def start(run: RunState, *, window_size: int = DEFAULT_WINDOW_SIZE) -> Decision:
@@ -256,6 +266,40 @@ NEAR_END_MS = 5_000
 #: rather than played to the end.
 SKIP_PROGRESS_MS = 3_000
 
+#: ``played_threshold`` vocabulary (ADR-003 F4, ``run_configs`` CHECK).
+PLAYED_ON_START = "on_start"
+PLAYED_ON_MIN_SECONDS = "on_min_seconds"
+PLAYED_ON_TRACK_END = "on_track_end"
+
+
+def is_played(
+    threshold: str,
+    threshold_seconds: int,
+    *,
+    progress_ms: int,
+    duration_ms: int,
+) -> bool:
+    """Does this much observed progress count the card as PLAYED? (ADR-003 F4)
+
+    Deliberately a pure function of *progress*, never of elapsed wall-clock
+    time.  Spotify's developer policy II.2 forbids inflating play counts, and
+    a card that advances on a timer would do exactly that — the deck may only
+    ever follow playback it has actually observed.
+
+    ``on_track_end`` is the strict reading and the default.  ``on_min_seconds``
+    is the belt and braces the F4 decision asked for: it also counts a card
+    once the listener has genuinely heard *threshold_seconds* of it, which is
+    what keeps a run moving when a poll misses the exact moment a track ended.
+    """
+    if progress_ms <= 0:
+        return False
+    if threshold == PLAYED_ON_START:
+        return True
+    near_end = duration_ms > 0 and duration_ms - progress_ms <= NEAR_END_MS
+    if threshold == PLAYED_ON_MIN_SECONDS:
+        return near_end or progress_ms >= max(0, threshold_seconds) * 1000
+    return near_end
+
 
 @dataclass
 class Reconciliation:
@@ -268,6 +312,17 @@ class Reconciliation:
     drifted: bool = False
     #: True when playback stopped entirely.
     idle: bool = False
+    #: True when the context we set is no longer carrying the deck forward, so
+    #: the caller must assert the next card itself instead of assuming the
+    #: service will.  Silence after a finished card, a context that replayed
+    #: our own card, and a foreign title all set this.
+    context_lost: bool = False
+    #: True only for the last of those: something we never handed the service
+    #: is audibly playing.  That — and only that — is evidence the service did
+    #: not keep the order we set, which is what may downgrade the execution
+    #: strategy.  Silence is not evidence (the listener may simply have closed
+    #: the app), and a replayed card of ours is not either.
+    foreign_playing: bool = False
     note: str = ""
 
     @property
@@ -276,10 +331,20 @@ class Reconciliation:
 
 
 def _window_end(run: RunState, window_size: Optional[int]) -> Optional[int]:
-    """Exclusive end of the currently set window, or ``None`` when unknown."""
-    if run.window_anchor is None or not window_size:
+    """Exclusive end of the currently set context, or ``None`` when unknown.
+
+    The size that counts is the one the run actually asserted
+    (:attr:`RunState.window_size`), not the configured default: a context
+    playlist carries thousands of cards where the setting says 250, and
+    reasoning about the end of the context with the wrong number would fire
+    the end-of-context patterns in the middle of a perfectly healthy run.
+    """
+    if run.window_anchor is None:
         return None
-    return min(run.window_anchor + window_size, run.total)
+    size = run.window_size or window_size
+    if not size:
+        return None
+    return min(run.window_anchor + size, run.total)
 
 
 def reconcile(
@@ -310,30 +375,70 @@ def reconcile(
     5. *stop*: playback went idle right after the window's last card played
        out → advance (``TRACK_ENDED``) so the caller plays the next window.
 
-    Auflage 1 stays intact: idle WITHOUT that played-out evidence — a device
-    that disappeared mid-track (404 / no active device) — remains plain
-    ``idle`` and consumes no card.
+    ADR-005 adds the case that actually broke live playback:
+
+    6. *context not honoured*: our card played to its end and the service then
+       started something we never handed it — a Spotify Autoplay
+       recommendation, or the rest of a uris list the client dropped.  That is
+       a track end plus a lost context (``context_lost``), NOT drift: the
+       listener did nothing.  Reading it as drift is what left the finished
+       card unbooked, so "Hörvorgang fortsetzen" restarted the same title over
+       and over.
+
+    Auflage 1 stays intact: idle WITHOUT played-out evidence — a device that
+    disappeared mid-track (404 / no active device) — remains plain ``idle`` and
+    consumes no card.
     """
     expected = run.current_track_id
     window_end = _window_end(run, window_size)
     on_last_window_card = window_end is not None and run.cursor == window_end - 1
 
+    # Did the card under the cursor demonstrably finish?  Two independent
+    # witnesses, because either one alone has a blind spot: the persisted
+    # observation (survives restarts and the very first poll after a start,
+    # where there IS no previous state) and the previous poll (covers the case
+    # where nothing was persisted yet).
+    satisfied = bool(
+        run.card_satisfied
+        and expected is not None
+        and run.observed_track_id == expected
+    )
+    # Did the OBSERVATION reach the end of the track?  Deliberately not the
+    # same question as ``card_satisfied``: under ``played_threshold`` =
+    # ``on_min_seconds`` a card counts as played after thirty seconds, and a
+    # device that disappears at 0:31 must still not consume it — that is
+    # ADR-002 Auflage 1, and reading the F4 verdict here would quietly repeal
+    # it.  Reaching the end is a stronger, separate fact.
+    observed_end = bool(
+        expected is not None
+        and run.observed_track_id == expected
+        and run.observed_duration_ms > 0
+        and run.observed_duration_ms - run.observed_progress_ms <= NEAR_END_MS
+    )
+    played_out_before = bool(
+        expected is not None
+        and previous_state is not None
+        and previous_state.track_id == expected
+        and previous_state.duration_ms > 0
+        and previous_state.remaining_ms <= NEAR_END_MS
+    )
+    reached_end = observed_end or played_out_before
+    card_finished = satisfied or played_out_before
+
     if state is None or state.is_idle:
-        # AN-2 'stop' after the window's last card demonstrably played out.
-        # The previous poll must have seen the expected title near its end —
-        # anything else (device loss, manual stop mid-track) stays idle and
-        # consumes nothing (Auflage 1).
-        if (
-            on_last_window_card
-            and expected is not None
-            and previous_state is not None
-            and previous_state.track_id == expected
-            and previous_state.duration_ms > 0
-            and previous_state.remaining_ms <= NEAR_END_MS
-        ):
+        # AN-2 'stop' after the context's last card demonstrably played out.
+        # Anything else (device loss, manual stop mid-track) stays idle and
+        # consumes nothing (ADR-002 Auflage 1).
+        #
+        # ``on_last_window_card`` is no longer required: a card that is known
+        # to have played out and is followed by silence has ended, whether or
+        # not we happen to know where the context boundary was.  Requiring the
+        # boundary is what made a run stall for good once the anchor was lost.
+        if reached_end:
             return Reconciliation(
                 reason=AdvanceReason.TRACK_ENDED,
-                note="context stopped after window end",
+                context_lost=True,
+                note="playback stopped after our card played out",
             )
         return Reconciliation(idle=True, note="no active playback session")
 
@@ -342,6 +447,28 @@ def reconcile(
 
     # Still on the expected track.
     if state.track_id == expected:
+        # …unless the card started over: it had already played out, progress
+        # fell back to the beginning, and the previous poll was further in.
+        # That is a replay, not "nothing happened" — without this the run
+        # would sit on the same title for ever.
+        #
+        # Not ``foreign_playing``: our own title is audible.  This is also how
+        # a legitimately adjacent duplicate looks (``min_gap`` 0 lets a repeat
+        # mode plan ``order[N] == order[N+1]``), and how a listener who
+        # restarts the current track by hand looks — neither is evidence about
+        # the service's handling of our order.
+        if (
+            reached_end
+            and state.progress_ms < SKIP_PROGRESS_MS
+            and previous_state is not None
+            and previous_state.track_id == expected
+            and previous_state.progress_ms > state.progress_ms
+        ):
+            return Reconciliation(
+                reason=AdvanceReason.TRACK_ENDED,
+                context_lost=True,
+                note="the current card started over",
+            )
         return Reconciliation(note="on expected track")
 
     # Provider moved on to the next title of our window → it played through.
@@ -350,7 +477,8 @@ def reconcile(
         prev_progress = previous_state.progress_ms if previous_state else 0
         prev_duration = previous_state.duration_ms if previous_state else 0
         played_out = (
-            prev_duration > 0 and prev_duration - prev_progress <= NEAR_END_MS
+            satisfied
+            or (prev_duration > 0 and prev_duration - prev_progress <= NEAR_END_MS)
         )
         if played_out or state.progress_ms > SKIP_PROGRESS_MS:
             return Reconciliation(
@@ -372,6 +500,27 @@ def reconcile(
         return Reconciliation(
             reason=AdvanceReason.TRACK_ENDED,
             note="context replayed after window end",
+        )
+
+    # THE case this whole product kept failing on: our card played to its end
+    # and the service then started something we never handed it — a Spotify
+    # Autoplay recommendation, or the remainder of a uris list the client
+    # silently dropped.  The listener did nothing; treating this as "they took
+    # over" is what left the finished card unbooked, so "continue" replayed it
+    # for ever.  It is a track end, and the next card has to be asserted now.
+    #
+    # Order matters: this sits BEHIND the in-window and replay branches, so a
+    # legitimate move inside our own context is never stolen by it.
+    left_our_context = (
+        run.asserted_context_uri is not None
+        and state.context_uri != run.asserted_context_uri
+    )
+    if card_finished and (left_our_context or state.track_id not in run.order):
+        return Reconciliation(
+            reason=AdvanceReason.TRACK_ENDED,
+            context_lost=True,
+            foreign_playing=True,
+            note="foreign title after our card played out — context not honoured",
         )
 
     # Something else entirely is playing.

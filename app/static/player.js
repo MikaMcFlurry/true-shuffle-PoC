@@ -764,9 +764,15 @@ export class RunPlayer {
     const label = s.mode === "controller"
       ? (this.vocab.completed_controller || "Durch")
       : (this.vocab.completed_utility || "Übergeben");
+    // "genau einmal" gilt nur ohne Wiederholungen -- sonst ist die Zahl
+    // der Zuege gleich der Fachgroesse, aber einzelne Titel kamen mehrfach.
+    const doneDeck = s.deck_size || s.total;
+    const completedBody = s.plan_is_rolling
+      ? `${label}: ${formatCount(s.cursor)} Titel gespielt — ein Durchgang über dein Fach mit ${formatCount(doneDeck)} Titeln, Wiederholungen eingeschlossen.`
+      : `${label}: Alle ${formatCount(doneDeck)} Titel genau einmal gespielt.`;
     const body = done
       ? (s.mode === "controller"
-          ? `${label}: Alle ${formatCount(s.total)} Titel genau einmal gespielt.`
+          ? completedBody
           : `${label}: Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.`)
       : "Dieser Hörvorgang wurde verworfen. Ein neuer Start mischt neu.";
 
@@ -944,14 +950,48 @@ export class RunPlayer {
     $("#transportHint").textContent = reason || `„Weiter" wählt immer den nächsten regelkonformen Titel.`;
 
     // -- progress -----------------------------------------------------------
-    const pct = s.total ? Math.round((s.cursor / s.total) * 100) : 0;
+    // Die Bezugsgroesse ist das FACH, nicht die Planlaenge. Unter einem
+    // Wiederholungs-Modus plant true-shuffle rollierend die naechsten 50
+    // Titel und fuellt nach; "s.total" ist dann nur dieser Horizont. Ihn als
+    // "Titel im Hoervorgang" zu zeigen liess ein Fach mit 9000 Titeln wie
+    // eines mit 50 aussehen -- genau der gemeldete Fehler.
+    const deckSize = s.deck_size || s.total;
+    const rolling = Boolean(s.plan_is_rolling);
+    const pct = deckSize ? Math.round((s.cursor / deckSize) * 100) : 0;
     const meter = $("#runMeter");
     meter.setAttribute("aria-valuenow", String(pct));
     meter.setAttribute("aria-label", `Fortschritt ${pct} Prozent`);
     meter.querySelector("i").style.width = `${pct}%`;
+    // Auch mit Wiederholungen hat ein Lauf ein Ende: so viele Zuege wie Karten
+    // im Fach (maybe_extend_plan deckelt den Horizont genau dort). Der Balken
+    // darf das also zeigen -- nur der Satz muss anders lauten, weil die Zuege
+    // nicht deckungsgleich mit den Titeln sind.
     $("#runProgressLine").replaceChildren(
-      el("span", {}, el("b", { style: "color:var(--ink)" }, formatCount(s.cursor)), ` von ${formatCount(s.total)} gespielt`),
+      el("span", {},
+        el("b", { style: "color:var(--ink)" }, formatCount(s.cursor)),
+        rolling
+          ? ` von ${formatCount(deckSize)} gespielt · Wiederholungen erlaubt`
+          : ` von ${formatCount(deckSize)} gespielt`),
       el("span", {}, `${pct} %`));
+    const planLine = $("#runPlanNote");
+    if (planLine) {
+      planLine.hidden = !rolling;
+      planLine.textContent = rolling
+        ? `Wiederholungen sind erlaubt: true-shuffle plant rollierend die `
+          + `nächsten ${formatCount(s.plan_horizon || 50)} Titel und füllt `
+          + `automatisch nach. Dein Fach mit ${formatCount(deckSize)} Titeln `
+          + `bleibt vollständig im Spiel.`
+        : "";
+    }
+    // Die ehrlichen Grenzen, sichtbar statt im Log: Smart Shuffle laesst sich
+    // ueber die Web-API nicht abschalten, und die Hilfs-Playlist liegt im
+    // Konto des Hoerers.
+    const smartLine = $("#runSmartShuffle");
+    if (smartLine) smartLine.hidden = !s.smart_shuffle_seen;
+    const helperLine = $("#runHelperPlaylist");
+    if (helperLine) {
+      helperLine.hidden = !(s.context && s.context.strategy === "context_playlist");
+    }
 
     // -- completion panel / upcoming list -----------------------------------
     this.renderCompletion(terminal);

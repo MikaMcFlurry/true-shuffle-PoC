@@ -77,10 +77,20 @@ decides what comes next and remembers where you are.
   fallback.
 - **Interface language is German.** The codebase, comments and documentation
   stay English.
-- **Honesty about state.** Nothing has yet been run against live streaming
-  credentials. The interface must never imply a service is verified working
-  when it is not, and must never report a run as complete when tracks were
-  silently dropped.
+- **Honesty about state.** The interface must never imply a service is verified
+  working when it is not, and must never report a run as complete when tracks
+  were silently dropped.
+- **Side effects in the listener's account are a cost, not a free move.** The
+  goal remains none. On Spotify's Live Mode that goal collides with a service
+  behaviour we cannot control — some clients drop everything after the first
+  entry of a URI list — so a private helper playlist is written when, and only
+  when, the cheap path is measured to fail (ADR-005). It is removed when the
+  run ends, it is named in the interface while it exists, and `no_prefetch`
+  remains available for anyone who wants no artifacts at all.
+- **What the service does that we cannot switch off must be said, not hidden.**
+  Spotify's Autoplay and Smart Shuffle are account settings with no API; while
+  they are on, the order promise does not hold. Saying so is part of the
+  product, not a footnote.
 
 ## Terminology
 

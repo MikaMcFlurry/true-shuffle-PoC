@@ -66,7 +66,7 @@ from providers.base import (
     ProviderPaidTierRequired,
     TokenBundle,
 )
-from tests.conftest import FakeProvider
+from tests.conftest import FakeProvider, forget_window
 from tests.sim_spotify import SimNoActiveDevice, SimRateLimited
 
 # pytest-asyncio auto mode (pyproject.toml) marks async tests automatically.
@@ -582,7 +582,7 @@ async def test_err05_one_retry_after_a_transient_error_advances_exactly_once(
     state = await _new_run(service, "5xx")
     await runs.start(service.session, state, device_id="dev1")
     attempts_after_start = service.provider.play_attempts
-    runs._window_anchors.clear()
+    await forget_window(state.run_id)
     state = await runs.get_state(state.run_id, service.user_id)
     assert state.window_anchor is None
 
@@ -646,7 +646,7 @@ async def test_err05_the_failed_attempt_leaves_no_ledger_trace(
     state = await _new_run(service, "5xx-ledger")
     await runs.start(service.session, state, device_id="dev1")
     events_before = len(await db.list_events(state.run_id))
-    runs._window_anchors.clear()
+    await forget_window(state.run_id)
     state = await runs.get_state(state.run_id, service.user_id)
 
     service.provider.play_error = _transient_5xx
@@ -679,7 +679,7 @@ async def test_err06_a_permanent_failure_consumes_one_failure_hop_per_call(
     state = await _new_run(service, "unspielbar")
     await runs.start(service.session, state, device_id="dev1")
     blocked = state.order[1]
-    runs._window_anchors.clear()
+    await forget_window(state.run_id)
     state = await runs.get_state(state.run_id, service.user_id)
 
     service.provider.play_error = _track_unavailable
@@ -757,7 +757,7 @@ async def test_err06_a_failed_playback_is_caught_reactively_as_promised(
     """
     state = await _new_run(service, "err06-reaktiv")
     await runs.start(service.session, state, device_id="dev1")
-    runs._window_anchors.clear()
+    await forget_window(state.run_id)
     state = await runs.get_state(state.run_id, service.user_id)
     service.provider.play_error = _track_unavailable
 
@@ -774,12 +774,17 @@ async def test_err06_a_failed_playback_is_caught_reactively_as_promised(
 # ---------------------------------------------------------------------------
 
 async def _restart_process(service: Service):
-    """Prozessneustart auf DERSELBEN Datei (Muster aus test_restart_e2e)."""
+    """Prozessneustart auf DERSELBEN Datei (Muster aus test_restart_e2e).
+
+    Seit M012 überlebt der Fensteranker den Neustart bewusst — er steht in der
+    ``runs``-Zeile, nicht mehr in einem prozesslokalen Dict. Genau das ist der
+    Sinn der Migration: ein verlorener Anker hat die Kontextende-Erkennung nach
+    jedem Neustart stillschweigend abgeschaltet.
+    """
     from app.accounts import Session
 
     await db.close_db()
     await db.init_db()
-    runs._window_anchors.clear()
     return Session(user_id=service.user_id, provider=service.provider,
                    token=TokenBundle(access_token="t"))
 
@@ -792,21 +797,24 @@ async def test_err08_a_crash_between_command_and_booking_leaves_no_half_move(
     Das ist die gefährliche Lücke: der Dienst hat den nächsten Titel schon
     bekommen, das Ledger weiß noch nichts davon.  ``db.book_advance`` bricht
     hier hart ab (wie ein Prozesstod), danach folgt ein echter Neustart
-    (``close_db``/``init_db`` auf derselben Datei, Fensterspeicher leer).
+    (``close_db``/``init_db`` auf derselben Datei).
 
     Erwartung und Ergebnis: keine halbe Transition.  Der Cursor steht noch auf
     der alten Karte, ``selection_seq`` ist 0, keine Planzeile ist konsumiert —
-    und der EINE Advance nach dem Neustart verbucht genau einmal.  Ehrlich
-    dazu: das play-Kommando geht dabei zweimal raus (vor und nach dem
-    Absturz).  Das ist der Preis der Reihenfolge „erst Kommando, dann Ledger"
-    (ADR-002 Auflage 1) — doppelt verbucht wird nichts.
+    und der EINE Advance nach dem Neustart verbucht genau einmal.
+
+    Seit M012/ADR-005 kostet das auch kein zweites Kommando mehr: der Anker
+    steht in der Datenbank, also weiß der neu gestartete Prozess, dass der
+    Dienst die nächste Karte längst bekommen hat, und schickt sie nicht noch
+    einmal.  Vorher war genau das der Preis der Reihenfolge „erst Kommando,
+    dann Ledger" (ADR-002 Auflage 1) — und live ein hörbarer Titel-Neustart.
     """
     state = await _new_run(service, "crash-vor-buchung")
     run_id = state.run_id
     await runs.start(service.session, state, device_id="dev1")
     attempts_after_start = service.provider.play_attempts
     # Damit überhaupt ein Kommando fließt, das der Absturz überholen kann.
-    runs._window_anchors.clear()
+    await forget_window(state.run_id)
     state = await runs.get_state(run_id, service.user_id)
 
     async def crash(*args: Any, **kwargs: Any) -> bool:
@@ -852,7 +860,9 @@ async def test_err08_a_crash_between_command_and_booking_leaves_no_half_move(
     assert await _one(
         "SELECT max(play_count) FROM run_tracks WHERE run_id = ?", (run_id,)
     ) == 1
-    assert service.provider.play_attempts == attempts_after_start + 2
+    # EIN Kommando insgesamt: das vor dem Absturz.  Der persistierte Anker
+    # macht das zweite überflüssig (vorher: attempts_after_start + 2).
+    assert service.provider.play_attempts == attempts_after_start + 1
 
 
 async def test_err08_a_crash_after_the_booking_keeps_the_transition_whole(

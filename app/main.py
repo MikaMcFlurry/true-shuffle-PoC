@@ -64,8 +64,53 @@ async def lifespan(app: FastAPI):
 
     retention_task = asyncio.create_task(_retention_tick(), name="ts-retention")
 
+    # ADR-005: an ACTIVE run with no watcher is a deck that silently stopped
+    # moving.  Until now watchers were only ever armed from three request
+    # handlers, so a redeploy or a crashed task left runs stranded and the only
+    # way back was pressing start.  Re-arm at boot, then keep checking.
+    #
+    # Deliberately NOT awaited here.  Both steps do serial network I/O — a
+    # token refresh per user, an unfollow per orphaned playlist — and awaiting
+    # them would put Spotify's availability in the startup path: a 429 or a
+    # 5xx from the token endpoint would keep the process from ever serving a
+    # request.  Boot must not depend on a third party being up.
+    async def _boot_recovery():
+        try:
+            await watcher.ensure_all()
+        except Exception:
+            logger.exception("watcher rehydration failed")
+        try:
+            await _sweep_orphaned_contexts()
+        except Exception:
+            logger.exception("orphaned-context sweep failed")
+
+    async def _watcher_supervisor():
+        interval = max(10.0, settings.watcher_supervisor_seconds)
+        while True:
+            await asyncio.sleep(interval)
+            try:
+                await watcher.ensure_all()
+            except Exception:
+                logger.exception("watcher supervisor tick failed")
+
+    boot_task = asyncio.create_task(_boot_recovery(), name="ts-boot-recovery")
+    supervisor_task = asyncio.create_task(
+        _watcher_supervisor(), name="ts-watcher-supervisor"
+    )
+
     yield
 
+    boot_task.cancel()
+    supervisor_task.cancel()
+    with contextlib.suppress(BaseException):
+        await boot_task
+    with contextlib.suppress(BaseException):
+        await supervisor_task
+    # Let in-flight helper-playlist fills finish (or fail) rather than being
+    # abandoned mid-write.
+    from app import execution as _execution
+    with contextlib.suppress(BaseException):
+        await asyncio.wait_for(_execution.drain_fill_tasks(), timeout=5.0)
     retention_task.cancel()
     with contextlib.suppress(BaseException):
         await retention_task
@@ -73,6 +118,42 @@ async def lifespan(app: FastAPI):
     await jobs.cancel_all()
     await close_db()
     logger.info("shutdown complete")
+
+
+async def _sweep_orphaned_contexts() -> None:
+    """Remove helper playlists whose run is over (ADR-005).
+
+    The context-playlist strategy writes into the listener's Spotify account.
+    A crash between "playlist created" and "run finished" leaves one of ours
+    sitting in their library with nothing pointing at it — litter we made, so
+    litter we clear.  Best effort: a listener who disconnected is beyond our
+    reach, and the ledger says so rather than pretending otherwise.
+    """
+    from app import db as _db
+    from app import execution
+    from app.accounts import try_open_session
+
+    try:
+        rows = await _db.orphaned_contexts()
+    except Exception:  # pragma: no cover — never break startup
+        logger.exception("orphaned-context sweep: could not list contexts")
+        return
+    by_run: dict = {}
+    for row in rows:
+        by_run.setdefault((int(row["run_id"]), int(row["user_id"]),
+                           str(row["provider"])), []).append(row)
+    for (run_id, user_id, provider) in by_run:
+        # try_open_session only swallows "not connected"; a token refresh can
+        # still raise ProviderError on a 429 or an outage, and cleaning up
+        # litter must never be the reason anything else fails.
+        with contextlib.suppress(Exception):
+            session = await try_open_session(user_id, provider)
+            stuck = await execution.cleanup_contexts(session, run_id)
+            if stuck:
+                logger.warning(
+                    "run %s: helper playlists left in the account: %s",
+                    run_id, stuck,
+                )
 
 
 app = FastAPI(

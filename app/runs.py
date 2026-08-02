@@ -17,7 +17,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 import aiosqlite
 
-from app import db, migrations
+from app import db, execution, migrations
 from app.accounts import Session
 from app.config import get_settings
 from core import engine
@@ -60,19 +60,53 @@ logger = logging.getLogger(__name__)
 #: catalogue data).
 _command_log = logging.getLogger("ts.provider.command")
 
-#: ADR-002 window tracking: ``run_id → cursor`` at which the last uris window
-#: was asserted on the provider.  Deliberately in-memory (like the advance
-#: locks): after a restart nothing is known to be set, so the first
-#: start/advance simply asserts a fresh window.
-_window_anchors: Dict[int, int] = {}
+async def _remember_window(
+    run_id: int,
+    anchor: int,
+    *,
+    size: int,
+    context_uri: Optional[str] = None,
+) -> None:
+    """Record which context is now set on the provider (ADR-002/ADR-005).
+
+    This used to be a process-local dict, and that was a real defect, not an
+    implementation detail: after every restart the anchor was ``None``, which
+    switches BOTH end-of-context patterns in :func:`core.engine.reconcile` off
+    — a context that ran out then read as drift, the deck stalled, and the
+    card that had just played was never booked.
+
+    ``size`` is what was *actually* asserted, not the configured window size:
+    a context playlist carries thousands of cards where the setting says 250.
+    """
+    await db.update_run(
+        run_id,
+        window_anchor=anchor,
+        window_size=max(1, size),
+        asserted_context_uri=context_uri or "",
+    )
 
 
-def _remember_window(run_id: int, anchor: int) -> None:
-    _window_anchors[run_id] = anchor
+async def _forget_window(run_id: int) -> None:
+    """Nothing is known to be set any more — the next command re-asserts."""
+    await db.update_run(run_id, clear_window=True)
 
 
-def _forget_window(run_id: int) -> None:
-    _window_anchors.pop(run_id, None)
+async def _drop_observation(state: RunState) -> None:
+    """Forget how far the previous card got.
+
+    Every reader gates on ``observed_track_id == current_track_id``, so a stale
+    observation is usually harmless — usually.  A cycle reset can legitimately
+    deal the same title to position 0, and then the id matches and a card is
+    booked unheard.  Cheaper to drop it wherever the cursor moves outside
+    :func:`_book_advance`.
+    """
+    await db.clear_observation(state.run_id)
+    state.observed_track_id = None
+    state.observed_progress_ms = 0
+    state.observed_duration_ms = 0
+    state.observed_at = ""
+    state.card_satisfied = False
+
 
 ProgressFn = Callable[[int, int, str], Awaitable[None]]
 
@@ -353,6 +387,14 @@ async def create_run_v3(
         config_id=config_id,
         snapshot_id=snapshot_id,
     )
+    # The configured strategy is honoured from the start.  It has been a
+    # validated, accepted, silently ignored knob since schema v3: nothing read
+    # `Rules.execution_strategy` into the run, so choosing `no_prefetch`
+    # („keine Spuren im Konto") changed nothing at all.
+    configured = execution.normalise(rules.execution_strategy)
+    if configured != execution.URIS_WINDOW:
+        await db.update_run(run_id, execution_strategy=configured)
+
     try:
         run_track_ids = await db.create_run_deck(run_id, deck)
         by_run_track: Dict[int, str] = {}
@@ -475,8 +517,19 @@ def _to_state(row: Dict[str, Any]) -> RunState:
         seed=row.get("seed"),
         created_at=row.get("created_at", ""),
         updated_at=row.get("updated_at", ""),
-        # ADR-002: which window this process last asserted, if any.
-        window_anchor=_window_anchors.get(row["id"]),
+        # ADR-002/ADR-005: which context is set on the provider, how big it
+        # really is, and how far the card under the cursor got.  All persisted
+        # since M012 — see _remember_window for why that matters.
+        window_anchor=row.get("window_anchor"),
+        window_size=row.get("window_size"),
+        asserted_context_uri=row.get("asserted_context_uri") or None,
+        execution_strategy=str(row.get("execution_strategy") or "uris_window"),
+        observed_track_id=row.get("observed_track_id"),
+        observed_progress_ms=int(row.get("observed_progress_ms") or 0),
+        observed_duration_ms=int(row.get("observed_duration_ms") or 0),
+        observed_at=row.get("observed_at") or "",
+        card_satisfied=bool(row.get("card_satisfied")),
+        smart_shuffle_seen=bool(row.get("smart_shuffle_seen")),
     )
 
 
@@ -501,39 +554,42 @@ async def _apply(
     """Push a decision to a REMOTE_DEVICE provider.
 
     ADR-002: at most ONE command leaves here — either a play carrying the
-    whole uris window, or the lightweight ``next`` for a TS skip inside the
-    window.  ``POST /queue`` is never used any more; the user's queue belongs
-    to the user.  Returns which command was sent (``"play"`` / ``"skip"``) so
-    the caller can track the asserted window, or ``None``.
+    whole context, or the lightweight ``next`` for a TS skip inside it.
+    ``POST /queue`` is never used any more; the user's queue belongs to the
+    user.  Returns which command was sent (``"play"`` / ``"skip"``), or
+    ``None``.
 
-    ``position_ms`` rides on the play command (ADR-004): a window re-assert
-    of the ALREADY PLAYING title continues at the listener's position instead
-    of restarting the song.
+    ADR-005 adds two things.  The *how* now depends on the run's effective
+    execution strategy (:mod:`app.execution`) rather than being hard-wired to a
+    uris array, and the asserted context is **persisted here** instead of by
+    every caller: an assert that the run does not remember is how a context
+    ended up looking unset, which switched off the end-of-context detection.
+
+    ``position_ms`` rides on the play command (ADR-004): a re-assert of the
+    ALREADY PLAYING title continues at the listener's position instead of
+    restarting the song.
 
     Web-player providers get the decision as JSON instead; the browser does
     the playing, so there is nothing to push.
     """
-    caps = session.provider.capabilities
-    if caps.playback is not PlaybackControl.REMOTE_DEVICE:
+    if not execution.is_remote(session):
         return None
     if not decision.play_track_id:
         return None
 
     correlation_id = uuid.uuid4().hex[:8]
     window = decision.play_window or [decision.play_track_id]
+    strategy = execution.effective_strategy(state, session)
 
     if decision.needs_override or force_override:
-        _command_log.info(
-            "corr=%s run=%s kind=play target=%s cursor=%s window=%s offset=0 "
-            "position_ms=%s",
-            correlation_id, state.run_id, decision.play_track_id,
-            decision.cursor, len(window), position_ms,
-        )
-        await session.provider.play(
-            session.token, track_ids=window, offset_position=0,
+        assertion = await execution.assert_playback(
+            session, state,
+            strategy=strategy, window=window, cursor=decision.cursor,
             device_id=device_id, position_ms=position_ms,
+            correlation_id=correlation_id,
         )
-        return "play"
+        await _record_assertion(state, assertion)
+        return assertion.command
 
     if decision.use_skip_next:
         try:
@@ -545,20 +601,99 @@ async def _apply(
             await session.provider.skip_next(session.token, device_id=device_id)
             return "skip"
         except Unsupported:
-            # No skip command on this provider — assert the window instead.
-            _command_log.info(
-                "corr=%s run=%s kind=play target=%s cursor=%s window=%s offset=0 "
-                "note=skip_next-unsupported",
-                correlation_id, state.run_id, decision.play_track_id,
-                decision.cursor, len(window),
+            # No skip command on this provider — assert the context instead.
+            assertion = await execution.assert_playback(
+                session, state,
+                strategy=strategy, window=window, cursor=decision.cursor,
+                device_id=device_id, position_ms=0,
+                correlation_id=correlation_id,
             )
-            await session.provider.play(
-                session.token, track_ids=window, offset_position=0,
-                device_id=device_id,
-            )
-            return "play"
+            await _record_assertion(state, assertion)
+            return assertion.command
 
     return None
+
+
+async def rules_for_state(state: RunState) -> Rules:
+    """The rule version governing the run's NEXT draw.
+
+    Thin wrapper around :func:`_effective_rules` for callers that hold a
+    :class:`RunState` rather than a row — the watcher needs
+    ``played_threshold`` on every poll.
+    """
+    run = await db.get_run(state.run_id)
+    if run is None:
+        return Rules()
+    _, _, rules = await _effective_rules(
+        run, int(run.get("selection_seq") or 0) + 1
+    )
+    return rules
+
+
+async def force_playback_modes(
+    session: Session, state: RunState
+) -> Dict[str, Any]:
+    """Put the service's own shuffle/repeat back where they belong: off."""
+    return await execution.force_playback_modes(
+        session, device_id=state.device_id
+    )
+
+
+async def downgrade_strategy(state: RunState, *, cause: str) -> bool:
+    """Fall back to the strategy that actually works on this client.
+
+    Called the first time a run demonstrably loses the context it asserted.
+    That observation — our card ended, something we never sent is playing — is
+    the honest measurement the original design lacked: ADR-002 chose the uris
+    window under the assumption that every client honours a multi-uri list, and
+    this is what it looks like when one does not.
+
+    One-way on purpose.  Promoting a run back to the cheap strategy on a good
+    day would reintroduce exactly the failure it was downgraded for.
+    """
+    current = execution.normalise(state.execution_strategy)
+    if current == execution.CONTEXT_PLAYLIST:
+        return False
+    await db.update_run(
+        state.run_id, execution_strategy=execution.CONTEXT_PLAYLIST
+    )
+    state.execution_strategy = execution.CONTEXT_PLAYLIST
+    await db.record_event(
+        state.run_id, "strategy_downgraded", cursor=state.cursor,
+        detail={
+            "from": current,
+            "to": execution.CONTEXT_PLAYLIST,
+            "cause": cause[:200],
+            "note": "der Dienst hat die gesetzte Reihenfolge nicht behalten — "
+                    "ab jetzt über eine Kontext-Playlist",
+        },
+    )
+    logger.info("run %s downgraded to context_playlist: %s", state.run_id, cause)
+    return True
+
+
+async def _record_assertion(
+    state: RunState, assertion: execution.Assertion
+) -> None:
+    """Persist what the provider is now believed to be playing from."""
+    if not assertion.asserted or assertion.anchor is None:
+        return
+    await _remember_window(
+        state.run_id, assertion.anchor,
+        size=assertion.size, context_uri=assertion.context_uri,
+    )
+    state.window_anchor = assertion.anchor
+    state.window_size = max(1, assertion.size)
+    state.asserted_context_uri = assertion.context_uri
+    if assertion.detail:
+        await db.record_event(
+            state.run_id, "context_asserted", cursor=assertion.anchor,
+            detail={
+                "strategy": assertion.strategy,
+                "size": assertion.size,
+                **assertion.detail,
+            },
+        )
 
 
 async def _slot_conflict(user_id: int, provider: str) -> engine.RunError:
@@ -586,12 +721,39 @@ async def start(
     *,
     device_id: Optional[str] = None,
 ) -> Decision:
-    """Begin or resume a run and, for remote providers, take over the device."""
+    """Begin or resume a run and, for remote providers, take over the device.
+
+    ADR-005: resuming must never replay a card that already played.  The old
+    code went straight to ``order[cursor]`` at position 0, whose only guard was
+    ``cursor >= total`` — so whenever a card had been heard without the deck
+    booking it (the service jumped to an autoplay title, the watcher was gone,
+    the process restarted), pressing „Hörvorgang fortsetzen" started the very
+    same title again.  The persisted observation closes that: a card that is
+    already satisfied is settled first, and only then does playback start —
+    on the NEXT card.
+    """
     settings = get_settings()
+
+    # Book a card that already played out BEFORE deciding what to start.  The
+    # start itself then force-asserts the next one, because „fortsetzen" is a
+    # deliberate take-over of the device: pressing it and hearing nothing would
+    # be its own bug.
+    if await _settle_satisfied_card(state) and state.status is RunStatus.COMPLETED:
+        # That card was the last one.  ``engine.start`` would refuse a finished
+        # run with a RunError, so the deck would never be handed back properly:
+        # no pause (Autoplay takes the device) and no cleanup (our helper
+        # playlist stays in the account).  Finish it here instead.
+        await _finish(state, session)
+        return Decision(
+            cursor=state.cursor, completed=True, advanced=True,
+            needs_override=False,
+            note="last card had already played out — deck finished on resume",
+        )
+
     decision = engine.start(state, window_size=settings.context_window_size)
 
     if decision.completed:
-        await _finish(state)
+        await _finish(state, session)
         return decision
 
     if state.status is RunStatus.PAUSED:
@@ -623,16 +785,149 @@ async def start(
             detail={"action": "start", "from": run.get("manual_state")},
         )
 
-    command = await _apply(session, state, decision,
-                           device_id=device_id or state.device_id,
-                           force_override=True)
-    if command == "play":
-        _remember_window(state.run_id, state.cursor)
+    # ADR-004 parity for a plain resume: when the listener stopped MID-track,
+    # pick the song up where they left it instead of starting it over.  Only
+    # a fresh observation of this very card counts — an hour-old position is a
+    # memory, not a place in the music.
+    position_ms = _resume_position_ms(state)
+
+    await _apply(session, state, decision,
+                 device_id=device_id or state.device_id,
+                 force_override=True, position_ms=position_ms)
     await db.record_event(
         state.run_id, "started", cursor=state.cursor,
-        detail={"device_id": device_id or state.device_id, "note": decision.note},
+        detail={
+            "device_id": device_id or state.device_id,
+            "note": decision.note,
+            "position_ms": position_ms,
+            "strategy": execution.effective_strategy(state, session)
+            if execution.is_remote(session) else None,
+        },
     )
+    await _probe_execution(session, state, decision,
+                           device_id=device_id or state.device_id)
     return decision
+
+
+async def _probe_execution(
+    session: Session,
+    state: RunState,
+    decision: Decision,
+    *,
+    device_id: Optional[str],
+) -> None:
+    """Check once whether the cheap strategy is actually being honoured.
+
+    ADR-005 deliberately makes this weak evidence and uses it in one direction
+    only.  ``GET /me/player/queue`` returns about twenty entries, is reported
+    to pad or loop when the real queue is shorter, and answers per device — so
+    a "looks fine" proves nothing and must never promote a run back to the
+    uris window.  A clear miss, on the other hand, is worth acting on
+    immediately instead of letting the listener discover it one track later.
+
+    The stronger signal is free and arrives on its own: ``context_lost`` from
+    :func:`core.engine.reconcile`.  This is the head start, not the guarantee.
+    """
+    if not execution.is_remote(session):
+        return
+    if execution.effective_strategy(state, session) != execution.URIS_WINDOW:
+        return
+    window = decision.play_window or []
+    try:
+        probe = await execution.probe_uris_window(session, window)
+    except ProviderError:
+        return
+    if probe is None:
+        return
+    await db.record_event(
+        state.run_id, "strategy_probe", cursor=state.cursor, detail=probe,
+    )
+    if probe.get("honoured"):
+        return
+    if not await downgrade_strategy(
+        state, cause="queue probe: the window was not honoured"
+    ):
+        return
+    # Re-assert straight away — the listener is one track away from hearing
+    # something we did not plan.
+    fresh = engine.start(state, window_size=get_settings().context_window_size)
+    if fresh.completed or not fresh.play_track_id:
+        return
+    with contextlib.suppress(ProviderError, Unsupported):
+        await _apply(session, state, fresh, device_id=device_id,
+                     force_override=True)
+
+
+def _resume_position_ms(state: RunState) -> int:
+    """Where to pick the current card up, or 0 to start it from the top."""
+    if state.observed_track_id != state.current_track_id:
+        return 0
+    if not state.observed_progress_ms or state.card_satisfied:
+        return 0
+    max_age = get_settings().resume_position_max_age_seconds
+    if max_age <= 0:
+        return 0
+    age = _observation_age_seconds(state)
+    if age is None or age > max_age:
+        return 0
+    return int(state.observed_progress_ms)
+
+
+def _observation_age_seconds(state: RunState) -> Optional[float]:
+    """How old the persisted observation is, in seconds (``None`` if unknown)."""
+    if not state.observed_at:
+        return None
+    try:
+        stamp = datetime.strptime(state.observed_at, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+    return max(0.0, datetime.now(tz=UTC).timestamp() - stamp.replace(tzinfo=UTC).timestamp())
+
+
+async def _settle_satisfied_card(state: RunState) -> bool:
+    """Book the card under the cursor if it already played out.
+
+    This is the fix for „Hörvorgang fortsetzen startet wieder den ersten Song".
+    The old resume path went straight to ``order[cursor]`` with the sole guard
+    ``cursor >= total``, so a card that had been heard without the deck booking
+    it — because the service jumped to an autoplay title, because the watcher
+    was gone, because the process restarted — was simply played again.
+
+    No provider command leaves here: the caller force-asserts right afterwards,
+    which is what „fortsetzen" means.  Booking goes through :func:`_book_advance`
+    directly for the same reason, and its F5 event key turns a race with the
+    watcher into a no-op instead of a double advance.
+    """
+    if not state.card_satisfied:
+        return False
+    if state.observed_track_id != state.current_track_id:
+        return False
+    # engine.advance refuses anything but a live run, and rightly so — a
+    # stopped or cancelled deck must not book cards behind the listener's back.
+    if state.status not in (RunStatus.ACTIVE, RunStatus.PAUSED):
+        return False
+    run = await db.get_run(state.run_id)
+    if run is None:
+        return False
+    decision = engine.advance(
+        state, reason=AdvanceReason.TRACK_ENDED,
+        window_size=get_settings().context_window_size,
+    )
+    if not await _book_advance(run, state, decision, AdvanceReason.TRACK_ENDED):
+        return False
+    state.cursor = decision.cursor
+    if decision.completed:
+        state.status = RunStatus.COMPLETED
+    await db.record_event(
+        state.run_id, "resume_settled", cursor=state.cursor,
+        detail={
+            "track": run.get("observed_track_id"),
+            "progress_ms": int(run.get("observed_progress_ms") or 0),
+            "note": "Karte war schon zu Ende gehört — vor dem Fortsetzen verbucht",
+        },
+    )
+    await maybe_extend_plan(state)
+    return True
 
 
 def _signed64(value: int) -> int:
@@ -813,16 +1108,26 @@ async def _book_advance(
         return False
     if order is not None:
         state.order = order
+    # The observation belonged to the card we just consumed.  Leaving it in
+    # place would make the NEXT card look already-played and settle it
+    # unheard — the mirror image of the bug this whole mechanism fixes.
+    await db.clear_observation(run_id)
+    state.observed_track_id = None
+    state.observed_progress_ms = 0
+    state.observed_duration_ms = 0
+    state.observed_at = ""
+    state.card_satisfied = False
     return True
 
 
 async def advance(
-    session: Session,
+    session: Optional[Session],
     state: RunState,
     *,
     reason: AdvanceReason,
     device_id: Optional[str] = None,
     steps: int = 1,
+    context_lost: bool = False,
 ) -> Decision:
     """Consume the current card and move to the next one.
 
@@ -832,9 +1137,22 @@ async def advance(
     the same transition falls off the UNIQUE index, is recorded as
     ``applied=0``/stale, and moves nothing.  ``order_json``/``cursor``
     remain the dual playback source until M009.
+
+    ``context_lost`` (ADR-005) says the service is demonstrably no longer
+    playing what we set.  The "context continues on its own, send nothing"
+    shortcut must not fire then — that shortcut is only correct while the
+    context we asserted is still running.
     """
     settings = get_settings()
     run = await db.get_run(state.run_id)
+    if context_lost:
+        # Both the belief and its confirmation are void: whatever is playing,
+        # it is not ours.  Forgetting first makes engine.advance take the
+        # re-assert branch instead of trusting a context that is gone.
+        await _forget_window(state.run_id)
+        state.window_anchor = None
+        state.window_size = None
+        state.asserted_context_uri = None
     decision = engine.advance(
         state, reason=reason, window_size=settings.context_window_size, steps=steps
     )
@@ -848,7 +1166,16 @@ async def advance(
                                 status=RunStatus.COMPLETED.value)
         state.cursor = decision.cursor
         state.status = RunStatus.COMPLETED
-        _forget_window(state.run_id)
+        await _forget_window(state.run_id)
+        # A finished deck must not become a radio station: the moment our
+        # context runs out Spotify Autoplay starts recommending, in the
+        # listener's account and their history.  Pause, then clean up.
+        if session is not None and execution.is_remote(session):
+            with contextlib.suppress(ProviderError, Unsupported):
+                await session.provider.pause(
+                    session.token, device_id=device_id or state.device_id
+                )
+        await _release_contexts(session, state.run_id)
         return decision
 
     # ADR-002 Auflage 1: the command goes out BEFORE anything is persisted.
@@ -856,8 +1183,8 @@ async def advance(
     # cursor stays put, and no card is consumed — the watcher then sees idle
     # (Zustand D) instead of a silently burnt title.
     try:
-        command = await _apply(session, state, decision,
-                               device_id=device_id or state.device_id)
+        await _apply(session, state, decision,
+                     device_id=device_id or state.device_id)
     except ProviderError as exc:
         # ERR-06: a TRACK-level refusal (plain 4xx command error — device,
         # auth, quota and tier failures all carry their own subclass and
@@ -880,7 +1207,7 @@ async def advance(
         else:  # pragma: no cover — run vanished mid-flight
             await db.update_run(state.run_id, cursor=decision.cursor)
         state.cursor = decision.cursor
-        _forget_window(state.run_id)
+        await _forget_window(state.run_id)
         await db.record_event(
             state.run_id, "playback_failed", cursor=state.cursor,
             reason=AdvanceReason.PLAYBACK_FAILED.value,
@@ -899,8 +1226,10 @@ async def advance(
     else:  # pragma: no cover — run vanished mid-flight
         await db.update_run(state.run_id, cursor=decision.cursor)
     state.cursor = decision.cursor
-    if command == "play":
-        _remember_window(state.run_id, decision.cursor)
+    # The rolling horizon rolls here, and nowhere else: close to the end of the
+    # plan, draw the next fifty.  Runs under a repeat mode used to simply stop
+    # after fifty cards while their deck still held thousands.
+    await maybe_extend_plan(state)
     return decision
 
 
@@ -920,13 +1249,15 @@ async def previous(
     old_cursor = state.cursor
     decision = engine.previous(state, window_size=settings.context_window_size)
     # Same order as advance(): command first, cursor second (ADR-002 Auflage 1).
-    command = await _apply(session, state, decision,
-                           device_id=device_id or state.device_id,
-                           force_override=True)
+    await _apply(session, state, decision,
+                 device_id=device_id or state.device_id,
+                 force_override=True)
     await db.update_run(state.run_id, cursor=decision.cursor)
     state.cursor = decision.cursor
-    if command == "play":
-        _remember_window(state.run_id, decision.cursor)
+    # The observation described the card we stepped away from.  Only the id
+    # check keeps it from being read as "the card under the cursor already
+    # played" — do not rely on that when we know it is stale.
+    await _drop_observation(state)
     if decision.advanced:
         await _mark_plan_replay(state.run_id, decision.cursor, old_cursor)
         await db.record_event(
@@ -961,6 +1292,217 @@ async def _mark_plan_replay(run_id: int, new_cursor: int, old_cursor: int) -> No
 # ---------------------------------------------------------------------------
 # Mid-run rules, favourites and exclusions (WP3-D3 — UC-08/20/21/27)
 # ---------------------------------------------------------------------------
+
+def _draw_tail(
+    sim: Dict[int, Candidate],
+    rules: Rules,
+    master_seed: int,
+    base_seq: int,
+    limit: int,
+    *,
+    repeat_window: Optional[List[int]] = None,
+) -> List[int]:
+    """Draw *limit* further cards, simulating each draw as if it were booked.
+
+    The one draw loop in the app layer — a tail replan and a horizon extension
+    must produce cards under exactly the same rules, or the two would disagree
+    about no-repeat, minimum gap and repeat quota.  ``sim`` is mutated in place
+    so the caller can keep simulating on top of the result.
+
+    Draw *k* is simulated at ``base_seq + 1 + k``, i.e. the same clock the
+    later advances will book — which is what makes a plan reproducible from
+    (master seed, selection_seq, rules, deck).
+    """
+    tail: List[int] = []
+    window: List[int] = list(repeat_window or [])
+    step = 0
+    while len(tail) < limit:
+        # The quota window is led in integers; window_repeats / QUOTA_WINDOW
+        # is the convention select_next converts back to the exact count —
+        # the P7 gate itself never compares floats (WP3-C, Befund 1).
+        window_repeats = sum(window[-QUOTA_WINDOW:])
+        share = window_repeats / QUOTA_WINDOW
+        selection = select_next(
+            list(sim.values()), rules, master_seed, base_seq + 1 + step,
+            recent_repeat_share=share,
+        )
+        step += 1
+        if selection.exhausted or selection.run_track_id is None:
+            break
+        chosen = sim[selection.run_track_id]
+        # A repeat is a draw of a card with a listening history — the same
+        # convention core.selection.plan_cycle books into its window.
+        window.append(1 if chosen.last_played_seq is not None else 0)
+        sim[chosen.run_track_id] = replace(
+            chosen, state="played", play_count=chosen.play_count + 1,
+            last_played_seq=base_seq + step,
+        )
+        tail.append(chosen.run_track_id)
+    return tail
+
+
+#: How close the cursor may come to the end of the plan before the rolling
+#: horizon is extended.  Twenty cards is over an hour of audio — enough for a
+#: failed extension to be retried several times before it could ever be felt.
+HORIZON_REFILL_MARGIN = 20
+
+#: ``run_id → plan length at which the draw loop came up empty``.  Purely a
+#: cost guard (see :func:`maybe_extend_plan`); losing it on a restart costs one
+#: extra attempt, nothing else.
+_EXTENSION_EXHAUSTED: Dict[int, int] = {}
+
+
+async def _extend_plan(
+    run: Dict[str, Any], state: RunState, rules: Rules, *, count: int = PLAN_HORIZON
+) -> int:
+    """Make the rolling horizon actually roll (the „nur 50 Titel"-Fehler).
+
+    Under ``limited_repeat``/``free_repeat`` the plan is deliberately a rolling
+    window of :data:`core.selection.PLAN_HORIZON` cards — a 9 000-entry plan
+    for a mode that allows repeats would be a fiction the first skip
+    invalidates.  What was missing is the *rolling*: nothing ever extended it,
+    so the run genuinely ended after fifty cards while the deck still held
+    thousands, and the interface reported the plan length as the deck size.
+
+    This appends ``count`` further cards under the SAME plan version — a
+    continuation, not a replan: the consumed prefix, the current card and every
+    already-planned row stay exactly as they are.  The simulation first replays
+    the still-pending plan rows, so the new cards respect minimum gap and
+    repeat quota against what is about to be played, not just against history.
+
+    Returns how many cards were added (0 when nothing was needed or possible).
+    """
+    if rules.repeat_mode == "no_repeat":
+        return 0  # a permutation has nothing left to extend
+    run_id = int(run["id"])
+    plan_rows = await db.list_active_plan(run_id)
+    if not plan_rows:
+        return 0  # legacy run without a materialised plan — order_json only
+
+    deck = await db.list_run_tracks(
+        run_id, states=["open", "played", "deferred"], admitted_only=True
+    )
+    provider_by_rt: Dict[int, str] = {}
+    sim: Dict[int, Candidate] = {}
+    for row in deck:
+        if row["removed_from_snapshot"]:
+            continue
+        rt_id = int(row["id"])
+        provider_by_rt[rt_id] = str(row["provider_track_id"])
+        last = row["last_played_seq"]
+        if row["state"] == "played" and last is None:
+            last = 0
+        sim[rt_id] = Candidate(
+            run_track_id=rt_id,
+            track_key=f"{run['provider']}:{row['provider_track_id']}",
+            state=str(row["state"]),
+            play_count=int(row["play_count"]),
+            last_played_seq=last,
+            favorite=bool(row["favorite"]),
+            weight=float(row["weight"]),
+        )
+    if not sim:
+        return 0
+
+    base_seq = int(run.get("selection_seq") or 0)
+    # Replay the pending plan: those cards WILL be played before anything we
+    # draw now, so drawing against today's deck state would let a card come
+    # back inside its own minimum gap.
+    repeat_window: List[int] = []
+    pending = plan_rows[state.cursor:]
+    for offset, prow in enumerate(pending):
+        rt_id = int(prow["run_track_id"])
+        card = sim.get(rt_id)
+        if card is None:
+            continue
+        repeat_window.append(1 if card.last_played_seq is not None else 0)
+        sim[rt_id] = replace(
+            card, state="played", play_count=card.play_count + 1,
+            last_played_seq=base_seq + 1 + offset,
+        )
+
+    tail = _draw_tail(
+        sim, rules, int(run["seed"]) if run.get("seed") is not None else 0,
+        base_seq + len(pending), count, repeat_window=repeat_window,
+    )
+    if not tail:
+        return 0
+
+    start_seq = await db.max_plan_seq(run_id) + 1
+    await db.write_run_plan(
+        run_id, tail, plan_version=int(run["plan_version"]),
+        start_seq=start_seq, live=False,
+    )
+    order = list(state.order) + [provider_by_rt[rt] for rt in tail]
+    await db.update_run(run_id, order=order)
+    state.order = order
+    run["order"] = order
+    await db.record_event(
+        run_id, "plan_extended", cursor=state.cursor,
+        detail={"added": len(tail), "total": len(order),
+                "repeat_mode": rules.repeat_mode},
+    )
+    return len(tail)
+
+
+async def maybe_extend_plan(state: RunState) -> int:
+    """Top the rolling horizon up when the cursor gets close to its end.
+
+    Called after a booked advance, under the caller's ``advance_lock``.  A
+    failure here must never stop the music: the horizon is a convenience, the
+    card that just played is the fact.
+
+    **How far it rolls, and why there is a limit.**  One run is one pass over
+    the deck — under a repeat mode that means as many draws as the deck has
+    cards, with repeats allowed among them, and then the run is through and the
+    F2 cycle reset deals a new one.  Rolling for ever would make
+    ``free_repeat`` runs endless and quietly delete the idea of a finished
+    Hörvorgang; stopping at fifty (what happened before) made a 9 000-title
+    deck end after fifty.  The deck size is the honest bound.
+    """
+    remaining = len(state.order) - state.cursor
+    if remaining > HORIZON_REFILL_MARGIN:
+        return 0
+    run = await db.get_run(state.run_id)
+    if run is None:
+        return 0
+    _, _, rules = await _effective_rules(
+        run, int(run.get("selection_seq") or 0) + 1
+    )
+    if rules.repeat_mode == "no_repeat":
+        return 0  # already a full permutation of the deck
+    # The same "cards that can still be dealt" count the interface shows.
+    # Counting excluded or removed rows here would keep asking _extend_plan for
+    # draws it cannot make — an O(deck × horizon) loop under the advance lock,
+    # returning zero, on every single advance near the end of a run.
+    deck_size = await db.playable_deck_size(state.run_id)
+    missing = deck_size - len(state.order)
+    if missing <= 0:
+        return 0
+    # The draw loop can legitimately come up empty — every remaining card is
+    # inside its minimum gap, the quota is spent.  Retrying that on every
+    # advance means an O(deck × horizon) loop under the advance lock returning
+    # zero, over and over.  One attempt per plan length is enough; the next
+    # booked card changes the length and unlocks a fresh attempt.
+    if _EXTENSION_EXHAUSTED.get(state.run_id) == len(state.order):
+        return 0
+    try:
+        added = await _extend_plan(
+            run, state, rules, count=min(PLAN_HORIZON, missing)
+        )
+        if added == 0:
+            _EXTENSION_EXHAUSTED[state.run_id] = len(state.order)
+        else:
+            _EXTENSION_EXHAUSTED.pop(state.run_id, None)
+        return added
+    except Exception as exc:  # pragma: no cover — never block playback
+        logger.warning("run %s: plan extension failed: %s", state.run_id, exc)
+        await db.record_event(
+            state.run_id, "plan_extension_failed", cursor=state.cursor,
+            detail={"error": str(exc)[:200]},
+        )
+        return 0
+
 
 async def _replan_tail(
     run: Dict[str, Any], state: RunState, rules: Rules,
@@ -1070,37 +1612,13 @@ async def _replan_tail(
         state.order = order
         run["plan_version"] = new_pv
         run["order"] = order
-        _forget_window(run_id)
+        await _forget_window(run_id)
         return len(tail)
 
     limit = len(sim) if rules.repeat_mode == "no_repeat" else min(
         PLAN_HORIZON, len(sim)
     )
-    tail: List[int] = []
-    repeat_window: List[int] = []
-    step = 0
-    while len(tail) < limit:
-        # The quota window is led in integers; window_repeats / QUOTA_WINDOW
-        # is the convention select_next converts back to the exact count —
-        # the P7 gate itself never compares floats (WP3-C, Befund 1).
-        window_repeats = sum(repeat_window[-QUOTA_WINDOW:])
-        share = window_repeats / QUOTA_WINDOW
-        selection = select_next(
-            list(sim.values()), rules, master_seed, base_seq + 1 + step,
-            recent_repeat_share=share,
-        )
-        step += 1
-        if selection.exhausted or selection.run_track_id is None:
-            break
-        chosen = sim[selection.run_track_id]
-        # A repeat is a draw of a card with a listening history — the same
-        # convention core.selection.plan_cycle books into its window.
-        repeat_window.append(1 if chosen.last_played_seq is not None else 0)
-        sim[chosen.run_track_id] = replace(
-            chosen, state="played", play_count=chosen.play_count + 1,
-            last_played_seq=base_seq + step,
-        )
-        tail.append(chosen.run_track_id)
+    tail = _draw_tail(sim, rules, master_seed, base_seq, limit)
 
     new_pv = int(run["plan_version"]) + 1
     if tail:
@@ -1117,7 +1635,7 @@ async def _replan_tail(
     # nothing is known to be correctly set any more.  Forgetting the anchor is
     # the safety net — the next command re-asserts a fresh window even when
     # the immediate re-assert below (routes) cannot run or fails.
-    _forget_window(run_id)
+    await _forget_window(run_id)
     return len(tail)
 
 
@@ -1158,6 +1676,16 @@ async def change_run_rules(
     )
     completed_before = run["status"] == RunStatus.COMPLETED.value
     replanned = await _replan_tail(run, state, merged, allow_completed=True)
+    # A mid-run strategy change takes effect — unless this run was already
+    # DOWNGRADED.  That downgrade is a measurement of what the listener's
+    # client actually does; letting a configuration edit undo it would bring
+    # the reported failure straight back (ADR-005, "herabstufen, nie hoch").
+    wanted = execution.normalise(merged.execution_strategy)
+    current_strategy = execution.normalise(state.execution_strategy)
+    if wanted != current_strategy and current_strategy != execution.CONTEXT_PLAYLIST:
+        await db.update_run(state.run_id, execution_strategy=wanted)
+        state.execution_strategy = wanted
+        await _forget_window(state.run_id)
     await db.record_event(
         state.run_id, "rules_changed", cursor=state.cursor,
         detail={
@@ -1430,7 +1958,6 @@ async def reassert_window(
         return "failed"
     if command != "play":
         return "not_driving"
-    _remember_window(state.run_id, state.cursor)
     await db.record_event(
         state.run_id, "window_reasserted", cursor=state.cursor,
         detail={
@@ -1549,7 +2076,7 @@ async def manual_tick(
         await db.update_run(
             state.run_id, manual_state=MANUAL_DETECTED, manual_since=_iso_utc(ts)
         )
-        _forget_window(state.run_id)  # observation only from here on
+        await _forget_window(state.run_id)  # observation only from here on
         await _record_keyed_event(
             state.run_id, "manual_detected",
             key=f"manual:{state.run_id}:{seq}:manual_detected",
@@ -1570,7 +2097,7 @@ async def manual_tick(
                     manual_state=MANUAL_SUSPENDED,
                 )
                 state.status = RunStatus.PAUSED
-                _forget_window(state.run_id)
+                await _forget_window(state.run_id)
                 await _record_keyed_event(
                     state.run_id, "manual_suspended",
                     key=f"manual:{state.run_id}:{seq}:suspended",
@@ -1604,13 +2131,11 @@ async def manual_tick(
                     and playback.track_id == state.current_track_id
                 ):
                     position_ms = int(playback.progress_ms or 0)
-                command = await _apply(
+                await _apply(
                     session, state, decision,
                     device_id=state.device_id, force_override=True,
                     position_ms=position_ms,
                 )
-                if command == "play":
-                    _remember_window(state.run_id, state.cursor)
             await _record_keyed_event(
                 state.run_id, "manual_resumed",
                 key=f"manual:{state.run_id}:{seq}:resumed",
@@ -1624,7 +2149,7 @@ async def manual_tick(
                 manual_state=MANUAL_NONE, clear_manual_since=True,
             )
             state.status = RunStatus.PAUSED
-            _forget_window(state.run_id)
+            await _forget_window(state.run_id)
             await _record_keyed_event(
                 state.run_id, "manual_paused",
                 key=f"manual:{state.run_id}:{seq}:paused",
@@ -1712,13 +2237,14 @@ async def sync_from_history(
 
     await db.update_run(state.run_id, cursor=verdict.cursor)
     state.cursor = verdict.cursor
+    await _drop_observation(state)
     await db.record_event(
         state.run_id, "history_sync", cursor=verdict.cursor,
         reason=AdvanceReason.TRACK_ENDED.value,
         detail={"matched": verdict.matched, "note": verdict.note},
     )
     if verdict.completed:
-        await _finish(state)
+        await _finish(state, session)
         await db.record_event(state.run_id, "completed", cursor=verdict.cursor,
                               reason="history_sync")
     return verdict
@@ -1786,7 +2312,10 @@ async def stop_run(session: Session, state: RunState) -> RunState:
                         clear_device=True)
     state.status = RunStatus.STOPPED
     state.device_id = None
-    _forget_window(state.run_id)
+    await _forget_window(state.run_id)
+    # The helper playlists deliberately survive a stop: the run is resumable,
+    # and re-creating a 2 000-entry playlist on every resume would be both slow
+    # and visible churn in the listener's account.
     await db.record_event(state.run_id, "stopped", cursor=state.cursor)
     return state
 
@@ -1914,7 +2443,12 @@ async def reset_run(session: Session, state: RunState) -> Dict[str, Any]:
     state.order = order
     state.cursor = 0
     state.status = status
-    _forget_window(state.run_id)
+    await _forget_window(state.run_id)
+    # A fresh cycle starts on a fresh card.  Without this, the reset's own
+    # shuffle could put the just-finished title at position 0 again — and the
+    # surviving observation would have the next start book it unheard.
+    await _drop_observation(state)
+    _EXTENSION_EXHAUSTED.pop(state.run_id, None)
     await db.record_event(
         state.run_id, "cycle_reset", cursor=0,
         detail={
@@ -1946,7 +2480,7 @@ async def delete_run(user_id: int, run_id: int) -> bool:
 
     from app.watcher import watcher  # lazy — see stop_run
     await watcher.stop(run_id)
-    _forget_window(run_id)
+    await _forget_window(run_id)
 
     if run["archived_at"]:
         return True  # idempotent — archiving twice must not re-stamp
@@ -1968,7 +2502,18 @@ async def hard_delete_run(user_id: int, run_id: int) -> bool:
 
     from app.watcher import watcher  # lazy — see stop_run
     await watcher.stop(run_id)
-    _forget_window(run_id)
+    await _forget_window(run_id)
+
+    # Our helper playlists live in the listener's Spotify account, and the
+    # cascade below only reaches OUR rows — deleting the run without removing
+    # them would leave litter nobody can trace back to us.
+    from app.accounts import try_open_session
+    session = await try_open_session(user_id, str(run["provider"]))
+    stuck = await _release_contexts(session, run_id)
+    if stuck:
+        logger.warning(
+            "run %s: helper playlists could not be removed: %s", run_id, stuck
+        )
 
     await db.hard_delete_run(run_id)
     logger.info("run %s hard-deleted for user %s", run_id, user_id)
@@ -1983,14 +2528,38 @@ async def cancel(session: Session, state: RunState) -> None:
         with contextlib.suppress(ProviderError):
             await session.provider.pause(session.token, device_id=state.device_id)
     await db.update_run(state.run_id, status=RunStatus.CANCELLED.value)
-    _forget_window(state.run_id)
+    await _forget_window(state.run_id)
+    await _release_contexts(session, state.run_id)
     await db.record_event(state.run_id, "cancelled", cursor=state.cursor)
 
 
-async def _finish(state: RunState) -> None:
+async def _finish(state: RunState, session: Optional[Session] = None) -> None:
+    """The deck is through.  Hand the device back deliberately.
+
+    Order matters and it is not cosmetic: the moment our context runs out,
+    Spotify's Autoplay starts recommending music inside the listener's account
+    and their listening history.  Pausing FIRST is the only thing that keeps a
+    finished run from turning into an unrequested radio station; only then is
+    it safe to take the helper playlist away.
+    """
+    if session is not None and execution.is_remote(session):
+        with contextlib.suppress(ProviderError, Unsupported):
+            await session.provider.pause(session.token, device_id=state.device_id)
     await db.update_run(state.run_id, status=RunStatus.COMPLETED.value)
     state.status = RunStatus.COMPLETED
-    _forget_window(state.run_id)
+    await _forget_window(state.run_id)
+    await _release_contexts(session, state.run_id)
+
+
+async def _release_contexts(
+    session: Optional[Session], run_id: int
+) -> List[str]:
+    """Take our helper playlists back out of the listener's account."""
+    try:
+        return await execution.cleanup_contexts(session, run_id)
+    except Exception:  # pragma: no cover — cleanup must never break a run
+        logger.exception("run %s: helper playlist cleanup failed", run_id)
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -2047,6 +2616,24 @@ async def describe(
             "artwork_url": t.artwork_url if t else "",
         }
 
+    # The DECK size, not the plan length.  Under a repeat mode the plan is a
+    # rolling horizon of PLAN_HORIZON cards that gets topped up as the cursor
+    # moves; showing its length as „Titel im Hörvorgang" is what made a
+    # 9 000-track deck look like a 50-track one.
+    # Only cards that can still be dealt.  A run with an excluded title used to
+    # report "Alle 10 Titel genau einmal gespielt" for a deck that played 9.
+    # 0 means a legacy/imported run without a materialised deck — there the
+    # plan IS all we know, and saying so beats inventing a number.
+    deck_size = await db.playable_deck_size(state.run_id) or state.total
+    run_row = await db.get_run(state.run_id)
+    repeat_mode = "no_repeat"
+    if run_row is not None:
+        _, _, rules = await _effective_rules(
+            run_row, int(run_row.get("selection_seq") or 0) + 1
+        )
+        repeat_mode = rules.repeat_mode
+    rolling = repeat_mode != "no_repeat"
+
     return {
         "run_id": state.run_id,
         "provider": state.provider,
@@ -2056,6 +2643,25 @@ async def describe(
         "status": state.status.value,
         "cursor": state.cursor,
         "total": state.total,
+        #: How many titles are really in the deck.  Equal to ``total`` for
+        #: no_repeat; for the repeat modes ``total`` is only the planned
+        #: horizon and this is the honest answer.
+        "deck_size": deck_size,
+        "repeat_mode": repeat_mode,
+        "plan_is_rolling": rolling,
+        "plan_horizon": PLAN_HORIZON if rolling else None,
+        #: What is set on the service right now — used by the UI and by tests
+        #: that used to reach into a process-local dict.
+        "context": {
+            "anchor": state.window_anchor,
+            "size": state.window_size,
+            "uri": state.asserted_context_uri,
+            "strategy": execution.normalise(state.execution_strategy),
+        },
+        #: Spotify's Smart Shuffle mixes recommendations into playback and
+        #: cannot be switched off through the Web API — if it is on, the
+        #: order promise does not hold and the interface has to say so.
+        "smart_shuffle_seen": state.smart_shuffle_seen,
         "remaining": state.remaining,
         "progress_pct": state.progress_pct,
         "device_id": state.device_id,

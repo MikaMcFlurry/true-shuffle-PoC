@@ -233,12 +233,24 @@ async def test_stopping_the_watcher_leaves_the_cursor_untouched(database, fake_p
 # ---------------------------------------------------------------------------
 
 def test_poll_sleeps_until_just_after_the_track_ends():
-    """A five-minute song should not be polled 75 times."""
+    """A five-minute song should not be polled 75 times.
+
+    That is what this test was always called, and until ADR-005 it asserted
+    the opposite: ``_next_delay`` capped the sleep at ``min(base, …)``, so it
+    could only ever be SHORTER than the base tick — 900 ``GET /me/player`` per
+    hour and run, against a quota Spotify counts per developer account.  The
+    cap now bounds the sleep from above (``max_poll``), which is what the name
+    promised all along.
+    """
     state = PlaybackState(is_playing=True, progress_ms=10_000, duration_ms=300_000)
-    assert _next_delay(state, base=4.0) == 4.0
+    # Almost five minutes left: sleep through them, in ONE poll.
+    assert abs(_next_delay(state, base=4.0) - 290.75) < 0.01
+    # …unless a ceiling is configured, which is what production passes: it
+    # bounds how long a pause or a takeover can go unnoticed.
+    assert _next_delay(state, base=4.0, max_poll=30.0) == 30.0
 
     nearly_done = PlaybackState(is_playing=True, progress_ms=298_000, duration_ms=300_000)
-    assert 2.0 < _next_delay(nearly_done, base=4.0) < 3.0
+    assert 2.0 < _next_delay(nearly_done, base=4.0, max_poll=30.0) < 3.0
 
 
 def test_poll_backs_off_while_drifted():

@@ -476,6 +476,20 @@ async def list_live_runs(
     return rows
 
 
+async def list_all_active_runs() -> List[Dict[str, Any]]:
+    """Every run that claims to be playing, across all users.
+
+    The watcher's boot rehydration needs this: an ACTIVE run with no watcher is
+    a deck that has silently stopped moving, and until M012 nothing noticed.
+    """
+    db = get_db()
+    cur = await db.execute(
+        "SELECT id, user_id, provider, mode FROM runs "
+        "WHERE status = 'active' AND archived_at IS NULL ORDER BY id"
+    )
+    return [dict(r) for r in await cur.fetchall()]
+
+
 async def count_active_controller_runs(user_id: int, provider: str) -> int:
     """How many runs currently occupy the one-playing-controller slot.
 
@@ -566,6 +580,19 @@ async def list_runs(
                created_at, updated_at, completed_at,
                name, config_id, snapshot_id, cycle, stopped_at, archived_at,
                json_array_length(order_json) AS total,
+               -- The PLAN length and the DECK size are two different numbers,
+               -- and only the second one answers "wie viele Titel sind drin".
+               -- Under a repeat mode the plan is a rolling horizon of 50; a
+               -- dashboard that shows it as the deck size is simply wrong.
+               -- Counted here are only cards that can still be dealt:
+               -- excluded, un-admitted and removed-from-playlist rows stay in
+               -- run_tracks for the history, but showing them would promise
+               -- titles this run will never play.
+               (SELECT count(*) FROM run_tracks rt
+                WHERE rt.run_id = runs.id
+                  AND rt.admitted = 1
+                  AND rt.removed_from_snapshot = 0
+                  AND rt.state IN ('open', 'played', 'deferred')) AS deck_size,
                (SELECT MAX(s2.id) FROM playlist_snapshots s1
                 JOIN playlist_snapshots s2 ON s2.playlist_id = s1.playlist_id
                 WHERE s1.id = runs.snapshot_id AND s2.status = 'ready') AS latest_ready_snapshot_id
@@ -599,6 +626,12 @@ async def update_run(
     clear_manual_since: bool = False,
     clear_device: bool = False,
     archive: bool = False,
+    window_anchor: Optional[int] = None,
+    window_size: Optional[int] = None,
+    asserted_context_uri: Optional[str] = None,
+    clear_window: bool = False,
+    execution_strategy: Optional[str] = None,
+    smart_shuffle_seen: Optional[bool] = None,
 ) -> None:
     """Mutate one run row.
 
@@ -608,6 +641,11 @@ async def update_run(
     delete stamps ``archived_at``).  WP3-D3 adds ``manual_state`` /
     ``manual_since`` (the F8 state machine; clearing ``manual_since`` needs
     its own flag for the same reason ``clear_device`` does).
+
+    M012 adds the asserted playback context (``window_anchor`` /
+    ``window_size`` / ``asserted_context_uri``, cleared together via
+    ``clear_window`` — a half-forgotten context is worse than none) and the
+    effective ``execution_strategy``.
 
     May raise ``aiosqlite.IntegrityError`` (e.g. ``idx_runs_one_playing`` on a
     resume to 'active'); the failed statement is rolled back before re-raising
@@ -651,6 +689,31 @@ async def update_run(
         sets.append("manual_since = NULL")
     if archive:
         sets.append("archived_at = datetime('now')")
+    # M012 / ADR-005.  clear_window wins over the setters: a caller that both
+    # forgets and re-asserts in one call is a bug, and forgetting is the safe
+    # direction (the next command simply re-asserts).
+    if clear_window:
+        sets.append("window_anchor = NULL")
+        sets.append("window_size = NULL")
+        sets.append("asserted_context_uri = NULL")
+        sets.append("context_asserted_at = NULL")
+    else:
+        if window_anchor is not None:
+            sets.append("window_anchor = ?")
+            params.append(window_anchor)
+            sets.append("context_asserted_at = datetime('now')")
+        if window_size is not None:
+            sets.append("window_size = ?")
+            params.append(window_size)
+        if asserted_context_uri is not None:
+            sets.append("asserted_context_uri = ?")
+            params.append(asserted_context_uri or None)
+    if execution_strategy is not None:
+        sets.append("execution_strategy = ?")
+        params.append(execution_strategy)
+    if smart_shuffle_seen is not None:
+        sets.append("smart_shuffle_seen = ?")
+        params.append(1 if smart_shuffle_seen else 0)
     params.append(run_id)
 
     db = get_db()
@@ -660,6 +723,146 @@ async def update_run(
         await db.rollback()
         raise
     await db.commit()
+
+
+async def record_observation(
+    run_id: int,
+    *,
+    track_id: Optional[str],
+    progress_ms: int,
+    duration_ms: int,
+    satisfied: bool,
+) -> None:
+    """Remember how far the card under the cursor actually got (M012).
+
+    Two things depend on this surviving the process: whether a resume may
+    re-start the same card (it may not, once the card counts as played) and
+    whether a track that ended while we were not looking still consumes its
+    card.  ``progress_ms`` only ever moves forward for the same track — a seek
+    backwards must not un-play a title.
+    """
+    db = get_db()
+    await db.execute(
+        """
+        UPDATE runs SET
+            observed_track_id = ?,
+            observed_progress_ms = CASE
+                WHEN observed_track_id = ? THEN MAX(observed_progress_ms, ?)
+                ELSE ? END,
+            observed_duration_ms = ?,
+            observed_at = datetime('now'),
+            card_satisfied = CASE
+                WHEN observed_track_id = ? THEN MAX(card_satisfied, ?)
+                ELSE ? END
+        WHERE id = ?
+        """,
+        (
+            track_id,
+            track_id, int(progress_ms), int(progress_ms),
+            int(duration_ms),
+            track_id, 1 if satisfied else 0, 1 if satisfied else 0,
+            run_id,
+        ),
+    )
+    await db.commit()
+
+
+async def clear_observation(run_id: int) -> None:
+    """Forget the current card's observation — called when the cursor moves."""
+    db = get_db()
+    await db.execute(
+        "UPDATE runs SET observed_track_id = NULL, observed_progress_ms = 0, "
+        "observed_duration_ms = 0, observed_at = NULL, card_satisfied = 0 "
+        "WHERE id = ?",
+        (run_id,),
+    )
+    await db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Helper playlists written into the listener's account (ADR-005)
+# ---------------------------------------------------------------------------
+
+async def create_run_context(
+    run_id: int, provider: str, playlist_id: str, *, slot: str,
+    anchor: int = 0, item_count: int = 0, fingerprint: str = "",
+) -> int:
+    db = get_db()
+    cur = await db.execute(
+        "INSERT INTO run_contexts (run_id, provider, playlist_id, slot, "
+        "anchor, item_count, fingerprint) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (run_id, provider, playlist_id, slot, anchor, item_count, fingerprint),
+    )
+    await db.commit()
+    return int(cur.lastrowid)
+
+
+async def update_run_context(
+    context_id: int, *, anchor: Optional[int] = None,
+    item_count: Optional[int] = None, fingerprint: Optional[str] = None,
+) -> None:
+    sets: List[str] = []
+    params: List[Any] = []
+    if anchor is not None:
+        sets.append("anchor = ?")
+        params.append(anchor)
+    if item_count is not None:
+        sets.append("item_count = ?")
+        params.append(item_count)
+    if fingerprint is not None:
+        sets.append("fingerprint = ?")
+        params.append(fingerprint)
+    if not sets:
+        return
+    params.append(context_id)
+    db = get_db()
+    await db.execute(
+        f"UPDATE run_contexts SET {', '.join(sets)} WHERE id = ?", params
+    )
+    await db.commit()
+
+
+async def list_run_contexts(
+    run_id: int, *, include_deleted: bool = False
+) -> List[Dict[str, Any]]:
+    db = get_db()
+    sql = "SELECT * FROM run_contexts WHERE run_id = ?"
+    if not include_deleted:
+        sql += " AND deleted_at IS NULL"
+    sql += " ORDER BY id"
+    cur = await db.execute(sql, (run_id,))
+    return [dict(r) for r in await cur.fetchall()]
+
+
+async def mark_context_deleted(context_id: int) -> None:
+    db = get_db()
+    await db.execute(
+        "UPDATE run_contexts SET deleted_at = datetime('now') WHERE id = ?",
+        (context_id,),
+    )
+    await db.commit()
+
+
+async def orphaned_contexts(user_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    """Helper playlists whose run can no longer use them.
+
+    A crash between "playlist created" and "run finished" leaves one of our
+    playlists in the listener's account with nothing pointing at it.  The boot
+    sweep uses this to clean up rather than leaving litter behind.
+    """
+    db = get_db()
+    sql = """
+        SELECT c.*, r.user_id FROM run_contexts c
+        JOIN runs r ON r.id = c.run_id
+        WHERE c.deleted_at IS NULL
+          AND r.status IN ('completed', 'cancelled')
+        """
+    params: List[Any] = []
+    if user_id is not None:
+        sql += " AND r.user_id = ?"
+        params.append(user_id)
+    cur = await db.execute(sql, params)
+    return [dict(r) for r in await cur.fetchall()]
 
 
 async def hard_delete_run(run_id: int) -> None:
@@ -914,6 +1117,24 @@ async def create_run_deck(
         raise
     await db.commit()
     return ids
+
+
+async def playable_deck_size(run_id: int) -> int:
+    """How many cards this run can still deal.
+
+    NOT ``count(*) FROM run_tracks``: excluded cards (UC-20), cards the
+    listener's playlist no longer contains, and cards awaiting admission stay
+    in the table for the history, but counting them would promise titles the
+    run will never play — and the number is shown as „Titel im Fach".
+    """
+    db = get_db()
+    cur = await db.execute(
+        "SELECT count(*) FROM run_tracks WHERE run_id = ? AND admitted = 1 "
+        "AND removed_from_snapshot = 0 "
+        "AND state IN ('open', 'played', 'deferred')",
+        (run_id,),
+    )
+    return int((await cur.fetchone())[0])
 
 
 async def deck_stats(run_id: int) -> Dict[str, Optional[int]]:

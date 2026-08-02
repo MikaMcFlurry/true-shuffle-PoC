@@ -82,8 +82,14 @@ function completionNote(r) {
         const label = r.mode === "controller"
             ? STATUS_VOCAB.completed_controller
             : STATUS_VOCAB.completed_utility;
+        // "genau einmal" gilt nur ohne Wiederholungen. Unter einem
+        // Wiederholungs-Modus ist die Zahl der Zuege gleich der Fachgroesse,
+        // aber einzelne Titel kamen mehrfach dran.
+        const deck = r.deck_size || r.total;
         return r.mode === "controller"
-            ? `${label}: Alle ${formatCount(r.total)} Titel genau einmal gespielt.`
+            ? (r.deck_size && r.deck_size !== r.total
+                ? `${label}: ${formatCount(r.cursor)} Titel gespielt — ein Durchgang über dein Fach mit ${formatCount(deck)} Titeln.`
+                : `${label}: Alle ${formatCount(deck)} Titel genau einmal gespielt.`)
             : `${label}: Playlist wurde übergeben — ob sie durchgehört wurde, lässt sich von hier aus nicht feststellen.`;
     }
     if (r.status === "cancelled") {
@@ -236,7 +242,8 @@ function coverFallback() {
  * "kein Cover" panel — inventing one from stale metadata would be worse.
  */
 function runCard(r) {
-    const pct = r.total ? Math.round((r.cursor / r.total) * 100) : 0;
+    const deckSize = r.deck_size || r.total;
+    const pct = deckSize ? Math.round((r.cursor / deckSize) * 100) : 0;
     const note = completionNote(r);
     const showSystemState = r.status === "active";
 
@@ -268,7 +275,11 @@ function runCard(r) {
                 "aria-label": `Fortschritt ${pct} Prozent`,
             }, el("i", { style: `width:${pct}%` })),
             el("p", { class: "run-progressline tabular" },
-                el("span", {}, `${formatCount(r.cursor)} von ${formatCount(r.total)} gespielt`),
+                // Die Fachgroesse, nicht die Planlaenge: unter einem
+                // Wiederholungs-Modus ist "total" nur der rollierende Horizont.
+                el("span", {}, r.deck_size && r.deck_size !== r.total
+                    ? `${formatCount(r.cursor)} gespielt · ${formatCount(r.deck_size)} Titel im Fach`
+                    : `${formatCount(r.cursor)} von ${formatCount(r.total)} gespielt`),
                 el("span", {}, `zuletzt: ${formatWhen(r.updated_at)}`))),
         note ? el("p", { class: "run-note" }, note) : null,
         syncNote(r),

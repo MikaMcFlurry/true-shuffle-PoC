@@ -776,11 +776,17 @@ async def run_start(request: Request, run_id: int):
     device_id = body.get("device_id") or run.get("device_id")
 
     session = await _session(run["user_id"], run["provider"])
-    state = runs._to_state(run)
-    try:
-        decision = await runs.start(session, state, device_id=device_id)
-    except ProviderError as exc:
-        raise http_error(exc) from exc
+    # Same lock as advance: since ADR-005 a start may BOOK a card (one that
+    # already played out while nobody was booking), so it moves the cursor and
+    # must not race a watcher tick doing the same.
+    async with runs.advance_lock(run_id):
+        state = await runs.get_state(run_id, run["user_id"])
+        if state is None:
+            raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+        try:
+            decision = await runs.start(session, state, device_id=device_id)
+        except ProviderError as exc:
+            raise http_error(exc) from exc
 
     await watcher.ensure(run_id, run["user_id"])
     return JSONResponse(await _decision_payload(session, run_id, run["user_id"], decision))
@@ -1092,7 +1098,12 @@ async def run_manual_decision(request: Request, run_id: int):
         )
     session = await _session(run["user_id"], run["provider"])
     try:
-        result = await runs.manual_decision(session, run_id, run["user_id"], action)
+        # manual_decision("resume") routes through runs.start, which may book a
+        # played-out card — the same reason the start route holds this lock.
+        async with runs.advance_lock(run_id):
+            result = await runs.manual_decision(
+                session, run_id, run["user_id"], action
+            )
     except ProviderError as exc:
         raise http_error(exc) from exc
     if result is None:
@@ -1158,11 +1169,14 @@ async def run_device(request: Request, run_id: int):
         raise HTTPException(status_code=400, detail="device_id wird gebraucht.")
 
     session = await _session(run["user_id"], run["provider"])
-    state = runs._to_state(run)
-    try:
-        decision = await runs.start(session, state, device_id=device_id)
-    except ProviderError as exc:
-        raise http_error(exc) from exc
+    async with runs.advance_lock(run_id):
+        state = await runs.get_state(run_id, run["user_id"])
+        if state is None:
+            raise HTTPException(status_code=404, detail="Diesen Lauf gibt es nicht.")
+        try:
+            decision = await runs.start(session, state, device_id=device_id)
+        except ProviderError as exc:
+            raise http_error(exc) from exc
     return JSONResponse(await _decision_payload(session, run_id, run["user_id"], decision))
 
 

@@ -137,7 +137,8 @@ async def test_fresh_database_lands_on_complete_v3(database):
             "snapshot_items", "snapshot_diffs", "run_configs",
             "run_config_versions", "run_rule_bindings", "run_tracks",
             "run_plan", "run_selections", "provider_commands",
-            "provider_observations", "deletion_requests"} <= tables
+            "provider_observations", "deletion_requests",
+            "run_contexts"} <= tables
 
     indexes = await _indexes(database)
     assert {"idx_runs_user", "idx_runs_live", "idx_runs_one_playing",
@@ -152,12 +153,15 @@ async def test_fresh_database_lands_on_complete_v3(database):
     ) == "3"
     cur = await database.execute("SELECT version FROM schema_migrations")
     versions = {row[0] for row in await cur.fetchall()}
-    # Baseline + M001..M008 + M010 + M011.  M009 (order_json drop) is gated.
-    # Teständerung 2026-08-01 (dokumentierte fachliche Begründung): M011
-    # (deletion_requests.salt, F10-Stufe-3-Matching — app/retention.py) kam
-    # als neue, nicht-destruktive Migration hinzu; der Versions-Pin wächst
-    # exakt um diese eine erwartete Nummer.
-    assert versions == {2, 301, 302, 303, 304, 305, 306, 307, 308, 310, 311}
+    # Baseline + M001..M008 + M010..M012.  M009 (order_json drop) is gated.
+    # Teständerung 2026-08-01: M011 (deletion_requests.salt, F10-Stufe-3 —
+    # app/retention.py).  Teständerung 2026-08-02: M012 (ADR-005 — der
+    # gesetzte Wiedergabe-Kontext und die Beobachtung der laufenden Karte
+    # werden persistent, plus ``run_contexts`` für die Hilfs-Playlists).
+    # Beide additiv und nicht-destruktiv; der Versions-Pin wächst exakt um
+    # die erwarteten Nummern.
+    assert versions == {2, 301, 302, 303, 304, 305, 306, 307, 308, 310, 311,
+                        312}
     assert 309 not in versions
 
 

@@ -976,6 +976,74 @@ async def _m011_deletion_salt(db: aiosqlite.Connection) -> None:
     )
 
 
+async def _m012_execution_and_observation(db: aiosqlite.Connection) -> None:
+    """M012 — was der Player wirklich tut, wird zu Zustand (ADR-005).
+
+    Zwei Dinge waren bisher prozesslokal oder gar nicht vorhanden, und beide
+    haben live Karten verschluckt:
+
+    * Der **Fensteranker** lebte in einem Dict in :mod:`app.runs`. Nach jedem
+      Neustart war er ``None``, und mit ihm waren beide AN-2-Muster in
+      :func:`core.engine.reconcile` abgeschaltet — ein Kontextende las sich
+      dann als Drift. Anker, tatsächlich gesetzte Größe und die Kontext-URI
+      gehören deshalb an die Zeile.
+    * Es gab **keine Beobachtung**: Wie weit die Karte unter dem Cursor
+      gekommen ist, wusste nur der laufende Watcher-Tick. Genau daran hängt
+      ADR-003 F4 („gespielt", wenn das Trackende erreicht ODER die Schwelle
+      überschritten wurde) und die Frage, ob ein „Fortsetzen" dieselbe Karte
+      noch einmal starten darf.
+
+    Additiv im Stil von M004: keine Ausdrucks-Defaults, keine Indizes, eine
+    einzige CHECK-Constraint auf ``execution_strategy`` (SQLite erlaubt sie
+    bei ADD COLUMN, solange der Default sie erfüllt).
+
+    Rollback: ``ALTER TABLE runs DROP COLUMN`` für die elf Spalten plus
+    ``DROP TABLE run_contexts`` — keine Indizes, keine View, keine
+    Fremdschlüssel auf diese Spalten. Siehe :func:`rollback_m012`.
+    """
+    for ddl in (
+        "ALTER TABLE runs ADD COLUMN window_anchor INTEGER",
+        "ALTER TABLE runs ADD COLUMN window_size INTEGER",
+        "ALTER TABLE runs ADD COLUMN asserted_context_uri TEXT",
+        "ALTER TABLE runs ADD COLUMN context_asserted_at TEXT",
+        "ALTER TABLE runs ADD COLUMN execution_strategy TEXT NOT NULL "
+        "DEFAULT 'uris_window' CHECK(execution_strategy IN "
+        "('single_uri','uris_window','context_playlist','no_prefetch'))",
+        "ALTER TABLE runs ADD COLUMN observed_track_id TEXT",
+        "ALTER TABLE runs ADD COLUMN observed_progress_ms INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE runs ADD COLUMN observed_duration_ms INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE runs ADD COLUMN observed_at TEXT",
+        "ALTER TABLE runs ADD COLUMN card_satisfied INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE runs ADD COLUMN smart_shuffle_seen INTEGER NOT NULL DEFAULT 0",
+    ):
+        await db.execute(ddl)
+
+    # The helper playlists the context_playlist strategy writes into the
+    # listener's account.  They are OUR artifacts, so we have to be able to
+    # find and remove every one of them — including after a crash, which is
+    # what ``deleted_at IS NULL`` on a terminal run means.
+    await db.execute(
+        """
+        CREATE TABLE run_contexts (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id      INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+            provider    TEXT    NOT NULL,
+            playlist_id TEXT    NOT NULL,
+            slot        TEXT    NOT NULL CHECK(slot IN ('a','b')),
+            anchor      INTEGER NOT NULL DEFAULT 0,
+            item_count  INTEGER NOT NULL DEFAULT 0,
+            -- Hash of the ids actually written.  A plan change (exclusion,
+            -- rule change) rewrites order_json underneath a playlist that is
+            -- already in the account; without this we would happily keep
+            -- playing the old order because the anchor still fits.
+            fingerprint TEXT    NOT NULL DEFAULT '',
+            created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+            deleted_at  TEXT
+        )
+        """
+    )
+
+
 # ---------------------------------------------------------------------------
 # Rollbacks (per-step, for the steps that need scripted reversal)
 # ---------------------------------------------------------------------------
@@ -994,6 +1062,28 @@ async def rollback_m007(db: aiosqlite.Connection) -> None:
         await db.execute("DROP TABLE provider_commands")
         await db.execute("DROP TABLE provider_observations")
         await db.execute("DELETE FROM schema_migrations WHERE version = 307")
+        await db.execute("COMMIT")
+    except BaseException:
+        await db.execute("ROLLBACK")
+        raise
+
+
+async def rollback_m012(db: aiosqlite.Connection) -> None:
+    """Reverse M012.  No index and no view references these columns, so plain
+    DROP COLUMNs suffice; the table goes last because the run rows may still
+    carry a context uri pointing at it."""
+    await db.commit()
+    await db.execute("BEGIN IMMEDIATE")
+    try:
+        for column in (
+            "window_anchor", "window_size", "asserted_context_uri",
+            "context_asserted_at", "execution_strategy", "observed_track_id",
+            "observed_progress_ms", "observed_duration_ms", "observed_at",
+            "card_satisfied", "smart_shuffle_seen",
+        ):
+            await db.execute(f"ALTER TABLE runs DROP COLUMN {column}")
+        await db.execute("DROP TABLE run_contexts")
+        await db.execute("DELETE FROM schema_migrations WHERE version = 312")
         await db.execute("COMMIT")
     except BaseException:
         await db.execute("ROLLBACK")
@@ -1032,6 +1122,8 @@ MIGRATIONS: Tuple[Migration, ...] = (
     Migration(309, "m009_drop_order_json", _m009_drop_order_json, optional=True),
     Migration(310, "m010_deletion_requests", _m010_deletion_requests),
     Migration(311, "m011_deletion_salt", _m011_deletion_salt),
+    Migration(312, "m012_execution_and_observation",
+              _m012_execution_and_observation),
 )
 
 
