@@ -188,6 +188,10 @@ class SpotifyProvider(MusicProvider):
         # ADR-002: PUT /me/player/play takes the whole uris window in one call.
         supports_context_window=True,
         supports_queue_read=True,
+        # ADR-005: …but not every client honours more than the first entry of
+        # that list, so a playlist context is the reliable path.
+        supports_context_playlist=True,
+        supports_playback_modes=True,
         supports_history_sync=True,
         brand_color="#1DB954",
         notes=[
@@ -207,6 +211,16 @@ class SpotifyProvider(MusicProvider):
             "Spotify verrät nicht mehr, ob dein Konto Premium hat. Ob der "
             "Live-Modus geht, zeigt sich beim ersten Abspielversuch — dann "
             "steht hier, woran es lag.",
+            "true-shuffle schaltet Spotifys eigenes Shuffle und Repeat beim "
+            "Start aus — die Reihenfolge kommt von hier. Zwei Spotify-Regler "
+            "kann die API aber nicht anfassen: „Smart Shuffle“ (mischt fremde "
+            "Empfehlungen dazwischen) und „Automatischer Mix/Autoplay“ (hängt "
+            "am Ende eigene Titel an). Beide bitte in der Spotify-App "
+            "ausschalten — sonst spielt Spotify Titel, die nicht im Fach sind.",
+            "Für den Live-Modus legt true-shuffle eine private Playlist "
+            "„true-shuffle · <Name>“ in deinem Konto an und spielt sie ab. "
+            "Nur so hält sich Spotify zuverlässig an die Reihenfolge. Sie wird "
+            "beim Beenden des Hörvorgangs wieder entfernt.",
             "Achtung beim Einrichten: Spotify verlangt, dass der Besitzer der "
             "Developer-App selbst Premium hat, sonst funktioniert die App im "
             "Entwicklungsmodus gar nicht — auch Handoff nicht. Das ist Spotifys "
@@ -612,6 +626,68 @@ class SpotifyProvider(MusicProvider):
             expect_json=False,
         )
 
+    async def play_context(
+        self,
+        token: TokenBundle,
+        *,
+        context_uri: str,
+        offset_position: int = 0,
+        device_id: Optional[str] = None,
+        position_ms: int = 0,
+    ) -> None:
+        """``PUT /me/player/play`` with a ``context_uri`` (ADR-005).
+
+        The difference to :meth:`play` is not cosmetic.  A ``uris`` array is an
+        ad-hoc list that some clients honour only for its first entry — the
+        rest is dropped and Spotify's own recommendations take over.  A
+        playlist context is the same thing every Spotify client plays every
+        day, and ``GET /me/player`` reports it back, so we can *see* whether we
+        are still inside it.
+        """
+        body: Dict[str, Any] = {
+            "context_uri": context_uri,
+            "offset": {"position": offset_position},
+        }
+        if position_ms:
+            body["position_ms"] = position_ms
+        await self._player(
+            token, "PUT", "/me/player/play",
+            json_body=body,
+            params={"device_id": device_id} if device_id else None,
+            expect_json=False,
+        )
+
+    async def replace_playlist_items(
+        self, token: TokenBundle, playlist_id: str, track_ids: List[str]
+    ) -> None:
+        """``PUT /playlists/{id}/items`` for the first batch, appends for the rest.
+
+        Replace takes at most 100 uris and cannot be combined with reorder, so
+        "make the playlist exactly this" is one PUT followed by ``add_tracks``
+        for everything beyond the first hundred.  An empty list clears it.
+        """
+        size = self.capabilities.write_batch_size
+        head = [f"spotify:track:{tid}" for tid in track_ids[:size]]
+        await http.request(
+            "PUT", f"{_API}/playlists/{playlist_id}/items",
+            headers=self._headers(token), json_body={"uris": head},
+            provider="spotify",
+        )
+        if len(track_ids) > size:
+            await self.add_tracks(token, playlist_id, track_ids[size:])
+
+    async def delete_playlist(self, token: TokenBundle, playlist_id: str) -> None:
+        """Remove a playlist from the account.
+
+        Spotify has no delete: unfollowing your own playlist is what the UI's
+        "delete" does, and it is the only way to take a helper playlist back
+        out of the listener's library.
+        """
+        await http.request(
+            "DELETE", f"{_API}/playlists/{playlist_id}/followers",
+            headers=self._headers(token), provider="spotify", expect_json=False,
+        )
+
     async def skip_next(
         self, token: TokenBundle, *, device_id: Optional[str] = None
     ) -> None:
@@ -643,6 +719,40 @@ class SpotifyProvider(MusicProvider):
             expect_json=False,
         )
 
+    async def set_shuffle(
+        self, token: TokenBundle, *, state: bool, device_id: Optional[str] = None
+    ) -> None:
+        """``PUT /me/player/shuffle`` — Spotify's own shuffle must be OFF.
+
+        True Shuffle *is* the shuffle: it hands the service an order it
+        computed itself.  With the service's shuffle on, that order is
+        scrambled again and every title reads as drift, which used to end the
+        deck in a manual-use episode after the first track.
+        """
+        params: Dict[str, Any] = {"state": "true" if state else "false"}
+        if device_id:
+            params["device_id"] = device_id
+        await self._player(
+            token, "PUT", "/me/player/shuffle", params=params, expect_json=False
+        )
+
+    async def set_repeat(
+        self, token: TokenBundle, *, state: str, device_id: Optional[str] = None
+    ) -> None:
+        """``PUT /me/player/repeat`` — ``off`` / ``track`` / ``context``.
+
+        Repeat is the other way the service can replay a card we already
+        booked; the deck owns repetition (``repeat_mode``), not the player.
+        """
+        if state not in ("off", "track", "context"):
+            raise ProviderError(f"spotify: invalid repeat state {state!r}")
+        params: Dict[str, Any] = {"state": state}
+        if device_id:
+            params["device_id"] = device_id
+        await self._player(
+            token, "PUT", "/me/player/repeat", params=params, expect_json=False
+        )
+
     async def get_playback_state(self, token: TokenBundle) -> Optional[PlaybackState]:
         data = await self._player(
             token, "GET", "/me/player", params={"additional_types": "track"}
@@ -651,6 +761,8 @@ class SpotifyProvider(MusicProvider):
             return PlaybackState(is_idle=True)
         item = data.get("item") or {}
         device = data.get("device") or {}
+        context = data.get("context") or {}
+        smart = data.get("smart_shuffle")
         return PlaybackState(
             is_playing=bool(data.get("is_playing")),
             track_id=item.get("id"),
@@ -659,6 +771,18 @@ class SpotifyProvider(MusicProvider):
             device_id=device.get("id"),
             device_name=device.get("name", ""),
             is_idle=not item,
+            # A `uris` list produces no context at all, a playlist does — which
+            # is precisely why the context_playlist strategy can tell "still
+            # ours" from "Spotify took over" without guessing from track ids.
+            context_uri=context.get("uri") or None,
+            shuffle_state=(
+                bool(data["shuffle_state"]) if "shuffle_state" in data else None
+            ),
+            repeat_state=data.get("repeat_state"),
+            # Undocumented field: present in the response, absent from the
+            # reference, and there is no endpoint to switch it off.  Read it
+            # defensively and report it — never gate on its absence.
+            smart_shuffle=bool(smart) if smart is not None else None,
         )
 
     async def get_queue(self, token: TokenBundle) -> Optional[Dict[str, Any]]:

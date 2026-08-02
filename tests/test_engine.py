@@ -289,14 +289,28 @@ def test_idle_without_played_out_evidence_stays_idle_and_burns_no_card():
     assert verdict.should_advance is False
 
 
-def test_idle_mid_window_is_never_read_as_context_stop():
-    """The context cannot stop mid-window on its own — idle there is a lost
-    device (or a user stop), and both must not consume a card."""
+def test_idle_after_a_card_played_out_consumes_it_wherever_the_window_ends():
+    """Silence after a finished card is a track end, not a lost device.
+
+    This test used to assert the opposite: idle mid-window was always read as
+    "the device disappeared", on the reasoning that a context with more titles
+    queued cannot stop by itself.  The live report falsified the premise — a
+    client that honours only the first entry of a uris list HAS a one-track
+    context, however long we believe our window to be, and with Spotify's
+    Autoplay switched off it simply falls silent at the end of track one.  The
+    deck then stood still for ever.
+
+    The discriminator is the evidence, not the window arithmetic: a card
+    observed to reach its end is consumed; a device that vanished mid-track is
+    not (that is the test below, and ADR-002 Auflage 1).
+    """
     run = make_run(total=6, cursor=1, window_anchor=0)
     nearly_done = state("t1", progress=178_000)
     verdict = engine.reconcile(
         run, PlaybackState(is_idle=True),
         previous_state=nearly_done, window_size=3,
     )
-    assert verdict.idle is True
-    assert verdict.should_advance is False
+    assert verdict.reason is AdvanceReason.TRACK_ENDED
+    assert verdict.context_lost is True
+    assert verdict.idle is False
+    assert verdict.should_advance is True

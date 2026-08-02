@@ -36,6 +36,7 @@ from core import engine
 from core.models import AdvanceReason, RunStatus
 from providers import registry
 from providers.base import ProviderError
+from tests.conftest import forget_window
 from tests.sim_spotify import (
     SimNoActiveDevice,
     SimRateLimited,
@@ -465,7 +466,7 @@ async def test_ts_skip_uses_the_next_command_inside_the_window(database, monkeyp
 
     # A restart forgets which window is set (the registry is in-memory by
     # design) — then the skip must re-assert a window instead of a blind next.
-    runs._forget_window(run_id)
+    await forget_window(run_id)
     fresh = await runs.get_state(run_id, user_id)
     await runs.advance(session, fresh, reason=AdvanceReason.MANUAL)
     assert player.counts["next"] == 1

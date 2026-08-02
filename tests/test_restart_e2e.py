@@ -26,9 +26,12 @@ Was dabei bewiesen wird:
 * Cursor, Status und Reihenfolge stehen nach dem Neustart exakt wie vorher;
 * nichts wird doppelt verbucht (F5): ``run_selections`` zählt genau einen
   Eintrag je Übergang, der Verlauf hat keine ``stale``-Zeile;
-* ``runs._window_anchors`` ist prozesslokal und nach dem Neustart leer
-  (Matrix-Restnotiz G3/SP-006) — der erste ``start`` danach schickt darum ein
-  frisches ``uris``-Fenster; ``fake_provider.play_windows`` wächst.
+* der Fensteranker ÜBERLEBT den Neustart (M012/ADR-005): er steht in der
+  ``runs``-Zeile statt in einem prozesslokalen Dict.  Das schließt die
+  Matrix-Restnotiz G3/SP-006 — nach einem Neustart lief die Kontextende-
+  Erkennung vorher blind, weil ``window_anchor`` immer ``None`` war.  Ein
+  ``start`` schickt trotzdem weiterhin ein frisches Fenster: „fortsetzen" ist
+  eine bewusste Übernahme des Geräts, kein stilles Weiterlaufen.
 
 Der Browser hält seine Session-Cookie über den Serverneustart hinweg; die
 lokale Identität hängt an genau dieser Cookie (``app/deps.py``: ein zufälliger
@@ -54,7 +57,7 @@ from app import db, runs
 from app.main import app
 from core.models import AdvanceReason, PlaylistRef, RunMode, RunState, RunStatus
 from providers.base import TokenBundle
-from tests.conftest import FakeProvider
+from tests.conftest import FakeProvider, window_anchor
 
 # pytest-asyncio auto mode (pyproject.toml) marks async tests automatically.
 
@@ -114,12 +117,10 @@ async def _restart_process(service: Service) -> object:
 
     ``DB_PATH`` setzt die autouse-Fixture aus ``tests/conftest.py`` auf eine
     Datei unter ``tmp_path``; sie wird hier absichtlich NICHT neu gepatcht —
-    genau darauf beruht die Aussage „dieselbe Datei".  Zusätzlich fällt der
-    prozesslokale Fensterspeicher weg, wie er es bei einem echten Neustart tut.
+    genau darauf beruht die Aussage „dieselbe Datei".
     """
     await db.close_db()
     await db.init_db()
-    runs._window_anchors.clear()
     return _new_session(service)
 
 
@@ -143,13 +144,18 @@ async def test_restart_keeps_cursor_status_and_order_and_finishes_the_run(
 
     order_before = list(state.order)
     assert state.cursor == 2 and state.status is RunStatus.ACTIVE
-    # Dieser Prozess weiß, dass er ein uris-Fenster gesetzt hat (ADR-002).
-    assert run_id in runs._window_anchors
+    # Der Lauf weiß, welchen Kontext er gesetzt hat (ADR-002/ADR-005).  Der
+    # Anker steht auf 0, nicht auf 2: die beiden Advances lagen INNERHALB des
+    # gesetzten Fensters und haben darum gar kein Kommando geschickt — genau
+    # die Kommando-Disziplin aus ADR-002.
+    assert await window_anchor(run_id) == 0
     windows_before = len(service.provider.play_windows)
 
     session = await _restart_process(service)
 
-    assert run_id not in runs._window_anchors        # prozesslokal, also weg
+    # M012: der Anker überlebt den Neustart — vorher war er hier weg, und mit
+    # ihm die gesamte Kontextende-Erkennung.
+    assert await window_anchor(run_id) == 0
     resumed = await runs.resume_run(session, run_id)
     assert isinstance(resumed, RunState)
     assert resumed.cursor == 2                       # exakt dieselbe Karte
@@ -163,7 +169,7 @@ async def test_restart_keeps_cursor_status_and_order_and_finishes_the_run(
     await runs.start(session, resumed, device_id="dev1")
     assert len(service.provider.play_windows) == windows_before + 1
     assert service.provider.play_windows[-1][0] == order_before[2]
-    assert runs._window_anchors.get(run_id) == 2
+    assert await window_anchor(run_id) == 2
     assert service.provider.queued == []             # ADR-002: nie die Queue
 
     guard = 0
@@ -289,14 +295,12 @@ def test_restart_over_http_resumes_the_same_run_and_plays_it_to_the_end(
 
     # --- SIMULIERTER Prozessneustart (Präzisierung nach Runde-2-Befund B6,
     # dokumentierte Teständerung 2026-08-01): der Lifespan-Zyklus erneuert
-    # die DB-Verbindung, aber die prozesslokalen Register überleben ihn —
-    # ein echter Neustart leert sie automatisch, hier tun wir es explizit
-    # (Anker UND Locks) und pinnen die Ausgangslage, damit die
-    # Fenster-Assertion unten wirklich am Neustartzustand hängt.
+    # die DB-Verbindung, aber die prozesslokalen Register überleben ihn — ein
+    # echter Neustart leert sie automatisch, hier tun wir es explizit.  Seit
+    # M012 betrifft das nur noch die Advance-Locks: der Fensteranker steht in
+    # der Datenbank und SOLL den Neustart überleben (ADR-005).
     assert session_cookie
-    runs._window_anchors.clear()
     runs._advance_locks.clear()
-    assert run_id not in runs._window_anchors
     windows_before = len(fake_provider.play_windows)
 
     with TestClient(app) as client:

@@ -195,6 +195,17 @@ class ProviderCapabilities:
     #: Spotify Web API has — the queue itself is append-only (no remove, clear
     #: or reorder), so any dedup/reconciliation strategy starts with this flag.
     supports_queue_read: bool = False
+    #: ADR-005: the provider can play a *playlist* as an addressable context
+    #: (``context_uri``) and reports that context back in its playback state.
+    #: That is what makes "is the service still playing OUR order?" answerable
+    #: without guessing, and it is the fallback for clients that silently drop
+    #: everything after the first entry of a uris list.
+    supports_context_playlist: bool = False
+    #: The provider's own shuffle/repeat modes can be switched off through the
+    #: API.  True Shuffle computes the order itself, so the service's shuffle
+    #: must be off — where this is False, the listener has to do it by hand and
+    #: the UI has to say so.
+    supports_playback_modes: bool = False
     #: The provider exposes a recently-played history we can read back.
     #:
     #: This is what makes a deck trackable with **no browser tab open at all**:
@@ -247,6 +258,8 @@ class ProviderCapabilities:
             "reports_account_tier": self.reports_account_tier,
             "supports_context_window": self.supports_context_window,
             "supports_queue_read": self.supports_queue_read,
+            "supports_context_playlist": self.supports_context_playlist,
+            "supports_playback_modes": self.supports_playback_modes,
             "supports_controller_mode": self.supports_controller_mode,
             "supports_history_sync": self.supports_history_sync,
             "live_mode_needs_open_tab": self.live_mode_needs_open_tab,
@@ -408,6 +421,25 @@ class MusicProvider(abc.ABC):
     ) -> None:
         raise Unsupported(f"{self.capabilities.id} cannot write playlists")
 
+    async def replace_playlist_items(
+        self, token: TokenBundle, playlist_id: str, track_ids: List[str]
+    ) -> None:
+        """Make the playlist hold exactly *track_ids*, in that order.
+
+        Needed by the context-playlist strategy (ADR-005) when a plan change
+        invalidates a helper playlist.  An empty list clears it.
+        """
+        raise Unsupported(f"{self.capabilities.id} cannot rewrite playlists")
+
+    async def delete_playlist(self, token: TokenBundle, playlist_id: str) -> None:
+        """Take a playlist back out of the listener's library.
+
+        The context-playlist strategy writes into the user's account, so it
+        must be able to clean up after itself — a helper playlist we cannot
+        remove is litter we left behind.
+        """
+        raise Unsupported(f"{self.capabilities.id} cannot delete playlists")
+
     async def resolve_tracks(
         self, token: TokenBundle, track_ids: List[str]
     ) -> Dict[str, Track]:
@@ -453,6 +485,46 @@ class MusicProvider(abc.ABC):
         case ``track_ids=[one_id]``.
         """
         raise Unsupported(f"{self.capabilities.id} has no remote playback control")
+
+    async def play_context(
+        self,
+        token: TokenBundle,
+        *,
+        context_uri: str,
+        offset_position: int = 0,
+        device_id: Optional[str] = None,
+        position_ms: int = 0,
+    ) -> None:
+        """Play an addressable context (a playlist) from *offset_position*.
+
+        ADR-005: the reliable counterpart to :meth:`play`.  A uris list is
+        ad-hoc and, on some clients, silently truncated to its first entry; a
+        playlist context is what every client plays natively and what
+        :meth:`get_playback_state` reports back, so drift becomes observable
+        instead of inferred.
+        """
+        raise Unsupported(f"{self.capabilities.id} cannot play a playlist context")
+
+    async def set_shuffle(
+        self, token: TokenBundle, *, state: bool, device_id: Optional[str] = None
+    ) -> None:
+        """Switch the service's OWN shuffle on or off.
+
+        True Shuffle hands the service a computed order; the service shuffling
+        it again destroys exactly the guarantee the product is named after.
+        Optional — callers treat :class:`Unsupported` as "tell the listener".
+        """
+        raise Unsupported(f"{self.capabilities.id} has no shuffle control")
+
+    async def set_repeat(
+        self, token: TokenBundle, *, state: str, device_id: Optional[str] = None
+    ) -> None:
+        """Set repeat to ``off`` / ``track`` / ``context``.
+
+        The deck owns repetition (``repeat_mode``); a player-side repeat would
+        replay cards the ledger has already booked.
+        """
+        raise Unsupported(f"{self.capabilities.id} has no repeat control")
 
     async def skip_next(
         self, token: TokenBundle, *, device_id: Optional[str] = None

@@ -36,8 +36,23 @@ class Settings(BaseSettings):
         250,
         validation_alias=AliasChoices("context_window_size", "queue_buffer_size"),
     )
-    #: Base interval for the server-side playback watcher.
+    #: Floor for the server-side playback watcher: how soon it may look again
+    #: after an event, and the base for its error backoff.
     watcher_poll_seconds: float = 4.0
+    #: Ceiling for the same watcher.  The poll schedule sleeps until just after
+    #: the current track is due to end, capped here — so a five-minute song
+    #: costs a handful of requests instead of seventy-five, while the track end
+    #: itself is caught within a second.  It also bounds how long a pause or a
+    #: takeover can go unnoticed.  Spotify counts the Development-Mode quota per
+    #: DEVELOPER ACCOUNT, so this is the one lever that matters for quota.
+    watcher_max_poll_seconds: float = 30.0
+    #: How often a supervisor re-arms watchers for runs that are ACTIVE but
+    #: unwatched (redeploy, crash, silent task death).
+    watcher_supervisor_seconds: float = 60.0
+    #: How old a position observation may be and still be used to resume a
+    #: half-played track.  Older than this and the card starts from the top —
+    #: an hour-old position is a memory, not a place in the music.
+    resume_position_max_age_seconds: int = 600
     #: How often to reconcile a Handoff-Mode deck against listening history.
     #: Services only keep ~50 recent entries, so this has to be well inside the
     #: time it takes to play 50 tracks (~2.5 hours) — a minute is generous.

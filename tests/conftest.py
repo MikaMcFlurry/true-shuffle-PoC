@@ -55,6 +55,10 @@ def _isolated_settings(monkeypatch, tmp_path):
     monkeypatch.setenv("SECRET_KEY", TEST_SECRET)
     monkeypatch.setenv("BASE_URL", "http://testserver")
     monkeypatch.setenv("WATCHER_POLL_SECONDS", "0.01")
+    # The poll schedule sleeps until just after a track is due to end,
+    # capped here.  Production caps at 30 s; a test that waits for the
+    # watcher must not.
+    monkeypatch.setenv("WATCHER_MAX_POLL_SECONDS", "0.02")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -62,23 +66,22 @@ def _isolated_settings(monkeypatch, tmp_path):
 
 @pytest.fixture(autouse=True)
 def _fresh_window_registry():
-    """ADR-002: the window-anchor registry is process-global (like the advance
-    locks), but run ids restart at 1 with every per-test database — clear it
-    so a stale anchor from one test cannot leak "a window is set" into the
-    next test's run of the same id.
+    """Clear the process-global advance locks between tests.
 
-    Phase 4 (§B5): the ADVANCE LOCKS leak the same way, and worse — an
-    ``asyncio.Lock`` created inside one test's event loop raises
-    ``RuntimeError`` when the next test's loop awaits it for the same
-    recycled run id.  That was the sporadic full-module "fixture flakiness"
-    RUN_STATE recorded during D1.  Production has one loop per process, so
-    clearing per test is the correct, honest fix."""
+    ADR-005 removed the sibling window-anchor registry: the asserted context
+    now lives in the ``runs`` row (M012), so it is torn down with the per-test
+    database and needs no fixture at all.
+
+    Phase 4 (§B5): the ADVANCE LOCKS still leak, and worse than the anchors
+    ever did — an ``asyncio.Lock`` created inside one test's event loop raises
+    ``RuntimeError`` when the next test's loop awaits it for the same recycled
+    run id.  That was the sporadic full-module "fixture flakiness" RUN_STATE
+    recorded during D1.  Production has one loop per process, so clearing per
+    test is the correct, honest fix."""
     from app import runs
 
-    runs._window_anchors.clear()
     runs._advance_locks.clear()
     yield
-    runs._window_anchors.clear()
     runs._advance_locks.clear()
 
 
@@ -92,6 +95,31 @@ async def database():
         yield db
     finally:
         await close_db()
+
+
+# ---------------------------------------------------------------------------
+# The asserted playback context (M012) — persisted, so tests read it from the row
+# ---------------------------------------------------------------------------
+
+async def window_anchor(run_id: int):
+    """Which cursor the run's currently asserted context starts at.
+
+    Replaces the old ``runs._window_anchors`` dict: since M012 this is a
+    column, which is the whole point — an anchor that dies with the process
+    silently disabled the end-of-context detection after every restart.
+    """
+    from app import db
+
+    run = await db.get_run(run_id)
+    return None if run is None else run.get("window_anchor")
+
+
+async def forget_window(run_id: int) -> None:
+    """Put a run into the "nothing is known to be set" state, as a plan change
+    or a lost context would."""
+    from app import db
+
+    await db.update_run(run_id, clear_window=True)
 
 
 # ---------------------------------------------------------------------------

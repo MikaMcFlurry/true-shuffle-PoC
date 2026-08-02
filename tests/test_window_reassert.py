@@ -41,6 +41,7 @@ from fastapi.testclient import TestClient
 from app import db, runs
 from app.main import app
 from core.models import PlaybackState
+from tests.conftest import window_anchor
 
 # pytest-asyncio auto mode (pyproject.toml) marks async tests automatically.
 
@@ -211,7 +212,7 @@ def test_reassert_observes_instead_of_fighting_when_the_listener_took_over(
         assert len(fake_provider.play_windows) == windows_before
         # Safety net: the stale window is forgotten, the next command
         # re-asserts (the exclusion itself IS applied).
-        assert run_id not in runs._window_anchors
+        assert client.get(f"/api/runs/{run_id}").json()["context"]["anchor"] is None
         fresh = client.get(f"/api/runs/{run_id}").json()
         assert all(e["run_track_id"] != target["run_track_id"]
                    for e in fresh["upcoming"])
@@ -237,7 +238,7 @@ def test_a_failed_reassert_is_honest_and_the_next_advance_converges(
         assert response.status_code == 200, response.text
         assert response.json()["window"] == "failed"
         assert response.json()["excluded"] is True
-        assert run_id not in runs._window_anchors
+        assert client.get(f"/api/runs/{run_id}").json()["context"]["anchor"] is None
 
         events = [e["type"] for e in
                   client.get(f"/api/runs/{run_id}/events").json()["events"]]
@@ -279,7 +280,7 @@ async def test_watcher_reasserts_a_missing_window_while_the_expected_track_plays
     # Restart shape: the provider plays our current title mid-track, but this
     # process never asserted a window for the run.
     _playing_mid_track(fake_provider, order[0], 42_000)
-    assert run_id not in runs._window_anchors
+    assert await window_anchor(run_id) is None
     windows_before = len(fake_provider.play_windows)
 
     watcher = Watcher()
@@ -297,7 +298,7 @@ async def test_watcher_reasserts_a_missing_window_while_the_expected_track_plays
     assert len(fake_provider.play_windows) == windows_before + 1
     assert fake_provider.play_windows[-1][0] == order[0]
     assert fake_provider.play_positions[-1] == 42_000
-    assert runs._window_anchors.get(run_id) == 0
+    assert await window_anchor(run_id) == 0
     events = [e["type"] for e in await db.list_events(run_id)]
     assert "window_reasserted" in events
 
