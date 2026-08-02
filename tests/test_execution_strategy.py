@@ -287,6 +287,40 @@ async def test_hard_deleting_a_run_takes_its_playlists_with_it(service):
     assert playlist_id in service.provider.deleted_playlists
 
 
+async def test_no_prefetch_hands_over_exactly_one_title_per_command(service):
+    """Der Notmodus: keine Spuren im Konto, dafür ein Kommando je Titel.
+
+    Er ist der ehrliche Preis-Gegenentwurf zur Hilfs-Playlist — und er muss
+    funktionieren, nicht nur im Schema stehen. Entscheidend ist, dass nach
+    jedem Trackende wirklich ein neues Kommando rausgeht: der Dienst hat ja
+    nur einen Titel bekommen.
+    """
+    state = await _run(service, name="Notmodus")
+    await db.update_run(state.run_id,
+                        execution_strategy=execution.NO_PREFETCH)
+    state = await runs.get_state(state.run_id, service.user_id)
+
+    await runs.start(service.session, state, device_id="dev1")
+    assert service.provider.play_windows[-1] == [state.order[0]]
+
+    for expected in range(1, 4):
+        before = len(service.provider.play_windows)
+        await runs.advance(service.session, state,
+                           reason=AdvanceReason.TRACK_ENDED, device_id="dev1")
+        assert len(service.provider.play_windows) == before + 1
+        assert service.provider.play_windows[-1] == [state.order[expected]]
+
+    assert service.provider.created == {}          # keine Hilfs-Playlist
+    assert service.provider.queued == []           # ADR-002: nie die Queue
+
+
+async def test_single_uri_folds_onto_no_prefetch(service):
+    """Der historische Name im CHECK bekommt keinen eigenen Codepfad."""
+    assert execution.normalise("single_uri") == execution.NO_PREFETCH
+    assert execution.normalise("unbekannt") == execution.URIS_WINDOW
+    assert execution.normalise(None) == execution.URIS_WINDOW
+
+
 # ---------------------------------------------------------------------------
 # Spotifys eigene Regler
 # ---------------------------------------------------------------------------
