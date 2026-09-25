@@ -19,7 +19,8 @@
 		"test:watch": "vitest",
 		"test:e2e": "playwright test",
 		"check": "npm run typecheck && npm run lint && npm run test",
-		"types": "wrangler types --include-env=false"
+		"types": "wrangler types --include-env=false",
+		"icons": "node scripts/render-icons.mjs"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.128.0",
