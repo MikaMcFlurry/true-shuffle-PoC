@@ -1,0 +1,245 @@
+/**
+ * The queue planner — decides the next N songs of a station.
+ *
+ * It is rebuilt from memory every time, never "reshuffled": the same
+ * queue cannot come back, because everything that was heard is remembered
+ * and everything that is chosen is chosen with fresh randomness.
+ *
+ * Guarantees, each covered by tests:
+ *  - a song appears at most once per queue;
+ *  - blocked songs (thumb down, station ban) never appear;
+ *  - nothing heard or early-skipped in the last 24 h appears;
+ *  - songs not yet heard in the current round come before any song of the
+ *    next round ("every song eventually");
+ *  - favourites repeat only after their cooldown;
+ *  - the fresh / favourite / discovery shares follow the mix, and unused
+ *    share flows to whatever is still available;
+ *  - songs by the same artist are spread apart when the pool allows it.
+ */
+
+import {
+	coolingDown,
+	favoriteReady,
+	heardInRound,
+	isBlocked,
+	isFavorite,
+	stalenessBoost,
+	tasteWeight,
+} from "./memory";
+import { type MixShares, sharesForRules } from "./mix";
+import { type Rng, weightedShuffle } from "./random";
+import {
+	DAY_MS,
+	type PlannedSlot,
+	type SlotKind,
+	type StationRules,
+	type TrackId,
+	type TrackMemory,
+} from "./types";
+
+export interface PoolEntry {
+	id: TrackId;
+	/** Primary artist, used to spread artists apart. */
+	artistId: string;
+}
+
+export interface DiscoveryEntry extends PoolEntry {
+	/** Source confidence in (0, 1]. */
+	score: number;
+}
+
+export interface PlanInput {
+	now: number;
+	roundStartedAt: number;
+	rules: StationRules;
+	pool: readonly PoolEntry[];
+	memory: (id: TrackId) => TrackMemory;
+	banned: ReadonlySet<TrackId>;
+	discoveries: readonly DiscoveryEntry[];
+	size: number;
+	rng: Rng;
+}
+
+export interface PlanResult {
+	slots: PlannedSlot[];
+	/** Songs of the pool not yet heard in this round (excluding blocked ones). */
+	freshRemaining: number;
+	/** Songs in the pool that may play at all (excluding blocked ones). */
+	poolSize: number;
+	/** How many slots came from each source. */
+	counts: Record<SlotKind, number>;
+	/** Slots filled from the next round because this round ran out. */
+	overflow: number;
+	shares: MixShares;
+}
+
+/** How far ahead the planner looks for a song that keeps artists apart. */
+const SPACING_LOOKAHEAD = 60;
+
+interface Candidate {
+	id: TrackId;
+	artistId: string;
+	overflow?: boolean;
+}
+
+export function planQueue(input: PlanInput): PlanResult {
+	const { now, roundStartedAt, rules, rng } = input;
+	const policy = rules.skipPolicy;
+
+	const fresh: Candidate[] = [];
+	const freshCooling: Candidate[] = [];
+	const favorites: Candidate[] = [];
+	const nextRound: Candidate[] = [];
+	const memo = new Map<TrackId, TrackMemory>();
+
+	const seen = new Set<TrackId>();
+	let poolSize = 0;
+	for (const entry of input.pool) {
+		if (seen.has(entry.id)) continue;
+		seen.add(entry.id);
+		const m = input.memory(entry.id);
+		if (isBlocked(m, input.banned)) continue;
+		poolSize++;
+		memo.set(entry.id, m);
+		const c: Candidate = { id: entry.id, artistId: entry.artistId };
+		const cooling = coolingDown(m, now);
+		if (!heardInRound(m, roundStartedAt, policy)) {
+			(cooling ? freshCooling : fresh).push(c);
+		} else if (!cooling) {
+			if (isFavorite(m)) {
+				// A favourite inside its cooldown waits — also as overflow.
+				if (favoriteReady(m, now, rules)) favorites.push(c);
+			} else {
+				nextRound.push({ ...c, overflow: true });
+			}
+		}
+	}
+
+	const mem = (id: TrackId) => memo.get(id)!;
+
+	const freshOrdered = weightedShuffle(
+		fresh,
+		(c) => tasteWeight(mem(c.id), policy) * stalenessBoost(mem(c.id), now),
+		rng,
+	);
+	const favoritesOrdered = weightedShuffle(
+		favorites,
+		(c) => {
+			const m = mem(c.id);
+			const days = m.lastPlayedAt === null ? 60 : (now - m.lastPlayedAt) / DAY_MS;
+			return tasteWeight(m, policy) * (1 + Math.min(1, days / 60));
+		},
+		rng,
+	);
+	const nextRoundOrdered = weightedShuffle(
+		nextRound,
+		(c) => {
+			const m = mem(c.id);
+			const days = m.lastPlayedAt === null ? 30 : (now - m.lastPlayedAt) / DAY_MS;
+			return tasteWeight(m, policy) * (1 + days / 7);
+		},
+		rng,
+	);
+	const coolingOrdered = weightedShuffle(freshCooling, (c) => tasteWeight(mem(c.id), policy), rng);
+
+	const discoveryCandidates: Candidate[] = [];
+	if (rules.discoveryEnabled) {
+		const ordered = weightedShuffle(
+			input.discoveries.filter((d) => {
+				if (seen.has(d.id)) return false;
+				const m = input.memory(d.id);
+				return !isBlocked(m, input.banned) && !coolingDown(m, now);
+			}),
+			(d) => Math.max(0.01, d.score),
+			rng,
+		);
+		for (const d of ordered) discoveryCandidates.push({ id: d.id, artistId: d.artistId });
+	}
+
+	// The fresh lane continues into the next round once this round is used up:
+	// nothing of the next round is ever placed before a song of this round.
+	const lanes: Record<SlotKind, Candidate[]> = {
+		fresh: [...freshOrdered, ...nextRoundOrdered, ...coolingOrdered],
+		favorite: favoritesOrdered,
+		discovery: discoveryCandidates,
+	};
+
+	const shares = sharesForRules(rules);
+	const taken: Record<SlotKind, number> = { fresh: 0, favorite: 0, discovery: 0 };
+	const kinds: SlotKind[] = ["fresh", "favorite", "discovery"];
+	const used = new Set<TrackId>();
+	const recentArtists: string[] = [];
+	const slots: PlannedSlot[] = [];
+	let overflow = 0;
+
+	for (let i = 0; slots.length < input.size; i++) {
+		// Deficit round robin: the lane furthest behind its share goes next.
+		let best: SlotKind | null = null;
+		let bestDeficit = Number.NEGATIVE_INFINITY;
+		for (const k of kinds) {
+			if (lanes[k].length === 0) continue;
+			const deficit = shares[k] * (slots.length + 1) - taken[k];
+			// Lanes with a zero share only step in when nothing else is left.
+			const adjusted = shares[k] === 0 ? deficit - 1e6 : deficit;
+			if (adjusted > bestDeficit) {
+				bestDeficit = adjusted;
+				best = k;
+			}
+		}
+		if (best === null) break;
+
+		const lane = lanes[best];
+		const pick = takeSpaced(lane, recentArtists, rules.artistSpacing, used);
+		if (!pick) {
+			lanes[best] = [];
+			continue;
+		}
+		used.add(pick.id);
+		taken[best]++;
+		if (pick.overflow) overflow++;
+		slots.push({ trackId: pick.id, kind: best });
+		if (rules.artistSpacing > 0) {
+			recentArtists.push(pick.artistId);
+			if (recentArtists.length > rules.artistSpacing) recentArtists.shift();
+		}
+		if (i > input.size * 4 + 1000) break; // defensive: cannot loop forever
+	}
+
+	return {
+		slots,
+		freshRemaining: fresh.length + freshCooling.length,
+		poolSize,
+		counts: taken,
+		overflow,
+		shares,
+	};
+}
+
+/**
+ * Remove and return the first candidate of `lane` whose artist is not among
+ * the recent ones. Falls back to the front of the lane when no spaced
+ * candidate exists within the lookahead — a small pool must still play.
+ */
+function takeSpaced(
+	lane: Candidate[],
+	recentArtists: readonly string[],
+	spacing: number,
+	used: ReadonlySet<TrackId>,
+): Candidate | null {
+	// Drop anything already placed (a song can sit in two lanes at most in
+	// theory; never twice in one queue).
+	while (lane.length > 0 && used.has(lane[0]!.id)) lane.shift();
+	if (lane.length === 0) return null;
+	if (spacing > 0 && recentArtists.length > 0) {
+		const limit = Math.min(lane.length, SPACING_LOOKAHEAD);
+		for (let j = 0; j < limit; j++) {
+			const c = lane[j]!;
+			if (used.has(c.id)) continue;
+			if (!recentArtists.includes(c.artistId)) {
+				lane.splice(j, 1);
+				return c;
+			}
+		}
+	}
+	return lane.shift() ?? null;
+}

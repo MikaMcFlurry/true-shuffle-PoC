@@ -1,0 +1,82 @@
+{
+	// True Shuffle — one Worker, two Durable Object classes, static client assets.
+	//
+	// Deployed by Workers Builds on push to the production branch
+	// (build command: `npm run build`, deploy command: `npx wrangler deploy`).
+	// See docs/SETUP.md for the one-time dashboard steps and secrets.
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "true-shuffle",
+	"main": "src/worker/index.ts",
+	"compatibility_date": "2026-09-20",
+	"compatibility_flags": ["nodejs_compat"],
+
+	// The Preact client is built into dist/client by `npm run build`. Static
+	// requests never invoke the Worker (free and unmetered); only /api and
+	// /auth do.
+	"assets": {
+		"directory": "dist/client",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/api/*", "/auth/*"]
+	},
+
+	// UserHub: one instance per Spotify account, holding that listener's whole
+	// state in its own SQLite database. Every operation for a listener runs in
+	// that one single-threaded object, so the background sync and a tap in the
+	// app can never race each other.
+	// Registry: a single instance that remembers which UserHubs exist, so the
+	// cron safety net can re-arm their alarms.
+	"durable_objects": {
+		"bindings": [
+			{ "name": "USER_HUB", "class_name": "UserHub" },
+			{ "name": "REGISTRY", "class_name": "Registry" }
+		]
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["UserHub", "Registry"] }],
+
+	// Safety net only: each UserHub schedules its own sync alarm. This cron
+	// re-arms any hub whose alarm chain was lost.
+	"triggers": { "crons": ["*/20 * * * *"] },
+
+	// Workers AI — free fallback for AI discovery when no Anthropic key is set.
+	"ai": { "binding": "AI" },
+
+	"vars": {
+		// Public client id of the Spotify app (PKCE, no client secret needed).
+		// Set it here or as a dashboard variable.
+		"SPOTIFY_CLIENT_ID": "",
+		// Model used for AI discovery when ANTHROPIC_API_KEY is set.
+		"ANTHROPIC_MODEL": "claude-sonnet-5",
+		// Optional comma-separated allowlist of Spotify user ids. Empty means
+		// "whoever Spotify lets through" — in Development Mode that is already
+		// limited to the accounts allowlisted in the Spotify dashboard.
+		"ALLOWED_SPOTIFY_IDS": ""
+	},
+
+	"observability": { "enabled": true },
+
+	// Local end-to-end tests: same Worker, fake Spotify, no Workers AI binding
+	// (it only runs remotely), no cron.
+	"env": {
+		"e2e": {
+			"name": "true-shuffle-e2e",
+			"durable_objects": {
+				"bindings": [
+					{ "name": "USER_HUB", "class_name": "UserHub" },
+					{ "name": "REGISTRY", "class_name": "Registry" }
+				]
+			},
+			"vars": {
+				"SPOTIFY_CLIENT_ID": "e2e-client",
+				"ANTHROPIC_MODEL": "claude-sonnet-5",
+				"ALLOWED_SPOTIFY_IDS": "",
+				"SPOTIFY_ACCOUNTS_BASE": "http://127.0.0.1:8788/accounts",
+				"SPOTIFY_API_BASE": "http://127.0.0.1:8788/v1",
+				"LASTFM_API_BASE": "http://127.0.0.1:8788/lastfm",
+				"DEEZER_API_BASE": "http://127.0.0.1:8788/deezer",
+				"APP_SECRET": "e2e-secret-e2e-secret-e2e-secret-e2e-secret",
+				"FAST_CLOCK": "1"
+			}
+		}
+	}
+}

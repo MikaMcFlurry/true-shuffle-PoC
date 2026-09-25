@@ -1,54 +1,26 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.egg-info/
+# Dependencies and build output
+node_modules/
 dist/
-build/
-*.egg
+.wrangler/
+coverage/
 
-# Virtual environments
-.venv/
-venv/
-env/
-
-# Environment variables / secrets
+# Local secrets (wrangler dev reads .dev.vars)
+.dev.vars
+.dev.vars.*
 .env
 .env.*
-!.env.example
 
-# Apple hands out the MusicKit .p8 key exactly once, and TESTEN.md tells people
-# to put it in ./secrets/. Committing it would be unrecoverable.
-secrets/
-*.p8
-*.pem
+# Playwright
+test-results/
+playwright-report/
+e2e/.artifacts/
 
-# SQLite databases
-*.db
-*.sqlite3
-data/
-
-# IDE
+# Editors / OS
 .vscode/
 .idea/
 *.swp
-*.swo
-
-# OS
-Thumbs.db
 .DS_Store
-
-# Ruff cache
-.ruff_cache/
-
-# pytest cache
-.pytest_cache/
-
-# mypy
-.mypy_cache/
-
-# Screenshot/preview scratch written into static/ by the design workflow
-app/static/_preview_*.html
+Thumbs.db
 
 # Local harness settings (impeccable design hook, permissions)
 .claude/settings.local.json
