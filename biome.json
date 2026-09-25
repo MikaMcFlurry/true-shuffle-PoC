@@ -9,7 +9,8 @@
 			"*.json",
 			"*.jsonc",
 			"!worker-configuration.d.ts",
-			"!e2e/*.tmp.mjs"
+			"!e2e/*.tmp.mjs",
+			"!e2e/.artifacts"
 		]
 	},
 	"formatter": {

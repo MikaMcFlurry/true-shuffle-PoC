@@ -116,10 +116,30 @@ export function App() {
 	// Phone: one screen at a time. Desktop: the radio stays, pages open beside it.
 	return (
 		<div class={`shell${side ? " shell--split" : ""}`} data-route={route.name}>
-			<div class={side ? "main main--home desk-only" : "main"}>
-				<Home state={state} />
-			</div>
+			{side && !desk ? null : (
+				<div class={side ? "main main--home" : "main"}>
+					<Home state={state} />
+				</div>
+			)}
 			{side ? <aside class="side">{side}</aside> : null}
+			{side && !desk ? <FlashStrip /> : null}
+		</div>
+	);
+}
+
+/**
+ * On a phone a page covers the radio, and with it the display that carries
+ * messages. They show in a strip of display glass at the bottom instead.
+ */
+function FlashStrip() {
+	const s = useStore();
+	const flash = s.flash && s.flash.until > Date.now() ? s.flash : null;
+	return (
+		<div
+			class={`strip${flash ? " strip--on" : ""}${flash?.tone === "error" ? " strip--error" : ""}`}
+			role="status"
+		>
+			{flash?.text ?? ""}
 		</div>
 	);
 }

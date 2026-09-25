@@ -102,6 +102,12 @@ function cover(i: number): string {
 	return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
+const DEVICES = [
+	{ id: "mika-phone", name: "Mikas iPhone", type: "Smartphone", restricted: false },
+	{ id: "mika-car", name: "Auto (CarPlay)", type: "Automobile", restricted: false },
+	{ id: "mika-desk", name: "Schreibtisch", type: "Computer", restricted: false },
+];
+
 export function seed(fake: FakeSpotify): void {
 	const n = 1500;
 	const tracks = fake.addTracks(n, { artists: ARTISTS.length });
@@ -125,11 +131,7 @@ export function seed(fake: FakeSpotify): void {
 		(t as { cover?: string }).cover = cover(Math.floor(i / 10));
 	});
 	fake.addUser("mika", { name: "Mika" });
-	fake.user("mika").devices = [
-		{ id: "mika-phone", name: "Mikas iPhone", type: "Smartphone", restricted: false },
-		{ id: "mika-car", name: "Auto (CarPlay)", type: "Automobile", restricted: false },
-		{ id: "mika-desk", name: "Schreibtisch", type: "Computer", restricted: false },
-	];
+	fake.user("mika").devices = [...DEVICES];
 	const ids = tracks.map((t) => t.id);
 	fake.addPlaylist("mika", "Alles, was ich mag", ids.slice(0, 1200), fakeId("P", 101));
 	fake.addPlaylist("mika", "Indie & Gitarren", ids.slice(300, 700), fakeId("P", 102));
@@ -183,7 +185,7 @@ const server = createServer(async (req, res) => {
 				user.premium = u.searchParams.get("on") === "1";
 				break;
 			case "/__control/devices":
-				if (u.searchParams.get("none") === "1") user.devices = [];
+				user.devices = u.searchParams.get("none") === "1" ? [] : [...DEVICES];
 				break;
 		}
 		response = Response.json({

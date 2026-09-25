@@ -5,7 +5,7 @@ import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
 import { PageBar, Scale, Section } from "../components/radio";
-import { ago, num, pct, SEP } from "../format";
+import { ago, DECK_PREFIX, num, pct, SEP } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
 import { playStation } from "./home";
@@ -263,7 +263,17 @@ export function Station({
 				}
 				backTo="/"
 				noBack={embedded}
-			/>
+			>
+				<Scale
+					pos={d.progress ?? 0}
+					label={
+						heard !== null && d.poolSize !== null
+							? `Runde ${d.roundNo}: ${num(heard)} von ${num(d.poolSize)} gehört, ${num(d.freshRemaining ?? 0)} offen`
+							: `Runde ${d.roundNo}`
+					}
+					reading={{ round: d.roundNo, heard, total: d.poolSize }}
+				/>
+			</PageBar>
 
 			<div class="row-actions">
 				<button
@@ -290,25 +300,6 @@ export function Station({
 						wird vorbereitet
 					</span>
 				)}
-			</div>
-
-			<div class="meter">
-				<Scale pos={d.progress ?? 0} label="Fortschritt der Runde" />
-				<div class="meter__legend num">
-					<strong>Runde {d.roundNo}</strong>
-					{heard !== null && d.poolSize !== null ? (
-						<>
-							<strong>
-								{num(heard)} <span>von</span> {num(d.poolSize)} <span>gehört</span>
-							</strong>
-							<strong>
-								{num(d.freshRemaining ?? 0)} <span>offen</span>
-							</strong>
-						</>
-					) : (
-						<span>Zählt ab dem ersten Durchlauf</span>
-					)}
-				</div>
 			</div>
 
 			<Section title="Mischung" id="mix">
@@ -387,7 +378,7 @@ export function Station({
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Behalten</span>
-							<span class="row__sub">Stehen jetzt in „True Shuffle · Entdeckungen“</span>
+							<span class="row__sub">Stehen jetzt in „{DECK_PREFIX}Entdeckungen“</span>
 						</span>
 						<span class="row__value num">{num(d.discoveries.kept)}</span>
 					</li>
@@ -544,8 +535,8 @@ export function Station({
 			{confirm ? (
 				<div class="stack">
 					<p class="note note--error">
-						„{d.name}“ löschen? Die Spotify-Playlist „True Shuffle · {d.name}“ verschwindet. Dein
-						Gedächtnis bleibt — jeder gehörte Song bleibt gehört.
+						„{d.name}“ löschen? Die Spotify-Playlist „{DECK_PREFIX}
+						{d.name}“ verschwindet. Dein Gedächtnis bleibt — jeder gehörte Song bleibt gehört.
 					</p>
 					<div class="row-actions">
 						<button type="button" class="key btn" onClick={() => setConfirm(false)}>

@@ -11,7 +11,7 @@ import {
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, NowPlaying, StationSummary } from "../../shared/api";
 import { api } from "../api";
-import { Display, type Indicator, Scale } from "../components/radio";
+import { Display, type Indicator, type RoundReading, Scale } from "../components/radio";
 import { duration, num, rds, SEP } from "../format";
 import { store, useStore } from "../store";
 
@@ -25,6 +25,21 @@ function roundLabel(s: StationSummary): string {
 	if (s.poolSize === null || s.freshRemaining === null) return `Runde ${s.roundNo}`;
 	const heard = Math.max(0, s.poolSize - s.freshRemaining);
 	return `Runde ${s.roundNo}${SEP}${num(heard)} / ${num(s.poolSize)}`;
+}
+
+function reading(s: StationSummary): RoundReading {
+	return {
+		round: s.roundNo,
+		heard:
+			s.poolSize !== null && s.freshRemaining !== null
+				? Math.max(0, s.poolSize - s.freshRemaining)
+				: null,
+		total: s.poolSize,
+	};
+}
+
+function stationScale(s: StationSummary) {
+	return { pos: s.progress ?? 0, label: roundLabel(s), reading: reading(s) };
 }
 
 /** "Runde 2" left, "340 / 1.200" right — one line, never broken inside a number. */
@@ -98,7 +113,7 @@ function NowDisplay({ state }: { state: AppState }) {
 				name={rds(tuning.name)}
 				song="Sender wird eingestellt …"
 				artist="True Shuffle bereitet deine Playlist in Spotify vor"
-				scale={{ pos: tuning.progress ?? 0, label: roundLabel(tuning) }}
+				scale={stationScale(tuning)}
 				tuning
 				live
 			/>
@@ -127,6 +142,7 @@ function NowDisplay({ state }: { state: AppState }) {
 				nameGhost={!station}
 				song={np.name}
 				artist={np.artists}
+				time={`${duration(elapsed)} / ${duration(np.durationMs)}`}
 				message={message}
 				line={
 					station
@@ -137,8 +153,7 @@ function NowDisplay({ state }: { state: AppState }) {
 							? "Gast-Modus: zählt nicht ins Gedächtnis"
 							: "Außerhalb von True Shuffle — zählt trotzdem"
 				}
-				lineRight={`${duration(elapsed)} / ${duration(np.durationMs)}`}
-				scale={station ? { pos: station.progress ?? 0, label: roundLabel(station) } : null}
+				scale={station ? stationScale(station) : null}
 				live
 			/>
 		);
@@ -155,7 +170,7 @@ function NowDisplay({ state }: { state: AppState }) {
 			song={last ? "Tippe den Sender, um weiterzuhören" : "Tippe einen Sender"}
 			artist="Spotify spielt, True Shuffle merkt sich alles"
 			message={message}
-			scale={last ? { pos: last.progress ?? 0, label: roundLabel(last) } : null}
+			scale={last ? stationScale(last) : null}
 		/>
 	);
 }

@@ -1,4 +1,5 @@
 import { Display } from "../components/radio";
+import { DECK_PREFIX } from "../format";
 
 const LOGIN_MESSAGES: Record<string, string> = {
 	denied: "Anmeldung abgebrochen — tippe nochmal, wenn du magst.",
@@ -27,6 +28,7 @@ export function SignIn() {
 					artist="Keine schnellen Wiederholungen. Alles kommt irgendwann dran."
 					message={message}
 					scale={{ pos: 0, label: "" }}
+					wrap
 				/>
 				<p class="power__text">
 					True Shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken — auch
@@ -36,8 +38,8 @@ export function SignIn() {
 					Mit Spotify anmelden
 				</a>
 				<p class="power__fine">
-					Braucht Spotify Premium. True Shuffle legt pro Sender eine private Playlist „True Shuffle
-					· …“ in deinem Konto an.
+					Braucht Spotify Premium. True Shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
+					…“ in deinem Konto an.
 				</p>
 			</div>
 		</div>

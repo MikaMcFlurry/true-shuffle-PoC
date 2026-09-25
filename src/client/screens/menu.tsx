@@ -10,7 +10,7 @@ import {
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api } from "../api";
 import { PageBar, Section } from "../components/radio";
-import { clock, day, num, SEP } from "../format";
+import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
 const DEVICE_TYPES: Record<string, string> = {
 	Smartphone: "Handy",
@@ -75,7 +75,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 			<PageBar title="Menü" sub={state.profile.name} backTo="/" />
 
 			<Section title="Gäste" id="guest">
-				<ul class="list">
+				<ul class="list list--keys">
 					<li>
 						<label class="row">
 							<span class="row__main">
@@ -129,7 +129,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 			</Section>
 
 			<Section title="Sender" id="stations">
-				<ul class="list">
+				<ul class="list list--keys">
 					<Row
 						href="/sender/neu"
 						title="Sender anlegen"
@@ -145,7 +145,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 			</Section>
 
 			<Section title="Gedächtnis" id="memory">
-				<ul class="list">
+				<ul class="list list--keys">
 					<Row
 						href="/verlauf"
 						title="Verlauf"
@@ -164,8 +164,8 @@ export function MenuScreen({ state }: { state: AppState }) {
 				</ul>
 			</Section>
 
-			<Section title="Anzeige" id="illum">
-				<div class="presetrow" role="toolbar" aria-label="Beleuchtung">
+			<Section title="Beleuchtung" id="illum">
+				<div class="presetrow" role="toolbar" aria-labelledby="illum">
 					{(
 						[
 							["auto", "Automatisch"],
@@ -190,7 +190,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 			</Section>
 
 			<Section title="Konto" id="account">
-				<ul class="list">
+				<ul class="list list--keys">
 					<Row
 						href="/info"
 						title="Über True Shuffle"
@@ -219,7 +219,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 				{confirm ? (
 					<div class="stack">
 						<p class="note note--error">
-							Alles löschen? Dein Gedächtnis, alle Sender und ihre Spotify-Playlists „True Shuffle ·
+							Alles löschen? Dein Gedächtnis, alle Sender und ihre Spotify-Playlists „{DECK_PREFIX}
 							…“ werden entfernt. Das lässt sich nicht rückgängig machen.
 						</p>
 						<div class="row-actions">
@@ -237,7 +237,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 											store.emit();
 											if (r.stuck.length) {
 												store.say(
-													`${r.stuck.length} Playlist(s) „True Shuffle · …“ bitte in Spotify selbst löschen — sie ließen sich nicht entfernen.`,
+													`${r.stuck.length} Playlist(s) „${DECK_PREFIX}…“ bitte in Spotify selbst löschen — sie ließen sich nicht entfernen.`,
 													"warn",
 													20000,
 												);
@@ -427,7 +427,7 @@ export function AboutScreen() {
 			<PageBar title="Über True Shuffle" backTo="/menu" />
 			<Section title="Wie es funktioniert" id="how">
 				<p class="lede">
-					Jeder Sender ist eine private Playlist „True Shuffle · …“ in deinem Spotify. True Shuffle
+					Jeder Sender ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify. True Shuffle
 					schreibt sie aus deinem Gedächtnis neu, immer dann, wenn gerade niemand sie hört. Spotify
 					spielt sie ganz normal ab — auf jedem Gerät, auch im Auto, auch wenn du sie direkt in
 					Spotify startest.
@@ -630,7 +630,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 							aria-valuemax={rows.length}
 							aria-valuenow={sent}
 						>
-							<span style={{ width: `${(sent / Math.max(1, rows.length)) * 100}%` }} />
+							<span style={{ "--done": String(sent / Math.max(1, rows.length)) }} />
 						</div>
 					) : null}
 				</div>

@@ -30,6 +30,9 @@
 	--lcd-ink-2: #39402d;
 	--lcd-ghost: rgba(22, 26, 16, 0.12);
 	--lcd-inset: inset 0 2px 5px rgba(20, 24, 14, 0.28), inset 0 0 0 1px rgba(20, 24, 14, 0.12);
+	/* day glass reflects the cabin; the cells of the matrix show faintly */
+	--lcd-sheen: linear-gradient(165deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 42%);
+	--lcd-cells: rgba(22, 26, 16, 0.05);
 	/* lit state */
 	--lit: #c2560c;
 	--lit-ink: #ffffff;
@@ -73,6 +76,13 @@
 		--lcd-ink-2: #c98b35;
 		--lcd-ghost: rgba(255, 181, 74, 0.1);
 		--lcd-inset: inset 0 2px 8px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+		/* night glass is lit from behind: the backlight bleeds in from the top */
+		--lcd-sheen: radial-gradient(
+			120% 90% at 50% -10%,
+			rgba(255, 171, 46, 0.1),
+			rgba(255, 171, 46, 0) 62%
+		);
+		--lcd-cells: rgba(255, 181, 74, 0.04);
 		--lit: #ffab2e;
 		--lit-ink: #1c1203;
 		--lit-soft: rgba(255, 171, 46, 0.14);
@@ -103,6 +113,12 @@
 	--lcd-ink-2: #c98b35;
 	--lcd-ghost: rgba(255, 181, 74, 0.1);
 	--lcd-inset: inset 0 2px 8px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+	--lcd-sheen: radial-gradient(
+		120% 90% at 50% -10%,
+		rgba(255, 171, 46, 0.1),
+		rgba(255, 171, 46, 0) 62%
+	);
+	--lcd-cells: rgba(255, 181, 74, 0.04);
 	--lit: #ffab2e;
 	--lit-ink: #1c1203;
 	--lit-soft: rgba(255, 171, 46, 0.14);
@@ -142,6 +158,11 @@ body {
 ::selection {
 	background: var(--lit-soft);
 	color: var(--ink);
+}
+
+input,
+textarea {
+	caret-color: var(--lit);
 }
 
 :focus-visible {
@@ -191,31 +212,57 @@ select {
 }
 
 @media (min-width: 980px) {
+	body:has(.shell--split) {
+		background: var(--plate-deep);
+	}
 	.shell--split {
-		max-width: 1180px;
+		max-width: 1300px;
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(380px, 440px);
+		grid-template-columns: minmax(0, 1fr) minmax(380px, 460px);
 		align-items: start;
-		gap: 24px;
-		padding-top: 28px;
+		gap: 28px;
+		padding-top: 24px;
+		padding-bottom: 24px;
+	}
+	/* The radio itself: one moulded faceplate running the window's height. */
+	.shell--split > .main--home {
+		position: sticky;
+		top: 24px;
+		min-height: calc(100dvh - 48px);
+		padding: 22px 24px 24px;
+		border-radius: var(--r-plate);
+		background: var(--plate);
+		box-shadow:
+			inset 0 1px 0 var(--key-hi),
+			inset 0 0 0 1px var(--seam-soft),
+			0 24px 48px -28px rgba(0, 0, 0, 0.45);
+	}
+	.shell--split > .main--home .bar {
+		margin-top: auto;
 	}
 	.shell--split > .side {
 		position: sticky;
 		top: 24px;
 		max-height: calc(100dvh - 48px);
 		overflow: auto;
-		border-radius: var(--r-plate);
-		background: var(--plate-deep);
-		box-shadow: inset 0 0 0 1px var(--seam-soft);
-	}
-	.side > .page {
-		padding: 20px;
+		padding: 2px 4px 24px;
 	}
 	.side .page__bar {
 		position: sticky;
 		top: 0;
-		background: var(--plate-deep);
 		z-index: 2;
+		padding-bottom: 6px;
+		background: var(--plate-deep);
+	}
+	.shell--split .presets {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.shell--split > .main--home .display__name {
+		font-size: 72px;
+		line-height: 1;
+	}
+	.shell--split .strip {
+		display: none;
 	}
 }
 
@@ -231,7 +278,10 @@ select {
 .display {
 	position: relative;
 	border-radius: var(--r-lcd);
-	background: var(--lcd);
+	background:
+		var(--lcd-sheen),
+		radial-gradient(circle at 1px 1px, var(--lcd-cells) 0.9px, transparent 1.1px) 0 0 / 3px 3px,
+		var(--lcd);
 	color: var(--lcd-ink);
 	box-shadow: var(--lcd-inset);
 	padding: 14px 16px 12px;
@@ -303,26 +353,39 @@ select {
 }
 
 .display__artist {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
 	font-weight: 500;
 	font-size: 15px;
 	color: var(--lcd-ink-2);
+}
+
+.display__artist > :first-child {
+	min-width: 0;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
+.display__time {
+	flex: none;
+	font-weight: 700;
+	font-size: 14px;
+}
+
+.display--wrap .display__song,
+.display--wrap .display__artist > :first-child {
+	white-space: normal;
+	overflow: visible;
+}
+
 .display__line {
-	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 12px;
 	font-size: 13px;
 	font-weight: 600;
 	color: var(--lcd-ink-2);
 	min-height: 18px;
-}
-
-.display__line > :first-child {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -356,6 +419,7 @@ select {
 	position: relative;
 	height: 22px;
 	margin-top: 4px;
+	overflow: hidden;
 	--pos: 0;
 }
 
@@ -385,41 +449,79 @@ select {
 	left: 0;
 	bottom: 5px;
 	height: 3px;
-	width: calc(var(--pos) * 100%);
+	width: 100%;
+	transform: scaleX(var(--pos));
+	transform-origin: left center;
 	background: currentColor;
-	transition: width 900ms var(--ease);
+	transition: transform 900ms var(--ease);
+}
+
+/* The needle rides a full-width track; the track moves, so only transform animates. */
+.scale__track {
+	position: absolute;
+	inset: 0;
+	transform: translateX(calc(var(--pos) * (100% - 3px)));
+	transition: transform 900ms var(--ease);
+	pointer-events: none;
 }
 
 .scale__needle {
 	position: absolute;
+	left: 0;
+	top: 0;
 	bottom: 0;
-	top: -4px;
-	left: calc(var(--pos) * 100%);
 	width: 3px;
-	margin-left: -1px;
 	border-radius: 2px;
 	background: var(--lit);
-	transition: left 900ms var(--ease);
 }
 
 .display .scale__needle {
 	background: currentColor;
 }
 
-.scale--tuning .scale__needle {
+.scale--tuning .scale__track {
 	animation: sweep 900ms var(--ease);
 }
 
 @keyframes sweep {
 	0% {
-		left: 0;
+		transform: translateX(0);
 	}
 	60% {
-		left: 100%;
+		transform: translateX(calc(100% - 3px));
 	}
 	100% {
-		left: calc(var(--pos) * 100%);
+		transform: translateX(calc(var(--pos) * (100% - 3px)));
 	}
+}
+
+.scale-unit {
+	display: grid;
+	gap: 2px;
+}
+
+.scale__majors {
+	display: flex;
+	justify-content: space-between;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1.1;
+	opacity: 0.8;
+}
+
+.scale__reading {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: 2px;
+	font-size: 13px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.display .scale__reading,
+.display .scale__majors {
+	color: var(--lcd-ink-2);
 }
 
 .display--tuning .display__name {
@@ -632,9 +734,9 @@ select {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	font-family: var(--font-lcd);
 	font-weight: 800;
-	font-size: 15px;
+	font-size: 14px;
+	letter-spacing: 0.08em;
 	line-height: 1;
 	color: var(--ink-3);
 }
@@ -663,8 +765,22 @@ select {
 	overflow-wrap: anywhere;
 }
 
+.preset--playing {
+	background: var(--key-press);
+	transform: translateY(1px);
+	box-shadow:
+		inset 0 2px 5px var(--key-shadow),
+		inset 0 0 0 1px var(--seam);
+}
+
 .preset--playing .preset__name {
-	font-size: 19px;
+	font-size: 22px;
+	font-weight: 800;
+	line-height: 1.1;
+}
+
+.preset--playing .preset__num {
+	color: var(--ink-2);
 }
 
 .preset__meta {
@@ -796,9 +912,8 @@ select {
 }
 
 .brand__mark {
-	font-family: var(--font-lcd);
-	font-weight: 800;
-	letter-spacing: 0.08em;
+	font-weight: 850;
+	letter-spacing: 0.22em;
 	color: var(--ink);
 }
 
@@ -838,33 +953,54 @@ select {
 
 .page__bar {
 	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 4px 0;
+	align-items: stretch;
+	gap: 10px;
 }
 
-.page__bar .key {
+.page__back {
 	width: 48px;
-	height: 48px;
+	min-height: 48px;
 	display: grid;
 	place-items: center;
 	flex: none;
 }
 
+.page__lcd {
+	flex: 1;
+	min-width: 0;
+	display: grid;
+	gap: 4px;
+	padding: 10px 14px 10px;
+	border-radius: var(--r-lcd);
+	background:
+		var(--lcd-sheen),
+		radial-gradient(circle at 1px 1px, var(--lcd-cells) 0.9px, transparent 1.1px) 0 0 / 3px 3px,
+		var(--lcd);
+	color: var(--lcd-ink);
+	box-shadow: var(--lcd-inset);
+}
+
 .page__title {
 	margin: 0;
-	font-size: 23px;
-	line-height: 1.15;
+	font-family: var(--font-lcd);
+	font-size: 26px;
+	line-height: 1.05;
 	font-weight: 800;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
 	min-width: 0;
 	overflow-wrap: anywhere;
 }
 
 .page__sub {
-	margin: 2px 0 0;
+	margin: 0;
 	font-size: 14px;
-	color: var(--ink-2);
+	color: var(--lcd-ink-2);
 	font-weight: 600;
+}
+
+.page__lcd .scale-unit {
+	margin-top: 4px;
 }
 
 .section {
@@ -977,6 +1113,41 @@ label.row:hover {
 	flex: none;
 	background: var(--seam-soft);
 }
+
+/* Menu rows are keys of their own, each pressable, like the faceplate. */
+.list--keys {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+	background: none;
+	box-shadow: none;
+	overflow: visible;
+	border-radius: 0;
+}
+
+.list--keys > li + li {
+	border-top: 0;
+}
+
+.list--keys > li > .row {
+	border-radius: var(--r-key);
+	background: var(--key);
+	box-shadow:
+		inset 0 1px 0 var(--key-hi),
+		0 1px 1px var(--key-shadow),
+		0 6px 12px -8px var(--key-shadow-far);
+}
+
+.list--keys > li > a.row:active,
+.list--keys > li > button.row:active {
+	transform: translateY(1px);
+	background: var(--key-press);
+	box-shadow:
+		inset 0 1px 0 var(--key-hi),
+		0 2px 4px -3px var(--key-shadow-far);
+}
+
+/* ------------------------------------------------------------------ tags */
 
 .tag {
 	display: inline-block;
@@ -1409,8 +1580,56 @@ details.more > .more__body {
 .progress > span {
 	display: block;
 	height: 100%;
+	width: 100%;
+	transform: scaleX(var(--done, 0));
+	transform-origin: left center;
 	background: var(--lit);
-	transition: width var(--t) var(--ease);
+	transition: transform var(--t) var(--ease);
+}
+
+/* a strip of display glass for messages while a page covers the radio */
+
+.strip {
+	position: fixed;
+	left: var(--pad);
+	right: var(--pad);
+	bottom: max(12px, env(safe-area-inset-bottom));
+	z-index: 10;
+	padding: 12px 16px;
+	border-radius: var(--r-lcd);
+	background: var(--lcd);
+	color: var(--lcd-ink);
+	box-shadow:
+		var(--lcd-inset),
+		0 12px 28px -12px rgba(0, 0, 0, 0.45);
+	font-weight: 700;
+	font-size: 14px;
+	line-height: 1.35;
+	opacity: 0;
+	transform: translateY(12px);
+	pointer-events: none;
+	transition:
+		opacity var(--t) var(--ease),
+		transform var(--t) var(--ease);
+}
+
+.strip--on {
+	opacity: 1;
+	transform: none;
+}
+
+.strip--error {
+	color: var(--danger);
+}
+
+:root:not([data-illumination="night"]) .strip--error {
+	color: #7d140c;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-illumination="day"]) .strip--error {
+		color: var(--danger);
+	}
 }
 
 /* reduced motion: the radio still works, it just stops sweeping */
@@ -1424,12 +1643,5 @@ details.more > .more__body {
 		animation-iteration-count: 1 !important;
 		transition-duration: 1ms !important;
 		/* biome-ignore-end lint/complexity/noImportantStyles: see above */
-	}
-}
-
-/* phone: a page replaces the radio; desktop: the radio stays beside it */
-@media (max-width: 979px) {
-	.desk-only {
-		display: none;
 	}
 }

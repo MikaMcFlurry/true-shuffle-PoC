@@ -4,7 +4,10 @@ const nf = new Intl.NumberFormat("de-DE");
  * Separator for short facts on one line. Overpass draws U+00B7 off-centre,
  * so the display uses the centred bullet operator instead.
  */
-export const SEP = " \u2219 ";
+export const SEP = "\u00a0\u2219 ";
+
+/** How the station playlists are named in Spotify, as the interface writes it. */
+export const DECK_PREFIX = "True Shuffle\u00a0\u2219\u00a0";
 
 export function num(n: number): string {
 	return nf.format(n);
