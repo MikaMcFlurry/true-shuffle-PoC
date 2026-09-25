@@ -7,6 +7,7 @@
 
 import { DatabaseSync } from "node:sqlite";
 import { seededRng } from "../../src/core/random";
+import type { AiRunner } from "../../src/worker/hub/discovery";
 import { HubCore, type HubDeps, type HubEnv } from "../../src/worker/hub/hub";
 import { Keys } from "../../src/worker/lib/crypto";
 import type { SqlDb, SqlValue } from "../../src/worker/lib/sql";
@@ -62,7 +63,7 @@ export interface Harness {
 }
 
 export async function makeHarness(
-	opts: { fake?: FakeSpotify; env?: Partial<HubEnv>; seed?: number } = {},
+	opts: { fake?: FakeSpotify; env?: Partial<HubEnv>; seed?: number; ai?: AiRunner | null } = {},
 ): Promise<Harness> {
 	const clock = { t: T0 };
 	const now = () => clock.t;
@@ -91,7 +92,7 @@ export async function makeHarness(
 		keys: new Keys("test-secret-test-secret-test-secret-42"),
 		env,
 		alarms: { set: async (at) => void (alarm = at), get: async () => alarm },
-		ai: null,
+		ai: opts.ai ?? null,
 	});
 	const h: Harness = {
 		hub: new HubCore(deps()),
@@ -144,6 +145,7 @@ export async function onboarded(
 		env?: Partial<HubEnv>;
 		durationMs?: number;
 		fake?: FakeSpotify;
+		ai?: AiRunner | null;
 	} = {},
 ): Promise<Harness & { stationIds: number[]; allId: number }> {
 	const fake = opts.fake ?? new FakeSpotify();
@@ -162,7 +164,7 @@ export async function onboarded(
 		return p;
 	});
 	fake.user("mika").liked = tracks.slice(0, opts.liked ?? 0).map((t) => t.id);
-	const h = await makeHarness({ fake, env: opts.env });
+	const h = await makeHarness({ fake, env: opts.env, ai: opts.ai });
 	const refresh = "rt-seed";
 	fake.refreshTokens.set(refresh, "mika");
 	await h.hub.connect(

@@ -58,6 +58,8 @@ export interface DiscoveryState {
 	seeds?: { id: string; name: string }[];
 	added?: number;
 	suggestions?: { artist: string; title: string }[];
+	/** When this run began (a run spans several invocations). */
+	startedAt?: number;
 }
 
 type Result = { done: true } | { done: false; state: DiscoveryState };

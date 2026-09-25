@@ -1647,6 +1647,7 @@ export class HubCore {
 		const pool = this.stationPool(st);
 		const index = this.trackIndex();
 		const known = (id: TrackId) => index.has(id) || this.hasLive(id) || this.hist().has(id);
+		const startedAt = state.startedAt ?? this.now();
 		const result = await discoverStep(
 			{
 				client,
@@ -1661,10 +1662,18 @@ export class HubCore {
 				stationName: st.name,
 				add: (t, source, score) => this.addDiscovery(stationId, t, source, score),
 			},
-			{ ...state, stationId },
+			{ ...state, stationId, startedAt },
 		);
 		if (result.done) {
 			this.indexCache = null;
+			// Fresh finds belong in the station now, not at tomorrow's refresh; the
+			// deck is only rewritten while nobody listens, as always.
+			const found = this.db.first<{ n: number }>(
+				`SELECT COUNT(*) AS n FROM discoveries WHERE station_id = ? AND created_at >= ?`,
+				stationId,
+				startedAt,
+			)!.n;
+			if (found > 0) this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, stationId);
 			return nextRun;
 		}
 		return { done: false, state: result.state };
@@ -1938,10 +1947,31 @@ export class HubCore {
 	}
 
 	importHistory(rows: HistoryRow[], part: number, parts: number): { stored: number } {
-		if (!Array.isArray(rows) || rows.length > 5000)
+		if (
+			!Array.isArray(rows) ||
+			rows.length > 5000 ||
+			!Number.isInteger(part) ||
+			!Number.isInteger(parts) ||
+			part < 0 ||
+			part >= parts ||
+			parts > 200
+		)
 			throw new HubError("bad_import", "Ungültiger Import-Block");
+		// Rows come from the browser: only well-formed counts and times reach the memory.
+		const count = (v: unknown) => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 1e6;
+		const latest = this.now() + DAY_MS;
 		for (const r of rows) {
-			if (!Array.isArray(r) || r.length !== 4 || !/^[A-Za-z0-9]{22}$/.test(String(r[0]))) {
+			if (
+				!Array.isArray(r) ||
+				r.length !== 4 ||
+				typeof r[0] !== "string" ||
+				!/^[A-Za-z0-9]{22}$/.test(r[0]) ||
+				!count(r[1]) ||
+				!count(r[2]) ||
+				!Number.isInteger(r[3]) ||
+				r[3] < 0 ||
+				r[3] > latest
+			) {
 				throw new HubError("bad_import", "Ungültige Zeile im Import");
 			}
 		}

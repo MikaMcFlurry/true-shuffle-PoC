@@ -1630,10 +1630,10 @@ details.more > .more__body {
 
 .glasslist__count {
 	flex: none;
-	font-family: var(--font-lcd);
 	font-weight: 800;
-	font-size: 24px;
+	font-size: 22px;
 	line-height: 1;
+	font-variant-numeric: tabular-nums;
 }
 
 .glasslist .seg {
@@ -1645,10 +1645,9 @@ details.more > .more__body {
 	text-transform: uppercase;
 }
 
-/* An unlit segment in a list still has to be read: dimmed ink, not ghost. */
+/* A plain reason still has to be read: second ink, below the lit ones, never ghost. */
 .glasslist .seg.dim {
 	color: var(--lcd-ink-2);
-	opacity: 0.75;
 }
 
 /* ------------------------------------------------ menu: faceplate keys */

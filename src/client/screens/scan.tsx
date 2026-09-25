@@ -67,25 +67,33 @@ export function Scan({ state }: { state: AppState }) {
 
 	return (
 		<div class="page">
+			{/* One display per screen: the page head once onboarded, the radio's own on first run. */}
 			{state.onboarded ? (
 				<PageBar
 					title="Sendersuchlauf"
-					sub="Weitere Playlists als Sender speichern"
+					sub={
+						lists
+							? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden — wähle, welche Sender werden`
+							: "True Shuffle sucht deine Playlists …"
+					}
 					backTo="/menu"
 				/>
-			) : null}
-			<Display
-				lit={[]}
-				name={lists ? "SUCHLAUF" : "SUCHE …"}
-				song={
-					lists
-						? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden`
-						: "True Shuffle sucht deine Playlists"
-				}
-				artist={lists ? "Wähle, welche Sender werden" : "Einen Moment"}
-				scale={{ pos: lists ? 1 : 0.35, label: "Suchlauf" }}
-				tuning={!lists}
-			/>
+			) : (
+				<Display
+					lit={[]}
+					name={lists ? "SUCHLAUF" : "SUCHE …"}
+					song={
+						lists
+							? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden`
+							: "True Shuffle sucht deine Playlists"
+					}
+					artist={lists ? "Wähle, welche Sender werden" : "Einen Moment"}
+					// While searching, the needle sweeps; a found list has nothing left to measure.
+					scale={lists ? null : { pos: 0.35, label: "Suchlauf" }}
+					tuning={!lists}
+					wrap
+				/>
+			)}
 			{!state.onboarded ? (
 				<p class="lede">
 					Jede gewählte Playlist wird ein Sender. Dazu kommt automatisch „Alles“ — alle Sender und
