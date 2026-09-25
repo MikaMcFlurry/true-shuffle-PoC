@@ -1,4 +1,4 @@
-import { ChevronRight, LogOut, Trash2 } from "lucide-preact";
+import { LogOut, Trash2 } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import {
 	aggregateHistory,
@@ -34,16 +34,13 @@ function deviceType(t: string): string {
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store } from "../store";
 
-function Row(props: { href: string; title: string; sub?: string; value?: string }) {
+/** A faceplate key with a printed legend and a small line under it. */
+function MenuKey(props: { href: string; legend: string; sub: string; value?: string }) {
 	return (
 		<li>
-			<a class="row" href={props.href}>
-				<span class="row__main">
-					<span class="row__title">{props.title}</span>
-					{props.sub ? <span class="row__sub">{props.sub}</span> : null}
-				</span>
-				{props.value ? <span class="row__value">{props.value}</span> : null}
-				<ChevronRight class="icon" aria-hidden="true" />
+			<a class="key menukey" href={props.href}>
+				<span class="menukey__legend">{props.legend}</span>
+				<span class="menukey__sub">{props.value ?? props.sub}</span>
 			</a>
 		</li>
 	);
@@ -75,36 +72,35 @@ export function MenuScreen({ state }: { state: AppState }) {
 			<PageBar title="Menü" sub={state.profile.name} backTo="/" />
 
 			<Section title="Gäste" id="guest">
-				<ul class="list list--keys">
-					<li>
-						<label class="row">
+				<div class="keyunit">
+					<label class="row">
+						<span class="row__main">
+							<span class="row__title">Gast-Modus</span>
+							<span class="row__sub">
+								{guest.active && guest.until
+									? `An bis ${clock(guest.until)} — was jetzt läuft, zählt nicht`
+									: "Hört jemand anderes über dein Konto? Dann zählt nichts davon."}
+							</span>
+						</span>
+						<input
+							type="checkbox"
+							role="switch"
+							class="switch"
+							aria-checked={guest.active}
+							checked={guest.active}
+							onChange={(e) => toggleGuest((e.target as HTMLInputElement).checked)}
+						/>
+					</label>
+					{!guest.active ? (
+						<div class="row">
 							<span class="row__main">
-								<span class="row__title">Gast-Modus</span>
-								<span class="row__sub">
-									{guest.active && guest.until
-										? `An bis ${clock(guest.until)} — was jetzt läuft, zählt nicht`
-										: "Hört jemand anderes über dein Konto? Dann zählt nichts davon."}
+								<span class="row__title" id="guest-hours">
+									Schaltet sich aus nach
 								</span>
 							</span>
-							<input
-								type="checkbox"
-								role="switch"
-								class="switch"
-								aria-checked={guest.active}
-								checked={guest.active}
-								onChange={(e) => toggleGuest((e.target as HTMLInputElement).checked)}
-							/>
-						</label>
-					</li>
-					{!guest.active ? (
-						<li class="row">
-							<span class="row__main">
-								<span class="row__title">Schaltet sich aus nach</span>
-							</span>
 							<select
-								class="input"
-								style={{ width: "auto", minHeight: 44 }}
-								aria-label="Dauer des Gast-Modus"
+								class="input input--inline"
+								aria-labelledby="guest-hours"
 								value={String(hours)}
 								onChange={(e) => setHours(Number((e.target as HTMLSelectElement).value))}
 							>
@@ -114,56 +110,40 @@ export function MenuScreen({ state }: { state: AppState }) {
 									</option>
 								))}
 							</select>
-						</li>
+						</div>
 					) : (
-						<li>
-							<button type="button" class="row" onClick={() => toggleGuest(true)}>
-								<span class="row__main">
-									<span class="row__title">Verlängern</span>
-									<span class="row__sub">Noch einmal {hours} Stunden ab jetzt</span>
-								</span>
-							</button>
-						</li>
+						<button type="button" class="row" onClick={() => toggleGuest(true)}>
+							<span class="row__main">
+								<span class="row__title">Verlängern</span>
+								<span class="row__sub">Noch einmal {hours} Stunden ab jetzt</span>
+							</span>
+						</button>
 					)}
-				</ul>
+				</div>
 			</Section>
-
 			<Section title="Sender" id="stations">
-				<ul class="list list--keys">
-					<Row
-						href="/sender/neu"
-						title="Sender anlegen"
-						sub="Mehrere Playlists zu einem Sender kombinieren"
-					/>
-					<Row
-						href="/suchlauf"
-						title="Sendersuchlauf"
-						sub="Weitere Playlists als Sender speichern"
-					/>
-					<Row href="/geraete" title="Wiedergabegerät" sub="Wo True Shuffle startet" />
+				<ul class="keygrid">
+					<MenuKey href="/sender/neu" legend="Sender anlegen" sub="Playlists kombinieren" />
+					<MenuKey href="/suchlauf" legend="Suchlauf" sub="Weitere Playlists speichern" />
+					<MenuKey href="/geraete" legend="Gerät" sub="Wo True Shuffle startet" />
 				</ul>
 			</Section>
 
 			<Section title="Gedächtnis" id="memory">
-				<ul class="list list--keys">
-					<Row
-						href="/verlauf"
-						title="Verlauf"
-						sub="Was zuletzt lief — auch außerhalb von True Shuffle"
-					/>
-					<Row
+				<ul class="keygrid">
+					<MenuKey href="/verlauf" legend="Verlauf" sub="Was zuletzt lief" />
+					<MenuKey
 						href="/import"
-						title="Hörverlauf importieren"
-						sub="Dein Spotify-Datenexport als Startwissen"
+						legend="Import"
+						sub="Hörverlauf aus Spotify"
 						value={
 							state.history.importedTracks > 0
-								? `${num(state.history.importedTracks)} Songs`
+								? `${num(state.history.importedTracks)} Songs mit Vorgeschichte`
 								: undefined
 						}
 					/>
 				</ul>
 			</Section>
-
 			<Section title="Beleuchtung" id="illum">
 				<div class="presetrow" role="toolbar" aria-labelledby="illum">
 					{(
@@ -190,16 +170,12 @@ export function MenuScreen({ state }: { state: AppState }) {
 			</Section>
 
 			<Section title="Konto" id="account">
-				<ul class="list list--keys">
-					<Row
-						href="/info"
-						title="Über True Shuffle"
-						sub="Wie es funktioniert und was Spotify nicht zulässt"
-					/>
+				<ul class="keygrid">
+					<MenuKey href="/info" legend="Info" sub="Wie True Shuffle arbeitet" />
 					<li>
 						<button
 							type="button"
-							class="row"
+							class="key menukey"
 							onClick={() =>
 								api.logout().finally(() => {
 									store.load = { kind: "signed-out" };
@@ -208,11 +184,11 @@ export function MenuScreen({ state }: { state: AppState }) {
 								})
 							}
 						>
-							<LogOut class="icon" aria-hidden="true" />
-							<span class="row__main">
-								<span class="row__title">Abmelden</span>
-								<span class="row__sub">Dein Gedächtnis bleibt gespeichert</span>
+							<span class="menukey__legend">
+								<LogOut class="icon" aria-hidden="true" />
+								Abmelden
 							</span>
+							<span class="menukey__sub">Gedächtnis bleibt</span>
 						</button>
 					</li>
 				</ul>

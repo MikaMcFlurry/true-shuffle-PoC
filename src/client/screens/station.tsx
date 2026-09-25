@@ -331,19 +331,18 @@ export function Station({
 						Noch keine Reihenfolge — sie entsteht, sobald der Sender eingelesen ist.
 					</p>
 				) : (
-					<ol class="list">
-						{d.upcoming.map((t) => (
-							<li key={t.id} class="row row--song">
-								{t.imageUrl ? (
-									<img class="row__thumb" src={t.imageUrl} alt="" loading="lazy" />
-								) : (
-									<span class="row__thumb" />
-								)}
-								<span class="row__main">
-									<span class="row__title">{t.name}</span>
-									<span class="row__sub">{t.artists}</span>
+					// The queue as the display shows it: numbered, each song with its reason.
+					<ol class="glass glasslist">
+						{d.upcoming.map((t, i) => (
+							<li key={t.id} class="glasslist__row">
+								<span class="glasslist__n num" aria-hidden="true">
+									{String(i + 1).padStart(2, "0")}
 								</span>
-								<span class={`tag${t.kind !== "fresh" ? " tag--lit" : ""}`}>{KIND[t.kind]}</span>
+								<span class="glasslist__main">
+									<span class="glasslist__title">{t.name}</span>
+									<span class="glasslist__sub">{t.artists}</span>
+								</span>
+								<span class={`seg${t.kind !== "fresh" ? " on" : " dim"}`}>{KIND[t.kind]}</span>
 							</li>
 						))}
 					</ol>
@@ -352,14 +351,14 @@ export function Station({
 
 			{d.recent.length > 0 ? (
 				<Section title="Zuletzt auf diesem Sender" id="recent">
-					<ul class="list">
+					<ul class="glass glasslist">
 						{d.recent.slice(0, 8).map((t) => (
-							<li key={`${t.id}-${t.playedAt}`} class="row row--song">
-								<span class="row__main">
-									<span class="row__title">{t.name}</span>
-									<span class="row__sub">{t.artists}</span>
+							<li key={`${t.id}-${t.playedAt}`} class="glasslist__row">
+								<span class="glasslist__main">
+									<span class="glasslist__title">{t.name}</span>
+									<span class="glasslist__sub">{t.artists}</span>
 								</span>
-								<span class="row__value">{ago(t.playedAt)}</span>
+								<span class="glasslist__value">{ago(t.playedAt)}</span>
 							</li>
 						))}
 					</ul>
@@ -367,27 +366,27 @@ export function Station({
 			) : null}
 
 			<Section title="Neuentdeckungen" id="disc">
-				<ul class="list">
-					<li class="row">
-						<span class="row__main">
-							<span class="row__title">Warten auf dich</span>
-							<span class="row__sub">Verifizierte Vorschläge für diesen Sender</span>
+				<ul class="glass glasslist">
+					<li class="glasslist__row">
+						<span class="glasslist__main">
+							<span class="glasslist__title">Warten auf dich</span>
+							<span class="glasslist__sub">Geprüfte Vorschläge für diesen Sender</span>
 						</span>
-						<span class="row__value num">{num(d.discoveries.pending)}</span>
+						<span class="glasslist__count num">{num(d.discoveries.pending)}</span>
 					</li>
-					<li class="row">
-						<span class="row__main">
-							<span class="row__title">Behalten</span>
-							<span class="row__sub">Stehen jetzt in „{DECK_PREFIX}Entdeckungen“</span>
+					<li class="glasslist__row">
+						<span class="glasslist__main">
+							<span class="glasslist__title">Behalten</span>
+							<span class="glasslist__sub">Stehen in „{DECK_PREFIX}Entdeckungen“</span>
 						</span>
-						<span class="row__value num">{num(d.discoveries.kept)}</span>
+						<span class="glasslist__count num">{num(d.discoveries.kept)}</span>
 					</li>
-					<li class="row">
-						<span class="row__main">
-							<span class="row__title">Aussortiert</span>
-							<span class="row__sub">Früh übersprungen oder Daumen runter</span>
+					<li class="glasslist__row">
+						<span class="glasslist__main">
+							<span class="glasslist__title">Aussortiert</span>
+							<span class="glasslist__sub">Früh übersprungen oder Daumen runter</span>
 						</span>
-						<span class="row__value num">{num(d.discoveries.rejected)}</span>
+						<span class="glasslist__count num">{num(d.discoveries.rejected)}</span>
 					</li>
 				</ul>
 			</Section>
