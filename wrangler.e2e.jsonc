@@ -1,0 +1,31 @@
+{
+	// End-to-end test configuration: the same Worker, pointed at the local
+	// Spotify fake (e2e/fake-server.ts). No Workers AI binding, no cron.
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "true-shuffle-e2e",
+	"main": "src/worker/index.ts",
+	"compatibility_date": "2026-09-20",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"directory": "dist/client",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/api/*", "/auth/*"]
+	},
+	"durable_objects": {
+		"bindings": [
+			{ "name": "USER_HUB", "class_name": "UserHub" },
+			{ "name": "REGISTRY", "class_name": "Registry" }
+		]
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["UserHub", "Registry"] }],
+	"vars": {
+		"SPOTIFY_CLIENT_ID": "e2e-client",
+		"APP_SECRET": "e2e-secret-e2e-secret-e2e-secret-e2e-secret",
+		"SPOTIFY_ACCOUNTS_BASE": "http://127.0.0.1:8788/accounts",
+		"SPOTIFY_API_BASE": "http://127.0.0.1:8788/v1",
+		"LASTFM_API_BASE": "http://127.0.0.1:8788/lastfm",
+		"LASTFM_API_KEY": "e2e-lastfm",
+		"DEEZER_API_BASE": "http://127.0.0.1:8788/deezer"
+	}
+}

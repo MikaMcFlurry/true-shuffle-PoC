@@ -2,7 +2,12 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { RECENT_GUARD_MS } from "../../src/core/memory";
 import { sharesForMix } from "../../src/core/mix";
-import { type DiscoveryEntry, type PlanInput, type PoolEntry, planQueue } from "../../src/core/planner";
+import {
+	type DiscoveryEntry,
+	type PlanInput,
+	type PoolEntry,
+	planQueue,
+} from "../../src/core/planner";
 import { seededRng } from "../../src/core/random";
 import {
 	DAY_MS,
@@ -41,12 +46,17 @@ function input(over: Partial<PlanInput> & { mem?: Map<string, TrackMemory> } = {
 describe("planQueue", () => {
 	it("never repeats a song inside one queue", () => {
 		fc.assert(
-			fc.property(fc.integer({ min: 1, max: 400 }), fc.integer({ min: 1, max: 300 }), fc.integer(), (n, size, seed) => {
-				const p = pool(n, Math.max(1, Math.floor(n / 3)));
-				const res = planQueue(input({ pool: [...p, ...p], size, rng: seededRng(seed) }));
-				const ids = res.slots.map((s) => s.trackId);
-				expect(new Set(ids).size).toBe(ids.length);
-			}),
+			fc.property(
+				fc.integer({ min: 1, max: 400 }),
+				fc.integer({ min: 1, max: 300 }),
+				fc.integer(),
+				(n, size, seed) => {
+					const p = pool(n, Math.max(1, Math.floor(n / 3)));
+					const res = planQueue(input({ pool: [...p, ...p], size, rng: seededRng(seed) }));
+					const ids = res.slots.map((s) => s.trackId);
+					expect(new Set(ids).size).toBe(ids.length);
+				},
+			),
 			{ numRuns: 150 },
 		);
 	});
@@ -88,7 +98,14 @@ describe("planQueue", () => {
 					mem.set(e.id, { ...emptyMemory(e.id), plays: 1, lastPlayedAt: round + DAY_MS });
 				}
 				const res = planQueue(
-					input({ pool: p, mem, roundStartedAt: round, size: n, rng: seededRng(seed), discoveries: [] }),
+					input({
+						pool: p,
+						mem,
+						roundStartedAt: round,
+						size: n,
+						rng: seededRng(seed),
+						discoveries: [],
+					}),
 				);
 				const heard = new Set(p.slice(0, Math.floor(n / 2)).map((e) => e.id));
 				const firstOverflow = res.slots.findIndex((s) => heard.has(s.trackId));
@@ -106,10 +123,20 @@ describe("planQueue", () => {
 		const round = NOW - 60 * DAY_MS;
 		// 40 liked songs heard this round: 20 three days ago (cooling), 20 ten days ago (ready).
 		for (const e of p.slice(0, 20)) {
-			mem.set(e.id, { ...emptyMemory(e.id), liked: true, plays: 3, lastPlayedAt: NOW - 3 * DAY_MS });
+			mem.set(e.id, {
+				...emptyMemory(e.id),
+				liked: true,
+				plays: 3,
+				lastPlayedAt: NOW - 3 * DAY_MS,
+			});
 		}
 		for (const e of p.slice(20, 40)) {
-			mem.set(e.id, { ...emptyMemory(e.id), liked: true, plays: 3, lastPlayedAt: NOW - 10 * DAY_MS });
+			mem.set(e.id, {
+				...emptyMemory(e.id),
+				liked: true,
+				plays: 3,
+				lastPlayedAt: NOW - 10 * DAY_MS,
+			});
 		}
 		const res = planQueue(input({ pool: p, mem, roundStartedAt: round, size: 200 }));
 		const placed = new Set(res.slots.map((s) => s.trackId));
@@ -187,7 +214,9 @@ describe("planQueue", () => {
 		}
 		let neverFirst = 0;
 		for (let seed = 0; seed < 20; seed++) {
-			const res = planQueue(input({ pool: p, mem, roundStartedAt: round, size: 100, rng: seededRng(seed) }));
+			const res = planQueue(
+				input({ pool: p, mem, roundStartedAt: round, size: 100, rng: seededRng(seed) }),
+			);
 			neverFirst += res.slots.filter((s) => !mem.has(s.trackId)).length;
 		}
 		// Never-heard songs are favoured (boost 1.6 vs ~1.6 cap; at least not starved).
@@ -226,7 +255,8 @@ describe("planQueue", () => {
 	it("never brings back a song heard inside the current round within 24 h", () => {
 		const mem = new Map<string, TrackMemory>();
 		const p = pool(10);
-		for (const e of p) mem.set(e.id, { ...emptyMemory(e.id), plays: 1, lastPlayedAt: NOW - HOUR_MS / 2 });
+		for (const e of p)
+			mem.set(e.id, { ...emptyMemory(e.id), plays: 1, lastPlayedAt: NOW - HOUR_MS / 2 });
 		const res = planQueue(input({ pool: p, mem, roundStartedAt: NOW - HOUR_MS, size: 10 }));
 		expect(res.slots.length).toBe(0);
 		expect(res.freshRemaining).toBe(0);

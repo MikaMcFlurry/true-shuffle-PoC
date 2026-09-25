@@ -1,7 +1,15 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"files": {
-		"includes": ["src/**", "test/**", "e2e/**", "*.ts", "*.json", "*.jsonc", "!worker-configuration.d.ts"]
+		"includes": [
+			"src/**",
+			"test/**",
+			"e2e/**",
+			"*.ts",
+			"*.json",
+			"*.jsonc",
+			"!worker-configuration.d.ts"
+		]
 	},
 	"formatter": {
 		"enabled": true,
@@ -25,5 +33,18 @@
 			"quoteStyle": "double",
 			"semicolons": "always"
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["test/**", "e2e/**"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noAssignInExpressions": "off",
+						"noExplicitAny": "off"
+					}
+				}
+			}
+		}
+	]
 }

@@ -7,7 +7,13 @@ import {
 	toRows,
 	trackIdFromUri,
 } from "../../src/core/history";
-import { isFavorite, mergeMemory, tasteWeight, withEarlySkip, withPlay } from "../../src/core/memory";
+import {
+	isFavorite,
+	mergeMemory,
+	tasteWeight,
+	withEarlySkip,
+	withPlay,
+} from "../../src/core/memory";
 import { PRESETS, sharesForMix, sharesForRules } from "../../src/core/mix";
 import { DEFAULT_RULES, emptyMemory, normaliseRules } from "../../src/core/types";
 
@@ -78,7 +84,9 @@ describe("memory", () => {
 describe("history import", () => {
 	const id = "4uLU6hMCjMI75M1A2tKUQC";
 	it("detects the export formats", () => {
-		expect(detectHistoryFile([{ ts: "x", ms_played: 1, spotify_track_uri: null }])).toBe("extended");
+		expect(detectHistoryFile([{ ts: "x", ms_played: 1, spotify_track_uri: null }])).toBe(
+			"extended",
+		);
 		expect(detectHistoryFile([{ endTime: "x", msPlayed: 1, trackName: "y" }])).toBe("account");
 		expect(detectHistoryFile({})).toBe("unknown");
 	});
@@ -91,10 +99,30 @@ describe("history import", () => {
 
 	it("counts >= 30 s as plays and short forward-button ends as early skips", () => {
 		const agg = aggregateHistory([
-			{ ts: "2025-01-01T10:00:00Z", ms_played: 200_000, spotify_track_uri: `spotify:track:${id}`, reason_end: "trackdone" },
-			{ ts: "2025-02-01T10:00:00Z", ms_played: 31_000, spotify_track_uri: `spotify:track:${id}`, reason_end: "fwdbtn" },
-			{ ts: "2025-03-01T10:00:00Z", ms_played: 4_000, spotify_track_uri: `spotify:track:${id}`, reason_end: "fwdbtn" },
-			{ ts: "2025-03-02T10:00:00Z", ms_played: 4_000, spotify_track_uri: `spotify:track:${id}`, reason_end: "logout" },
+			{
+				ts: "2025-01-01T10:00:00Z",
+				ms_played: 200_000,
+				spotify_track_uri: `spotify:track:${id}`,
+				reason_end: "trackdone",
+			},
+			{
+				ts: "2025-02-01T10:00:00Z",
+				ms_played: 31_000,
+				spotify_track_uri: `spotify:track:${id}`,
+				reason_end: "fwdbtn",
+			},
+			{
+				ts: "2025-03-01T10:00:00Z",
+				ms_played: 4_000,
+				spotify_track_uri: `spotify:track:${id}`,
+				reason_end: "fwdbtn",
+			},
+			{
+				ts: "2025-03-02T10:00:00Z",
+				ms_played: 4_000,
+				spotify_track_uri: `spotify:track:${id}`,
+				reason_end: "logout",
+			},
 			{ ts: "2025-03-03T10:00:00Z", ms_played: 90_000, spotify_track_uri: null },
 		]);
 		const s = agg.stats.get(id)!;

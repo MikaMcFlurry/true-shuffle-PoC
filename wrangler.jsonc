@@ -41,42 +41,11 @@
 	// Workers AI — free fallback for AI discovery when no Anthropic key is set.
 	"ai": { "binding": "AI" },
 
-	"vars": {
-		// Public client id of the Spotify app (PKCE, no client secret needed).
-		// Set it here or as a dashboard variable.
-		"SPOTIFY_CLIENT_ID": "",
-		// Model used for AI discovery when ANTHROPIC_API_KEY is set.
-		"ANTHROPIC_MODEL": "claude-sonnet-5",
-		// Optional comma-separated allowlist of Spotify user ids. Empty means
-		// "whoever Spotify lets through" — in Development Mode that is already
-		// limited to the accounts allowlisted in the Spotify dashboard.
-		"ALLOWED_SPOTIFY_IDS": ""
-	},
+	// Configuration lives in the dashboard (Settings → Variables and Secrets),
+	// never in this file: SPOTIFY_CLIENT_ID, APP_SECRET, and optionally
+	// ANTHROPIC_API_KEY, LASTFM_API_KEY, ALLOWED_SPOTIFY_IDS, ANTHROPIC_MODEL.
+	// keep_vars stops a deploy from wiping variables set there.
+	"keep_vars": true,
 
-	"observability": { "enabled": true },
-
-	// Local end-to-end tests: same Worker, fake Spotify, no Workers AI binding
-	// (it only runs remotely), no cron.
-	"env": {
-		"e2e": {
-			"name": "true-shuffle-e2e",
-			"durable_objects": {
-				"bindings": [
-					{ "name": "USER_HUB", "class_name": "UserHub" },
-					{ "name": "REGISTRY", "class_name": "Registry" }
-				]
-			},
-			"vars": {
-				"SPOTIFY_CLIENT_ID": "e2e-client",
-				"ANTHROPIC_MODEL": "claude-sonnet-5",
-				"ALLOWED_SPOTIFY_IDS": "",
-				"SPOTIFY_ACCOUNTS_BASE": "http://127.0.0.1:8788/accounts",
-				"SPOTIFY_API_BASE": "http://127.0.0.1:8788/v1",
-				"LASTFM_API_BASE": "http://127.0.0.1:8788/lastfm",
-				"DEEZER_API_BASE": "http://127.0.0.1:8788/deezer",
-				"APP_SECRET": "e2e-secret-e2e-secret-e2e-secret-e2e-secret",
-				"FAST_CLOCK": "1"
-			}
-		}
-	}
+	"observability": { "enabled": true }
 }

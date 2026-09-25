@@ -63,7 +63,11 @@ export const MAX_SKIP_GAP = 10;
  */
 export const SKIP_GRACE_MS = 20 * MINUTE_MS;
 
-export function newDeck(ids: readonly { trackId: TrackId; kind: SlotKind }[], version: number, now: number): Deck {
+export function newDeck(
+	ids: readonly { trackId: TrackId; kind: SlotKind }[],
+	version: number,
+	now: number,
+): Deck {
 	return {
 		version,
 		items: ids.map((s) => ({ id: s.trackId, kind: s.kind, state: "pending", at: null })),
@@ -117,7 +121,9 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	if (idx > prev) {
 		const gap = idx - prev - 1;
 		if (gap <= MAX_SKIP_GAP) {
-			for (let i = prev + 1; i < idx; i++) {
+			// The song we saw last time is behind us now, as is everything
+			// between it and the current one.
+			for (let i = Math.max(prev, 0); i < idx; i++) {
 				const it = items[i]!;
 				if (it.state === "pending") {
 					items[i] = { ...it, state: "passed", at: obs.at };
@@ -168,7 +174,11 @@ export function applyPlays(deck: Deck, plays: readonly RecentPlay[], deckUri: st
 }
 
 /** Passed items that never showed up as a play within the grace period. */
-export function settleSkips(deck: Deck, now: number, graceMs = SKIP_GRACE_MS): { deck: Deck; skipped: TrackId[] } {
+export function settleSkips(
+	deck: Deck,
+	now: number,
+	graceMs = SKIP_GRACE_MS,
+): { deck: Deck; skipped: TrackId[] } {
 	const skipped: TrackId[] = [];
 	const items = deck.items.map((it) => {
 		if (it.state === "passed" && it.at !== null && now - it.at >= graceMs) {

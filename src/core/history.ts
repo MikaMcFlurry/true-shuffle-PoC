@@ -66,7 +66,10 @@ export function emptyAggregate(): Aggregate {
  * own stream rule); an early skip is < 30 s ended by the forward button or
  * flagged `skipped`. Everything else (errors, logouts, podcasts) is ignored.
  */
-export function aggregateHistory(entries: readonly ExtendedEntry[], agg: Aggregate = emptyAggregate()): Aggregate {
+export function aggregateHistory(
+	entries: readonly ExtendedEntry[],
+	agg: Aggregate = emptyAggregate(),
+): Aggregate {
 	for (const e of entries) {
 		agg.entries++;
 		const id = trackIdFromUri(e.spotify_track_uri ?? null);

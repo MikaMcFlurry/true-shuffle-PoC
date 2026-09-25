@@ -42,9 +42,14 @@ describe("observePlayer", () => {
 		let d = deck();
 		d = observePlayer(d, obs("s0"), URI).deck;
 		const r = observePlayer(d, obs("s3"), URI);
-		expect(r.passed).toEqual(["s1", "s2"]);
+		expect(r.passed).toEqual(["s0", "s1", "s2"]);
 		expect(r.index).toBe(3);
-		expect(r.deck.items.slice(0, 4).map((i) => i.state)).toEqual(["pending", "passed", "passed", "pending"]);
+		expect(r.deck.items.slice(0, 4).map((i) => i.state)).toEqual([
+			"passed",
+			"passed",
+			"passed",
+			"pending",
+		]);
 	});
 
 	it("treats the first observation as coming from the top", () => {

@@ -41,7 +41,11 @@ export function seededRng(seed: number): Rng {
  * unbiased weighted sample without replacement. Weight 1 everywhere is an
  * ordinary uniform shuffle. Items with weight <= 0 are dropped.
  */
-export function weightedShuffle<T>(items: readonly T[], weight: (item: T) => number, rng: Rng): T[] {
+export function weightedShuffle<T>(
+	items: readonly T[],
+	weight: (item: T) => number,
+	rng: Rng,
+): T[] {
 	const keyed: { item: T; key: number }[] = [];
 	for (const item of items) {
 		const w = weight(item);

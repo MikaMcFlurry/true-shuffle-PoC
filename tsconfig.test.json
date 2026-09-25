@@ -4,5 +4,15 @@
 		"lib": ["ES2023", "DOM"],
 		"types": ["node"]
 	},
-	"include": ["test/**/*.ts", "e2e/**/*.ts", "src/core/**/*.ts", "src/shared/**/*.ts", "src/worker/hub/**/*.ts", "src/worker/spotify/**/*.ts", "src/worker/lib/**/*.ts", "src/worker/sources/**/*.ts", "*.config.ts"]
+	"include": [
+		"test/**/*.ts",
+		"e2e/**/*.ts",
+		"src/core/**/*.ts",
+		"src/shared/**/*.ts",
+		"src/worker/hub/**/*.ts",
+		"src/worker/spotify/**/*.ts",
+		"src/worker/lib/**/*.ts",
+		"src/worker/sources/**/*.ts",
+		"*.config.ts"
+	]
 }
