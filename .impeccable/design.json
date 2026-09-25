@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-25T00:00:00Z",
+  "title": "Design System: True Shuffle",
+  "extensions": {
+    "colorMeta": {
+      "lit": { "role": "primary", "displayName": "Lamp Amber (day)", "canonical": "#c2560c", "tonalRamp": ["#3a1a04", "#5c2906", "#7f3908", "#a2490a", "#c2560c", "#e0782f", "#efa56d", "#f8d3b3"] },
+      "lit-night": { "role": "primary", "displayName": "Lamp Amber (night)", "canonical": "#ffab2e", "tonalRamp": ["#3d2400", "#6b3f00", "#995b00", "#c77700", "#ee9105", "#ffab2e", "#ffc875", "#ffe6c0"] },
+      "plate": { "role": "neutral", "displayName": "Faceplate Polymer (day)", "canonical": "#d3d6da", "tonalRamp": ["#15181c", "#2a2e34", "#454b53", "#5f666f", "#8b929b", "#b4b9bf", "#d3d6da", "#f1f2f4"] },
+      "plate-night": { "role": "neutral", "displayName": "Faceplate Polymer (night)", "canonical": "#16181b", "tonalRamp": ["#101214", "#16181b", "#1d2024", "#23262b", "#2a2e34", "#33373e", "#8b929b", "#e8eaed"] },
+      "key": { "role": "neutral", "displayName": "Key Cap (day)", "canonical": "#e8eaed" },
+      "key-night": { "role": "neutral", "displayName": "Key Cap (night)", "canonical": "#23262b" },
+      "ink": { "role": "neutral", "displayName": "Legend Ink (day)", "canonical": "#15181c" },
+      "ink-night": { "role": "neutral", "displayName": "Legend Ink (night)", "canonical": "#e8eaed" },
+      "lcd": { "role": "neutral", "displayName": "Reflective LCD (day)", "canonical": "#b3bb9f", "tonalRamp": ["#161a10", "#262b1d", "#39402d", "#5b6448", "#7d8766", "#9aa287", "#b3bb9f", "#dfe3d3"] },
+      "lcd-night": { "role": "neutral", "displayName": "Backlit LCD glass (night)", "canonical": "#0b0c0d" },
+      "lcd-ink-night": { "role": "neutral", "displayName": "Backlit Amber Segment (night)", "canonical": "#ffb54a", "tonalRamp": ["#3d2600", "#6b4403", "#99621a", "#c98b35", "#ffb54a", "#ffc673", "#ffd9a0", "#ffecd0"] },
+      "danger": { "role": "tertiary", "displayName": "Fault Red (day)", "canonical": "#a8231a" },
+      "danger-ink-day": { "role": "tertiary", "displayName": "Fault Red text on day surfaces", "canonical": "#7d140c" },
+      "danger-night": { "role": "tertiary", "displayName": "Fault Red (night)", "canonical": "#ff7a66" },
+      "focus": { "role": "secondary", "displayName": "Focus Blue (day)", "canonical": "#0b5fd1" },
+      "focus-night": { "role": "secondary", "displayName": "Focus Blue (night)", "canonical": "#7fb4ff" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Station name", "purpose": "Doto dot-matrix station name in the main display; display glass only." },
+      "display-desk": { "displayName": "Station name (desktop faceplate)", "purpose": "The display name inside the desktop faceplate at >=980px." },
+      "page-title": { "displayName": "Page head title", "purpose": "Doto uppercase page name in the small display window of a page head." },
+      "indicator": { "displayName": "Indicator segment", "purpose": "NEU / FAVORIT / ENTDECKUNG / GAST / PAUSE segments; reason segments and balance ends on glass." },
+      "song": { "displayName": "Song", "purpose": "Current song on the display (Overpass, not Doto)." },
+      "preset-name": { "displayName": "Preset name", "purpose": "Station name on a preset key, max two lines." },
+      "preset-name-playing": { "displayName": "Preset name, playing", "purpose": "The playing preset is marked by size, not colour." },
+      "body": { "displayName": "Body", "purpose": "Default text on the plate." },
+      "row-title": { "displayName": "Row title", "purpose": "Titles in settings lists." },
+      "sub": { "displayName": "Sub", "purpose": "Row subtitles, menu key descriptions, hints." },
+      "key-legend": { "displayName": "Key legend", "purpose": "Uppercase legends on faceplate bar keys." },
+      "section-head": { "displayName": "Section head", "purpose": "Uppercase h2 naming a menu section." },
+      "scale-reading": { "displayName": "Scale reading", "purpose": "Tuner scale readout and counts; tabular numerals." }
+    },
+    "shadows": [
+      { "name": "key-raised", "value": "inset 0 1px 0 var(--key-hi), 0 1px 1px var(--key-shadow), 0 6px 12px -8px var(--key-shadow-far)", "purpose": "Keys, preset keys, key units at rest." },
+      { "name": "key-pressed", "value": "inset 0 1px 0 var(--key-hi), 0 0 0 var(--key-shadow), 0 2px 4px -3px var(--key-shadow-far)", "purpose": ":active on keys, with translateY(1px)." },
+      { "name": "preset-latched", "value": "inset 0 2px 5px var(--key-shadow), inset 0 0 0 1px var(--seam)", "purpose": "The playing preset stays pressed in, with translateY(1px)." },
+      { "name": "key-flush", "value": "inset 0 0 0 1px var(--seam)", "purpose": "Disabled keys, level with the plate." },
+      { "name": "lcd-inset-day", "value": "inset 0 2px 5px rgba(20, 24, 14, 0.28), inset 0 0 0 1px rgba(20, 24, 14, 0.12)", "purpose": "Recessed display glass, day." },
+      { "name": "lcd-inset-night", "value": "inset 0 2px 8px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.04)", "purpose": "Recessed display glass, night." },
+      { "name": "well", "value": "inset 0 1px 3px var(--key-shadow)", "purpose": "Inputs, switches; check keys and progress use 0 1px 2px." },
+      { "name": "plate-cast", "value": "inset 0 1px 0 var(--key-hi), inset 0 0 0 1px var(--seam-soft), 0 24px 48px -28px rgba(0, 0, 0, 0.45)", "purpose": "The desktop faceplate only." },
+      { "name": "strip-lift", "value": "var(--lcd-inset), 0 12px 28px -12px rgba(0, 0, 0, 0.45)", "purpose": "The phone message strip." },
+      { "name": "lcd-sheen-day", "value": "linear-gradient(165deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 42%)", "purpose": "Day glass reflects the cabin." },
+      { "name": "lcd-sheen-night", "value": "radial-gradient(120% 90% at 50% -10%, rgba(255, 171, 46, 0.1), rgba(255, 171, 46, 0) 62%)", "purpose": "Night backlight bleeding from the top." },
+      { "name": "lcd-cells", "value": "radial-gradient(circle at 1px 1px, var(--lcd-cells) 0.9px, transparent 1.1px) 0 0 / 3px 3px", "purpose": "Faint pixel-cell grid on all display glass (cells: day rgba(22,26,16,0.05), night rgba(255,181,74,0.04))." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The single easing for every transition." },
+      { "name": "t-fast", "value": "140ms", "purpose": "Key hover and press, row hover." },
+      { "name": "t", "value": "220ms", "purpose": "Indicator segments, switches, progress, message strip." },
+      { "name": "tune-sweep", "value": "900ms var(--ease)", "purpose": "Needle sweep and scale fill when a preset is pressed; transform only." },
+      { "name": "name-rewrite", "value": "520ms steps(4, end)", "purpose": "Station name rewrites from ghost to ink while tuning." },
+      { "name": "shimmer", "value": "1.4s linear infinite", "purpose": "Loading skeleton keys." },
+      { "name": "reduced-motion", "value": "1ms", "purpose": "prefers-reduced-motion collapses all animation and transition durations." }
+    ],
+    "breakpoints": [
+      { "name": "presets-3col", "value": "700px" },
+      { "name": "desk-faceplate", "value": "980px" }
+    ],
+    "illuminations": {
+      "default": "Day unless prefers-color-scheme: dark; the menu can force it via :root[data-illumination=\"day\"|\"night\"]. Night values are the *-night color tokens, assigned to the same custom property names."
+    },
+    "provenance": {
+      "rasters": "src/client/public/icon-192.png, icon-512.png and apple-touch-icon.png are rendered from src/client/public/icon.svg (source of truth) by scripts/render-icons.mjs via `npm run icons`.",
+      "fonts": "Doto and Overpass are self-hosted via @fontsource-variable/doto and @fontsource-variable/overpass (wght axis), imported in src/client/main.tsx.",
+      "icons": "UI icons from lucide-preact (outline, stroke 2).",
+      "review": "Finish review ran two rounds with an independent reviewer; the last verdict resolved all scored items and listed three small follow-ups (faint plain reason segment, Doto zero in counts, doubled display on Sendersuchlauf). These were fixed in code and recaptured but have not been re-scored by the reviewer."
+    }
+  },
+  "components": [
+    {
+      "name": "Display",
+      "kind": "custom",
+      "refersTo": "display",
+      "description": "The radio's recessed display window: indicators, Doto station name, song, artist and time, tuner scale.",
+      "html": "<section class=\"ds-display\"><div class=\"ds-ind\"><span class=\"ds-seg ds-on\">NEU</span><span class=\"ds-seg\">FAVORIT</span><span class=\"ds-seg\">ENTDECKUNG</span><span class=\"ds-seg\">GAST</span><span class=\"ds-dev\">Mikas iPhone</span></div><p class=\"ds-name\">ALLES</p><div class=\"ds-song\">Nie mehr Tanzfläche</div><div class=\"ds-artist\"><span>Glasfabrik</span><span>0:07 / 4:00</span></div><div class=\"ds-scale\" style=\"--pos:.3\"><div class=\"ds-ticks\"></div><div class=\"ds-needle\"></div></div><div class=\"ds-read\"><span>Runde 1</span><span>450 von 1.500 gehört</span></div></section>",
+      "css": ".ds-display { display: grid; gap: 6px; padding: 14px 16px 12px; border-radius: 16px; background: var(--lcd-sheen), radial-gradient(circle at 1px 1px, var(--lcd-cells) 0.9px, transparent 1.1px) 0 0 / 3px 3px, var(--lcd); color: var(--lcd-ink); box-shadow: var(--lcd-inset); font-family: var(--font-ui); } .ds-ind { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--font-lcd); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; line-height: 1; } .ds-seg { color: var(--lcd-ghost); } .ds-seg.ds-on { color: var(--lcd-ink); } .ds-dev { margin-left: auto; font-family: var(--font-ui); font-weight: 600; font-size: 12px; color: var(--lcd-ink-2); } .ds-name { margin: 2px 0 0; font-family: var(--font-lcd); font-weight: 800; font-size: 48px; line-height: 1.02; letter-spacing: 0.02em; } .ds-song { font-weight: 700; font-size: 19px; line-height: 1.25; } .ds-artist { display: flex; justify-content: space-between; font-weight: 500; font-size: 15px; color: var(--lcd-ink-2); } .ds-artist span:last-child { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; } .ds-scale { position: relative; height: 22px; margin-top: 4px; } .ds-ticks { position: absolute; inset: 0 0 6px; background: repeating-linear-gradient(to right, currentColor 0 1px, transparent 1px 10%) bottom / 100% 12px no-repeat, repeating-linear-gradient(to right, currentColor 0 1px, transparent 1px 2%) bottom / 100% 6px no-repeat; border-bottom: 1px solid currentColor; opacity: 0.55; } .ds-needle { position: absolute; top: 0; bottom: 0; width: 3px; border-radius: 2px; background: currentColor; left: calc(var(--pos) * (100% - 3px)); transition: left 900ms var(--ease); } .ds-read { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--lcd-ink-2); font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Key",
+      "kind": "button",
+      "refersTo": "key",
+      "description": "The raised faceplate key; every button is one.",
+      "html": "<button class=\"ds-key\">Nochmal versuchen</button>",
+      "css": ".ds-key { min-height: 52px; padding: 0 20px; border: 0; border-radius: 14px; background: var(--key); color: var(--ink); font-family: var(--font-ui); font-weight: 700; font-size: 16px; letter-spacing: 0.01em; cursor: pointer; box-shadow: inset 0 1px 0 var(--key-hi), 0 1px 1px var(--key-shadow), 0 6px 12px -8px var(--key-shadow-far); transition: background-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); } .ds-key:hover { background: var(--key-hover); } .ds-key:active { transform: translateY(1px); background: var(--key-press); box-shadow: inset 0 1px 0 var(--key-hi), 0 0 0 var(--key-shadow), 0 2px 4px -3px var(--key-shadow-far); } .ds-key:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-key:disabled { background: var(--plate); color: var(--ink-3); box-shadow: inset 0 0 0 1px var(--seam); transform: none; cursor: default; }"
+    },
+    {
+      "name": "Lit Key (primary)",
+      "kind": "button",
+      "refersTo": "key-lit",
+      "description": "The primary action, lit amber (Spielen).",
+      "html": "<button class=\"ds-key-lit\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"6 3 20 12 6 21 6 3\"/></svg>Spielen</button>",
+      "css": ".ds-key-lit { display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 20px; border: 0; border-radius: 14px; background: var(--lit); color: var(--lit-ink); font-family: var(--font-ui); font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: inset 0 1px 0 var(--key-hi), 0 1px 1px var(--key-shadow), 0 6px 12px -8px var(--key-shadow-far); transition: filter var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); } .ds-key-lit:hover { filter: brightness(1.06); } .ds-key-lit:active { transform: translateY(1px); filter: brightness(0.96); } .ds-key-lit:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Transport Keys",
+      "kind": "custom",
+      "refersTo": "transport-key",
+      "description": "Four equal keys: thumbs down, pause, next, thumbs up; a latched thumb lights its icon.",
+      "html": "<div class=\"ds-transport\"><button class=\"ds-tk\" aria-label=\"Daumen runter\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 14V2\"/><path d=\"M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z\"/></svg></button><button class=\"ds-tk\" aria-label=\"Pause\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\"/><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\"/></svg></button><button class=\"ds-tk\" aria-label=\"Weiter\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"5 4 15 12 5 20 5 4\"/><line x1=\"19\" x2=\"19\" y1=\"5\" y2=\"19\"/></svg></button><button class=\"ds-tk\" aria-pressed=\"true\" aria-label=\"Daumen hoch\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 10v12\"/><path d=\"M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z\"/></svg></button></div>",
+      "css": ".ds-transport { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; } .ds-tk { min-height: 58px; display: grid; place-items: center; border: 0; border-radius: 14px; background: var(--key); color: var(--ink); cursor: pointer; box-shadow: inset 0 1px 0 var(--key-hi), 0 1px 1px var(--key-shadow), 0 6px 12px -8px var(--key-shadow-far); transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); } .ds-tk:hover { background: var(--key-hover); } .ds-tk:active { transform: translateY(1px); background: var(--key-press); } .ds-tk:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-tk[aria-pressed=\"true\"] { color: var(--lit); }"
+    },
+    {
+      "name": "Preset Key",
+      "kind": "custom",
+      "refersTo": "preset-key",
+      "description": "A station as a split preset key: number, LED, name, hairline round scale; tune key on the right. The playing preset latches down.",
+      "html": "<div style=\"display:grid;grid-template-columns:1fr 1fr;gap:10px\"><div class=\"ds-preset ds-playing\"><button class=\"ds-pp\"><span class=\"ds-pn\">1<i class=\"ds-led ds-on\"></i></span><span class=\"ds-pname\">Alles</span><span class=\"ds-pmeta\"><span class=\"ds-hair\"></span><span class=\"ds-pround\"><span>Runde 1</span><span>0 / 1.500</span></span></span></button><a class=\"ds-tune\" href=\"#\" aria-label=\"einstellen\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\"/><line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\"/><line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\"/><line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\"/><line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\"/><line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\"/><line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\"/><line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\"/></svg></a></div><div class=\"ds-preset\"><button class=\"ds-pp\"><span class=\"ds-pn\">2<i class=\"ds-led\"></i></span><span class=\"ds-pname\">Indie &amp; Gitarren</span><span class=\"ds-pmeta\"><span class=\"ds-hair\"></span><span class=\"ds-pround\"><span>Runde 1</span><span>0 / 400</span></span></span></button><a class=\"ds-tune\" href=\"#\" aria-label=\"einstellen\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><line x1=\"21\" x2=\"3\" y1=\"4\" y2=\"4\"/><line x1=\"21\" x2=\"3\" y1=\"12\" y2=\"12\"/><line x1=\"21\" x2=\"3\" y1=\"20\" y2=\"20\"/></svg></a></div></div>",
+      "css": ".ds-preset { display: grid; grid-template-columns: 1fr auto; min-height: 104px; border-radius: 14px; background: var(--key); color: var(--ink); font-family: var(--font-ui); box-shadow: inset 0 1px 0 var(--key-hi), 0 1px 1px var(--key-shadow), 0 6px 12px -8px var(--key-shadow-far); } .ds-preset.ds-playing { background: var(--key-press); transform: translateY(1px); box-shadow: inset 0 2px 5px var(--key-shadow), inset 0 0 0 1px var(--seam); } .ds-pp { display: grid; grid-template-rows: auto 1fr auto; gap: 4px; padding: 12px 8px 12px 14px; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; border-radius: 14px 0 0 14px; cursor: pointer; transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); } .ds-pp:hover { background: var(--key-hover); } .ds-pp:active { transform: translateY(1px); background: var(--key-press); } .ds-pp:focus-visible, .ds-tune:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-pn { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 14px; letter-spacing: 0.08em; color: var(--ink-3); } .ds-playing .ds-pn { color: var(--ink-2); } .ds-led { width: 18px; height: 5px; border-radius: 3px; background: var(--seam); box-shadow: inset 0 1px 1px rgba(0,0,0,0.2); } .ds-led.ds-on { background: var(--lit); box-shadow: none; } .ds-pname { font-weight: 750; font-size: 17px; line-height: 1.2; } .ds-playing .ds-pname { font-weight: 800; font-size: 22px; line-height: 1.1; } .ds-pmeta { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--ink-2); } .ds-hair { height: 7px; color: var(--ink-3); background: repeating-linear-gradient(to right, currentColor 0 1px, transparent 1px 10%) bottom / 100% 6px no-repeat; border-bottom: 1px solid currentColor; opacity: 0.45; } .ds-pround { display: flex; justify-content: space-between; gap: 6px; font-variant-numeric: tabular-nums; } .ds-tune { width: 48px; display: grid; place-items: center; color: var(--ink-2); border-left: 1px solid var(--seam-soft); border-radius: 0 14px 14px 0; transition: background-color var(--t-fast) var(--ease); } .ds-tune:hover { background: var(--key-hover); color: var(--ink); }"
+    },
+    {
+      "name": "Page Head",
+      "kind": "nav",
+      "refersTo": "page-head-window",
+      "description": "Back key beside a small display window naming the page.",
+      "html": "<header class=\"ds-pbar\"><button class=\"ds-back\" aria-label=\"Zurück\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m15 18-6-6 6-6\"/></svg></button><div class=\"ds-plcd\"><h1 class=\"ds-ptitle\">Menü</h1><p class=\"ds-psub\">Einstellungen des Radios</p></div></header>",
+      "css": ".ds-pbar { display: flex; gap: 10px; align-items: stretch; } .ds-back { width: 48px; height: 48px; margin-top: 4px; flex: none; display: grid; place-items: center; border: 0; border-radius: 14px; background: var(--key); color: var(--ink); cursor: pointer; box-shadow: inset 0 1px 0 var(--key-hi), 0 1px 1px var(--key-shadow), 0 6px 12px -8px var(--key-shadow-far); } .ds-back:hover { background: var(--key-hover); } .ds-back:active { transform: translateY(1px); background: var(--key-press); } .ds-back:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-plcd { flex: 1; min-width: 0; display: grid; gap: 4px; padding: 10px 14px; border-radius: 16px; background: var(--lcd-sheen), radial-gradient(circle at 1px 1px, var(--lcd-cells) 0.9px, transparent 1.1px) 0 0 / 3px 3px, var(--lcd); color: var(--lcd-ink); box-shadow: var(--lcd-inset); } .ds-ptitle { margin: 0; font-family: var(--font-lcd); font-weight: 800; font-size: 26px; line-height: 1.05; letter-spacing: 0.02em; text-transform: uppercase; } .ds-psub { margin: 0; font-family: var(--font-ui); font-size: 14px; font-weight: 600; color: var(--lcd-ink-2); }"
+    },
+    {
+      "name": "Glass List",
+      "kind": "card",
+      "refersTo": "glass-list",
+      "description": "A sequence on display glass: Doto numbers, Overpass title and artist, Doto reason segment.",
+      "html": "<ol class=\"ds-glass\"><li class=\"ds-grow\"><span class=\"ds-gn\">01</span><span class=\"ds-gmain\"><span class=\"ds-gt\">Golden Hour</span><span class=\"ds-gs\">Wildwechsel</span></span><span class=\"ds-gseg ds-dim\">NEU</span></li><li class=\"ds-grow\"><span class=\"ds-gn\">02</span><span class=\"ds-gmain\"><span class=\"ds-gt\">Sternschnuppe</span><span class=\"ds-gs\">Velvet Anchor</span></span><span class=\"ds-gseg\">FAVORIT</span></li></ol>",
+      "css": ".ds-glass { list-style: none; margin: 0; padding: 6px 14px; border-radius: 16px; background: var(--lcd-sheen), radial-gradient(circle at 1px 1px, var(--lcd-cells) 0.9px, transparent 1.1px) 0 0 / 3px 3px, var(--lcd); color: var(--lcd-ink); box-shadow: var(--lcd-inset); font-family: var(--font-ui); } .ds-grow { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 7px 0; } .ds-grow + .ds-grow { border-top: 1px dashed color-mix(in srgb, var(--lcd-ink) 18%, transparent); } .ds-gn { flex: none; width: 2.1em; font-family: var(--font-lcd); font-weight: 800; font-size: 17px; color: var(--lcd-ink-2); } .ds-gmain { flex: 1; min-width: 0; display: grid; } .ds-gt { font-weight: 700; font-size: 15px; line-height: 1.3; } .ds-gs { font-size: 13px; font-weight: 500; color: var(--lcd-ink-2); } .ds-gseg { flex: none; font-family: var(--font-lcd); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lcd-ink); } .ds-gseg.ds-dim { color: var(--lcd-ink-2); }"
+    },
+    {
+      "name": "Menu Key Grid",
+      "kind": "custom",
+      "refersTo": "menu-key",
+      "description": "Menu choices as faceplate keys in a two-column grid.",
+      "html": "<ul class=\"ds-kgrid\"><li><a class=\"ds-mkey\" href=\"#\"><span class=\"ds-mleg\">Verlauf</span><span class=\"ds-msub\">Was zuletzt lief</span></a></li><li><a class=\"ds-mkey\" href=\"#\"><span class=\"ds-mleg\">Geräte</span><span class=\"ds-msub\">2 verbunden</span></a></li></ul>",
+      "css": ".ds-kgrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .ds-mkey { display: grid; align-content: start; gap: 4px; min-height: 76px; padding: 14px 14px 12px; border-radius: 14px; background: var(--key); color: var(--ink); text-decoration: none; font-family: var(--font-ui); box-shadow: inset 0 1px 0 var(--key-hi), 0 1px 1px var(--key-shadow), 0 6px 12px -8px var(--key-shadow-far); transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); } .ds-mkey:hover { background: var(--key-hover); } .ds-mkey:active { transform: translateY(1px); background: var(--key-press); } .ds-mkey:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-mleg { font-weight: 800; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; } .ds-msub { font-size: 13px; font-weight: 500; line-height: 1.3; color: var(--ink-2); }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A sunk well in the plate.",
+      "html": "<input class=\"ds-input\" placeholder=\"Sendername\">",
+      "css": ".ds-input { min-height: 52px; width: 100%; padding: 0 14px; border: 0; border-radius: 12px; background: var(--plate); color: var(--ink); caret-color: var(--lit); box-shadow: inset 0 1px 3px var(--key-shadow); font-family: var(--font-ui); font-size: 17px; font-weight: 600; } .ds-input::placeholder { color: var(--ink-3); } .ds-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Message Strip",
+      "kind": "custom",
+      "refersTo": "message-strip",
+      "description": "Display glass strip carrying messages on phones while a page covers the radio.",
+      "html": "<div class=\"ds-strip\" role=\"status\">Sender gespeichert</div>",
+      "css": ".ds-strip { padding: 12px 16px; border-radius: 16px; background: var(--lcd); color: var(--lcd-ink); box-shadow: var(--lcd-inset), 0 12px 28px -12px rgba(0, 0, 0, 0.45); font-family: var(--font-ui); font-weight: 700; font-size: 14px; line-height: 1.35; transition: opacity var(--t) var(--ease), transform var(--t) var(--ease); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Station Memory",
+    "overview": "The interface is a car radio's faceplate: a moulded polymer plate, a recessed display window at the top, chunky rounded keys that physically depress, and a preset bank where each station is a numbered key. Everything a listener needs is readable in a two-second glance and tappable one-handed; the screen serves seconds, the music serves hours.\n\nThe world has two illuminations, like a radio's dimmer. Day is cool light-grey polymer with a reflective grey-green LCD and black segments; night is anthracite polymer with a backlit amber LCD. Night follows `prefers-color-scheme: dark` unless the listener forces an illumination from the menu (`data-illumination=\"day\" | \"night\"` on the root). Both illuminations share every token name; only values change.\n\nSettings live behind the radio's MENU and each preset's tune key, rendered in the radio's own menu grammar: small display windows for page heads, faceplate keys for choices, a segmented balance bar for \"Entdecken ↔ Vertraut\", and lists shown on display glass. The previous record-crate world (\"Plattenschrank\") is a confirmed anti-reference.",
+    "keyCharacteristics": [
+      "One neutral ramp per illumination; amber marks only what is lit.",
+      "Dot-matrix type (Doto) appears only on display glass; everything else is Overpass.",
+      "Keys are tactile: top highlight, soft drop shadow, 1px travel on press.",
+      "Display windows are recessed with an inset shadow, a faint pixel-cell grid and a sheen.",
+      "Progress is a tuner scale with a needle, numbered majors and a plain-language readout."
+    ],
+    "rules": [
+      { "name": "The Lit-Only Rule", "body": "Amber appears only on something that is lit: the playing station, the current selection, the primary action. Nothing is amber for decoration.", "section": "colors" },
+      { "name": "The Size-Not-Colour Rule", "body": "The playing preset is marked by being pressed in and by a larger name (22px/800), plus its LED; the key face does not turn amber.", "section": "colors" },
+      { "name": "The Shared-Names Rule", "body": "A new colour must be defined for both illuminations under one custom property name; components never reference a day or night value directly.", "section": "colors" },
+      { "name": "The Glass-Only Doto Rule", "body": "Doto is used only for text on display glass (display, page head window, balance bar, glass lists), and there only for names, indicators, reasons and sequence numbers. Songs, artists, readouts and counts on glass stay Overpass.", "section": "typography" },
+      { "name": "The Tabular Count Rule", "body": "Every number that counts uses Overpass with tabular numerals, and sits next to what it counts (\"2 von 1.200 gehört\", \"Runde 1 0 / 400\").", "section": "typography" },
+      { "name": "The Three Heights Rule", "body": "Every surface is raised (a key), level (the plate) or recessed (glass and wells). Nothing hovers above the plate except the transient message strip.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do define every new colour for both illuminations under one custom property name.",
+      "Do reserve `lit` amber for the playing station, the current selection and the primary action.",
+      "Do put Doto only on display glass, and only for names, indicators, reasons and sequence numbers.",
+      "Do set counts in Overpass with tabular numerals, next to the thing they count.",
+      "Do make every control a key (raised, 14px radius, 1px press travel) or a well (sunk, `plate`).",
+      "Do show a sequence or status the radio would display on display glass (display, page head window, glass list, strip).",
+      "Do keep touch targets at 52px or more for keys and 48px or more for rows.",
+      "Do animate only transform, opacity and colour, with `--ease`; reduced motion collapses all of it to 1ms."
+    ],
+    "donts": [
+      "Don't mark the playing station by turning its key amber; it latches down and its name grows.",
+      "Don't use Doto for body copy, songs, artists, counts or anything on the plate.",
+      "Don't use cover-art grids, a round green play button or dark streaming chrome.",
+      "Don't reuse the discarded \"Plattenschrank\" record-crate world.",
+      "Don't float cards above the plate with generic drop shadows; use the three heights.",
+      "Don't use unicode glyphs as icons; use lucide outline icons."
+    ]
+  }
+}
