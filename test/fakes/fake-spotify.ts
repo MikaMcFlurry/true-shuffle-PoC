@@ -457,7 +457,14 @@ export class FakeSpotify {
 			album: {
 				id: t.albumId,
 				name: t.albumName,
-				images: [{ url: `https://img.example/${t.albumId}.jpg`, width: 300, height: 300 }],
+				images: [
+					{
+						url:
+							(t as FakeTrack & { cover?: string }).cover ?? `https://img.example/${t.albumId}.jpg`,
+						width: 300,
+						height: 300,
+					},
+				],
 				release_date: t.releaseDate,
 			},
 		};
@@ -473,7 +480,13 @@ export class FakeSpotify {
 			collaborative: false,
 			snapshot_id: `snap-${p.snapshot}`,
 			owner: { id: p.ownerId, display_name: this.users.get(p.ownerId)?.name ?? p.ownerId },
-			images: [{ url: `https://img.example/${p.id}.jpg` }],
+			images: [
+				{
+					url:
+						(this.tracks.get(p.items[0] ?? "") as (FakeTrack & { cover?: string }) | undefined)
+							?.cover ?? `https://img.example/${p.id}.jpg`,
+				},
+			],
 			uri: `spotify:playlist:${p.id}`,
 			...(readable ? { items: { total: p.items.length } } : {}),
 		};

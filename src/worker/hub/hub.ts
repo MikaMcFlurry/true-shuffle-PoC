@@ -1261,6 +1261,7 @@ export class HubCore {
 			at: this.now(),
 		};
 		this.kvSet("player", snap);
+		this.kvDel("player_stale");
 		const wasPlaying = s.idleSince === null && s.lastActivityAt > 0;
 		if (obs?.isPlaying) {
 			s.lastActivityAt = this.now();
@@ -1784,6 +1785,7 @@ export class HubCore {
 			this.kvSet("deck_activity", activity);
 			this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), fresh.id);
 			this.log("info", "play", `„${fresh.name}“ gestartet auf ${target.name}`);
+			this.kvSet("player_stale", 1);
 			await this.scheduleSoon(20_000);
 			return { ok: true, deviceName: target.name };
 		} catch (err) {
@@ -1866,6 +1868,8 @@ export class HubCore {
 			if (action === "pause") await client.pause();
 			else if (action === "resume") await client.resume();
 			else await client.next();
+			// The next look at the interface must read the player, not the old snapshot.
+			this.kvSet("player_stale", 1);
 			await this.scheduleSoon(4000);
 			return { ok: true };
 		} catch (err) {
@@ -1975,7 +1979,7 @@ export class HubCore {
 		};
 		if (opts.live && this.isConnected()) {
 			const snap = this.kvGet<PlayerSnapshot>("player");
-			if (!snap || this.now() - snap.at > 15_000) {
+			if (!snap || this.kvGet("player_stale") || this.now() - snap.at > 15_000) {
 				const budget = new RequestBudget(8);
 				await this.sync(budget);
 				await this.ensureAlarm();

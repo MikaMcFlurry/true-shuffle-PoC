@@ -14,6 +14,7 @@ coverage/
 test-results/
 playwright-report/
 e2e/.artifacts/
+e2e/*.tmp.mjs
 
 # Editors / OS
 .vscode/
@@ -24,3 +25,10 @@ Thumbs.db
 
 # Local harness settings (impeccable design hook, permissions)
 .claude/settings.local.json
+
+# impeccable working files (screenshots and reference images stay local;
+# only the surface brief and the final review shots are kept)
+.impeccable/hook.cache.json
+.impeccable/refs/
+.impeccable/review/tour/
+.impeccable/review/walk-*.png

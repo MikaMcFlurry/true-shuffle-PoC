@@ -11,6 +11,8 @@ export default defineConfig({
 		emptyOutDir: true,
 		target: "es2022",
 		sourcemap: true,
+		// Fonts and images ship as files: the CSP allows no data: fonts.
+		assetsInlineLimit: 0,
 	},
 	server: {
 		proxy: {

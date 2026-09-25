@@ -53,6 +53,11 @@ describe("listening", () => {
 		expect(p.shuffle).toBe(false);
 		expect(p.repeat).toBe("off");
 		expect(p.isPlaying).toBe(true);
+		// The display shows the song right away, not the snapshot from before the start.
+		h.clock.t += 1000;
+		const st = await h.hub.state({ live: true });
+		expect(st.nowPlaying?.stationId).toBe(h.stationIds[0]);
+		expect(st.nowPlaying?.isPlaying).toBe(true);
 	});
 
 	it("remembers everything heard and never rewrites the deck while it plays", async () => {
