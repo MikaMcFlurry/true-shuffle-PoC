@@ -27,6 +27,8 @@ export interface DeckItem {
 	 * (between two looks) may be booked as "not now", never as banned or used up.
 	 */
 	seen?: boolean;
+	/** Passed: the look before, when it was still ahead or playing — left between `from` and `at`. */
+	from?: number;
 }
 
 export interface Deck {
@@ -181,7 +183,13 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		};
 		if (seenPrev && obs.trackId !== deck.lastTrackId && deck.items[prev]!.state === "pending") {
 			const items = deck.items.slice();
-			items[prev] = { ...items[prev]!, state: "passed", at: obs.at, seen: true };
+			items[prev] = {
+				...items[prev]!,
+				state: "passed",
+				at: obs.at,
+				from: deck.lastObservedAt ?? obs.at,
+				seen: true,
+			};
 			return {
 				...base,
 				inDeck: true,
@@ -222,7 +230,13 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	const pass = (i: number) => {
 		const it = items[i]!;
 		if (it.state === "pending") {
-			items[i] = { ...it, state: "passed", at: obs.at, seen: seenPrev && i === prev };
+			items[i] = {
+				...it,
+				state: "passed",
+				at: obs.at,
+				from: deck.lastObservedAt ?? obs.at,
+				seen: seenPrev && i === prev,
+			};
 			passed.push(it.id);
 		}
 	};
@@ -297,20 +311,25 @@ export function settleSkips(
 	deck: Deck,
 	now: number,
 	graceMs = SKIP_GRACE_MS,
-): { deck: Deck; skipped: TrackId[]; seen: Set<TrackId>; leftAt: Map<TrackId, number> } {
+): {
+	deck: Deck;
+	skipped: TrackId[];
+	seen: Set<TrackId>;
+	left: Map<TrackId, { from: number; at: number }>;
+} {
 	const skipped: TrackId[] = [];
 	const seen = new Set<TrackId>();
-	const leftAt = new Map<TrackId, number>();
+	const left = new Map<TrackId, { from: number; at: number }>();
 	const items = deck.items.map((it) => {
 		if (it.state === "passed" && it.at !== null && now - it.at >= graceMs) {
 			skipped.push(it.id);
-			leftAt.set(it.id, it.at);
+			left.set(it.id, { from: it.from ?? it.at, at: it.at });
 			if (it.seen) seen.add(it.id);
 			return { ...it, state: "skipped" as const, at: now };
 		}
 		return it;
 	});
-	return { deck: { ...deck, items }, skipped, seen, leftAt };
+	return { deck: { ...deck, items }, skipped, seen, left };
 }
 
 /** Songs of the deck the listener has moved past or heard. */

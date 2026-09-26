@@ -36,7 +36,7 @@ Jeder Sender ist eine private Spotify-Playlist „True Shuffle · <Sender>" mit 
   - Lässt sich die gehaltene Version nicht verbessern, bleibt sie, wie sie ist, und True Shuffle schaut stündlich wieder nach.
 - **Was True Shuffle nicht gewählt hat, überspringt es selbst** (`guardStation`), sobald es das im Sender sieht:
   - ein Song mit Daumen runter, egal woher und egal wie lange er schon läuft;
-  - in seinen ersten 30 Sekunden ein Song, der in den letzten 24 Stunden lief und nicht mehr in der Playlist steht, wohl aber in einer ihrer Versionen der letzten 36 Stunden, also aus einer alten, vom Player geladenen Reihenfolge kommt;
+  - in seinen ersten 30 Sekunden ein Song, der in den letzten 24 Stunden lief und nicht mehr in der Playlist steht, wohl aber in einer ihrer Versionen der letzten 36 Stunden, die ein Player geladen haben kann: eine, in der True Shuffle ihn gesehen hat, die es selbst gestartet hat, oder was eine Fortsetzung davon behielt;
   - in seinen ersten 30 Sekunden ein heute schon gehörter Song vorn in einer fortgesetzten Version, wenn jemand sie in Spotify von oben startet. Dann springt True Shuffle zum ersten ungehörten Song der Playlist.
 
   Das gilt auch bei geschlossener App: True Shuffle sieht direkt nach jedem Songende nach, und solange ein Player einen Sender hält (pausiert oder unsichtbar, bis 36 Stunden), jede Minute. Solche Sprünge zählen nie als Skip des Hörers, und die App zeigt drei Minuten lang, was übersprungen wurde und warum. Im Gast-Modus springt True Shuffle nie. Einen Song, den der Hörer in der aktuellen Playlist selbst antippt oder in die Warteschlange legt, lässt es in Ruhe, außer er steht vorn in einer fortgesetzten Version oder in einer alten Version dieses Senders.
@@ -56,7 +56,7 @@ Frühe Skips leitet True Shuffle vorsichtig aus der Player-Position ab. Die Rege
 - True Shuffle sieht direkt nach jedem Songende nach. So wird fast jeder Song in seinen ersten Sekunden gesehen.
 - Ein Song gilt als verlassen, wenn er zuletzt **laufend** gesehen wurde und danach ein anderer im selben Sender läuft. Ein pausierter Song, den Spotify später durch einen anderen ersetzt, wurde nicht übersprungen.
 - Taucht innerhalb von 20 Minuten keine Wiedergabe auf, ist er früh übersprungen.
-- Lücken zwischen zwei Beobachtungen zählen nur in einem Deck, dessen Reihenfolge sicher ist. Das ist der Fall, wenn True Shuffle es selbst gestartet hat oder wenn es eine solche Version an Ort und Stelle fortsetzt. Solche nur erschlossenen Skips wirken lediglich weich („nicht jetzt, seltener"). Sperren (Regel „ban") und Verbrauchen der Runde (Regel „consume", eigenes Feld `consumed_at`) gibt es nur für einen Song, der tatsächlich laufend gesehen und verlassen wurde. Daumen hoch hebt eine Sperre auf allen Sendern auf.
+- Lücken zwischen zwei Beobachtungen zählen nur in einem Deck, dessen Reihenfolge sicher ist. Das ist der Fall, wenn True Shuffle es selbst gestartet hat oder wenn es eine solche Version an Ort und Stelle fortsetzt. Solche nur erschlossenen Skips wirken lediglich weich („nicht jetzt, seltener"). Lag zwischen dem letzten Blick davor und dem Blick, der den Song verlassen sah, Gast-Zeit, bleibt der Skip beim Gast und zählt nicht. Beendet ein Skip unter „consume" eine Runde, beginnt die nächste beim Buchen, nicht rückwirkend. Sperren (Regel „ban") und Verbrauchen der Runde (Regel „consume", eigenes Feld `consumed_at`) gibt es nur für einen Song, der tatsächlich laufend gesehen und verlassen wurde. Daumen hoch hebt eine Sperre auf allen Sendern auf.
 - Ein Song, der im Sender läuft, aber nicht in der aktuellen Deck-Version steht, wird einzeln beobachtet.
 - Stellt sich ein „Skip" doch als Wiedergabe heraus, wird er genau einmal und vollständig zurückgenommen: Zähler, Pause und Sperre. Das gilt auch, wenn die Wiedergabe erst nach der Wartezeit ankommt.
 - Geprüft wird das gegen die Wahrheit des Simulators (`test/hub/skips-truth.test.ts`, mit allen Argumenten der Buchung): kein einziger Skip für einen Song, der nicht früh übersprungen wurde, und keine falsche Sperre. Das gilt bei normalem Hören und nach einem Autostopp, und zwar für jede Art, wie Spotify weitermachen könnte:
@@ -86,10 +86,11 @@ Die Anteile kommen vom Regler „Entdecken ↔ Vertraut" (Standard Entdecker: 60
 Das Objekt weckt sich selbst per Alarm:
 
 - direkt nach jedem Songende (bei langen Songs spätestens alle 4 Minuten), solange ein Deck spielt,
-- jede Minute, solange ein Player einen Sender hält (pausiert oder unsichtbar), höchstens 36 Stunden nach dem letzten Hören; ein unveränderter Player-Stand wird dabei nicht jedes Mal gespeichert,
+- solange ein Player einen Sender hält (pausiert oder unsichtbar): in den ersten 3 Stunden nach dem letzten Hören alle 30 Sekunden, dann jede Minute bis 36 Stunden, danach alle 2 Minuten, solange Spotify den Player noch pausiert im Sender zeigt; ein unveränderter Player-Stand wird dabei nicht jedes Mal gespeichert,
 - 15 Sekunden nach einem eigenen Sprung oder einem Tipp in der App,
 - alle 30 Sekunden, solange ein Player im Sender einen Song spielt, den die Playlist nicht mehr enthält (eine ältere, geladene Reihenfolge),
-- alle 20 Sekunden, wenn 1 bis 3 Songs voraus ein abgelehnter Song steht oder eine Stelle, an der ein Player mit der vorigen Version einen gestrichenen Song träfe, und in einer fortgesetzten Playlist, solange eine ihrer älteren Versionen (36 Stunden) einen inzwischen abgelehnten Song enthielt,
+- alle 20 Sekunden, wenn 1 bis 3 Songs voraus ein abgelehnter Song steht, eine Stelle, an der ein Player mit der vorigen Version einen gestrichenen Song träfe, oder, vorn in einer fortgesetzten Playlist, ein heute schon gehörter Song,
+- alle 20 Sekunden in einer Playlist, die True Shuffle nicht selbst gestartet hat, solange eine ältere Version (36 Stunden) einen inzwischen abgelehnten Song noch vor der Stelle des Players hatte,
 
 Die schnellen Takte gelten nur nach einem Blick, der geklappt hat. Kann True Shuffle den Player nicht sehen (Spotify-Zugang entzogen, Spotify bremst), bleibt es beim langsamen Takt.
 - alle 10 Minuten bei anderer Wiedergabe,

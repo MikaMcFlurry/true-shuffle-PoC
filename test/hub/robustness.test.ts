@@ -819,3 +819,123 @@ describe("the seventh review's cases", () => {
 			expect(heard.get(t)![0]).toBeLessThan(30_000);
 		});
 });
+
+describe("the eighth review's cases", () => {
+	function earsOn(h: H) {
+		const heard = new Map<string, number[]>();
+		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
+		const orig = f.moveNext.bind(h.fake);
+		f.moveNext = (user: unknown, at: number) => {
+			const cur = h.fake.current();
+			if (cur) heard.set(cur, [...(heard.get(cur) ?? []), h.fake.user().player.listenedMs]);
+			orig(user, at);
+		};
+		return heard;
+	}
+
+	for (const beforeEnd of [30, 150])
+		it(`a guest's skip ${beforeEnd} s before guest mode ends stays the guest's`, async () => {
+			const h = await onboarded({ tracks: 300 });
+			const sid = h.stationIds[0]!;
+			await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+			h.hub.setGuest(true, 1);
+			const end = (await h.hub.state()).guest.until!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(end - h.clock.t - beforeEnd * 1000 - 4 * MINUTE_MS);
+			let g: string | null = null;
+			for (let i = 0; i < 600 && !g; i++) {
+				await h.listen(1_000);
+				const p = h.fake.user().player;
+				if (h.clock.t >= end - beforeEnd * 1000 && p.listenedMs >= 8_000 && p.listenedMs < 12_000) {
+					g = h.fake.current();
+					h.fake.skip();
+				}
+			}
+			expect(h.clock.t).toBeLessThan(end);
+			await h.listen(40 * MINUTE_MS); // guest mode ends; the owner listens on
+			const row = h.sql.first<{ early_skips: number }>(
+				`SELECT early_skips FROM memory WHERE id = ?`,
+				g,
+			);
+			expect(row?.early_skips ?? 0).toBe(0);
+			expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, g)).toBeNull();
+		});
+
+	it("a song turned down during a 40-h hold is caught after a skip by hand onto it", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(30 * MINUTE_MS);
+		const p = h.fake.user().player;
+		p.isPlaying = false;
+		const x = p.order[p.index + 3]!;
+		const before = p.order[p.index + 2]!;
+		await h.listen(38 * 60 * MINUTE_MS);
+		await h.hub.thumb(x, -1);
+		await h.listen(2 * 60 * MINUTE_MS);
+		const heard = earsOn(h);
+		p.isPlaying = true;
+		let skipped = false;
+		for (let i = 0; i < 480; i++) {
+			await h.listen(5_000);
+			if (!skipped && h.fake.current() === before && p.listenedMs >= 5_000) {
+				h.fake.skip();
+				skipped = true;
+			}
+		}
+		expect(heard.get(x)?.length).toBe(1);
+		expect(heard.get(x)![0]).toBeLessThan(30_000);
+	});
+
+	it("started from the top, the first song skipped early: today's songs behind it are jumped", async () => {
+		const h = await onboarded({ tracks: 120 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(3 * 60 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(40 * MINUTE_MS);
+		const { pl } = stationDeck(h, sid);
+		const today = new Set(
+			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
+		);
+		const heard = earsOn(h);
+		const p = h.fake.user().player;
+		h.fake.startContext("mika", `spotify:playlist:${pl.id}`, 0, p.deviceId!, false);
+		let skipped = false;
+		for (let i = 0; i < 3600; i++) {
+			await h.listen(1_000);
+			if (!skipped && p.index === 0 && p.listenedMs >= 5_000) {
+				h.fake.skip();
+				skipped = true;
+			}
+		}
+		const repeats = [...heard.entries()].filter(
+			([id, ms]) => today.has(id) && ms.some((x) => x >= 30_000),
+		);
+		expect(repeats).toEqual([]);
+	});
+
+	it('in "Alles", never played before, a song the listener queues plays', async () => {
+		const h = await onboarded({ tracks: 1200, playlists: [600, 600] });
+		const [s1] = h.stationIds as [number];
+		const all = h.allId;
+		await h.listen(20 * 60 * MINUTE_MS); // background rewrites of every station meanwhile
+		expect((await h.hub.play(s1)).ok).toBe(true);
+		await h.listen(90 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(3 * 60 * MINUTE_MS);
+		const today = [
+			...new Set(
+				h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
+			),
+		];
+		expect((await h.hub.play(all)).ok).toBe(true);
+		await h.listen(4 * MINUTE_MS);
+		const inAll = new Set(stationDeck(h, all).pl.items);
+		const q = today.find((id) => !inAll.has(id))!;
+		const heard = earsOn(h);
+		h.fake.user().player.userQueue.push(q);
+		await h.listen(15 * MINUTE_MS);
+		expect(heard.get(q)?.[0]).toBeGreaterThanOrEqual(30_000);
+	});
+});

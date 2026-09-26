@@ -1541,15 +1541,35 @@ export class HubCore {
 		}
 		// Songs a player may still have loaded from earlier versions: each one
 		// for 36 h after it left the playlist, then forgotten.
+		// Only what a player could have loaded counts: a version it was seen in
+		// or True Shuffle started, or what a continuation kept of one; not a
+		// background plan nobody played.
 		if (prev) {
 			const former = new Map<TrackId, number>();
 			for (const [id, until] of prev.former ?? []) if (until > this.now()) former.set(id, until);
-			for (const it of prev.items) former.set(it.id, this.now() + HOLD_WATCH_MS);
+			const loadable =
+				prev.lastIndex != null || prev.ours === true
+					? 0
+					: prev.continued && prev.heldAt != null
+						? prev.heldAt + 1
+						: prev.items.length;
+			for (const it of prev.items.slice(loadable)) former.set(it.id, this.now() + HOLD_WATCH_MS);
 			for (const id of inLayout.keys()) former.delete(id);
 			deck.former = [...former].sort((a, b) => b[1] - a[1]).slice(0, 2000);
-			deck.formerOff = deck.former
-				.filter(([id]) => isBlocked(this.memory(id), banned))
-				.map(([id]) => id);
+			// Turned down or banned, and still ahead of where the player was: it
+			// may yet come up in that older order.
+			const ahead = new Set(
+				prev.items.slice(Math.max(loadable, (position(prev) ?? -1) + 1)).map((it) => it.id),
+			);
+			const still = new Set(deck.former.map(([id]) => id));
+			deck.formerOff = [
+				...new Set([
+					...(prev.formerOff ?? []).filter((id) => still.has(id)),
+					...deck.former
+						.filter(([id]) => ahead.has(id) && isBlocked(this.memory(id), banned))
+						.map(([id]) => id),
+				]),
+			];
 		}
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
@@ -1787,15 +1807,19 @@ export class HubCore {
 				changed = true;
 				deck = settled.deck;
 				const rules = this.rulesOf(st);
-				// Booked at the moment the song was left: a guest's skip stays the guest's.
-				for (const id of settled.skipped)
+				// Booked at the look that saw the song left; a guest period anywhere
+				// between the look before and that one keeps it the guest's skip.
+				for (const id of settled.skipped) {
+					const left = settled.left.get(id);
 					this.bookEarlySkip(
 						st,
 						id,
 						rules,
-						settled.leftAt.get(id) ?? deck.lastObservedAt ?? this.now(),
+						left?.at ?? deck.lastObservedAt ?? this.now(),
 						settled.seen.has(id),
+						left?.from,
 					);
+				}
 			}
 			if (changed) this.saveDeck(st.id, deck);
 			// Rewrite a deck once nobody has listened to it for a while.
@@ -1922,7 +1946,7 @@ export class HubCore {
 		let why: string;
 		if (m.thumb === -1) why = "abgelehnt";
 		else if (heardToday && at.index === null && formerNow(deck, this.now()).has(obs.trackId))
-			why = "heute schon gehört, aus einer alten Reihenfolge";
+			why = "heute schon gehört";
 		else if (
 			heardToday &&
 			at.index !== null &&
@@ -2003,7 +2027,7 @@ export class HubCore {
 				continue;
 			}
 			const st = this.stationRow(e.st);
-			if (st) this.bookEarlySkip(st, e.id, this.rulesOf(st), e.at, e.seen === true);
+			if (st) this.bookEarlySkip(st, e.id, this.rulesOf(st), e.at, e.seen === true, e.since);
 		}
 		if (keep.length !== list.length) this.kvSet("pending_skips", keep);
 	}
@@ -2033,6 +2057,11 @@ export class HubCore {
 
 	private inGuest(at: number): boolean {
 		return this.guestPeriods().some((p) => at >= p.from && at < p.to);
+	}
+
+	/** Any guest time between `from` and `to`? */
+	private inGuestDuring(from: number, to: number): boolean {
+		return this.guestPeriods().some((p) => p.from <= to && p.to > from);
 	}
 
 	/** Book new entries of the recently-played list into memory. */
@@ -2181,8 +2210,9 @@ export class HubCore {
 		rules: StationRules,
 		at: number,
 		seen: boolean,
+		from?: number,
 	): void {
-		if (this.inGuest(at)) return;
+		if (this.inGuest(at) || (from !== undefined && this.inGuestDuring(from, at))) return;
 		const before = this.memory(id);
 		this.liveSkip(id, at);
 		this.log(
@@ -2202,7 +2232,9 @@ export class HubCore {
 		}
 		if (rules.skipPolicy === "consume") {
 			this.updateLive(id, (r) => ({ ...r, consumed_at: Math.max(r.consumed_at ?? 0, at) }));
-			this.countRound(id, before, at, "consume");
+			// A round this skip completes begins now: plays already counted since
+			// the song was left belong to the round that just ended.
+			this.countRound(id, before, this.now(), "consume");
 		}
 		// A discovery skipped early is not for this listener.
 		this.db.run(
@@ -3138,10 +3170,10 @@ export class HubCore {
 				end - now <= 4 * MINUTE_MS;
 			candidates.push(aligned ? Math.max(now + 15_000, end) : now + 3 * MINUTE_MS);
 		} else if (snap?.obs?.isPlaying) candidates.push(now + 10 * MINUTE_MS);
-		else if (snap && this.stationHeld(snap))
+		else if (snap && this.heldPace(snap) !== null)
 			// A player holds a station (paused, or out of sight): whatever it plays
-			// on resume is seen within a minute.
-			candidates.push(now + MINUTE_MS);
+			// on resume is seen within its first seconds.
+			candidates.push(now + this.heldPace(snap)!);
 		else if (s.idleSince !== null && now - s.idleSince > 6 * HOUR_MS)
 			candidates.push(now + 60 * MINUTE_MS);
 		else candidates.push(now + 20 * MINUTE_MS);
@@ -3163,14 +3195,20 @@ export class HubCore {
 		const deck = st ? this.deckOf(st) : null;
 		const at = deck ? position(deck) : null;
 		if (!deck || at === null) return false;
+		// In a continued playlist's front (started from the top): today's songs
+		// ahead are jumped over, also when the listener skips onto one by hand.
+		const front = deck.continued === true && deck.heldAt != null && at < deck.heldAt;
 		for (let i = at + 1; i <= at + 3 && i < deck.items.length; i++) {
-			if (deck.changedAt?.includes(i) || this.memory(deck.items[i]!.id).thumb === -1) return true;
+			const m = this.memory(deck.items[i]!.id);
+			if (deck.changedAt?.includes(i) || m.thumb === -1) return true;
+			if (front && m.lastPlayedAt !== null && this.now() - m.lastPlayedAt < RECENT_GUARD_MS)
+				return true;
 		}
-		// A song turned down that an older version held: where a player still
-		// in that version meets it is unknown, so it may come any time. Only a
-		// continued playlist can be played in an older order: one True Shuffle
-		// started itself replaced whatever the player had loaded.
-		if (deck.continued === true && deck.formerOff?.length) {
+		// A song turned down that an older version held, still ahead in it:
+		// where a player still in that order meets it is unknown, so it may come
+		// any time. Not after True Shuffle started the playlist itself: that
+		// replaced whatever the player had loaded.
+		if ((deck.continued === true || deck.ours !== true) && deck.formerOff?.length) {
 			const former = formerNow(deck, this.now());
 			if (deck.formerOff.some((id) => former.has(id))) return true;
 		}
@@ -3178,13 +3216,23 @@ export class HubCore {
 	}
 
 	/** A player paused in a station's playlist, or gone quiet in it, within the last 36 h. */
-	private stationHeld(snap: PlayerSnapshot | null): boolean {
+	/**
+	 * How often to look while a player holds a station, or null if none does:
+	 * every 30 s in the first hours after the last listening (a car stop, a
+	 * restart from the top soon after), then every minute up to 36 h, and
+	 * beyond that every 2 min for as long as Spotify still shows the player
+	 * paused in the station.
+	 */
+	private heldPace(snap: PlayerSnapshot | null): number | null {
 		const uri = snap?.obs ? snap.obs.contextUri : this.kvGet<string>("last_context");
-		if (!uri) return false;
+		if (!uri) return null;
 		const st = this.stations().find((x) => this.deckUri(x) === uri);
-		if (!st) return false;
+		if (!st) return null;
 		const active = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
-		return this.now() - active < HOLD_WATCH_MS;
+		const since = this.now() - active;
+		if (since < 3 * HOUR_MS) return 30_000;
+		if (since < HOLD_WATCH_MS) return MINUTE_MS;
+		return snap?.obs ? 2 * MINUTE_MS : null;
 	}
 
 	async scheduleSoon(ms: number): Promise<void> {
