@@ -202,6 +202,11 @@ export interface RecentPlay {
 	contextUri: string | null;
 	/** The guest's: it proves the song was not skipped then, but undoes no skip of the owner. */
 	ignored?: boolean;
+	/**
+	 * The guest's play across the end of guest time, begun then: a skip seen
+	 * after that is this play's own, and was none.
+	 */
+	from?: number;
 }
 
 /**

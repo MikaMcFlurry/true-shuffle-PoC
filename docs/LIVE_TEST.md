@@ -27,7 +27,8 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 - [ ] Hören beenden und nach mindestens 10 Minuten denselben Sender wieder starten. Die Reihenfolge ist neu, Gehörtes ist nicht wieder vorn.
 - [ ] Am nächsten Tag denselben Sender starten: kein Song aus dem Vortag, die Rundenzahl „x von y gehört" ist gestiegen.
 - [ ] Die Sender-Playlist **direkt in Spotify** starten (ohne True Shuffle). Die Songs zählen trotzdem.
-- [ ] Einen Song eine Minute hören, dann in der App einen anderen Sender starten. Eine halbe Stunde später steht der Song im **Verlauf**, genau einmal, und kommt heute nicht wieder. (Prüft auch, ob Spotify einen so ersetzten Song meldet; wenn nicht, zählt True Shuffle ihn nach 20 Minuten selbst.)
+- [ ] Einen Song eine Minute hören, dann in der App einen anderen Sender starten. Eine halbe Stunde später steht der Song im **Verlauf**, genau einmal, und kommt heute nicht wieder. Dann im **Protokoll** nachsehen, welche Zeile steht: „Spotify meldet ersetzte Songs …“ (Spotify meldet einen so ersetzten Song) oder „… zählt ohne Spotifys Meldung (ersetzt)“ (Spotify meldet ihn nicht, True Shuffle zählt ihn nach 20 Minuten selbst). Notiere, welche.
+- [ ] Dasselbe **in Spotify**: einen Song eine Minute hören (App offen), dann in Spotify ein anderes Album oder eine andere Playlist starten. Eine halbe Stunde später steht der Song genau einmal im Verlauf; das Protokoll zeigt wieder, wer ihn gezählt hat.
 
 ## D. Auto-Situation (der ursprüngliche Ärger)
 

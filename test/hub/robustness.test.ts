@@ -1337,7 +1337,7 @@ describe("the tenth review's cases", () => {
 });
 
 describe("the eleventh review's cases", () => {
-	it("a guest who skips just before guest mode goes off: the song then playing stays the guest's", async () => {
+	it("a guest who skips just before guest mode goes off: the song then playing stays the guest's when the owner leaves it", async () => {
 		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
@@ -1353,7 +1353,8 @@ describe("the eleventh review's cases", () => {
 		await h.listen(10_000);
 		const running = h.fake.current()!;
 		await h.hub.setGuest(false);
-		while (h.fake.current() === running) await h.listen(1_000);
+		await h.listen(25_000);
+		h.fake.skip(); // the owner moves on: heard 35 s, 25 of them the owner's
 		await h.listen(30 * MINUTE_MS);
 		u.player.isPlaying = false;
 		await h.listen(30 * MINUTE_MS);
@@ -1440,7 +1441,7 @@ describe("the twelfth review's cases", () => {
 		expect(d.sharedAt?.length).toBeGreaterThan(0);
 	});
 
-	it("a guest who skips just after the last look: the next song stays the guest's", async () => {
+	it("a guest who skips just after the last look: the next song stays the guest's when the owner leaves it", async () => {
 		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
 		const u = h.fake.user();
 		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
@@ -1457,7 +1458,8 @@ describe("the twelfth review's cases", () => {
 		await h.listen(3_000);
 		const b = h.fake.current()!;
 		await h.hub.setGuest(false);
-		while (h.fake.current() === b) await h.listen(1_000);
+		await h.listen(28_000);
+		h.fake.skip(); // the owner moves on: heard 31 s, 28 of them the owner's
 		await h.listen(15 * MINUTE_MS);
 		u.player.isPlaying = false;
 		await h.listen(30 * MINUTE_MS);
@@ -2358,4 +2360,190 @@ describe("the twenty-first review's cases", () => {
 		await h.listen(48 * 60 * MINUTE_MS);
 		expect(writes).toBeLessThan(10);
 	});
+});
+
+describe("the twenty-second review's cases", () => {
+	const rows = (h: H, id: string) =>
+		h.sql
+			.all<{ ignored: number }>(`SELECT ignored FROM plays WHERE track_id = ?`, id)
+			.map((r) => r.ignored);
+	const memPlays = (h: H, id: string) =>
+		h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, id)?.plays ?? 0;
+	const own = (h: H) => [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+	async function nextSong(h: H) {
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+	}
+
+	for (const listed of [false, true])
+		for (const to of ["the same playlist", "another playlist"] as const)
+			it(`a song heard a minute and replaced by a start in Spotify (${to}) counts once${listed ? " (Spotify lists it)" : ""}`, async () => {
+				const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+				const u = h.fake.user();
+				u.listReplaced = listed;
+				const pl = own(h);
+				h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, 20, u.devices[0]!.id, false);
+				await h.listen(3_000);
+				await h.hub.state({ live: true }); // the app is open
+				const x = h.fake.current()!;
+				await h.listen(60_000);
+				await h.hub.state({ live: true });
+				const other = [...h.fake.playlists.values()].find((p) => p.name === "Playlist 1")!;
+				const next = to === "the same playlist" ? pl : other;
+				h.fake.startContext(u.id, `spotify:playlist:${next.id}`, 80, u.devices[0]!.id, false);
+				await h.listen(60 * MINUTE_MS);
+				h.fake.pause();
+				await h.listen(60 * MINUTE_MS);
+				expect(rows(h, x)).toEqual([0]);
+				expect(memPlays(h, x)).toBe(1);
+			});
+
+	it("the guest's play across the end leaves the owner's earlier skip and ban", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+		const u = h.fake.user();
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(8 * MINUTE_MS);
+		await nextSong(h);
+		const x = h.fake.current()!;
+		await h.listen(10_000);
+		h.fake.skip(); // the owner skips X after 10 s
+		await h.listen(4 * MINUTE_MS);
+		await h.hub.setGuest(true, 6);
+		const pl = [...h.fake.playlists.values()].find(
+			(p) => p.items.includes(x) && p.name !== "Playlist 1",
+		)!;
+		h.fake.startContext(
+			u.id,
+			`spotify:playlist:${pl.id}`,
+			pl.items.indexOf(x),
+			u.devices[0]!.id,
+			false,
+		);
+		await h.listen(60_000);
+		await h.hub.setGuest(false);
+		await h.listen(5_000);
+		h.fake.skip();
+		await h.listen(60 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(60 * MINUTE_MS);
+		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, x)).not.toBeNull();
+		expect(h.hub.memory(x).earlySkips).toBe(1);
+	});
+
+	for (const how of ["hand", "timer"] as const)
+		it(`a seek after guest time does not hand the guest's play to the owner (${how})`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			await h.hub.setGuest(true, 1);
+			if (how === "timer") await h.listen(20_000);
+			expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+			if (how === "hand") {
+				await h.listen(20 * MINUTE_MS);
+				await nextSong(h);
+				await h.listen(90_000);
+				await h.hub.setGuest(false);
+			} else while ((await h.hub.state()).guest.active) await h.listen(1_000);
+			const g = h.fake.current()!;
+			await h.listen(8_000);
+			h.fake.skip(); // the owner hears 8 s of it
+			u.player.progressMs = 150_000; // and seeks the next song to 2:30
+			await h.listen(30 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(rows(h, g).every((i) => i === 1)).toBe(true);
+			expect(memPlays(h, g)).toBe(0);
+		});
+
+	it("a second guest time closes the first one's last play", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		const pl = own(h);
+		await h.hub.setGuest(true, 1);
+		h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, 3, u.devices[0]!.id, false);
+		await h.listen(3 * MINUTE_MS);
+		await nextSong(h);
+		const x = h.fake.current()!;
+		await h.listen(20_000);
+		h.fake.pause();
+		await h.listen(70 * MINUTE_MS); // the timer ends, X stays paused
+		await h.hub.setGuest(true, 1);
+		h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, 40, u.devices[0]!.id, false);
+		await h.listen(70 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(10 * 60 * MINUTE_MS);
+		h.fake.playSong(u.id, x); // the next morning the owner plays X in full
+		await nextSong(h);
+		h.fake.pause();
+		await h.listen(60 * MINUTE_MS);
+		expect(rows(h, x)).toContain(0);
+		expect(memPlays(h, x)).toBe(1);
+	});
+
+	it("a late listing of the song's play before does not make Spotify's word decide", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		const pl = own(h);
+		const fake = h.fake as unknown as { handle: (r: Request) => Promise<Response> };
+		const orig = fake.handle.bind(h.fake);
+		fake.handle = async (req: Request) => {
+			if (!new URL(req.url).pathname.endsWith("/me/player/recently-played")) return orig(req);
+			// Spotify lists plays three minutes late.
+			const keep = u.recent;
+			u.recent = keep.filter((e) => e.playedAt <= h.clock.t - 3 * MINUTE_MS);
+			try {
+				return await orig(req);
+			} finally {
+				u.recent = keep;
+			}
+		};
+		const x = pl.items[10]!;
+		h.fake.playSong(u.id, x);
+		await nextSong(h);
+		h.fake.playSong(u.id, x); // and at once again
+		await h.listen(60_000);
+		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		await h.listen(30 * MINUTE_MS);
+		expect(h.sql.first(`SELECT 1 FROM kv WHERE k = 'replaced_listed'`)).toBeNull();
+		h.fake.pause();
+		await h.listen(2 * 60 * MINUTE_MS);
+		h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, 60, u.devices[0]!.id, false);
+		await h.listen(3_000);
+		const y = h.fake.current()!;
+		await h.listen(2 * MINUTE_MS);
+		expect((await h.hub.play(h.stationIds[1]!)).ok).toBe(true);
+		await h.listen(60 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(60 * MINUTE_MS);
+		expect(rows(h, y)).toEqual([0]);
+		// (Seen by no look between them, the two plays of X are one to the looks.)
+		expect(rows(h, x)).toContain(0);
+	});
+
+	for (const how of ["hand", "timer"] as const)
+		it(`outside a station, the play across the end heard to its end counts for the owner (${how})`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			const pl = own(h);
+			await h.hub.setGuest(true, 1);
+			h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, 3, u.devices[0]!.id, false);
+			if (how === "hand") {
+				await h.listen(20 * MINUTE_MS);
+				await nextSong(h);
+				await h.listen(20_000);
+				await h.hub.setGuest(false);
+			} else {
+				await h.listen(58 * MINUTE_MS);
+				while ((await h.hub.state()).guest.active) await h.listen(1_000);
+			}
+			const x = h.fake.current()!;
+			const left = h.fake.tracks.get(x)!.durationMs - u.player.progressMs;
+			await nextSong(h);
+			await h.listen(20 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			if (left >= 40_000) expect(rows(h, x)).toContain(0);
+			else expect(memPlays(h, x)).toBe(0);
+		});
 });
