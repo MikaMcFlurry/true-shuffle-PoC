@@ -2313,9 +2313,20 @@ describe("the twenty-first review's cases", () => {
 		});
 
 	for (const paused of [false, true])
-		it(`a song sought past 30 s is not counted at a start from the app${paused ? " (paused)" : ""}`, async () => {
+		it(`once Spotify is known to list replaced songs, a song sought past 30 s is not counted${paused ? " (paused)" : ""}`, async () => {
 			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
 			const u = h.fake.user();
+			u.listReplaced = true;
+			// A start replaces a song heard a minute: Spotify lists it.
+			expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+			await h.listen(10 * MINUTE_MS);
+			await nextSong(h);
+			await h.listen(60_000);
+			expect((await h.hub.play(h.stationIds[1]!)).ok).toBe(true);
+			await h.listen(30 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(h.sql.first(`SELECT 1 FROM kv WHERE k = 'replaced_listed'`)).not.toBeNull();
 			const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
 			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 5, u.devices[0]!.id, false);
 			await h.listen(5_000);

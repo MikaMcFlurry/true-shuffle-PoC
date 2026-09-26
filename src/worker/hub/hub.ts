@@ -303,9 +303,8 @@ interface PlayerSnapshot {
 }
 
 /**
- * The play the player shows, as looks saw it: how much of it they saw play.
- * A look that first sees a song cannot tell listening from a seek, so only
- * what later looks see it move counts — never more than the time between.
+ * The play the player shows, as looks saw it: how much of it they saw play —
+ * how far it moved between looks, never more than the time between.
  */
 interface HeardSong {
 	id: TrackId;
@@ -1931,7 +1930,7 @@ export class HubCore {
 			s.lastPlayerAt,
 		);
 		this.noteGuestLast(
-			this.noteHeardSong(obs),
+			this.noteHeardSong(obs, s.lastPlayerAt),
 			!!obs?.trackId,
 			s.lastPlayerAt,
 			this.kvGet<PlayerSnapshot>("player")?.obs ?? null,
@@ -2273,12 +2272,13 @@ export class HubCore {
 			const u = e.unless;
 			if (u && this.heardBetween(u.id, u.from, u.to)) continue;
 			// …or its play was read in an earlier round than this one.
+			const since = (e.since ?? e.at) - SKIP_GRACE_MS;
 			const heard = this.db.first(
 				`SELECT 1 FROM plays WHERE played_at >= ? AND track_id = ? AND ignored = 0 LIMIT 1`,
-				(e.since ?? e.at) - SKIP_GRACE_MS,
+				since,
 				e.id,
 			);
-			if (heard) continue;
+			if (heard || this.guestLastRan(e.id, since)) continue;
 			if (this.now() - e.at < SKIP_GRACE_MS) {
 				keep.push(e);
 				continue;
@@ -2375,9 +2375,15 @@ export class HubCore {
 	 * the play before it ended, and no earlier than its length allows — or the
 	 * song seen playing when guest mode went off by hand.
 	 */
-	private guestPlay(id: TrackId, at: number, durationMs: number, before: () => number): boolean {
+	private guestPlay(
+		id: TrackId,
+		at: number,
+		durationMs: number,
+		before: () => number,
+	): { ignored: boolean; last: boolean } {
 		const periods = this.guestPeriods();
 		let listed = false;
+		let last = false;
 		const hit = periods.some((p) => {
 			if (at > p.from && at <= p.to) return true;
 			if (at <= p.to) return false;
@@ -2391,7 +2397,8 @@ export class HubCore {
 				) {
 					g.listed = true;
 					listed = true;
-					return g.owner < 30_000;
+					last = g.owner < 30_000;
+					return last;
 				}
 				// Looks saw the one play across the end: every other one is the owner's.
 				if (g.only) return false;
@@ -2401,7 +2408,24 @@ export class HubCore {
 			return Math.max(at - durationMs, before()) < p.to;
 		});
 		if (listed) this.kvSet("guest", periods);
-		return hit;
+		return { ignored: hit, last: hit && last };
+	}
+
+	/** The guest's last play of this song was listed since then: it ran, the owner skipped nothing. */
+	private guestLastRan(id: TrackId, since: number): boolean {
+		return this.guestPeriods().some((p) => {
+			const g = p.last;
+			if (!g?.listed || g.id !== id) return false;
+			return (
+				this.db.first(
+					`SELECT 1 FROM plays WHERE track_id = ? AND ignored = 1 AND played_at >= ? AND played_at >= ? AND played_at <= ? LIMIT 1`,
+					id,
+					since,
+					g.start,
+					this.guestLastEnd(p, g) + MINUTE_MS,
+				) !== null
+			);
+		});
 	}
 
 	/** The guest's last play while looks still follow it. */
@@ -2495,7 +2519,10 @@ export class HubCore {
 	 * play; and the play just over — with the rest of it when it was seen
 	 * playing and the next one began right at its end (it ran out).
 	 */
-	private noteHeardSong(obs: PlayerObservation | null): {
+	private noteHeardSong(
+		obs: PlayerObservation | null,
+		lookBefore: number,
+	): {
 		before: HeardSong | null;
 		over: HeardSong | null;
 		cur: HeardSong | null;
@@ -2529,7 +2556,7 @@ export class HubCore {
 				: {
 						id: obs.trackId,
 						start: obs.at - obs.progressMs,
-						listened: 0,
+						listened: this.firstHeard(obs, lookBefore),
 						progress: obs.progressMs,
 						at: now,
 						playing: obs.isPlaying,
@@ -2544,6 +2571,16 @@ export class HubCore {
 			obs.progressMs === before.progress;
 		if (!unchanged) this.kvSet("heard_song", cur);
 		return { before, over, cur: unchanged ? before : cur };
+	}
+
+	/**
+	 * A song first seen: its position, but no more than the time since the
+	 * look before; further in than that, it was sought there, and nothing
+	 * counts. (A seek within that time cannot be told from listening.)
+	 */
+	private firstHeard(obs: PlayerObservation, lookBefore: number): number {
+		const since = lookBefore > 0 ? obs.at - lookBefore : obs.progressMs;
+		return obs.progressMs > since + 2_000 ? 0 : Math.max(0, Math.min(obs.progressMs, since));
 	}
 
 	/** Any guest time between `from` and `to`? */
@@ -2716,6 +2753,10 @@ export class HubCore {
 		const left = notes.filter((e) => now < e.until);
 		if (left.length > 0) this.kvSet("shown_pending", left);
 		else this.kvDel("shown_pending");
+		// Spotify has listed replaced songs lately: one it did not list was not
+		// heard 30 s by its count (a seek, say) — better missed than made up.
+		const listed = this.kvGet<number>("replaced_listed");
+		if (listed !== null && now - listed < 30 * DAY_MS) return [];
 		const out: RecentPlay[] = [];
 		for (const e of notes) {
 			if (now < e.until || this.guestNote(e)) continue;
@@ -2855,7 +2896,11 @@ export class HubCore {
 			const k = notes.findIndex(
 				(e) => e.id === id && at >= e.start - MINUTE_MS && at <= e.at + MINUTE_MS,
 			);
-			if (k >= 0) notes.splice(k, 1);
+			if (k >= 0) {
+				notes.splice(k, 1);
+				// Spotify lists a song a start replaced: its word decides from now on.
+				this.kvSet("replaced_listed", this.now());
+			}
 			// Counted already from the looks in a private session: it still tells
 			// the decks it was heard, and memory nothing new.
 			if (seen.some((e) => e.id === id && at >= e.from && at <= e.to)) {
@@ -2863,7 +2908,7 @@ export class HubCore {
 				out.push({ trackId: id, playedAt: at, contextUri: ctx });
 				continue;
 			}
-			const ignored = this.guestPlay(id, at, i.track.duration_ms ?? 0, () => {
+			const guest = this.guestPlay(id, at, i.track.duration_ms ?? 0, () => {
 				let before = Number.NEGATIVE_INFINITY;
 				for (const t of times) if (t < at && t > before) before = t;
 				if (before === Number.NEGATIVE_INFINITY)
@@ -2874,6 +2919,7 @@ export class HubCore {
 						)?.at ?? Number.NEGATIVE_INFINITY;
 				return before;
 			});
+			const ignored = guest.ignored;
 			const station = ctx ? deckByUri.get(ctx) : deckHolding(id, at);
 			const packed = packTrack(i.track);
 			this.db.run(
@@ -2886,7 +2932,14 @@ export class HubCore {
 				packed ? JSON.stringify(packed) : null,
 			);
 			s.recentCursor = Math.max(s.recentCursor, at);
-			out.push({ trackId: id, playedAt: at, contextUri: ctx, ...(ignored ? { ignored } : {}) });
+			// The guest's last play, which the owner may have played on: it tells
+			// the decks the song ran (no skip of the owner's), and memory nothing.
+			out.push({
+				trackId: id,
+				playedAt: at,
+				contextUri: ctx,
+				...(ignored && !guest.last ? { ignored } : {}),
+			});
 			if (ignored) continue;
 			// The round is judged on memory as it was: a skip that already used the
 			// song up (consume rule) stands in for this play — never counted twice.
