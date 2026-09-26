@@ -65,7 +65,7 @@ Frühe Skips leitet True Shuffle vorsichtig aus der Player-Position ab. Die Rege
   - der Song gesucht,
   - von oben.
 
-  Dazu kommen alle drei Skip-Regeln. Unabhängige Prüfungen kamen zum selben Ergebnis, zuletzt mit 360 Autostopp-Läufen (sechs Arten weiterzumachen, fünf Pausenlängen, drei Regeln): keine erfundene Buchung, keine falsche Sperre, keine fehlende oder doppelte Wiedergabe. Erkannt werden bei normalem Hören mindestens 90 % der echten Skips, nach einem Autostopp mindestens 80 %. Wenn Spotify nach dem Halt anders weitermacht als geladen, sind es weniger, dann lieber verpasst als erfunden.
+  Dazu kommen alle drei Skip-Regeln. Unabhängige Prüfungen kamen zum selben Ergebnis, zuletzt mit 360 Autostopp-Läufen (sechs Arten weiterzumachen, fünf Pausenlängen, drei Regeln): keine erfundene Buchung, keine falsche Sperre, keine fehlende oder doppelte Wiedergabe. Erkannt werden bei normalem Hören mindestens 90 % der echten Skips (Test), nach einem Autostopp in der unabhängigen Prüfung rund 91 %: je nach Art des Weitermachens 79 % (von oben) bis 97 % (geladene Reihenfolge). Wenn Spotify nach dem Halt anders weitermacht als geladen, sind es weniger, dann lieber verpasst als erfunden.
 
 Der Gast-Modus blendet Zeiträume aus. Der Hörverlauf-Import (Spotify-Datenexport) liefert die Vorgeschichte.
 
