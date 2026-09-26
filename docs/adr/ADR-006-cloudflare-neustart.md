@@ -110,7 +110,7 @@ Ein Cron-Trigger (alle 20 Minuten) belebt verlorene Alarmketten über die `Regis
   | an der Grenze: 30 Sender, 25.000 im Gedächtnis, 300 gefolgte Playlists, 1 h offene App | ~160.000 | ~1.900 | ~16 % / ~10 % |
   | an der Grenze, App 8 h offen | ~306.000 | ~5.100 | ~31 % / ~26 % |
   | an der Grenze, 12 × Daumen runter am Tag | ~155.000 | ~2.000 | ~16 % / ~10 % |
-  | extrem (Messung der unabhängigen Prüfung): 30 Sender mit je 10.000 Songs | ~320.000 | ~2.400 | ~32 % / ~12 % |
+  | extrem (Messung der unabhängigen Prüfung): 30 Sender mit je 10.000 Songs | ~317.000 | ~2.700 | ~32 % / ~13 % |
 
   Dazu kommen Durable-Object-Anfragen (100.000 pro Tag im kostenlosen Plan): etwa 20 pro gehörter Stunde, 60 pro Stunde, in der ein Player einen Sender pausiert hält (höchstens 12 Stunden), sonst 3 pro Stunde. Für 5 Konten sind das auch an langen Tagen unter 15.000.
 
