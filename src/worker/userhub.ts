@@ -97,7 +97,11 @@ export class UserHub extends DurableObject<Env> {
 		return this.session(epoch, () => this.hub().state({ live }));
 	}
 	playlists(epoch: number) {
-		return this.session(epoch, () => this.hub().listPlaylists());
+		return this.session(epoch, async () => {
+			// Opening the station search is a good moment to look again.
+			await this.hub().refreshPlaylistsSoon();
+			return this.hub().listPlaylists();
+		});
 	}
 	onboard(epoch: number, ids: string[]) {
 		return this.session(epoch, () => this.hub().onboard(ids));

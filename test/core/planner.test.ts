@@ -262,3 +262,39 @@ describe("planQueue", () => {
 		expect(res.freshRemaining).toBe(0);
 	});
 });
+
+describe("planQueue with a kept front", () => {
+	it("keeps the still-allowed songs in front, in order, and plans after them", () => {
+		const p = pool(500);
+		const keep = p.slice(40, 50).map((e) => ({ trackId: e.id, kind: "fresh" as const }));
+		const res = planQueue(input({ pool: p, keep }));
+		expect(res.slots.slice(0, 10).map((s) => s.trackId)).toEqual(keep.map((k) => k.trackId));
+		const ids = res.slots.map((s) => s.trackId);
+		expect(new Set(ids).size).toBe(ids.length);
+		expect(res.slots).toHaveLength(200);
+	});
+
+	it("drops kept songs that were heard, turned down or are no longer in the station", () => {
+		const p = pool(500);
+		const mem = new Map<string, TrackMemory>();
+		const heard = p[41]!.id;
+		const down = p[42]!.id;
+		mem.set(heard, { ...emptyMemory(heard), lastPlayedAt: NOW - HOUR_MS, plays: 1 });
+		mem.set(down, { ...emptyMemory(down), thumb: -1 });
+		const keep = [
+			...p.slice(40, 44).map((e) => ({ trackId: e.id, kind: "fresh" as const })),
+			{ trackId: "not-in-this-station-anymore", kind: "fresh" as const },
+		];
+		const front = planQueue(input({ pool: p, keep, mem }))
+			.slots.slice(0, 2)
+			.map((s) => s.trackId);
+		expect(front).toEqual([p[40]!.id, p[43]!.id]);
+	});
+
+	it("counts the kept songs towards the mix, so the shares still hold", () => {
+		const p = pool(500);
+		const keep = p.slice(0, 100).map((e) => ({ trackId: e.id, kind: "fresh" as const }));
+		const res = planQueue(input({ pool: p, keep, size: 200 }));
+		expect(res.counts.fresh + res.counts.favorite + res.counts.discovery).toBe(200);
+	});
+});

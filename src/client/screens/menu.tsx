@@ -494,7 +494,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 					continue;
 				}
 				if (kind !== "extended") continue;
-				aggregateHistory(data as ExtendedEntry[], agg);
+				// What came after the first sign-in, True Shuffle already counted live.
+				aggregateHistory(data as ExtendedEntry[], agg, { before: state.history.liveSince });
 				used++;
 			} catch {
 				setErr(`„${f.name}“ konnte nicht gelesen werden.`);
@@ -540,7 +541,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 			<p class="lede">
 				Mit deinem Spotify-Hörverlauf weiß True Shuffle vom ersten Tag an, was du oft gehört, früh
 				übersprungen oder nie gehört hast. Die Dateien werden hier im Browser ausgewertet —
-				hochgeladen wird nur, wie oft du welchen Song gehört hast.
+				hochgeladen wird nur, wie oft du welchen Song gehört hast. Es zählt nur, was vor deiner
+				ersten Anmeldung lief; alles danach hat True Shuffle schon selbst mitgezählt.
 			</p>
 			<ol class="list">
 				<li class="row">

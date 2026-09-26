@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { cryptoRng } from "../../src/core/random";
 import { HOUR_MS, MINUTE_MS } from "../../src/core/types";
-import { DECK_SIZE } from "../../src/worker/hub/hub";
-import { onboarded } from "./harness";
+import { DECK_SIZE, HubCore } from "../../src/worker/hub/hub";
+import { Keys } from "../../src/worker/lib/crypto";
+import { FakeSpotify } from "../fakes/fake-spotify";
+
+import { nodeSql, onboarded, T0 } from "./harness";
 
 function deckPlaylist(h: Awaited<ReturnType<typeof onboarded>>, stationId: number) {
 	const row = h.sql.first<{ playlist_id: string }>(
@@ -334,5 +338,58 @@ describe("sessions", () => {
 		const next = await h.hub.connect({ id: "mika", name: "Mika", imageUrl: null }, tokens);
 		expect(next).not.toBe(first);
 		expect(() => h.hub.checkSession(next)).not.toThrow();
+	});
+});
+
+describe("sessions after deleting the account", () => {
+	it("a cookie revoked before stays invalid after the account is deleted and made again", async () => {
+		const fake = new FakeSpotify();
+		fake.addTracks(10);
+		fake.addUser("mika");
+		let sql = nodeSql();
+		const clock = { t: T0 };
+		fake.now = () => clock.t;
+		let hub!: HubCore;
+		const make = () =>
+			new HubCore({
+				sql,
+				fetch: (r) => fake.handle(r),
+				now: () => clock.t,
+				rng: cryptoRng(), // as in production
+				keys: new Keys("test-secret-test-secret-test-secret-42"),
+				env: {
+					endpoints: {
+						accountsBase: "https://fake/accounts",
+						apiBase: "https://fake/v1",
+						clientId: "cid",
+					},
+					lastfmBase: "https://fake/lastfm",
+					lastfmKey: null,
+					deezerBase: "https://fake/deezer",
+					anthropicKey: null,
+					anthropicModel: "x",
+				},
+				alarms: { set: async () => {}, get: async () => null },
+				ai: null,
+				wipe: async () => {
+					sql = nodeSql(); // storage.deleteAll()
+					hub = make();
+				},
+			});
+		hub = make();
+		const tokens = () => {
+			fake.refreshTokens.set("r", "mika");
+			return {
+				accessToken: fake.issueToken("mika"),
+				refreshToken: "r",
+				expiresAt: clock.t + 3_600_000,
+				scope: "all",
+			};
+		};
+		const copied = await hub.connect({ id: "mika", name: "Mika", imageUrl: null }, tokens());
+		hub.endSessions();
+		await hub.deleteAccount();
+		await hub.connect({ id: "mika", name: "Mika", imageUrl: null }, tokens());
+		expect(() => hub.checkSession(copied)).toThrow(/anmelden/);
 	});
 });

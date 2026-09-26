@@ -135,3 +135,18 @@ describe("history import", () => {
 		expect(rs).toEqual(s);
 	});
 });
+
+describe("aggregateHistory with a live start", () => {
+	it("counts only listening before True Shuffle started counting live", () => {
+		const uri = "spotify:track:0123456789abcdefghijkl";
+		const agg = aggregateHistory(
+			[
+				{ ts: "2026-09-01T10:00:00Z", ms_played: 200_000, spotify_track_uri: uri },
+				{ ts: "2026-09-20T10:00:00Z", ms_played: 200_000, spotify_track_uri: uri },
+			] as never,
+			undefined,
+			{ before: Date.parse("2026-09-10T00:00:00Z") },
+		);
+		expect(agg.stats.get("0123456789abcdefghijkl")?.plays).toBe(1);
+	});
+});

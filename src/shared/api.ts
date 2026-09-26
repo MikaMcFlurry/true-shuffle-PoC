@@ -69,7 +69,8 @@ export interface AppState {
 	guest: { active: boolean; until: number | null };
 	warnings: Warning[];
 	jobs: JobView[];
-	history: { importedTracks: number; importedAt: number | null };
+	/** `liveSince`: from here on True Shuffle counts live; an import covers what came before. */
+	history: { importedTracks: number; importedAt: number | null; liveSince: number | null };
 	aiSource: "anthropic" | "workers-ai" | "off";
 	serverTime: number;
 }

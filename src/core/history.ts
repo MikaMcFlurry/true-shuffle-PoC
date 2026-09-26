@@ -69,12 +69,14 @@ export function emptyAggregate(): Aggregate {
 export function aggregateHistory(
 	entries: readonly ExtendedEntry[],
 	agg: Aggregate = emptyAggregate(),
+	/** Only listening before this time counts: after it, True Shuffle counted live. */
+	opts: { before?: number | null } = {},
 ): Aggregate {
 	for (const e of entries) {
 		agg.entries++;
 		const id = trackIdFromUri(e.spotify_track_uri ?? null);
 		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
-		if (!id || !Number.isFinite(at)) {
+		if (!id || !Number.isFinite(at) || (opts.before != null && at >= opts.before)) {
 			agg.ignored++;
 			continue;
 		}

@@ -96,6 +96,7 @@ Jeder Vorschlag wird vor der Aufnahme in Spotify gesucht. Erfundene Songs kommen
 True Shuffle ist auf den kostenlosen Workers-Plan ausgelegt:
 
 - Pro Aufruf höchstens 40 Anfragen an externe Dienste (die Grenze liegt bei 50).
+- Höchstens 30 Sender pro Konto. So bleiben auch 5 Konten mit großen Bibliotheken bei rund einem Viertel des täglichen Lesekontingents.
 - Gedächtnis und Bibliothek werden in Blöcken gespeichert, damit die SQLite-Kontingente der Durable Objects (Zeilen pro Tag) auch bei 10.000er-Playlists reichen.
 - Synchronisiert wird alle 3 Minuten, solange ein Sender läuft, danach seltener. Nach 6 Stunden Stille nur noch stündlich.
 

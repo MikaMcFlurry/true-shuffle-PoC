@@ -102,11 +102,24 @@ interface PendingSkip {
 	since?: number;
 }
 
+/**
+ * Stations per account. Measured with a Durable Object evicted between
+ * requests: 33 stations and 25 000 remembered songs cost ≈ 260 000 rows read
+ * per listener-day, so five such accounts stay near a quarter of the free plan.
+ */
+export const MAX_STATIONS = 30;
+
 /** How far back a play may arrive late in recently-played and still count. */
 const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
 /** Single plays are kept this long (memory keeps the totals for good). */
 const PLAYS_KEEP_MS = 180 * DAY_MS;
 const PRUNE_PER_DAY = 500;
+
+/**
+ * A deck used this recently may still be loaded in a player (a car stop, a
+ * phone that went quiet): its rewrite continues it instead of replanning.
+ */
+const CONTINUE_WITHIN_MS = 12 * HOUR_MS;
 
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
@@ -225,7 +238,6 @@ export class HubError extends Error {
 export class HubCore {
 	private readonly db: SqlDb;
 	private sourceCache = new Map<string, PackedTrack[]>();
-	private memCache: Map<TrackId, MemoryRow> | null = null;
 	private histCache: Map<TrackId, ImportedStats> | null = null;
 	private likedCache: Set<TrackId> | null = null;
 	private indexCache: Map<TrackId, PackedTrack> | null = null;
@@ -329,7 +341,14 @@ export class HubCore {
 
 	/** The listener's current sign-in generation; signing out anywhere ends all. */
 	sessionEpoch(): number {
-		return this.kvGet<number>("session_epoch") ?? 1;
+		let epoch = this.kvGet<number>("session_epoch");
+		if (epoch === null) {
+			// Random start: after an account is deleted and made again, cookies
+			// revoked before must not match the new count.
+			epoch = 1 + Math.floor(this.d.rng() * 2 ** 30);
+			this.kvSet("session_epoch", epoch);
+		}
+		return epoch;
 	}
 
 	checkSession(epoch: number): void {
@@ -358,6 +377,7 @@ export class HubCore {
 			const s = this.syncState();
 			s.recentCursor = this.now() - HOUR_MS * 3;
 			this.setSyncState(s);
+			this.kvSet("live_since", s.recentCursor);
 		}
 		this.enqueue("playlists", "playlists", {}, 1);
 		this.log("info", "connect", `Mit Spotify verbunden als ${profile.name}`);
@@ -498,7 +518,7 @@ export class HubCore {
 		const state = JSON.parse(job.state) as Record<string, unknown>;
 		switch (job.kind) {
 			case "playlists":
-				return this.stepPlaylists(client, state as { offset?: number; seenAt?: number }, budget);
+				return this.stepPlaylists(client, state as { offset?: number; seen?: string[] }, budget);
 			case "import":
 				return this.stepImport(client, state as unknown as ImportState, budget);
 			case "deck":
@@ -541,13 +561,13 @@ export class HubCore {
 
 	private async stepPlaylists(
 		client: SpotifyClient,
-		state: { offset?: number; seenAt?: number },
+		state: { offset?: number; seen?: string[] },
 		budget: RequestBudget,
 	): Promise<StepResult> {
 		let offset = state.offset ?? 0;
-		// One mark for the whole walk, however many invocations it takes: only
-		// what the complete list no longer contains may be forgotten.
-		const seenAt = state.seenAt ?? this.now();
+		// Which playlists the walk has seen, across however many invocations it
+		// takes: only what the complete list no longer contains may be forgotten.
+		const seen = new Set(state.seen ?? []);
 		const ours = new Set(
 			this.stations()
 				.map((s) => s.playlist_id)
@@ -556,14 +576,52 @@ export class HubCore {
 		const discoveriesId = this.kvGet<string>("discoveries_playlist");
 		if (discoveriesId) ours.add(discoveriesId);
 		const profile = this.kvGet<{ id: string }>("profile");
+		type Row = {
+			id: string;
+			name: string;
+			owner_id: string | null;
+			owner_name: string | null;
+			image_url: string | null;
+			total: number | null;
+			snapshot_id: string | null;
+			readable: number;
+			ours: number;
+			sort: number;
+		};
 		while (budget.left > 4) {
 			const page = await client.myPlaylists(offset);
 			if (!page) break;
+			const ids = page.items.map((p) => p?.id).filter(Boolean) as string[];
+			const known = new Map<string, Row>();
+			if (ids.length > 0) {
+				for (const r of this.db.all<Row>(
+					`SELECT id, name, owner_id, owner_name, image_url, total, snapshot_id, readable, ours, sort
+					 FROM playlists WHERE id IN (${ids.map(() => "?").join(",")})`,
+					...ids,
+				))
+					known.set(r.id, r);
+			}
 			page.items.forEach((p, i) => {
 				if (!p?.id) return;
+				seen.add(p.id);
 				const isOurs =
 					ours.has(p.id) || (p.owner?.id === profile?.id && p.name.startsWith(DECK_NAME_PREFIX));
 				const readable = p.owner?.id === profile?.id || p.collaborative === true;
+				const next: Row = {
+					id: p.id,
+					name: p.name,
+					owner_id: p.owner?.id ?? null,
+					owner_name: p.owner?.display_name ?? null,
+					image_url: pickImage(p.images),
+					total: p.items?.total ?? null,
+					snapshot_id: p.snapshot_id ?? null,
+					readable: readable ? 1 : 0,
+					ours: isOurs ? 1 : 0,
+					sort: offset + i,
+				};
+				const cur = known.get(p.id);
+				// Every written row counts against the day's budget: unchanged ones stay.
+				if (cur && (Object.keys(next) as (keyof Row)[]).every((k) => cur[k] === next[k])) return;
 				this.db.run(
 					`INSERT INTO playlists (id, name, owner_id, owner_name, image_url, total, snapshot_id, readable, ours, sort, seen_at)
 					 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -571,39 +629,74 @@ export class HubCore {
 					   owner_name = excluded.owner_name, image_url = excluded.image_url, total = excluded.total,
 					   snapshot_id = excluded.snapshot_id, readable = excluded.readable, ours = excluded.ours,
 					   sort = excluded.sort, seen_at = excluded.seen_at`,
-					p.id,
-					p.name,
-					p.owner?.id ?? null,
-					p.owner?.display_name ?? null,
-					pickImage(p.images),
-					p.items?.total ?? null,
-					p.snapshot_id,
-					readable ? 1 : 0,
-					isOurs ? 1 : 0,
-					offset + i,
-					seenAt,
+					next.id,
+					next.name,
+					next.owner_id,
+					next.owner_name,
+					next.image_url,
+					next.total,
+					next.snapshot_id,
+					next.readable,
+					next.ours,
+					next.sort,
+					this.now(),
 				);
 			});
 			if (!page.next) {
 				// Playlists the listener no longer follows disappear from the list —
 				// except a station's sources: those stay, marked gone, so the station
 				// can say what happened and play on with what is left.
+				// A source counts as gone only after two complete walks without it:
+				// one short list from Spotify must not take a station's music away.
 				const used = this.usedSources();
-				for (const r of this.db.all<{ id: string }>(
-					`SELECT id FROM playlists WHERE seen_at < ?`,
-					seenAt,
+				const missed = this.kvGet<Record<string, number>>("sources_missed") ?? {};
+				const stillMissed: Record<string, number> = {};
+				for (const r of this.db.all<{ id: string; gone_at: number | null }>(
+					`SELECT id, gone_at FROM playlists`,
 				)) {
+					if (seen.has(r.id)) {
+						if (r.gone_at !== null)
+							this.db.run(`UPDATE playlists SET gone_at = NULL WHERE id = ?`, r.id);
+						continue;
+					}
 					if (used.has(`pl:${r.id}`)) {
-						this.db.run(
-							`UPDATE playlists SET gone_at = COALESCE(gone_at, ?) WHERE id = ?`,
-							this.now(),
-							r.id,
-						);
+						const n = (missed[r.id] ?? 0) + 1;
+						stillMissed[r.id] = n;
+						if (n >= 2 && r.gone_at === null)
+							this.db.run(`UPDATE playlists SET gone_at = ? WHERE id = ?`, this.now(), r.id);
 					} else {
 						this.db.run(`DELETE FROM playlists WHERE id = ?`, r.id);
 					}
 				}
-				this.db.run(`UPDATE playlists SET gone_at = NULL WHERE seen_at >= ?`, seenAt);
+				this.kvSet("sources_missed", stillMissed);
+				// Stations whose sources changed this way must be rewritten (when idle).
+				const goneNow = new Set(
+					this.db
+						.all<{ id: string }>(`SELECT id FROM playlists WHERE gone_at IS NOT NULL`)
+						.map((r) => r.id),
+				);
+				const goneBefore = new Set(
+					(this.kvGet<{ id: string }[]>("sources_gone") ?? []).map((r) => r.id),
+				);
+				const changed = [...goneNow, ...goneBefore].filter(
+					(id) => goneNow.has(id) !== goneBefore.has(id),
+				);
+				if (changed.length > 0) {
+					for (const st of this.stations()) {
+						const hit =
+							st.kind === "all" ||
+							this.sourcesOf(st).some((x) => x.type === "playlist" && changed.includes(x.id));
+						if (hit) this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, st.id);
+					}
+					this.poolVersion++;
+				}
+				// Read by every look at the app: kept ready instead of scanning the list.
+				this.kvSet(
+					"sources_gone",
+					this.db.all<{ id: string; name: string }>(
+						`SELECT id, name FROM playlists WHERE gone_at IS NOT NULL`,
+					),
+				);
 				const s = this.syncState();
 				s.lastPlaylistsAt = this.now();
 				this.setSyncState(s);
@@ -612,7 +705,7 @@ export class HubCore {
 			}
 			offset += page.items.length || 50;
 		}
-		return { done: false, state: { offset, seenAt } };
+		return { done: false, state: { offset, seen: [...seen] } };
 	}
 
 	/** Re-import any source playlist whose snapshot changed since its import. */
@@ -809,23 +902,29 @@ export class HubCore {
 	// Memory
 	// =======================================================================
 
-	/**
-	 * All live memory rows. Only the planner needs this; the sync path uses
-	 * point lookups so a background tick reads a handful of rows, not the
-	 * listener's whole history (the free plan's daily read budget is shared).
-	 */
-	private memRows(): Map<TrackId, MemoryRow> {
-		if (!this.memCache) {
-			this.memCache = new Map();
-			for (const r of this.db.all<MemoryRow>(`SELECT * FROM memory`)) this.memCache.set(r.id, r);
-		}
-		return this.memCache;
-	}
-
 	private liveLookups = new Map<TrackId, MemoryRow | null>();
 
+	/**
+	 * Read the memory of just these songs (a station's pool), a hundred per
+	 * query. A Durable Object forgets its caches minutes after going idle, so
+	 * every rebuild reads again: reading only the pool instead of the whole
+	 * memory table keeps a many-station account inside the daily row budget.
+	 */
+	private preloadMemory(ids: Iterable<TrackId>): void {
+		const missing: TrackId[] = [];
+		for (const id of ids) if (!this.liveLookups.has(id)) missing.push(id);
+		for (let i = 0; i < missing.length; i += 100) {
+			const chunk = missing.slice(i, i + 100);
+			for (const id of chunk) this.liveLookups.set(id, null);
+			const rows = this.db.all<MemoryRow>(
+				`SELECT * FROM memory WHERE id IN (${chunk.map(() => "?").join(",")})`,
+				...chunk,
+			);
+			for (const r of rows) this.liveLookups.set(r.id, r);
+		}
+	}
+
 	private liveRow(id: TrackId): MemoryRow | null {
-		if (this.memCache) return this.memCache.get(id) ?? null;
 		if (this.liveLookups.has(id)) return this.liveLookups.get(id) ?? null;
 		const r = this.db.first<MemoryRow>(`SELECT * FROM memory WHERE id = ?`, id);
 		this.liveLookups.set(id, r);
@@ -858,7 +957,6 @@ export class HubCore {
 			next.last_skipped_at,
 			next.thumb,
 		);
-		this.memCache?.set(id, next);
 		this.liveLookups.set(id, next);
 	}
 
@@ -1018,6 +1116,11 @@ export class HubCore {
 	}): number {
 		const name = input.name.trim().slice(0, 80) || "Sender";
 		const kind = input.kind ?? "custom";
+		if (kind !== "all" && this.stations().filter((st) => st.kind !== "all").length >= MAX_STATIONS)
+			throw new HubError(
+				"too_many",
+				`Mehr als ${MAX_STATIONS} Sender gehen nicht — sonst reicht das kostenlose Tageskontingent nicht. Lösche einen, den du nicht mehr hörst.`,
+			);
 		const sort =
 			(this.db.first<{ m: number | null }>(`SELECT MAX(sort) AS m FROM stations`)?.m ?? 0) + 1;
 		this.db.run(
@@ -1054,6 +1157,13 @@ export class HubCore {
 					),
 				),
 		);
+		const adding = new Set(playlistIds.filter((id) => !existing.has(id))).size;
+		const have = this.stations().filter((st) => st.kind !== "all").length;
+		if (have + adding > MAX_STATIONS)
+			throw new HubError(
+				"too_many",
+				`Höchstens ${MAX_STATIONS} Sender — wähle ${have + adding - MAX_STATIONS} Playlist(s) weniger.`,
+			);
 		for (const id of playlistIds) {
 			if (existing.has(id)) continue;
 			const row = this.db.first<{ name: string; readable: number }>(
@@ -1151,7 +1261,19 @@ export class HubCore {
 	}
 
 	/** Plan a fresh deck from memory and write it into the station's playlist. */
-	private async rebuildDeck(client: SpotifyClient, st: StationRow): Promise<Deck> {
+	/**
+	 * `background`: nobody asked to start it. If a player may still have the
+	 * previous version loaded (it was in use lately), the new one continues it:
+	 * the songs still ahead stay in front, in their order, so whatever a player
+	 * resumes plays on consistently — and a restart from the top in Spotify
+	 * begins with an unheard song. When True Shuffle starts the station itself
+	 * (`start`), it plans afresh and plays from the top.
+	 */
+	private async rebuildDeck(
+		client: SpotifyClient,
+		st: StationRow,
+		mode: "start" | "background" = "start",
+	): Promise<Deck> {
 		if (this.stationOrphaned(st))
 			throw new HubError(
 				"gone",
@@ -1162,10 +1284,20 @@ export class HubCore {
 		const pool = this.stationPool(st);
 		if (pool.length === 0)
 			throw new HubError("empty", "Dieser Sender hat keine abspielbaren Songs.");
-		this.memRows(); // planning reads every song's memory: load it once
 		let rules = this.rulesOf(st);
 		const banned = this.bans(st.id);
 		const discoveries = this.discoveryEntries(st);
+		// Planning reads every candidate's memory: fetch them in one sweep.
+		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
+		const prev = this.deckOf(st);
+		const lastUse = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
+		const continuing = mode === "background" && !!prev && this.now() - lastUse < CONTINUE_WITHIN_MS;
+		const keep = continuing
+			? prev.items
+					.slice(prev.lastIndex ?? 0)
+					.filter((it) => it.state === "pending")
+					.map((it) => ({ trackId: it.id, kind: it.kind }))
+			: undefined;
 		const plan = () =>
 			planQueue({
 				now: this.now(),
@@ -1177,6 +1309,7 @@ export class HubCore {
 				discoveries,
 				size: DECK_SIZE,
 				rng: this.d.rng,
+				keep,
 			});
 		let result = plan();
 		if (result.freshRemaining === 0 && result.poolSize > 0) {
@@ -1221,17 +1354,13 @@ export class HubCore {
 		for (let i = 100; i < uris.length; i += 100) {
 			await client.addItems(playlistId, uris.slice(i, i + 100));
 		}
-		const prev = this.deckOf(st);
 		if (prev) this.carryPasses(st.id, prev);
 		const deck = newDeck(result.slots, (prev?.version ?? 0) + 1, this.now());
-		// Rewritten while the player still holds this playlist (paused, e.g. a
-		// car stop): Spotify may carry on with the order it had loaded, or with
-		// the new one from the old position. Until the new order is seen to
-		// hold, positions prove nothing — only a song seen playing can count.
-		const snap = this.kvGet<PlayerSnapshot>("player");
-		const heldByPlayer = snap?.obs?.contextUri === `spotify:playlist:${playlistId}`;
-		const snapStale = !snap || this.now() - snap.at > PLAYER_FRESH_MS;
-		if (heldByPlayer || snapStale) deck.verified = false;
+		// Positions stay trustworthy only through a continuation of an order we
+		// trusted. A fresh plan nobody started is not ours until True Shuffle
+		// starts it: a player may still carry on with what it had loaded.
+		deck.continued = continuing;
+		deck.ours = continuing && prev?.ours === true;
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
 			JSON.stringify(deck),
@@ -1269,7 +1398,7 @@ export class HubCore {
 			return { done: false, state: { stationId }, delayMs: IDLE_BEFORE_REBUILD_MS };
 		try {
 			await this.freshenMemory(client);
-			await this.rebuildDeck(client, this.stationRow(stationId) ?? st);
+			await this.rebuildDeck(client, this.stationRow(stationId) ?? st, "background");
 		} catch (err) {
 			if (err instanceof HubError && err.code === "empty") {
 				this.log("info", "deck", err.message);
@@ -1286,17 +1415,19 @@ export class HubCore {
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck || !st.playlist_id) return { done: true };
 		if (remainingAhead(deck) >= EXTEND_BELOW) return { done: true };
-		this.memRows();
 		const inDeck = new Set(deck.items.map((i) => i.id));
 		const banned = new Set([...this.bans(st.id), ...inDeck]);
+		const pool = this.stationPool(st);
+		const discoveries = this.discoveryEntries(st);
+		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
 		const res = planQueue({
 			now: this.now(),
 			roundStartedAt: st.round_started_at,
 			rules: this.rulesOf(st),
-			pool: this.stationPool(st),
+			pool,
 			memory: (id) => this.memory(id),
 			banned,
-			discoveries: this.discoveryEntries(st),
+			discoveries,
 			size: 100,
 			rng: this.d.rng,
 		});
@@ -1605,7 +1736,11 @@ export class HubCore {
 		// that was not in it arrived late (offline listening synced afterwards):
 		// it still counts, once — the plays table has the final say.
 		const known = new Set(this.kvGet<string[]>("recent_keys") ?? []);
-		const lateFrom = s.recentCursor - LATE_PLAY_WINDOW_MS;
+		// Never reaching back before the first sign-in: that belongs to the import.
+		const lateFrom = Math.max(
+			s.recentCursor - LATE_PLAY_WINDOW_MS,
+			this.kvGet<number>("live_since") ?? Number.NEGATIVE_INFINITY,
+		);
 		const fresh = items
 			.map((i) => ({ i, at: Date.parse(i.played_at) }))
 			.filter((x) => {
@@ -1665,6 +1800,10 @@ export class HubCore {
 			s.recentCursor = Math.max(s.recentCursor, at);
 			out.push({ trackId: id, playedAt: at, contextUri: ctx });
 			if (ignored) continue;
+			// Its play arrived after all: a skip booked around that time was none.
+			const skippedAt = this.liveRow(id)?.last_skipped_at ?? null;
+			if (skippedAt !== null && at >= skippedAt - 30 * MINUTE_MS && at <= skippedAt + 5 * MINUTE_MS)
+				this.undoSkip(null, id);
 			const before = this.memory(id);
 			this.livePlay(id, at);
 			this.countRound(id, before, at);
@@ -1749,16 +1888,25 @@ export class HubCore {
 		}
 	}
 
-	/** A song booked as skipped turned out to be heard: take the skip back entirely. */
-	private undoSkip(stationId: number, id: TrackId): void {
+	/**
+	 * A song booked as skipped turned out to be heard: take the skip back
+	 * entirely — once, however many paths notice it.
+	 */
+	private undoSkip(stationId: number | null, id: TrackId): void {
+		const row = this.liveRow(id);
+		if (!row || row.last_skipped_at === null) return;
+		const at = row.last_skipped_at;
 		this.updateLive(id, (r) => ({
 			...r,
 			early_skips: Math.max(0, r.early_skips - 1),
 			// Its "not now" pause goes too; having just been heard keeps it away anyway.
 			last_skipped_at: null,
 		}));
-		// It was in this station's deck, so no ban existed before the false skip.
-		this.db.run(`DELETE FROM bans WHERE station_id = ? AND track_id = ?`, stationId, id);
+		// A ban that false skip caused: in this station's deck no ban existed
+		// before it; elsewhere, the one booked at that very moment.
+		if (stationId !== null)
+			this.db.run(`DELETE FROM bans WHERE station_id = ? AND track_id = ?`, stationId, id);
+		else this.db.run(`DELETE FROM bans WHERE track_id = ? AND at = ?`, id, at);
 		this.db.run(
 			`UPDATE discoveries SET status = 'probation', updated_at = ? WHERE id = ? AND status = 'rejected'`,
 			this.now(),
@@ -1937,9 +2085,10 @@ export class HubCore {
 				!deck ||
 				fresh.deck_dirty === 1 ||
 				consumedCount(deck) > 0 ||
+				deck.continued === true ||
 				this.now() - deck.writtenAt > DECK_MAX_AGE_MS ||
 				!fresh.playlist_id;
-			if (needsRebuild) deck = await this.rebuildDeck(client, fresh);
+			if (needsRebuild) deck = await this.rebuildDeck(client, fresh, "start");
 			const target = await this.pickDevice(client, deviceId ?? null);
 			if (!target)
 				return fail(
@@ -1981,8 +2130,8 @@ export class HubCore {
 				deck.lastIndex = null;
 				deck.lastTrackId = null;
 				deck.lastObservedAt = null;
-				deck.verified = true;
-				deck.fromStart = true;
+				deck.ours = true;
+				deck.top = true;
 				this.saveDeck(fresh.id, deck);
 			}
 			const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
@@ -2243,20 +2392,28 @@ export class HubCore {
 					"Spotify-Shuffle ist an — die True-Shuffle-Reihenfolge hält erst wieder, wenn es aus ist.",
 			});
 		}
-		for (const r of this.db.all<{ id: string; name: string }>(
-			`SELECT id, name FROM playlists WHERE gone_at IS NOT NULL`,
-		)) {
-			const users = this.stations()
-				.filter(
-					(st) =>
-						st.kind !== "all" &&
-						this.sourcesOf(st).some((x) => x.type === "playlist" && x.id === r.id),
-				)
-				.map((st) => `„${st.name}“`);
+		for (const r of this.kvGet<{ id: string; name: string }[]>("sources_gone") ?? []) {
+			const users = this.stations().filter(
+				(st) =>
+					st.kind !== "all" &&
+					this.sourcesOf(st).some((x) => x.type === "playlist" && x.id === r.id),
+			);
 			if (users.length === 0) continue;
+			const names = (list: StationRow[]) => list.map((st) => `„${st.name}“`).join(", ");
+			const orphaned = users.filter((st) => this.stationOrphaned(st));
+			const playingOn = users.filter((st) => !this.stationOrphaned(st));
+			const parts: string[] = [];
+			if (playingOn.length > 0)
+				parts.push(
+					`${names(playingOn)} ${playingOn.length === 1 ? "spielt" : "spielen"} ohne sie weiter`,
+				);
+			if (orphaned.length > 0)
+				parts.push(
+					`${names(orphaned)} ${orphaned.length === 1 ? "hat" : "haben"} damit keine Quelle mehr — wähle unter „Quellen“ eine neue`,
+				);
 			warnings.push({
 				code: "source_gone",
-				message: `Die Playlist „${r.name}“ gibt es in deinem Spotify nicht mehr — ${users.join(", ")} ${users.length === 1 ? "spielt" : "spielen"} ohne sie weiter.`,
+				message: `Die Playlist „${r.name}“ gibt es in deinem Spotify nicht mehr: ${parts.join("; ")}.`,
 			});
 		}
 		const guestNow = this.guestPeriods().find((p) => this.now() >= p.from && this.now() < p.to);
@@ -2269,7 +2426,11 @@ export class HubCore {
 			guest: { active: !!guestNow, until: guestNow?.to ?? null },
 			warnings,
 			jobs: this.jobViews(),
-			history: { importedTracks: hist?.tracks ?? 0, importedAt: hist?.at ?? null },
+			history: {
+				importedTracks: hist?.tracks ?? 0,
+				importedAt: hist?.at ?? null,
+				liveSince: this.kvGet<number>("live_since"),
+			},
 			aiSource: this.d.env.anthropicKey ? "anthropic" : this.d.ai ? "workers-ai" : "off",
 			serverTime: this.now(),
 		};
@@ -2385,6 +2546,14 @@ export class HubCore {
 		return (
 			this.db.first<{ name: string }>(`SELECT name FROM playlists WHERE id = ?`, id)?.name ?? null
 		);
+	}
+
+	/** Read the listener's playlist list again soon, unless that just happened. */
+	async refreshPlaylistsSoon(): Promise<void> {
+		if (this.now() - this.syncState().lastPlaylistsAt < 10 * MINUTE_MS) return;
+		if (this.jobExists("playlists")) return;
+		this.enqueue("playlists", "playlists", {}, 1);
+		await this.scheduleSoon(1000);
 	}
 
 	listPlaylists(): PlaylistView[] {

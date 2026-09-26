@@ -58,6 +58,12 @@ export interface PlanInput {
 	discoveries: readonly DiscoveryEntry[];
 	size: number;
 	rng: Rng;
+	/**
+	 * Songs already queued by the previous version, in order, that a player
+	 * may still be about to play. Those still allowed stay in front, as they
+	 * were; the plan continues after them.
+	 */
+	keep?: readonly { trackId: TrackId; kind: SlotKind }[];
 }
 
 export interface PlanResult {
@@ -171,6 +177,33 @@ export function planQueue(input: PlanInput): PlanResult {
 	const recentArtists: string[] = [];
 	const slots: PlannedSlot[] = [];
 	let overflow = 0;
+
+	// The kept front: only what would still be chosen for its lane today.
+	const artistOf = new Map<TrackId, string>();
+	for (const e of input.pool) artistOf.set(e.id, e.artistId);
+	for (const c of discoveryCandidates) artistOf.set(c.id, c.artistId);
+	const discoveryIds = new Set(discoveryCandidates.map((c) => c.id));
+	for (const k of input.keep ?? []) {
+		if (slots.length >= input.size || used.has(k.trackId)) continue;
+		const m = memo.get(k.trackId);
+		const allowed =
+			k.kind === "discovery"
+				? discoveryIds.has(k.trackId)
+				: m !== undefined &&
+					!coolingDown(m, now) &&
+					(k.kind === "favorite"
+						? favoriteReady(m, now, rules)
+						: !heardInRound(m, roundStartedAt, policy));
+		if (!allowed) continue;
+		used.add(k.trackId);
+		taken[k.kind]++;
+		slots.push({ trackId: k.trackId, kind: k.kind });
+		const artist = artistOf.get(k.trackId);
+		if (rules.artistSpacing > 0 && artist) {
+			recentArtists.push(artist);
+			if (recentArtists.length > rules.artistSpacing) recentArtists.shift();
+		}
+	}
 
 	for (let i = 0; slots.length < input.size; i++) {
 		// Deficit round robin: the lane furthest behind its share goes next.

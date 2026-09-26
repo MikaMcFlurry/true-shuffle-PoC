@@ -361,11 +361,11 @@ app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow(c.var.epoch)));
 
 app.delete("/api/account", async (c) => {
 	const r = (await c.var.hub.deleteAccount(c.var.epoch)) as RpcResult<{ stuck: string[] }>;
+	if (!r.ok) return c.json({ error: r.error }, r.error.status as ContentfulStatusCode);
+	// Only a deletion that happened takes the account out of the cron's list.
 	await c.env.REGISTRY.get(c.env.REGISTRY.idFromName("registry")).remove(c.var.uid);
 	deleteCookie(c, SESSION_COOKIE, { path: "/" });
-	return r.ok
-		? c.json(r.value)
-		: c.json({ error: r.error }, r.error.status as ContentfulStatusCode);
+	return c.json(r.value);
 });
 
 app.notFound((c) => c.json({ error: { code: "not_found", message: "Nicht gefunden" } }, 404));

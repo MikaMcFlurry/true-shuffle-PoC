@@ -25,7 +25,7 @@ function deck(n = 20): Deck {
 
 /** A deck True Shuffle itself started at the top. */
 function started(n = 20): Deck {
-	return { ...deck(n), fromStart: true };
+	return { ...deck(n), ours: true, top: true };
 }
 
 function obs(trackId: string | null, over: Partial<PlayerObservation> = {}): PlayerObservation {
@@ -43,8 +43,8 @@ function obs(trackId: string | null, over: Partial<PlayerObservation> = {}): Pla
 }
 
 describe("observePlayer", () => {
-	it("marks the songs between two positions as passed", () => {
-		let d = deck();
+	it("marks the songs between two positions as passed in a deck it started", () => {
+		let d = started();
 		d = observePlayer(d, obs("s0"), URI).deck;
 		const r = observePlayer(d, obs("s3"), URI);
 		expect(r.passed).toEqual(["s0", "s1", "s2"]);
@@ -68,27 +68,25 @@ describe("observePlayer", () => {
 		expect(r.index).toBe(4);
 	});
 
-	it("after a rewrite under a paused player, only a song seen playing can be passed", () => {
-		// Spotify may still play the order it had loaded: s7, then s9 of the new version.
-		let d: Deck = { ...deck(), verified: false };
+	it("in a version it did not start, only a song seen playing can be passed", () => {
+		// After a rewrite Spotify may still play the order it had loaded: s7, then s9.
+		let d = deck();
 		d = observePlayer(d, obs("s7"), URI).deck;
 		const r = observePlayer(d, obs("s9"), URI);
 		expect(r.passed).toEqual(["s7"]);
 		expect(r.deck.items[8]!.state).toBe("pending");
-		expect(r.deck.verified).toBe(false);
 	});
 
-	it("trusts the order again once two neighbours were seen in a row", () => {
-		let d: Deck = { ...deck(), verified: false };
+	it("never trusts gaps in a version it did not start, even after neighbours by chance", () => {
+		let d = deck();
 		d = observePlayer(d, obs("s3"), URI).deck;
 		d = observePlayer(d, obs("s4"), URI).deck;
-		expect(d.verified).toBe(true);
 		const r = observePlayer(d, obs("s7"), URI);
-		expect(r.passed).toEqual(["s4", "s5", "s6"]);
+		expect(r.passed).toEqual(["s4"]);
 	});
 
 	it("counts the song it saw as left when a song outside the deck follows", () => {
-		let d: Deck = { ...deck(), verified: false };
+		let d = deck();
 		d = observePlayer(d, obs("s6"), URI).deck;
 		const r = observePlayer(d, obs("not-in-this-version"), URI);
 		expect(r.passed).toEqual(["s6"]);
@@ -102,10 +100,10 @@ describe("observePlayer", () => {
 		expect(r.passed).toEqual([]);
 	});
 
-	it("after shuffling, trusts positions only once the order is seen to hold", () => {
+	it("after shuffling, trusts positions only once True Shuffle starts it again", () => {
 		let d = started();
 		d = observePlayer(d, obs("s5", { shuffle: true }), URI).deck;
-		expect(d.verified).toBe(false);
+		expect(d.ours).toBe(false);
 		const r = observePlayer(d, obs("s9"), URI);
 		expect(r.passed).toEqual(["s5"]);
 	});

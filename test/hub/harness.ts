@@ -146,6 +146,7 @@ export async function onboarded(
 		durationMs?: number;
 		fake?: FakeSpotify;
 		ai?: AiRunner | null;
+		seed?: number;
 	} = {},
 ): Promise<Harness & { stationIds: number[]; allId: number }> {
 	const fake = opts.fake ?? new FakeSpotify();
@@ -164,7 +165,7 @@ export async function onboarded(
 		return p;
 	});
 	fake.user("mika").liked = tracks.slice(0, opts.liked ?? 0).map((t) => t.id);
-	const h = await makeHarness({ fake, env: opts.env, ai: opts.ai });
+	const h = await makeHarness({ fake, env: opts.env, ai: opts.ai, seed: opts.seed });
 	const refresh = "rt-seed";
 	fake.refreshTokens.set(refresh, "mika");
 	await h.hub.connect(

@@ -150,7 +150,10 @@ describe("a source playlist deleted in Spotify (RT-3)", () => {
 		const h = await onboarded({ tracks: 600, playlists: [300, 300] });
 		const p2 = [...h.fake.playlists.values()].find((p) => p.name === "Playlist 2")!;
 		p2.followedBy.delete("mika");
+		// Gone only after two complete walks of the list (every 12 h) without it.
 		await h.listen(13 * 60 * MINUTE_MS);
+		expect((await h.hub.state()).warnings.some((w) => w.code === "source_gone")).toBe(false);
+		await h.listen(12 * 60 * MINUTE_MS);
 		expect((await h.hub.state()).warnings.some((w) => w.code === "source_gone")).toBe(true);
 		p2.followedBy.add("mika");
 		await h.listen(13 * 60 * MINUTE_MS);
@@ -197,5 +200,86 @@ describe("plays that reach recently-played late (RT-2)", () => {
 		);
 		expect(got.length).toBe(offline.length);
 		for (const g of got) expect(g.plays).toBe(1);
+	});
+});
+
+describe("a rewrite continues what a player may still have loaded", () => {
+	it("keeps the songs still ahead in front after a car stop, without any heard song", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(30 * MINUTE_MS);
+		const before = stationDeck(h, sid);
+		const position = before.deck.lastIndex!;
+		const ahead = before.pl.items.slice(position + 1, position + 20);
+		h.fake.pause();
+		await h.listen(15 * MINUTE_MS);
+		const after = stationDeck(h, sid);
+		expect(after.deck.version).toBeGreaterThan(before.deck.version);
+		// Whatever the phone resumes, it plays on in the same order.
+		const idx = after.pl.items.indexOf(ahead[0]!);
+		expect(idx).toBeGreaterThanOrEqual(0);
+		expect(after.pl.items.slice(idx, idx + ahead.length)).toEqual(ahead);
+		const heard = new Set(
+			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
+		);
+		for (const id of after.pl.items) expect(heard.has(id)).toBe(false);
+	});
+
+	it("a mix changed in the app applies at the next start from the app", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(30 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(15 * MINUTE_MS); // continuation written while paused
+		await h.hub.updateStation(sid, { rules: { mix: 100 } });
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const deck = JSON.parse(row.deck) as { continued: boolean; ours: boolean };
+		expect(deck.continued).toBe(false);
+		expect(deck.ours).toBe(true);
+	});
+});
+
+describe("a skip booked before its play showed up", () => {
+	it("is taken back exactly once when the play arrives late", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const running = h.fake.current();
+		while (h.fake.current() === running) await h.listen(5_000);
+		await h.hub.state({ live: true });
+		const song = h.fake.current()!;
+		await h.listen(5_000);
+		h.fake.skip(); // left after 5 s: Spotify records nothing
+		const leftAt = h.clock.t;
+		h.clock.t += 16_000;
+		await h.hub.state({ live: true });
+		await h.listen(25 * MINUTE_MS);
+		const early = () =>
+			h.sql.first<{ early_skips: number }>(`SELECT early_skips FROM memory WHERE id = ?`, song)
+				?.early_skips;
+		expect(early()).toBe(1);
+		// Spotify's list catches up: it had been a play after all.
+		const u = h.fake.user();
+		const uri = `spotify:playlist:${stationDeck(h, sid).pl.id}`;
+		u.recent.push({ trackId: song, playedAt: leftAt, contextUri: uri });
+		u.recent.sort((a, b) => b.playedAt - a.playedAt);
+		await h.listen(10 * MINUTE_MS);
+		expect(early()).toBe(0);
+	});
+});
+
+describe("the station limit", () => {
+	it("refuses more stations than the free plan's budget allows, before creating any", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const lists = Array.from({ length: 40 }, (_, i) =>
+			h.fake.addPlaylist("mika", `Extra ${i}`, [...h.fake.tracks.keys()].slice(i, i + 5)),
+		);
+		await h.listen(13 * 60 * MINUTE_MS); // the list is read again
+		const before = (await h.hub.state()).stations.length;
+		await expect(h.hub.onboard(lists.map((p) => p.id))).rejects.toThrow(/Höchstens/);
+		expect((await h.hub.state()).stations.length).toBe(before);
 	});
 });

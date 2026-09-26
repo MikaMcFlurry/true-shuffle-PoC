@@ -35,13 +35,16 @@ export interface Deck {
 	lastTrackId?: TrackId | null;
 	lastObservedAt: number | null;
 	/**
-	 * Spotify is known to play this version in our order. False after a
-	 * rewrite under a paused player (Spotify may carry on with the order it
-	 * had loaded) and after shuffling, until two neighbours were seen in a row.
+	 * Spotify plays exactly this order: True Shuffle started it, or this
+	 * version continues one it started (whatever a player had loaded goes on
+	 * the same way). Only then do positions between two looks at the player
+	 * prove anything; otherwise only a song seen playing can count as left.
 	 */
-	verified?: boolean;
-	/** True Shuffle itself started playback at the top of this version. */
-	fromStart?: boolean;
+	ours?: boolean;
+	/** Just started by True Shuffle at its first song; nothing seen since. */
+	top?: boolean;
+	/** Built as a continuation of the previous version (kept its front). */
+	continued?: boolean;
 }
 
 export interface PlayerObservation {
@@ -85,8 +88,9 @@ export function newDeck(
 		lastIndex: null,
 		lastTrackId: null,
 		lastObservedAt: null,
-		verified: true,
-		fromStart: false,
+		ours: false,
+		top: false,
+		continued: false,
 	};
 }
 
@@ -147,16 +151,15 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 				lastIndex: idx,
 				lastTrackId: obs.trackId,
 				lastObservedAt: obs.at,
-				verified: false,
-				fromStart: false,
+				ours: false,
+				top: false,
 			},
 		};
 	}
 	// What do we actually know was reached? Either the song we saw last time
 	// (still at that index in this version), or the top, when we started it.
-	const fromTop = prev === null && deck.fromStart === true;
-	let verified = deck.verified !== false;
-	if (!verified && seenPrev && idx === prev + 1) verified = true;
+	const ours = deck.ours === true;
+	const fromTop = prev === null && ours && deck.top === true;
 
 	const items = deck.items.slice();
 	const passed: TrackId[] = [];
@@ -170,7 +173,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	const anchor = seenPrev ? prev : fromTop ? -1 : null;
 	if (anchor !== null && idx > anchor) {
 		const gap = idx - anchor - 1;
-		if (verified && gap <= MAX_SKIP_GAP) {
+		if (ours && gap <= MAX_SKIP_GAP) {
 			// In our order: the song we saw and everything up to the current one
 			// is behind us.
 			for (let i = Math.max(anchor, 0); i < idx; i++) pass(i);
@@ -187,8 +190,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			lastIndex: idx,
 			lastTrackId: obs.trackId,
 			lastObservedAt: obs.at,
-			verified,
-			fromStart: false,
+			top: false,
 		},
 		inDeck: true,
 		index: idx,
