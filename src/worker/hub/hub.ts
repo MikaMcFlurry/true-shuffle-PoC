@@ -2461,16 +2461,11 @@ export class HubCore {
 					over: null,
 					only: true,
 				};
-			} else if (cur && cur.start < p.to && !samePlay(cur, before)) {
-				// Begun before the end, first seen after it: what plays on is the owner's.
-				last = {
-					id: cur.id,
-					start: cur.start,
-					guest: cur.listened,
-					owner: 0,
-					over: null,
-					only: true,
-				};
+			} else if (cur && !samePlay(cur, before) && (cur.start < p.to || !cur.playing)) {
+				// First seen after the end, but begun before it — or paused, so it may
+				// have been: what looks see play on is the owner's.
+				last = { id: cur.id, start: cur.start, guest: cur.listened, owner: 0, over: null };
+				if (cur.start < p.to) last.only = true;
 			} else if (over && before && before.at <= p.to) {
 				// Seen before the end, over by now: only a run to its end tells how long after.
 				const ranOut = over.listened > before.listened;
