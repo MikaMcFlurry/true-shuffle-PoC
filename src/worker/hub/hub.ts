@@ -139,15 +139,13 @@ const PLAYS_KEEP_MS = 180 * DAY_MS;
 const PRUNE_PER_DAY = 500;
 
 /**
- * A deck used this recently may still be loaded in a player (a car stop, a
- * phone that went quiet): its rewrite continues it instead of replanning.
- */
-const CONTINUE_WITHIN_MS = 12 * HOUR_MS;
-/**
  * How long a player that last played a station may still hold (a loaded
- * order of) its playlist: watched every minute, and its songs remembered.
+ * order of) its playlist — a car stop, a phone that went quiet, a night.
+ * Within it, a rewrite continues the deck instead of replanning, the held
+ * station is watched every minute, and its earlier songs are remembered.
  */
 const HOLD_WATCH_MS = 36 * HOUR_MS;
+const CONTINUE_WITHIN_MS = HOLD_WATCH_MS;
 
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
@@ -1791,11 +1789,7 @@ export class HubCore {
 			if (changed) this.saveDeck(st.id, deck);
 			// Rewrite a deck once nobody has listened to it for a while.
 			const consumed = consumedCount(deck) > 0;
-			// A continuation whose hold ran out: its front (old songs, for positions)
-			// makes way for a fresh plan before anyone starts it from the top.
-			const expired =
-				deck.continued === true && this.now() - (activity[String(st.id)] ?? 0) > CONTINUE_WITHIN_MS;
-			const stale = expired || this.now() - deck.writtenAt > DECK_MAX_AGE_MS;
+			const stale = this.now() - deck.writtenAt > DECK_MAX_AGE_MS;
 			if ((consumed || st.deck_dirty || stale) && !this.jobExists(`deck:${st.id}`)) {
 				const lastActive = activity[String(st.id)] ?? 0;
 				const wait = Math.max(0, lastActive + IDLE_BEFORE_REBUILD_MS - this.now());
@@ -3067,6 +3061,12 @@ export class HubCore {
 		const now = this.now();
 		const candidates: number[] = [];
 		const backoff = this.backoffUntil();
+		// Spotify access gone: nothing can be read or written until the listener
+		// connects again (which wakes the hub at once). One try an hour.
+		if (this.kvGet("auth_lost")) {
+			await this.d.alarms.set(Math.max(now + HOUR_MS, backoff + 1000));
+			return;
+		}
 		const job =
 			this.db.first<{ t: number | null }>(`SELECT MIN(run_after) AS t FROM jobs`)?.t ?? null;
 		if (job !== null) {

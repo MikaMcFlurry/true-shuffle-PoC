@@ -724,6 +724,6 @@ describe("the listener's own choices and long stops (red-team 6)", () => {
 			return orig();
 		};
 		await h.listen(24 * 60 * MINUTE_MS);
-		expect(alarms).toBeLessThanOrEqual(80);
+		expect(alarms).toBeLessThanOrEqual(30);
 	});
 });
