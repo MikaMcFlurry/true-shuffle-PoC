@@ -54,6 +54,8 @@ export interface FakeUser {
 	}[];
 	/** …unless Spotify lists them after all. */
 	listPrivatePlays?: boolean;
+	/** A song heard 30 s or more and replaced by a new start is listed then (unknown in real Spotify). */
+	listReplaced?: boolean;
 	player: PlayerSim;
 }
 
@@ -243,6 +245,7 @@ export class FakeSpotify {
 	): void {
 		const u = this.user(userId);
 		const p = u.player;
+		if (u.listReplaced) this.recordIfHeard(u, this.current(u.id), this.now());
 		p.deviceId = deviceId;
 		p.contextUri = uri;
 		p.order = this.resolveContext(uri, position, p.shuffle || p.smartShuffle);

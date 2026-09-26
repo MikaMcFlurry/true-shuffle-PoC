@@ -305,8 +305,28 @@ interface GuestPeriod {
 	 * played). Its play, ending later, is still the guest's.
 	 */
 	tail?: TrackId | null;
+	/**
+	 * The song the player showed at the guest's last look (paused as well),
+	 * and until when looks after the guest time still showed it: its play,
+	 * listed when it is over or replaced, is the guest's.
+	 */
+	shown?: TrackId;
+	shownUntil?: number;
 	from: number;
 	to: number;
+}
+
+/**
+ * The song a start from the app replaced, heard 30 s or more: counted from
+ * Spotify's listing, or from this record if none comes within the grace.
+ */
+interface ShownPending {
+	id: TrackId;
+	at: number;
+	durationMs: number;
+	contextUri: string | null;
+	track: PackedTrack;
+	until: number;
 }
 
 interface SyncState {
@@ -1873,6 +1893,7 @@ export class HubCore {
 			state?.item ? packTrack(state.item) : null,
 			s.lastPlayerAt,
 		);
+		this.noteGuestShown(obs);
 		s.lastPlayerAt = this.now();
 		const snap: PlayerSnapshot = {
 			obs,
@@ -1921,6 +1942,8 @@ export class HubCore {
 			const own = this.recordSeenPlay(heardPrivately);
 			if (own) plays = [...plays, own];
 		}
+		const replaced = this.settleShownPending();
+		if (replaced) plays = [...plays, replaced];
 
 		this.settleCarried(plays);
 
@@ -2311,10 +2334,32 @@ export class HubCore {
 	private guestPlay(id: TrackId, at: number, durationMs: number, before: () => number): boolean {
 		return this.guestPeriods().some((p) => {
 			if (at > p.from && at <= p.to) return true;
+			if (this.guestShown(p, id, at)) return true;
 			if (at <= p.to || at - durationMs >= p.to) return false;
 			if (p.tail !== undefined) return p.tail === id;
 			return Math.max(at - durationMs, before()) < p.to;
 		});
+	}
+
+	/** The guest's song, still shown after the guest time, listed now. */
+	private guestShown(p: GuestPeriod, id: TrackId, at: number): boolean {
+		return p.shown === id && at > p.to && at <= (p.shownUntil ?? p.to) + 5 * MINUTE_MS;
+	}
+
+	/** At each look: the song the guest leaves on the player, as long as it stays there. */
+	private noteGuestShown(obs: PlayerObservation | null): void {
+		const periods = this.guestPeriods();
+		const now = this.now();
+		const p = periods.filter((x) => x.from <= now).at(-1);
+		if (!p || now - p.to > 2 * DAY_MS) return;
+		const id = obs?.trackId ?? null;
+		if (now < p.to) {
+			if (!id) return;
+			p.shown = id;
+			p.shownUntil = now;
+		} else if (id !== null && id === p.shown) p.shownUntil = now;
+		else return;
+		this.kvSet("guest", periods);
 	}
 
 	/** Any guest time between `from` and `to`? */
@@ -2339,8 +2384,9 @@ export class HubCore {
 		if (now && open) {
 			if (!playing) return;
 			last!.seen = this.now();
-		} else if (now)
+		} else if (now && playing)
 			list.push({ from: lookBefore > 0 ? lookBefore : this.now(), to: null, seen: this.now() });
+		else if (now) return;
 		else if (open) last!.to = this.now();
 		else return;
 		this.kvSet(
@@ -2399,10 +2445,8 @@ export class HubCore {
 			// sought there: only what later looks see it play counts.
 			const sought = !same && moved > since + 2_000;
 			const start = same ? rec!.start : cur.at - cur.progressMs;
-			// Where it ends if it plays on: later after every pause.
-			const end = cur.isPlaying
-				? cur.at + cur.durationMs - cur.progressMs
-				: Math.max(same ? rec!.end : 0, start + cur.durationMs);
+			// Where it ends if it plays on from now: later after every pause.
+			const end = cur.at + cur.durationMs - cur.progressMs;
 			this.kvSet("private_song", {
 				id: cur.trackId,
 				start,
@@ -2444,6 +2488,45 @@ export class HubCore {
 		// The look play() just made (an unchanged picture is not stored again).
 		const fresh = this.now() - Math.max(snap?.at ?? 0, this.lastLookAt) <= MINUTE_MS;
 		return o?.trackId && o.progressMs >= 30_000 && fresh ? o.trackId : null;
+	}
+
+	/**
+	 * The start worked and replaced a song heard 30 s or more: it counts when
+	 * Spotify lists it, and if Spotify does not within the grace, from here.
+	 * In a private session the looks count it.
+	 */
+	private noteShownPending(id: TrackId | null): void {
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const o = snap?.obs;
+		if (!id || o?.trackId !== id || !snap?.track || o.durationMs <= 0) return;
+		if (this.kvGet<PrivateSong>("private_song")?.id === id) return;
+		this.kvSet("shown_pending", {
+			id,
+			at: this.now(),
+			durationMs: o.durationMs,
+			contextUri: o.contextUri,
+			track: snap.track,
+			until: this.now() + SKIP_GRACE_MS,
+		} satisfies ShownPending);
+	}
+
+	/** Not listed within the grace: the replaced song counts from its record. */
+	private settleShownPending(): RecentPlay | null {
+		const e = this.kvGet<ShownPending>("shown_pending");
+		if (!e || this.now() < e.until) return null;
+		this.kvDel("shown_pending");
+		if (this.inGuest(e.at) || this.guestPeriods().some((p) => this.guestShown(p, e.id, e.at)))
+			return null;
+		// Whenever Spotify may list it later (paused for hours: its stamp may be
+		// old), it is this play.
+		return this.recordSeenPlay({
+			id: e.id,
+			at: e.at,
+			start: e.at - DAY_MS,
+			end: e.at,
+			contextUri: e.contextUri,
+			track: e.track,
+		});
 	}
 
 	/**
@@ -2548,9 +2631,13 @@ export class HubCore {
 			}
 			return hit;
 		};
+		const pending = this.kvGet<ShownPending>("shown_pending");
 		for (const { i, at } of fresh) {
 			const id = i.track.id!;
 			const ctx = i.context?.uri ?? null;
+			// Spotify listed the song a start replaced: this is its play.
+			if (pending && id === pending.id && at >= pending.at - DAY_MS && at <= pending.at + MINUTE_MS)
+				this.kvDel("shown_pending");
 			// Counted already from the looks in a private session: it still tells
 			// the decks it was heard, and memory nothing new.
 			if (seen.some((e) => e.id === id && at >= e.from && at <= e.to)) {
@@ -3022,6 +3109,7 @@ export class HubCore {
 				delete deck.strayedUntil;
 				this.saveDeck(fresh.id, deck);
 			}
+			this.noteShownPending(shown);
 			const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
 			activity[String(fresh.id)] = this.now();
 			this.kvSet("deck_activity", activity);

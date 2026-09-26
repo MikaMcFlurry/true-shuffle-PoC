@@ -27,6 +27,7 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 - [ ] Hören beenden und nach mindestens 10 Minuten denselben Sender wieder starten. Die Reihenfolge ist neu, Gehörtes ist nicht wieder vorn.
 - [ ] Am nächsten Tag denselben Sender starten: kein Song aus dem Vortag, die Rundenzahl „x von y gehört" ist gestiegen.
 - [ ] Die Sender-Playlist **direkt in Spotify** starten (ohne True Shuffle). Die Songs zählen trotzdem.
+- [ ] Einen Song eine Minute hören, dann in der App einen anderen Sender starten. Eine halbe Stunde später steht der Song im **Verlauf**, genau einmal, und kommt heute nicht wieder. (Prüft auch, ob Spotify einen so ersetzten Song meldet; wenn nicht, zählt True Shuffle ihn nach 20 Minuten selbst.)
 
 ## D. Auto-Situation (der ursprüngliche Ärger)
 
@@ -40,6 +41,7 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 - [ ] Was jetzt läuft, steht im Verlauf mit der Markierung „Gast" und verändert keinen Sender.
 - [ ] Nach Ablauf schaltet er sich selbst ab. Vorher lässt er sich von Hand ausschalten.
 - [ ] Mitten in einem Song von Hand ausschalten und den Song zu Ende hören. Er steht im Verlauf mit „Gast", der Song danach ohne. (Prüft, dass Spotify eine Wiedergabe mit ihrem Ende stempelt.)
+- [ ] Im Gast-Modus einen Song nach einer Minute pausieren, Gast-Modus ausschalten, später einen Sender aus der App starten. Der pausierte Song steht, wenn überhaupt, mit „Gast" im Verlauf.
 
 ## F. Entdeckungen
 
