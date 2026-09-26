@@ -117,8 +117,8 @@ Ein Cron-Trigger (alle 20 Minuten) belebt verlorene Alarmketten über die `Regis
 
   | Konto | gelesene Zeilen | geschriebene Zeilen | 5 solche Konten vom Tageskontingent |
   |---|---|---|---|
-  | typisch: 9 Sender, 10.000 Songs, 15.000 im Gedächtnis, 1 h offene App | ~109.000 | ~1.600 | ~11 % / ~8 % |
-  | an der Grenze: 30 Sender, 25.000 im Gedächtnis, 300 gefolgte Playlists, 1 h offene App | ~193.000 | ~1.900 | ~19 % / ~10 % |
+  | typisch: 9 Sender, 10.000 Songs, 15.000 im Gedächtnis, 1 h offene App | ~115.000 | ~1.700 | ~12 % / ~9 % |
+  | an der Grenze: 30 Sender, 25.000 im Gedächtnis, 300 gefolgte Playlists, 1 h offene App | ~197.000 | ~2.000 | ~20 % / ~10 % |
   | an der Grenze, App 8 h offen | ~366.000 | ~5.600 | ~37 % / ~28 % |
   | an der Grenze, 12 × Daumen runter am Tag | ~189.000 | ~2.000 | ~19 % / ~10 % |
   | extrem (Messung der unabhängigen Prüfung): 30 Sender mit je 10.000 Songs | ~325.000 | ~2.700 | ~33 % / ~13 % |
