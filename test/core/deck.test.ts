@@ -23,6 +23,11 @@ function deck(n = 20): Deck {
 	);
 }
 
+/** A deck True Shuffle itself started at the top. */
+function started(n = 20): Deck {
+	return { ...deck(n), fromStart: true };
+}
+
 function obs(trackId: string | null, over: Partial<PlayerObservation> = {}): PlayerObservation {
 	return {
 		at: T0 + 60_000,
@@ -52,15 +57,70 @@ describe("observePlayer", () => {
 		]);
 	});
 
-	it("treats the first observation as coming from the top", () => {
-		const r = observePlayer(deck(), obs("s2"), URI);
+	it("treats the first observation as coming from the top when it started the deck", () => {
+		const r = observePlayer(started(), obs("s2"), URI);
 		expect(r.passed).toEqual(["s0", "s1"]);
 	});
 
+	it("infers nothing from a first observation it did not start (listener tapped a song)", () => {
+		const r = observePlayer(deck(), obs("s4"), URI);
+		expect(r.passed).toEqual([]);
+		expect(r.index).toBe(4);
+	});
+
+	it("after a rewrite under a paused player, only a song seen playing can be passed", () => {
+		// Spotify may still play the order it had loaded: s7, then s9 of the new version.
+		let d: Deck = { ...deck(), verified: false };
+		d = observePlayer(d, obs("s7"), URI).deck;
+		const r = observePlayer(d, obs("s9"), URI);
+		expect(r.passed).toEqual(["s7"]);
+		expect(r.deck.items[8]!.state).toBe("pending");
+		expect(r.deck.verified).toBe(false);
+	});
+
+	it("trusts the order again once two neighbours were seen in a row", () => {
+		let d: Deck = { ...deck(), verified: false };
+		d = observePlayer(d, obs("s3"), URI).deck;
+		d = observePlayer(d, obs("s4"), URI).deck;
+		expect(d.verified).toBe(true);
+		const r = observePlayer(d, obs("s7"), URI);
+		expect(r.passed).toEqual(["s4", "s5", "s6"]);
+	});
+
+	it("counts the song it saw as left when a song outside the deck follows", () => {
+		let d: Deck = { ...deck(), verified: false };
+		d = observePlayer(d, obs("s6"), URI).deck;
+		const r = observePlayer(d, obs("not-in-this-version"), URI);
+		expect(r.passed).toEqual(["s6"]);
+		expect(r.deck.lastIndex).toBe(6);
+	});
+
+	it("does not read a position carried over from another version", () => {
+		// lastIndex points at s2, but the song seen there was a different one.
+		const d: Deck = { ...deck(), lastIndex: 2, lastTrackId: "old-song" };
+		const r = observePlayer(d, obs("s4"), URI);
+		expect(r.passed).toEqual([]);
+	});
+
+	it("after shuffling, trusts positions only once the order is seen to hold", () => {
+		let d = started();
+		d = observePlayer(d, obs("s5", { shuffle: true }), URI).deck;
+		expect(d.verified).toBe(false);
+		const r = observePlayer(d, obs("s9"), URI);
+		expect(r.passed).toEqual(["s5"]);
+	});
+
 	it("reads a long forward move as a jump, not as skips", () => {
-		const r = observePlayer(deck(40), obs(`s${MAX_SKIP_GAP + 5}`), URI);
+		const r = observePlayer(started(40), obs(`s${MAX_SKIP_GAP + 5}`), URI);
 		expect(r.passed).toEqual([]);
 		expect(r.index).toBe(MAX_SKIP_GAP + 5);
+	});
+
+	it("after a long jump, only the song it jumped away from counts as left", () => {
+		let d = started(40);
+		d = observePlayer(d, obs("s1"), URI).deck;
+		const r = observePlayer(d, obs(`s${MAX_SKIP_GAP + 8}`), URI);
+		expect(r.passed).toEqual(["s1"]);
 	});
 
 	it("infers nothing while the service shuffles", () => {
@@ -94,7 +154,7 @@ describe("observePlayer", () => {
 
 describe("applyPlays + settleSkips", () => {
 	it("confirms plays from our playlist and books unconfirmed passes as skips after the grace", () => {
-		let d = deck();
+		let d = started();
 		d = observePlayer(d, obs("s4", { at: T0 + 10 * 60_000 }), URI).deck; // s0..s3 passed
 		const p = applyPlays(
 			d,
@@ -114,7 +174,7 @@ describe("applyPlays + settleSkips", () => {
 	});
 
 	it("undoes a skip when the play arrives late", () => {
-		let d = deck();
+		let d = started();
 		d = observePlayer(d, obs("s2", { at: T0 + 60_000 }), URI).deck;
 		d = settleSkips(d, T0 + 60_000 + SKIP_GRACE_MS).deck;
 		const p = applyPlays(d, [{ trackId: "s1", playedAt: T0 + 30_000, contextUri: URI }], URI);

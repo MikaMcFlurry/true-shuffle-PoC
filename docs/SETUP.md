@@ -86,7 +86,7 @@ fly apps destroy <name-der-alten-app>
 
 ## KI-Vorschläge: was sie kosten
 
-- **Ohne `ANTHROPIC_API_KEY`:** Workers AI (Llama 3.3). Im kostenlosen Kontingent von Cloudflare enthalten, die Vorschläge sind brauchbar.
+- **Ohne `ANTHROPIC_API_KEY`:** Workers AI (Llama 3.3), die Vorschläge sind brauchbar. Eine Anfrage kostet rund 150–200 „Neurons". Das kostenlose Kontingent (10.000 pro Tag) reicht also für etwa 50 Anfragen täglich, bei einer Anfrage pro Sender und Tag für rund 50 Sender über alle Konten. Ist es an einem Tag aufgebraucht, fehlen nur an diesem Tag die KI-Vorschläge. Die übrigen Quellen laufen weiter.
 - **Mit `ANTHROPIC_API_KEY`:** Claude Sonnet 5 (2 $ / 10 $ pro Million Token Ein-/Ausgabe) liefert deutlich treffendere Vorschläge. Pro Sender läuft etwa einmal am Tag eine Anfrage mit rund 1.000 Token. Bei 5 Sendern sind das grob 1–3 US$ im Monat.
 
 Jeder Vorschlag wird vor der Aufnahme in Spotify gesucht. Erfundene Songs kommen nie in einen Sender.

@@ -32,6 +32,7 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 
 - [ ] Im Auto über CarPlay/Android Auto einen Sender starten, fahren, Motor aus, später weiterfahren. Spotify macht dort weiter, wo es war: keine Wiederholung, nicht rückwärts.
 - [ ] Nach mehreren Fahrten: kein Song doppelt, außer Favoriten nach frühestens einer Woche.
+- [ ] Nach der Weiterfahrt im Cloudflare-Dashboard (Worker → Observability → Logs) nach `Früh übersprungen` suchen: Einträge gibt es nur für Songs, die du wirklich weggedrückt hast, nicht für Songs, die gar nicht liefen.
 
 ## E. Gast-Modus
 

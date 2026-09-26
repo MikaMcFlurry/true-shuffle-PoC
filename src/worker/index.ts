@@ -21,7 +21,7 @@ const SESSION_COOKIE = "ts_session";
 const OAUTH_COOKIE = "ts_oauth";
 const SESSION_DAYS = 180;
 
-type Vars = { uid: string; hub: DurableObjectStub<UserHub> };
+type Vars = { uid: string; epoch: number; hub: DurableObjectStub<UserHub> };
 const app = new Hono<{ Bindings: Env; Variables: Vars }>();
 
 function origin(c: { req: { url: string }; env: Env }): string {
@@ -37,6 +37,18 @@ function configured(env: Env): string | null {
 	if (!env.APP_SECRET || env.APP_SECRET.length < 32)
 		return "APP_SECRET fehlt oder ist zu kurz (mind. 32 Zeichen)";
 	return null;
+}
+
+/** The signed session cookie: who, until when, which sign-in generation. */
+async function readSession(c: {
+	env: Env;
+	req: { raw: Request };
+}): Promise<{ uid: string; epoch: number } | null> {
+	const signed = getCookie(c as never, SESSION_COOKIE);
+	const payload = signed ? await new Keys(c.env.APP_SECRET!).verify(signed) : null;
+	const [uid, exp, epoch] = payload?.split("|") ?? [];
+	if (!uid || !(Number(exp) >= Date.now()) || !Number.isInteger(Number(epoch))) return null;
+	return { uid, epoch: Number(epoch) };
 }
 
 function hubFor(env: Env, uid: string): DurableObjectStub<UserHub> {
@@ -128,11 +140,11 @@ app.get("/auth/callback", async (c) => {
 	const res = (await hub.attach(
 		{ id: me.id, name: me.display_name || me.id, imageUrl: me.images?.[0]?.url ?? null },
 		held,
-	)) as RpcResult<void>;
+	)) as RpcResult<number>;
 	if (!res.ok) return c.redirect("/?login=failed");
 	await c.env.REGISTRY.get(c.env.REGISTRY.idFromName("registry")).register(me.id);
 	const sessionExp = Date.now() + SESSION_DAYS * 86_400_000;
-	setCookie(c, SESSION_COOKIE, await keys.sign(`${me.id}|${sessionExp}`), {
+	setCookie(c, SESSION_COOKIE, await keys.sign(`${me.id}|${sessionExp}|${res.value}`), {
 		httpOnly: true,
 		secure: secure(c),
 		sameSite: "Lax",
@@ -142,7 +154,12 @@ app.get("/auth/callback", async (c) => {
 	return c.redirect("/");
 });
 
-app.post("/auth/logout", (c) => {
+app.post("/auth/logout", async (c) => {
+	if (c.req.header("x-ts") !== "1")
+		return c.json({ error: { code: "csrf", message: "Ungültige Anfrage" } }, 403);
+	// Ends every session of this listener, not just this browser's cookie.
+	const session = configured(c.env) ? null : await readSession(c);
+	if (session) await hubFor(c.env, session.uid).logout(session.epoch);
 	deleteCookie(c, SESSION_COOKIE, { path: "/" });
 	return c.json({ ok: true });
 });
@@ -163,14 +180,13 @@ app.use("/api/*", async (c, next) => {
 	if (c.req.method !== "GET" && c.req.header("x-ts") !== "1") {
 		return c.json({ error: { code: "csrf", message: "Ungültige Anfrage" } }, 403);
 	}
-	const signed = getCookie(c, SESSION_COOKIE);
-	const payload = signed ? await new Keys(c.env.APP_SECRET!).verify(signed) : null;
-	const [uid, exp] = payload?.split("|") ?? [];
-	if (!uid || Number(exp) < Date.now()) {
+	const session = await readSession(c);
+	if (!session) {
 		return c.json({ error: { code: "auth", message: "Bitte mit Spotify anmelden." } }, 401);
 	}
-	c.set("uid", uid);
-	c.set("hub", hubFor(c.env, uid));
+	c.set("uid", session.uid);
+	c.set("epoch", session.epoch);
+	c.set("hub", hubFor(c.env, session.uid));
 	return next();
 });
 
@@ -195,7 +211,7 @@ async function body<T>(c: { req: { json: () => Promise<unknown> } }): Promise<T>
 }
 
 app.get("/api/state", async (c) => {
-	const r = (await c.var.hub.state(c.req.query("live") === "1")) as RpcResult<{
+	const r = (await c.var.hub.state(c.var.epoch, c.req.query("live") === "1")) as RpcResult<{
 		profile: { id: string };
 	}>;
 	if (r.ok && !r.value.profile.id) {
@@ -208,14 +224,14 @@ app.get("/api/state", async (c) => {
 		: c.json({ error: r.error }, r.error.status as ContentfulStatusCode);
 });
 
-app.get("/api/playlists", (c) => unwrap(c, c.var.hub.playlists()));
+app.get("/api/playlists", (c) => unwrap(c, c.var.hub.playlists(c.var.epoch)));
 
 app.post("/api/onboarding", async (c) => {
 	const b = await body<{ playlistIds?: unknown }>(c);
 	const ids = Array.isArray(b.playlistIds)
 		? b.playlistIds.filter((x): x is string => typeof x === "string").slice(0, 100)
 		: [];
-	return unwrap(c, c.var.hub.onboard(ids));
+	return unwrap(c, c.var.hub.onboard(c.var.epoch, ids));
 });
 
 function parseSources(v: unknown): StationSource[] | undefined {
@@ -245,7 +261,11 @@ app.post("/api/stations", async (c) => {
 		);
 	return unwrap(
 		c,
-		c.var.hub.createStation({ name: String(b.name ?? "Neuer Sender"), sources, rules: b.rules }),
+		c.var.hub.createStation(c.var.epoch, {
+			name: String(b.name ?? "Neuer Sender"),
+			sources,
+			rules: b.rules,
+		}),
 	);
 });
 
@@ -253,7 +273,7 @@ app.patch("/api/stations/:id", async (c) => {
 	const b = await body<{ name?: string; sources?: unknown; rules?: Partial<StationRules> }>(c);
 	return unwrap(
 		c,
-		c.var.hub.updateStation(Number(c.req.param("id")), {
+		c.var.hub.updateStation(c.var.epoch, Number(c.req.param("id")), {
 			name: typeof b.name === "string" ? b.name : undefined,
 			rules: b.rules && typeof b.rules === "object" ? b.rules : undefined,
 			sources: parseSources(b.sources),
@@ -262,15 +282,21 @@ app.patch("/api/stations/:id", async (c) => {
 });
 
 app.delete("/api/stations/:id", (c) =>
-	unwrap(c, c.var.hub.deleteStation(Number(c.req.param("id")))),
+	unwrap(c, c.var.hub.deleteStation(c.var.epoch, Number(c.req.param("id")))),
 );
-app.get("/api/stations/:id", (c) => unwrap(c, c.var.hub.stationDetail(Number(c.req.param("id")))));
+app.get("/api/stations/:id", (c) =>
+	unwrap(c, c.var.hub.stationDetail(c.var.epoch, Number(c.req.param("id")))),
+);
 
 app.post("/api/stations/:id/play", async (c) => {
 	const b = await body<{ deviceId?: string }>(c);
 	return unwrap(
 		c,
-		c.var.hub.play(Number(c.req.param("id")), typeof b.deviceId === "string" ? b.deviceId : null),
+		c.var.hub.play(
+			c.var.epoch,
+			Number(c.req.param("id")),
+			typeof b.deviceId === "string" ? b.deviceId : null,
+		),
 	);
 });
 
@@ -279,22 +305,26 @@ app.post("/api/player/:action", (c) => {
 	if (action !== "pause" && action !== "resume" && action !== "next") {
 		return c.json({ error: { code: "bad_action", message: "Unbekannte Aktion" } }, 400);
 	}
-	return unwrap(c, c.var.hub.playerAction(action));
+	return unwrap(c, c.var.hub.playerAction(c.var.epoch, action));
 });
 
-app.get("/api/devices", (c) => unwrap(c, c.var.hub.devices()));
+app.get("/api/devices", (c) => unwrap(c, c.var.hub.devices(c.var.epoch)));
 
 app.post("/api/tracks/:id/thumb", async (c) => {
 	const b = await body<{ value?: number }>(c);
 	const v = b.value === 1 ? 1 : b.value === -1 ? -1 : 0;
-	return unwrap(c, c.var.hub.thumb(c.req.param("id"), v));
+	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v));
 });
 
 app.post("/api/guest", async (c) => {
 	const b = await body<{ on?: boolean; hours?: number }>(c);
 	return unwrap(
 		c,
-		c.var.hub.setGuest(b.on === true, typeof b.hours === "number" ? b.hours : undefined),
+		c.var.hub.setGuest(
+			c.var.epoch,
+			b.on === true,
+			typeof b.hours === "number" ? b.hours : undefined,
+		),
 	);
 });
 
@@ -312,21 +342,25 @@ app.post("/api/history/import", async (c) => {
 	) {
 		return c.json({ error: { code: "bad_import", message: "Ungültiger Import-Block" } }, 400);
 	}
-	return unwrap(c, c.var.hub.importHistory(rows, part, parts));
+	return unwrap(c, c.var.hub.importHistory(c.var.epoch, rows, part, parts));
 });
 
 app.get("/api/history", (c) => {
 	const before = c.req.query("before");
 	return unwrap(
 		c,
-		c.var.hub.history(Number(c.req.query("limit") ?? 50), before ? Number(before) : undefined),
+		c.var.hub.history(
+			c.var.epoch,
+			Number(c.req.query("limit") ?? 50),
+			before ? Number(before) : undefined,
+		),
 	);
 });
 
-app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow()));
+app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow(c.var.epoch)));
 
 app.delete("/api/account", async (c) => {
-	const r = (await c.var.hub.deleteAccount()) as RpcResult<{ stuck: string[] }>;
+	const r = (await c.var.hub.deleteAccount(c.var.epoch)) as RpcResult<{ stuck: string[] }>;
 	await c.env.REGISTRY.get(c.env.REGISTRY.idFromName("registry")).remove(c.var.uid);
 	deleteCookie(c, SESSION_COOKIE, { path: "/" });
 	return r.ok

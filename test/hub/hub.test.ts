@@ -316,3 +316,23 @@ describe("listener input", () => {
 		expect(ids.length).toBeGreaterThan(0);
 	});
 });
+
+describe("sessions", () => {
+	it("signing out ends every session issued so far, and a new sign-in works again", async () => {
+		const h = await onboarded();
+		const first = h.hub.sessionEpoch();
+		expect(() => h.hub.checkSession(first)).not.toThrow();
+		h.hub.endSessions();
+		expect(() => h.hub.checkSession(first)).toThrow(/anmelden/);
+		const tokens = {
+			accessToken: h.fake.issueToken("mika"),
+			refreshToken: "rt-again",
+			expiresAt: h.clock.t + 3_600_000,
+			scope: "all",
+		};
+		h.fake.refreshTokens.set("rt-again", "mika");
+		const next = await h.hub.connect({ id: "mika", name: "Mika", imageUrl: null }, tokens);
+		expect(next).not.toBe(first);
+		expect(() => h.hub.checkSession(next)).not.toThrow();
+	});
+});

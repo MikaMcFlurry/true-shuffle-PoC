@@ -161,9 +161,17 @@ test.describe("a listener's day", () => {
 
 	test("signs out and keeps the memory", async ({ page }) => {
 		await signIn(page);
+		const before = await page.context().cookies();
 		await page.getByRole("link", { name: "Menü" }).click();
 		await page.getByRole("button", { name: /Abmelden/ }).click();
 		await expect(page.getByRole("link", { name: "Mit Spotify anmelden" })).toBeVisible();
+
+		// A copy of the old session cookie no longer opens anything.
+		await page.context().addCookies(before);
+		const res = await page.request.get("/api/state");
+		expect(res.status()).toBe(401);
+		await page.context().clearCookies();
+		await page.goto("/");
 
 		await page.getByRole("link", { name: "Mit Spotify anmelden" }).click();
 		await expect(page.getByRole("button", { name: /^Indie & Gitarren starten/ })).toBeVisible();

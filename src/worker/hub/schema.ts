@@ -112,6 +112,15 @@ const MIGRATIONS: string[][] = [
 			message TEXT NOT NULL
 		)`,
 	],
+	[
+		// A source playlist the listener deleted in Spotify: kept (for its name)
+		// and marked, so its station plays on without it instead of waiting.
+		`ALTER TABLE playlists ADD COLUMN gone_at INTEGER`,
+		// Recent plays per station without scanning the whole plays table.
+		`CREATE INDEX IF NOT EXISTS plays_by_station ON plays (station_id, played_at)`,
+		// A song's discovery rows, looked up on every play.
+		`CREATE INDEX IF NOT EXISTS discoveries_by_track ON discoveries (id)`,
+	],
 ];
 
 export function migrate(db: SqlDb): void {

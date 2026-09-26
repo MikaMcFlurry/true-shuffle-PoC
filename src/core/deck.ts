@@ -31,7 +31,17 @@ export interface Deck {
 	writtenAt: number;
 	/** Last index observed in the player for this version, or null. */
 	lastIndex: number | null;
+	/** The song seen at `lastIndex` — the only position we know was reached. */
+	lastTrackId?: TrackId | null;
 	lastObservedAt: number | null;
+	/**
+	 * Spotify is known to play this version in our order. False after a
+	 * rewrite under a paused player (Spotify may carry on with the order it
+	 * had loaded) and after shuffling, until two neighbours were seen in a row.
+	 */
+	verified?: boolean;
+	/** True Shuffle itself started playback at the top of this version. */
+	fromStart?: boolean;
 }
 
 export interface PlayerObservation {
@@ -73,7 +83,10 @@ export function newDeck(
 		items: ids.map((s) => ({ id: s.trackId, kind: s.kind, state: "pending", at: null })),
 		writtenAt: now,
 		lastIndex: null,
+		lastTrackId: null,
 		lastObservedAt: null,
+		verified: true,
+		fromStart: false,
 	};
 }
 
@@ -101,39 +114,82 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	if (obs.contextUri !== deckUri || obs.trackId === null) return base;
 	const orderBroken = obs.shuffle || obs.smartShuffle;
 	const idx = deck.items.findIndex((it) => it.id === obs.trackId);
+	const prev = deck.lastIndex;
+	const seenPrev =
+		prev !== null && deck.lastTrackId != null && deck.items[prev]?.id === deck.lastTrackId;
 	if (idx < 0) {
-		// A song from the listener's own queue while our playlist is the context.
+		// A song that is not in this version (the listener's own queue, or an
+		// order Spotify loaded before a rewrite). The song we saw before it has
+		// been left all the same; positions stay where they were.
+		if (seenPrev && obs.trackId !== deck.lastTrackId && deck.items[prev]!.state === "pending") {
+			const items = deck.items.slice();
+			items[prev] = { ...items[prev]!, state: "passed", at: obs.at };
+			return {
+				...base,
+				inDeck: true,
+				orderBroken,
+				passed: [items[prev]!.id],
+				deck: { ...deck, items, lastObservedAt: obs.at },
+			};
+		}
 		return { ...base, inDeck: true, orderBroken };
 	}
 	if (orderBroken) {
-		// Positions mean nothing while the service shuffles — infer nothing.
+		// Positions mean nothing while the service shuffles — infer nothing,
+		// and trust the order again only once it is seen to hold.
 		return {
 			...base,
 			inDeck: true,
 			index: idx,
 			orderBroken,
-			deck: { ...deck, lastIndex: idx, lastObservedAt: obs.at },
+			deck: {
+				...deck,
+				lastIndex: idx,
+				lastTrackId: obs.trackId,
+				lastObservedAt: obs.at,
+				verified: false,
+				fromStart: false,
+			},
 		};
 	}
-	const prev = deck.lastIndex ?? -1;
+	// What do we actually know was reached? Either the song we saw last time
+	// (still at that index in this version), or the top, when we started it.
+	const fromTop = prev === null && deck.fromStart === true;
+	let verified = deck.verified !== false;
+	if (!verified && seenPrev && idx === prev + 1) verified = true;
+
 	const items = deck.items.slice();
 	const passed: TrackId[] = [];
-	if (idx > prev) {
-		const gap = idx - prev - 1;
-		if (gap <= MAX_SKIP_GAP) {
-			// The song we saw last time is behind us now, as is everything
-			// between it and the current one.
-			for (let i = Math.max(prev, 0); i < idx; i++) {
-				const it = items[i]!;
-				if (it.state === "pending") {
-					items[i] = { ...it, state: "passed", at: obs.at };
-					passed.push(it.id);
-				}
-			}
+	const pass = (i: number) => {
+		const it = items[i]!;
+		if (it.state === "pending") {
+			items[i] = { ...it, state: "passed", at: obs.at };
+			passed.push(it.id);
+		}
+	};
+	const anchor = seenPrev ? prev : fromTop ? -1 : null;
+	if (anchor !== null && idx > anchor) {
+		const gap = idx - anchor - 1;
+		if (verified && gap <= MAX_SKIP_GAP) {
+			// In our order: the song we saw and everything up to the current one
+			// is behind us.
+			for (let i = Math.max(anchor, 0); i < idx; i++) pass(i);
+		} else if (seenPrev) {
+			// A long jump, or an order we cannot trust: only the song we
+			// actually saw playing was left behind.
+			pass(prev);
 		}
 	}
 	return {
-		deck: { ...deck, items, lastIndex: idx, lastObservedAt: obs.at },
+		deck: {
+			...deck,
+			items,
+			lastIndex: idx,
+			lastTrackId: obs.trackId,
+			lastObservedAt: obs.at,
+			verified,
+			fromStart: false,
+		},
 		inDeck: true,
 		index: idx,
 		orderBroken: false,

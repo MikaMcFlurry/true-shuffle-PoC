@@ -93,6 +93,23 @@ export const DECK_SIZE = 300;
 export const EXTEND_BELOW = 25;
 /** A deck is rewritten only after nobody listened to it for this long. */
 export const IDLE_BEFORE_REBUILD_MS = 10 * MINUTE_MS;
+/** A song left behind, waiting for its play to show up before it counts as skipped. */
+interface PendingSkip {
+	id: TrackId;
+	st: number;
+	at: number;
+	/** When it was first seen playing. */
+	since?: number;
+}
+
+/** How far back a play may arrive late in recently-played and still count. */
+const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
+/** Single plays are kept this long (memory keeps the totals for good). */
+const PLAYS_KEEP_MS = 180 * DAY_MS;
+const PRUNE_PER_DAY = 500;
+
+/** A player snapshot older than this cannot vouch that nobody is listening. */
+const PLAYER_FRESH_MS = 5 * MINUTE_MS;
 /** Refresh decks that were written longer ago than this (memory drifted). */
 export const DECK_MAX_AGE_MS = 20 * HOUR_MS;
 /** External requests per invocation (Workers free plan allows 50). */
@@ -257,6 +274,8 @@ export class HubCore {
 			message.slice(0, 500),
 		);
 		this.db.run(`DELETE FROM events WHERE id <= (SELECT MAX(id) - 300 FROM events)`);
+		// Also to the Worker's logs (dashboard → Observability).
+		console.log(JSON.stringify({ level, kind, message: message.slice(0, 500) }));
 	}
 
 	private syncState(): SyncState {
@@ -308,10 +327,26 @@ export class HubCore {
 		return this.kvGet<string>("tokens") !== null && this.kvGet("auth_lost") === null;
 	}
 
+	/** The listener's current sign-in generation; signing out anywhere ends all. */
+	sessionEpoch(): number {
+		return this.kvGet<number>("session_epoch") ?? 1;
+	}
+
+	checkSession(epoch: number): void {
+		if (epoch !== this.sessionEpoch())
+			throw new HubError("auth", "Bitte mit Spotify anmelden.", 401);
+	}
+
+	/** Sign out: every session cookie issued so far stops working. */
+	endSessions(): void {
+		this.kvSet("session_epoch", this.sessionEpoch() + 1);
+		this.log("info", "connect", "Abgemeldet");
+	}
+
 	async connect(
 		profile: { id: string; name: string; imageUrl: string | null },
 		tokens: SpotifyTokens,
-	): Promise<void> {
+	): Promise<number> {
 		await this.tokenStore().set(tokens);
 		this.kvSet("profile", profile);
 		this.kvDel("auth_lost");
@@ -327,6 +362,7 @@ export class HubCore {
 		this.enqueue("playlists", "playlists", {}, 1);
 		this.log("info", "connect", `Mit Spotify verbunden als ${profile.name}`);
 		await this.scheduleSoon(1000);
+		return this.sessionEpoch();
 	}
 
 	private markAuthLost(): void {
@@ -462,11 +498,11 @@ export class HubCore {
 		const state = JSON.parse(job.state) as Record<string, unknown>;
 		switch (job.kind) {
 			case "playlists":
-				return this.stepPlaylists(client, state as { offset?: number }, budget);
+				return this.stepPlaylists(client, state as { offset?: number; seenAt?: number }, budget);
 			case "import":
 				return this.stepImport(client, state as unknown as ImportState, budget);
 			case "deck":
-				return this.stepDeck(client, Number(state.stationId));
+				return this.stepDeck(client, budget, Number(state.stationId));
 			case "extend":
 				return this.stepExtend(client, Number(state.stationId));
 			case "keep":
@@ -505,11 +541,13 @@ export class HubCore {
 
 	private async stepPlaylists(
 		client: SpotifyClient,
-		state: { offset?: number },
+		state: { offset?: number; seenAt?: number },
 		budget: RequestBudget,
 	): Promise<StepResult> {
 		let offset = state.offset ?? 0;
-		const seenAt = this.now();
+		// One mark for the whole walk, however many invocations it takes: only
+		// what the complete list no longer contains may be forgotten.
+		const seenAt = state.seenAt ?? this.now();
 		const ours = new Set(
 			this.stations()
 				.map((s) => s.playlist_id)
@@ -547,8 +585,25 @@ export class HubCore {
 				);
 			});
 			if (!page.next) {
-				// Playlists the listener no longer follows disappear from the list.
-				this.db.run(`DELETE FROM playlists WHERE seen_at < ?`, seenAt);
+				// Playlists the listener no longer follows disappear from the list —
+				// except a station's sources: those stay, marked gone, so the station
+				// can say what happened and play on with what is left.
+				const used = this.usedSources();
+				for (const r of this.db.all<{ id: string }>(
+					`SELECT id FROM playlists WHERE seen_at < ?`,
+					seenAt,
+				)) {
+					if (used.has(`pl:${r.id}`)) {
+						this.db.run(
+							`UPDATE playlists SET gone_at = COALESCE(gone_at, ?) WHERE id = ?`,
+							this.now(),
+							r.id,
+						);
+					} else {
+						this.db.run(`DELETE FROM playlists WHERE id = ?`, r.id);
+					}
+				}
+				this.db.run(`UPDATE playlists SET gone_at = NULL WHERE seen_at >= ?`, seenAt);
 				const s = this.syncState();
 				s.lastPlaylistsAt = this.now();
 				this.setSyncState(s);
@@ -557,7 +612,7 @@ export class HubCore {
 			}
 			offset += page.items.length || 50;
 		}
-		return { done: false, state: { offset } };
+		return { done: false, state: { offset, seenAt } };
 	}
 
 	/** Re-import any source playlist whose snapshot changed since its import. */
@@ -711,6 +766,21 @@ export class HubCore {
 		for (const r of rows) for (const t of JSON.parse(r.data) as PackedTrack[]) out.push(t);
 		this.sourceCache.set(key, out);
 		return out;
+	}
+
+	/** A source playlist that is no longer in the listener's Spotify. */
+	private sourceGone(key: string): boolean {
+		if (key === "liked") return false;
+		const row = this.db.first<{ gone_at: number | null }>(
+			`SELECT gone_at FROM playlists WHERE id = ?`,
+			key.slice(3),
+		);
+		return !row || row.gone_at !== null;
+	}
+
+	/** The sources a station can still draw from. */
+	private liveSources(st: StationRow): StationSource[] {
+		return this.sourcesOf(st).filter((s) => !this.sourceGone(sourceKey(s)));
 	}
 
 	private sourceImported(key: string): boolean {
@@ -889,7 +959,7 @@ export class HubCore {
 	private stationPool(st: StationRow): PoolEntry[] {
 		const out: PoolEntry[] = [];
 		const seen = new Set<TrackId>();
-		for (const s of this.sourcesOf(st)) {
+		for (const s of this.liveSources(st)) {
 			for (const t of this.loadSource(sourceKey(s))) {
 				if (seen.has(t[0])) continue;
 				seen.add(t[0]);
@@ -909,9 +979,14 @@ export class HubCore {
 	}
 
 	private stationReady(st: StationRow): boolean {
-		const sources = this.sourcesOf(st);
+		const sources = this.liveSources(st);
 		if (sources.length === 0) return false;
 		return sources.every((s) => this.sourceImported(sourceKey(s)));
+	}
+
+	/** Every source of this station was deleted in Spotify: nothing will come. */
+	private stationOrphaned(st: StationRow): boolean {
+		return this.sourcesOf(st).length > 0 && this.liveSources(st).length === 0;
 	}
 
 	private bans(stationId: number): Set<TrackId> {
@@ -1077,6 +1152,11 @@ export class HubCore {
 
 	/** Plan a fresh deck from memory and write it into the station's playlist. */
 	private async rebuildDeck(client: SpotifyClient, st: StationRow): Promise<Deck> {
+		if (this.stationOrphaned(st))
+			throw new HubError(
+				"gone",
+				"Die Playlist dieses Senders gibt es in deinem Spotify nicht mehr. Wähle unter „Quellen“ eine andere.",
+			);
 		if (!this.stationReady(st))
 			throw new HubError("not_ready", "Dieser Sender wird noch eingelesen.");
 		const pool = this.stationPool(st);
@@ -1144,16 +1224,14 @@ export class HubCore {
 		const prev = this.deckOf(st);
 		if (prev) this.carryPasses(st.id, prev);
 		const deck = newDeck(result.slots, (prev?.version ?? 0) + 1, this.now());
-		// Rewritten under a paused player: Spotify will continue after the old
-		// position, so positions before it must not be read as skips.
+		// Rewritten while the player still holds this playlist (paused, e.g. a
+		// car stop): Spotify may carry on with the order it had loaded, or with
+		// the new one from the old position. Until the new order is seen to
+		// hold, positions prove nothing — only a song seen playing can count.
 		const snap = this.kvGet<PlayerSnapshot>("player");
-		if (
-			prev &&
-			snap?.obs?.contextUri === `spotify:playlist:${playlistId}` &&
-			prev.lastIndex !== null
-		) {
-			deck.lastIndex = prev.lastIndex;
-		}
+		const heldByPlayer = snap?.obs?.contextUri === `spotify:playlist:${playlistId}`;
+		const snapStale = !snap || this.now() - snap.at > PLAYER_FRESH_MS;
+		if (heldByPlayer || snapStale) deck.verified = false;
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
 			JSON.stringify(deck),
@@ -1167,10 +1245,26 @@ export class HubCore {
 		return deck;
 	}
 
-	private async stepDeck(client: SpotifyClient, stationId: number): Promise<StepResult> {
+	private async stepDeck(
+		client: SpotifyClient,
+		budget: RequestBudget,
+		stationId: number,
+	): Promise<StepResult> {
 		const st = this.stationRow(stationId);
 		if (!st) return { done: true };
-		if (!this.stationReady(st)) return { done: false, state: { stationId }, delayMs: 30_000 };
+		if (!this.stationReady(st)) {
+			// Waiting is only worth it while something is being read in; otherwise
+			// the next import or source change queues the deck again.
+			const importing = this.liveSources(st).some((s) => this.jobExists(`import:${sourceKey(s)}`));
+			return importing ? { done: false, state: { stationId }, delayMs: 30_000 } : { done: true };
+		}
+		// Never rewrite a playlist on an old picture of the player: someone may be
+		// listening to it right now. Look first; if Spotify cannot say, wait.
+		if (st.deck && !this.playerFresh()) {
+			await this.sync(budget);
+			if (!this.playerFresh())
+				return { done: false, state: { stationId }, delayMs: IDLE_BEFORE_REBUILD_MS };
+		}
 		if (this.isListeningTo(st))
 			return { done: false, state: { stationId }, delayMs: IDLE_BEFORE_REBUILD_MS };
 		try {
@@ -1221,6 +1315,11 @@ export class HubCore {
 		);
 		this.saveDeck(st.id, deck);
 		return { done: true };
+	}
+
+	private playerFresh(): boolean {
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		return !!snap && this.now() - snap.at <= PLAYER_FRESH_MS;
 	}
 
 	/** Is the listener in this station's playlist right now (or was, moments ago)? */
@@ -1289,6 +1388,7 @@ export class HubCore {
 
 		// Walk every deck: confirm plays, read the position, book early skips.
 		const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
+		let inStation: { st: number; uri: string; inDeck: boolean } | null = null;
 		for (const st of this.stations()) {
 			let deck = this.deckOf(st);
 			const uri = this.deckUri(st);
@@ -1298,7 +1398,7 @@ export class HubCore {
 				const r = applyPlays(deck, plays, uri);
 				if (r.played.length > 0 || r.unskipped.length > 0) changed = true;
 				deck = r.deck;
-				for (const id of r.unskipped) this.undoSkip(id);
+				for (const id of r.unskipped) this.undoSkip(st.id, id);
 			}
 			if (obs && obs.contextUri === uri) {
 				// Only actual playback counts as activity: a deck paused and left
@@ -1307,6 +1407,7 @@ export class HubCore {
 				const r = observePlayer(deck, obs, uri);
 				deck = r.deck;
 				changed = true;
+				inStation = { st: st.id, uri, inDeck: r.index !== null };
 				if (obs.isPlaying)
 					this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), st.id);
 				if (r.orderBroken && obs.shuffle && this.now() - s.shuffleFixAt > 10 * MINUTE_MS) {
@@ -1344,6 +1445,7 @@ export class HubCore {
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3, wait);
 			}
 		}
+		this.watchCurrent(obs, inStation);
 		for (const st of this.stations()) {
 			if (!st.deck && this.stationReady(st) && !this.jobExists(`deck:${st.id}`)) {
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3);
@@ -1357,7 +1459,25 @@ export class HubCore {
 		if (this.kvGet("onboarded") && this.now() - s.lastLikedAt > 3 * DAY_MS) {
 			this.enqueue("import:liked", "import", { source: "liked", offset: 0 }, 6);
 		}
+		this.prune();
 		this.setSyncState(s);
+	}
+
+	/**
+	 * Once a day, drop single plays older than half a year (memory keeps every
+	 * song's totals) so the table — and every read of it — stays small. At most
+	 * a few hundred per day: every deleted row counts against the day's writes.
+	 */
+	private prune(): void {
+		const last = this.kvGet<number>("pruned_at") ?? 0;
+		if (this.now() - last < DAY_MS) return;
+		this.kvSet("pruned_at", this.now());
+		this.db.run(
+			`DELETE FROM plays WHERE (played_at, track_id) IN
+			 (SELECT played_at, track_id FROM plays WHERE played_at < ? ORDER BY played_at LIMIT ?)`,
+			this.now() - PLAYS_KEEP_MS,
+			PRUNE_PER_DAY,
+		);
 	}
 
 	private async readRecent(client: SpotifyClient, s: SyncState): Promise<RecentPlay[]> {
@@ -1380,7 +1500,7 @@ export class HubCore {
 			if (!deck || !uri) continue;
 			const r = applyPlays(deck, plays, uri);
 			if (r.played.length > 0 || r.unskipped.length > 0) {
-				for (const id of r.unskipped) this.undoSkip(id);
+				for (const id of r.unskipped) this.undoSkip(st.id, id);
 				this.saveDeck(st.id, r.deck);
 			}
 		}
@@ -1393,18 +1513,50 @@ export class HubCore {
 	private carryPasses(stationId: number, deck: Deck): void {
 		const waiting = deck.items.filter((it) => it.state === "passed");
 		if (waiting.length === 0) return;
-		const list = this.kvGet<{ id: TrackId; st: number; at: number }[]>("pending_skips") ?? [];
+		const list = this.kvGet<PendingSkip[]>("pending_skips") ?? [];
 		for (const it of waiting) list.push({ id: it.id, st: stationId, at: it.at ?? this.now() });
 		this.kvSet("pending_skips", list.slice(-500));
 	}
 
+	/**
+	 * A song playing in a station's playlist that is not in the deck version we
+	 * know (Spotify can carry on with an order it loaded before a rewrite) is
+	 * watched on its own: when another song takes over in the same playlist, it
+	 * was left — an early skip unless its play shows up within the grace.
+	 */
+	private watchCurrent(
+		obs: PlayerObservation | null,
+		inStation: { st: number; uri: string; inDeck: boolean } | null,
+	): void {
+		const watch = this.kvGet<{ id: TrackId; st: number; uri: string; since: number }>("watch");
+		const cur = obs?.trackId ?? null;
+		if (watch && cur && cur !== watch.id && obs?.contextUri === watch.uri && obs.isPlaying) {
+			const list = this.kvGet<PendingSkip[]>("pending_skips") ?? [];
+			list.push({ id: watch.id, st: watch.st, at: this.now(), since: watch.since });
+			this.kvSet("pending_skips", list.slice(-500));
+		}
+		if (inStation && cur && !inStation.inDeck) {
+			if (watch?.id !== cur)
+				this.kvSet("watch", { id: cur, st: inStation.st, uri: inStation.uri, since: this.now() });
+		} else if (watch && (cur !== watch.id || obs?.contextUri !== watch.uri)) {
+			this.kvDel("watch");
+		}
+	}
+
 	private settleCarried(plays: RecentPlay[]): void {
-		const list = this.kvGet<{ id: TrackId; st: number; at: number }[]>("pending_skips");
+		const list = this.kvGet<PendingSkip[]>("pending_skips");
 		if (!list || list.length === 0) return;
 		const played = new Set(plays.map((p) => p.trackId));
 		const keep: typeof list = [];
 		for (const e of list) {
 			if (played.has(e.id)) continue; // it was a play after all
+			// …or its play was read in an earlier round than this one.
+			const heard = this.db.first(
+				`SELECT 1 FROM plays WHERE played_at >= ? AND track_id = ? LIMIT 1`,
+				(e.since ?? e.at) - SKIP_GRACE_MS,
+				e.id,
+			);
+			if (heard) continue;
 			if (this.now() - e.at < SKIP_GRACE_MS) {
 				keep.push(e);
 				continue;
@@ -1448,10 +1600,29 @@ export class HubCore {
 		s: SyncState,
 	): RecentPlay[] {
 		const out: RecentPlay[] = [];
+		const key = (at: number, id: string) => `${at}|${id}`;
+		// What the previous read already returned. A play older than the cursor
+		// that was not in it arrived late (offline listening synced afterwards):
+		// it still counts, once — the plays table has the final say.
+		const known = new Set(this.kvGet<string[]>("recent_keys") ?? []);
+		const lateFrom = s.recentCursor - LATE_PLAY_WINDOW_MS;
 		const fresh = items
 			.map((i) => ({ i, at: Date.parse(i.played_at) }))
-			.filter((x) => Number.isFinite(x.at) && x.at > s.recentCursor && x.i.track?.id)
+			.filter((x) => {
+				const id = x.i.track?.id;
+				if (!Number.isFinite(x.at) || !id) return false;
+				if (x.at > s.recentCursor) return true;
+				if (x.at <= lateFrom || known.has(key(x.at, id))) return false;
+				return !this.db.first(`SELECT 1 FROM plays WHERE played_at = ? AND track_id = ?`, x.at, id);
+			})
 			.sort((a, b) => a.at - b.at);
+		this.kvSet(
+			"recent_keys",
+			items
+				.filter((i) => i.track?.id)
+				.map((i) => key(Date.parse(i.played_at), i.track.id!))
+				.slice(0, 60),
+		);
 		if (fresh.length >= 50 && items.length >= 50) {
 			this.log(
 				"warn",
@@ -1464,11 +1635,23 @@ export class HubCore {
 			const uri = this.deckUri(st);
 			if (uri) deckByUri.set(uri, st);
 		}
+		// Spotify leaves the context out for some plays; a song that was waiting in
+		// exactly one station's deck came from there.
+		const deckHolding = (id: TrackId, at: number): StationRow | undefined => {
+			let hit: StationRow | undefined;
+			for (const st of deckByUri.values()) {
+				const d = this.deckOf(st);
+				if (!d || d.writtenAt > at || !d.items.some((it) => it.id === id)) continue;
+				if (hit) return undefined;
+				hit = st;
+			}
+			return hit;
+		};
 		for (const { i, at } of fresh) {
 			const id = i.track.id!;
 			const ctx = i.context?.uri ?? null;
 			const ignored = this.inGuest(at);
-			const station = ctx ? deckByUri.get(ctx) : undefined;
+			const station = ctx ? deckByUri.get(ctx) : deckHolding(id, at);
 			const packed = packTrack(i.track);
 			this.db.run(
 				`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -1536,6 +1719,7 @@ export class HubCore {
 		if (this.inGuest(at)) return;
 		const before = this.memory(id);
 		this.liveSkip(id, at);
+		this.log("info", "skip", `Früh übersprungen auf „${st.name}“: ${this.describe(id)}`);
 		this.dirtyDecksHolding(id, null);
 		if (rules.skipPolicy === "ban") {
 			this.db.run(
@@ -1565,8 +1749,16 @@ export class HubCore {
 		}
 	}
 
-	private undoSkip(id: TrackId): void {
-		this.updateLive(id, (r) => ({ ...r, early_skips: Math.max(0, r.early_skips - 1) }));
+	/** A song booked as skipped turned out to be heard: take the skip back entirely. */
+	private undoSkip(stationId: number, id: TrackId): void {
+		this.updateLive(id, (r) => ({
+			...r,
+			early_skips: Math.max(0, r.early_skips - 1),
+			// Its "not now" pause goes too; having just been heard keeps it away anyway.
+			last_skipped_at: null,
+		}));
+		// It was in this station's deck, so no ban existed before the false skip.
+		this.db.run(`DELETE FROM bans WHERE station_id = ? AND track_id = ?`, stationId, id);
 		this.db.run(
 			`UPDATE discoveries SET status = 'probation', updated_at = ? WHERE id = ? AND status = 'rejected'`,
 			this.now(),
@@ -1636,7 +1828,7 @@ export class HubCore {
 		if (!st) return { done: true };
 		const rules = this.rulesOf(st);
 		const nextRun = { done: false as const, state: { stationId }, delayMs: 20 * HOUR_MS };
-		if (!rules.discoveryEnabled) return nextRun;
+		if (!rules.discoveryEnabled || this.stationOrphaned(st)) return nextRun;
 		if (!this.stationReady(st))
 			return { done: false, state: { stationId }, delayMs: 5 * MINUTE_MS };
 		const pending = this.db.first<{ n: number }>(
@@ -1785,8 +1977,12 @@ export class HubCore {
 				});
 			}
 			if (deck) {
+				// We started it at the top: positions from here on are ours.
 				deck.lastIndex = null;
+				deck.lastTrackId = null;
 				deck.lastObservedAt = null;
+				deck.verified = true;
+				deck.fromStart = true;
 				this.saveDeck(fresh.id, deck);
 			}
 			const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
@@ -2047,6 +2243,22 @@ export class HubCore {
 					"Spotify-Shuffle ist an — die True-Shuffle-Reihenfolge hält erst wieder, wenn es aus ist.",
 			});
 		}
+		for (const r of this.db.all<{ id: string; name: string }>(
+			`SELECT id, name FROM playlists WHERE gone_at IS NOT NULL`,
+		)) {
+			const users = this.stations()
+				.filter(
+					(st) =>
+						st.kind !== "all" &&
+						this.sourcesOf(st).some((x) => x.type === "playlist" && x.id === r.id),
+				)
+				.map((st) => `„${st.name}“`);
+			if (users.length === 0) continue;
+			warnings.push({
+				code: "source_gone",
+				message: `Die Playlist „${r.name}“ gibt es in deinem Spotify nicht mehr — ${users.join(", ")} ${users.length === 1 ? "spielt" : "spielen"} ohne sie weiter.`,
+			});
+		}
 		const guestNow = this.guestPeriods().find((p) => this.now() >= p.from && this.now() < p.to);
 		const hist = this.kvGet<{ at: number; tracks: number }>("history_import");
 		return {
@@ -2187,7 +2399,7 @@ export class HubCore {
 				imported_at: number | null;
 				imported_count: number | null;
 				skipped_count: number | null;
-			}>(`SELECT * FROM playlists WHERE ours = 0 ORDER BY sort`)
+			}>(`SELECT * FROM playlists WHERE ours = 0 AND gone_at IS NULL ORDER BY sort`)
 			.map((p) => ({
 				id: p.id,
 				name: p.name,

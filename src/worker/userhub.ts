@@ -75,28 +75,43 @@ export class UserHub extends DurableObject<Env> {
 		return run;
 	}
 
+	/** Like exclusive, for calls made on behalf of a signed-in session. */
+	private session<T>(epoch: number, fn: () => Promise<T> | T): Promise<RpcResult<T>> {
+		return this.exclusive(() => {
+			this.hub().checkSession(epoch);
+			return fn();
+		});
+	}
+
+	logout(epoch: number) {
+		return this.session(epoch, () => this.hub().endSessions());
+	}
+
 	attach(profile: { id: string; name: string; imageUrl: string | null }, tokens: SpotifyTokens) {
 		return this.exclusive(() => this.hub().connect(profile, tokens));
 	}
 	isConnected() {
 		return this.exclusive(() => this.hub().isConnected());
 	}
-	state(live: boolean) {
-		return this.exclusive(() => this.hub().state({ live }));
+	state(epoch: number, live: boolean) {
+		return this.session(epoch, () => this.hub().state({ live }));
 	}
-	playlists() {
-		return this.exclusive(() => this.hub().listPlaylists());
+	playlists(epoch: number) {
+		return this.session(epoch, () => this.hub().listPlaylists());
 	}
-	onboard(ids: string[]) {
-		return this.exclusive(() => this.hub().onboard(ids));
+	onboard(epoch: number, ids: string[]) {
+		return this.session(epoch, () => this.hub().onboard(ids));
 	}
-	createStation(input: {
-		name: string;
-		sources: StationSource[];
-		rules?: Partial<StationRules>;
-		kind?: StationKind;
-	}) {
-		return this.exclusive(async () => {
+	createStation(
+		epoch: number,
+		input: {
+			name: string;
+			sources: StationSource[];
+			rules?: Partial<StationRules>;
+			kind?: StationKind;
+		},
+	) {
+		return this.session(epoch, async () => {
 			const id = this.hub().createStation({
 				...input,
 				kind: input.kind === "all" ? "all" : "custom",
@@ -106,51 +121,57 @@ export class UserHub extends DurableObject<Env> {
 		});
 	}
 	updateStation(
+		epoch: number,
 		id: number,
 		patch: { name?: string; rules?: Partial<StationRules>; sources?: StationSource[] },
 	) {
-		return this.exclusive(async () => {
+		return this.session(epoch, async () => {
 			this.hub().updateStation(id, patch);
 			await this.hub().scheduleSoon(1000);
 		});
 	}
-	deleteStation(id: number) {
-		return this.exclusive(() => this.hub().deleteStation(id));
+	deleteStation(epoch: number, id: number) {
+		return this.session(epoch, () => this.hub().deleteStation(id));
 	}
-	stationDetail(id: number) {
-		return this.exclusive(() => this.hub().stationDetail(id));
+	stationDetail(epoch: number, id: number) {
+		return this.session(epoch, () => this.hub().stationDetail(id));
 	}
-	play(stationId: number, deviceId: string | null) {
-		return this.exclusive(() => this.hub().play(stationId, deviceId));
+	play(epoch: number, stationId: number, deviceId: string | null) {
+		return this.session(epoch, () => this.hub().play(stationId, deviceId));
 	}
-	playerAction(action: "pause" | "resume" | "next") {
-		return this.exclusive(() => this.hub().playerAction(action));
+	playerAction(epoch: number, action: "pause" | "resume" | "next") {
+		return this.session(epoch, () => this.hub().playerAction(action));
 	}
-	devices() {
-		return this.exclusive(() => this.hub().devices());
+	devices(epoch: number) {
+		return this.session(epoch, () => this.hub().devices());
 	}
-	thumb(trackId: string, value: -1 | 0 | 1) {
-		return this.exclusive(() => this.hub().thumb(trackId, value));
+	thumb(epoch: number, trackId: string, value: -1 | 0 | 1) {
+		return this.session(epoch, () => this.hub().thumb(trackId, value));
 	}
-	setGuest(on: boolean, hours?: number) {
-		return this.exclusive(() => this.hub().setGuest(on, hours));
+	setGuest(epoch: number, on: boolean, hours?: number) {
+		return this.session(epoch, () => this.hub().setGuest(on, hours));
 	}
-	importHistory(rows: [string, number, number, number][], part: number, parts: number) {
-		return this.exclusive(() => this.hub().importHistory(rows, part, parts));
+	importHistory(
+		epoch: number,
+		rows: [string, number, number, number][],
+		part: number,
+		parts: number,
+	) {
+		return this.session(epoch, () => this.hub().importHistory(rows, part, parts));
 	}
-	history(limit: number, before?: number) {
-		return this.exclusive(() => this.hub().history(limit, before));
+	history(epoch: number, limit: number, before?: number) {
+		return this.session(epoch, () => this.hub().history(limit, before));
 	}
-	syncNow() {
-		return this.exclusive(async () => {
+	syncNow(epoch: number) {
+		return this.session(epoch, async () => {
 			await this.hub().scheduleSoon(0);
 		});
 	}
 	ensureAlarm() {
 		return this.exclusive(() => this.hub().ensureAlarm());
 	}
-	deleteAccount() {
-		return this.exclusive(() => this.hub().deleteAccount());
+	deleteAccount(epoch: number) {
+		return this.session(epoch, () => this.hub().deleteAccount());
 	}
 
 	override async alarm(): Promise<void> {
