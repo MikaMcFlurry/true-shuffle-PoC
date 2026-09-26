@@ -727,3 +727,95 @@ describe("the listener's own choices and long stops (red-team 6)", () => {
 		expect(alarms).toBeLessThanOrEqual(30);
 	});
 });
+
+describe("the seventh review's cases", () => {
+	function earsOn(h: H) {
+		const heard = new Map<string, number[]>();
+		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
+		const orig = f.moveNext.bind(h.fake);
+		f.moveNext = (user: unknown, at: number) => {
+			const cur = h.fake.current();
+			if (cur) heard.set(cur, [...(heard.get(cur) ?? []), h.fake.user().player.listenedMs]);
+			orig(user, at);
+		};
+		return heard;
+	}
+
+	it("a guest's early skip shortly before guest mode ends stays out of memory", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+		h.hub.setGuest(true, 1);
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(52 * MINUTE_MS);
+		let g: string | null = null;
+		for (let i = 0; i < 200 && !g; i++) {
+			await h.listen(1_000);
+			const p = h.fake.user().player;
+			if (p.listenedMs >= 8_000 && p.listenedMs < 12_000) {
+				g = h.fake.current();
+				h.fake.skip();
+			}
+		}
+		await h.listen(40 * MINUTE_MS); // guest mode ends; the owner listens on
+		const row = h.sql.first<{ early_skips: number }>(
+			`SELECT early_skips FROM memory WHERE id = ?`,
+			g,
+		);
+		expect(row?.early_skips ?? 0).toBe(0);
+		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, g)).toBeNull();
+	});
+
+	it("forgets songs of older versions after 36 h: a queued one plays", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(20 * MINUTE_MS);
+		const first = stationDeck(h, sid).pl.items.slice();
+		// Three days of one session a day, each started from the app.
+		for (let day = 0; day < 3; day++) {
+			h.fake.pause();
+			await h.listen(22 * 60 * MINUTE_MS);
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(20 * MINUTE_MS);
+		}
+		const now = stationDeck(h, sid).pl.items;
+		const x = first.slice(150).find((id) => !now.includes(id))!; // only in the version of day 0
+		h.fake.user().recent.unshift({ trackId: x, playedAt: h.clock.t, contextUri: null }); // heard today
+		const heard = earsOn(h);
+		h.fake.user().player.userQueue.push(x);
+		await h.listen(15 * MINUTE_MS);
+		expect(heard.get(x)?.[0]).toBeGreaterThanOrEqual(30_000);
+	});
+
+	for (const size of [120, 600])
+		it(`a song turned down during a stop is caught in an order two versions old (${size} songs)`, async () => {
+			const h = await onboarded({ tracks: size });
+			const sid = h.stationIds[0]!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(30 * MINUTE_MS);
+			const p = h.fake.user().player;
+			p.isPlaying = false;
+			const t = p.order[p.index + 3]!;
+			const before = p.order[p.index + 2]!;
+			await h.listen(12 * MINUTE_MS); // first continuation
+			await h.hub.thumb(t, -1); // turned down in the app while the car is parked
+			await h.listen(30 * MINUTE_MS); // a continuation without it
+			await h.hub.thumb(p.order[p.index + 9]!, -1); // another one: a further continuation
+			await h.listen(30 * MINUTE_MS);
+			expect(stationDeck(h, sid).deck.version).toBeGreaterThanOrEqual(3);
+			const heard = earsOn(h);
+			p.isPlaying = true; // the loaded order goes on …
+			let skipped = false;
+			for (let i = 0; i < 480; i++) {
+				await h.listen(5_000);
+				// … the song before t is skipped by hand after 5 s: t comes up
+				if (!skipped && h.fake.current() === before && p.listenedMs >= 5_000) {
+					h.fake.skip();
+					skipped = true;
+				}
+			}
+			expect(heard.get(t)?.length).toBe(1);
+			expect(heard.get(t)![0]).toBeLessThan(30_000);
+		});
+});

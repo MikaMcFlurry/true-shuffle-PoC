@@ -68,10 +68,12 @@ export interface Deck {
 	 */
 	changedAt?: number[];
 	/**
-	 * Songs of earlier versions a player may still have loaded (the last day
-	 * and a half) that this version no longer holds.
+	 * Songs of earlier versions a player may still have loaded that this
+	 * version no longer holds, each until when (36 h after it left).
 	 */
-	formerIds?: TrackId[];
+	former?: [TrackId, number][];
+	/** Of those, the ones turned down or banned: they may still come up. */
+	formerOff?: TrackId[];
 	/**
 	 * The songs a chain of continuations took out at the held position — the
 	 * one a player paused on among them. Never planned back while the chain
@@ -295,18 +297,20 @@ export function settleSkips(
 	deck: Deck,
 	now: number,
 	graceMs = SKIP_GRACE_MS,
-): { deck: Deck; skipped: TrackId[]; seen: Set<TrackId> } {
+): { deck: Deck; skipped: TrackId[]; seen: Set<TrackId>; leftAt: Map<TrackId, number> } {
 	const skipped: TrackId[] = [];
 	const seen = new Set<TrackId>();
+	const leftAt = new Map<TrackId, number>();
 	const items = deck.items.map((it) => {
 		if (it.state === "passed" && it.at !== null && now - it.at >= graceMs) {
 			skipped.push(it.id);
+			leftAt.set(it.id, it.at);
 			if (it.seen) seen.add(it.id);
 			return { ...it, state: "skipped" as const, at: now };
 		}
 		return it;
 	});
-	return { deck: { ...deck, items }, skipped, seen };
+	return { deck: { ...deck, items }, skipped, seen, leftAt };
 }
 
 /** Songs of the deck the listener has moved past or heard. */

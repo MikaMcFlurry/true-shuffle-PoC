@@ -1423,10 +1423,17 @@ export class HubCore {
 		// New songs never come from what the held version holds for the player:
 		// ahead of it, or reached (see `heldForPlayer`). Without a player, a skip
 		// still waiting for its booking keeps the song out as well.
+		// A fresh plan written in the background leaves out the song the player
+		// was last seen on and those taken out before: it may still hold them.
 		const exclude =
 			continuing && prev
 				? heldForPlayer(prev)
-				: new Set((prev?.items ?? []).filter((it) => it.state === "passed").map((it) => it.id));
+				: new Set([
+						...(prev?.items ?? []).filter((it) => it.state === "passed").map((it) => it.id),
+						...(mode === "background" && prev
+							? [...(prev.leftOut ?? []), ...(prev.lastTrackId ? [prev.lastTrackId] : [])]
+							: []),
+					]);
 		const playable = (id: TrackId) => {
 			const m = this.memory(id);
 			return !isBlocked(m, banned) && !coolingDown(m, this.now());
@@ -1532,14 +1539,17 @@ export class HubCore {
 			deck.changedAt = [...marks];
 			deck.leftOut = [...(prev.leftOut ?? []), prev.items[held]!.id].slice(-20);
 		}
-		// Songs a player may still have loaded from earlier versions.
-		if (prev && this.now() - lastUse < HOLD_WATCH_MS) {
-			const former = new Set<TrackId>();
-			for (const id of [...prev.items.map((it) => it.id), ...(prev.formerIds ?? [])]) {
-				if (former.size >= 2000) break;
-				if (!inLayout.has(id)) former.add(id);
-			}
-			deck.formerIds = [...former];
+		// Songs a player may still have loaded from earlier versions: each one
+		// for 36 h after it left the playlist, then forgotten.
+		if (prev) {
+			const former = new Map<TrackId, number>();
+			for (const [id, until] of prev.former ?? []) if (until > this.now()) former.set(id, until);
+			for (const it of prev.items) former.set(it.id, this.now() + HOLD_WATCH_MS);
+			for (const id of inLayout.keys()) former.delete(id);
+			deck.former = [...former].sort((a, b) => b[1] - a[1]).slice(0, 2000);
+			deck.formerOff = deck.former
+				.filter(([id]) => isBlocked(this.memory(id), banned))
+				.map(([id]) => id);
 		}
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
@@ -1777,12 +1787,13 @@ export class HubCore {
 				changed = true;
 				deck = settled.deck;
 				const rules = this.rulesOf(st);
+				// Booked at the moment the song was left: a guest's skip stays the guest's.
 				for (const id of settled.skipped)
 					this.bookEarlySkip(
 						st,
 						id,
 						rules,
-						deck.lastObservedAt ?? this.now(),
+						settled.leftAt.get(id) ?? deck.lastObservedAt ?? this.now(),
 						settled.seen.has(id),
 					);
 			}
@@ -1899,7 +1910,7 @@ export class HubCore {
 	): Promise<void> {
 		// A guest's music is theirs: True Shuffle only listens, never steers.
 		if (!obs?.isPlaying || !obs.trackId || !at || this.inGuest(this.now())) return;
-		const last = this.kvGet<{ id: TrackId; at: number }>("moved");
+		const last = this.kvGet<{ id: TrackId; at: number }>("guard_try");
 		if (last && last.id === obs.trackId && this.now() - last.at < MINUTE_MS) return;
 		const st = this.stationRow(at.st);
 		const deck = st ? this.deckOf(st) : null;
@@ -1910,7 +1921,7 @@ export class HubCore {
 		let to: number | null = null;
 		let why: string;
 		if (m.thumb === -1) why = "abgelehnt";
-		else if (heardToday && at.index === null && deck.formerIds?.includes(obs.trackId))
+		else if (heardToday && at.index === null && formerNow(deck, this.now()).has(obs.trackId))
 			why = "heute schon gehört, aus einer alten Reihenfolge";
 		else if (
 			heardToday &&
@@ -1929,7 +1940,7 @@ export class HubCore {
 			if (to < 0) return;
 			why = "heute schon gehört, von oben gestartet";
 		} else return;
-		this.kvSet("moved", { id: obs.trackId, at: this.now(), why, station: st.name });
+		this.kvSet("guard_try", { id: obs.trackId, at: this.now() });
 		try {
 			if (to === null) await client.next();
 			else
@@ -1941,6 +1952,8 @@ export class HubCore {
 		} catch {
 			return; // a restricted device: nothing we can do from here
 		}
+		const label = this.describe(obs.trackId);
+		this.kvSet("moved", { id: obs.trackId, at: this.now(), why, station: st.name, label });
 		this.kvSet("player_stale", 1);
 		this.log(
 			"info",
@@ -2576,6 +2589,14 @@ export class HubCore {
 			);
 			// Stations planning to play it leave it out next time.
 			this.dirtyDecksHolding(trackId, null);
+			// Stations whose older versions held it watch for it more closely.
+			for (const st of this.stations()) {
+				const d = this.deckOf(st);
+				if (!d || d.formerOff?.includes(trackId) || !formerNow(d, this.now()).has(trackId))
+					continue;
+				d.formerOff = [...(d.formerOff ?? []), trackId];
+				this.saveDeck(st.id, d);
+			}
 			const snap = this.kvGet<PlayerSnapshot>("player");
 			if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) await this.playerAction("next");
 		}
@@ -2734,11 +2755,17 @@ export class HubCore {
 			});
 		}
 		// Say it when True Shuffle moved the player on by itself.
-		const moved = this.kvGet<{ id: TrackId; at: number; why?: string; station?: string }>("moved");
+		const moved = this.kvGet<{
+			id: TrackId;
+			at: number;
+			why?: string;
+			station?: string;
+			label?: string;
+		}>("moved");
 		if (moved?.why && this.now() - moved.at < 3 * MINUTE_MS)
 			warnings.push({
 				code: "guard",
-				message: `Übersprungen auf „${moved.station}“: ${this.describe(moved.id)} — ${moved.why}`,
+				message: `Übersprungen auf „${moved.station}“: ${moved.label ?? this.describe(moved.id)} — ${moved.why}`,
 			});
 		for (const r of this.kvGet<{ id: string; name: string }[]>("sources_gone") ?? []) {
 			const users = this.stations().filter(
@@ -3139,6 +3166,12 @@ export class HubCore {
 		for (let i = at + 1; i <= at + 3 && i < deck.items.length; i++) {
 			if (deck.changedAt?.includes(i) || this.memory(deck.items[i]!.id).thumb === -1) return true;
 		}
+		// A song turned down that an older version held: where a player still
+		// in that version meets it is unknown, so it may come any time.
+		if (deck.formerOff?.length) {
+			const former = formerNow(deck, this.now());
+			if (deck.formerOff.some((id) => former.has(id))) return true;
+		}
 		return false;
 	}
 
@@ -3197,6 +3230,11 @@ interface ImportState {
 	count?: number;
 	snapshot?: string | null;
 	total?: number;
+}
+
+/** Songs of earlier versions a player may still hold, as of `now`. */
+function formerNow(deck: Deck, now: number): Set<TrackId> {
+	return new Set((deck.former ?? []).filter(([, until]) => until > now).map(([id]) => id));
 }
 
 /** Equal but for the moment of the last look at the player. */
