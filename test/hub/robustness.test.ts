@@ -631,7 +631,7 @@ describe("the listener's own choices and long stops (red-team 6)", () => {
 			await h.listen(5 * MINUTE_MS);
 			h.fake.pause();
 			await h.listen(2 * 60 * MINUTE_MS);
-			if (guest) h.hub.setGuest(true, 2);
+			if (guest) await h.hub.setGuest(true, 2);
 			await h.hub.play(s1);
 			await h.listen(6 * MINUTE_MS);
 			const heard = earsOn(h);
@@ -745,7 +745,7 @@ describe("the seventh review's cases", () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
 		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
-		h.hub.setGuest(true, 1);
+		await h.hub.setGuest(true, 1);
 		expect((await h.hub.play(sid)).ok).toBe(true);
 		await h.listen(52 * MINUTE_MS);
 		let g: string | null = null;
@@ -838,7 +838,7 @@ describe("the eighth review's cases", () => {
 			const h = await onboarded({ tracks: 300 });
 			const sid = h.stationIds[0]!;
 			await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
-			h.hub.setGuest(true, 1);
+			await h.hub.setGuest(true, 1);
 			const end = (await h.hub.state()).guest.until!;
 			expect((await h.hub.play(sid)).ok).toBe(true);
 			await h.listen(end - h.clock.t - beforeEnd * 1000 - 4 * MINUTE_MS);
@@ -957,7 +957,7 @@ describe("the ninth review's cases", () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
 		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
-		h.hub.setGuest(true, 6);
+		await h.hub.setGuest(true, 6);
 		expect((await h.hub.play(sid)).ok).toBe(true);
 		await h.listen(40 * MINUTE_MS);
 		let g: string | null = null;
@@ -970,7 +970,7 @@ describe("the ninth review's cases", () => {
 			}
 		}
 		await h.listen(20_000);
-		h.hub.setGuest(false);
+		await h.hub.setGuest(false);
 		expect((await h.hub.play(sid)).ok).toBe(true); // a rewrite within the skip's wait
 		await h.listen(45 * MINUTE_MS);
 		const row = h.sql.first<{ early_skips: number }>(
@@ -1104,7 +1104,7 @@ describe("the tenth look: older orders and the edges of guest time", () => {
 	it("a song still playing when guest mode goes off stays the guest's", async () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
-		h.hub.setGuest(true, 6);
+		await h.hub.setGuest(true, 6);
 		expect((await h.hub.play(sid)).ok).toBe(true);
 		await h.listen(10 * MINUTE_MS);
 		const p = h.fake.user().player;
@@ -1112,7 +1112,7 @@ describe("the tenth look: older orders and the edges of guest time", () => {
 		while (h.fake.current() === x) await h.listen(1_000);
 		const y = h.fake.current()!;
 		await h.listen(60_000);
-		h.hub.setGuest(false); // y plays on to its end, and the owner's music after it
+		await h.hub.setGuest(false); // y plays on to its end, and the owner's music after it
 		await h.listen(40 * MINUTE_MS);
 		expect(p.isPlaying).toBe(true);
 		const rows = h.sql.all<{ track_id: string; ignored: number }>(
@@ -1133,7 +1133,7 @@ describe("the tenth look: older orders and the edges of guest time", () => {
 		const x = h.fake.current()!;
 		await h.listen(h.fake.tracks.get(x)!.durationMs - p.progressMs); // ends right now
 		expect(h.fake.current()).not.toBe(x);
-		h.hub.setGuest(true, 1);
+		await h.hub.setGuest(true, 1);
 		await h.listen(30 * MINUTE_MS);
 		const row = h.sql.first<{ ignored: number }>(`SELECT ignored FROM plays WHERE track_id = ?`, x);
 		expect(row?.ignored).toBe(0);
@@ -1164,14 +1164,14 @@ describe("the tenth review's cases", () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
-		h.hub.setGuest(true, 6);
+		await h.hub.setGuest(true, 6);
 		await h.listen(20 * MINUTE_MS);
 		const p = h.fake.user().player;
 		const x = h.fake.current()!;
 		while (h.fake.current() === x) await h.listen(1_000);
 		await h.listen(60_000);
 		const y = h.fake.current()!; // the guest's song, still running
-		h.hub.setGuest(false);
+		await h.hub.setGuest(false);
 		await h.listen(30_000);
 		const mine: string[] = [];
 		for (let i = 0; i < 4; i++) {
@@ -1191,7 +1191,7 @@ describe("the tenth review's cases", () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
-		h.hub.setGuest(true, 1);
+		await h.hub.setGuest(true, 1);
 		const p = h.fake.user().player;
 		await h.listen(58 * MINUTE_MS);
 		let y = h.fake.current()!;
@@ -1228,7 +1228,7 @@ describe("the tenth review's cases", () => {
 		h.fake.skip();
 		await h.listen(25 * MINUTE_MS);
 		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, x)).not.toBeNull();
-		h.hub.setGuest(true, 6);
+		await h.hub.setGuest(true, 6);
 		const live = stationDeck(h, sid).pl.items.slice();
 		p.order = live;
 		p.index = live.indexOf(x); // the guest taps it in the same playlist
@@ -1310,5 +1310,66 @@ describe("the tenth review's cases", () => {
 		const v3 = deckOf(h, sid);
 		expect(v3.version).toBeGreaterThan(v2.version);
 		expect(v3.changedAt).toContain(v3.items.findIndex((it) => it.id === there));
+	});
+});
+
+describe("the eleventh review's cases", () => {
+	it("a guest who skips just before guest mode goes off: the song then playing stays the guest's", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		await h.hub.setGuest(true, 6);
+		const u = h.fake.user();
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 7, u.player.deviceId!, false);
+		await h.listen(35 * MINUTE_MS);
+		await h.hub.state({ live: true }); // the app looked 20 s before
+		await h.listen(10_000);
+		h.fake.skip(); // the guest skips
+		await h.listen(10_000);
+		const running = h.fake.current()!;
+		await h.hub.setGuest(false);
+		while (h.fake.current() === running) await h.listen(1_000);
+		await h.listen(30 * MINUTE_MS);
+		u.player.isPlaying = false;
+		await h.listen(30 * MINUTE_MS);
+		const row = h.sql.first<{ ignored: number }>(
+			`SELECT ignored FROM plays WHERE track_id = ? ORDER BY played_at DESC`,
+			running,
+		);
+		expect(row?.ignored).toBe(1);
+		const mem = h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, running);
+		expect(mem?.plays ?? 0).toBe(0);
+	});
+
+	it("a guest's play of a song the owner left minutes before leaves the owner's skip and ban", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(8 * MINUTE_MS);
+		const p = h.fake.user().player;
+		const y = h.fake.current()!;
+		while (h.fake.current() === y) await h.listen(1_000);
+		const x = h.fake.current()!;
+		while (p.listenedMs < 15_000) await h.listen(1_000);
+		h.fake.skip(); // the owner's early skip, seen playing
+		await h.listen(10 * MINUTE_MS); // still waiting to be booked
+		await h.hub.setGuest(true, 6);
+		const live = stationDeck(h, sid).pl.items.slice();
+		p.order = live;
+		p.index = live.indexOf(x); // the guest taps it and hears it
+		p.progressMs = 0;
+		p.listenedMs = 0;
+		p.currentFromQueue = null;
+		p.isPlaying = true;
+		await h.listen(40 * MINUTE_MS);
+		const mem = h.sql.first<{ early_skips: number }>(
+			`SELECT early_skips FROM memory WHERE id = ?`,
+			x,
+		);
+		expect(mem?.early_skips).toBe(1);
+		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, x)).not.toBeNull();
 	});
 });

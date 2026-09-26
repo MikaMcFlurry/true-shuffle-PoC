@@ -107,6 +107,12 @@ export interface Deck {
 	 * plays its own tail from there.
 	 */
 	endsAt?: number[];
+	/**
+	 * A player is known to follow this version: True Shuffle started it or
+	 * jumped it to a place, or it was seen playing a song only this version
+	 * holds. Until then its front (up to `heldAt`) proves no gaps.
+	 */
+	inOrder?: boolean;
 }
 
 /** Runs of `true` as [from, to) pairs. */
@@ -297,6 +303,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			? obs.at
 			: deck.strayedUntil;
 	const trusted = ours && !(strayedUntil !== undefined && obs.at < strayedUntil);
+	const inOrder = deck.inOrder === true || (isNew && obs.isPlaying);
 
 	const items = deck.items.slice();
 	const passed: TrackId[] = [];
@@ -324,7 +331,13 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		const crosses =
 			(deck.heldAt != null && anchor < deck.heldAt && idx > deck.heldAt) ||
 			(deck.changedAt ?? []).some((c) => c > anchor && c <= idx);
-		if (trusted && gap <= MAX_SKIP_GAP && !crosses) {
+		// A continuation's front holds the tail of every older order a player
+		// may still follow — the songs moved forward, among the old ones before
+		// the held place. Steps there prove nothing until the player is known
+		// to follow this version, however it came there (a first look after
+		// the rewrite, a run of skips between two looks).
+		const front = deck.continued === true && heldAt != null && anchor <= heldAt && !inOrder;
+		if (trusted && gap <= MAX_SKIP_GAP && !crosses && !front) {
 			// In our order: the song we saw and everything up to the current one
 			// is behind us.
 			for (let i = Math.max(anchor, 0); i < idx; i++) pass(i);
@@ -344,6 +357,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			lastObservedAt: obs.at,
 			top: false,
 			...(strayedUntil !== undefined ? { strayedUntil } : {}),
+			...(inOrder ? { inOrder } : {}),
 		},
 		inDeck: true,
 		index: idx,
@@ -381,6 +395,10 @@ export function applyPlays(deck: Deck, plays: readonly RecentPlay[], deckUri: st
 			if (p.ignored) continue;
 			unskipped.push(it.id);
 		}
+		// A guest's play proves only its own listening: a song the owner left
+		// before it (still waiting as a skip) stays left.
+		if (p.ignored && it.state === "passed" && it.at !== null && p.playedAt > it.at + 60_000)
+			continue;
 		items[i] = { ...it, state: "played", at: p.playedAt };
 		played.push(it.id);
 	}

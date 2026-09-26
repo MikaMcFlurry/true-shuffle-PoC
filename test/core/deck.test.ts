@@ -186,13 +186,37 @@ describe("observePlayer", () => {
 		expect(r.passed).toEqual(["s15", "s16", "s17"]);
 	});
 
-	it("back to the top from the middle of the kept songs is a restart, not an older order", () => {
+	it("back to the top from the middle of the kept songs: no stray, but old songs in front prove no gaps", () => {
 		const d: Deck = { ...deck(40), ours: true, continued: true, heldAt: 4, keptTo: 34 };
 		let r = observePlayer(d, obs("s12", at(1)), URI);
 		r = observePlayer(r.deck, obs("s0", at(4)), URI);
 		expect(r.deck.strayedUntil).toBeUndefined();
 		r = observePlayer(r.deck, obs("s2", at(7)), URI);
-		expect(r.passed).toEqual(["s0", "s1"]);
+		expect(r.passed).toEqual(["s0"]);
+		// The kept songs still prove gaps.
+		r = observePlayer(r.deck, obs("s6", at(10)), URI);
+		r = observePlayer(r.deck, obs("s9", at(13)), URI);
+		expect(r.passed).toEqual(["s6", "s7", "s8"]);
+	});
+
+	it("the front proves gaps once the player is seen on a song only this version holds", () => {
+		// v2 = [old tail song, old ones…, new ones…]: an older order plays the
+		// first and jumps on to its next tail song; only a new song shows the order.
+		const d: Deck = {
+			...deck(40),
+			ours: true,
+			continued: true,
+			heldAt: 9,
+			keptTo: 34,
+			newAt: [[5, 10]],
+		};
+		let r = observePlayer(d, obs("s0", at(1)), URI); // first look after the rewrite
+		r = observePlayer(r.deck, obs("s4", at(4)), URI);
+		expect(r.passed).toEqual(["s0"]);
+		r = observePlayer(r.deck, obs("s6", at(7)), URI); // a new song: this order
+		expect(r.deck.inOrder).toBe(true);
+		r = observePlayer(r.deck, obs("s9", at(10)), URI);
+		expect(r.passed).toEqual(["s6", "s7", "s8"]);
 	});
 
 	it("an older order that met a song or two by chance past that end strays all the same", () => {
@@ -209,6 +233,38 @@ describe("observePlayer", () => {
 		expect(r.deck.strayedUntil).toBeDefined();
 		r = observePlayer(r.deck, obs("s3", at(7)), URI);
 		expect(r.passed).toEqual(["s1"]);
+	});
+
+	describe("an older order in a small station's continuation (the eleventh review)", () => {
+		// v1 had 30 songs; paused after 10, v2 = [v1[28], v1[0..8], v1[29], v1[11..27]].
+		const v1 = Array.from({ length: 30 }, (_, i) => `s${i}`);
+		const layout = [v1[28]!, ...v1.slice(0, 9), v1[29]!, ...v1.slice(11, 28)];
+		const v2 = (): Deck => ({
+			...newDeck(
+				layout.map((trackId) => ({ trackId, kind: "fresh" as const })),
+				2,
+				T0,
+			),
+			ours: true,
+			continued: true,
+			heldAt: 10,
+			keptTo: 27,
+			newAt: [],
+		});
+		const heard = (...rs: { passed: string[] }[]) => rs.flatMap((r) => r.passed);
+
+		it("after a run of quick skips between two looks, its tail proves no gaps in front", () => {
+			const d = observePlayer(v2(), obs("s16", at(1)), URI).deck;
+			const r1 = observePlayer(d, obs("s28", at(3)), URI); // its tail, at 0
+			const r2 = observePlayer(r1.deck, obs("s29", at(6)), URI); // at 10
+			expect(heard(r1, r2)).toEqual(["s28"]);
+		});
+
+		it("seen first after the rewrite in its tail, it proves no gaps in front", () => {
+			const r1 = observePlayer(v2(), obs("s28", at(1)), URI);
+			const r2 = observePlayer(r1.deck, obs("s29", at(4)), URI);
+			expect(heard(r1, r2)).toEqual(["s28"]);
+		});
 	});
 
 	it("a song only this version holds is reached in its order: no stray", () => {

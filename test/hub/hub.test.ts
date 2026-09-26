@@ -209,7 +209,7 @@ describe("guest mode", () => {
 	it("ignores everything played while it is on", async () => {
 		const h = await onboarded();
 		const sid = h.stationIds[0]!;
-		h.hub.setGuest(true, 1);
+		await h.hub.setGuest(true, 1);
 		await h.hub.play(sid);
 		await h.listen(30 * MINUTE_MS);
 		expect(memoryPlays(h)).toBe(0);

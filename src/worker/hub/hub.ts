@@ -150,6 +150,8 @@ const CONTINUE_WITHIN_MS = HOLD_WATCH_MS;
 
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
+/** How old a look may be to say which song was playing as guest mode went off. */
+const GUEST_TAIL_FRESH_MS = 10_000;
 /** Refresh decks that were written longer ago than this (memory drifted). */
 export const DECK_MAX_AGE_MS = 20 * HOUR_MS;
 /** External requests per invocation (Workers free plan allows 50). */
@@ -2053,7 +2055,10 @@ export class HubCore {
 		deck.lastTrackId = null;
 		deck.lastPlaying = false;
 		// Started at a place of this version: whatever order it had is gone.
-		if (to !== null) delete deck.strayedUntil;
+		if (to !== null) {
+			delete deck.strayedUntil;
+			deck.inOrder = true;
+		}
 		this.saveDeck(st.id, deck);
 		if (this.kvGet<{ id: TrackId }>("watch")?.id === obs.trackId) this.kvDel("watch");
 	}
@@ -2600,6 +2605,7 @@ export class HubCore {
 				deck.lastObservedAt = null;
 				deck.ours = true;
 				deck.top = true;
+				deck.inOrder = true;
 				delete deck.strayedUntil;
 				this.saveDeck(fresh.id, deck);
 			}
@@ -2753,7 +2759,19 @@ export class HubCore {
 		await this.scheduleSoon(2000);
 	}
 
-	setGuest(on: boolean, hours = GUEST_DEFAULT_HOURS): void {
+	async setGuest(on: boolean, hours = GUEST_DEFAULT_HOURS): Promise<void> {
+		// Off by hand: the song playing right now is still the guest's. Know it
+		// from a look just now, not from one minutes old.
+		if (!on && this.inGuest(this.now()) && this.isConnected()) {
+			const snap = this.kvGet<PlayerSnapshot>("player");
+			if (!snap || this.now() - snap.at > GUEST_TAIL_FRESH_MS) {
+				try {
+					await this.sync(new RequestBudget(8));
+				} catch {
+					// Without a look, the play's own times decide (guestPlay).
+				}
+			}
+		}
 		const now = this.now();
 		let periods = this.guestPeriods().filter((p) => p.to > now - 90 * DAY_MS);
 		const open = periods.find((p) => now >= p.from && now < p.to);
@@ -2765,7 +2783,7 @@ export class HubCore {
 			open.to = now;
 			const snap = this.kvGet<PlayerSnapshot>("player");
 			const o = snap?.obs;
-			if (snap && now - snap.at <= PLAYER_FRESH_MS)
+			if (snap && now - snap.at <= GUEST_TAIL_FRESH_MS)
 				open.tail =
 					o?.isPlaying && o.trackId && snap.at + (o.durationMs - o.progressMs) > now
 						? o.trackId
