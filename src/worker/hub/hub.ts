@@ -1564,10 +1564,17 @@ export class HubCore {
 			// A player in a still older order meets something else also where the
 			// previous version differed from its own predecessor: at its changed
 			// places and after the songs it kept, wherever those songs sit now.
+			// A place of the previous version as this one numbers it: where its
+			// song sits among the kept ones, or — taken out — right after the last
+			// song before it that is still kept.
 			const here = (c: number) => {
-				const id = c > held ? prev.items[c]?.id : undefined;
-				const k = id === undefined ? undefined : inLayout.get(id);
-				return k !== undefined && k >= keptFrom ? k : undefined;
+				if (c <= held) return undefined;
+				for (let u = c; u > held; u--) {
+					const id = prev.items[u]?.id;
+					const k = id === undefined ? undefined : inLayout.get(id);
+					if (k !== undefined && k >= keptFrom) return u === c ? k : k + 1;
+				}
+				return keptFrom;
 			};
 			const prevEnds = [...(prev.endsAt ?? [])];
 			if (prev.continued && prev.keptTo != null) prevEnds.push(prev.keptTo + 1);

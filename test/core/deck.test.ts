@@ -195,6 +195,13 @@ describe("observePlayer", () => {
 		expect(r.passed).toEqual(["s0", "s1"]);
 	});
 
+	it("an older order that met a song or two by chance past that end strays all the same", () => {
+		const d = { ...continued(), endsAt: [9] };
+		let r = observePlayer(d, obs("s11", at(1)), URI);
+		r = observePlayer(r.deck, obs("s1", at(4)), URI);
+		expect(r.deck.strayedUntil).toBeDefined();
+	});
+
 	it("near where an older version's kept songs end, an older order may stray too", () => {
 		const d = { ...continued(), endsAt: [9] };
 		let r = observePlayer(d, obs("s8", at(1)), URI);
