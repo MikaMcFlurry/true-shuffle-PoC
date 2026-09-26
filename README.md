@@ -2,7 +2,7 @@
 
 Deine Spotify-Playlists als **Sender mit Gedächtnis**. Du tippst auf einen Sender, Spotify spielt, und True Shuffle sorgt dafür, dass
 
-1. **kein Fortschritt verloren geht**: Jeder gehörte Song landet im Gedächtnis, egal ob über True Shuffle, direkt in Spotify, im Auto oder an der Box. Nur in einer privaten Sitzung von Spotify zählt True Shuffle, was es selbst laufen sieht; die App sagt es dann.
+1. **kein Fortschritt verloren geht**: Jeder gehörte Song landet im Gedächtnis, egal ob über True Shuffle, direkt in Spotify, im Auto oder an der Box. Nur in einer privaten Sitzung von Spotify zählt True Shuffle, was es selbst laufen sieht; die App sagt es dann. Ob Spotify einen Song meldet, den ein neuer Start mittendrin ersetzt, ist noch ungeprüft (siehe `docs/LIVE_TEST.md`); True Shuffle zählt ihn dann selbst, sofern es ihn mindestens 30 Sekunden laufen sah.
 2. **nichts schnell wiederkommt**: Gehörtes bleibt draußen, bis die Runde durch ist.
 3. **irgendwann jeder Song drankommt**: Bei 10.000 Songs eben alle 10.000, lange nicht Gehörtes zuerst.
 4. **Favoriten öfter kommen, aber nicht zu oft**: standardmäßig höchstens einmal pro Woche, einstellbar.

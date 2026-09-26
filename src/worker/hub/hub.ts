@@ -361,8 +361,10 @@ interface GuestPeriod {
  */
 interface ShownPending {
 	id: TrackId;
-	/** Left for a start (from the app, or another context in Spotify), or by a skip. */
-	by?: "start" | "leave";
+	/** Left for a start from the app, for another context in Spotify, or by a skip. */
+	by?: "app" | "start" | "leave";
+	/** The last look that saw it unfinished (left after that). */
+	seen?: number;
 	/** When the play began, and when the start replaced it. */
 	start: number;
 	at: number;
@@ -2764,7 +2766,7 @@ export class HubCore {
 		if (this.kvGet<PrivateSong>("private_song")?.id === id) return;
 		this.addNote({
 			id,
-			by: "start",
+			by: "app",
 			start: rec.start,
 			at: this.now(),
 			durationMs: rec.durationMs,
@@ -2786,14 +2788,19 @@ export class HubCore {
 	): void {
 		const { over, cur } = h;
 		if (!over || !cur || over.ranOut || over.listened < 30_000) return;
+		// The same song again: one play or two, the looks cannot tell.
+		if (cur.id === over.id) return;
 		if (shown?.obs?.trackId !== over.id || !shown.track) return;
 		const now = this.now();
+		// Left after the last look that saw it, and — seen playing — no later
+		// than its own end; the new song began no earlier than that.
+		const latest = over.playing ? over.at + over.durationMs - over.progress : now;
 		this.addNote({
 			id: over.id,
 			by: (cur.contextUri ?? null) === (over.contextUri ?? null) ? "leave" : "start",
+			seen: over.at,
 			start: over.start,
-			// Replaced when the new song began, after the last look that saw it.
-			at: Math.min(now, Math.max(over.at, cur.start)),
+			at: Math.max(over.at, Math.min(now, cur.start, latest)),
 			durationMs: over.durationMs,
 			contextUri: over.contextUri ?? null,
 			track: shown.track,
@@ -2833,16 +2840,28 @@ export class HubCore {
 		const out: RecentPlay[] = [];
 		for (const e of notes) {
 			if (now < e.until || this.guestNote(e)) continue;
+			// Left between the last look that saw it and the next look: a song
+			// listed since then began after it ended, 30 s or more before its own
+			// listing — the earliest one bounds when it was left.
+			let at = e.at;
+			if (e.seen !== undefined) {
+				const next = this.db.first<{ at: number | null }>(
+					`SELECT MIN(played_at) AS at FROM plays WHERE played_at > ? AND track_id != ?`,
+					e.seen,
+					e.id,
+				)?.at;
+				if (next != null) at = Math.max(e.seen, Math.min(at, next - 30_000));
+			}
 			// Whenever Spotify may list it later (paused for hours: its stamp may be
 			// old), it is this play.
 			const r = this.recordSeenPlay({
 				id: e.id,
-				at: e.at,
+				at,
 				start: e.start,
 				// Heard 30 s or more: its listing is stamped no earlier than that
 				// after it began (one before is the play before it).
 				after: e.start + 20_000,
-				end: e.at,
+				end: Math.max(at, e.at),
 				contextUri: e.contextUri,
 				track: e.track,
 			});
@@ -2851,7 +2870,7 @@ export class HubCore {
 			this.log(
 				"info",
 				"replaced",
-				`„${e.track[1]}“ zählt ohne Spotifys Meldung (${e.by === "leave" ? "weitergesprungen" : "ersetzt"})`,
+				`„${e.track[1]}“ zählt ohne Spotifys Meldung (${e.by === "leave" ? "weitergesprungen" : e.by === "start" ? "in Spotify ersetzt" : "ersetzt"})`,
 			);
 		}
 		return out;
@@ -2981,9 +3000,14 @@ export class HubCore {
 			if (k >= 0) {
 				const e = notes[k]!;
 				notes.splice(k, 1);
-				// A start's, stamped when it was replaced, before its own end: Spotify
-				// lists replaced songs, and its word decides from now on.
-				if (e.by !== "leave" && at >= e.at - 10_000 && at < e.start + e.durationMs - 10_000) {
+				// A start's from the app (its time is known), stamped when it was
+				// replaced, before its own end: Spotify lists replaced songs, and its
+				// word decides from now on.
+				if (
+					(e.by ?? "app") === "app" &&
+					at >= e.at - 10_000 &&
+					at < e.start + e.durationMs - 10_000
+				) {
 					if (this.now() - (this.kvGet<number>("replaced_listed") ?? 0) >= 30 * DAY_MS)
 						this.log(
 							"info",
