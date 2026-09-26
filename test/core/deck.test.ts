@@ -145,6 +145,21 @@ describe("observePlayer", () => {
 		expect(r.index).toBeNull();
 	});
 
+	it("a song from further down played from the queue: the songs in between were not left", () => {
+		let d = observePlayer(started(), obs("s2", at(1)), URI).deck;
+		let r = observePlayer(d, obs("s6", at(4)), URI); // queued, played inside the playlist
+		expect(r.passed).toEqual(["s2", "s3", "s4", "s5"]);
+		r = observePlayer(r.deck, obs("s3", at(8)), URI); // back in order
+		d = r.deck;
+		expect(d.items.slice(2, 7).map((it) => it.state)).toEqual([
+			"passed",
+			"pending",
+			"pending",
+			"pending",
+			"pending",
+		]);
+	});
+
 	it("does not mark anything when the listener steps back", () => {
 		let d = deck();
 		d = observePlayer(d, obs("s5"), URI).deck;
@@ -197,6 +212,23 @@ describe("observePlayer", () => {
 		r = observePlayer(r.deck, obs("s6", at(10)), URI);
 		r = observePlayer(r.deck, obs("s9", at(13)), URI);
 		expect(r.passed).toEqual(["s6", "s7", "s8"]);
+	});
+
+	it("in front, a step proves gaps where every order a player may follow has the same songs", () => {
+		const d: Deck = {
+			...deck(40),
+			ours: true,
+			continued: true,
+			heldAt: 9,
+			keptTo: 34,
+			sharedAt: [[1, 6]],
+		};
+		let r = observePlayer(d, obs("s1", at(1)), URI);
+		r = observePlayer(r.deck, obs("s4", at(4)), URI);
+		expect(r.passed).toEqual(["s1", "s2", "s3"]);
+		// Across a place where the orders differ, only the song seen.
+		r = observePlayer(r.deck, obs("s8", at(7)), URI);
+		expect(r.passed).toEqual(["s4"]);
 	});
 
 	it("the front proves gaps once the player is seen on a song only this version holds", () => {

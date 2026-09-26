@@ -22,6 +22,7 @@ import {
 	continueLayout,
 	type Deck,
 	heldForPlayer,
+	inRanges,
 	newDeck,
 	observePlayer,
 	type PlayerObservation,
@@ -151,7 +152,7 @@ const CONTINUE_WITHIN_MS = HOLD_WATCH_MS;
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
 /** How old a look may be to say which song was playing as guest mode went off. */
-const GUEST_TAIL_FRESH_MS = 10_000;
+const GUEST_TAIL_FRESH_MS = 2_000;
 /** Refresh decks that were written longer ago than this (memory drifted). */
 export const DECK_MAX_AGE_MS = 20 * HOUR_MS;
 /** External requests per invocation (Workers free plan allows 50). */
@@ -1593,12 +1594,32 @@ export class HubCore {
 			deck.changedAt = [...marks].slice(0, 50);
 			deck.endsAt = [...ends].slice(0, 20);
 			deck.leftOut = [...(prev.leftOut ?? []), prev.items[held]!.id].slice(-20);
-			// Songs no version a player may still have loaded held: only a player
-			// in this order reaches them.
-			const older = new Set<TrackId>(prev.items.map((it) => it.id));
+			// Songs no player in an older order can still come to — only one in
+			// this order reaches them. An older order goes on from where it was:
+			// the previous version after the held place, and whatever it did not
+			// count as new itself; songs that left the playlist lately too.
+			const older = new Set<TrackId>(prev.items.slice(held).map((it) => it.id));
+			if (prev.continued)
+				prev.items.forEach((it, i) => {
+					if (!inRanges(prev.newAt, i)) older.add(it.id);
+				});
 			for (const [id, until] of prev.former ?? []) if (until > this.now()) older.add(id);
 			for (const id of prev.leftOut ?? []) older.add(id);
 			deck.newAt = toRanges(layout.map((sl) => !older.has(sl.trackId)));
+			// Where the next song follows the same one in the previous version,
+			// and there in every older one: steps across agree in every order.
+			const prevAt = new Map(prev.items.map((it, j) => [it.id, j]));
+			deck.sharedAt = toRanges(
+				layout.map((sl, i) => {
+					const j = prevAt.get(sl.trackId);
+					return (
+						j !== undefined &&
+						i + 1 < layout.length &&
+						prev.items[j + 1]?.id === layout[i + 1]!.trackId &&
+						(!prev.continued || inRanges(prev.sharedAt, j))
+					);
+				}),
+			);
 		}
 		// Songs a player may still have loaded from earlier versions: each one
 		// for 36 h after it left the playlist, then forgotten.
@@ -2783,11 +2804,11 @@ export class HubCore {
 			open.to = now;
 			const snap = this.kvGet<PlayerSnapshot>("player");
 			const o = snap?.obs;
-			if (snap && now - snap.at <= GUEST_TAIL_FRESH_MS)
-				open.tail =
-					o?.isPlaying && o.trackId && snap.at + (o.durationMs - o.progressMs) > now
-						? o.trackId
-						: null;
+			if (snap && now - snap.at <= GUEST_TAIL_FRESH_MS) {
+				if (!o?.isPlaying || !o.trackId) open.tail = null;
+				else if (snap.at + (o.durationMs - o.progressMs) > now) open.tail = o.trackId;
+				// Its song must have ended since: the play's own times decide.
+			}
 		}
 		periods = periods.slice(-50);
 		this.kvSet("guest", periods);

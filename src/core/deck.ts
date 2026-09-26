@@ -113,6 +113,12 @@ export interface Deck {
 	 * holds. Until then its front (up to `heldAt`) proves no gaps.
 	 */
 	inOrder?: boolean;
+	/**
+	 * Places i (from, to exclusive) whose next song follows the same one in
+	 * every order a player may still have loaded: a step across them passes
+	 * the same songs whichever of those orders the player follows.
+	 */
+	sharedAt?: [number, number][];
 }
 
 /** Runs of `true` as [from, to) pairs. */
@@ -127,8 +133,12 @@ export function toRanges(flags: readonly boolean[]): [number, number][] {
 	return out;
 }
 
+export function inRanges(ranges: readonly [number, number][] | undefined, i: number): boolean {
+	return (ranges ?? []).some(([from, to]) => i >= from && i < to);
+}
+
 function isNewAt(deck: Deck, i: number): boolean {
-	return (deck.newAt ?? []).some(([from, to]) => i >= from && i < to);
+	return inRanges(deck.newAt, i);
 }
 
 /** Where the player is (or was last seen) in this version. */
@@ -306,6 +316,15 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	const inOrder = deck.inOrder === true || (isNew && obs.isPlaying);
 
 	const items = deck.items.slice();
+	// Seen again inside a gap taken as skips (a song from further down played
+	// from the queue, then back in order): those songs were not left.
+	if (prev !== null && idx < prev) {
+		for (let i = idx; i < prev; i++) {
+			const it = items[i]!;
+			if (it.state === "passed" && it.seen !== true)
+				items[i] = { id: it.id, kind: it.kind, state: "pending", at: null };
+		}
+	}
 	const passed: TrackId[] = [];
 	const pass = (i: number) => {
 		const it = items[i]!;
@@ -335,8 +354,12 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		// may still follow — the songs moved forward, among the old ones before
 		// the held place. Steps there prove nothing until the player is known
 		// to follow this version, however it came there (a first look after
-		// the rewrite, a run of skips between two looks).
-		const front = deck.continued === true && heldAt != null && anchor <= heldAt && !inOrder;
+		// the rewrite, a run of skips between two looks) — unless every order
+		// it may follow has the same songs in between.
+		let shared = true;
+		for (let i = Math.max(anchor, 0); i < idx && shared; i++) shared = inRanges(deck.sharedAt, i);
+		const front =
+			deck.continued === true && heldAt != null && anchor <= heldAt && !inOrder && !shared;
 		if (trusted && gap <= MAX_SKIP_GAP && !crosses && !front) {
 			// In our order: the song we saw and everything up to the current one
 			// is behind us.

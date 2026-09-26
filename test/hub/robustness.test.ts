@@ -1373,3 +1373,75 @@ describe("the eleventh review's cases", () => {
 		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, x)).not.toBeNull();
 	});
 });
+
+describe("the twelfth review's cases", () => {
+	it("a song from further down the station, queued, books no skip for the songs in between", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(20 * MINUTE_MS);
+		const p = h.fake.user().player;
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		await h.listen(20_000);
+		const items = stationDeck(h, sid).pl.items;
+		const q = items[items.indexOf(h.fake.current()!) + 6]!;
+		p.userQueue.push(q); // plays inside the playlist, then back in order
+		while (h.fake.current() !== q) await h.listen(1_000);
+		while (h.fake.current() === q) await h.listen(1_000);
+		const after = h.fake.current();
+		while (h.fake.current() === after) await h.listen(1_000);
+		h.fake.pause();
+		await h.listen(45 * MINUTE_MS);
+		expect(falseSkips(h)).toBe(0);
+	});
+
+	it("a small station's continuation knows where every order has the same songs", async () => {
+		const h = await onboarded({ tracks: 24 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const p = h.fake.user().player;
+		while (p.index < 8) await h.listen(5_000);
+		await h.listen(60_000);
+		h.fake.pause();
+		const v1 = p.order.slice();
+		await h.listen(40 * MINUTE_MS);
+		const d = JSON.parse(
+			h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!.deck,
+		) as { items: { id: string }[]; sharedAt?: [number, number][] };
+		const shared = (i: number) => (d.sharedAt ?? []).some(([a, b]) => i >= a && i < b);
+		for (let i = 0; i + 1 < d.items.length; i++) {
+			const j = v1.indexOf(d.items[i]!.id);
+			expect(shared(i)).toBe(j >= 0 && v1[j + 1] === d.items[i + 1]!.id);
+		}
+		expect(d.sharedAt?.length).toBeGreaterThan(0);
+	});
+
+	it("a guest who skips just after the last look: the next song stays the guest's", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		await h.listen(5 * MINUTE_MS);
+		await h.hub.setGuest(true, 6);
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 7, u.player.deviceId!, false);
+		await h.listen(12 * MINUTE_MS);
+		while (u.player.progressMs < 60_000) await h.listen(1_000);
+		(h.hub as unknown as { kvDel: (k: string) => void }).kvDel("player");
+		await h.hub.state({ live: true }); // the app looks
+		await h.listen(3_000);
+		h.fake.skip(); // the guest skips
+		await h.listen(3_000);
+		const b = h.fake.current()!;
+		await h.hub.setGuest(false);
+		while (h.fake.current() === b) await h.listen(1_000);
+		await h.listen(15 * MINUTE_MS);
+		u.player.isPlaying = false;
+		await h.listen(30 * MINUTE_MS);
+		const row = h.sql.first<{ ignored: number }>(
+			`SELECT ignored FROM plays WHERE track_id = ? ORDER BY played_at DESC`,
+			b,
+		);
+		expect(row?.ignored).toBe(1);
+	});
+});
