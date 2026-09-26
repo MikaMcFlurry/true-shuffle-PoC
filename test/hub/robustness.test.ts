@@ -1123,4 +1123,21 @@ describe("the tenth look: older orders and the edges of guest time", () => {
 		const mem = h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, y);
 		expect(mem?.plays ?? 0).toBe(0);
 	});
+
+	it("a song that ended just as guest mode came on stays the owner's", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		const p = h.fake.user().player;
+		const x = h.fake.current()!;
+		await h.listen(h.fake.tracks.get(x)!.durationMs - p.progressMs); // ends right now
+		expect(h.fake.current()).not.toBe(x);
+		h.hub.setGuest(true, 1);
+		await h.listen(30 * MINUTE_MS);
+		const row = h.sql.first<{ ignored: number }>(`SELECT ignored FROM plays WHERE track_id = ?`, x);
+		expect(row?.ignored).toBe(0);
+		const mem = h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, x);
+		expect(mem?.plays).toBe(1);
+	});
 });
