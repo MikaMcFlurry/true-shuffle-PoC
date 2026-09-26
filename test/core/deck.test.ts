@@ -223,14 +223,22 @@ describe("observePlayer", () => {
 		]);
 	});
 
-	it("going on past the end of the kept songs is this version's order", () => {
-		// An older order meets the songs this version moved forward there, not new ones.
+	it("past the end of the kept songs, gaps count once the player shows this version's order", () => {
+		// An older order goes on elsewhere there; songs planned later may be its rest.
 		let d = observePlayer(continued(), obs("s14", at(1)), URI).deck;
 		let r = observePlayer(d, obs("s17", at(4)), URI);
-		expect(r.deck.strayedUntil).toBeUndefined();
-		expect(r.passed).toEqual(["s14", "s15", "s16"]);
-		d = observePlayer(continued(), obs("s14", at(1)), URI).deck;
+		expect(r.passed).toEqual(["s14"]);
+		r = observePlayer(r.deck, obs("s19", at(7)), URI);
+		expect(r.passed).toEqual(["s17"]);
+		// Songs appended behind them, an older order's rest among them: steps
+		// there prove nothing either.
+		d = observePlayer(continued(), obs("s16", at(1)), URI).deck;
+		r = observePlayer(d, obs("s19", at(4)), URI);
+		expect(r.passed).toEqual(["s16"]);
+		// New songs behind the kept ones: only this version's order reaches them.
+		d = observePlayer({ ...continued(), newAt: [[15, 20]] }, obs("s14", at(1)), URI).deck;
 		r = observePlayer(d, obs("s15", at(4)), URI);
+		expect(r.deck.inOrder).toBe(true);
 		r = observePlayer(r.deck, obs("s18", at(7)), URI);
 		expect(r.passed).toEqual(["s15", "s16", "s17"]);
 	});

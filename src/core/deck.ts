@@ -392,11 +392,17 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		// to follow this version, however it came there (a first look after
 		// the rewrite, a run of skips between two looks) — unless every order
 		// it may follow has the same songs in between.
+		// The same holds behind the kept songs: songs planned there later (new
+		// ones appended as the playlist runs low) are the long unheard ones —
+		// often exactly the rest of an older order.
 		let shared = true;
 		for (let i = Math.max(anchor, 0); i < idx && shared; i++) shared = inRanges(deck.sharedAt, i);
-		const front =
-			deck.continued === true && heldAt != null && anchor <= heldAt && !inOrder && !shared;
-		if (trusted && gap <= MAX_SKIP_GAP && !crosses && !front) {
+		const keptEnd = deck.keptTo ?? deck.items.length - 1;
+		const outside = anchor <= (heldAt ?? -1) || anchor > keptEnd;
+		const front = deck.continued === true && heldAt != null && outside && !inOrder && !shared;
+		// Out of the kept songs with a gap: an older order goes on elsewhere.
+		const leaves = deck.continued === true && !inOrder && anchor <= keptEnd && idx > keptEnd + 1;
+		if (trusted && gap <= MAX_SKIP_GAP && !crosses && !front && !leaves) {
 			// In our order: the song we saw and everything up to the current one
 			// is behind us.
 			let first = -1;
