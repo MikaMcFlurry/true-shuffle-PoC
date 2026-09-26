@@ -226,8 +226,17 @@ describe("observePlayer", () => {
 			const s = settleSkips(r.deck, T0 + 195_000 + SKIP_GRACE_MS);
 			expect(s.skipped).toEqual(["s0", "s1", "s2", "s3", "s4", "s5"]);
 			const p = applyPlays(s.deck, [play("s2", T0 + 190_000)], URI);
-			expect(p.unskipped).toEqual(["s2", "s3", "s4", "s5"]);
+			expect(p.unskipped).toEqual(["s2"]); // its own play; the hub takes back the others it booked
+			expect(p.waiting).toEqual(["s3", "s4", "s5"]);
 			expect(states(p.deck, 3, 6)).toEqual(["pending", "pending", "pending"]);
+		});
+
+		it("the song before, left in its last seconds, is stamped before its end: the gap stands", () => {
+			let r = observePlayer(started(40), look("s2", T0, 10_000), URI); // would end at T0 + 190 s
+			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI);
+			const p = applyPlays(r.deck, [play("s2", T0 + 180_000)], URI); // heard 170 s, then left
+			expect(p.waiting).toEqual([]);
+			expect(states(p.deck, 3, 6)).toEqual(["passed", "passed", "passed"]);
 		});
 
 		it("a run of skips that took just as long: without that play, the gap stands", () => {
@@ -249,9 +258,22 @@ describe("observePlayer", () => {
 			let r = observePlayer(started(40), look("s2", T0, 10_000), URI);
 			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI);
 			expect(r.deck.orderAt).toBe(2);
-			r = observePlayer(r.deck, look("s3", T0 + 392_000, 2_000), URI); // on in order
+			r = observePlayer(r.deck, look("s6", T0 + 240_000, 50_000), URI); // seen again
+			expect(r.deck.orderAt).toBe(2);
+			r = observePlayer(r.deck, look("s6", T0 + 300_000, 60_000), URI); // and paused
+			r = observePlayer(r.deck, { ...look("s6", T0 + 330_000, 60_000), isPlaying: false }, URI);
+			expect(r.deck.orderAt).toBe(2);
+			r = observePlayer(r.deck, look("s6", T0 + 400_000, 70_000), URI); // on again
+			r = observePlayer(r.deck, look("s3", T0 + 532_000, 2_000), URI); // then on in order
 			expect(r.deck.orderAt).toBe(3);
 			expect(r.deck.backFrom).toEqual([]);
+		});
+
+		it("two songs from the queue next to each other: the place in order stays", () => {
+			let r = observePlayer(started(40), look("s2", T0, 10_000), URI);
+			r = observePlayer(r.deck, look("s15", T0 + 195_000, 5_000), URI);
+			r = observePlayer(r.deck, look("s16", T0 + 392_000, 2_000), URI);
+			expect(r.deck.orderAt).toBe(2);
 		});
 
 		it("two songs from the queue further up, in order: nothing between them counts", () => {
@@ -262,7 +284,7 @@ describe("observePlayer", () => {
 			r = observePlayer(r.deck, look("s9", T0 + 657_000, 2_000), URI); // and the next one
 			r = observePlayer(r.deck, look("s27", T0 + 857_000, 2_000), URI); // on where it was
 			expect(r.passed).toEqual(["s9"]);
-			expect(r.deck.orderAt).toBe(27);
+			expect(r.deck.orderAt).toBe(1); // a tap far down leaves it behind: rather behind than ahead
 			const p = applyPlays(r.deck, [play("s5", T0 + 655_000), play("s9", T0 + 855_000)], URI);
 			expect(p.waiting).toEqual(["s6", "s7", "s8"]);
 			expect(

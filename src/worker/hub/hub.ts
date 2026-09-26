@@ -118,6 +118,15 @@ interface InStation {
 	index: number | null;
 }
 
+/** An inferred skip booked with a condition: taken back once that play shows up. */
+interface QueuedSkip {
+	st: number;
+	id: TrackId;
+	/** When it was booked as left: the skip's own time in memory. */
+	at: number;
+	unless: { id: TrackId; from: number; to: number };
+}
+
 interface PendingSkip {
 	id: TrackId;
 	st: number;
@@ -1794,6 +1803,7 @@ export class HubCore {
 			return;
 		}
 		const obs = toObservation(state, this.now());
+		this.notePrivate(state?.device?.is_private_session === true, s.lastPlayerAt);
 		s.lastPlayerAt = this.now();
 		const snap: PlayerSnapshot = {
 			obs,
@@ -1904,14 +1914,10 @@ export class HubCore {
 				// between the look before and that one keeps it the guest's skip.
 				for (const id of settled.skipped) {
 					const left = settled.left.get(id);
-					this.bookEarlySkip(
-						st,
-						id,
-						rules,
-						left?.at ?? deck.lastObservedAt ?? this.now(),
-						settled.seen.has(id),
-						left?.from,
-					);
+					const at = left?.at ?? deck.lastObservedAt ?? this.now();
+					const booked = this.bookEarlySkip(st, id, rules, at, settled.seen.has(id), left?.from);
+					if (booked && left?.unless)
+						this.noteQueuedSkip({ st: st.id, id, at, unless: left.unless });
 				}
 			}
 			if (changed) this.saveDeck(st.id, deck);
@@ -1968,7 +1974,9 @@ export class HubCore {
 	private async readRecent(client: SpotifyClient, s: SyncState): Promise<RecentPlay[]> {
 		const page = await client.recentlyPlayed();
 		s.lastRecentAt = this.now();
-		return this.recordPlays(page?.items ?? [], s);
+		const plays = this.recordPlays(page?.items ?? [], s);
+		this.takeBackQueuedSkips(plays);
+		return plays;
 	}
 
 	/** Make memory current before planning: read recently-played unless just read. */
@@ -2136,9 +2144,53 @@ export class HubCore {
 				continue;
 			}
 			const st = this.stationRow(e.st);
-			if (st) this.bookEarlySkip(st, e.id, this.rulesOf(st), e.at, e.seen === true, e.since);
+			if (!st) continue;
+			const booked = this.bookEarlySkip(st, e.id, this.rulesOf(st), e.at, e.seen === true, e.since);
+			if (booked && e.unless)
+				this.noteQueuedSkip({ st: st.id, id: e.id, at: e.at, unless: e.unless });
 		}
 		if (keep.length !== list.length) this.kvSet("pending_skips", keep);
+	}
+
+	/**
+	 * A skip booked with a condition (`DeckItem.unless`) outlives its deck: the
+	 * play that lifts it may reach recently-played late, also after a stop.
+	 */
+	private noteQueuedSkip(e: QueuedSkip): void {
+		const list = this.kvGet<QueuedSkip[]>("queued_skips") ?? [];
+		list.push(e);
+		this.kvSet("queued_skips", list.slice(-500));
+	}
+
+	/** Plays just read that lift a booked skip's condition: that skip goes. */
+	private takeBackQueuedSkips(plays: RecentPlay[]): void {
+		if (plays.length === 0) return;
+		const list = this.kvGet<QueuedSkip[]>("queued_skips");
+		if (!list || list.length === 0) return;
+		const keep: QueuedSkip[] = [];
+		for (const e of list) {
+			const u = e.unless;
+			if (this.now() > u.to + LATE_PLAY_WINDOW_MS) continue;
+			if (!plays.some((p) => p.trackId === u.id && p.playedAt >= u.from && p.playedAt <= u.to)) {
+				keep.push(e);
+				continue;
+			}
+			// Only that booking: a later skip of the song stays, and one never
+			// booked (guest time) takes nothing else back.
+			const row = this.liveRow(e.id);
+			if (!row || row.last_skipped_at === null || row.last_skipped_at < e.at) continue;
+			this.updateLive(e.id, (r) => ({
+				...r,
+				early_skips: Math.max(0, r.early_skips - 1),
+				last_skipped_at: r.last_skipped_at === e.at ? null : r.last_skipped_at,
+			}));
+			this.log(
+				"info",
+				"skip",
+				`Zurückgenommen: ${this.describe(e.id)} lief nicht, davor kam ein Song aus der Warteschlange`,
+			);
+		}
+		if (keep.length !== list.length) this.kvSet("queued_skips", keep);
 	}
 
 	/** A play of the song stamped in that time, read now or before. */
@@ -2199,6 +2251,29 @@ export class HubCore {
 	/** Any guest time between `from` and `to`? */
 	private inGuestDuring(from: number, to: number): boolean {
 		return this.guestPeriods().some((p) => p.from <= to && p.to > from);
+	}
+
+	/**
+	 * A private session in Spotify: its plays may never reach recently-played,
+	 * so a song left then cannot be told from one heard. From the look before
+	 * the first one that saw it to the first one that no longer does.
+	 */
+	private notePrivate(now: boolean, lookBefore: number): void {
+		const list = this.kvGet<{ from: number; to: number | null }[]>("private") ?? [];
+		const last = list[list.length - 1];
+		const open = last !== undefined && last.to === null;
+		if (now === open) return;
+		if (now) list.push({ from: lookBefore > 0 ? lookBefore : this.now(), to: null });
+		else last!.to = this.now();
+		this.kvSet(
+			"private",
+			list.filter((p) => p.to === null || p.to > this.now() - 2 * DAY_MS).slice(-50),
+		);
+	}
+
+	private inPrivateDuring(from: number, to: number): boolean {
+		const list = this.kvGet<{ from: number; to: number | null }[]>("private");
+		return (list ?? []).some((p) => p.from <= to && (p.to === null || p.to > from));
 	}
 
 	/** Book new entries of the recently-played list into memory. */
@@ -2360,8 +2435,9 @@ export class HubCore {
 		at: number,
 		seen: boolean,
 		from?: number,
-	): void {
-		if (this.inGuest(at) || (from !== undefined && this.inGuestDuring(from, at))) return;
+	): boolean {
+		if (this.inGuest(at) || (from !== undefined && this.inGuestDuring(from, at))) return false;
+		if (this.inPrivateDuring(from ?? at, at)) return false;
 		const before = this.memory(id);
 		this.liveSkip(id, at);
 		this.log(
@@ -2370,7 +2446,7 @@ export class HubCore {
 			`Früh übersprungen auf „${st.name}“${seen ? "" : " (erschlossen)"}: ${this.describe(id)}`,
 		);
 		this.dirtyDecksHolding(id, null);
-		if (!seen) return;
+		if (!seen) return true;
 		if (rules.skipPolicy === "ban") {
 			this.db.run(
 				`INSERT OR IGNORE INTO bans (station_id, track_id, at) VALUES (?, ?, ?)`,
@@ -2391,6 +2467,7 @@ export class HubCore {
 			this.now(),
 			id,
 		);
+		return true;
 	}
 
 	/** Decks that still plan to play `id` must be rewritten when idle. */

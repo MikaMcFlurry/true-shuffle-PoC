@@ -375,21 +375,25 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	// with a move back (a restart, a song from further up); a jump further
 	// down may be a song from the queue, so the place stays. Following a song
 	// directly, only the next in order (or the top after the last) moves it.
+	// Only a new song seen playing moves it: a song seen again, or paused,
+	// may be one from the queue all the same. Rather behind than ahead.
 	const orderBase = deck.orderAt ?? (deck.continued ? (heldAt ?? null) : deck.top ? -1 : null);
 	const next =
-		(orderBase !== null &&
-			(idx === orderBase + 1 || (idx === 0 && orderBase === deck.items.length - 1))) ||
-		(prev !== null && idx === prev + 1);
+		orderBase !== null &&
+		(idx === orderBase + 1 || (idx === 0 && orderBase === deck.items.length - 1));
+	const moves = obs.isPlaying && idx !== prev;
 	const orderAt =
 		orderBase === null
 			? undefined
-			: direct
-				? next
-					? idx
-					: orderBase
-				: idx <= orderBase + MAX_SKIP_GAP + 1
-					? idx
-					: orderBase;
+			: !moves
+				? orderBase
+				: direct
+					? next
+						? idx
+						: orderBase
+					: idx <= orderBase + MAX_SKIP_GAP + 1
+						? idx
+						: orderBase;
 	// A song from the queue says nothing about the order the player follows.
 	const inOrder = deck.inOrder === true || (isNew && obs.isPlaying && !(direct && !next));
 
@@ -435,13 +439,14 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			passed.push(it.id);
 		}
 	};
-	// The song seen before, if it ran to its end: its play is stamped after
-	// that look and by the time this song began.
+	// The song seen before, if it ran to its end: Spotify stamps its play at
+	// that end. One left earlier, in its last seconds even, is stamped
+	// before — then the songs between were skipped after all.
 	const unless =
 		direct && deck.lastTrackId != null && deck.lastEndAt != null
 			? {
 					id: deck.lastTrackId,
-					from: deck.lastObservedAt ?? deck.lastEndAt,
+					from: Math.max(deck.lastObservedAt ?? 0, deck.lastEndAt - DIRECT_MS),
 					to: deck.lastEndAt + STAMP_LATE_MS,
 				}
 			: undefined;
@@ -515,7 +520,7 @@ export interface PlaysResult {
 	deck: Deck;
 	/** Items confirmed as played (>= 30 s). */
 	played: TrackId[];
-	/** Items that had been booked as skipped and were in fact played, or never played. */
+	/** Items that had been booked as skipped and were in fact played. */
 	unskipped: TrackId[];
 	/** Items that wait again: they came before a song from the queue (see `takeBackQueued`). */
 	waiting: TrackId[];
@@ -558,37 +563,30 @@ export function applyPlays(deck: Deck, plays: readonly RecentPlay[], deckUri: st
 				(p.contextUri === null || p.contextUri === deckUri),
 		),
 	);
-	return {
-		deck: back.deck,
-		played,
-		unskipped: [...unskipped, ...back.unskipped],
-		waiting: back.waiting,
-	};
+	return { deck: back.deck, played, unskipped, waiting: back.waiting };
 }
 
 /**
  * Songs taken as skipped between two looks, whose song before ran to its end
  * after all (`heard` finds its play): the song after them came from the
- * queue, and they never played. They wait again; the ones already booked are
- * returned, to be taken back.
+ * queue, and they never played. They wait again. A skip already booked for
+ * one is taken back from memory by whoever booked it (the hub keeps a record).
  */
 export function takeBackQueued(
 	deck: Deck,
 	heard: (id: TrackId, from: number, to: number) => boolean,
-): { deck: Deck; unskipped: TrackId[]; waiting: TrackId[] } {
+): { deck: Deck; waiting: TrackId[] } {
 	let items: DeckItem[] | null = null;
-	const unskipped: TrackId[] = [];
 	const waiting: TrackId[] = [];
 	deck.items.forEach((it, i) => {
 		const u = it.unless;
 		if (!u || (it.state !== "passed" && it.state !== "skipped")) return;
 		if (!heard(u.id, u.from, u.to)) return;
 		items ??= deck.items.slice();
-		if (it.state === "skipped") unskipped.push(it.id);
 		waiting.push(it.id);
 		items[i] = { id: it.id, kind: it.kind, state: "pending", at: null };
 	});
-	return { deck: items ? { ...deck, items } : deck, unskipped, waiting };
+	return { deck: items ? { ...deck, items } : deck, waiting };
 }
 
 /** Passed items that never showed up as a play within the grace period. */
@@ -600,15 +598,19 @@ export function settleSkips(
 	deck: Deck;
 	skipped: TrackId[];
 	seen: Set<TrackId>;
-	left: Map<TrackId, { from: number; at: number }>;
+	left: Map<TrackId, { from: number; at: number; unless?: DeckItem["unless"] }>;
 } {
 	const skipped: TrackId[] = [];
 	const seen = new Set<TrackId>();
-	const left = new Map<TrackId, { from: number; at: number }>();
+	const left = new Map<TrackId, { from: number; at: number; unless?: DeckItem["unless"] }>();
 	const items = deck.items.map((it) => {
 		if (it.state === "passed" && it.at !== null && now - it.at >= graceMs) {
 			skipped.push(it.id);
-			left.set(it.id, { from: it.from ?? it.at, at: it.at });
+			left.set(it.id, {
+				from: it.from ?? it.at,
+				at: it.at,
+				...(it.unless ? { unless: it.unless } : {}),
+			});
 			if (it.seen) seen.add(it.id);
 			return { ...it, state: "skipped" as const, at: now };
 		}

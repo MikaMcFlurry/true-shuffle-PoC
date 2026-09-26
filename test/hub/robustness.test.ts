@@ -1533,6 +1533,33 @@ describe("the fourteenth review's cases", () => {
 		expect([early(w), early(x), early(y)]).toEqual([1, 1, 0]);
 	});
 
+	it("the play of the song before shows up late, after a stop: the skips booked meanwhile go", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		await nextSong(h);
+		await h.listen(20_000);
+		const u = h.fake.user();
+		const items = stationDeck(h, sid).pl.items;
+		const a = h.fake.current()!;
+		const q = items[items.indexOf(a) + 5]!;
+		u.player.userQueue.push(q);
+		while (h.fake.current() !== q) await h.listen(1_000);
+		// Spotify lists a's play only 25 minutes late.
+		const i = u.recent.findIndex((e) => e.trackId === a);
+		const late = u.recent.splice(i, 1)[0]!;
+		const release = h.clock.t + 25 * MINUTE_MS;
+		await h.listen(60_000);
+		h.fake.pause(); // and does not come back
+		while (h.clock.t < release) await h.listen(30_000);
+		u.recent.push(late);
+		u.recent.sort((x, y) => y.playedAt - x.playedAt);
+		await h.listen(2 * 60 * MINUTE_MS);
+		expect(h.sql.first(`SELECT 1 FROM plays WHERE track_id = ?`, a)).not.toBeNull();
+		expect(falseSkips(h)).toBe(0);
+	});
+
 	it("a song queued from a few places ahead, then the listener stops: no skip for the songs between", async () => {
 		const h = await onboarded({ tracks: 600 });
 		const sid = h.stationIds[0]!;
@@ -1548,5 +1575,37 @@ describe("the fourteenth review's cases", () => {
 		h.fake.pause(); // and does not come back
 		await h.listen(3 * 60 * MINUTE_MS);
 		expect(falseSkips(h)).toBe(0);
+	});
+});
+
+describe("the fifteenth review's cases", () => {
+	it("a private session in Spotify books no skip, not even a ban", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(5 * MINUTE_MS);
+		const u = h.fake.user();
+		u.devices.find((d) => d.id === u.player.deviceId)!.privateSession = true;
+		for (let i = 0; i < 6; i++) {
+			const c0 = h.fake.current();
+			while (h.fake.current() === c0) await h.listen(1_000);
+			await h.listen(i % 2 === 0 ? 10_000 : 3 * MINUTE_MS); // some left early, some heard
+			if (i % 2 === 0) h.fake.skip();
+		}
+		h.fake.pause();
+		await h.listen(60 * MINUTE_MS);
+		expect(falseSkips(h)).toBe(0);
+		expect(h.sql.first<{ n: number }>(`SELECT COUNT(*) AS n FROM bans`)!.n).toBe(0);
+		// Out of it, skips count again.
+		u.devices.find((d) => d.id === u.player.deviceId)!.privateSession = false;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(2 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		await h.listen(10_000);
+		h.fake.skip();
+		await h.listen(40 * MINUTE_MS);
+		expect(falseSkips(h)).toBe(1);
 	});
 });
