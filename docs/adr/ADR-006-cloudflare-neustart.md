@@ -34,10 +34,10 @@ Jeder Sender ist eine private Spotify-Playlist „True Shuffle · <Sender>" mit 
   - Davor stehen neue Songs, damit ein Neustart von oben in Spotify nichts wiederholt. Neu heißt: nicht gehört, nicht kürzlich übersprungen, und nichts, was der Player in dieser Version schon erreicht hat.
   - **Kleine Sender** (die Playlist enthält schon fast alles): Reichen die neuen Songs nicht, wandern die letzten der behaltenen Songs nach vorn, höchstens die Hälfte. Reicht auch das nicht, bleiben vorn die alten Songs stehen. Dann würde nur ein Neustart von oben etwas wiederholen, und wer dort weitermacht, wo er aufgehört hat, behält jeden Song vor sich. Kurz vor dem Ende der Playlist kommen die besten neuen Songs zuerst hinter die gehaltene Stelle (bis 25 voraus), solange die Plätze davor gefüllt bleiben. Die Playlist schrumpft nie auf wenige Songs, und kein Song steht zweimal darin, sonst wären die Positionen mehrdeutig.
   - Lässt sich die gehaltene Version nicht verbessern, bleibt sie, wie sie ist, und True Shuffle schaut stündlich wieder nach.
-- **Was True Shuffle nicht gewählt hat, überspringt es selbst** (`guardStation`), sobald es im Sender auftaucht und noch keine 30 Sekunden lief:
-  - ein Song mit Daumen runter, egal woher;
-  - ein Song, der in den letzten 24 Stunden lief und nur noch in einer alten, vom Player geladenen Reihenfolge steht;
-  - ein heute schon gehörter Song vorn in einer fortgesetzten Version, wenn jemand sie in Spotify von oben startet. Dann springt True Shuffle zum ersten ungehörten Song der Playlist.
+- **Was True Shuffle nicht gewählt hat, überspringt es selbst** (`guardStation`), sobald es das im Sender sieht:
+  - ein Song mit Daumen runter, egal woher und egal wie lange er schon läuft;
+  - in seinen ersten 30 Sekunden ein Song, der in den letzten 24 Stunden lief und nur noch in einer alten, vom Player geladenen Reihenfolge steht;
+  - in seinen ersten 30 Sekunden ein heute schon gehörter Song vorn in einer fortgesetzten Version, wenn jemand sie in Spotify von oben startet. Dann springt True Shuffle zum ersten ungehörten Song der Playlist.
 
   Das gilt auch bei geschlossener App: True Shuffle sieht direkt nach jedem Songende nach, und solange ein Player einen Sender hält (pausiert oder unsichtbar, bis 12 Stunden), jede Minute. Solche Sprünge zählen nie als Skip des Hörers. Einen Song, den der Hörer in der aktuellen Playlist selbst antippt, lässt True Shuffle in Ruhe, außer er steht vorn in einer fortgesetzten Version.
 - **Startet True Shuffle den Sender selbst,** plant es frisch und spielt von oben. Geänderte Einstellungen (Mischung, Regeln) gelten ab diesem Start, und bei jedem Neuschreiben, während kein Player die Playlist hält.
@@ -86,6 +86,8 @@ Das Objekt weckt sich selbst per Alarm:
 - direkt nach jedem Songende (bei langen Songs spätestens alle 4 Minuten), solange ein Deck spielt,
 - jede Minute, solange ein Player einen Sender hält (pausiert oder unsichtbar), höchstens 12 Stunden lang; ein unveränderter Player-Stand wird dabei nicht jedes Mal gespeichert,
 - 15 Sekunden nach einem eigenen Sprung oder einem Tipp in der App,
+- alle 30 Sekunden, solange ein Player im Sender einen Song spielt, den die Playlist nicht mehr enthält (eine ältere, geladene Reihenfolge),
+- alle 20 Sekunden, wenn 1 bis 3 Songs voraus ein abgelehnter Song steht oder eine Stelle, die sich seit der vorigen Version geändert hat,
 - alle 10 Minuten bei anderer Wiedergabe,
 - alle 20 Minuten im Leerlauf,
 - stündlich nach 6 Stunden Stille.
@@ -104,10 +106,13 @@ Ein Cron-Trigger (alle 20 Minuten) belebt verlorene Alarmketten über die `Regis
 
   | Konto | gelesene Zeilen | geschriebene Zeilen | 5 solche Konten vom Tageskontingent |
   |---|---|---|---|
-  | typisch: 9 Sender, 10.000 Songs, 15.000 im Gedächtnis, 1 h offene App | ~75.000 | ~1.500 | ~8 % / ~8 % |
-  | an der Grenze: 30 Sender, 25.000 im Gedächtnis, 300 gefolgte Playlists, 1 h offene App | ~125.000 | ~1.800 | ~13 % / ~9 % |
-  | an der Grenze, App 8 h offen | ~305.000 | ~5.100 | ~31 % / ~26 % |
+  | typisch: 9 Sender, 10.000 Songs, 15.000 im Gedächtnis, 1 h offene App | ~87.000 | ~1.600 | ~9 % / ~8 % |
+  | an der Grenze: 30 Sender, 25.000 im Gedächtnis, 300 gefolgte Playlists, 1 h offene App | ~160.000 | ~1.900 | ~16 % / ~10 % |
+  | an der Grenze, App 8 h offen | ~306.000 | ~5.100 | ~31 % / ~26 % |
+  | an der Grenze, 12 × Daumen runter am Tag | ~155.000 | ~2.000 | ~16 % / ~10 % |
   | extrem (Messung der unabhängigen Prüfung): 30 Sender mit je 10.000 Songs | ~320.000 | ~2.400 | ~32 % / ~12 % |
+
+  Dazu kommen Durable-Object-Anfragen (100.000 pro Tag im kostenlosen Plan): etwa 20 pro gehörter Stunde, 60 pro Stunde, in der ein Player einen Sender pausiert hält (höchstens 12 Stunden), sonst 3 pro Stunde. Für 5 Konten sind das auch an langen Tagen unter 15.000.
 
 ### 6. Entdeckungen werden verifiziert
 
@@ -141,7 +146,7 @@ Quellen sind Deep Cuts und Neuerscheinungen geliebter Künstler, Last.fm, Deezer
 - **Der Spotify-Entwicklungsmodus erlaubt höchstens 5 Konten** und hat ein knappes Anfragekontingent. Bei „Kontingent aufgebraucht" pausiert True Shuffle für die gemeldete Zeit und macht dann weiter (getestet).
 - **Die Reihenfolge in einem laufenden oder gehaltenen Deck steht fest.** Regeländerungen wirken beim nächsten Start aus der App oder beim nächsten Neuschreiben, während kein Player die Playlist hält.
 - **Den Song, der beim Autostopp pausiert war,** nimmt die fortgesetzte Version heraus. Lief er schon mindestens 30 Sekunden, ist er ohnehin gehört und kommt nicht gleich wieder. Ausnahme: Wechselte der Song kurz vor dem Stopp, ohne dass True Shuffle es sah (ein Skip in den ersten Sekunden), kennt es den pausierten Song nicht. Startet der Hörer danach in Spotify von oben, kann dieser Song am selben Tag noch einmal kommen. In der unabhängigen Prüfung waren das 3 Wiederholungen in 180 Läufen, alle bei einem 60-Song-Sender.
-- **Hält ein Handy eine alte, geladene Reihenfolge,** spielt es diese ab, egal was in der Playlist steht. True Shuffle überspringt darin abgelehnte und in den letzten 24 Stunden gehörte Songs. Einen Song, der erst während der ersten Minute nach dem Weiterhören beginnt, kann es dabei verpassen, dann läuft er einmal.
+- **Hält ein Handy eine alte, geladene Reihenfolge,** spielt es diese ab, egal was in der Playlist steht. True Shuffle überspringt darin abgelehnte und in den letzten 24 Stunden gehörte Songs. In der ersten Minute nach dem Weiterhören hat es den Player noch nicht wieder gesehen: Ein abgelehnter Song, zu dem der Hörer gleich von Hand springt, läuft bis zum ersten Blick (höchstens etwa eine Minute), ein schon gehörter kann dann einmal ganz laufen.
 - **Wer einen Song in die Warteschlange legt,** der heute schon lief und in einer alten Version des Senders stand, erlebt, dass True Shuffle ihn überspringt. Spotify sagt nicht, ob ein Song aus der Warteschlange kommt.
 - **Wer einen Sender wochenlang nur im Auto fortsetzt,** ohne ihn in der App anzutippen, hört die Playlist bis zu ihrem Ende. Steht der ganze Sender schon darin, ist das nach einer Runde erreicht (in der Prüfung mit 600 Songs nach 40 Fahrten ohne eine Wiederholung). Dann übernimmt Spotifys Autoplay, bis ein Start aus der App die nächste Runde beginnt. Bei großen Sendern ist die Grenze die Länge von 2.000 Songs.
 - **Ein offener Browser-Tab** fragt alle 15 Sekunden nach dem Stand, solange er sichtbar ist. Das sind bis zu 5.760 Worker-Anfragen pro Tag und Tab, bei 100.000 im kostenlosen Plan.

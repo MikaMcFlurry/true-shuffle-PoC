@@ -1868,21 +1868,23 @@ export class HubCore {
 	 * holds an older version of the playlist or restarts a continued one from
 	 * the top (its front keeps songs heard today when a small station has
 	 * nothing else). Move on at once — and never count that as the listener's
-	 * skip. A song the listener picks inside the current version, or one heard
-	 * for more than 30 s already, is left alone.
+	 * skip. A song turned down goes whenever it is seen; any other song only
+	 * within its first 30 s (after that its play counts anyway). A song the
+	 * listener picks inside the current version is left alone.
 	 */
 	private async guardStation(
 		client: SpotifyClient,
 		obs: PlayerObservation | null,
 		at: InStation | null,
 	): Promise<void> {
-		if (!obs?.isPlaying || !obs.trackId || !at || obs.progressMs >= 30_000) return;
+		if (!obs?.isPlaying || !obs.trackId || !at) return;
 		const last = this.kvGet<{ id: TrackId; at: number }>("moved");
 		if (last && last.id === obs.trackId && this.now() - last.at < MINUTE_MS) return;
 		const st = this.stationRow(at.st);
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck) return;
 		const m = this.memory(obs.trackId);
+		if (m.thumb !== -1 && obs.progressMs >= 30_000) return;
 		const heardToday = m.lastPlayedAt !== null && this.now() - m.lastPlayedAt < RECENT_GUARD_MS;
 		let to: number | null = null;
 		let why: string;
@@ -3041,6 +3043,9 @@ export class HubCore {
 		// every 20 s, so a skip by hand onto it is caught too.
 		if (snap?.obs?.isPlaying && this.guardedAhead(snap.obs.contextUri))
 			candidates.push(now + 20_000);
+		// A station playing a song its playlist no longer holds: the player
+		// follows an older order, and what comes next is unknown — look often.
+		if (snap?.obs?.isPlaying && this.olderOrder(snap.obs)) candidates.push(now + 30_000);
 		if (snap?.obs?.isPlaying && inDeck) {
 			// Look right after the song ends: the next one is then seen in its
 			// first seconds — a song turned down is skipped before it is heard,
@@ -3065,6 +3070,14 @@ export class HubCore {
 		let at = Math.min(...candidates);
 		if (backoff > now) at = Math.max(at, backoff + 1000);
 		await this.d.alarms.set(at);
+	}
+
+	private olderOrder(obs: PlayerObservation): boolean {
+		const st = obs.contextUri
+			? this.stations().find((x) => this.deckUri(x) === obs.contextUri)
+			: null;
+		const deck = st ? this.deckOf(st) : null;
+		return !!deck && !!obs.trackId && !deck.items.some((it) => it.id === obs.trackId);
 	}
 
 	private guardedAhead(uri: string | null): boolean {
