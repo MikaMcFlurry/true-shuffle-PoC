@@ -939,3 +939,129 @@ describe("the eighth review's cases", () => {
 		expect(heard.get(q)?.[0]).toBeGreaterThanOrEqual(30_000);
 	});
 });
+
+describe("the ninth review's cases", () => {
+	function earsOn(h: H) {
+		const heard = new Map<string, number[]>();
+		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
+		const orig = f.moveNext.bind(h.fake);
+		f.moveNext = (user: unknown, at: number) => {
+			const cur = h.fake.current();
+			if (cur) heard.set(cur, [...(heard.get(cur) ?? []), h.fake.user().player.listenedMs]);
+			orig(user, at);
+		};
+		return heard;
+	}
+
+	it("a guest's skip stays the guest's when the owner switches guest mode off and taps the station", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+		h.hub.setGuest(true, 6);
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(40 * MINUTE_MS);
+		let g: string | null = null;
+		for (let i = 0; i < 600 && !g; i++) {
+			await h.listen(1_000);
+			const p = h.fake.user().player;
+			if (p.listenedMs >= 8_000 && p.listenedMs < 12_000) {
+				g = h.fake.current();
+				h.fake.skip();
+			}
+		}
+		await h.listen(20_000);
+		h.hub.setGuest(false);
+		expect((await h.hub.play(sid)).ok).toBe(true); // a rewrite within the skip's wait
+		await h.listen(45 * MINUTE_MS);
+		const row = h.sql.first<{ early_skips: number }>(
+			`SELECT early_skips FROM memory WHERE id = ?`,
+			g,
+		);
+		expect(row?.early_skips ?? 0).toBe(0);
+		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, g)).toBeNull();
+	});
+
+	it("infers no skip across a place the new version changed", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(30 * MINUTE_MS);
+		const p = h.fake.user().player;
+		p.isPlaying = false;
+		const before = p.order[p.index + 2]!;
+		const y = p.order[p.index + 3]!;
+		await h.listen(15 * MINUTE_MS);
+		await h.hub.thumb(y, -1); // the continuation puts another song in its place
+		await h.listen(30 * MINUTE_MS);
+		const replacement = stationDeck(h, sid).pl.items[p.index + 3]!;
+		p.isPlaying = true; // the loaded order goes on
+		let stage = 0;
+		for (let i = 0; i < 900; i++) {
+			await h.listen(1_000);
+			const cur = h.fake.current();
+			if (stage === 0 && cur === before && p.listenedMs >= 5_000) {
+				h.fake.skip();
+				stage = 1;
+			} else if (stage === 1 && cur === y && p.listenedMs >= 2_000) {
+				h.fake.skip();
+				stage = 2;
+			}
+		}
+		await h.listen(30 * MINUTE_MS);
+		const row = h.sql.first<{ early_skips: number }>(
+			`SELECT early_skips FROM memory WHERE id = ?`,
+			replacement,
+		);
+		expect(row?.early_skips ?? 0).toBe(0);
+	});
+
+	for (const hours of [4, 8])
+		it(`started from the top ${hours} h after a stop, the first song skipped early: nothing repeats`, async () => {
+			const h = await onboarded({ tracks: 120 });
+			const sid = h.stationIds[0]!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(3 * 60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(hours * 60 * MINUTE_MS);
+			const { pl } = stationDeck(h, sid);
+			const today = new Set(
+				h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
+			);
+			const heard = earsOn(h);
+			const p = h.fake.user().player;
+			h.fake.startContext("mika", `spotify:playlist:${pl.id}`, 0, p.deviceId!, false);
+			let skipped = false;
+			for (let i = 0; i < 3600; i++) {
+				await h.listen(1_000);
+				if (!skipped && p.index === 0 && p.listenedMs >= 5_000) {
+					h.fake.skip();
+					skipped = true;
+				}
+			}
+			const repeats = [...heard.entries()].filter(
+				([id, ms]) => today.has(id) && ms.some((x) => x >= 30_000),
+			);
+			expect(repeats).toEqual([]);
+		});
+
+	it("a turned-down song is skipped after a weekend with the phone out of sight", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(30 * MINUTE_MS);
+		const p = h.fake.user().player;
+		p.isPlaying = false;
+		const device = p.deviceId;
+		const x = p.order[p.index + 2]!;
+		p.deviceId = null; // parked: Spotify shows no player
+		await h.listen(18 * 60 * MINUTE_MS);
+		await h.hub.thumb(x, -1);
+		await h.listen(43 * 60 * MINUTE_MS);
+		const heard = earsOn(h);
+		p.deviceId = device;
+		p.isPlaying = true; // Monday morning: the loaded order goes on
+		await h.listen(20 * MINUTE_MS);
+		expect(heard.get(x)?.length).toBe(1);
+		expect(heard.get(x)![0]).toBeLessThan(30_000);
+	});
+});

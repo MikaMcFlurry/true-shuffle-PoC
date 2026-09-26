@@ -76,6 +76,8 @@ export interface Deck {
 	former?: [TrackId, number][];
 	/** Of those, the ones turned down or banned: they may still come up. */
 	formerOff?: TrackId[];
+	/** Until when the front (before `heldAt`) holds songs heard lately. */
+	frontHeardUntil?: number;
 	/**
 	 * The songs a chain of continuations took out at the held position — the
 	 * one a player paused on among them. Never planned back while the chain
@@ -246,7 +248,11 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		// From a continuation's front into what it kept: the player came from
 		// an order we do not know (a paused song found in the front, a restart
 		// from the top). Only the song seen there was left.
-		const crosses = deck.heldAt != null && anchor < deck.heldAt && idx > deck.heldAt;
+		// Nor across a place this version changed: a player in the older order
+		// played something else there, maybe several songs.
+		const crosses =
+			(deck.heldAt != null && anchor < deck.heldAt && idx > deck.heldAt) ||
+			(deck.changedAt ?? []).some((c) => c > anchor && c <= idx);
 		if (ours && gap <= MAX_SKIP_GAP && !crosses) {
 			// In our order: the song we saw and everything up to the current one
 			// is behind us.
@@ -401,7 +407,9 @@ export interface ContinueInput {
  *    listener resuming where they stopped keeps every song ahead.
  * `null`: nothing better than the version the player holds — leave it.
  */
-export function continueLayout(input: ContinueInput): PlannedSlot[] | null {
+export function continueLayout(
+	input: ContinueInput,
+): { layout: PlannedSlot[]; keptFrom: number } | null {
 	const { items, held } = input;
 	if (held < 0 || held >= items.length) return null;
 	const fresh = input.fresh.slice();
@@ -451,5 +459,11 @@ export function continueLayout(input: ContinueInput): PlannedSlot[] | null {
 	}
 	const layout = [...(first ? [first] : []), ...fill, ...front, ...kept, ...ahead];
 	if (layout.length > MAX_CONTINUED_ITEMS) return null;
-	return [...layout, ...fresh.slice(0, MAX_CONTINUED_ITEMS - layout.length)];
+	// Where the kept songs begin: right after `held`, or earlier when too few
+	// songs were left to fill the front.
+	const keptFrom = (first ? 1 : 0) + fill.length + front.length;
+	return {
+		layout: [...layout, ...fresh.slice(0, MAX_CONTINUED_ITEMS - layout.length)],
+		keptFrom,
+	};
 }

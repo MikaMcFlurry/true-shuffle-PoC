@@ -1475,9 +1475,10 @@ export class HubCore {
 			result = plan();
 		}
 		rules = this.rulesOf(st);
-		let layout: PlannedSlot[] | null;
+		let layout: PlannedSlot[];
+		let keptFrom = 0;
 		if (continuing && prev && held !== null) {
-			layout = continueLayout({
+			const cont = continueLayout({
 				items: prev.items,
 				held,
 				fresh: result.slots,
@@ -1485,7 +1486,9 @@ export class HubCore {
 				blocked: (id) => isBlocked(this.memory(id), banned),
 			});
 			// Nothing better than what the player holds: leave it as it is.
-			if (!layout) return null;
+			if (!cont) return null;
+			layout = cont.layout;
+			keptFrom = cont.keptFrom;
 		} else {
 			if (result.slots.length === 0) {
 				throw new HubError(
@@ -1523,7 +1526,17 @@ export class HubCore {
 		// starts it: a player may still carry on with what it had loaded.
 		deck.continued = continuing;
 		deck.ours = continuing && prev?.ours === true;
-		deck.heldAt = continuing && held !== null ? Math.min(held, layout.length - 1) : null;
+		// The held place is the one just before the kept songs — also when too
+		// few songs were left to keep them exactly where they were.
+		deck.heldAt = continuing && held !== null ? keptFrom - 1 : null;
+		if (continuing) {
+			let heardUntil = 0;
+			for (const s of layout.slice(0, keptFrom)) {
+				const last = this.memory(s.trackId).lastPlayedAt;
+				if (last !== null) heardUntil = Math.max(heardUntil, last + RECENT_GUARD_MS);
+			}
+			if (heardUntil > this.now()) deck.frontHeardUntil = heardUntil;
+		}
 		const inLayout = new Map(layout.map((s, i) => [s.trackId, i]));
 		if (continuing && prev && held !== null) {
 			// Where a player still in the previous version meets a song this one
@@ -1907,7 +1920,13 @@ export class HubCore {
 		if (waiting.length === 0) return;
 		const list = this.kvGet<PendingSkip[]>("pending_skips") ?? [];
 		for (const it of waiting)
-			list.push({ id: it.id, st: stationId, at: it.at ?? this.now(), seen: it.seen === true });
+			list.push({
+				id: it.id,
+				st: stationId,
+				at: it.at ?? this.now(),
+				since: it.from,
+				seen: it.seen === true,
+			});
 		this.kvSet("pending_skips", list.slice(-500));
 	}
 
@@ -3205,9 +3224,10 @@ export class HubCore {
 				return true;
 		}
 		// A song turned down that an older version held, still ahead in it:
-		// where a player still in that order (this one, or a second device)
-		// meets it is unknown, so it may come any time.
-		if (deck.formerOff?.length) {
+		// where a player still in that order meets it is unknown, so it may come
+		// any time. Not once True Shuffle started the playlist itself: that
+		// replaced the order the player had (a second device is out of sight).
+		if ((deck.continued === true || deck.ours !== true) && deck.formerOff?.length) {
 			const former = formerNow(deck, this.now());
 			if (deck.formerOff.some((id) => former.has(id))) return true;
 		}
@@ -3229,9 +3249,15 @@ export class HubCore {
 		if (!st) return null;
 		const active = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
 		const since = this.now() - active;
-		if (since < 3 * HOUR_MS) return 30_000;
+		// A continued playlist whose front holds today's songs: a restart from
+		// the top must be seen before the second song is 30 s in.
+		const deck = this.deckOf(st);
+		if (since < 3 * HOUR_MS || (deck?.frontHeardUntil ?? 0) > this.now()) return 30_000;
 		if (since < HOLD_WATCH_MS) return MINUTE_MS;
-		return snap?.obs ? 2 * MINUTE_MS : null;
+		// Longer: while Spotify still shows the player paused there, or for a
+		// long weekend while the station was the last thing played.
+		if (snap?.obs || since < 72 * HOUR_MS) return 2 * MINUTE_MS;
+		return null;
 	}
 
 	async scheduleSoon(ms: number): Promise<void> {

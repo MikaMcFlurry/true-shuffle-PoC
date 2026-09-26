@@ -198,7 +198,8 @@ describe("applyPlays + settleSkips", () => {
 describe("continueLayout — the next version of a deck a player still holds", () => {
 	const items = (n: number) => deck(n).items;
 	const slots = (ids: string[]) => ids.map((trackId) => ({ trackId, kind: "fresh" as const }));
-	const ids = (l: { trackId: string }[] | null) => l?.map((s) => s.trackId) ?? null;
+	const ids = (l: { layout: { trackId: string }[] } | null) =>
+		l?.layout.map((s) => s.trackId) ?? null;
 	const all = () => true;
 	const none = () => false;
 
@@ -307,6 +308,11 @@ describe("continueLayout — the next version of a deck a player still holds", (
 			continueLayout({ items: all100, held: 95, fresh: front, playable: all, blocked: none }),
 		)!;
 		expect(out.length).toBe(99);
+		// The kept songs begin one place early: that is where the next look starts from.
+		expect(
+			continueLayout({ items: all100, held: 95, fresh: front, playable: all, blocked: none })!
+				.keptFrom,
+		).toBe(95);
 		// One song fewer than before (the held one): the kept songs move up by one at most.
 		expect(out.slice(95)).toEqual(["s96", "s97", "s98", "s99"]);
 		expect(new Set(out).size).toBe(out.length);
@@ -372,7 +378,8 @@ describe("continueLayout — the next version of a deck a player still holds", (
 			playable: all,
 			blocked: none,
 		})!;
-		expect(out.length).toBe(MAX_CONTINUED_ITEMS);
+		expect(out.layout.length).toBe(MAX_CONTINUED_ITEMS);
+		expect(out.keptFrom).toBe(3);
 	});
 });
 
