@@ -12,7 +12,7 @@
  * observed; memory (plays) is recorded from the recently-played list only.
  */
 
-import { MINUTE_MS, type PlannedSlot, type SlotKind, type TrackId } from "./types";
+import { HOUR_MS, MINUTE_MS, type PlannedSlot, type SlotKind, type TrackId } from "./types";
 
 export type DeckItemState = "pending" | "passed" | "played" | "skipped";
 
@@ -84,6 +84,18 @@ export interface Deck {
 	 * lasts: a player resuming it would be found in the front.
 	 */
 	leftOut?: TrackId[];
+	/**
+	 * Last place of the songs kept where they were (after `heldAt`). Past it a
+	 * player still in an older order plays that order's own tail, which this
+	 * version holds elsewhere or not at all.
+	 */
+	keptTo?: number | null;
+	/**
+	 * A player left the kept songs for another place in this version: it may
+	 * still follow an older order, whose steps are no gaps here. Until then
+	 * only a song seen playing counts as left, also in the continuations.
+	 */
+	strayedUntil?: number;
 }
 
 /** Where the player is (or was last seen) in this version. */
@@ -119,6 +131,9 @@ export const MAX_SKIP_GAP = 10;
  * before it is booked as an early skip. Spotify's list can lag.
  */
 export const SKIP_GRACE_MS = 20 * MINUTE_MS;
+
+/** How long a player that strayed from the kept songs may still follow an older order. */
+export const STRAY_MS = 36 * HOUR_MS;
 
 export function newDeck(
 	ids: readonly { trackId: TrackId; kind: SlotKind }[],
@@ -226,6 +241,19 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	// (still at that index in this version), or the top, when we started it.
 	const ours = deck.ours === true && obs.isPlaying;
 	const fromTop = prev === null && ours && deck.top === true;
+	// Out of the songs a continuation kept in place — back into its front, or
+	// past their end with a gap: a player still in an older order plays that
+	// order's tail there, and this version holds those songs anywhere.
+	const keptTo = deck.keptTo ?? deck.items.length - 1;
+	const strays =
+		deck.continued === true &&
+		deck.heldAt != null &&
+		prev !== null &&
+		prev > deck.heldAt &&
+		prev <= keptTo &&
+		(idx <= deck.heldAt || idx > keptTo + 1);
+	const strayedUntil = strays ? obs.at + STRAY_MS : deck.strayedUntil;
+	const trusted = ours && !(strayedUntil !== undefined && obs.at < strayedUntil);
 
 	const items = deck.items.slice();
 	const passed: TrackId[] = [];
@@ -253,7 +281,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		const crosses =
 			(deck.heldAt != null && anchor < deck.heldAt && idx > deck.heldAt) ||
 			(deck.changedAt ?? []).some((c) => c > anchor && c <= idx);
-		if (ours && gap <= MAX_SKIP_GAP && !crosses) {
+		if (trusted && gap <= MAX_SKIP_GAP && !crosses) {
 			// In our order: the song we saw and everything up to the current one
 			// is behind us.
 			for (let i = Math.max(anchor, 0); i < idx; i++) pass(i);
@@ -272,6 +300,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			lastPlaying: obs.isPlaying,
 			lastObservedAt: obs.at,
 			top: false,
+			...(strayedUntil !== undefined ? { strayedUntil } : {}),
 		},
 		inDeck: true,
 		index: idx,
@@ -409,7 +438,7 @@ export interface ContinueInput {
  */
 export function continueLayout(
 	input: ContinueInput,
-): { layout: PlannedSlot[]; keptFrom: number } | null {
+): { layout: PlannedSlot[]; keptFrom: number; keptTo: number } | null {
 	const { items, held } = input;
 	if (held < 0 || held >= items.length) return null;
 	const fresh = input.fresh.slice();
@@ -465,5 +494,6 @@ export function continueLayout(
 	return {
 		layout: [...layout, ...fresh.slice(0, MAX_CONTINUED_ITEMS - layout.length)],
 		keptFrom,
+		keptTo: keptFrom + kept.length - 1,
 	};
 }

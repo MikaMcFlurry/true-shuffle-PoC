@@ -1065,3 +1065,62 @@ describe("the ninth review's cases", () => {
 		expect(heard.get(x)![0]).toBeLessThan(30_000);
 	});
 });
+
+describe("the tenth look: older orders and the edges of guest time", () => {
+	it("infers no skip from an older order that runs past the songs a continuation kept", async () => {
+		// A small station deep into its round: the continuation keeps the songs
+		// after the held one at their places, but moves the last two forward.
+		const h = await onboarded({ tracks: 24 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const p = h.fake.user().player;
+		while (p.index < 8) await h.listen(5_000);
+		await h.listen(60_000);
+		h.fake.pause();
+		const loaded = p.order.slice();
+		await h.listen(40 * MINUTE_MS);
+		const { deck, pl } = stationDeck(h, sid);
+		expect(deck.version).toBe(2);
+		// The last songs of the order the phone still has sit in front now,
+		// with songs it already played between them.
+		const tail = loaded.slice(-2);
+		expect(pl.items.indexOf(tail[0]!)).toBeLessThan(pl.items.indexOf(tail[1]!) - 1);
+		p.isPlaying = true; // the loaded order goes on to its end, nothing skipped
+		await h.listen(80 * MINUTE_MS);
+		expect(p.order).toEqual(loaded);
+		await h.listen(40 * MINUTE_MS);
+		expect(falseSkips(h)).toBe(0);
+		expect(
+			(
+				JSON.parse(
+					h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!.deck,
+				) as {
+					strayedUntil?: number;
+				}
+			).strayedUntil,
+		).toBeGreaterThan(h.clock.t);
+	});
+
+	it("a song still playing when guest mode goes off stays the guest's", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		h.hub.setGuest(true, 6);
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		const p = h.fake.user().player;
+		const x = h.fake.current()!;
+		while (h.fake.current() === x) await h.listen(1_000);
+		const y = h.fake.current()!;
+		await h.listen(60_000);
+		h.hub.setGuest(false); // y plays on to its end, and the owner's music after it
+		await h.listen(40 * MINUTE_MS);
+		expect(p.isPlaying).toBe(true);
+		const rows = h.sql.all<{ track_id: string; ignored: number }>(
+			`SELECT track_id, ignored FROM plays ORDER BY played_at`,
+		);
+		expect(rows.find((r) => r.track_id === y)?.ignored).toBe(1);
+		expect(rows.at(-1)?.ignored).toBe(0);
+		const mem = h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, y);
+		expect(mem?.plays ?? 0).toBe(0);
+	});
+});

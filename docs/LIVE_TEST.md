@@ -39,6 +39,7 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 - [ ] Menü → Gast-Modus an (z. B. 2 Stunden). GAST leuchtet in der Anzeige.
 - [ ] Was jetzt läuft, steht im Verlauf mit der Markierung „Gast" und verändert keinen Sender.
 - [ ] Nach Ablauf schaltet er sich selbst ab. Vorher lässt er sich von Hand ausschalten.
+- [ ] Mitten in einem Song von Hand ausschalten und den Song zu Ende hören. Er steht im Verlauf mit „Gast", der Song danach ohne. (Prüft, dass Spotify eine Wiedergabe mit ihrem Ende stempelt.)
 
 ## F. Entdeckungen
 

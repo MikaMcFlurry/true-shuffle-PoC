@@ -1477,6 +1477,7 @@ export class HubCore {
 		rules = this.rulesOf(st);
 		let layout: PlannedSlot[];
 		let keptFrom = 0;
+		let keptTo = 0;
 		if (continuing && prev && held !== null) {
 			const cont = continueLayout({
 				items: prev.items,
@@ -1489,6 +1490,7 @@ export class HubCore {
 			if (!cont) return null;
 			layout = cont.layout;
 			keptFrom = cont.keptFrom;
+			keptTo = cont.keptTo;
 		} else {
 			if (result.slots.length === 0) {
 				throw new HubError(
@@ -1529,6 +1531,10 @@ export class HubCore {
 		// The held place is the one just before the kept songs — also when too
 		// few songs were left to keep them exactly where they were.
 		deck.heldAt = continuing && held !== null ? keptFrom - 1 : null;
+		deck.keptTo = continuing && held !== null ? keptTo : null;
+		// A player that strayed may still be in that older order.
+		if (continuing && prev?.strayedUntil !== undefined && prev.strayedUntil > this.now())
+			deck.strayedUntil = prev.strayedUntil;
 		if (continuing) {
 			let heardUntil = 0;
 			for (const s of layout.slice(0, keptFrom)) {
@@ -2006,6 +2012,8 @@ export class HubCore {
 		// Our move, not the listener's: nothing is inferred from it.
 		deck.lastTrackId = null;
 		deck.lastPlaying = false;
+		// Started at a place of this version: whatever order it had is gone.
+		if (to !== null) delete deck.strayedUntil;
 		this.saveDeck(st.id, deck);
 		if (this.kvGet<{ id: TrackId }>("watch")?.id === obs.trackId) this.kvDel("watch");
 	}
@@ -2078,6 +2086,11 @@ export class HubCore {
 		return this.guestPeriods().some((p) => at >= p.from && at < p.to);
 	}
 
+	/** A play that ran from `start` and ended at `end`: did any of it fall in guest time? */
+	private guestPlay(start: number, end: number): boolean {
+		return this.guestPeriods().some((p) => p.from < end && p.to > start);
+	}
+
 	/** Any guest time between `from` and `to`? */
 	private inGuestDuring(from: number, to: number): boolean {
 		return this.guestPeriods().some((p) => p.from <= to && p.to > from);
@@ -2143,7 +2156,9 @@ export class HubCore {
 		for (const { i, at } of fresh) {
 			const id = i.track.id!;
 			const ctx = i.context?.uri ?? null;
-			const ignored = this.inGuest(at);
+			// Spotify stamps a play when it ends. One that was already running when
+			// guest mode came on, or still running when it went off, was the guest's.
+			const ignored = this.guestPlay(at - (i.track.duration_ms ?? 0), at);
 			const station = ctx ? deckByUri.get(ctx) : deckHolding(id, at);
 			const packed = packTrack(i.track);
 			this.db.run(
@@ -2523,6 +2538,7 @@ export class HubCore {
 				deck.lastObservedAt = null;
 				deck.ours = true;
 				deck.top = true;
+				delete deck.strayedUntil;
 				this.saveDeck(fresh.id, deck);
 			}
 			const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};

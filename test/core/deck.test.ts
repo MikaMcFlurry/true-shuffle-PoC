@@ -12,6 +12,7 @@ import {
 	type PlayerObservation,
 	remainingAhead,
 	SKIP_GRACE_MS,
+	STRAY_MS,
 	settleSkips,
 } from "../../src/core/deck";
 
@@ -151,6 +152,49 @@ describe("observePlayer", () => {
 		expect(r.passed).toEqual([]);
 		expect(r.deck.lastIndex).toBe(4);
 	});
+
+	/** A continuation: new songs up to s4 (held), s5–s14 kept in place, s15–s19 new. */
+	const continued = (): Deck => ({ ...deck(), ours: true, continued: true, heldAt: 4, keptTo: 14 });
+	const at = (min: number) => ({ at: T0 + min * 60_000 });
+
+	it("back in a continuation's front from the kept songs, the player may follow an older order", () => {
+		let d = observePlayer(continued(), obs("s13", at(1)), URI).deck;
+		d = observePlayer(d, obs("s14", at(4)), URI).deck;
+		let r = observePlayer(d, obs("s1", at(7)), URI);
+		expect(r.deck.strayedUntil).toBe(T0 + 7 * 60_000 + STRAY_MS);
+		// Its next song sits anywhere here: only the one seen counts as left.
+		r = observePlayer(r.deck, obs("s3", at(10)), URI);
+		expect(r.passed).toEqual(["s1"]);
+		r = observePlayer(r.deck, obs("s12", at(13)), URI);
+		expect(r.passed).toEqual(["s3"]);
+		expect(r.deck.items.filter((it) => it.state === "passed").map((it) => it.id)).toEqual([
+			"s1",
+			"s3",
+			"s13",
+		]);
+	});
+
+	it("past the end of the kept songs with a gap, the player may follow an older order", () => {
+		let d = observePlayer(continued(), obs("s14", at(1)), URI).deck;
+		let r = observePlayer(d, obs("s17", at(4)), URI);
+		expect(r.passed).toEqual(["s14"]);
+		expect(r.deck.strayedUntil).toBeDefined();
+		// Straight on into the new songs is this version's order.
+		d = observePlayer(continued(), obs("s14", at(1)), URI).deck;
+		r = observePlayer(d, obs("s15", at(4)), URI);
+		expect(r.deck.strayedUntil).toBeUndefined();
+		r = observePlayer(r.deck, obs("s18", at(7)), URI);
+		expect(r.passed).toEqual(["s15", "s16", "s17"]);
+	});
+
+	it("trusts gaps again once an older order can no longer be loaded", () => {
+		const d = { ...continued(), strayedUntil: T0 + 5 * 60_000 };
+		let r = observePlayer(d, obs("s6", at(1)), URI);
+		r = observePlayer(r.deck, obs("s8", at(3)), URI);
+		expect(r.passed).toEqual(["s6"]);
+		r = observePlayer(r.deck, obs("s10", at(6)), URI);
+		expect(r.passed).toEqual(["s8", "s9"]);
+	});
 });
 
 describe("applyPlays + settleSkips", () => {
@@ -222,6 +266,27 @@ describe("continueLayout — the next version of a deck a player still holds", (
 		expect(out[3]).toBe("n1"); // the best new song where a player resuming by position starts
 		expect(out.slice(40)).toEqual(["n5", "n6"]);
 		expect(new Set(out).size).toBe(out.length);
+	});
+
+	it("tells where the songs kept in place end", () => {
+		const kept = continueLayout({
+			items: items(40),
+			held: 3,
+			fresh: slots(["n1", "n2", "n3", "n4", "n5", "n6"]),
+			playable: all,
+			blocked: none,
+		})!;
+		expect([kept.keptFrom, kept.keptTo]).toEqual([4, 39]);
+		// A small station: the last two move forward, the kept ones end before them.
+		const moved = continueLayout({
+			items: items(24),
+			held: 8,
+			fresh: [],
+			playable: all,
+			blocked: none,
+		})!;
+		expect([moved.keptFrom, moved.keptTo]).toEqual([9, 21]);
+		expect(moved.layout[moved.keptTo]!.trackId).toBe("s21");
 	});
 
 	it("never shrinks a small station: with no new songs the last kept songs move forward", () => {
