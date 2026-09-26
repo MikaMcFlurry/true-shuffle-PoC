@@ -3442,10 +3442,17 @@ function formerNow(deck: Deck, now: number): Set<TrackId> {
 }
 
 /** Equal but for the moment of the last look at the player. */
-function sameDeck(a: Deck, b: Deck): boolean {
+export function sameDeck(a: Deck, b: Deck): boolean {
+	// Each look moves its own time, and where it puts the song's end by a few
+	// milliseconds: only a pause or a seek moves the end by more.
+	const endA = a.lastEndAt ?? null;
+	const endB = b.lastEndAt ?? null;
+	const sameEnd =
+		endA === endB || (endA !== null && endB !== null && Math.abs(endA - endB) < 1_000);
 	return (
-		JSON.stringify({ ...a, lastObservedAt: null }) ===
-		JSON.stringify({ ...b, lastObservedAt: null })
+		sameEnd &&
+		JSON.stringify({ ...a, lastObservedAt: null, lastEndAt: null }) ===
+			JSON.stringify({ ...b, lastObservedAt: null, lastEndAt: null })
 	);
 }
 

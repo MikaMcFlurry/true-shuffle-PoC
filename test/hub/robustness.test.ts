@@ -1478,3 +1478,51 @@ describe("the thirteenth review's cases", () => {
 		expect(row?.ignored).toBe(0);
 	});
 });
+
+describe("the fourteenth review's cases", () => {
+	async function nextSong(h: H) {
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+	}
+
+	it("two songs from further up, queued in order, book no skip for the songs between them", async () => {
+		const h = await onboarded({ tracks: 150 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const u = h.fake.user();
+		const p = u.player;
+		await nextSong(h);
+		await nextSong(h);
+		await h.listen(40_000);
+		// The listener taps a song 25 further down; its play reaches Spotify's list.
+		(
+			h.fake as unknown as { recordIfHeard: (u: unknown, id: string, at: number) => void }
+		).recordIfHeard(u, h.fake.current()!, h.clock.t);
+		h.fake.startContext(u.id, p.contextUri!, p.index + 25, p.deviceId!, false);
+		for (let i = 0; i < 4; i++) await nextSong(h);
+		await h.listen(20_000);
+		const items = stationDeck(h, sid).pl.items;
+		p.userQueue.push(items[p.index - 20]!, items[p.index - 13]!); // both never reached
+		await h.listen(60 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(45 * MINUTE_MS);
+		expect(falseSkips(h)).toBe(0);
+	});
+
+	it("a song queued from a few places ahead, then the listener stops: no skip for the songs between", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(20 * MINUTE_MS);
+		await nextSong(h);
+		await h.listen(20_000);
+		const items = stationDeck(h, sid).pl.items;
+		const q = items[items.indexOf(h.fake.current()!) + 6]!;
+		h.fake.user().player.userQueue.push(q);
+		while (h.fake.current() !== q) await h.listen(1_000);
+		await h.listen(60_000);
+		h.fake.pause(); // and does not come back
+		await h.listen(3 * 60 * MINUTE_MS);
+		expect(falseSkips(h)).toBe(0);
+	});
+});

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { newDeck, observePlayer } from "../../src/core/deck";
 import { cryptoRng } from "../../src/core/random";
 import { HOUR_MS, MINUTE_MS } from "../../src/core/types";
-import { DECK_SIZE, HubCore } from "../../src/worker/hub/hub";
+import { DECK_SIZE, HubCore, sameDeck } from "../../src/worker/hub/hub";
 import { Keys } from "../../src/worker/lib/crypto";
 import { FakeSpotify } from "../fakes/fake-spotify";
 
@@ -185,6 +186,31 @@ describe("listening", () => {
 		await h.listen(195 * MINUTE_MS);
 		expect(deckPlaylist(h, sid).items.length).toBeGreaterThan(DECK_SIZE);
 		expect(h.fake.user().player.contextUri).toContain(deckPlaylist(h, sid).id);
+	});
+});
+
+describe("stored decks", () => {
+	it("a later look at the same song writes nothing, unless a pause or a seek moved its end", () => {
+		const uri = "spotify:playlist:x";
+		const at = T0 + 60_000;
+		const look = (dt: number, progress: number) => ({
+			at: at + dt,
+			contextUri: uri,
+			trackId: "s1",
+			isPlaying: true,
+			progressMs: progress,
+			durationMs: 200_000,
+			shuffle: false,
+			smartShuffle: false,
+		});
+		const ids = ["s0", "s1", "s2"].map((trackId) => ({ trackId, kind: "fresh" as const }));
+		const first = observePlayer({ ...newDeck(ids, 1, T0), ours: true }, look(0, 10_000), uri).deck;
+		// A minute later, the look's own delay puts the end 180 ms off.
+		const later = observePlayer(first, look(60_000, 69_820), uri).deck;
+		expect(sameDeck(first, later)).toBe(true);
+		// Paused for half a minute in between: the song ends later.
+		const paused = observePlayer(first, look(60_000, 40_000), uri).deck;
+		expect(sameDeck(first, paused)).toBe(false);
 	});
 });
 

@@ -200,6 +200,74 @@ describe("observePlayer", () => {
 		expect(d.orderAt).toBe(0);
 	});
 
+	describe("a song that began right when the one before ended followed it directly", () => {
+		// A look at `at` with `progress` into a song of 200 s: it began at at − progress.
+		const look = (id: string, at: number, progress: number) =>
+			obs(id, { at, progressMs: progress, durationMs: 200_000 });
+
+		it("from the queue further down: nothing between was skipped, the place in order stays", () => {
+			let r = observePlayer(started(40), look("s2", T0, 10_000), URI); // ends at T0 + 190 s
+			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI); // began at T0 + 190 s
+			expect(r.passed).toEqual(["s2"]);
+			expect(r.deck.orderAt).toBe(2);
+			r = observePlayer(r.deck, look("s3", T0 + 392_000, 2_000), URI); // on in order
+			expect(r.deck.orderAt).toBe(3);
+			expect(r.deck.backFrom).toEqual([]);
+			r = observePlayer(r.deck, look("s4", T0 + 592_000, 2_000), URI);
+			expect(r.deck.items.slice(2, 7).map((it) => it.state)).toEqual([
+				"passed",
+				"passed",
+				"pending",
+				"pending",
+				"pending", // the song from the queue: it ended on its own
+			]);
+		});
+
+		it("two songs from the queue further up, in order: nothing between them counts", () => {
+			let r = observePlayer(started(40), look("s1", T0, 10_000), URI);
+			r = observePlayer(r.deck, look("s25", T0 + 60_000, 5_000), URI); // tapped far down
+			r = observePlayer(r.deck, look("s26", T0 + 257_000, 2_000), URI);
+			r = observePlayer(r.deck, look("s5", T0 + 457_000, 2_000), URI); // from the queue
+			r = observePlayer(r.deck, look("s9", T0 + 657_000, 2_000), URI); // and the next one
+			expect(r.passed).toEqual(["s5"]);
+			r = observePlayer(r.deck, look("s27", T0 + 857_000, 2_000), URI); // on where it was
+			expect(r.passed).toEqual(["s9"]);
+			expect(
+				r.deck.items
+					.slice(2, 25)
+					.filter((it) => it.state !== "pending")
+					.map((it) => it.id),
+			).toEqual(["s5", "s9"]);
+		});
+
+		it("skipped, the next song begins before the end: gaps count as before", () => {
+			let r = observePlayer(started(40), look("s2", T0, 10_000), URI);
+			r = observePlayer(r.deck, look("s5", T0 + 60_000, 5_000), URI);
+			expect(r.passed).toEqual(["s2", "s3", "s4"]);
+		});
+	});
+
+	it("remembers every place a move back came from, not only the furthest", () => {
+		// Looks a minute apart, a few seconds into each song: no song followed
+		// another directly.
+		let d = started(60);
+		let m = 0;
+		const step = (i: number) => {
+			m += 1;
+			d = observePlayer(d, obs(`s${i}`, { ...at(m), progressMs: 5_000 }), URI).deck;
+		};
+		for (const i of [0, 1, 2, 30, 31, 32, 33, 34, 35, 36]) step(i); // a tap far down at 30
+		step(35); // "previous": back from 36
+		step(26); // from the queue further up: back from 35
+		step(36); // on where the player was
+		expect(d.items.slice(27, 30).map((it) => it.state)).toEqual(["pending", "pending", "pending"]);
+		// Two moves back in a row, then on past both places.
+		d = started(60);
+		m = 0;
+		for (const i of [0, 1, 25, 26, 20, 15, 27]) step(i);
+		expect(d.items.slice(16, 25).filter((it) => it.state !== "pending")).toEqual([]);
+	});
+
 	it("does not mark anything when the listener steps back", () => {
 		let d = deck();
 		d = observePlayer(d, obs("s5"), URI).deck;

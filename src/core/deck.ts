@@ -127,18 +127,24 @@ export interface Deck {
 	 */
 	lastGap?: [number, number] | null;
 	/**
-	 * After a move back (a song from further up, from the queue or tapped):
-	 * the place it came from. Nothing at or before it is taken as skipped on
-	 * the way forward again — those songs were behind the player already, or
-	 * never reached.
+	 * After moves back (a song from further up, from the queue or tapped):
+	 * the places they came from. Nothing at or before one is taken as skipped
+	 * on the way forward past it again — those songs were behind the player
+	 * already, or never reached.
 	 */
-	backFrom?: number | null;
+	backFrom?: number[];
 	/**
 	 * Where the player is in this version's order: moved on by plain steps
 	 * forward and by moves back, not by a jump further down (maybe a song from
 	 * the queue). Where an older order goes on from, once this one is replaced.
 	 */
 	orderAt?: number;
+	/**
+	 * When the song seen last ends if it plays on, as that look saw it. A song
+	 * seen next that began right then followed it directly — the next in order
+	 * or one from the queue: nothing in between was skipped.
+	 */
+	lastEndAt?: number | null;
 }
 
 /** Runs of `true` as [from, to) pairs. */
@@ -199,6 +205,17 @@ export const SKIP_GRACE_MS = 20 * MINUTE_MS;
 
 /** How long a player that strayed from the kept songs may still follow an older order. */
 export const STRAY_MS = 36 * HOUR_MS;
+
+/**
+ * How closely a song's start must meet the end of the one seen before it to
+ * count as following it directly. Two looks' delays, not a listener's skip.
+ */
+export const DIRECT_MS = 1_500;
+
+/** When the song seen now ends if it plays on. */
+function endOf(obs: PlayerObservation): number | null {
+	return obs.isPlaying && obs.durationMs > 0 ? obs.at + obs.durationMs - obs.progressMs : null;
+}
 
 export function newDeck(
 	ids: readonly { trackId: TrackId; kind: SlotKind }[],
@@ -261,6 +278,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			lastTrackId: obs.trackId,
 			lastPlaying: obs.isPlaying,
 			lastObservedAt: obs.at,
+			lastEndAt: endOf(obs),
 			top: false,
 		};
 		if (seenPrev && obs.trackId !== deck.lastTrackId && deck.items[prev]!.state === "pending") {
@@ -297,6 +315,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 				lastTrackId: obs.trackId,
 				lastPlaying: obs.isPlaying,
 				lastObservedAt: obs.at,
+				lastEndAt: endOf(obs),
 				ours: false,
 				top: false,
 			},
@@ -333,11 +352,38 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			? obs.at
 			: deck.strayedUntil;
 	const trusted = ours && !(strayedUntil !== undefined && obs.at < strayedUntil);
-	const inOrder = deck.inOrder === true || (isNew && obs.isPlaying);
+
+	// Began right when the song seen before it ended: it followed that one
+	// directly — the next in order, or a song from the queue. Nothing in
+	// between was played, so nothing was skipped.
+	const direct =
+		seenPrev &&
+		deck.lastEndAt != null &&
+		Math.abs(obs.at - obs.progressMs - deck.lastEndAt) <= DIRECT_MS;
+	// Where the player is in this order: on with plain steps forward, back
+	// with a move back (a restart, a song from further up); a jump further
+	// down may be a song from the queue, so the place stays. Following a song
+	// directly, only the next in order (or the top after the last) moves it.
+	const orderBase = deck.orderAt ?? (deck.continued ? (heldAt ?? null) : deck.top ? -1 : null);
+	const next =
+		orderBase !== null &&
+		(idx === orderBase + 1 || (idx === 0 && orderBase === deck.items.length - 1));
+	const orderAt =
+		orderBase === null
+			? undefined
+			: direct
+				? next
+					? idx
+					: orderBase
+				: idx <= orderBase + MAX_SKIP_GAP + 1
+					? idx
+					: orderBase;
+	// A song from the queue says nothing about the order the player follows.
+	const inOrder = deck.inOrder === true || (isNew && obs.isPlaying && !(direct && !next));
 
 	const items = deck.items.slice();
 	let lastGap = deck.lastGap ?? null;
-	let backFrom = deck.backFrom ?? null;
+	let backFrom = Array.isArray(deck.backFrom) ? deck.backFrom.slice() : [];
 	if (prev !== null && idx < prev) {
 		// Seen again before songs taken as skipped without being seen (a song
 		// from further down came from the queue, a second device, a look back):
@@ -348,22 +394,20 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 				items[i] = { id: it.id, kind: it.kind, state: "pending", at: null };
 		}
 		// Inside the gap just inferred, the player now goes through those songs;
-		// anywhere else it may go back to where it was.
-		if (!(lastGap && idx >= lastGap[0] && idx < lastGap[1]))
-			backFrom = Math.max(backFrom ?? -1, prev);
+		// anywhere else it may go back to where it was — unless it follows the
+		// order again right after a song from the queue.
+		if (!(lastGap && idx >= lastGap[0] && idx < lastGap[1]) && !(direct && next)) {
+			backFrom.push(prev);
+			if (backFrom.length > 10) backFrom = backFrom.slice(-10);
+		}
 		lastGap = null;
 	} else if (lastGap && idx > lastGap[1]) lastGap = null;
-	// Back again beyond where it came from (the song from further up came from
-	// the queue, or was only a look back): only what lies beyond that place
-	// was left now. Going on in order from the earlier place, all counts.
-	const limit = backFrom !== null && idx > backFrom ? backFrom : null;
-	if (limit !== null) backFrom = null;
-	// Where the player is in this order: on with plain steps forward, back
-	// with a move back (a restart, a song from further up); a jump further
-	// down may be a song from the queue, so the place stays.
-	const orderBase = deck.orderAt ?? (deck.continued ? (heldAt ?? null) : deck.top ? -1 : null);
-	const orderAt =
-		orderBase === null ? undefined : idx <= orderBase + MAX_SKIP_GAP + 1 ? idx : orderBase;
+	// Back again beyond a place it came from (the song from further up came
+	// from the queue, or was only a look back): only what lies beyond that
+	// place was left now. Going on in order from the earlier place, all counts.
+	const behind = backFrom.filter((b) => b < idx);
+	const limit = behind.length > 0 ? Math.max(...behind) : null;
+	if (limit !== null) backFrom = backFrom.filter((b) => b >= idx);
 	const passed: TrackId[] = [];
 	const pass = (i: number) => {
 		const it = items[i]!;
@@ -405,7 +449,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		const front = deck.continued === true && heldAt != null && outside && !inOrder && !shared;
 		// Out of the kept songs with a gap: an older order goes on elsewhere.
 		const leaves = deck.continued === true && !inOrder && anchor <= keptEnd && idx > keptEnd + 1;
-		if (trusted && gap <= MAX_SKIP_GAP && !crosses && !front && !leaves) {
+		if (trusted && gap <= MAX_SKIP_GAP && !crosses && !front && !leaves && !direct) {
 			// In our order: the song we saw and everything up to the current one
 			// is behind us.
 			let first = -1;
@@ -416,8 +460,8 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			}
 			if (first >= 0) lastGap = [first, idx];
 		} else if (seenPrev) {
-			// A long jump, or an order we cannot trust: only the song we
-			// actually saw playing was left behind.
+			// A long jump, a song that followed directly, or an order we cannot
+			// trust: only the song we actually saw playing was left behind.
 			pass(prev);
 		}
 	}
@@ -429,6 +473,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			lastTrackId: obs.trackId,
 			lastPlaying: obs.isPlaying,
 			lastObservedAt: obs.at,
+			lastEndAt: endOf(obs),
 			top: false,
 			...(strayedUntil !== undefined ? { strayedUntil } : {}),
 			...(inOrder ? { inOrder } : {}),
