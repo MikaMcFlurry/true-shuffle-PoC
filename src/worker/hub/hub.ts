@@ -2327,10 +2327,10 @@ export class HubCore {
 		return list?.[list.length - 1]?.to === null;
 	}
 
-	/** A private session on, or seen within the last day: the next may begin any time. */
+	/** A private session on, or seen within the last week: the next may begin any time. */
 	private privateLately(): boolean {
 		const last = this.kvGet<{ from: number; to: number | null }[]>("private")?.at(-1);
-		return last !== undefined && (last.to === null || this.now() - last.to < DAY_MS);
+		return last !== undefined && (last.to === null || this.now() - last.to < 7 * DAY_MS);
 	}
 
 	/**
@@ -2363,12 +2363,15 @@ export class HubCore {
 			// Heard since the look before: no more than the time that passed.
 			const since = same ? now - rec!.at : lookBefore > 0 ? now - lookBefore : cur.progressMs;
 			const moved = same ? cur.progressMs - rec!.progress : cur.progressMs;
+			// A new song further in than the time since the look before allows was
+			// sought there: only what later looks see it play counts.
+			const sought = !same && moved > since + 2_000;
 			const start = same ? rec!.start : cur.at - cur.progressMs;
 			this.kvSet("private_song", {
 				id: cur.trackId,
 				start,
 				end: start + cur.durationMs,
-				listened: (same ? rec!.listened : 0) + Math.max(0, Math.min(moved, since)),
+				listened: (same ? rec!.listened : 0) + (sought ? 0 : Math.max(0, Math.min(moved, since))),
 				progress: cur.progressMs,
 				at: now,
 				contextUri: cur.contextUri,
@@ -2406,8 +2409,9 @@ export class HubCore {
 		}
 		const snap = this.kvGet<PlayerSnapshot>("player");
 		const o = snap?.obs;
-		if (!o?.trackId || !snap?.track || o.progressMs < 30_000 || this.now() - snap.at > MINUTE_MS)
-			return;
+		// The look play() just made (an unchanged picture is not stored again).
+		const fresh = this.now() - Math.max(snap?.at ?? 0, this.lastLookAt) <= MINUTE_MS;
+		if (!o?.trackId || !snap?.track || o.progressMs < 30_000 || !fresh) return;
 		const at = this.now();
 		const start = snap.at - o.progressMs;
 		if (this.inGuest(at) || this.inGuestDuring(start, at)) return;

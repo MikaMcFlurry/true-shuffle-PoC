@@ -98,7 +98,7 @@ True Shuffle ist auf den kostenlosen Workers-Plan ausgelegt:
 - Pro Aufruf höchstens 40 Anfragen an externe Dienste (die Grenze liegt bei 50).
 - Höchstens 30 Sender pro Konto. So bleiben auch 5 Konten mit großen Bibliotheken bei höchstens rund einem Drittel der täglichen Kontingente.
 - Gedächtnis und Bibliothek werden in Blöcken gespeichert, damit die SQLite-Kontingente der Durable Objects (Zeilen pro Tag) auch bei 10.000er-Playlists reichen.
-- Solange ein Sender läuft, schaut True Shuffle nach jedem Song nach (bei langen Songs spätestens alle 4 Minuten). In einer privaten Sitzung von Spotify überall, dann alle 30 Sekunden, auch pausiert (nach einer halben Stunde Pause alle 2 Minuten, bis zu 6 Stunden), und in den 24 Stunden danach mindestens alle 2 Minuten. Hält ein Player einen Sender pausiert, alle 30 Sekunden bis jede Minute, später alle 2 Minuten. Sonst seltener, nach 6 Stunden Stille nur noch stündlich.
+- Solange ein Sender läuft, schaut True Shuffle nach jedem Song nach (bei langen Songs spätestens alle 4 Minuten). In einer privaten Sitzung von Spotify überall, dann alle 30 Sekunden, auch pausiert (nach einer halben Stunde Pause alle 2 Minuten, bis zu 6 Stunden), und in den 7 Tagen danach mindestens alle 2 Minuten. Hält ein Player einen Sender pausiert, alle 30 Sekunden bis jede Minute, später alle 2 Minuten. Sonst seltener, nach 6 Stunden Stille nur noch stündlich.
 
 ## Wenn etwas nicht klappt
 

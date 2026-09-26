@@ -772,15 +772,17 @@ describe("the seventh review's cases", () => {
 		expect((await h.hub.play(sid)).ok).toBe(true);
 		await h.listen(20 * MINUTE_MS);
 		const first = stationDeck(h, sid).pl.items.slice();
+		const later = new Set<string>();
 		// Three days of one session a day, each started from the app.
 		for (let day = 0; day < 3; day++) {
 			h.fake.pause();
 			await h.listen(22 * 60 * MINUTE_MS);
 			expect((await h.hub.play(sid)).ok).toBe(true);
+			for (const id of stationDeck(h, sid).pl.items) later.add(id);
 			await h.listen(20 * MINUTE_MS);
+			for (const id of stationDeck(h, sid).pl.items) later.add(id);
 		}
-		const now = stationDeck(h, sid).pl.items;
-		const x = first.slice(150).find((id) => !now.includes(id))!; // only in the version of day 0
+		const x = first.slice(150).find((id) => !later.has(id))!; // only in the version of day 0
 		h.fake.user().recent.unshift({ trackId: x, playedAt: h.clock.t, contextUri: null }); // heard today
 		const heard = earsOn(h);
 		h.fake.user().player.userQueue.push(x);
