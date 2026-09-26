@@ -1728,6 +1728,32 @@ describe("the seventeenth review's cases", () => {
 		expect([...heard].filter((id) => id !== last && !counted.has(id))).toEqual([]);
 	});
 
+	it("a private session in a playlist of one's own, paused and resumed: what plays after counts", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 0, u.devices[0]!.id, false);
+		await privately(h);
+		await h.listen(5 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(3 * MINUTE_MS);
+		u.player.isPlaying = true;
+		const heard = new Set<string>();
+		for (let t = 0; t < 12 * MINUTE_MS; t += 5_000) {
+			await h.listen(5_000);
+			if (u.player.listenedMs >= 30_000) heard.add(h.fake.current()!);
+			if (u.player.listenedMs >= 45_000) h.fake.skip(); // leaves each song after 45 s
+		}
+		const last = h.fake.current();
+		h.fake.pause();
+		await h.listen(30 * MINUTE_MS);
+		const counted = new Set(
+			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
+		);
+		expect(heard.size).toBeGreaterThan(10);
+		expect([...heard].filter((id) => id !== last && !counted.has(id))).toEqual([]);
+	});
+
 	it("a private session: a song left before 30 s is not counted, even after a pause", async () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;

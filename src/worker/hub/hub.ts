@@ -3608,6 +3608,8 @@ export class HubCore {
 		const privately = snap?.obs?.isPlaying === true && this.inPrivateNow();
 		if (privately && snap!.obs!.progressMs < 30_000)
 			candidates.push(Math.max(now + 15_000, snap!.at + 32_000 - snap!.obs!.progressMs));
+		// …and a song skipped into is seen within 30 s, so its own look is timed.
+		if (privately) candidates.push(now + 30_000);
 		if (snap?.obs?.isPlaying && (inDeck || privately)) {
 			// Look right after the song ends: the next one is then seen in its
 			// first seconds — a song turned down is skipped before it is heard,
@@ -3622,6 +3624,15 @@ export class HubCore {
 				end - now <= 4 * MINUTE_MS;
 			candidates.push(aligned ? Math.max(now + 15_000, end) : now + 3 * MINUTE_MS);
 		} else if (snap?.obs?.isPlaying) candidates.push(now + 10 * MINUTE_MS);
+		else if (
+			snap?.obs?.trackId &&
+			this.inPrivateNow() &&
+			s.idleSince !== null &&
+			now - s.idleSince < 6 * HOUR_MS
+		)
+			// A private session paused anywhere: whatever plays on resume must be
+			// seen at 30 s — nothing else will list it.
+			candidates.push(now + (now - s.idleSince < 30 * MINUTE_MS ? 30_000 : 2 * MINUTE_MS));
 		else if (snap && this.heldPace(snap) !== null)
 			// A player holds a station (paused, or out of sight): whatever it plays
 			// on resume is seen within its first seconds.
