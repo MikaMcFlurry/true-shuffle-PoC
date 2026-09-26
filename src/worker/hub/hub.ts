@@ -17,6 +17,7 @@
 
 import {
 	applyPlays,
+	CONTINUE_AHEAD,
 	consumedCount,
 	continueLayout,
 	type Deck,
@@ -1423,7 +1424,9 @@ export class HubCore {
 				memory: (id) => this.memory(id),
 				banned,
 				discoveries,
-				size: continuing ? Math.max((held ?? 0) + 1, DECK_SIZE - suffix.length) + gaps : DECK_SIZE,
+				size: continuing
+					? Math.max((held ?? 0) + 1, DECK_SIZE - suffix.length) + gaps + CONTINUE_AHEAD
+					: DECK_SIZE,
 				rng: this.d.rng,
 				exclude,
 				// Written while a player may resume it: nothing skipped lately.

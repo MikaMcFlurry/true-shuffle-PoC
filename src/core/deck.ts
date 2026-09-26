@@ -298,9 +298,10 @@ export function remainingAhead(deck: Deck): number {
 export const MAX_CONTINUED_ITEMS = 2000;
 
 /**
- * Songs a continuation keeps ahead of the player when new songs are scarce.
- * Appending while it plays cannot help then: every song of the station is
- * in the playlist already, and one song twice would make positions ambiguous.
+ * Songs a continuation keeps ahead of the player near the end of the
+ * playlist. Appending while it plays may not help there: in a small station
+ * every song is in the playlist already, and one song twice would make
+ * positions ambiguous.
  */
 export const CONTINUE_AHEAD = 25;
 
@@ -359,12 +360,9 @@ export function continueLayout(input: ContinueInput): PlannedSlot[] | null {
 		if (input.playable(it.id)) kept.push({ trackId: it.id, kind: it.kind });
 		else if (fresh.length > 0) kept.push(fresh.shift()!);
 	}
-	// Too few new songs for the front: some go ahead of the player first, so
-	// one resuming where it stopped does not run out.
-	const ahead =
-		fresh.length < held + 1 - front.length
-			? fresh.splice(0, Math.max(0, CONTINUE_AHEAD - kept.length))
-			: [];
+	// Near the end of the playlist the best new songs go ahead of the player
+	// first — one resuming where it stopped hears them, not the front.
+	const ahead = fresh.splice(0, Math.max(0, CONTINUE_AHEAD - kept.length));
 	while (front.length < held + 1 && fresh.length > 0) front.unshift(fresh.shift()!);
 	const short = held + 1 - front.length;
 	if (short > 0 && ahead.length === 0 && short <= Math.floor(kept.length / 2)) {
@@ -384,6 +382,9 @@ export function continueLayout(input: ContinueInput): PlannedSlot[] | null {
 		used.add(it.id);
 		fill.push({ trackId: it.id, kind: it.kind });
 	}
+	// Positions first: a station already whole in the playlist has no song to
+	// spare for both, and a gap in front would shift every kept song.
+	while (fill.length + front.length < held + 1 && ahead.length > 0) front.unshift(ahead.pop()!);
 	const layout = [...fill, ...front, ...kept, ...ahead];
 	if (layout.length > MAX_CONTINUED_ITEMS) return null;
 	return [...layout, ...fresh.slice(0, MAX_CONTINUED_ITEMS - layout.length)];

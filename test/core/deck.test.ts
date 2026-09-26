@@ -205,17 +205,21 @@ describe("continueLayout — the next version of a deck a player still holds", (
 	it("keeps every song after the held one at its place and puts new songs in front", () => {
 		const out = ids(
 			continueLayout({
-				items: items(10),
+				items: items(40),
 				held: 3,
 				fresh: slots(["n1", "n2", "n3", "n4", "n5", "n6"]),
 				playable: all,
 				blocked: none,
 			}),
 		)!;
-		expect(out.slice(4, 10)).toEqual(["s4", "s5", "s6", "s7", "s8", "s9"]);
+		expect(out.slice(4, 40)).toEqual(
+			items(40)
+				.slice(4)
+				.map((i) => i.id),
+		);
 		expect(out.slice(0, 4).every((id) => id.startsWith("n"))).toBe(true);
 		expect(out[3]).toBe("n1"); // the best new song where a player resuming by position starts
-		expect(out.slice(10)).toEqual(["n5", "n6"]);
+		expect(out.slice(40)).toEqual(["n5", "n6"]);
 		expect(new Set(out).size).toBe(out.length);
 	});
 
@@ -292,6 +296,19 @@ describe("continueLayout — the next version of a deck a player still holds", (
 		expect(out.slice(96, 100)).toEqual(["s96", "s97", "s98", "s99"]);
 		expect(out.slice(100).length).toBe(21);
 		expect(out.slice(100).every((id) => id.startsWith("n"))).toBe(true);
+		expect(new Set(out).size).toBe(out.length);
+	});
+
+	it("near the end of a station already whole in the playlist: positions come first", () => {
+		// The new songs are the front's own, never reached: nothing to spare.
+		const all100 = items(100);
+		const front = all100.slice(0, 80).map((i) => ({ trackId: i.id, kind: i.kind }));
+		const out = ids(
+			continueLayout({ items: all100, held: 95, fresh: front, playable: all, blocked: none }),
+		)!;
+		expect(out.length).toBe(99);
+		// One song fewer than before (the held one): the kept songs move up by one at most.
+		expect(out.slice(95)).toEqual(["s96", "s97", "s98", "s99"]);
 		expect(new Set(out).size).toBe(out.length);
 	});
 
