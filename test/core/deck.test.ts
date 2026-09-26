@@ -174,15 +174,14 @@ describe("observePlayer", () => {
 		]);
 	});
 
-	it("past the end of the kept songs with a gap, the player may follow an older order", () => {
+	it("going on past the end of the kept songs is this version's order", () => {
+		// An older order meets the songs this version moved forward there, not new ones.
 		let d = observePlayer(continued(), obs("s14", at(1)), URI).deck;
 		let r = observePlayer(d, obs("s17", at(4)), URI);
-		expect(r.passed).toEqual(["s14"]);
-		expect(r.deck.strayedUntil).toBeDefined();
-		// Straight on into the new songs is this version's order.
+		expect(r.deck.strayedUntil).toBeUndefined();
+		expect(r.passed).toEqual(["s14", "s15", "s16"]);
 		d = observePlayer(continued(), obs("s14", at(1)), URI).deck;
 		r = observePlayer(d, obs("s15", at(4)), URI);
-		expect(r.deck.strayedUntil).toBeUndefined();
 		r = observePlayer(r.deck, obs("s18", at(7)), URI);
 		expect(r.passed).toEqual(["s15", "s16", "s17"]);
 	});

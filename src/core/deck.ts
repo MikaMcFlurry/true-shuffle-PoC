@@ -270,11 +270,12 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	// (still at that index in this version), or the top, when we started it.
 	const ours = deck.ours === true && obs.isPlaying;
 	const fromTop = prev === null && ours && deck.top === true;
-	// Off the end of the songs a continuation kept in place — back into its
-	// front, or on with a gap — onto a song an older version held: a player
-	// still in that order plays its tail there, which this version holds
-	// anywhere. Only from near that end: an older order passes every kept
-	// song first. A song only this version holds is reached in its own order.
+	// Off the end of the songs a continuation kept in place, back into its
+	// front, onto a song an older version held: a player still in that order
+	// plays its tail there — the songs this version moved forward. Only from
+	// near that end (or the end of what an earlier version kept): an older
+	// order passes every kept song first. A song only this version holds is
+	// reached in its own order. Going on past an end is a changed place.
 	const ends = [(deck.keptTo ?? deck.items.length - 1) + 1, ...(deck.endsAt ?? [])];
 	const isNew = isNewAt(deck, idx);
 	const heldAt = deck.heldAt;
@@ -283,8 +284,9 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		heldAt != null &&
 		prev !== null &&
 		prev > heldAt &&
+		idx <= heldAt &&
 		!isNew &&
-		ends.some((e) => prev < e && prev >= e - 1 - MAX_SKIP_GAP && (idx <= heldAt || idx > e));
+		ends.some((e) => prev < e && prev >= e - 1 - MAX_SKIP_GAP);
 	// Seen going on in order onto such a song: the player follows this version.
 	const backInOrder = seenPrev && prev !== null && idx === prev + 1 && isNew;
 	const strayedUntil = strays
