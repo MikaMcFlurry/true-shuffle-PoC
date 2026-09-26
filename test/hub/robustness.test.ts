@@ -2179,6 +2179,27 @@ describe("the twentieth review's cases", () => {
 			expect(rows(h, x)).toBe(0);
 		});
 
+	it("the guest's paused song, resumed by the owner after the guest time, counts", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		await h.hub.setGuest(true, 1);
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, u.devices[0]!.id, false);
+		await h.listen(3 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		const x = h.fake.current()!;
+		await h.listen(20_000);
+		h.fake.pause();
+		await h.hub.setGuest(false);
+		await h.listen(30 * MINUTE_MS);
+		u.player.isPlaying = true; // the owner plays it on
+		while (h.fake.current() === x) await h.listen(1_000);
+		h.fake.pause();
+		await h.listen(40 * MINUTE_MS);
+		expect(rows(h, x)).toBe(1);
+	});
+
 	it("a private song paused with seconds left is stamped when it really ended", async () => {
 		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
 		const u = h.fake.user();

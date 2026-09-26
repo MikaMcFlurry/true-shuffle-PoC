@@ -312,6 +312,8 @@ interface GuestPeriod {
 	 */
 	shown?: TrackId;
 	shownUntil?: number;
+	/** A look saw it paused: seen playing after the guest time, the owner resumed it. */
+	shownPaused?: boolean;
 	from: number;
 	to: number;
 }
@@ -2346,19 +2348,32 @@ export class HubCore {
 		return p.shown === id && at > p.to && at <= (p.shownUntil ?? p.to) + 5 * MINUTE_MS;
 	}
 
-	/** At each look: the song the guest leaves on the player, as long as it stays there. */
+	/**
+	 * At each look: the song the guest leaves on the player, as long as it
+	 * stays there. Resumed after the guest time, it is the owner's again, and
+	 * the play's own times decide (guestPlay).
+	 */
 	private noteGuestShown(obs: PlayerObservation | null): void {
 		const periods = this.guestPeriods();
 		const now = this.now();
 		const p = periods.filter((x) => x.from <= now).at(-1);
 		if (!p || now - p.to > 2 * DAY_MS) return;
 		const id = obs?.trackId ?? null;
+		const playing = obs?.isPlaying === true;
 		if (now < p.to) {
 			if (!id) return;
 			p.shown = id;
 			p.shownUntil = now;
-		} else if (id !== null && id === p.shown) p.shownUntil = now;
-		else return;
+			p.shownPaused = !playing;
+		} else if (id === null || id !== p.shown) return;
+		else if (!playing) {
+			p.shownUntil = now;
+			p.shownPaused = true;
+		} else if (p.shownPaused) {
+			delete p.shown;
+			delete p.shownUntil;
+			delete p.shownPaused;
+		} else p.shownUntil = now;
 		this.kvSet("guest", periods);
 	}
 
