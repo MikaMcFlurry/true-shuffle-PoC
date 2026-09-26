@@ -3167,8 +3167,10 @@ export class HubCore {
 			if (deck.changedAt?.includes(i) || this.memory(deck.items[i]!.id).thumb === -1) return true;
 		}
 		// A song turned down that an older version held: where a player still
-		// in that version meets it is unknown, so it may come any time.
-		if (deck.formerOff?.length) {
+		// in that version meets it is unknown, so it may come any time. Only a
+		// continued playlist can be played in an older order: one True Shuffle
+		// started itself replaced whatever the player had loaded.
+		if (deck.continued === true && deck.formerOff?.length) {
 			const former = formerNow(deck, this.now());
 			if (deck.formerOff.some((id) => former.has(id))) return true;
 		}

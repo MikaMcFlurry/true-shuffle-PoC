@@ -89,7 +89,7 @@ Das Objekt weckt sich selbst per Alarm:
 - jede Minute, solange ein Player einen Sender hält (pausiert oder unsichtbar), höchstens 36 Stunden nach dem letzten Hören; ein unveränderter Player-Stand wird dabei nicht jedes Mal gespeichert,
 - 15 Sekunden nach einem eigenen Sprung oder einem Tipp in der App,
 - alle 30 Sekunden, solange ein Player im Sender einen Song spielt, den die Playlist nicht mehr enthält (eine ältere, geladene Reihenfolge),
-- alle 20 Sekunden, wenn 1 bis 3 Songs voraus ein abgelehnter Song steht oder eine Stelle, an der ein Player mit der vorigen Version einen gestrichenen Song träfe,
+- alle 20 Sekunden, wenn 1 bis 3 Songs voraus ein abgelehnter Song steht oder eine Stelle, an der ein Player mit der vorigen Version einen gestrichenen Song träfe, und in einer fortgesetzten Playlist, solange eine ihrer älteren Versionen (36 Stunden) einen inzwischen abgelehnten Song enthielt,
 
 Die schnellen Takte gelten nur nach einem Blick, der geklappt hat. Kann True Shuffle den Player nicht sehen (Spotify-Zugang entzogen, Spotify bremst), bleibt es beim langsamen Takt.
 - alle 10 Minuten bei anderer Wiedergabe,
