@@ -96,6 +96,33 @@ export interface Deck {
 	 * only a song seen playing counts as left, also in the continuations.
 	 */
 	strayedUntil?: number;
+	/**
+	 * Places (from, to exclusive) of songs no version a player may still have
+	 * loaded held: only a player in this version's order reaches them.
+	 */
+	newAt?: [number, number][];
+	/**
+	 * Places right after the songs an earlier version of the chain kept, as
+	 * this version numbers them: a player still in the order before that one
+	 * plays its own tail from there.
+	 */
+	endsAt?: number[];
+}
+
+/** Runs of `true` as [from, to) pairs. */
+export function toRanges(flags: readonly boolean[]): [number, number][] {
+	const out: [number, number][] = [];
+	for (let i = 0; i < flags.length; i++) {
+		if (!flags[i]) continue;
+		const last = out[out.length - 1];
+		if (last && last[1] === i) last[1] = i + 1;
+		else out.push([i, i + 1]);
+	}
+	return out;
+}
+
+function isNewAt(deck: Deck, i: number): boolean {
+	return (deck.newAt ?? []).some(([from, to]) => i >= from && i < to);
 }
 
 /** Where the player is (or was last seen) in this version. */
@@ -118,6 +145,8 @@ export interface RecentPlay {
 	trackId: TrackId;
 	playedAt: number;
 	contextUri: string | null;
+	/** The guest's: it proves the song was not skipped then, but undoes no skip of the owner. */
+	ignored?: boolean;
 }
 
 /**
@@ -241,18 +270,28 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	// (still at that index in this version), or the top, when we started it.
 	const ours = deck.ours === true && obs.isPlaying;
 	const fromTop = prev === null && ours && deck.top === true;
-	// Out of the songs a continuation kept in place — back into its front, or
-	// past their end with a gap: a player still in an older order plays that
-	// order's tail there, and this version holds those songs anywhere.
-	const keptTo = deck.keptTo ?? deck.items.length - 1;
+	// Off the end of the songs a continuation kept in place — back into its
+	// front, or on with a gap — onto a song an older version held: a player
+	// still in that order plays its tail there, which this version holds
+	// anywhere. Only from near that end: an older order passes every kept
+	// song first. A song only this version holds is reached in its own order.
+	const ends = [(deck.keptTo ?? deck.items.length - 1) + 1, ...(deck.endsAt ?? [])];
+	const isNew = isNewAt(deck, idx);
+	const heldAt = deck.heldAt;
 	const strays =
 		deck.continued === true &&
-		deck.heldAt != null &&
+		heldAt != null &&
 		prev !== null &&
-		prev > deck.heldAt &&
-		prev <= keptTo &&
-		(idx <= deck.heldAt || idx > keptTo + 1);
-	const strayedUntil = strays ? obs.at + STRAY_MS : deck.strayedUntil;
+		prev > heldAt &&
+		!isNew &&
+		ends.some((e) => prev < e && prev >= e - 1 - MAX_SKIP_GAP && (idx <= heldAt || idx > e));
+	// Seen going on in order onto such a song: the player follows this version.
+	const backInOrder = seenPrev && prev !== null && idx === prev + 1 && isNew;
+	const strayedUntil = strays
+		? obs.at + STRAY_MS
+		: backInOrder && deck.strayedUntil !== undefined
+			? obs.at
+			: deck.strayedUntil;
 	const trusted = ours && !(strayedUntil !== undefined && obs.at < strayedUntil);
 
 	const items = deck.items.slice();
@@ -334,7 +373,10 @@ export function applyPlays(deck: Deck, plays: readonly RecentPlay[], deckUri: st
 		const i = items.findIndex((it) => it.id === p.trackId && it.state !== "played");
 		if (i < 0) continue;
 		const it = items[i]!;
-		if (it.state === "skipped") unskipped.push(it.id);
+		if (it.state === "skipped") {
+			if (p.ignored) continue;
+			unskipped.push(it.id);
+		}
 		items[i] = { ...it, state: "played", at: p.playedAt };
 		played.push(it.id);
 	}

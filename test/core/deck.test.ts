@@ -187,6 +187,47 @@ describe("observePlayer", () => {
 		expect(r.passed).toEqual(["s15", "s16", "s17"]);
 	});
 
+	it("back to the top from the middle of the kept songs is a restart, not an older order", () => {
+		const d: Deck = { ...deck(40), ours: true, continued: true, heldAt: 4, keptTo: 34 };
+		let r = observePlayer(d, obs("s12", at(1)), URI);
+		r = observePlayer(r.deck, obs("s0", at(4)), URI);
+		expect(r.deck.strayedUntil).toBeUndefined();
+		r = observePlayer(r.deck, obs("s2", at(7)), URI);
+		expect(r.passed).toEqual(["s0", "s1"]);
+	});
+
+	it("near where an older version's kept songs end, an older order may stray too", () => {
+		const d = { ...continued(), endsAt: [9] };
+		let r = observePlayer(d, obs("s8", at(1)), URI);
+		r = observePlayer(r.deck, obs("s1", at(4)), URI);
+		expect(r.deck.strayedUntil).toBeDefined();
+		r = observePlayer(r.deck, obs("s3", at(7)), URI);
+		expect(r.passed).toEqual(["s1"]);
+	});
+
+	it("a song only this version holds is reached in its order: no stray", () => {
+		// s0–s4 are new songs: a restart from the top, not an older order.
+		const d = { ...continued(), newAt: [[0, 5]] as [number, number][] };
+		let r = observePlayer(d, obs("s12", at(1)), URI);
+		r = observePlayer(r.deck, obs("s0", at(4)), URI);
+		expect(r.deck.strayedUntil).toBeUndefined();
+		r = observePlayer(r.deck, obs("s3", at(7)), URI);
+		expect(r.passed).toEqual(["s0", "s1", "s2"]);
+	});
+
+	it("seen going on in order onto a song only this version holds, it trusts gaps again", () => {
+		const d = {
+			...continued(),
+			strayedUntil: T0 + STRAY_MS,
+			newAt: [[15, 20]] as [number, number][],
+		};
+		let r = observePlayer(d, obs("s14", at(1)), URI);
+		r = observePlayer(r.deck, obs("s15", at(4)), URI);
+		expect(r.passed).toEqual(["s14"]);
+		r = observePlayer(r.deck, obs("s18", at(7)), URI);
+		expect(r.passed).toEqual(["s15", "s16", "s17"]);
+	});
+
 	it("trusts gaps again once an older order can no longer be loaded", () => {
 		const d = { ...continued(), strayedUntil: T0 + 5 * 60_000 };
 		let r = observePlayer(d, obs("s6", at(1)), URI);

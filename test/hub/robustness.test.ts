@@ -1141,3 +1141,174 @@ describe("the tenth look: older orders and the edges of guest time", () => {
 		expect(mem?.plays).toBe(1);
 	});
 });
+
+describe("the tenth review's cases", () => {
+	function deckOf(h: H, sid: number) {
+		return JSON.parse(
+			h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!.deck,
+		) as {
+			version: number;
+			items: { id: string }[];
+			heldAt: number | null;
+			changedAt?: number[];
+			strayedUntil?: number;
+		};
+	}
+	const ignoredOf = (h: H, id: string) =>
+		h.sql.first<{ ignored: number }>(
+			`SELECT ignored FROM plays WHERE track_id = ? ORDER BY played_at DESC`,
+			id,
+		)?.ignored;
+
+	it("the owner's short plays right after guest mode goes off count", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		h.hub.setGuest(true, 6);
+		await h.listen(20 * MINUTE_MS);
+		const p = h.fake.user().player;
+		const x = h.fake.current()!;
+		while (h.fake.current() === x) await h.listen(1_000);
+		await h.listen(60_000);
+		const y = h.fake.current()!; // the guest's song, still running
+		h.hub.setGuest(false);
+		await h.listen(30_000);
+		const mine: string[] = [];
+		for (let i = 0; i < 4; i++) {
+			h.fake.skip(); // the owner samples songs for 45 s each
+			mine.push(h.fake.current()!);
+			await h.listen(45_000);
+		}
+		h.fake.skip();
+		await h.listen(20 * MINUTE_MS);
+		p.isPlaying = false;
+		await h.listen(30 * MINUTE_MS);
+		expect(ignoredOf(h, y)).toBe(1);
+		expect(mine.map((id) => ignoredOf(h, id))).toEqual([0, 0, 0, 0]);
+	});
+
+	it("after guest mode ran out on its own, the song running then is the guest's, the next ones count", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		h.hub.setGuest(true, 1);
+		const p = h.fake.user().player;
+		await h.listen(58 * MINUTE_MS);
+		let y = h.fake.current()!;
+		// the song running when the hour is up
+		while ((await h.hub.state()).guest.active) {
+			await h.listen(1_000);
+			y = h.fake.current()!;
+		}
+		while (h.fake.current() === y) await h.listen(1_000);
+		const mine: string[] = [];
+		for (let i = 0; i < 3; i++) {
+			mine.push(h.fake.current()!);
+			await h.listen(45_000);
+			h.fake.skip();
+		}
+		await h.listen(20 * MINUTE_MS);
+		p.isPlaying = false;
+		await h.listen(30 * MINUTE_MS);
+		expect(ignoredOf(h, y)).toBe(1);
+		expect(mine.map((id) => ignoredOf(h, id))).toEqual([0, 0, 0]);
+	});
+
+	it("a guest's play of a song the owner skipped leaves the skip and the ban", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(8 * MINUTE_MS);
+		const p = h.fake.user().player;
+		const y = h.fake.current()!;
+		while (h.fake.current() === y) await h.listen(1_000);
+		const x = h.fake.current()!;
+		while (p.listenedMs < 15_000) await h.listen(1_000);
+		h.fake.skip();
+		await h.listen(25 * MINUTE_MS);
+		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, x)).not.toBeNull();
+		h.hub.setGuest(true, 6);
+		const live = stationDeck(h, sid).pl.items.slice();
+		p.order = live;
+		p.index = live.indexOf(x); // the guest taps it in the same playlist
+		p.progressMs = 0;
+		p.listenedMs = 0;
+		p.currentFromQueue = null;
+		await h.listen(6 * MINUTE_MS);
+		expect(ignoredOf(h, x)).toBe(1);
+		const mem = h.sql.first<{ early_skips: number }>(
+			`SELECT early_skips FROM memory WHERE id = ?`,
+			x,
+		);
+		expect(mem?.early_skips).toBe(1);
+		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, x)).not.toBeNull();
+	});
+
+	it("restarting a continued playlist from the top keeps inferring skips", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(25 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(15 * MINUTE_MS);
+		const { deck, pl } = stationDeck(h, sid);
+		expect(deck.version).toBe(2);
+		const p = h.fake.user().player;
+		const live = pl.items.slice();
+		p.order = live; // resumes the new version where it stopped
+		p.currentFromQueue = null;
+		p.isPlaying = true;
+		await h.listen(4 * MINUTE_MS);
+		p.index = 0; // then the listener starts it from the top in Spotify
+		p.progressMs = 0;
+		p.listenedMs = 0;
+		await h.listen(60_000);
+		// Two songs skipped in a row: the second is never seen playing.
+		while (h.fake.current() === live[0]) await h.listen(1_000);
+		await h.listen(8_000);
+		h.fake.skip();
+		const unseen = h.fake.current()!;
+		await h.listen(3_000);
+		h.fake.skip();
+		await h.listen(30 * MINUTE_MS);
+		expect(deckOf(h, sid).strayedUntil).toBeUndefined();
+		const mem = h.sql.first<{ early_skips: number }>(
+			`SELECT early_skips FROM memory WHERE id = ?`,
+			unseen,
+		);
+		expect(mem?.early_skips).toBe(1);
+	});
+
+	it("a later continuation still knows where an older version changed", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(20 * MINUTE_MS);
+		const p = h.fake.user().player;
+		p.isPlaying = false;
+		const loaded = p.order.slice();
+		const x = loaded[p.index + 8]!;
+		await h.listen(5 * MINUTE_MS);
+		await h.hub.thumb(x, -1); // v2 takes it out: the old order differs there
+		await h.listen(20 * MINUTE_MS);
+		const v2 = deckOf(h, sid);
+		// Where the old order has the turned-down song, v2 has another one.
+		const mark = v2.changedAt?.[0];
+		expect(mark).toBeDefined();
+		expect(loaded.slice(loaded.indexOf(x) - 1, loaded.indexOf(x))).toContain(
+			v2.items[mark! - 1]!.id,
+		);
+		const there = v2.items[mark!]!.id;
+		p.isPlaying = true; // the old order goes on for a song, then stops again
+		const cur = h.fake.current();
+		while (h.fake.current() === cur) await h.listen(1_000);
+		await h.listen(60_000);
+		p.isPlaying = false;
+		await h.hub.thumb(loaded[loaded.indexOf(x) + 4]!, -1); // another rewrite
+		await h.listen(20 * MINUTE_MS);
+		const v3 = deckOf(h, sid);
+		expect(v3.version).toBeGreaterThan(v2.version);
+		expect(v3.changedAt).toContain(v3.items.findIndex((it) => it.id === there));
+	});
+});

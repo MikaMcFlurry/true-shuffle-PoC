@@ -30,6 +30,7 @@ import {
 	remainingAhead,
 	SKIP_GRACE_MS,
 	settleSkips,
+	toRanges,
 } from "../../core/deck";
 import { fromRow, type HistoryRow } from "../../core/history";
 import {
@@ -233,6 +234,11 @@ interface PlayerSnapshot {
 }
 
 interface GuestPeriod {
+	/**
+	 * The song seen playing when guest mode went off by hand (null: nothing
+	 * played). Its play, ending later, is still the guest's.
+	 */
+	tail?: TrackId | null;
 	from: number;
 	to: number;
 }
@@ -1555,8 +1561,35 @@ export class HubCore {
 				while (k > held && !inLayout.has(prev.items[k]!.id)) k--;
 				marks.add((k > held ? inLayout.get(prev.items[k]!.id)! : held) + 1);
 			}
-			deck.changedAt = [...marks];
+			// A player in a still older order meets something else also where the
+			// previous version differed from its own predecessor: at its changed
+			// places and after the songs it kept, wherever those songs sit now.
+			const here = (c: number) => {
+				const id = c > held ? prev.items[c]?.id : undefined;
+				const k = id === undefined ? undefined : inLayout.get(id);
+				return k !== undefined && k >= keptFrom ? k : undefined;
+			};
+			const prevEnds = [...(prev.endsAt ?? [])];
+			if (prev.continued && prev.keptTo != null) prevEnds.push(prev.keptTo + 1);
+			const ends = new Set<number>();
+			for (const e of prevEnds) {
+				const k = here(e);
+				if (k !== undefined) ends.add(k);
+			}
+			for (const c of prev.changedAt ?? []) {
+				const k = here(c);
+				if (k !== undefined) marks.add(k);
+			}
+			for (const k of ends) marks.add(k);
+			deck.changedAt = [...marks].slice(0, 50);
+			deck.endsAt = [...ends].slice(0, 20);
 			deck.leftOut = [...(prev.leftOut ?? []), prev.items[held]!.id].slice(-20);
+			// Songs no version a player may still have loaded held: only a player
+			// in this order reaches them.
+			const older = new Set<TrackId>(prev.items.map((it) => it.id));
+			for (const [id, until] of prev.former ?? []) if (until > this.now()) older.add(id);
+			for (const id of prev.leftOut ?? []) older.add(id);
+			deck.newAt = toRanges(layout.map((sl) => !older.has(sl.trackId)));
 		}
 		// Songs a player may still have loaded from earlier versions: each one
 		// for 36 h after it left the playlist, then forgotten.
@@ -2038,13 +2071,14 @@ export class HubCore {
 	private settleCarried(plays: RecentPlay[]): void {
 		const list = this.kvGet<PendingSkip[]>("pending_skips");
 		if (!list || list.length === 0) return;
-		const played = new Set(plays.map((p) => p.trackId));
+		// A guest's play of the song later on takes nothing back from the owner.
+		const played = new Set(plays.filter((p) => !p.ignored).map((p) => p.trackId));
 		const keep: typeof list = [];
 		for (const e of list) {
 			if (played.has(e.id)) continue; // it was a play after all
 			// …or its play was read in an earlier round than this one.
 			const heard = this.db.first(
-				`SELECT 1 FROM plays WHERE played_at >= ? AND track_id = ? LIMIT 1`,
+				`SELECT 1 FROM plays WHERE played_at >= ? AND track_id = ? AND ignored = 0 LIMIT 1`,
 				(e.since ?? e.at) - SKIP_GRACE_MS,
 				e.id,
 			);
@@ -2086,9 +2120,20 @@ export class HubCore {
 		return this.guestPeriods().some((p) => at >= p.from && at < p.to);
 	}
 
-	/** A play that ran from `start` and ended at `end`: did any of it fall in guest time? */
-	private guestPlay(start: number, end: number): boolean {
-		return this.guestPeriods().some((p) => p.from < end && p.to > start);
+	/**
+	 * Was this play the guest's? Spotify stamps a play when it ends: one that
+	 * ended in guest time was (also the song already running when guest mode
+	 * came on), and so was the one still running when it went off — the song
+	 * seen playing then, or, not seen, a play that can have begun before:
+	 * after the play before it ended, and no earlier than its length allows.
+	 */
+	private guestPlay(id: TrackId, at: number, durationMs: number, before: () => number): boolean {
+		return this.guestPeriods().some((p) => {
+			if (at > p.from && at <= p.to) return true;
+			if (at <= p.to || at - durationMs >= p.to) return false;
+			if (p.tail !== undefined) return p.tail === id;
+			return Math.max(at - durationMs, before()) < p.to;
+		});
 	}
 
 	/** Any guest time between `from` and `to`? */
@@ -2122,6 +2167,8 @@ export class HubCore {
 				return !this.db.first(`SELECT 1 FROM plays WHERE played_at = ? AND track_id = ?`, x.at, id);
 			})
 			.sort((a, b) => a.at - b.at);
+		// When each play of this read ended: one account plays one song at a time.
+		const times = items.map((i) => Date.parse(i.played_at)).filter((t) => Number.isFinite(t));
 		this.kvSet(
 			"recent_keys",
 			items
@@ -2156,9 +2203,17 @@ export class HubCore {
 		for (const { i, at } of fresh) {
 			const id = i.track.id!;
 			const ctx = i.context?.uri ?? null;
-			// Spotify stamps a play when it ends. One that was already running when
-			// guest mode came on, or still running when it went off, was the guest's.
-			const ignored = this.guestPlay(at - (i.track.duration_ms ?? 0), at);
+			const ignored = this.guestPlay(id, at, i.track.duration_ms ?? 0, () => {
+				let before = Number.NEGATIVE_INFINITY;
+				for (const t of times) if (t < at && t > before) before = t;
+				if (before === Number.NEGATIVE_INFINITY)
+					before =
+						this.db.first<{ at: number | null }>(
+							`SELECT MAX(played_at) AS at FROM plays WHERE played_at < ?`,
+							at,
+						)?.at ?? Number.NEGATIVE_INFINITY;
+				return before;
+			});
 			const station = ctx ? deckByUri.get(ctx) : deckHolding(id, at);
 			const packed = packTrack(i.track);
 			this.db.run(
@@ -2171,7 +2226,7 @@ export class HubCore {
 				packed ? JSON.stringify(packed) : null,
 			);
 			s.recentCursor = Math.max(s.recentCursor, at);
-			out.push({ trackId: id, playedAt: at, contextUri: ctx });
+			out.push({ trackId: id, playedAt: at, contextUri: ctx, ...(ignored ? { ignored } : {}) });
 			if (ignored) continue;
 			// The round is judged on memory as it was: a skip that already used the
 			// song up (consume rule) stands in for this play — never counted twice.
@@ -2701,6 +2756,13 @@ export class HubCore {
 			else periods.push({ from: now, to });
 		} else if (open) {
 			open.to = now;
+			const snap = this.kvGet<PlayerSnapshot>("player");
+			const o = snap?.obs;
+			if (snap && now - snap.at <= PLAYER_FRESH_MS)
+				open.tail =
+					o?.isPlaying && o.trackId && snap.at + (o.durationMs - o.progressMs) > now
+						? o.trackId
+						: null;
 		}
 		periods = periods.slice(-50);
 		this.kvSet("guest", periods);
