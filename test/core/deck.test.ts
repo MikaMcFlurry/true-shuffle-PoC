@@ -182,7 +182,7 @@ describe("observePlayer", () => {
 		expect(d.items.slice(3, 6).map((it) => it.state)).toEqual(["passed", "passed", "passed"]);
 	});
 
-	it("goes on counting its place in order, not where a song from the queue sat", () => {
+	it("keeps its place in order: not where a song from the queue sat, back with a restart", () => {
 		let d = observePlayer(started(40), obs("s1", at(1)), URI).deck;
 		d = observePlayer(d, obs("s2", at(4)), URI).deck;
 		expect(d.orderAt).toBe(2);
@@ -190,6 +190,8 @@ describe("observePlayer", () => {
 		expect(d.orderAt).toBe(2);
 		d = observePlayer(d, obs("s3", at(11)), URI).deck;
 		expect(d.orderAt).toBe(3);
+		d = observePlayer(d, obs("s0", at(14)), URI).deck; // back to the top
+		expect(d.orderAt).toBe(0);
 	});
 
 	it("does not mark anything when the listener steps back", () => {

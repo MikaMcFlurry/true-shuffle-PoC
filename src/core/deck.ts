@@ -133,7 +133,11 @@ export interface Deck {
 	 * never reached.
 	 */
 	backFrom?: number | null;
-	/** The furthest place reached going forward in this version's order (no jump). */
+	/**
+	 * Where the player is in this version's order: moved on by plain steps
+	 * forward and by moves back, not by a jump further down (maybe a song from
+	 * the queue). Where an older order goes on from, once this one is replaced.
+	 */
 	orderAt?: number;
 }
 
@@ -351,12 +355,12 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	// was left now. Going on in order from the earlier place, all counts.
 	const limit = backFrom !== null && idx > backFrom ? backFrom : null;
 	if (limit !== null) backFrom = null;
-	// Plain steps forward in this order; not a jump, not a way back.
+	// Where the player is in this order: on with plain steps forward, back
+	// with a move back (a restart, a song from further up); a jump further
+	// down may be a song from the queue, so the place stays.
 	const orderBase = deck.orderAt ?? (deck.continued ? (heldAt ?? null) : deck.top ? -1 : null);
 	const orderAt =
-		orderBase !== null && idx > orderBase && idx <= orderBase + MAX_SKIP_GAP + 1
-			? idx
-			: (orderBase ?? undefined);
+		orderBase === null ? undefined : idx <= orderBase + MAX_SKIP_GAP + 1 ? idx : orderBase;
 	const passed: TrackId[] = [];
 	const pass = (i: number) => {
 		const it = items[i]!;
