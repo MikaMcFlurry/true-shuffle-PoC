@@ -33,9 +33,10 @@ function bookings(h: H, t: ReturnType<typeof truth>) {
 	const log: { id: string; legit: boolean }[] = [];
 	const hub = h.hub as unknown as { bookEarlySkip: (...a: unknown[]) => void };
 	const orig = hub.bookEarlySkip.bind(hub);
-	hub.bookEarlySkip = (st: unknown, id: unknown, rules: unknown, at: unknown) => {
-		log.push({ id: id as string, legit: t.early.has(id as string) });
-		orig(st, id, rules, at);
+	hub.bookEarlySkip = (...args: unknown[]) => {
+		const id = args[1] as string;
+		log.push({ id, legit: t.early.has(id) });
+		orig(...args);
 	};
 	return {
 		invented: () => log.filter((b) => !b.legit).length,

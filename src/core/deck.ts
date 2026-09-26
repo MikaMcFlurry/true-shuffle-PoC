@@ -12,7 +12,7 @@
  * observed; memory (plays) is recorded from the recently-played list only.
  */
 
-import { MINUTE_MS, type SlotKind, type TrackId } from "./types";
+import { MINUTE_MS, type PlannedSlot, type SlotKind, type TrackId } from "./types";
 
 export type DeckItemState = "pending" | "passed" | "played" | "skipped";
 
@@ -292,4 +292,99 @@ export function remainingAhead(deck: Deck): number {
 	let n = 0;
 	for (let i = from; i < deck.items.length; i++) if (deck.items[i]!.state === "pending") n++;
 	return n;
+}
+
+/** The longest deck a continuation writes: every 100 songs cost a request. */
+export const MAX_CONTINUED_ITEMS = 2000;
+
+/**
+ * Songs a continuation keeps ahead of the player when new songs are scarce.
+ * Appending while it plays cannot help then: every song of the station is
+ * in the playlist already, and one song twice would make positions ambiguous.
+ */
+export const CONTINUE_AHEAD = 25;
+
+/**
+ * Songs this version holds for a player: ahead of it, or already reached
+ * (heard, or skipped with the booking still waiting). What stands in front
+ * of where the player came in — a continuation's front — was never reached
+ * and may be planned again; after a restart from the top, everything counts.
+ */
+export function heldForPlayer(deck: Deck): Set<TrackId> {
+	const cameIn =
+		deck.lastIndex != null && deck.lastIndex < (deck.heldAt ?? 0) ? 0 : (deck.heldAt ?? 0);
+	return new Set(
+		deck.items.filter((it, i) => i >= cameIn || it.state !== "pending").map((it) => it.id),
+	);
+}
+
+export interface ContinueInput {
+	/** The version a player still holds. */
+	items: readonly DeckItem[];
+	/** Where that player is in it. */
+	held: number;
+	/**
+	 * New songs, best first: none of them heard or skipped lately, none in
+	 * `items` after `held` or at it.
+	 */
+	fresh: readonly PlannedSlot[];
+	/** May this song play now: not turned down or banned, not heard or skipped lately? */
+	playable: (id: TrackId) => boolean;
+	/** Turned down or banned: never back, not even to fill a gap. */
+	blocked: (id: TrackId) => boolean;
+}
+
+/**
+ * The next version of a deck a player may still hold (paused, or gone quiet
+ * in it). Whatever the player does on resume, it meets no song it just heard:
+ *  - resuming by position plays index `held` (a new song), then the songs
+ *    after it — kept at their places, each one that may no longer play
+ *    replaced by a new song or, with none left, taken out;
+ *  - resuming its loaded order plays what it had anyway;
+ *  - a restart from the top plays the front: new songs, or — when too few
+ *    exist — the last kept songs moved forward, as long as at most half of
+ *    them have to move. Otherwise the front keeps the old songs before the
+ *    held one: only a restart from the top would repeat them, and the
+ *    listener resuming where they stopped keeps every song ahead.
+ * `null`: nothing better than the version the player holds — leave it.
+ */
+export function continueLayout(input: ContinueInput): PlannedSlot[] | null {
+	const { items, held } = input;
+	const fresh = input.fresh.slice();
+	// The new songs up to `held`; the best one at `held` itself, which a
+	// player resuming by position plays first.
+	const front: PlannedSlot[] = fresh.length > 0 ? [fresh.shift()!] : [];
+	let kept: PlannedSlot[] = [];
+	for (const it of items.slice(held + 1)) {
+		if (input.playable(it.id)) kept.push({ trackId: it.id, kind: it.kind });
+		else if (fresh.length > 0) kept.push(fresh.shift()!);
+	}
+	// Too few new songs for the front: some go ahead of the player first, so
+	// one resuming where it stopped does not run out.
+	const ahead =
+		fresh.length < held + 1 - front.length
+			? fresh.splice(0, Math.max(0, CONTINUE_AHEAD - kept.length))
+			: [];
+	while (front.length < held + 1 && fresh.length > 0) front.unshift(fresh.shift()!);
+	const short = held + 1 - front.length;
+	if (short > 0 && ahead.length === 0 && short <= Math.floor(kept.length / 2)) {
+		front.unshift(...kept.slice(kept.length - short));
+		kept = kept.slice(0, kept.length - short);
+	} else if (short > 0 && front.length === 0 && kept.length >= 2) {
+		front.push(kept[kept.length - 1]!);
+		kept = kept.slice(0, -1);
+	}
+	if (front.length === 0) return null;
+	const used = new Set<TrackId>([items[held]!.id]);
+	for (const s of [...front, ...kept, ...ahead, ...fresh]) used.add(s.trackId);
+	const fill: PlannedSlot[] = [];
+	for (let i = 0; i < held && fill.length + front.length < held + 1; i++) {
+		const it = items[i]!;
+		if (used.has(it.id) || input.blocked(it.id)) continue;
+		used.add(it.id);
+		fill.push({ trackId: it.id, kind: it.kind });
+	}
+	const layout = [...fill, ...front, ...kept, ...ahead];
+	if (layout.length > MAX_CONTINUED_ITEMS) return null;
+	return [...layout, ...fresh.slice(0, MAX_CONTINUED_ITEMS - layout.length)];
 }

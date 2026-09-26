@@ -34,7 +34,7 @@ Worker → **Settings** → **Variables and Secrets** → **Add**:
 | --- | --- | --- |
 | `SPOTIFY_CLIENT_ID` | Text | Client ID deiner Spotify-App |
 | `APP_SECRET` | **Secret** | mindestens 32 zufällige Zeichen, z. B. von `openssl rand -base64 48` |
-| `ALLOWED_SPOTIFY_IDS` | Text, optional | kommagetrennte Spotify-Benutzer-IDs, die sich anmelden dürfen (leer: alle, die Spotify zulässt) |
+| `ALLOWED_SPOTIFY_IDS` | Text, optional | kommagetrennte Spotify-Benutzer-IDs, die True Shuffle nutzen dürfen (leer: alle, die Spotify zulässt). Wer entfernt wird, ist sofort abgemeldet. |
 | `LASTFM_API_KEY` | Secret, optional | kostenloser Schlüssel von [last.fm/api](https://www.last.fm/api/account/create), bessere Entdeckungen |
 | `ANTHROPIC_API_KEY` | Secret, optional | für KI-Vorschläge mit Claude (siehe unten); ohne Schlüssel nutzt True Shuffle kostenlos Workers AI |
 | `ANTHROPIC_MODEL` | Text, optional | Standard: `claude-sonnet-5` |
@@ -96,9 +96,9 @@ Jeder Vorschlag wird vor der Aufnahme in Spotify gesucht. Erfundene Songs kommen
 True Shuffle ist auf den kostenlosen Workers-Plan ausgelegt:
 
 - Pro Aufruf höchstens 40 Anfragen an externe Dienste (die Grenze liegt bei 50).
-- Höchstens 30 Sender pro Konto. So bleiben auch 5 Konten mit großen Bibliotheken bei rund einem Viertel des täglichen Lesekontingents.
+- Höchstens 30 Sender pro Konto. So bleiben auch 5 Konten mit großen Bibliotheken bei höchstens rund einem Drittel der täglichen Kontingente.
 - Gedächtnis und Bibliothek werden in Blöcken gespeichert, damit die SQLite-Kontingente der Durable Objects (Zeilen pro Tag) auch bei 10.000er-Playlists reichen.
-- Synchronisiert wird alle 3 Minuten, solange ein Sender läuft, danach seltener. Nach 6 Stunden Stille nur noch stündlich.
+- Solange ein Sender läuft, schaut True Shuffle nach jedem Song nach (bei langen Songs spätestens alle 4 Minuten), danach seltener. Nach 6 Stunden Stille nur noch stündlich.
 
 ## Wenn etwas nicht klappt
 

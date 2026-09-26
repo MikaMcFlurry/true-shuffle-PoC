@@ -57,6 +57,9 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 - [ ] Handy-App von True Shuffle schließen und eine Stunde normal über Spotify hören, dann öffnen: Alles wurde mitgezählt, denn der Server liest im Hintergrund.
 - [ ] Eine Sender-Playlist in Spotify löschen und den Sender antippen: True Shuffle legt sie neu an und spielt.
 - [ ] Zweites Konto (Freund/Freundin) anmelden: Die Gedächtnisse sind getrennt.
+- [ ] Einen kleinen Sender (unter 300 Songs) im Auto hören, 20 Minuten Pause, weiterhören: Es geht mit dem nächsten Song weiter, kein Autoplay, nichts von vorhin. In Spotify ist die Playlist danach fast so lang wie vorher.
+- [ ] Einen Song aus einem laufenden Sender mit Daumen runter ablehnen, während ein anderer Song läuft, dann die App schließen: Kommt der Song im Auto doch noch (aus der geladenen Reihenfolge), springt Spotify nach wenigen Sekunden weiter.
+- [ ] Einen Sender auf „Nie wieder auf diesem Sender" stellen, einen Song darin nach 10 Sekunden überspringen, 25 Minuten warten. Im Cloudflare-Dashboard (Worker → Observability → Logs) steht „Früh übersprungen" ohne „(erschlossen)", und der Song kommt auf diesem Sender nicht mehr. Läuft er später woanders, hebt Daumen hoch die Sperre auf.
 - [ ] Im Cloudflare-Dashboard (Worker → Observability) keine gehäuften Fehler.
 - [ ] Den größten Sender (oder „Alles“) antippen. Unter Worker → Metrics → Errors erscheint kein „Exceeded CPU Time Limits“.
 

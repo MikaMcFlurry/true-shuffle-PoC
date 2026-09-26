@@ -121,6 +121,11 @@ const MIGRATIONS: string[][] = [
 		// A song's discovery rows, looked up on every play.
 		`CREATE INDEX IF NOT EXISTS discoveries_by_track ON discoveries (id)`,
 	],
+	[
+		// An early skip seen under the "consume" rule uses the song up for the
+		// round; one only inferred does not (last_skipped_at covers both).
+		`ALTER TABLE memory ADD COLUMN consumed_at INTEGER`,
+	],
 ];
 
 export function migrate(db: SqlDb): void {

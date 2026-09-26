@@ -212,15 +212,16 @@ describe("a rewrite continues what a player may still have loaded", () => {
 		h.fake.pause();
 		await h.hub.state({ live: true });
 		const before = stationDeck(h, sid);
+		const beforeItems = before.pl.items.slice();
 		const held = before.deck.lastIndex!;
-		const pausedSong = before.pl.items[held]!;
+		const pausedSong = beforeItems[held]!;
 		h.clock.t += 15 * MINUTE_MS;
 		await h.listen(1_000);
 		const after = stationDeck(h, sid);
 		expect(after.deck.version).toBeGreaterThan(before.deck.version);
 		// Resuming by position or by the loaded order plays the same songs.
 		expect(after.pl.items.slice(held + 1, held + 40)).toEqual(
-			before.pl.items.slice(held + 1, held + 40),
+			beforeItems.slice(held + 1, held + 40),
 		);
 		// A restart from the top plays nothing heard today, not even the paused song.
 		const heard = new Set(
@@ -260,7 +261,7 @@ describe("a skip booked before its play showed up", () => {
 		const leftAt = h.clock.t;
 		h.clock.t += 16_000;
 		await h.hub.state({ live: true });
-		await h.listen(25 * MINUTE_MS);
+		await h.listen(30 * MINUTE_MS);
 		const early = () =>
 			h.sql.first<{ early_skips: number }>(`SELECT early_skips FROM memory WHERE id = ?`, song)
 				?.early_skips;
@@ -378,12 +379,131 @@ describe("a song turned down that a player still has queued", () => {
 			if (h.fake.current() === later) heardFor = h.fake.user().player.listenedMs;
 			orig(user, at);
 		};
-		// The app is open: it looks every few seconds.
-		for (let i = 0; i < 180; i++) {
-			await h.listen(5_000);
-			await h.hub.state({ live: true });
-		}
+		// The app is closed: only the hub's own looks at the player.
+		await h.listen(15 * MINUTE_MS);
 		expect(heardFor).toBeGreaterThan(0);
 		expect(heardFor).toBeLessThan(30_000);
+	});
+});
+
+describe("a small station after a car stop (red-team 4)", () => {
+	for (const size of [60, 100, 200, 300]) {
+		it(`keeps every song ahead and fills the front without repeats (${size} songs)`, async () => {
+			const h = await onboarded({ tracks: size });
+			const sid = h.stationIds[0]!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(25 * MINUTE_MS);
+			h.fake.pause();
+			await h.hub.state({ live: true });
+			const before = stationDeck(h, sid);
+			const items = before.pl.items.slice();
+			const held = before.deck.lastIndex!;
+			h.clock.t += 15 * MINUTE_MS;
+			await h.listen(1_000);
+			const after = stationDeck(h, sid).pl.items.slice();
+			// The songs after the paused one: at their places; at most the last
+			// half of them moved to the front.
+			const ahead = items.length - held - 1;
+			const kept = after.slice(held + 1);
+			expect(kept).toEqual(items.slice(held + 1, held + 1 + kept.length));
+			expect(kept.length).toBeGreaterThanOrEqual(Math.ceil(ahead / 2));
+			expect(after.length).toBeGreaterThanOrEqual(held + 1 + kept.length);
+			// Nothing heard today anywhere: resuming by position, by song, or from the top.
+			const heard = new Set(
+				h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
+			);
+			expect(after.filter((id) => heard.has(id))).toEqual([]);
+			expect(new Set(after).size).toBe(after.length);
+		});
+	}
+});
+
+describe("a song heard somewhere else while a player holds the station (red-team 4)", () => {
+	it("gives up its place in the continued playlist", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(20 * MINUTE_MS);
+		h.fake.pause();
+		await h.hub.state({ live: true });
+		const before = stationDeck(h, sid);
+		const items = before.pl.items.slice();
+		const held = before.deck.lastIndex!;
+		const elsewhere = items[held + 5]!;
+		// Heard in full on another device, no context reported.
+		h.fake.user().recent.unshift({ trackId: elsewhere, playedAt: h.clock.t, contextUri: null });
+		h.clock.t += 15 * MINUTE_MS;
+		await h.listen(1_000);
+		const after = stationDeck(h, sid).pl.items.slice();
+		expect(after).not.toContain(elsewhere);
+		expect(after.slice(held + 1, held + 5)).toEqual(items.slice(held + 1, held + 5));
+		expect(after.slice(held + 6, held + 30)).toEqual(items.slice(held + 6, held + 30));
+	});
+});
+
+describe("skip rules the hub sees with the app closed (red-team 4)", () => {
+	/** Wait until the next song has been playing for `ms`. */
+	async function intoNextSong(h: H, ms: number) {
+		const running = h.fake.current();
+		while (h.fake.current() === running) await h.listen(1_000);
+		await h.listen(ms);
+		return h.fake.current()!;
+	}
+
+	it("a thumb up lifts a ban the skip rule set", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const song = await intoNextSong(h, 10_000);
+		h.fake.skip();
+		await h.listen(30 * MINUTE_MS);
+		const bans = () =>
+			h.sql.all<{ track_id: string }>(`SELECT track_id FROM bans WHERE station_id = ?`, sid);
+		expect(bans().map((b) => b.track_id)).toEqual([song]);
+		await h.hub.thumb(song, 1);
+		expect(bans()).toEqual([]);
+	});
+
+	it("under consume, only a skip seen playing uses the song up", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "consume" } });
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const seen = await intoNextSong(h, 8_000);
+		h.fake.skip();
+		await h.listen(4_000);
+		const inferred = h.fake.current()!; // skipped before any look at the player
+		h.fake.skip();
+		await h.listen(30 * MINUTE_MS);
+		const row = (id: string) =>
+			h.sql.first<{ early_skips: number; consumed_at: number | null }>(
+				`SELECT early_skips, consumed_at FROM memory WHERE id = ?`,
+				id,
+			)!;
+		expect(row(seen).early_skips).toBe(1);
+		expect(row(seen).consumed_at).not.toBeNull();
+		expect(row(inferred).early_skips).toBe(1);
+		expect(row(inferred).consumed_at).toBeNull();
+	});
+});
+
+describe("the rewrite after a stop (red-team 4)", () => {
+	it("comes ten minutes after the last song, even with a rewrite queued while playing", async () => {
+		// Whenever the stop falls between two looks of a waiting rewrite.
+		for (let extra = 0; extra < 10; extra++) {
+			const h = await onboarded({ tracks: 600 });
+			const sid = h.stationIds[0]!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(4 * MINUTE_MS);
+			h.fake.skip(); // queues a rewrite for when nobody listens
+			await h.listen((12 + extra) * MINUTE_MS);
+			const version = stationDeck(h, sid).deck.version;
+			h.fake.pause();
+			const stoppedAt = h.clock.t;
+			while (stationDeck(h, sid).deck.version === version && h.clock.t - stoppedAt < 30 * MINUTE_MS)
+				await h.listen(15_000);
+			expect(h.clock.t - stoppedAt, `stop ${extra} min later`).toBeLessThanOrEqual(11 * MINUTE_MS);
+		}
 	});
 });

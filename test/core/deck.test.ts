@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
 	applyPlays,
 	consumedCount,
+	continueLayout,
 	type Deck,
+	heldForPlayer,
+	MAX_CONTINUED_ITEMS,
 	MAX_SKIP_GAP,
 	newDeck,
 	observePlayer,
@@ -189,5 +192,148 @@ describe("applyPlays + settleSkips", () => {
 		let d = deck(10);
 		d = observePlayer(d, obs("s3"), URI).deck;
 		expect(remainingAhead(d)).toBe(6);
+	});
+});
+
+describe("continueLayout — the next version of a deck a player still holds", () => {
+	const items = (n: number) => deck(n).items;
+	const slots = (ids: string[]) => ids.map((trackId) => ({ trackId, kind: "fresh" as const }));
+	const ids = (l: { trackId: string }[] | null) => l?.map((s) => s.trackId) ?? null;
+	const all = () => true;
+	const none = () => false;
+
+	it("keeps every song after the held one at its place and puts new songs in front", () => {
+		const out = ids(
+			continueLayout({
+				items: items(10),
+				held: 3,
+				fresh: slots(["n1", "n2", "n3", "n4", "n5", "n6"]),
+				playable: all,
+				blocked: none,
+			}),
+		)!;
+		expect(out.slice(4, 10)).toEqual(["s4", "s5", "s6", "s7", "s8", "s9"]);
+		expect(out.slice(0, 4).every((id) => id.startsWith("n"))).toBe(true);
+		expect(out[3]).toBe("n1"); // the best new song where a player resuming by position starts
+		expect(out.slice(10)).toEqual(["n5", "n6"]);
+		expect(new Set(out).size).toBe(out.length);
+	});
+
+	it("never shrinks a small station: with no new songs the last kept songs move forward", () => {
+		const out = ids(
+			continueLayout({ items: items(100), held: 8, fresh: [], playable: all, blocked: none }),
+		)!;
+		// Songs 9… stay where they were; the nine front slots hold the last nine songs.
+		expect(out.length).toBe(100 - 9 + 0);
+		expect(out.slice(9, 20)).toEqual(
+			items(100)
+				.slice(9, 20)
+				.map((i) => i.id),
+		);
+		expect(out.slice(0, 9)).toEqual(
+			items(100)
+				.slice(91, 100)
+				.map((i) => i.id),
+		);
+		expect(out.some((id) => ["s0", "s1", "s8"].includes(id))).toBe(false);
+	});
+
+	it("deep in a short deck: keeps the songs ahead for a player resuming where it stopped", () => {
+		const out = ids(
+			continueLayout({ items: items(300), held: 250, fresh: [], playable: all, blocked: none }),
+		)!;
+		expect(out.length).toBeGreaterThanOrEqual(300 - 2);
+		// Position 250 holds a song nobody heard yet, and everything after it too.
+		expect(Number(out[250]!.slice(1))).toBeGreaterThan(250);
+		for (let i = 251; i < out.length; i++) expect(Number(out[i]!.slice(1))).toBeGreaterThan(250);
+	});
+
+	it("replaces a kept song heard elsewhere in the meantime, at its place", () => {
+		const out = ids(
+			continueLayout({
+				items: items(12),
+				held: 2,
+				fresh: slots(["n1", "n2", "n3", "n4"]),
+				playable: (id) => id !== "s6",
+				blocked: none,
+			}),
+		)!;
+		expect(out[6]).toBe("n2");
+		expect(out).not.toContain("s6");
+		expect(out.slice(3, 6)).toEqual(["s3", "s4", "s5"]);
+		expect(out.slice(7, 12)).toEqual(["s7", "s8", "s9", "s10", "s11"]);
+	});
+
+	it("takes out a kept song that may not play when nothing can replace it", () => {
+		const out = ids(
+			continueLayout({
+				items: items(12),
+				held: 1,
+				fresh: slots(["n1", "n2"]),
+				playable: (id) => id !== "s5",
+				blocked: (id) => id === "s5",
+			}),
+		)!;
+		expect(out).not.toContain("s5");
+		expect(out.slice(2, 5)).toEqual(["s2", "s3", "s4"]);
+	});
+
+	it("near the end with few new songs: keeps some ahead of the player", () => {
+		const out = ids(
+			continueLayout({
+				items: items(100),
+				held: 95,
+				fresh: slots(Array.from({ length: 40 }, (_, i) => `n${i}`)),
+				playable: all,
+				blocked: none,
+			}),
+		)!;
+		// The four kept songs, then new ones: 25 ahead of the player in all.
+		expect(out.slice(96, 100)).toEqual(["s96", "s97", "s98", "s99"]);
+		expect(out.slice(100).length).toBe(21);
+		expect(out.slice(100).every((id) => id.startsWith("n"))).toBe(true);
+		expect(new Set(out).size).toBe(out.length);
+	});
+
+	it("leaves the version alone when it cannot be improved", () => {
+		expect(
+			continueLayout({ items: items(3), held: 1, fresh: [], playable: all, blocked: none }),
+		).toBeNull();
+	});
+
+	it("never writes more than the budget allows", () => {
+		expect(
+			continueLayout({
+				items: items(MAX_CONTINUED_ITEMS + 50),
+				held: 10,
+				fresh: slots(["n1"]),
+				playable: all,
+				blocked: none,
+			}),
+		).toBeNull();
+		const out = continueLayout({
+			items: items(20),
+			held: 2,
+			fresh: slots(Array.from({ length: MAX_CONTINUED_ITEMS }, (_, i) => `n${i}`)),
+			playable: all,
+			blocked: none,
+		})!;
+		expect(out.length).toBe(MAX_CONTINUED_ITEMS);
+	});
+});
+
+describe("heldForPlayer — what a new plan must not take from a deck", () => {
+	it("a deck started from the top: every song", () => {
+		expect(heldForPlayer({ ...deck(10), lastIndex: 4 }).size).toBe(10);
+	});
+
+	it("a continuation: not its front, which the player never reached", () => {
+		const d: Deck = { ...deck(10), heldAt: 5, lastIndex: 7 };
+		d.items[2] = { ...d.items[2]!, state: "played", at: T0 };
+		expect([...heldForPlayer(d)].sort()).toEqual(["s2", "s5", "s6", "s7", "s8", "s9"].sort());
+	});
+
+	it("a continuation restarted from the top: every song", () => {
+		expect(heldForPlayer({ ...deck(10), heldAt: 5, lastIndex: 1 }).size).toBe(10);
 	});
 });

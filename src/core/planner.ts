@@ -8,7 +8,9 @@
  * Guarantees, each covered by tests:
  *  - a song appears at most once per queue;
  *  - blocked songs (thumb down, station ban) never appear;
- *  - nothing heard or early-skipped in the last 24 h appears;
+ *  - nothing heard in the last 24 h appears;
+ *  - nothing skipped early in the last 24 h appears while anything else is
+ *    left — and never with `allowCooling: false`;
  *  - songs not yet heard in the current round come before any song of the
  *    next round ("every song eventually");
  *  - favourites repeat only after their cooldown;
@@ -64,6 +66,12 @@ export interface PlanInput {
 	 * they count for the round like every other song.
 	 */
 	exclude?: ReadonlySet<TrackId>;
+	/**
+	 * May songs skipped early in the last 24 h fill up the end when nothing
+	 * else is left? Default yes — a small station must still play when the
+	 * listener starts it; no for a deck rewritten in the background.
+	 */
+	allowCooling?: boolean;
 }
 
 export interface PlanResult {
@@ -165,7 +173,11 @@ export function planQueue(input: PlanInput): PlanResult {
 	// The fresh lane continues into the next round once this round is used up:
 	// nothing of the next round is ever placed before a song of this round.
 	const lanes: Record<SlotKind, Candidate[]> = {
-		fresh: [...freshOrdered, ...nextRoundOrdered, ...coolingOrdered],
+		fresh: [
+			...freshOrdered,
+			...nextRoundOrdered,
+			...(input.allowCooling === false ? [] : coolingOrdered),
+		],
 		favorite: favoritesOrdered,
 		discovery: discoveryCandidates,
 	};

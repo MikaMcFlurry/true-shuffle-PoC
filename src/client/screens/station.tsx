@@ -486,7 +486,11 @@ export function Station({
 										"Zählt als gehört",
 										"Erledigt für diese Runde, ohne Einfluss auf deinen Geschmack.",
 									],
-									["ban", "Nie wieder auf diesem Sender", "Rückgängig über Daumen hoch."],
+									[
+										"ban",
+										"Nie wieder auf diesem Sender",
+										"Gilt, sobald True Shuffle das Überspringen sieht. Aufheben: Daumen hoch, wenn der Song läuft.",
+									],
 								] as const
 							).map(([v, t, sub]) => (
 								<label key={v} class="radio">

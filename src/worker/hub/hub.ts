@@ -18,7 +18,9 @@
 import {
 	applyPlays,
 	consumedCount,
+	continueLayout,
 	type Deck,
+	heldForPlayer,
 	newDeck,
 	observePlayer,
 	type PlayerObservation,
@@ -29,7 +31,13 @@ import {
 	settleSkips,
 } from "../../core/deck";
 import { fromRow, type HistoryRow } from "../../core/history";
-import { heardInRound, type ImportedStats, mergeMemory } from "../../core/memory";
+import {
+	coolingDown,
+	heardInRound,
+	type ImportedStats,
+	isBlocked,
+	mergeMemory,
+} from "../../core/memory";
 import { type DiscoveryEntry, type PoolEntry, planQueue } from "../../core/planner";
 import type { Rng } from "../../core/random";
 import {
@@ -39,6 +47,8 @@ import {
 	HOUR_MS,
 	MINUTE_MS,
 	normaliseRules,
+	type PlannedSlot,
+	type SkipPolicy,
 	type SlotKind,
 	type StationRules,
 	type TrackId,
@@ -188,6 +198,7 @@ interface MemoryRow {
 	plays: number;
 	early_skips: number;
 	last_skipped_at: number | null;
+	consumed_at: number | null;
 	thumb: number;
 }
 
@@ -324,8 +335,21 @@ export class HubCore {
 		};
 	}
 
+	/**
+	 * Every row written counts against the account's daily writes: clocks that
+	 * moved by less than a minute change no decision and are not stored.
+	 */
 	private setSyncState(s: SyncState): void {
-		this.kvSet("sync", s);
+		const cur = this.kvGet<SyncState>("sync");
+		const clocks: (keyof SyncState)[] = ["lastPlayerAt", "lastActivityAt", "lastRecentAt"];
+		const same =
+			cur &&
+			(Object.keys(s) as (keyof SyncState)[]).every((k) =>
+				clocks.includes(k)
+					? Math.abs((s[k] ?? 0) - (cur[k] ?? 0)) < MINUTE_MS
+					: s[k] === (cur[k] ?? null),
+			);
+		if (!same) this.kvSet("sync", s);
 	}
 
 	// =======================================================================
@@ -999,18 +1023,21 @@ export class HubCore {
 			plays: 0,
 			early_skips: 0,
 			last_skipped_at: null,
+			consumed_at: null,
 			thumb: 0,
 		};
 		const next = fn({ ...cur });
 		this.db.run(
-			`INSERT INTO memory (id, last_played_at, plays, early_skips, last_skipped_at, thumb) VALUES (?, ?, ?, ?, ?, ?)
+			`INSERT INTO memory (id, last_played_at, plays, early_skips, last_skipped_at, consumed_at, thumb) VALUES (?, ?, ?, ?, ?, ?, ?)
 			 ON CONFLICT(id) DO UPDATE SET last_played_at = excluded.last_played_at, plays = excluded.plays,
-			   early_skips = excluded.early_skips, last_skipped_at = excluded.last_skipped_at, thumb = excluded.thumb`,
+			   early_skips = excluded.early_skips, last_skipped_at = excluded.last_skipped_at,
+			   consumed_at = excluded.consumed_at, thumb = excluded.thumb`,
 			id,
 			next.last_played_at,
 			next.plays,
 			next.early_skips,
 			next.last_skipped_at,
+			next.consumed_at ?? null,
 			next.thumb,
 		);
 		this.liveLookups.set(id, next);
@@ -1060,6 +1087,7 @@ export class HubCore {
 					plays: r.plays,
 					earlySkips: r.early_skips,
 					lastSkippedAt: r.last_skipped_at,
+					consumedAt: r.consumed_at ?? null,
 					liked: false,
 					thumb: (r.thumb as -1 | 0 | 1) ?? 0,
 				}
@@ -1319,20 +1347,26 @@ export class HubCore {
 		return pl.id;
 	}
 
-	/** Plan a fresh deck from memory and write it into the station's playlist. */
 	/**
-	 * `background`: nobody asked to start it. If a player may still have the
-	 * previous version loaded (it was in use lately), the new one continues it:
-	 * the songs still ahead stay in front, in their order, so whatever a player
-	 * resumes plays on consistently — and a restart from the top in Spotify
-	 * begins with an unheard song. When True Shuffle starts the station itself
-	 * (`start`), it plans afresh and plays from the top.
+	 * Plan a deck from memory and write it into the station's playlist.
+	 *
+	 * `start`: True Shuffle starts it at the top, so it plans afresh.
+	 * `background`: nobody asked to start it. If a player may still hold the
+	 * previous version (it was in use lately), the new one continues it — see
+	 * `continueLayout`: whatever the player resumes, it meets nothing it just
+	 * heard. `null`: the held version cannot be improved and stays as it is.
 	 */
+	private async rebuildDeck(client: SpotifyClient, st: StationRow, mode?: "start"): Promise<Deck>;
+	private async rebuildDeck(
+		client: SpotifyClient,
+		st: StationRow,
+		mode: "background",
+	): Promise<Deck | null>;
 	private async rebuildDeck(
 		client: SpotifyClient,
 		st: StationRow,
 		mode: "start" | "background" = "start",
-	): Promise<Deck> {
+	): Promise<Deck | null> {
 		if (this.stationOrphaned(st))
 			throw new HubError(
 				"gone",
@@ -1358,7 +1392,7 @@ export class HubCore {
 			!!uri &&
 			(snap?.obs?.contextUri === uri || (!snap?.obs && this.kvGet<string>("last_context") === uri));
 		const held = prev ? position(prev) : null;
-		let continuing =
+		const continuing =
 			mode === "background" &&
 			!!prev &&
 			held !== null &&
@@ -1368,10 +1402,18 @@ export class HubCore {
 		// player resuming by position and one resuming its loaded order play the
 		// same songs. The held song itself leaves this version.
 		const suffix = continuing && prev && held !== null ? prev.items.slice(held + 1) : [];
+		// New songs never come from what the held version holds for the player:
+		// ahead of it, or reached (see `heldForPlayer`). Without a player, a skip
+		// still waiting for its booking keeps the song out as well.
 		const exclude =
-			continuing && prev && held !== null
-				? new Set([...suffix.map((it) => it.id), prev.items[held]!.id])
-				: undefined;
+			continuing && prev
+				? heldForPlayer(prev)
+				: new Set((prev?.items ?? []).filter((it) => it.state === "passed").map((it) => it.id));
+		const playable = (id: TrackId) => {
+			const m = this.memory(id);
+			return !isBlocked(m, banned) && !coolingDown(m, this.now());
+		};
+		const gaps = suffix.filter((it) => !playable(it.id)).length;
 		const plan = () =>
 			planQueue({
 				now: this.now(),
@@ -1381,9 +1423,11 @@ export class HubCore {
 				memory: (id) => this.memory(id),
 				banned,
 				discoveries,
-				size: continuing ? Math.max((held ?? 0) + 1, DECK_SIZE - suffix.length) : DECK_SIZE,
+				size: continuing ? Math.max((held ?? 0) + 1, DECK_SIZE - suffix.length) + gaps : DECK_SIZE,
 				rng: this.d.rng,
 				exclude,
+				// Written while a player may resume it: nothing skipped lately.
+				allowCooling: !continuing,
 			});
 		let result = plan();
 		if (result.freshRemaining === 0 && result.poolSize > 0) {
@@ -1404,24 +1448,26 @@ export class HubCore {
 			result = plan();
 		}
 		rules = this.rulesOf(st);
-		if (result.slots.length === 0) {
-			throw new HubError(
-				"empty",
-				"Alle Songs dieses Senders liefen in den letzten 24 Stunden. Morgen geht es weiter.",
-			);
+		let layout: PlannedSlot[] | null;
+		if (continuing && prev && held !== null) {
+			layout = continueLayout({
+				items: prev.items,
+				held,
+				fresh: result.slots,
+				playable,
+				blocked: (id) => isBlocked(this.memory(id), banned),
+			});
+			// Nothing better than what the player holds: leave it as it is.
+			if (!layout) return null;
+		} else {
+			if (result.slots.length === 0) {
+				throw new HubError(
+					"empty",
+					"Alle Songs dieses Senders liefen in den letzten 24 Stunden. Morgen geht es weiter.",
+				);
+			}
+			layout = result.slots;
 		}
-		// Continuation layout: fresh unheard songs up to the held position (what
-		// a restart from the top plays), then the kept songs at their places,
-		// then the rest of the plan. Too small a pool to fill the front: replan.
-		if (continuing && held !== null && result.slots.length < held + 1) continuing = false;
-		const layout: { trackId: TrackId; kind: SlotKind }[] =
-			continuing && held !== null
-				? [
-						...result.slots.slice(0, held + 1),
-						...suffix.map((it) => ({ trackId: it.id, kind: it.kind })),
-						...result.slots.slice(held + 1),
-					]
-				: result.slots;
 		let playlistId = await this.ensurePlaylist(client, st);
 		const uris = layout.map((s) => `spotify:track:${s.trackId}`);
 		try {
@@ -1481,11 +1527,18 @@ export class HubCore {
 			if (!this.playerFresh())
 				return { done: false, state: { stationId }, delayMs: IDLE_BEFORE_REBUILD_MS };
 		}
-		if (this.isListeningTo(st))
-			return { done: false, state: { stationId }, delayMs: IDLE_BEFORE_REBUILD_MS };
+		if (this.isListeningTo(st)) {
+			// Look again the moment the pause is long enough, not a step later.
+			const active = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
+			const wait = Math.max(MINUTE_MS, active + IDLE_BEFORE_REBUILD_MS - this.now());
+			return { done: false, state: { stationId }, delayMs: wait };
+		}
 		try {
 			await this.freshenMemory(client);
-			await this.rebuildDeck(client, this.stationRow(stationId) ?? st, "background");
+			const deck = await this.rebuildDeck(client, this.stationRow(stationId) ?? st, "background");
+			// A player holds a version nothing better can replace yet: songs cool
+			// down by the hour, so look again then.
+			if (!deck) return { done: false, state: { stationId }, delayMs: HOUR_MS };
 		} catch (err) {
 			if (err instanceof HubError && err.code === "empty") {
 				this.log("info", "deck", err.message);
@@ -1502,6 +1555,7 @@ export class HubCore {
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck || !st.playlist_id) return { done: true };
 		if (remainingAhead(deck) >= EXTEND_BELOW) return { done: true };
+		// Never a song twice in one playlist: positions must stay unambiguous.
 		const inDeck = new Set(deck.items.map((i) => i.id));
 		const banned = new Set([...this.bans(st.id), ...inDeck]);
 		const pool = this.stationPool(st);
@@ -1584,7 +1638,7 @@ export class HubCore {
 			at: this.now(),
 		};
 		this.kvSet("player", snap);
-		this.kvDel("player_stale");
+		if (this.kvGet("player_stale")) this.kvDel("player_stale");
 		if (obs?.contextUri && obs.contextUri !== this.kvGet<string>("last_context"))
 			this.kvSet("last_context", obs.contextUri);
 		const wasPlaying = s.idleSince === null && s.lastActivityAt > 0;
@@ -1613,7 +1667,16 @@ export class HubCore {
 		this.settleCarried(plays);
 
 		// Walk every deck: confirm plays, read the position, book early skips.
-		const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
+		const activityBefore = this.kvGet<Record<string, number>>("deck_activity") ?? {};
+		const activity = { ...activityBefore };
+		// A play inside a station's playlist is activity there too — also when
+		// the player itself cannot be seen (a phone playing offline).
+		for (const p of plays) {
+			const st = p.contextUri
+				? this.stations().find((x) => this.deckUri(x) === p.contextUri)
+				: null;
+			if (st && p.playedAt > (activity[String(st.id)] ?? 0)) activity[String(st.id)] = p.playedAt;
+		}
 		let inStation: { st: number; uri: string; inDeck: boolean } | null = null;
 		for (const st of this.stations()) {
 			let deck = this.deckOf(st);
@@ -1631,10 +1694,11 @@ export class HubCore {
 				// alone must still be refreshed for the next start.
 				if (obs.isPlaying) activity[String(st.id)] = this.now();
 				const r = observePlayer(deck, obs, uri);
+				// Stored only when more than the time of the look changed.
+				if (!sameDeck(deck, r.deck)) changed = true;
 				deck = r.deck;
-				changed = true;
 				inStation = { st: st.id, uri, inDeck: r.index !== null };
-				if (obs.isPlaying)
+				if (obs.isPlaying && this.now() - (st.last_played_at ?? 0) >= 5 * MINUTE_MS)
 					this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), st.id);
 				if (r.orderBroken && obs.shuffle && this.now() - s.shuffleFixAt > 10 * MINUTE_MS) {
 					s.shuffleFixAt = this.now();
@@ -1701,7 +1765,12 @@ export class HubCore {
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3);
 			}
 		}
-		this.kvSet("deck_activity", activity);
+		if (
+			Object.entries(activity).some(
+				([k, v]) => activityBefore[k] === undefined || v - activityBefore[k]! >= MINUTE_MS,
+			)
+		)
+			this.kvSet("deck_activity", activity);
 
 		// Housekeeping on a slow clock.
 		if (this.now() - s.lastPlaylistsAt > 12 * HOUR_MS)
@@ -1937,11 +2006,15 @@ export class HubCore {
 		return out;
 	}
 
-	/** Keep each station's "fresh remaining" counter honest and start rounds. */
-	private countRound(id: TrackId, before: TrackMemory, at: number): void {
+	/**
+	 * Keep each station's "fresh remaining" counter honest and start rounds.
+	 * `only`: a skip under that rule — it uses the song up only there.
+	 */
+	private countRound(id: TrackId, before: TrackMemory, at: number, only?: SkipPolicy): void {
 		for (const st of this.stations()) {
 			if (st.fresh_remaining === null) continue;
 			const rules = this.rulesOf(st);
+			if (only && rules.skipPolicy !== only) continue;
 			if (heardInRound(before, st.round_started_at, rules.skipPolicy)) continue;
 			if (!this.stationPoolHas(st, id)) continue;
 			const left = st.fresh_remaining - 1;
@@ -2007,7 +2080,10 @@ export class HubCore {
 				at,
 			);
 		}
-		if (rules.skipPolicy === "consume") this.countRound(id, before, at);
+		if (rules.skipPolicy === "consume") {
+			this.updateLive(id, (r) => ({ ...r, consumed_at: Math.max(r.consumed_at ?? 0, at) }));
+			this.countRound(id, before, at, "consume");
+		}
 		// A discovery skipped early is not for this listener.
 		this.db.run(
 			`UPDATE discoveries SET status = 'rejected', updated_at = ? WHERE id = ? AND status IN ('candidate', 'probation')`,
@@ -2040,6 +2116,7 @@ export class HubCore {
 			early_skips: Math.max(0, r.early_skips - 1),
 			// Its "not now" pause goes too; having just been heard keeps it away anyway.
 			last_skipped_at: null,
+			consumed_at: null,
 		}));
 		// A ban that false skip caused: in this station's deck no ban existed
 		// before it; elsewhere, the one booked at that very moment.
@@ -2283,6 +2360,9 @@ export class HubCore {
 			this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), fresh.id);
 			this.log("info", "play", `„${fresh.name}“ gestartet auf ${target.name}`);
 			this.kvSet("player_stale", 1);
+			// The deck is current now: a rewrite queued before would only wait on
+			// its own clock and come late after the next stop.
+			this.db.run(`DELETE FROM jobs WHERE key = ?`, `deck:${fresh.id}`);
 			await this.scheduleSoon(20_000);
 			return { ok: true, deviceName: target.name };
 		} catch (err) {
@@ -2393,6 +2473,8 @@ export class HubCore {
 			if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) await this.playerAction("next");
 		}
 		if (value === 1) {
+			// "Nie wieder auf diesem Sender" ends with a thumb up, on every station.
+			this.db.run(`DELETE FROM bans WHERE track_id = ?`, trackId);
 			const rows = this.db.all<{ status: string }>(
 				`SELECT status FROM discoveries WHERE id = ?`,
 				trackId,
@@ -2496,8 +2578,16 @@ export class HubCore {
 			imageUrl: null,
 		};
 		if (opts.live && this.isConnected()) {
+			// An open app looks at Spotify when the picture may have changed: after
+			// a tap, when the song should have ended, and otherwise every 45 s — the
+			// display runs the progress on by itself in between.
 			const snap = this.kvGet<PlayerSnapshot>("player");
-			if (!snap || this.kvGet("player_stale") || this.now() - snap.at > 15_000) {
+			const age = snap ? this.now() - snap.at : Number.POSITIVE_INFINITY;
+			const ended =
+				!!snap?.obs?.isPlaying &&
+				snap.obs.durationMs > 0 &&
+				snap.obs.progressMs + age > snap.obs.durationMs + 2000;
+			if (!snap || this.kvGet("player_stale") || age > 45_000 || (ended && age > 5_000)) {
 				const budget = new RequestBudget(8);
 				await this.sync(budget);
 				await this.ensureAlarm();
@@ -2850,8 +2940,16 @@ export class HubCore {
 		const inDeck = snap?.obs?.contextUri
 			? this.stations().some((st) => this.deckUri(st) === snap.obs?.contextUri)
 			: false;
-		if (snap?.obs?.isPlaying && inDeck) candidates.push(now + 3 * MINUTE_MS);
-		else if (snap?.obs?.isPlaying) candidates.push(now + 10 * MINUTE_MS);
+		if (snap?.obs?.isPlaying && inDeck) {
+			// Look right after the song ends: the next one is then seen in its
+			// first seconds — a song turned down is skipped before it is heard,
+			// and a skip is seen rather than inferred. Songs longer than a few
+			// minutes get a look in between.
+			const end = snap.at + snap.obs.durationMs - snap.obs.progressMs + 2000;
+			const aligned =
+				snap.obs.durationMs > 0 && now - snap.at <= PLAYER_FRESH_MS && end - now <= 4 * MINUTE_MS;
+			candidates.push(aligned ? Math.max(now + 15_000, end) : now + 3 * MINUTE_MS);
+		} else if (snap?.obs?.isPlaying) candidates.push(now + 10 * MINUTE_MS);
 		else if (s.idleSince !== null && now - s.idleSince > 6 * HOUR_MS)
 			candidates.push(now + 60 * MINUTE_MS);
 		else candidates.push(now + 20 * MINUTE_MS);
@@ -2905,6 +3003,14 @@ interface ImportState {
 	count?: number;
 	snapshot?: string | null;
 	total?: number;
+}
+
+/** Equal but for the moment of the last look at the player. */
+function sameDeck(a: Deck, b: Deck): boolean {
+	return (
+		JSON.stringify({ ...a, lastObservedAt: null }) ===
+		JSON.stringify({ ...b, lastObservedAt: null })
+	);
 }
 
 function fail(code: PlayErrorCode, message: string): PlayResult {

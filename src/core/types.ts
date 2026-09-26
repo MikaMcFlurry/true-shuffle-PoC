@@ -39,6 +39,11 @@ export interface TrackMemory {
 	/** Skips under 30 s. They lower the weight; three make a song rare. */
 	earlySkips: number;
 	lastSkippedAt: number | null;
+	/**
+	 * Used up for the round by an early skip seen under the `consume` rule —
+	 * never by one only inferred between two looks at the player.
+	 */
+	consumedAt?: number | null;
 	/** In the listener's Spotify "Lieblingssongs". */
 	liked: boolean;
 	/** Thumb in True Shuffle: -1 = never again, 0 = none, 1 = favourite. */

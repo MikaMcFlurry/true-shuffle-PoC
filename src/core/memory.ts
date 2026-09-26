@@ -72,8 +72,8 @@ export function stalenessBoost(m: TrackMemory, now: number): number {
 /** Heard in this round? (The round is what "every song eventually" counts.) */
 export function heardInRound(m: TrackMemory, roundStartedAt: number, policy: SkipPolicy): boolean {
 	if (m.lastPlayedAt !== null && m.lastPlayedAt >= roundStartedAt) return true;
-	// Under `consume`, an early skip uses up the song for this round.
-	if (policy === "consume" && m.lastSkippedAt !== null && m.lastSkippedAt >= roundStartedAt) {
+	// Under `consume`, an early skip (seen, not inferred) uses up the song for this round.
+	if (policy === "consume" && m.consumedAt != null && m.consumedAt >= roundStartedAt) {
 		return true;
 	}
 	return false;

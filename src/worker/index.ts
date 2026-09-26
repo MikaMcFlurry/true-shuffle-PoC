@@ -48,7 +48,18 @@ async function readSession(c: {
 	const payload = signed ? await new Keys(c.env.APP_SECRET!).verify(signed) : null;
 	const [uid, exp, epoch] = payload?.split("|") ?? [];
 	if (!uid || !(Number(exp) >= Date.now()) || !Number.isInteger(Number(epoch))) return null;
+	// Taken off the list: signed out at once, not when the cookie runs out.
+	if (!allowed(c.env, uid)) return null;
 	return { uid, epoch: Number(epoch) };
+}
+
+/** `ALLOWED_SPOTIFY_IDS`, if set, names everyone who may use this True Shuffle. */
+function allowed(env: Env, uid: string): boolean {
+	const allow = (env.ALLOWED_SPOTIFY_IDS ?? "")
+		.split(",")
+		.map((s) => s.trim())
+		.filter(Boolean);
+	return allow.length === 0 || allow.includes(uid);
 }
 
 function hubFor(env: Env, uid: string): DurableObjectStub<UserHub> {
@@ -130,11 +141,7 @@ app.get("/auth/callback", async (c) => {
 		return c.redirect("/?login=failed");
 	}
 	if (!me?.id) return c.redirect("/?login=failed");
-	const allow = (c.env.ALLOWED_SPOTIFY_IDS ?? "")
-		.split(",")
-		.map((s) => s.trim())
-		.filter(Boolean);
-	if (allow.length > 0 && !allow.includes(me.id)) return c.redirect("/?login=not_allowed");
+	if (!allowed(c.env, me.id)) return c.redirect("/?login=not_allowed");
 
 	const hub = hubFor(c.env, me.id);
 	const res = (await hub.attach(
