@@ -21,7 +21,6 @@ import {
 	consumedCount,
 	continueLayout,
 	type Deck,
-	DIRECT_MS,
 	heldForPlayer,
 	inRanges,
 	markBooked,
@@ -118,6 +117,17 @@ interface InStation {
 	uri: string;
 	inDeck: boolean;
 	index: number | null;
+}
+
+/** An early skip booked in memory. */
+interface Booking {
+	st: number;
+	id: TrackId;
+	/** When it was seen left: the skip's time in memory, and its ban's. */
+	at: number;
+	/** The look before, when it was still ahead or playing. */
+	from?: number;
+	seen: boolean;
 }
 
 /** An inferred skip booked with a condition: taken back once that play shows up. */
@@ -241,6 +251,16 @@ interface JobRow {
 	run_after: number;
 	attempts: number;
 	error: string | null;
+}
+
+/** The song playing in a private session, and how far a look saw it get. */
+interface PrivateSong {
+	id: TrackId;
+	start: number;
+	end: number;
+	heard: number;
+	contextUri: string | null;
+	track: PackedTrack;
 }
 
 /** A play True Shuffle saw end in a private session (Spotify may never list it). */
@@ -1816,7 +1836,7 @@ export class HubCore {
 		}
 		const obs = toObservation(state, this.now());
 		this.notePrivate(state?.device?.is_private_session === true, s.lastPlayerAt);
-		const heardPrivately = this.privatePlayEnded(this.kvGet<PlayerSnapshot>("player"), obs);
+		const heardPrivately = this.notePrivateSong(obs, state?.item ? packTrack(state.item) : null);
 		s.lastPlayerAt = this.now();
 		const snap: PlayerSnapshot = {
 			obs,
@@ -2196,13 +2216,7 @@ export class HubCore {
 			}
 			// Only that booking: a later skip of the song stays, and one never
 			// booked (guest time) takes nothing else back.
-			const row = this.liveRow(e.id);
-			if (!row || row.last_skipped_at === null || row.last_skipped_at < e.at) continue;
-			this.updateLive(e.id, (r) => ({
-				...r,
-				early_skips: Math.max(0, r.early_skips - 1),
-				last_skipped_at: r.last_skipped_at === e.at ? null : r.last_skipped_at,
-			}));
+			if (!this.undoBookingAt(e.st, e.id, e.at)) continue;
 			this.log(
 				"info",
 				"skip",
@@ -2301,41 +2315,50 @@ export class HubCore {
 	}
 
 	/**
-	 * The song seen at the look before, played in a private session and now
-	 * over — counted as heard only when this look proves it: it was seen at
-	 * 30 s or more, the next song began right at its end, or the next song of
-	 * its station began 30 s or more after it did. Spotify may never list it.
+	 * A song played in a private session counts as heard exactly when a look
+	 * saw it at 30 s or more (the looks are timed for that). Kept per song, so
+	 * it counts once it is over — also when the session ended meanwhile.
 	 */
-	private privatePlayEnded(
-		before: PlayerSnapshot | null,
-		now: PlayerObservation | null,
+	private notePrivateSong(
+		obs: PlayerObservation | null,
+		track: PackedTrack | null,
 	): SeenPlay | null {
-		const p = before?.obs;
-		if (!p?.trackId || p.durationMs <= 0 || !before?.track) return null;
-		if (!this.inPrivateDuring(p.at, this.now())) return null;
-		if (now?.trackId === p.trackId && (now.isPlaying || now.progressMs >= p.progressMs))
-			return null;
-		const start = p.at - p.progressMs;
-		const end = start + p.durationMs;
-		const next = now?.isPlaying && now.trackId ? now.at - now.progressMs : null;
-		let heard = p.progressMs >= 30_000;
-		if (p.isPlaying && next !== null && !heard) {
-			if (Math.abs(next - end) <= DIRECT_MS) heard = true;
-			else if (next - start >= 30_000 && this.followsInStation(p, now!)) heard = true;
+		const rec = this.kvGet<PrivateSong>("private_song");
+		const cur = obs?.trackId ? obs : null;
+		// The same song, not begun again.
+		const same =
+			rec !== null &&
+			cur !== null &&
+			cur.trackId === rec.id &&
+			!(cur.isPlaying && cur.progressMs + 5_000 < rec.heard);
+		let out: SeenPlay | null = null;
+		if (rec && !same) {
+			if (rec.heard >= 30_000) {
+				const at = Math.min(rec.end, this.now());
+				if (!this.inGuest(at) && !this.inGuestDuring(rec.start, at))
+					out = {
+						id: rec.id,
+						at,
+						start: rec.start,
+						end: rec.end,
+						contextUri: rec.contextUri,
+						track: rec.track,
+					};
+			}
+			this.kvDel("private_song");
 		}
-		if (!heard) return null;
-		const at = Math.min(end, next ?? this.now());
-		if (this.inGuest(at) || this.inGuestDuring(start, at)) return null;
-		return { id: p.trackId, at, start, end, contextUri: p.contextUri, track: before.track };
-	}
-
-	/** The song now is the next after the one before in that station's deck. */
-	private followsInStation(p: PlayerObservation, now: PlayerObservation): boolean {
-		if (!p.contextUri || p.contextUri !== now.contextUri) return false;
-		const st = this.stations().find((x) => this.deckUri(x) === p.contextUri);
-		const items = st ? this.deckOf(st)?.items : undefined;
-		const i = items?.findIndex((it) => it.id === p.trackId) ?? -1;
-		return i >= 0 && items![i + 1]?.id === now.trackId;
+		if (cur?.trackId && track && cur.durationMs > 0 && this.inPrivateNow()) {
+			const start = same ? rec!.start : cur.at - cur.progressMs;
+			this.kvSet("private_song", {
+				id: cur.trackId,
+				start,
+				end: start + cur.durationMs,
+				heard: Math.max(same ? rec!.heard : 0, cur.progressMs),
+				contextUri: cur.contextUri,
+				track,
+			} satisfies PrivateSong);
+		}
+		return out;
 	}
 
 	/**
@@ -2471,10 +2494,15 @@ export class HubCore {
 			// The round is judged on memory as it was: a skip that already used the
 			// song up (consume rule) stands in for this play — never counted twice.
 			const before = this.memory(id);
-			// Its play arrived after all: a skip booked around that time was none.
-			const skippedAt = this.liveRow(id)?.last_skipped_at ?? null;
-			if (skippedAt !== null && at >= skippedAt - 30 * MINUTE_MS && at <= skippedAt + 5 * MINUTE_MS)
-				this.undoSkip(null, id);
+			// Its play arrived after all: the skip booked for the time it played
+			// was none — that one, not whichever came last.
+			const wrong = this.bookings().find(
+				(b) =>
+					b.id === id &&
+					at >= (b.from ?? b.at - 30 * MINUTE_MS) - MINUTE_MS &&
+					at <= b.at + 5 * MINUTE_MS,
+			);
+			if (wrong) this.undoBookingAt(wrong.st, id, wrong.at);
 			this.livePlay(id, at);
 			this.countRound(id, before, at);
 			this.noteDiscoveryHeard(id);
@@ -2545,6 +2573,7 @@ export class HubCore {
 		if (this.inPrivateDuring(from ?? at, at)) return false;
 		const before = this.memory(id);
 		this.liveSkip(id, at);
+		this.noteBooking({ st: st.id, id, at, ...(from !== undefined ? { from } : {}), seen });
 		this.log(
 			"info",
 			"skip",
@@ -2595,14 +2624,58 @@ export class HubCore {
 	 * it is the song's latest, only its count once a later skip followed, and
 	 * nothing if it is no longer there (taken back already).
 	 */
-	private undoBooking(stationId: number, deck: Deck, id: TrackId): void {
-		const it = deck.items.find((x) => x.id === id && x.state === "skipped");
-		const at = it?.booked;
+	private bookings(): Booking[] {
+		return this.kvGet<Booking[]>("bookings") ?? [];
+	}
+
+	/** Every early skip booked, for a day: a late play takes back the one it proves wrong. */
+	private noteBooking(b: Booking): void {
+		const keep = this.bookings().filter(
+			(x) => x.at > this.now() - LATE_PLAY_WINDOW_MS - 2 * HOUR_MS,
+		);
+		keep.push(b);
+		this.kvSet("bookings", keep.slice(-500));
+	}
+
+	/**
+	 * Take back exactly that booking: all of it while it is the song's latest
+	 * skip, only its count and its ban once a later skip followed, nothing if
+	 * it was taken back already.
+	 */
+	private undoBookingAt(stationId: number, id: TrackId, at: number): boolean {
+		const list = this.bookings();
+		const i = list.findIndex((b) => b.st === stationId && b.id === id && b.at === at);
+		if (i < 0) return false;
+		const b = list[i]!;
+		list.splice(i, 1);
+		this.kvSet("bookings", list);
 		const row = this.liveRow(id);
-		if (at === undefined || !row || row.last_skipped_at === null || row.last_skipped_at < at)
-			return;
-		if (row.last_skipped_at === at) this.undoSkip(stationId, id);
-		else this.updateLive(id, (r) => ({ ...r, early_skips: Math.max(0, r.early_skips - 1) }));
+		if (!row || row.last_skipped_at === null || row.last_skipped_at < at) return false;
+		if (row.last_skipped_at === at) {
+			if (b.seen) this.undoSkip(stationId, id);
+			else
+				this.updateLive(id, (r) => ({
+					...r,
+					early_skips: Math.max(0, r.early_skips - 1),
+					last_skipped_at: null,
+				}));
+		} else {
+			this.updateLive(id, (r) => ({ ...r, early_skips: Math.max(0, r.early_skips - 1) }));
+			if (b.seen)
+				this.db.run(
+					`DELETE FROM bans WHERE station_id = ? AND track_id = ? AND at = ?`,
+					stationId,
+					id,
+					at,
+				);
+		}
+		return true;
+	}
+
+	/** A deck's own record of what it booked: take back exactly that. */
+	private undoBooking(stationId: number, deck: Deck, id: TrackId): void {
+		const at = deck.items.find((x) => x.id === id && x.state === "skipped")?.booked;
+		if (at !== undefined) this.undoBookingAt(stationId, id, at);
 	}
 
 	private undoSkip(stationId: number | null, id: TrackId): void {
@@ -3144,7 +3217,7 @@ export class HubCore {
 			warnings.push({
 				code: "private_session",
 				message:
-					"Private Sitzung in Spotify — True Shuffle zählt jetzt nur Songs, die es selbst zu Ende laufen sieht, und keine Skips.",
+					"Private Sitzung in Spotify — True Shuffle zählt jetzt nur Songs, die es selbst 30 Sekunden laufen sieht, und keine Skips.",
 			});
 		const np = this.nowPlaying(snap);
 		if (np?.smartShuffle) {
@@ -3530,7 +3603,12 @@ export class HubCore {
 		// A station playing a song its playlist no longer holds: the player
 		// follows an older order, and what comes next is unknown — look often.
 		if (snap?.obs?.isPlaying && this.olderOrder(snap.obs)) candidates.push(now + 30_000);
-		if (snap?.obs?.isPlaying && inDeck) {
+		// In a private session Spotify may never list a play: see every song
+		// once it has played 30 s, wherever it plays — that look counts it.
+		const privately = snap?.obs?.isPlaying === true && this.inPrivateNow();
+		if (privately && snap!.obs!.progressMs < 30_000)
+			candidates.push(Math.max(now + 15_000, snap!.at + 32_000 - snap!.obs!.progressMs));
+		if (snap?.obs?.isPlaying && (inDeck || privately)) {
 			// Look right after the song ends: the next one is then seen in its
 			// first seconds — a song turned down is skipped before it is heard,
 			// and a skip is seen rather than inferred. Songs longer than a few

@@ -1684,3 +1684,140 @@ describe("the sixteenth review's cases", () => {
 			expect(falseSkips(h)).toBe(0);
 		});
 });
+
+describe("the seventeenth review's cases", () => {
+	type Hidden = {
+		bookEarlySkip: (
+			st: unknown,
+			id: string,
+			rules: unknown,
+			at: number,
+			seen: boolean,
+			from?: number,
+		) => boolean;
+		stationRow: (id: number) => unknown;
+		rulesOf: (st: unknown) => unknown;
+		recordPlays: (items: unknown[], s: unknown) => unknown;
+		syncState: () => unknown;
+	};
+
+	async function privately(h: H) {
+		const u = h.fake.user();
+		const dev = u.devices.find((d) => d.id === u.player.deviceId) ?? u.devices[0]!;
+		dev.privateSession = true;
+		return dev;
+	}
+
+	it("a private session in a playlist of one's own: every song heard is counted", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 0, u.devices[0]!.id, false);
+		await privately(h);
+		const heard = new Set<string>();
+		for (let t = 0; t < 60 * MINUTE_MS; t += 5_000) {
+			await h.listen(5_000);
+			if (u.player.isPlaying && u.player.listenedMs >= 30_000) heard.add(h.fake.current()!);
+		}
+		const last = h.fake.current();
+		h.fake.pause();
+		await h.listen(30 * MINUTE_MS);
+		const counted = new Set(
+			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
+		);
+		expect([...heard].filter((id) => id !== last && !counted.has(id))).toEqual([]);
+	});
+
+	it("a private session: a song left before 30 s is not counted, even after a pause", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await privately(h);
+		await h.listen(5 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		const x = h.fake.current()!;
+		await h.listen(10_000);
+		h.fake.pause();
+		await h.listen(70_000);
+		h.fake.user().player.isPlaying = true;
+		await h.listen(5_000);
+		h.fake.skip(); // heard 15 s, over 85 s
+		await h.listen(5 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(30 * MINUTE_MS);
+		expect(h.sql.first(`SELECT 1 FROM plays WHERE track_id = ?`, x)).toBeNull();
+	});
+
+	it("a private session that ends while a song heard past 30 s is paused: it still counts", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const dev = await privately(h);
+		await h.listen(5 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		const x = h.fake.current()!;
+		await h.listen(100_000);
+		h.fake.pause();
+		await h.listen(2 * MINUTE_MS);
+		dev.privateSession = false;
+		await h.listen(20 * MINUTE_MS);
+		h.fake.user().player.isPlaying = true;
+		await h.listen(5_000);
+		h.fake.skip();
+		await h.listen(5 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(30 * MINUTE_MS);
+		expect(h.sql.first(`SELECT 1 FROM plays WHERE track_id = ?`, x)).not.toBeNull();
+	});
+
+	it("a play arriving late takes back the skip it proves wrong, not the latest one", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const hub = h.hub as unknown as Hidden;
+		const a = h.stationIds[0]!;
+		const all = h.allId;
+		await h.hub.updateStation(a, { rules: { skipPolicy: "ban" } });
+		await h.hub.updateStation(all, { rules: { skipPolicy: "ban" } });
+		const x = stationDeck(h, a).pl.items[3]!;
+		const t1 = h.clock.t;
+		const t2 = t1 + 15 * MINUTE_MS;
+		const book = (st: number, at: number) =>
+			hub.bookEarlySkip(
+				hub.stationRow(st),
+				x,
+				hub.rulesOf(hub.stationRow(st)),
+				at,
+				true,
+				at - 200_000,
+			);
+		expect(book(a, t1)).toBe(true); // wrongly: its play was late
+		expect(book(all, t2)).toBe(true); // really
+		const track = h.fake.tracks.get(x)!;
+		hub.recordPlays(
+			[
+				{
+					track: {
+						id: x,
+						name: track.name,
+						duration_ms: track.durationMs,
+						artists: [],
+						album: { name: "", images: [] },
+					},
+					played_at: new Date(t1 - 10_000).toISOString(),
+					context: null,
+				},
+			],
+			hub.syncState(),
+		);
+		const row = h.sql.first<{ e: number; l: number | null }>(
+			`SELECT early_skips AS e, last_skipped_at AS l FROM memory WHERE id = ?`,
+			x,
+		)!;
+		const bans = h.sql.all<{ station_id: number }>(
+			`SELECT station_id FROM bans WHERE track_id = ?`,
+			x,
+		);
+		expect([row.e, row.l, bans.map((b) => b.station_id)]).toEqual([1, t2, [all]]);
+	});
+});
