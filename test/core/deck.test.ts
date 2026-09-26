@@ -312,6 +312,18 @@ describe("continueLayout — the next version of a deck a player still holds", (
 		expect(new Set(out).size).toBe(out.length);
 	});
 
+	it("leaves a version alone whose held position lies past its end", () => {
+		expect(
+			continueLayout({
+				items: items(5),
+				held: 5,
+				fresh: slots(["n1"]),
+				playable: all,
+				blocked: none,
+			}),
+		).toBeNull();
+	});
+
 	it("leaves the version alone when it cannot be improved", () => {
 		expect(
 			continueLayout({ items: items(3), held: 1, fresh: [], playable: all, blocked: none }),

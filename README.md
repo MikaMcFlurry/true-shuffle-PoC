@@ -14,7 +14,7 @@ Frühes Überspringen (unter 30 Sekunden) heißt „nicht jetzt, und seltener". 
 
 Jeder Sender ist eine private Playlist „True Shuffle · <Sender>" in deinem Spotify-Konto. True Shuffle schreibt sie aus deinem Gedächtnis neu, und zwar nur dann, wenn gerade niemand zuhört. Spotify spielt sie ganz normal mit ausgeschaltetem Shuffle ab. Deshalb funktioniert es auf jedem Gerät, auch im Auto, und auch, wenn du die Playlist direkt in Spotify startest. Spotifys Warteschlangen-API muss dafür nicht dauerhaft mitlaufen.
 
-Im Hintergrund schaut ein Durable Object pro Hörer nach jedem Song, was läuft und was gelaufen ist. Daraus erkennt es Durchläufe, frühe Skips und Musik außerhalb von True Shuffle und plant die nächste Reihenfolge. Die Entscheidungen dahinter stehen in [docs/adr/ADR-006-cloudflare-neustart.md](docs/adr/ADR-006-cloudflare-neustart.md).
+Im Hintergrund schaut ein Durable Object pro Hörer nach, was läuft und was gelaufen ist: während ein Sender spielt nach jedem Song, sonst seltener. Daraus erkennt es Durchläufe, frühe Skips und Musik außerhalb von True Shuffle und plant die nächste Reihenfolge. Die Entscheidungen dahinter stehen in [docs/adr/ADR-006-cloudflare-neustart.md](docs/adr/ADR-006-cloudflare-neustart.md).
 
 ## Stand
 

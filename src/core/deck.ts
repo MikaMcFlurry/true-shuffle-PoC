@@ -62,6 +62,11 @@ export interface Deck {
 	 * resuming the loaded order play the same songs.
 	 */
 	heldAt?: number | null;
+	/**
+	 * Places after `heldAt` whose song this version changed: a player still in
+	 * the previous version plays something else there.
+	 */
+	changedAt?: number[];
 }
 
 /** Where the player is (or was last seen) in this version. */
@@ -152,7 +157,15 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	if (idx < 0) {
 		// A song that is not in this version (the listener's own queue, or an
 		// order Spotify loaded before a rewrite). The song we saw before it has
-		// been left all the same; positions stay where they were.
+		// been left all the same. The player may follow an order we do not know
+		// now: nothing between here and the next song seen in this version is
+		// inferred — the look after it starts afresh.
+		const seen = {
+			lastTrackId: obs.trackId,
+			lastPlaying: obs.isPlaying,
+			lastObservedAt: obs.at,
+			top: false,
+		};
 		if (seenPrev && obs.trackId !== deck.lastTrackId && deck.items[prev]!.state === "pending") {
 			const items = deck.items.slice();
 			items[prev] = { ...items[prev]!, state: "passed", at: obs.at, seen: true };
@@ -161,10 +174,10 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 				inDeck: true,
 				orderBroken,
 				passed: [items[prev]!.id],
-				deck: { ...deck, items, lastObservedAt: obs.at },
+				deck: { ...deck, items, ...seen },
 			};
 		}
-		return { ...base, inDeck: true, orderBroken };
+		return { ...base, inDeck: true, orderBroken, deck: { ...deck, ...seen } };
 	}
 	// Positions between two looks mean something only while it plays on.
 	if (orderBroken) {
@@ -351,6 +364,7 @@ export interface ContinueInput {
  */
 export function continueLayout(input: ContinueInput): PlannedSlot[] | null {
 	const { items, held } = input;
+	if (held < 0 || held >= items.length) return null;
 	const fresh = input.fresh.slice();
 	// The new songs up to `held`; the best one at `held` itself, which a
 	// player resuming by position plays first.

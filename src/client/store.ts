@@ -61,13 +61,13 @@ class Store {
 		return this.inflight;
 	}
 
-	/** Poll every 10 s while visible; the hub itself syncs in the background. */
+	/** Poll every 15 s while visible; the hub itself syncs in the background. */
 	start(): void {
 		const tick = () => {
 			if (document.visibilityState === "visible") void this.refresh(true);
 		};
 		void this.refresh(true);
-		this.timer = window.setInterval(tick, 10_000);
+		this.timer = window.setInterval(tick, 15_000);
 		document.addEventListener("visibilitychange", tick);
 		window.addEventListener("focus", tick);
 	}

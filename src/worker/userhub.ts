@@ -174,6 +174,9 @@ export class UserHub extends DurableObject<Env> {
 	ensureAlarm() {
 		return this.exclusive(() => this.hub().ensureAlarm());
 	}
+	suspend() {
+		return this.exclusive(async () => this.hub().suspend());
+	}
 	deleteAccount(epoch: number) {
 		return this.session(epoch, () => this.hub().deleteAccount());
 	}

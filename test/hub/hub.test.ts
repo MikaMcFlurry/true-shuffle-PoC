@@ -341,6 +341,28 @@ describe("sessions", () => {
 	});
 });
 
+describe("taken off the allowlist", () => {
+	it("the hub rests until its listener may sign in again", async () => {
+		const h = await onboarded();
+		h.hub.suspend();
+		await h.listen(60 * 60_000);
+		expect(h.alarmAt()).toBeNull();
+		await h.hub.ensureAlarm(); // the cron's safety net does not wake it either
+		expect(h.alarmAt()).toBeNull();
+		h.fake.refreshTokens.set("rt-back", "mika");
+		await h.hub.connect(
+			{ id: "mika", name: "Mika", imageUrl: null },
+			{
+				accessToken: h.fake.issueToken("mika"),
+				refreshToken: "rt-back",
+				expiresAt: h.clock.t + 3_600_000,
+				scope: "all",
+			},
+		);
+		expect(h.alarmAt()).not.toBeNull();
+	});
+});
+
 describe("sessions after deleting the account", () => {
 	it("a cookie revoked before stays invalid after the account is deleted and made again", async () => {
 		const fake = new FakeSpotify();

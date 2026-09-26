@@ -122,6 +122,11 @@ export class SpotifyClient {
 
 	constructor(private readonly o: ClientOptions) {}
 
+	/** Requests this invocation may still make. */
+	get requestsLeft(): number {
+		return this.o.budget.left;
+	}
+
 	// ---------------------------------------------------------------------
 	// Auth
 	// ---------------------------------------------------------------------

@@ -507,3 +507,103 @@ describe("the rewrite after a stop (red-team 4)", () => {
 		}
 	});
 });
+
+describe("songs a player brings back on its own (red-team 5)", () => {
+	/** How long each song was heard every time it ended, from the simulator's side. */
+	function earsOn(h: H) {
+		const heard = new Map<string, number[]>();
+		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
+		const orig = f.moveNext.bind(h.fake);
+		f.moveNext = (user: unknown, at: number) => {
+			const cur = h.fake.current();
+			if (cur) heard.set(cur, [...(heard.get(cur) ?? []), h.fake.user().player.listenedMs]);
+			orig(user, at);
+		};
+		return heard;
+	}
+
+	it("skips a song heard elsewhere that an old loaded order still has, and books nothing", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(20 * MINUTE_MS);
+		h.fake.pause();
+		await h.hub.state({ live: true });
+		const before = stationDeck(h, sid);
+		const items = before.pl.items.slice();
+		const held = before.deck.lastIndex!;
+		const x = items[held + 2]!;
+		h.fake.user().recent.unshift({ trackId: x, playedAt: h.clock.t, contextUri: null });
+		h.clock.t += 15 * MINUTE_MS;
+		await h.listen(1_000);
+		const after = stationDeck(h, sid).pl.items.slice();
+		const f = after[held + 2]!; // x's place in the new version
+		expect(f).not.toBe(x);
+		const heard = earsOn(h);
+		h.fake.user().player.isPlaying = true; // the phone plays on in the order it had loaded
+		await h.listen(40 * MINUTE_MS);
+		expect(heard.get(x)?.length).toBe(1);
+		expect(heard.get(x)![0]).toBeLessThan(30_000);
+		expect(falseSkips(h)).toBe(0);
+	});
+
+	for (const idle of [30 * MINUTE_MS, 8 * 60 * MINUTE_MS])
+		it(`skips a song turned down while the player held the station (${idle / MINUTE_MS} min pause)`, async () => {
+			const h = await onboarded({ tracks: 600 });
+			const sid = h.stationIds[0]!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(10 * MINUTE_MS);
+			h.fake.pause();
+			await h.hub.state({ live: true });
+			const { pl, deck } = stationDeck(h, sid);
+			const t = pl.items[deck.lastIndex! + 1]!; // the very next song
+			await h.hub.thumb(t, -1);
+			await h.listen(idle);
+			const heard = earsOn(h);
+			h.fake.user().player.isPlaying = true; // resumes its loaded order, app closed
+			await h.listen(15 * MINUTE_MS);
+			expect(heard.get(t)?.length).toBe(1);
+			expect(heard.get(t)![0]).toBeLessThan(30_000);
+		});
+
+	it("skips a turned-down song every time it comes up, not only the first", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(5 * MINUTE_MS);
+		const p = h.fake.user().player;
+		const order = p.order.slice();
+		const at = p.index + 3;
+		const t = order[at]!;
+		await h.hub.thumb(t, -1);
+		const heard = earsOn(h);
+		await h.listen(20 * MINUTE_MS);
+		// Later the same loaded order again, two songs before it.
+		Object.assign(p, { order: order.slice(), index: at - 2, progressMs: 0, listenedMs: 0 });
+		await h.listen(20 * MINUTE_MS);
+		expect(heard.get(t)?.length).toBe(2);
+		for (const ms of heard.get(t)!) expect(ms).toBeLessThan(30_000);
+	});
+
+	it("a small station started from the top in Spotify later the same day repeats nothing", async () => {
+		const h = await onboarded({ tracks: 120 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(3 * 60 * MINUTE_MS);
+		h.fake.pause(); // car stop
+		await h.listen(2 * 60 * MINUTE_MS); // continued meanwhile, its front full of today's songs
+		const { pl, deck } = stationDeck(h, sid);
+		expect((deck as { continued?: boolean }).continued).toBe(true);
+		const heard = earsOn(h);
+		const before = new Set(
+			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
+		);
+		const phone = h.fake.user().player.deviceId!;
+		h.fake.startContext("mika", `spotify:playlist:${pl.id}`, 0, phone, false);
+		await h.listen(60 * MINUTE_MS);
+		const repeats = [...heard.entries()].filter(
+			([id, ms]) => before.has(id) && ms.some((x) => x >= 30_000),
+		);
+		expect(repeats.length).toBeLessThanOrEqual(1);
+	});
+});
