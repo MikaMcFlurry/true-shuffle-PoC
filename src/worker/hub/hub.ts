@@ -21,8 +21,10 @@ import {
 	consumedCount,
 	continueLayout,
 	type Deck,
+	DIRECT_MS,
 	heldForPlayer,
 	inRanges,
+	markBooked,
 	newDeck,
 	observePlayer,
 	type PlayerObservation,
@@ -239,6 +241,16 @@ interface JobRow {
 	run_after: number;
 	attempts: number;
 	error: string | null;
+}
+
+/** A play True Shuffle saw end in a private session (Spotify may never list it). */
+interface SeenPlay {
+	id: TrackId;
+	at: number;
+	start: number;
+	end: number;
+	contextUri: string | null;
+	track: PackedTrack;
 }
 
 interface PlayerSnapshot {
@@ -1804,6 +1816,7 @@ export class HubCore {
 		}
 		const obs = toObservation(state, this.now());
 		this.notePrivate(state?.device?.is_private_session === true, s.lastPlayerAt);
+		const heardPrivately = this.privatePlayEnded(this.kvGet<PlayerSnapshot>("player"), obs);
 		s.lastPlayerAt = this.now();
 		const snap: PlayerSnapshot = {
 			obs,
@@ -1848,6 +1861,11 @@ export class HubCore {
 			}
 		}
 
+		if (heardPrivately) {
+			const own = this.recordSeenPlay(heardPrivately);
+			if (own) plays = [...plays, own];
+		}
+
 		this.settleCarried(plays);
 
 		// Walk every deck: confirm plays, read the position, book early skips.
@@ -1870,8 +1888,8 @@ export class HubCore {
 			if (plays.length > 0) {
 				const r = applyPlays(deck, plays, uri);
 				if (r.played.length > 0 || r.unskipped.length > 0 || r.waiting.length > 0) changed = true;
+				for (const id of r.unskipped) this.undoBooking(st.id, deck, id);
 				deck = r.deck;
-				for (const id of r.unskipped) this.undoSkip(st.id, id);
 			}
 			if (obs && obs.contextUri === uri) {
 				// Only actual playback counts as activity: a deck paused and left
@@ -1916,8 +1934,9 @@ export class HubCore {
 					const left = settled.left.get(id);
 					const at = left?.at ?? deck.lastObservedAt ?? this.now();
 					const booked = this.bookEarlySkip(st, id, rules, at, settled.seen.has(id), left?.from);
-					if (booked && left?.unless)
-						this.noteQueuedSkip({ st: st.id, id, at, unless: left.unless });
+					if (!booked) continue;
+					deck = markBooked(deck, id, at);
+					if (left?.unless) this.noteQueuedSkip({ st: st.id, id, at, unless: left.unless });
 				}
 			}
 			if (changed) this.saveDeck(st.id, deck);
@@ -1993,7 +2012,7 @@ export class HubCore {
 			if (!deck || !uri) continue;
 			const r = applyPlays(deck, plays, uri);
 			if (r.played.length > 0 || r.unskipped.length > 0 || r.waiting.length > 0) {
-				for (const id of r.unskipped) this.undoSkip(st.id, id);
+				for (const id of r.unskipped) this.undoBooking(st.id, deck, id);
 				this.saveDeck(st.id, r.deck);
 			}
 		}
@@ -2276,6 +2295,89 @@ export class HubCore {
 		return (list ?? []).some((p) => p.from <= to && (p.to === null || p.to > from));
 	}
 
+	private inPrivateNow(): boolean {
+		const list = this.kvGet<{ from: number; to: number | null }[]>("private");
+		return list?.[list.length - 1]?.to === null;
+	}
+
+	/**
+	 * The song seen at the look before, played in a private session and now
+	 * over — counted as heard only when this look proves it: it was seen at
+	 * 30 s or more, the next song began right at its end, or the next song of
+	 * its station began 30 s or more after it did. Spotify may never list it.
+	 */
+	private privatePlayEnded(
+		before: PlayerSnapshot | null,
+		now: PlayerObservation | null,
+	): SeenPlay | null {
+		const p = before?.obs;
+		if (!p?.trackId || p.durationMs <= 0 || !before?.track) return null;
+		if (!this.inPrivateDuring(p.at, this.now())) return null;
+		if (now?.trackId === p.trackId && (now.isPlaying || now.progressMs >= p.progressMs))
+			return null;
+		const start = p.at - p.progressMs;
+		const end = start + p.durationMs;
+		const next = now?.isPlaying && now.trackId ? now.at - now.progressMs : null;
+		let heard = p.progressMs >= 30_000;
+		if (p.isPlaying && next !== null && !heard) {
+			if (Math.abs(next - end) <= DIRECT_MS) heard = true;
+			else if (next - start >= 30_000 && this.followsInStation(p, now!)) heard = true;
+		}
+		if (!heard) return null;
+		const at = Math.min(end, next ?? this.now());
+		if (this.inGuest(at) || this.inGuestDuring(start, at)) return null;
+		return { id: p.trackId, at, start, end, contextUri: p.contextUri, track: before.track };
+	}
+
+	/** The song now is the next after the one before in that station's deck. */
+	private followsInStation(p: PlayerObservation, now: PlayerObservation): boolean {
+		if (!p.contextUri || p.contextUri !== now.contextUri) return false;
+		const st = this.stations().find((x) => this.deckUri(x) === p.contextUri);
+		const items = st ? this.deckOf(st)?.items : undefined;
+		const i = items?.findIndex((it) => it.id === p.trackId) ?? -1;
+		return i >= 0 && items![i + 1]?.id === now.trackId;
+	}
+
+	/**
+	 * Count a play seen in a private session, unless Spotify listed it after
+	 * all; and when it lists it later, do not count it again.
+	 */
+	private recordSeenPlay(e: SeenPlay): RecentPlay | null {
+		const from = e.start - MINUTE_MS;
+		const to = e.end + 5 * MINUTE_MS;
+		if (
+			this.db.first(
+				`SELECT 1 FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ? LIMIT 1`,
+				from,
+				to,
+				e.id,
+			)
+		)
+			return null;
+		const st = e.contextUri
+			? this.stations().find((x) => this.deckUri(x) === e.contextUri)
+			: undefined;
+		this.db.run(
+			`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta) VALUES (?, ?, ?, ?, 0, ?)`,
+			e.at,
+			e.id,
+			e.contextUri,
+			st?.id ?? null,
+			JSON.stringify(e.track),
+		);
+		const seen = (
+			this.kvGet<{ id: TrackId; from: number; to: number }[]>("seen_plays") ?? []
+		).filter((x) => x.to > this.now() - LATE_PLAY_WINDOW_MS);
+		seen.push({ id: e.id, from, to });
+		this.kvSet("seen_plays", seen.slice(-200));
+		const before = this.memory(e.id);
+		this.livePlay(e.id, e.at);
+		this.countRound(e.id, before, e.at);
+		this.noteDiscoveryHeard(e.id);
+		this.dirtyDecksHolding(e.id, st?.id ?? null);
+		return { trackId: e.id, playedAt: e.at, contextUri: e.contextUri };
+	}
+
 	/** Book new entries of the recently-played list into memory. */
 	private recordPlays(
 		items: { track: SpTrack; played_at: string; context: { uri: string } | null }[],
@@ -2287,6 +2389,8 @@ export class HubCore {
 		// that was not in it arrived late (offline listening synced afterwards):
 		// it still counts, once — the plays table has the final say.
 		const known = new Set(this.kvGet<string[]>("recent_keys") ?? []);
+		// Plays True Shuffle counted itself in a private session: listed late, not again.
+		const seen = this.kvGet<{ id: TrackId; from: number; to: number }[]>("seen_plays") ?? [];
 		// Never reaching back before the first sign-in: that belongs to the import.
 		const lateFrom = Math.max(
 			s.recentCursor - LATE_PLAY_WINDOW_MS,
@@ -2297,6 +2401,7 @@ export class HubCore {
 			.filter((x) => {
 				const id = x.i.track?.id;
 				if (!Number.isFinite(x.at) || !id) return false;
+				if (seen.some((e) => e.id === id && x.at >= e.from && x.at <= e.to)) return false;
 				if (x.at > s.recentCursor) return true;
 				if (x.at <= lateFrom || known.has(key(x.at, id))) return false;
 				return !this.db.first(`SELECT 1 FROM plays WHERE played_at = ? AND track_id = ?`, x.at, id);
@@ -2485,6 +2590,21 @@ export class HubCore {
 	 * A song booked as skipped turned out to be heard: take the skip back
 	 * entirely — once, however many paths notice it.
 	 */
+	/**
+	 * Take back exactly the skip a deck booked for this song: all of it while
+	 * it is the song's latest, only its count once a later skip followed, and
+	 * nothing if it is no longer there (taken back already).
+	 */
+	private undoBooking(stationId: number, deck: Deck, id: TrackId): void {
+		const it = deck.items.find((x) => x.id === id && x.state === "skipped");
+		const at = it?.booked;
+		const row = this.liveRow(id);
+		if (at === undefined || !row || row.last_skipped_at === null || row.last_skipped_at < at)
+			return;
+		if (row.last_skipped_at === at) this.undoSkip(stationId, id);
+		else this.updateLive(id, (r) => ({ ...r, early_skips: Math.max(0, r.early_skips - 1) }));
+	}
+
 	private undoSkip(stationId: number | null, id: TrackId): void {
 		const row = this.liveRow(id);
 		if (!row || row.last_skipped_at === null) return;
@@ -3020,6 +3140,12 @@ export class HubCore {
 						: "Spotify bremst gerade — True Shuffle wartet kurz.",
 			});
 		}
+		if (this.inPrivateNow())
+			warnings.push({
+				code: "private_session",
+				message:
+					"Private Sitzung in Spotify — True Shuffle zählt jetzt nur Songs, die es selbst zu Ende laufen sieht, und keine Skips.",
+			});
 		const np = this.nowPlaying(snap);
 		if (np?.smartShuffle) {
 			warnings.push({

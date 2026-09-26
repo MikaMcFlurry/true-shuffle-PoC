@@ -44,7 +44,7 @@ export interface FakeUser {
 	premium: boolean;
 	liked: string[];
 	recent: { trackId: string; playedAt: number; contextUri: string | null }[];
-	/** `privateSession`: its plays never reach recently-played (the worst case). */
+	/** `privateSession`: its plays never reach recently-played (the worst case)… */
 	devices: {
 		id: string;
 		name: string;
@@ -52,6 +52,8 @@ export interface FakeUser {
 		restricted: boolean;
 		privateSession?: boolean;
 	}[];
+	/** …unless Spotify lists them after all. */
+	listPrivatePlays?: boolean;
 	player: PlayerSim;
 }
 
@@ -268,7 +270,7 @@ export class FakeSpotify {
 	private recordIfHeard(u: FakeUser, trackId: string | null, at: number): void {
 		const p = u.player;
 		if (!trackId || p.listenedMs < 30_000) return;
-		if (u.devices.find((d) => d.id === p.deviceId)?.privateSession) return;
+		if (u.devices.find((d) => d.id === p.deviceId)?.privateSession && !u.listPrivatePlays) return;
 		const viaApi = (p as PlayerSim & { viaApi?: boolean }).viaApi;
 		const ctx = p.currentFromQueue ? p.contextUri : p.contextUri;
 		u.recent.unshift({

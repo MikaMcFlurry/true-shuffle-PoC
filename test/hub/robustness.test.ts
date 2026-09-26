@@ -1609,3 +1609,78 @@ describe("the fifteenth review's cases", () => {
 		expect(falseSkips(h)).toBe(1);
 	});
 });
+
+describe("the sixteenth review's cases", () => {
+	for (const mode of ["guest", "private"] as const)
+		it(`a skip never booked (${mode}) takes no earlier skip back when the song plays later`, async () => {
+			const h = await onboarded({ tracks: 300 });
+			const sid = h.stationIds[0]!;
+			const u = h.fake.user();
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(8 * MINUTE_MS);
+			const c0 = h.fake.current();
+			while (h.fake.current() === c0) await h.listen(1_000);
+			const x = h.fake.current()!;
+			// The owner skipped it three days ago.
+			const old = h.clock.t - 3 * 24 * 60 * MINUTE_MS;
+			h.sql.run(
+				`INSERT INTO memory (id, last_played_at, plays, early_skips, last_skipped_at, consumed_at, thumb) VALUES (?, NULL, 0, 1, ?, NULL, 0)
+				 ON CONFLICT(id) DO UPDATE SET early_skips = 1, last_skipped_at = excluded.last_skipped_at`,
+				x,
+				old,
+			);
+			(h.hub as unknown as { liveLookups: Map<string, unknown> }).liveLookups.delete(x);
+			const dev = u.devices.find((d) => d.id === u.player.deviceId)!;
+			if (mode === "guest") await h.hub.setGuest(true, 6);
+			else dev.privateSession = true;
+			await h.listen(10_000);
+			h.fake.skip(); // left after 10 s: not the owner's, or not to be told
+			await h.listen(30 * MINUTE_MS);
+			if (mode === "guest") await h.hub.setGuest(false);
+			else dev.privateSession = false;
+			await h.listen(5 * MINUTE_MS);
+			h.fake.playSong(u.id, x); // the owner plays it from search, no context
+			await h.listen(4 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(40 * MINUTE_MS);
+			const row = h.sql.first<{ e: number; l: number | null }>(
+				`SELECT early_skips AS e, last_skipped_at AS l FROM memory WHERE id = ?`,
+				x,
+			)!;
+			expect([row.e, row.l]).toEqual([1, old]);
+		});
+
+	for (const listed of [false, true])
+		it(`a private session${listed ? " Spotify lists after all" : ""}: what True Shuffle saw heard counts, once`, async () => {
+			const h = await onboarded({ tracks: 100 });
+			const sid = h.stationIds[0]!;
+			const u = h.fake.user();
+			u.listPrivatePlays = listed;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			const dev = u.devices.find((d) => d.id === u.player.deviceId)!;
+			dev.privateSession = true;
+			const heard = async (ms: number) => {
+				const out = new Set<string>();
+				for (let t = 0; t < ms; t += 5_000) {
+					await h.listen(5_000);
+					if (u.player.isPlaying && u.player.listenedMs >= 30_000) out.add(h.fake.current()!);
+				}
+				return out;
+			};
+			const first = await heard(60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(2 * 60 * MINUTE_MS);
+			dev.privateSession = false;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			const second = await heard(60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(40 * MINUTE_MS);
+			expect([...second].filter((id) => first.has(id))).toEqual([]);
+			const counted = h.sql
+				.all<{ track_id: string }>(`SELECT track_id FROM plays`)
+				.map((r) => r.track_id);
+			expect(counted.length).toBe(new Set(counted).size); // none twice
+			expect([...first].filter((id) => !counted.includes(id))).toEqual([]);
+			expect(falseSkips(h)).toBe(0);
+		});
+});

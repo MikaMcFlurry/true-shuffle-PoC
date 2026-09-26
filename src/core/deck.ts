@@ -36,6 +36,12 @@ export interface DeckItem {
 	 * the queue, and this one never played — it waits again.
 	 */
 	unless?: { id: TrackId; from: number; to: number };
+	/**
+	 * Skipped: when its early skip was booked in memory (the time it was seen
+	 * left). Absent, nothing was booked (guest time, a private session), and a
+	 * play later takes nothing back.
+	 */
+	booked?: number;
 }
 
 export interface Deck {
@@ -221,6 +227,13 @@ export const DIRECT_MS = 1_500;
 
 /** How late after its end Spotify may stamp a song's play. */
 const STAMP_LATE_MS = 60_000;
+
+/**
+ * How early before the end we put it a play may be stamped and still mean the
+ * song ran to its end: the delays of our looks, a phone's clock. Leaving a
+ * song in its last seconds is hearing it to the end.
+ */
+const STAMP_EARLY_MS = 10_000;
 
 /** When the song seen now ends if it plays on. */
 function endOf(obs: PlayerObservation): number | null {
@@ -440,13 +453,13 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		}
 	};
 	// The song seen before, if it ran to its end: Spotify stamps its play at
-	// that end. One left earlier, in its last seconds even, is stamped
-	// before — then the songs between were skipped after all.
+	// that end. One left earlier, in its outro, is stamped before — then the
+	// songs between were skipped after all.
 	const unless =
 		direct && deck.lastTrackId != null && deck.lastEndAt != null
 			? {
 					id: deck.lastTrackId,
-					from: Math.max(deck.lastObservedAt ?? 0, deck.lastEndAt - DIRECT_MS),
+					from: Math.max(deck.lastObservedAt ?? 0, deck.lastEndAt - STAMP_EARLY_MS),
 					to: deck.lastEndAt + STAMP_LATE_MS,
 				}
 			: undefined;
@@ -545,7 +558,15 @@ export function applyPlays(deck: Deck, plays: readonly RecentPlay[], deckUri: st
 		const it = items[i]!;
 		if (it.state === "skipped") {
 			if (p.ignored) continue;
-			unskipped.push(it.id);
+			// Its play after all: stamped between the look before and a few
+			// minutes after the one that saw it left. A later play is a new one.
+			const left = it.booked;
+			if (
+				left !== undefined &&
+				p.playedAt >= (it.from ?? left) - MINUTE_MS &&
+				p.playedAt <= left + 5 * MINUTE_MS
+			)
+				unskipped.push(it.id);
 		}
 		// A guest's play proves only its own listening: a song the owner left
 		// before it (still waiting as a skip) stays left.
@@ -617,6 +638,15 @@ export function settleSkips(
 		return it;
 	});
 	return { deck: { ...deck, items }, skipped, seen, left };
+}
+
+/** The skip of a skipped item was booked in memory, as left at `at`. */
+export function markBooked(deck: Deck, id: TrackId, at: number): Deck {
+	const i = deck.items.findIndex((it) => it.id === id && it.state === "skipped");
+	if (i < 0) return deck;
+	const items = deck.items.slice();
+	items[i] = { ...items[i]!, booked: at };
+	return { ...deck, items };
 }
 
 /** Songs of the deck the listener has moved past or heard. */

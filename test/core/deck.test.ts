@@ -7,6 +7,7 @@ import {
 	heldForPlayer,
 	MAX_CONTINUED_ITEMS,
 	MAX_SKIP_GAP,
+	markBooked,
 	newDeck,
 	observePlayer,
 	type PlayerObservation,
@@ -225,16 +226,19 @@ describe("observePlayer", () => {
 			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI);
 			const s = settleSkips(r.deck, T0 + 195_000 + SKIP_GRACE_MS);
 			expect(s.skipped).toEqual(["s0", "s1", "s2", "s3", "s4", "s5"]);
-			const p = applyPlays(s.deck, [play("s2", T0 + 190_000)], URI);
+			const booked = markBooked(s.deck, "s2", T0 + 195_000);
+			const p = applyPlays(booked, [play("s2", T0 + 190_000)], URI);
 			expect(p.unskipped).toEqual(["s2"]); // its own play; the hub takes back the others it booked
 			expect(p.waiting).toEqual(["s3", "s4", "s5"]);
 			expect(states(p.deck, 3, 6)).toEqual(["pending", "pending", "pending"]);
 		});
 
-		it("the song before, left in its last seconds, is stamped before its end: the gap stands", () => {
+		it("the song before, left in its outro, is stamped before its end: the gap stands", () => {
 			let r = observePlayer(started(40), look("s2", T0, 10_000), URI); // would end at T0 + 190 s
 			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI);
-			const p = applyPlays(r.deck, [play("s2", T0 + 180_000)], URI); // heard 170 s, then left
+			const early = applyPlays(r.deck, [play("s2", T0 + 182_000)], URI); // a clock 8 s behind
+			expect(early.waiting).toEqual(["s3", "s4", "s5"]);
+			const p = applyPlays(r.deck, [play("s2", T0 + 170_000)], URI); // heard 160 s, then left
 			expect(p.waiting).toEqual([]);
 			expect(states(p.deck, 3, 6)).toEqual(["passed", "passed", "passed"]);
 		});
@@ -529,9 +533,28 @@ describe("applyPlays + settleSkips", () => {
 		let d = started();
 		d = observePlayer(d, obs("s2", { at: T0 + 60_000 }), URI).deck;
 		d = settleSkips(d, T0 + 60_000 + SKIP_GRACE_MS).deck;
+		d = markBooked(d, "s1", T0 + 60_000);
 		const p = applyPlays(d, [{ trackId: "s1", playedAt: T0 + 30_000, contextUri: URI }], URI);
 		expect(p.unskipped).toEqual(["s1"]);
 		expect(p.deck.items[1]!.state).toBe("played");
+	});
+
+	it("takes back only a skip that was booked, and only by its own play", () => {
+		let d = started();
+		d = observePlayer(d, obs("s2", { at: T0 + 60_000 }), URI).deck;
+		d = settleSkips(d, T0 + 60_000 + SKIP_GRACE_MS).deck; // s0, s1 left
+		d = markBooked(d, "s1", T0 + 60_000); // s0 was not booked (guest time)
+		const later = T0 + 3 * 3_600_000; // played again from search, hours later
+		const p = applyPlays(
+			d,
+			[
+				{ trackId: "s0", playedAt: T0 + 30_000, contextUri: null },
+				{ trackId: "s1", playedAt: later, contextUri: null },
+			],
+			URI,
+		);
+		expect(p.unskipped).toEqual([]);
+		expect(p.played).toEqual(["s0", "s1"]);
 	});
 
 	it("ignores plays from before the deck was written", () => {
