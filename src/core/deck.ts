@@ -223,7 +223,7 @@ export const STRAY_MS = 36 * HOUR_MS;
  * How closely a song's start must meet the end of the one seen before it to
  * count as following it directly. Two looks' delays, not a listener's skip.
  */
-export const DIRECT_MS = 1_500;
+export const DIRECT_MS = 3_000;
 
 /** How late after its end Spotify may stamp a song's play. */
 const STAMP_LATE_MS = 60_000;
