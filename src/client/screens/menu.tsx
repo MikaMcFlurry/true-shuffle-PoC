@@ -403,10 +403,11 @@ export function AboutScreen() {
 			<PageBar title="Über True Shuffle" backTo="/menu" />
 			<Section title="Wie es funktioniert" id="how">
 				<p class="lede">
-					Jeder Sender ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify. True Shuffle
-					schreibt sie aus deinem Gedächtnis neu, immer dann, wenn gerade niemand sie hört. Spotify
-					spielt sie ganz normal ab — auf jedem Gerät, auch im Auto, auch wenn du sie direkt in
-					Spotify startest.
+					Jeder Sender ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify. Sie enthält
+					nicht alle Songs des Senders, sondern die nächsten 300 (rund 17 Stunden), und True Shuffle
+					schreibt sie aus deinem Gedächtnis neu, immer dann, wenn gerade niemand sie hört. So kommt
+					nach und nach jeder Song des Senders dran. Spotify spielt sie ganz normal ab — auf jedem
+					Gerät, auch im Auto, auch wenn du sie direkt in Spotify startest.
 				</p>
 				<p class="lede">
 					Alle paar Minuten liest True Shuffle, was du gehört hast. Jeder Song ab 30 Sekunden kommt
