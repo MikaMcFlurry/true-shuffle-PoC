@@ -31,6 +31,7 @@ import {
 	remainingAhead,
 	SKIP_GRACE_MS,
 	settleSkips,
+	takeBackQueued,
 	toRanges,
 } from "../../core/deck";
 import { fromRow, type HistoryRow } from "../../core/history";
@@ -125,6 +126,8 @@ interface PendingSkip {
 	since?: number;
 	/** Seen playing before it was left (not only inferred between two looks). */
 	seen?: boolean;
+	/** Not skipped if this play shows up (see `DeckItem.unless`). */
+	unless?: { id: TrackId; from: number; to: number };
 }
 
 /**
@@ -1856,7 +1859,7 @@ export class HubCore {
 			let changed = false;
 			if (plays.length > 0) {
 				const r = applyPlays(deck, plays, uri);
-				if (r.played.length > 0 || r.unskipped.length > 0) changed = true;
+				if (r.played.length > 0 || r.unskipped.length > 0 || r.waiting.length > 0) changed = true;
 				deck = r.deck;
 				for (const id of r.unskipped) this.undoSkip(st.id, id);
 			}
@@ -1868,6 +1871,10 @@ export class HubCore {
 				// Stored only when more than the time of the look changed.
 				if (!sameDeck(deck, r.deck)) changed = true;
 				deck = r.deck;
+				// Songs just taken as skipped whose song before is known to have run
+				// to its end: the song after them came from the queue.
+				if (deck.items.some((it) => it.unless && it.state === "passed" && it.at === obs.at))
+					deck = takeBackQueued(deck, (id, from, to) => this.heardBetween(id, from, to)).deck;
 				inStation = { st: st.id, uri, inDeck: r.index !== null, index: r.index };
 				if (obs.isPlaying && this.now() - (st.last_played_at ?? 0) >= 5 * MINUTE_MS)
 					this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), st.id);
@@ -1977,7 +1984,7 @@ export class HubCore {
 			const uri = this.deckUri(st);
 			if (!deck || !uri) continue;
 			const r = applyPlays(deck, plays, uri);
-			if (r.played.length > 0 || r.unskipped.length > 0) {
+			if (r.played.length > 0 || r.unskipped.length > 0 || r.waiting.length > 0) {
 				for (const id of r.unskipped) this.undoSkip(st.id, id);
 				this.saveDeck(st.id, r.deck);
 			}
@@ -1999,6 +2006,7 @@ export class HubCore {
 				at: it.at ?? this.now(),
 				since: it.from,
 				seen: it.seen === true,
+				...(it.unless ? { unless: it.unless } : {}),
 			});
 		this.kvSet("pending_skips", list.slice(-500));
 	}
@@ -2113,6 +2121,9 @@ export class HubCore {
 		const keep: typeof list = [];
 		for (const e of list) {
 			if (played.has(e.id)) continue; // it was a play after all
+			// The song before it ran to its end: it never played.
+			const u = e.unless;
+			if (u && this.heardBetween(u.id, u.from, u.to)) continue;
 			// …or its play was read in an earlier round than this one.
 			const heard = this.db.first(
 				`SELECT 1 FROM plays WHERE played_at >= ? AND track_id = ? AND ignored = 0 LIMIT 1`,
@@ -2128,6 +2139,18 @@ export class HubCore {
 			if (st) this.bookEarlySkip(st, e.id, this.rulesOf(st), e.at, e.seen === true, e.since);
 		}
 		if (keep.length !== list.length) this.kvSet("pending_skips", keep);
+	}
+
+	/** A play of the song stamped in that time, read now or before. */
+	private heardBetween(id: TrackId, from: number, to: number): boolean {
+		return (
+			this.db.first(
+				`SELECT 1 FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ? LIMIT 1`,
+				from,
+				to,
+				id,
+			) !== null
+		);
 	}
 
 	private handleSyncError(err: unknown): void {

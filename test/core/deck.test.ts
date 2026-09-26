@@ -200,27 +200,58 @@ describe("observePlayer", () => {
 		expect(d.orderAt).toBe(0);
 	});
 
-	describe("a song that began right when the one before ended followed it directly", () => {
+	describe("a song that began right as the one before would end", () => {
 		// A look at `at` with `progress` into a song of 200 s: it began at at − progress.
 		const look = (id: string, at: number, progress: number) =>
 			obs(id, { at, progressMs: progress, durationMs: 200_000 });
+		const play = (trackId: string, playedAt: number) => ({ trackId, playedAt, contextUri: URI });
+		const states = (d: Deck, from: number, to: number) =>
+			d.items.slice(from, to).map((it) => it.state);
 
-		it("from the queue further down: nothing between was skipped, the place in order stays", () => {
+		it("from the queue further down, then the listener stops: the play of the song before takes the gap back", () => {
 			let r = observePlayer(started(40), look("s2", T0, 10_000), URI); // ends at T0 + 190 s
 			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI); // began at T0 + 190 s
-			expect(r.passed).toEqual(["s2"]);
+			expect(r.passed).toEqual(["s2", "s3", "s4", "s5"]); // for now
+			const p = applyPlays(r.deck, [play("s2", T0 + 190_000)], URI);
+			expect(p.played).toEqual(["s2"]);
+			expect(p.waiting).toEqual(["s3", "s4", "s5"]);
+			const s = settleSkips(p.deck, T0 + 195_000 + SKIP_GRACE_MS);
+			expect(s.skipped).toEqual(["s0", "s1"]); // before the first look, from the top
+			expect(states(s.deck, 2, 7)).toEqual(["played", "pending", "pending", "pending", "pending"]);
+		});
+
+		it("a play that shows up only after the gap was booked takes the skips back", () => {
+			let r = observePlayer(started(40), look("s2", T0, 10_000), URI);
+			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI);
+			const s = settleSkips(r.deck, T0 + 195_000 + SKIP_GRACE_MS);
+			expect(s.skipped).toEqual(["s0", "s1", "s2", "s3", "s4", "s5"]);
+			const p = applyPlays(s.deck, [play("s2", T0 + 190_000)], URI);
+			expect(p.unskipped).toEqual(["s2", "s3", "s4", "s5"]);
+			expect(states(p.deck, 3, 6)).toEqual(["pending", "pending", "pending"]);
+		});
+
+		it("a run of skips that took just as long: without that play, the gap stands", () => {
+			let r = observePlayer(started(40), look("s2", T0, 10_000), URI);
+			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI);
+			const p = applyPlays(r.deck, [play("s9", T0 + 190_000), play("s2", T0 - 3_600_000)], URI);
+			expect(p.waiting).toEqual([]);
+			expect(settleSkips(p.deck, T0 + 195_000 + SKIP_GRACE_MS).skipped).toEqual([
+				"s0",
+				"s1",
+				"s2",
+				"s3",
+				"s4",
+				"s5",
+			]);
+		});
+
+		it("the place in order stays at a song from the queue and moves on with the next in order", () => {
+			let r = observePlayer(started(40), look("s2", T0, 10_000), URI);
+			r = observePlayer(r.deck, look("s6", T0 + 195_000, 5_000), URI);
 			expect(r.deck.orderAt).toBe(2);
 			r = observePlayer(r.deck, look("s3", T0 + 392_000, 2_000), URI); // on in order
 			expect(r.deck.orderAt).toBe(3);
 			expect(r.deck.backFrom).toEqual([]);
-			r = observePlayer(r.deck, look("s4", T0 + 592_000, 2_000), URI);
-			expect(r.deck.items.slice(2, 7).map((it) => it.state)).toEqual([
-				"passed",
-				"passed",
-				"pending",
-				"pending",
-				"pending", // the song from the queue: it ended on its own
-			]);
 		});
 
 		it("two songs from the queue further up, in order: nothing between them counts", () => {
@@ -229,21 +260,24 @@ describe("observePlayer", () => {
 			r = observePlayer(r.deck, look("s26", T0 + 257_000, 2_000), URI);
 			r = observePlayer(r.deck, look("s5", T0 + 457_000, 2_000), URI); // from the queue
 			r = observePlayer(r.deck, look("s9", T0 + 657_000, 2_000), URI); // and the next one
-			expect(r.passed).toEqual(["s5"]);
 			r = observePlayer(r.deck, look("s27", T0 + 857_000, 2_000), URI); // on where it was
 			expect(r.passed).toEqual(["s9"]);
+			expect(r.deck.orderAt).toBe(27);
+			const p = applyPlays(r.deck, [play("s5", T0 + 655_000), play("s9", T0 + 855_000)], URI);
+			expect(p.waiting).toEqual(["s6", "s7", "s8"]);
 			expect(
-				r.deck.items
+				p.deck.items
 					.slice(2, 25)
 					.filter((it) => it.state !== "pending")
 					.map((it) => it.id),
 			).toEqual(["s5", "s9"]);
 		});
 
-		it("skipped, the next song begins before the end: gaps count as before", () => {
+		it("skipped, the next song begins before the end: gaps count, with no condition", () => {
 			let r = observePlayer(started(40), look("s2", T0, 10_000), URI);
 			r = observePlayer(r.deck, look("s5", T0 + 60_000, 5_000), URI);
 			expect(r.passed).toEqual(["s2", "s3", "s4"]);
+			expect(r.deck.items.slice(2, 5).every((it) => it.unless === undefined)).toBe(true);
 		});
 	});
 

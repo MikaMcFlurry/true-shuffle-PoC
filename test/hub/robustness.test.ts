@@ -1509,6 +1509,30 @@ describe("the fourteenth review's cases", () => {
 		expect(falseSkips(h)).toBe(0);
 	});
 
+	it("skips that end right as the song seen last would have: still booked", async () => {
+		const h = await onboarded({ tracks: 600 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		const items = stationDeck(h, sid).pl.items;
+		const at = items.indexOf(h.fake.current()!);
+		const [w, x, y] = [items[at + 1]!, items[at + 2]!, items[at + 3]!];
+		h.fake.tracks.get(w)!.durationMs = 160_000;
+		h.fake.tracks.get(x)!.durationMs = 200_000;
+		h.fake.tracks.get(y)!.durationMs = 150_000; // 5 s + 5 s + 150 s: as long as w
+		while (h.fake.current() !== w) await h.listen(1_000);
+		await h.listen(4_000); // the hub has seen w in its first seconds
+		h.fake.skip();
+		await h.listen(5_000);
+		h.fake.skip(); // x, unseen
+		await h.listen(15 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(30 * MINUTE_MS);
+		const early = (id: string) =>
+			h.sql.first<{ n: number }>(`SELECT early_skips AS n FROM memory WHERE id = ?`, id)?.n ?? 0;
+		expect([early(w), early(x), early(y)]).toEqual([1, 1, 0]);
+	});
+
 	it("a song queued from a few places ahead, then the listener stops: no skip for the songs between", async () => {
 		const h = await onboarded({ tracks: 600 });
 		const sid = h.stationIds[0]!;
