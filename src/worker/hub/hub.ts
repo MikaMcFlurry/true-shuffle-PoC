@@ -1598,7 +1598,11 @@ export class HubCore {
 			// this order reaches them. An older order goes on from where it was:
 			// the previous version after the held place, and whatever it did not
 			// count as new itself; songs that left the playlist lately too.
-			const older = new Set<TrackId>(prev.items.slice(held).map((it) => it.id));
+			// Where an older order is: the held place, or before it, where the
+			// player last went on in order (a song from the queue, far down, is
+			// no place in that order).
+			const at = Math.max(0, Math.min(held, prev.orderAt ?? held));
+			const older = new Set<TrackId>(prev.items.slice(at).map((it) => it.id));
 			if (prev.continued)
 				prev.items.forEach((it, i) => {
 					if (!inRanges(prev.newAt, i)) older.add(it.id);
@@ -2785,7 +2789,7 @@ export class HubCore {
 		// from a look just now, not from one minutes old.
 		if (!on && this.inGuest(this.now()) && this.isConnected()) {
 			const snap = this.kvGet<PlayerSnapshot>("player");
-			if (!snap || this.now() - snap.at > GUEST_TAIL_FRESH_MS) {
+			if (!snap || this.now() - Math.max(snap.at, this.lastLookAt) > GUEST_TAIL_FRESH_MS) {
 				try {
 					await this.sync(new RequestBudget(8));
 				} catch {
@@ -2804,7 +2808,8 @@ export class HubCore {
 			open.to = now;
 			const snap = this.kvGet<PlayerSnapshot>("player");
 			const o = snap?.obs;
-			if (snap && now - snap.at <= GUEST_TAIL_FRESH_MS) {
+			// A look that found the picture unchanged does not store it again.
+			if (snap && now - Math.max(snap.at, this.lastLookAt) <= GUEST_TAIL_FRESH_MS) {
 				if (!o?.isPlaying || !o.trackId) open.tail = null;
 				else if (snap.at + (o.durationMs - o.progressMs) > now) open.tail = o.trackId;
 				// Its song must have ended since: the play's own times decide.

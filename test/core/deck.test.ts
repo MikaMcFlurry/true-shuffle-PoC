@@ -160,6 +160,38 @@ describe("observePlayer", () => {
 		]);
 	});
 
+	it("a song from further up played from the queue, then on where it was: nothing in between was left", () => {
+		let d = observePlayer(started(40), obs("s2", at(1)), URI).deck;
+		d = observePlayer(d, obs("s20", at(4)), URI).deck; // a tap far down: a jump
+		let r = observePlayer(d, obs("s16", at(7)), URI); // queued from further up
+		r = observePlayer(r.deck, obs("s21", at(11)), URI); // on where it was
+		expect(r.passed).toEqual(["s16"]);
+		expect(r.deck.items.slice(17, 21).map((it) => it.state)).toEqual([
+			"pending",
+			"pending",
+			"pending",
+			"pending",
+		]);
+	});
+
+	it("a look back into songs skipped before leaves those skips standing", () => {
+		let d = observePlayer(started(), obs("s2", at(1)), URI).deck;
+		d = observePlayer(d, obs("s6", at(3)), URI).deck; // s3–s5 skipped
+		d = observePlayer(d, obs("s7", at(7)), URI).deck; // and on
+		d = observePlayer(d, obs("s4", at(8)), URI).deck; // "previous", a few times
+		expect(d.items.slice(3, 6).map((it) => it.state)).toEqual(["passed", "passed", "passed"]);
+	});
+
+	it("goes on counting its place in order, not where a song from the queue sat", () => {
+		let d = observePlayer(started(40), obs("s1", at(1)), URI).deck;
+		d = observePlayer(d, obs("s2", at(4)), URI).deck;
+		expect(d.orderAt).toBe(2);
+		d = observePlayer(d, obs("s30", at(7)), URI).deck; // far down, from the queue
+		expect(d.orderAt).toBe(2);
+		d = observePlayer(d, obs("s3", at(11)), URI).deck;
+		expect(d.orderAt).toBe(3);
+	});
+
 	it("does not mark anything when the listener steps back", () => {
 		let d = deck();
 		d = observePlayer(d, obs("s5"), URI).deck;

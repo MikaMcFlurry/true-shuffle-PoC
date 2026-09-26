@@ -1445,3 +1445,36 @@ describe("the twelfth review's cases", () => {
 		expect(row?.ignored).toBe(1);
 	});
 });
+
+describe("the thirteenth review's cases", () => {
+	it("guest mode off after a look at a paused player: the owner's next song counts", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		await h.hub.setGuest(true, 6);
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 5, u.player.deviceId!, false);
+		await h.listen(20 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		while (u.player.listenedMs < 10_000) await h.listen(1_000);
+		u.player.isPlaying = false; // the guest pauses early in a song
+		await h.listen(2 * MINUTE_MS);
+		await h.hub.state({ live: true }); // the owner opens the app
+		await h.listen(20_000);
+		await h.hub.setGuest(false);
+		await h.listen(10_000);
+		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		await h.listen(2_000);
+		const first = h.fake.current()!;
+		while (u.player.listenedMs < 45_000) await h.listen(1_000);
+		h.fake.skip();
+		await h.listen(20 * MINUTE_MS);
+		u.player.isPlaying = false;
+		await h.listen(30 * MINUTE_MS);
+		const row = h.sql.first<{ ignored: number }>(
+			`SELECT ignored FROM plays WHERE track_id = ? ORDER BY played_at DESC`,
+			first,
+		);
+		expect(row?.ignored).toBe(0);
+	});
+});
