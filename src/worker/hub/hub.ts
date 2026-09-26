@@ -3205,10 +3205,9 @@ export class HubCore {
 				return true;
 		}
 		// A song turned down that an older version held, still ahead in it:
-		// where a player still in that order meets it is unknown, so it may come
-		// any time. Not after True Shuffle started the playlist itself: that
-		// replaced whatever the player had loaded.
-		if ((deck.continued === true || deck.ours !== true) && deck.formerOff?.length) {
+		// where a player still in that order (this one, or a second device)
+		// meets it is unknown, so it may come any time.
+		if (deck.formerOff?.length) {
 			const former = formerNow(deck, this.now());
 			if (deck.formerOff.some((id) => former.has(id))) return true;
 		}

@@ -90,7 +90,7 @@ Das Objekt weckt sich selbst per Alarm:
 - 15 Sekunden nach einem eigenen Sprung oder einem Tipp in der App,
 - alle 30 Sekunden, solange ein Player im Sender einen Song spielt, den die Playlist nicht mehr enthält (eine ältere, geladene Reihenfolge),
 - alle 20 Sekunden, wenn 1 bis 3 Songs voraus ein abgelehnter Song steht, eine Stelle, an der ein Player mit der vorigen Version einen gestrichenen Song träfe, oder, vorn in einer fortgesetzten Playlist, ein heute schon gehörter Song,
-- alle 20 Sekunden in einer Playlist, die True Shuffle nicht selbst gestartet hat, solange eine ältere Version (36 Stunden) einen inzwischen abgelehnten Song noch vor der Stelle des Players hatte,
+- alle 20 Sekunden, solange eine ältere Version der Playlist (36 Stunden) einen inzwischen abgelehnten Song noch vor der Stelle des Players hatte,
 
 Die schnellen Takte gelten nur nach einem Blick, der geklappt hat. Kann True Shuffle den Player nicht sehen (Spotify-Zugang entzogen, Spotify bremst), bleibt es beim langsamen Takt.
 - alle 10 Minuten bei anderer Wiedergabe,
@@ -111,13 +111,13 @@ Ein Cron-Trigger (alle 20 Minuten) belebt verlorene Alarmketten über die `Regis
 
   | Konto | gelesene Zeilen | geschriebene Zeilen | 5 solche Konten vom Tageskontingent |
   |---|---|---|---|
-  | typisch: 9 Sender, 10.000 Songs, 15.000 im Gedächtnis, 1 h offene App | ~87.000 | ~1.600 | ~9 % / ~8 % |
-  | an der Grenze: 30 Sender, 25.000 im Gedächtnis, 300 gefolgte Playlists, 1 h offene App | ~160.000 | ~1.900 | ~16 % / ~10 % |
-  | an der Grenze, App 8 h offen | ~357.000 | ~5.600 | ~36 % / ~28 % |
-  | an der Grenze, 12 × Daumen runter am Tag | ~155.000 | ~2.000 | ~16 % / ~10 % |
-  | extrem (Messung der unabhängigen Prüfung): 30 Sender mit je 10.000 Songs | ~317.000 | ~2.700 | ~32 % / ~13 % |
+  | typisch: 9 Sender, 10.000 Songs, 15.000 im Gedächtnis, 1 h offene App | ~109.000 | ~1.600 | ~11 % / ~8 % |
+  | an der Grenze: 30 Sender, 25.000 im Gedächtnis, 300 gefolgte Playlists, 1 h offene App | ~193.000 | ~1.900 | ~19 % / ~10 % |
+  | an der Grenze, App 8 h offen | ~366.000 | ~5.600 | ~37 % / ~28 % |
+  | an der Grenze, 12 × Daumen runter am Tag | ~189.000 | ~2.000 | ~19 % / ~10 % |
+  | extrem (Messung der unabhängigen Prüfung): 30 Sender mit je 10.000 Songs | ~325.000 | ~2.700 | ~33 % / ~13 % |
 
-  Dazu kommen Durable-Object-Anfragen (100.000 pro Tag im kostenlosen Plan): etwa 20 pro gehörter Stunde, 60 pro Stunde, in der ein Player einen Sender pausiert hält (höchstens 36 Stunden nach dem letzten Hören), sonst 1 bis 3 pro Stunde, dazu 240 pro Stunde für jeden sichtbar offenen App-Tab. Gemessen sind es rund 1.800 pro Konto und Tag; ein Konto, das einen ganzen Tag lang einen Sender pausiert hält, braucht rund 1.450 Weckrufe. Für 5 Konten bleibt es auch dann unter 10.000.
+  Dazu kommen Durable-Object-Anfragen (100.000 pro Tag im kostenlosen Plan): etwa 20 pro gehörter Stunde, 60 pro Stunde, in der ein Player einen Sender pausiert hält (höchstens 36 Stunden nach dem letzten Hören), sonst 1 bis 3 pro Stunde, dazu 240 pro Stunde für jeden sichtbar offenen App-Tab. Gemessen sind es rund 2.400 pro Konto und Tag; ein Konto, das einen ganzen Tag lang einen Sender pausiert hält, braucht rund 1.600 Weckrufe. Für 5 Konten bleibt es auch dann unter 15.000.
 
 ### 6. Entdeckungen werden verifiziert
 
@@ -153,7 +153,7 @@ Quellen sind Deep Cuts und Neuerscheinungen geliebter Künstler, Last.fm, Deezer
 - **Den Song, der beim Autostopp pausiert war,** nimmt die fortgesetzte Version heraus. Lief er schon mindestens 30 Sekunden, ist er ohnehin gehört und kommt nicht gleich wieder. Ausnahme: Wechselte der Song kurz vor dem Stopp, ohne dass True Shuffle es sah (ein Skip in den ersten Sekunden), kennt es den pausierten Song nicht. Startet der Hörer danach in Spotify von oben, kann dieser Song am selben Tag noch einmal kommen. In der unabhängigen Prüfung waren das 3 Wiederholungen in 180 Läufen, alle bei einem 60-Song-Sender.
 - **Hält ein Handy eine alte, geladene Reihenfolge,** spielt es diese ab, egal was in der Playlist steht. True Shuffle überspringt darin abgelehnte und in den letzten 24 Stunden gehörte Songs. In der ersten Minute nach dem Weiterhören hat es den Player noch nicht wieder gesehen: Ein abgelehnter Song, zu dem der Hörer gleich von Hand springt, läuft bis zum ersten Blick (höchstens etwa eine Minute), ein schon gehörter kann dann einmal ganz laufen.
 - **Wer einen Song in die Warteschlange legt,** der heute schon lief und in den letzten 36 Stunden in einer Version dieses Senders stand, erlebt, dass True Shuffle ihn überspringt. Spotify sagt nicht, ob ein Song aus der Warteschlange kommt. Frühere Songs einer Playlist merkt sich True Shuffle nur 36 Stunden lang.
-- **Spielen zwei Geräte denselben Sender** (etwa das Handy hält eine alte Reihenfolge, der PC startet den Sender neu), kann True Shuffle aus dem Handy-Verlauf gelegentlich einen Skip erschließen, der keiner war. Das wirkt nur weich (seltener, nicht jetzt), nie als Sperre. Wie Spotify Connect die Geräte dabei wirklich führt, ist ungeprüft.
+- **Spielen zwei Geräte denselben Sender** (etwa das Handy hält eine alte Reihenfolge, der PC startet den Sender neu), kann True Shuffle aus dem Handy-Verlauf gelegentlich einen Skip erschließen, der keiner war. Das wirkt nur weich (seltener, nicht jetzt), nie als Sperre. Ein heute schon gehörter oder abgelehnter Song aus der alten Handy-Reihenfolge kann dann laufen: Spotify zeigt über die Web-API nur das gerade aktive Gerät, ein zweites sieht True Shuffle nicht. Wie Spotify Connect die Geräte dabei wirklich führt, ist ungeprüft; Spotify spielt pro Konto nur auf einem Gerät zugleich.
 - **Wer einen Sender wochenlang nur im Auto fortsetzt,** ohne ihn in der App anzutippen, hört die Playlist bis zu ihrem Ende. Steht der ganze Sender schon darin, ist das nach einer Runde erreicht (in der Prüfung mit 600 Songs nach 40 Fahrten ohne eine Wiederholung). Dann übernimmt Spotifys Autoplay, bis ein Start aus der App die nächste Runde beginnt. Bei großen Sendern ist die Grenze die Länge von 2.000 Songs.
 - **Ein offener Browser-Tab** fragt alle 15 Sekunden nach dem Stand, solange er sichtbar ist. Das sind bis zu 5.760 Worker-Anfragen pro Tag und Tab, bei 100.000 im kostenlosen Plan.
 - **Wer von `ALLOWED_SPOTIFY_IDS` genommen wird,** ist sofort abgemeldet, und spätestens mit dem nächsten Cron (20 Minuten) ruht sein Hub. Seine alten Sitzungen gelten auch dann nicht mehr, wenn er wieder auf die Liste kommt: Er meldet sich neu an. Sein Hub hört schon mit dem nächsten Cron wieder mit, auch vor der Anmeldung.
