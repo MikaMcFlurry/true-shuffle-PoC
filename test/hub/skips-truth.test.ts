@@ -155,3 +155,69 @@ describe("early skips against ground truth", () => {
 		});
 	}
 });
+
+type Resume = "loaded order" | "new contents by position" | "by song" | "from the top";
+
+/** How a phone may carry on after a stop — real Spotify behaviour is unknown. */
+function resume(h: H, sid: number, how: Resume, device: string | null) {
+	const p = h.fake.user().player;
+	if (device) p.deviceId = device;
+	const row = h.sql.first<{ playlist_id: string }>(
+		`SELECT playlist_id FROM stations WHERE id = ?`,
+		sid,
+	)!;
+	const pl = h.fake.playlists.get(row.playlist_id)!;
+	if (how === "new contents by position") {
+		p.order = pl.items.slice();
+		p.index = Math.min(p.index, p.order.length - 1);
+		p.currentFromQueue = null;
+	} else if (how === "by song") {
+		const cur = h.fake.current();
+		p.order = pl.items.slice();
+		const i = cur ? p.order.indexOf(cur) : -1;
+		p.index = i >= 0 ? i : Math.min(p.index, p.order.length - 1);
+		p.currentFromQueue = null;
+	} else if (how === "from the top") {
+		h.fake.skip();
+		p.order = pl.items.slice();
+		p.index = 0;
+		p.progressMs = 0;
+		p.listenedMs = 0;
+		p.currentFromQueue = null;
+		p.contextUri = `spotify:playlist:${pl.id}`;
+	}
+	p.isPlaying = true;
+}
+
+describe("early skips after a car stop, whatever Spotify does on resume", () => {
+	const hows: Resume[] = ["loaded order", "new contents by position", "by song", "from the top"];
+	for (const policy of ["later_less", "consume", "ban"] as const) {
+		it(`never books a song that was not skipped early (${policy})`, async () => {
+			for (const how of hows)
+				for (const stop of ["paused 60 min", "no player 8 h"] as const)
+					for (const size of [60, 300]) {
+						const h = await onboarded({ tracks: size, seed: size + hows.indexOf(how) });
+						const sid = h.stationIds[0]!;
+						if (policy !== "later_less")
+							await h.hub.updateStation(sid, { rules: { skipPolicy: policy } });
+						const t = truth(h.fake);
+						const b = bookings(h, t);
+						const rnd = prng(size * 31 + hows.indexOf(how));
+						await h.hub.play(sid);
+						await listenAndSkip(h, 25 * MINUTE_MS, rnd);
+						const p = h.fake.user().player;
+						p.isPlaying = false;
+						const device = p.deviceId;
+						if (stop === "no player 8 h") p.deviceId = null;
+						await h.listen(stop === "paused 60 min" ? 60 * MINUTE_MS : 8 * HOUR_MS);
+						resume(h, sid, how, device);
+						await listenAndSkip(h, 60 * MINUTE_MS, rnd);
+						h.fake.pause();
+						await h.listen(40 * MINUTE_MS);
+						const where = `${how}, ${stop}, ${size} songs`;
+						expect(b.invented(), where).toBe(0);
+						expect(bannedWithoutSkip(h, t), where).toBe(0);
+					}
+		}, 300_000);
+	}
+});

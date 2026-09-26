@@ -22,6 +22,7 @@ import {
 	newDeck,
 	observePlayer,
 	type PlayerObservation,
+	position,
 	type RecentPlay,
 	remainingAhead,
 	SKIP_GRACE_MS,
@@ -100,6 +101,8 @@ interface PendingSkip {
 	at: number;
 	/** When it was first seen playing. */
 	since?: number;
+	/** Seen playing before it was left (not only inferred between two looks). */
+	seen?: boolean;
 }
 
 /**
@@ -243,9 +246,26 @@ export class HubCore {
 	private indexCache: Map<TrackId, PackedTrack> | null = null;
 
 	constructor(private readonly d: HubDeps) {
-		this.db = d.sql;
+		const raw = d.sql;
+		const cache = this.cache;
+		// Every write to the stations table drops the cached list of stations.
+		this.db = {
+			all: (q, ...p) => raw.all(q, ...p),
+			first: (q, ...p) => raw.first(q, ...p),
+			run: (q, ...p) => {
+				if (/\bstations\b/i.test(q)) cache.stations = null;
+				raw.run(q, ...p);
+			},
+			transaction: (fn) => raw.transaction(fn),
+		};
 		migrate(this.db);
 	}
+
+	/**
+	 * The stations, read once until one of them changes (handed out as copies:
+	 * callers may edit). Shared with the write path above, which clears it.
+	 */
+	private readonly cache: { stations: StationRow[] | null } = { stations: null };
 
 	private now(): number {
 		return this.d.now();
@@ -889,13 +909,49 @@ export class HubCore {
 	private trackIndex(): Map<TrackId, PackedTrack> {
 		if (this.indexCache) return this.indexCache;
 		const idx = new Map<TrackId, PackedTrack>();
-		const rows = this.db.all<{ source: string }>(`SELECT DISTINCT source FROM pages`);
-		for (const r of rows) for (const t of this.loadSource(r.source)) idx.set(t[0], t);
-		for (const d of this.db.all<{ id: string; meta: string }>(`SELECT id, meta FROM discoveries`)) {
-			if (!idx.has(d.id)) idx.set(d.id, JSON.parse(d.meta) as PackedTrack);
-		}
+		// The sources in use, not a scan of every stored page.
+		const sources = this.usedSources();
+		if (this.kvGet("onboarded")) sources.add("liked");
+		for (const key of sources) for (const t of this.loadSource(key)) idx.set(t[0], t);
 		this.indexCache = idx;
 		return idx;
+	}
+
+	/**
+	 * Tracks by id without building the whole index: the given sources (read
+	 * once per source and kept), then discoveries by id.
+	 */
+	private lookupTracks(
+		ids: readonly TrackId[],
+		sources: Iterable<string>,
+	): Map<TrackId, PackedTrack> {
+		const want = new Set(ids);
+		const out = new Map<TrackId, PackedTrack>();
+		if (this.indexCache) {
+			for (const id of want) {
+				const t = this.indexCache.get(id);
+				if (t) out.set(id, t);
+			}
+		} else {
+			for (const key of sources) {
+				for (const t of this.loadSource(key)) if (want.has(t[0])) out.set(t[0], t);
+				if (out.size === want.size) break;
+			}
+		}
+		const missing = [...want].filter((id) => !out.has(id));
+		for (let i = 0; i < missing.length; i += 100) {
+			const chunk = missing.slice(i, i + 100);
+			for (const d of this.db.all<{ id: string; meta: string }>(
+				`SELECT id, meta FROM discoveries WHERE id IN (${chunk.map(() => "?").join(",")})`,
+				...chunk,
+			))
+				out.set(d.id, JSON.parse(d.meta) as PackedTrack);
+		}
+		return out;
+	}
+
+	private isDiscovery(id: TrackId): boolean {
+		return this.db.first(`SELECT 1 FROM discoveries WHERE id = ? LIMIT 1`, id) !== null;
 	}
 
 	// =======================================================================
@@ -1018,11 +1074,14 @@ export class HubCore {
 	// =======================================================================
 
 	private stations(): StationRow[] {
-		return this.db.all<StationRow>(`SELECT * FROM stations ORDER BY sort, id`);
+		if (!this.cache.stations)
+			this.cache.stations = this.db.all<StationRow>(`SELECT * FROM stations ORDER BY sort, id`);
+		return this.cache.stations.map((r) => ({ ...r }));
 	}
 
 	private stationRow(id: number): StationRow | null {
-		return this.db.first<StationRow>(`SELECT * FROM stations WHERE id = ?`, id);
+		const r = this.stations().find((x) => x.id === id);
+		return r ?? null;
 	}
 
 	private sourcesOf(st: StationRow): StationSource[] {
@@ -1290,14 +1349,29 @@ export class HubCore {
 		// Planning reads every candidate's memory: fetch them in one sweep.
 		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
 		const prev = this.deckOf(st);
+		// Continue, rather than replan, when a player may still hold this
+		// playlist (paused in it, or gone quiet while in it) and resume it.
 		const lastUse = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
-		const continuing = mode === "background" && !!prev && this.now() - lastUse < CONTINUE_WITHIN_MS;
-		const keep = continuing
-			? prev.items
-					.slice(prev.lastIndex ?? 0)
-					.filter((it) => it.state === "pending")
-					.map((it) => ({ trackId: it.id, kind: it.kind }))
-			: undefined;
+		const uri = this.deckUri(st);
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const heldByPlayer =
+			!!uri &&
+			(snap?.obs?.contextUri === uri || (!snap?.obs && this.kvGet<string>("last_context") === uri));
+		const held = prev ? position(prev) : null;
+		let continuing =
+			mode === "background" &&
+			!!prev &&
+			held !== null &&
+			heldByPlayer &&
+			this.now() - lastUse < CONTINUE_WITHIN_MS;
+		// The songs after the held position stay exactly where they are, so a
+		// player resuming by position and one resuming its loaded order play the
+		// same songs. The held song itself leaves this version.
+		const suffix = continuing && prev && held !== null ? prev.items.slice(held + 1) : [];
+		const exclude =
+			continuing && prev && held !== null
+				? new Set([...suffix.map((it) => it.id), prev.items[held]!.id])
+				: undefined;
 		const plan = () =>
 			planQueue({
 				now: this.now(),
@@ -1307,9 +1381,9 @@ export class HubCore {
 				memory: (id) => this.memory(id),
 				banned,
 				discoveries,
-				size: DECK_SIZE,
+				size: continuing ? Math.max((held ?? 0) + 1, DECK_SIZE - suffix.length) : DECK_SIZE,
 				rng: this.d.rng,
-				keep,
+				exclude,
 			});
 		let result = plan();
 		if (result.freshRemaining === 0 && result.poolSize > 0) {
@@ -1336,8 +1410,20 @@ export class HubCore {
 				"Alle Songs dieses Senders liefen in den letzten 24 Stunden. Morgen geht es weiter.",
 			);
 		}
+		// Continuation layout: fresh unheard songs up to the held position (what
+		// a restart from the top plays), then the kept songs at their places,
+		// then the rest of the plan. Too small a pool to fill the front: replan.
+		if (continuing && held !== null && result.slots.length < held + 1) continuing = false;
+		const layout: { trackId: TrackId; kind: SlotKind }[] =
+			continuing && held !== null
+				? [
+						...result.slots.slice(0, held + 1),
+						...suffix.map((it) => ({ trackId: it.id, kind: it.kind })),
+						...result.slots.slice(held + 1),
+					]
+				: result.slots;
 		let playlistId = await this.ensurePlaylist(client, st);
-		const uris = result.slots.map((s) => `spotify:track:${s.trackId}`);
+		const uris = layout.map((s) => `spotify:track:${s.trackId}`);
 		try {
 			await client.replaceItems(playlistId, uris.slice(0, 100));
 		} catch (err) {
@@ -1355,12 +1441,13 @@ export class HubCore {
 			await client.addItems(playlistId, uris.slice(i, i + 100));
 		}
 		if (prev) this.carryPasses(st.id, prev);
-		const deck = newDeck(result.slots, (prev?.version ?? 0) + 1, this.now());
+		const deck = newDeck(layout, (prev?.version ?? 0) + 1, this.now());
 		// Positions stay trustworthy only through a continuation of an order we
 		// trusted. A fresh plan nobody started is not ours until True Shuffle
 		// starts it: a player may still carry on with what it had loaded.
 		deck.continued = continuing;
 		deck.ours = continuing && prev?.ours === true;
+		deck.heldAt = continuing ? held : null;
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
 			JSON.stringify(deck),
@@ -1457,10 +1544,16 @@ export class HubCore {
 	private isListeningTo(st: StationRow): boolean {
 		const snap = this.kvGet<PlayerSnapshot>("player");
 		const uri = this.deckUri(st);
-		if (!uri || !snap?.obs) return false;
+		if (!uri || !snap) return false;
+		const activity = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
+		// Spotify briefly shows no player at all (a phone switching networks):
+		// that is not "nobody listens" — the last thing playing was this.
+		if (!snap.obs)
+			return (
+				this.kvGet<string>("last_context") === uri && this.now() - activity < IDLE_BEFORE_REBUILD_MS
+			);
 		if (snap.obs.contextUri !== uri) return false;
 		if (snap.obs.isPlaying) return true;
-		const activity = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
 		return this.now() - activity < IDLE_BEFORE_REBUILD_MS;
 	}
 
@@ -1492,6 +1585,8 @@ export class HubCore {
 		};
 		this.kvSet("player", snap);
 		this.kvDel("player_stale");
+		if (obs?.contextUri && obs.contextUri !== this.kvGet<string>("last_context"))
+			this.kvSet("last_context", obs.contextUri);
 		const wasPlaying = s.idleSince === null && s.lastActivityAt > 0;
 		if (obs?.isPlaying) {
 			s.lastActivityAt = this.now();
@@ -1564,7 +1659,13 @@ export class HubCore {
 				deck = settled.deck;
 				const rules = this.rulesOf(st);
 				for (const id of settled.skipped)
-					this.bookEarlySkip(st, id, rules, deck.lastObservedAt ?? this.now());
+					this.bookEarlySkip(
+						st,
+						id,
+						rules,
+						deck.lastObservedAt ?? this.now(),
+						settled.seen.has(id),
+					);
 			}
 			if (changed) this.saveDeck(st.id, deck);
 			// Rewrite a deck once nobody has listened to it for a while.
@@ -1577,6 +1678,24 @@ export class HubCore {
 			}
 		}
 		this.watchCurrent(obs, inStation);
+		// "Never again" holds even in a queue a player loaded before the song was
+		// turned down: if it comes up in one of our stations, move on.
+		if (
+			obs?.isPlaying &&
+			obs.trackId &&
+			inStation &&
+			obs.progressMs < 30_000 &&
+			this.memory(obs.trackId).thumb === -1 &&
+			this.kvGet<string>("autoskipped") !== obs.trackId
+		) {
+			this.kvSet("autoskipped", obs.trackId);
+			try {
+				await client.next();
+				this.kvSet("player_stale", 1);
+			} catch {
+				/* a restricted device: nothing we can do from here */
+			}
+		}
 		for (const st of this.stations()) {
 			if (!st.deck && this.stationReady(st) && !this.jobExists(`deck:${st.id}`)) {
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3);
@@ -1645,7 +1764,8 @@ export class HubCore {
 		const waiting = deck.items.filter((it) => it.state === "passed");
 		if (waiting.length === 0) return;
 		const list = this.kvGet<PendingSkip[]>("pending_skips") ?? [];
-		for (const it of waiting) list.push({ id: it.id, st: stationId, at: it.at ?? this.now() });
+		for (const it of waiting)
+			list.push({ id: it.id, st: stationId, at: it.at ?? this.now(), seen: it.seen === true });
 		this.kvSet("pending_skips", list.slice(-500));
 	}
 
@@ -1663,13 +1783,14 @@ export class HubCore {
 		const cur = obs?.trackId ?? null;
 		if (watch && cur && cur !== watch.id && obs?.contextUri === watch.uri && obs.isPlaying) {
 			const list = this.kvGet<PendingSkip[]>("pending_skips") ?? [];
-			list.push({ id: watch.id, st: watch.st, at: this.now(), since: watch.since });
+			list.push({ id: watch.id, st: watch.st, at: this.now(), since: watch.since, seen: true });
 			this.kvSet("pending_skips", list.slice(-500));
 		}
-		if (inStation && cur && !inStation.inDeck) {
+		if (inStation && cur && !inStation.inDeck && obs?.isPlaying) {
 			if (watch?.id !== cur)
 				this.kvSet("watch", { id: cur, st: inStation.st, uri: inStation.uri, since: this.now() });
-		} else if (watch && (cur !== watch.id || obs?.contextUri !== watch.uri)) {
+		} else if (watch && (cur !== watch.id || obs?.contextUri !== watch.uri || !obs?.isPlaying)) {
+			// Moved on, or paused: a paused song Spotify later replaces was not skipped.
 			this.kvDel("watch");
 		}
 	}
@@ -1693,7 +1814,7 @@ export class HubCore {
 				continue;
 			}
 			const st = this.stationRow(e.st);
-			if (st) this.bookEarlySkip(st, e.id, this.rulesOf(st), e.at);
+			if (st) this.bookEarlySkip(st, e.id, this.rulesOf(st), e.at, e.seen === true);
 		}
 		if (keep.length !== list.length) this.kvSet("pending_skips", keep);
 	}
@@ -1800,11 +1921,13 @@ export class HubCore {
 			s.recentCursor = Math.max(s.recentCursor, at);
 			out.push({ trackId: id, playedAt: at, contextUri: ctx });
 			if (ignored) continue;
+			// The round is judged on memory as it was: a skip that already used the
+			// song up (consume rule) stands in for this play — never counted twice.
+			const before = this.memory(id);
 			// Its play arrived after all: a skip booked around that time was none.
 			const skippedAt = this.liveRow(id)?.last_skipped_at ?? null;
 			if (skippedAt !== null && at >= skippedAt - 30 * MINUTE_MS && at <= skippedAt + 5 * MINUTE_MS)
 				this.undoSkip(null, id);
-			const before = this.memory(id);
 			this.livePlay(id, at);
 			this.countRound(id, before, at);
 			this.noteDiscoveryHeard(id);
@@ -1854,12 +1977,28 @@ export class HubCore {
 		return entry.set.has(id);
 	}
 
-	private bookEarlySkip(st: StationRow, id: TrackId, rules: StationRules, at: number): void {
+	/**
+	 * `seen`: the song was seen playing and then left. Only then may a skip ban
+	 * it or use it up for the round; a skip inferred from positions between
+	 * two looks is booked softly ("not now, and rarer") and nothing more.
+	 */
+	private bookEarlySkip(
+		st: StationRow,
+		id: TrackId,
+		rules: StationRules,
+		at: number,
+		seen: boolean,
+	): void {
 		if (this.inGuest(at)) return;
 		const before = this.memory(id);
 		this.liveSkip(id, at);
-		this.log("info", "skip", `Früh übersprungen auf „${st.name}“: ${this.describe(id)}`);
+		this.log(
+			"info",
+			"skip",
+			`Früh übersprungen auf „${st.name}“${seen ? "" : " (erschlossen)"}: ${this.describe(id)}`,
+		);
 		this.dirtyDecksHolding(id, null);
+		if (!seen) return;
 		if (rules.skipPolicy === "ban") {
 			this.db.run(
 				`INSERT OR IGNORE INTO bans (station_id, track_id, at) VALUES (?, ?, ?)`,
@@ -1986,7 +2125,8 @@ export class HubCore {
 		if (pending >= 150 && !state.phase) return nextRun;
 		const pool = this.stationPool(st);
 		const index = this.trackIndex();
-		const known = (id: TrackId) => index.has(id) || this.hasLive(id) || this.hist().has(id);
+		const known = (id: TrackId) =>
+			index.has(id) || this.isDiscovery(id) || this.hasLive(id) || this.hist().has(id);
 		const startedAt = state.startedAt ?? this.now();
 		const result = await discoverStep(
 			{
@@ -2021,7 +2161,10 @@ export class HubCore {
 
 	/** Artists the listener demonstrably likes in this station — discovery seeds. */
 	private seedArtists(pool: PoolEntry[]): { id: string; name: string; weight: number }[] {
-		const index = this.trackIndex();
+		const index = this.lookupTracks(
+			pool.map((e) => e.id),
+			this.usedSources(),
+		);
 		const byArtist = new Map<string, { id: string; name: string; weight: number }>();
 		for (const e of pool) {
 			const m = this.memory(e.id);
@@ -2472,7 +2615,10 @@ export class HubCore {
 
 	private nowPlaying(snap: PlayerSnapshot | null): NowPlaying | null {
 		if (!snap?.obs?.trackId) return null;
-		const t = snap.track ?? this.trackIndex().get(snap.obs.trackId) ?? null;
+		const t =
+			snap.track ??
+			this.lookupTracks([snap.obs.trackId], this.usedSources()).get(snap.obs.trackId) ??
+			null;
 		if (!t) return null;
 		let stationId: number | null = null;
 		let kind: SlotKind | null = null;
@@ -2508,8 +2654,15 @@ export class HubCore {
 		};
 	}
 
+	/** A song's name for a log line, from what is already in memory — no reads. */
 	private describe(id: TrackId): string {
-		const t = this.trackIndex().get(id);
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		let t: PackedTrack | undefined = snap?.track?.[0] === id ? snap.track : undefined;
+		if (!t)
+			for (const list of this.sourceCache.values()) {
+				t = list.find((x) => x[0] === id);
+				if (t) break;
+			}
 		return t ? `${t[1]} — ${artistLine(t)}` : id;
 	}
 
@@ -2587,22 +2740,30 @@ export class HubCore {
 		if (!st) throw new HubError("not_found", "Diesen Sender gibt es nicht.", 404);
 		const snap = this.kvGet<PlayerSnapshot>("player");
 		const deck = this.deckOf(st);
-		const index = this.trackIndex();
 		const upcoming: StationDetail["upcoming"] = [];
 		if (deck) {
-			const from = (deck.lastIndex ?? -1) + 1;
-			for (let i = from; i < deck.items.length && upcoming.length < 12; i++) {
-				const it = deck.items[i]!;
-				if (it.state !== "pending") continue;
-				const t = index.get(it.id);
+			const from = (position(deck) ?? -1) + 1;
+			const next = deck.items
+				.slice(from)
+				.filter((it) => it.state === "pending")
+				.slice(0, 12);
+			const found = this.lookupTracks(
+				next.map((it) => it.id),
+				this.liveSources(st).map(sourceKey),
+			);
+			for (const it of next) {
+				const t = found.get(it.id);
 				if (t) upcoming.push({ ...this.view(t), kind: it.kind });
 			}
 		}
-		const recent = this.db
-			.all<{ played_at: number; track_id: string; meta: string | null }>(
-				`SELECT played_at, track_id, meta FROM plays WHERE station_id = ? AND ignored = 0 ORDER BY played_at DESC LIMIT 15`,
-				id,
-			)
+		const recentRows = this.db.all<{ played_at: number; track_id: string; meta: string | null }>(
+			`SELECT played_at, track_id, meta FROM plays WHERE station_id = ? AND ignored = 0 ORDER BY played_at DESC LIMIT 15`,
+			id,
+		);
+		const bare = recentRows.filter((r) => !r.meta).map((r) => r.track_id);
+		const index =
+			bare.length > 0 ? this.lookupTracks(bare, this.liveSources(st).map(sourceKey)) : new Map();
+		const recent = recentRows
 			.map((r) => {
 				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
 				return t ? { ...this.view(t), playedAt: r.played_at } : null;
@@ -2640,7 +2801,8 @@ export class HubCore {
 			Math.min(200, Math.max(1, limit)),
 		);
 		const names = new Map(this.stations().map((s) => [s.id, s.name]));
-		const index = this.trackIndex();
+		const bare = rows.filter((r) => !r.meta).map((r) => r.track_id);
+		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
 		return rows
 			.map((r) => {
 				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);

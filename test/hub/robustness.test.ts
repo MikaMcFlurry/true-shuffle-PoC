@@ -204,26 +204,30 @@ describe("plays that reach recently-played late (RT-2)", () => {
 });
 
 describe("a rewrite continues what a player may still have loaded", () => {
-	it("keeps the songs still ahead in front after a car stop, without any heard song", async () => {
+	it("keeps the songs after the paused one at their places, with no heard song anywhere", async () => {
 		const h = await onboarded({ tracks: 600 });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
 		await h.listen(30 * MINUTE_MS);
-		const before = stationDeck(h, sid);
-		const position = before.deck.lastIndex!;
-		const ahead = before.pl.items.slice(position + 1, position + 20);
 		h.fake.pause();
-		await h.listen(15 * MINUTE_MS);
+		await h.hub.state({ live: true });
+		const before = stationDeck(h, sid);
+		const held = before.deck.lastIndex!;
+		const pausedSong = before.pl.items[held]!;
+		h.clock.t += 15 * MINUTE_MS;
+		await h.listen(1_000);
 		const after = stationDeck(h, sid);
 		expect(after.deck.version).toBeGreaterThan(before.deck.version);
-		// Whatever the phone resumes, it plays on in the same order.
-		const idx = after.pl.items.indexOf(ahead[0]!);
-		expect(idx).toBeGreaterThanOrEqual(0);
-		expect(after.pl.items.slice(idx, idx + ahead.length)).toEqual(ahead);
+		// Resuming by position or by the loaded order plays the same songs.
+		expect(after.pl.items.slice(held + 1, held + 40)).toEqual(
+			before.pl.items.slice(held + 1, held + 40),
+		);
+		// A restart from the top plays nothing heard today, not even the paused song.
 		const heard = new Set(
 			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
 		);
 		for (const id of after.pl.items) expect(heard.has(id)).toBe(false);
+		expect(after.pl.items.includes(pausedSong)).toBe(false);
 	});
 
 	it("a mix changed in the app applies at the next start from the app", async () => {
@@ -281,5 +285,105 @@ describe("the station limit", () => {
 		const before = (await h.hub.state()).stations.length;
 		await expect(h.hub.onboard(lists.map((p) => p.id))).rejects.toThrow(/Höchstens/);
 		expect((await h.hub.state()).stations.length).toBe(before);
+	});
+});
+
+describe("the consume rule with Spotify's list lagging behind (NF-6)", () => {
+	it("ends a round only when every song was heard or used up once", async () => {
+		const h = await onboarded({ tracks: 120, seed: 1 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "consume" } });
+		// recently-played shows every play 30 min late (longer than the skip grace).
+		const u = h.fake.user();
+		const held: { e: (typeof u.recent)[number]; due: number }[] = [];
+		const known = new Set(u.recent.map((r) => `${r.playedAt}|${r.trackId}`));
+		const lag = () => {
+			for (const r of u.recent) {
+				const k = `${r.playedAt}|${r.trackId}`;
+				if (!known.has(k)) {
+					known.add(k);
+					held.push({ e: r, due: h.clock.t + 30 * MINUTE_MS });
+				}
+			}
+			u.recent = u.recent.filter((r) => !held.some((x) => x.e === r));
+			for (let i = held.length - 1; i >= 0; i--)
+				if (held[i]!.due <= h.clock.t) {
+					u.recent.push(held[i]!.e);
+					held.splice(i, 1);
+				}
+			u.recent.sort((a, b) => b.playedAt - a.playedAt);
+		};
+		const ended = new Set<string>();
+		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
+		const orig = f.moveNext.bind(h.fake);
+		f.moveNext = (user: unknown, at: number) => {
+			const cur = h.fake.current();
+			if (cur) ended.add(cur);
+			orig(user, at);
+		};
+		await h.hub.play(sid);
+		for (let m = 0; m < 9 * 60; m++) {
+			await h.listen(MINUTE_MS);
+			lag();
+			const st = h.sql.first<{ round_no: number }>(
+				`SELECT round_no FROM stations WHERE id = ?`,
+				sid,
+			)!;
+			if (st.round_no > 1) break;
+		}
+		const round = h.sql.first<{ round_no: number }>(
+			`SELECT round_no FROM stations WHERE id = ?`,
+			sid,
+		)!;
+		expect(round.round_no).toBeGreaterThan(1);
+		// The round ended only once every one of the 120 songs had actually come.
+		expect(ended.size).toBeGreaterThanOrEqual(118);
+	}, 120_000);
+});
+
+describe("Spotify showing no player for a moment (NF-9)", () => {
+	it("does not rewrite the deck under someone listening", async () => {
+		for (const blip of [1, 2, 3]) {
+			const h = await onboarded({ tracks: 300, seed: blip });
+			const sid = h.stationIds[0]!;
+			await h.hub.play(sid);
+			await h.listen(22 * MINUTE_MS);
+			const before = stationDeck(h, sid).deck.version;
+			const p = h.fake.user().player;
+			const device = p.deviceId;
+			p.deviceId = null; // the Web API answers 204; the phone plays on
+			await h.listen(blip * MINUTE_MS);
+			p.deviceId = device;
+			await h.listen(8 * MINUTE_MS);
+			expect(stationDeck(h, sid).deck.version, `${blip} min`).toBe(before);
+		}
+	});
+});
+
+describe("a song turned down that a player still has queued", () => {
+	it("is moved past as soon as it comes up in a station", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.play(sid);
+		await h.listen(5 * MINUTE_MS);
+		const upcoming = stationDeck(h, sid).pl.items;
+		const idx = upcoming.indexOf(h.fake.current()!);
+		const later = upcoming[idx + 3]!;
+		// Turned down from somewhere else (e.g. while another song played).
+		await h.hub.thumb(later, -1);
+		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
+		let heardFor = 0;
+		const orig = f.moveNext.bind(h.fake);
+		f.moveNext = (user: unknown, at: number) => {
+			if (h.fake.current() === later) heardFor = h.fake.user().player.listenedMs;
+			orig(user, at);
+		};
+		// The app is open: it looks every few seconds.
+		for (let i = 0; i < 180; i++) {
+			await h.listen(5_000);
+			await h.hub.state({ live: true });
+		}
+		expect(heardFor).toBeGreaterThan(0);
+		expect(heardFor).toBeLessThan(30_000);
 	});
 });

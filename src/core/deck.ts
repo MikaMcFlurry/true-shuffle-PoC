@@ -22,6 +22,11 @@ export interface DeckItem {
 	state: DeckItemState;
 	/** When the state last changed. */
 	at: number | null;
+	/**
+	 * It was seen playing before it was left. A song passed only by inference
+	 * (between two looks) may be booked as "not now", never as banned or used up.
+	 */
+	seen?: boolean;
 }
 
 export interface Deck {
@@ -33,6 +38,12 @@ export interface Deck {
 	lastIndex: number | null;
 	/** The song seen at `lastIndex` — the only position we know was reached. */
 	lastTrackId?: TrackId | null;
+	/**
+	 * That song was playing when seen. A song last seen paused and later
+	 * replaced (Spotify resuming with something else after a stop) was not
+	 * skipped by the listener.
+	 */
+	lastPlaying?: boolean;
 	lastObservedAt: number | null;
 	/**
 	 * Spotify plays exactly this order: True Shuffle started it, or this
@@ -43,8 +54,19 @@ export interface Deck {
 	ours?: boolean;
 	/** Just started by True Shuffle at its first song; nothing seen since. */
 	top?: boolean;
-	/** Built as a continuation of the previous version (kept its front). */
+	/** Built as a continuation of the previous version. */
 	continued?: boolean;
+	/**
+	 * Index at which a player still holds the previous version (paused). The
+	 * songs after it were kept at their places, so resuming by position and
+	 * resuming the loaded order play the same songs.
+	 */
+	heldAt?: number | null;
+}
+
+/** Where the player is (or was last seen) in this version. */
+export function position(deck: Deck): number | null {
+	return deck.lastIndex ?? deck.heldAt ?? null;
 }
 
 export interface PlayerObservation {
@@ -91,6 +113,7 @@ export function newDeck(
 		ours: false,
 		top: false,
 		continued: false,
+		heldAt: null,
 	};
 }
 
@@ -119,15 +142,20 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	const orderBroken = obs.shuffle || obs.smartShuffle;
 	const idx = deck.items.findIndex((it) => it.id === obs.trackId);
 	const prev = deck.lastIndex;
+	// Left by the listener: seen playing, and now another song plays.
 	const seenPrev =
-		prev !== null && deck.lastTrackId != null && deck.items[prev]?.id === deck.lastTrackId;
+		prev !== null &&
+		deck.lastTrackId != null &&
+		deck.items[prev]?.id === deck.lastTrackId &&
+		deck.lastPlaying === true &&
+		obs.isPlaying;
 	if (idx < 0) {
 		// A song that is not in this version (the listener's own queue, or an
 		// order Spotify loaded before a rewrite). The song we saw before it has
 		// been left all the same; positions stay where they were.
 		if (seenPrev && obs.trackId !== deck.lastTrackId && deck.items[prev]!.state === "pending") {
 			const items = deck.items.slice();
-			items[prev] = { ...items[prev]!, state: "passed", at: obs.at };
+			items[prev] = { ...items[prev]!, state: "passed", at: obs.at, seen: true };
 			return {
 				...base,
 				inDeck: true,
@@ -138,6 +166,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 		}
 		return { ...base, inDeck: true, orderBroken };
 	}
+	// Positions between two looks mean something only while it plays on.
 	if (orderBroken) {
 		// Positions mean nothing while the service shuffles — infer nothing,
 		// and trust the order again only once it is seen to hold.
@@ -150,6 +179,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 				...deck,
 				lastIndex: idx,
 				lastTrackId: obs.trackId,
+				lastPlaying: obs.isPlaying,
 				lastObservedAt: obs.at,
 				ours: false,
 				top: false,
@@ -158,7 +188,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	}
 	// What do we actually know was reached? Either the song we saw last time
 	// (still at that index in this version), or the top, when we started it.
-	const ours = deck.ours === true;
+	const ours = deck.ours === true && obs.isPlaying;
 	const fromTop = prev === null && ours && deck.top === true;
 
 	const items = deck.items.slice();
@@ -166,7 +196,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	const pass = (i: number) => {
 		const it = items[i]!;
 		if (it.state === "pending") {
-			items[i] = { ...it, state: "passed", at: obs.at };
+			items[i] = { ...it, state: "passed", at: obs.at, seen: seenPrev && i === prev };
 			passed.push(it.id);
 		}
 	};
@@ -189,6 +219,7 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 			items,
 			lastIndex: idx,
 			lastTrackId: obs.trackId,
+			lastPlaying: obs.isPlaying,
 			lastObservedAt: obs.at,
 			top: false,
 		},
@@ -236,16 +267,18 @@ export function settleSkips(
 	deck: Deck,
 	now: number,
 	graceMs = SKIP_GRACE_MS,
-): { deck: Deck; skipped: TrackId[] } {
+): { deck: Deck; skipped: TrackId[]; seen: Set<TrackId> } {
 	const skipped: TrackId[] = [];
+	const seen = new Set<TrackId>();
 	const items = deck.items.map((it) => {
 		if (it.state === "passed" && it.at !== null && now - it.at >= graceMs) {
 			skipped.push(it.id);
+			if (it.seen) seen.add(it.id);
 			return { ...it, state: "skipped" as const, at: now };
 		}
 		return it;
 	});
-	return { deck: { ...deck, items }, skipped };
+	return { deck: { ...deck, items }, skipped, seen };
 }
 
 /** Songs of the deck the listener has moved past or heard. */
@@ -255,7 +288,7 @@ export function consumedCount(deck: Deck): number {
 
 /** Songs still ahead of the current position. */
 export function remainingAhead(deck: Deck): number {
-	const from = (deck.lastIndex ?? -1) + 1;
+	const from = (position(deck) ?? -1) + 1;
 	let n = 0;
 	for (let i = from; i < deck.items.length; i++) if (deck.items[i]!.state === "pending") n++;
 	return n;

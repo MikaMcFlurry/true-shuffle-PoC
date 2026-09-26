@@ -209,7 +209,7 @@ export function Station({
 			.then(() => {
 				if (!quiet)
 					store.say(
-						"Gespeichert — der Sender wird neu befüllt, sobald gerade niemand hört",
+						"Gespeichert — gilt, sobald du den Sender das nächste Mal startest",
 						"info",
 						4000,
 					);

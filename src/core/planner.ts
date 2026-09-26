@@ -59,11 +59,11 @@ export interface PlanInput {
 	size: number;
 	rng: Rng;
 	/**
-	 * Songs already queued by the previous version, in order, that a player
-	 * may still be about to play. Those still allowed stay in front, as they
-	 * were; the plan continues after them.
+	 * Songs that are already placed elsewhere in the deck (kept from the
+	 * previous version): never chosen again, but still part of the station —
+	 * they count for the round like every other song.
 	 */
-	keep?: readonly { trackId: TrackId; kind: SlotKind }[];
+	exclude?: ReadonlySet<TrackId>;
 }
 
 export interface PlanResult {
@@ -178,42 +178,23 @@ export function planQueue(input: PlanInput): PlanResult {
 	const slots: PlannedSlot[] = [];
 	let overflow = 0;
 
-	// The kept front: only what would still be chosen for its lane today.
-	const artistOf = new Map<TrackId, string>();
-	for (const e of input.pool) artistOf.set(e.id, e.artistId);
-	for (const c of discoveryCandidates) artistOf.set(c.id, c.artistId);
-	const discoveryIds = new Set(discoveryCandidates.map((c) => c.id));
-	for (const k of input.keep ?? []) {
-		if (slots.length >= input.size || used.has(k.trackId)) continue;
-		const m = memo.get(k.trackId);
-		const allowed =
-			k.kind === "discovery"
-				? discoveryIds.has(k.trackId)
-				: m !== undefined &&
-					!coolingDown(m, now) &&
-					(k.kind === "favorite"
-						? favoriteReady(m, now, rules)
-						: !heardInRound(m, roundStartedAt, policy));
-		if (!allowed) continue;
-		used.add(k.trackId);
-		taken[k.kind]++;
-		slots.push({ trackId: k.trackId, kind: k.kind });
-		const artist = artistOf.get(k.trackId);
-		if (rules.artistSpacing > 0 && artist) {
-			recentArtists.push(artist);
-			if (recentArtists.length > rules.artistSpacing) recentArtists.shift();
-		}
-	}
+	// Songs placed elsewhere in the deck are never picked twice.
+	for (const id of input.exclude ?? []) used.add(id);
 
 	for (let i = 0; slots.length < input.size; i++) {
-		// Deficit round robin: the lane furthest behind its share goes next.
+		// Deficit round robin: the lane furthest behind its share goes next. A
+		// lane that ran dry hands its share to the others in proportion, so
+		// "Vertraut" without favourites yet does not turn into discoveries.
 		let best: SlotKind | null = null;
 		let bestDeficit = Number.NEGATIVE_INFINITY;
+		const live = kinds.filter((k) => lanes[k].length > 0 && shares[k] > 0);
+		const liveShare = live.reduce((sum, k) => sum + shares[k], 0);
 		for (const k of kinds) {
 			if (lanes[k].length === 0) continue;
-			const deficit = shares[k] * (slots.length + 1) - taken[k];
+			const share = liveShare > 0 && shares[k] > 0 ? shares[k] / liveShare : shares[k];
+			const deficit = share * (slots.length + 1) - taken[k];
 			// Lanes with a zero share only step in when nothing else is left.
-			const adjusted = shares[k] === 0 ? deficit - 1e6 : deficit;
+			const adjusted = share === 0 ? deficit - 1e6 : deficit;
 			if (adjusted > bestDeficit) {
 				bestDeficit = adjusted;
 				best = k;

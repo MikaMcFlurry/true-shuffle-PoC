@@ -263,38 +263,32 @@ describe("planQueue", () => {
 	});
 });
 
-describe("planQueue with a kept front", () => {
-	it("keeps the still-allowed songs in front, in order, and plans after them", () => {
+describe("planQueue with songs placed elsewhere in the deck", () => {
+	it("never picks an excluded song, but still counts it for the round", () => {
 		const p = pool(500);
-		const keep = p.slice(40, 50).map((e) => ({ trackId: e.id, kind: "fresh" as const }));
-		const res = planQueue(input({ pool: p, keep }));
-		expect(res.slots.slice(0, 10).map((s) => s.trackId)).toEqual(keep.map((k) => k.trackId));
+		const exclude = new Set(p.slice(0, 100).map((e) => e.id));
+		const res = planQueue(input({ pool: p, exclude, size: 450 }));
 		const ids = res.slots.map((s) => s.trackId);
-		expect(new Set(ids).size).toBe(ids.length);
-		expect(res.slots).toHaveLength(200);
+		for (const id of ids) expect(exclude.has(id)).toBe(false);
+		expect(res.freshRemaining).toBe(500);
+		expect(res.poolSize).toBe(500);
 	});
+});
 
-	it("drops kept songs that were heard, turned down or are no longer in the station", () => {
-		const p = pool(500);
-		const mem = new Map<string, TrackMemory>();
-		const heard = p[41]!.id;
-		const down = p[42]!.id;
-		mem.set(heard, { ...emptyMemory(heard), lastPlayedAt: NOW - HOUR_MS, plays: 1 });
-		mem.set(down, { ...emptyMemory(down), thumb: -1 });
-		const keep = [
-			...p.slice(40, 44).map((e) => ({ trackId: e.id, kind: "fresh" as const })),
-			{ trackId: "not-in-this-station-anymore", kind: "fresh" as const },
-		];
-		const front = planQueue(input({ pool: p, keep, mem }))
-			.slots.slice(0, 2)
-			.map((s) => s.trackId);
-		expect(front).toEqual([p[40]!.id, p[43]!.id]);
-	});
-
-	it("counts the kept songs towards the mix, so the shares still hold", () => {
-		const p = pool(500);
-		const keep = p.slice(0, 100).map((e) => ({ trackId: e.id, kind: "fresh" as const }));
-		const res = planQueue(input({ pool: p, keep, size: 200 }));
-		expect(res.counts.fresh + res.counts.favorite + res.counts.discovery).toBe(200);
+describe("planQueue shares when a lane is empty", () => {
+	it("hands an empty lane's share to the others in proportion", () => {
+		// "Vertraut" (mix 100) with no favourites ready: discoveries must stay rare.
+		const discoveries: DiscoveryEntry[] = Array.from({ length: 300 }, (_, i) => ({
+			id: `d${String(i).padStart(21, "0")}`,
+			artistId: `x${i}`,
+			score: 0.5,
+		}));
+		const res = planQueue(input({ rules: { ...DEFAULT_RULES, mix: 100 }, discoveries, size: 200 }));
+		const share = res.counts.discovery / res.slots.length;
+		expect(share).toBeLessThan(0.15);
+		const mixed = planQueue(
+			input({ rules: { ...DEFAULT_RULES, mix: 25 }, discoveries, size: 200 }),
+		);
+		expect(res.counts.discovery).toBeLessThan(mixed.counts.discovery);
 	});
 });

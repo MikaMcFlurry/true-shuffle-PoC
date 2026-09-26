@@ -28,11 +28,11 @@ Hosting: kostenloser Cloudflare-Plan. Bis zu 5 Konten mit Spotify-Anmeldung.
 Jeder Sender ist eine private Spotify-Playlist „True Shuffle · <Sender>" mit bis zu 300 geplanten Songs. Gestartet wird sie mit `context_uri` und `offset`, Shuffle und Wiederholen sind aus. Spotify spielt sie dann selbst ab, auf jedem Gerät, auch offline im Auto und auch ohne True Shuffle. Eine Warteschlange muss niemand am Leben halten. Das behebt die Fehlerklasse des Prototyps an der Wurzel.
 
 - **Neu geschrieben** wird ein Deck nur, wenn seit mindestens 10 Minuten niemand darin hört: Jemandem die laufende Playlist umzuschreiben ist genau der alte Fehler. Das „niemand hört" muss ein frischer Blick auf den Player belegen (höchstens 5 Minuten alt). Kann Spotify nichts sagen, wartet True Shuffle. Anlass ist ein verbrauchtes Deck, ein veraltetes (älter als 20 h) oder ein markiertes (neue Entdeckungen, Daumen runter, Regeländerung).
-- **Im Hintergrund neu geschrieben, setzt ein Deck fort.** Wurde es in den letzten 12 Stunden benutzt, kann ein Player es noch geladen haben (Autostopp, Handy ohne Verbindung). Die neue Version beginnt dann mit den noch ungehörten Songs ab der letzten bekannten Position, in ihrer Reihenfolge. Dahinter folgt der neue Plan.
-  - Setzt der Player die alte Reihenfolge fort, passt sie zur neuen.
-  - Setzt er die neue ab der alten Position fort, passt es auch.
-  - Startet jemand in Spotify von oben, kommt zuerst ein ungehörter Song.
-- **Startet True Shuffle den Sender selbst,** plant es frisch und spielt von oben. Eine geänderte Mischung wirkt also beim nächsten Start aus der App.
+- **Hält ein Player die Playlist noch (pausiert, etwa beim Autostopp, oder zuletzt darin und gerade unsichtbar), setzt ein Hintergrund-Neuschreiben sie fort.** Die Songs nach der gehaltenen Stelle bleiben genau an ihren Plätzen. Dadurch spielt ein Player dasselbe, egal ob er nach Position weitermacht oder die geladene Reihenfolge fortsetzt.
+  - Davor stehen frische, ungehörte Songs, damit ein Neustart von oben in Spotify nichts wiederholt.
+  - Der pausierte Song selbst fällt aus der Version heraus.
+  - Ein Song, den du mit Daumen runter abgelehnt hast, wird übersprungen, sobald er in einem Sender auftaucht, auch aus einer noch geladenen Reihenfolge.
+- **Startet True Shuffle den Sender selbst,** plant es frisch und spielt von oben. Geänderte Einstellungen (Mischung, Regeln) gelten ab diesem Start, und bei jedem Neuschreiben, während kein Player die Playlist hält.
 - **Quell-Playlists, die in Spotify gelöscht wurden,** gelten als weg, nicht als „wird noch eingelesen". Das gilt erst, wenn sie in zwei vollständigen Abrufen der Playlist-Liste fehlen, denn eine einmal lückenhafte Antwort darf keinem Sender die Musik nehmen. Der Sender spielt mit den übrigen Quellen weiter, „Alles" wird nie blockiert, und die App sagt, welche Playlist fehlt. Der Sendersuchlauf holt die Liste frisch.
 - **Angehängt** wird, wenn beim Hören weniger als 25 Songs vor der aktuellen Position übrig sind. Anhängen stört die laufende Wiedergabe nicht.
 - **Schaltet jemand Spotifys Shuffle ein,** stellt True Shuffle ihn höchstens alle 10 Minuten wieder ab.
@@ -43,14 +43,18 @@ Pro Song werden gespeichert: letzte Wiedergabe, Anzahl Wiedergaben, frühe Skips
 
 Frühe Skips leitet True Shuffle vorsichtig aus der Player-Position ab. Die Regel lautet: lieber einen Skip verpassen als einen erfinden.
 
-- Ein Song gilt als verlassen, wenn er als laufend gesehen wurde und danach ein anderer im selben Sender läuft.
+- Ein Song gilt als verlassen, wenn er zuletzt **laufend** gesehen wurde und danach ein anderer im selben Sender läuft. Ein pausierter Song, den Spotify später durch einen anderen ersetzt, wurde nicht übersprungen.
 - Taucht innerhalb von 20 Minuten keine Wiedergabe auf, ist er früh übersprungen.
-- Lücken zwischen zwei Beobachtungen zählen nur in einem Deck, dessen Reihenfolge sicher ist. Das ist der Fall, wenn True Shuffle es selbst gestartet hat oder wenn es eine solche Version fortsetzt. Eine Version, die niemand von uns gestartet hat, beweist durch Positionen nichts.
+- Lücken zwischen zwei Beobachtungen zählen nur in einem Deck, dessen Reihenfolge sicher ist. Das ist der Fall, wenn True Shuffle es selbst gestartet hat oder wenn es eine solche Version an Ort und Stelle fortsetzt. Solche nur erschlossenen Skips wirken lediglich weich („nicht jetzt, seltener"). Sperren (Regel „ban") und Verbrauchen der Runde (Regel „consume") gibt es nur für einen Song, der tatsächlich laufend gesehen und verlassen wurde.
 - Ein Song, der im Sender läuft, aber nicht in der aktuellen Deck-Version steht, wird einzeln beobachtet.
 - Stellt sich ein „Skip" doch als Wiedergabe heraus, wird er genau einmal und vollständig zurückgenommen: Zähler, Pause und Sperre. Das gilt auch, wenn die Wiedergabe erst nach der Wartezeit ankommt.
-- Geprüft wird das gegen die Wahrheit des Simulators (`test/hub/skips-truth.test.ts`), mit folgendem Ergebnis:
-  - null erfundene Skips bei normalem Hören, nach Autostopp und nach langem Halt ohne sichtbaren Player,
-  - mindestens 90 % beziehungsweise 80 % der echten Skips erkannt.
+- Geprüft wird das gegen die Wahrheit des Simulators (`test/hub/skips-truth.test.ts`): kein einziger Skip für einen Song, der nicht früh übersprungen wurde, und keine falsche Sperre. Das gilt bei normalem Hören und nach einem Autostopp, und zwar für jede Art, wie Spotify weitermachen könnte:
+  - die geladene Reihenfolge,
+  - der neue Inhalt ab der alten Position,
+  - der Song gesucht,
+  - von oben.
+
+  Dazu kommen alle drei Skip-Regeln. Eine unabhängige Prüfung mit 1.152 Läufen kam zum selben Ergebnis. Erkannt werden bei normalem Hören mindestens 90 % der echten Skips, nach einem Autostopp mindestens 80 %. Wenn Spotify nach dem Halt anders weitermacht als geladen, sind es weniger, dann lieber verpasst als erfunden.
 
 Der Gast-Modus blendet Zeiträume aus. Der Hörverlauf-Import (Spotify-Datenexport) liefert die Vorgeschichte.
 
@@ -84,13 +88,13 @@ Ein Cron-Trigger (alle 20 Minuten) belebt verlorene Alarmketten über die `Regis
 - Einzelne Wiedergaben werden nach 180 Tagen gelöscht, höchstens 500 pro Tag. Das Gedächtnis behält die Summen.
 - Für einen Neuaufbau wird nur das Gedächtnis der Songs des Senders gelesen, nicht das ganze. Die Playlist-Liste schreibt nur geänderte Zeilen.
 - Höchstens **30 Sender** pro Konto.
-- Gemessen (`test/hub/budget.test.ts`, mit einem Durable Object, das nach einer Minute Ruhe alles vergisst), für einen Hörer-Tag mit 10.000 Songs, einem Jahr Verlauf und einer Stunde offener App:
+- Gemessen (`test/hub/budget.test.ts`, mit einem Durable Object, das nach einer Minute Ruhe alles vergisst), für einen Hörer-Tag mit einem Jahr Verlauf und einer Stunde offener App:
 
   | Konto | gelesene Zeilen | geschriebene Zeilen | 5 solche Konten vom Tageskontingent |
   |---|---|---|---|
-  | typisch: 9 Sender, 15.000 Songs im Gedächtnis | ~110.000 | ~2.300 | ~11 % / ~12 % |
-  | an der Grenze: 30 Sender, 25.000 Songs, 300 gefolgte Playlists | ~253.000 | ~3.100 | ~25 % / ~16 % |
-- Statische Dateien gehen nie über den Worker, nur `/api/*` und `/auth/*`.
+  | typisch: 9 Sender, 10.000 Songs, 15.000 im Gedächtnis | ~78.000 | ~2.300 | ~8 % / ~12 % |
+  | an der Grenze: 30 Sender, 25.000 im Gedächtnis, 300 gefolgte Playlists | ~150.000 | ~3.100 | ~15 % / ~16 % |
+  | extrem (unabhängige Messung): 30 Sender mit je 10.000 Songs | ~325.000 | ~3.600 | ~33 % / ~18 % |
 
 ### 6. Entdeckungen werden verifiziert
 
@@ -122,5 +126,7 @@ Quellen sind Deep Cuts und Neuerscheinungen geliebter Künstler, Last.fm, Deezer
 - **`recently-played` liefert nur die letzten 50 Songs.** Wer sehr lange ohne Verbindung hört (mehr als 50 Songs zwischen zwei Syncs), verliert die ältesten aus dem Gedächtnis. True Shuffle schreibt dann einen Hinweis ins Log.
 - **Frühe Skips, die niemand gesehen hat,** bleiben in einem Deck, das True Shuffle nicht selbst gestartet oder fortgesetzt hat (etwa nach über 12 Stunden Pause), unerkannt. Das ist bewusst so: Ein verpasster Skip lässt einen Song höchstens etwas früher wiederkommen. Ein erfundener würde einen nie gehörten Song verdrängen.
 - **Der Spotify-Entwicklungsmodus erlaubt höchstens 5 Konten** und hat ein knappes Anfragekontingent. Bei „Kontingent aufgebraucht" pausiert True Shuffle für die gemeldete Zeit und macht dann weiter (getestet).
-- **Die Reihenfolge in einem laufenden Deck steht fest.** Regeländerungen wirken ab dem nächsten Neuschreiben, also sobald 10 Minuten niemand hört.
+- **Die Reihenfolge in einem laufenden oder gehaltenen Deck steht fest.** Regeländerungen wirken beim nächsten Start aus der App oder beim nächsten Neuschreiben, während kein Player die Playlist hält.
+- **Den Song, der beim Autostopp pausiert war,** nimmt die fortgesetzte Version heraus. Lief er schon mindestens 30 Sekunden, ist er ohnehin gehört und kommt nicht gleich wieder.
+- **Das Planen eines Senders mit 10.000 Songs** braucht in Node etwa 20–45 ms CPU. Das läuft im Durable Object, das laut Cloudflare-Doku (Durable Objects → Limits) auch im kostenlosen Plan 30 s CPU pro Anfrage hat. Die 10 ms des kostenlosen Plans gelten für den vorgelagerten Worker, der nur prüft und weiterleitet. Gemessen ist das im echten Betrieb noch nicht ([LIVE_TEST.md](../LIVE_TEST.md), Abschnitt H).
 - **Nachweis:** Unit-, Eigenschafts-, Szenario- und End-to-End-Tests gegen eine Spotify-Attrappe mit Player-Simulation. Der Live-Nachweis mit echtem Spotify steht aus ([LIVE_TEST.md](../LIVE_TEST.md)).

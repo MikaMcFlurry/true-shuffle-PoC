@@ -58,6 +58,7 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 - [ ] Eine Sender-Playlist in Spotify löschen und den Sender antippen: True Shuffle legt sie neu an und spielt.
 - [ ] Zweites Konto (Freund/Freundin) anmelden: Die Gedächtnisse sind getrennt.
 - [ ] Im Cloudflare-Dashboard (Worker → Observability) keine gehäuften Fehler.
+- [ ] Den größten Sender (oder „Alles“) antippen. Unter Worker → Metrics → Errors erscheint kein „Exceeded CPU Time Limits“.
 
 ## Wenn etwas nicht stimmt
 
