@@ -1970,3 +1970,145 @@ describe("the eighteenth review's cases", () => {
 		expect(h.sql.first(`SELECT 1 FROM plays WHERE track_id = ?`, x)).toBeNull();
 	});
 });
+
+describe("the nineteenth review's cases", () => {
+	/** Songs that left the player after 30 s or more from now on. */
+	function heardFrom(h: H) {
+		const heard = new Set<string>();
+		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
+		const orig = f.moveNext.bind(h.fake);
+		f.moveNext = (user: unknown, at: number) => {
+			const cur = h.fake.current();
+			if (cur && h.fake.user().player.listenedMs >= 30_000) heard.add(cur);
+			orig(user, at);
+		};
+		return heard;
+	}
+	const early = (h: H, id: string) =>
+		h.sql.first<{ n: number }>(`SELECT early_skips AS n FROM memory WHERE id = ?`, id)?.n ?? 0;
+	const bans = (h: H, id: string) =>
+		h.sql.first<{ n: number }>(`SELECT COUNT(*) AS n FROM bans WHERE track_id = ?`, id)!.n;
+
+	it("a station tapped again in the app: the song shown is not replayed, and never booked as a skip", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const x = h.fake.current()!;
+		await h.listen(60_000);
+		expect((await h.hub.play(sid)).ok).toBe(true); // tapped again: starts over
+		expect(stationDeck(h, sid).pl.items).not.toContain(x);
+		const heard = heardFrom(h);
+		await h.listen(40 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(40 * MINUTE_MS);
+		expect(heard.has(x)).toBe(false);
+		expect([early(h, x), bans(h, x)]).toEqual([0, 0]);
+	});
+
+	it("a start that fails leaves the song playing on untouched", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const [a, b] = h.stationIds as [number, number];
+		await h.hub.updateStation(a, { rules: { skipPolicy: "ban" } });
+		const u = h.fake.user();
+		u.devices[0]!.restricted = true; // a car: plays, takes no commands
+		h.fake.startContext(
+			u.id,
+			`spotify:playlist:${stationDeck(h, a).pl.id}`,
+			0,
+			u.devices[0]!.id,
+			false,
+		);
+		await h.listen(10 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		const x = h.fake.current()!;
+		await h.listen(60_000);
+		expect((await h.hub.play(b)).ok).toBe(false);
+		while (h.fake.current() === x) await h.listen(1_000); // heard to its end
+		await h.listen(30 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(40 * MINUTE_MS);
+		expect([early(h, x), bans(h, x)]).toEqual([0, 0]);
+		expect(h.sql.all(`SELECT 1 FROM plays WHERE track_id = ?`, x).length).toBe(1);
+	});
+
+	it("the guest's paused song stays out of memory when the owner starts a station later", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		await h.hub.setGuest(true, 6);
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, u.devices[0]!.id, false);
+		await h.listen(3 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		const x = h.fake.current()!;
+		await h.listen(60_000);
+		h.fake.pause();
+		await h.hub.setGuest(false);
+		await h.listen(10 * 60 * MINUTE_MS);
+		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		expect(h.sql.all(`SELECT 1 FROM plays WHERE track_id = ? AND ignored = 0`, x).length).toBe(0);
+	});
+
+	for (const pos of [0, 25])
+		it(`a song tapped at place ${pos + 1} in Spotify, then the station started from the app: it does not come back`, async () => {
+			const h = await onboarded({ tracks: 300 });
+			const sid = h.stationIds[0]!;
+			const u = h.fake.user();
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			h.fake.pause();
+			await h.listen(2 * MINUTE_MS);
+			const pl = stationDeck(h, sid).pl;
+			h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, pos, u.devices[0]!.id, false);
+			const x = h.fake.current()!;
+			await h.listen(60_000);
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			const heard = heardFrom(h);
+			await h.listen(4 * 60 * MINUTE_MS);
+			expect(heard.has(x)).toBe(false);
+		});
+
+	it("a private song paused for hours and heard to its end is stamped at its end", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 0, u.devices[0]!.id, false);
+		u.devices[0]!.privateSession = true;
+		await h.listen(3 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		const x = h.fake.current()!;
+		await h.listen(40_000);
+		h.fake.pause();
+		await h.listen(3 * 60 * MINUTE_MS);
+		u.player.isPlaying = true;
+		while (h.fake.current() === x) await h.listen(1_000);
+		const end = h.clock.t;
+		await h.listen(5 * MINUTE_MS);
+		const row = h.sql.first<{ at: number }>(
+			`SELECT played_at AS at FROM plays WHERE track_id = ?`,
+			x,
+		)!;
+		expect(Math.abs(row.at - end)).toBeLessThan(2 * MINUTE_MS);
+	});
+
+	it("a private session whose player vanishes ends after six hours: no warning, no fast looks after a week", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 0, u.devices[0]!.id, false);
+		u.devices[0]!.privateSession = true;
+		await h.listen(10 * MINUTE_MS);
+		h.fake.pause();
+		u.player.deviceId = null; // Spotify closed: no player, never seen to end
+		await h.listen(7 * 60 * MINUTE_MS);
+		expect((await h.hub.state()).warnings.map((w) => w.code)).not.toContain("private_session");
+		await h.listen(8 * 24 * 60 * MINUTE_MS);
+		const n0 = h.fake.calls.length;
+		await h.listen(24 * 60 * MINUTE_MS);
+		const looks = h.fake.calls.slice(n0).filter((c) => c === "GET /v1/me/player").length;
+		expect(looks).toBeLessThan(100);
+	});
+});

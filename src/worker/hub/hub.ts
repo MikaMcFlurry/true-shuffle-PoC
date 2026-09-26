@@ -253,6 +253,21 @@ interface JobRow {
 	error: string | null;
 }
 
+/**
+ * A private session as looks saw it: from the look before the first that
+ * showed it, to the first that no longer did — or, never seen to end, six
+ * hours after it was last seen playing (Spotify ends it by then itself).
+ */
+interface PrivatePeriod {
+	from: number;
+	to: number | null;
+	seen?: number;
+}
+
+function privateEnd(p: PrivatePeriod, now: number): number {
+	return p.to ?? Math.min(now, (p.seen ?? p.from) + 6 * HOUR_MS);
+}
+
 /** The song playing in a private session, and how long looks saw it play. */
 interface PrivateSong {
 	id: TrackId;
@@ -1431,7 +1446,12 @@ export class HubCore {
 	 * `continueLayout`: whatever the player resumes, it meets nothing it just
 	 * heard. `null`: the held version cannot be improved and stays as it is.
 	 */
-	private async rebuildDeck(client: SpotifyClient, st: StationRow, mode?: "start"): Promise<Deck>;
+	private async rebuildDeck(
+		client: SpotifyClient,
+		st: StationRow,
+		mode?: "start",
+		avoid?: TrackId | null,
+	): Promise<Deck>;
 	private async rebuildDeck(
 		client: SpotifyClient,
 		st: StationRow,
@@ -1441,6 +1461,7 @@ export class HubCore {
 		client: SpotifyClient,
 		st: StationRow,
 		mode: "start" | "background" = "start",
+		avoid: TrackId | null = null,
 	): Promise<Deck | null> {
 		if (this.stationOrphaned(st))
 			throw new HubError(
@@ -1482,6 +1503,8 @@ export class HubCore {
 		// still waiting for its booking keeps the song out as well.
 		// A fresh plan written in the background leaves out the song the player
 		// was last seen on and those taken out before: it may still hold them.
+		// Started from the app: the song the player shows, heard 30 s or more, is
+		// heard — whether or when Spotify lists it.
 		const exclude =
 			continuing && prev
 				? heldForPlayer(prev)
@@ -1490,6 +1513,7 @@ export class HubCore {
 						...(mode === "background" && prev
 							? [...(prev.leftOut ?? []), ...(prev.lastTrackId ? [prev.lastTrackId] : [])]
 							: []),
+						...(avoid ? [avoid] : []),
 					]);
 		const playable = (id: TrackId) => {
 			const m = this.memory(id);
@@ -1842,6 +1866,7 @@ export class HubCore {
 		this.notePrivate(
 			state?.device ? state.device.is_private_session === true : null,
 			s.lastPlayerAt,
+			obs?.isPlaying === true,
 		);
 		const heardPrivately = this.notePrivateSong(
 			obs,
@@ -2302,15 +2327,22 @@ export class HubCore {
 	 * so a song left then cannot be told from one heard. From the look before
 	 * the first one that saw it to the first one that no longer does.
 	 */
-	private notePrivate(now: boolean | null, lookBefore: number): void {
+	private notePrivate(now: boolean | null, lookBefore: number, playing: boolean): void {
 		// No player to see (Spotify answered 204): nothing changes.
 		if (now === null) return;
-		const list = this.kvGet<{ from: number; to: number | null }[]>("private") ?? [];
+		const list = this.kvGet<PrivatePeriod[]>("private") ?? [];
 		const last = list[list.length - 1];
+		// One not seen for six hours ended then, whatever comes next.
+		if (last && last.to === null && privateEnd(last, this.now()) < this.now())
+			last.to = privateEnd(last, this.now());
 		const open = last !== undefined && last.to === null;
-		if (now === open) return;
-		if (now) list.push({ from: lookBefore > 0 ? lookBefore : this.now(), to: null });
-		else last!.to = this.now();
+		if (now && open) {
+			if (!playing) return;
+			last!.seen = this.now();
+		} else if (now)
+			list.push({ from: lookBefore > 0 ? lookBefore : this.now(), to: null, seen: this.now() });
+		else if (open) last!.to = this.now();
+		else return;
 		this.kvSet(
 			"private",
 			list.filter((p) => p.to === null || p.to > this.now() - 2 * DAY_MS).slice(-50),
@@ -2318,19 +2350,19 @@ export class HubCore {
 	}
 
 	private inPrivateDuring(from: number, to: number): boolean {
-		const list = this.kvGet<{ from: number; to: number | null }[]>("private");
-		return (list ?? []).some((p) => p.from <= to && (p.to === null || p.to > from));
+		const list = this.kvGet<PrivatePeriod[]>("private");
+		return (list ?? []).some((p) => p.from <= to && privateEnd(p, this.now()) > from);
 	}
 
 	private inPrivateNow(): boolean {
-		const list = this.kvGet<{ from: number; to: number | null }[]>("private");
-		return list?.[list.length - 1]?.to === null;
+		const last = this.kvGet<PrivatePeriod[]>("private")?.at(-1);
+		return last !== undefined && privateEnd(last, this.now()) >= this.now();
 	}
 
 	/** A private session on, or seen within the last week: the next may begin any time. */
 	private privateLately(): boolean {
-		const last = this.kvGet<{ from: number; to: number | null }[]>("private")?.at(-1);
-		return last !== undefined && (last.to === null || this.now() - last.to < 7 * DAY_MS);
+		const last = this.kvGet<PrivatePeriod[]>("private")?.at(-1);
+		return last !== undefined && this.now() - privateEnd(last, this.now()) < 7 * DAY_MS;
 	}
 
 	/**
@@ -2367,10 +2399,14 @@ export class HubCore {
 			// sought there: only what later looks see it play counts.
 			const sought = !same && moved > since + 2_000;
 			const start = same ? rec!.start : cur.at - cur.progressMs;
+			// Where it ends if it plays on: later after every pause.
+			const end = cur.isPlaying
+				? cur.at + cur.durationMs - cur.progressMs
+				: Math.max(same ? rec!.end : 0, start + cur.durationMs);
 			this.kvSet("private_song", {
 				id: cur.trackId,
 				start,
-				end: start + cur.durationMs,
+				end,
 				listened: (same ? rec!.listened : 0) + (sought ? 0 : Math.max(0, Math.min(moved, since))),
 				progress: cur.progressMs,
 				at: now,
@@ -2397,32 +2433,17 @@ export class HubCore {
 
 	/**
 	 * Starting a station replaces what the player shows: a song heard 30 s or
-	 * more counts now, before the plan — else it may come right back.
+	 * more is kept out of the new plan, else it may come right back. It counts
+	 * as heard when Spotify lists it (in a private session: by the looks).
 	 */
-	private settleShownSong(): void {
+	private shownHeardSong(): TrackId | null {
 		const rec = this.kvGet<PrivateSong>("private_song");
-		if (rec) {
-			this.kvDel("private_song");
-			const e = this.privatePlay(rec);
-			if (e) this.recordSeenPlay(e);
-			return;
-		}
+		if (rec && rec.listened >= 30_000) return rec.id;
 		const snap = this.kvGet<PlayerSnapshot>("player");
 		const o = snap?.obs;
 		// The look play() just made (an unchanged picture is not stored again).
 		const fresh = this.now() - Math.max(snap?.at ?? 0, this.lastLookAt) <= MINUTE_MS;
-		if (!o?.trackId || !snap?.track || o.progressMs < 30_000 || !fresh) return;
-		const at = this.now();
-		const start = snap.at - o.progressMs;
-		if (this.inGuest(at) || this.inGuestDuring(start, at)) return;
-		this.recordSeenPlay({
-			id: o.trackId,
-			at,
-			start,
-			end: start + o.durationMs,
-			contextUri: o.contextUri,
-			track: snap.track,
-		});
+		return o?.trackId && o.progressMs >= 30_000 && fresh ? o.trackId : null;
 	}
 
 	/**
@@ -2430,9 +2451,9 @@ export class HubCore {
 	 * all; and when it lists it later, do not count it again.
 	 */
 	private recordSeenPlay(e: SeenPlay): RecentPlay | null {
-		// Paused on the way, it ended later than it would have: up to now.
+		// It was over by now (paused on the way, later than it would have been).
 		const from = e.start - MINUTE_MS;
-		const to = Math.max(e.end, this.now()) + 5 * MINUTE_MS;
+		const to = Math.max(e.end, this.now()) + MINUTE_MS;
 		if (
 			this.db.first(
 				`SELECT 1 FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ? LIMIT 1`,
@@ -2489,7 +2510,6 @@ export class HubCore {
 			.filter((x) => {
 				const id = x.i.track?.id;
 				if (!Number.isFinite(x.at) || !id) return false;
-				if (seen.some((e) => e.id === id && x.at >= e.from && x.at <= e.to)) return false;
 				if (x.at > s.recentCursor) return true;
 				if (x.at <= lateFrom || known.has(key(x.at, id))) return false;
 				return !this.db.first(`SELECT 1 FROM plays WHERE played_at = ? AND track_id = ?`, x.at, id);
@@ -2531,6 +2551,13 @@ export class HubCore {
 		for (const { i, at } of fresh) {
 			const id = i.track.id!;
 			const ctx = i.context?.uri ?? null;
+			// Counted already from the looks in a private session: it still tells
+			// the decks it was heard, and memory nothing new.
+			if (seen.some((e) => e.id === id && at >= e.from && at <= e.to)) {
+				s.recentCursor = Math.max(s.recentCursor, at);
+				out.push({ trackId: id, playedAt: at, contextUri: ctx });
+				continue;
+			}
 			const ignored = this.guestPlay(id, at, i.track.duration_ms ?? 0, () => {
 				let before = Number.NEGATIVE_INFINITY;
 				for (const t of times) if (t < at && t > before) before = t;
@@ -2935,7 +2962,7 @@ export class HubCore {
 		const client = this.client(budget);
 		try {
 			await this.sync(budget, { force: true });
-			this.settleShownSong();
+			const shown = this.shownHeardSong();
 			const fresh = this.stationRow(stationId)!;
 			let deck = this.deckOf(fresh);
 			const needsRebuild =
@@ -2944,8 +2971,10 @@ export class HubCore {
 				consumedCount(deck) > 0 ||
 				deck.continued === true ||
 				this.now() - deck.writtenAt > DECK_MAX_AGE_MS ||
-				!fresh.playlist_id;
-			if (needsRebuild) deck = await this.rebuildDeck(client, fresh, "start");
+				!fresh.playlist_id ||
+				// The song the player shows, heard 30 s or more, still waits in it.
+				(shown !== null && deck.items.some((it) => it.id === shown && it.state === "pending"));
+			if (needsRebuild) deck = await this.rebuildDeck(client, fresh, "start", shown);
 			const target = await this.pickDevice(client, deviceId ?? null);
 			if (!target)
 				return fail(
@@ -2975,7 +3004,7 @@ export class HubCore {
 				// The listener deleted the station's playlist in Spotify: make a new one.
 				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, fresh.id);
 				fresh.playlist_id = null;
-				deck = await this.rebuildDeck(client, fresh);
+				deck = await this.rebuildDeck(client, fresh, "start", shown);
 				await client.play({
 					contextUri: `spotify:playlist:${fresh.playlist_id}`,
 					position: 0,
