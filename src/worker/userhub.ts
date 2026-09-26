@@ -177,6 +177,9 @@ export class UserHub extends DurableObject<Env> {
 	suspend() {
 		return this.exclusive(async () => this.hub().suspend());
 	}
+	allow() {
+		return this.exclusive(() => this.hub().allow());
+	}
 	deleteAccount(epoch: number) {
 		return this.session(epoch, () => this.hub().deleteAccount());
 	}

@@ -385,12 +385,13 @@ export default {
 	fetch: app.fetch,
 	async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
 		// Safety net: every listener's hub re-arms its own sync alarm if it lost it.
-		// One taken off the allowlist stops working in the background.
+		// One taken off the allowlist stops working in the background, and one
+		// put back on it starts again.
 		const uids = await env.REGISTRY.get(env.REGISTRY.idFromName("registry")).list();
 		ctx.waitUntil(
 			Promise.allSettled(
 				uids.map((uid) =>
-					allowed(env, uid) ? hubFor(env, uid).ensureAlarm() : hubFor(env, uid).suspend(),
+					allowed(env, uid) ? hubFor(env, uid).allow() : hubFor(env, uid).suspend(),
 				),
 			),
 		);

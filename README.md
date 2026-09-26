@@ -8,7 +8,7 @@ Deine Spotify-Playlists als **Sender mit Gedächtnis**. Du tippst auf einen Send
 4. **Favoriten öfter kommen, aber nicht zu oft**: standardmäßig höchstens einmal pro Woche, einstellbar.
 5. **Neues dazukommt**: Songs von Künstlern, die du magst, dazu Neuerscheinungen, Last.fm, Deezer und KI-Vorschläge. Jeder Vorschlag wird vorher auf Spotify geprüft.
 
-Frühes Überspringen (unter 30 Sekunden) heißt „nicht jetzt, und seltener". Daumen runter heißt „nie wieder". Der **Gast-Modus** ignoriert alles, was läuft, und schaltet sich nach einer eingestellten Zeit selbst ab.
+Frühes Überspringen (unter 30 Sekunden) heißt „nicht jetzt, und seltener". Daumen runter heißt „nie wieder". Taucht in einem Sender trotzdem ein Song auf, den True Shuffle dort nicht vorgesehen hat, springt es selbst weiter und sagt es in der App. Das betrifft einen abgelehnten Song, einen heute schon gehörten aus einer alten Reihenfolge des Handys, und heute schon gehörte Songs, wenn jemand die Playlist in Spotify von oben startet. Was du selbst antippst oder in die Warteschlange legst, lässt es in Ruhe. Der **Gast-Modus** ignoriert alles, was läuft, und schaltet sich nach einer eingestellten Zeit selbst ab.
 
 ## Wie es funktioniert
 

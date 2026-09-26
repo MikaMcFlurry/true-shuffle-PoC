@@ -312,6 +312,31 @@ describe("continueLayout — the next version of a deck a player still holds", (
 		expect(new Set(out).size).toBe(out.length);
 	});
 
+	it("with old songs in front, a restart from the top still begins with an unheard one", () => {
+		const played = new Set(
+			items(100)
+				.slice(0, 60)
+				.map((i) => i.id),
+		);
+		const out = ids(
+			continueLayout({
+				items: items(100),
+				held: 60,
+				fresh: [],
+				playable: (id) => !played.has(id),
+				blocked: none,
+			}),
+		)!;
+		expect(played.has(out[0]!)).toBe(false);
+		expect(played.has(out[60]!)).toBe(false);
+		// Two of the kept songs moved forward (to the held place and to the top).
+		expect(out.slice(61)).toEqual(
+			items(100)
+				.slice(61, 98)
+				.map((i) => i.id),
+		);
+	});
+
 	it("leaves a version alone whose held position lies past its end", () => {
 		expect(
 			continueLayout({

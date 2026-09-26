@@ -36,10 +36,12 @@ Jeder Sender ist eine private Spotify-Playlist „True Shuffle · <Sender>" mit 
   - Lässt sich die gehaltene Version nicht verbessern, bleibt sie, wie sie ist, und True Shuffle schaut stündlich wieder nach.
 - **Was True Shuffle nicht gewählt hat, überspringt es selbst** (`guardStation`), sobald es das im Sender sieht:
   - ein Song mit Daumen runter, egal woher und egal wie lange er schon läuft;
-  - in seinen ersten 30 Sekunden ein Song, der in den letzten 24 Stunden lief und nur noch in einer alten, vom Player geladenen Reihenfolge steht;
+  - in seinen ersten 30 Sekunden ein Song, der in den letzten 24 Stunden lief und nicht mehr in der Playlist steht, wohl aber in einer ihrer Versionen der letzten 36 Stunden, also aus einer alten, vom Player geladenen Reihenfolge kommt;
   - in seinen ersten 30 Sekunden ein heute schon gehörter Song vorn in einer fortgesetzten Version, wenn jemand sie in Spotify von oben startet. Dann springt True Shuffle zum ersten ungehörten Song der Playlist.
 
-  Das gilt auch bei geschlossener App: True Shuffle sieht direkt nach jedem Songende nach, und solange ein Player einen Sender hält (pausiert oder unsichtbar, bis 12 Stunden), jede Minute. Solche Sprünge zählen nie als Skip des Hörers. Einen Song, den der Hörer in der aktuellen Playlist selbst antippt, lässt True Shuffle in Ruhe, außer er steht vorn in einer fortgesetzten Version.
+  Das gilt auch bei geschlossener App: True Shuffle sieht direkt nach jedem Songende nach, und solange ein Player einen Sender hält (pausiert oder unsichtbar, bis 36 Stunden), jede Minute. Solche Sprünge zählen nie als Skip des Hörers, und die App zeigt drei Minuten lang, was übersprungen wurde und warum. Im Gast-Modus springt True Shuffle nie. Einen Song, den der Hörer in der aktuellen Playlist selbst antippt oder in die Warteschlange legt, lässt es in Ruhe, außer er steht vorn in einer fortgesetzten Version oder in einer alten Version dieses Senders.
+- **Eine fortgesetzte Version gilt 12 Stunden.** Hat danach niemand darin gehört, wird sie beim nächsten Abgleich durch einen frischen Plan ersetzt, ohne die alten Songs vorn. Wer den Sender am nächsten Tag in Spotify von oben startet, hört also nichts von gestern.
+- **Beginnt eine fortgesetzte Version vorn mit alten Songs,** steht an erster Stelle trotzdem ein ungehörter. Während er läuft, sieht True Shuffle den Sender und springt hinter ihm über die schon gehörten hinweg.
 - **Startet True Shuffle den Sender selbst,** plant es frisch und spielt von oben. Geänderte Einstellungen (Mischung, Regeln) gelten ab diesem Start, und bei jedem Neuschreiben, während kein Player die Playlist hält.
 - **Quell-Playlists, die in Spotify gelöscht wurden,** gelten als weg, nicht als „wird noch eingelesen". Das gilt erst, wenn sie in zwei vollständigen Abrufen der Playlist-Liste fehlen, denn eine einmal lückenhafte Antwort darf keinem Sender die Musik nehmen. Der Sender spielt mit den übrigen Quellen weiter, „Alles" wird nie blockiert, und die App sagt, welche Playlist fehlt. Der Sendersuchlauf holt die Liste frisch.
 - **Angehängt** wird, wenn beim Hören weniger als 25 Songs vor der aktuellen Position übrig sind. Anhängen stört die laufende Wiedergabe nicht.
@@ -84,10 +86,12 @@ Die Anteile kommen vom Regler „Entdecken ↔ Vertraut" (Standard Entdecker: 60
 Das Objekt weckt sich selbst per Alarm:
 
 - direkt nach jedem Songende (bei langen Songs spätestens alle 4 Minuten), solange ein Deck spielt,
-- jede Minute, solange ein Player einen Sender hält (pausiert oder unsichtbar), höchstens 12 Stunden lang; ein unveränderter Player-Stand wird dabei nicht jedes Mal gespeichert,
+- jede Minute, solange ein Player einen Sender hält (pausiert oder unsichtbar), höchstens 36 Stunden nach dem letzten Hören; ein unveränderter Player-Stand wird dabei nicht jedes Mal gespeichert,
 - 15 Sekunden nach einem eigenen Sprung oder einem Tipp in der App,
 - alle 30 Sekunden, solange ein Player im Sender einen Song spielt, den die Playlist nicht mehr enthält (eine ältere, geladene Reihenfolge),
-- alle 20 Sekunden, wenn 1 bis 3 Songs voraus ein abgelehnter Song steht oder eine Stelle, die sich seit der vorigen Version geändert hat,
+- alle 20 Sekunden, wenn 1 bis 3 Songs voraus ein abgelehnter Song steht oder eine Stelle, an der ein Player mit der vorigen Version einen gestrichenen Song träfe,
+
+Die schnellen Takte gelten nur nach einem Blick, der geklappt hat. Kann True Shuffle den Player nicht sehen (Spotify-Zugang entzogen, Spotify bremst), bleibt es beim langsamen Takt.
 - alle 10 Minuten bei anderer Wiedergabe,
 - alle 20 Minuten im Leerlauf,
 - stündlich nach 6 Stunden Stille.
@@ -150,6 +154,6 @@ Quellen sind Deep Cuts und Neuerscheinungen geliebter Künstler, Last.fm, Deezer
 - **Wer einen Song in die Warteschlange legt,** der heute schon lief und in einer alten Version des Senders stand, erlebt, dass True Shuffle ihn überspringt. Spotify sagt nicht, ob ein Song aus der Warteschlange kommt.
 - **Wer einen Sender wochenlang nur im Auto fortsetzt,** ohne ihn in der App anzutippen, hört die Playlist bis zu ihrem Ende. Steht der ganze Sender schon darin, ist das nach einer Runde erreicht (in der Prüfung mit 600 Songs nach 40 Fahrten ohne eine Wiederholung). Dann übernimmt Spotifys Autoplay, bis ein Start aus der App die nächste Runde beginnt. Bei großen Sendern ist die Grenze die Länge von 2.000 Songs.
 - **Ein offener Browser-Tab** fragt alle 15 Sekunden nach dem Stand, solange er sichtbar ist. Das sind bis zu 5.760 Worker-Anfragen pro Tag und Tab, bei 100.000 im kostenlosen Plan.
-- **Wer von `ALLOWED_SPOTIFY_IDS` genommen wird,** ist sofort abgemeldet, und spätestens mit dem nächsten Cron (20 Minuten) ruht sein Hub. Meldet er sich wieder an (wieder erlaubt), läuft er weiter.
+- **Wer von `ALLOWED_SPOTIFY_IDS` genommen wird,** ist sofort abgemeldet, und spätestens mit dem nächsten Cron (20 Minuten) ruht sein Hub. Seine alten Sitzungen gelten auch dann nicht mehr, wenn er wieder auf die Liste kommt: Er meldet sich neu an. Sein Hub hört schon mit dem nächsten Cron wieder mit, auch vor der Anmeldung.
 - **Das Planen eines Senders mit 10.000 Songs** braucht in Node etwa 20–45 ms CPU. Das läuft im Durable Object, das laut Cloudflare-Doku (Durable Objects → Limits) auch im kostenlosen Plan 30 s CPU pro Anfrage hat. Die 10 ms des kostenlosen Plans gelten für den vorgelagerten Worker, der nur prüft und weiterleitet. Gemessen ist das im echten Betrieb noch nicht ([LIVE_TEST.md](../LIVE_TEST.md), Abschnitt H).
 - **Nachweis:** Unit-, Eigenschafts-, Szenario- und End-to-End-Tests gegen eine Spotify-Attrappe mit Player-Simulation. Der Live-Nachweis mit echtem Spotify steht aus ([LIVE_TEST.md](../LIVE_TEST.md)).

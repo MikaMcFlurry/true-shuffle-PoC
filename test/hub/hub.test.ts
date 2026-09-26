@@ -342,13 +342,18 @@ describe("sessions", () => {
 });
 
 describe("taken off the allowlist", () => {
-	it("the hub rests until its listener may sign in again", async () => {
+	it("the hub rests until its listener is allowed again", async () => {
 		const h = await onboarded();
+		const cookie = h.hub.sessionEpoch();
 		h.hub.suspend();
+		expect(() => h.hub.checkSession(cookie)).toThrow(); // signed out for good
 		await h.listen(60 * 60_000);
 		expect(h.alarmAt()).toBeNull();
 		await h.hub.ensureAlarm(); // the cron's safety net does not wake it either
 		expect(h.alarmAt()).toBeNull();
+		await h.hub.allow(); // back on the list: the cron wakes it
+		expect(h.alarmAt()).not.toBeNull();
+		h.hub.suspend(); // taken off once more
 		h.fake.refreshTokens.set("rt-back", "mika");
 		await h.hub.connect(
 			{ id: "mika", name: "Mika", imageUrl: null },

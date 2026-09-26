@@ -143,6 +143,11 @@ const PRUNE_PER_DAY = 500;
  * phone that went quiet): its rewrite continues it instead of replanning.
  */
 const CONTINUE_WITHIN_MS = 12 * HOUR_MS;
+/**
+ * How long a player that last played a station may still hold (a loaded
+ * order of) its playlist: watched every minute, and its songs remembered.
+ */
+const HOLD_WATCH_MS = 36 * HOUR_MS;
 
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
@@ -1514,13 +1519,30 @@ export class HubCore {
 		deck.continued = continuing;
 		deck.ours = continuing && prev?.ours === true;
 		deck.heldAt = continuing && held !== null ? Math.min(held, layout.length - 1) : null;
-		if (continuing && prev && held !== null)
-			deck.changedAt = layout
-				.map((s, i) =>
-					i > held && i < prev.items.length && prev.items[i]!.id !== s.trackId ? i : -1,
-				)
-				.filter((i) => i >= 0)
-				.slice(0, 50);
+		const inLayout = new Map(layout.map((s, i) => [s.trackId, i]));
+		if (continuing && prev && held !== null) {
+			// Where a player still in the previous version meets a song this one
+			// dropped (heard since, turned down, banned): the place after the song
+			// before it, as this version numbers it.
+			const marks = new Set<number>();
+			for (let u = held + 1; u < prev.items.length && marks.size < 50; u++) {
+				if (playable(prev.items[u]!.id)) continue;
+				let k = u - 1;
+				while (k > held && !inLayout.has(prev.items[k]!.id)) k--;
+				marks.add((k > held ? inLayout.get(prev.items[k]!.id)! : held) + 1);
+			}
+			deck.changedAt = [...marks];
+			deck.leftOut = [...(prev.leftOut ?? []), prev.items[held]!.id].slice(-20);
+		}
+		// Songs a player may still have loaded from earlier versions.
+		if (prev && this.now() - lastUse < HOLD_WATCH_MS) {
+			const former = new Set<TrackId>();
+			for (const id of [...prev.items.map((it) => it.id), ...(prev.formerIds ?? [])]) {
+				if (former.size >= 2000) break;
+				if (!inLayout.has(id)) former.add(id);
+			}
+			deck.formerIds = [...former];
+		}
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
 			JSON.stringify(deck),
@@ -1769,7 +1791,11 @@ export class HubCore {
 			if (changed) this.saveDeck(st.id, deck);
 			// Rewrite a deck once nobody has listened to it for a while.
 			const consumed = consumedCount(deck) > 0;
-			const stale = this.now() - deck.writtenAt > DECK_MAX_AGE_MS;
+			// A continuation whose hold ran out: its front (old songs, for positions)
+			// makes way for a fresh plan before anyone starts it from the top.
+			const expired =
+				deck.continued === true && this.now() - (activity[String(st.id)] ?? 0) > CONTINUE_WITHIN_MS;
+			const stale = expired || this.now() - deck.writtenAt > DECK_MAX_AGE_MS;
 			if ((consumed || st.deck_dirty || stale) && !this.jobExists(`deck:${st.id}`)) {
 				const lastActive = activity[String(st.id)] ?? 0;
 				const wait = Math.max(0, lastActive + IDLE_BEFORE_REBUILD_MS - this.now());
@@ -1877,7 +1903,8 @@ export class HubCore {
 		obs: PlayerObservation | null,
 		at: InStation | null,
 	): Promise<void> {
-		if (!obs?.isPlaying || !obs.trackId || !at) return;
+		// A guest's music is theirs: True Shuffle only listens, never steers.
+		if (!obs?.isPlaying || !obs.trackId || !at || this.inGuest(this.now())) return;
 		const last = this.kvGet<{ id: TrackId; at: number }>("moved");
 		if (last && last.id === obs.trackId && this.now() - last.at < MINUTE_MS) return;
 		const st = this.stationRow(at.st);
@@ -1889,7 +1916,7 @@ export class HubCore {
 		let to: number | null = null;
 		let why: string;
 		if (m.thumb === -1) why = "abgelehnt";
-		else if (heardToday && at.index === null)
+		else if (heardToday && at.index === null && deck.formerIds?.includes(obs.trackId))
 			why = "heute schon gehört, aus einer alten Reihenfolge";
 		else if (
 			heardToday &&
@@ -1908,7 +1935,7 @@ export class HubCore {
 			if (to < 0) return;
 			why = "heute schon gehört, von oben gestartet";
 		} else return;
-		this.kvSet("moved", { id: obs.trackId, at: this.now() });
+		this.kvSet("moved", { id: obs.trackId, at: this.now(), why, station: st.name });
 		try {
 			if (to === null) await client.next();
 			else
@@ -2712,6 +2739,13 @@ export class HubCore {
 					"Spotify-Shuffle ist an — die True-Shuffle-Reihenfolge hält erst wieder, wenn es aus ist.",
 			});
 		}
+		// Say it when True Shuffle moved the player on by itself.
+		const moved = this.kvGet<{ id: TrackId; at: number; why?: string; station?: string }>("moved");
+		if (moved?.why && this.now() - moved.at < 3 * MINUTE_MS)
+			warnings.push({
+				code: "guard",
+				message: `Übersprungen auf „${moved.station}“: ${this.describe(moved.id)} — ${moved.why}`,
+			});
 		for (const r of this.kvGet<{ id: string; name: string }[]>("sources_gone") ?? []) {
 			const users = this.stations().filter(
 				(st) =>
@@ -3003,7 +3037,15 @@ export class HubCore {
 	 * free-plan quotas. Signing in again (once allowed) wakes the hub.
 	 */
 	suspend(): void {
+		if (this.kvGet("suspended")) return;
 		this.kvSet("suspended", 1);
+		this.endSessions(); // signed out for good: a cookie from before never works again
+	}
+
+	/** On the allowlist (again): background work resumes. */
+	async allow(): Promise<void> {
+		if (this.kvGet("suspended")) this.kvDel("suspended");
+		await this.ensureAlarm();
 	}
 
 	async alarm(): Promise<void> {
@@ -3031,13 +3073,22 @@ export class HubCore {
 			// Work left over because the budget ran out: continue almost at once.
 			candidates.push(budget.left < 6 && job <= now ? now + 2000 : Math.max(job, now + 1000));
 		}
-		const snap = this.kvGet<PlayerSnapshot>("player");
 		const s = this.syncState();
+		// Only a look that worked sets a quick pace: without one (Spotify access
+		// lost, a pause Spotify asked for) the picture is old and the slow pace holds.
+		const seen = this.kvGet<PlayerSnapshot>("player");
+		const snap =
+			seen &&
+			this.isConnected() &&
+			!this.kvGet("auth_lost") &&
+			now - Math.max(seen.at, this.lastLookAt) <= PLAYER_FRESH_MS
+				? seen
+				: null;
 		const inDeck = snap?.obs?.contextUri
 			? this.stations().some((st) => this.deckUri(st) === snap.obs?.contextUri)
 			: false;
 		// Just moved the player (a tap, or past a song): see where it went.
-		if (this.kvGet("player_stale")) candidates.push(now + 15_000);
+		if (snap && this.kvGet("player_stale")) candidates.push(now + 15_000);
 		// A few songs ahead the player may meet one True Shuffle would not play
 		// (turned down, or replaced since the player loaded the playlist): look
 		// every 20 s, so a skip by hand onto it is caught too.
@@ -3060,7 +3111,7 @@ export class HubCore {
 				end - now <= 4 * MINUTE_MS;
 			candidates.push(aligned ? Math.max(now + 15_000, end) : now + 3 * MINUTE_MS);
 		} else if (snap?.obs?.isPlaying) candidates.push(now + 10 * MINUTE_MS);
-		else if (this.stationHeld(snap))
+		else if (snap && this.stationHeld(snap))
 			// A player holds a station (paused, or out of sight): whatever it plays
 			// on resume is seen within a minute.
 			candidates.push(now + MINUTE_MS);
@@ -3091,14 +3142,14 @@ export class HubCore {
 		return false;
 	}
 
-	/** A player paused in a station's playlist, or gone quiet in it, within the last 12 h. */
+	/** A player paused in a station's playlist, or gone quiet in it, within the last 36 h. */
 	private stationHeld(snap: PlayerSnapshot | null): boolean {
 		const uri = snap?.obs ? snap.obs.contextUri : this.kvGet<string>("last_context");
 		if (!uri) return false;
 		const st = this.stations().find((x) => this.deckUri(x) === uri);
 		if (!st) return false;
 		const active = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
-		return this.now() - active < CONTINUE_WITHIN_MS;
+		return this.now() - active < HOLD_WATCH_MS;
 	}
 
 	async scheduleSoon(ms: number): Promise<void> {

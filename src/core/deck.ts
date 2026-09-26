@@ -67,6 +67,17 @@ export interface Deck {
 	 * the previous version plays something else there.
 	 */
 	changedAt?: number[];
+	/**
+	 * Songs of earlier versions a player may still have loaded (the last day
+	 * and a half) that this version no longer holds.
+	 */
+	formerIds?: TrackId[];
+	/**
+	 * The songs a chain of continuations took out at the held position — the
+	 * one a player paused on among them. Never planned back while the chain
+	 * lasts: a player resuming it would be found in the front.
+	 */
+	leftOut?: TrackId[];
 }
 
 /** Where the player is (or was last seen) in this version. */
@@ -216,7 +227,11 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	const anchor = seenPrev ? prev : fromTop ? -1 : null;
 	if (anchor !== null && idx > anchor) {
 		const gap = idx - anchor - 1;
-		if (ours && gap <= MAX_SKIP_GAP) {
+		// From a continuation's front into what it kept: the player came from
+		// an order we do not know (a paused song found in the front, a restart
+		// from the top). Only the song seen there was left.
+		const crosses = deck.heldAt != null && anchor < deck.heldAt && idx > deck.heldAt;
+		if (ours && gap <= MAX_SKIP_GAP && !crosses) {
 			// In our order: the song we saw and everything up to the current one
 			// is behind us.
 			for (let i = Math.max(anchor, 0); i < idx; i++) pass(i);
@@ -327,9 +342,10 @@ export const CONTINUE_AHEAD = 25;
 export function heldForPlayer(deck: Deck): Set<TrackId> {
 	const cameIn =
 		deck.lastIndex != null && deck.lastIndex < (deck.heldAt ?? 0) ? 0 : (deck.heldAt ?? 0);
-	return new Set(
-		deck.items.filter((it, i) => i >= cameIn || it.state !== "pending").map((it) => it.id),
-	);
+	return new Set([
+		...deck.items.filter((it, i) => i >= cameIn || it.state !== "pending").map((it) => it.id),
+		...(deck.leftOut ?? []),
+	]);
 }
 
 export interface ContinueInput {
@@ -399,7 +415,18 @@ export function continueLayout(input: ContinueInput): PlannedSlot[] | null {
 	// Positions first: a station already whole in the playlist has no song to
 	// spare for both, and a gap in front would shift every kept song.
 	while (fill.length + front.length < held + 1 && ahead.length > 0) front.unshift(ahead.pop()!);
-	const layout = [...fill, ...front, ...kept, ...ahead];
+	// With old songs in front, a restart from the top still begins with one
+	// nobody heard: while it plays, the hub sees the station and moves past
+	// the heard ones behind it.
+	let first: PlannedSlot | null = null;
+	if (fill.length > 0) {
+		if (front.length >= 2) first = front.shift()!;
+		else if (ahead.length > 0 || kept.length >= 2) {
+			first = ahead.length > 0 ? ahead.pop()! : kept.pop()!;
+			fill.pop();
+		}
+	}
+	const layout = [...(first ? [first] : []), ...fill, ...front, ...kept, ...ahead];
 	if (layout.length > MAX_CONTINUED_ITEMS) return null;
 	return [...layout, ...fresh.slice(0, MAX_CONTINUED_ITEMS - layout.length)];
 }

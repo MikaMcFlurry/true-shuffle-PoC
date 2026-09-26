@@ -607,3 +607,123 @@ describe("songs a player brings back on its own (red-team 5)", () => {
 		expect(repeats.length).toBeLessThanOrEqual(1);
 	});
 });
+
+describe("the listener's own choices and long stops (red-team 6)", () => {
+	function earsOn(h: H) {
+		const heard = new Map<string, number[]>();
+		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
+		const orig = f.moveNext.bind(h.fake);
+		f.moveNext = (user: unknown, at: number) => {
+			const cur = h.fake.current();
+			if (cur) heard.set(cur, [...(heard.get(cur) ?? []), h.fake.user().player.listenedMs]);
+			orig(user, at);
+		};
+		return heard;
+	}
+
+	for (const guest of [false, true])
+		it(`leaves a song the listener queues alone, even one heard today${guest ? " (guest mode)" : ""}`, async () => {
+			const h = await onboarded({ tracks: 600, playlists: [500, 100] });
+			const [s1, s2] = h.stationIds as [number, number];
+			await h.hub.play(s2);
+			await h.listen(2_000);
+			const q = h.fake.current()!; // heard in full on the other station this morning
+			await h.listen(5 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(2 * 60 * MINUTE_MS);
+			if (guest) h.hub.setGuest(true, 2);
+			await h.hub.play(s1);
+			await h.listen(6 * MINUTE_MS);
+			const heard = earsOn(h);
+			h.fake.user().player.userQueue.push(q);
+			await h.listen(20 * MINUTE_MS);
+			expect(heard.get(q)?.[0]).toBeGreaterThanOrEqual(30_000);
+		});
+
+	for (const hours of [13, 20])
+		it(`still skips a turned-down song an old order brings back after ${hours} h`, async () => {
+			const h = await onboarded({ tracks: 600 });
+			const sid = h.stationIds[0]!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(10 * MINUTE_MS);
+			h.fake.pause();
+			await h.hub.state({ live: true });
+			const { pl, deck } = stationDeck(h, sid);
+			const t = pl.items[deck.lastIndex! + 2]!;
+			await h.hub.thumb(t, -1);
+			await h.listen(hours * 60 * MINUTE_MS);
+			const heard = earsOn(h);
+			h.fake.user().player.isPlaying = true; // the loaded order, app closed
+			await h.listen(20 * MINUTE_MS);
+			expect(heard.get(t)?.length).toBe(1);
+			expect(heard.get(t)![0]).toBeLessThan(30_000);
+		});
+
+	it("a continued small station started from the top the next day repeats nothing", async () => {
+		const h = await onboarded({ tracks: 120 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(3 * 60 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(13 * 60 * MINUTE_MS);
+		const { pl } = stationDeck(h, sid);
+		const heard = earsOn(h);
+		const since = h.clock.t - 24 * 60 * MINUTE_MS;
+		const before = new Set(
+			h.sql
+				.all<{ track_id: string }>(`SELECT track_id FROM plays WHERE played_at >= ?`, since)
+				.map((r) => r.track_id),
+		);
+		h.fake.startContext(
+			"mika",
+			`spotify:playlist:${pl.id}`,
+			0,
+			h.fake.user().player.deviceId!,
+			false,
+		);
+		await h.listen(60 * MINUTE_MS);
+		const repeats = [...heard.entries()].filter(
+			([id, ms]) => before.has(id) && ms.some((x) => x >= 30_000),
+		);
+		expect(repeats).toEqual([]);
+	});
+
+	for (const size of [80, 120, 300])
+		it(`a second rewrite during one stop invents no skip and keeps the paused song out (${size} songs)`, async () => {
+			const h = await onboarded({ tracks: size });
+			const sid = h.stationIds[0]!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(110 * MINUTE_MS);
+			const p = h.fake.user().player;
+			p.isPlaying = false;
+			const paused = h.fake.current()!;
+			await h.listen(30 * MINUTE_MS); // first continuation
+			await h.hub.updateStation(sid, { rules: {} }); // marks the deck, like new discoveries
+			await h.listen(30 * MINUTE_MS); // second continuation
+			const { deck, pl } = stationDeck(h, sid);
+			expect(deck.version).toBeGreaterThanOrEqual(3);
+			expect(pl.items).not.toContain(paused);
+			p.isPlaying = true; // the loaded order goes on
+			await h.listen(60 * MINUTE_MS);
+			expect(falseSkips(h)).toBe(0);
+		});
+
+	it("without Spotify access the hub looks only a few times an hour", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true); // just tapped: a quick look is due
+		await h.listen(3 * MINUTE_MS);
+		// Access removed in Spotify: no token works, none can be refreshed.
+		h.fake.refreshTokens.clear();
+		h.fake.tokens.clear();
+		let alarms = 0;
+		const hub = h.hub as unknown as { alarm: () => Promise<void> };
+		const orig = hub.alarm.bind(h.hub);
+		hub.alarm = () => {
+			alarms++;
+			return orig();
+		};
+		await h.listen(24 * 60 * MINUTE_MS);
+		expect(alarms).toBeLessThanOrEqual(80);
+	});
+});
