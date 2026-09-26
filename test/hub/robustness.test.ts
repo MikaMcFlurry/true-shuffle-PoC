@@ -1847,3 +1847,124 @@ describe("the seventeenth review's cases", () => {
 		expect([row.e, row.l, bans.map((b) => b.station_id)]).toEqual([1, t2, [all]]);
 	});
 });
+
+describe("the eighteenth review's cases", () => {
+	async function ownPlaylist(h: H) {
+		const u = h.fake.user();
+		const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 0, u.devices[0]!.id, false);
+		return u;
+	}
+	async function heardFor(h: H, ms: number, leaveAt?: number) {
+		const u = h.fake.user();
+		const out = new Set<string>();
+		for (let t = 0; t < ms; t += 5_000) {
+			await h.listen(5_000);
+			if (u.player.isPlaying && u.player.listenedMs >= 30_000) out.add(h.fake.current()!);
+			if (leaveAt && u.player.listenedMs >= leaveAt) h.fake.skip();
+		}
+		return out;
+	}
+	const counted = (h: H) =>
+		new Set(h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id));
+
+	it("a moment without a player does not end a private session", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = await ownPlaylist(h);
+		u.devices[0]!.privateSession = true;
+		await h.listen(5 * MINUTE_MS);
+		const dev = u.player.deviceId;
+		u.player.deviceId = null; // Spotify answers 204 for a moment
+		await h.listen(35_000);
+		u.player.deviceId = dev;
+		const heard = await heardFor(h, 30 * MINUTE_MS, 50_000);
+		const last = h.fake.current();
+		h.fake.pause();
+		await h.listen(30 * MINUTE_MS);
+		const c = counted(h);
+		expect([...heard].filter((id) => id !== last && !c.has(id))).toEqual([]);
+	});
+
+	it("a private session begun hours after the last one is seen within minutes", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = await ownPlaylist(h);
+		u.devices[0]!.privateSession = true;
+		await h.listen(10 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(8 * 60 * MINUTE_MS); // quiet
+		await ownPlaylist(h); // started again directly in Spotify, still private
+		const heard = await heardFor(h, 40 * MINUTE_MS, 50_000);
+		const last = h.fake.current();
+		h.fake.pause();
+		await h.listen(30 * MINUTE_MS);
+		const c = counted(h);
+		// At most what played before the first look, 2 minutes at most.
+		expect([...heard].filter((id) => id !== last && !c.has(id)).length).toBeLessThanOrEqual(2);
+	});
+
+	for (const priv of [false, true])
+		it(`a song paused after a minute${priv ? " in a private session" : ""} does not come back when the station starts again`, async () => {
+			const h = await onboarded({ tracks: 60 });
+			const sid = h.stationIds[0]!;
+			const u = h.fake.user();
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			if (priv) u.devices.find((d) => d.id === u.player.deviceId)!.privateSession = true;
+			await h.listen(10 * MINUTE_MS);
+			const c0 = h.fake.current();
+			while (h.fake.current() === c0) await h.listen(1_000);
+			const x = h.fake.current()!;
+			await h.listen(60_000);
+			h.fake.pause();
+			await h.listen(2 * 60 * MINUTE_MS);
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			expect(stationDeck(h, sid).pl.items).not.toContain(x);
+			let again = false;
+			for (let t = 0; t < 120 * MINUTE_MS; t += 5_000) {
+				await h.listen(5_000);
+				if (h.fake.current() === x && u.player.listenedMs >= 30_000) again = true;
+			}
+			expect(again).toBe(false);
+		});
+
+	for (const listed of [false, true])
+		it(`a private play paused for ten minutes counts once${listed ? " (Spotify lists it)" : ""}`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = await ownPlaylist(h);
+			u.listPrivatePlays = listed;
+			u.devices[0]!.privateSession = true;
+			await h.listen(3 * MINUTE_MS);
+			const c0 = h.fake.current();
+			while (h.fake.current() === c0) await h.listen(1_000);
+			const x = h.fake.current()!;
+			await h.listen(60_000);
+			h.fake.pause();
+			await h.listen(10 * MINUTE_MS);
+			u.player.isPlaying = true;
+			while (h.fake.current() === x) await h.listen(1_000);
+			await h.listen(5 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(40 * MINUTE_MS);
+			expect(h.sql.all(`SELECT 1 FROM plays WHERE track_id = ?`, x).length).toBe(1);
+		});
+
+	it("a private session: a song seeked far and left after 20 s is not counted", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = await ownPlaylist(h);
+		u.devices[0]!.privateSession = true;
+		await h.listen(3 * MINUTE_MS);
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+		const x = h.fake.current()!;
+		await h.listen(3_000);
+		u.player.progressMs = 90_000; // seeks to 1:30
+		await h.listen(5_000);
+		(h.hub as unknown as { kvSet: (k: string, v: unknown) => void }).kvSet("player_stale", 1);
+		await h.hub.state({ live: true }); // the app looks at 1:35
+		await h.listen(15_000);
+		h.fake.skip();
+		await h.listen(5 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(30 * MINUTE_MS);
+		expect(h.sql.first(`SELECT 1 FROM plays WHERE track_id = ?`, x)).toBeNull();
+	});
+});

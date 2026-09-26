@@ -253,12 +253,16 @@ interface JobRow {
 	error: string | null;
 }
 
-/** The song playing in a private session, and how far a look saw it get. */
+/** The song playing in a private session, and how long looks saw it play. */
 interface PrivateSong {
 	id: TrackId;
 	start: number;
 	end: number;
-	heard: number;
+	/** Played between looks: never more than the time that passed. */
+	listened: number;
+	/** Its position at the latest look, and when that was. */
+	progress: number;
+	at: number;
 	contextUri: string | null;
 	track: PackedTrack;
 }
@@ -1835,8 +1839,15 @@ export class HubCore {
 			return;
 		}
 		const obs = toObservation(state, this.now());
-		this.notePrivate(state?.device?.is_private_session === true, s.lastPlayerAt);
-		const heardPrivately = this.notePrivateSong(obs, state?.item ? packTrack(state.item) : null);
+		this.notePrivate(
+			state?.device ? state.device.is_private_session === true : null,
+			s.lastPlayerAt,
+		);
+		const heardPrivately = this.notePrivateSong(
+			obs,
+			state?.item ? packTrack(state.item) : null,
+			s.lastPlayerAt,
+		);
 		s.lastPlayerAt = this.now();
 		const snap: PlayerSnapshot = {
 			obs,
@@ -2291,7 +2302,9 @@ export class HubCore {
 	 * so a song left then cannot be told from one heard. From the look before
 	 * the first one that saw it to the first one that no longer does.
 	 */
-	private notePrivate(now: boolean, lookBefore: number): void {
+	private notePrivate(now: boolean | null, lookBefore: number): void {
+		// No player to see (Spotify answered 204): nothing changes.
+		if (now === null) return;
 		const list = this.kvGet<{ from: number; to: number | null }[]>("private") ?? [];
 		const last = list[list.length - 1];
 		const open = last !== undefined && last.to === null;
@@ -2314,14 +2327,22 @@ export class HubCore {
 		return list?.[list.length - 1]?.to === null;
 	}
 
+	/** A private session on, or seen within the last day: the next may begin any time. */
+	private privateLately(): boolean {
+		const last = this.kvGet<{ from: number; to: number | null }[]>("private")?.at(-1);
+		return last !== undefined && (last.to === null || this.now() - last.to < DAY_MS);
+	}
+
 	/**
-	 * A song played in a private session counts as heard exactly when a look
-	 * saw it at 30 s or more (the looks are timed for that). Kept per song, so
-	 * it counts once it is over — also when the session ended meanwhile.
+	 * A song played in a private session counts as heard exactly when looks
+	 * saw it play 30 s or more: the time it moved on between them, not how far
+	 * it got (a seek is not listening). Kept per song, so it counts once it is
+	 * over — also when the session ended meanwhile.
 	 */
 	private notePrivateSong(
 		obs: PlayerObservation | null,
 		track: PackedTrack | null,
+		lookBefore: number,
 	): SeenPlay | null {
 		const rec = this.kvGet<PrivateSong>("private_song");
 		const cur = obs?.trackId ? obs : null;
@@ -2330,30 +2351,26 @@ export class HubCore {
 			rec !== null &&
 			cur !== null &&
 			cur.trackId === rec.id &&
-			!(cur.isPlaying && cur.progressMs + 5_000 < rec.heard);
+			!(cur.isPlaying && cur.progressMs + 5_000 < rec.progress);
 		let out: SeenPlay | null = null;
-		if (rec && !same) {
-			if (rec.heard >= 30_000) {
-				const at = Math.min(rec.end, this.now());
-				if (!this.inGuest(at) && !this.inGuestDuring(rec.start, at))
-					out = {
-						id: rec.id,
-						at,
-						start: rec.start,
-						end: rec.end,
-						contextUri: rec.contextUri,
-						track: rec.track,
-					};
-			}
+		// No player to see says nothing about the song: it may still play.
+		if (rec && !same && cur !== null) {
+			out = this.privatePlay(rec);
 			this.kvDel("private_song");
 		}
 		if (cur?.trackId && track && cur.durationMs > 0 && this.inPrivateNow()) {
+			const now = this.now();
+			// Heard since the look before: no more than the time that passed.
+			const since = same ? now - rec!.at : lookBefore > 0 ? now - lookBefore : cur.progressMs;
+			const moved = same ? cur.progressMs - rec!.progress : cur.progressMs;
 			const start = same ? rec!.start : cur.at - cur.progressMs;
 			this.kvSet("private_song", {
 				id: cur.trackId,
 				start,
 				end: start + cur.durationMs,
-				heard: Math.max(same ? rec!.heard : 0, cur.progressMs),
+				listened: (same ? rec!.listened : 0) + Math.max(0, Math.min(moved, since)),
+				progress: cur.progressMs,
+				at: now,
 				contextUri: cur.contextUri,
 				track,
 			} satisfies PrivateSong);
@@ -2361,13 +2378,57 @@ export class HubCore {
 		return out;
 	}
 
+	private privatePlay(rec: PrivateSong): SeenPlay | null {
+		if (rec.listened < 30_000) return null;
+		const at = Math.min(rec.end, this.now());
+		if (this.inGuest(at) || this.inGuestDuring(rec.start, at)) return null;
+		return {
+			id: rec.id,
+			at,
+			start: rec.start,
+			end: rec.end,
+			contextUri: rec.contextUri,
+			track: rec.track,
+		};
+	}
+
+	/**
+	 * Starting a station replaces what the player shows: a song heard 30 s or
+	 * more counts now, before the plan — else it may come right back.
+	 */
+	private settleShownSong(): void {
+		const rec = this.kvGet<PrivateSong>("private_song");
+		if (rec) {
+			this.kvDel("private_song");
+			const e = this.privatePlay(rec);
+			if (e) this.recordSeenPlay(e);
+			return;
+		}
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const o = snap?.obs;
+		if (!o?.trackId || !snap?.track || o.progressMs < 30_000 || this.now() - snap.at > MINUTE_MS)
+			return;
+		const at = this.now();
+		const start = snap.at - o.progressMs;
+		if (this.inGuest(at) || this.inGuestDuring(start, at)) return;
+		this.recordSeenPlay({
+			id: o.trackId,
+			at,
+			start,
+			end: start + o.durationMs,
+			contextUri: o.contextUri,
+			track: snap.track,
+		});
+	}
+
 	/**
 	 * Count a play seen in a private session, unless Spotify listed it after
 	 * all; and when it lists it later, do not count it again.
 	 */
 	private recordSeenPlay(e: SeenPlay): RecentPlay | null {
+		// Paused on the way, it ended later than it would have: up to now.
 		const from = e.start - MINUTE_MS;
-		const to = e.end + 5 * MINUTE_MS;
+		const to = Math.max(e.end, this.now()) + 5 * MINUTE_MS;
 		if (
 			this.db.first(
 				`SELECT 1 FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ? LIMIT 1`,
@@ -2870,6 +2931,7 @@ export class HubCore {
 		const client = this.client(budget);
 		try {
 			await this.sync(budget, { force: true });
+			this.settleShownSong();
 			const fresh = this.stationRow(stationId)!;
 			let deck = this.deckOf(fresh);
 			const needsRebuild =
@@ -3610,6 +3672,8 @@ export class HubCore {
 			candidates.push(Math.max(now + 15_000, snap!.at + 32_000 - snap!.obs!.progressMs));
 		// …and a song skipped into is seen within 30 s, so its own look is timed.
 		if (privately) candidates.push(now + 30_000);
+		// A private session lately: the next one is seen within 2 minutes.
+		if (this.privateLately()) candidates.push(now + 2 * MINUTE_MS);
 		if (snap?.obs?.isPlaying && (inDeck || privately)) {
 			// Look right after the song ends: the next one is then seen in its
 			// first seconds — a song turned down is skipped before it is heard,
@@ -3624,14 +3688,10 @@ export class HubCore {
 				end - now <= 4 * MINUTE_MS;
 			candidates.push(aligned ? Math.max(now + 15_000, end) : now + 3 * MINUTE_MS);
 		} else if (snap?.obs?.isPlaying) candidates.push(now + 10 * MINUTE_MS);
-		else if (
-			snap?.obs?.trackId &&
-			this.inPrivateNow() &&
-			s.idleSince !== null &&
-			now - s.idleSince < 6 * HOUR_MS
-		)
-			// A private session paused anywhere: whatever plays on resume must be
-			// seen at 30 s — nothing else will list it.
+		else if (this.inPrivateNow() && s.idleSince !== null && now - s.idleSince < 6 * HOUR_MS)
+			// A private session paused anywhere, or its player out of sight for a
+			// moment: whatever plays on must be seen at 30 s — nothing else will
+			// list it.
 			candidates.push(now + (now - s.idleSince < 30 * MINUTE_MS ? 30_000 : 2 * MINUTE_MS));
 		else if (snap && this.heldPace(snap) !== null)
 			// A player holds a station (paused, or out of sight): whatever it plays
