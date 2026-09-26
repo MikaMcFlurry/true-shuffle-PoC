@@ -1115,28 +1115,35 @@ describe("the tenth look: older orders and the edges of guest time", () => {
 		).toBeGreaterThan(h.clock.t);
 	});
 
-	it("a song still playing when guest mode goes off stays the guest's", async () => {
-		const h = await onboarded({ tracks: 300 });
-		const sid = h.stationIds[0]!;
-		await h.hub.setGuest(true, 6);
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(10 * MINUTE_MS);
-		const p = h.fake.user().player;
-		const x = h.fake.current()!;
-		while (h.fake.current() === x) await h.listen(1_000);
-		const y = h.fake.current()!;
-		await h.listen(60_000);
-		await h.hub.setGuest(false); // y plays on to its end, and the owner's music after it
-		await h.listen(40 * MINUTE_MS);
-		expect(p.isPlaying).toBe(true);
-		const rows = h.sql.all<{ track_id: string; ignored: number }>(
-			`SELECT track_id, ignored FROM plays ORDER BY played_at`,
-		);
-		expect(rows.find((r) => r.track_id === y)?.ignored).toBe(1);
-		expect(rows.at(-1)?.ignored).toBe(0);
-		const mem = h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, y);
-		expect(mem?.plays ?? 0).toBe(0);
-	});
+	for (const owner of ["skips it", "hears it on"] as const)
+		it(`a song still playing when guest mode goes off: the guest's unless the owner hears 30 s of it (${owner})`, async () => {
+			const h = await onboarded({ tracks: 300 });
+			const sid = h.stationIds[0]!;
+			await h.hub.setGuest(true, 6);
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(10 * MINUTE_MS);
+			const p = h.fake.user().player;
+			const x = h.fake.current()!;
+			while (h.fake.current() === x) await h.listen(1_000);
+			const y = h.fake.current()!;
+			await h.listen(60_000);
+			expect(h.fake.tracks.get(y)!.durationMs - p.progressMs).toBeGreaterThan(40_000);
+			await h.hub.setGuest(false);
+			if (owner === "skips it") {
+				await h.listen(5_000);
+				h.fake.skip();
+			} // else y plays on to its end, and the owner's music after it
+			await h.listen(40 * MINUTE_MS);
+			expect(p.isPlaying).toBe(true);
+			const rows = h.sql.all<{ track_id: string; ignored: number }>(
+				`SELECT track_id, ignored FROM plays ORDER BY played_at`,
+			);
+			const heard = owner === "hears it on";
+			expect(rows.find((r) => r.track_id === y)?.ignored).toBe(heard ? 0 : 1);
+			expect(rows.at(-1)?.ignored).toBe(0);
+			const mem = h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, y);
+			expect(mem?.plays ?? 0).toBe(heard ? 1 : 0);
+		});
 
 	it("a song that ended just as guest mode came on stays the owner's", async () => {
 		const h = await onboarded({ tracks: 300 });
@@ -1209,11 +1216,13 @@ describe("the tenth review's cases", () => {
 		const p = h.fake.user().player;
 		await h.listen(58 * MINUTE_MS);
 		let y = h.fake.current()!;
-		// the song running when the hour is up
+		// the song running when the hour is up, left within seconds
 		while ((await h.hub.state()).guest.active) {
 			await h.listen(1_000);
 			y = h.fake.current()!;
 		}
+		await h.listen(3_000);
+		if (h.fake.current() === y) h.fake.skip();
 		while (h.fake.current() === y) await h.listen(1_000);
 		const mine: string[] = [];
 		for (let i = 0; i < 3; i++) {
@@ -2240,5 +2249,102 @@ describe("the twentieth review's cases", () => {
 		await h.listen(24 * 60 * MINUTE_MS);
 		const looks = h.fake.calls.slice(n0).filter((c) => c === "GET /v1/me/player").length;
 		expect(looks).toBeLessThan(100);
+	});
+});
+
+describe("the twenty-first review's cases", () => {
+	const rows = (h: H, id: string, ignored = 0) =>
+		h.sql.all(`SELECT 1 FROM plays WHERE track_id = ? AND ignored = ?`, id, ignored).length;
+	async function nextSong(h: H) {
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+	}
+
+	for (const how of ["hand", "timer"] as const)
+		it(`only the one play across the end of guest time is the guest's (${how})`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+			await h.hub.setGuest(true, 1);
+			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, u.devices[0]!.id, false);
+			if (how === "hand") {
+				await h.listen(20 * MINUTE_MS);
+				await h.hub.setGuest(false);
+			} else while ((await h.hub.state()).guest.active) await h.listen(5_000);
+			const x = h.fake.current()!;
+			await h.listen(3_000);
+			if (h.fake.current() === x) h.fake.skip(); // the owner moves on
+			await h.listen(3 * 60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			// X comes again the next day: the owner hears it in full
+			h.fake.startContext(
+				u.id,
+				`spotify:playlist:${own.id}`,
+				own.items.indexOf(x),
+				u.devices[0]!.id,
+				false,
+			);
+			await nextSong(h);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(rows(h, x, 0)).toBe(1);
+		});
+
+	for (const listed of [false, true])
+		it(`two starts within minutes: both replaced songs count once${listed ? " (Spotify lists them)" : ""}`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const [a, b] = h.stationIds as [number, number];
+			h.fake.user().listReplaced = listed;
+			expect((await h.hub.play(a)).ok).toBe(true);
+			await h.listen(10 * MINUTE_MS);
+			await nextSong(h);
+			await h.listen(60_000);
+			const s1 = h.fake.current()!;
+			expect((await h.hub.play(b)).ok).toBe(true);
+			await h.listen(3 * MINUTE_MS);
+			const s2 = h.fake.current()!;
+			expect((await h.hub.play(a)).ok).toBe(true);
+			await h.listen(2 * 60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(rows(h, s1)).toBe(1);
+			expect(rows(h, s2)).toBe(1);
+		});
+
+	for (const paused of [false, true])
+		it(`a song sought past 30 s is not counted at a start from the app${paused ? " (paused)" : ""}`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			const own = [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!;
+			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 5, u.devices[0]!.id, false);
+			await h.listen(5_000);
+			const x = h.fake.current()!;
+			u.player.progressMs = 60_000; // a seek: nothing more was heard
+			await h.listen(4_000);
+			if (paused) h.fake.pause();
+			await h.listen(3_000);
+			expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+			await h.listen(60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(rows(h, x)).toBe(0);
+		});
+
+	it("guest time and the two days after it write the guest record only when it changes", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const hub = h.hub as unknown as { kvSet: (k: string, v: unknown) => void };
+		const orig = hub.kvSet.bind(hub);
+		let writes = 0;
+		hub.kvSet = (k: string, v: unknown) => {
+			if (k === "guest") writes++;
+			orig(k, v);
+		};
+		await h.hub.setGuest(true, 2);
+		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		await h.listen(3 * 60 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(48 * 60 * MINUTE_MS);
+		expect(writes).toBeLessThan(10);
 	});
 });

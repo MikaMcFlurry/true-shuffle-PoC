@@ -21,6 +21,7 @@ import {
 	consumedCount,
 	continueLayout,
 	type Deck,
+	DIRECT_MS,
 	heldForPlayer,
 	inRanges,
 	markBooked,
@@ -177,6 +178,8 @@ const CONTINUE_WITHIN_MS = HOLD_WATCH_MS;
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
 /** How old a look may be to say which song was playing as guest mode went off. */
 const GUEST_TAIL_FRESH_MS = 2_000;
+/** How long after a guest time its last play is followed. */
+const GUEST_FOLLOW_MS = 2 * DAY_MS;
 /** Refresh decks that were written longer ago than this (memory drifted). */
 export const DECK_MAX_AGE_MS = 20 * HOUR_MS;
 /** External requests per invocation (Workers free plan allows 50). */
@@ -299,31 +302,63 @@ interface PlayerSnapshot {
 	at: number;
 }
 
+/**
+ * The play the player shows, as looks saw it: how much of it they saw play.
+ * A look that first sees a song cannot tell listening from a seek, so only
+ * what later looks see it move counts — never more than the time between.
+ */
+interface HeardSong {
+	id: TrackId;
+	/** When it began: the first look that saw it, less its position. */
+	start: number;
+	listened: number;
+	/** Its position at the latest look, and when that was. */
+	progress: number;
+	at: number;
+	playing: boolean;
+	durationMs: number;
+}
+
+/**
+ * The one play on the player when the guest time ended (running or paused):
+ * the guest's, unless looks saw the owner play 30 s or more of it after.
+ */
+interface GuestLast {
+	id: TrackId;
+	start: number;
+	/** Listened (HeardSong) that may still have been the guest's. */
+	guest: number;
+	/** Listened since: the owner's. */
+	owner: number;
+	/** The first look that no longer showed it (null: still on the player). */
+	over: number | null;
+	/** Its listing came: a later one is another play. */
+	listed?: true;
+	/** Looks saw it on the player across the end: no other play can be the guest's. */
+	only?: true;
+}
+
 interface GuestPeriod {
 	/**
 	 * The song seen playing when guest mode went off by hand (null: nothing
 	 * played). Its play, ending later, is still the guest's.
 	 */
 	tail?: TrackId | null;
-	/**
-	 * The song the player showed at the guest's last look (paused as well),
-	 * and until when looks after the guest time still showed it: its play,
-	 * listed when it is over or replaced, is the guest's.
-	 */
-	shown?: TrackId;
-	shownUntil?: number;
-	/** A look saw it paused: seen playing after the guest time, the owner resumed it. */
-	shownPaused?: boolean;
+	/** The play across its end, once a look after it saw the player (null: none). */
+	last?: GuestLast | null;
 	from: number;
 	to: number;
 }
 
 /**
- * The song a start from the app replaced, heard 30 s or more: counted from
- * Spotify's listing, or from this record if none comes within the grace.
+ * A song a start from the app replaced, which looks saw play 30 s or more:
+ * counted from Spotify's listing, or from this note if none comes within
+ * the grace. One per play.
  */
 interface ShownPending {
 	id: TrackId;
+	/** When the play began, and when the start replaced it. */
+	start: number;
 	at: number;
 	durationMs: number;
 	contextUri: string | null;
@@ -1895,7 +1930,12 @@ export class HubCore {
 			state?.item ? packTrack(state.item) : null,
 			s.lastPlayerAt,
 		);
-		this.noteGuestShown(obs);
+		this.noteGuestLast(
+			this.noteHeardSong(obs),
+			!!obs?.trackId,
+			s.lastPlayerAt,
+			this.kvGet<PlayerSnapshot>("player")?.obs ?? null,
+		);
 		s.lastPlayerAt = this.now();
 		const snap: PlayerSnapshot = {
 			obs,
@@ -1945,7 +1985,7 @@ export class HubCore {
 			if (own) plays = [...plays, own];
 		}
 		const replaced = this.settleShownPending();
-		if (replaced) plays = [...plays, replaced];
+		if (replaced.length > 0) plays = [...plays, ...replaced];
 
 		this.settleCarried(plays);
 
@@ -2329,52 +2369,186 @@ export class HubCore {
 	/**
 	 * Was this play the guest's? Spotify stamps a play when it ends: one that
 	 * ended in guest time was (also the song already running when guest mode
-	 * came on), and so was the one still running when it went off — the song
-	 * seen playing then, or, not seen, a play that can have begun before:
-	 * after the play before it ended, and no earlier than its length allows.
+	 * came on). The one play on the player when it ended, running or paused,
+	 * is the guest's unless looks saw the owner play 30 s or more of it after
+	 * (GuestLast). Not seen: a play that can have begun before the end — after
+	 * the play before it ended, and no earlier than its length allows — or the
+	 * song seen playing when guest mode went off by hand.
 	 */
 	private guestPlay(id: TrackId, at: number, durationMs: number, before: () => number): boolean {
-		return this.guestPeriods().some((p) => {
+		const periods = this.guestPeriods();
+		let listed = false;
+		const hit = periods.some((p) => {
 			if (at > p.from && at <= p.to) return true;
-			if (this.guestShown(p, id, at)) return true;
-			if (at <= p.to || at - durationMs >= p.to) return false;
+			if (at <= p.to) return false;
+			const g = p.last;
+			if (g) {
+				if (
+					g.id === id &&
+					!g.listed &&
+					at >= g.start &&
+					at <= this.guestLastEnd(p, g) + MINUTE_MS
+				) {
+					g.listed = true;
+					listed = true;
+					return g.owner < 30_000;
+				}
+				// Looks saw the one play across the end: every other one is the owner's.
+				if (g.only) return false;
+			}
+			if (at - durationMs >= p.to) return false;
 			if (p.tail !== undefined) return p.tail === id;
 			return Math.max(at - durationMs, before()) < p.to;
 		});
+		if (listed) this.kvSet("guest", periods);
+		return hit;
 	}
 
-	/** The guest's song, still shown after the guest time, listed now. */
-	private guestShown(p: GuestPeriod, id: TrackId, at: number): boolean {
-		return p.shown === id && at > p.to && at <= (p.shownUntil ?? p.to) + 5 * MINUTE_MS;
+	/** The guest's last play while looks still follow it. */
+	private guestLastOpen(): { id: TrackId; to: number } | null {
+		const p = this.guestPeriods().at(-1);
+		const now = this.now();
+		if (!p?.last || p.last.over !== null || now < p.to || now - p.to > GUEST_FOLLOW_MS) return null;
+		return { id: p.last.id, to: p.to };
+	}
+
+	/** Until when a listing can be the guest's last play: over, or followed for two days. */
+	private guestLastEnd(p: GuestPeriod, g: GuestLast): number {
+		return g.over ?? p.to + GUEST_FOLLOW_MS;
 	}
 
 	/**
-	 * At each look: the song the guest leaves on the player, as long as it
-	 * stays there. Resumed after the guest time, it is the owner's again, and
-	 * the play's own times decide (guestPlay).
+	 * At each look after a guest time: the one play on the player when it
+	 * ended, followed until a look no longer shows it. Of what looks saw it
+	 * play (HeardSong), the part after the end is the owner's; the part a look
+	 * gap spans across the end counts as the guest's.
 	 */
-	private noteGuestShown(obs: PlayerObservation | null): void {
-		const periods = this.guestPeriods();
+	private noteGuestLast(
+		h: { before: HeardSong | null; over: HeardSong | null; cur: HeardSong | null },
+		seen: boolean,
+		lookBefore: number,
+		prev: PlayerObservation | null,
+	): void {
 		const now = this.now();
-		const p = periods.filter((x) => x.from <= now).at(-1);
-		if (!p || now - p.to > 2 * DAY_MS) return;
-		const id = obs?.trackId ?? null;
-		const playing = obs?.isPlaying === true;
-		if (now < p.to) {
-			if (!id) return;
-			p.shown = id;
-			p.shownUntil = now;
-			p.shownPaused = !playing;
-		} else if (id === null || id !== p.shown) return;
-		else if (!playing) {
-			p.shownUntil = now;
-			p.shownPaused = true;
-		} else if (p.shownPaused) {
-			delete p.shown;
-			delete p.shownUntil;
-			delete p.shownPaused;
-		} else p.shownUntil = now;
+		const periods = this.guestPeriods();
+		const p = periods.at(-1);
+		// No song to see says nothing: wait for a look that shows one.
+		if (!p || now < p.to || now - p.to > GUEST_FOLLOW_MS || !seen) return;
+		const { before, over, cur } = h;
+		const samePlay = (a: HeardSong | null, b: { id: TrackId; start: number } | null) =>
+			a !== null && b !== null && a.id === b.id && a.start === b.start;
+		if (p.last === undefined) {
+			let last: GuestLast | null = null;
+			if (cur && before && before.at <= p.to && samePlay(cur, before)) {
+				// The play seen before the end goes on: it is the only one across it.
+				// Seen paused as it was at the look before (not stored again): it
+				// moved only after that look.
+				const stillPaused =
+					prev !== null &&
+					!prev.isPlaying &&
+					!before.playing &&
+					prev.trackId === before.id &&
+					prev.progressMs === before.progress;
+				const saw =
+					stillPaused && lookBefore > before.at && lookBefore <= p.to ? lookBefore : before.at;
+				const guest =
+					before.listened + Math.min(cur.listened - before.listened, Math.max(0, p.to - saw));
+				last = {
+					id: cur.id,
+					start: cur.start,
+					guest,
+					owner: cur.listened - guest,
+					over: null,
+					only: true,
+				};
+			} else if (cur && cur.start < p.to && !samePlay(cur, before)) {
+				// Begun before the end, first seen after it: what plays on is the owner's.
+				last = {
+					id: cur.id,
+					start: cur.start,
+					guest: cur.listened,
+					owner: 0,
+					over: null,
+					only: true,
+				};
+			} else if (over && before && before.at <= p.to) {
+				// Seen before the end, over by now: only a run to its end tells how long after.
+				const ranOut = over.listened > before.listened;
+				const end = before.at + before.durationMs - before.progress;
+				const owner = ranOut ? Math.max(0, end - Math.max(p.to, before.at)) : 0;
+				last = { id: over.id, start: over.start, guest: over.listened - owner, owner, over: now };
+			}
+			p.last = last;
+			this.kvSet("guest", periods);
+			return;
+		}
+		const g = p.last;
+		if (!g || g.over !== null) return;
+		if (samePlay(cur, g)) {
+			const owner = Math.max(0, cur!.listened - g.guest);
+			if (owner === g.owner) return;
+			g.owner = owner;
+		} else {
+			if (samePlay(over, g)) g.owner = Math.max(0, over!.listened - g.guest);
+			g.over = now;
+		}
 		this.kvSet("guest", periods);
+	}
+
+	/**
+	 * At each look: the play the player shows and how much of it looks saw
+	 * play; and the play just over — with the rest of it when it was seen
+	 * playing and the next one began right at its end (it ran out).
+	 */
+	private noteHeardSong(obs: PlayerObservation | null): {
+		before: HeardSong | null;
+		over: HeardSong | null;
+		cur: HeardSong | null;
+	} {
+		const before = this.kvGet<HeardSong>("heard_song");
+		// No song to see says nothing about it: it may still play.
+		if (!obs?.trackId || obs.durationMs <= 0) return { before, over: null, cur: before };
+		const now = this.now();
+		const same =
+			before !== null &&
+			obs.trackId === before.id &&
+			!(obs.isPlaying && obs.progressMs + 5_000 < before.progress);
+		let over: HeardSong | null = null;
+		if (before && !same) {
+			over = { ...before };
+			const end = before.at + before.durationMs - before.progress;
+			if (before.playing && obs.isPlaying && Math.abs(obs.at - obs.progressMs - end) <= DIRECT_MS)
+				over.listened += Math.max(0, before.durationMs - before.progress);
+		}
+		const cur: HeardSong =
+			before && same
+				? {
+						...before,
+						listened:
+							before.listened +
+							Math.max(0, Math.min(obs.progressMs - before.progress, now - before.at)),
+						progress: obs.progressMs,
+						at: now,
+						playing: obs.isPlaying,
+					}
+				: {
+						id: obs.trackId,
+						start: obs.at - obs.progressMs,
+						listened: 0,
+						progress: obs.progressMs,
+						at: now,
+						playing: obs.isPlaying,
+						durationMs: obs.durationMs,
+					};
+		// A paused song seen again as it was: nothing new to store.
+		const unchanged =
+			before !== null &&
+			same &&
+			!obs.isPlaying &&
+			!before.playing &&
+			obs.progressMs === before.progress;
+		if (!unchanged) this.kvSet("heard_song", cur);
+		return { before, over, cur: unchanged ? before : cur };
 	}
 
 	/** Any guest time between `from` and `to`? */
@@ -2506,42 +2680,73 @@ export class HubCore {
 	}
 
 	/**
-	 * The start worked and replaced a song heard 30 s or more: it counts when
-	 * Spotify lists it, and if Spotify does not within the grace, from here.
-	 * In a private session the looks count it.
+	 * The start worked and replaced a song looks saw play 30 s or more: it
+	 * counts when Spotify lists it, and if Spotify does not within the grace,
+	 * from here. In a private session the looks count it.
 	 */
 	private noteShownPending(id: TrackId | null): void {
+		const rec = this.kvGet<HeardSong>("heard_song");
 		const snap = this.kvGet<PlayerSnapshot>("player");
-		const o = snap?.obs;
-		if (!id || o?.trackId !== id || !snap?.track || o.durationMs <= 0) return;
+		if (!id || rec?.id !== id || rec.listened < 30_000) return;
+		if (snap?.obs?.trackId !== id || !snap.track) return;
 		if (this.kvGet<PrivateSong>("private_song")?.id === id) return;
-		this.kvSet("shown_pending", {
+		const notes = this.shownNotes();
+		if (notes.some((e) => e.id === id && e.start === rec.start)) return;
+		notes.push({
 			id,
+			start: rec.start,
 			at: this.now(),
-			durationMs: o.durationMs,
-			contextUri: o.contextUri,
+			durationMs: rec.durationMs,
+			contextUri: snap.obs.contextUri,
 			track: snap.track,
 			until: this.now() + SKIP_GRACE_MS,
-		} satisfies ShownPending);
+		});
+		this.kvSet("shown_pending", notes.slice(-20));
 	}
 
-	/** Not listed within the grace: the replaced song counts from its record. */
-	private settleShownPending(): RecentPlay | null {
-		const e = this.kvGet<ShownPending>("shown_pending");
-		if (!e || this.now() < e.until) return null;
-		this.kvDel("shown_pending");
-		if (this.inGuest(e.at) || this.guestPeriods().some((p) => this.guestShown(p, e.id, e.at)))
-			return null;
-		// Whenever Spotify may list it later (paused for hours: its stamp may be
-		// old), it is this play.
-		return this.recordSeenPlay({
-			id: e.id,
-			at: e.at,
-			start: e.at - DAY_MS,
-			end: e.at,
-			contextUri: e.contextUri,
-			track: e.track,
-		});
+	private shownNotes(): ShownPending[] {
+		const v = this.kvGet<ShownPending[] | ShownPending>("shown_pending");
+		if (!v) return [];
+		// Kept as one note before: its play began at most a day before.
+		return Array.isArray(v)
+			? v
+			: [{ ...v, start: (v as Partial<ShownPending>).start ?? v.at - DAY_MS }];
+	}
+
+	/** Not listed within the grace: each replaced song counts from its note. */
+	private settleShownPending(): RecentPlay[] {
+		const notes = this.shownNotes();
+		const now = this.now();
+		if (!notes.some((e) => now >= e.until)) return [];
+		const left = notes.filter((e) => now < e.until);
+		if (left.length > 0) this.kvSet("shown_pending", left);
+		else this.kvDel("shown_pending");
+		const out: RecentPlay[] = [];
+		for (const e of notes) {
+			if (now < e.until || this.guestNote(e)) continue;
+			// Whenever Spotify may list it later (paused for hours: its stamp may be
+			// old), it is this play.
+			const r = this.recordSeenPlay({
+				id: e.id,
+				at: e.at,
+				start: e.start,
+				end: e.at,
+				contextUri: e.contextUri,
+				track: e.track,
+			});
+			if (r) out.push(r);
+		}
+		return out;
+	}
+
+	/** A replaced song the guest played: in guest time, or across its end unless the owner heard it. */
+	private guestNote(e: ShownPending): boolean {
+		if (this.inGuest(e.at)) return true;
+		for (const p of this.guestPeriods()) {
+			const g = p.last;
+			if (g && g.id === e.id && g.start === e.start) return g.owner < 30_000;
+		}
+		return this.inGuestDuring(e.start, e.at);
 	}
 
 	/**
@@ -2646,13 +2851,16 @@ export class HubCore {
 			}
 			return hit;
 		};
-		const pending = this.kvGet<ShownPending>("shown_pending");
+		const notes = this.shownNotes();
+		const noted = notes.length;
 		for (const { i, at } of fresh) {
 			const id = i.track.id!;
 			const ctx = i.context?.uri ?? null;
-			// Spotify listed the song a start replaced: this is its play.
-			if (pending && id === pending.id && at >= pending.at - DAY_MS && at <= pending.at + MINUTE_MS)
-				this.kvDel("shown_pending");
+			// Spotify listed a song a start replaced: this is its play.
+			const k = notes.findIndex(
+				(e) => e.id === id && at >= e.start - MINUTE_MS && at <= e.at + MINUTE_MS,
+			);
+			if (k >= 0) notes.splice(k, 1);
 			// Counted already from the looks in a private session: it still tells
 			// the decks it was heard, and memory nothing new.
 			if (seen.some((e) => e.id === id && at >= e.from && at <= e.to)) {
@@ -2702,6 +2910,10 @@ export class HubCore {
 			this.noteDiscoveryHeard(id);
 			// Heard somewhere else: every other deck still holding it is stale.
 			this.dirtyDecksHolding(id, station?.id ?? null);
+		}
+		if (notes.length < noted) {
+			if (notes.length > 0) this.kvSet("shown_pending", notes);
+			else this.kvDel("shown_pending");
 		}
 		return out;
 	}
@@ -3810,6 +4022,17 @@ export class HubCore {
 		if (privately) candidates.push(now + 30_000);
 		// A private session lately: the next one is seen within 2 minutes.
 		if (this.privateLately()) candidates.push(now + 2 * MINUTE_MS);
+		// The guest's last play, still on the player: seen right after its end
+		// (a run to its end is the owner's), and paused, within 2 minutes of a
+		// resume — up to 6 hours.
+		const last = this.guestLastOpen();
+		if (last && snap?.obs?.trackId === last.id) {
+			const left = snap.obs.durationMs - snap.obs.progressMs;
+			if (snap.obs.isPlaying && left > 0)
+				candidates.push(Math.max(now + 15_000, snap.at + left + 2000));
+			else if (!snap.obs.isPlaying && now - last.to < 6 * HOUR_MS)
+				candidates.push(now + 2 * MINUTE_MS);
+		}
 		if (snap?.obs?.isPlaying && (inDeck || privately)) {
 			// Look right after the song ends: the next one is then seen in its
 			// first seconds — a song turned down is skipped before it is heard,

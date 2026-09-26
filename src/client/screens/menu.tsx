@@ -59,7 +59,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 				store.say(
 					on
 						? `Gast-Modus an — ${hours} Stunden lang zählt nichts`
-						: "Gast-Modus aus — ab dem nächsten Song zählt wieder alles",
+						: "Gast-Modus aus — was du ab jetzt hörst, zählt wieder",
 					"info",
 					4000,
 				);
