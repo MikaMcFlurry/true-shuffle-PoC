@@ -174,12 +174,18 @@ describe("observePlayer", () => {
 		]);
 	});
 
-	it("a look back into songs skipped before leaves those skips standing", () => {
+	it("seen back before songs only inferred as skipped: better missed than made up", () => {
 		let d = observePlayer(started(), obs("s2", at(1)), URI).deck;
-		d = observePlayer(d, obs("s6", at(3)), URI).deck; // s3–s5 skipped
+		d = observePlayer(d, obs("s6", at(3)), URI).deck; // s3–s5 inferred
 		d = observePlayer(d, obs("s7", at(7)), URI).deck; // and on
-		d = observePlayer(d, obs("s4", at(8)), URI).deck; // "previous", a few times
-		expect(d.items.slice(3, 6).map((it) => it.state)).toEqual(["passed", "passed", "passed"]);
+		d = observePlayer(d, obs("s4", at(8)), URI).deck; // back (a second device, a tap)
+		expect(d.items.slice(2, 7).map((it) => it.state)).toEqual([
+			"passed", // seen, then left
+			"passed",
+			"pending",
+			"pending",
+			"passed", // seen, then left
+		]);
 	});
 
 	it("keeps its place in order: not where a song from the queue sat, back with a restart", () => {

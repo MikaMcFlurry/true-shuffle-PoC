@@ -122,8 +122,8 @@ export interface Deck {
 	/**
 	 * The songs (from, to exclusive) the latest step took as skipped without
 	 * seeing them, while the player is still where that step ended. Seen back
-	 * inside them — a song from further down came from the queue — they were
-	 * not left.
+	 * inside them, a song from further down came from the queue: the player
+	 * goes through them now.
 	 */
 	lastGap?: [number, number] | null;
 	/**
@@ -339,15 +339,18 @@ export function observePlayer(deck: Deck, obs: PlayerObservation, deckUri: strin
 	let lastGap = deck.lastGap ?? null;
 	let backFrom = deck.backFrom ?? null;
 	if (prev !== null && idx < prev) {
-		if (lastGap && idx >= lastGap[0] && idx < lastGap[1]) {
-			// Seen again inside the gap just taken as skips (a song from further
-			// down played from the queue, then back in order): not left.
-			for (let i = idx; i < lastGap[1]; i++) {
-				const it = items[i]!;
-				if (it.state === "passed" && it.seen !== true)
-					items[i] = { id: it.id, kind: it.kind, state: "pending", at: null };
-			}
-		} else backFrom = Math.max(backFrom ?? -1, prev);
+		// Seen again before songs taken as skipped without being seen (a song
+		// from further down came from the queue, a second device, a look back):
+		// better missed than made up — they go back to waiting.
+		for (let i = idx; i < prev; i++) {
+			const it = items[i]!;
+			if (it.state === "passed" && it.seen !== true)
+				items[i] = { id: it.id, kind: it.kind, state: "pending", at: null };
+		}
+		// Inside the gap just inferred, the player now goes through those songs;
+		// anywhere else it may go back to where it was.
+		if (!(lastGap && idx >= lastGap[0] && idx < lastGap[1]))
+			backFrom = Math.max(backFrom ?? -1, prev);
 		lastGap = null;
 	} else if (lastGap && idx > lastGap[1]) lastGap = null;
 	// Back again beyond where it came from (the song from further up came from
