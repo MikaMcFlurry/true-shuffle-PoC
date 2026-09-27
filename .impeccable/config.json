@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(0.34, 1.26, 0.5, 1)",
+        "createdAt": "2026-09-27T03:20:45.837Z",
+        "reason": "direction contract (.impeccable/surfaces/src-client.md): the dial pointer's slight string overshoot is the named signature interaction; only the pointer uses it, reduced motion disables it"
+      }
+    ]
+  }
+}

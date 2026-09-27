@@ -380,6 +380,11 @@ interface GuestPeriod {
 	tail?: TrackId | null;
 	/** The play across its end, once a look after it saw the player (null: none). */
 	last?: GuestLast | null;
+	/**
+	 * No look showed a song after the end before the listings stopped waiting:
+	 * the first one listed after the end has been taken as the guest's.
+	 */
+	firstTaken?: true;
 	from: number;
 	to: number;
 }
@@ -2532,6 +2537,14 @@ export class HubCore {
 		const hit = periods.some((p) => {
 			if (at > p.from && at <= p.to) return true;
 			if (at <= p.to) return false;
+			// No look has shown a song since the end, and the listings waited as long
+			// as they may: the first one listed after the end may have been paused
+			// across it — the guest's.
+			if (p.last === undefined && !p.firstTaken && at - p.to < GUEST_FOLLOW_MS) {
+				p.firstTaken = true;
+				listed = true;
+				return true;
+			}
 			const g = p.last;
 			if (g) {
 				if (
