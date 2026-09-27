@@ -658,11 +658,9 @@ p {
 	line-height: 1.2;
 	letter-spacing: 0.05em;
 	white-space: nowrap;
-	color: transparent;
-	/* satin brass: an even cast face, a touch lighter toward the top; the chamfer and the shadow do the rest */
-	background: linear-gradient(180deg, var(--emblem-face-hi), var(--emblem-face-lo));
-	-webkit-background-clip: text;
-	background-clip: text;
+	/* satin brass: one even cast face; the chamfer and the shadow do the rest */
+	--emblem-face: color-mix(in oklab, var(--emblem-face-hi) 45%, var(--emblem-face-lo));
+	color: var(--emblem-face);
 	filter: drop-shadow(0 -1px 0 var(--emblem-edge)) drop-shadow(0 1px 0 var(--emblem-side))
 		drop-shadow(1px 2.5px 1px var(--emblem-cast));
 }
@@ -676,7 +674,7 @@ p {
 	height: 0.11em;
 	border-radius: 1px;
 	/* the same casting as the letters: the same face, under the same chamfer and shadow */
-	background: linear-gradient(180deg, var(--emblem-face-hi), var(--emblem-face-lo));
+	background: var(--emblem-face);
 	transform: translateY(-0.18em);
 }
 
