@@ -7,8 +7,8 @@ import { Cover, Detents, MixKnob, PageBar, Scale, Section, useWide } from "../co
 import { RateHit, ThumbMark } from "../components/rate";
 import { ago, DECK_PREFIX, num, pct } from "../format";
 import { navigate } from "../router";
-import { store } from "../store";
-import { currentStation, MixReadout, mixText, playStation } from "./home";
+import { store, useStore } from "../store";
+import { MixReadout, mixText, playStation, pointedStation } from "./home";
 
 const KIND: Record<SlotKind, string> = {
 	fresh: "Ungehört",
@@ -154,7 +154,9 @@ export function Station({
 	const [confirm, setConfirm] = useState(false);
 	const [editSources, setEditSources] = useState<StationSource[] | null>(null);
 	const saveTimer = useRef<number | null>(null);
+	const flushMix = useRef(() => {});
 	const wide = useWide();
+	const radio = useStore();
 
 	const load = () => {
 		const started = Date.now();
@@ -164,7 +166,6 @@ export function Station({
 				store.settleThumbs([...x.upcoming, ...x.recent], started);
 				setD(x);
 				setName(x.name);
-				setMix((m) => (m === null ? x.rules.mix : m));
 			})
 			.catch((e: Error) => setErr(e.message));
 	};
@@ -176,7 +177,14 @@ export function Station({
 		const t = window.setInterval(() => {
 			if (document.visibilityState === "visible") void load();
 		}, 15_000);
-		return () => window.clearInterval(t);
+		// Leaving before the turn was saved: save it now, not never.
+		const onHide = () => flushMix.current();
+		window.addEventListener("pagehide", onHide);
+		return () => {
+			window.clearInterval(t);
+			window.removeEventListener("pagehide", onHide);
+			flushMix.current();
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id]);
 
@@ -195,10 +203,32 @@ export function Station({
 			})
 			.catch((e: Error) => store.say(e.message, "error"));
 
+	// While the listener turns the knob, the sheet shows the turned value; once
+	// saved, it follows the hub again (also when the radio's own Klang knob turned it).
+	const pendingMix = useRef<number | null>(null);
+	const saveMix = (v: number) => {
+		pendingMix.current = null;
+		saveTimer.current = null;
+		api
+			.updateStation(id, { rules: { mix: v } })
+			.then(() => store.refresh(false))
+			.then(() => {
+				// The hub's word counts again, unless the knob was turned once more meanwhile.
+				if (pendingMix.current === null) setMix(null);
+				void load();
+			})
+			.catch((e: Error) => store.say(e.message, "error"));
+	};
+	flushMix.current = () => {
+		if (saveTimer.current === null || pendingMix.current === null) return;
+		window.clearTimeout(saveTimer.current);
+		saveMix(pendingMix.current);
+	};
 	const onMix = (v: number) => {
 		setMix(v);
+		pendingMix.current = v;
 		if (saveTimer.current) window.clearTimeout(saveTimer.current);
-		saveTimer.current = window.setTimeout(() => void patch({ rules: { mix: v } }, true), 700);
+		saveTimer.current = window.setTimeout(() => saveMix(v), 700);
 	};
 
 	const setRule = (r: Partial<StationRules>) => void patch({ rules: r });
@@ -222,7 +252,9 @@ export function Station({
 	}
 
 	const summary = state.stations.find((s) => s.id === id) ?? d;
-	const frontKnob = wide && currentStation(state)?.id === id;
+	// The radio's Klang knob turns the station its pointer stands on.
+	const frontKnob =
+		wide && pointedStation(state, radio.tuning?.stationId ?? null, radio.selected)?.id === id;
 	const np = state.nowPlaying;
 	// Paused in this station: the key plays on, it never starts the station over.
 	const held = !!np && np.stationId === id && !np.isPlaying;
@@ -237,7 +269,7 @@ export function Station({
 	const heard =
 		d.poolSize !== null && d.freshRemaining !== null ? d.poolSize - d.freshRemaining : null;
 	const rules = d.rules;
-	const value = mix ?? rules.mix;
+	const value = mix ?? summary.rules.mix;
 
 	return (
 		<div class="page">

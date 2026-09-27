@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { Cabinet, Dial, DialText } from "./components/radio";
 import { RateSheet } from "./components/rate";
 import { useRoute } from "./router";
@@ -37,6 +37,24 @@ export function App() {
 		store.start();
 		return () => store.stop();
 	}, []);
+
+	// After a page change, focus moves to the new page's heading (the radio's badge on home).
+	const first = useRef(true);
+	useEffect(() => {
+		if (first.current) {
+			first.current = false;
+			return;
+		}
+		const r = requestAnimationFrame(() => {
+			const h =
+				document.querySelector<HTMLElement>(".side h1") ??
+				document.querySelector<HTMLElement>(".cabinet h1");
+			if (!h) return;
+			h.tabIndex = -1;
+			h.focus({ preventScroll: true });
+		});
+		return () => cancelAnimationFrame(r);
+	}, [route]);
 
 	if (s.load.kind === "loading") {
 		return (

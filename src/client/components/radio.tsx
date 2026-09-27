@@ -87,10 +87,11 @@ export function Cabinet(props: {
 			{props.window ? <div class="cabinet__window">{props.window}</div> : null}
 			{props.extra ? <div class="cabinet__extra">{props.extra}</div> : null}
 			{props.left || props.right || props.keys ? (
+				// Keys first: on a phone they sit above the knobs, and focus follows what the eye sees.
 				<div class="cabinet__base">
+					{props.keys ? <div class="cabinet__keys">{props.keys}</div> : null}
 					{props.left ? <div class="cabinet__knob cabinet__knob--l">{props.left}</div> : null}
 					{props.right ? <div class="cabinet__knob cabinet__knob--r">{props.right}</div> : null}
-					{props.keys ? <div class="cabinet__keys">{props.keys}</div> : null}
 				</div>
 			) : null}
 		</div>
@@ -370,9 +371,10 @@ export function ProgramCard(props: {
 
 /**
  * A bakelite knob in a brass ring. It is a slider: arrow keys, Page keys,
- * Home and End; a drag turns it a step per notch; a tap on its left or
- * right half turns it one notch that way. Turning never does more than
- * move the value.
+ * Home and End; a drag turns it a step per notch. Where `tapSteps` is set,
+ * a tap on its left or right half turns it one notch that way; otherwise a
+ * tap does nothing, so a stray touch never changes anything. Turning never
+ * does more than move the value.
  */
 export function Knob(props: {
 	label: string;
@@ -388,6 +390,10 @@ export function Knob(props: {
 	ticks?: number[];
 	/** Pixels of drag per notch. */
 	pitch?: number;
+	/** A tap on either half turns one notch. */
+	tapSteps?: boolean;
+	/** Report a turn even to the value it already has (a selection that is not yet made). */
+	emitSame?: boolean;
 }) {
 	const cur = useRef(props.value);
 	cur.current = props.value;
@@ -395,7 +401,7 @@ export function Knob(props: {
 	const pitch = props.pitch ?? 14;
 	const set = (v: number) => {
 		const c = Math.min(props.max, Math.max(props.min, v));
-		if (c === cur.current) return;
+		if (c === cur.current && !props.emitSame) return;
 		cur.current = c;
 		props.onChange(c);
 	};
@@ -441,7 +447,7 @@ export function Knob(props: {
 			onPointerUp={(e) => {
 				const d = drag.current;
 				drag.current = null;
-				if (!d || d.moved) return;
+				if (!d || d.moved || !props.tapSteps) return;
 				const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
 				nudge(e.clientX < r.left + r.width / 2 ? -1 : 1);
 			}}
@@ -483,12 +489,16 @@ function mixAngle(v: number): number {
  * printed detents that are keys of their own.
  */
 export function MixKnob(props: {
-	value: number;
+	/** null: no station to turn (the knob rests, no detent lit). */
+	value: number | null;
 	valueText: string;
 	station: string | null;
 	onChange: (v: number) => void;
 	disabled?: boolean;
+	/** Print the station the knob turns under it (on the radio, where it can change). */
+	showTarget?: boolean;
 }) {
+	const off = props.disabled || props.value === null;
 	return (
 		<div class="knob-unit knob-unit--mix">
 			<div class="detents">
@@ -497,8 +507,8 @@ export function MixKnob(props: {
 						key={label}
 						type="button"
 						class={`detent detent--${pos}`}
-						aria-pressed={props.value === v}
-						disabled={props.disabled}
+						aria-pressed={!off && props.value === v}
+						disabled={off}
 						onClick={() => props.onChange(v)}
 					>
 						{label}
@@ -510,15 +520,18 @@ export function MixKnob(props: {
 				min={0}
 				max={100}
 				step={5}
-				value={props.value}
+				value={props.value ?? 0}
 				valueText={props.valueText}
-				angle={mixAngle}
+				angle={(v) => (props.value === null ? -25 : mixAngle(v))}
 				onChange={props.onChange}
-				disabled={props.disabled}
+				disabled={off}
 				ticks={[-120, -95, -70, -35, 0, 35, 70]}
 			/>
 			<span class="knob-unit__name" aria-hidden="true">
 				Klang
+				{props.showTarget && props.station ? (
+					<span class="knob-unit__target">{props.station}</span>
+				) : null}
 			</span>
 		</div>
 	);

@@ -213,6 +213,30 @@ test.describe("a listener's day", () => {
 		await page.goto(station ?? "/");
 		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 		await checkPage(page, `${station} at 320 px`);
+
+		// A long name with no break in it still reflows: on the dial, the back panel, its page.
+		const long = "Donaudampfschifffahrtsgesellschaftskapitänsmützenhalterungen";
+		expect(long).toHaveLength(60);
+		const st = (await (await page.request.get("/api/state")).json()) as {
+			stations: { id: number; name: string }[];
+		};
+		const lange = st.stations.find((x) => x.name === "Lange Autofahrt");
+		expect(lange).toBeDefined();
+		const rename = (name: string) =>
+			page.request.patch(`/api/stations/${lange?.id}`, {
+				headers: { "x-ts": "1", "content-type": "application/json" },
+				data: { name },
+			});
+		expect((await rename(long)).ok()).toBe(true);
+		try {
+			for (const path of ["/", "/menu", `/sender/${lange?.id}`]) {
+				await page.goto(path);
+				await expect(page.getByText(long).first()).toBeVisible();
+				await checkPage(page, `${path} at 320 px with a 60-character name`);
+			}
+		} finally {
+			expect((await rename("Lange Autofahrt")).ok()).toBe(true);
+		}
 	});
 
 	test("a station held paused plays on from its page, never starts over", async ({ page }) => {

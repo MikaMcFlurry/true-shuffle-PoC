@@ -39,18 +39,30 @@ export function parse(path: string): Route {
 
 const listeners = new Set<() => void>();
 
+/** How many pages deep the listener went inside the app (so "Zurück" can go back there). */
+let depth = 0;
+
 export function navigate(path: string, replace = false): void {
 	if (path === location.pathname + location.search) return;
-	if (replace) history.replaceState(null, "", path);
-	else history.pushState(null, "", path);
+	if (replace) history.replaceState({ depth }, "", path);
+	else {
+		depth += 1;
+		history.pushState({ depth }, "", path);
+	}
 	for (const l of listeners) l();
 	window.scrollTo({ top: 0 });
 }
 
+/** Back to where the listener came from inside the app; else to the page's parent. */
 export function back(fallback = "/"): void {
-	if (history.length > 1 && document.referrer.startsWith(location.origin)) history.back();
+	if (depth > 0) history.back();
 	else navigate(fallback);
 }
+
+window.addEventListener("popstate", (e) => {
+	const d = (e.state as { depth?: number } | null)?.depth;
+	depth = typeof d === "number" ? d : 0;
+});
 
 export function useRoute(): Route {
 	const [route, setRoute] = useState(() => parse(location.pathname));

@@ -135,7 +135,7 @@ export function currentStation(state: AppState): StationSummary | null {
 }
 
 /** Where the pointer stands: tuning, then the knob's selection, then the current station. */
-function pointedStation(
+export function pointedStation(
 	state: AppState,
 	tuningId: number | null,
 	selected: number | null,
@@ -371,7 +371,7 @@ function NowCard({ state }: { state: AppState }) {
 					station
 						? np.kind
 							? KIND_TEXT[np.kind](station.roundNo)
-							: "Aus deiner Warteschlange"
+							: "Nicht aus der Reihenfolge dieses Senders"
 						: guest
 							? "Gast-Modus: zählt nicht ins Gedächtnis"
 							: "Außerhalb von true-shuffle — zählt trotzdem"
@@ -401,36 +401,71 @@ function NowCard({ state }: { state: AppState }) {
 
 // ---------------------------------------------------------------- knobs
 
-/** Klang: the current station's Entdecken ↔ Vertraut, saved a moment after the last turn. */
+/**
+ * Klang: Entdecken ↔ Vertraut of the station the pointer stands on (the one
+ * the card shows), saved a moment after the last turn, and at once when
+ * the listener leaves the radio before that.
+ */
 function KlangKnob({ state }: { state: AppState }) {
-	const station = currentStation(state);
+	const s = useStore();
+	const station = s.tuning ? null : pointedStation(state, null, s.selected);
 	const [local, setLocal] = useState<{ id: number; mix: number } | null>(null);
-	const timer = useRef<number | null>(null);
-	useEffect(() => () => void (timer.current && window.clearTimeout(timer.current)), []);
-	const value = station ? (local?.id === station.id ? local.mix : station.rules.mix) : 60;
+	const pending = useRef<{ id: number; mix: number; timer: number } | null>(null);
+	const save = (id: number, mix: number) =>
+		api
+			.updateStation(id, { rules: { mix } })
+			.then(() => store.refresh(false))
+			.catch((e: Error) => store.say(e.message, "error"));
+	const flush = useRef(() => {});
+	flush.current = () => {
+		const p = pending.current;
+		if (!p) return;
+		window.clearTimeout(p.timer);
+		pending.current = null;
+		void save(p.id, p.mix);
+	};
+	useEffect(() => {
+		const onHide = () => flush.current();
+		window.addEventListener("pagehide", onHide);
+		return () => {
+			window.removeEventListener("pagehide", onHide);
+			flush.current();
+		};
+	}, []);
+	// Once the hub has the value turned here, its word counts again.
+	useEffect(() => {
+		if (local && !pending.current && station?.id === local.id && station.rules.mix === local.mix)
+			setLocal(null);
+	});
+	const value = station ? (local?.id === station.id ? local.mix : station.rules.mix) : null;
 	const change = (v: number) => {
 		if (!station) return;
 		setLocal({ id: station.id, mix: v });
 		store.say(
-			`Klang ${mixText(station, v)}. Gilt, sobald du den Sender das nächste Mal startest.`,
+			`Klang für ${station.name} ${mixText(station, v)}. Gilt, sobald du den Sender das nächste Mal startest.`,
 			"info",
 			4500,
 		);
-		if (timer.current) window.clearTimeout(timer.current);
-		timer.current = window.setTimeout(() => {
-			api
-				.updateStation(station.id, { rules: { mix: v } })
-				.then(() => store.refresh(false))
-				.catch((e: Error) => store.say(e.message, "error"));
-		}, 700);
+		if (pending.current && pending.current.id !== station.id) flush.current();
+		if (pending.current) window.clearTimeout(pending.current.timer);
+		const id = station.id;
+		pending.current = {
+			id,
+			mix: v,
+			timer: window.setTimeout(() => {
+				pending.current = null;
+				void save(id, v);
+			}, 700),
+		};
 	};
 	return (
 		<MixKnob
 			value={value}
-			valueText={station ? mixText(station, value, ", ") : "kein Sender"}
+			valueText={station && value !== null ? mixText(station, value, ", ") : "kein Sender"}
 			station={station?.name ?? null}
 			onChange={change}
 			disabled={!station}
+			showTarget
 		/>
 	);
 }
@@ -440,7 +475,8 @@ function TuneKnob({ state }: { state: AppState }) {
 	const s = useStore();
 	const list = state.stations;
 	const n = list.length;
-	const at = pointedStation(state, s.tuning?.stationId ?? null, s.selected);
+	// It stands where the pointer stands; with nothing tuned yet, on the first station.
+	const at = pointedStation(state, s.tuning?.stationId ?? null, s.selected) ?? list[0] ?? null;
 	const idx = at
 		? Math.max(
 				0,
@@ -465,6 +501,8 @@ function TuneKnob({ state }: { state: AppState }) {
 				disabled={n === 0 || !!s.tuning}
 				ticks={list.map((_, i) => angle(i))}
 				pitch={22}
+				tapSteps
+				emitSame
 			/>
 			<span class="knob-unit__name" aria-hidden="true">
 				Senderwahl
@@ -496,9 +534,15 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 		const next = np.thumb === v ? 0 : v;
 		api
 			.thumb(np.id, next)
-			.then(() => {
+			.then((r) => {
 				store.setThumb(np.id, next);
-				if (next === -1) store.say("Kommt nie wieder — wird übersprungen", "info", 4000);
+				// Say what happened: skipped on only when Spotify actually moved on.
+				if (next === -1)
+					store.say(
+						r?.skipped ? "Kommt nie wieder — übersprungen" : "Kommt nie wieder",
+						"info",
+						4000,
+					);
 				else if (next === 1) store.say("Als Favorit gemerkt", "info", 3000);
 			})
 			.catch((e: Error) => store.say(e.message, "error"))

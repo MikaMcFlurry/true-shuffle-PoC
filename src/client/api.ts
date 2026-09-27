@@ -65,7 +65,7 @@ export const api = {
 		call<PlayResult>("POST", `/api/player/${action}`),
 	devices: () => call<DeviceView[]>("GET", "/api/devices"),
 	thumb: (trackId: string, value: -1 | 0 | 1) =>
-		call<unknown>("POST", `/api/tracks/${trackId}/thumb`, { value }),
+		call<{ skipped?: boolean }>("POST", `/api/tracks/${trackId}/thumb`, { value }),
 	remoteKey: () => call<RemoteKeyView>("GET", "/api/remote"),
 	newRemoteKey: () => call<RemoteKeyView>("POST", "/api/remote"),
 	dropRemoteKey: () => call<unknown>("DELETE", "/api/remote"),
