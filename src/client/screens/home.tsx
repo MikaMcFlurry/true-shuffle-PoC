@@ -1,5 +1,6 @@
-import { ChevronRight, Pause, Play, Plus, SkipForward, ThumbsDown, ThumbsUp } from "lucide-preact";
-import { useEffect, useState } from "preact/hooks";
+import { ChevronRight, Pause, Play, SkipForward, ThumbsDown, ThumbsUp } from "lucide-preact";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { sharesForRules } from "../../core/mix";
 import type { AppState, NowPlaying, StationSummary } from "../../shared/api";
 import { api } from "../api";
 import {
@@ -8,10 +9,12 @@ import {
 	Dial,
 	type Eye,
 	type Indicator,
+	Knob,
+	MixKnob,
 	ProgramCard,
 	type RoundReading,
 } from "../components/radio";
-import { duration, num, SEP } from "../format";
+import { duration, num, pct, SEP } from "../format";
 import { navigate } from "../router";
 import { store, useStore } from "../store";
 
@@ -31,19 +34,39 @@ function reading(s: StationSummary): RoundReading {
 	return { round: s.roundNo, heard: heardOf(s), total: s.poolSize };
 }
 
-/** The round in small print under a station's name, like its frequency. */
-function freq(s: StationSummary): string {
+/** The round in small print beside a station's name, like its frequency. */
+export function freq(s: StationSummary): string {
 	const heard = heardOf(s);
 	const count = heard !== null && s.poolSize !== null ? `${num(heard)}/${num(s.poolSize)}` : "";
-	if (s.roundNo > 1) return count ? `Runde ${s.roundNo}${SEP}${count}` : `Runde ${s.roundNo}`;
+	if (s.roundNo > 1) return count ? `R${s.roundNo}${SEP}${count}` : `Runde ${s.roundNo}`;
 	return count || `Runde ${s.roundNo}`;
 }
 
 /** The same, spelled out for a screen reader. */
-function roundLabel(s: StationSummary): string {
+export function roundLabel(s: StationSummary): string {
 	const heard = heardOf(s);
 	if (heard === null || s.poolSize === null) return `Runde ${s.roundNo}`;
 	return `Runde ${s.roundNo}, ${num(heard)} von ${num(s.poolSize)} gehört`;
+}
+
+/** "≈ 60 % ungehört · 10 % Favoriten · 30 % Neuentdeckungen" for a mix. */
+export function mixText(s: StationSummary, mix: number, sep = SEP): string {
+	const sh = sharesForRules({ ...s.rules, mix });
+	return `≈ ${pct(sh.fresh)} ungehört${sep}${pct(sh.favorite)} Favoriten${sep}${pct(sh.discovery)} Neuentdeckungen`;
+}
+
+/** The same, printed: a share and its name never break apart. */
+export function MixReadout({ s, mix }: { s: StationSummary; mix: number }) {
+	const sh = sharesForRules({ ...s.rules, mix });
+	return (
+		<>
+			<span class="nowrap">≈ {pct(sh.fresh)} ungehört</span>
+			{SEP}
+			<span class="nowrap">{pct(sh.favorite)} Favoriten</span>
+			{SEP}
+			<span class="nowrap">{pct(sh.discovery)} Neuentdeckungen</span>
+		</>
+	);
 }
 
 function useTick(active: boolean): number {
@@ -59,6 +82,7 @@ function useTick(active: boolean): number {
 export function playStation(s: StationSummary): void {
 	if (store.tuning) return;
 	store.tuning = { stationId: s.id, since: Date.now() };
+	store.selected = null;
 	store.flash = null;
 	store.emit();
 	let deviceId: string | undefined;
@@ -83,6 +107,7 @@ export function playStation(s: StationSummary): void {
 }
 
 function resumePlayback(): void {
+	store.selected = null;
 	api
 		.player("resume")
 		.then((r) => {
@@ -92,22 +117,36 @@ function resumePlayback(): void {
 		.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
 }
 
-/** The station the pointer stands on: tuning, then playing or held, then the last one played. */
-function pointedStation(state: AppState, tuningId: number | null): StationSummary | null {
-	if (tuningId !== null) {
-		const t = state.stations.find((x) => x.id === tuningId);
-		if (t) return t;
-	}
-	const np = state.nowPlaying;
-	if (np?.stationId != null) {
-		const s = state.stations.find((x) => x.id === np.stationId);
-		if (s) return s;
-	}
+function lastPlayed(state: AppState): StationSummary | null {
 	return (
 		state.stations
 			.filter((x) => x.lastPlayedAt !== null)
 			.sort((a, b) => (b.lastPlayedAt ?? 0) - (a.lastPlayedAt ?? 0))[0] ?? null
 	);
+}
+
+/** The station that plays or is held, else the one that played last. */
+function currentStation(state: AppState): StationSummary | null {
+	const np = state.nowPlaying;
+	if (np?.stationId != null) {
+		const s = state.stations.find((x) => x.id === np.stationId);
+		if (s) return s;
+	}
+	return lastPlayed(state);
+}
+
+/** Where the pointer stands: tuning, then the knob's selection, then the current station. */
+function pointedStation(
+	state: AppState,
+	tuningId: number | null,
+	selected: number | null,
+): StationSummary | null {
+	for (const id of [tuningId, selected]) {
+		if (id === null) continue;
+		const s = state.stations.find((x) => x.id === id);
+		if (s) return s;
+	}
+	return currentStation(state);
 }
 
 function eyeFor(state: AppState, tuning: boolean): Eye {
@@ -139,7 +178,17 @@ function jobFor(state: AppState, s: StationSummary) {
 }
 
 /** One station printed on the dial. Tapping it tunes in. */
-function DialStation({ s, state }: { s: StationSummary; state: AppState }) {
+function DialStation({
+	s,
+	n,
+	state,
+	selected,
+}: {
+	s: StationSummary;
+	n: number;
+	state: AppState;
+	selected: boolean;
+}) {
 	const store = useStore();
 	const tuning = store.tuning?.stationId === s.id;
 	const held = state.nowPlaying?.stationId === s.id;
@@ -153,11 +202,9 @@ function DialStation({ s, state }: { s: StationSummary; state: AppState }) {
 			: null;
 	const lit = s.playing || tuning;
 	const freqId = `freq-${s.id}`;
+	const cls = lit ? " station--lit" : held ? " station--held" : selected ? " station--sel" : "";
 	return (
-		<li
-			class={`station${lit ? " station--lit" : held ? " station--held" : ""}${s.ready ? "" : " station--wait"}`}
-			data-at={String(s.id)}
-		>
+		<li class={`station${cls}${s.ready ? "" : " station--wait"}`} data-at={String(s.id)}>
 			<button
 				type="button"
 				class="station__tune"
@@ -175,6 +222,9 @@ function DialStation({ s, state }: { s: StationSummary; state: AppState }) {
 					s.playing ? navigate(`/sender/${s.id}`) : held ? resumePlayback() : playStation(s)
 				}
 			>
+				<span class="station__no num" aria-hidden="true">
+					{n}
+				</span>
 				<span class="station__name">
 					<Breakable text={s.name} />
 				</span>
@@ -187,25 +237,61 @@ function DialStation({ s, state }: { s: StationSummary; state: AppState }) {
 	);
 }
 
+/** Stations in wave-band rows of three, each row with its printed legend. */
+const BAND = 3;
+
 function StationDial({ state }: { state: AppState }) {
 	const s = useStore();
-	const at = pointedStation(state, s.tuning?.stationId ?? null);
+	const at = pointedStation(state, s.tuning?.stationId ?? null, s.selected);
+	const bands: StationSummary[][] = [];
+	state.stations.forEach((x, i) => {
+		if (i % BAND === 0) bands.push([]);
+		bands[bands.length - 1]!.push(x);
+	});
 	return (
 		<Dial label="Senderskala" at={at ? String(at.id) : null} lamps={lampsFor(state)}>
-			{state.stations.length > 0 ? (
-				<ul class="dial__band">
-					{state.stations.map((x) => (
-						<DialStation key={x.id} s={x} state={state} />
-					))}
-				</ul>
+			{bands.length > 0 ? (
+				<ol class="dial__bands">
+					{bands.map((band, b) => {
+						const first = b * BAND + 1;
+						const last = first + band.length - 1;
+						return (
+							<li key={band[0]!.id} class="band">
+								<span class="band__legend num" aria-hidden="true">
+									{first === last ? first : `${first}–${last}`}
+								</span>
+								<ul class="band__stations">
+									{band.map((x, i) => (
+										<DialStation
+											key={x.id}
+											s={x}
+											n={first + i}
+											state={state}
+											selected={s.selected === x.id}
+										/>
+									))}
+								</ul>
+							</li>
+						);
+					})}
+				</ol>
 			) : (
-				<p class="dial__empty">Noch kein Sender — lege unten einen an.</p>
+				<p class="dial__empty">Noch kein Sender — lege im Menü einen an.</p>
 			)}
 		</Dial>
 	);
 }
 
 // -------------------------------------------------------- program card
+
+function SetUp({ s }: { s: StationSummary }) {
+	return (
+		<a class="card__setup" href={`/sender/${s.id}`}>
+			{s.name} einstellen
+			<ChevronRight class="card__go" aria-hidden="true" />
+		</a>
+	);
+}
 
 function NowCard({ state }: { state: AppState }) {
 	const s = useStore();
@@ -216,17 +302,55 @@ function NowCard({ state }: { state: AppState }) {
 	const warning = state.warnings[0];
 	const message = flash ?? (warning ? { text: warning.message, tone: "warn" as const } : null);
 	const guest = state.guest.active;
+	const current = currentStation(state);
+	const picked =
+		s.selected !== null && s.selected !== current?.id
+			? state.stations.find((x) => x.id === s.selected)
+			: s.selected !== null && np && !np.isPlaying
+				? state.stations.find((x) => x.id === s.selected)
+				: null;
 
 	if (tuning) {
 		return (
 			<ProgramCard
-				station={tuning.name}
 				song="Sender wird eingestellt …"
 				artist="true-shuffle bereitet deine Playlist in Spotify vor"
 				reading={reading(tuning)}
 				pos={tuning.progress}
 				art={{ src: tuning.imageUrl }}
 				live
+				foot={<SetUp s={tuning} />}
+			/>
+		);
+	}
+
+	// The tuning knob has turned the pointer to a station: the card offers it, nothing plays yet.
+	if (picked) {
+		const held = np?.stationId === picked.id;
+		return (
+			<ProgramCard
+				song={picked.name}
+				artist={held ? "Eingestellt — hier pausiert" : "Eingestellt — spielt erst auf Tastendruck"}
+				message={message}
+				reading={reading(picked)}
+				pos={picked.progress}
+				art={{ src: picked.imageUrl }}
+				live
+				foot={
+					<>
+						<button
+							type="button"
+							class="key key--lit btn--small"
+							disabled={!picked.ready || !!s.tuning}
+							aria-label={`${held ? "Eingestellten Sender weiterspielen" : "Eingestellten Sender spielen"}: ${picked.name}`}
+							onClick={() => (held ? resumePlayback() : playStation(picked))}
+						>
+							<Play class="icon" aria-hidden="true" />
+							{held ? "Weiterspielen" : "Spielen"}
+						</button>
+						<SetUp s={picked} />
+					</>
+				}
 			/>
 		);
 	}
@@ -241,8 +365,6 @@ function NowCard({ state }: { state: AppState }) {
 		);
 		return (
 			<ProgramCard
-				station={station ? station.name : "Spotify"}
-				quiet={!station}
 				song={np.name}
 				artist={np.artists}
 				time={`${duration(elapsed)} / ${duration(np.durationMs)}`}
@@ -261,30 +383,106 @@ function NowCard({ state }: { state: AppState }) {
 				pos={station?.progress}
 				art={{ src: np.imageUrl }}
 				live
+				foot={station ? <SetUp s={station} /> : null}
 			/>
 		);
 	}
 
-	const last = state.stations
-		.filter((x) => x.lastPlayedAt !== null)
-		.sort((a, b) => (b.lastPlayedAt ?? 0) - (a.lastPlayedAt ?? 0))[0];
+	const last = lastPlayed(state);
 	return (
 		<ProgramCard
-			station={last ? last.name : "Bereit"}
-			quiet={!last}
 			song={last ? "Tippe den Sender, um weiterzuhören" : "Tippe einen Sender"}
 			artist="Spotify spielt, true-shuffle merkt sich alles"
 			message={message}
 			reading={last ? reading(last) : null}
 			pos={last?.progress}
 			art={{ src: last?.imageUrl ?? null }}
+			foot={last ? <SetUp s={last} /> : null}
 		/>
 	);
 }
 
-// ---------------------------------------------------------- piano keys
+// ---------------------------------------------------------------- knobs
 
-function Transport({ np }: { np: NowPlaying | null }) {
+/** Klang: the current station's Entdecken ↔ Vertraut, saved a moment after the last turn. */
+function KlangKnob({ state }: { state: AppState }) {
+	const station = currentStation(state);
+	const [local, setLocal] = useState<{ id: number; mix: number } | null>(null);
+	const timer = useRef<number | null>(null);
+	useEffect(() => () => void (timer.current && window.clearTimeout(timer.current)), []);
+	const value = station ? (local?.id === station.id ? local.mix : station.rules.mix) : 60;
+	const change = (v: number) => {
+		if (!station) return;
+		setLocal({ id: station.id, mix: v });
+		store.say(
+			`Klang ${mixText(station, v)}. Gilt, sobald du den Sender das nächste Mal startest.`,
+			"info",
+			4500,
+		);
+		if (timer.current) window.clearTimeout(timer.current);
+		timer.current = window.setTimeout(() => {
+			api
+				.updateStation(station.id, { rules: { mix: v } })
+				.then(() => store.refresh(false))
+				.catch((e: Error) => store.say(e.message, "error"));
+		}, 700);
+	};
+	return (
+		<MixKnob
+			value={value}
+			valueText={station ? mixText(station, value, ", ") : "kein Sender"}
+			station={station?.name ?? null}
+			onChange={change}
+			disabled={!station}
+		/>
+	);
+}
+
+/** The tuning knob: it moves the pointer from station to station. Playing is a separate press. */
+function TuneKnob({ state }: { state: AppState }) {
+	const s = useStore();
+	const list = state.stations;
+	const n = list.length;
+	const at = pointedStation(state, s.tuning?.stationId ?? null, s.selected);
+	const idx = at
+		? Math.max(
+				0,
+				list.findIndex((x) => x.id === at.id),
+			)
+		: 0;
+	const angle = (i: number) => (n > 1 ? -120 + (240 * i) / (n - 1) : 0);
+	return (
+		<div class="knob-unit knob-unit--tune">
+			<Knob
+				label="Senderwahl"
+				min={0}
+				max={Math.max(0, n - 1)}
+				step={1}
+				value={idx}
+				valueText={at ? `${idx + 1} von ${n}: ${at.name}` : "kein Sender"}
+				angle={angle}
+				onChange={(i) => {
+					const next = list[i];
+					if (next) store.select(next.id);
+				}}
+				disabled={n === 0 || !!s.tuning}
+				ticks={list.map((_, i) => angle(i))}
+				pitch={22}
+			/>
+			<span class="knob-unit__name" aria-hidden="true">
+				Senderwahl
+			</span>
+		</div>
+	);
+}
+
+// ---------------------------------------------------------- the keyboard
+
+/**
+ * One keyboard in one slot: Menü, the four keys that act on the song,
+ * Verlauf. A latched key stays down.
+ */
+function Keyboard({ np }: { np: NowPlaying | null }) {
 	const disabled = !np;
 	const thumbNow = np?.thumb ?? 0;
 	const act = (a: "pause" | "resume" | "next") => {
@@ -312,126 +510,94 @@ function Transport({ np }: { np: NowPlaying | null }) {
 	// Paused, the pause key stays down, like a tape deck's.
 	const paused = !!np && !np.isPlaying;
 	return (
-		<fieldset class={`keys${disabled ? " keys--off" : ""}`}>
-			<legend class="sr-only">Wiedergabe</legend>
-			<button
-				type="button"
-				class={`pkey${thumbNow === -1 ? " pkey--down" : ""}`}
-				disabled={disabled}
-				aria-pressed={thumbNow === -1}
-				aria-label="Daumen runter: diesen Song nie wieder"
-				onClick={() => thumb(-1)}
-			>
-				<ThumbsDown class="pkey__icon" aria-hidden="true" />
-				<span class="pkey__legend" aria-hidden="true">
-					nie wieder
-				</span>
-			</button>
-			<button
-				type="button"
-				class={`pkey${paused ? " pkey--down" : ""}`}
-				disabled={disabled}
-				aria-label={np?.isPlaying ? "Pause" : "Weiter abspielen"}
-				onClick={() => act(np?.isPlaying ? "pause" : "resume")}
-			>
-				{np?.isPlaying || !np ? (
-					<Pause class="pkey__icon" aria-hidden="true" />
-				) : (
-					<Play class="pkey__icon" aria-hidden="true" />
-				)}
-				<span class="pkey__legend" aria-hidden="true">
-					{paused ? "Weiter" : "Pause"}
-				</span>
-			</button>
-			<button
-				type="button"
-				class="pkey"
-				disabled={disabled}
-				aria-label="Nächster Song"
-				onClick={() => act("next")}
-			>
-				<SkipForward class="pkey__icon" aria-hidden="true" />
-				<span class="pkey__legend" aria-hidden="true">
-					Nächster
-				</span>
-			</button>
-			<button
-				type="button"
-				class={`pkey${thumbNow === 1 ? " pkey--down" : ""}`}
-				disabled={disabled}
-				aria-pressed={thumbNow === 1}
-				aria-label="Daumen hoch: Favorit"
-				onClick={() => thumb(1)}
-			>
-				<ThumbsUp class="pkey__icon" aria-hidden="true" />
-				<span class="pkey__legend" aria-hidden="true">
-					Favorit
-				</span>
-			</button>
-		</fieldset>
-	);
-}
-
-// ------------------------------------------------------- station index
-
-/**
- * The station index, printed on a sheet under the radio: every station
- * with its round, each leading to its page to set it up.
- */
-function StationIndex({ state }: { state: AppState }) {
-	return (
-		<section class="index" aria-labelledby="index-head">
-			<h2 class="index__head" id="index-head">
-				Sender einstellen
-			</h2>
-			<ol class="index__list">
-				{state.stations.map((s, i) => (
-					<li key={s.id}>
-						<a class="index__row" href={`/sender/${s.id}`} aria-label={`${s.name} einstellen`}>
-							<span class="index__n num" aria-hidden="true">
-								{i + 1}
-							</span>
-							<span class="index__name">{s.name}</span>
-							<span class="index__lead" aria-hidden="true" />
-							<span class="index__freq num" aria-hidden="true">
-								{freq(s)}
-							</span>
-							<ChevronRight class="index__go" aria-hidden="true" />
-						</a>
-					</li>
-				))}
-			</ol>
-			<a class="index__row index__row--add" href="/sender/neu">
-				<Plus class="index__plus" aria-hidden="true" />
-				<span class="index__name">Sender anlegen</span>
+		<div class={`keyboard${disabled ? " keyboard--off" : ""}`}>
+			<a class="pkey pkey--end" href="/menu">
+				<span class="pkey__legend">Menü</span>
 			</a>
-		</section>
+			<fieldset class="keyboard__play">
+				<legend class="sr-only">Wiedergabe</legend>
+				<button
+					type="button"
+					class={`pkey${thumbNow === -1 ? " pkey--down" : ""}`}
+					disabled={disabled}
+					aria-pressed={thumbNow === -1}
+					aria-label="Daumen runter: diesen Song nie wieder"
+					onClick={() => thumb(-1)}
+				>
+					<ThumbsDown class="pkey__icon" aria-hidden="true" />
+					<span class="pkey__legend" aria-hidden="true">
+						nie wieder
+					</span>
+				</button>
+				<button
+					type="button"
+					class={`pkey${paused ? " pkey--down" : ""}`}
+					disabled={disabled}
+					aria-label={np?.isPlaying ? "Pause" : "Weiter abspielen"}
+					onClick={() => act(np?.isPlaying ? "pause" : "resume")}
+				>
+					{np?.isPlaying || !np ? (
+						<Pause class="pkey__icon" aria-hidden="true" />
+					) : (
+						<Play class="pkey__icon" aria-hidden="true" />
+					)}
+					<span class="pkey__legend" aria-hidden="true">
+						{paused ? "Weiter" : "Pause"}
+					</span>
+				</button>
+				<button
+					type="button"
+					class="pkey"
+					disabled={disabled}
+					aria-label="Nächster Song"
+					onClick={() => act("next")}
+				>
+					<SkipForward class="pkey__icon" aria-hidden="true" />
+					<span class="pkey__legend" aria-hidden="true">
+						Nächster
+					</span>
+				</button>
+				<button
+					type="button"
+					class={`pkey${thumbNow === 1 ? " pkey--down" : ""}`}
+					disabled={disabled}
+					aria-pressed={thumbNow === 1}
+					aria-label="Daumen hoch: Favorit"
+					onClick={() => thumb(1)}
+				>
+					<ThumbsUp class="pkey__icon" aria-hidden="true" />
+					<span class="pkey__legend" aria-hidden="true">
+						Favorit
+					</span>
+				</button>
+			</fieldset>
+			<a class="pkey pkey--end" href="/verlauf">
+				<span class="pkey__legend">Verlauf</span>
+			</a>
+		</div>
 	);
 }
 
 export function Home({ state }: { state: AppState }) {
 	const s = useStore();
 	return (
-		<>
-			<Cabinet eye={eyeFor(state, !!s.tuning)} eyeKey={s.tuning?.since ?? "steady"}>
-				<StationDial state={state} />
-				<NowCard state={state} />
-				{state.warnings.slice(1).map((w) => (
-					<p key={w.code} class="slip">
-						{w.message}
-					</p>
-				))}
-				<Transport np={state.nowPlaying} />
-				<nav class="keys keys--small" aria-label="Radio">
-					<a class="pkey pkey--dark" href="/menu">
-						Menü
-					</a>
-					<a class="pkey pkey--dark" href="/verlauf">
-						Verlauf
-					</a>
-				</nav>
-			</Cabinet>
-			<StationIndex state={state} />
-		</>
+		<Cabinet
+			eye={eyeFor(state, !!s.tuning)}
+			eyeKey={s.tuning?.since ?? "steady"}
+			dial={<StationDial state={state} />}
+			window={<NowCard state={state} />}
+			extra={
+				state.warnings.length > 1
+					? state.warnings.slice(1).map((w) => (
+							<p key={w.code} class="slip">
+								{w.message}
+							</p>
+						))
+					: null
+			}
+			left={<KlangKnob state={state} />}
+			right={<TuneKnob state={state} />}
+			keys={<Keyboard np={state.nowPlaying} />}
+		/>
 	);
 }

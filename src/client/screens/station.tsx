@@ -1,15 +1,14 @@
 import { ChevronDown, ExternalLink, Minus, Play, Plus, Trash2 } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { PRESETS, sharesForRules } from "../../core/mix";
 import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
-import { Cover, PageBar, Scale, Section } from "../components/radio";
+import { Cover, MixKnob, PageBar, Scale, Section } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
-import { ago, DECK_PREFIX, num, pct, SEP } from "../format";
+import { ago, DECK_PREFIX, num, pct } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
-import { playStation } from "./home";
+import { MixReadout, mixText, playStation } from "./home";
 
 const KIND: Record<SlotKind, string> = {
 	fresh: "Ungehört",
@@ -17,49 +16,9 @@ const KIND: Record<SlotKind, string> = {
 	discovery: "Entdeckung",
 };
 
-/** Why a song is here. The plain reason stays quiet; favourites and discoveries are lit. */
+/** Why a song is here, as a small printed mark. Favourites and discoveries are marked red. */
 function Reason({ kind }: { kind: SlotKind }) {
-	return <span class={`reason${kind !== "fresh" ? " reason--lit" : ""}`}>{KIND[kind]}</span>;
-}
-
-/**
- * "Entdecken ↔ Vertraut" as a tone control: a small lit scale window with a
- * red pointer, the way a radio shows where its tone knob stands.
- */
-function Balance(props: { value: number; onChange: (v: number) => void; rules: StationRules }) {
-	const shares = sharesForRules({ ...props.rules, mix: props.value });
-	return (
-		<div class="tone">
-			<div class="tone__ends" aria-hidden="true">
-				<span>Entdecken</span>
-				<span>Vertraut</span>
-			</div>
-			<div class="tone__window">
-				<div class="tone__glass" style={{ "--v": String(props.value / 100) }}>
-					<span class="tone__ticks" aria-hidden="true" />
-					<span class="tone__pointer" aria-hidden="true" />
-					<input
-						type="range"
-						min={0}
-						max={100}
-						step={5}
-						value={props.value}
-						aria-label="Entdecken oder Vertraut"
-						aria-valuetext={`${pct(shares.fresh)} ungehört, ${pct(shares.favorite)} Favoriten, ${pct(shares.discovery)} Neuentdeckungen`}
-						onInput={(e) => props.onChange(Number((e.target as HTMLInputElement).value))}
-					/>
-					<span class="tone__focus" />
-				</div>
-			</div>
-			<p class="tone__shares num">
-				≈ <span>{pct(shares.fresh)} ungehört</span>
-				{SEP}
-				<span>{pct(shares.favorite)} Favoriten</span>
-				{SEP}
-				<span>{pct(shares.discovery)} Neuentdeckungen</span>
-			</p>
-		</div>
-	);
+	return <span class={`reason reason--${kind}`}>{KIND[kind]}</span>;
 }
 
 function Stepper(props: {
@@ -325,70 +284,57 @@ export function Station({
 				)}
 			</div>
 
-			<Section title="Mischung" id="mix">
-				<Balance value={value} rules={rules} onChange={onMix} />
-				{/* A tone register: three piano keys, the chosen one stays down. */}
-				<fieldset class="keys keys--register">
-					<legend class="sr-only">Klangregister</legend>
-					{(
-						[
-							["Entdecker", PRESETS.entdecker],
-							["Ausgewogen", PRESETS.ausgewogen],
-							["Vertraut", PRESETS.vertraut],
-						] as const
-					).map(([label, v]) => (
-						<button
-							key={label}
-							type="button"
-							class={`pkey${value === v ? " pkey--down" : ""}`}
-							aria-pressed={value === v}
-							onClick={() => onMix(v)}
-						>
-							<span class="pkey__legend">{label}</span>
-						</button>
-					))}
-				</fieldset>
+			<Section title="Mischung" id="mix" lead={<MixReadout s={summary} mix={value} />}>
+				<MixKnob
+					value={value}
+					valueText={mixText(summary, value, ", ")}
+					station={d.name}
+					onChange={onMix}
+				/>
 			</Section>
 
 			{np && np.stationId === id ? (
 				<Section title={np.isPlaying ? "Läuft gerade" : "Pausiert"} id="now">
-					<ul class="inlay tracks tracks--now">
-						<li class="track track--rate">
+					<ul class="order order--now">
+						<li class="order__row track--rate">
 							<RateHit t={np} />
 							<Cover src={np.imageUrl} class="cover--lg" />
-							<span class="track__main">
-								<span class="track__title">{np.name}</span>
-								<span class="track__sub">{np.artists}</span>
+							<span class="order__title">
+								<span class="order__song">{np.name}</span>
+								<span class="order__artist">{np.artists}</span>
 							</span>
 							<ThumbMark t={np} />
 							{np.kind ? (
 								<Reason kind={np.kind} />
 							) : (
-								<span class="track__meta">{np.isPlaying ? "spielt" : "Pause"}</span>
+								<span class="order__meta">{np.isPlaying ? "spielt" : "Pause"}</span>
 							)}
 						</li>
 					</ul>
 				</Section>
 			) : null}
 
-			<Section title="Als Nächstes" id="next">
+			<Section
+				title="Als Nächstes"
+				id="next"
+				lead={d.upcoming.length > 0 ? `${d.upcoming.length} Songs in dieser Reihenfolge` : null}
+			>
 				{d.upcoming.length === 0 ? (
 					<p class="hint">
 						Noch keine Reihenfolge — sie entsteht, sobald der Sender eingelesen ist.
 					</p>
 				) : (
-					// The queue in order: numbered, each song with its cover and its reason.
-					<ol class="inlay tracks tracks--numbered">
+					// The running order: number, title — artist, and why it comes.
+					<ol class="order">
 						{d.upcoming.map((t, i) => (
-							<li key={t.id} class="track track--rate">
+							<li key={t.id} class="order__row track--rate">
 								<RateHit t={t} />
-								<span class="track__n num" aria-hidden="true">
+								<span class="order__n num" aria-hidden="true">
 									{String(i + 1).padStart(2, "0")}
 								</span>
-								<Cover src={t.imageUrl} />
-								<span class="track__main">
-									<span class="track__title">{t.name}</span>
-									<span class="track__sub">{t.artists}</span>
+								<span class="order__title">
+									<span class="order__song">{t.name}</span>
+									<span class="order__artist">{t.artists}</span>
 								</span>
 								<ThumbMark t={t} />
 								<Reason kind={t.kind} />
@@ -400,17 +346,16 @@ export function Station({
 
 			{d.recent.length > 0 ? (
 				<Section title="Zuletzt auf diesem Sender" id="recent">
-					<ul class="inlay tracks tracks--covers">
+					<ul class="order">
 						{d.recent.slice(0, 8).map((t) => (
-							<li key={`${t.id}-${t.playedAt}`} class="track track--rate">
+							<li key={`${t.id}-${t.playedAt}`} class="order__row track--rate">
 								<RateHit t={t} />
-								<Cover src={t.imageUrl} />
-								<span class="track__main">
-									<span class="track__title">{t.name}</span>
-									<span class="track__sub">{t.artists}</span>
+								<span class="order__when">{ago(t.playedAt)}</span>
+								<span class="order__title">
+									<span class="order__song">{t.name}</span>
+									<span class="order__artist">{t.artists}</span>
 								</span>
 								<ThumbMark t={t} />
-								<span class="track__meta">{ago(t.playedAt)}</span>
 							</li>
 						))}
 					</ul>
@@ -418,36 +363,36 @@ export function Station({
 			) : null}
 
 			<Section title="Neuentdeckungen" id="disc">
-				<ul class="inlay tracks">
-					<li class="track">
-						<span class="track__main">
-							<span class="track__title">Kommen noch</span>
-							<span class="track__sub track__sub--wrap">
-								Geprüfte Vorschläge, die dieser Sender noch spielt
-							</span>
-						</span>
-						<span class="track__count num">{num(d.discoveries.pending)}</span>
-					</li>
-					<li class="track">
-						<span class="track__main">
-							<span class="track__title">Gefallen dir</span>
-							<span class="track__sub track__sub--wrap">
-								Zweimal gehört oder Daumen hoch. Sie bleiben im Sender und stehen in deiner
-								Spotify-Playlist „{DECK_PREFIX}Entdeckungen“.
-							</span>
-						</span>
-						<span class="track__count num">{num(d.discoveries.kept)}</span>
-					</li>
-					<li class="track">
-						<span class="track__main">
-							<span class="track__title">Aussortiert</span>
-							<span class="track__sub track__sub--wrap">
-								Früh übersprungen oder Daumen runter. Sie kommen nicht wieder.
-							</span>
-						</span>
-						<span class="track__count num">{num(d.discoveries.rejected)}</span>
-					</li>
-				</ul>
+				<table class="ledger">
+					<tbody>
+						<tr>
+							<th scope="row">
+								Kommen noch
+								<span class="ledger__note">Geprüfte Vorschläge, die dieser Sender noch spielt</span>
+							</th>
+							<td class="num">{num(d.discoveries.pending)}</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								Gefallen dir
+								<span class="ledger__note">
+									Zweimal gehört oder Daumen hoch. Sie bleiben im Sender und stehen in deiner
+									Spotify-Playlist „{DECK_PREFIX}Entdeckungen“.
+								</span>
+							</th>
+							<td class="num">{num(d.discoveries.kept)}</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								Aussortiert
+								<span class="ledger__note">
+									Früh übersprungen oder Daumen runter. Sie kommen nicht wieder.
+								</span>
+							</th>
+							<td class="num">{num(d.discoveries.rejected)}</td>
+						</tr>
+					</tbody>
+				</table>
 			</Section>
 
 			{d.kind !== "all" ? (

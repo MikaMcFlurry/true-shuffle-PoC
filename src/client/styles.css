@@ -1,16 +1,18 @@
 /*
  * true-shuffle — the front of a 1950s German tube radio.
  *
- * A walnut cabinet with a brass trim; golden speaker cloth with a brass
- * script badge and a green magic eye; a cream glass dial lit from behind,
- * every station printed on it and a red pointer on the one that plays; a
- * program card behind a brass frame; ivory piano keys in a dark slot.
- * Pages are printed program sheets (paper) or the radio's back panel
- * (hardboard). Two illuminations: DAY, the radio on a sideboard by a light
- * wall; NIGHT, a dark room where only the dial and the magic eye glow.
+ * One walnut cabinet under lacquer, a golden speaker cloth with the script
+ * badge on a brass plate and a green magic eye; a glass dial lit from
+ * behind with every station printed on it and a red pointer on the one
+ * that plays; the program card behind a brass-framed window; two knobs;
+ * one keyboard of ivory keys. Pages are printed program sheets (paper) or
+ * the radio's back panel (hardboard). Two illuminations: DAY, the radio on
+ * a sideboard by a light wall; NIGHT, a dark room where only the dial and
+ * the magic eye glow.
  *
- * Every material is drawn here: grain, weave and paper are small SVG
- * filters and patterns inlined as data URIs (CSP img-src allows data:).
+ * Wood and cloth are CC0 rasters from Poly Haven (see /tex/*.json for their
+ * origin); paper grain, brushed brass, plaster and hardboard are small SVG
+ * filters inlined as data URIs (CSP img-src allows 'self' and data:).
  */
 
 :root {
@@ -39,11 +41,17 @@
 	--cloth: #b4965c;
 	--cloth-dim: rgba(10, 6, 0, 0);
 
+	/* printed on the walnut: knob legends */
+	--wood-ink: #f4e3b6;
+	--wood-ink-2: #ecd6a2;
+
 	/* the dial glass, lit from behind */
 	--glass-hi: #fbf3d9;
 	--glass: #f2e4be;
 	--glass-lo: #e4cf9e;
 	--halo: #f4e7c4;
+	--glass-edge: #e2c285;
+	--lit-deep: #8c1a12;
 	--print: #2b1d12;
 	--print-2: #5a4230;
 	--lit: #a8221a;
@@ -64,6 +72,7 @@
 	--ivory-ink: #2e2317;
 	--ivory-ink-2: #56473a;
 	--ivory-mute: rgba(46, 35, 23, 0.45);
+	--engrave: #5a4934;
 	--slot: #1a110a;
 	--bakelite-hi: #5b3d29;
 	--bakelite: #2d1c12;
@@ -77,6 +86,7 @@
 	--lit-key: #8c1a12;
 
 	/* printed paper: program card, program sheets */
+	--card: #f5efe1;
 	--paper: #f6eedb;
 	--paper-2: #eee3c8;
 	--ink: #2a2119;
@@ -107,7 +117,8 @@
 
 	--font: "Jost Variable", "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
 	--font-script: "Yellowtail", "Brush Script MT", cursive;
-	--font-code: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+	--font-code: ui-monospace, monospace;
+	--font-dial: "Barlow Condensed", "Jost Variable", "Jost", sans-serif;
 
 	--ease: cubic-bezier(0.16, 1, 0.3, 1);
 	/* a dial pointer on its string: it runs a little past, then settles */
@@ -115,17 +126,17 @@
 	--t-fast: 120ms;
 	--t: 220ms;
 
-	/* materials */
-	--tex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0024 .085' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .12 0 0 0 0 .055 0 0 0 0 .02 2.1 0 0 0 -.78'/%3E%3C/filter%3E%3Crect width='520' height='520' filter='url(%23f)'/%3E%3C/svg%3E");
-	--tex-figure: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='380' height='380'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .04' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .72 0 0 0 0 .46 0 0 0 0 .24 0 2.6 0 0 -1.3'/%3E%3C/filter%3E%3Crect width='380' height='380' filter='url(%23f)'/%3E%3C/svg%3E");
-	--tex-weave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect width='6' height='6' fill='%237a6036'/%3E%3Crect x='0' y='.5' width='3' height='2' rx='1' fill='%23dcc38b'/%3E%3Crect x='3' y='3.5' width='3' height='2' rx='1' fill='%23dcc38b'/%3E%3Crect x='3.5' y='0' width='2' height='3' rx='1' fill='%23bb9e66'/%3E%3Crect x='.5' y='3' width='2' height='3' rx='1' fill='%23bb9e66'/%3E%3C/svg%3E");
-	--tex-lurex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='14'%3E%3Crect y='6' width='12' height='1' fill='%23fff1c2' fill-opacity='.42'/%3E%3C/svg%3E");
+	/* materials: sourced rasters (CC0) and small drawn ones */
+	--tex-walnut: url("/tex/walnut.webp");
+	--tex-cloth: url("/tex/cloth.webp");
+	--tex-brushed: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='60'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.003 .95' numOctaves='2' seed='6' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .93 0 0 0 0 .74 0 0 0 1.5 -.62'/%3E%3C/filter%3E%3Crect width='300' height='60' filter='url(%23f)'/%3E%3C/svg%3E");
+	--tex-ticks-v: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='6'%3E%3Cpath d='M13.5 0V6' stroke='%232b1d12' stroke-opacity='.55'/%3E%3Cpath d='M13.5 .5H9.5' stroke='%232b1d12' stroke-opacity='.5'/%3E%3C/svg%3E");
+	--tex-ticks-v-major: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='30'%3E%3Cpath d='M13.5 .5H5' stroke='%232b1d12' stroke-opacity='.7'/%3E%3C/svg%3E");
 	--tex-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .26 0 0 0 0 .14 .5 0 0 0 -.23'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23f)'/%3E%3C/svg%3E");
 	--tex-plaster: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .19 0 0 0 0 .14 .28 0 0 0 -.1'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23f)'/%3E%3C/svg%3E");
 	--tex-board: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.6 .9' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .08 0 0 0 0 .04 0 0 0 0 .01 1.3 0 0 0 -.55'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)'/%3E%3C/svg%3E");
 	--tex-holes: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Ccircle cx='7' cy='7.6' r='2.7' fill='%23ffffff' fill-opacity='.1'/%3E%3Ccircle cx='7' cy='7' r='2.6' fill='%23100904'/%3E%3C/svg%3E");
 	--tex-ticks: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='8'%3E%3Cpath d='M0 7.5H6' stroke='%232b1d12' stroke-opacity='.55'/%3E%3Cpath d='M.5 7.5V4.5' stroke='%232b1d12' stroke-opacity='.5'/%3E%3C/svg%3E");
-	--tex-tone: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='14'%3E%3Cg stroke='%232b1d12' stroke-opacity='.6'%3E%3Cpath d='M.5 14V2'/%3E%3Cpath d='M6.5 14V8M12.5 14V8M18.5 14V8M24.5 14V8'/%3E%3C/g%3E%3C/svg%3E");
 	--mask-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4.5 12.8l4.6 4.6L19.6 6.4' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
@@ -147,10 +158,14 @@
 		--badge: #caa962;
 		--badge-lo: #2f1f05;
 		--cloth-dim: rgba(8, 4, 0, 0.6);
+		--wood-ink: #dcc590;
+		--wood-ink-2: #cdb47d;
 		--glass-hi: #ffeab6;
 		--glass: #f6d796;
 		--glass-lo: #e2b872;
 		--halo: #f7da9c;
+		--glass-edge: #e0af62;
+		--lit-deep: #7d140d;
 		--lit: #931a12;
 		--lit-glow: rgba(255, 96, 40, 0.42);
 		--spill: rgba(255, 170, 70, 0.26);
@@ -165,6 +180,7 @@
 		--ivory-ink: #281e13;
 		--ivory-ink-2: #4a3c2c;
 		--ivory-mute: rgba(40, 30, 19, 0.5);
+		--engrave: #3a2d1f;
 		--slot: #0b0704;
 		--key-brass-hi: #e6ca84;
 		--key-brass: #bb8f40;
@@ -172,6 +188,7 @@
 		--key-brass-ink: #1d1207;
 		--danger-key: #8c1a12;
 		--paper: #28221b;
+		--card: #2b251e;
 		--paper-2: #221d17;
 		--ink: #efe4cb;
 		--ink-2: #d0c2a7;
@@ -209,10 +226,14 @@
 	--badge: #caa962;
 	--badge-lo: #2f1f05;
 	--cloth-dim: rgba(8, 4, 0, 0.6);
+	--wood-ink: #dcc590;
+	--wood-ink-2: #cdb47d;
 	--glass-hi: #ffeab6;
 	--glass: #f6d796;
 	--glass-lo: #e2b872;
 	--halo: #f7da9c;
+	--glass-edge: #e0af62;
+	--lit-deep: #7d140d;
 	--lit: #931a12;
 	--lit-glow: rgba(255, 96, 40, 0.42);
 	--spill: rgba(255, 170, 70, 0.26);
@@ -227,6 +248,7 @@
 	--ivory-ink: #281e13;
 	--ivory-ink-2: #4a3c2c;
 	--ivory-mute: rgba(40, 30, 19, 0.5);
+	--engrave: #3a2d1f;
 	--slot: #0b0704;
 	--key-brass-hi: #e6ca84;
 	--key-brass: #bb8f40;
@@ -234,6 +256,7 @@
 	--key-brass-ink: #1d1207;
 	--danger-key: #8c1a12;
 	--paper: #28221b;
+	--card: #2b251e;
 	--paper-2: #221d17;
 	--ink: #efe4cb;
 	--ink-2: #d0c2a7;
@@ -323,6 +346,10 @@ p {
 	font-variant-numeric: tabular-nums;
 }
 
+.nowrap {
+	white-space: nowrap;
+}
+
 .sr-only {
 	position: absolute;
 	width: 1px;
@@ -369,15 +396,18 @@ p {
 	min-width: 0;
 }
 
-/* Desktop: the whole radio, and the station's program sheet beside it. */
+/* Desktop: the landscape radio, and the station's program sheet beside it. */
 @media (min-width: 980px) {
+	.shell--split,
+	.shell:has(> .main > .cabinet) {
+		max-width: 1360px;
+	}
 	.shell--split {
-		max-width: 1200px;
 		display: grid;
-		grid-template-columns: minmax(0, 600px) minmax(400px, 480px);
+		grid-template-columns: minmax(0, 860px) minmax(360px, 440px);
 		justify-content: center;
 		align-items: start;
-		gap: 48px;
+		gap: 36px;
 		padding-top: 40px;
 		padding-bottom: 40px;
 	}
@@ -409,35 +439,49 @@ p {
 		display: none;
 	}
 }
-
 /* ---------------------------------------------------------- the cabinet */
 
+/* One object: walnut veneer under lacquer with rounded, lit shoulders. */
 .cabinet {
 	--focus: var(--focus-on-dark);
 	position: relative;
 	isolation: isolate;
-	padding: 12px 12px 14px;
-	border-radius: 36px 36px 18px 18px / 30px 30px 16px 16px;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas:
+		"cloth"
+		"dial"
+		"window"
+		"extra"
+		"base";
+	gap: 14px;
+	padding: 14px 12px 12px;
+	border-radius: 34px 34px 18px 18px / 28px 28px 16px 16px;
 	background:
-		linear-gradient(180deg, var(--lacquer), transparent 16%, transparent 84%, rgba(0, 0, 0, 0.24)),
-		linear-gradient(var(--wood-dim), var(--wood-dim)),
-		var(--tex-figure) 0 0 / 380px 380px,
-		var(--tex-grain) 0 0 / 520px 520px,
+		radial-gradient(120% 55% at 50% -6%, rgba(255, 232, 196, 0.34), transparent 58%),
+		linear-gradient(
+			180deg,
+			rgba(255, 236, 206, 0.16),
+			transparent 10%,
+			transparent 88%,
+			rgba(0, 0, 0, 0.3)
+		),
 		linear-gradient(
 			90deg,
-			var(--walnut-deep),
-			var(--walnut) 16%,
-			var(--walnut-light) 50%,
-			var(--walnut) 84%,
-			var(--walnut-deep)
-		);
+			rgba(0, 0, 0, 0.26),
+			transparent 9%,
+			transparent 91%,
+			rgba(0, 0, 0, 0.26)
+		),
+		linear-gradient(var(--wood-dim), var(--wood-dim)),
+		var(--tex-walnut) center / cover no-repeat,
+		var(--walnut);
 	box-shadow:
-		inset 0 2px 0 rgba(255, 228, 188, 0.28),
-		inset 0 -5px 9px rgba(0, 0, 0, 0.38),
-		inset 4px 0 7px rgba(0, 0, 0, 0.22),
-		inset -4px 0 7px rgba(0, 0, 0, 0.22),
-		0 2px 2px rgba(0, 0, 0, 0.3),
-		0 28px 38px -20px var(--cast);
+		inset 0 2px 1px rgba(255, 238, 208, 0.55),
+		inset 0 12px 16px -10px rgba(255, 230, 190, 0.3),
+		inset 0 -6px 10px rgba(0, 0, 0, 0.42),
+		0 2px 2px rgba(0, 0, 0, 0.35),
+		0 30px 40px -22px var(--cast);
 }
 
 /* the thin brass trim inlaid round the front */
@@ -447,62 +491,199 @@ p {
 	inset: 5px;
 	z-index: -1;
 	border: 1px solid var(--brass);
-	border-radius: 31px 31px 13px 13px / 25px 25px 11px 11px;
-	opacity: 0.7;
+	border-radius: 29px 29px 13px 13px / 23px 23px 11px 11px;
+	opacity: 0.65;
 	pointer-events: none;
 }
 
 .cabinet__cloth {
+	grid-area: cloth;
 	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 10px;
-	min-height: 100px;
-	padding: 14px 16px 16px 20px;
-	border-radius: 26px 26px 6px 6px / 22px 22px 6px 6px;
+	gap: 12px;
+	min-height: 118px;
+	padding: 16px 18px;
+	border-radius: 24px 24px 6px 6px / 20px 20px 6px 6px;
 	background:
 		linear-gradient(var(--cloth-dim), var(--cloth-dim)),
-		radial-gradient(120% 150% at 50% -10%, rgba(255, 244, 214, 0.32), transparent 62%),
-		linear-gradient(180deg, transparent 55%, rgba(40, 22, 4, 0.3)),
-		var(--tex-lurex) 0 0 / 12px 14px,
-		var(--tex-weave) 0 0 / 6px 6px,
+		radial-gradient(120% 150% at 50% -12%, rgba(255, 246, 220, 0.3), transparent 60%),
+		linear-gradient(180deg, transparent 45%, rgba(40, 22, 4, 0.34)),
+		var(--tex-cloth) center / 450px 450px no-repeat,
 		var(--cloth);
 	box-shadow:
 		0 0 0 2px var(--brass),
 		0 0 0 3px rgba(30, 16, 4, 0.55),
 		0 1px 0 3px rgba(255, 226, 180, 0.12),
-		inset 0 5px 10px rgba(30, 16, 2, 0.5),
+		inset 0 6px 12px rgba(30, 16, 2, 0.5),
 		inset 0 0 0 1px rgba(30, 16, 4, 0.35);
 }
 
-/* The brass script on the cloth. Lower case, always. */
-.badge {
+/* The badge: script engraved in a brushed-brass plate, held by two screws. */
+.plate {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+	padding: 5px 30px 9px;
+	border-radius: 7px;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 38%, rgba(60, 36, 4, 0.14)),
+		var(--tex-brushed) 0 0 / 300px 60px,
+		linear-gradient(100deg, #efd690, #c99d4a 32%, #e7c97f 55%, #b8893a 80%, #dcb96c);
+	box-shadow:
+		0 0 0 1px rgba(60, 38, 6, 0.7),
+		inset 0 1px 0 rgba(255, 250, 225, 0.8),
+		inset 0 -1px 0 rgba(90, 60, 10, 0.5),
+		0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.plate__script {
 	margin: 0;
-	padding: 0 6px 8px 2px;
 	font-family: var(--font-script);
-	font-size: clamp(34px, 10.5vw, 46px);
+	font-size: clamp(30px, 9vw, 40px);
 	font-weight: 400;
 	line-height: 1;
 	letter-spacing: 0.01em;
-	color: var(--badge);
-	transform: rotate(-5deg);
-	text-shadow:
-		0 -1px 0 rgba(255, 248, 220, 0.7),
-		0 1px 0 var(--badge-lo),
-		0 2px 0 rgba(47, 31, 5, 0.85),
-		0 4px 5px rgba(20, 10, 0, 0.55);
 	white-space: nowrap;
+	color: #3a2406;
+	text-shadow:
+		0 1px 0 rgba(255, 244, 200, 0.7),
+		0 -1px 0 rgba(60, 36, 4, 0.3);
 }
 
-.cabinet__front {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding-top: 14px;
+.plate__screw {
+	position: absolute;
+	top: 50%;
+	width: 9px;
+	height: 9px;
+	margin-top: -4.5px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 35%, #fff4cc, #9a7430 60%, #5c410f);
+	box-shadow: 0 0 0 1px rgba(60, 38, 6, 0.5);
+}
+
+.plate__screw::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 1px;
+	right: 1px;
+	height: 1.5px;
+	margin-top: -0.75px;
+	background: rgba(50, 30, 5, 0.8);
+	transform: rotate(40deg);
+}
+
+.plate__screw--l {
+	left: 10px;
+}
+
+.plate__screw--r {
+	right: 10px;
+}
+
+@media (max-width: 359px) {
+	.plate {
+		padding: 4px 22px 7px;
+	}
+	.plate__script {
+		font-size: 26px;
+	}
+	.plate__screw--l {
+		left: 7px;
+	}
+	.plate__screw--r {
+		right: 7px;
+	}
+}
+
+.cabinet__dial {
+	grid-area: dial;
 	min-width: 0;
 }
 
+.cabinet__window {
+	grid-area: window;
+	min-width: 0;
+}
+
+.cabinet__extra {
+	grid-area: extra;
+	display: grid;
+	gap: 8px;
+	min-width: 0;
+}
+
+/* The knobs at the lower corners and the one keyboard. */
+.cabinet__base {
+	grid-area: base;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-areas:
+		"keys keys keys"
+		"kl . kr";
+	align-items: end;
+	gap: 8px 8px;
+	min-width: 0;
+}
+
+.cabinet__knob--l {
+	grid-area: kl;
+}
+
+.cabinet__knob--r {
+	grid-area: kr;
+}
+
+.cabinet__keys {
+	grid-area: keys;
+	min-width: 0;
+}
+
+/* Desktop: the landscape table radio. Cloth and badge on the left, the dial
+ * across the top, the window under it, knobs and keyboard along the bottom. */
+@media (min-width: 980px) {
+	.cabinet {
+		grid-template-columns: minmax(210px, 0.62fr) minmax(0, 1fr);
+		grid-template-areas:
+			"cloth dial"
+			"cloth window"
+			"cloth extra"
+			"base base";
+		align-items: start;
+		gap: 16px 18px;
+		padding: 20px 20px 16px;
+		border-radius: 40px 40px 20px 20px / 34px 34px 18px 18px;
+	}
+	.cabinet::before {
+		border-radius: 35px 35px 15px 15px / 29px 29px 13px 13px;
+	}
+	.cabinet__cloth {
+		align-self: stretch;
+		flex-direction: column;
+		justify-content: space-between;
+		gap: 24px;
+		padding: 26px 18px 34px;
+		border-radius: 28px 8px 8px 8px / 24px 8px 8px 8px;
+		background-size: auto, auto, auto, cover, auto;
+	}
+	.plate {
+		padding: 6px 28px 10px;
+	}
+	.cabinet__cloth > .eye {
+		order: -1;
+	}
+}
+
+@media (min-width: 1200px) {
+	.cabinet__base {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas: "kl keys kr";
+		gap: 18px;
+	}
+}
 /* ------------------------------------------------------------ magic eye */
 
 .eye {
@@ -720,22 +901,21 @@ p {
 
 /* ------------------------------------------------------------- the dial */
 
+/* Glass set into a dark recess behind a brass lip; lit from behind, the
+ * light falling off toward its edges, the room reflected across it. */
 .dial {
 	--focus: var(--focus-on-light);
 	position: relative;
-	padding: 3px;
-	border-radius: 12px;
-	background: linear-gradient(
-		180deg,
-		var(--brass-hi),
-		var(--brass) 30%,
-		var(--brass-lo) 66%,
-		var(--brass) 92%
-	);
+	padding: 6px;
+	border-radius: 14px;
+	background: linear-gradient(180deg, #1c120a, #0c0703);
 	box-shadow:
-		0 1px 0 rgba(255, 228, 184, 0.18),
-		0 2px 5px rgba(0, 0, 0, 0.5),
-		0 0 34px var(--spill);
+		inset 0 3px 5px rgba(0, 0, 0, 0.85),
+		inset 0 -1px 0 rgba(255, 220, 170, 0.12),
+		0 0 0 2px var(--brass),
+		0 0 0 3px rgba(30, 16, 4, 0.6),
+		0 1px 0 3px rgba(255, 228, 184, 0.14),
+		0 0 38px var(--spill);
 }
 
 .dial__glass {
@@ -744,39 +924,63 @@ p {
 	border-radius: 9px;
 	color: var(--print);
 	background: radial-gradient(
-		130% 100% at 50% 42%,
-		var(--glass-hi),
-		var(--glass) 55%,
-		var(--glass-lo) 100%
+		95% 75% at 50% 46%,
+		var(--glass-hi) 0%,
+		var(--glass) 42%,
+		var(--glass-lo) 82%,
+		var(--glass-edge) 100%
 	);
 	box-shadow:
-		inset 0 3px 8px rgba(80, 45, 10, 0.36),
-		inset 0 0 0 1px rgba(70, 40, 10, 0.3);
+		inset 0 0 0 1px rgba(255, 244, 214, 0.28),
+		inset 0 4px 10px rgba(60, 30, 5, 0.45),
+		inset 0 0 44px rgba(120, 62, 10, 0.32);
 }
 
-/* a reflection on the glass from the room */
+/* the glass itself: a bright edge along the top and a band of reflection */
 .dial__glass::after {
 	content: "";
 	position: absolute;
 	inset: 0;
 	z-index: 3;
 	pointer-events: none;
-	background: linear-gradient(168deg, rgba(255, 255, 255, 0.3) 0, rgba(255, 255, 255, 0) 20%);
+	border-radius: inherit;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0, rgba(255, 255, 255, 0) 3px),
+		linear-gradient(
+			110deg,
+			transparent 0 26%,
+			rgba(255, 255, 255, 0.24) 31%,
+			rgba(255, 255, 255, 0.08) 40%,
+			transparent 47%
+		);
 }
 
 .dial__field {
 	position: relative;
 	container-type: inline-size;
-	padding: 18px 6px 8px;
+	padding: 10px 52px 10px 10px;
 }
 
-/* the dial string the pointer rides on, over its two pulleys */
+/* Phone: a vertical scale down the right, the string along it. */
+.dial__field::before {
+	content: "";
+	position: absolute;
+	top: 12px;
+	bottom: 12px;
+	right: 12px;
+	width: 14px;
+	background:
+		var(--tex-ticks-v-major) right top / 14px 30px repeat-y,
+		var(--tex-ticks-v) right top / 14px 6px repeat-y;
+	pointer-events: none;
+}
+
 .dial__string {
 	position: absolute;
-	top: 9px;
-	left: 10px;
-	right: 10px;
-	height: 1px;
+	top: 8px;
+	bottom: 8px;
+	right: 34px;
+	width: 1px;
 	background: rgba(43, 29, 18, 0.5);
 }
 
@@ -784,46 +988,55 @@ p {
 .dial__string::after {
 	content: "";
 	position: absolute;
-	top: -2.5px;
+	left: -2.5px;
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
 	background: radial-gradient(circle at 35% 35%, #9b8057, #3a2818);
 }
+
 .dial__string::before {
-	left: -3px;
-}
-.dial__string::after {
-	right: -3px;
+	top: -3px;
 }
 
+.dial__string::after {
+	bottom: -3px;
+}
+
+/* The pointer rides the string and points left at the lit name. */
 .dial__pointer {
 	position: absolute;
 	z-index: 1;
-	top: 6px;
-	bottom: 4px;
-	left: 0;
-	width: 2px;
-	margin-left: -1px;
-	border-radius: 1px;
-	background: linear-gradient(90deg, #7a120c, var(--lit) 45%, #d0473a);
-	box-shadow:
-		2px 1px 2px rgba(70, 25, 5, 0.25),
-		0 0 8px var(--lit-glow);
-	transform: translateX(var(--x, 18px));
+	top: 0;
+	right: 10px;
+	width: 44px;
+	height: 0;
+	transform: translateY(var(--py, 26px));
 }
 
-/* the rider that clamps the pointer to the string */
-.dial__pointer::before {
+.dial__needle {
+	position: absolute;
+	top: -1.5px;
+	right: 0;
+	width: 44px;
+	height: 3px;
+	border-radius: 2px 1px 1px 2px;
+	background: linear-gradient(180deg, #d0473a, var(--lit) 55%, #7a120c);
+	box-shadow:
+		0 2px 2px rgba(70, 25, 5, 0.3),
+		0 0 8px var(--lit-glow);
+}
+
+/* the rider that clamps the needle to the string */
+.dial__needle::after {
 	content: "";
 	position: absolute;
-	top: 0;
-	left: 50%;
-	width: 12px;
-	height: 8px;
-	margin-left: -6px;
-	border-radius: 2px 2px 4px 4px;
-	background: linear-gradient(180deg, #52372a, #22150c);
+	top: -3.5px;
+	right: 19px;
+	width: 8px;
+	height: 10px;
+	border-radius: 2px;
+	background: linear-gradient(90deg, #52372a, #22150c);
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
 }
 
@@ -831,28 +1044,33 @@ p {
 	transition: transform 1150ms var(--ease-string);
 }
 
-/* Suchlauf, switching on: the pointer searches the band. */
+/* Suchlauf, switching on: the pointer searches the scale. */
 .dial--sweep .dial__pointer {
-	animation: sweep 3.4s ease-in-out infinite alternate;
+	animation: sweep-v 3.4s ease-in-out infinite alternate;
 }
 
-@keyframes sweep {
+@keyframes sweep-v {
 	from {
-		transform: translateX(18px);
+		transform: translateY(16px);
 	}
 	to {
-		transform: translateX(calc(100cqi - 18px));
+		transform: translateY(96px);
 	}
 }
 
-/* Stations printed like wave-band rows: each name above its piece of scale,
- * its round in small print under it like a frequency. */
-.dial__band {
+.dial__bands {
 	position: relative;
 	z-index: 2;
-	display: flex;
-	flex-wrap: wrap;
-	row-gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.band__legend {
+	display: none;
+}
+
+.band__stations {
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -860,43 +1078,28 @@ p {
 
 .station {
 	position: relative;
-	display: flex;
-	flex: 1 1 auto;
-	max-width: 100%;
-	padding-bottom: 8px;
-	background: var(--tex-ticks) left bottom / 6px 8px repeat-x;
+	border-bottom: 1px solid rgba(43, 29, 18, 0.2);
 }
 
-/* the station's own mark on its scale */
-.station::after {
-	content: "";
-	position: absolute;
-	left: 50%;
-	bottom: 0;
-	width: 2px;
-	height: 8px;
-	margin-left: -1px;
-	background: var(--print);
-	opacity: 0.75;
+.band:last-child .station:last-child {
+	border-bottom: 0;
 }
 
 .station__tune {
 	--focus: var(--focus-on-light);
-	flex: 1;
-	min-width: 0;
-	min-height: 52px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: flex-end;
-	gap: 3px;
+	display: grid;
+	grid-template-columns: 24px minmax(0, 1fr) auto;
+	align-items: baseline;
+	column-gap: 10px;
+	width: 100%;
+	min-height: 46px;
 	margin: 0;
-	padding: 6px 10px 4px;
+	padding: 9px 4px 8px;
 	border: 0;
-	border-radius: 4px;
+	border-radius: 3px;
 	background: transparent;
 	color: var(--print);
-	text-align: center;
+	text-align: left;
 	cursor: pointer;
 }
 
@@ -904,22 +1107,36 @@ p {
 	outline-offset: -2px;
 }
 
+/* the station's number, printed in a small box like a band legend */
+.station__no {
+	align-self: center;
+	padding: 1px 0 0;
+	border: 1px solid rgba(43, 29, 18, 0.5);
+	border-radius: 2px;
+	font-family: var(--font-dial);
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.3;
+	text-align: center;
+	color: var(--print-2);
+}
+
+/* Dial lettering: condensed caps, as printed on the glass. */
 .station__name {
 	display: block;
-	font-size: 17px;
+	font-family: var(--font-dial);
+	font-size: 19px;
 	font-weight: 500;
-	line-height: 1.12;
-	letter-spacing: 0.005em;
-	text-wrap: balance;
+	line-height: 1.1;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 	hyphens: auto;
 	overflow-wrap: normal;
-	/* the print sits on the glass; the pointer passes behind it */
+	text-wrap: balance;
+	transform-origin: left center;
 	text-shadow:
 		0 0 2px var(--halo),
-		0 0 3px var(--halo),
-		0 0 4px var(--halo),
-		1px 0 1px var(--halo),
-		-1px 0 1px var(--halo);
+		0 0 3px var(--halo);
 	transition:
 		color var(--t) var(--ease),
 		transform 500ms var(--ease);
@@ -927,14 +1144,13 @@ p {
 
 .station__freq {
 	display: block;
-	font-size: 12px;
-	font-weight: 450;
-	letter-spacing: 0.04em;
+	font-family: var(--font-dial);
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.06em;
 	line-height: 1.2;
+	white-space: nowrap;
 	color: var(--print-2);
-	text-shadow:
-		0 0 2px var(--halo),
-		0 0 3px var(--halo);
 }
 
 .station__tune:disabled {
@@ -945,17 +1161,26 @@ p {
 	color: var(--print-2);
 }
 
+/* Selected with the tuning knob, not playing: printed heavier. */
+.station--sel .station__name {
+	font-weight: 600;
+}
+
 /* The station that plays: struck forward and lit from behind in red. */
 .station--lit .station__name {
 	color: var(--lit);
-	font-weight: 620;
-	transform: scale(1.06);
+	font-weight: 600;
+	transform: scale(1.05);
 	text-shadow:
 		0 0 2px var(--halo),
 		0 0 3px var(--halo),
-		1px 0 1px var(--halo),
-		-1px 0 1px var(--halo),
 		0 0 12px var(--lit-glow);
+}
+
+/* Held in pause: still the pointer's station, printed red, not lit. */
+.station--held .station__name {
+	color: var(--lit);
+	font-weight: 600;
 }
 
 .station--lit .station__freq,
@@ -963,19 +1188,10 @@ p {
 	color: var(--lit);
 }
 
-.station--lit::after,
-.station--held::after {
-	width: 3px;
-	height: 11px;
-	margin-left: -1.5px;
-	background: var(--lit);
-	opacity: 1;
-}
-
-/* Held in pause: still the pointer's station, printed red, not lit. */
-.station--held .station__name {
+.station--lit .station__no,
+.station--held .station__no {
+	border-color: var(--lit);
 	color: var(--lit);
-	font-weight: 600;
 }
 
 .station__tune:hover .station__name {
@@ -1004,7 +1220,7 @@ p {
 	display: grid;
 	justify-items: center;
 	gap: 6px;
-	padding: 10px 12px 2px;
+	padding: 12px 4px 6px;
 	text-align: center;
 	text-shadow:
 		0 0 2px var(--halo),
@@ -1012,10 +1228,12 @@ p {
 }
 
 .dial__title {
-	font-size: 23px;
+	font-family: var(--font-dial);
+	font-size: 25px;
 	font-weight: 600;
-	line-height: 1.15;
-	letter-spacing: 0.005em;
+	line-height: 1.1;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 	text-wrap: balance;
 }
 
@@ -1041,29 +1259,34 @@ p {
 }
 
 .dial__scale {
-	justify-self: stretch;
-	height: 8px;
-	margin-top: 12px;
-	background: var(--tex-ticks) left bottom / 6px 8px repeat-x;
+	display: none;
 }
 
-/* The indicator windows along the foot of the glass, like wave-band lamps. */
+/* The indicator windows along the foot of the glass, like wave-band lamps:
+ * one row, or on the narrowest phones a fixed grid of three. */
 .dial__lamps {
 	position: relative;
 	z-index: 2;
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-evenly;
-	gap: 4px 14px;
+	display: grid;
+	grid-template-columns: repeat(5, max-content);
+	justify-content: space-between;
+	gap: 5px 8px;
 	padding: 8px 10px 9px;
 	border-top: 1px solid rgba(43, 29, 18, 0.32);
-	font-size: 10.5px;
-	font-weight: 550;
-	letter-spacing: 0.13em;
+	font-family: var(--font-dial);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.05em;
 	line-height: 1.2;
 	text-transform: uppercase;
 	color: var(--print-2);
 	text-shadow: 0 0 2px var(--halo);
+}
+
+@media (max-width: 369px) {
+	.dial__lamps {
+		grid-template-columns: repeat(3, max-content);
+	}
 }
 
 .seg {
@@ -1086,8 +1309,8 @@ p {
 }
 
 .seg.on {
-	color: var(--lit);
-	font-weight: 650;
+	color: var(--lit-deep);
+	font-weight: 600;
 }
 
 .seg.on::before {
@@ -1095,64 +1318,259 @@ p {
 	box-shadow: 0 0 7px rgba(230, 70, 40, 0.65);
 }
 
-/* --------------------------------------------------------- program card */
-
-.card {
-	--focus: var(--focus-paper);
-	padding: 4px;
-	border-radius: 7px;
-	background: linear-gradient(
-		180deg,
-		var(--brass-hi),
-		var(--brass) 34%,
-		var(--brass-lo) 74%,
-		var(--brass)
-	);
-	box-shadow:
-		0 2px 4px rgba(0, 0, 0, 0.45),
-		inset 0 1px 0 rgba(255, 255, 255, 0.35);
+/* Desktop: the wide horizontal dial. Bands of stations with a printed
+ * legend each; the pointer runs across them and marks the lit station on
+ * its scale. */
+@media (min-width: 980px) {
+	.dial__field {
+		padding: 22px 12px 6px;
+	}
+	.dial__field::before {
+		display: none;
+	}
+	.dial__string {
+		top: 10px;
+		bottom: auto;
+		left: 14px;
+		right: 14px;
+		width: auto;
+		height: 1px;
+	}
+	.dial__string::before,
+	.dial__string::after {
+		top: -2.5px;
+		left: auto;
+		bottom: auto;
+	}
+	.dial__string::before {
+		left: -3px;
+	}
+	.dial__string::after {
+		right: -3px;
+	}
+	/* the pointer: a fine line behind the print, strong where it meets the lit station's scale */
+	.dial__pointer {
+		top: 6px;
+		bottom: 4px;
+		left: 0;
+		right: auto;
+		width: 1px;
+		height: auto;
+		background: rgba(168, 34, 26, 0.38);
+		transform: translateX(var(--px, 60px));
+	}
+	.dial__pointer::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: -5.5px;
+		width: 12px;
+		height: 8px;
+		border-radius: 2px 2px 4px 4px;
+		background: linear-gradient(180deg, #52372a, #22150c);
+	}
+	.dial__needle {
+		top: -6px;
+		right: auto;
+		left: -1px;
+		width: 3px;
+		height: 30px;
+		border-radius: 1px;
+		background: linear-gradient(90deg, #7a120c, var(--lit) 45%, #d0473a);
+		opacity: var(--seg-o, 0);
+		transform: translateY(calc(var(--seg-top, 0px) + var(--seg-h, 0px) - 30px));
+	}
+	.dial__needle::after {
+		display: none;
+	}
+	.dial--sweep .dial__pointer {
+		animation-name: sweep-h;
+	}
+	.band {
+		display: grid;
+		grid-template-columns: 44px minmax(0, 1fr);
+		background: var(--tex-ticks) left bottom / 6px 8px repeat-x;
+	}
+	.band + .band {
+		margin-top: 4px;
+	}
+	.band__legend {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 8px;
+		border-right: 1px solid rgba(43, 29, 18, 0.35);
+		font-family: var(--font-dial);
+		font-size: 12px;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		color: var(--print-2);
+	}
+	.band__stations {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+	}
+	.station {
+		border-bottom: 0;
+		padding-bottom: 8px;
+	}
+	.station::after {
+		content: "";
+		position: absolute;
+		left: 50%;
+		bottom: 0;
+		width: 2px;
+		height: 8px;
+		margin-left: -1px;
+		background: var(--print);
+		opacity: 0.7;
+	}
+	.station--lit::after,
+	.station--held::after {
+		background: var(--lit);
+		opacity: 1;
+	}
+	.station__tune {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 3px;
+		min-height: 60px;
+		padding: 8px 8px 4px;
+		text-align: center;
+	}
+	.station__no {
+		display: none;
+	}
+	.station__name {
+		font-size: 18px;
+		transform-origin: center;
+	}
+	.dial__text {
+		padding: 16px 12px 12px;
+	}
+	.dial__scale {
+		display: block;
+		justify-self: stretch;
+		height: 8px;
+		margin-top: 12px;
+		background: var(--tex-ticks) left bottom / 6px 8px repeat-x;
+	}
 }
 
-.card__paper {
+@keyframes sweep-h {
+	from {
+		transform: translateX(18px);
+	}
+	to {
+		transform: translateX(calc(100cqi - 18px));
+	}
+}
+/* ------------------------------------------------------ program window */
+
+/* A window cut into the cabinet: a bevelled brass bezel with four screws,
+ * the program card seated behind it in the frame's shadow. */
+.window {
+	--focus: var(--focus-paper);
 	position: relative;
+	padding: 10px;
+	border-radius: 9px;
+	background: linear-gradient(
+		150deg,
+		var(--brass-hi),
+		var(--brass) 28%,
+		var(--brass-lo) 58%,
+		var(--brass) 82%,
+		var(--brass-hi)
+	);
+	box-shadow:
+		0 0 0 1px rgba(30, 16, 4, 0.65),
+		inset 0 1px 0 rgba(255, 250, 225, 0.6),
+		inset 0 -1px 0 rgba(60, 38, 6, 0.5),
+		0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.window__paper {
+	position: relative;
+	min-width: 0;
+	padding: 13px 14px 12px;
+	border-radius: 3px;
+	background:
+		var(--tex-paper) 0 0 / 240px 240px,
+		var(--card);
+	color: var(--ink);
+	box-shadow:
+		0 0 0 2px rgba(40, 24, 4, 0.55),
+		inset 0 4px 9px rgba(40, 20, 5, 0.42),
+		inset 0 0 0 1px rgba(40, 20, 5, 0.3),
+		inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.screw {
+	position: absolute;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 35%, #fff2c6, #a57c34 55%, #5b3f0f);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.screw::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 1px;
+	right: 1px;
+	height: 1.5px;
+	margin-top: -0.75px;
+	background: rgba(50, 30, 5, 0.8);
+	transform: rotate(35deg);
+}
+
+.screw--tl {
+	top: 1px;
+	left: 1px;
+}
+
+.screw--tr {
+	top: 1px;
+	right: 1px;
+}
+
+.screw--tr::after {
+	transform: rotate(-20deg);
+}
+
+.screw--bl {
+	bottom: 1px;
+	left: 1px;
+}
+
+.screw--bl::after {
+	transform: rotate(80deg);
+}
+
+.screw--br {
+	bottom: 1px;
+	right: 1px;
+}
+
+.card {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
 	column-gap: 14px;
-	padding: 11px 14px 12px;
-	border-radius: 4px;
-	background:
-		var(--tex-paper) 0 0 / 240px 240px,
-		var(--paper);
-	color: var(--ink);
-	box-shadow:
-		inset 0 2px 5px rgba(60, 35, 10, 0.28),
-		inset 0 0 0 1px rgba(60, 35, 10, 0.2);
 }
 
-.card__paper > * {
+.card > * {
 	grid-column: 1 / -1;
 	min-width: 0;
 }
 
-.card__station {
-	margin-bottom: 11px;
-	padding-bottom: 7px;
-	border-bottom: 1.5px solid var(--rule-strong);
-	font-size: 12.5px;
-	font-weight: 600;
-	letter-spacing: 0.15em;
-	line-height: 1.3;
-	text-transform: uppercase;
-}
-
-.card__station--quiet {
-	color: var(--ink-2);
-}
-
 .card__art {
 	display: block;
-	width: 78px;
-	height: 78px;
+	width: 76px;
+	height: 76px;
 	border-radius: 2px;
 	object-fit: cover;
 	background: var(--paper-2);
@@ -1191,13 +1609,13 @@ p {
 
 .card--art .card__art {
 	grid-column: 1;
-	grid-row: 2;
+	grid-row: 1;
 	align-self: start;
 }
 
 .card--art .card__text {
 	grid-column: 2;
-	grid-row: 2;
+	grid-row: 1;
 	align-self: center;
 }
 
@@ -1207,7 +1625,7 @@ p {
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
 	overflow: hidden;
-	font-size: 18.5px;
+	font-size: 19px;
 	font-weight: 600;
 	line-height: 1.22;
 	overflow-wrap: break-word;
@@ -1251,10 +1669,8 @@ p {
 
 .card__line,
 .card__msg {
-	margin-top: 11px;
-	padding-top: 9px;
-	border-top: 1px solid var(--rule);
-	font-size: 14.5px;
+	margin-top: 12px;
+	font-size: 15px;
 	font-weight: 500;
 	line-height: 1.4;
 	text-wrap: pretty;
@@ -1266,8 +1682,8 @@ p {
 
 .card__round {
 	display: grid;
-	gap: 6px;
-	margin-top: 9px;
+	gap: 5px;
+	margin-top: 8px;
 	font-size: 13px;
 	color: var(--ink-2);
 }
@@ -1298,60 +1714,316 @@ p {
 	background: var(--lit-ink);
 }
 
+.card__foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px 12px;
+	margin-top: 6px;
+}
+
+.card__setup {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	min-height: 44px;
+	margin-left: auto;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--ink-2);
+	text-decoration: underline;
+	text-decoration-color: var(--rule-strong);
+	text-underline-offset: 4px;
+}
+
+.card__setup:hover {
+	color: var(--ink);
+}
+
+.card__go {
+	flex: none;
+	width: 16px;
+	height: 16px;
+}
+
 .slip {
 	padding: 10px 12px;
 	border-radius: 1px;
 	background:
 		var(--tex-paper) 0 0 / 240px 240px,
-		var(--paper);
+		var(--card);
 	color: var(--ink);
 	font-size: 14px;
 	line-height: 1.45;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
+/* ---------------------------------------------------------------- knobs */
 
-/* ------------------------------------------------------------ piano keys */
+.knob-unit {
+	display: grid;
+	justify-items: center;
+	gap: 6px;
+	min-width: 0;
+}
 
-/* A dark slot cut into the cabinet, the keys seated in it. */
-.keys {
+.knob-unit__name {
+	font-family: var(--font-dial);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--wood-ink);
+	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+/* On a program sheet the legends are printed in the sheet's ink. */
+.page .knob-unit {
+	--wood-ink: var(--ink);
+	--wood-ink-2: var(--ink-2);
+	text-shadow: none;
+}
+
+/* Klang: the detents printed round the knob, each a key of its own. */
+.knob-unit--mix {
+	grid-template-columns: auto auto auto;
+	justify-content: center;
+	grid-template-areas:
+		". c ."
+		"l k r"
+		"n n n";
+	align-items: center;
+	column-gap: 2px;
+	row-gap: 0;
+}
+
+.detents {
+	display: contents;
+}
+
+.detent {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	min-width: 44px;
+	min-height: 44px;
+	padding: 2px 4px;
+	border: 0;
+	border-radius: 4px;
+	background: none;
+	color: var(--wood-ink-2);
+	font-family: var(--font-dial);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+	cursor: pointer;
+}
+
+.detent::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.45);
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.detent--l {
+	grid-area: l;
+}
+
+.detent--c {
+	grid-area: c;
+}
+
+.detent--r {
+	grid-area: r;
+}
+
+.detent[aria-pressed="true"] {
+	color: var(--wood-ink);
+	font-weight: 600;
+}
+
+.detent[aria-pressed="true"]::before {
+	background: radial-gradient(circle at 38% 34%, #ffc4b0, #e3452f 55%, #8e1a10);
+	box-shadow: 0 0 6px rgba(230, 70, 40, 0.7);
+}
+
+.page .detent,
+.page .knob-unit__name {
+	text-shadow: none;
+}
+
+.detent:hover:not(:disabled) {
+	color: var(--wood-ink);
+}
+
+.detent:disabled {
+	cursor: default;
+	opacity: 0.55;
+}
+
+.knob-unit--mix > .knob-unit__name {
+	grid-area: n;
+	margin-top: 6px;
+}
+
+/* A bakelite knob in a brass ring, the printed ticks round it. */
+.knob {
+	position: relative;
+	flex: none;
+	width: 66px;
+	height: 66px;
+	margin: 8px;
+	border-radius: 50%;
+	touch-action: none;
+	cursor: grab;
+}
+
+.knob-unit--mix > .knob {
+	grid-area: k;
+}
+
+.knob:active {
+	cursor: grabbing;
+}
+
+.knob:focus-visible {
+	outline-offset: 5px;
+	border-radius: 50%;
+}
+
+.knob__ticks {
+	position: absolute;
+	inset: -9px;
+	width: calc(100% + 18px);
+	height: calc(100% + 18px);
+	overflow: visible;
+	stroke: var(--wood-ink);
+	stroke-width: 1.6;
+	stroke-linecap: round;
+	pointer-events: none;
+}
+
+.knob__ring {
+	position: absolute;
+	inset: 0;
+	display: block;
+	padding: 5px;
+	border-radius: 50%;
+	background: conic-gradient(
+		from 210deg,
+		var(--brass-hi),
+		var(--brass) 22%,
+		var(--brass-lo) 48%,
+		var(--brass) 74%,
+		var(--brass-hi)
+	);
+	box-shadow:
+		0 3px 5px rgba(0, 0, 0, 0.6),
+		inset 0 0 0 1px rgba(60, 36, 6, 0.6);
+}
+
+.knob__cap {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	background:
+		radial-gradient(circle at 36% 28%, rgba(255, 220, 180, 0.35), transparent 34%),
+		radial-gradient(circle at 50% 50%, #3a2518 0 58%, #22150c 60%, #3a2518 64%, #1a0f08 100%);
+	box-shadow:
+		inset 0 1px 1px rgba(255, 220, 180, 0.3),
+		inset 0 -3px 4px rgba(0, 0, 0, 0.6);
+	transform: rotate(var(--turn, 0deg));
+	transition: transform 360ms var(--ease-string);
+}
+
+/* the knob's pointer line, inlaid ivory */
+.knob__cap::before {
+	content: "";
+	position: absolute;
+	top: 5px;
+	left: 50%;
+	width: 4px;
+	height: 17px;
+	margin-left: -2px;
+	border-radius: 2px;
+	background: var(--ivory);
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.knob--off {
+	cursor: default;
+	opacity: 0.6;
+}
+
+@media (max-width: 379px) {
+	.detent {
+		min-width: 44px;
+		padding: 2px 1px;
+		font-size: 11px;
+		letter-spacing: 0.04em;
+	}
+	.knob {
+		width: 60px;
+		height: 60px;
+		margin: 7px;
+	}
+}
+/* ---------------------------------------------------------- the keyboard */
+
+/* One continuous slot cut into the cabinet; six ivory keys touching in it. */
+.keyboard {
 	--focus: var(--focus-on-light);
 	position: relative;
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: 4px;
+	grid-template-columns: minmax(0, 0.84fr) minmax(0, 4fr) minmax(0, 0.84fr);
 	min-width: 0;
-	margin: 0;
-	padding: 5px 5px 0;
-	border: 0;
-	border-radius: 7px 7px 3px 3px;
+	padding: 6px 6px 0;
+	border-radius: 8px 8px 3px 3px;
 	overflow: hidden;
-	background: linear-gradient(180deg, #060302, var(--slot) 40%, #24160c);
+	background: linear-gradient(180deg, #050201, var(--slot) 40%, #24160c);
 	box-shadow:
 		inset 0 4px 8px rgba(0, 0, 0, 0.9),
-		0 1px 0 rgba(255, 226, 180, 0.16);
+		0 1px 0 rgba(255, 226, 180, 0.16),
+		0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
 /* the slot's upper lip shades the keys */
-.keys::after {
+.keyboard::after {
 	content: "";
 	position: absolute;
 	inset: 0 0 auto;
 	z-index: 2;
-	height: 10px;
-	background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+	height: 11px;
+	background: linear-gradient(180deg, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
 	pointer-events: none;
 }
 
-.keys--small {
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+.keyboard__play {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
 }
 
-.keys--register {
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.keys--one {
+.keyboard--one {
 	grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 359px) {
+	.keyboard {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 4fr) minmax(0, 1fr);
+	}
 }
 
 .pkey {
@@ -1360,13 +2032,13 @@ p {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 5px;
+	gap: 6px;
 	min-width: 0;
-	min-height: 72px;
+	min-height: 76px;
 	margin: 0 0 -8px;
-	padding: 10px 4px 18px;
+	padding: 10px 3px 18px;
 	border: 0;
-	border-radius: 3px 3px 0 0;
+	border-radius: 2px 2px 0 0;
 	background: linear-gradient(
 		180deg,
 		var(--ivory-hi) 0,
@@ -1374,14 +2046,16 @@ p {
 		var(--ivory-lo) 82%,
 		var(--ivory-front) 100%
 	);
-	color: var(--ivory-ink);
+	color: var(--engrave);
 	font: inherit;
 	text-decoration: none;
 	cursor: pointer;
+	/* the joints between touching keys: a lit left edge, a shaded right edge */
 	box-shadow:
 		inset 0 1px 0 rgba(255, 255, 255, 0.9),
-		inset 1px 0 0 rgba(255, 255, 255, 0.35),
-		inset -1px 0 0 rgba(90, 64, 30, 0.28);
+		inset 1px 0 0 rgba(255, 255, 255, 0.55),
+		inset -1px 0 0 rgba(90, 64, 30, 0.5),
+		inset -2px 0 0 rgba(90, 64, 30, 0.12);
 	transition:
 		transform var(--t-fast) var(--ease),
 		background-color var(--t-fast) var(--ease);
@@ -1391,33 +2065,26 @@ p {
 	outline-offset: -6px;
 }
 
+/* Legends engraved into the key front: debossed, lit from above. */
 .pkey__icon {
-	width: 24px;
-	height: 24px;
-	stroke-width: 1.9;
-	filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55));
+	width: 22px;
+	height: 22px;
+	stroke-width: 1.8;
+	filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.8)) drop-shadow(0 -1px 0 rgba(60, 40, 15, 0.28));
 }
 
 .pkey__legend {
-	font-size: 10.5px;
+	font-family: var(--font-dial);
+	font-size: 12.5px;
 	font-weight: 600;
 	letter-spacing: 0.1em;
-	line-height: 1.15;
+	line-height: 1.1;
 	text-align: center;
 	text-transform: uppercase;
-	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
-	overflow-wrap: break-word;
-	hyphens: auto;
-}
-
-@media (max-width: 399px) {
-	.pkey__legend {
-		font-size: 10px;
-		letter-spacing: 0.04em;
-	}
-	.pkey--dark {
-		letter-spacing: 0.14em;
-	}
+	text-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.8),
+		0 -1px 0 rgba(60, 40, 15, 0.28);
+	overflow-wrap: normal;
 }
 
 .pkey:hover:not(:disabled) {
@@ -1443,7 +2110,8 @@ p {
 	);
 	box-shadow:
 		inset 0 3px 5px rgba(50, 32, 10, 0.4),
-		inset 1px 0 0 rgba(255, 255, 255, 0.2);
+		inset 1px 0 0 rgba(255, 255, 255, 0.25),
+		inset -1px 0 0 rgba(90, 64, 30, 0.5);
 }
 
 .pkey--down .pkey__legend,
@@ -1460,181 +2128,46 @@ p {
 	filter: none;
 }
 
-/* Bakelite keys: the smaller, darker ones (Menü, Verlauf). */
-.pkey--dark {
-	--focus: var(--focus-on-dark);
-	min-height: 54px;
-	padding: 8px 6px 16px;
-	background: linear-gradient(
-		180deg,
-		var(--bakelite-hi) 0,
-		var(--bakelite) 20%,
-		var(--bakelite-lo) 100%
-	);
-	color: var(--bakelite-ink);
-	font-size: 12.5px;
-	font-weight: 600;
-	letter-spacing: 0.2em;
-	text-transform: uppercase;
-	box-shadow:
-		inset 0 1px 0 rgba(255, 220, 180, 0.3),
-		inset 1px 0 0 rgba(255, 220, 180, 0.08);
+.pkey--end .pkey__legend {
+	font-size: 12px;
+	letter-spacing: 0.06em;
 }
 
-.pkey--dark:hover {
-	background: linear-gradient(180deg, #6b4a33 0, #3a2518 20%, #1d110a 100%);
+@media (max-width: 379px) {
+	.pkey {
+		padding-left: 1px;
+		padding-right: 1px;
+	}
+	.pkey__legend {
+		font-size: 11px;
+		letter-spacing: 0.03em;
+	}
+	.pkey--end .pkey__legend {
+		font-size: 10.5px;
+		letter-spacing: 0.01em;
+	}
 }
 
-.pkey--dark:active {
-	background: linear-gradient(180deg, #24160d 0, var(--bakelite-lo) 100%);
-	box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.6);
-}
-
-/* The brass key: the one that switches the radio on. */
-.pkey--brass {
-	min-height: 60px;
-	padding: 10px 12px 18px;
-	background: linear-gradient(
-		180deg,
-		var(--key-brass-hi) 0,
-		var(--key-brass) 30%,
-		var(--key-brass-lo) 100%
-	);
-	color: var(--key-brass-ink);
-	font-size: 16px;
-	font-weight: 600;
-	letter-spacing: 0.02em;
-	box-shadow: inset 0 1px 0 rgba(255, 250, 225, 0.8);
-}
-
-.pkey--brass:hover {
-	background: linear-gradient(180deg, #fff0bc 0, #dcb35e 30%, #a57c2f 100%);
-}
-
-.pkey--brass:active {
-	background: linear-gradient(180deg, var(--key-brass) 0, var(--key-brass-lo) 100%);
-}
-
-.keys--off {
-	opacity: 0.92;
-}
-
-/* ----------------------------------------------------- the station index */
-
-.index {
-	--focus: var(--focus-paper);
-	padding: 16px 16px 8px;
-	border-radius: 2px;
-	background:
-		var(--tex-paper) 0 0 / 240px 240px,
-		linear-gradient(180deg, var(--paper), var(--paper-2));
-	color: var(--ink);
-	box-shadow:
-		0 1px 1px rgba(30, 20, 5, 0.2),
-		0 14px 30px -16px rgba(30, 20, 5, 0.55);
-}
-
-.index__head {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	margin: 0 0 4px;
-	font-size: 12.5px;
-	font-weight: 600;
-	letter-spacing: 0.16em;
-	line-height: 1.3;
-	text-transform: uppercase;
-}
-
-.index__head::after {
-	content: "";
-	flex: 1;
-	height: 1px;
-	background: var(--rule-strong);
-}
-
-.index__list {
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-.index__row {
-	display: flex;
-	align-items: baseline;
+/* The key that switches the radio on: a red pilot lamp beside its legend. */
+.pkey--power {
+	flex-direction: row;
 	gap: 10px;
-	min-height: 48px;
-	padding: 13px 2px 12px;
-	border-bottom: 1px solid var(--rule);
-	color: inherit;
-	text-decoration: none;
+	min-height: 64px;
 }
 
-.index__row:hover {
-	background: var(--row-hover);
-}
-
-.index__row:focus-visible {
-	outline-offset: -3px;
-}
-
-.index__n {
-	flex: none;
-	width: 1.7em;
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--ink-3);
-	text-align: right;
-}
-
-.index__name {
-	min-width: 0;
+.pkey--power .pkey__legend {
 	font-size: 16px;
-	font-weight: 500;
-	line-height: 1.3;
-	hyphens: auto;
+	letter-spacing: 0.08em;
 }
 
-.index__row:hover .index__name {
-	text-decoration: underline;
-	text-decoration-thickness: 1px;
-	text-underline-offset: 3px;
-}
-
-/* dotted leaders, like a printed table of contents */
-.index__lead {
-	flex: 1 1 16px;
-	min-width: 16px;
-	border-bottom: 2px dotted var(--rule-strong);
-}
-
-.index__freq {
+.pkey__lamp {
 	flex: none;
-	font-size: 13px;
-	color: var(--ink-2);
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 38% 34%, #ffc4b0, #e3452f 55%, #8e1a10);
+	box-shadow: 0 0 7px rgba(230, 70, 40, 0.6);
 }
-
-.index__go {
-	flex: none;
-	align-self: center;
-	width: 18px;
-	height: 18px;
-	color: var(--ink-3);
-	stroke-width: 2;
-}
-
-.index__row--add {
-	align-items: center;
-	border-bottom: 0;
-}
-
-.index__plus {
-	flex: none;
-	width: 1.7em;
-	height: 18px;
-	stroke-width: 2;
-}
-
 /* ------------------------------------------------------ program sheets */
 
 .page {
@@ -1789,28 +2322,32 @@ p {
 .section {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 10px;
 	min-width: 0;
 }
 
-.section__head {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	margin: 0;
-	font-size: 12.5px;
-	font-weight: 600;
-	letter-spacing: 0.16em;
-	line-height: 1.3;
-	text-transform: uppercase;
+/* Run-in heads, as a printed program sets them: "Mischung. ≈ 60 % …" */
+.runin {
+	font-size: 15.5px;
+	line-height: 1.5;
+	color: var(--ink-2);
+	text-wrap: pretty;
 }
 
-.section__head::after {
-	content: "";
-	flex: 1;
-	min-width: 24px;
-	height: 1px;
-	background: var(--rule-strong);
+.runin__head {
+	display: inline;
+	margin: 0;
+	font-size: 18px;
+	font-weight: 650;
+	line-height: 1.3;
+	letter-spacing: -0.005em;
+	color: var(--ink);
+}
+
+.runin__lead::before {
+	content: ". ";
+	color: var(--ink);
+	font-weight: 650;
 }
 
 .lede {
@@ -1924,38 +2461,24 @@ p {
 	color: var(--ivory-mute);
 }
 
+/* The primary key: ivory like the others, with a red pilot lamp lit. */
 .key--lit {
-	background: linear-gradient(
-		180deg,
-		var(--key-brass-hi),
-		var(--key-brass) 40%,
-		var(--key-brass-lo) 88%,
-		#8a6220 100%
-	);
-	color: var(--key-brass-ink);
 	font-weight: 600;
-	box-shadow:
-		inset 0 1px 0 rgba(255, 250, 225, 0.8),
-		inset 0 -1px 0 rgba(60, 38, 6, 0.35),
-		0 0 0 1px rgba(60, 38, 6, 0.65),
-		0 2px 3px rgba(40, 24, 8, 0.32);
 }
 
-.key--lit:hover:not(:disabled) {
-	background: linear-gradient(180deg, #fff0bc, #dcb35e 40%, #a57c2f 88%, #8a6220 100%);
+.key--lit::before {
+	content: "";
+	flex: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 38% 34%, #ffc4b0, #e3452f 55%, #8e1a10);
+	box-shadow: 0 0 6px rgba(230, 70, 40, 0.6);
 }
 
-.key--lit:active:not(:disabled) {
-	background: linear-gradient(
-		180deg,
-		var(--key-brass-lo),
-		var(--key-brass) 60%,
-		var(--key-brass-lo)
-	);
-}
-
-.key--lit:disabled {
-	color: rgba(34, 22, 10, 0.55);
+.key--lit:disabled::before {
+	background: rgba(0, 0, 0, 0.25);
+	box-shadow: none;
 }
 
 .key--danger {
@@ -1990,7 +2513,6 @@ p {
 /* --------------------------------------------- lists on the program sheet */
 
 .list,
-.tracks,
 .keyunit {
 	margin: 0;
 	padding: 0;
@@ -2000,7 +2522,6 @@ p {
 }
 
 .list > li + li,
-.tracks > li + li,
 .keyunit > * + * {
 	border-top: 1px solid var(--rule);
 }
@@ -2074,15 +2595,6 @@ label.row:hover {
 	height: 42px;
 }
 
-.track {
-	position: relative;
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	min-height: 62px;
-	padding: 8px 2px;
-}
-
 .track--rate {
 	transition: background-color var(--t-fast) var(--ease);
 }
@@ -2105,15 +2617,6 @@ label.row:hover {
 
 .track__hit:focus-visible {
 	outline-offset: -3px;
-}
-
-.track__n {
-	flex: none;
-	width: 1.6em;
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--ink-3);
-	text-align: right;
 }
 
 .track__main {
@@ -2147,23 +2650,6 @@ label.row:hover {
 	white-space: normal;
 }
 
-.track__meta {
-	display: flex;
-	flex: none;
-	flex-direction: column;
-	align-items: flex-end;
-	gap: 4px;
-	font-size: 13px;
-	color: var(--ink-2);
-}
-
-.track__count {
-	flex: none;
-	font-size: 26px;
-	font-weight: 500;
-	line-height: 1;
-}
-
 .track__thumb {
 	flex: none;
 	width: 16px;
@@ -2176,30 +2662,6 @@ label.row:hover {
 }
 
 /* Why a song is here. The plain reason is quiet; favourites and discoveries are marked red. */
-.reason {
-	flex: none;
-	display: inline-flex;
-	align-items: center;
-	gap: 5px;
-	font-size: 11px;
-	font-weight: 600;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-	color: var(--ink-3);
-}
-
-.reason--lit {
-	color: var(--lit-ink);
-}
-
-.reason--lit::before {
-	content: "";
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: currentColor;
-}
-
 .cover {
 	flex: none;
 	display: block;
@@ -2245,122 +2707,219 @@ label.row:hover {
 	color: var(--ink-2);
 }
 
-/* ------------------------------------------------ tone control and register */
+/* ---------------------------------------------- the printed running order */
 
-.tone {
+/* A song list set like a printed running order: number or time, title —
+ * artist, and why it comes as a small printed mark, with column rules. */
+.order {
 	display: grid;
-	gap: 8px;
-}
-
-.tone__ends {
-	display: flex;
-	justify-content: space-between;
-	font-size: 12px;
-	font-weight: 600;
-	letter-spacing: 0.14em;
-	text-transform: uppercase;
-}
-
-.tone__window {
-	padding: 3px;
-	border-radius: 8px;
-	background: linear-gradient(
-		180deg,
-		var(--brass-hi),
-		var(--brass) 35%,
-		var(--brass-lo) 75%,
-		var(--brass)
-	);
-	box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35);
-}
-
-.tone__glass {
-	--focus: var(--focus-on-light);
-	position: relative;
-	container-type: inline-size;
-	height: 50px;
-	border-radius: 5px;
-	background: radial-gradient(
-		130% 120% at 50% 40%,
-		var(--glass-hi),
-		var(--glass) 55%,
-		var(--glass-lo)
-	);
-	box-shadow:
-		inset 0 2px 6px rgba(80, 45, 10, 0.35),
-		0 0 22px var(--spill);
-}
-
-.tone__ticks {
-	position: absolute;
-	left: 12px;
-	right: 12px;
-	bottom: 10px;
-	height: 14px;
-	background: var(--tex-tone) left bottom / 30px 14px repeat-x;
-}
-
-.tone__pointer {
-	position: absolute;
-	top: 7px;
-	bottom: 7px;
-	left: 12px;
-	width: 3px;
-	margin-left: -1.5px;
-	border-radius: 2px;
-	background: var(--lit);
-	box-shadow:
-		1px 1px 2px rgba(60, 20, 5, 0.3),
-		0 0 8px var(--lit-glow);
-	transform: translateX(calc(var(--v, 0) * (100cqi - 24px)));
-	transition: transform 420ms var(--ease-string);
-	pointer-events: none;
-}
-
-.tone__glass input[type="range"] {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
+	grid-template-columns: auto minmax(0, 1fr) auto auto;
 	margin: 0;
-	opacity: 0;
-	cursor: pointer;
+	padding: 0;
+	list-style: none;
+	border-top: 1.5px solid var(--ink-2);
+	border-bottom: 1px solid var(--rule-strong);
 }
 
-.tone__focus {
-	position: absolute;
-	inset: 0;
-	border-radius: 5px;
-	pointer-events: none;
+.order__row {
+	position: relative;
+	display: grid;
+	grid-column: 1 / -1;
+	grid-template-columns: subgrid;
+	align-items: baseline;
+	min-height: 48px;
+	border-top: 1px solid var(--rule);
 }
 
-.tone__glass input[type="range"]:focus-visible + .tone__focus {
-	outline: 3px solid var(--focus);
-	outline-offset: -4px;
+.order__row:first-child {
+	border-top: 0;
 }
 
-.tone__shares {
-	font-size: 13.5px;
-	line-height: 1.5;
-	color: var(--ink-2);
-}
-
-.tone__shares > span {
+.order__n,
+.order__when,
+.order__row > .cover {
+	grid-column: 1;
+	padding: 12px 10px 10px 2px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ink-3);
 	white-space: nowrap;
 }
 
-/* A tone register on the sheet: three keys in their own slot. */
-.keys--register .pkey {
-	min-height: 58px;
-	padding: 8px 4px 16px;
+.order__n {
+	font-family: var(--font-dial);
+	font-size: 15px;
+	letter-spacing: 0.04em;
 }
 
-.keys--register .pkey__legend {
-	font-size: 11px;
+.order__when {
+	font-weight: 500;
+}
+
+.order__row > .cover {
+	align-self: center;
+	padding: 0;
+	margin: 8px 12px 8px 0;
+}
+
+/* the column rules */
+.order__title {
+	grid-column: 2;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	padding: 11px 10px 10px 12px;
+	border-left: 1px solid var(--rule-strong);
+	font-size: 15px;
+	line-height: 1.35;
+	align-self: stretch;
+}
+
+.order__song {
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.order__artist {
+	color: var(--ink-2);
+}
+
+.order__artist::before {
+	content: " · ";
+}
+
+.order__row > .track__thumb {
+	grid-column: 3;
+	align-self: center;
+	margin-right: 8px;
+}
+
+.order__meta {
+	padding: 12px 2px 10px 10px;
+	border-left: 1px solid var(--rule);
+	font-size: 13px;
+	color: var(--ink-2);
+}
+
+.order__row > .tag {
+	align-self: center;
+	justify-self: end;
+}
+
+/* The reason as a small printed mark: ○ ungehört, ● Favorit, ◆ Entdeckung. */
+.reason {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 6px;
+	padding: 12px 2px 10px 10px;
+	border-left: 1px solid var(--rule);
+	font-family: var(--font-dial);
+	font-size: 13px;
+	font-weight: 500;
 	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--ink-3);
 }
 
-/* ------------------------------------------------------------ the knob */
+.reason::before {
+	content: "";
+	flex: none;
+	width: 7px;
+	height: 7px;
+	border: 1.5px solid currentColor;
+	border-radius: 50%;
+}
+
+.reason--favorite,
+.reason--discovery {
+	color: var(--lit-ink);
+}
+
+.reason--favorite::before {
+	background: currentColor;
+}
+
+.reason--discovery::before {
+	border-radius: 1px;
+	background: currentColor;
+	transform: rotate(45deg) scale(0.9);
+}
+
+.order__row > .reason,
+.order__row > .order__meta,
+.order__row > .tag {
+	grid-column: 4;
+	align-self: stretch;
+	justify-self: stretch;
+}
+
+.order--now .order__row {
+	align-items: center;
+}
+
+.order--now .order__title {
+	display: grid;
+	align-self: center;
+	padding-top: 8px;
+	padding-bottom: 8px;
+	-webkit-line-clamp: none;
+	line-clamp: none;
+}
+
+.order--now .order__artist::before {
+	content: none;
+}
+
+/* A printed ledger: label, small print under it, the count in its column. */
+.ledger {
+	width: 100%;
+	border-collapse: collapse;
+	border-top: 1.5px solid var(--ink-2);
+	border-bottom: 1px solid var(--rule-strong);
+}
+
+.ledger th,
+.ledger td {
+	padding: 10px 2px;
+	border-top: 1px solid var(--rule);
+	vertical-align: baseline;
+}
+
+.ledger th {
+	font-size: 15px;
+	font-weight: 600;
+	text-align: left;
+	color: var(--ink);
+}
+
+.ledger__note {
+	display: block;
+	margin-top: 2px;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1.45;
+	color: var(--ink-2);
+}
+
+.ledger td {
+	width: 4.5em;
+	padding-left: 12px;
+	border-left: 1px solid var(--rule-strong);
+	font-family: var(--font-dial);
+	font-size: 18px;
+	font-weight: 600;
+	text-align: right;
+}
+
+.ledger tr:first-child th,
+.ledger tr:first-child td {
+	border-top: 0;
+}
+
+/* ------------------------------------------------------ the dimmer knob */
 
 .dimmer {
 	display: grid;
@@ -2420,51 +2979,16 @@ label.row:hover {
 	color: var(--ink);
 }
 
-.knob {
-	position: relative;
-	display: block;
+.knob--static {
 	width: 76px;
 	height: 76px;
-	padding: 5px;
-	border-radius: 50%;
-	background: conic-gradient(
-		from 210deg,
-		var(--brass-hi),
-		var(--brass) 22%,
-		var(--brass-lo) 48%,
-		var(--brass) 74%,
-		var(--brass-hi)
-	);
-	box-shadow:
-		0 3px 6px rgba(0, 0, 0, 0.55),
-		inset 0 0 0 1px rgba(60, 36, 6, 0.6);
+	margin: 4px 0 0;
+	cursor: default;
+	touch-action: auto;
 }
 
-.knob__cap {
-	position: relative;
-	display: block;
-	width: 100%;
-	height: 100%;
-	border-radius: 50%;
-	background: radial-gradient(circle at 38% 30%, #7a563c, #2d1c12 55%, #120904);
-	box-shadow:
-		inset 0 1px 1px rgba(255, 220, 180, 0.3),
-		inset 0 -3px 4px rgba(0, 0, 0, 0.6);
-	transform: rotate(var(--turn, 0deg));
-	transition: transform 520ms var(--ease-string);
-}
-
-.knob__cap::before {
-	content: "";
-	position: absolute;
-	top: 6px;
-	left: 50%;
-	width: 4px;
-	height: 20px;
-	margin-left: -2px;
-	border-radius: 2px;
-	background: var(--ivory);
-	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+.knob--static .knob__cap {
+	transition-duration: 520ms;
 }
 
 /* ----------------------------------------------------------- the lever */
@@ -2766,10 +3290,9 @@ details.more > summary {
 	min-height: 52px;
 	padding: 0 2px;
 	list-style: none;
-	font-size: 12.5px;
-	font-weight: 600;
-	letter-spacing: 0.16em;
-	text-transform: uppercase;
+	font-size: 18px;
+	font-weight: 650;
+	letter-spacing: -0.005em;
 	cursor: pointer;
 }
 
@@ -2904,50 +3427,115 @@ details.more[open] .more__chev {
 	transition: transform var(--t) var(--ease);
 }
 
-/* ---------------------------------------------------------- back panel keys */
+/* ------------------------------------------------ back panel: terminal strip */
 
-.keygrid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 10px;
+.strip-list {
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	border-top: 1px solid var(--rule-strong);
 }
 
-.menukey {
+/* A terminal: a brass screw, an engraved label, the line under it. */
+.terminal {
 	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	justify-content: center;
-	gap: 3px;
-	width: 100%;
-	height: 100%;
-	min-height: 78px;
-	padding: 12px 14px 15px;
-	text-align: left;
-}
-
-.menukey__legend {
-	display: inline-flex;
 	align-items: center;
-	gap: 6px;
-	font-size: 13px;
-	font-weight: 650;
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
+	gap: 12px;
+	width: 100%;
+	min-height: 58px;
+	padding: 9px 4px;
+	border: 0;
+	border-bottom: 1px solid var(--rule);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	text-decoration: none;
+	cursor: pointer;
 }
 
-.menukey__legend .icon {
+.terminal:hover {
+	background: var(--row-hover);
+}
+
+.terminal:focus-visible {
+	outline-offset: -3px;
+}
+
+.terminal__screw {
+	position: relative;
+	flex: none;
 	width: 16px;
 	height: 16px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 35%, #fff2c6, #b08a3e 50%, #5b3f0f);
+	box-shadow:
+		0 0 0 2px rgba(0, 0, 0, 0.35),
+		0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.menukey__sub {
+.terminal__screw::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 2px;
+	right: 2px;
+	height: 2px;
+	margin-top: -1px;
+	background: rgba(50, 30, 5, 0.8);
+	transform: rotate(-30deg);
+}
+
+.terminal__n {
+	flex: none;
+	min-width: 1.4em;
+	font-family: var(--font-dial);
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--ink-2);
+	text-align: right;
+}
+
+.terminal__plate {
+	display: grid;
+	flex: 1;
+	gap: 1px;
+	min-width: 0;
+}
+
+.terminal__legend {
+	font-family: var(--font-dial);
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	line-height: 1.2;
+	text-transform: uppercase;
+	color: var(--ink);
+	hyphens: auto;
+}
+
+.terminal__sub {
+	font-size: 13.5px;
+	line-height: 1.35;
+	color: var(--ink-2);
+}
+
+.terminal__act {
+	flex: none;
+	font-family: var(--font-dial);
 	font-size: 13px;
-	font-weight: 450;
-	line-height: 1.3;
-	color: var(--ivory-ink-2);
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-2);
+}
+
+.terminal__go {
+	flex: none;
+	width: 18px;
+	height: 18px;
+	color: var(--ink-2);
+	stroke-width: 2;
 }
 
 /* -------------------------------------------------------- sign-in, idle */
@@ -2986,10 +3574,6 @@ details.more[open] .more__chev {
 
 .skeleton--card {
 	height: 150px;
-}
-
-.skeleton--keys {
-	height: 72px;
 }
 
 @keyframes skeleton {

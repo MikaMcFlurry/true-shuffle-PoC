@@ -1,13 +1,13 @@
 /**
- * The radio's parts: the walnut cabinet with its speaker cloth, badge and
- * magic eye; the backlit glass dial with its pointer; the program card; and
- * the printed pieces the pages are made of (sheet head, sections, covers,
- * the printed round scale).
+ * The radio's parts: one walnut cabinet with its speaker cloth, brass badge
+ * plate and magic eye; the backlit glass dial and its pointer; the program
+ * window; the knobs; and the printed pieces the pages are made of.
  */
 
 import { ChevronLeft, Disc3, Music2, Speaker } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
+import { PRESETS } from "../../core/mix";
 import { num, SEP } from "../format";
 import { back } from "../router";
 
@@ -24,7 +24,7 @@ export interface RoundReading {
  * The magic eye (an EM tube): a green fan with a dark shadow. The shadow
  * closes when a station is tuned in, opens wide when nothing is received.
  * `tuning` plays the tuning sweep once: it opens, closes on the station,
- * opens a little as the pointer overshoots, and settles.
+ * opens a little as the pointer runs past, and settles.
  */
 export type Eye = "off" | "open" | "weak" | "tuned" | "tuning";
 
@@ -43,22 +43,42 @@ export function MagicEye({ state }: { state: Eye }) {
 // -------------------------------------------------------------- cabinet
 
 /**
- * The cabinet: walnut, a brass trim, the speaker cloth with the badge and
- * the magic eye, and the front with whatever the screen needs below it.
+ * The cabinet, one object: walnut under lacquer, the cloth with the badge
+ * plate and the magic eye, the dial, the program window, the knobs at the
+ * lower corners and one keyboard. Phones stand it upright; a desktop lays
+ * it out as the landscape table radio it is.
  */
 export function Cabinet(props: {
 	eye: Eye;
 	/** Changes on every new tuning, so the eye plays its sweep again. */
 	eyeKey?: string | number;
-	children: ComponentChildren;
+	dial: ComponentChildren;
+	window?: ComponentChildren;
+	extra?: ComponentChildren;
+	left?: ComponentChildren;
+	right?: ComponentChildren;
+	keys?: ComponentChildren;
 }) {
 	return (
 		<div class="cabinet">
 			<div class="cabinet__cloth">
-				<h1 class="badge">true-shuffle</h1>
+				<div class="plate">
+					<h1 class="plate__script">true-shuffle</h1>
+					<span class="plate__screw plate__screw--l" aria-hidden="true" />
+					<span class="plate__screw plate__screw--r" aria-hidden="true" />
+				</div>
 				<MagicEye key={props.eyeKey} state={props.eye} />
 			</div>
-			<div class="cabinet__front">{props.children}</div>
+			<div class="cabinet__dial">{props.dial}</div>
+			{props.window ? <div class="cabinet__window">{props.window}</div> : null}
+			{props.extra ? <div class="cabinet__extra">{props.extra}</div> : null}
+			{props.left || props.right || props.keys ? (
+				<div class="cabinet__base">
+					{props.left ? <div class="cabinet__knob cabinet__knob--l">{props.left}</div> : null}
+					{props.right ? <div class="cabinet__knob cabinet__knob--r">{props.right}</div> : null}
+					{props.keys ? <div class="cabinet__keys">{props.keys}</div> : null}
+				</div>
+			) : null}
 		</div>
 	);
 }
@@ -69,13 +89,12 @@ export type Indicator = "Ungehört" | "Favorit" | "Entdeckung" | "Gast" | "Pause
 
 const LAMPS: Indicator[] = ["Ungehört", "Favorit", "Entdeckung", "Gast", "Pause"];
 
-/** Where the pointer rests when no station is tuned: the dial's left end. */
-const REST = 18;
-
 /**
- * The glass dial. Whatever is printed on it goes in `children`; stations
- * carry `data-at` and a `.station__name`, and the pointer stands on the one
- * named by `at`, gliding there on its string when it changes.
+ * The glass dial. Stations carry `data-at`; the pointer stands on the one
+ * named by `at` and glides there on its string when it changes. On a phone
+ * the dial is a vertical scale: names down the left, the pointer riding a
+ * string on the right beside the lit name. On a desktop it is the wide
+ * horizontal dial with the pointer crossing the bands.
  */
 export function Dial(props: {
 	label: string;
@@ -94,31 +113,56 @@ export function Dial(props: {
 	place.current = () => {
 		const f = field.current;
 		if (!f) return;
-		const target = at.current
-			? f.querySelector<HTMLElement>(`[data-at="${at.current}"] .station__name`)
-			: null;
-		let x = REST;
-		if (target) {
-			const box = f.getBoundingClientRect();
-			const r = target.getBoundingClientRect();
-			x = r.left + r.width / 2 - box.left;
+		const row = at.current ? f.querySelector<HTMLElement>(`[data-at="${at.current}"]`) : null;
+		const name = row?.querySelector<HTMLElement>(".station__name") ?? null;
+		const band = row?.closest<HTMLElement>(".band") ?? null;
+		const box = f.getBoundingClientRect();
+		const s = f.style;
+		if (row && name) {
+			const r = row.getBoundingClientRect();
+			const n = name.getBoundingClientRect();
+			s.setProperty("--px", `${Math.round(n.left + n.width / 2 - box.left)}px`);
+			s.setProperty("--py", `${Math.round(r.top + r.height / 2 - box.top)}px`);
+			if (band) {
+				const b = band.getBoundingClientRect();
+				s.setProperty("--seg-top", `${Math.round(b.top - box.top)}px`);
+				s.setProperty("--seg-h", `${Math.round(b.height)}px`);
+			}
+			s.setProperty("--seg-o", "1");
+		} else {
+			s.removeProperty("--px");
+			s.removeProperty("--py");
+			s.setProperty("--seg-o", "0");
 		}
-		f.style.setProperty("--x", `${Math.round(x)}px`);
 	};
 
-	// Every render may move the names (a lit name is set heavier): measure again.
-	useLayoutEffect(() => place.current());
+	// Every render may move the names (a lit name is set heavier): measure
+	// again now, and once more after the browser has laid the frame out.
+	useLayoutEffect(() => {
+		place.current();
+		const r = requestAnimationFrame(() => place.current());
+		return () => cancelAnimationFrame(r);
+	});
 
 	useEffect(() => {
 		const f = field.current;
 		if (!f) return;
-		const ro = new ResizeObserver(() => place.current());
+		const again = () => place.current();
+		// Anything that can move a name: a resize, a font arriving, a station lit or dimmed.
+		const ro = new ResizeObserver(again);
 		ro.observe(f);
-		void document.fonts?.ready.then(() => place.current());
+		const mo = new MutationObserver(again);
+		mo.observe(f, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+		window.addEventListener("resize", again);
+		document.fonts?.addEventListener("loadingdone", again);
+		void document.fonts?.ready.then(again);
 		// The first placement is where the pointer already stands; later ones glide.
-		const t = window.setTimeout(() => setReady(true), 120);
+		const t = window.setTimeout(() => setReady(true), 150);
 		return () => {
 			ro.disconnect();
+			mo.disconnect();
+			window.removeEventListener("resize", again);
+			document.fonts?.removeEventListener("loadingdone", again);
 			window.clearTimeout(t);
 		};
 	}, []);
@@ -131,7 +175,9 @@ export function Dial(props: {
 			<div class="dial__glass">
 				<div class="dial__field" ref={field}>
 					<span class="dial__string" aria-hidden="true" />
-					<span class="dial__pointer" aria-hidden="true" />
+					<span class="dial__pointer" aria-hidden="true">
+						<span class="dial__needle" />
+					</span>
 					{props.children}
 				</div>
 				{props.lamps ? (
@@ -193,9 +239,9 @@ export function Breakable({ text }: { text: string }) {
 	);
 }
 
-// --------------------------------------------------------- program card
+// ------------------------------------------------------ program window
 
-/** The song's cover on the program card, or a drawn record when there is none. */
+/** The song's cover in the window, or a drawn record when there is none. */
 function CardArt({ src }: { src: string | null }) {
 	const [failed, setFailed] = useState<string | null>(null);
 	if (src === null || failed === src) {
@@ -217,14 +263,25 @@ function CardArt({ src }: { src: string | null }) {
 	);
 }
 
+/** A window cut into the cabinet: brass bezel, four screws, paper behind it. */
+export function Window(props: { label?: string; live?: boolean; children: ComponentChildren }) {
+	return (
+		<section class="window" aria-label={props.label} aria-live={props.live ? "polite" : undefined}>
+			<div class="window__paper">{props.children}</div>
+			<span class="screw screw--tl" aria-hidden="true" />
+			<span class="screw screw--tr" aria-hidden="true" />
+			<span class="screw screw--bl" aria-hidden="true" />
+			<span class="screw screw--br" aria-hidden="true" />
+		</section>
+	);
+}
+
 /**
- * The program card behind its brass frame: which station, what song, why it
- * plays, and how far the round is. It is the radio's "Anzeige".
+ * The program card seated behind the window: what song, why it plays, how
+ * far the round is. It is the radio's "Anzeige". The lit dial already names
+ * the station; the card names it once more at its foot, as the way to set it up.
  */
 export function ProgramCard(props: {
-	station: string | null;
-	/** A name that is not a station (idle, Spotify outside a station) prints quieter. */
-	quiet?: boolean;
 	song?: ComponentChildren;
 	artist?: ComponentChildren;
 	time?: string | null;
@@ -235,21 +292,14 @@ export function ProgramCard(props: {
 	pos?: number | null;
 	art?: { src: string | null } | null;
 	live?: boolean;
+	/** The foot of the card: a way to set the station up, a key to play a selection. */
+	foot?: ComponentChildren;
 }) {
 	const r = props.reading;
 	const pos = Math.min(1, Math.max(0, props.pos ?? 0));
 	return (
-		<section
-			class={`card${props.art ? " card--art" : ""}`}
-			aria-label="Anzeige"
-			aria-live={props.live ? "polite" : undefined}
-		>
-			<div class="card__paper">
-				{props.station ? (
-					<p class={`card__station${props.quiet ? " card__station--quiet" : ""}`}>
-						{props.station}
-					</p>
-				) : null}
+		<Window label="Anzeige" live={props.live}>
+			<div class={`card${props.art ? " card--art" : ""}`}>
 				{props.art ? <CardArt src={props.art.src} /> : null}
 				<div class="card__text">
 					{props.song ? <p class="card__song">{props.song}</p> : null}
@@ -292,8 +342,167 @@ export function ProgramCard(props: {
 						<span class="card__rule" style={{ "--pos": String(pos) }} aria-hidden="true" />
 					</div>
 				) : null}
+				{props.foot ? <div class="card__foot">{props.foot}</div> : null}
 			</div>
-		</section>
+		</Window>
+	);
+}
+
+// ---------------------------------------------------------------- knobs
+
+/**
+ * A bakelite knob in a brass ring. It is a slider: arrow keys, Page keys,
+ * Home and End; a drag turns it a step per notch; a tap on its left or
+ * right half turns it one notch that way. Turning never does more than
+ * move the value.
+ */
+export function Knob(props: {
+	label: string;
+	min: number;
+	max: number;
+	step: number;
+	value: number;
+	valueText: string;
+	angle: (v: number) => number;
+	onChange: (v: number) => void;
+	disabled?: boolean;
+	/** Printed ticks round the knob, as angles. */
+	ticks?: number[];
+	/** Pixels of drag per notch. */
+	pitch?: number;
+}) {
+	const cur = useRef(props.value);
+	cur.current = props.value;
+	const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+	const pitch = props.pitch ?? 14;
+	const set = (v: number) => {
+		const c = Math.min(props.max, Math.max(props.min, v));
+		if (c === cur.current) return;
+		cur.current = c;
+		props.onChange(c);
+	};
+	const nudge = (n: number) => set(cur.current + n * props.step);
+	const onKeyDown = (e: KeyboardEvent) => {
+		if (props.disabled) return;
+		const k = e.key;
+		if (k === "ArrowRight" || k === "ArrowUp") nudge(1);
+		else if (k === "ArrowLeft" || k === "ArrowDown") nudge(-1);
+		else if (k === "PageUp") nudge(4);
+		else if (k === "PageDown") nudge(-4);
+		else if (k === "Home") set(props.min);
+		else if (k === "End") set(props.max);
+		else return;
+		e.preventDefault();
+	};
+	return (
+		<div
+			class={`knob${props.disabled ? " knob--off" : ""}`}
+			role="slider"
+			tabIndex={0}
+			aria-label={props.label}
+			aria-valuemin={props.min}
+			aria-valuemax={props.max}
+			aria-valuenow={props.value}
+			aria-valuetext={props.valueText}
+			aria-disabled={props.disabled || undefined}
+			onKeyDown={onKeyDown}
+			onPointerDown={(e) => {
+				if (props.disabled || e.button !== 0) return;
+				(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+				drag.current = { x: e.clientX, y: e.clientY, moved: false };
+			}}
+			onPointerMove={(e) => {
+				const d = drag.current;
+				if (!d) return;
+				const steps = Math.trunc((e.clientX - d.x - (e.clientY - d.y)) / pitch);
+				if (steps !== 0) {
+					nudge(steps);
+					drag.current = { x: e.clientX, y: e.clientY, moved: true };
+				}
+			}}
+			onPointerUp={(e) => {
+				const d = drag.current;
+				drag.current = null;
+				if (!d || d.moved) return;
+				const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+				nudge(e.clientX < r.left + r.width / 2 ? -1 : 1);
+			}}
+			onPointerCancel={() => {
+				drag.current = null;
+			}}
+		>
+			{props.ticks ? (
+				<svg class="knob__ticks" viewBox="-50 -50 100 100" aria-hidden="true">
+					{props.ticks.map((a) => (
+						<line key={a} x1="0" y1="-49" x2="0" y2="-43" transform={`rotate(${a})`} />
+					))}
+				</svg>
+			) : null}
+			<span class="knob__ring">
+				<span class="knob__cap" style={{ "--turn": `${props.angle(props.value)}deg` }} />
+			</span>
+		</div>
+	);
+}
+
+const MIX_DETENTS = [
+	["Entdecker", PRESETS.entdecker, "l"],
+	["Ausgewogen", PRESETS.ausgewogen, "c"],
+	["Vertraut", PRESETS.vertraut, "r"],
+] as const;
+
+/** The Klang knob turns from -120° (all discovery) to +70°, the presets at -70°, 0° and +70°. */
+function mixAngle(v: number): number {
+	const e = PRESETS.entdecker;
+	const a = PRESETS.ausgewogen;
+	if (v <= e) return -120 + (50 * v) / e;
+	if (v <= a) return -70 + (70 * (v - e)) / (a - e);
+	return (70 * (v - a)) / (100 - a);
+}
+
+/**
+ * "Klang": the station's Entdecken ↔ Vertraut, as a knob with three
+ * printed detents that are keys of their own.
+ */
+export function MixKnob(props: {
+	value: number;
+	valueText: string;
+	station: string | null;
+	onChange: (v: number) => void;
+	disabled?: boolean;
+}) {
+	return (
+		<div class="knob-unit knob-unit--mix">
+			<div class="detents">
+				{MIX_DETENTS.map(([label, v, pos]) => (
+					<button
+						key={label}
+						type="button"
+						class={`detent detent--${pos}`}
+						aria-pressed={props.value === v}
+						disabled={props.disabled}
+						onClick={() => props.onChange(v)}
+					>
+						{label}
+					</button>
+				))}
+			</div>
+			<Knob
+				label={props.station ? `Klang für ${props.station}: Entdecken oder Vertraut` : "Klang"}
+				min={0}
+				max={100}
+				step={5}
+				value={props.value}
+				valueText={props.valueText}
+				angle={mixAngle}
+				onChange={props.onChange}
+				disabled={props.disabled}
+				ticks={[-120, -95, -70, -35, 0, 35, 70]}
+			/>
+			<span class="knob-unit__name" aria-hidden="true">
+				Klang
+			</span>
+		</div>
 	);
 }
 
@@ -422,12 +631,25 @@ export function PageBar(props: {
 	);
 }
 
-export function Section(props: { title: string; children: ComponentChildren; id?: string }) {
+/**
+ * A section of a program sheet: its head runs into the first line, the way
+ * a printed program sets "Mischung. ≈ 60 % ungehört …".
+ */
+export function Section(props: {
+	title: string;
+	children?: ComponentChildren;
+	id?: string;
+	/** Text that follows the run-in head on its line. */
+	lead?: ComponentChildren;
+}) {
 	return (
 		<section class="section" aria-labelledby={props.id}>
-			<h2 class="section__head" id={props.id}>
-				{props.title}
-			</h2>
+			<div class="runin">
+				<h2 class="runin__head" id={props.id}>
+					{props.title}
+				</h2>
+				{props.lead ? <span class="runin__lead">{props.lead}</span> : null}
+			</div>
 			{props.children}
 		</section>
 	);

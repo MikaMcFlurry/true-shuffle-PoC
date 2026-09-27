@@ -1,6 +1,9 @@
-// Jost: a Futura-like geometric, the lettering of 1950s German radio dials
-// and program magazines. Yellowtail: the brass script badge on the cloth.
+// Jost: a Futura-like geometric, the type of 1950s German program magazines.
+// Barlow Condensed: the condensed caps printed on the dial glass and engraved
+// on keys and plates. Yellowtail: the script on the brass badge.
 import "@fontsource-variable/jost/wght.css";
+import "@fontsource/barlow-condensed/latin-500.css";
+import "@fontsource/barlow-condensed/latin-600.css";
 import "@fontsource/yellowtail/latin-400.css";
 import "./styles.css";
 import { render } from "preact";

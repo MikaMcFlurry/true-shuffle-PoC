@@ -41,13 +41,15 @@ export function App() {
 	if (s.load.kind === "loading") {
 		return (
 			<div class="shell" aria-busy="true">
-				<Cabinet eye="off">
-					<Dial label="Senderskala" at={null} sweep>
-						<DialText title="Schaltet ein …" />
-					</Dial>
-					<div class="skeleton skeleton--card" />
-					<div class="skeleton skeleton--keys" />
-				</Cabinet>
+				<Cabinet
+					eye="off"
+					dial={
+						<Dial label="Senderskala" at={null} sweep>
+							<DialText title="Schaltet ein …" />
+						</Dial>
+					}
+					window={<div class="skeleton skeleton--card" />}
+				/>
 			</div>
 		);
 	}
@@ -61,22 +63,25 @@ export function App() {
 	if (s.load.kind === "error") {
 		return (
 			<div class="shell">
-				<Cabinet eye="open">
-					<Dial label="Senderskala" at={null}>
-						<DialText
-							title="Störung"
-							sub="true-shuffle ist gerade nicht erreichbar"
-							message={{ text: s.load.message, tone: "error" }}
-						/>
-					</Dial>
-					<button
-						type="button"
-						class="key key--lit btn btn--wide"
-						onClick={() => void store.refresh(true)}
-					>
-						Nochmal versuchen
-					</button>
-				</Cabinet>
+				<Cabinet
+					eye="open"
+					dial={
+						<Dial label="Senderskala" at={null}>
+							<DialText
+								title="Störung"
+								sub="true-shuffle ist gerade nicht erreichbar"
+								message={{ text: s.load.message, tone: "error" }}
+							/>
+						</Dial>
+					}
+					keys={
+						<div class="keyboard keyboard--one">
+							<button type="button" class="pkey" onClick={() => void store.refresh(true)}>
+								<span class="pkey__legend">Nochmal versuchen</span>
+							</button>
+						</div>
+					}
+				/>
 			</div>
 		);
 	}

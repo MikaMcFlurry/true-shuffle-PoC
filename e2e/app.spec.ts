@@ -109,6 +109,8 @@ test.describe("a listener's day", () => {
 
 	test("shows the station with its round, mix and next songs", async ({ page }) => {
 		await signIn(page);
+		// Every station is set up from the back panel (Menü).
+		await page.getByRole("link", { name: "Menü" }).click();
 		await page.getByRole("link", { name: "Indie & Gitarren einstellen" }).click();
 		await expect(page.getByRole("heading", { name: "Indie & Gitarren", level: 1 })).toBeVisible();
 		const panel = page.getByRole("complementary");
@@ -199,10 +201,15 @@ test.describe("a listener's day", () => {
 		// The smallest phones reflow too (WCAG 1.4.10): home and a station page at 320 px.
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto("/");
+		await expect(
+			page.getByRole("button", { name: /^Alles (starten|öffnen|weiterspielen)/ }),
+		).toBeVisible();
+		await checkPage(page, "/ at 320 px");
+		await page.goto("/menu");
 		const station = await page
 			.getByRole("link", { name: "Indie & Gitarren einstellen" })
 			.getAttribute("href");
-		await checkPage(page, "/ at 320 px");
+		await checkPage(page, "/menu at 320 px");
 		await page.goto(station ?? "/");
 		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 		await checkPage(page, `${station} at 320 px`);

@@ -1,4 +1,4 @@
-import { LogOut, Trash2 } from "lucide-preact";
+import { ChevronRight, LogOut, Trash2 } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import {
 	aggregateHistory,
@@ -9,7 +9,7 @@ import {
 } from "../../core/history";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api } from "../api";
-import { Cover, PageBar, Section } from "../components/radio";
+import { PageBar, Section } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
@@ -34,6 +34,7 @@ function deviceType(t: string): string {
 
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store } from "../store";
+import { roundLabel } from "./home";
 
 const ILLUMINATIONS = [
 	["day", "Tag"],
@@ -41,13 +42,33 @@ const ILLUMINATIONS = [
 	["night", "Nacht"],
 ] as const;
 
-/** An ivory key on the back panel, its legend printed on it and a small line under it. */
-function MenuKey(props: { href: string; legend: string; sub: string; value?: string }) {
+/**
+ * A terminal on the back panel's strip: a brass screw, an engraved label,
+ * a line under it. The whole row is the link.
+ */
+function Terminal(props: {
+	href: string;
+	legend: string;
+	sub: string;
+	n?: number;
+	act?: string;
+	label?: string;
+}) {
 	return (
 		<li>
-			<a class="key menukey" href={props.href}>
-				<span class="menukey__legend">{props.legend}</span>
-				<span class="menukey__sub">{props.value ?? props.sub}</span>
+			<a class="terminal" href={props.href} aria-label={props.label}>
+				<span class="terminal__screw" aria-hidden="true" />
+				{props.n !== undefined ? (
+					<span class="terminal__n num" aria-hidden="true">
+						{props.n}
+					</span>
+				) : null}
+				<span class="terminal__plate">
+					<span class="terminal__legend">{props.legend}</span>
+					<span class="terminal__sub">{props.sub}</span>
+				</span>
+				{props.act ? <span class="terminal__act">{props.act}</span> : null}
+				<ChevronRight class="terminal__go" aria-hidden="true" />
 			</a>
 		</li>
 	);
@@ -138,25 +159,40 @@ export function MenuScreen({ state }: { state: AppState }) {
 				</div>
 			</Section>
 			<Section title="Sender" id="stations">
-				<ul class="keygrid">
-					<MenuKey href="/sender/neu" legend="Sender anlegen" sub="Playlists kombinieren" />
-					<MenuKey href="/suchlauf" legend="Suchlauf" sub="Weitere Playlists speichern" />
-					<MenuKey href="/geraete" legend="Gerät" sub="Wo true-shuffle startet" />
-					<MenuKey href="/fernbedienung" legend="Fernbedienung" sub="Siri, CarPlay, Uhr, Widget" />
+				<ul class="strip-list">
+					{state.stations.map((x, i) => (
+						<Terminal
+							key={x.id}
+							href={`/sender/${x.id}`}
+							n={i + 1}
+							legend={x.name}
+							sub={roundLabel(x)}
+							act="einstellen"
+							label={`${x.name} einstellen`}
+						/>
+					))}
+					<Terminal href="/sender/neu" legend="Sender anlegen" sub="Playlists kombinieren" />
+					<Terminal href="/suchlauf" legend="Suchlauf" sub="Weitere Playlists speichern" />
+				</ul>
+			</Section>
+
+			<Section title="Anschlüsse" id="connections">
+				<ul class="strip-list">
+					<Terminal href="/geraete" legend="Gerät" sub="Wo true-shuffle startet" />
+					<Terminal href="/fernbedienung" legend="Fernbedienung" sub="Siri, CarPlay, Uhr, Widget" />
 				</ul>
 			</Section>
 
 			<Section title="Gedächtnis" id="memory">
-				<ul class="keygrid">
-					<MenuKey href="/verlauf" legend="Verlauf" sub="Was zuletzt lief" />
-					<MenuKey
+				<ul class="strip-list">
+					<Terminal href="/verlauf" legend="Verlauf" sub="Was zuletzt lief" />
+					<Terminal
 						href="/import"
 						legend="Import"
-						sub="Hörverlauf aus Spotify"
-						value={
+						sub={
 							state.history.importedTracks > 0
 								? `${num(state.history.importedTracks)} Songs mit Vorgeschichte`
-								: undefined
+								: "Hörverlauf aus Spotify"
 						}
 					/>
 				</ul>
@@ -180,23 +216,26 @@ export function MenuScreen({ state }: { state: AppState }) {
 							</button>
 						))}
 					</div>
-					<span
-						class="knob"
-						style={{ "--turn": `${ILLUMINATIONS.findIndex(([v]) => v === illum) * 50 - 50}deg` }}
-						aria-hidden="true"
-					>
-						<span class="knob__cap" />
+					<span class="knob knob--static" aria-hidden="true">
+						<span class="knob__ring">
+							<span
+								class="knob__cap"
+								style={{
+									"--turn": `${ILLUMINATIONS.findIndex(([v]) => v === illum) * 50 - 50}deg`,
+								}}
+							/>
+						</span>
 					</span>
 				</fieldset>
 			</Section>
 
 			<Section title="Konto" id="account">
-				<ul class="keygrid">
-					<MenuKey href="/info" legend="Info" sub="Wie true-shuffle arbeitet" />
+				<ul class="strip-list">
+					<Terminal href="/info" legend="Info" sub="Wie true-shuffle arbeitet" />
 					<li>
 						<button
 							type="button"
-							class="key menukey"
+							class="terminal"
 							onClick={() =>
 								api.logout().finally(() => {
 									store.load = { kind: "signed-out" };
@@ -205,11 +244,12 @@ export function MenuScreen({ state }: { state: AppState }) {
 								})
 							}
 						>
-							<span class="menukey__legend">
-								<LogOut class="icon" aria-hidden="true" />
-								Abmelden
+							<span class="terminal__screw" aria-hidden="true" />
+							<span class="terminal__plate">
+								<span class="terminal__legend">Abmelden</span>
+								<span class="terminal__sub">Gedächtnis bleibt</span>
 							</span>
-							<span class="menukey__sub">Gedächtnis bleibt</span>
+							<LogOut class="terminal__go" aria-hidden="true" />
 						</button>
 					</li>
 				</ul>
@@ -306,23 +346,20 @@ export function HistoryScreen() {
 			) : null}
 			{groups.map(([d, list]) => (
 				<Section key={d} title={d} id={`d-${d}`}>
-					<ol class="inlay tracks tracks--covers">
+					<ol class="order">
 						{list.map((t) => (
-							<li key={`${t.id}-${t.playedAt}`} class="track track--rate">
+							<li key={`${t.id}-${t.playedAt}`} class="order__row track--rate">
 								<RateHit t={t} />
-								<Cover src={t.imageUrl} class="cover--md" />
-								<span class="track__main">
-									<span class="track__title">{t.name}</span>
-									<span class="track__sub">
+								<span class="order__when num">{clock(t.playedAt)}</span>
+								<span class="order__title">
+									<span class="order__song">{t.name}</span>
+									<span class="order__artist">
 										{t.artists}
 										{t.stationName ? `${SEP}${t.stationName}` : ""}
 									</span>
 								</span>
 								<ThumbMark t={t} />
-								<span class="track__meta">
-									<span class="num">{clock(t.playedAt)}</span>
-									{t.ignored ? <span class="tag">Gast</span> : null}
-								</span>
+								{t.ignored ? <span class="tag">Gast</span> : null}
 							</li>
 						))}
 					</ol>

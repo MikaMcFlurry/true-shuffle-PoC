@@ -25,6 +25,12 @@ class Store {
 	load: Load = { kind: "loading" };
 	flash: Flash | null = null;
 	tuning: { stationId: number; since: number } | null = null;
+	/**
+	 * The station the tuning knob has turned the pointer to. Turning only
+	 * selects; playing it takes a separate, deliberate press.
+	 */
+	selected: number | null = null;
+	private selectTimer: number | null = null;
 	/** The song whose rating sheet is open. */
 	rating: TrackView | null = null;
 	/** Thumbs given here, shown at once in every list until a later load has them. */
@@ -42,6 +48,21 @@ class Store {
 
 	emit(): void {
 		for (const l of this.listeners) l();
+	}
+
+	/** Point the dial at a station without playing it; it falls back after a while untouched. */
+	select(stationId: number | null): void {
+		this.selected = stationId;
+		if (this.selectTimer !== null) window.clearTimeout(this.selectTimer);
+		this.selectTimer =
+			stationId === null
+				? null
+				: window.setTimeout(() => {
+						this.selected = null;
+						this.selectTimer = null;
+						this.emit();
+					}, 20_000);
+		this.emit();
 	}
 
 	rate(t: TrackView | null): void {

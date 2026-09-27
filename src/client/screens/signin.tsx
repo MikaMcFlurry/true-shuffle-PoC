@@ -1,4 +1,4 @@
-import { Cabinet, Dial, DialText } from "../components/radio";
+import { Cabinet, Dial, DialText, Window } from "../components/radio";
 import { DECK_PREFIX } from "../format";
 
 const LOGIN_MESSAGES: Record<string, string> = {
@@ -21,28 +21,34 @@ export function SignIn() {
 			: null;
 	return (
 		<div class="power">
-			<Cabinet eye="off">
-				<Dial label="Senderskala" at={null}>
-					<DialText
-						title="Deine Sender mit Gedächtnis"
-						sub="Keine schnellen Wiederholungen. Alles kommt irgendwann dran."
-						message={message}
-					/>
-				</Dial>
-				<div class="card">
-					<div class="card__paper">
+			<Cabinet
+				eye="off"
+				dial={
+					<Dial label="Senderskala" at={null}>
+						<DialText
+							title="Deine Sender mit Gedächtnis"
+							sub="Keine schnellen Wiederholungen. Alles kommt irgendwann dran."
+							message={message}
+						/>
+					</Dial>
+				}
+				window={
+					<Window>
 						<p class="power__text">
 							true-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken —
 							auch über Tage, Geräte und alles, was du nebenbei hörst.
 						</p>
+					</Window>
+				}
+				keys={
+					<div class="keyboard keyboard--one">
+						<a class="pkey pkey--power" href="/auth/login">
+							<span class="pkey__lamp" aria-hidden="true" />
+							<span class="pkey__legend">Mit Spotify anmelden</span>
+						</a>
 					</div>
-				</div>
-				<div class="keys keys--one">
-					<a class="pkey pkey--brass" href="/auth/login">
-						Mit Spotify anmelden
-					</a>
-				</div>
-			</Cabinet>
+				}
+			/>
 			<p class="power__fine">
 				Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
 				…“ in deinem Konto an.

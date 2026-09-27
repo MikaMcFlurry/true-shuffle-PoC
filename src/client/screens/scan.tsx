@@ -155,15 +155,18 @@ export function Scan({ state }: { state: AppState }) {
 	if (state.onboarded) return sheet;
 	return (
 		<>
-			<Cabinet eye={lists ? "weak" : "open"}>
-				{/* While searching, the pointer sweeps; a found list has nothing left to measure. */}
-				<Dial label="Senderskala" at={null} sweep={!lists}>
-					<DialText
-						title={found ?? "Suchlauf …"}
-						sub={lists ? "Wähle, welche Sender werden" : "true-shuffle sucht deine Playlists"}
-					/>
-				</Dial>
-			</Cabinet>
+			<Cabinet
+				eye={lists ? "weak" : "open"}
+				dial={
+					// While searching, the pointer sweeps; a found list has nothing left to measure.
+					<Dial label="Senderskala" at={null} sweep={!lists}>
+						<DialText
+							title={found ?? "Suchlauf …"}
+							sub={lists ? "Wähle, welche Sender werden" : "true-shuffle sucht deine Playlists"}
+						/>
+					</Dial>
+				}
+			/>
 			{sheet}
 		</>
 	);
