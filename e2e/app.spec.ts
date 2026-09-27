@@ -3,7 +3,7 @@
  * Spotify stand-in (synthetic demo library, see e2e/fake-server.ts).
  */
 
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const FAKE = "http://127.0.0.1:8788/__control";
 
@@ -67,6 +67,32 @@ async function checkContained(page: Page, where: string): Promise<void> {
 	);
 	expect(out, `${where}: wider than its box`).toEqual([]);
 }
+
+/** No words cut off: text that does not fit wraps; it is never clipped or ended with "…". */
+async function checkText(page: Page, where: string): Promise<void> {
+	const cut = await page.evaluate(() =>
+		[...document.querySelectorAll("body *")]
+			.filter((el) => {
+				const h = el as HTMLElement;
+				if (![...h.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim())) return false;
+				const cs = getComputedStyle(h);
+				if (h.offsetParent === null && cs.position !== "fixed") return false;
+				// Visually hidden text for screen readers is 1 px on purpose.
+				if (h.clientWidth <= 2) return false;
+				if (cs.overflowX === "visible" && cs.overflowY === "visible") return false;
+				return h.scrollWidth > h.clientWidth + 1 || h.scrollHeight > h.clientHeight + 2;
+			})
+			.map((el) => `${el.getAttribute("class") ?? el.tagName}: ${el.textContent?.trim()}`),
+	);
+	expect(cut, `${where}: text cut off`).toEqual([]);
+}
+
+/** Pages whose explanations arrive after the heading: wait for them. */
+const EXPLAINED: Record<string, RegExp> = {
+	"/suchlauf": /Spotify gibt die Songs nicht heraus/,
+	"/sender/neu": /Spotify gibt die Songs nicht heraus/,
+	"/geraete": /Das gerade aktive Gerät, sonst dein Handy/,
+};
 
 test.describe.configure({ mode: "serial" });
 
@@ -217,7 +243,21 @@ test.describe("a listener's day", () => {
 		]) {
 			await page.goto(path);
 			await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+			const why = EXPLAINED[path];
+			if (why) await expect(page.getByText(why).first()).toBeVisible();
 			await checkPage(page, path);
+			await checkText(page, path);
+		}
+		// The reason a playlist cannot be chosen, or what a device setting means,
+		// is read in full on small phones too.
+		for (const w of [320, 360, 390]) {
+			await page.setViewportSize({ width: w, height: 700 });
+			for (const [path, why] of Object.entries(EXPLAINED)) {
+				await page.goto(path);
+				await expect(page.getByText(why).first()).toBeVisible();
+				await checkPage(page, `${path} at ${w} px`);
+				await checkText(page, `${path} at ${w} px`);
+			}
 		}
 		// The smallest phones reflow too (WCAG 1.4.10): home and a station page at 320 px.
 		await page.setViewportSize({ width: 320, height: 700 });
@@ -279,28 +319,35 @@ test.describe("a listener's day", () => {
 			}
 		}
 
-		// The song about to be rated shows its whole title, "– Live" and all.
+		// The song about to be rated shows its whole title, however long: here the
+		// next song on the station page is given a 159-character one.
+		const title =
+			"Leuchtturm im Nebel über dem alten Hafen (Live aus der Waldbühne Berlin, 14. Juli 1987, mit dem Rundfunk-Sinfonieorchester und Gästen) – 2024 Remaster (Deluxe)";
+		expect(title.length).toBeGreaterThan(150);
+		await page.route(`**/api/stations/${lange?.id}`, async (route) => {
+			if (route.request().method() !== "GET") return route.fallback();
+			const response = await route.fetch();
+			const json = (await response.json()) as { upcoming: { name: string }[] };
+			if (json.upcoming[0]) json.upcoming[0].name = title;
+			await route.fulfill({ response, json });
+		});
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto(`/sender/${lange?.id}`);
 		const rows = page.getByRole("region", { name: "Als Nächstes" }).getByRole("listitem");
-		await expect(rows.first()).toBeVisible();
-		const titles = await rows.locator(".order__title").allTextContents();
-		const longest = titles.reduce((a, t, i) => (t.length > titles[a]!.length ? i : a), 0);
+		await expect(rows.first()).toContainText(title);
+		await checkText(page, "a 159-character title in the running order");
 		await rows
-			.nth(longest)
+			.first()
 			.getByRole("button", { name: / bewerten$/ })
 			.click();
 		const sheet = page.getByRole("dialog");
 		await expect(sheet).toBeVisible();
-		const title = await sheet.locator("#rate-title").evaluate((t) => ({
-			text: t.textContent ?? "",
-			cut: t.scrollWidth > t.clientWidth + 1 || t.scrollHeight > t.clientHeight + 2,
-		}));
-		expect(titles[longest]).toContain(title.text);
-		expect(title.cut, `rating sheet cuts "${title.text}"`).toBe(false);
+		await expect(sheet.locator("#rate-title")).toHaveText(title);
+		await checkText(page, "rating sheet at 320 px with a 159-character title");
 		await checkContained(page, "rating sheet at 320 px");
 		await sheet.getByRole("button", { name: "Abbrechen" }).click();
 		await expect(sheet).toBeHidden();
+		await page.unroute(`**/api/stations/${lange?.id}`);
 
 		// A device with a long name wraps inside the card.
 		const device = "Wohnzimmerlautsprecheranlagenverstärkerfernbedienungsempfänger";
@@ -400,5 +447,79 @@ test.describe("desktop", () => {
 		await expect(page.locator(".side").getByRole("heading", { name: "Menü" })).toBeVisible();
 		await expect(page.getByRole("region", { name: "Anzeige" })).toBeVisible();
 		await checkPage(page, "desktop menu");
+	});
+});
+
+test.describe("on a touch screen", () => {
+	test.use({ viewport: { width: 390, height: 700 }, hasTouch: true });
+
+	test("a swipe across Klang never keeps it in hand", async ({ page }) => {
+		// The dial's selection falls back after 20 s untouched: let the test say when.
+		await page.clock.install();
+		await signIn(page);
+		const tune = page.getByRole("slider", { name: "Senderwahl" });
+		const klang = page.getByRole("slider", { name: /^Klang für / });
+		await expect(tune).toBeVisible();
+		const stationOf = {
+			tune: async () => (await tune.getAttribute("aria-valuetext"))?.replace(/^\d+ von \d+: /, ""),
+			klang: async () =>
+				(await klang.getAttribute("aria-label"))?.replace(
+					/^Klang für (.*): Entdecken oder Vertraut$/,
+					"$1",
+				),
+			dial: () =>
+				page.evaluate(() => {
+					const at = document.querySelector<HTMLElement>(".dial")?.dataset.pointer;
+					return document.querySelector(`[data-at="${at}"] .station__name`)?.textContent?.trim();
+				}),
+		};
+		const agree = async () => {
+			const t = await stationOf.tune();
+			expect(await stationOf.klang(), "Klang turns the station Senderwahl shows").toBe(t);
+			expect(await stationOf.dial(), "the dial points where Senderwahl stands").toBe(t);
+			return t;
+		};
+		const resting = await agree();
+		const cdp = await page.context().newCDPSession(page);
+		// A finger lands on the target and drags the page down: the browser takes
+		// it as a scroll (pointerdown, pointercancel — no pointerup, no focus).
+		const swipeFrom = async (target: Locator) => {
+			await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+			const box = await target.boundingBox();
+			expect(box).not.toBeNull();
+			const x = Math.round(box!.x + box!.width / 2);
+			const y = Math.round(box!.y + box!.height / 2);
+			const before = await page.evaluate(() => window.scrollY);
+			await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+			for (let i = 1; i <= 8; i++) {
+				await cdp.send("Input.dispatchTouchEvent", {
+					type: "touchMove",
+					touchPoints: [{ x, y: y + i * 20 }],
+				});
+			}
+			await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+			await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(before);
+		};
+		// Senderwahl turned to another station, then let go of.
+		const turnAway = async () => {
+			await tune.focus();
+			await page.keyboard.press("End");
+			if ((await stationOf.tune()) === resting) await page.keyboard.press("Home");
+			await tune.blur();
+			expect(await agree()).not.toBe(resting);
+		};
+		for (const [what, from] of [
+			["a detent", page.getByRole("button", { name: "Vertraut", exact: true })],
+			["the KLANG label", page.locator(".knob-unit--mix > .knob-unit__name")],
+		] as const) {
+			await turnAway();
+			await swipeFrom(from);
+			// Untouched for 20 s, the dial falls back to the station that plays (or played last).
+			await page.clock.fastForward(21_000);
+			await expect.poll(stationOf.tune, { message: `after a swipe from ${what}` }).toBe(resting);
+			await agree();
+		}
+		// And Klang follows Senderwahl again at once.
+		await turnAway();
 	});
 });

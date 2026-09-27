@@ -2782,13 +2782,12 @@ label.row:hover {
 	color: var(--ink-2);
 }
 
+/* The line under a row explains it (often why it cannot be chosen): it is read in full. */
 .row__sub {
 	font-size: 13.5px;
 	line-height: 1.4;
 	color: var(--ink-2);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow-wrap: anywhere;
 }
 
 .row__thumb {
@@ -2846,8 +2845,6 @@ label.row:hover {
 	white-space: nowrap;
 }
 
-.row__sub.row__sub--wrap,
-.row--switch .row__sub,
 .track__sub.track__sub--wrap {
 	white-space: normal;
 }
@@ -3979,21 +3976,10 @@ details.more[open] > summary::after {
 	border-bottom: 1px solid var(--rule-strong);
 }
 
-/* The song about to be rated shows its whole title ("– Live", "– Remix"), up to three lines. */
-.sheet__song .track__title {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 3;
-	line-clamp: 3;
-	overflow-wrap: anywhere;
-	white-space: normal;
-}
-
+/* The song about to be rated shows its whole title ("– Live", "(… 2024 Remaster)"), however long. */
+.sheet__song .track__title,
 .sheet__song .track__sub {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 2;
-	line-clamp: 2;
+	overflow: visible;
 	overflow-wrap: anywhere;
 	white-space: normal;
 }

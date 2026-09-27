@@ -105,7 +105,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 					<label class="row">
 						<span class="row__main">
 							<span class="row__title">Gast-Modus</span>
-							<span class="row__sub row__sub--wrap">
+							<span class="row__sub">
 								{guest.active && guest.until
 									? `An bis ${clock(guest.until)} — was jetzt läuft, zählt nicht`
 									: "Hört jemand anderes über dein Konto? Dann zählt nichts davon."}
@@ -462,7 +462,7 @@ export function AboutScreen() {
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Autoplay</span>
-							<span class="row__sub row__sub--wrap">
+							<span class="row__sub">
 								Ist eine Playlist zu Ende, spielt Spotify eigene Empfehlungen. Die Sender sind lang
 								genug, dass das kaum passiert.
 							</span>
@@ -471,7 +471,7 @@ export function AboutScreen() {
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Smart Shuffle</span>
-							<span class="row__sub row__sub--wrap">
+							<span class="row__sub">
 								Lässt sich per Schnittstelle nicht abschalten und mischt fremde Songs dazu.
 								true-shuffle sagt dir, wenn es an ist.
 							</span>
@@ -480,7 +480,7 @@ export function AboutScreen() {
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Premium</span>
-							<span class="row__sub row__sub--wrap">
+							<span class="row__sub">
 								Starten und Überspringen aus der App geht nur mit Spotify Premium.
 							</span>
 						</span>
@@ -488,7 +488,7 @@ export function AboutScreen() {
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Höchstens fünf Konten</span>
-							<span class="row__sub row__sub--wrap">
+							<span class="row__sub">
 								Spotify erlaubt privaten Apps nur fünf freigeschaltete Nutzer.
 							</span>
 						</span>
@@ -591,7 +591,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 				<li class="row">
 					<span class="row__main">
 						<span class="row__title">1. In Spotify anfordern</span>
-						<span class="row__sub row__sub--wrap">
+						<span class="row__sub">
 							spotify.com → Konto → Datenschutz → „Erweiterter Streamingverlauf“. Spotify schickt
 							die Dateien per Mail (bis zu 30 Tage).
 						</span>
@@ -600,9 +600,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 				<li class="row">
 					<span class="row__main">
 						<span class="row__title">2. Hier auswählen</span>
-						<span class="row__sub row__sub--wrap">
-							Alle Dateien „Streaming_History_Audio_…json“ auf einmal.
-						</span>
+						<span class="row__sub">Alle Dateien „Streaming_History_Audio_…json“ auf einmal.</span>
 					</span>
 				</li>
 			</ol>

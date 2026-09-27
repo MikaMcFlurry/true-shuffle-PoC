@@ -189,7 +189,7 @@ export function RemoteScreen() {
 						<li key={c.action} class="row row--cmd">
 							<span class="row__main">
 								<span class="row__title">{c.name}</span>
-								<span class="row__sub row__sub--wrap">{c.what}</span>
+								<span class="row__sub">{c.what}</span>
 							</span>
 							<CopyButton text={base + c.action} what={`Adresse für „${c.name}“`} />
 							<span class="cmd__url code">

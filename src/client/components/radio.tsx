@@ -186,6 +186,7 @@ export function Dial(props: {
 		<section
 			class={`dial${ready ? " dial--ready" : ""}${props.sweep ? " dial--sweep" : ""}`}
 			aria-label={props.label}
+			data-pointer={props.at ?? undefined}
 		>
 			<div class="dial__glass">
 				<div class="dial__field" ref={field}>
@@ -394,6 +395,8 @@ export function Knob(props: {
 	tapSteps?: boolean;
 	/** Report a turn even to the value it already has (a selection that is not yet made). */
 	emitSame?: boolean;
+	/** Told when a pointer takes the knob (it holds that pointer) and when it lets go. */
+	onGrab?: (on: boolean) => void;
 }) {
 	const cur = useRef(props.value);
 	cur.current = props.value;
@@ -434,7 +437,10 @@ export function Knob(props: {
 				if (props.disabled || e.button !== 0) return;
 				(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 				drag.current = { x: e.clientX, y: e.clientY, moved: false };
+				props.onGrab?.(true);
 			}}
+			// Up, cancelled or taken away: the capture ends every way the hand can leave.
+			onLostPointerCapture={() => props.onGrab?.(false)}
 			onPointerMove={(e) => {
 				const d = drag.current;
 				if (!d) return;
@@ -497,32 +503,36 @@ export function MixKnob(props: {
 	disabled?: boolean;
 	/** Print the station the knob turns under it (on the radio, where it can change). */
 	showTarget?: boolean;
-	/** Told when the knob (or a detent) is taken in hand and let go again. */
+	/**
+	 * Told when the knob is taken in hand (focused, or turned by a pointer it
+	 * holds) and when it is let go again. A touch that only scrolls past never
+	 * takes it.
+	 */
 	onHold?: (on: boolean) => void;
 }) {
 	const off = props.disabled || props.value === null;
-	const hold = props.onHold;
+	const focused = useRef(false);
+	const grabbed = useRef(false);
+	const held = useRef(false);
+	const tell = () => {
+		const on = focused.current || grabbed.current;
+		if (on === held.current) return;
+		held.current = on;
+		props.onHold?.(on);
+	};
 	return (
 		<div
 			class="knob-unit knob-unit--mix"
-			onFocusIn={hold ? () => hold(true) : undefined}
-			onPointerDownCapture={hold ? () => hold(true) : undefined}
-			onPointerUpCapture={
-				hold
-					? (e) => {
-							// A touch that never took focus lets go with the finger.
-							if (!(e.currentTarget as HTMLElement).contains(document.activeElement)) hold(false);
-						}
-					: undefined
-			}
-			onFocusOut={
-				hold
-					? (e) => {
-							const to = e.relatedTarget as Node | null;
-							if (!to || !(e.currentTarget as HTMLElement).contains(to)) hold(false);
-						}
-					: undefined
-			}
+			onFocusIn={() => {
+				focused.current = true;
+				tell();
+			}}
+			onFocusOut={(e) => {
+				const to = e.relatedTarget as Node | null;
+				if (to && (e.currentTarget as HTMLElement).contains(to)) return;
+				focused.current = false;
+				tell();
+			}}
 		>
 			<div class="detents">
 				{MIX_DETENTS.map(([label, v, pos]) => (
@@ -549,6 +559,10 @@ export function MixKnob(props: {
 				onChange={props.onChange}
 				disabled={off}
 				ticks={[-120, -95, -70, -35, 0, 35, 70]}
+				onGrab={(on) => {
+					grabbed.current = on;
+					tell();
+				}}
 			/>
 			<span class="knob-unit__name" aria-hidden="true">
 				Klang
