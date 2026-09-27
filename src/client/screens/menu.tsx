@@ -9,7 +9,7 @@ import {
 } from "../../core/history";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api } from "../api";
-import { PageBar, Section } from "../components/radio";
+import { Cover, PageBar, Section } from "../components/radio";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
 const DEVICE_TYPES: Record<string, string> = {
@@ -283,23 +283,19 @@ export function HistoryScreen() {
 			) : null}
 			{groups.map(([d, list]) => (
 				<Section key={d} title={d} id={`d-${d}`}>
-					<ol class="list">
+					<ol class="inlay tracks tracks--covers">
 						{list.map((t) => (
-							<li key={`${t.id}-${t.playedAt}`} class="row row--song">
-								{t.imageUrl ? (
-									<img class="row__thumb" src={t.imageUrl} alt="" loading="lazy" />
-								) : (
-									<span class="row__thumb" />
-								)}
-								<span class="row__main">
-									<span class="row__title">{t.name}</span>
-									<span class="row__sub">
+							<li key={`${t.id}-${t.playedAt}`} class="track">
+								<Cover src={t.imageUrl} class="cover--md" />
+								<span class="track__main">
+									<span class="track__title">{t.name}</span>
+									<span class="track__sub">
 										{t.artists}
 										{t.stationName ? `${SEP}${t.stationName}` : ""}
 									</span>
 								</span>
-								<span class="stack" style={{ justifyItems: "end", gap: "4px" }}>
-									<span class="row__value num">{clock(t.playedAt)}</span>
+								<span class="track__meta">
+									<span class="num">{clock(t.playedAt)}</span>
 									{t.ignored ? <span class="tag">Gast</span> : null}
 								</span>
 							</li>

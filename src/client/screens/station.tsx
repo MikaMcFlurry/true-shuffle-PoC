@@ -4,7 +4,7 @@ import { PRESETS, sharesForRules } from "../../core/mix";
 import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
-import { PageBar, Scale, Section } from "../components/radio";
+import { Cover, PageBar, Scale, Section } from "../components/radio";
 import { ago, DECK_PREFIX, num, pct, SEP } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
@@ -15,6 +15,11 @@ const KIND: Record<SlotKind, string> = {
 	favorite: "Favorit",
 	discovery: "Entdeckung",
 };
+
+/** Why a song is here. The plain reason stays quiet; favourites and discoveries are lit. */
+function Reason({ kind }: { kind: SlotKind }) {
+	return <span class={`reason${kind !== "fresh" ? " reason--lit" : ""}`}>{KIND[kind]}</span>;
+}
 
 function Balance(props: { value: number; onChange: (v: number) => void; rules: StationRules }) {
 	const segs = 21;
@@ -45,9 +50,11 @@ function Balance(props: { value: number; onChange: (v: number) => void; rules: S
 				<span class="balance__focus" />
 			</div>
 			<div class="balance__shares num">
-				≈ {pct(shares.fresh)} ungehört{SEP}
-				{pct(shares.favorite)} Favoriten{SEP}
-				{pct(shares.discovery)} Neuentdeckungen
+				≈ <span>{pct(shares.fresh)} ungehört</span>
+				{SEP}
+				<span>{pct(shares.favorite)} Favoriten</span>
+				{SEP}
+				<span>{pct(shares.discovery)} Neuentdeckungen</span>
 			</div>
 		</div>
 	);
@@ -328,16 +335,17 @@ export function Station({
 
 			{np && np.stationId === id ? (
 				<Section title="Läuft gerade" id="now">
-					<ul class="glass glasslist">
-						<li class="glasslist__row">
-							<span class="glasslist__main">
-								<span class="glasslist__title">{np.name}</span>
-								<span class="glasslist__sub">{np.artists}</span>
+					<ul class="inlay tracks tracks--now">
+						<li class="track">
+							<Cover src={np.imageUrl} class="cover--lg" />
+							<span class="track__main">
+								<span class="track__title">{np.name}</span>
+								<span class="track__sub">{np.artists}</span>
 							</span>
 							{np.kind ? (
-								<span class={`seg${np.kind !== "fresh" ? " on" : " dim"}`}>{KIND[np.kind]}</span>
+								<Reason kind={np.kind} />
 							) : (
-								<span class="glasslist__value">{np.isPlaying ? "spielt" : "Pause"}</span>
+								<span class="track__meta">{np.isPlaying ? "spielt" : "Pause"}</span>
 							)}
 						</li>
 					</ul>
@@ -350,18 +358,19 @@ export function Station({
 						Noch keine Reihenfolge — sie entsteht, sobald der Sender eingelesen ist.
 					</p>
 				) : (
-					// The queue as the display shows it: numbered, each song with its reason.
-					<ol class="glass glasslist">
+					// The queue in order: numbered, each song with its cover and its reason.
+					<ol class="inlay tracks tracks--numbered">
 						{d.upcoming.map((t, i) => (
-							<li key={t.id} class="glasslist__row">
-								<span class="glasslist__n num" aria-hidden="true">
+							<li key={t.id} class="track">
+								<span class="track__n num" aria-hidden="true">
 									{String(i + 1).padStart(2, "0")}
 								</span>
-								<span class="glasslist__main">
-									<span class="glasslist__title">{t.name}</span>
-									<span class="glasslist__sub">{t.artists}</span>
+								<Cover src={t.imageUrl} />
+								<span class="track__main">
+									<span class="track__title">{t.name}</span>
+									<span class="track__sub">{t.artists}</span>
 								</span>
-								<span class={`seg${t.kind !== "fresh" ? " on" : " dim"}`}>{KIND[t.kind]}</span>
+								<Reason kind={t.kind} />
 							</li>
 						))}
 					</ol>
@@ -370,14 +379,15 @@ export function Station({
 
 			{d.recent.length > 0 ? (
 				<Section title="Zuletzt auf diesem Sender" id="recent">
-					<ul class="glass glasslist">
+					<ul class="inlay tracks tracks--covers">
 						{d.recent.slice(0, 8).map((t) => (
-							<li key={`${t.id}-${t.playedAt}`} class="glasslist__row">
-								<span class="glasslist__main">
-									<span class="glasslist__title">{t.name}</span>
-									<span class="glasslist__sub">{t.artists}</span>
+							<li key={`${t.id}-${t.playedAt}`} class="track">
+								<Cover src={t.imageUrl} />
+								<span class="track__main">
+									<span class="track__title">{t.name}</span>
+									<span class="track__sub">{t.artists}</span>
 								</span>
-								<span class="glasslist__value">{ago(t.playedAt)}</span>
+								<span class="track__meta">{ago(t.playedAt)}</span>
 							</li>
 						))}
 					</ul>
@@ -385,27 +395,27 @@ export function Station({
 			) : null}
 
 			<Section title="Neuentdeckungen" id="disc">
-				<ul class="glass glasslist">
-					<li class="glasslist__row">
-						<span class="glasslist__main">
-							<span class="glasslist__title">Warten auf dich</span>
-							<span class="glasslist__sub">Geprüfte Vorschläge für diesen Sender</span>
+				<ul class="inlay tracks">
+					<li class="track">
+						<span class="track__main">
+							<span class="track__title">Warten auf dich</span>
+							<span class="track__sub">Geprüfte Vorschläge für diesen Sender</span>
 						</span>
-						<span class="glasslist__count num">{num(d.discoveries.pending)}</span>
+						<span class="track__count num">{num(d.discoveries.pending)}</span>
 					</li>
-					<li class="glasslist__row">
-						<span class="glasslist__main">
-							<span class="glasslist__title">Behalten</span>
-							<span class="glasslist__sub">Stehen in „{DECK_PREFIX}Entdeckungen“</span>
+					<li class="track">
+						<span class="track__main">
+							<span class="track__title">Behalten</span>
+							<span class="track__sub">Stehen in „{DECK_PREFIX}Entdeckungen“</span>
 						</span>
-						<span class="glasslist__count num">{num(d.discoveries.kept)}</span>
+						<span class="track__count num">{num(d.discoveries.kept)}</span>
 					</li>
-					<li class="glasslist__row">
-						<span class="glasslist__main">
-							<span class="glasslist__title">Aussortiert</span>
-							<span class="glasslist__sub">Früh übersprungen oder Daumen runter</span>
+					<li class="track">
+						<span class="track__main">
+							<span class="track__title">Aussortiert</span>
+							<span class="track__sub">Früh übersprungen oder Daumen runter</span>
 						</span>
-						<span class="glasslist__count num">{num(d.discoveries.rejected)}</span>
+						<span class="track__count num">{num(d.discoveries.rejected)}</span>
 					</li>
 				</ul>
 			</Section>

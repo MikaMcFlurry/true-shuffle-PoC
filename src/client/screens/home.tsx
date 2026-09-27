@@ -115,6 +115,7 @@ function NowDisplay({ state }: { state: AppState }) {
 				song="Sender wird eingestellt …"
 				artist="True Shuffle bereitet deine Playlist in Spotify vor"
 				scale={stationScale(tuning)}
+				art={{ src: tuning.imageUrl }}
 				tuning
 				live
 			/>
@@ -155,6 +156,7 @@ function NowDisplay({ state }: { state: AppState }) {
 							: "Außerhalb von True Shuffle — zählt trotzdem"
 				}
 				scale={station ? stationScale(station) : null}
+				art={{ src: np.imageUrl }}
 				live
 			/>
 		);
@@ -172,6 +174,7 @@ function NowDisplay({ state }: { state: AppState }) {
 			artist="Spotify spielt, True Shuffle merkt sich alles"
 			message={message}
 			scale={last ? stationScale(last) : null}
+			art={{ src: last?.imageUrl ?? null }}
 		/>
 	);
 }
@@ -200,7 +203,7 @@ function Transport({ np }: { np: NowPlaying | null }) {
 			.finally(() => window.setTimeout(() => void store.refresh(true), 800));
 	};
 	return (
-		<fieldset class="transport">
+		<fieldset class={`transport${disabled ? " transport--off" : ""}`}>
 			<legend class="sr-only">Wiedergabe</legend>
 			<button
 				type="button"
@@ -334,7 +337,7 @@ export function Home({ state }: { state: AppState }) {
 					<Preset key={s.id} s={s} n={i + 1} state={state} />
 				))}
 				<li>
-					<a class="key preset--add" href="/sender/neu" style={{ display: "grid", height: "100%" }}>
+					<a class="preset--add" href="/sender/neu">
 						<Plus class="icon" aria-hidden="true" />
 						<span>Sender anlegen</span>
 					</a>

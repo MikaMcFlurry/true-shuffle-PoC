@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, PlaylistView } from "../../shared/api";
 import { api } from "../api";
-import { Display, PageBar } from "../components/radio";
+import { Cover, Display, PageBar } from "../components/radio";
 import { num } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
@@ -127,11 +127,7 @@ export function Scan({ state }: { state: AppState }) {
 									checked={picked.has(p.id)}
 									onChange={() => toggle(p.id)}
 								/>
-								{p.imageUrl ? (
-									<img class="row__thumb" src={p.imageUrl} alt="" loading="lazy" />
-								) : (
-									<span class="row__thumb" />
-								)}
+								<Cover src={p.imageUrl} class="row__thumb" />
 								<span class="row__main">
 									<span class="row__title">{p.name}</span>
 									<span class="row__sub">

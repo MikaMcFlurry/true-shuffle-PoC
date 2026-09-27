@@ -1,9 +1,10 @@
 /**
- * The radio's parts: display, tuner scale, keys.
+ * The radio's parts: display, tuner scale, keys, covers.
  */
 
-import { ChevronLeft } from "lucide-preact";
+import { ChevronLeft, Disc3, Music2, Speaker } from "lucide-preact";
 import type { ComponentChildren } from "preact";
+import { useState } from "preact/hooks";
 import { num } from "../format";
 import { back } from "../router";
 
@@ -13,6 +14,13 @@ export interface RoundReading {
 	heard: number | null;
 	total: number | null;
 }
+
+// The scale's graduation, drawn once: minor ticks every 2 %, majors every 10 %.
+const MINOR = Array.from({ length: 51 }, (_, i) => i)
+	.filter((i) => i % 5 !== 0)
+	.map((i) => `M${i * 2} 12V7`)
+	.join("");
+const MAJOR = Array.from({ length: 11 }, (_, i) => `M${i * 10} 12V1`).join("");
 
 export function Scale(props: {
 	pos: number;
@@ -32,7 +40,15 @@ export function Scale(props: {
 				role="img"
 				aria-label={props.label}
 			>
-				<div class="scale__ticks" />
+				<svg
+					class="scale__ticks"
+					viewBox="0 0 100 12"
+					preserveAspectRatio="none"
+					aria-hidden="true"
+				>
+					<path class="scale__minor" d={MINOR} />
+					<path class="scale__major" d={MAJOR} />
+				</svg>
 				<div class="scale__base" />
 				<div class="scale__fill" />
 				<div class="scale__track">
@@ -62,6 +78,60 @@ export function Scale(props: {
 	);
 }
 
+/**
+ * A song's cover, or a drawn stand-in when there is none or it fails to
+ * load. Always decorative: title and artist sit right beside it.
+ */
+export function Cover(props: { src: string | null | undefined; class?: string }) {
+	const [failed, setFailed] = useState<string | null>(null);
+	const cls = props.class ? `cover ${props.class}` : "cover";
+	const src = props.src;
+	if (!src || failed === src) {
+		return (
+			<span class={`${cls} cover--empty`} aria-hidden="true">
+				<Music2 class="cover__icon" aria-hidden="true" />
+			</span>
+		);
+	}
+	return (
+		<img
+			class={cls}
+			src={src}
+			alt=""
+			loading="lazy"
+			decoding="async"
+			onError={() => setFailed(src)}
+		/>
+	);
+}
+
+/** The cover in the display window, with the light it casts onto the glass. */
+function DisplayArt({ src }: { src: string | null }) {
+	const [failed, setFailed] = useState<string | null>(null);
+	if (src === null || failed === src) {
+		return (
+			<div class="display__art" aria-hidden="true">
+				<span class="display__cover display__cover--empty">
+					<Disc3 class="display__disc" aria-hidden="true" />
+				</span>
+			</div>
+		);
+	}
+	return (
+		<div class="display__art" aria-hidden="true">
+			<img key={`glow-${src}`} class="display__glow" src={src} alt="" decoding="async" />
+			<img
+				key={src}
+				class="display__cover"
+				src={src}
+				alt=""
+				decoding="async"
+				onError={() => setFailed(src)}
+			/>
+		</div>
+	);
+}
+
 export type Indicator = "UNGEHÖRT" | "FAVORIT" | "ENTDECKUNG" | "GAST" | "PAUSE";
 
 const ALL: Indicator[] = ["UNGEHÖRT", "FAVORIT", "ENTDECKUNG", "GAST", "PAUSE"];
@@ -73,19 +143,22 @@ export function Display(props: {
 	nameGhost?: boolean;
 	song?: ComponentChildren;
 	artist?: ComponentChildren;
-	/** Song time, shown beside the artist — not beside the round's scale. */
+	/** Song time, shown with the song — not beside the round's scale. */
 	time?: string | null;
 	line?: ComponentChildren;
 	message?: { text: string; tone: "info" | "warn" | "error" } | null;
 	scale?: { pos: number; label: string; reading?: RoundReading | null } | null;
+	/** Cover beside the song. Omitted: not a song, no slot. `src: null`: the drawn stand-in. */
+	art?: { src: string | null } | null;
 	tuning?: boolean;
 	live?: boolean;
-	/** Let song and artist wrap (sign-in copy), instead of one line each. */
+	/** Let song and artist wrap (sign-in copy), instead of clamping them. */
 	wrap?: boolean;
 }) {
+	const hasText = !!(props.song || props.artist || props.time || props.device);
 	return (
 		<section
-			class={`display${props.tuning ? " display--tuning" : ""}${props.wrap ? " display--wrap" : ""}`}
+			class={`display${props.art ? " display--art" : ""}${props.tuning ? " display--tuning" : ""}${props.wrap ? " display--wrap" : ""}`}
 			aria-label="Anzeige"
 			aria-live={props.live ? "polite" : undefined}
 		>
@@ -99,20 +172,30 @@ export function Display(props: {
 						{i}
 					</span>
 				))}
-				{props.device ? <span class="display__device">{props.device}</span> : null}
 			</div>
 			<p class="display__name">
 				<span class={props.nameGhost ? "ghost" : ""}>{props.name}</span>
 			</p>
-			{props.song ? <div class="display__song">{props.song}</div> : null}
-			{props.artist || props.time ? (
-				<div class="display__artist">
-					<span>{props.artist}</span>
-					{props.time ? (
-						// Ticks every second: never announced.
-						<span class="num display__time" aria-live="off">
-							{props.time}
-						</span>
+			{props.art ? <DisplayArt src={props.art.src} /> : null}
+			{hasText ? (
+				<div class="display__text">
+					{props.song ? <div class="display__song">{props.song}</div> : null}
+					{props.artist ? <div class="display__artist">{props.artist}</div> : null}
+					{props.time || props.device ? (
+						<div class="display__meta">
+							{props.time ? (
+								// Ticks every second: never announced.
+								<span class="num display__time" aria-live="off">
+									{props.time}
+								</span>
+							) : null}
+							{props.device ? (
+								<span class="display__device">
+									<Speaker class="display__devicon" aria-hidden="true" />
+									<span>{props.device}</span>
+								</span>
+							) : null}
+						</div>
 					) : null}
 				</div>
 			) : null}
@@ -140,7 +223,7 @@ export function Display(props: {
 
 /**
  * A page's head: the back key and a small display window naming the page,
- * the way a radio's menu shows where you are on its LCD.
+ * the way a radio's menu shows where you are on its display.
  */
 export function PageBar(props: {
 	title: ComponentChildren;

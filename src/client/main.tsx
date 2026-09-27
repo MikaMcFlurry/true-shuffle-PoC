@@ -1,5 +1,6 @@
 import "@fontsource-variable/overpass/wght.css";
-import "@fontsource-variable/doto/wght.css";
+// Doto with both axes: weight sets the dot size, ROND makes the dots round.
+import "@fontsource-variable/doto/full.css";
 import "./styles.css";
 import { render } from "preact";
 import { App } from "./app";
