@@ -1,4 +1,4 @@
-import { Display } from "../components/radio";
+import { Cabinet, Dial, DialText } from "../components/radio";
 import { DECK_PREFIX } from "../format";
 
 const LOGIN_MESSAGES: Record<string, string> = {
@@ -9,6 +9,7 @@ const LOGIN_MESSAGES: Record<string, string> = {
 		"Dieses Spotify-Konto ist für true-shuffle nicht freigeschaltet. Spotify erlaubt privaten Apps nur fünf Konten — frag den Besitzer der App.",
 };
 
+/** The radio, switched off: the dial says what it is, the one key switches it on. */
 export function SignIn() {
 	const params = new URLSearchParams(location.search);
 	const login = params.get("login");
@@ -20,28 +21,32 @@ export function SignIn() {
 			: null;
 	return (
 		<div class="power">
-			<div class="main">
-				<Display
-					lit={[]}
-					name="true-shuffle"
-					song="Deine Sender mit Gedächtnis"
-					artist="Keine schnellen Wiederholungen. Alles kommt irgendwann dran."
-					message={message}
-					scale={{ pos: 0, label: "" }}
-					wrap
-				/>
-				<p class="power__text">
-					true-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken — auch
-					über Tage, Geräte und alles, was du nebenbei hörst.
-				</p>
-				<a class="key key--lit btn btn--wide" href="/auth/login">
-					Mit Spotify anmelden
-				</a>
-				<p class="power__fine">
-					Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
-					…“ in deinem Konto an.
-				</p>
-			</div>
+			<Cabinet eye="off">
+				<Dial label="Senderskala" at={null}>
+					<DialText
+						title="Deine Sender mit Gedächtnis"
+						sub="Keine schnellen Wiederholungen. Alles kommt irgendwann dran."
+						message={message}
+					/>
+				</Dial>
+				<div class="card">
+					<div class="card__paper">
+						<p class="power__text">
+							true-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken —
+							auch über Tage, Geräte und alles, was du nebenbei hörst.
+						</p>
+					</div>
+				</div>
+				<div class="keys keys--one">
+					<a class="pkey pkey--brass" href="/auth/login">
+						Mit Spotify anmelden
+					</a>
+				</div>
+			</Cabinet>
+			<p class="power__fine">
+				Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
+				…“ in deinem Konto an.
+			</p>
 		</div>
 	);
 }

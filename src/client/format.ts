@@ -1,13 +1,10 @@
 const nf = new Intl.NumberFormat("de-DE");
 
-/**
- * Separator for short facts on one line. Overpass draws U+00B7 off-centre,
- * so the display uses the centred bullet operator instead.
- */
-export const SEP = "\u00a0\u2219 ";
+/** Separator for short facts on one line: a middle dot, kept to what it follows. */
+export const SEP = "\u00a0\u00b7 ";
 
-/** How the station playlists are named in Spotify, as the interface writes it. */
-export const DECK_PREFIX = "true-shuffle\u00a0\u2219\u00a0";
+/** How the station playlists are named in Spotify ("true-shuffle · Sender"). */
+export const DECK_PREFIX = "true-shuffle\u00a0\u00b7\u00a0";
 
 export function num(n: number): string {
 	return nf.format(n);
@@ -48,9 +45,4 @@ export function day(at: number): string {
 	if (d.toDateString() === today.toDateString()) return "Heute";
 	if (d.toDateString() === y.toDateString()) return "Gestern";
 	return df.format(d);
-}
-
-/** The radio display shows station names in capitals, like an RDS name. */
-export function rds(name: string): string {
-	return name.toLocaleUpperCase("de-DE");
 }

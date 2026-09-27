@@ -1,11 +1,14 @@
 /**
- * The radio's parts: display, tuner scale, keys, covers.
+ * The radio's parts: the walnut cabinet with its speaker cloth, badge and
+ * magic eye; the backlit glass dial with its pointer; the program card; and
+ * the printed pieces the pages are made of (sheet head, sections, covers,
+ * the printed round scale).
  */
 
 import { ChevronLeft, Disc3, Music2, Speaker } from "lucide-preact";
 import type { ComponentChildren } from "preact";
-import { useState } from "preact/hooks";
-import { num } from "../format";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
+import { num, SEP } from "../format";
 import { back } from "../router";
 
 /** A round on the scale: which one, how far, out of how many songs. */
@@ -15,16 +18,297 @@ export interface RoundReading {
 	total: number | null;
 }
 
-// The scale's graduation, drawn once: minor ticks every 2 %, majors every 10 %.
+// ------------------------------------------------------------ magic eye
+
+/**
+ * The magic eye (an EM tube): a green fan with a dark shadow. The shadow
+ * closes when a station is tuned in, opens wide when nothing is received.
+ * `tuning` plays the tuning sweep once: it opens, closes on the station,
+ * opens a little as the pointer overshoots, and settles.
+ */
+export type Eye = "off" | "open" | "weak" | "tuned" | "tuning";
+
+export function MagicEye({ state }: { state: Eye }) {
+	return (
+		<span class={`eye eye--${state}`} aria-hidden="true">
+			<span class="eye__lens">
+				<span class="eye__fan eye__fan--a" />
+				<span class="eye__fan eye__fan--b" />
+				<span class="eye__cap" />
+			</span>
+		</span>
+	);
+}
+
+// -------------------------------------------------------------- cabinet
+
+/**
+ * The cabinet: walnut, a brass trim, the speaker cloth with the badge and
+ * the magic eye, and the front with whatever the screen needs below it.
+ */
+export function Cabinet(props: {
+	eye: Eye;
+	/** Changes on every new tuning, so the eye plays its sweep again. */
+	eyeKey?: string | number;
+	children: ComponentChildren;
+}) {
+	return (
+		<div class="cabinet">
+			<div class="cabinet__cloth">
+				<h1 class="badge">true-shuffle</h1>
+				<MagicEye key={props.eyeKey} state={props.eye} />
+			</div>
+			<div class="cabinet__front">{props.children}</div>
+		</div>
+	);
+}
+
+// ----------------------------------------------------------------- dial
+
+export type Indicator = "Ungehört" | "Favorit" | "Entdeckung" | "Gast" | "Pause";
+
+const LAMPS: Indicator[] = ["Ungehört", "Favorit", "Entdeckung", "Gast", "Pause"];
+
+/** Where the pointer rests when no station is tuned: the dial's left end. */
+const REST = 18;
+
+/**
+ * The glass dial. Whatever is printed on it goes in `children`; stations
+ * carry `data-at` and a `.station__name`, and the pointer stands on the one
+ * named by `at`, gliding there on its string when it changes.
+ */
+export function Dial(props: {
+	label: string;
+	at: string | null;
+	/** Sweep across the whole dial (Suchlauf, switching on). */
+	sweep?: boolean;
+	lamps?: Indicator[] | null;
+	children: ComponentChildren;
+}) {
+	const field = useRef<HTMLDivElement>(null);
+	const at = useRef(props.at);
+	at.current = props.at;
+	const [ready, setReady] = useState(false);
+
+	const place = useRef(() => {});
+	place.current = () => {
+		const f = field.current;
+		if (!f) return;
+		const target = at.current
+			? f.querySelector<HTMLElement>(`[data-at="${at.current}"] .station__name`)
+			: null;
+		let x = REST;
+		if (target) {
+			const box = f.getBoundingClientRect();
+			const r = target.getBoundingClientRect();
+			x = r.left + r.width / 2 - box.left;
+		}
+		f.style.setProperty("--x", `${Math.round(x)}px`);
+	};
+
+	// Every render may move the names (a lit name is set heavier): measure again.
+	useLayoutEffect(() => place.current());
+
+	useEffect(() => {
+		const f = field.current;
+		if (!f) return;
+		const ro = new ResizeObserver(() => place.current());
+		ro.observe(f);
+		void document.fonts?.ready.then(() => place.current());
+		// The first placement is where the pointer already stands; later ones glide.
+		const t = window.setTimeout(() => setReady(true), 120);
+		return () => {
+			ro.disconnect();
+			window.clearTimeout(t);
+		};
+	}, []);
+
+	return (
+		<section
+			class={`dial${ready ? " dial--ready" : ""}${props.sweep ? " dial--sweep" : ""}`}
+			aria-label={props.label}
+		>
+			<div class="dial__glass">
+				<div class="dial__field" ref={field}>
+					<span class="dial__string" aria-hidden="true" />
+					<span class="dial__pointer" aria-hidden="true" />
+					{props.children}
+				</div>
+				{props.lamps ? (
+					<p class="dial__lamps">
+						{LAMPS.map((i) => {
+							const on = props.lamps?.includes(i) ?? false;
+							return (
+								<span key={i} class={`seg${on ? " on" : ""}`} aria-hidden={!on}>
+									{i}
+								</span>
+							);
+						})}
+					</p>
+				) : null}
+			</div>
+		</section>
+	);
+}
+
+/** Words printed on the dial instead of stations: sign-in, switching on, a fault, Suchlauf. */
+export function DialText(props: {
+	title: ComponentChildren;
+	sub?: ComponentChildren;
+	message?: { text: string; tone: "info" | "warn" | "error" } | null;
+}) {
+	return (
+		<div class="dial__text">
+			<p class="dial__title">{props.title}</p>
+			{props.sub ? <p class="dial__sub">{props.sub}</p> : null}
+			{props.message ? (
+				<p
+					class={`dial__msg${props.message.tone === "error" ? " dial__msg--error" : ""}`}
+					role="status"
+				>
+					{props.message.text}
+				</p>
+			) : null}
+			<span class="dial__scale" aria-hidden="true" />
+		</div>
+	);
+}
+
+/** A station name may break after a slash ("Rock/Metall"), never inside a word. */
+export function Breakable({ text }: { text: string }) {
+	const parts = text.split("/");
+	return (
+		<>
+			{parts.map((p, i) => (
+				<span key={i}>
+					{p}
+					{i < parts.length - 1 ? (
+						<>
+							/<wbr />
+						</>
+					) : null}
+				</span>
+			))}
+		</>
+	);
+}
+
+// --------------------------------------------------------- program card
+
+/** The song's cover on the program card, or a drawn record when there is none. */
+function CardArt({ src }: { src: string | null }) {
+	const [failed, setFailed] = useState<string | null>(null);
+	if (src === null || failed === src) {
+		return (
+			<span class="card__art card__art--empty" aria-hidden="true">
+				<Disc3 class="card__disc" aria-hidden="true" />
+			</span>
+		);
+	}
+	return (
+		<img
+			key={src}
+			class="card__art"
+			src={src}
+			alt=""
+			decoding="async"
+			onError={() => setFailed(src)}
+		/>
+	);
+}
+
+/**
+ * The program card behind its brass frame: which station, what song, why it
+ * plays, and how far the round is. It is the radio's "Anzeige".
+ */
+export function ProgramCard(props: {
+	station: string | null;
+	/** A name that is not a station (idle, Spotify outside a station) prints quieter. */
+	quiet?: boolean;
+	song?: ComponentChildren;
+	artist?: ComponentChildren;
+	time?: string | null;
+	device?: string | null;
+	line?: ComponentChildren;
+	message?: { text: string; tone: "info" | "warn" | "error" } | null;
+	reading?: RoundReading | null;
+	pos?: number | null;
+	art?: { src: string | null } | null;
+	live?: boolean;
+}) {
+	const r = props.reading;
+	const pos = Math.min(1, Math.max(0, props.pos ?? 0));
+	return (
+		<section
+			class={`card${props.art ? " card--art" : ""}`}
+			aria-label="Anzeige"
+			aria-live={props.live ? "polite" : undefined}
+		>
+			<div class="card__paper">
+				{props.station ? (
+					<p class={`card__station${props.quiet ? " card__station--quiet" : ""}`}>
+						{props.station}
+					</p>
+				) : null}
+				{props.art ? <CardArt src={props.art.src} /> : null}
+				<div class="card__text">
+					{props.song ? <p class="card__song">{props.song}</p> : null}
+					{props.artist ? <p class="card__artist">{props.artist}</p> : null}
+					{props.time || props.device ? (
+						<p class="card__meta">
+							{props.time ? (
+								// Ticks every second: never announced.
+								<span class="num card__time" aria-live="off">
+									{props.time}
+								</span>
+							) : null}
+							{props.device ? (
+								<span class="card__device">
+									<Speaker class="card__devicon" aria-hidden="true" />
+									<span>{props.device}</span>
+								</span>
+							) : null}
+						</p>
+					) : null}
+				</div>
+				{props.message ? (
+					<p
+						class={`card__msg${props.message.tone === "error" ? " card__msg--error" : ""}`}
+						role="status"
+					>
+						{props.message.text}
+					</p>
+				) : props.line ? (
+					<p class="card__line">{props.line}</p>
+				) : null}
+				{r ? (
+					<div class="card__round">
+						<p class="num">
+							Runde {r.round}
+							{r.heard !== null && r.total !== null
+								? `${SEP}${num(r.heard)} von ${num(r.total)} gehört`
+								: `${SEP}zählt ab dem ersten Song`}
+						</p>
+						<span class="card__rule" style={{ "--pos": String(pos) }} aria-hidden="true" />
+					</div>
+				) : null}
+			</div>
+		</section>
+	);
+}
+
+// ------------------------------------------------------ printed scale
+
+// The graduation, drawn once: minor ticks every 2 %, majors every 10 %.
 const MINOR = Array.from({ length: 51 }, (_, i) => i)
 	.filter((i) => i % 5 !== 0)
-	.map((i) => `M${i * 2} 12V7`)
+	.map((i) => `M${i * 2} 12V8`)
 	.join("");
-const MAJOR = Array.from({ length: 11 }, (_, i) => `M${i * 10} 12V1`).join("");
+const MAJOR = Array.from({ length: 11 }, (_, i) => `M${i * 10} 12V3`).join("");
 
+/** A round printed as a tuning scale on the program sheet, with a red needle. */
 export function Scale(props: {
 	pos: number;
-	tuning?: boolean;
 	label?: string;
 	/** Numbered majors (0 … total) and the round's readout under the band. */
 	reading?: RoundReading | null;
@@ -33,13 +317,8 @@ export function Scale(props: {
 	const r = props.reading;
 	const total = r?.total ?? null;
 	return (
-		<div class={`scale-unit${r ? " scale-unit--read" : ""}`}>
-			<div
-				class={`scale${props.tuning ? " scale--tuning" : ""}`}
-				style={{ "--pos": String(pos) }}
-				role="img"
-				aria-label={props.label}
-			>
+		<div class="scale-unit">
+			<div class="scale" style={{ "--pos": String(pos) }} role="img" aria-label={props.label}>
 				<svg
 					class="scale__ticks"
 					viewBox="0 0 100 12"
@@ -49,8 +328,6 @@ export function Scale(props: {
 					<path class="scale__minor" d={MINOR} />
 					<path class="scale__major" d={MAJOR} />
 				</svg>
-				<div class="scale__base" />
-				<div class="scale__fill" />
 				<div class="scale__track">
 					<div class="scale__needle" />
 				</div>
@@ -77,6 +354,8 @@ export function Scale(props: {
 		</div>
 	);
 }
+
+// ---------------------------------------------------------------- covers
 
 /**
  * A song's cover, or a drawn stand-in when there is none or it fails to
@@ -105,125 +384,11 @@ export function Cover(props: { src: string | null | undefined; class?: string })
 	);
 }
 
-/** The cover in the display window, with the light it casts onto the glass. */
-function DisplayArt({ src }: { src: string | null }) {
-	const [failed, setFailed] = useState<string | null>(null);
-	if (src === null || failed === src) {
-		return (
-			<div class="display__art" aria-hidden="true">
-				<span class="display__cover display__cover--empty">
-					<Disc3 class="display__disc" aria-hidden="true" />
-				</span>
-			</div>
-		);
-	}
-	return (
-		<div class="display__art" aria-hidden="true">
-			<img key={`glow-${src}`} class="display__glow" src={src} alt="" decoding="async" />
-			<img
-				key={src}
-				class="display__cover"
-				src={src}
-				alt=""
-				decoding="async"
-				onError={() => setFailed(src)}
-			/>
-		</div>
-	);
-}
-
-export type Indicator = "UNGEHÖRT" | "FAVORIT" | "ENTDECKUNG" | "GAST" | "PAUSE";
-
-const ALL: Indicator[] = ["UNGEHÖRT", "FAVORIT", "ENTDECKUNG", "GAST", "PAUSE"];
-
-export function Display(props: {
-	lit: Indicator[];
-	device?: string | null;
-	name: string;
-	nameGhost?: boolean;
-	song?: ComponentChildren;
-	artist?: ComponentChildren;
-	/** Song time, shown with the song — not beside the round's scale. */
-	time?: string | null;
-	line?: ComponentChildren;
-	message?: { text: string; tone: "info" | "warn" | "error" } | null;
-	scale?: { pos: number; label: string; reading?: RoundReading | null } | null;
-	/** Cover beside the song. Omitted: not a song, no slot. `src: null`: the drawn stand-in. */
-	art?: { src: string | null } | null;
-	tuning?: boolean;
-	live?: boolean;
-	/** Let song and artist wrap (sign-in copy), instead of clamping them. */
-	wrap?: boolean;
-}) {
-	const hasText = !!(props.song || props.artist || props.time || props.device);
-	return (
-		<section
-			class={`display${props.art ? " display--art" : ""}${props.tuning ? " display--tuning" : ""}${props.wrap ? " display--wrap" : ""}`}
-			aria-label="Anzeige"
-			aria-live={props.live ? "polite" : undefined}
-		>
-			<div class="display__ind">
-				{ALL.map((i) => (
-					<span
-						key={i}
-						class={`seg${props.lit.includes(i) ? " on" : ""}`}
-						aria-hidden={!props.lit.includes(i)}
-					>
-						{i}
-					</span>
-				))}
-			</div>
-			<p class="display__name">
-				<span class={props.nameGhost ? "ghost" : ""}>{props.name}</span>
-			</p>
-			{props.art ? <DisplayArt src={props.art.src} /> : null}
-			{hasText ? (
-				<div class="display__text">
-					{props.song ? <div class="display__song">{props.song}</div> : null}
-					{props.artist ? <div class="display__artist">{props.artist}</div> : null}
-					{props.time || props.device ? (
-						<div class="display__meta">
-							{props.time ? (
-								// Ticks every second: never announced.
-								<span class="num display__time" aria-live="off">
-									{props.time}
-								</span>
-							) : null}
-							{props.device ? (
-								<span class="display__device">
-									<Speaker class="display__devicon" aria-hidden="true" />
-									<span>{props.device}</span>
-								</span>
-							) : null}
-						</div>
-					) : null}
-				</div>
-			) : null}
-			{props.message ? (
-				<div
-					class={`display__msg${props.message.tone === "error" ? " display__msg--error" : ""}`}
-					role="status"
-				>
-					{props.message.text}
-				</div>
-			) : props.line ? (
-				<div class="display__line">{props.line}</div>
-			) : null}
-			{props.scale ? (
-				<Scale
-					pos={props.scale.pos}
-					tuning={props.tuning}
-					label={props.scale.label}
-					reading={props.scale.reading}
-				/>
-			) : null}
-		</section>
-	);
-}
+// ------------------------------------------------------- program sheets
 
 /**
- * A page's head: the back key and a small display window naming the page,
- * the way a radio's menu shows where you are on its display.
+ * A page's head, printed at the top of its sheet: a small key back to where
+ * the listener came from, the title, a line under it.
  */
 export function PageBar(props: {
 	title: ComponentChildren;
@@ -235,23 +400,24 @@ export function PageBar(props: {
 	children?: ComponentChildren;
 }) {
 	return (
-		<header class="page__bar">
+		<header class="masthead">
 			{props.noBack ? null : (
 				<button
 					type="button"
-					class="key page__back"
+					class="key key--back"
 					onClick={() => back(props.backTo ?? "/")}
 					aria-label="Zurück"
 				>
 					<ChevronLeft class="icon" aria-hidden="true" />
+					<span aria-hidden="true">Zurück</span>
 				</button>
 			)}
-			<div class="page__lcd">
-				<h1 class="page__title">{props.title}</h1>
-				{props.sub ? <p class="page__sub">{props.sub}</p> : null}
-				{props.children}
+			<div class="masthead__plate">
+				<h1 class="masthead__title">{props.title}</h1>
+				{props.sub ? <p class="masthead__sub">{props.sub}</p> : null}
 			</div>
 			{props.action}
+			{props.children}
 		</header>
 	);
 }

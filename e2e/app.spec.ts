@@ -75,7 +75,7 @@ test.describe("a listener's day", () => {
 		await signIn(page);
 		await page.getByRole("button", { name: "Indie & Gitarren starten" }).click();
 		const display = page.getByRole("region", { name: "Anzeige" });
-		await expect(display).toContainText("INDIE & GITARREN");
+		await expect(display).toContainText("Indie & Gitarren");
 		await expect(display).toContainText("Noch nicht gehört in Runde 1");
 		await expect(display).toContainText("Mikas iPhone");
 
@@ -94,7 +94,7 @@ test.describe("a listener's day", () => {
 
 	test("skips and bans a song from the transport keys", async ({ page }) => {
 		await signIn(page);
-		const song = page.locator(".display__song");
+		const song = page.getByRole("region", { name: "Anzeige" }).locator(".card__song");
 		await expect(song).not.toBeEmpty();
 		const first = await song.textContent();
 

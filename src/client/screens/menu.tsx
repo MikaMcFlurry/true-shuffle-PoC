@@ -35,7 +35,13 @@ function deviceType(t: string): string {
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store } from "../store";
 
-/** A faceplate key with a printed legend and a small line under it. */
+const ILLUMINATIONS = [
+	["day", "Tag"],
+	["auto", "Automatisch"],
+	["night", "Nacht"],
+] as const;
+
+/** An ivory key on the back panel, its legend printed on it and a small line under it. */
 function MenuKey(props: { href: string; legend: string; sub: string; value?: string }) {
 	return (
 		<li>
@@ -68,8 +74,9 @@ export function MenuScreen({ state }: { state: AppState }) {
 			})
 			.catch((e: Error) => store.say(e.message, "error"));
 
+	// The menu is the radio's back panel: hardboard, printed labels, real switches.
 	return (
-		<div class="page">
+		<div class="page page--back">
 			<PageBar title="Menü" sub={state.profile.name} backTo="/" />
 
 			<Section title="Gäste" id="guest">
@@ -77,20 +84,28 @@ export function MenuScreen({ state }: { state: AppState }) {
 					<label class="row">
 						<span class="row__main">
 							<span class="row__title">Gast-Modus</span>
-							<span class="row__sub">
+							<span class="row__sub row__sub--wrap">
 								{guest.active && guest.until
 									? `An bis ${clock(guest.until)} — was jetzt läuft, zählt nicht`
 									: "Hört jemand anderes über dein Konto? Dann zählt nichts davon."}
 							</span>
 						</span>
-						<input
-							type="checkbox"
-							role="switch"
-							class="switch"
-							aria-checked={guest.active}
-							checked={guest.active}
-							onChange={(e) => toggleGuest((e.target as HTMLInputElement).checked)}
-						/>
+						<span class="lever">
+							<span class="lever__legend" aria-hidden="true">
+								Aus
+							</span>
+							<input
+								type="checkbox"
+								role="switch"
+								class="switch"
+								aria-checked={guest.active}
+								checked={guest.active}
+								onChange={(e) => toggleGuest((e.target as HTMLInputElement).checked)}
+							/>
+							<span class="lever__legend" aria-hidden="true">
+								An
+							</span>
+						</span>
 					</label>
 					{!guest.active ? (
 						<div class="row">
@@ -147,28 +162,32 @@ export function MenuScreen({ state }: { state: AppState }) {
 				</ul>
 			</Section>
 			<Section title="Beleuchtung" id="illum">
-				<div class="presetrow" role="toolbar" aria-labelledby="illum">
-					{(
-						[
-							["auto", "Automatisch"],
-							["day", "Tag"],
-							["night", "Nacht"],
-						] as const
-					).map(([v, label]) => (
-						<button
-							key={v}
-							type="button"
-							aria-pressed={illum === v}
-							class="key btn btn--small"
-							onClick={() => {
-								setIllumination(v);
-								setIllum(v);
-							}}
-						>
-							{label}
-						</button>
-					))}
-				</div>
+				{/* A rotary switch: the knob points at the chosen light. */}
+				<fieldset class="dimmer" aria-labelledby="illum">
+					<div class="dimmer__legends">
+						{ILLUMINATIONS.map(([v, label]) => (
+							<button
+								key={v}
+								type="button"
+								aria-pressed={illum === v}
+								class="dimmer__pos"
+								onClick={() => {
+									setIllumination(v);
+									setIllum(v);
+								}}
+							>
+								{label}
+							</button>
+						))}
+					</div>
+					<span
+						class="knob"
+						style={{ "--turn": `${ILLUMINATIONS.findIndex(([v]) => v === illum) * 50 - 50}deg` }}
+						aria-hidden="true"
+					>
+						<span class="knob__cap" />
+					</span>
+				</fieldset>
 			</Section>
 
 			<Section title="Konto" id="account">
@@ -281,8 +300,8 @@ export function HistoryScreen() {
 			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
 			{items && items.length === 0 ? (
 				<p class="lede">
-					Noch nichts gehört. Sobald du etwas in Spotify hörst, steht es hier — egal ob über True
-					Shuffle oder nicht.
+					Noch nichts gehört. Sobald du etwas in Spotify hörst, steht es hier — egal ob über
+					true-shuffle oder nicht.
 				</p>
 			) : null}
 			{groups.map(([d, list]) => (
@@ -422,7 +441,7 @@ export function AboutScreen() {
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Autoplay</span>
-							<span class="row__sub" style={{ whiteSpace: "normal" }}>
+							<span class="row__sub row__sub--wrap">
 								Ist eine Playlist zu Ende, spielt Spotify eigene Empfehlungen. Die Sender sind lang
 								genug, dass das kaum passiert.
 							</span>
@@ -431,16 +450,16 @@ export function AboutScreen() {
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Smart Shuffle</span>
-							<span class="row__sub" style={{ whiteSpace: "normal" }}>
-								Lässt sich per Schnittstelle nicht abschalten und mischt fremde Songs dazu. True
-								Shuffle sagt dir, wenn es an ist.
+							<span class="row__sub row__sub--wrap">
+								Lässt sich per Schnittstelle nicht abschalten und mischt fremde Songs dazu.
+								true-shuffle sagt dir, wenn es an ist.
 							</span>
 						</span>
 					</li>
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Premium</span>
-							<span class="row__sub" style={{ whiteSpace: "normal" }}>
+							<span class="row__sub row__sub--wrap">
 								Starten und Überspringen aus der App geht nur mit Spotify Premium.
 							</span>
 						</span>
@@ -448,7 +467,7 @@ export function AboutScreen() {
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Höchstens fünf Konten</span>
-							<span class="row__sub" style={{ whiteSpace: "normal" }}>
+							<span class="row__sub row__sub--wrap">
 								Spotify erlaubt privaten Apps nur fünf freigeschaltete Nutzer.
 							</span>
 						</span>
@@ -551,7 +570,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 				<li class="row">
 					<span class="row__main">
 						<span class="row__title">1. In Spotify anfordern</span>
-						<span class="row__sub" style={{ whiteSpace: "normal" }}>
+						<span class="row__sub row__sub--wrap">
 							spotify.com → Konto → Datenschutz → „Erweiterter Streamingverlauf“. Spotify schickt
 							die Dateien per Mail (bis zu 30 Tage).
 						</span>
@@ -560,7 +579,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 				<li class="row">
 					<span class="row__main">
 						<span class="row__title">2. Hier auswählen</span>
-						<span class="row__sub" style={{ whiteSpace: "normal" }}>
+						<span class="row__sub row__sub--wrap">
 							Alle Dateien „Streaming_History_Audio_…json“ auf einmal.
 						</span>
 					</span>

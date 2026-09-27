@@ -22,41 +22,42 @@ function Reason({ kind }: { kind: SlotKind }) {
 	return <span class={`reason${kind !== "fresh" ? " reason--lit" : ""}`}>{KIND[kind]}</span>;
 }
 
+/**
+ * "Entdecken ↔ Vertraut" as a tone control: a small lit scale window with a
+ * red pointer, the way a radio shows where its tone knob stands.
+ */
 function Balance(props: { value: number; onChange: (v: number) => void; rules: StationRules }) {
-	const segs = 21;
-	const pos = Math.round((props.value / 100) * (segs - 1));
 	const shares = sharesForRules({ ...props.rules, mix: props.value });
 	return (
-		<div class="balance">
-			<div class="balance__ends" aria-hidden="true">
-				<span>ENTDECKEN</span>
-				<span>VERTRAUT</span>
+		<div class="tone">
+			<div class="tone__ends" aria-hidden="true">
+				<span>Entdecken</span>
+				<span>Vertraut</span>
 			</div>
-			<div class="balance__track">
-				<div class="balance__segs" aria-hidden="true">
-					{Array.from({ length: segs }, (_, i) => (
-						<span key={i} class={i === pos ? "on" : ""} />
-					))}
+			<div class="tone__window">
+				<div class="tone__glass" style={{ "--v": String(props.value / 100) }}>
+					<span class="tone__ticks" aria-hidden="true" />
+					<span class="tone__pointer" aria-hidden="true" />
+					<input
+						type="range"
+						min={0}
+						max={100}
+						step={5}
+						value={props.value}
+						aria-label="Entdecken oder Vertraut"
+						aria-valuetext={`${pct(shares.fresh)} ungehört, ${pct(shares.favorite)} Favoriten, ${pct(shares.discovery)} Neuentdeckungen`}
+						onInput={(e) => props.onChange(Number((e.target as HTMLInputElement).value))}
+					/>
+					<span class="tone__focus" />
 				</div>
-				<input
-					type="range"
-					min={0}
-					max={100}
-					step={5}
-					value={props.value}
-					aria-label="Entdecken oder Vertraut"
-					aria-valuetext={`${pct(shares.fresh)} ungehört, ${pct(shares.favorite)} Favoriten, ${pct(shares.discovery)} Neuentdeckungen`}
-					onInput={(e) => props.onChange(Number((e.target as HTMLInputElement).value))}
-				/>
-				<span class="balance__focus" />
 			</div>
-			<div class="balance__shares num">
+			<p class="tone__shares num">
 				≈ <span>{pct(shares.fresh)} ungehört</span>
 				{SEP}
 				<span>{pct(shares.favorite)} Favoriten</span>
 				{SEP}
 				<span>{pct(shares.discovery)} Neuentdeckungen</span>
-			</div>
+			</p>
 		</div>
 	);
 }
@@ -326,7 +327,9 @@ export function Station({
 
 			<Section title="Mischung" id="mix">
 				<Balance value={value} rules={rules} onChange={onMix} />
-				<div class="presetrow">
+				{/* A tone register: three piano keys, the chosen one stays down. */}
+				<fieldset class="keys keys--register">
+					<legend class="sr-only">Klangregister</legend>
 					{(
 						[
 							["Entdecker", PRESETS.entdecker],
@@ -337,14 +340,14 @@ export function Station({
 						<button
 							key={label}
 							type="button"
-							class="key btn btn--small"
+							class={`pkey${value === v ? " pkey--down" : ""}`}
 							aria-pressed={value === v}
 							onClick={() => onMix(v)}
 						>
-							{label}
+							<span class="pkey__legend">{label}</span>
 						</button>
 					))}
-				</div>
+				</fieldset>
 			</Section>
 
 			{np && np.stationId === id ? (
@@ -484,7 +487,7 @@ export function Station({
 			<details class="more">
 				<summary>
 					Erweitert
-					<ChevronDown class="icon" aria-hidden="true" />
+					<ChevronDown class="icon more__chev" aria-hidden="true" />
 				</summary>
 				<div class="more__body">
 					<div class="field">
@@ -558,27 +561,35 @@ export function Station({
 									/>
 									<span>
 										<strong>{t}</strong>
-										<span>{sub}</span>
+										<span class="radio__sub">{sub}</span>
 									</span>
 								</label>
 							))}
 						</div>
 					</fieldset>
-					<label class="row" style={{ padding: 0, minHeight: 44 }}>
+					<label class="row row--switch">
 						<span class="row__main">
 							<span class="row__title">Neuentdeckungen</span>
 							<span class="row__sub">Songs, die nicht in deinen Playlists stehen</span>
 						</span>
-						<input
-							type="checkbox"
-							role="switch"
-							class="switch"
-							aria-checked={rules.discoveryEnabled}
-							checked={rules.discoveryEnabled}
-							onChange={(e) =>
-								setRule({ discoveryEnabled: (e.target as HTMLInputElement).checked })
-							}
-						/>
+						<span class="lever">
+							<span class="lever__legend" aria-hidden="true">
+								Aus
+							</span>
+							<input
+								type="checkbox"
+								role="switch"
+								class="switch"
+								aria-checked={rules.discoveryEnabled}
+								checked={rules.discoveryEnabled}
+								onChange={(e) =>
+									setRule({ discoveryEnabled: (e.target as HTMLInputElement).checked })
+								}
+							/>
+							<span class="lever__legend" aria-hidden="true">
+								An
+							</span>
+						</span>
 					</label>
 					<Stepper
 						label="Abstand zwischen Songs desselben Künstlers"

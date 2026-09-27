@@ -1,6 +1,7 @@
-import "@fontsource-variable/overpass/wght.css";
-// Doto with both axes: weight sets the dot size, ROND makes the dots round.
-import "@fontsource-variable/doto/full.css";
+// Jost: a Futura-like geometric, the lettering of 1950s German radio dials
+// and program magazines. Yellowtail: the brass script badge on the cloth.
+import "@fontsource-variable/jost/wght.css";
+import "@fontsource/yellowtail/latin-400.css";
 import "./styles.css";
 import { render } from "preact";
 import { App } from "./app";

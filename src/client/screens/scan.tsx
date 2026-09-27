@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, PlaylistView } from "../../shared/api";
 import { api } from "../api";
-import { Cover, Display, PageBar } from "../components/radio";
+import { Cabinet, Cover, Dial, DialText, PageBar } from "../components/radio";
 import { num } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
@@ -65,41 +65,27 @@ export function Scan({ state }: { state: AppState }) {
 			.finally(() => setBusy(false));
 	};
 
-	return (
+	const found = lists
+		? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden`
+		: null;
+	const sheet = (
 		<div class="page">
-			{/* One display per screen: the page head once onboarded, the radio's own on first run. */}
 			{state.onboarded ? (
 				<PageBar
 					title="Sendersuchlauf"
 					sub={
-						lists
-							? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden — wähle, welche Sender werden`
+						found
+							? `${found} — wähle, welche Sender werden`
 							: "true-shuffle sucht deine Playlists …"
 					}
 					backTo="/menu"
 				/>
 			) : (
-				<Display
-					lit={[]}
-					name={lists ? "SUCHLAUF" : "SUCHE …"}
-					song={
-						lists
-							? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden`
-							: "true-shuffle sucht deine Playlists"
-					}
-					artist={lists ? "Wähle, welche Sender werden" : "Einen Moment"}
-					// While searching, the needle sweeps; a found list has nothing left to measure.
-					scale={lists ? null : { pos: 0.35, label: "Suchlauf" }}
-					tuning={!lists}
-					wrap
-				/>
-			)}
-			{!state.onboarded ? (
 				<p class="lede">
 					Jede gewählte Playlist wird ein Sender. Dazu kommt automatisch „Alles“ — alle Sender und
 					deine Lieblingssongs zusammen.
 				</p>
-			) : null}
+			)}
 			{lists === null ? <div class="skeleton" style={{ height: "280px" }} /> : null}
 			{lists && readable.length > 1 ? (
 				<div class="row-actions">
@@ -163,5 +149,22 @@ export function Scan({ state }: { state: AppState }) {
 						: "Nur mit „Alles“ starten"}
 			</button>
 		</div>
+	);
+
+	// Once onboarded this is a page like the others; on first run the radio itself searches.
+	if (state.onboarded) return sheet;
+	return (
+		<>
+			<Cabinet eye={lists ? "weak" : "open"}>
+				{/* While searching, the pointer sweeps; a found list has nothing left to measure. */}
+				<Dial label="Senderskala" at={null} sweep={!lists}>
+					<DialText
+						title={found ?? "Suchlauf …"}
+						sub={lists ? "Wähle, welche Sender werden" : "true-shuffle sucht deine Playlists"}
+					/>
+				</Dial>
+			</Cabinet>
+			{sheet}
+		</>
 	);
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
-import { Display } from "./components/radio";
+import { Cabinet, Dial, DialText } from "./components/radio";
 import { RateSheet } from "./components/rate";
 import { useRoute } from "./router";
 import { Home } from "./screens/home";
@@ -41,16 +41,13 @@ export function App() {
 	if (s.load.kind === "loading") {
 		return (
 			<div class="shell" aria-busy="true">
-				<Display
-					lit={[]}
-					name="true-shuffle"
-					nameGhost
-					song="Schaltet ein …"
-					scale={{ pos: 0, label: "" }}
-					tuning
-				/>
-				<div class="skeleton" style={{ height: "58px" }} />
-				<div class="skeleton" style={{ height: "220px" }} />
+				<Cabinet eye="off">
+					<Dial label="Senderskala" at={null} sweep>
+						<DialText title="Schaltet ein …" />
+					</Dial>
+					<div class="skeleton skeleton--card" />
+					<div class="skeleton skeleton--keys" />
+				</Cabinet>
 			</div>
 		);
 	}
@@ -64,15 +61,22 @@ export function App() {
 	if (s.load.kind === "error") {
 		return (
 			<div class="shell">
-				<Display
-					lit={[]}
-					name="STÖRUNG"
-					song="true-shuffle ist gerade nicht erreichbar"
-					message={{ text: s.load.message, tone: "error" }}
-				/>
-				<button type="button" class="key btn btn--wide" onClick={() => void store.refresh(true)}>
-					Nochmal versuchen
-				</button>
+				<Cabinet eye="open">
+					<Dial label="Senderskala" at={null}>
+						<DialText
+							title="Störung"
+							sub="true-shuffle ist gerade nicht erreichbar"
+							message={{ text: s.load.message, tone: "error" }}
+						/>
+					</Dial>
+					<button
+						type="button"
+						class="key key--lit btn btn--wide"
+						onClick={() => void store.refresh(true)}
+					>
+						Nochmal versuchen
+					</button>
+				</Cabinet>
 			</div>
 		);
 	}
@@ -133,8 +137,8 @@ export function App() {
 }
 
 /**
- * On a phone a page covers the radio, and with it the display that carries
- * messages. They show in a strip of display glass at the bottom instead.
+ * On a phone a page covers the radio, and with it the program card that
+ * carries messages. They show in a strip of dial glass at the bottom instead.
  */
 function FlashStrip() {
 	const s = useStore();

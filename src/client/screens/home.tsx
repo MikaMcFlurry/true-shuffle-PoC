@@ -1,18 +1,17 @@
-import {
-	Menu,
-	Pause,
-	Play,
-	Plus,
-	SkipForward,
-	SlidersHorizontal,
-	ThumbsDown,
-	ThumbsUp,
-} from "lucide-preact";
+import { ChevronRight, Pause, Play, Plus, SkipForward, ThumbsDown, ThumbsUp } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, NowPlaying, StationSummary } from "../../shared/api";
 import { api } from "../api";
-import { Display, type Indicator, type RoundReading } from "../components/radio";
-import { duration, num, rds, SEP } from "../format";
+import {
+	Breakable,
+	Cabinet,
+	Dial,
+	type Eye,
+	type Indicator,
+	ProgramCard,
+	type RoundReading,
+} from "../components/radio";
+import { duration, num, SEP } from "../format";
 import { navigate } from "../router";
 import { store, useStore } from "../store";
 
@@ -22,71 +21,29 @@ const KIND_TEXT = {
 	discovery: () => "Neuentdeckung",
 } as const;
 
-function roundLabel(s: StationSummary): string {
-	if (s.poolSize === null || s.freshRemaining === null) return `Runde ${s.roundNo}`;
-	const heard = Math.max(0, s.poolSize - s.freshRemaining);
-	return `Runde ${s.roundNo}${SEP}${num(heard)} / ${num(s.poolSize)}`;
+function heardOf(s: StationSummary): number | null {
+	return s.poolSize !== null && s.freshRemaining !== null
+		? Math.max(0, s.poolSize - s.freshRemaining)
+		: null;
 }
 
 function reading(s: StationSummary): RoundReading {
-	return {
-		round: s.roundNo,
-		heard:
-			s.poolSize !== null && s.freshRemaining !== null
-				? Math.max(0, s.poolSize - s.freshRemaining)
-				: null,
-		total: s.poolSize,
-	};
+	return { round: s.roundNo, heard: heardOf(s), total: s.poolSize };
 }
 
-function stationScale(s: StationSummary) {
-	return { pos: s.progress ?? 0, label: roundLabel(s), reading: reading(s) };
+/** The round in small print under a station's name, like its frequency. */
+function freq(s: StationSummary): string {
+	const heard = heardOf(s);
+	const count = heard !== null && s.poolSize !== null ? `${num(heard)}/${num(s.poolSize)}` : "";
+	if (s.roundNo > 1) return count ? `Runde ${s.roundNo}${SEP}${count}` : `Runde ${s.roundNo}`;
+	return count || `Runde ${s.roundNo}`;
 }
 
-/**
- * A preset's round as a groove with a needle, the count under it. The round
- * number shows from the second round on; in the first, the count says it all.
- */
-function PresetMeter({ s }: { s: StationSummary }) {
-	const heard =
-		s.poolSize !== null && s.freshRemaining !== null
-			? Math.max(0, s.poolSize - s.freshRemaining)
-			: null;
-	const pos = Math.min(1, Math.max(0, s.progress ?? 0));
-	return (
-		<span class="preset__meter" role="img" aria-label={roundLabel(s)}>
-			<span class="groove" style={{ "--pos": String(pos) }} aria-hidden="true">
-				<span class="groove__fill" />
-			</span>
-			<span class="preset__count" aria-hidden="true">
-				{heard !== null && s.poolSize !== null ? (
-					<span class="num">
-						{num(heard)} / {num(s.poolSize)}
-					</span>
-				) : null}
-				{s.roundNo > 1 ? <span>Runde {s.roundNo}</span> : null}
-			</span>
-		</span>
-	);
-}
-
-/** A station name may break after a slash ("Rock/Metall"), never inside a word. */
-function Breakable({ text }: { text: string }) {
-	const parts = text.split("/");
-	return (
-		<>
-			{parts.map((p, i) => (
-				<span key={i}>
-					{p}
-					{i < parts.length - 1 ? (
-						<>
-							/<wbr />
-						</>
-					) : null}
-				</span>
-			))}
-		</>
-	);
+/** The same, spelled out for a screen reader. */
+function roundLabel(s: StationSummary): string {
+	const heard = heardOf(s);
+	if (heard === null || s.poolSize === null) return `Runde ${s.roundNo}`;
+	return `Runde ${s.roundNo}, ${num(heard)} von ${num(s.poolSize)} gehört`;
 }
 
 function useTick(active: boolean): number {
@@ -125,7 +82,132 @@ export function playStation(s: StationSummary): void {
 		});
 }
 
-function NowDisplay({ state }: { state: AppState }) {
+function resumePlayback(): void {
+	api
+		.player("resume")
+		.then((r) => {
+			if (!r.ok) store.say(r.error?.message ?? "Das hat nicht geklappt.", "error");
+		})
+		.catch((e: Error) => store.say(e.message, "error"))
+		.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
+}
+
+/** The station the pointer stands on: tuning, then playing or held, then the last one played. */
+function pointedStation(state: AppState, tuningId: number | null): StationSummary | null {
+	if (tuningId !== null) {
+		const t = state.stations.find((x) => x.id === tuningId);
+		if (t) return t;
+	}
+	const np = state.nowPlaying;
+	if (np?.stationId != null) {
+		const s = state.stations.find((x) => x.id === np.stationId);
+		if (s) return s;
+	}
+	return (
+		state.stations
+			.filter((x) => x.lastPlayedAt !== null)
+			.sort((a, b) => (b.lastPlayedAt ?? 0) - (a.lastPlayedAt ?? 0))[0] ?? null
+	);
+}
+
+function eyeFor(state: AppState, tuning: boolean): Eye {
+	if (tuning) return "tuning";
+	const np = state.nowPlaying;
+	if (!np) return "open";
+	if (!np.isPlaying) return "weak";
+	return np.stationId !== null ? "tuned" : "weak";
+}
+
+function lampsFor(state: AppState): Indicator[] {
+	const np = state.nowPlaying;
+	const lit: Indicator[] = [];
+	if (np?.kind === "fresh") lit.push("Ungehört");
+	if (np && (np.kind === "favorite" || np.thumb === 1)) lit.push("Favorit");
+	if (np?.kind === "discovery") lit.push("Entdeckung");
+	if (state.guest.active) lit.push("Gast");
+	if (np && !np.isPlaying) lit.push("Pause");
+	return lit;
+}
+
+// ------------------------------------------------------------- the dial
+
+function jobFor(state: AppState, s: StationSummary) {
+	return (
+		state.jobs.find((j) => j.key.startsWith("import:") && j.total !== null) ??
+		state.jobs.find((j) => j.key === `deck:${s.id}`)
+	);
+}
+
+/** One station printed on the dial. Tapping it tunes in. */
+function DialStation({ s, state }: { s: StationSummary; state: AppState }) {
+	const store = useStore();
+	const tuning = store.tuning?.stationId === s.id;
+	const held = state.nowPlaying?.stationId === s.id;
+	const job = !s.ready ? jobFor(state, s) : undefined;
+	const status = s.importing
+		? job?.total
+			? `liest ein${SEP}${num(job.done ?? 0)}/${num(job.total)}`
+			: "liest ein …"
+		: !s.ready
+			? "wird vorbereitet …"
+			: null;
+	const lit = s.playing || tuning;
+	const freqId = `freq-${s.id}`;
+	return (
+		<li
+			class={`station${lit ? " station--lit" : held ? " station--held" : ""}${s.ready ? "" : " station--wait"}`}
+			data-at={String(s.id)}
+		>
+			<button
+				type="button"
+				class="station__tune"
+				disabled={!s.ready || !!store.tuning}
+				aria-label={
+					s.playing
+						? `${s.name} öffnen (läuft gerade)`
+						: held
+							? `${s.name} weiterspielen`
+							: `${s.name} starten`
+				}
+				aria-describedby={freqId}
+				// Already playing: open it; paused in it: play on — never start it over.
+				onClick={() =>
+					s.playing ? navigate(`/sender/${s.id}`) : held ? resumePlayback() : playStation(s)
+				}
+			>
+				<span class="station__name">
+					<Breakable text={s.name} />
+				</span>
+				<span class="station__freq num" id={freqId}>
+					<span aria-hidden="true">{status ?? freq(s)}</span>
+					<span class="sr-only">{status ?? roundLabel(s)}</span>
+				</span>
+			</button>
+		</li>
+	);
+}
+
+function StationDial({ state }: { state: AppState }) {
+	const s = useStore();
+	const at = pointedStation(state, s.tuning?.stationId ?? null);
+	return (
+		<Dial label="Senderskala" at={at ? String(at.id) : null} lamps={lampsFor(state)}>
+			{state.stations.length > 0 ? (
+				<ul class="dial__band">
+					{state.stations.map((x) => (
+						<DialStation key={x.id} s={x} state={state} />
+					))}
+				</ul>
+			) : (
+				<p class="dial__empty">Noch kein Sender — lege unten einen an.</p>
+			)}
+		</Dial>
+	);
+}
+
+// -------------------------------------------------------- program card
+
+function NowCard({ state }: { state: AppState }) {
 	const s = useStore();
 	const np = state.nowPlaying;
 	const now = useTick(!!np?.isPlaying);
@@ -137,14 +219,13 @@ function NowDisplay({ state }: { state: AppState }) {
 
 	if (tuning) {
 		return (
-			<Display
-				lit={guest ? ["GAST"] : []}
-				name={rds(tuning.name)}
+			<ProgramCard
+				station={tuning.name}
 				song="Sender wird eingestellt …"
 				artist="true-shuffle bereitet deine Playlist in Spotify vor"
-				scale={stationScale(tuning)}
+				reading={reading(tuning)}
+				pos={tuning.progress}
 				art={{ src: tuning.imageUrl }}
-				tuning
 				live
 			/>
 		);
@@ -153,26 +234,19 @@ function NowDisplay({ state }: { state: AppState }) {
 	if (np) {
 		const station =
 			np.stationId !== null ? state.stations.find((x) => x.id === np.stationId) : null;
-		const lit: Indicator[] = [];
-		if (np.kind === "fresh") lit.push("UNGEHÖRT");
-		if (np.kind === "favorite" || np.thumb === 1) lit.push("FAVORIT");
-		if (np.kind === "discovery") lit.push("ENTDECKUNG");
-		if (guest) lit.push("GAST");
-		if (!np.isPlaying) lit.push("PAUSE");
 		// The hub reports progress as of its answer; count on from when it arrived.
 		const elapsed = Math.min(
 			np.durationMs,
 			np.progressMs + (np.isPlaying ? Math.max(0, now - s.receivedAt) : 0),
 		);
 		return (
-			<Display
-				lit={lit}
-				device={np.deviceName}
-				name={station ? rds(station.name) : "SPOTIFY"}
-				nameGhost={!station}
+			<ProgramCard
+				station={station ? station.name : "Spotify"}
+				quiet={!station}
 				song={np.name}
 				artist={np.artists}
 				time={`${duration(elapsed)} / ${duration(np.durationMs)}`}
+				device={np.deviceName}
 				message={message}
 				line={
 					station
@@ -183,7 +257,8 @@ function NowDisplay({ state }: { state: AppState }) {
 							? "Gast-Modus: zählt nicht ins Gedächtnis"
 							: "Außerhalb von true-shuffle — zählt trotzdem"
 				}
-				scale={station ? stationScale(station) : null}
+				reading={station ? reading(station) : null}
+				pos={station?.progress}
 				art={{ src: np.imageUrl }}
 				live
 			/>
@@ -194,21 +269,24 @@ function NowDisplay({ state }: { state: AppState }) {
 		.filter((x) => x.lastPlayedAt !== null)
 		.sort((a, b) => (b.lastPlayedAt ?? 0) - (a.lastPlayedAt ?? 0))[0];
 	return (
-		<Display
-			lit={guest ? ["GAST"] : []}
-			name={last ? rds(last.name) : "BEREIT"}
-			nameGhost={!last}
+		<ProgramCard
+			station={last ? last.name : "Bereit"}
+			quiet={!last}
 			song={last ? "Tippe den Sender, um weiterzuhören" : "Tippe einen Sender"}
 			artist="Spotify spielt, true-shuffle merkt sich alles"
 			message={message}
-			scale={last ? stationScale(last) : null}
+			reading={last ? reading(last) : null}
+			pos={last?.progress}
 			art={{ src: last?.imageUrl ?? null }}
 		/>
 	);
 }
 
+// ---------------------------------------------------------- piano keys
+
 function Transport({ np }: { np: NowPlaying | null }) {
 	const disabled = !np;
+	const thumbNow = np?.thumb ?? 0;
 	const act = (a: "pause" | "resume" | "next") => {
 		api
 			.player(a)
@@ -231,149 +309,129 @@ function Transport({ np }: { np: NowPlaying | null }) {
 			.catch((e: Error) => store.say(e.message, "error"))
 			.finally(() => window.setTimeout(() => void store.refresh(true), 800));
 	};
+	// Paused, the pause key stays down, like a tape deck's.
+	const paused = !!np && !np.isPlaying;
 	return (
-		<fieldset class={`transport${disabled ? " transport--off" : ""}`}>
+		<fieldset class={`keys${disabled ? " keys--off" : ""}`}>
 			<legend class="sr-only">Wiedergabe</legend>
 			<button
 				type="button"
-				class="key"
+				class={`pkey${thumbNow === -1 ? " pkey--down" : ""}`}
 				disabled={disabled}
-				aria-pressed={np?.thumb === -1}
+				aria-pressed={thumbNow === -1}
 				aria-label="Daumen runter: diesen Song nie wieder"
 				onClick={() => thumb(-1)}
 			>
-				<ThumbsDown class="icon" aria-hidden="true" />
+				<ThumbsDown class="pkey__icon" aria-hidden="true" />
+				<span class="pkey__legend" aria-hidden="true">
+					nie wieder
+				</span>
 			</button>
 			<button
 				type="button"
-				class="key"
+				class={`pkey${paused ? " pkey--down" : ""}`}
 				disabled={disabled}
 				aria-label={np?.isPlaying ? "Pause" : "Weiter abspielen"}
 				onClick={() => act(np?.isPlaying ? "pause" : "resume")}
 			>
-				{np?.isPlaying ? (
-					<Pause class="icon" aria-hidden="true" />
+				{np?.isPlaying || !np ? (
+					<Pause class="pkey__icon" aria-hidden="true" />
 				) : (
-					<Play class="icon" aria-hidden="true" />
+					<Play class="pkey__icon" aria-hidden="true" />
 				)}
+				<span class="pkey__legend" aria-hidden="true">
+					{paused ? "Weiter" : "Pause"}
+				</span>
 			</button>
 			<button
 				type="button"
-				class="key"
+				class="pkey"
 				disabled={disabled}
 				aria-label="Nächster Song"
 				onClick={() => act("next")}
 			>
-				<SkipForward class="icon" aria-hidden="true" />
+				<SkipForward class="pkey__icon" aria-hidden="true" />
+				<span class="pkey__legend" aria-hidden="true">
+					Nächster
+				</span>
 			</button>
 			<button
 				type="button"
-				class="key"
+				class={`pkey${thumbNow === 1 ? " pkey--down" : ""}`}
 				disabled={disabled}
-				aria-pressed={np?.thumb === 1}
+				aria-pressed={thumbNow === 1}
 				aria-label="Daumen hoch: Favorit"
 				onClick={() => thumb(1)}
 			>
-				<ThumbsUp class="icon" aria-hidden="true" />
+				<ThumbsUp class="pkey__icon" aria-hidden="true" />
+				<span class="pkey__legend" aria-hidden="true">
+					Favorit
+				</span>
 			</button>
 		</fieldset>
 	);
 }
 
-function jobFor(state: AppState, s: StationSummary) {
-	return (
-		state.jobs.find((j) => j.key.startsWith("import:") && j.total !== null) ??
-		state.jobs.find((j) => j.key === `deck:${s.id}`)
-	);
-}
+// ------------------------------------------------------- station index
 
-function Preset({ s, n, state }: { s: StationSummary; n: number; state: AppState }) {
-	const store = useStore();
-	const tuning = store.tuning?.stationId === s.id;
-	const held = state.nowPlaying?.stationId === s.id;
-	const resume = () =>
-		api
-			.player("resume")
-			.then((r) => {
-				if (!r.ok) store.say(r.error?.message ?? "Das hat nicht geklappt.", "error");
-			})
-			.catch((e: Error) => store.say(e.message, "error"))
-			.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
-	const job = !s.ready ? jobFor(state, s) : undefined;
-	const status = s.importing
-		? job?.total
-			? `liest ein${SEP}${num(job.done ?? 0)} / ${num(job.total)}`
-			: "liest ein …"
-		: !s.ready
-			? "wird vorbereitet …"
-			: null;
+/**
+ * The station index, printed on a sheet under the radio: every station
+ * with its round, each leading to its page to set it up.
+ */
+function StationIndex({ state }: { state: AppState }) {
 	return (
-		<li class={`preset${s.playing ? " preset--playing" : ""}`}>
-			<button
-				type="button"
-				class="preset__play"
-				disabled={!s.ready || !!store.tuning}
-				aria-label={
-					s.playing
-						? `${s.name} öffnen (läuft gerade)`
-						: held
-							? `${s.name} weiterspielen`
-							: `${s.name} starten`
-				}
-				// Already playing: open it; paused in it: play on — never start it over.
-				onClick={() => (s.playing ? navigate(`/sender/${s.id}`) : held ? resume() : playStation(s))}
-			>
-				<span class="preset__num">
-					<span class="num">{n}</span>
-					<span class={`led${s.playing || tuning ? " on" : ""}`} aria-hidden="true" />
-				</span>
-				<span class="preset__name">
-					<Breakable text={s.name} />
-				</span>
-				{status ? <span class="preset__status">{status}</span> : <PresetMeter s={s} />}
-			</button>
-			<a class="preset__tune" href={`/sender/${s.id}`} aria-label={`${s.name} einstellen`}>
-				<SlidersHorizontal class="icon" aria-hidden="true" />
+		<section class="index" aria-labelledby="index-head">
+			<h2 class="index__head" id="index-head">
+				Sender einstellen
+			</h2>
+			<ol class="index__list">
+				{state.stations.map((s, i) => (
+					<li key={s.id}>
+						<a class="index__row" href={`/sender/${s.id}`} aria-label={`${s.name} einstellen`}>
+							<span class="index__n num" aria-hidden="true">
+								{i + 1}
+							</span>
+							<span class="index__name">{s.name}</span>
+							<span class="index__lead" aria-hidden="true" />
+							<span class="index__freq num" aria-hidden="true">
+								{freq(s)}
+							</span>
+							<ChevronRight class="index__go" aria-hidden="true" />
+						</a>
+					</li>
+				))}
+			</ol>
+			<a class="index__row index__row--add" href="/sender/neu">
+				<Plus class="index__plus" aria-hidden="true" />
+				<span class="index__name">Sender anlegen</span>
 			</a>
-		</li>
+		</section>
 	);
 }
 
 export function Home({ state }: { state: AppState }) {
+	const s = useStore();
 	return (
 		<>
-			<div class="brand">
-				<span class="brand__mark">true-shuffle</span>
-				<span>{state.profile.name}</span>
-			</div>
-			<NowDisplay state={state} />
-			<Transport np={state.nowPlaying} />
-			{state.warnings.slice(1).map((w) => (
-				<p key={w.code} class="note">
-					{w.message}
-				</p>
-			))}
-			<h2 class="sr-only">Sender</h2>
-			<ul class="presets">
-				{state.stations.map((s, i) => (
-					<Preset key={s.id} s={s} n={i + 1} state={state} />
+			<Cabinet eye={eyeFor(state, !!s.tuning)} eyeKey={s.tuning?.since ?? "steady"}>
+				<StationDial state={state} />
+				<NowCard state={state} />
+				{state.warnings.slice(1).map((w) => (
+					<p key={w.code} class="slip">
+						{w.message}
+					</p>
 				))}
-				<li>
-					<a class="preset--add" href="/sender/neu">
-						<Plus class="icon" aria-hidden="true" />
-						<span>Sender anlegen</span>
+				<Transport np={state.nowPlaying} />
+				<nav class="keys keys--small" aria-label="Radio">
+					<a class="pkey pkey--dark" href="/menu">
+						Menü
 					</a>
-				</li>
-			</ul>
-			<nav class="bar" aria-label="Faceplate">
-				<a class="key" href="/menu">
-					<Menu class="icon" aria-hidden="true" />
-					Menü
-				</a>
-				<a class="key" href="/verlauf">
-					Verlauf
-				</a>
-			</nav>
+					<a class="pkey pkey--dark" href="/verlauf">
+						Verlauf
+					</a>
+				</nav>
+			</Cabinet>
+			<StationIndex state={state} />
 		</>
 	);
 }
