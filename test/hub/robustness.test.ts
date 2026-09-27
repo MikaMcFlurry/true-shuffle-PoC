@@ -2547,3 +2547,105 @@ describe("the twenty-second review's cases", () => {
 			else expect(memPlays(h, x)).toBe(0);
 		});
 });
+
+describe("the twenty-third review's cases", () => {
+	const memPlays = (h: H, id: string) =>
+		h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, id)?.plays ?? 0;
+	const lists = (h: H) => ({
+		own: [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!,
+		other: [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 1")!,
+	});
+	async function nextSong(h: H) {
+		const c0 = h.fake.current();
+		while (h.fake.current() === c0) await h.listen(1_000);
+	}
+
+	for (const how of ["app", "spotify"] as const)
+		it(`the guest's song paused out of sight and left by the owner the next day stays the guest's (${how})`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			const { own, other } = lists(h);
+			await h.hub.setGuest(true, 1);
+			const g0 = h.clock.t;
+			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, u.devices[0]!.id, false);
+			await h.listen(20 * MINUTE_MS);
+			await nextSong(h);
+			const x = h.fake.current()!;
+			await h.listen(45_000);
+			await h.hub.state({ live: true }); // a look in guest time sees X playing
+			h.fake.pause();
+			const dev = u.player.deviceId;
+			u.player.deviceId = null; // the device sleeps: no player in sight
+			await h.listen(g0 + 60 * MINUTE_MS - h.clock.t + 12 * 60 * MINUTE_MS);
+			u.player.deviceId = dev;
+			u.player.isPlaying = true; // the owner plays on for a few seconds
+			await h.listen(4_000);
+			await h.hub.state({ live: true });
+			await h.listen(6_000);
+			if (how === "app") expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+			else h.fake.startContext(u.id, `spotify:playlist:${other.id}`, 40, u.devices[0]!.id, false);
+			await h.listen(60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(memPlays(h, x)).toBe(0);
+		});
+
+	for (const how of ["app", "spotify"] as const)
+		it(`a song seen playing a minute, paused, then out of sight counts when a start replaces it (${how})`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			const { own, other } = lists(h);
+			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 7, u.devices[0]!.id, false);
+			await h.listen(3_000);
+			await h.hub.state({ live: true });
+			const a = h.fake.current()!;
+			await h.listen(60_000);
+			await h.hub.state({ live: true }); // looks saw A play a minute
+			h.fake.pause();
+			const dev = u.player.deviceId;
+			u.player.deviceId = null;
+			await h.listen(90 * MINUTE_MS);
+			if (how === "app") expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+			else {
+				u.player.deviceId = dev;
+				h.fake.startContext(u.id, `spotify:playlist:${other.id}`, 40, u.devices[0]!.id, false);
+				await h.listen(3_000);
+				await h.hub.state({ live: true });
+			}
+			await h.listen(60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(memPlays(h, a)).toBe(1);
+		});
+
+	for (const how of ["start", "resume-skip"] as const)
+		it(`a guest's song no look saw, paused across the end, stays the guest's (${how})`, async () => {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			u.listReplaced = true;
+			const { own, other } = lists(h);
+			await h.hub.setGuest(true, 1);
+			const g0 = h.clock.t;
+			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, u.devices[0]!.id, false);
+			await h.listen(30 * MINUTE_MS);
+			await nextSong(h);
+			const x = h.fake.current()!;
+			await h.listen(90_000);
+			h.fake.pause();
+			const dev = u.player.deviceId;
+			u.player.deviceId = null;
+			await h.listen(g0 + 60 * MINUTE_MS - h.clock.t + 3 * 60 * MINUTE_MS);
+			u.player.deviceId = dev;
+			if (how === "start")
+				h.fake.startContext(u.id, `spotify:playlist:${other.id}`, 40, u.devices[0]!.id, false);
+			else {
+				u.player.isPlaying = true;
+				await h.listen(10_000);
+				h.fake.skip();
+			}
+			await h.listen(60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(memPlays(h, x)).toBe(0);
+		});
+});

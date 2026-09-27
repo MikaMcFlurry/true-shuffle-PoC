@@ -319,6 +319,8 @@ interface HeardSong {
 	playing: boolean;
 	durationMs: number;
 	contextUri?: string | null;
+	/** What to write if it counts from a note, whatever the player shows by then. */
+	track?: PackedTrack | null;
 	/** Over, seen playing, and the next song began right at its end. */
 	ranOut?: true;
 }
@@ -340,6 +342,12 @@ interface GuestLast {
 	listed?: true;
 	/** Looks saw it on the player across the end: no other play can be the guest's. */
 	only?: true;
+	/**
+	 * Not seen across the end: plays may lie unseen between it and the first
+	 * one seen after the end (`next`, begun at `gapTo`) — the guest's.
+	 */
+	gapTo?: number;
+	next?: TrackId;
 }
 
 interface GuestPeriod {
@@ -1939,7 +1947,11 @@ export class HubCore {
 			s.lastPlayerAt,
 		);
 		const shown = this.kvGet<PlayerSnapshot>("player");
-		const heard = this.noteHeardSong(obs, s.lastPlayerAt);
+		const heard = this.noteHeardSong(
+			obs,
+			s.lastPlayerAt,
+			state?.item ? packTrack(state.item) : null,
+		);
 		this.noteGuestLast(
 			heard,
 			!!obs?.trackId && !this.inPrivateNow(),
@@ -2419,6 +2431,9 @@ export class HubCore {
 					from = g.start;
 					return true;
 				}
+				// A play no look saw, over before the first one seen after the end:
+				// it may have been the guest's, paused across the end.
+				if (g.gapTo !== undefined && id !== g.next && at <= g.gapTo + 10_000) return true;
 				// Looks saw the one play across the end: every other one is the owner's.
 				if (g.only) return false;
 			}
@@ -2521,6 +2536,12 @@ export class HubCore {
 				const end = before.at + before.durationMs - before.progress;
 				const owner = ranOut ? Math.max(0, end - Math.max(p.to, before.at)) : 0;
 				last = { id: over.id, start: over.start, guest: over.listened - owner, owner, over: now };
+				// Not run out: plays no look saw may lie between it and the first one
+				// seen after the end, and one of them may have been paused across it.
+				if (!ranOut && cur && cur.start > p.to) {
+					last.gapTo = cur.start;
+					last.next = cur.id;
+				}
 			}
 			p.last = last;
 			this.kvSet("guest", periods);
@@ -2547,6 +2568,7 @@ export class HubCore {
 	private noteHeardSong(
 		obs: PlayerObservation | null,
 		lookBefore: number,
+		track: PackedTrack | null,
 	): {
 		before: HeardSong | null;
 		over: HeardSong | null;
@@ -2561,15 +2583,12 @@ export class HubCore {
 		// No song to see says nothing about it: it may still play.
 		if (!obs?.trackId || obs.durationMs <= 0) return { before, over: null, cur: before };
 		const now = this.now();
-		// Seen playing, it would have ended by now; the song seen again is less far
-		// in than the time since that end: played again, not the same play.
-		const again =
-			before?.playing === true &&
-			obs.progressMs + 5_000 < now - (before.at + before.durationMs - before.progress);
+		// The same song, not begun again: a pause the looks did not see, or one
+		// played again from where it was, is one play to them — never split, so
+		// what they saw of it is never lost or given to someone else.
 		const same =
 			before !== null &&
 			obs.trackId === before.id &&
-			!again &&
 			!(obs.isPlaying && obs.progressMs + 5_000 < before.progress);
 		let over: HeardSong | null = null;
 		if (before && !same) {
@@ -2602,6 +2621,7 @@ export class HubCore {
 						playing: obs.isPlaying,
 						durationMs: obs.durationMs,
 						contextUri: obs.contextUri,
+						track,
 					};
 		// A paused song seen again as it was: nothing new to store.
 		const unchanged =
@@ -2750,7 +2770,11 @@ export class HubCore {
 		const o = snap?.obs;
 		// The look play() just made (an unchanged picture is not stored again).
 		const fresh = this.now() - Math.max(snap?.at ?? 0, this.lastLookAt) <= MINUTE_MS;
-		return o?.trackId && o.progressMs >= 30_000 && fresh ? o.trackId : null;
+		if (o?.trackId && o.progressMs >= 30_000 && fresh) return o.trackId;
+		// No player in sight (the device went to sleep): the song looks saw last,
+		// 30 s or more, is the one the start replaces.
+		const heard = this.kvGet<HeardSong>("heard_song");
+		return !o?.trackId && heard && heard.listened >= 30_000 ? heard.id : null;
 	}
 
 	/**
@@ -2762,7 +2786,8 @@ export class HubCore {
 		const rec = this.kvGet<HeardSong>("heard_song");
 		const snap = this.kvGet<PlayerSnapshot>("player");
 		if (!id || rec?.id !== id || rec.listened < 30_000) return;
-		if (snap?.obs?.trackId !== id || !snap.track) return;
+		const track = rec.track ?? (snap?.obs?.trackId === id ? snap.track : null);
+		if (!track) return;
 		if (this.kvGet<PrivateSong>("private_song")?.id === id) return;
 		this.addNote({
 			id,
@@ -2770,8 +2795,8 @@ export class HubCore {
 			start: rec.start,
 			at: this.now(),
 			durationMs: rec.durationMs,
-			contextUri: snap.obs.contextUri,
-			track: snap.track,
+			contextUri: rec.contextUri ?? snap?.obs?.contextUri ?? null,
+			track,
 			until: this.now() + SKIP_GRACE_MS,
 		});
 	}
@@ -2790,7 +2815,10 @@ export class HubCore {
 		if (!over || !cur || over.ranOut || over.listened < 30_000) return;
 		// The same song again: one play or two, the looks cannot tell.
 		if (cur.id === over.id) return;
-		if (shown?.obs?.trackId !== over.id || !shown.track) return;
+		// Its track as the look that first saw it read it (a look without a
+		// player since then changes nothing).
+		const track = over.track ?? (shown?.obs?.trackId === over.id ? shown.track : null);
+		if (!track) return;
 		const now = this.now();
 		// Left after the last look that saw it, and — seen playing — no later
 		// than its own end; the new song began no earlier than that.
@@ -2803,7 +2831,7 @@ export class HubCore {
 			at: Math.max(over.at, Math.min(now, cur.start, latest)),
 			durationMs: over.durationMs,
 			contextUri: over.contextUri ?? null,
-			track: shown.track,
+			track,
 			until: now + SKIP_GRACE_MS,
 		});
 	}
