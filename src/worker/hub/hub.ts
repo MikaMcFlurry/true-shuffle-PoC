@@ -181,6 +181,11 @@ const PLAYER_FRESH_MS = 5 * MINUTE_MS;
 const GUEST_TAIL_FRESH_MS = 2_000;
 /** How long after a guest time its last play is followed. */
 const GUEST_FOLLOW_MS = 2 * DAY_MS;
+/**
+ * After a guest time, listings wait for the first look that shows a song
+ * (it tells which play was on the player across the end) — at most this long.
+ */
+const GUEST_DECIDE_MS = 12 * HOUR_MS;
 /** A remote key answers at most this many commands in ten minutes. */
 const REMOTE_LIMIT = 20;
 const REMOTE_WINDOW_MS = 10 * MINUTE_MS;
@@ -354,6 +359,15 @@ interface GuestLast {
 	 */
 	gapTo?: number;
 	next?: TrackId;
+	/**
+	 * `next` itself may be the guest's play, paused across the end and played
+	 * on: when it began, what the look that first saw it showed (the guest's),
+	 * what later looks saw play (the owner's), and when it was over.
+	 */
+	nextStart?: number;
+	nextGuest?: number;
+	nextOwner?: number;
+	nextOver?: number | null;
 	/** The play across the end is known among them (listed): the rest are the owner's. */
 	gapTaken?: true;
 }
@@ -2487,6 +2501,12 @@ export class HubCore {
 		return this.kvGet<GuestPeriod[]>("guest") ?? [];
 	}
 
+	/** A guest time ended and no look has shown a song since: listings after it wait. */
+	private guestUndecided(at: number): boolean {
+		const p = this.guestPeriods().at(-1);
+		return !!p && p.last === undefined && at > p.to && this.now() - p.to < GUEST_DECIDE_MS;
+	}
+
 	private inGuest(at: number): boolean {
 		return this.guestPeriods().some((p) => at >= p.from && at < p.to);
 	}
@@ -2536,6 +2556,29 @@ export class HubCore {
 					listed = true;
 					return true;
 				}
+				// None of them listed: the first one seen after the end may itself
+				// have been the guest's, paused across the end and played on later —
+				// the guest's, unless looks saw the owner hear 30 s or more of it.
+				if (
+					g.next === id &&
+					g.nextStart !== undefined &&
+					!g.gapTaken &&
+					at >= g.nextStart &&
+					at <= (g.nextOver ?? p.to + GUEST_FOLLOW_MS) + MINUTE_MS &&
+					(g.nextOwner ?? 0) < 30_000
+				) {
+					g.gapTaken = true;
+					listed = true;
+					return true;
+				}
+				// Looks saw the owner hear 30 s or more of it: the owner's.
+				if (
+					g.next === id &&
+					g.nextStart !== undefined &&
+					at >= g.nextStart &&
+					(g.nextOwner ?? 0) >= 30_000
+				)
+					return false;
 				// Looks saw the one play across the end: every other one is the owner's.
 				if (g.only) return false;
 			}
@@ -2632,6 +2675,9 @@ export class HubCore {
 				// before allows (a seek would fake an early start).
 				const sought = lookBefore <= 0 || cur.progress > now - lookBefore + 2_000;
 				if (cur.start < p.to && !sought) last.only = true;
+				// Not surely across the end: a play no look saw before it (an earlier
+				// play of the same song, too) may have been — the first one listed.
+				else last.gapTo = cur.start;
 			} else if (over && before && before.at <= p.to) {
 				// Seen before the end, over by now: only a run to its end tells how long after.
 				const ranOut = over.listened > before.listened;
@@ -2643,6 +2689,10 @@ export class HubCore {
 				if (!ranOut && cur && cur.start > p.to) {
 					last.gapTo = cur.start;
 					last.next = cur.id;
+					last.nextStart = cur.start;
+					last.nextGuest = cur.listened;
+					last.nextOwner = 0;
+					last.nextOver = null;
 				}
 			}
 			p.last = last;
@@ -2650,6 +2700,15 @@ export class HubCore {
 			return;
 		}
 		const g = p.last;
+		if (g && g.next !== undefined && g.nextStart !== undefined && g.nextOver === null) {
+			const n = { id: g.next, start: g.nextStart };
+			if (samePlay(cur, n)) g.nextOwner = Math.max(0, cur!.listened - (g.nextGuest ?? 0));
+			else {
+				if (samePlay(over, n)) g.nextOwner = Math.max(0, over!.listened - (g.nextGuest ?? 0));
+				g.nextOver = now;
+			}
+			this.kvSet("guest", periods);
+		}
 		if (!g || g.over !== null) return;
 		if (samePlay(cur, g)) {
 			const owner = Math.max(0, cur!.listened - g.guest);
@@ -2688,9 +2747,20 @@ export class HubCore {
 		// The same song, not begun again: a pause the looks did not see, or one
 		// played again from where it was, is one play to them — never split, so
 		// what they saw of it is never lost or given to someone else.
+		// Played again after its end: seen playing at the look before (no look
+		// between that showed no player or it paused), it would have ended since,
+		// and it is not as far in as the time since that end — another play.
+		const again =
+			before !== null &&
+			obs.trackId === before.id &&
+			before.playing &&
+			obs.isPlaying &&
+			lookBefore <= before.at &&
+			now - (before.at + before.durationMs - before.progress) > obs.progressMs + 5_000;
 		const same =
 			before !== null &&
 			obs.trackId === before.id &&
+			!again &&
 			!(obs.isPlaying && obs.progressMs + 5_000 < before.progress);
 		let over: HeardSong | null = null;
 		if (before && !same) {
@@ -3012,6 +3082,8 @@ export class HubCore {
 		for (const p of this.guestPeriods()) {
 			const g = p.last;
 			if (g && g.id === e.id && g.start === e.start) return g.owner < 30_000;
+			if (g && g.next === e.id && g.nextStart === e.start)
+				return !g.gapTaken && (g.nextOwner ?? 0) < 30_000;
 		}
 		return this.inGuestDuring(e.start, e.at);
 	}
@@ -3075,11 +3147,14 @@ export class HubCore {
 			s.recentCursor - LATE_PLAY_WINDOW_MS,
 			this.kvGet<number>("live_since") ?? Number.NEGATIVE_INFINITY,
 		);
+		// Listed after a guest time, before any look showed which play was on the
+		// player across its end: left for a later read (Spotify keeps the last 50).
+		const waits = (at: number) => this.guestUndecided(at);
 		const fresh = items
 			.map((i) => ({ i, at: Date.parse(i.played_at) }))
 			.filter((x) => {
 				const id = x.i.track?.id;
-				if (!Number.isFinite(x.at) || !id) return false;
+				if (!Number.isFinite(x.at) || !id || waits(x.at)) return false;
 				if (x.at > s.recentCursor) return true;
 				if (x.at <= lateFrom || known.has(key(x.at, id))) return false;
 				return !this.db.first(`SELECT 1 FROM plays WHERE played_at = ? AND track_id = ?`, x.at, id);
@@ -3088,7 +3163,7 @@ export class HubCore {
 		// When each play of this read ended: one account plays one song at a time.
 		const times = items.map((i) => Date.parse(i.played_at)).filter((t) => Number.isFinite(t));
 		const keys = items
-			.filter((i) => i.track?.id)
+			.filter((i) => i.track?.id && !waits(Date.parse(i.played_at)))
 			.map((i) => key(Date.parse(i.played_at), i.track.id!))
 			.slice(0, 60);
 		if (keys.length !== known.size || keys.some((k) => !known.has(k)))

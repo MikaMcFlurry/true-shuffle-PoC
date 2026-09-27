@@ -2719,3 +2719,132 @@ describe("hearts set in Spotify", () => {
 		expect(h.hub.memory(y).liked).toBe(false);
 	});
 });
+
+describe("the twenty-fourth review's cases", () => {
+	const HOUR = 60 * MINUTE_MS;
+	type H = Awaited<ReturnType<typeof onboarded>>;
+	const memPlays = (h: H, id: string) =>
+		h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, id)?.plays ?? 0;
+	const lists = (h: H) => ({
+		own: [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 2")!,
+		other: [...h.fake.playlists.values()].find((pl) => pl.name === "Playlist 1")!,
+	});
+	const dur = (h: H, id: string) => h.fake.tracks.get(id)!.durationMs;
+
+	it("RT24-01: the guest's song paused across the end and resumed by the owner stays the guest's", async () => {
+		for (const R of [10_000, 25_000]) {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			const dev = u.devices[0]!.id;
+			await h.hub.setGuest(true, 1);
+			const g0 = h.clock.t;
+			h.fake.startContext(u.id, `spotify:playlist:${lists(h).own.id}`, 3, dev, false);
+			await h.listen(45 * MINUTE_MS);
+			await h.hub.state({ live: true }); // a look in guest time sees X
+			h.fake.skip(); // the guest goes on to Y right after that look
+			const y = h.fake.current()!;
+			await h.listen(dur(h, y) - R); // Y plays unseen
+			h.fake.pause();
+			u.player.deviceId = null; // the phone sleeps: out of sight across the end
+			await h.listen(g0 + HOUR - h.clock.t + 5 * HOUR);
+			// The owner presses play in Spotify and opens true-shuffle: a look sees Y.
+			u.player.deviceId = dev;
+			u.player.isPlaying = true;
+			await h.listen(3_000);
+			await h.hub.state({ live: true });
+			await h.listen(40 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(90 * MINUTE_MS);
+			expect(memPlays(h, y)).toBe(0);
+		}
+	});
+
+	it("RT24-01: listings wait for a look that shows a song (a podcast after guest time)", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		u.listReplaced = false;
+		const { own, other } = lists(h);
+		const dev = u.devices[0]!.id;
+		let podcast = false;
+		const orig = h.fake.handle.bind(h.fake);
+		h.fake.handle = async (req: Request) => {
+			if (podcast && req.method === "GET" && new URL(req.url).pathname.endsWith("/me/player"))
+				return Response.json({
+					device: {
+						id: dev,
+						is_active: true,
+						is_restricted: false,
+						name: "iPhone",
+						type: "Smartphone",
+					},
+					timestamp: h.clock.t,
+					context: { uri: "spotify:show:x", type: "show" },
+					progress_ms: 60_000,
+					is_playing: true,
+					item: null,
+					currently_playing_type: "episode",
+				});
+			return orig(req);
+		};
+		await h.hub.setGuest(true, 1);
+		const g0 = h.clock.t;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, dev, false);
+		await h.listen(40 * MINUTE_MS);
+		const x = h.fake.current()!;
+		h.fake.pause(); // the guest pauses X and leaves
+		await h.hub.state({ live: true });
+		await h.listen(3 * MINUTE_MS);
+		u.player.deviceId = null;
+		await h.listen(g0 + HOUR - h.clock.t + 9 * HOUR);
+		// Morning: the owner plays X on for 5 s, skips it, then starts a podcast.
+		u.player.deviceId = dev;
+		u.player.isPlaying = true;
+		await h.listen(5_000);
+		h.fake.skip();
+		await h.listen(10_000);
+		h.fake.startContext(u.id, `spotify:playlist:${other.id}`, 0, dev, false);
+		h.fake.pause();
+		podcast = true;
+		await h.listen(2 * HOUR);
+		podcast = false;
+		u.player.isPlaying = true;
+		await h.listen(40 * MINUTE_MS);
+		h.fake.pause();
+		await h.listen(90 * MINUTE_MS);
+		expect(u.recent.some((r) => r.trackId === x)).toBe(true); // Spotify listed it
+		expect(memPlays(h, x)).toBe(0);
+	});
+
+	it("RT24-02: a song played again after it ran out is a second play", async () => {
+		for (const how of ["app", "spotify"] as const) {
+			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+			const u = h.fake.user();
+			u.listReplaced = false;
+			const { own, other } = lists(h);
+			const dev = u.devices[0]!.id;
+			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, dev, false);
+			await h.listen(3_000);
+			await h.hub.state({ live: true });
+			const c0 = h.fake.current();
+			while (h.fake.current() === c0) await h.listen(1_000);
+			await h.listen(50_000);
+			await h.hub.state({ live: true }); // a look sees X at 50 s
+			const x = h.fake.current()!;
+			await h.listen(dur(h, x) - 50_000 + 5_000); // X runs out and is listed
+			await h.listen(Math.max(0, h.alarmAt()! - h.clock.t - 120_000));
+			h.fake.playSong(u.id, x); // X again
+			await h.listen(Math.max(0, h.alarmAt()! - h.clock.t) + 1_000); // the next look sees it
+			await h.listen(5_000);
+			if (how === "app") expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+			else {
+				h.fake.startContext(u.id, `spotify:playlist:${other.id}`, 40, dev, false);
+				await h.listen(3_000);
+				await h.hub.state({ live: true });
+			}
+			await h.listen(60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(60 * MINUTE_MS);
+			expect(memPlays(h, x)).toBe(2);
+		}
+	});
+});
