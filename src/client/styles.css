@@ -2223,3 +2223,48 @@ details.more > .more__body {
 		margin: auto;
 	}
 }
+
+/* remote: key, command addresses, setup steps */
+
+.copyline {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 8px;
+	align-items: center;
+}
+
+.input--code,
+.code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	overflow-wrap: anywhere;
+}
+
+.input--code {
+	font-size: 13px;
+	min-width: 0;
+}
+
+.code {
+	font-size: 12px;
+	color: var(--ink);
+}
+
+.row__sub--wrap {
+	white-space: normal;
+}
+
+.steps {
+	margin: 0;
+	padding-left: 1.4em;
+	display: grid;
+	gap: 8px;
+	font-size: 15px;
+	line-height: 1.55;
+	color: var(--ink-2);
+	max-width: 62ch;
+}
+
+.steps b {
+	color: var(--ink);
+	font-weight: 600;
+}

@@ -347,6 +347,73 @@ describe("listener input", () => {
 	});
 });
 
+describe("remote key (Siri, CarPlay, a watch, a widget)", () => {
+	const nexts = (h: Awaited<ReturnType<typeof onboarded>>) =>
+		h.fake.calls.filter((c) => c.startsWith("POST /v1/me/player/next")).length;
+
+	it("likes, bans and skips the song playing now, and only with the current key", async () => {
+		const h = await onboarded();
+		await h.hub.play(h.stationIds[0]!);
+		await h.listen(MINUTE_MS);
+		await expect(h.hub.remote("nope", "like")).rejects.toMatchObject({ status: 401 });
+		const kid = h.hub.newRemoteKey();
+		expect(h.hub.remoteKey()?.kid).toBe(kid);
+
+		const liked = h.fake.current()!;
+		expect(await h.hub.remote(kid, "like")).toMatch(/ist jetzt Favorit\.$/);
+		expect(h.hub.memory(liked).thumb).toBe(1);
+		expect(h.fake.current()).toBe(liked);
+
+		const banned = h.fake.current()!;
+		const before = nexts(h);
+		expect(await h.hub.remote(kid, "dislike")).toMatch(/kommt nie wieder\. Nächster Song\.$/);
+		expect(h.hub.memory(banned).thumb).toBe(-1);
+		// Skipped exactly once, not by both the command and the thumb.
+		expect(nexts(h)).toBe(before + 1);
+		expect(h.fake.current()).not.toBe(banned);
+
+		const skipped = h.fake.current()!;
+		expect(await h.hub.remote(kid, "skip")).toBe("Nächster Song.");
+		expect(h.fake.current()).not.toBe(skipped);
+		expect(h.hub.memory(skipped).thumb).toBe(0);
+		expect(h.hub.remoteKey()?.usedAt).toBe(h.clock.t);
+
+		// A new key ends the old one; deleting ends the new one.
+		const next = h.hub.newRemoteKey();
+		await expect(h.hub.remote(kid, "skip")).rejects.toMatchObject({ status: 401 });
+		h.hub.dropRemoteKey();
+		await expect(h.hub.remote(next, "skip")).rejects.toMatchObject({ status: 401 });
+	});
+
+	it("says so when nothing plays, and a paused song is banned without a skip", async () => {
+		const h = await onboarded();
+		const kid = h.hub.newRemoteKey();
+		await expect(h.hub.remote(kid, "like")).rejects.toMatchObject({
+			status: 409,
+			message: "In Spotify läuft gerade kein Song.",
+		});
+		await h.hub.play(h.stationIds[0]!);
+		await h.listen(MINUTE_MS);
+		h.fake.pause();
+		const cur = h.fake.current()!;
+		const before = nexts(h);
+		expect(await h.hub.remote(kid, "dislike")).toMatch(/kommt nie wieder\.$/);
+		expect(nexts(h)).toBe(before);
+		expect(h.hub.memory(cur).thumb).toBe(-1);
+	});
+
+	it("answers at most 20 commands in ten minutes", async () => {
+		const h = await onboarded();
+		await h.hub.play(h.stationIds[0]!);
+		await h.listen(MINUTE_MS);
+		const kid = h.hub.newRemoteKey();
+		for (let i = 0; i < 20; i++) await h.hub.remote(kid, "like");
+		await expect(h.hub.remote(kid, "like")).rejects.toMatchObject({ status: 429 });
+		await h.listen(10 * MINUTE_MS);
+		await expect(h.hub.remote(kid, "like")).resolves.toMatch(/Favorit/);
+	});
+});
+
 describe("sessions", () => {
 	it("signing out ends every session issued so far, and a new sign-in works again", async () => {
 		const h = await onboarded();

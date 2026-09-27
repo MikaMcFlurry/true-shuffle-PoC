@@ -9,6 +9,7 @@ export type Route =
 	| { name: "import" }
 	| { name: "devices" }
 	| { name: "about" }
+	| { name: "remote" }
 	| { name: "scan" };
 
 export function parse(path: string): Route {
@@ -27,6 +28,8 @@ export function parse(path: string): Route {
 			return { name: "devices" };
 		case "/info":
 			return { name: "about" };
+		case "/fernbedienung":
+			return { name: "remote" };
 		case "/suchlauf":
 			return { name: "scan" };
 		default:

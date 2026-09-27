@@ -102,6 +102,16 @@ export interface HistoryEntry extends TrackView {
 	ignored: boolean;
 }
 
+/** What a personal remote key can do (Siri, CarPlay, a watch, a widget). */
+export type RemoteAction = "like" | "dislike" | "skip";
+
+export interface RemoteKeyView {
+	/** The key itself, or null when none is set up. */
+	key: string | null;
+	createdAt: number | null;
+	usedAt: number | null;
+}
+
 export interface DeviceView {
 	id: string;
 	name: string;

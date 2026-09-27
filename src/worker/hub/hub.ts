@@ -70,6 +70,7 @@ import type {
 	PlayErrorCode,
 	PlaylistView,
 	PlayResult,
+	RemoteAction,
 	StationDetail,
 	StationKind,
 	StationSource,
@@ -77,7 +78,7 @@ import type {
 	TrackView,
 	Warning,
 } from "../../shared/api";
-import type { Keys } from "../lib/crypto";
+import { type Keys, randomToken } from "../lib/crypto";
 import type { SqlDb } from "../lib/sql";
 import {
 	type Fetcher,
@@ -180,6 +181,9 @@ const PLAYER_FRESH_MS = 5 * MINUTE_MS;
 const GUEST_TAIL_FRESH_MS = 2_000;
 /** How long after a guest time its last play is followed. */
 const GUEST_FOLLOW_MS = 2 * DAY_MS;
+/** A remote key answers at most this many commands in ten minutes. */
+const REMOTE_LIMIT = 20;
+const REMOTE_WINDOW_MS = 10 * MINUTE_MS;
 /** Refresh decks that were written longer ago than this (memory drifted). */
 export const DECK_MAX_AGE_MS = 20 * HOUR_MS;
 /** External requests per invocation (Workers free plan allows 50). */
@@ -382,6 +386,14 @@ interface ShownPending {
 	contextUri: string | null;
 	track: PackedTrack;
 	until: number;
+}
+
+/** The personal remote key: its id, and its recent commands for the rate limit. */
+interface RemoteKey {
+	kid: string;
+	createdAt: number;
+	usedAt: number | null;
+	uses: number[];
 }
 
 interface SyncState {
@@ -3680,7 +3692,11 @@ export class HubCore {
 	// Listener input
 	// =======================================================================
 
-	async thumb(trackId: TrackId, value: -1 | 0 | 1): Promise<void> {
+	/**
+	 * `playing` says whether the song plays right now, when the caller just
+	 * read the player; otherwise the last snapshot decides.
+	 */
+	async thumb(trackId: TrackId, value: -1 | 0 | 1, playing?: boolean): Promise<void> {
 		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
 		this.updateLive(trackId, (r) => ({ ...r, thumb: value }));
 		if (value === -1) {
@@ -3700,7 +3716,8 @@ export class HubCore {
 				this.saveDeck(st.id, d);
 			}
 			const snap = this.kvGet<PlayerSnapshot>("player");
-			if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) await this.playerAction("next");
+			if (playing ?? (snap?.obs?.isPlaying && snap.obs.trackId === trackId))
+				await this.playerAction("next");
 		}
 		if (value === 1) {
 			// "Nie wieder auf diesem Sender" ends with a thumb up, on every station.
@@ -3724,6 +3741,93 @@ export class HubCore {
 			`${value === 1 ? "Daumen hoch" : value === -1 ? "Daumen runter" : "Daumen zurückgesetzt"}: ${this.describe(trackId)}`,
 		);
 		await this.scheduleSoon(2000);
+	}
+
+	// =======================================================================
+	// Remote: Siri, CarPlay, a watch, a widget
+	// =======================================================================
+
+	/** The current remote key's id (the Worker signs it into the key). */
+	remoteKey(): { kid: string; createdAt: number; usedAt: number | null } | null {
+		const k = this.kvGet<RemoteKey>("remote_key");
+		return k ? { kid: k.kid, createdAt: k.createdAt, usedAt: k.usedAt } : null;
+	}
+
+	/** A new key; the one before stops working. */
+	newRemoteKey(): string {
+		const kid = randomToken(12);
+		const had = this.kvGet<RemoteKey>("remote_key") !== null;
+		this.kvSet("remote_key", { kid, createdAt: this.now(), usedAt: null, uses: [] });
+		this.log(
+			"info",
+			"remote",
+			had
+				? "Neuer Schlüssel für die Fernbedienung — der alte gilt nicht mehr"
+				: "Schlüssel für die Fernbedienung erstellt",
+		);
+		return kid;
+	}
+
+	dropRemoteKey(): void {
+		if (this.kvGet("remote_key") === null) return;
+		this.kvDel("remote_key");
+		this.log("info", "remote", "Schlüssel für die Fernbedienung gelöscht");
+	}
+
+	/**
+	 * A command from a personal key. Answers with a sentence to show or speak;
+	 * a failure is a HubError whose message says the same.
+	 */
+	async remote(kid: string, action: RemoteAction): Promise<string> {
+		const k = this.kvGet<RemoteKey>("remote_key");
+		if (!k || k.kid !== kid)
+			throw new HubError(
+				"auth",
+				"Dieser Schlüssel gilt nicht mehr. Einen neuen gibt es in True Shuffle unter Menü, Fernbedienung.",
+				401,
+			);
+		const now = this.now();
+		const uses = k.uses.filter((t) => now - t < REMOTE_WINDOW_MS);
+		if (uses.length >= REMOTE_LIMIT)
+			throw new HubError(
+				"rate",
+				"Zu viele Befehle kurz hintereinander. Warte ein paar Minuten.",
+				429,
+			);
+		this.kvSet("remote_key", { ...k, usedAt: now, uses: [...uses, now] });
+		if (!this.isConnected())
+			throw new HubError(
+				"auth",
+				"True Shuffle ist nicht mit Spotify verbunden. Melde dich in der App neu an.",
+				409,
+			);
+		const failed = (r: PlayResult): HubError =>
+			new HubError(
+				r.error?.code ?? "unknown",
+				r.error?.message ?? "Das hat nicht geklappt.",
+				r.error?.code === "rate" || r.error?.code === "quota" ? 429 : 409,
+			);
+		if (action === "skip") {
+			const r = await this.playerAction("next");
+			if (!r.ok) throw failed(r);
+			return "Nächster Song.";
+		}
+		let state: SpPlaybackState | null;
+		try {
+			state = await this.client(new RequestBudget(3)).player();
+		} catch (err) {
+			throw failed(this.playError(err));
+		}
+		const t = state?.item;
+		if (!state || !t?.id || t.is_local || (t.type && t.type !== "track"))
+			throw new HubError("nothing", "In Spotify läuft gerade kein Song.", 409);
+		const song = `„${t.name}“ von ${(t.artists ?? []).map((a) => a.name).join(", ")}`;
+		if (action === "like") {
+			await this.thumb(t.id, 1);
+			return `${song} ist jetzt Favorit.`;
+		}
+		await this.thumb(t.id, -1, state.is_playing);
+		return `${song} kommt nie wieder${state.is_playing ? ". Nächster Song" : ""}.`;
 	}
 
 	async setGuest(on: boolean, hours = GUEST_DEFAULT_HOURS): Promise<void> {

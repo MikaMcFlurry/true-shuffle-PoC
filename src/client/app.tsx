@@ -10,6 +10,7 @@ import {
 	ImportScreen,
 	MenuScreen,
 } from "./screens/menu";
+import { RemoteScreen } from "./screens/remote";
 import { Scan } from "./screens/scan";
 import { SignIn } from "./screens/signin";
 import { NewStation, Station } from "./screens/station";
@@ -101,6 +102,8 @@ export function App() {
 				return <DevicesScreen />;
 			case "about":
 				return <AboutScreen />;
+			case "remote":
+				return <RemoteScreen />;
 			case "scan":
 				return <Scan state={state} />;
 			default: {

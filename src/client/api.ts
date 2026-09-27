@@ -5,6 +5,7 @@ import type {
 	HistoryEntry,
 	PlaylistView,
 	PlayResult,
+	RemoteKeyView,
 	StationDetail,
 	StationSource,
 } from "../shared/api";
@@ -65,6 +66,9 @@ export const api = {
 	devices: () => call<DeviceView[]>("GET", "/api/devices"),
 	thumb: (trackId: string, value: -1 | 0 | 1) =>
 		call<unknown>("POST", `/api/tracks/${trackId}/thumb`, { value }),
+	remoteKey: () => call<RemoteKeyView>("GET", "/api/remote"),
+	newRemoteKey: () => call<RemoteKeyView>("POST", "/api/remote"),
+	dropRemoteKey: () => call<unknown>("DELETE", "/api/remote"),
 	guest: (on: boolean, hours?: number) => call<unknown>("POST", "/api/guest", { on, hours }),
 	importHistory: (rows: [string, number, number, number][], part: number, parts: number) =>
 		call<{ stored: number }>("POST", "/api/history/import", { rows, part, parts }),

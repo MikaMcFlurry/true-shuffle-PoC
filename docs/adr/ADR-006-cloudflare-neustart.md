@@ -141,6 +141,7 @@ Quellen sind Deep Cuts und Neuerscheinungen geliebter Künstler, Last.fm, Deezer
 - Refresh-Token AES-GCM-verschlüsselt, Sitzungs-Cookie HMAC-signiert, beide Schlüssel per HKDF aus `APP_SECRET`.
 - Das Cookie trägt eine Anmelde-Generation. Abmelden erhöht sie im Hub und beendet damit alle bisher ausgegebenen Sitzungen dieses Kontos, auch kopierte Cookies. Sie beginnt zufällig, damit nach dem Löschen und Neuanlegen eines Kontos kein altes Cookie wieder passt.
 - Jede Änderung braucht den Header `x-ts: 1` (CSRF).
+- Die Fernbedienung (`POST /remote/like|dislike|skip`) nimmt statt des Cookies einen persönlichen Schlüssel im Header `Authorization: Bearer …`. Er ist das HMAC-signierte Paar aus Konto und Schlüssel-ID, mit einem eigenen, per HKDF abgeleiteten Schlüssel, damit weder ein Cookie als Fernbedienungs-Schlüssel noch ein solcher Schlüssel als Cookie durchgeht. Der Worker prüft die Signatur, bevor er ein Durable Object weckt; der Hub prüft, dass die Schlüssel-ID noch die aktuelle ist. Ein neuer Schlüssel oder Löschen macht den alten sofort ungültig. Er kann nur diese drei Befehle an den laufenden Song, höchstens 20 in zehn Minuten, und gilt über das Abmelden hinaus, bis der Hörer ihn löscht (so gehen Kurzbefehle im Auto nicht still kaputt, wenn er sich am Rechner abmeldet). Die Allowlist gilt auch für ihn.
 - Optionale Allowlist `ALLOWED_SPOTIFY_IDS`. Sie gilt bei jeder Anfrage: Wer von der Liste genommen wird, ist sofort abgemeldet.
 - CSP ohne Inline-Skripte.
 

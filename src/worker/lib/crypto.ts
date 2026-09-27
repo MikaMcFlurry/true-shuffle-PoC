@@ -64,10 +64,14 @@ async function hkdf(secret: string, info: string, usage: "hmac" | "aes"): Promis
 export class Keys {
 	private hmac: Promise<CryptoKey> | null = null;
 	private aes: Promise<CryptoKey> | null = null;
-	constructor(private readonly secret: string) {}
+	/** `purpose` keeps signatures for one use (cookies, remote keys) from passing for another. */
+	constructor(
+		private readonly secret: string,
+		private readonly purpose = "cookie-signing",
+	) {}
 
 	private hmacKey(): Promise<CryptoKey> {
-		this.hmac ??= hkdf(this.secret, "cookie-signing", "hmac");
+		this.hmac ??= hkdf(this.secret, this.purpose, "hmac");
 		return this.hmac;
 	}
 	private aesKey(): Promise<CryptoKey> {

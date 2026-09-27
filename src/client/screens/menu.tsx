@@ -127,6 +127,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 					<MenuKey href="/sender/neu" legend="Sender anlegen" sub="Playlists kombinieren" />
 					<MenuKey href="/suchlauf" legend="Suchlauf" sub="Weitere Playlists speichern" />
 					<MenuKey href="/geraete" legend="Gerät" sub="Wo True Shuffle startet" />
+					<MenuKey href="/fernbedienung" legend="Fernbedienung" sub="Siri, CarPlay, Uhr, Widget" />
 				</ul>
 			</Section>
 

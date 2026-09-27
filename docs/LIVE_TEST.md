@@ -44,6 +44,14 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 - [ ] Mitten in einem Song von Hand ausschalten und nach wenigen Sekunden weiterspringen. Er steht im Verlauf mit „Gast" (oder gar nicht), der Song danach ohne. Noch einmal, diesmal den Song nach dem Ausschalten mindestens eine Minute bis zu seinem Ende hören: Er steht ohne „Gast" im Verlauf. (Prüft, dass Spotify eine Wiedergabe mit ihrem Ende stempelt.)
 - [ ] Im Gast-Modus einen Song nach einer Minute pausieren, Gast-Modus ausschalten, später einen Sender aus der App starten. Der pausierte Song steht, wenn überhaupt, mit „Gast" im Verlauf.
 
+## E2. Unterwegs bewerten
+
+- [ ] In Spotify (Handy, CarPlay, Android Auto oder Uhr) einem laufenden Song ein Herz geben. Binnen etwa zehn Minuten steht in den Logs (Cloudflare-Dashboard → Workers → true-shuffle → Observability) „Herz in Spotify: … ist jetzt Favorit“.
+- [ ] Im Verlauf einen Song von gestern antippen → Daumen runter. Er ist markiert und kommt in keinem Sender mehr.
+- [ ] Menü → Fernbedienung → Schlüssel erstellen. Auf dem iPhone einen Kurzbefehl „Favorit“ nach der Anleitung dort anlegen. „Hey Siri, Favorit“ (auch in CarPlay): Siri sagt „… ist jetzt Favorit“, der Song ist im Verlauf mit Daumen hoch markiert.
+- [ ] Kurzbefehl „Nie wieder“: Spotify springt genau einen Song weiter.
+- [ ] Neuen Schlüssel erstellen: Der alte Kurzbefehl antwortet „Kein gültiger Schlüssel …“ oder „Dieser Schlüssel gilt nicht mehr …“.
+
 ## F. Entdeckungen
 
 - [ ] Nach einigen Stunden: Sender-Seite → Neuentdeckungen → „Warten auf dich" ist größer als 0.
@@ -74,4 +82,4 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 
 ## Wenn etwas nicht stimmt
 
-Notiere Uhrzeit, Sender und was du erwartet hast. Die Logs zeigen dann, was der Hub gesehen und entschieden hat.
+Notiere Uhrzeit, Sender und was du erwartet hast. Die Logs (das „Protokoll“ oben; Cloudflare-Dashboard → Workers → true-shuffle → Observability) zeigen dann, was der Hub gesehen und entschieden hat.

@@ -146,10 +146,52 @@ test.describe("a listener's day", () => {
 		await expect(page.getByText(/Gast-Modus aus/)).toBeVisible();
 	});
 
+	test("a personal key likes the playing song from Siri or a widget", async ({ page }) => {
+		await signIn(page);
+		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: /Fernbedienung/ }).click();
+		await expect(page.getByRole("heading", { name: "Fernbedienung", level: 1 })).toBeVisible();
+		await page.getByRole("button", { name: "Schlüssel erstellen" }).click();
+		const field = page.getByRole("textbox", { name: "Dein Schlüssel" });
+		await expect(field).toHaveValue(/^Bearer tsr_/);
+		await checkPage(page, "/fernbedienung");
+		const key = (await field.inputValue()).replace(/^Bearer /, "");
+
+		// A Shortcut sends a POST with the key; nothing else gets in.
+		const bad = await page.request.post("/remote/like", {
+			headers: { authorization: "Bearer tsr_made-up" },
+		});
+		expect(bad.status()).toBe(401);
+		expect(await bad.text()).toMatch(/Kein gültiger Schlüssel/);
+		const res = await page.request.post("/remote/like", {
+			headers: { authorization: `Bearer ${key}` },
+		});
+		expect(res.status()).toBe(200);
+		expect(res.headers()["content-type"]).toMatch(/^text\/plain/);
+		expect(await res.text()).toMatch(/ist jetzt Favorit\.$/);
+
+		// A new key ends the old one.
+		await page.getByRole("button", { name: "Neuer Schlüssel" }).click();
+		await page.getByRole("button", { name: "Neu erstellen" }).click();
+		await expect(field).not.toHaveValue(key);
+		const old = await page.request.post("/remote/skip", {
+			headers: { authorization: `Bearer ${key}` },
+		});
+		expect(old.status()).toBe(401);
+	});
+
 	test("every page reads well on a phone", async ({ page }) => {
 		await signIn(page);
 		await expect(page.getByRole("button", { name: /^Alles starten/ })).toBeVisible();
-		for (const path of ["/verlauf", "/import", "/geraete", "/info", "/sender/neu", "/suchlauf"]) {
+		for (const path of [
+			"/verlauf",
+			"/import",
+			"/geraete",
+			"/fernbedienung",
+			"/info",
+			"/sender/neu",
+			"/suchlauf",
+		]) {
 			await page.goto(path);
 			await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 			await checkPage(page, path);

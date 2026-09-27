@@ -10,7 +10,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { cryptoRng } from "../core/random";
 import type { StationRules } from "../core/types";
-import type { StationKind, StationSource } from "../shared/api";
+import type { RemoteAction, StationKind, StationSource } from "../shared/api";
 import { type Env, hubEnv } from "./env";
 import { HubCore, HubError } from "./hub/hub";
 import { Keys } from "./lib/crypto";
@@ -151,6 +151,19 @@ export class UserHub extends DurableObject<Env> {
 	}
 	thumb(epoch: number, trackId: string, value: -1 | 0 | 1) {
 		return this.session(epoch, () => this.hub().thumb(trackId, value));
+	}
+	remoteKey(epoch: number) {
+		return this.session(epoch, () => this.hub().remoteKey());
+	}
+	newRemoteKey(epoch: number) {
+		return this.session(epoch, () => this.hub().newRemoteKey());
+	}
+	dropRemoteKey(epoch: number) {
+		return this.session(epoch, () => this.hub().dropRemoteKey());
+	}
+	/** A command from a personal key: no session, the key's id is the proof. */
+	remote(kid: string, action: RemoteAction) {
+		return this.exclusive(() => this.hub().remote(kid, action));
 	}
 	setGuest(epoch: number, on: boolean, hours?: number) {
 		return this.session(epoch, () => this.hub().setGuest(on, hours));

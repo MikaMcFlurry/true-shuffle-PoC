@@ -8,9 +8,10 @@ import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { StationRules } from "../core/types";
-import type { StationSource } from "../shared/api";
+import type { RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
 import { type Env, endpoints } from "./env";
 import { Keys, randomToken, sha256b64url } from "./lib/crypto";
+import { readRemoteKey, remoteKeyFor } from "./lib/remote-key";
 import { RequestBudget, SpotifyClient, SpotifyError, type SpotifyTokens } from "./spotify/client";
 import type { RpcResult, UserHub } from "./userhub";
 
@@ -172,6 +173,36 @@ app.post("/auth/logout", async (c) => {
 });
 
 // ---------------------------------------------------------------------------
+// Remote: one POST per command, for Siri Shortcuts, a watch, a widget
+// ---------------------------------------------------------------------------
+
+const REMOTE_ACTIONS: readonly RemoteAction[] = ["like", "dislike", "skip"];
+
+app.post("/remote/:action", async (c) => {
+	// Plain text, so a Shortcut can speak or show the answer as it comes.
+	const say = (text: string, status: ContentfulStatusCode) =>
+		c.text(text, status, { "cache-control": "no-store" });
+	const missing = configured(c.env);
+	if (missing) return say(`True Shuffle ist nicht eingerichtet: ${missing}`, 503);
+	const action = c.req.param("action") as RemoteAction;
+	if (!REMOTE_ACTIONS.includes(action))
+		return say("Unbekannter Befehl. Es gibt like, dislike und skip.", 404);
+	const m = /^Bearer\s+(\S+)$/i.exec(c.req.header("authorization") ?? "");
+	const key = m ? await readRemoteKey(c.env.APP_SECRET!, m[1]!) : null;
+	if (!key || !allowed(c.env, key.uid))
+		return say(
+			"Kein gültiger Schlüssel. Den Schlüssel gibt es in True Shuffle unter Menü, Fernbedienung.",
+			401,
+		);
+	const r = (await hubFor(c.env, key.uid).remote(key.kid, action)) as RpcResult<string>;
+	return r.ok ? say(r.value, 200) : say(r.error.message, r.error.status as ContentfulStatusCode);
+});
+
+app.all("/remote/*", (c) =>
+	c.text("Befehle an True Shuffle kommen als POST.", 405, { "cache-control": "no-store" }),
+);
+
+// ---------------------------------------------------------------------------
 // API
 // ---------------------------------------------------------------------------
 
@@ -322,6 +353,37 @@ app.post("/api/tracks/:id/thumb", async (c) => {
 	const v = b.value === 1 ? 1 : b.value === -1 ? -1 : 0;
 	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v));
 });
+
+async function remoteView(
+	c: { env: Env; var: Vars },
+	k: { kid: string; createdAt: number; usedAt: number | null } | null,
+): Promise<RemoteKeyView> {
+	return k
+		? {
+				key: await remoteKeyFor(c.env.APP_SECRET!, c.var.uid, k.kid),
+				createdAt: k.createdAt,
+				usedAt: k.usedAt,
+			}
+		: { key: null, createdAt: null, usedAt: null };
+}
+
+app.get("/api/remote", async (c) => {
+	const r = (await c.var.hub.remoteKey(c.var.epoch)) as RpcResult<{
+		kid: string;
+		createdAt: number;
+		usedAt: number | null;
+	} | null>;
+	if (!r.ok) return c.json({ error: r.error }, r.error.status as ContentfulStatusCode);
+	return c.json(await remoteView(c, r.value));
+});
+
+app.post("/api/remote", async (c) => {
+	const r = (await c.var.hub.newRemoteKey(c.var.epoch)) as RpcResult<string>;
+	if (!r.ok) return c.json({ error: r.error }, r.error.status as ContentfulStatusCode);
+	return c.json(await remoteView(c, { kid: r.value, createdAt: Date.now(), usedAt: null }));
+});
+
+app.delete("/api/remote", (c) => unwrap(c, c.var.hub.dropRemoteKey(c.var.epoch)));
 
 app.post("/api/guest", async (c) => {
 	const b = await body<{ on?: boolean; hours?: number }>(c);
