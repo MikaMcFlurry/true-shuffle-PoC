@@ -224,6 +224,7 @@ function Transport({ np }: { np: NowPlaying | null }) {
 		api
 			.thumb(np.id, next)
 			.then(() => {
+				store.setThumb(np.id, next);
 				if (next === -1) store.say("Kommt nie wieder — wird übersprungen", "info", 4000);
 				else if (next === 1) store.say("Als Favorit gemerkt", "info", 3000);
 			})

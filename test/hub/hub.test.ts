@@ -426,6 +426,95 @@ describe("remote key (Siri, CarPlay, a watch, a widget)", () => {
 		expect(h.hub.memory(cur).thumb).toBe(-1);
 	});
 
+	/** Spotify's player lags behind a command: it shows the old song for `lagMs` after /next. */
+	function lagAfterNext(h: Awaited<ReturnType<typeof onboarded>>, lagMs: number) {
+		const orig = h.fake.handle.bind(h.fake);
+		let frozen: { body: string; until: number } | null = null;
+		h.fake.handle = async (req: Request) => {
+			const u = new URL(req.url);
+			if (req.method === "POST" && u.pathname.endsWith("/me/player/next")) {
+				const before = await orig(
+					new Request(`${u.origin}/v1/me/player`, { headers: req.headers }),
+				);
+				const body = before.status === 200 ? await before.text() : "";
+				const res = await orig(req);
+				if (body) frozen = { body, until: h.clock.t + lagMs };
+				return res;
+			}
+			if (
+				req.method === "GET" &&
+				u.pathname.endsWith("/me/player") &&
+				frozen &&
+				h.clock.t < frozen.until
+			)
+				return new Response(frozen.body, {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				});
+			return orig(req);
+		};
+	}
+
+	for (const via of ["remote", "app key", "rating sheet"] as const)
+		it(`a dislike (${via}) skips once, even while Spotify still shows the old song`, async () => {
+			const h = await onboarded();
+			await h.hub.play(h.stationIds[0]!);
+			await h.listen(MINUTE_MS);
+			await h.hub.state({ live: true });
+			const kid = h.hub.newRemoteKey();
+			lagAfterNext(h, 5000);
+			const p = h.fake.user().player;
+			const banned = h.fake.current()!;
+			const innocent = p.order[p.index + 1]!;
+			const before = nexts(h);
+			if (via === "remote") expect(await h.hub.remote(kid, "dislike")).toMatch(/Nächster Song\.$/);
+			else await h.hub.thumb(banned, -1);
+			if (via === "rating sheet") {
+				h.clock.t += 800;
+				await h.hub.state({ live: true });
+			}
+			await h.listen(30 * MINUTE_MS);
+			expect(nexts(h) - before).toBe(1);
+			expect(h.hub.memory(banned).thumb).toBe(-1);
+			expect(h.hub.memory(innocent).earlySkips).toBe(0);
+			expect(h.hub.memory(innocent).plays).toBe(1);
+		});
+
+	it("a thumb down from a list skips nothing when the listener already moved on", async () => {
+		const h = await onboarded();
+		await h.hub.play(h.stationIds[0]!);
+		await h.listen(MINUTE_MS);
+		await h.hub.state({ live: true });
+		const a = h.fake.current()!;
+		h.fake.skip(); // skipped in Spotify; the hub's picture still shows A
+		const b = h.fake.current()!;
+		const before = nexts(h);
+		const r = await h.hub.thumb(a, -1);
+		expect(r.skipped).toBe(false);
+		expect(nexts(h)).toBe(before);
+		expect(h.fake.current()).toBe(b);
+		await h.listen(30 * MINUTE_MS);
+		expect(h.hub.memory(b).earlySkips).toBe(0);
+		expect(h.hub.memory(a).thumb).toBe(-1);
+	});
+
+	it("says so when Spotify refuses to skip, and signing out ends the key", async () => {
+		const h = await onboarded();
+		await h.hub.play(h.stationIds[0]!);
+		await h.listen(MINUTE_MS);
+		const kid = h.hub.newRemoteKey();
+		const cur = h.fake.current()!;
+		h.fake.user().premium = false;
+		const said = await h.hub.remote(kid, "dislike");
+		expect(said).not.toMatch(/Nächster Song/);
+		expect(said).toMatch(/kommt nie wieder\. Weiterspringen ging nicht: .*Premium/);
+		expect(h.fake.current()).toBe(cur);
+		h.fake.user().premium = true;
+		h.hub.endSessions();
+		expect(h.hub.remoteKey()).toBeNull();
+		await expect(h.hub.remote(kid, "skip")).rejects.toMatchObject({ status: 401 });
+	});
+
 	it("answers at most 20 commands in ten minutes", async () => {
 		const h = await onboarded();
 		await h.hub.play(h.stationIds[0]!);

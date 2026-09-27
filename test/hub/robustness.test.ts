@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import { MINUTE_MS } from "../../src/core/types";
+import { FakeSpotify } from "../fakes/fake-spotify";
 import { onboarded } from "./harness";
 
 type H = Awaited<ReturnType<typeof onboarded>>;
@@ -2662,5 +2663,59 @@ describe("hearts set in Spotify", () => {
 		expect(h.hub.memory(x).liked).toBe(true);
 		const log = h.sql.all<{ message: string }>(`SELECT message FROM events WHERE kind = 'liked'`);
 		expect(log.length).toBe(1);
+	});
+
+	it("an old heart Spotify greys out is no new heart, not even after a full import", async () => {
+		const fake = new FakeSpotify();
+		const add = fake.addTracks.bind(fake);
+		let x = "";
+		fake.addTracks = ((n: number, o: never) => {
+			const ts = add(n, o);
+			ts[5]!.playable = false;
+			x = ts[5]!.id;
+			return ts;
+		}) as typeof fake.addTracks;
+		const h = await onboarded({ tracks: 300, liked: 10, fake });
+		expect(h.hub.memory(x).liked).toBe(false);
+		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		for (let day = 0; day < 4; day++) {
+			await h.listen(3 * 60 * MINUTE_MS);
+			h.fake.pause();
+			await h.listen(21 * 60 * MINUTE_MS);
+			expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		}
+		await h.listen(15 * MINUTE_MS);
+		const log = h.sql.all<{ message: string }>(`SELECT message FROM events WHERE kind = 'liked'`);
+		expect(log).toEqual([]);
+		expect(h.hub.memory(x).liked).toBe(false);
+	});
+
+	it("a heart seen while the full import runs survives its end", async () => {
+		const h = await onboarded({ tracks: 300, liked: 120 });
+		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		await h.listen(3 * MINUTE_MS);
+		const hub = h.hub as unknown as {
+			kvGet: (k: string) => unknown;
+			kvSet: (k: string, v: unknown) => void;
+		};
+		// A heart the peek saw after the import had read its first page (stamped
+		// later than any start the import will have), and a heart from before.
+		const hearts = new Set(h.fake.user().liked);
+		const [x, y] = [...h.fake.tracks.keys()].filter((id) => !hearts.has(id)).slice(-2) as [
+			string,
+			string,
+		];
+		hub.kvSet("liked_recent", [
+			{ id: y, at: h.clock.t - MINUTE_MS },
+			{ id: x, at: h.clock.t + 60 * MINUTE_MS },
+		]);
+		const before = (hub.kvGet("liked_import") as { at: number }).at;
+		const st = hub.kvGet("sync") as { lastLikedAt: number };
+		hub.kvSet("sync", { ...st, lastLikedAt: 0 });
+		await h.listen(20 * MINUTE_MS);
+		expect((hub.kvGet("liked_import") as { at: number }).at).toBeGreaterThan(before);
+		// The one the import could not have seen stays; the one it did see is its word.
+		expect(h.hub.memory(x).liked).toBe(true);
+		expect(h.hub.memory(y).liked).toBe(false);
 	});
 });

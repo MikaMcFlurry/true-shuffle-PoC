@@ -583,6 +583,8 @@ export class HubCore {
 	/** Sign out: every session cookie issued so far stops working. */
 	endSessions(): void {
 		this.kvSet("session_epoch", this.sessionEpoch() + 1);
+		// A key made with a session goes with it: signing out ends every way in.
+		this.kvDel("remote_key");
 		this.log("info", "connect", "Abgemeldet");
 	}
 
@@ -985,6 +987,7 @@ export class HubCore {
 		let skipped = state.skipped ?? 0;
 		let count = state.count ?? 0;
 		let snapshot = state.snapshot ?? null;
+		const startedAt = state.startedAt ?? this.now();
 		if (offset === 0 && source.startsWith("pl:")) {
 			const row = this.db.first<{ snapshot_id: string }>(
 				`SELECT snapshot_id FROM playlists WHERE id = ?`,
@@ -1016,7 +1019,7 @@ export class HubCore {
 							"import",
 							`Playlist ${source.slice(3)} ist nicht lesbar (${err.kind})`,
 						);
-						this.finishImport(source, snapshot, count, skipped, 0);
+						this.finishImport(source, snapshot, count, skipped, 0, startedAt);
 						return { done: true };
 					}
 					throw err;
@@ -1042,12 +1045,15 @@ export class HubCore {
 			);
 			offset += items.length || PAGE_SIZE;
 			if (!next || items.length === 0) {
-				this.finishImport(source, snapshot, count, skipped, pageNo + 1);
+				this.finishImport(source, snapshot, count, skipped, pageNo + 1, startedAt);
 				return { done: true };
 			}
 			state.total = total;
 		}
-		return { done: false, state: { source, offset, skipped, count, snapshot, total: state.total } };
+		return {
+			done: false,
+			state: { source, offset, skipped, count, snapshot, total: state.total, startedAt },
+		};
 	}
 
 	private finishImport(
@@ -1056,6 +1062,7 @@ export class HubCore {
 		count: number,
 		skipped: number,
 		pages: number,
+		startedAt?: number,
 	): void {
 		this.db.run(`DELETE FROM pages WHERE source = ? AND page >= ?`, source, pages);
 		if (source === "liked") {
@@ -1063,8 +1070,11 @@ export class HubCore {
 			const s = this.syncState();
 			s.lastLikedAt = this.now();
 			this.setSyncState(s);
-			// The full list has the hearts seen since the last one.
-			this.kvDel("liked_recent");
+			// The full list has the hearts seen before it started; one seen while it
+			// ran may be on a page it had already read, so that one stays.
+			const rest = this.likedRecent().filter((r) => r.at >= (startedAt ?? this.now()));
+			if (rest.length > 0) this.kvSet("liked_recent", rest);
+			else this.kvDel("liked_recent");
 			this.likedCache = null;
 		} else {
 			this.db.run(
@@ -1276,9 +1286,16 @@ export class HubCore {
 		if (!this.likedCache)
 			this.likedCache = new Set([
 				...this.loadSource("liked").map((t) => t[0]),
-				...(this.kvGet<TrackId[]>("liked_recent") ?? []),
+				...this.likedRecent().map((r) => r.id),
 			]);
 		return this.likedCache;
+	}
+
+	/** Hearts seen since the last full import (older entries were bare ids). */
+	private likedRecent(): { id: TrackId; at: number }[] {
+		return (this.kvGet<(TrackId | { id: TrackId; at: number })[]>("liked_recent") ?? []).map((r) =>
+			typeof r === "string" ? { id: r, at: 0 } : r,
+		);
 	}
 
 	/**
@@ -1292,10 +1309,16 @@ export class HubCore {
 		s.lastLikedPeekAt = this.now();
 		const page = await client.likedTracks(0);
 		const known = this.liked();
-		const fresh = (page?.items ?? []).filter((i) => !!i.track?.id && !known.has(i.track.id));
+		// The same songs the full import takes: no local files, nothing greyed out.
+		const fresh = (page?.items ?? []).filter(
+			(i) => packTrack(i.track) !== null && !known.has(i.track.id!),
+		);
 		if (fresh.length === 0) return;
-		const recent = this.kvGet<TrackId[]>("liked_recent") ?? [];
-		this.kvSet("liked_recent", [...recent, ...fresh.map((i) => i.track.id!)].slice(-500));
+		const recent = this.likedRecent();
+		this.kvSet(
+			"liked_recent",
+			[...recent, ...fresh.map((i) => ({ id: i.track.id!, at: this.now() }))].slice(-500),
+		);
 		this.likedCache = null;
 		for (const i of fresh.slice(0, 5))
 			this.log(
@@ -3715,7 +3738,13 @@ export class HubCore {
 	 * `playing` says whether the song plays right now, when the caller just
 	 * read the player; otherwise the last snapshot decides.
 	 */
-	async thumb(trackId: TrackId, value: -1 | 0 | 1, playing?: boolean): Promise<void> {
+	async thumb(
+		trackId: TrackId,
+		value: -1 | 0 | 1,
+		playing?: boolean,
+	): Promise<{ skipped: boolean; skipError?: string }> {
+		let skipped = false;
+		let skipError: string | undefined;
 		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
 		this.updateLive(trackId, (r) => ({ ...r, thumb: value }));
 		if (value === -1) {
@@ -3734,9 +3763,30 @@ export class HubCore {
 				d.formerOff = [...(d.formerOff ?? []), trackId];
 				this.saveDeck(st.id, d);
 			}
-			const snap = this.kvGet<PlayerSnapshot>("player");
-			if (playing ?? (snap?.obs?.isPlaying && snap.obs.trackId === trackId))
-				await this.playerAction("next");
+			// Skip it only while it plays. The stored picture of the player can be
+			// a minute old: when it says so, a fresh look confirms it, or a song the
+			// listener already left would take the next one with it.
+			let now = playing;
+			if (now === undefined) {
+				const snap = this.kvGet<PlayerSnapshot>("player");
+				if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) {
+					try {
+						const st = await this.client(new RequestBudget(3)).player();
+						now = !!st?.is_playing && st.item?.id === trackId;
+					} catch {
+						now = false;
+					}
+				}
+			}
+			if (now) {
+				const r = await this.playerAction("next");
+				skipped = r.ok;
+				// Our move: a look that still shows the song (Spotify catches up a
+				// moment later) must not skip it a second time. A skip that failed
+				// is left to the station guard to try again.
+				if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
+				else skipError = r.error?.message;
+			}
 		}
 		if (value === 1) {
 			// "Nie wieder auf diesem Sender" ends with a thumb up, on every station.
@@ -3760,6 +3810,7 @@ export class HubCore {
 			`${value === 1 ? "Daumen hoch" : value === -1 ? "Daumen runter" : "Daumen zurückgesetzt"}: ${this.describe(trackId)}`,
 		);
 		await this.scheduleSoon(2000);
+		return skipError ? { skipped, skipError } : { skipped };
 	}
 
 	// =======================================================================
@@ -3845,8 +3896,11 @@ export class HubCore {
 			await this.thumb(t.id, 1);
 			return `${song} ist jetzt Favorit.`;
 		}
-		await this.thumb(t.id, -1, state.is_playing);
-		return `${song} kommt nie wieder${state.is_playing ? ". Nächster Song" : ""}.`;
+		const r = await this.thumb(t.id, -1, state.is_playing);
+		if (!state.is_playing) return `${song} kommt nie wieder.`;
+		return r.skipped
+			? `${song} kommt nie wieder. Nächster Song.`
+			: `${song} kommt nie wieder. Weiterspringen ging nicht: ${r.skipError ?? "Spotify hat abgelehnt."}`;
 	}
 
 	async setGuest(on: boolean, hours = GUEST_DEFAULT_HOURS): Promise<void> {
@@ -4552,6 +4606,8 @@ export class HubCore {
 
 interface ImportState {
 	source: string;
+	/** When this import read its first page. */
+	startedAt?: number;
 	offset?: number;
 	skipped?: number;
 	count?: number;

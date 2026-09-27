@@ -190,15 +190,18 @@ export function Station({
 	const [editSources, setEditSources] = useState<StationSource[] | null>(null);
 	const saveTimer = useRef<number | null>(null);
 
-	const load = () =>
-		api
+	const load = () => {
+		const started = Date.now();
+		return api
 			.station(id)
 			.then((x) => {
+				store.settleThumbs([...x.upcoming, ...x.recent], started);
 				setD(x);
 				setName(x.name);
 				setMix((m) => (m === null ? x.rules.mix : m));
 			})
 			.catch((e: Error) => setErr(e.message));
+	};
 
 	useEffect(() => {
 		setD(null);
@@ -254,6 +257,16 @@ export function Station({
 
 	const summary = state.stations.find((s) => s.id === id) ?? d;
 	const np = state.nowPlaying;
+	// Paused in this station: the key plays on, it never starts the station over.
+	const held = !!np && np.stationId === id && !np.isPlaying;
+	const resume = () =>
+		api
+			.player("resume")
+			.then((r) => {
+				if (!r.ok) store.say(r.error?.message ?? "Das hat nicht geklappt.", "error");
+			})
+			.catch((e: Error) => store.say(e.message, "error"))
+			.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
 	const heard =
 		d.poolSize !== null && d.freshRemaining !== null ? d.poolSize - d.freshRemaining : null;
 	const rules = d.rules;
@@ -289,10 +302,10 @@ export function Station({
 					type="button"
 					class="key key--lit btn"
 					disabled={!summary.ready || !!store.tuning}
-					onClick={() => playStation(summary)}
+					onClick={() => (held ? resume() : playStation(summary))}
 				>
 					<Play class="icon" aria-hidden="true" />
-					{summary.playing ? "Neu starten" : "Spielen"}
+					{summary.playing ? "Neu starten" : held ? "Weiterspielen" : "Spielen"}
 				</button>
 				{d.playlistId ? (
 					<a
@@ -335,7 +348,7 @@ export function Station({
 			</Section>
 
 			{np && np.stationId === id ? (
-				<Section title="Läuft gerade" id="now">
+				<Section title={np.isPlaying ? "Läuft gerade" : "Pausiert"} id="now">
 					<ul class="inlay tracks tracks--now">
 						<li class="track track--rate">
 							<RateHit t={np} />
@@ -532,7 +545,7 @@ export function Station({
 									[
 										"ban",
 										"Nie wieder auf diesem Sender",
-										"Gilt, sobald true-shuffle das Überspringen sieht. Aufheben: Daumen hoch, wenn der Song läuft.",
+										"Gilt, sobald true-shuffle das Überspringen sieht. Aufheben: Daumen hoch, auch später im Verlauf.",
 									],
 								] as const
 							).map(([v, t, sub]) => (

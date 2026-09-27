@@ -12,7 +12,7 @@ const COMMANDS: { action: RemoteAction; name: string; what: string }[] = [
 	{
 		action: "skip",
 		name: "Weiter",
-		what: "Nächster Song. Vor 30 Sekunden zählt das als früher Skip",
+		what: "Nächster Song. In einem Sender zählt das vor 30 Sekunden als früher Skip",
 	},
 ];
 
@@ -116,8 +116,8 @@ export function RemoteScreen() {
 							{view?.usedAt ? `Zuletzt benutzt: ${stamp(view.usedAt)}` : "Noch nie benutzt"}
 						</p>
 						<p class="hint">
-							Der Schlüssel kann nur die drei Befehle unten, sonst nichts. Er gilt auch nach dem
-							Abmelden weiter, bis du ihn löschst oder einen neuen erstellst. Gib ihn nicht weiter.
+							Der Schlüssel kann nur die drei Befehle unten, sonst nichts. Er gilt, bis du ihn
+							löschst, einen neuen erstellst oder dich abmeldest. Gib ihn nicht weiter.
 						</p>
 						{confirm ? (
 							<div class="stack">

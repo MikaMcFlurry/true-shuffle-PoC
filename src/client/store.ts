@@ -27,8 +27,8 @@ class Store {
 	tuning: { stationId: number; since: number } | null = null;
 	/** The song whose rating sheet is open. */
 	rating: TrackView | null = null;
-	/** Thumbs given here, shown at once in every list until the next load has them. */
-	thumbs = new Map<string, -1 | 0 | 1>();
+	/** Thumbs given here, shown at once in every list until a later load has them. */
+	private thumbs = new Map<string, { v: -1 | 0 | 1; at: number }>();
 	/** When the last snapshot arrived (for counting song progress locally). */
 	receivedAt = Date.now();
 	private listeners = new Set<Listener>();
@@ -50,16 +50,34 @@ class Store {
 	}
 
 	thumbOf(t: { id: string; thumb: -1 | 0 | 1 }): -1 | 0 | 1 {
-		return this.thumbs.get(t.id) ?? t.thumb;
+		return this.thumbs.get(t.id)?.v ?? t.thumb;
+	}
+
+	setThumb(id: string, v: -1 | 0 | 1): void {
+		this.thumbs.set(id, { v, at: Date.now() });
+		this.emit();
+	}
+
+	/**
+	 * A list loaded after a thumb was given here knows it, and knows any change
+	 * made elsewhere since (Siri, the display's key): its word wins again.
+	 */
+	settleThumbs(songs: { id: string }[], loadStartedAt: number): void {
+		for (const s of songs) {
+			const own = this.thumbs.get(s.id);
+			if (own && own.at < loadStartedAt) this.thumbs.delete(s.id);
+		}
 	}
 
 	refresh(live = true): Promise<void> {
 		if (this.inflight) return this.inflight;
+		const started = Date.now();
 		this.inflight = api
 			.state(live)
 			.then((state) => {
 				this.load = { kind: "ready", state };
 				this.receivedAt = Date.now();
+				if (state.nowPlaying) this.settleThumbs([state.nowPlaying], started);
 			})
 			.catch((err: unknown) => {
 				if (err instanceof ApiError && err.status === 401) this.load = { kind: "signed-out" };

@@ -50,7 +50,10 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 - [ ] Im Verlauf einen Song von gestern antippen → Daumen runter. Er ist markiert und kommt in keinem Sender mehr.
 - [ ] Menü → Fernbedienung → Schlüssel erstellen. Auf dem iPhone einen Kurzbefehl „Favorit“ nach der Anleitung dort anlegen. „Hey Siri, Favorit“ (auch in CarPlay): Siri sagt „… ist jetzt Favorit“, der Song ist im Verlauf mit Daumen hoch markiert.
 - [ ] Kurzbefehl „Nie wieder“: Spotify springt genau einen Song weiter.
-- [ ] Neuen Schlüssel erstellen: Der alte Kurzbefehl antwortet „Kein gültiger Schlüssel …“ oder „Dieser Schlüssel gilt nicht mehr …“.
+- [ ] Im Auto per CarPlay „Nie wieder“: Spotify springt genau einen Song weiter, der Song danach läuft normal (kein zweiter Sprung ein paar Sekunden später).
+- [ ] Apple Watch: den Kurzbefehl „Favorit“ in der Kurzbefehle-App der Uhr antippen und per Siri auf der Uhr sagen. Beide Male antwortet er mit „… ist jetzt Favorit“.
+- [ ] Homescreen-Widget (iPhone: Kurzbefehle-Widget; Android: HTTP Shortcuts): „Weiter“ springt einen Song weiter und zeigt die Antwort.
+- [ ] Neuen Schlüssel erstellen: Der alte Kurzbefehl antwortet „Kein gültiger Schlüssel …“ oder „Dieser Schlüssel gilt nicht mehr …“. Nach „Abmelden“ ebenso.
 
 ## F. Entdeckungen
 

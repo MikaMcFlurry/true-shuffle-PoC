@@ -886,12 +886,21 @@ select {
 
 .presetrow .key {
 	min-height: 52px;
+	min-width: 0;
 	font-weight: 600;
 	display: grid;
 	justify-items: center;
 	align-content: center;
 	gap: 6px;
-	padding: 6px 8px;
+	padding: 6px 4px;
+}
+
+/* The smallest phones (320 px): the three legends still fit side by side. */
+@media (max-width: 359px) {
+	.presetrow .key {
+		font-size: 13px;
+		letter-spacing: 0;
+	}
 }
 
 /* A row of keys machined from one bar: transport, choice rows. */
@@ -913,7 +922,7 @@ select {
 }
 
 .presetrow {
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .transport .key,

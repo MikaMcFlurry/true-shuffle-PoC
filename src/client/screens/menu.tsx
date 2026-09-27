@@ -249,9 +249,11 @@ export function HistoryScreen() {
 	const [more, setMore] = useState(true);
 	const [err, setErr] = useState<string | null>(null);
 	useEffect(() => {
+		const started = Date.now();
 		api
 			.history()
 			.then((x) => {
+				store.settleThumbs(x, started);
 				setItems(x);
 				setMore(x.length >= 60);
 			})

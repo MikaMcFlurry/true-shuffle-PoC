@@ -196,6 +196,44 @@ test.describe("a listener's day", () => {
 			await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 			await checkPage(page, path);
 		}
+		// The smallest phones reflow too (WCAG 1.4.10): home and a station page at 320 px.
+		await page.setViewportSize({ width: 320, height: 700 });
+		await page.goto("/");
+		const station = await page
+			.getByRole("link", { name: "Indie & Gitarren einstellen" })
+			.getAttribute("href");
+		await checkPage(page, "/ at 320 px");
+		await page.goto(station ?? "/");
+		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+		await checkPage(page, `${station} at 320 px`);
+	});
+
+	test("a station held paused plays on from its page, never starts over", async ({ page }) => {
+		await signIn(page);
+		const playing = await fake("status");
+		expect(playing.playing).toBe(true);
+		await fake("pause");
+		// Let the hub look at the player now instead of at its next regular look.
+		await page.request.post("/api/sync", { headers: { "x-ts": "1" } });
+		await expect
+			.poll(
+				async () => {
+					const st = (await (await page.request.get("/api/state?live=1")).json()) as {
+						nowPlaying: { isPlaying: boolean; stationId: number | null } | null;
+					};
+					return st.nowPlaying && !st.nowPlaying.isPlaying ? st.nowPlaying.stationId : null;
+				},
+				{ timeout: 30_000 },
+			)
+			.not.toBeNull();
+		const st = (await (await page.request.get("/api/state")).json()) as {
+			nowPlaying: { stationId: number };
+		};
+		await page.goto(`/sender/${st.nowPlaying.stationId}`);
+		await expect(page.getByRole("heading", { name: "Pausiert" })).toBeVisible();
+		await page.getByRole("button", { name: "Weiterspielen" }).click();
+		await expect.poll(async () => (await fake("status")).playing).toBe(true);
+		expect((await fake("status")).current).toBe(playing.current);
 	});
 
 	test("says clearly when Spotify refuses: no Premium, no device", async ({ page }) => {
