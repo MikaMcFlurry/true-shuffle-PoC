@@ -628,12 +628,10 @@ export function MixKnob(props: {
  * detents as a printed scale, Entdecker · Ausgewogen · Vertraut, the chosen
  * one set bold with a short red tick under it. Native radios underneath, so
  * the arrow keys move the choice. A mix turned between detents on the radio
- * shows its nearest position; a choice here writes only the detent's value.
+ * marks no position (the readout above prints it), so any choice here snaps
+ * it to that detent's value.
  */
 export function MixScale(props: { value: number; station: string; onChange: (v: number) => void }) {
-	const nearest = MIX_DETENTS.reduce((a, b) =>
-		Math.abs(b[1] - props.value) < Math.abs(a[1] - props.value) ? b : a,
-	)[1];
 	return (
 		<fieldset class="mixscale">
 			<legend class="sr-only">Klang für {props.station}: Entdecken oder Vertraut</legend>
@@ -643,7 +641,7 @@ export function MixScale(props: { value: number; station: string; onChange: (v: 
 						type="radio"
 						name={`mix-${props.station}`}
 						value={String(v)}
-						checked={nearest === v}
+						checked={props.value === v}
 						onChange={() => props.onChange(v)}
 					/>
 					<span class="mixscale__label">{label}</span>
