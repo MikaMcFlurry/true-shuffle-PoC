@@ -186,6 +186,8 @@ const GUEST_FOLLOW_MS = 2 * DAY_MS;
  * (it tells which play was on the player across the end) — at most this long.
  */
 const GUEST_DECIDE_MS = 12 * HOUR_MS;
+/** Listings held meanwhile: enough for 12 hours of one-minute songs. */
+const GUEST_HELD_MAX = 1000;
 /** A remote key answers at most this many commands in ten minutes. */
 const REMOTE_LIMIT = 20;
 const REMOTE_WINDOW_MS = 10 * MINUTE_MS;
@@ -3161,6 +3163,7 @@ export class HubCore {
 	private holdGuestListings(
 		read: { track: SpTrack; played_at: string; context: { uri: string } | null }[],
 		key: (at: number, id: string) => string,
+		released: Set<string>,
 	): { track: SpTrack; played_at: string; context: { uri: string } | null }[] {
 		type Held = { p: PackedTrack; at: string; ctx: string | null };
 		const held = this.kvGet<Held[]>("guest_waiting") ?? [];
@@ -3195,9 +3198,17 @@ export class HubCore {
 		const release = held.filter((h) => !waits(h.at));
 		const stay = [...held.filter((h) => waits(h.at)), ...add];
 		if (add.length > 0 || release.length > 0) {
-			if (stay.length > 0) this.kvSet("guest_waiting", stay.slice(-500));
+			// Twelve hours of one-minute songs fit; beyond that the oldest go, said so.
+			if (stay.length > GUEST_HELD_MAX)
+				this.log(
+					"warn",
+					"gap",
+					`${stay.length - GUEST_HELD_MAX} Songs nach der Gast-Zeit konnten nicht aufgehoben werden`,
+				);
+			if (stay.length > 0) this.kvSet("guest_waiting", stay.slice(-GUEST_HELD_MAX));
 			else this.kvDel("guest_waiting");
 		}
+		for (const h of release) released.add(key(Date.parse(h.at), h.p[0]));
 		if (release.length === 0) return read;
 		const inRead = new Set(
 			read.filter((i) => i.track?.id).map((i) => key(Date.parse(i.played_at), i.track.id!)),
@@ -3228,7 +3239,8 @@ export class HubCore {
 	): RecentPlay[] {
 		const out: RecentPlay[] = [];
 		const key = (at: number, id: string) => `${at}|${id}`;
-		const items = this.holdGuestListings(read, key);
+		const released = new Set<string>();
+		const items = this.holdGuestListings(read, key, released);
 		// What the previous read already returned. A play older than the cursor
 		// that was not in it arrived late (offline listening synced afterwards):
 		// it still counts, once — the plays table has the final say.
@@ -3261,7 +3273,10 @@ export class HubCore {
 			.slice(0, 60);
 		if (keys.length !== known.size || keys.some((k) => !known.has(k)))
 			this.kvSet("recent_keys", keys);
-		if (fresh.length >= 50 && items.length >= 50) {
+		// Spotify's own read was full of new plays: older ones may be past its 50.
+		// (Released held listings are not part of that read.)
+		const freshRead = fresh.filter((x) => !released.has(key(x.at, x.i.track.id!))).length;
+		if (freshRead >= 50 && read.length >= 50) {
 			this.log(
 				"warn",
 				"gap",

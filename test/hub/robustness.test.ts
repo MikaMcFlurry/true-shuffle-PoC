@@ -2885,6 +2885,8 @@ describe("the twenty-sixth review's cases", () => {
 			const truth = u.recent.filter((r) => r.playedAt > from).length;
 			expect(truth).toBeGreaterThan(50);
 			expect(counted(h, from)).toBeGreaterThanOrEqual(truth - 1);
+			// Nothing was lost, so the log says nothing was (RT27-02).
+			expect(h.sql.all(`SELECT 1 FROM events WHERE kind = 'gap'`)).toEqual([]);
 		}
 	}, 240_000);
 
