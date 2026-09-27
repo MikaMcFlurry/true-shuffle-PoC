@@ -1750,6 +1750,13 @@ p {
 	align-items: center;
 	gap: 5px;
 	min-width: 0;
+	max-width: 100%;
+}
+
+/* A device may carry any name: it wraps inside the card, never widens it. */
+.card__device > span {
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .card__devicon {
@@ -2840,6 +2847,7 @@ label.row:hover {
 }
 
 .row__sub.row__sub--wrap,
+.row--switch .row__sub,
 .track__sub.track__sub--wrap {
 	white-space: normal;
 }
@@ -3613,6 +3621,8 @@ details.more[open] > summary::after {
 
 .more__body {
 	display: grid;
+	/* One column as wide as the sheet: never as wide as its widest child. */
+	grid-template-columns: minmax(0, 1fr);
 	gap: 22px;
 	padding: 8px 0 22px;
 }
@@ -3967,6 +3977,25 @@ details.more[open] > summary::after {
 	min-width: 0;
 	padding-bottom: 12px;
 	border-bottom: 1px solid var(--rule-strong);
+}
+
+/* The song about to be rated shows its whole title ("– Live", "– Remix"), up to three lines. */
+.sheet__song .track__title {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+	line-clamp: 3;
+	overflow-wrap: anywhere;
+	white-space: normal;
+}
+
+.sheet__song .track__sub {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow-wrap: anywhere;
+	white-space: normal;
 }
 
 .sheet__actions {

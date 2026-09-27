@@ -408,14 +408,29 @@ function NowCard({ state }: { state: AppState }) {
  */
 function KlangKnob({ state }: { state: AppState }) {
 	const s = useStore();
-	const station = s.tuning ? null : pointedStation(state, null, s.selected);
+	// In hand, the knob keeps the station it was taken up on, whatever the pointer does.
+	const [pinned, setPinned] = useState<number | null>(null);
+	const station = s.tuning
+		? null
+		: ((pinned !== null ? state.stations.find((x) => x.id === pinned) : undefined) ??
+			pointedStation(state, null, s.selected));
 	const [local, setLocal] = useState<{ id: number; mix: number } | null>(null);
 	const pending = useRef<{ id: number; mix: number; timer: number } | null>(null);
 	const save = (id: number, mix: number) =>
 		api
 			.updateStation(id, { rules: { mix } })
 			.then(() => store.refresh(false))
-			.catch((e: Error) => store.say(e.message, "error"));
+			.catch((e: Error) => {
+				// Not saved: the knob goes back to what the station really has.
+				if (pending.current?.id !== id) setLocal((l) => (l?.id === id ? null : l));
+				store.say(`Klang nicht gespeichert: ${e.message}`, "error");
+				void store.refresh(false);
+			});
+	const hold = (on: boolean) => {
+		if (on && !station) return;
+		setPinned(on ? (station?.id ?? null) : null);
+		store.holdSelection(on);
+	};
 	const flush = useRef(() => {});
 	flush.current = () => {
 		const p = pending.current;
@@ -430,6 +445,7 @@ function KlangKnob({ state }: { state: AppState }) {
 		return () => {
 			window.removeEventListener("pagehide", onHide);
 			flush.current();
+			store.holdSelection(false);
 		};
 	}, []);
 	// Once the hub has the value turned here, its word counts again.
@@ -461,11 +477,16 @@ function KlangKnob({ state }: { state: AppState }) {
 	return (
 		<MixKnob
 			value={value}
-			valueText={station && value !== null ? mixText(station, value, ", ") : "kein Sender"}
+			valueText={
+				station && value !== null
+					? `${station.name}: ${mixText(station, value, ", ")}`
+					: "kein Sender"
+			}
 			station={station?.name ?? null}
 			onChange={change}
 			disabled={!station}
 			showTarget
+			onHold={hold}
 		/>
 	);
 }

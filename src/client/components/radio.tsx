@@ -497,10 +497,33 @@ export function MixKnob(props: {
 	disabled?: boolean;
 	/** Print the station the knob turns under it (on the radio, where it can change). */
 	showTarget?: boolean;
+	/** Told when the knob (or a detent) is taken in hand and let go again. */
+	onHold?: (on: boolean) => void;
 }) {
 	const off = props.disabled || props.value === null;
+	const hold = props.onHold;
 	return (
-		<div class="knob-unit knob-unit--mix">
+		<div
+			class="knob-unit knob-unit--mix"
+			onFocusIn={hold ? () => hold(true) : undefined}
+			onPointerDownCapture={hold ? () => hold(true) : undefined}
+			onPointerUpCapture={
+				hold
+					? (e) => {
+							// A touch that never took focus lets go with the finger.
+							if (!(e.currentTarget as HTMLElement).contains(document.activeElement)) hold(false);
+						}
+					: undefined
+			}
+			onFocusOut={
+				hold
+					? (e) => {
+							const to = e.relatedTarget as Node | null;
+							if (!to || !(e.currentTarget as HTMLElement).contains(to)) hold(false);
+						}
+					: undefined
+			}
+		>
 			<div class="detents">
 				{MIX_DETENTS.map(([label, v, pos]) => (
 					<button

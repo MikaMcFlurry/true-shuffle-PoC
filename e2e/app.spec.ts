@@ -47,6 +47,27 @@ async function checkPage(page: Page, where: string): Promise<void> {
 	expect(unnamed, `${where}: controls without a name`).toEqual([]);
 }
 
+/** Nothing sticks out of the box it sits in, where a clipping box would cut it off. */
+async function checkContained(page: Page, where: string): Promise<void> {
+	const out = await page.evaluate(() =>
+		[...document.querySelectorAll("body *")]
+			.filter((el) => {
+				const p = el.parentElement;
+				if (!p || el.closest("svg")) return false;
+				const cs = getComputedStyle(el);
+				// Placed or turned on purpose (lamps, needles, knob caps): not flow content.
+				if (cs.position === "absolute" || cs.position === "fixed" || cs.transform !== "none")
+					return false;
+				const r = el.getBoundingClientRect();
+				const pr = p.getBoundingClientRect();
+				if (r.width === 0 || pr.width === 0) return false;
+				return r.right > pr.right + 1 || r.left < pr.left - 1;
+			})
+			.map((el) => `${el.tagName.toLowerCase()}.${el.getAttribute("class") ?? ""}`),
+	);
+	expect(out, `${where}: wider than its box`).toEqual([]);
+}
+
 test.describe.configure({ mode: "serial" });
 
 test.describe("a listener's day", () => {
@@ -236,6 +257,68 @@ test.describe("a listener's day", () => {
 			}
 		} finally {
 			expect((await rename("Lange Autofahrt")).ok()).toBe(true);
+		}
+
+		// Opened up — the station's advanced settings, and any folds on the menu
+		// and the remote page — every page still fits at 320 and 360 px.
+		for (const w of [320, 360]) {
+			await page.setViewportSize({ width: w, height: 700 });
+			for (const path of [`/sender/${lange?.id}`, "/menu", "/fernbedienung"]) {
+				await page.goto(path);
+				await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+				if (path.startsWith("/sender/"))
+					await expect(page.getByText("Erweitert", { exact: true })).toBeVisible();
+				const folds = await page.evaluate(() => {
+					const all = [...document.querySelectorAll("details")];
+					for (const d of all) d.open = true;
+					return all.length;
+				});
+				if (path.startsWith("/sender/")) expect(folds).toBeGreaterThan(0);
+				await checkPage(page, `${path} at ${w} px, opened up`);
+				await checkContained(page, `${path} at ${w} px, opened up`);
+			}
+		}
+
+		// The song about to be rated shows its whole title, "– Live" and all.
+		await page.setViewportSize({ width: 320, height: 700 });
+		await page.goto(`/sender/${lange?.id}`);
+		const rows = page.getByRole("region", { name: "Als Nächstes" }).getByRole("listitem");
+		await expect(rows.first()).toBeVisible();
+		const titles = await rows.locator(".order__title").allTextContents();
+		const longest = titles.reduce((a, t, i) => (t.length > titles[a]!.length ? i : a), 0);
+		await rows
+			.nth(longest)
+			.getByRole("button", { name: / bewerten$/ })
+			.click();
+		const sheet = page.getByRole("dialog");
+		await expect(sheet).toBeVisible();
+		const title = await sheet.locator("#rate-title").evaluate((t) => ({
+			text: t.textContent ?? "",
+			cut: t.scrollWidth > t.clientWidth + 1 || t.scrollHeight > t.clientHeight + 2,
+		}));
+		expect(titles[longest]).toContain(title.text);
+		expect(title.cut, `rating sheet cuts "${title.text}"`).toBe(false);
+		await checkContained(page, "rating sheet at 320 px");
+		await sheet.getByRole("button", { name: "Abbrechen" }).click();
+		await expect(sheet).toBeHidden();
+
+		// A device with a long name wraps inside the card.
+		const device = "Wohnzimmerlautsprecheranlagenverstärkerfernbedienungsempfänger";
+		await fake(`devices?name=${encodeURIComponent(device)}`);
+		try {
+			await page.request.post("/api/sync", { headers: { "x-ts": "1" } });
+			for (const w of [320, 390]) {
+				await page.setViewportSize({ width: w, height: 700 });
+				await page.goto("/");
+				await expect(
+					page.getByRole("region", { name: "Anzeige" }).getByText(device, { exact: true }),
+				).toBeVisible({ timeout: 20_000 });
+				await checkPage(page, `/ at ${w} px with a long device name`);
+				await checkContained(page, `/ at ${w} px with a long device name`);
+			}
+		} finally {
+			await fake("devices");
+			await page.request.post("/api/sync", { headers: { "x-ts": "1" } });
 		}
 	});
 

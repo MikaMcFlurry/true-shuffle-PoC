@@ -217,7 +217,12 @@ export function Station({
 				if (pendingMix.current === null) setMix(null);
 				void load();
 			})
-			.catch((e: Error) => store.say(e.message, "error"));
+			.catch((e: Error) => {
+				// Not saved: back to what the station really has.
+				if (pendingMix.current === null) setMix(null);
+				store.say(`Mischung nicht gespeichert: ${e.message}`, "error");
+				void store.refresh(false);
+			});
 	};
 	flushMix.current = () => {
 		if (saveTimer.current === null || pendingMix.current === null) return;

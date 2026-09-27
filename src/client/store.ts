@@ -53,16 +53,32 @@ class Store {
 	/** Point the dial at a station without playing it; it falls back after a while untouched. */
 	select(stationId: number | null): void {
 		this.selected = stationId;
+		this.armSelection();
+		this.emit();
+	}
+
+	/**
+	 * While the Klang knob is in hand, the selection it turns stays put;
+	 * let go, and the usual while untouched starts again.
+	 */
+	holdSelection(on: boolean): void {
+		if (this.selectionHeld === on) return;
+		this.selectionHeld = on;
+		this.armSelection();
+	}
+
+	private selectionHeld = false;
+
+	private armSelection(): void {
 		if (this.selectTimer !== null) window.clearTimeout(this.selectTimer);
 		this.selectTimer =
-			stationId === null
+			this.selected === null || this.selectionHeld
 				? null
 				: window.setTimeout(() => {
 						this.selected = null;
 						this.selectTimer = null;
 						this.emit();
 					}, 20_000);
-		this.emit();
 	}
 
 	rate(t: TrackView | null): void {

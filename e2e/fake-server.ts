@@ -184,9 +184,15 @@ const server = createServer(async (req, res) => {
 			case "/__control/premium":
 				user.premium = u.searchParams.get("on") === "1";
 				break;
-			case "/__control/devices":
-				user.devices = u.searchParams.get("none") === "1" ? [] : [...DEVICES];
+			case "/__control/devices": {
+				// ?none=1: no devices; ?name=…: the first device carries that name.
+				const name = u.searchParams.get("name");
+				user.devices =
+					u.searchParams.get("none") === "1"
+						? []
+						: DEVICES.map((d, i) => (i === 0 && name ? { ...d, name } : { ...d }));
 				break;
+			}
 		}
 		response = Response.json({
 			current: fake.current("mika"),
