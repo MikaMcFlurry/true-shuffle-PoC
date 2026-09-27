@@ -2649,3 +2649,18 @@ describe("the twenty-third review's cases", () => {
 			expect(memPlays(h, x)).toBe(0);
 		});
 });
+
+describe("hearts set in Spotify", () => {
+	it("a heart set in Spotify (CarPlay, a watch) makes a favourite within minutes", async () => {
+		const h = await onboarded({ tracks: 300 });
+		expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+		await h.listen(3 * MINUTE_MS);
+		const x = h.fake.current()!;
+		expect(h.hub.memory(x).liked).toBe(false);
+		h.fake.user().liked.unshift(x); // the heart, newest first as Spotify lists them
+		await h.listen(12 * MINUTE_MS);
+		expect(h.hub.memory(x).liked).toBe(true);
+		const log = h.sql.all<{ message: string }>(`SELECT message FROM events WHERE kind = 'liked'`);
+		expect(log.length).toBe(1);
+	});
+});

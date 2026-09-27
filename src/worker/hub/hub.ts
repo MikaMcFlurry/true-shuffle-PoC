@@ -393,6 +393,8 @@ interface SyncState {
 	shuffleFixAt: number;
 	lastPlaylistsAt: number;
 	lastLikedAt: number;
+	/** The last look at the newest Spotify hearts (while music plays). */
+	lastLikedPeekAt?: number;
 }
 
 type StepResult = { done: true } | { done: false; state: unknown; delayMs?: number };
@@ -1030,6 +1032,8 @@ export class HubCore {
 			const s = this.syncState();
 			s.lastLikedAt = this.now();
 			this.setSyncState(s);
+			// The full list has the hearts seen since the last one.
+			this.kvDel("liked_recent");
 			this.likedCache = null;
 		} else {
 			this.db.run(
@@ -1238,8 +1242,36 @@ export class HubCore {
 	}
 
 	private liked(): Set<TrackId> {
-		if (!this.likedCache) this.likedCache = new Set(this.loadSource("liked").map((t) => t[0]));
+		if (!this.likedCache)
+			this.likedCache = new Set([
+				...this.loadSource("liked").map((t) => t[0]),
+				...(this.kvGet<TrackId[]>("liked_recent") ?? []),
+			]);
 		return this.likedCache;
+	}
+
+	/**
+	 * A heart set in Spotify — on the phone, in CarPlay or Android Auto, on a
+	 * watch — makes a favourite within minutes: while music plays, the newest
+	 * hearts are read every 10 minutes (one request).
+	 */
+	private async peekLiked(client: SpotifyClient, s: SyncState): Promise<void> {
+		if (!this.kvGet("liked_import") || this.now() - (s.lastLikedPeekAt ?? 0) < 10 * MINUTE_MS)
+			return;
+		s.lastLikedPeekAt = this.now();
+		const page = await client.likedTracks(0);
+		const known = this.liked();
+		const fresh = (page?.items ?? []).filter((i) => !!i.track?.id && !known.has(i.track.id));
+		if (fresh.length === 0) return;
+		const recent = this.kvGet<TrackId[]>("liked_recent") ?? [];
+		this.kvSet("liked_recent", [...recent, ...fresh.map((i) => i.track.id!)].slice(-500));
+		this.likedCache = null;
+		for (const i of fresh.slice(0, 5))
+			this.log(
+				"info",
+				"liked",
+				`Herz in Spotify: „${i.track.name}“ — ${(i.track.artists ?? []).map((a) => a.name).join(", ")} ist jetzt Favorit`,
+			);
 	}
 
 	/** Effective memory of a song: live + imported history + Spotify heart. */
@@ -2000,6 +2032,13 @@ export class HubCore {
 		if (recentDue) {
 			try {
 				plays = await this.readRecent(client, s);
+			} catch (err) {
+				this.handleSyncError(err);
+			}
+		}
+		if (obs?.isPlaying) {
+			try {
+				await this.peekLiked(client, s);
 			} catch (err) {
 				this.handleSyncError(err);
 			}
