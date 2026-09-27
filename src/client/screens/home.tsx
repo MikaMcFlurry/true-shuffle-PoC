@@ -527,7 +527,9 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 					type="button"
 					class={`pkey${paused ? " pkey--down" : ""}`}
 					disabled={disabled}
-					aria-label={np?.isPlaying ? "Pause" : "Weiter abspielen"}
+					// A latching key: "Pause", pressed while paused; pressing it again plays on.
+					aria-label="Pause"
+					aria-pressed={paused}
 					onClick={() => act(np?.isPlaying ? "pause" : "resume")}
 				>
 					{/* Engraved once: the key sinks and its legend reddens while paused. */}
