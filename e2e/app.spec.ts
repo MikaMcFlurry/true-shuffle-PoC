@@ -83,9 +83,13 @@ test.describe("a listener's day", () => {
 		expect(s.playing).toBe(true);
 		expect(s.shuffle).toBe(false);
 		expect(s.context).toMatch(/^spotify:playlist:/);
-		await expect(
-			page.getByRole("button", { name: "Indie & Gitarren starten (läuft)" }),
-		).toBeVisible();
+		// Playing now: a tap opens the station instead of starting it over.
+		const tile = page.getByRole("button", { name: "Indie & Gitarren öffnen (läuft gerade)" });
+		await expect(tile).toBeVisible();
+		await tile.click();
+		await expect(page.getByRole("heading", { name: "Indie & Gitarren", level: 1 })).toBeVisible();
+		await expect(page.getByText("Läuft gerade").first()).toBeVisible();
+		expect((await fake("status")).playing).toBe(true);
 	});
 
 	test("skips and bans a song from the transport keys", async ({ page }) => {
@@ -174,7 +178,9 @@ test.describe("a listener's day", () => {
 		await page.goto("/");
 
 		await page.getByRole("link", { name: "Mit Spotify anmelden" }).click();
-		await expect(page.getByRole("button", { name: /^Indie & Gitarren starten/ })).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: /^Indie & Gitarren (starten|öffnen|weiterspielen)/ }),
+		).toBeVisible();
 	});
 });
 

@@ -13,6 +13,7 @@ import type { AppState, NowPlaying, StationSummary } from "../../shared/api";
 import { api } from "../api";
 import { Display, type Indicator, type RoundReading, Scale } from "../components/radio";
 import { duration, num, rds, SEP } from "../format";
+import { navigate } from "../router";
 import { store, useStore } from "../store";
 
 const KIND_TEXT = {
@@ -124,7 +125,7 @@ function NowDisplay({ state }: { state: AppState }) {
 		const station =
 			np.stationId !== null ? state.stations.find((x) => x.id === np.stationId) : null;
 		const lit: Indicator[] = [];
-		if (np.kind === "fresh") lit.push("NEU");
+		if (np.kind === "fresh") lit.push("UNGEHÖRT");
 		if (np.kind === "favorite" || np.thumb === 1) lit.push("FAVORIT");
 		if (np.kind === "discovery") lit.push("ENTDECKUNG");
 		if (guest) lit.push("GAST");
@@ -257,6 +258,15 @@ function jobFor(state: AppState, s: StationSummary) {
 function Preset({ s, n, state }: { s: StationSummary; n: number; state: AppState }) {
 	const store = useStore();
 	const tuning = store.tuning?.stationId === s.id;
+	const held = state.nowPlaying?.stationId === s.id;
+	const resume = () =>
+		api
+			.player("resume")
+			.then((r) => {
+				if (!r.ok) store.say(r.error?.message ?? "Das hat nicht geklappt.", "error");
+			})
+			.catch((e: Error) => store.say(e.message, "error"))
+			.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
 	const job = !s.ready ? jobFor(state, s) : undefined;
 	const status = s.importing
 		? job?.total
@@ -271,8 +281,15 @@ function Preset({ s, n, state }: { s: StationSummary; n: number; state: AppState
 				type="button"
 				class="preset__play"
 				disabled={!s.ready || !!store.tuning}
-				aria-label={`${s.name} starten${s.playing ? " (läuft)" : ""}`}
-				onClick={() => playStation(s)}
+				aria-label={
+					s.playing
+						? `${s.name} öffnen (läuft gerade)`
+						: held
+							? `${s.name} weiterspielen`
+							: `${s.name} starten`
+				}
+				// Already playing: open it; paused in it: play on — never start it over.
+				onClick={() => (s.playing ? navigate(`/sender/${s.id}`) : held ? resume() : playStation(s))}
 			>
 				<span class="preset__num">
 					<span class="num">{n}</span>

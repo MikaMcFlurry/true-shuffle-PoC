@@ -11,7 +11,7 @@ import { store } from "../store";
 import { playStation } from "./home";
 
 const KIND: Record<SlotKind, string> = {
-	fresh: "Neu",
+	fresh: "Ungehört",
 	favorite: "Favorit",
 	discovery: "Entdeckung",
 };
@@ -245,6 +245,7 @@ export function Station({
 	}
 
 	const summary = state.stations.find((s) => s.id === id) ?? d;
+	const np = state.nowPlaying;
 	const heard =
 		d.poolSize !== null && d.freshRemaining !== null ? d.poolSize - d.freshRemaining : null;
 	const rules = d.rules;
@@ -255,10 +256,10 @@ export function Station({
 			<PageBar
 				title={d.name}
 				sub={
-					d.kind === "all"
-						? "Alle deine Sender und Lieblingssongs"
-						: d.playing
-							? "Läuft gerade"
+					d.playing
+						? "Läuft gerade"
+						: d.kind === "all"
+							? "Alle deine Sender und Lieblingssongs"
 							: undefined
 				}
 				backTo="/"
@@ -283,7 +284,7 @@ export function Station({
 					onClick={() => playStation(summary)}
 				>
 					<Play class="icon" aria-hidden="true" />
-					Spielen
+					{summary.playing ? "Neu starten" : "Spielen"}
 				</button>
 				{d.playlistId ? (
 					<a
@@ -324,6 +325,24 @@ export function Station({
 					))}
 				</div>
 			</Section>
+
+			{np && np.stationId === id ? (
+				<Section title="Läuft gerade" id="now">
+					<ul class="glass glasslist">
+						<li class="glasslist__row">
+							<span class="glasslist__main">
+								<span class="glasslist__title">{np.name}</span>
+								<span class="glasslist__sub">{np.artists}</span>
+							</span>
+							{np.kind ? (
+								<span class={`seg${np.kind !== "fresh" ? " on" : " dim"}`}>{KIND[np.kind]}</span>
+							) : (
+								<span class="glasslist__value">{np.isPlaying ? "spielt" : "Pause"}</span>
+							)}
+						</li>
+					</ul>
+				</Section>
+			) : null}
 
 			<Section title="Als Nächstes" id="next">
 				{d.upcoming.length === 0 ? (

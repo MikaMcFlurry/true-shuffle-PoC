@@ -62,9 +62,9 @@ export function Scale(props: {
 	);
 }
 
-export type Indicator = "NEU" | "FAVORIT" | "ENTDECKUNG" | "GAST" | "PAUSE";
+export type Indicator = "UNGEHÖRT" | "FAVORIT" | "ENTDECKUNG" | "GAST" | "PAUSE";
 
-const ALL: Indicator[] = ["NEU", "FAVORIT", "ENTDECKUNG", "GAST", "PAUSE"];
+const ALL: Indicator[] = ["UNGEHÖRT", "FAVORIT", "ENTDECKUNG", "GAST", "PAUSE"];
 
 export function Display(props: {
 	lit: Indicator[];
