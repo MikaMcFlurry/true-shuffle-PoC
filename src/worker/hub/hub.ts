@@ -348,6 +348,8 @@ interface GuestLast {
 	 */
 	gapTo?: number;
 	next?: TrackId;
+	/** The play across the end is known among them (listed): the rest are the owner's. */
+	gapTaken?: true;
 }
 
 interface GuestPeriod {
@@ -2427,13 +2429,20 @@ export class HubCore {
 				) {
 					g.listed = true;
 					listed = true;
+					// Listed after the end: it was the play across it.
+					if (g.gapTo !== undefined) g.gapTaken = true;
 					if (g.owner >= 30_000) return false;
 					from = g.start;
 					return true;
 				}
-				// A play no look saw, over before the first one seen after the end:
-				// it may have been the guest's, paused across the end.
-				if (g.gapTo !== undefined && id !== g.next && at <= g.gapTo + 10_000) return true;
+				// Plays no look saw, over before the first one seen after the end:
+				// the first listed of them may have been the guest's, paused across
+				// the end; the ones after it began after it, the owner's.
+				if (g.gapTo !== undefined && !g.gapTaken && id !== g.next && at <= g.gapTo + 10_000) {
+					g.gapTaken = true;
+					listed = true;
+					return true;
+				}
 				// Looks saw the one play across the end: every other one is the owner's.
 				if (g.only) return false;
 			}
