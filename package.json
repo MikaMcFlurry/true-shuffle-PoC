@@ -2,7 +2,7 @@
 	"name": "true-shuffle",
 	"version": "1.0.0",
 	"private": true,
-	"description": "True Shuffle — Spotify stations with a memory: no quick repeats, every song eventually, favourites sometimes, discoveries along the way.",
+	"description": "true-shuffle — Spotify stations with a memory: no quick repeats, every song eventually, favourites sometimes, discoveries along the way.",
 	"type": "module",
 	"engines": {
 		"node": ">=22"

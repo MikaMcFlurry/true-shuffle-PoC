@@ -46,7 +46,7 @@ export interface TrackMemory {
 	consumedAt?: number | null;
 	/** In the listener's Spotify "Lieblingssongs". */
 	liked: boolean;
-	/** Thumb in True Shuffle: -1 = never again, 0 = none, 1 = favourite. */
+	/** Thumb in true-shuffle: -1 = never again, 0 = none, 1 = favourite. */
 	thumb: -1 | 0 | 1;
 }
 

@@ -137,7 +137,7 @@ describe("history import", () => {
 });
 
 describe("aggregateHistory with a live start", () => {
-	it("counts only listening before True Shuffle started counting live", () => {
+	it("counts only listening before true-shuffle started counting live", () => {
 		const uri = "spotify:track:0123456789abcdefghijkl";
 		const agg = aggregateHistory(
 			[

@@ -126,7 +126,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 				<ul class="keygrid">
 					<MenuKey href="/sender/neu" legend="Sender anlegen" sub="Playlists kombinieren" />
 					<MenuKey href="/suchlauf" legend="Suchlauf" sub="Weitere Playlists speichern" />
-					<MenuKey href="/geraete" legend="Gerät" sub="Wo True Shuffle startet" />
+					<MenuKey href="/geraete" legend="Gerät" sub="Wo true-shuffle startet" />
 					<MenuKey href="/fernbedienung" legend="Fernbedienung" sub="Siri, CarPlay, Uhr, Widget" />
 				</ul>
 			</Section>
@@ -173,7 +173,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 
 			<Section title="Konto" id="account">
 				<ul class="keygrid">
-					<MenuKey href="/info" legend="Info" sub="Wie True Shuffle arbeitet" />
+					<MenuKey href="/info" legend="Info" sub="Wie true-shuffle arbeitet" />
 					<li>
 						<button
 							type="button"
@@ -400,17 +400,17 @@ export function DevicesScreen() {
 export function AboutScreen() {
 	return (
 		<div class="page">
-			<PageBar title="Über True Shuffle" backTo="/menu" />
+			<PageBar title="Info" sub="Wie true-shuffle arbeitet" backTo="/menu" />
 			<Section title="Wie es funktioniert" id="how">
 				<p class="lede">
 					Jeder Sender ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify. Sie enthält
-					nicht alle Songs des Senders, sondern die nächsten 300 (rund 17 Stunden), und True Shuffle
+					nicht alle Songs des Senders, sondern die nächsten 300 (rund 17 Stunden), und true-shuffle
 					schreibt sie aus deinem Gedächtnis neu, immer dann, wenn gerade niemand sie hört. So kommt
 					nach und nach jeder Song des Senders dran. Spotify spielt sie ganz normal ab — auf jedem
 					Gerät, auch im Auto, auch wenn du sie direkt in Spotify startest.
 				</p>
 				<p class="lede">
-					Alle paar Minuten liest True Shuffle, was du gehört hast. Jeder Song ab 30 Sekunden kommt
+					Alle paar Minuten liest true-shuffle, was du gehört hast. Jeder Song ab 30 Sekunden kommt
 					ins Gedächtnis, egal wo er lief. Was du früh überspringst, kommt später und seltener
 					wieder.
 				</p>
@@ -495,7 +495,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 					continue;
 				}
 				if (kind !== "extended") continue;
-				// What came after the first sign-in, True Shuffle already counted live.
+				// What came after the first sign-in, true-shuffle already counted live.
 				aggregateHistory(data as ExtendedEntry[], agg, { before: state.history.liveSince });
 				used++;
 			} catch {
@@ -540,10 +540,10 @@ export function ImportScreen({ state }: { state: AppState }) {
 				backTo="/menu"
 			/>
 			<p class="lede">
-				Mit deinem Spotify-Hörverlauf weiß True Shuffle vom ersten Tag an, was du oft gehört, früh
+				Mit deinem Spotify-Hörverlauf weiß true-shuffle vom ersten Tag an, was du oft gehört, früh
 				übersprungen oder nie gehört hast. Die Dateien werden hier im Browser ausgewertet —
 				hochgeladen wird nur, wie oft du welchen Song gehört hast. Es zählt nur, was vor deiner
-				ersten Anmeldung lief; alles danach hat True Shuffle schon selbst mitgezählt.
+				ersten Anmeldung lief; alles danach hat true-shuffle schon selbst mitgezählt.
 			</p>
 			<ol class="list">
 				<li class="row">

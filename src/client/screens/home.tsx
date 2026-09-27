@@ -141,7 +141,7 @@ function NowDisplay({ state }: { state: AppState }) {
 				lit={guest ? ["GAST"] : []}
 				name={rds(tuning.name)}
 				song="Sender wird eingestellt …"
-				artist="True Shuffle bereitet deine Playlist in Spotify vor"
+				artist="true-shuffle bereitet deine Playlist in Spotify vor"
 				scale={stationScale(tuning)}
 				art={{ src: tuning.imageUrl }}
 				tuning
@@ -181,7 +181,7 @@ function NowDisplay({ state }: { state: AppState }) {
 							: "Aus deiner Warteschlange"
 						: guest
 							? "Gast-Modus: zählt nicht ins Gedächtnis"
-							: "Außerhalb von True Shuffle — zählt trotzdem"
+							: "Außerhalb von true-shuffle — zählt trotzdem"
 				}
 				scale={station ? stationScale(station) : null}
 				art={{ src: np.imageUrl }}
@@ -199,7 +199,7 @@ function NowDisplay({ state }: { state: AppState }) {
 			name={last ? rds(last.name) : "BEREIT"}
 			nameGhost={!last}
 			song={last ? "Tippe den Sender, um weiterzuhören" : "Tippe einen Sender"}
-			artist="Spotify spielt, True Shuffle merkt sich alles"
+			artist="Spotify spielt, true-shuffle merkt sich alles"
 			message={message}
 			scale={last ? stationScale(last) : null}
 			art={{ src: last?.imageUrl ?? null }}
@@ -342,7 +342,7 @@ export function Home({ state }: { state: AppState }) {
 	return (
 		<>
 			<div class="brand">
-				<span class="brand__mark">TRUE SHUFFLE</span>
+				<span class="brand__mark">true-shuffle</span>
 				<span>{state.profile.name}</span>
 			</div>
 			<NowDisplay state={state} />

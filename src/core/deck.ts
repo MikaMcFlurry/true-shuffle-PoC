@@ -61,13 +61,13 @@ export interface Deck {
 	lastPlaying?: boolean;
 	lastObservedAt: number | null;
 	/**
-	 * Spotify plays exactly this order: True Shuffle started it, or this
+	 * Spotify plays exactly this order: true-shuffle started it, or this
 	 * version continues one it started (whatever a player had loaded goes on
 	 * the same way). Only then do positions between two looks at the player
 	 * prove anything; otherwise only a song seen playing can count as left.
 	 */
 	ours?: boolean;
-	/** Just started by True Shuffle at its first song; nothing seen since. */
+	/** Just started by true-shuffle at its first song; nothing seen since. */
 	top?: boolean;
 	/** Built as a continuation of the previous version. */
 	continued?: boolean;
@@ -121,7 +121,7 @@ export interface Deck {
 	 */
 	endsAt?: number[];
 	/**
-	 * A player is known to follow this version: True Shuffle started it or
+	 * A player is known to follow this version: true-shuffle started it or
 	 * jumped it to a place, or it was seen playing a song only this version
 	 * holds. Until then its front (up to `heldAt`) proves no gaps.
 	 */

@@ -1,5 +1,5 @@
 /*
- * True Shuffle — the station memory of a car radio, built like a good one.
+ * true-shuffle — the station memory of a car radio, built like a good one.
  *
  * Two illuminations, like a radio's dimmer: DAY is a satin silver
  * faceplate, NIGHT is graphite. The display window is black glass in both,
@@ -1301,9 +1301,12 @@ select {
 	text-transform: uppercase;
 }
 
+/* The name is written the owner's way, lower case with a hyphen: never set in capitals. */
 .brand__mark {
 	font-weight: 700;
-	letter-spacing: 0.32em;
+	font-size: 14px;
+	letter-spacing: 0.04em;
+	text-transform: none;
 	color: var(--ink);
 }
 

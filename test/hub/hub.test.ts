@@ -30,11 +30,35 @@ describe("onboarding", () => {
 			expect(s.ready).toBe(true);
 			const pl = h.fake.playlists.get(s.playlistId!)!;
 			expect(pl.public).toBe(false);
-			expect(pl.name).toBe(`True Shuffle · ${s.name}`);
+			expect(pl.name).toBe(`true-shuffle · ${s.name}`);
 			expect(new Set(pl.items).size).toBe(pl.items.length);
 		}
 		expect(deckPlaylist(h, st.stations[1]!.id).items.length).toBe(Math.min(DECK_SIZE, 400));
 		expect(st.jobs).toEqual([]);
+	});
+
+	it("renames playlists made under the old spelling once, and still knows them as its own", async () => {
+		const h = await onboarded({ tracks: 300, playlists: [300] });
+		const hub = h.hub as unknown as { kvDel: (k: string) => void };
+		const st = await h.hub.state();
+		// An account from before: its decks carry the old name, the rename never ran.
+		for (const s of st.stations) {
+			const pl = h.fake.playlists.get(s.playlistId!)!;
+			pl.name = pl.name.replace("true-shuffle · ", "True Shuffle · ");
+		}
+		hub.kvDel("names_v2");
+		await h.listen(10 * MINUTE_MS);
+		for (const s of st.stations)
+			expect(h.fake.playlists.get(s.playlistId!)!.name).toBe(`true-shuffle · ${s.name}`);
+		// A deck under the old name is never offered as a source.
+		const offered = h.hub.listPlaylists().map((p) => p.name);
+		expect(offered.some((n) => /shuffle ·/i.test(n))).toBe(false);
+		// Once is enough: no rename on later syncs.
+		const renames = () => h.fake.calls.filter((c) => /^PUT \/v1\/playlists\/[^/]+$/.test(c)).length;
+		const calls = renames();
+		expect(calls).toBeGreaterThan(0);
+		await h.listen(HOUR_MS);
+		expect(renames()).toBe(calls);
 	});
 
 	it("imports a big library across several invocations within the request budget", async () => {
@@ -133,7 +157,7 @@ describe("listening", () => {
 		for (const id of skipped) expect(deck.includes(id)).toBe(false);
 	});
 
-	it("counts music heard outside True Shuffle and leaves the deck alone meanwhile", async () => {
+	it("counts music heard outside true-shuffle and leaves the deck alone meanwhile", async () => {
 		const h = await onboarded();
 		const sid = h.stationIds[0]!;
 		const deckBefore = deckPlaylist(h, sid).items.slice();
@@ -280,7 +304,7 @@ describe("errors", () => {
 		// The quota was hit within the first minutes: silence for the hour.
 		await h.listen(30 * MINUTE_MS);
 		expect(h.fake.calls.length).toBe(calls);
-		// ...and then True Shuffle carries on by itself.
+		// ...and then true-shuffle carries on by itself.
 		await h.listen(HOUR_MS);
 		expect(h.fake.calls.length).toBeGreaterThan(calls);
 		expect((await h.hub.state()).warnings.some((w) => w.code === "quota")).toBe(false);

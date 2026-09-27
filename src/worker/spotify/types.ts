@@ -1,5 +1,5 @@
 /**
- * The subset of Spotify Web API shapes True Shuffle reads, as of the
+ * The subset of Spotify Web API shapes true-shuffle reads, as of the
  * February 2026 Development Mode changes: playlist `tracks` → `items`,
  * playlist item `track` → `item`, no `product`/`country` on /me, no
  * batch reads, search limit 10.

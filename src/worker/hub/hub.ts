@@ -1,5 +1,5 @@
 /**
- * HubCore — everything True Shuffle knows and does for one listener.
+ * HubCore — everything true-shuffle knows and does for one listener.
  *
  * Runs inside that listener's Durable Object (single-threaded, so the
  * background sync and a tap in the app never race), and in tests on
@@ -7,7 +7,7 @@
  *
  * The reliability model, in one paragraph: a station's order lives in a
  * private Spotify playlist that Spotify plays by itself on any device.
- * True Shuffle never has to be "in the loop" while music plays. It only
+ * true-shuffle never has to be "in the loop" while music plays. It only
  * (a) reads what was heard from Spotify's recently-played list into a
  * global per-song memory, (b) reads the player position to tell early skips
  * from plays, and (c) rewrites a station's playlist from that memory when
@@ -193,12 +193,14 @@ export const DISCOVERY_SECOND_CHANCE_MS = 7 * DAY_MS;
 /** Guest mode switches itself off after this long unless extended. */
 export const GUEST_DEFAULT_HOURS = 6;
 
-export const DECK_NAME_PREFIX = "True Shuffle · ";
+export const DECK_NAME_PREFIX = "true-shuffle · ";
+/** How the playlists were named before the owner's spelling (until 2026-09-27). */
+const LEGACY_DECK_NAME_PREFIX = "True Shuffle · ";
 const DECK_DESCRIPTION = (name: string) =>
-	`Dein True-Shuffle-Sender „${name}“. Einfach abspielen — Shuffle bleibt aus. True Shuffle befüllt diese Playlist automatisch neu.`;
+	`Dein true-shuffle-Sender „${name}“. Einfach abspielen — Shuffle bleibt aus. true-shuffle befüllt diese Playlist automatisch neu.`;
 const DISCOVERIES_NAME = `${DECK_NAME_PREFIX}Entdeckungen`;
 const DISCOVERIES_DESCRIPTION =
-	"Neuentdeckungen, die dir in True Shuffle gefallen haben. Wird automatisch ergänzt.";
+	"Neuentdeckungen, die dir in true-shuffle gefallen haben. Wird automatisch ergänzt.";
 
 export interface HubEnv {
 	endpoints: SpotifyEndpoints;
@@ -289,7 +291,7 @@ interface PrivateSong {
 	track: PackedTrack;
 }
 
-/** A play True Shuffle saw end in a private session (Spotify may never list it). */
+/** A play true-shuffle saw end in a private session (Spotify may never list it). */
 interface SeenPlay {
 	id: TrackId;
 	at: number;
@@ -729,7 +731,7 @@ export class HubCore {
 			this.log(
 				"warn",
 				"quota",
-				"Spotify-Kontingent aufgebraucht — True Shuffle pausiert eine Stunde",
+				"Spotify-Kontingent aufgebraucht — true-shuffle pausiert eine Stunde",
 			);
 	}
 
@@ -758,11 +760,26 @@ export class HubCore {
 			case "rename": {
 				const st = this.stationRow(Number(state.stationId));
 				if (st?.playlist_id) {
-					await client.updatePlaylistDetails(
-						st.playlist_id,
-						DECK_NAME_PREFIX + st.name,
-						DECK_DESCRIPTION(st.name),
-					);
+					await client
+						.updatePlaylistDetails(
+							st.playlist_id,
+							DECK_NAME_PREFIX + st.name,
+							DECK_DESCRIPTION(st.name),
+						)
+						.catch((e) => {
+							if (!(e instanceof SpotifyError && e.kind === "not_found")) throw e;
+						});
+				}
+				return { done: true };
+			}
+			case "rename-discoveries": {
+				const pid = this.kvGet<string>("discoveries_playlist");
+				if (pid) {
+					await client
+						.updatePlaylistDetails(pid, DISCOVERIES_NAME, DISCOVERIES_DESCRIPTION)
+						.catch((e) => {
+							if (!(e instanceof SpotifyError && e.kind === "not_found")) throw e;
+						});
 				}
 				return { done: true };
 			}
@@ -828,7 +845,9 @@ export class HubCore {
 				if (!p?.id) return;
 				seen.add(p.id);
 				const isOurs =
-					ours.has(p.id) || (p.owner?.id === profile?.id && p.name.startsWith(DECK_NAME_PREFIX));
+					ours.has(p.id) ||
+					(p.owner?.id === profile?.id &&
+						(p.name.startsWith(DECK_NAME_PREFIX) || p.name.startsWith(LEGACY_DECK_NAME_PREFIX)));
 				const readable = p.owner?.id === profile?.id || p.collaborative === true;
 				const next: Row = {
 					id: p.id,
@@ -1559,7 +1578,7 @@ export class HubCore {
 	/**
 	 * Plan a deck from memory and write it into the station's playlist.
 	 *
-	 * `start`: True Shuffle starts it at the top, so it plans afresh.
+	 * `start`: true-shuffle starts it at the top, so it plans afresh.
 	 * `background`: nobody asked to start it. If a player may still hold the
 	 * previous version (it was in use lately), the new one continues it — see
 	 * `continueLayout`: whatever the player resumes, it meets nothing it just
@@ -1724,7 +1743,7 @@ export class HubCore {
 		if (prev) this.carryPasses(st.id, prev);
 		const deck = newDeck(layout, (prev?.version ?? 0) + 1, this.now());
 		// Positions stay trustworthy only through a continuation of an order we
-		// trusted. A fresh plan nobody started is not ours until True Shuffle
+		// trusted. A fresh plan nobody started is not ours until true-shuffle
 		// starts it: a player may still carry on with what it had loaded.
 		deck.continued = continuing;
 		deck.ours = continuing && prev?.ours === true;
@@ -1819,7 +1838,7 @@ export class HubCore {
 		// Songs a player may still have loaded from earlier versions: each one
 		// for 36 h after it left the playlist, then forgotten.
 		// Only what a player could have loaded counts: a version it was seen in
-		// or True Shuffle started, or what a continuation kept of one; not a
+		// or true-shuffle started, or what a continuation kept of one; not a
 		// background plan nobody played.
 		if (prev) {
 			const former = new Map<TrackId, number>();
@@ -2242,7 +2261,7 @@ export class HubCore {
 	 * was left — an early skip unless its play shows up within the grace.
 	 */
 	/**
-	 * A song True Shuffle did not choose for this moment comes up in a station:
+	 * A song true-shuffle did not choose for this moment comes up in a station:
 	 * turned down, or heard in the last 24 h and there only because a player
 	 * holds an older version of the playlist or restarts a continued one from
 	 * the top (its front keeps songs heard today when a small station has
@@ -2256,7 +2275,7 @@ export class HubCore {
 		obs: PlayerObservation | null,
 		at: InStation | null,
 	): Promise<void> {
-		// A guest's music is theirs: True Shuffle only listens, never steers.
+		// A guest's music is theirs: true-shuffle only listens, never steers.
 		if (!obs?.isPlaying || !obs.trackId || !at || this.inGuest(this.now())) return;
 		const last = this.kvGet<{ id: TrackId; at: number }>("guard_try");
 		if (last && last.id === obs.trackId && this.now() - last.at < MINUTE_MS) return;
@@ -3026,7 +3045,7 @@ export class HubCore {
 		// that was not in it arrived late (offline listening synced afterwards):
 		// it still counts, once — the plays table has the final say.
 		const known = new Set(this.kvGet<string[]>("recent_keys") ?? []);
-		// Plays True Shuffle counted itself in a private session: listed late, not again.
+		// Plays true-shuffle counted itself in a private session: listed late, not again.
 		const seen = this.kvGet<{ id: TrackId; from: number; to: number }[]>("seen_plays") ?? [];
 		// Never reaching back before the first sign-in: that belongs to the import.
 		const lateFrom = Math.max(
@@ -3783,7 +3802,7 @@ export class HubCore {
 		if (!k || k.kid !== kid)
 			throw new HubError(
 				"auth",
-				"Dieser Schlüssel gilt nicht mehr. Einen neuen gibt es in True Shuffle unter Menü, Fernbedienung.",
+				"Dieser Schlüssel gilt nicht mehr. Einen neuen gibt es in true-shuffle unter Menü, Fernbedienung.",
 				401,
 			);
 		const now = this.now();
@@ -3798,7 +3817,7 @@ export class HubCore {
 		if (!this.isConnected())
 			throw new HubError(
 				"auth",
-				"True Shuffle ist nicht mit Spotify verbunden. Melde dich in der App neu an.",
+				"true-shuffle ist nicht mit Spotify verbunden. Melde dich in der App neu an.",
 				409,
 			);
 		const failed = (r: PlayResult): HubError =>
@@ -3969,15 +3988,15 @@ export class HubCore {
 				code: backoff.kind,
 				message:
 					backoff.kind === "quota"
-						? "Spotify-Kontingent aufgebraucht — True Shuffle macht kurz Pause."
-						: "Spotify bremst gerade — True Shuffle wartet kurz.",
+						? "Spotify-Kontingent aufgebraucht — true-shuffle macht kurz Pause."
+						: "Spotify bremst gerade — true-shuffle wartet kurz.",
 			});
 		}
 		if (this.inPrivateNow())
 			warnings.push({
 				code: "private_session",
 				message:
-					"Private Sitzung in Spotify — True Shuffle zählt jetzt nur Songs, die es selbst 30 Sekunden laufen sieht, und keine Skips.",
+					"Private Sitzung in Spotify — true-shuffle zählt jetzt nur Songs, die es selbst 30 Sekunden laufen sieht, und keine Skips.",
 			});
 		const np = this.nowPlaying(snap);
 		if (np?.smartShuffle) {
@@ -3990,10 +4009,10 @@ export class HubCore {
 			warnings.push({
 				code: "shuffle",
 				message:
-					"Spotify-Shuffle ist an — die True-Shuffle-Reihenfolge hält erst wieder, wenn es aus ist.",
+					"Spotify-Shuffle ist an — die true-shuffle-Reihenfolge hält erst wieder, wenn es aus ist.",
 			});
 		}
-		// Say it when True Shuffle moved the player on by itself.
+		// Say it when true-shuffle moved the player on by itself.
 		const moved = this.kvGet<{
 			id: TrackId;
 			at: number;
@@ -4309,11 +4328,25 @@ export class HubCore {
 		await this.ensureAlarm();
 	}
 
+	/**
+	 * Once: playlists made before the owner's spelling of the name get it,
+	 * "true-shuffle · Sender" instead of "True Shuffle · Sender".
+	 */
+	private renameLegacyPlaylists(): void {
+		if (this.kvGet("names_v2") !== null) return;
+		this.kvSet("names_v2", 1);
+		for (const st of this.stations())
+			if (st.playlist_id) this.enqueue(`rename:${st.id}`, "rename", { stationId: st.id }, 6);
+		if (this.kvGet("discoveries_playlist"))
+			this.enqueue("rename:discoveries", "rename-discoveries", {}, 6);
+	}
+
 	async alarm(): Promise<void> {
 		if (this.kvGet("suspended")) return;
 		if (!this.isConnected() && this.kvGet("tokens") === null) return;
 		const budget = new RequestBudget(BUDGET_PER_INVOCATION);
 		try {
+			this.renameLegacyPlaylists();
 			// Sync first: memory must be current before any deck is planned.
 			await this.sync(budget);
 			await this.runJobs(budget);
@@ -4356,7 +4389,7 @@ export class HubCore {
 			: false;
 		// Just moved the player (a tap, or past a song): see where it went.
 		if (snap && this.kvGet("player_stale")) candidates.push(now + 15_000);
-		// A few songs ahead the player may meet one True Shuffle would not play
+		// A few songs ahead the player may meet one true-shuffle would not play
 		// (turned down, or replaced since the player loaded the playlist): look
 		// every 20 s, so a skip by hand onto it is caught too.
 		if (snap?.obs?.isPlaying && this.guardedAhead(snap.obs.contextUri))
@@ -4444,7 +4477,7 @@ export class HubCore {
 		}
 		// A song turned down that an older version held, still ahead in it:
 		// where a player still in that order meets it is unknown, so it may come
-		// any time. Not once True Shuffle started the playlist itself: that
+		// any time. Not once true-shuffle started the playlist itself: that
 		// replaced the order the player had (a second device is out of sight).
 		if ((deck.continued === true || deck.ours !== true) && deck.formerOff?.length) {
 			const former = formerNow(deck, this.now());

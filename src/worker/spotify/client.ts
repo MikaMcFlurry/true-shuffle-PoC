@@ -1,7 +1,7 @@
 /**
  * Spotify Web API client.
  *
- * Deliberately small: every call True Shuffle makes is listed here, typed,
+ * Deliberately small: every call true-shuffle makes is listed here, typed,
  * and funnelled through one `request()` that handles token refresh, the
  * error classes the product must react to differently (no Premium, no
  * device, rate limit, exhausted quota) and the per-invocation request

@@ -1,5 +1,5 @@
 {
-	// True Shuffle — one Worker, two Durable Object classes, static client assets.
+	// true-shuffle — one Worker, two Durable Object classes, static client assets.
 	//
 	// Deployed by Workers Builds on push to the production branch
 	// (build command: `npm run build`, deploy command: `npx wrangler deploy`).

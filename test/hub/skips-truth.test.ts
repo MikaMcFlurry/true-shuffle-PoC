@@ -1,7 +1,7 @@
 /**
  * Early skips judged against ground truth: the Spotify fake records what the
  * listener really did with every song, and each skip the hub books is checked
- * against it. A skip that never happened is the worst error True Shuffle can
+ * against it. A skip that never happened is the worst error true-shuffle can
  * make (a song never heard becomes "rarer", or is banned); a missed one only
  * lets a song come back a little sooner. (Red-team findings RT-1 / RT-1R.)
  */

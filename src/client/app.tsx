@@ -43,7 +43,7 @@ export function App() {
 			<div class="shell" aria-busy="true">
 				<Display
 					lit={[]}
-					name="TRUE SHUFFLE"
+					name="true-shuffle"
 					nameGhost
 					song="Schaltet ein …"
 					scale={{ pos: 0, label: "" }}
@@ -67,7 +67,7 @@ export function App() {
 				<Display
 					lit={[]}
 					name="STÖRUNG"
-					song="True Shuffle ist gerade nicht erreichbar"
+					song="true-shuffle ist gerade nicht erreichbar"
 					message={{ text: s.load.message, tone: "error" }}
 				/>
 				<button type="button" class="key btn btn--wide" onClick={() => void store.refresh(true)}>

@@ -532,7 +532,7 @@ export function Station({
 									[
 										"ban",
 										"Nie wieder auf diesem Sender",
-										"Gilt, sobald True Shuffle das Überspringen sieht. Aufheben: Daumen hoch, wenn der Song läuft.",
+										"Gilt, sobald true-shuffle das Überspringen sieht. Aufheben: Daumen hoch, wenn der Song läuft.",
 									],
 								] as const
 							).map(([v, t, sub]) => (

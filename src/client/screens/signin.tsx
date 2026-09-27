@@ -6,7 +6,7 @@ const LOGIN_MESSAGES: Record<string, string> = {
 	expired: "Die Anmeldung hat zu lange gedauert. Bitte nochmal.",
 	failed: "Spotify hat die Anmeldung nicht bestätigt. Bitte nochmal versuchen.",
 	not_allowed:
-		"Dieses Spotify-Konto ist für True Shuffle nicht freigeschaltet. Spotify erlaubt privaten Apps nur fünf Konten — frag den Besitzer der App.",
+		"Dieses Spotify-Konto ist für true-shuffle nicht freigeschaltet. Spotify erlaubt privaten Apps nur fünf Konten — frag den Besitzer der App.",
 };
 
 export function SignIn() {
@@ -23,7 +23,7 @@ export function SignIn() {
 			<div class="main">
 				<Display
 					lit={[]}
-					name="TRUE SHUFFLE"
+					name="true-shuffle"
 					song="Deine Sender mit Gedächtnis"
 					artist="Keine schnellen Wiederholungen. Alles kommt irgendwann dran."
 					message={message}
@@ -31,14 +31,14 @@ export function SignIn() {
 					wrap
 				/>
 				<p class="power__text">
-					True Shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken — auch
+					true-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken — auch
 					über Tage, Geräte und alles, was du nebenbei hörst.
 				</p>
 				<a class="key key--lit btn btn--wide" href="/auth/login">
 					Mit Spotify anmelden
 				</a>
 				<p class="power__fine">
-					Braucht Spotify Premium. True Shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
+					Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
 					…“ in deinem Konto an.
 				</p>
 			</div>

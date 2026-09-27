@@ -1,5 +1,5 @@
 ---
-name: True Shuffle
+name: true-shuffle
 description: The station memory of a car radio, built like a good one, in two illuminations.
 colors:
   # Day illumination (default): satin silver faceplate
@@ -345,7 +345,7 @@ components:
     padding: "12px 16px"
 ---
 
-# Design System: True Shuffle
+# Design System: true-shuffle
 
 ## Overview
 
@@ -417,6 +417,8 @@ A cool neutral ramp per illumination, one amber accent, and a small shared palet
 - Weights stop at 700; there is no 750–850 any more.
 
 ### Named Rules
+**The Name Rule.** The product is written *true-shuffle*: lower case, with a hyphen, everywhere — the brand row, the displays, page copy, Spotify playlist names ("true-shuffle · Sender") and docs. It is never set in capitals, not even in tracked legends or on the glass; where a head window would uppercase it, the title names the page instead ("Info") and the sub-line carries the name.
+
 **The One-Line Doto Rule.** Doto sets only the station name in the display and the title in a page head window. Indicators, reasons, sequence numbers, balance ends, songs, artists and counts are Overpass, the way a real display prints its fixed legends in a clean sans and keeps the matrix for the text that changes.
 
 **The Tabular Count Rule.** Every number that counts uses tabular numerals and sits next to what it counts ("10 von 400 gehört", "Runde 1 7 / 400"). A share and its name never break apart ("30 % Neuentdeckungen").

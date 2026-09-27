@@ -7,7 +7,7 @@ const nf = new Intl.NumberFormat("de-DE");
 export const SEP = "\u00a0\u2219 ";
 
 /** How the station playlists are named in Spotify, as the interface writes it. */
-export const DECK_PREFIX = "True Shuffle\u00a0\u2219\u00a0";
+export const DECK_PREFIX = "true-shuffle\u00a0\u2219\u00a0";
 
 export function num(n: number): string {
 	return nf.format(n);

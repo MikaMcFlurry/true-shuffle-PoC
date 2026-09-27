@@ -74,7 +74,7 @@ export function Scan({ state }: { state: AppState }) {
 					sub={
 						lists
 							? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden — wähle, welche Sender werden`
-							: "True Shuffle sucht deine Playlists …"
+							: "true-shuffle sucht deine Playlists …"
 					}
 					backTo="/menu"
 				/>
@@ -85,7 +85,7 @@ export function Scan({ state }: { state: AppState }) {
 					song={
 						lists
 							? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden`
-							: "True Shuffle sucht deine Playlists"
+							: "true-shuffle sucht deine Playlists"
 					}
 					artist={lists ? "Wähle, welche Sender werden" : "Einen Moment"}
 					// While searching, the needle sweeps; a found list has nothing left to measure.

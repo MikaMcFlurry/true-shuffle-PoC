@@ -5,7 +5,7 @@ primary_target: "src/client"
 related_targets: []
 ---
 
-# True Shuffle app (all screens)
+# true-shuffle app (all screens)
 
 Scope: the whole signed-in app plus sign-in. Mode: Operate.
 Audience/job: see PRODUCT.md. Glance 2–3 s, tap a station, gone.

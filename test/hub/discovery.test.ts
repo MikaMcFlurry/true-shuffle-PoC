@@ -84,7 +84,7 @@ describe("discovery", () => {
 		await h.settle();
 		await h.listen(10 * MINUTE_MS);
 		const kept = [...h.fake.playlists.values()].find(
-			(p) => p.name === "True Shuffle · Entdeckungen",
+			(p) => p.name === "true-shuffle · Entdeckungen",
 		);
 		expect(kept?.items).toContain(d.id);
 		expect(discoveries(h, h.sid).find((x) => x.id === d.id)?.status).toBe("kept");

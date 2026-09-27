@@ -71,7 +71,7 @@ test.describe("a listener's day", () => {
 		await checkPage(page, "home");
 	});
 
-	test("starts a station in Spotify, in True Shuffle's order", async ({ page }) => {
+	test("starts a station in Spotify, in true-shuffle's order", async ({ page }) => {
 		await signIn(page);
 		await page.getByRole("button", { name: "Indie & Gitarren starten" }).click();
 		const display = page.getByRole("region", { name: "Anzeige" });

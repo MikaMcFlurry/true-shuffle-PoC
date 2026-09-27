@@ -5,7 +5,7 @@
  * It is used twice: in-process by the hub integration tests (with a fake
  * clock), and behind a local HTTP server by the Playwright end-to-end tests.
  *
- * The player simulates what matters for True Shuffle:
+ * The player simulates what matters for true-shuffle:
  *  - a playlist context plays its items in order (or shuffled when the
  *    listener has shuffle on), reading the playlist's contents LIVE;
  *  - recently-played records a song only once 30 s of it were heard, and

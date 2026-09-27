@@ -1,6 +1,6 @@
 {
-	"name": "True Shuffle",
-	"short_name": "True Shuffle",
+	"name": "true-shuffle",
+	"short_name": "true-shuffle",
 	"description": "Deine Spotify-Sender mit Gedächtnis.",
 	"start_url": "/",
 	"display": "standalone",

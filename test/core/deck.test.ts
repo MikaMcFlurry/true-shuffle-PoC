@@ -28,7 +28,7 @@ function deck(n = 20): Deck {
 	);
 }
 
-/** A deck True Shuffle itself started at the top. */
+/** A deck true-shuffle itself started at the top. */
 function started(n = 20): Deck {
 	return { ...deck(n), ours: true, top: true };
 }
@@ -105,7 +105,7 @@ describe("observePlayer", () => {
 		expect(r.passed).toEqual([]);
 	});
 
-	it("after shuffling, trusts positions only once True Shuffle starts it again", () => {
+	it("after shuffling, trusts positions only once true-shuffle starts it again", () => {
 		let d = started();
 		d = observePlayer(d, obs("s5", { shuffle: true }), URI).deck;
 		expect(d.ours).toBe(false);

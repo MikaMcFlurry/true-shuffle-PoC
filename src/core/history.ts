@@ -69,7 +69,7 @@ export function emptyAggregate(): Aggregate {
 export function aggregateHistory(
 	entries: readonly ExtendedEntry[],
 	agg: Aggregate = emptyAggregate(),
-	/** Only listening before this time counts: after it, True Shuffle counted live. */
+	/** Only listening before this time counts: after it, true-shuffle counted live. */
 	opts: { before?: number | null } = {},
 ): Aggregate {
 	for (const e of entries) {

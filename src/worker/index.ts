@@ -54,7 +54,7 @@ async function readSession(c: {
 	return { uid, epoch: Number(epoch) };
 }
 
-/** `ALLOWED_SPOTIFY_IDS`, if set, names everyone who may use this True Shuffle. */
+/** `ALLOWED_SPOTIFY_IDS`, if set, names everyone who may use this true-shuffle. */
 function allowed(env: Env, uid: string): boolean {
 	const allow = (env.ALLOWED_SPOTIFY_IDS ?? "")
 		.split(",")
@@ -183,7 +183,7 @@ app.post("/remote/:action", async (c) => {
 	const say = (text: string, status: ContentfulStatusCode) =>
 		c.text(text, status, { "cache-control": "no-store" });
 	const missing = configured(c.env);
-	if (missing) return say(`True Shuffle ist nicht eingerichtet: ${missing}`, 503);
+	if (missing) return say(`true-shuffle ist nicht eingerichtet: ${missing}`, 503);
 	const action = c.req.param("action") as RemoteAction;
 	if (!REMOTE_ACTIONS.includes(action))
 		return say("Unbekannter Befehl. Es gibt like, dislike und skip.", 404);
@@ -191,7 +191,7 @@ app.post("/remote/:action", async (c) => {
 	const key = m ? await readRemoteKey(c.env.APP_SECRET!, m[1]!) : null;
 	if (!key || !allowed(c.env, key.uid))
 		return say(
-			"Kein gültiger Schlüssel. Den Schlüssel gibt es in True Shuffle unter Menü, Fernbedienung.",
+			"Kein gültiger Schlüssel. Den Schlüssel gibt es in true-shuffle unter Menü, Fernbedienung.",
 			401,
 		);
 	const r = (await hubFor(c.env, key.uid).remote(key.kid, action)) as RpcResult<string>;
@@ -199,7 +199,7 @@ app.post("/remote/:action", async (c) => {
 });
 
 app.all("/remote/*", (c) =>
-	c.text("Befehle an True Shuffle kommen als POST.", 405, { "cache-control": "no-store" }),
+	c.text("Befehle an true-shuffle kommen als POST.", 405, { "cache-control": "no-store" }),
 );
 
 // ---------------------------------------------------------------------------

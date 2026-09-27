@@ -32,7 +32,7 @@ ohne schnelle Wiederholungen, mit Neuem dazwischen."*
 
 Spotify's own shuffle repeats songs quickly, replays nearly the same queue
 after a reshuffle days later (sometimes in reverse after a car stop), loses
-progress, and leaves large parts of big playlists unheard. True Shuffle
+progress, and leaves large parts of big playlists unheard. true-shuffle
 replaces that with stations that have a memory:
 
 1. progress is never lost, whatever happens in Spotify in between;
@@ -47,17 +47,17 @@ Success: the owner presses start and stops thinking about shuffle.
 ## Positioning
 
 One memory per song across all stations and all listening — including
-music heard outside True Shuffle — that is never lost. Spotify's shuffle has
-no memory; True Shuffle is nothing but memory plus a planner.
+music heard outside true-shuffle — that is never lost. Spotify's shuffle has
+no memory; true-shuffle is nothing but memory plus a planner.
 
 ## Operating Context
 
 - Spotify always plays the audio. Each station is a private Spotify playlist
-  "True Shuffle · <Sender>" that True Shuffle rewrites from memory whenever
+  "true-shuffle · <Sender>" that true-shuffle rewrites from memory whenever
   nobody is listening to it; it works on any device (phone, car/CarPlay,
   speakers), even when started directly in Spotify.
-- True Shuffle reads what was heard from Spotify every few minutes in the
-  background. Nothing of True Shuffle needs to stay open.
+- true-shuffle reads what was heard from Spotify every few minutes in the
+  background. Nothing of true-shuffle needs to stay open.
 - A "Sender" (station) has one or more playlists (and/or "Lieblingssongs")
   as sources. Every chosen playlist becomes a station; "Alles" combines all.
 - One slider per station, "Entdecken ↔ Vertraut"; default preset
@@ -76,7 +76,7 @@ no memory; True Shuffle is nothing but memory plus a planner.
 - Discoveries: more from liked artists, their new releases, Last.fm,
   Deezer, genre search, AI suggestions (Claude Sonnet 5 with key, Workers AI
   otherwise). Every suggestion is verified on Spotify. Liked discoveries go
-  into "True Shuffle · Entdeckungen" and join the station.
+  into "true-shuffle · Entdeckungen" and join the station.
 - Premium only. Starting playback without Premium is refused with an
   explanation. Spotify's Autoplay and Smart Shuffle cannot be switched off
   through the API; the app says so when they interfere.
@@ -87,7 +87,7 @@ no memory; True Shuffle is nothing but memory plus a planner.
 
 ## Brand Commitments
 
-Name: **True Shuffle**. German interface. The previous visual world
+Name: **true-shuffle**, always lower case with a hyphen, never "True Shuffle" and never set in capitals (owner, 2026-09-27). German interface. The previous visual world
 ("Plattenschrank" record-crate) was explicitly discarded by the owner and is
 an anti-reference, not a starting point.
 

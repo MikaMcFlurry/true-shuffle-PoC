@@ -34,7 +34,7 @@ export interface TrackView {
 	album: string;
 	imageUrl: string | null;
 	durationMs: number;
-	/** Thumb in True Shuffle: -1 never again, 1 favourite, 0 none. */
+	/** Thumb in true-shuffle: -1 never again, 1 favourite, 0 none. */
 	thumb: -1 | 0 | 1;
 }
 
@@ -71,7 +71,7 @@ export interface AppState {
 	guest: { active: boolean; until: number | null };
 	warnings: Warning[];
 	jobs: JobView[];
-	/** `liveSince`: from here on True Shuffle counts live; an import covers what came before. */
+	/** `liveSince`: from here on true-shuffle counts live; an import covers what came before. */
 	history: { importedTracks: number; importedAt: number | null; liveSince: number | null };
 	aiSource: "anthropic" | "workers-ai" | "off";
 	serverTime: number;

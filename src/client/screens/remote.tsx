@@ -70,13 +70,13 @@ export function RemoteScreen() {
 		<div class="page">
 			<PageBar title="Fernbedienung" sub="Siri, CarPlay, Apple Watch, Widgets" backTo="/menu" />
 			<p class="lede">
-				Mit einem persönlichen Schlüssel sagst du True Shuffle per Kurzbefehl, was du vom laufenden
+				Mit einem persönlichen Schlüssel sagst du true-shuffle per Kurzbefehl, was du vom laufenden
 				Song hältst, ohne die App zu öffnen: mit Siri im Auto, auf der Apple Watch, über ein Widget
 				auf dem Homescreen oder unter Android mit einer App wie „HTTP Shortcuts“.
 			</p>
 			<p class="note">
 				Ein Herz in Spotify zählt schon von selbst als Favorit, auch in CarPlay, Android Auto und
-				auf der Uhr. True Shuffle sieht es binnen etwa zehn Minuten, solange Musik läuft.
+				auf der Uhr. true-shuffle sieht es binnen etwa zehn Minuten, solange Musik läuft.
 			</p>
 
 			<Section title="Dein Schlüssel" id="remote-key">
@@ -226,7 +226,7 @@ export function RemoteScreen() {
 				</ol>
 				<p class="hint">
 					Android Auto lässt keine eigenen Knöpfe von Web-Apps zu. Zeigt Spotify im Auto oder auf
-					einer Wear-OS-Uhr ein Herz oder Plus zum Speichern, nimm das: True Shuffle zählt es als
+					einer Wear-OS-Uhr ein Herz oder Plus zum Speichern, nimm das: true-shuffle zählt es als
 					Favorit.
 				</p>
 			</Section>

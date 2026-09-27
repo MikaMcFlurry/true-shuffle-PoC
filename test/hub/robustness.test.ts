@@ -1676,7 +1676,7 @@ describe("the sixteenth review's cases", () => {
 		});
 
 	for (const listed of [false, true])
-		it(`a private session${listed ? " Spotify lists after all" : ""}: what True Shuffle saw heard counts, once`, async () => {
+		it(`a private session${listed ? " Spotify lists after all" : ""}: what true-shuffle saw heard counts, once`, async () => {
 			const h = await onboarded({ tracks: 100 });
 			const sid = h.stationIds[0]!;
 			const u = h.fake.user();
