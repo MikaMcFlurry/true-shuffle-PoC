@@ -35,9 +35,8 @@
 	--brass: #c89c48;
 	--brass-lo: #7c5719;
 	/* the emblem: cast brass letters standing proud of the cloth */
-	--emblem-hi: #fff6d8;
-	--emblem-mid: #e0b964;
-	--emblem-dark: #a8782c;
+	--emblem-face-hi: #dcb766;
+	--emblem-face-lo: #c8a150;
 	--emblem-edge: rgba(255, 250, 226, 0.85);
 	--emblem-side: rgba(62, 36, 4, 0.95);
 	--emblem-cast: rgba(22, 10, 0, 0.62);
@@ -95,6 +94,12 @@
 	/* printed paper: program card, program sheets */
 	--card: #f5efe1;
 	--paper-glow: rgba(255, 214, 150, 0);
+	/* the program card seen through the cabinet's window (by night it falls into the room's dark) */
+	--window-paper: #f5efe1;
+	--window-glow: rgba(255, 214, 150, 0);
+	--window-ink: #2a2119;
+	--window-ink-2: #564a3c;
+	--window-lit: #a3231a;
 	--paper: #f6eedb;
 	--paper-2: #eee3c8;
 	--ink: #2a2119;
@@ -166,15 +171,14 @@
 		--wall-2: #0e0c09;
 		--wall-ink: #ddd2bc;
 		--wall-ink-2: #c3b8a1;
-		--wood-dim: rgba(10, 5, 1, 0.52);
+		--wood-dim: rgba(8, 4, 1, 0.74);
 		--lacquer: rgba(255, 200, 130, 0.1);
 		--cast: rgba(0, 0, 0, 0.75);
 		--brass-hi: #d7bb77;
 		--brass: #9a7433;
 		--brass-lo: #533709;
-		--emblem-hi: #eed9a0;
-		--emblem-mid: #b58c42;
-		--emblem-dark: #5f3f0c;
+		--emblem-face-hi: #b8964f;
+		--emblem-face-lo: #a4843f;
 		--emblem-edge: rgba(240, 214, 150, 0.5);
 		--emblem-side: rgba(30, 18, 2, 0.95);
 		--emblem-cast: rgba(0, 0, 0, 0.7);
@@ -211,6 +215,11 @@
 		--danger-key: #8c1a12;
 		--paper: #cdbb95;
 		--card: #d4c39e;
+		--window-paper: #a0906f;
+		--window-glow: rgba(255, 196, 110, 0.07);
+		--window-ink: #231a10;
+		--window-ink-2: #2f2418;
+		--window-lit: #560d07;
 		--paper-glow: rgba(255, 196, 110, 0.3);
 		--paper-2: #c2af88;
 		--ink: #231a10;
@@ -240,15 +249,14 @@
 	--wall-2: #0e0c09;
 	--wall-ink: #ddd2bc;
 	--wall-ink-2: #c3b8a1;
-	--wood-dim: rgba(10, 5, 1, 0.52);
+	--wood-dim: rgba(8, 4, 1, 0.74);
 	--lacquer: rgba(255, 200, 130, 0.1);
 	--cast: rgba(0, 0, 0, 0.75);
 	--brass-hi: #d7bb77;
 	--brass: #9a7433;
 	--brass-lo: #533709;
-	--emblem-hi: #eed9a0;
-	--emblem-mid: #b58c42;
-	--emblem-dark: #5f3f0c;
+	--emblem-face-hi: #b8964f;
+	--emblem-face-lo: #a4843f;
 	--emblem-edge: rgba(240, 214, 150, 0.5);
 	--emblem-side: rgba(30, 18, 2, 0.95);
 	--emblem-cast: rgba(0, 0, 0, 0.7);
@@ -285,6 +293,11 @@
 	--danger-key: #8c1a12;
 	--paper: #cdbb95;
 	--card: #d4c39e;
+	--window-paper: #a0906f;
+	--window-glow: rgba(255, 196, 110, 0.07);
+	--window-ink: #231a10;
+	--window-ink-2: #2f2418;
+	--window-lit: #560d07;
 	--paper-glow: rgba(255, 196, 110, 0.3);
 	--paper-2: #c2af88;
 	--ink: #231a10;
@@ -428,7 +441,7 @@ p {
 /* Below the landscape radio the screen is the radio's face, edge to edge:
  * no wall beside it. What follows the face (the first Suchlauf's sheet) keeps
  * its own margins. */
-@media (max-width: 1199px) {
+@media (max-width: 979px) {
 	.shell:has(.cabinet) {
 		max-width: none;
 		padding: 0;
@@ -442,44 +455,43 @@ p {
 	}
 }
 
-@media (min-width: 560px) and (max-width: 1199px) {
+@media (min-width: 560px) and (max-width: 979px) {
 	.shell:has(.cabinet) > .page {
 		margin-left: auto;
 		margin-right: auto;
 	}
 }
 
-/* Desktop: the landscape radio, and the program card and sheet beside it. */
-@media (min-width: 1200px) {
+/* Desktop: the landscape radio. From 980 px it stands centred on its
+ * sideboard with the program card and sheet below it at a reading measure;
+ * from 1200 px the card and sheet stand beside it. */
+@media (min-width: 980px) {
+	.main {
+		gap: 0;
+	}
 	.shell--split {
-		max-width: 1400px;
-		display: grid;
-		/* the radio takes the room first; the sheet stays a readable column */
-		grid-template-columns: minmax(0, 940px) 360px;
-		justify-content: center;
-		align-items: start;
+		max-width: none;
+		align-items: center;
 		gap: 36px;
 		padding-top: 40px;
 		padding-bottom: 40px;
+	}
+	.shell--split > .main {
+		width: 100%;
+		max-width: 940px;
+	}
+	.shell--split > .side {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		max-width: 640px;
+		padding: 0 0 12px;
 	}
 	/* Sign-in, switching on, a fault: the radio alone, a little smaller. */
 	.shell:has(> .cabinet),
 	.shell:has(> .power) {
 		max-width: 860px;
 		padding-top: 48px;
-	}
-	.main {
-		gap: 0;
-	}
-	/* the radio stays where it stands while the sheet beside it is read */
-	.shell--split > .main {
-		position: sticky;
-		top: 24px;
-	}
-	.shell--split > .side {
-		display: flex;
-		flex-direction: column;
-		padding: 0 0 12px;
 	}
 	/* the program sheet is a page with a bottom edge, lying slightly lifted */
 	.side > .page {
@@ -490,42 +502,58 @@ p {
 			0 4px 2px -1px rgba(30, 20, 5, 0.25),
 			0 18px 30px -16px rgba(30, 20, 5, 0.6);
 	}
-	/* The sideboard the radio stands on: its top face and front edge. */
+	/* The sideboard the radio stands on, a piece of furniture: its top face
+	 * (shaded at the wall, lit toward the front) and its front edge, running
+	 * from the window's left edge to the sheet, or across the whole window
+	 * when the sheet lies below; square at both ends. The cabinet measures
+	 * the distances (--board-l, --board-r). */
 	.cabinet::after {
 		content: "";
 		display: block;
-		height: 32px;
-		margin: 0 -14px;
-		border-radius: 10px 10px 6px 6px / 7px 7px 6px 6px;
+		height: 38px;
+		margin: 0 calc(-1 * var(--board-r, 14px)) 0 calc(-1 * var(--board-l, 14px));
 		background:
 			linear-gradient(
-				90deg,
-				rgba(0, 0, 0, 0.32),
-				rgba(0, 0, 0, 0) 22px,
-				rgba(0, 0, 0, 0) calc(100% - 22px),
-				rgba(0, 0, 0, 0.32)
-			),
-			linear-gradient(
 				180deg,
-				rgba(255, 238, 208, 0.48) 0,
-				rgba(255, 238, 208, 0.14) 7px,
-				rgba(0, 0, 0, 0.3) 8px,
-				rgba(0, 0, 0, 0) 12px,
-				rgba(0, 0, 0, 0) 72%,
-				rgba(0, 0, 0, 0.3)
+				rgba(0, 0, 0, 0.34) 0,
+				rgba(255, 238, 208, 0.12) 3px,
+				rgba(255, 238, 208, 0.36) 12px,
+				rgba(255, 246, 222, 0.72) 13px,
+				rgba(0, 0, 0, 0.34) 14px,
+				rgba(0, 0, 0, 0) 19px,
+				rgba(0, 0, 0, 0) 70%,
+				rgba(0, 0, 0, 0.34)
 			),
 			linear-gradient(var(--wood-dim), var(--wood-dim)),
 			var(--tex-walnut) 0 70% / 1100px auto,
 			var(--walnut);
 		box-shadow:
-			inset 0 1px 0 rgba(255, 240, 210, 0.55),
-			inset 0 -2px 3px rgba(0, 0, 0, 0.35),
 			0 1px 0 rgba(0, 0, 0, 0.35),
 			0 20px 30px -18px var(--cast);
 	}
 
 	.shell--split .strip {
 		display: none;
+	}
+}
+
+@media (min-width: 1200px) {
+	.shell--split {
+		display: grid;
+		max-width: 1400px;
+		/* the radio takes the room first; the sheet stays a readable column */
+		grid-template-columns: minmax(0, 940px) 320px;
+		justify-content: center;
+		align-items: start;
+	}
+	/* the radio stays where it stands while the sheet beside it is read */
+	.shell--split > .main {
+		max-width: none;
+		position: sticky;
+		top: 24px;
+	}
+	.shell--split > .side {
+		max-width: none;
 	}
 }
 
@@ -591,7 +619,7 @@ p {
 	display: grid;
 	align-items: center;
 	flex: 0 0 auto;
-	min-height: clamp(118px, 40vw, 176px);
+	min-height: clamp(118px, 36vw, 176px);
 	padding: 14px 0 12px;
 	border-radius: 10px;
 	background:
@@ -631,16 +659,8 @@ p {
 	letter-spacing: 0.05em;
 	white-space: nowrap;
 	color: transparent;
-	/* polished brass: the room's light on the upper face, a dark horizon, the warm floor reflected */
-	background: linear-gradient(
-		180deg,
-		var(--emblem-hi) 0%,
-		var(--brass-hi) 34%,
-		var(--emblem-mid) 50%,
-		var(--emblem-dark) 58%,
-		var(--brass) 76%,
-		var(--brass-hi) 100%
-	);
+	/* satin brass: an even cast face, a touch lighter toward the top; the chamfer and the shadow do the rest */
+	background: linear-gradient(180deg, var(--emblem-face-hi), var(--emblem-face-lo));
 	-webkit-background-clip: text;
 	background-clip: text;
 	filter: drop-shadow(0 -1px 0 var(--emblem-edge)) drop-shadow(0 1px 0 var(--emblem-side))
@@ -655,7 +675,8 @@ p {
 	min-width: 10px;
 	height: 0.11em;
 	border-radius: 1px;
-	background: linear-gradient(180deg, var(--emblem-hi), var(--brass) 45%, var(--brass-lo));
+	/* the same casting as the letters: the same face, under the same chamfer and shadow */
+	background: linear-gradient(180deg, var(--emblem-face-hi), var(--emblem-face-lo));
 	transform: translateY(-0.18em);
 }
 
@@ -744,10 +765,11 @@ p {
  * The cloth across the full width of the upper front with the emblem centred,
  * one wide dial strip under it, the knobs and the keyboard along the bottom;
  * a plinth with two small feet on the sideboard. */
-@media (min-width: 1200px) {
+@media (min-width: 980px) {
+	/* the feet reach down onto the sideboard's top face, a little behind its front edge */
 	.cabinet {
 		display: block;
-		padding-bottom: 12px;
+		padding-bottom: 8px;
 	}
 	.cabinet--fill {
 		min-height: 0;
@@ -850,9 +872,10 @@ p {
 	.cabinet__foot {
 		display: block;
 		position: absolute;
+		z-index: 1;
 		top: 100%;
 		width: 58px;
-		height: 12px;
+		height: 15px;
 		border-radius: 0 0 7px 7px / 0 0 6px 6px;
 		background: linear-gradient(
 			180deg,
@@ -861,9 +884,10 @@ p {
 			var(--bakelite-hi) 62%,
 			var(--bakelite-lo)
 		);
+		/* its shadow falls on the sideboard it stands on */
 		box-shadow:
 			inset 0 1px 1px rgba(0, 0, 0, 0.6),
-			0 2px 2px rgba(0, 0, 0, 0.45);
+			0 3px 3px -1px rgba(0, 0, 0, 0.6);
 	}
 	.cabinet__foot--l {
 		left: 8%;
@@ -889,6 +913,27 @@ p {
 @container cabinet (max-width: 700px) {
 	.cabinet__cloth {
 		min-height: 88px;
+	}
+}
+
+/* A dial printed dense takes the height it needs from the cloth, down to a
+ * band round the emblem, and the front sits its parts a little closer. */
+@media (min-width: 980px) {
+	.cabinet__body:has(.dial__bands--dense) {
+		gap: 12px;
+		padding-top: 22px;
+		padding-bottom: 16px;
+	}
+	.cabinet__body:has(.dial__bands--dense) .cabinet__cloth {
+		min-height: 76px;
+		padding: 12px 0;
+	}
+	.dial__field:has(.dial__bands--dense) {
+		padding-top: 18px;
+	}
+	.dial:has(.dial__bands--dense) .dial__lamps {
+		padding-top: 4px;
+		padding-bottom: 5px;
 	}
 }
 /* ------------------------------------------------------------ magic eye */
@@ -1106,39 +1151,34 @@ p {
 	}
 }
 
-/* Seated in the dial's bezel at its top right: a dark boss round the eye's
- * brass ring, ringed in the bezel's brass, as if the tube looks out through
- * the frame; the pointer's string runs in under it. */
-.cabinet__dial > .eye {
+/* Seated in the dial's bezel. On a phone the tube looks out through the glass
+ * at the head of the pointer's scale, in a small round window with a brass
+ * rim; the scale, the string and the first station begin below it. */
+.cabinet__eye {
 	position: absolute;
 	z-index: 4;
-	top: -22px;
-	right: 6px;
-	zoom: 0.84;
-	box-shadow:
-		inset 0 0 0 1px rgba(60, 36, 6, 0.6),
-		0 0 0 5px #150d06,
-		0 0 0 7px var(--brass),
-		0 0 0 8px rgba(30, 16, 4, 0.6),
-		0 4px 7px 7px rgba(0, 0, 0, 0.32),
-		0 0 30px 6px var(--eye-glow);
+	top: 14px;
+	right: 14px;
+	display: block;
+	line-height: 0;
 }
 
-.cabinet__dial > .eye--off {
+.cabinet__eye > .eye {
+	zoom: 0.7;
 	box-shadow:
 		inset 0 0 0 1px rgba(60, 36, 6, 0.6),
-		0 0 0 5px #150d06,
-		0 0 0 7px var(--brass),
-		0 0 0 8px rgba(30, 16, 4, 0.6),
-		0 4px 7px 7px rgba(0, 0, 0, 0.32);
+		0 0 0 3px #150d06,
+		0 0 0 4.5px var(--brass),
+		0 1px 4px 4px rgba(60, 30, 5, 0.28),
+		0 0 24px 4px var(--eye-glow);
 }
 
-@media (min-width: 1200px) {
-	.cabinet__dial > .eye {
-		top: -22px;
-		right: 40px;
-		zoom: 1;
-	}
+.cabinet__eye > .eye--off {
+	box-shadow:
+		inset 0 0 0 1px rgba(60, 36, 6, 0.6),
+		0 0 0 3px #150d06,
+		0 0 0 4.5px var(--brass),
+		0 1px 4px 4px rgba(60, 30, 5, 0.28);
 }
 
 /* ------------------------------------------------------------- the dial */
@@ -1200,14 +1240,15 @@ p {
 .dial__field {
 	position: relative;
 	container-type: inline-size;
-	padding: 4px 50px 4px 8px;
+	/* the first station begins below the magic eye at the head of the scale */
+	padding: 30px 50px 4px 8px;
 }
 
 /* Phone: a vertical scale down the right, the string along it. */
 .dial__field::before {
 	content: "";
 	position: absolute;
-	top: 12px;
+	top: 52px;
 	bottom: 12px;
 	right: 12px;
 	width: 14px;
@@ -1219,7 +1260,7 @@ p {
 
 .dial__string {
 	position: absolute;
-	top: 8px;
+	top: 48px;
 	bottom: 8px;
 	right: 34px;
 	width: 1px;
@@ -1253,7 +1294,7 @@ p {
 	right: 10px;
 	width: 44px;
 	height: 0;
-	transform: translateY(var(--py, 26px));
+	transform: translateY(var(--py, 58px));
 }
 
 .dial__needle {
@@ -1293,10 +1334,10 @@ p {
 
 @keyframes sweep-v {
 	from {
-		transform: translateY(16px);
+		transform: translateY(58px);
 	}
 	to {
-		transform: translateY(96px);
+		transform: translateY(128px);
 	}
 }
 
@@ -1580,7 +1621,7 @@ p {
 /* Desktop: the wide horizontal dial. Bands of stations with a printed
  * legend each; the pointer runs across them and marks the lit station on
  * its scale. */
-@media (min-width: 1200px) {
+@media (min-width: 980px) {
 	.dial__field {
 		padding: 22px 12px 6px;
 	}
@@ -1721,20 +1762,49 @@ p {
 		background: var(--halo);
 		box-shadow: 0 0 5px 3px var(--halo);
 	}
-	/* many bands: set closer, so the radio stays wider than it is tall */
+	/* Past two rows the dial is printed denser, so the radio stays wider than
+	 * it is tall: rows of about 34 px, smaller lettering, the count set after
+	 * the name (under it only where the column is too narrow). */
+	.dial__bands--dense .band {
+		background-size: 6px 6px;
+	}
 	.dial__bands--dense .band + .band {
 		margin-top: 0;
 	}
+	.dial__bands--dense .band__legend {
+		margin-bottom: 5px;
+		font-size: 11px;
+	}
+	.dial__bands--dense .station {
+		padding-bottom: 4px;
+	}
+	.dial__bands--dense .station::after {
+		height: 4px;
+	}
+	/* name and count set as one line of print, the count in smaller type after the name */
 	.dial__bands--dense .station__tune {
-		gap: 1px;
-		min-height: 46px;
-		padding: 4px 4px 2px;
+		display: block;
+		min-height: 30px;
+		padding: 5px 3px 1px;
+		font-family: var(--font-dial);
+		font-size: 14px;
+		line-height: 1.05;
 	}
 	.dial__bands--dense .station__name {
-		font-size: 15px;
+		display: inline;
+		font-size: 14px;
+		letter-spacing: 0.02em;
+		line-height: 1.05;
+	}
+	.dial__bands--dense .station--lit .station__name {
+		transform: none;
 	}
 	.dial__bands--dense .station__freq {
-		font-size: 12px;
+		display: inline;
+		margin-left: 5px;
+		padding: 0 2px;
+		font-size: 11px;
+		white-space: nowrap;
 	}
 	.dial__text {
 		padding: 16px 12px 12px;
@@ -1756,6 +1826,56 @@ p {
 		transform: translateX(calc(100cqi - 18px));
 	}
 }
+/* Desktop: the magic eye has its own end cell at the right of the dial
+ * window, beside the stations. Glass and cell share one dark bezel with the
+ * brass line round it; the cell is a brass-rimmed escutcheon of its own. */
+@media (min-width: 980px) {
+	.cabinet__dial {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 72px;
+		gap: 6px;
+		padding: 6px;
+		border-radius: 14px;
+		background: linear-gradient(180deg, #1c120a, #0c0703);
+		box-shadow:
+			inset 0 3px 5px rgba(0, 0, 0, 0.85),
+			inset 0 -1px 0 rgba(255, 220, 170, 0.12),
+			0 0 0 2px var(--brass),
+			0 0 0 3px rgba(30, 16, 4, 0.6),
+			0 1px 0 3px rgba(255, 228, 184, 0.14),
+			0 0 38px var(--spill);
+	}
+	.cabinet__dial > .dial {
+		padding: 0;
+		border-radius: 9px;
+		background: none;
+		box-shadow: none;
+	}
+	.cabinet__eye {
+		position: static;
+		display: grid;
+		place-items: center;
+		border-radius: 9px;
+		background: radial-gradient(circle at 50% 42%, #24170c, #0a0603 78%);
+		box-shadow:
+			inset 0 0 0 1.5px var(--brass),
+			inset 0 0 0 2.5px rgba(30, 16, 4, 0.7),
+			inset 0 4px 9px rgba(0, 0, 0, 0.75);
+	}
+	.cabinet__eye > .eye {
+		zoom: 1;
+		box-shadow:
+			0 2px 3px rgba(0, 0, 0, 0.55),
+			inset 0 0 0 1px rgba(60, 36, 6, 0.6),
+			0 0 22px var(--eye-glow);
+	}
+	.cabinet__eye > .eye--off {
+		box-shadow:
+			0 2px 3px rgba(0, 0, 0, 0.55),
+			inset 0 0 0 1px rgba(60, 36, 6, 0.6);
+	}
+}
+
 /* ------------------------------------------------------ program window */
 
 /* A window cut into the cabinet: a bevelled brass bezel with four screws,
@@ -1781,14 +1901,17 @@ p {
 }
 
 .window__paper {
+	--ink: var(--window-ink);
+	--ink-2: var(--window-ink-2);
+	--lit-ink: var(--window-lit);
 	position: relative;
 	min-width: 0;
 	padding: 10px 12px 4px;
 	border-radius: 3px;
 	background:
-		radial-gradient(120% 90% at 50% 0%, var(--paper-glow), transparent 70%),
+		radial-gradient(120% 90% at 50% 0%, var(--window-glow), transparent 70%),
 		var(--tex-paper) 0 0 / 240px 240px,
-		var(--card);
+		var(--window-paper);
 	color: var(--ink);
 	box-shadow:
 		0 0 0 2px rgba(40, 24, 4, 0.55),
@@ -2079,7 +2202,7 @@ p {
 /* Desktop: the program card has left the cabinet. It heads the program sheet
  * beside the radio, printed on the same paper with a double rule under it;
  * over the back panel's hardboard it lies as a card of its own. */
-@media (min-width: 1200px) {
+@media (min-width: 980px) {
 	.side__card .window {
 		padding: 0;
 		background: none;
@@ -2089,6 +2212,10 @@ p {
 		display: none;
 	}
 	.side__card .window__paper {
+		/* printed on the sheet's own paper, in the sheet's own inks */
+		--ink: inherit;
+		--ink-2: inherit;
+		--lit-ink: inherit;
 		padding: 18px 18px 6px;
 		border-bottom: 3px double var(--rule-strong);
 		border-radius: 2px 2px 0 0;
@@ -2354,7 +2481,8 @@ p {
 	--focus: var(--focus-on-light);
 	position: relative;
 	display: grid;
-	grid-template-columns: minmax(0, 0.84fr) minmax(0, 4fr) minmax(0, 0.84fr);
+	/* the four ivory keys make the row; Menü and Verlauf are smaller keys either side */
+	grid-template-columns: minmax(46px, 0.6fr) minmax(0, 4fr) minmax(46px, 0.6fr);
 	min-width: 0;
 	padding: 5px 5px 0;
 	border-radius: 8px 8px 3px 3px;
@@ -2388,12 +2516,6 @@ p {
 
 .keyboard--one {
 	grid-template-columns: minmax(0, 1fr);
-}
-
-@media (max-width: 359px) {
-	.keyboard {
-		grid-template-columns: minmax(0, 1fr) minmax(0, 4fr) minmax(0, 1fr);
-	}
 }
 
 /* An ivory key: its face lit from above, a front lip along its foot, the
@@ -2487,7 +2609,49 @@ p {
 	letter-spacing: 0.03em;
 }
 
-@media (min-width: 1200px) {
+/* Menü and Verlauf: smaller keys of dark bakelite either side of the ivory
+ * row, a little shorter, their legends cut the same way and filled pale. */
+.pkey--bakelite {
+	--focus: var(--focus-on-dark);
+	align-self: end;
+	min-height: 50px;
+	padding-bottom: 14px;
+	background: linear-gradient(
+		180deg,
+		var(--bakelite-hi) 0,
+		var(--bakelite) 20%,
+		var(--bakelite-lo) calc(100% - 9px),
+		rgba(255, 220, 180, 0.26) calc(100% - 9px),
+		rgba(255, 220, 180, 0.26) calc(100% - 8px),
+		#1c110a calc(100% - 8px),
+		#0b0604 100%
+	);
+	color: var(--bakelite-ink);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 220, 180, 0.32),
+		inset 1px 0 0 rgba(255, 220, 180, 0.16),
+		inset -1px 0 0 rgba(0, 0, 0, 0.6);
+}
+
+.pkey--bakelite .pkey__legend {
+	text-shadow:
+		0 -1px 0 rgba(0, 0, 0, 0.75),
+		0 1px 0 rgba(255, 220, 180, 0.16);
+}
+
+.pkey--bakelite:active:not(:disabled) {
+	background: linear-gradient(
+		180deg,
+		#120a05 0,
+		var(--bakelite-lo) 24%,
+		var(--bakelite) calc(100% - 9px),
+		#1c110a calc(100% - 9px),
+		#0b0604 100%
+	);
+	box-shadow: inset 0 5px 7px rgba(0, 0, 0, 0.7);
+}
+
+@media (min-width: 980px) {
 	.pkey__legend {
 		font-size: 13px;
 		letter-spacing: 0.08em;
@@ -2854,19 +3018,9 @@ p {
 }
 
 /* The primary key: the same ivory, a red pilot lamp lit beside its legend. */
-.key--lit::before {
-	content: "";
-	flex: none;
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: radial-gradient(circle at 38% 34%, #ffc4b0, #e3452f 55%, #8e1a10);
-	box-shadow: 0 0 6px rgba(230, 70, 40, 0.6);
-}
-
-.key--lit:disabled::before {
-	background: rgba(0, 0, 0, 0.25);
-	box-shadow: none;
+/* The main key on a sheet: its legend cut deeper. Pilot lamps belong to the cabinet. */
+.key--lit {
+	color: var(--ivory-ink);
 }
 
 .key--danger {
@@ -2949,6 +3103,82 @@ p {
 
 .act--danger {
 	color: var(--lit-ink);
+}
+
+/* A station's own actions on its sheet, printed rather than keyed: one ruled
+ * line, the main action set bold with a dotted leader running on to the
+ * second, which is set lighter and underlined like "… einstellen". */
+.acts {
+	display: flex;
+	align-items: stretch;
+	min-width: 0;
+	border-top: 1px solid var(--rule-strong);
+	border-bottom: 1px solid var(--rule-strong);
+}
+
+.acts__go {
+	display: flex;
+	flex: 1;
+	align-items: baseline;
+	gap: 12px;
+	min-width: 0;
+	min-height: 52px;
+	margin: 0;
+	padding: 13px 2px 12px;
+	border: 0;
+	background: none;
+	color: var(--ink);
+	font: inherit;
+	font-size: 18px;
+	font-weight: 700;
+	letter-spacing: -0.005em;
+	text-align: left;
+	cursor: pointer;
+}
+
+.acts__go::after {
+	content: "";
+	flex: 1;
+	min-width: 20px;
+	border-bottom: 2px dotted currentColor;
+	opacity: 0.5;
+}
+
+.acts__go:hover:not(:disabled) {
+	background: var(--row-hover);
+}
+
+.acts__go:disabled {
+	color: var(--ink-3);
+	cursor: default;
+}
+
+.acts__alt {
+	display: flex;
+	flex: none;
+	align-items: center;
+	min-height: 52px;
+	padding: 0 2px 0 14px;
+	font-size: 15.5px;
+	font-weight: 500;
+	color: var(--ink-2);
+	text-decoration: underline;
+	text-decoration-color: var(--rule-strong);
+	text-underline-offset: 4px;
+}
+
+.acts__alt:hover {
+	color: var(--ink);
+}
+
+.acts__alt[aria-disabled="true"] {
+	color: var(--ink-3);
+	text-decoration: none;
+}
+
+.acts__go:focus-visible,
+.acts__alt:focus-visible {
+	outline-offset: -3px;
 }
 
 /* --------------------------------------------- lists on the program sheet */

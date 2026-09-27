@@ -16,7 +16,7 @@ import { SignIn } from "./screens/signin";
 import { NewStation, Station } from "./screens/station";
 import { store, useStore } from "./store";
 
-const DESK = "(min-width: 1200px)";
+const DESK = "(min-width: 980px)";
 
 function useDesk(): boolean {
 	const [desk, setDesk] = useState(() => window.matchMedia(DESK).matches);

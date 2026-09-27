@@ -295,10 +295,11 @@ export function Station({
 				/>
 			</PageBar>
 
-			<div class="row-actions">
+			{/* Printed on the sheet, not keys of the radio: what to do with this station, ruled like a program line. */}
+			<div class="acts">
 				<button
 					type="button"
-					class="key key--lit btn"
+					class="acts__go"
 					disabled={!summary.ready || !!store.tuning}
 					onClick={() => (held ? resume() : playStation(summary))}
 				>
@@ -306,7 +307,7 @@ export function Station({
 				</button>
 				{d.playlistId ? (
 					<a
-						class="key btn"
+						class="acts__alt"
 						href={`https://open.spotify.com/playlist/${d.playlistId}`}
 						target="_blank"
 						rel="noopener"
@@ -314,7 +315,7 @@ export function Station({
 						In Spotify
 					</a>
 				) : (
-					<span class="key btn" aria-disabled="true">
+					<span class="acts__alt" aria-disabled="true">
 						wird vorbereitet
 					</span>
 				)}

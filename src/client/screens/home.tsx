@@ -238,26 +238,28 @@ function DialStation({
 }
 
 /** The narrowest column a station name is printed in on the wide dial, and its band legend. */
-const COLUMN_PX = 104;
+const COLUMN_PX = 100;
+const DENSE_COLUMN_PX = 84;
 const LEGEND_PX = 44;
-/** More bands than this, and the dial sets its lettering closer, so the radio stays wider than tall. */
-const DENSE_FROM = 4;
+/** More rows than this, and the dial is printed denser: smaller lettering, the count after the name. */
+const DENSE_ROWS = 2;
 
 /** How wide a column must be to print the longest word of any name whole (roughly, per letter). */
 function columnFor(stations: StationSummary[], dense: boolean): number {
 	let longest = 0;
 	for (const x of stations)
 		for (const w of x.name.split(/[\s/-]+/)) longest = Math.max(longest, w.length);
-	return Math.min(150, Math.max(COLUMN_PX, Math.round(longest * (dense ? 7.8 : 8.8) + 12)));
+	const need = Math.round(longest * (dense ? 6.9 : 8.8) + (dense ? 10 : 12));
+	return Math.min(150, Math.max(dense ? DENSE_COLUMN_PX : COLUMN_PX, need));
 }
 
 /**
- * How many stations share a wave band: as many as the glass has room for
- * (three to eight), and the bands evened out, so twelve read as two of six.
+ * How many stations share a wave band: as many as the glass has room for,
+ * at most `most`, and the bands evened out, so twelve read as two of six.
  */
-function bandSize(n: number, fieldPx: number | null, columnPx: number): number {
+function bandSize(n: number, fieldPx: number | null, columnPx: number, most: number): number {
 	const fits = fieldPx === null ? 3 : Math.floor((fieldPx - LEGEND_PX) / columnPx);
-	const room = Math.max(3, Math.min(8, fits));
+	const room = Math.max(3, Math.min(most, fits));
 	const bands = Math.max(1, Math.ceil(n / room));
 	return Math.max(1, Math.ceil(n / bands));
 }
@@ -269,9 +271,16 @@ function StationDial({ state }: { state: AppState }) {
 	const at = pointedStation(state, s.tuning?.stationId ?? null, s.selected);
 	// A phone prints one station per line; the wide dial prints bands across.
 	const n = state.stations.length;
-	let per = wide ? bandSize(n, fieldPx, columnFor(state.stations, false)) : 3;
-	const dense = wide && Math.ceil(n / per) >= DENSE_FROM;
-	if (dense) per = bandSize(n, fieldPx, columnFor(state.stations, true));
+	let per = wide ? bandSize(n, fieldPx, columnFor(state.stations, false), 8) : 3;
+	// Past two rows the dial is printed denser, with up to eight columns on a wide glass.
+	const dense = wide && Math.ceil(n / per) > DENSE_ROWS;
+	if (dense)
+		per = bandSize(
+			n,
+			fieldPx,
+			columnFor(state.stations, true),
+			fieldPx !== null && fieldPx >= 760 ? 8 : 6,
+		);
 	const bands: StationSummary[][] = [];
 	state.stations.forEach((x, i) => {
 		if (i % per === 0) bands.push([]);
@@ -574,8 +583,9 @@ function TuneKnob({ state }: { state: AppState }) {
 // ---------------------------------------------------------- the keyboard
 
 /**
- * One keyboard in one slot: Menü, the four keys that act on the song,
- * Verlauf. A latched key stays down.
+ * One keyboard in one slot: the four ivory keys that act on the song, and
+ * either side of them the smaller bakelite keys Menü and Verlauf. A latched
+ * key stays down.
  */
 function Keyboard({ np }: { np: NowPlaying | null }) {
 	const disabled = !np;
@@ -612,7 +622,7 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 	const paused = !!np && !np.isPlaying;
 	return (
 		<div class={`keyboard${disabled ? " keyboard--off" : ""}`}>
-			<a class="pkey pkey--end" href="/menu">
+			<a class="pkey pkey--end pkey--bakelite" href="/menu">
 				<span class="pkey__legend">Menü</span>
 			</a>
 			<fieldset class="keyboard__play">
@@ -659,7 +669,7 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 					<span class="pkey__legend">Favorit</span>
 				</button>
 			</fieldset>
-			<a class="pkey pkey--end" href="/verlauf">
+			<a class="pkey pkey--end pkey--bakelite" href="/verlauf">
 				<span class="pkey__legend">Verlauf</span>
 			</a>
 		</div>

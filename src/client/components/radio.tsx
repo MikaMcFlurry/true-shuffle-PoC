@@ -19,9 +19,9 @@ export interface RoundReading {
 	total: number | null;
 }
 
-const WIDE = "(min-width: 1200px)";
+const WIDE = "(min-width: 980px)";
 
-/** True where the radio is laid out as the landscape table radio with a sheet beside it. */
+/** True where the radio is laid out as the landscape table radio, its card and sheet beside or below it. */
 export function useWide(): boolean {
 	const [wide, setWide] = useState(() => window.matchMedia(WIDE).matches);
 	useEffect(() => {
@@ -78,16 +78,45 @@ export function Cabinet(props: {
 	/** The face fills a phone's screen; spare height goes to the speaker cloth. */
 	fill?: boolean;
 }) {
+	// On a desktop the radio stands on a sideboard that runs from the window's
+	// left edge to the sheet beside it (or across the whole window when the
+	// sheet lies below): measure how far that is on either side.
+	const root = useRef<HTMLDivElement>(null);
+	useLayoutEffect(() => {
+		const el = root.current;
+		if (!el) return;
+		const measure = () => {
+			const r = el.getBoundingClientRect();
+			const side = document.querySelector<HTMLElement>(".side")?.getBoundingClientRect();
+			const end =
+				side && side.left >= r.right - 1 ? side.left : document.documentElement.clientWidth;
+			el.style.setProperty("--board-l", `${Math.max(0, Math.ceil(r.left))}px`);
+			el.style.setProperty("--board-r", `${Math.max(0, Math.floor(end - r.right))}px`);
+		};
+		measure();
+		const ro = new ResizeObserver(measure);
+		ro.observe(el);
+		ro.observe(document.documentElement);
+		window.addEventListener("resize", measure);
+		return () => {
+			ro.disconnect();
+			window.removeEventListener("resize", measure);
+		};
+	}, []);
 	return (
-		<div class={`cabinet${props.fill ? " cabinet--fill" : ""}`}>
+		<div ref={root} class={`cabinet${props.fill ? " cabinet--fill" : ""}`}>
 			<div class="cabinet__body">
 				<div class="cabinet__cloth">
 					{/* Cast brass letters on the cloth; the trim bars run level with the hyphen. */}
 					<h1 class="emblem">true-shuffle</h1>
 				</div>
+				{/* The magic eye is seated in the dial's bezel: at the head of the pointer's scale on a
+				    phone, in its own brass-rimmed end cell beside the stations on a desktop. */}
 				<div class="cabinet__dial">
 					{props.dial}
-					<MagicEye key={props.eyeKey} state={props.eye} />
+					<span class="cabinet__eye">
+						<MagicEye key={props.eyeKey} state={props.eye} />
+					</span>
 				</div>
 				{props.window ? <div class="cabinet__window">{props.window}</div> : null}
 				{props.extra ? <div class="cabinet__extra">{props.extra}</div> : null}
