@@ -1761,8 +1761,8 @@ p {
 		box-shadow: 0 0 5px 3px var(--halo);
 	}
 	/* Past two rows the dial is printed denser, so the radio stays wider than
-	 * it is tall: rows of about 34 px, smaller lettering, the count set after
-	 * the name (under it only where the column is too narrow). */
+	 * it is tall: rows of about 34 px (44 px under a finger), smaller
+	 * lettering, the count on its own line under the name. */
 	.dial__bands--dense .band {
 		background-size: 6px 6px;
 	}
@@ -1779,7 +1779,7 @@ p {
 	.dial__bands--dense .station::after {
 		height: 4px;
 	}
-	/* name and count set as one line of print, the count in smaller type after the name */
+	/* name and count in smaller print; the count follows under the name */
 	.dial__bands--dense .station__tune {
 		display: block;
 		min-height: 30px;
@@ -1806,6 +1806,12 @@ p {
 		font-size: 11px;
 		line-height: 1.1;
 		white-space: nowrap;
+	}
+	/* a tablet's finger still gets a full 44 px row */
+	@media (pointer: coarse) {
+		.dial__bands--dense .station__tune {
+			min-height: 44px;
+		}
 	}
 	.dial__text {
 		padding: 16px 12px 12px;

@@ -241,7 +241,7 @@ function DialStation({
 const COLUMN_PX = 100;
 const DENSE_COLUMN_PX = 84;
 const LEGEND_PX = 40;
-/** More rows than this, and the dial is printed denser: smaller lettering, the count after the name. */
+/** More rows than this, and the dial is printed denser: smaller lettering, the count under the name. */
 const DENSE_ROWS = 2;
 
 /** How wide a column must be to print the longest word of any name whole (roughly, per letter). */
