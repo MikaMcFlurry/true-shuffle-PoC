@@ -240,7 +240,7 @@ function DialStation({
 /** The narrowest column a station name is printed in on the wide dial, and its band legend. */
 const COLUMN_PX = 100;
 const DENSE_COLUMN_PX = 84;
-const LEGEND_PX = 44;
+const LEGEND_PX = 40;
 /** More rows than this, and the dial is printed denser: smaller lettering, the count after the name. */
 const DENSE_ROWS = 2;
 
@@ -249,7 +249,7 @@ function columnFor(stations: StationSummary[], dense: boolean): number {
 	let longest = 0;
 	for (const x of stations)
 		for (const w of x.name.split(/[\s/-]+/)) longest = Math.max(longest, w.length);
-	const need = Math.round(longest * (dense ? 6.9 : 8.8) + (dense ? 10 : 12));
+	const need = Math.round(longest * (dense ? 6.4 : 8.8) + (dense ? 10 : 12));
 	return Math.min(150, Math.max(dense ? DENSE_COLUMN_PX : COLUMN_PX, need));
 }
 

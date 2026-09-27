@@ -779,7 +779,7 @@ p {
 		grid-template-rows: 1fr;
 		grid-auto-rows: auto;
 		gap: 16px;
-		padding: 26px 26px 22px;
+		padding: 26px 20px 22px;
 		border-radius: 76px 76px 14px 14px / 60px 60px 12px 12px;
 		background:
 			radial-gradient(90% 30% at 50% -4%, rgba(255, 232, 196, 0.34), transparent 70%),
@@ -1689,7 +1689,7 @@ p {
 	}
 	.band {
 		display: grid;
-		grid-template-columns: 44px minmax(0, 1fr);
+		grid-template-columns: 40px minmax(0, 1fr);
 		background: var(--tex-ticks) left bottom / 6px 8px repeat-x;
 	}
 	.band + .band {
@@ -1739,7 +1739,7 @@ p {
 		justify-content: flex-end;
 		gap: 3px;
 		min-height: 60px;
-		padding: 8px 4px 4px;
+		padding: 8px 2px 4px;
 		text-align: center;
 	}
 	.station__no {
@@ -1748,7 +1748,7 @@ p {
 	/* a long single word (SONNTAGMORGEN) still fits a narrow band column whole */
 	.station__name {
 		font-size: 17px;
-		letter-spacing: 0.035em;
+		letter-spacing: 0.025em;
 		transform-origin: center;
 	}
 	/* the count printed on a clear patch of glass, so the pointer never runs through it */
@@ -1785,23 +1785,26 @@ p {
 		min-height: 30px;
 		padding: 5px 3px 1px;
 		font-family: var(--font-dial);
-		font-size: 14px;
+		font-size: 13px;
 		line-height: 1.05;
 	}
 	.dial__bands--dense .station__name {
 		display: inline;
-		font-size: 14px;
-		letter-spacing: 0.02em;
+		font-size: 13px;
+		letter-spacing: 0.01em;
 		line-height: 1.05;
 	}
 	.dial__bands--dense .station--lit .station__name {
 		transform: none;
 	}
+	/* the count on a line of its own under the name, never run on after a wrapped name */
 	.dial__bands--dense .station__freq {
-		display: inline;
-		margin-left: 5px;
+		display: block;
+		width: fit-content;
+		margin: 1px auto 0;
 		padding: 0 2px;
 		font-size: 11px;
+		line-height: 1.1;
 		white-space: nowrap;
 	}
 	.dial__text {
@@ -1824,41 +1827,34 @@ p {
 		transform: translateX(calc(100cqi - 18px));
 	}
 }
-/* Desktop: the magic eye has its own end cell at the right of the dial
- * window, beside the stations. Glass and cell share one dark bezel with the
- * brass line round it; the cell is a brass-rimmed escutcheon of its own. */
+/* Desktop: the magic eye sits beside the dial window in an escutcheon of its
+ * own at the top of the end cap: a square of dark bezel ringed in the same
+ * brass line, set into the walnut. The dial row reaches a little into the
+ * front's margins, so the end cap costs the stations nothing. */
 @media (min-width: 980px) {
 	.cabinet__dial {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) 72px;
-		gap: 6px;
-		padding: 6px;
-		border-radius: 14px;
-		background: linear-gradient(180deg, #1c120a, #0c0703);
-		box-shadow:
-			inset 0 3px 5px rgba(0, 0, 0, 0.85),
-			inset 0 -1px 0 rgba(255, 220, 170, 0.12),
-			0 0 0 2px var(--brass),
-			0 0 0 3px rgba(30, 16, 4, 0.6),
-			0 1px 0 3px rgba(255, 228, 184, 0.14),
-			0 0 38px var(--spill);
+		align-items: start;
+		gap: 12px;
 	}
-	.cabinet__dial > .dial {
-		padding: 0;
-		border-radius: 9px;
-		background: none;
-		box-shadow: none;
+	.cabinet__body > .cabinet__dial {
+		width: auto;
+		margin-inline: -8px;
 	}
 	.cabinet__eye {
 		position: static;
 		display: grid;
 		place-items: center;
-		border-radius: 9px;
+		aspect-ratio: 1;
+		border-radius: 12px;
 		background: radial-gradient(circle at 50% 42%, #24170c, #0a0603 78%);
 		box-shadow:
-			inset 0 0 0 1.5px var(--brass),
-			inset 0 0 0 2.5px rgba(30, 16, 4, 0.7),
-			inset 0 4px 9px rgba(0, 0, 0, 0.75);
+			inset 0 3px 6px rgba(0, 0, 0, 0.85),
+			inset 0 -1px 0 rgba(255, 220, 170, 0.12),
+			0 0 0 2px var(--brass),
+			0 0 0 3px rgba(30, 16, 4, 0.6),
+			0 1px 0 3px rgba(255, 228, 184, 0.14);
 	}
 	.cabinet__eye > .eye {
 		zoom: 1;
@@ -2917,118 +2913,92 @@ p {
 	gap: 12px;
 }
 
-/* Keys side by side share one slot, touching like the radio's keyboard. */
-.row-actions {
-	--focus: var(--focus-on-light);
-	display: flex;
-	flex-wrap: nowrap;
-	gap: 0;
-	padding: 3px 2px 0;
-	border-radius: 3px 3px 0 0;
-	overflow: hidden;
-	background: linear-gradient(180deg, #050201, var(--slot) 40%, #24160c);
-	box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.9);
-}
+/* ---------------------------------------------------- actions on paper */
 
-/* ------------------------------------------------ keys on the program sheet */
-
-/* A key from the radio's keyboard family, seated in a slot of its own:
- * ivory face, front lip, legend cut into it. */
+/* Paper carries no keys; keys belong to the cabinet. What can be done on a
+ * program sheet, the program card or the rating slip is printed in the
+ * sheet's own type: the main action set bold, the others underlined like a
+ * reference, danger in red ink. Each keeps a tap target of at least 44 px,
+ * and inks follow the page (paper or the back panel's hardboard). */
 .key {
-	--focus: var(--focus-on-light);
-	position: relative;
 	display: inline-flex;
 	align-items: center;
-	justify-content: center;
+	justify-content: flex-start;
 	gap: 8px;
-	min-height: 50px;
-	padding: 0 16px 9px;
+	min-width: 44px;
+	min-height: 44px;
+	margin: 0;
+	padding: 0 2px;
 	border: 0;
 	border-radius: 2px;
-	background: linear-gradient(
-		180deg,
-		var(--ivory-hi) 0,
-		var(--ivory) 14%,
-		var(--ivory-lo) calc(100% - 8px),
-		rgba(255, 252, 240, 0.85) calc(100% - 8px),
-		rgba(255, 252, 240, 0.85) calc(100% - 7px),
-		var(--ivory-front) calc(100% - 7px),
-		var(--ivory-lip) 100%
-	);
-	color: var(--engrave);
+	background: none;
+	color: var(--ink-2);
 	font: inherit;
-	font-family: var(--font-dial);
-	font-size: 14.5px;
-	font-weight: 600;
-	letter-spacing: 0.08em;
-	line-height: 1.1;
-	text-align: center;
-	text-decoration: none;
-	text-transform: uppercase;
-	text-shadow:
-		0 1px 0 rgba(255, 255, 255, 0.85),
-		0 -1px 0 rgba(50, 32, 10, 0.4);
+	font-size: 15.5px;
+	font-weight: 500;
+	line-height: 1.3;
+	text-align: left;
+	text-decoration: underline;
+	text-decoration-color: var(--rule-strong);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 4px;
 	cursor: pointer;
-	/* seated in a slot: a thin dark rim at the top and sides, the lip at the slot's edge */
-	box-shadow:
-		0 -3px 0 0 var(--slot),
-		2px -3px 0 0 var(--slot),
-		-2px -3px 0 0 var(--slot),
-		2px 0 0 0 var(--slot),
-		-2px 0 0 0 var(--slot),
-		inset 0 7px 6px -5px rgba(0, 0, 0, 0.55),
-		inset 1px 0 0 rgba(255, 255, 255, 0.45),
-		inset -1px 0 0 rgba(90, 64, 30, 0.4);
-	transition: filter var(--t-fast) var(--ease);
-}
-
-.key:focus-visible {
-	outline-offset: -6px;
 }
 
 .key:hover:not(:disabled):not([aria-disabled="true"]) {
-	filter: brightness(1.04);
+	color: var(--ink);
+	text-decoration-color: currentColor;
 }
 
-.key:active:not(:disabled):not([aria-disabled="true"]),
-.key[aria-pressed="true"] {
-	background: linear-gradient(
-		180deg,
-		#b9a882 0,
-		var(--ivory-lo) 24%,
-		#cdbe9b calc(100% - 5px),
-		var(--ivory-front) calc(100% - 5px),
-		var(--ivory-lip) 100%
-	);
-	box-shadow:
-		0 -3px 0 0 var(--slot),
-		2px -3px 0 0 var(--slot),
-		-2px -3px 0 0 var(--slot),
-		2px 0 0 0 var(--slot),
-		-2px 0 0 0 var(--slot),
-		inset 0 7px 8px -3px rgba(30, 18, 4, 0.6);
+.key:focus-visible {
+	outline-offset: 2px;
 }
 
 .key:disabled,
 .key[aria-disabled="true"] {
+	color: var(--ink-3);
+	text-decoration: none;
 	cursor: default;
-	color: var(--ivory-mute);
 }
 
-/* The primary key: the same ivory, a red pilot lamp lit beside its legend. */
-/* The main key on a sheet: its legend cut deeper. Pilot lamps belong to the cabinet. */
+/* the main action: set bold, in the sheet's black */
 .key--lit {
-	color: var(--ivory-ink);
+	color: var(--ink);
+	font-size: 17.5px;
+	font-weight: 700;
+	letter-spacing: -0.005em;
+	text-decoration: none;
+}
+
+.key--lit:hover:not(:disabled):not([aria-disabled="true"]) {
+	text-decoration: underline;
+	text-decoration-thickness: 2px;
 }
 
 .key--danger {
-	color: var(--danger-key);
+	color: var(--lit-ink);
+	text-decoration-color: currentColor;
+}
+
+/* a choice that is set (the rating slip): bold in red ink after a printed tick */
+.key[aria-pressed="true"] {
+	color: var(--lit-ink);
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.key[aria-pressed="true"]::before {
+	content: "";
+	flex: none;
+	width: 16px;
+	height: 16px;
+	background: currentColor;
+	-webkit-mask: var(--mask-tick) center / contain no-repeat;
+	mask: var(--mask-tick) center / contain no-repeat;
 }
 
 .key--back {
-	min-height: 44px;
-	padding: 0 14px 8px;
-	font-size: 13.5px;
+	font-size: 14.5px;
 }
 
 .masthead .key--back {
@@ -3037,39 +3007,50 @@ p {
 
 .btn--wide {
 	width: 100%;
+	min-height: 52px;
+}
+
+/* the main action on a line of its own: ruled above and below, like a program line */
+.key--lit.btn--wide {
+	border-top: 1px solid var(--rule-strong);
+	border-bottom: 1px solid var(--rule-strong);
+	border-radius: 0;
 }
 
 .btn--small {
-	min-height: 46px;
-	padding: 0 12px 8px;
-	font-size: 13.5px;
+	font-size: 14.5px;
 }
 
-/* inside a shared slot the keys touch, the slot is the row's */
-.row-actions > .key {
-	flex: 1 1 0;
+/* Actions side by side: printed on one line, set apart by space only. */
+.row-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 2px 24px;
 	min-width: 0;
-	border-radius: 2px 2px 0 0;
-	box-shadow:
-		inset 0 7px 6px -5px rgba(0, 0, 0, 0.55),
-		inset 0 1px 0 rgba(255, 255, 255, 0.9),
-		inset 1px 0 0 rgba(255, 255, 255, 0.5),
-		inset -1px 0 0 rgba(90, 64, 30, 0.5);
 }
 
-.row-actions > .key:active:not(:disabled),
-.row-actions > .key[aria-pressed="true"] {
-	box-shadow: inset 0 5px 7px rgba(30, 18, 4, 0.5);
+/* A station's own actions: one ruled line, the main action bold on the left,
+ * the other an underlined reference on the right. */
+.acts {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 2px 24px;
+	min-width: 0;
+	min-height: 58px;
+	padding: 4px 0;
+	border-top: 1px solid var(--rule-strong);
+	border-bottom: 1px solid var(--rule-strong);
 }
 
-/* A printed action on the sheet: set in the text, ruled above and below,
- * a leader running to the margin. Used for what should not look like a key. */
+/* A lone action on its own ruled line (Sender löschen, Konto löschen). */
 .act {
 	display: flex;
-	align-items: baseline;
-	gap: 12px;
+	align-items: center;
 	width: 100%;
-	min-height: 48px;
+	min-height: 52px;
 	padding: 12px 2px;
 	border: 0;
 	border-top: 1px solid var(--rule-strong);
@@ -3083,14 +3064,6 @@ p {
 	cursor: pointer;
 }
 
-.act::after {
-	content: "";
-	flex: 1;
-	min-width: 24px;
-	border-bottom: 2px dotted currentColor;
-	opacity: 0.55;
-}
-
 .act:hover {
 	background: var(--row-hover);
 }
@@ -3101,82 +3074,6 @@ p {
 
 .act--danger {
 	color: var(--lit-ink);
-}
-
-/* A station's own actions on its sheet, printed rather than keyed: one ruled
- * line, the main action set bold with a dotted leader running on to the
- * second, which is set lighter and underlined like "… einstellen". */
-.acts {
-	display: flex;
-	align-items: stretch;
-	min-width: 0;
-	border-top: 1px solid var(--rule-strong);
-	border-bottom: 1px solid var(--rule-strong);
-}
-
-.acts__go {
-	display: flex;
-	flex: 1;
-	align-items: baseline;
-	gap: 12px;
-	min-width: 0;
-	min-height: 52px;
-	margin: 0;
-	padding: 13px 2px 12px;
-	border: 0;
-	background: none;
-	color: var(--ink);
-	font: inherit;
-	font-size: 18px;
-	font-weight: 700;
-	letter-spacing: -0.005em;
-	text-align: left;
-	cursor: pointer;
-}
-
-.acts__go::after {
-	content: "";
-	flex: 1;
-	min-width: 20px;
-	border-bottom: 2px dotted currentColor;
-	opacity: 0.5;
-}
-
-.acts__go:hover:not(:disabled) {
-	background: var(--row-hover);
-}
-
-.acts__go:disabled {
-	color: var(--ink-3);
-	cursor: default;
-}
-
-.acts__alt {
-	display: flex;
-	flex: none;
-	align-items: center;
-	min-height: 52px;
-	padding: 0 2px 0 14px;
-	font-size: 15.5px;
-	font-weight: 500;
-	color: var(--ink-2);
-	text-decoration: underline;
-	text-decoration-color: var(--rule-strong);
-	text-underline-offset: 4px;
-}
-
-.acts__alt:hover {
-	color: var(--ink);
-}
-
-.acts__alt[aria-disabled="true"] {
-	color: var(--ink-3);
-	text-decoration: none;
-}
-
-.acts__go:focus-visible,
-.acts__alt:focus-visible {
-	outline-offset: -3px;
 }
 
 /* --------------------------------------------- lists on the program sheet */
@@ -4034,9 +3931,15 @@ select.input {
 	gap: 10px;
 }
 
+/* the stepper's minus and plus: printed boxes on the form, as a form prints them */
 .stepper .key {
+	justify-content: center;
 	width: 50px;
+	height: 48px;
 	padding: 0;
+	border: 1.5px solid var(--rule-strong);
+	border-radius: 3px;
+	color: var(--ink);
 }
 
 .stepper output {
@@ -4455,11 +4358,14 @@ details.more[open] > summary::after {
 
 .sheet__actions {
 	display: grid;
-	gap: 8px;
+	border-top: 1px solid var(--rule-strong);
 }
 
 .sheet__actions .key {
-	justify-content: flex-start;
+	width: 100%;
+	min-height: 48px;
+	border-bottom: 1px solid var(--rule);
+	border-radius: 0;
 }
 
 @media (min-width: 720px) {

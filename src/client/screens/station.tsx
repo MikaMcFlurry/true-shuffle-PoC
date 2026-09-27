@@ -299,7 +299,7 @@ export function Station({
 			<div class="acts">
 				<button
 					type="button"
-					class="acts__go"
+					class="key key--lit"
 					disabled={!summary.ready || !!store.tuning}
 					onClick={() => (held ? resume() : playStation(summary))}
 				>
@@ -307,7 +307,7 @@ export function Station({
 				</button>
 				{d.playlistId ? (
 					<a
-						class="acts__alt"
+						class="key"
 						href={`https://open.spotify.com/playlist/${d.playlistId}`}
 						target="_blank"
 						rel="noopener"
@@ -315,7 +315,7 @@ export function Station({
 						In Spotify
 					</a>
 				) : (
-					<span class="acts__alt" aria-disabled="true">
+					<span class="key" aria-disabled="true">
 						wird vorbereitet
 					</span>
 				)}
