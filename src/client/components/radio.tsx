@@ -624,6 +624,37 @@ export function MixKnob(props: {
 }
 
 /**
+ * Klang printed on a program sheet, where no knob belongs: the knob's three
+ * detents as a printed scale, Entdecker · Ausgewogen · Vertraut, the chosen
+ * one set bold with a short red tick under it. Native radios underneath, so
+ * the arrow keys move the choice. A mix turned between detents on the radio
+ * shows its nearest position; a choice here writes only the detent's value.
+ */
+export function MixScale(props: { value: number; station: string; onChange: (v: number) => void }) {
+	const nearest = MIX_DETENTS.reduce((a, b) =>
+		Math.abs(b[1] - props.value) < Math.abs(a[1] - props.value) ? b : a,
+	)[1];
+	return (
+		<fieldset class="mixscale">
+			<legend class="sr-only">Klang für {props.station}: Entdecken oder Vertraut</legend>
+			{MIX_DETENTS.map(([label, v]) => (
+				<label key={label} class="mixscale__opt">
+					<input
+						type="radio"
+						name={`mix-${props.station}`}
+						value={String(v)}
+						checked={nearest === v}
+						onChange={() => props.onChange(v)}
+					/>
+					<span class="mixscale__label">{label}</span>
+					<span class="mixscale__tick" aria-hidden="true" />
+				</label>
+			))}
+		</fieldset>
+	);
+}
+
+/**
  * A detent selector: printed positions, a lamp lit over the one that is
  * set. Radio inputs underneath, so arrow keys and screen readers work.
  */

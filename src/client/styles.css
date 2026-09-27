@@ -3637,6 +3637,81 @@ label.row:hover {
 	color: var(--ink);
 }
 
+/* Klang printed on a sheet: three positions on a ruled strip of scale, the
+ * chosen one bold with a short red tick under it, the others quiet. */
+.mixscale {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-top: 1px solid var(--rule-strong);
+	background: var(--tex-ticks) left bottom / 6px 6px repeat-x;
+}
+
+.mixscale__opt {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 56px;
+	padding: 8px 2px 18px;
+	text-align: center;
+	cursor: pointer;
+}
+
+.mixscale__opt:hover {
+	background: var(--row-hover);
+}
+
+.mixscale__opt input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	opacity: 0;
+}
+
+.mixscale__opt:has(input:focus-visible) {
+	outline: 3px solid var(--focus);
+	outline-offset: -3px;
+}
+
+.mixscale__label {
+	font-family: var(--font-dial);
+	font-size: 14.5px;
+	font-weight: 500;
+	letter-spacing: 0.06em;
+	line-height: 1.15;
+	text-transform: uppercase;
+	color: var(--ink-2);
+}
+
+/* the position's own mark on the scale: a hairline, red and taller when chosen; the labels keep one baseline */
+.mixscale__tick {
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	width: 1px;
+	height: 8px;
+	transform: translateX(-50%);
+	background: var(--ink-2);
+}
+
+.mixscale__opt:has(input:checked) .mixscale__label {
+	font-weight: 700;
+	color: var(--ink);
+}
+
+.mixscale__opt:has(input:checked) .mixscale__tick {
+	width: 3px;
+	height: 14px;
+	border-radius: 1px;
+	background: var(--lit-ink);
+}
+
 .row--detents {
 	display: block;
 	padding: 10px 0 12px;

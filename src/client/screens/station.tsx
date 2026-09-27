@@ -3,12 +3,12 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
-import { Cover, Detents, MixKnob, PageBar, Scale, Section, useWide } from "../components/radio";
+import { Cover, Detents, MixScale, PageBar, Scale, Section, useWide } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
 import { ago, DECK_PREFIX, num, pct } from "../format";
 import { navigate } from "../router";
 import { store, useStore } from "../store";
-import { MixReadout, mixText, playStation, pointedStation } from "./home";
+import { MixReadout, playStation, pointedStation } from "./home";
 
 const KIND: Record<SlotKind, string> = {
 	fresh: "Ungehört",
@@ -321,17 +321,13 @@ export function Station({
 				)}
 			</div>
 
-			{/* Beside the radio, its Klang knob already turns this station: the sheet only prints the mix. */}
+			{/* Beside the radio, its Klang knob already turns this station: the sheet only prints the mix.
+			    Elsewhere the sheet prints the knob's three positions to choose from; the knob stays on the radio. */}
 			<Section title="Mischung" id="mix" lead={<MixReadout s={summary} mix={value} />}>
 				{frontKnob ? (
 					<p class="hint">Am Klang-Knopf des Radios einstellbar.</p>
 				) : (
-					<MixKnob
-						value={value}
-						valueText={mixText(summary, value, ", ")}
-						station={d.name}
-						onChange={onMix}
-					/>
+					<MixScale value={value} station={d.name} onChange={onMix} />
 				)}
 			</Section>
 

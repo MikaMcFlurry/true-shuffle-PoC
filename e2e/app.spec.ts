@@ -166,9 +166,10 @@ test.describe("a listener's day", () => {
 		await expect(next.first()).toBeVisible();
 		await checkPage(page, "station");
 
-		await page.getByRole("button", { name: "Vertraut" }).click();
+		// On the sheet the mix is printed as the knob's three positions to choose from.
+		await page.getByRole("radio", { name: "Vertraut" }).check();
 		await expect(page.getByText(/≈ 50 % ungehört/)).toBeVisible();
-		await page.getByRole("button", { name: "Entdecker" }).click();
+		await page.getByRole("radio", { name: "Entdecker" }).check();
 		await expect(page.getByText(/≈ 60 % ungehört/)).toBeVisible();
 
 		// Rated afterwards, not only while it plays: a song further down the list.
