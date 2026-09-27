@@ -1,20 +1,25 @@
-import { ChevronDown, ExternalLink, Minus, Play, Plus, Trash2 } from "lucide-preact";
+import { Minus, Plus } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
-import { Cover, MixKnob, PageBar, Scale, Section } from "../components/radio";
+import { Cover, Detents, MixKnob, PageBar, Scale, Section, useWide } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
 import { ago, DECK_PREFIX, num, pct } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
-import { MixReadout, mixText, playStation } from "./home";
+import { currentStation, MixReadout, mixText, playStation } from "./home";
 
 const KIND: Record<SlotKind, string> = {
 	fresh: "Ungehört",
 	favorite: "Favorit",
 	discovery: "Entdeckung",
 };
+
+const FAV_SHARES = [
+	["auto", "wie Mischung"],
+	...[0, 0.05, 0.1, 0.15, 0.25, 0.35, 0.5].map((v) => [String(v), pct(v)] as const),
+] as const;
 
 /** Why a song is here, as a small printed mark. Favourites and discoveries are marked red. */
 function Reason({ kind }: { kind: SlotKind }) {
@@ -149,6 +154,7 @@ export function Station({
 	const [confirm, setConfirm] = useState(false);
 	const [editSources, setEditSources] = useState<StationSource[] | null>(null);
 	const saveTimer = useRef<number | null>(null);
+	const wide = useWide();
 
 	const load = () => {
 		const started = Date.now();
@@ -216,6 +222,7 @@ export function Station({
 	}
 
 	const summary = state.stations.find((s) => s.id === id) ?? d;
+	const frontKnob = wide && currentStation(state)?.id === id;
 	const np = state.nowPlaying;
 	// Paused in this station: the key plays on, it never starts the station over.
 	const held = !!np && np.stationId === id && !np.isPlaying;
@@ -236,13 +243,7 @@ export function Station({
 		<div class="page">
 			<PageBar
 				title={d.name}
-				sub={
-					d.playing
-						? "Läuft gerade"
-						: d.kind === "all"
-							? "Alle deine Sender und Lieblingssongs"
-							: undefined
-				}
+				sub={d.kind === "all" ? "Alle deine Sender und Lieblingssongs" : undefined}
 				backTo="/"
 				noBack={embedded}
 			>
@@ -264,7 +265,6 @@ export function Station({
 					disabled={!summary.ready || !!store.tuning}
 					onClick={() => (held ? resume() : playStation(summary))}
 				>
-					<Play class="icon" aria-hidden="true" />
 					{summary.playing ? "Neu starten" : held ? "Weiterspielen" : "Spielen"}
 				</button>
 				{d.playlistId ? (
@@ -274,7 +274,6 @@ export function Station({
 						target="_blank"
 						rel="noopener"
 					>
-						<ExternalLink class="icon" aria-hidden="true" />
 						In Spotify
 					</a>
 				) : (
@@ -284,13 +283,18 @@ export function Station({
 				)}
 			</div>
 
+			{/* Beside the radio, its Klang knob already turns this station: the sheet only prints the mix. */}
 			<Section title="Mischung" id="mix" lead={<MixReadout s={summary} mix={value} />}>
-				<MixKnob
-					value={value}
-					valueText={mixText(summary, value, ", ")}
-					station={d.name}
-					onChange={onMix}
-				/>
+				{frontKnob ? (
+					<p class="hint">Am Klang-Knopf des Radios einstellbar.</p>
+				) : (
+					<MixKnob
+						value={value}
+						valueText={mixText(summary, value, ", ")}
+						station={d.name}
+						onChange={onMix}
+					/>
+				)}
 			</Section>
 
 			{np && np.stationId === id ? (
@@ -430,10 +434,7 @@ export function Station({
 			) : null}
 
 			<details class="more">
-				<summary>
-					Erweitert
-					<ChevronDown class="icon more__chev" aria-hidden="true" />
-				</summary>
+				<summary>Erweitert</summary>
 				<div class="more__body">
 					<div class="field">
 						<label for="st-name">Name</label>
@@ -456,25 +457,13 @@ export function Station({
 						unit={(n) => `${n} ${n === 1 ? "Tag" : "Tagen"}`}
 						onChange={(n) => setRule({ favoriteCooldownDays: n })}
 					/>
-					<div class="field">
-						<label for="st-fav">Anteil Favoriten</label>
-						<select
-							id="st-fav"
-							class="input"
-							value={rules.favoriteShare === null ? "auto" : String(rules.favoriteShare)}
-							onChange={(e) => {
-								const v = (e.target as HTMLSelectElement).value;
-								setRule({ favoriteShare: v === "auto" ? null : Number(v) });
-							}}
-						>
-							<option value="auto">Wie die Mischung</option>
-							{[0, 0.05, 0.1, 0.15, 0.25, 0.35, 0.5].map((v) => (
-								<option key={v} value={String(v)}>
-									{pct(v)}
-								</option>
-							))}
-						</select>
-					</div>
+					<Detents
+						name="st-fav"
+						legend="Anteil Favoriten"
+						options={FAV_SHARES}
+						value={rules.favoriteShare === null ? "auto" : String(rules.favoriteShare)}
+						onChange={(v) => setRule({ favoriteShare: v === "auto" ? null : Number(v) })}
+					/>
 					<fieldset class="field" style={{ border: 0, padding: 0, margin: 0 }}>
 						<legend class="field__label">Wenn du einen Song früh überspringst</legend>
 						<div class="radios">
@@ -576,12 +565,7 @@ export function Station({
 					</div>
 				</div>
 			) : (
-				<button
-					type="button"
-					class="key btn btn--wide key--danger"
-					onClick={() => setConfirm(true)}
-				>
-					<Trash2 class="icon" aria-hidden="true" />
+				<button type="button" class="act act--danger" onClick={() => setConfirm(true)}>
 					Sender löschen
 				</button>
 			)}

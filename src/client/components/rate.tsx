@@ -102,7 +102,6 @@ export function RateSheet() {
 							disabled={busy}
 							onClick={() => set(cur === 1 ? 0 : 1)}
 						>
-							<ThumbsUp class="icon" aria-hidden="true" />
 							Daumen hoch: Favorit
 						</button>
 						<button
@@ -112,7 +111,6 @@ export function RateSheet() {
 							disabled={busy}
 							onClick={() => set(cur === -1 ? 0 : -1)}
 						>
-							<ThumbsDown class="icon" aria-hidden="true" />
 							Daumen runter: nie wieder
 						</button>
 						<button type="button" class="key btn" onClick={() => store.rate(null)}>

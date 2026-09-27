@@ -1,4 +1,3 @@
-import { ChevronRight, LogOut, Trash2 } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import {
 	aggregateHistory,
@@ -9,7 +8,7 @@ import {
 } from "../../core/history";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api } from "../api";
-import { PageBar, Section } from "../components/radio";
+import { Detents, PageBar, Section } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
@@ -35,6 +34,8 @@ function deviceType(t: string): string {
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store } from "../store";
 import { roundLabel } from "./home";
+
+const GUEST_HOURS = [2, 4, 6, 12, 24].map((h) => [String(h), `${h} Std.`] as const);
 
 const ILLUMINATIONS = [
 	["day", "Tag"],
@@ -68,7 +69,6 @@ function Terminal(props: {
 					<span class="terminal__sub">{props.sub}</span>
 				</span>
 				{props.act ? <span class="terminal__act">{props.act}</span> : null}
-				<ChevronRight class="terminal__go" aria-hidden="true" />
 			</a>
 		</li>
 	);
@@ -129,24 +129,14 @@ export function MenuScreen({ state }: { state: AppState }) {
 						</span>
 					</label>
 					{!guest.active ? (
-						<div class="row">
-							<span class="row__main">
-								<span class="row__title" id="guest-hours">
-									Schaltet sich aus nach
-								</span>
-							</span>
-							<select
-								class="input input--inline"
-								aria-labelledby="guest-hours"
+						<div class="row row--detents">
+							<Detents
+								name="guest-hours"
+								legend="Schaltet sich aus nach"
+								options={GUEST_HOURS}
 								value={String(hours)}
-								onChange={(e) => setHours(Number((e.target as HTMLSelectElement).value))}
-							>
-								{[2, 4, 6, 12, 24].map((h) => (
-									<option key={h} value={String(h)}>
-										{h} Stunden
-									</option>
-								))}
-							</select>
+								onChange={(v) => setHours(Number(v))}
+							/>
 						</div>
 					) : (
 						<button type="button" class="row" onClick={() => toggleGuest(true)}>
@@ -249,7 +239,6 @@ export function MenuScreen({ state }: { state: AppState }) {
 								<span class="terminal__legend">Abmelden</span>
 								<span class="terminal__sub">Gedächtnis bleibt</span>
 							</span>
-							<LogOut class="terminal__go" aria-hidden="true" />
 						</button>
 					</li>
 				</ul>
@@ -289,12 +278,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 						</div>
 					</div>
 				) : (
-					<button
-						type="button"
-						class="key btn btn--wide key--danger"
-						onClick={() => setConfirm(true)}
-					>
-						<Trash2 class="icon" aria-hidden="true" />
+					<button type="button" class="act act--danger" onClick={() => setConfirm(true)}>
 						Konto und Daten löschen
 					</button>
 				)}

@@ -4,7 +4,7 @@
  * window; the knobs; and the printed pieces the pages are made of.
  */
 
-import { ChevronLeft, Disc3, Music2, Speaker } from "lucide-preact";
+import { Disc3, Music2, Speaker } from "lucide-preact";
 import type { ComponentChildren } from "preact";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { PRESETS } from "../../core/mix";
@@ -16,6 +16,20 @@ export interface RoundReading {
 	round: number;
 	heard: number | null;
 	total: number | null;
+}
+
+const WIDE = "(min-width: 980px)";
+
+/** True where the radio is laid out as the landscape table radio with a sheet beside it. */
+export function useWide(): boolean {
+	const [wide, setWide] = useState(() => window.matchMedia(WIDE).matches);
+	useEffect(() => {
+		const mq = window.matchMedia(WIDE);
+		const on = () => setWide(mq.matches);
+		mq.addEventListener("change", on);
+		return () => mq.removeEventListener("change", on);
+	}, []);
+	return wide;
 }
 
 // ------------------------------------------------------------ magic eye
@@ -331,18 +345,22 @@ export function ProgramCard(props: {
 				) : props.line ? (
 					<p class="card__line">{props.line}</p>
 				) : null}
-				{r ? (
-					<div class="card__round">
-						<p class="num">
-							Runde {r.round}
-							{r.heard !== null && r.total !== null
-								? `${SEP}${num(r.heard)} von ${num(r.total)} gehört`
-								: `${SEP}zählt ab dem ersten Song`}
-						</p>
-						<span class="card__rule" style={{ "--pos": String(pos) }} aria-hidden="true" />
+				{r || props.foot ? (
+					<div class="card__base">
+						{r ? (
+							<div class="card__round">
+								<p class="num">
+									Runde {r.round}
+									{r.heard !== null && r.total !== null
+										? `${SEP}${num(r.heard)} von ${num(r.total)} gehört`
+										: `${SEP}zählt ab dem ersten Song`}
+								</p>
+								<span class="card__rule" style={{ "--pos": String(pos) }} aria-hidden="true" />
+							</div>
+						) : null}
+						{props.foot ? <div class="card__foot">{props.foot}</div> : null}
 					</div>
 				) : null}
-				{props.foot ? <div class="card__foot">{props.foot}</div> : null}
 			</div>
 		</Window>
 	);
@@ -506,6 +524,39 @@ export function MixKnob(props: {
 	);
 }
 
+/**
+ * A detent selector: printed positions, a lamp lit over the one that is
+ * set. Radio inputs underneath, so arrow keys and screen readers work.
+ */
+export function Detents<T extends string>(props: {
+	name: string;
+	legend: string;
+	options: readonly (readonly [T, string])[];
+	value: T;
+	onChange: (v: T) => void;
+}) {
+	return (
+		<fieldset class="detentsel">
+			<legend class="detentsel__legend">{props.legend}</legend>
+			<div class="detentsel__row">
+				{props.options.map(([v, label]) => (
+					<label key={v} class="detentsel__opt">
+						<input
+							type="radio"
+							name={props.name}
+							value={v}
+							checked={props.value === v}
+							onChange={() => props.onChange(v)}
+						/>
+						<span class="detentsel__lamp" aria-hidden="true" />
+						<span class="detentsel__label">{label}</span>
+					</label>
+				))}
+			</div>
+		</fieldset>
+	);
+}
+
 // ------------------------------------------------------ printed scale
 
 // The graduation, drawn once: minor ticks every 2 %, majors every 10 %.
@@ -611,14 +662,8 @@ export function PageBar(props: {
 	return (
 		<header class="masthead">
 			{props.noBack ? null : (
-				<button
-					type="button"
-					class="key key--back"
-					onClick={() => back(props.backTo ?? "/")}
-					aria-label="Zurück"
-				>
-					<ChevronLeft class="icon" aria-hidden="true" />
-					<span aria-hidden="true">Zurück</span>
+				<button type="button" class="key key--back" onClick={() => back(props.backTo ?? "/")}>
+					Zurück
 				</button>
 			)}
 			<div class="masthead__plate">

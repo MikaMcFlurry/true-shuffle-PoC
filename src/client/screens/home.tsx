@@ -1,4 +1,3 @@
-import { ChevronRight, Pause, Play, SkipForward, ThumbsDown, ThumbsUp } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { sharesForRules } from "../../core/mix";
 import type { AppState, NowPlaying, StationSummary } from "../../shared/api";
@@ -126,7 +125,7 @@ function lastPlayed(state: AppState): StationSummary | null {
 }
 
 /** The station that plays or is held, else the one that played last. */
-function currentStation(state: AppState): StationSummary | null {
+export function currentStation(state: AppState): StationSummary | null {
 	const np = state.nowPlaying;
 	if (np?.stationId != null) {
 		const s = state.stations.find((x) => x.id === np.stationId);
@@ -288,7 +287,6 @@ function SetUp({ s }: { s: StationSummary }) {
 	return (
 		<a class="card__setup" href={`/sender/${s.id}`}>
 			{s.name} einstellen
-			<ChevronRight class="card__go" aria-hidden="true" />
 		</a>
 	);
 }
@@ -345,7 +343,6 @@ function NowCard({ state }: { state: AppState }) {
 							aria-label={`${held ? "Eingestellten Sender weiterspielen" : "Eingestellten Sender spielen"}: ${picked.name}`}
 							onClick={() => (held ? resumePlayback() : playStation(picked))}
 						>
-							<Play class="icon" aria-hidden="true" />
 							{held ? "Weiterspielen" : "Spielen"}
 						</button>
 						<SetUp s={picked} />
@@ -524,10 +521,7 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 					aria-label="Daumen runter: diesen Song nie wieder"
 					onClick={() => thumb(-1)}
 				>
-					<ThumbsDown class="pkey__icon" aria-hidden="true" />
-					<span class="pkey__legend" aria-hidden="true">
-						nie wieder
-					</span>
+					<span class="pkey__legend">nie wieder</span>
 				</button>
 				<button
 					type="button"
@@ -536,26 +530,16 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 					aria-label={np?.isPlaying ? "Pause" : "Weiter abspielen"}
 					onClick={() => act(np?.isPlaying ? "pause" : "resume")}
 				>
-					{np?.isPlaying || !np ? (
-						<Pause class="pkey__icon" aria-hidden="true" />
-					) : (
-						<Play class="pkey__icon" aria-hidden="true" />
-					)}
-					<span class="pkey__legend" aria-hidden="true">
-						{paused ? "Weiter" : "Pause"}
-					</span>
+					<span class="pkey__legend">{paused ? "Spielen" : "Pause"}</span>
 				</button>
 				<button
 					type="button"
 					class="pkey"
 					disabled={disabled}
-					aria-label="Nächster Song"
+					aria-label="Weiter: Nächster Song"
 					onClick={() => act("next")}
 				>
-					<SkipForward class="pkey__icon" aria-hidden="true" />
-					<span class="pkey__legend" aria-hidden="true">
-						Nächster
-					</span>
+					<span class="pkey__legend">Weiter</span>
 				</button>
 				<button
 					type="button"
@@ -565,10 +549,7 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 					aria-label="Daumen hoch: Favorit"
 					onClick={() => thumb(1)}
 				>
-					<ThumbsUp class="pkey__icon" aria-hidden="true" />
-					<span class="pkey__legend" aria-hidden="true">
-						Favorit
-					</span>
+					<span class="pkey__legend">Favorit</span>
 				</button>
 			</fieldset>
 			<a class="pkey pkey--end" href="/verlauf">

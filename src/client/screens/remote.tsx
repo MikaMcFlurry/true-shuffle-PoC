@@ -1,4 +1,3 @@
-import { Copy } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import type { RemoteAction, RemoteKeyView } from "../../shared/api";
 import { api } from "../api";
@@ -37,7 +36,7 @@ function CopyButton(props: { text: string; what: string }) {
 			aria-label={`${props.what} kopieren`}
 			onClick={() => void copy(props.text, props.what)}
 		>
-			<Copy class="icon" aria-hidden="true" />
+			Kopieren
 		</button>
 	);
 }
