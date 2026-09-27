@@ -2848,3 +2848,72 @@ describe("the twenty-fourth review's cases", () => {
 		}
 	});
 });
+
+describe("the twenty-sixth review's cases", () => {
+	const HOUR = 60 * MINUTE_MS;
+	type H = Awaited<ReturnType<typeof onboarded>>;
+	const counted = (h: H, from: number) =>
+		h.sql.first<{ n: number }>(
+			`SELECT COUNT(*) AS n FROM plays WHERE ignored = 0 AND played_at > ?`,
+			from,
+		)!.n;
+
+	it("RT26-01: listings held after a guest time are kept, none falls out of Spotify's last 50", async () => {
+		for (const hours of [4, 6]) {
+			const h = await onboarded({ tracks: 600, playlists: [300, 300] });
+			const u = h.fake.user();
+			u.listReplaced = false;
+			const own = [...h.fake.playlists.values()].find((p) => p.name === "Playlist 2")!;
+			const other = [...h.fake.playlists.values()].find((p) => p.name === "Playlist 1")!;
+			const dev = u.devices[0]!.id;
+			await h.hub.setGuest(true, 1);
+			const g0 = h.clock.t;
+			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, dev, false);
+			await h.listen(40 * MINUTE_MS);
+			h.fake.pause();
+			await h.hub.state({ live: true });
+			u.player.deviceId = null; // out of sight across the end
+			await h.listen(g0 + HOUR - h.clock.t + 30 * MINUTE_MS);
+			const from = h.clock.t;
+			// The owner listens on a player the Web API does not show; Spotify lists it.
+			h.fake.startContext(u.id, `spotify:playlist:${other.id}`, 10, dev, false);
+			u.player.deviceId = null;
+			await h.listen(hours * HOUR);
+			h.fake.pause();
+			u.player.deviceId = dev;
+			await h.listen(3 * HOUR);
+			const truth = u.recent.filter((r) => r.playedAt > from).length;
+			expect(truth).toBeGreaterThan(50);
+			expect(counted(h, from)).toBeGreaterThanOrEqual(truth - 1);
+		}
+	}, 240_000);
+
+	it("RT26-04: the guest's song resumed by the owner and heard to its end counts for the owner", async () => {
+		const memPlays = (h: H, id: string) =>
+			h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, id)?.plays ?? 0;
+		const h = await onboarded({ tracks: 300, playlists: [150, 150] });
+		const u = h.fake.user();
+		u.listReplaced = false;
+		const dev = u.devices[0]!.id;
+		const own = [...h.fake.playlists.values()].find((p) => p.name === "Playlist 2")!;
+		await h.hub.setGuest(true, 1);
+		const g0 = h.clock.t;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, dev, false);
+		await h.listen(45 * MINUTE_MS);
+		await h.hub.state({ live: true });
+		h.fake.skip();
+		const y = h.fake.current()!;
+		await h.listen(Math.max(0, h.fake.tracks.get(y)!.durationMs - 150_000));
+		h.fake.pause(); // 150 s left
+		u.player.deviceId = null;
+		await h.listen(g0 + HOUR - h.clock.t + 5 * HOUR);
+		u.player.deviceId = dev;
+		u.player.isPlaying = true;
+		await h.listen(3_000);
+		await h.hub.state({ live: true }); // a look sees Y
+		await h.listen(40 * MINUTE_MS); // the owner hears its last 150 s and more
+		h.fake.pause();
+		await h.listen(90 * MINUTE_MS);
+		expect(memPlays(h, y)).toBe(1);
+	});
+});

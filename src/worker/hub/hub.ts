@@ -2631,6 +2631,15 @@ export class HubCore {
 		return { id: p.last.id, to: p.to };
 	}
 
+	/** The first play seen after the end, which may be the guest's, while looks still follow it. */
+	private guestNextOpen(): { id: TrackId; to: number } | null {
+		const p = this.guestPeriods().at(-1);
+		const g = p?.last;
+		const now = this.now();
+		if (!p || !g?.next || g.nextOver !== null || now - p.to > GUEST_FOLLOW_MS) return null;
+		return { id: g.next, to: p.to };
+	}
+
 	/** Until when a listing can be the guest's last play: over, or followed for two days. */
 	private guestLastEnd(p: GuestPeriod, g: GuestLast): number {
 		return g.over ?? p.to + GUEST_FOLLOW_MS;
@@ -3142,13 +3151,84 @@ export class HubCore {
 		return { trackId: e.id, playedAt: e.at, contextUri: e.contextUri };
 	}
 
+	/**
+	 * Listings made after a guest time wait until a look shows which play was
+	 * on the player across its end (at most GUEST_DECIDE_MS). They are kept
+	 * here meanwhile — Spotify's list holds only the last 50 — and join the
+	 * read that no longer has to wait. A station they played in counts as in
+	 * use, so its deck is not rewritten under the listener meanwhile.
+	 */
+	private holdGuestListings(
+		read: { track: SpTrack; played_at: string; context: { uri: string } | null }[],
+		key: (at: number, id: string) => string,
+	): { track: SpTrack; played_at: string; context: { uri: string } | null }[] {
+		type Held = { p: PackedTrack; at: string; ctx: string | null };
+		const held = this.kvGet<Held[]>("guest_waiting") ?? [];
+		const waits = (at: string) => this.guestUndecided(Date.parse(at));
+		const seen = new Set(held.map((h) => key(Date.parse(h.at), h.p[0])));
+		const add: Held[] = [];
+		const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
+		let active = false;
+		for (const i of read) {
+			const id = i.track?.id;
+			const at = Date.parse(i.played_at);
+			if (!id || !Number.isFinite(at) || !waits(i.played_at) || seen.has(key(at, id))) continue;
+			seen.add(key(at, id));
+			const p: PackedTrack = packTrack(i.track) ?? [
+				id,
+				i.track.name ?? "",
+				(i.track.artists ?? []).map((a) => [a.id ?? `name:${a.name}`, a.name] as [string, string]),
+				i.track.album?.name ?? "",
+				null,
+				i.track.duration_ms ?? 0,
+			];
+			add.push({ p, at: i.played_at, ctx: i.context?.uri ?? null });
+			const st = i.context?.uri
+				? this.stations().find((x) => this.deckUri(x) === i.context!.uri)
+				: undefined;
+			if (st && at > (activity[String(st.id)] ?? 0)) {
+				activity[String(st.id)] = at;
+				active = true;
+			}
+		}
+		if (active) this.kvSet("deck_activity", activity);
+		const release = held.filter((h) => !waits(h.at));
+		const stay = [...held.filter((h) => waits(h.at)), ...add];
+		if (add.length > 0 || release.length > 0) {
+			if (stay.length > 0) this.kvSet("guest_waiting", stay.slice(-500));
+			else this.kvDel("guest_waiting");
+		}
+		if (release.length === 0) return read;
+		const inRead = new Set(
+			read.filter((i) => i.track?.id).map((i) => key(Date.parse(i.played_at), i.track.id!)),
+		);
+		return [
+			...read,
+			...release
+				.filter((h) => !inRead.has(key(Date.parse(h.at), h.p[0])))
+				.map((h) => ({
+					track: {
+						id: h.p[0],
+						name: h.p[1],
+						type: "track",
+						duration_ms: h.p[5],
+						artists: h.p[2].map(([aid, name]) => ({ id: aid, name })),
+						album: { name: h.p[3], images: h.p[4] ? [{ url: h.p[4] }] : [] },
+					} as SpTrack,
+					played_at: h.at,
+					context: h.ctx ? { uri: h.ctx } : null,
+				})),
+		];
+	}
+
 	/** Book new entries of the recently-played list into memory. */
 	private recordPlays(
-		items: { track: SpTrack; played_at: string; context: { uri: string } | null }[],
+		read: { track: SpTrack; played_at: string; context: { uri: string } | null }[],
 		s: SyncState,
 	): RecentPlay[] {
 		const out: RecentPlay[] = [];
 		const key = (at: number, id: string) => `${at}|${id}`;
+		const items = this.holdGuestListings(read, key);
 		// What the previous read already returned. A play older than the cursor
 		// that was not in it arrived late (offline listening synced afterwards):
 		// it still counts, once — the plays table has the final say.
@@ -3161,7 +3241,7 @@ export class HubCore {
 			this.kvGet<number>("live_since") ?? Number.NEGATIVE_INFINITY,
 		);
 		// Listed after a guest time, before any look showed which play was on the
-		// player across its end: left for a later read (Spotify keeps the last 50).
+		// player across its end: held (holdGuestListings), judged once it is known.
 		const waits = (at: number) => this.guestUndecided(at);
 		const fresh = items
 			.map((i) => ({ i, at: Date.parse(i.played_at) }))
@@ -4556,7 +4636,9 @@ export class HubCore {
 		// The guest's last play, still on the player: seen right after its end
 		// (a run to its end is the owner's), and paused, within 2 minutes of a
 		// resume — up to 6 hours.
-		const last = this.guestLastOpen();
+		// The same for the first play seen after the end when it may be the guest's:
+		// what the owner hears of it to its end is seen, and counts for the owner.
+		const last = this.guestLastOpen() ?? this.guestNextOpen();
 		if (last && snap?.obs?.trackId === last.id) {
 			const left = snap.obs.durationMs - snap.obs.progressMs;
 			if (snap.obs.isPlaying && left > 0)

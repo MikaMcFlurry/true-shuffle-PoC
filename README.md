@@ -57,7 +57,7 @@ Lokal gegen das echte Spotify: `.dev.vars` mit `SPOTIFY_CLIENT_ID` und `APP_SECR
 | `src/worker/spotify/` | Spotify-Web-API-Client (PKCE, Budget, Fehlerarten) |
 | `src/worker/index.ts` | Hono-Worker: Anmeldung, API, Cron |
 | `src/worker/userhub.ts`, `registry.ts` | Durable Objects |
-| `src/client/` | Oberfläche (Preact): „Autoradio-Senderspeicher" |
+| `src/client/` | Oberfläche (Preact): ein Röhrenradio der 50er (Glasskala, Klaviertasten, Programmheft), siehe `DESIGN.md` |
 | `test/` | Unit-Tests, Hub-Szenarien gegen die Spotify-Attrappe (`test/fakes/`) |
 | `e2e/` | Playwright-Suite und Attrappen-Server |
 | `DESIGN.md`, `PRODUCT.md` | Gestaltungssystem und Produktbild |
