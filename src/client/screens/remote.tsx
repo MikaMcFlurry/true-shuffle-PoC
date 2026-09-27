@@ -15,6 +15,25 @@ const COMMANDS: { action: RemoteAction; name: string; what: string }[] = [
 	},
 ];
 
+/** An address breaks only after a slash, never inside a word. */
+function Url({ text }: { text: string }) {
+	const parts = text.split("/");
+	return (
+		<>
+			{parts.map((p, i) => (
+				<span key={i}>
+					{p}
+					{i < parts.length - 1 ? (
+						<>
+							/<wbr />
+						</>
+					) : null}
+				</span>
+			))}
+		</>
+	);
+}
+
 function stamp(at: number): string {
 	return `${day(at)}, ${clock(at)}`;
 }
@@ -167,13 +186,15 @@ export function RemoteScreen() {
 			<Section title="Die Befehle" id="remote-commands">
 				<ul class="list">
 					{COMMANDS.map((c) => (
-						<li key={c.action} class="row">
+						<li key={c.action} class="row row--cmd">
 							<span class="row__main">
 								<span class="row__title">{c.name}</span>
 								<span class="row__sub row__sub--wrap">{c.what}</span>
-								<span class="row__sub row__sub--wrap code">POST {base + c.action}</span>
 							</span>
 							<CopyButton text={base + c.action} what={`Adresse für „${c.name}“`} />
+							<span class="cmd__url code">
+								POST <Url text={base + c.action} />
+							</span>
 						</li>
 					))}
 				</ul>

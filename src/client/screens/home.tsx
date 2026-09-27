@@ -530,7 +530,8 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 					aria-label={np?.isPlaying ? "Pause" : "Weiter abspielen"}
 					onClick={() => act(np?.isPlaying ? "pause" : "resume")}
 				>
-					<span class="pkey__legend">{paused ? "Spielen" : "Pause"}</span>
+					{/* Engraved once: the key sinks and its legend reddens while paused. */}
+					<span class="pkey__legend">Pause</span>
 				</button>
 				<button
 					type="button"
