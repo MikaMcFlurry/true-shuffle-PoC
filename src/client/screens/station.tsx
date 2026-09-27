@@ -334,7 +334,8 @@ export function Station({
 				)}
 			</Section>
 
-			{np && np.stationId === id ? (
+			{/* On a desktop the program card heads this sheet and names the song; it is said once. */}
+			{np && np.stationId === id && !wide ? (
 				<Section title={np.isPlaying ? "Läuft gerade" : "Pausiert"} id="now">
 					<ul class="order order--now">
 						<li class="order__row track--rate">

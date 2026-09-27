@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { Cabinet, Dial, DialText } from "./components/radio";
 import { RateSheet } from "./components/rate";
 import { useRoute } from "./router";
-import { Home } from "./screens/home";
+import { Home, NowCard } from "./screens/home";
 import {
 	AboutScreen,
 	DevicesScreen,
@@ -16,7 +16,7 @@ import { SignIn } from "./screens/signin";
 import { NewStation, Station } from "./screens/station";
 import { store, useStore } from "./store";
 
-const DESK = "(min-width: 980px)";
+const DESK = "(min-width: 1200px)";
 
 function useDesk(): boolean {
 	const [desk, setDesk] = useState(() => window.matchMedia(DESK).matches);
@@ -60,6 +60,7 @@ export function App() {
 		return (
 			<div class="shell" aria-busy="true">
 				<Cabinet
+					fill
 					eye="off"
 					dial={
 						<Dial label="Senderskala" at={null} sweep>
@@ -82,6 +83,7 @@ export function App() {
 		return (
 			<div class="shell">
 				<Cabinet
+					fill
 					eye="open"
 					dial={
 						<Dial label="Senderskala" at={null}>
@@ -144,16 +146,33 @@ export function App() {
 		}
 	})();
 
-	// Phone: one screen at a time. Desktop: the radio stays, pages open beside it.
+	// Phone: one screen at a time. Desktop: the radio stays, pages open beside it,
+	// headed by the program card that has left the cabinet.
+	if (desk) {
+		return (
+			<div class="shell shell--split" data-route={route.name}>
+				<div class="main main--home">
+					<Home state={state} />
+				</div>
+				<aside class="side">
+					<div class="side__card">
+						<NowCard state={state} />
+					</div>
+					{side}
+				</aside>
+				<RateSheet />
+			</div>
+		);
+	}
 	return (
-		<div class={`shell${side ? " shell--split" : ""}`} data-route={route.name}>
-			{side && !desk ? null : (
-				<div class={side ? "main main--home" : "main"}>
+		<div class="shell" data-route={route.name}>
+			{side ? null : (
+				<div class="main">
 					<Home state={state} />
 				</div>
 			)}
 			{side ? <aside class="side">{side}</aside> : null}
-			{side && !desk ? <FlashStrip /> : null}
+			{side ? <FlashStrip /> : null}
 			<RateSheet />
 		</div>
 	);

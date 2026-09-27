@@ -22,6 +22,7 @@ export function SignIn() {
 	return (
 		<div class="power">
 			<Cabinet
+				fill
 				eye="off"
 				dial={
 					<Dial label="Senderskala" at={null}>
@@ -38,6 +39,10 @@ export function SignIn() {
 							true-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken —
 							auch über Tage, Geräte und alles, was du nebenbei hörst.
 						</p>
+						<p class="power__fine">
+							Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „
+							{DECK_PREFIX}…“ in deinem Konto an.
+						</p>
 					</Window>
 				}
 				keys={
@@ -49,10 +54,6 @@ export function SignIn() {
 					</div>
 				}
 			/>
-			<p class="power__fine">
-				Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
-				…“ in deinem Konto an.
-			</p>
 		</div>
 	);
 }

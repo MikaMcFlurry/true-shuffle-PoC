@@ -12,6 +12,7 @@ import {
 	MixKnob,
 	ProgramCard,
 	type RoundReading,
+	useWide,
 } from "../components/radio";
 import { duration, num, pct, SEP } from "../format";
 import { navigate } from "../router";
@@ -236,23 +237,60 @@ function DialStation({
 	);
 }
 
-/** Stations in wave-band rows of three, each row with its printed legend. */
-const BAND = 3;
+/** The narrowest column a station name is printed in on the wide dial, and its band legend. */
+const COLUMN_PX = 104;
+const LEGEND_PX = 44;
+/** More bands than this, and the dial sets its lettering closer, so the radio stays wider than tall. */
+const DENSE_FROM = 4;
+
+/** How wide a column must be to print the longest word of any name whole (roughly, per letter). */
+function columnFor(stations: StationSummary[], dense: boolean): number {
+	let longest = 0;
+	for (const x of stations)
+		for (const w of x.name.split(/[\s/-]+/)) longest = Math.max(longest, w.length);
+	return Math.min(150, Math.max(COLUMN_PX, Math.round(longest * (dense ? 7.8 : 8.8) + 12)));
+}
+
+/**
+ * How many stations share a wave band: as many as the glass has room for
+ * (three to eight), and the bands evened out, so twelve read as two of six.
+ */
+function bandSize(n: number, fieldPx: number | null, columnPx: number): number {
+	const fits = fieldPx === null ? 3 : Math.floor((fieldPx - LEGEND_PX) / columnPx);
+	const room = Math.max(3, Math.min(8, fits));
+	const bands = Math.max(1, Math.ceil(n / room));
+	return Math.max(1, Math.ceil(n / bands));
+}
 
 function StationDial({ state }: { state: AppState }) {
 	const s = useStore();
+	const wide = useWide();
+	const [fieldPx, setFieldPx] = useState<number | null>(null);
 	const at = pointedStation(state, s.tuning?.stationId ?? null, s.selected);
+	// A phone prints one station per line; the wide dial prints bands across.
+	const n = state.stations.length;
+	let per = wide ? bandSize(n, fieldPx, columnFor(state.stations, false)) : 3;
+	const dense = wide && Math.ceil(n / per) >= DENSE_FROM;
+	if (dense) per = bandSize(n, fieldPx, columnFor(state.stations, true));
 	const bands: StationSummary[][] = [];
 	state.stations.forEach((x, i) => {
-		if (i % BAND === 0) bands.push([]);
+		if (i % per === 0) bands.push([]);
 		bands[bands.length - 1]!.push(x);
 	});
 	return (
-		<Dial label="Senderskala" at={at ? String(at.id) : null} lamps={lampsFor(state)}>
+		<Dial
+			label="Senderskala"
+			at={at ? String(at.id) : null}
+			lamps={lampsFor(state)}
+			onFieldWidth={(px) => setFieldPx(Math.round(px))}
+		>
 			{bands.length > 0 ? (
-				<ol class="dial__bands">
+				<ol
+					class={`dial__bands${dense ? " dial__bands--dense" : ""}`}
+					style={{ "--per": String(per) }}
+				>
 					{bands.map((band, b) => {
-						const first = b * BAND + 1;
+						const first = b * per + 1;
 						const last = first + band.length - 1;
 						return (
 							<li key={band[0]!.id} class="band">
@@ -291,7 +329,8 @@ function SetUp({ s }: { s: StationSummary }) {
 	);
 }
 
-function NowCard({ state }: { state: AppState }) {
+/** The program card: what plays, why, how far the round is. On a desktop it heads the sheet beside the radio. */
+export function NowCard({ state }: { state: AppState }) {
 	const s = useStore();
 	const np = state.nowPlaying;
 	const now = useTick(!!np?.isPlaying);
@@ -629,12 +668,15 @@ function Keyboard({ np }: { np: NowPlaying | null }) {
 
 export function Home({ state }: { state: AppState }) {
 	const s = useStore();
+	// On a desktop the card leaves the cabinet and heads the program sheet beside it.
+	const wide = useWide();
 	return (
 		<Cabinet
+			fill
 			eye={eyeFor(state, !!s.tuning)}
 			eyeKey={s.tuning?.since ?? "steady"}
 			dial={<StationDial state={state} />}
-			window={<NowCard state={state} />}
+			window={wide ? undefined : <NowCard state={state} />}
 			extra={
 				state.warnings.length > 1
 					? state.warnings.slice(1).map((w) => (

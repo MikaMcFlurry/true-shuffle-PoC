@@ -1,7 +1,8 @@
 /**
- * The radio's parts: one walnut cabinet with its speaker cloth, brass badge
- * plate and magic eye; the backlit glass dial and its pointer; the program
- * window; the knobs; and the printed pieces the pages are made of.
+ * The radio's parts: one walnut cabinet with its speaker cloth and cast
+ * brass emblem; the backlit glass dial with the magic eye in its bezel and
+ * the pointer on its string; the program window; the knobs; and the printed
+ * pieces the pages are made of.
  */
 
 import { Disc3, Music2, Speaker } from "lucide-preact";
@@ -18,7 +19,7 @@ export interface RoundReading {
 	total: number | null;
 }
 
-const WIDE = "(min-width: 980px)";
+const WIDE = "(min-width: 1200px)";
 
 /** True where the radio is laid out as the landscape table radio with a sheet beside it. */
 export function useWide(): boolean {
@@ -57,10 +58,12 @@ export function MagicEye({ state }: { state: Eye }) {
 // -------------------------------------------------------------- cabinet
 
 /**
- * The cabinet, one object: walnut under lacquer, the cloth with the badge
- * plate and the magic eye, the dial, the program window, the knobs at the
- * lower corners and one keyboard. Phones stand it upright; a desktop lays
- * it out as the landscape table radio it is.
+ * The cabinet, one object: walnut under lacquer; the speaker cloth with the
+ * maker's emblem in cast brass letters and the trim bars level with its
+ * hyphen; the dial with the magic eye seated in its bezel; the program
+ * window; one keyboard and the knobs; the plinth it stands on. On a phone
+ * the screen is its face in close-up, edge to edge; a desktop shows the
+ * whole landscape table radio standing on its feet.
  */
 export function Cabinet(props: {
 	eye: Eye;
@@ -72,28 +75,35 @@ export function Cabinet(props: {
 	left?: ComponentChildren;
 	right?: ComponentChildren;
 	keys?: ComponentChildren;
+	/** The face fills a phone's screen; spare height goes to the speaker cloth. */
+	fill?: boolean;
 }) {
 	return (
-		<div class="cabinet">
-			<div class="cabinet__cloth">
-				<div class="plate">
-					<h1 class="plate__script">true-shuffle</h1>
-					<span class="plate__screw plate__screw--l" aria-hidden="true" />
-					<span class="plate__screw plate__screw--r" aria-hidden="true" />
+		<div class={`cabinet${props.fill ? " cabinet--fill" : ""}`}>
+			<div class="cabinet__body">
+				<div class="cabinet__cloth">
+					{/* Cast brass letters on the cloth; the trim bars run level with the hyphen. */}
+					<h1 class="emblem">true-shuffle</h1>
 				</div>
-				<MagicEye key={props.eyeKey} state={props.eye} />
+				<div class="cabinet__dial">
+					{props.dial}
+					<MagicEye key={props.eyeKey} state={props.eye} />
+				</div>
+				{props.window ? <div class="cabinet__window">{props.window}</div> : null}
+				{props.extra ? <div class="cabinet__extra">{props.extra}</div> : null}
+				{props.left || props.right || props.keys ? (
+					// Keys first: on a phone they sit above the knobs, and focus follows what the eye sees.
+					<div class="cabinet__base">
+						{props.keys ? <div class="cabinet__keys">{props.keys}</div> : null}
+						{props.left ? <div class="cabinet__knob cabinet__knob--l">{props.left}</div> : null}
+						{props.right ? <div class="cabinet__knob cabinet__knob--r">{props.right}</div> : null}
+					</div>
+				) : null}
 			</div>
-			<div class="cabinet__dial">{props.dial}</div>
-			{props.window ? <div class="cabinet__window">{props.window}</div> : null}
-			{props.extra ? <div class="cabinet__extra">{props.extra}</div> : null}
-			{props.left || props.right || props.keys ? (
-				// Keys first: on a phone they sit above the knobs, and focus follows what the eye sees.
-				<div class="cabinet__base">
-					{props.keys ? <div class="cabinet__keys">{props.keys}</div> : null}
-					{props.left ? <div class="cabinet__knob cabinet__knob--l">{props.left}</div> : null}
-					{props.right ? <div class="cabinet__knob cabinet__knob--r">{props.right}</div> : null}
-				</div>
-			) : null}
+			<div class="cabinet__plinth" aria-hidden="true">
+				<span class="cabinet__foot cabinet__foot--l" />
+				<span class="cabinet__foot cabinet__foot--r" />
+			</div>
 		</div>
 	);
 }
@@ -117,6 +127,8 @@ export function Dial(props: {
 	/** Sweep across the whole dial (Suchlauf, switching on). */
 	sweep?: boolean;
 	lamps?: Indicator[] | null;
+	/** Told the glass's printable width, so the stations can be set in bands that fit. */
+	onFieldWidth?: (px: number) => void;
 	children: ComponentChildren;
 }) {
 	const field = useRef<HTMLDivElement>(null);
@@ -124,6 +136,8 @@ export function Dial(props: {
 	at.current = props.at;
 	const [ready, setReady] = useState(false);
 
+	const width = useRef(props.onFieldWidth);
+	width.current = props.onFieldWidth;
 	const place = useRef(() => {});
 	place.current = () => {
 		const f = field.current;
@@ -164,7 +178,13 @@ export function Dial(props: {
 		if (!f) return;
 		const again = () => place.current();
 		// Anything that can move a name: a resize, a font arriving, a station lit or dimmed.
-		const ro = new ResizeObserver(again);
+		const ro = new ResizeObserver(() => {
+			const cs = getComputedStyle(f);
+			width.current?.(
+				f.clientWidth - Number.parseFloat(cs.paddingLeft) - Number.parseFloat(cs.paddingRight),
+			);
+			again();
+		});
 		ro.observe(f);
 		const mo = new MutationObserver(again);
 		mo.observe(f, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
