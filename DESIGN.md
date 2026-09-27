@@ -156,6 +156,11 @@ typography:
     fontSize: "15px"
     fontWeight: 600
     lineHeight: 1.3
+  machine-string:
+    fontFamily: "ui-monospace, monospace"
+    fontSize: "12px"
+    fontWeight: 400
+    lineHeight: 1.4
   key-text:
     fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
     fontSize: "15px"
@@ -403,6 +408,7 @@ A cool neutral ramp per illumination, one amber accent, and a small shared palet
 - **Preset name** (Overpass 600, 16px/1.2, max two lines; playing 700, 18px/1.15).
 - **Row title** (600, 15px/1.3) over a **sub** (500, 13px/1.4, `ink-2`). **Body** 400 at 16px/1.45; **ledes** 15px/1.55 capped at 62ch (17px on the sign-in page).
 - **Count** (600, 22px, tabular) and **scale** readings (majors 10px, readout 12px, tabular).
+- **Machine string** (system `ui-monospace`, 12px; 13px in the key field, `ink`, wraps anywhere): only strings a listener copies into another app, the remote key and command addresses on the Fernbedienung page. Everything a listener reads stays Overpass.
 - Weights stop at 700; there is no 750–850 any more.
 
 ### Named Rules
