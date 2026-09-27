@@ -3195,8 +3195,18 @@ export class HubCore {
 			}
 		}
 		if (active) this.kvSet("deck_activity", activity);
+		// A read that is all new held listings may have missed older ones: say so,
+		// as for any read (released listings are left out of that check later).
+		if (read.length >= 50 && add.length >= 50)
+			this.log(
+				"warn",
+				"gap",
+				"Mehr als 50 Songs seit dem letzten Abgleich — ältere konnten nicht gelesen werden",
+			);
 		const release = held.filter((h) => !waits(h.at));
-		const stay = [...held.filter((h) => waits(h.at)), ...add];
+		const stay = [...held.filter((h) => waits(h.at)), ...add].sort(
+			(a, b) => Date.parse(a.at) - Date.parse(b.at),
+		);
 		if (add.length > 0 || release.length > 0) {
 			// Twelve hours of one-minute songs fit; beyond that the oldest go, said so.
 			if (stay.length > GUEST_HELD_MAX)

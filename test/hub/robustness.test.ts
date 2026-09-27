@@ -2890,6 +2890,38 @@ describe("the twenty-sixth review's cases", () => {
 		}
 	}, 240_000);
 
+	it("RT28-02: plays lost during a guest hold (more than 50 between two reads) are logged", async () => {
+		const h = await onboarded({ tracks: 900, playlists: [450, 450], durationMs: 60_000 });
+		const u = h.fake.user();
+		u.listReplaced = false;
+		const own = [...h.fake.playlists.values()].find((p) => p.name === "Playlist 2")!;
+		const other = [...h.fake.playlists.values()].find((p) => p.name === "Playlist 1")!;
+		const dev = u.devices[0]!.id;
+		await h.hub.setGuest(true, 1);
+		const g0 = h.clock.t;
+		h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, dev, false);
+		await h.listen(40 * MINUTE_MS);
+		h.fake.pause();
+		await h.hub.state({ live: true });
+		u.player.deviceId = null;
+		await h.listen(g0 + HOUR - h.clock.t + 30 * MINUTE_MS);
+		const from = h.clock.t;
+		h.fake.startContext(u.id, `spotify:playlist:${other.id}`, 10, dev, false);
+		u.player.deviceId = null;
+		await h.listen(11 * HOUR);
+		h.fake.pause();
+		u.player.deviceId = dev;
+		await h.listen(3 * HOUR);
+		// One-minute songs back to back for 11 hours (the fake keeps only its last
+		// 200 listings, so the truth is the clock's).
+		const truth = 11 * 60;
+		const got = counted(h, from);
+		const gaps = h.sql.all(`SELECT 1 FROM events WHERE kind = 'gap'`).length;
+		// Whatever was lost, the log says so; nothing is counted twice.
+		expect(got).toBeLessThanOrEqual(truth + 1);
+		if (got < truth - 2) expect(gaps).toBeGreaterThan(0);
+	}, 240_000);
+
 	it("RT26-04: the guest's song resumed by the owner and heard to its end counts for the owner", async () => {
 		const memPlays = (h: H, id: string) =>
 			h.sql.first<{ plays: number }>(`SELECT plays FROM memory WHERE id = ?`, id)?.plays ?? 0;
