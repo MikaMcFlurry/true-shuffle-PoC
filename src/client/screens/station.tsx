@@ -405,22 +405,29 @@ export function Station({
 				<ul class="inlay tracks">
 					<li class="track">
 						<span class="track__main">
-							<span class="track__title">Warten auf dich</span>
-							<span class="track__sub">Geprüfte Vorschläge für diesen Sender</span>
+							<span class="track__title">Kommen noch</span>
+							<span class="track__sub track__sub--wrap">
+								Geprüfte Vorschläge, die dieser Sender noch spielt
+							</span>
 						</span>
 						<span class="track__count num">{num(d.discoveries.pending)}</span>
 					</li>
 					<li class="track">
 						<span class="track__main">
-							<span class="track__title">Behalten</span>
-							<span class="track__sub">Stehen in „{DECK_PREFIX}Entdeckungen“</span>
+							<span class="track__title">Gefallen dir</span>
+							<span class="track__sub track__sub--wrap">
+								Zweimal gehört oder Daumen hoch. Sie bleiben im Sender und stehen in deiner
+								Spotify-Playlist „{DECK_PREFIX}Entdeckungen“.
+							</span>
 						</span>
 						<span class="track__count num">{num(d.discoveries.kept)}</span>
 					</li>
 					<li class="track">
 						<span class="track__main">
 							<span class="track__title">Aussortiert</span>
-							<span class="track__sub">Früh übersprungen oder Daumen runter</span>
+							<span class="track__sub track__sub--wrap">
+								Früh übersprungen oder Daumen runter. Sie kommen nicht wieder.
+							</span>
 						</span>
 						<span class="track__count num">{num(d.discoveries.rejected)}</span>
 					</li>

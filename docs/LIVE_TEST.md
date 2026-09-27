@@ -54,7 +54,7 @@ Automatisch getestet ist alles gegen eine Spotify-Attrappe. Diese Liste prüft, 
 
 ## F. Entdeckungen
 
-- [ ] Nach einigen Stunden: Sender-Seite → Neuentdeckungen → „Warten auf dich" ist größer als 0.
+- [ ] Nach einigen Stunden: Sender-Seite → Neuentdeckungen → „Kommen noch" ist größer als 0.
 - [ ] Beim Hören leuchtet ENTDECKUNG bei neuen Songs.
 - [ ] Daumen hoch auf eine Entdeckung: Sie steht in der Playlist „True Shuffle · Entdeckungen".
 - [ ] Mischung auf „Vertraut" stellen: Es kommen kaum noch Entdeckungen, dafür mehr Favoriten.

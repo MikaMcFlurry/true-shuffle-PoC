@@ -11,7 +11,7 @@ import {
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, NowPlaying, StationSummary } from "../../shared/api";
 import { api } from "../api";
-import { Display, type Indicator, type RoundReading, Scale } from "../components/radio";
+import { Display, type Indicator, type RoundReading } from "../components/radio";
 import { duration, num, rds, SEP } from "../format";
 import { navigate } from "../router";
 import { store, useStore } from "../store";
@@ -43,21 +43,49 @@ function stationScale(s: StationSummary) {
 	return { pos: s.progress ?? 0, label: roundLabel(s), reading: reading(s) };
 }
 
-/** "Runde 2" left, "340 / 1.200" right — one line, never broken inside a number. */
-function RoundLine({ s }: { s: StationSummary }) {
+/**
+ * A preset's round as a groove with a needle, the count under it. The round
+ * number shows from the second round on; in the first, the count says it all.
+ */
+function PresetMeter({ s }: { s: StationSummary }) {
 	const heard =
 		s.poolSize !== null && s.freshRemaining !== null
 			? Math.max(0, s.poolSize - s.freshRemaining)
 			: null;
+	const pos = Math.min(1, Math.max(0, s.progress ?? 0));
 	return (
-		<span class="preset__round" aria-hidden="true">
-			<span>Runde {s.roundNo}</span>
-			{heard !== null && s.poolSize !== null ? (
-				<span class="num">
-					{num(heard)} / {num(s.poolSize)}
-				</span>
-			) : null}
+		<span class="preset__meter" role="img" aria-label={roundLabel(s)}>
+			<span class="groove" style={{ "--pos": String(pos) }} aria-hidden="true">
+				<span class="groove__fill" />
+			</span>
+			<span class="preset__count" aria-hidden="true">
+				{heard !== null && s.poolSize !== null ? (
+					<span class="num">
+						{num(heard)} / {num(s.poolSize)}
+					</span>
+				) : null}
+				{s.roundNo > 1 ? <span>Runde {s.roundNo}</span> : null}
+			</span>
 		</span>
+	);
+}
+
+/** A station name may break after a slash ("Rock/Metall"), never inside a word. */
+function Breakable({ text }: { text: string }) {
+	const parts = text.split("/");
+	return (
+		<>
+			{parts.map((p, i) => (
+				<span key={i}>
+					{p}
+					{i < parts.length - 1 ? (
+						<>
+							/<wbr />
+						</>
+					) : null}
+				</span>
+			))}
+		</>
 	);
 }
 
@@ -298,17 +326,10 @@ function Preset({ s, n, state }: { s: StationSummary; n: number; state: AppState
 					<span class="num">{n}</span>
 					<span class={`led${s.playing || tuning ? " on" : ""}`} aria-hidden="true" />
 				</span>
-				<span class="preset__name">{s.name}</span>
-				<span class="preset__meta">
-					{status ? (
-						<span>{status}</span>
-					) : (
-						<>
-							<Scale pos={s.progress ?? 0} label={roundLabel(s)} />
-							<RoundLine s={s} />
-						</>
-					)}
+				<span class="preset__name">
+					<Breakable text={s.name} />
 				</span>
+				{status ? <span class="preset__status">{status}</span> : <PresetMeter s={s} />}
 			</button>
 			<a class="preset__tune" href={`/sender/${s.id}`} aria-label={`${s.name} einstellen`}>
 				<SlidersHorizontal class="icon" aria-hidden="true" />

@@ -201,7 +201,8 @@ rounded:
   glass: "16px"
   switch: "15px"
   panel: "14px"
-  key: "12px"
+  bed: "12px"
+  key: "8px"
   field: "10px"
   cover-display: "8px"
   check: "7px"
@@ -214,6 +215,7 @@ rounded:
 spacing:
   unit: "4px"
   key-gap: "10px"
+  bed-gap: "6px"
   gap: "12px"
   home-gap: "14px"
   pad: "16px"
@@ -265,7 +267,7 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.key-text-small}"
     rounded: "{rounded.key}"
-    height: "46px"
+    height: "52px"
   faceplate-bar-key:
     backgroundColor: "{colors.key-top}"
     textColor: "{colors.ink}"
@@ -277,16 +279,19 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.preset-name}"
     rounded: "{rounded.key}"
-    padding: "12px 6px 12px 14px"
-    height: "100px"
+    padding: "12px 12px 12px 14px"
+    height: "104px"
   preset-key-playing:
     backgroundColor: "{colors.key-press}"
     typography: "{typography.preset-name-playing}"
-  preset-slot:
+  preset-bank:
     backgroundColor: "{colors.well}"
+    rounded: "{rounded.bed}"
+    padding: "6px"
+  preset-slot:
     textColor: "{colors.ink-2}"
     rounded: "{rounded.key}"
-    height: "100px"
+    height: "104px"
   menu-key:
     backgroundColor: "{colors.key-top}"
     textColor: "{colors.ink}"
@@ -418,7 +423,7 @@ A cool neutral ramp per illumination, one amber accent, and a small shared palet
 
 ## Layout
 
-Phone first: one column, max 560px, 16px side padding (safe-area aware). On home the blocks are 14px apart, with 20px before the preset bank and before the faceplate bar: brand row, display, transport bar, presets (2 columns, 10px gaps; 3 from 700px), MENÜ / VERLAUF. Pages stack their sections 20px apart; a section head sits 10px above its content.
+Phone first: one column, max 560px, 16px side padding (safe-area aware). On home the blocks are 14px apart, with 20px before the preset bank and before the faceplate bar: brand row, display, transport bar, the preset bank (2 columns, 6px gaps inside a 6px bed; 3 from 700px), MENÜ / VERLAUF. Pages stack their sections 20px apart; a section head sits 10px above its content.
 
 - **The display arranges itself by its plate** (`container: plate` on `.main`): below 560px the cover (84px) sits under the station name beside the song; from 560px the cover (136px) spans the name and song rows and the name moves beside it.
 - **Desktop faceplate (≥980px):** two columns, max 1320px, `minmax(0,1fr)` radio and a 380–460px side panel, 32px gutter, on `plate-deep`. The faceplate is one plate (24px radius, 22px 28px 28px padding) sticky at top 28px that hugs its content. Pages open in the side panel (the playing or last-played station by default); the panel scrolls on its own with its page head sticky. The phone message strip is hidden there.
@@ -429,7 +434,7 @@ Phone first: one column, max 560px, 16px side padding (safe-area aware). On home
 Depth is physical: raised keys, a flush plate, inlaid panels and sunk wells, and one sheet of recessed glass. No card floats.
 
 ### Shadow Vocabulary
-- **Key** (`--sh-key`): `inset 0 1px 0 key-hi, inset 0 -1px 0 key-lo, 0 0 0 1px key-edge, 0 1px 1px key-cast, 0 8px 14px -10px key-cast`. A top highlight, a hairline edge and a short contact shadow; the face is a top-lit gradient.
+- **Key** (`--sh-key`): `inset 0 1px 0 key-hi, inset 0 -1px 0 key-lo, 0 0 0 1px key-edge, 0 1px 0 key-cast, 0 3px 4px -2px key-cast`. A chamfer highlight on top, a hairline edge and a tight contact shadow; the face is a top-lit gradient. No long soft drop shadow: that is what made the first keys read as floating cards. The primary (lit) key takes the same tight shadow and no amber halo.
 - **Pressed** (`--sh-key-press`): `inset 0 1px 3px key-cast, 0 0 0 1px key-edge` + 1px travel.
 - **Latched** (`--sh-latched`): the playing preset stays down; a latched segment in a bar shows `inset 0 2px 4px key-cast`.
 - **Inlay** (`--sh-inlay`): `inset 0 1px 2px inlay-shade, inset 0 0 0 1px inlay-edge, 0 1px 0 seam-hi`.
@@ -443,7 +448,7 @@ Depth is physical: raised keys, a flush plate, inlaid panels and sunk wells, and
 
 ## Shapes
 
-Precise rounded rectangles. Faceplate 24px, glass 16px, inlay panels 14px, keys and bars 12px, fields and notes 10px, the display cover 8px, check keys 7px, list covers 6px. Switches and radio dots are round; tags and lit reasons are pills. LEDs are 2px-radius bars (preset 14×4, choice 6×6 dot). Keys in one bar share the outer radius and are split by a `seam-soft` hairline; the preset tune key's seam is inset 16px top and bottom. Row hairlines start under the text, not under the cover.
+Precise rounded rectangles, tight like machined parts. Faceplate 24px, glass 16px, inlay panels 14px, the preset bank 12px, keys and bars 8px, fields and notes 10px, the display cover 8px, check keys 7px, list covers 6px. Switches and radio dots are round; tags and lit reasons are pills. LEDs are 2px-radius lenses, 16×3, at the top centre of a preset key or above a choice key's legend. Keys in one bar share the outer radius and are split by a `seam-soft` hairline. Row hairlines start under the text, not under the cover.
 
 ## Components
 
@@ -451,16 +456,16 @@ Precise rounded rectangles. Faceplate 24px, glass 16px, inlay panels 14px, keys 
 The radio's window: black glass, 16px radius, 14px 16px padding (18px 22px wide). Top: the five indicator legends (lit in `vfd` with glow, unlit in `vfd-ghost`). Then the Doto station name (a name that is not a station, such as idle, steps back to `vfd-2`). Then the cover and the song block: song (two lines max), artist, and a meta line with the time and the output device (speaker icon) split by a `glass-rule` hairline. Then one status line (`vfd-2`) or a message, then the tuner scale. **Cover:** 84px (136px wide), 8px radius, 1px light outline, a contact shadow, fading in (420ms) when the song changes, with its blurred glow behind it. Missing or failing covers show a drawn disc on dark glass, never a broken image; while a station tunes, or when nothing plays, the station's own playlist image stands in. Sign-in, loading, error and first-run displays have no cover slot.
 
 ### Tuner scale with numbered majors and readout
-A round's progress as a frequency band: an SVG graduation (minor ticks every 2%, majors every 10%, crisp 1px strokes), a 1px baseline, a 3px fill and a 2px needle. On glass the band is `vfd-2` and the needle `vfd` with glow; on a preset key it shrinks to 9px with majors only and an amber needle. Under the band: five numbered majors and the readout "Runde n" / "x von y gehört". **Signature interaction:** pressing a preset tunes; the needle sweeps across and settles at the station's position (900ms) while the station name rewrites from ghost to lit in four steps (520ms). Only transform and colour animate.
+A round's progress as a frequency band: an SVG graduation (minor ticks every 2%, majors every 10%, crisp 1px strokes), a 1px baseline, a 3px fill and a 2px needle. On glass the band is `vfd-2` and the needle `vfd` with glow; on a preset key it becomes the plain groove described there. Under the band: five numbered majors and the readout "Runde n" / "x von y gehört". **Signature interaction:** pressing a preset tunes; the needle sweeps across and settles at the station's position (900ms) while the station name rewrites from ghost to lit in four steps (520ms). Only transform and colour animate.
 
 ### Transport bar
-One machined bar split into four keys (Daumen runter, Pause/Play, Weiter, Daumen hoch), 58px tall, 24px icons at stroke 1.75. A latched thumb stays down and lights its icon in `lit-text` (`aria-pressed`). With nothing playing the whole bar sinks flush.
+One machined bar split into four keys (Daumen runter, Pause/Play, Weiter, Daumen hoch), 58px tall, 24px icons at stroke 2, so they read like printed legends. A latched thumb stays down and lights its icon in `lit-text` (`aria-pressed`). With nothing playing the whole bar sinks flush.
 
 ### Preset keys
-A split key, min 100px: the play area shows the number (600, 12px, `ink-3`) with its LED bar, the name, and the hairline scale with "Runde n  x / y". The tune key (44px, sliders icon in `ink-3`) opens the station's settings. The playing preset latches down, its name grows to 18px/700 and its LED lights with a glow. The last cell is a free memory slot: a sunk well with a plus and "Sender anlegen".
+**The preset bank** is one cut-out in the plate (`well`, 12px radius, 6px padding and gaps) with the station keys seated in it, as a head unit's preset keys sit in their frame; keys never float on the plate by themselves. Each key (min 104px) carries: the number top left (700, 13px, tabular, `ink-3`), the LED lens at the top centre, the Einstellen legend top right (sliders icon 18px in `ink-3`, its own 44px target), the name (two lines, German hyphenation, a break allowed after "/", never inside a word), and at the foot the round as a groove cut into the key (4px, `well`, amber fill to the station's position) over the count "x / y"; "Runde n" joins the count from the second round on. The playing preset latches down, its name grows to 18px/700, its LED lights and the groove's fill glows. A free memory slot is an empty seat in the bank: a hairline outline, a plus and "Sender anlegen".
 
 ### Choice rows
-Three choices (mix presets, illumination) machined from one bar; each segment carries a small LED dot, and the latched choice stays down with its LED lit.
+Three choices (mix presets, illumination) machined from one bar, 52px tall; each key carries its LED lens above the legend, and the latched choice stays down with its LED lit.
 
 ### Faceplate bar and menu keys
 MENÜ and VERLAUF as keys with 12px tracked legends. Menu choices are keys in a two-column grid (min 76px, legend over a 13px sub-line).

@@ -76,7 +76,8 @@
 	--r-plate: 24px;
 	--r-glass: 16px;
 	--r-panel: 14px;
-	--r-key: 12px;
+	--r-key: 8px;
+	--r-bed: 12px;
 	--r-field: 10px;
 	--r-thumb: 6px;
 	--gap: 12px;
@@ -86,8 +87,8 @@
 	--ease: cubic-bezier(0.16, 1, 0.3, 1);
 
 	--sh-key:
-		inset 0 1px 0 var(--key-hi), inset 0 -1px 0 var(--key-lo), 0 0 0 1px var(--key-edge), 0 1px 1px
-		var(--key-cast), 0 8px 14px -10px var(--key-cast);
+		inset 0 1px 0 var(--key-hi), inset 0 -1px 0 var(--key-lo), 0 0 0 1px var(--key-edge), 0 1px 0
+		var(--key-cast), 0 3px 4px -2px var(--key-cast);
 	--sh-key-press: inset 0 1px 3px var(--key-cast), 0 0 0 1px var(--key-edge);
 	--sh-latched: inset 0 2px 5px var(--key-cast), 0 0 0 1px var(--key-edge), 0 1px 0 var(--seam-hi);
 	--sh-inlay:
@@ -806,11 +807,11 @@ select {
 	background: linear-gradient(180deg, var(--lit-top), var(--lit));
 	color: var(--lit-ink);
 	box-shadow:
-		inset 0 1px 0 rgba(255, 255, 255, 0.4),
-		inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+		inset 0 1px 0 rgba(255, 255, 255, 0.45),
+		inset 0 -1px 0 rgba(0, 0, 0, 0.14),
 		0 0 0 1px var(--lit-edge),
-		0 1px 1px var(--key-cast),
-		0 10px 18px -12px var(--lit-glow);
+		0 1px 0 var(--key-cast),
+		0 3px 4px -2px var(--key-cast);
 }
 
 .key--lit:hover:not(:disabled) {
@@ -884,8 +885,13 @@ select {
 }
 
 .presetrow .key {
-	min-height: 46px;
+	min-height: 52px;
 	font-weight: 600;
+	display: grid;
+	justify-items: center;
+	align-content: center;
+	gap: 6px;
+	padding: 6px 8px;
 }
 
 /* A row of keys machined from one bar: transport, choice rows. */
@@ -952,6 +958,7 @@ select {
 .transport .icon {
 	width: 24px;
 	height: 24px;
+	stroke-width: 2;
 }
 
 /* A latched thumb stays down and lights its legend. */
@@ -973,10 +980,10 @@ select {
 /* Choice rows: the latched choice stays down and its LED lights. */
 .presetrow .key::before {
 	content: "";
-	width: 6px;
-	height: 6px;
+	width: 16px;
+	height: 3px;
 	flex: none;
-	border-radius: 50%;
+	border-radius: 2px;
 	background: var(--led-off);
 	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.3);
 	transition:
@@ -997,13 +1004,22 @@ select {
 
 /* ---------------------------------------------------------------- presets */
 
+/*
+ * The preset bank: one cut-out in the plate with the station keys seated in
+ * it, the way a head unit's preset keys sit in their frame.
+ */
 .presets {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 10px;
+	gap: 6px;
 	margin: 6px 0 0;
-	padding: 0;
+	padding: 6px;
 	list-style: none;
+	border-radius: var(--r-bed);
+	background: var(--well);
+	box-shadow:
+		var(--sh-well),
+		0 1px 0 var(--seam-hi);
 }
 
 @media (min-width: 700px) {
@@ -1015,28 +1031,29 @@ select {
 .preset {
 	position: relative;
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 44px;
-	min-height: 100px;
+	min-height: 104px;
 	border-radius: var(--r-key);
 	background: linear-gradient(180deg, var(--key-top), var(--key-bot));
 	box-shadow: var(--sh-key);
 	transition:
 		box-shadow var(--t-fast) var(--ease),
-		transform var(--t-fast) var(--ease);
+		transform var(--t-fast) var(--ease),
+		background-color var(--t-fast) var(--ease);
 }
 
 .preset__play {
 	appearance: none;
 	border: 0;
 	background: transparent;
-	border-radius: var(--r-key) 0 0 var(--r-key);
-	padding: 12px 6px 12px 14px;
+	border-radius: inherit;
+	padding: 12px 12px 12px 14px;
 	text-align: left;
 	display: grid;
-	grid-template-rows: auto 1fr auto;
-	gap: 6px;
+	grid-template-rows: 20px auto 1fr auto;
+	row-gap: 6px;
 	cursor: pointer;
 	min-width: 0;
+	color: var(--ink);
 	transition: background-color var(--t-fast) var(--ease);
 	touch-action: manipulation;
 }
@@ -1049,6 +1066,11 @@ select {
 	background: var(--key-press);
 }
 
+.preset:has(.preset__play:active:not(:disabled)) {
+	transform: translateY(1px);
+	box-shadow: var(--sh-key-press);
+}
+
 .preset__play:disabled {
 	cursor: default;
 }
@@ -1057,23 +1079,25 @@ select {
 	background: transparent;
 }
 
+/* The preset number, top left, like the legend on a key. */
 .preset__num {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	font-weight: 600;
-	font-size: 12px;
-	letter-spacing: 0.06em;
+	font-weight: 700;
+	font-size: 13px;
 	line-height: 1;
 	color: var(--ink-3);
+	font-variant-numeric: tabular-nums;
 }
 
 .led {
-	width: 14px;
-	height: 4px;
+	width: 16px;
+	height: 3px;
 	border-radius: 2px;
 	background: var(--led-off);
-	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.3);
+	box-shadow:
+		inset 0 1px 1px rgba(0, 0, 0, 0.35),
+		0 1px 0 var(--seam-hi);
 	transition:
 		background-color var(--t) var(--ease),
 		box-shadow var(--t) var(--ease);
@@ -1086,6 +1110,14 @@ select {
 		0 0 9px var(--lit-glow);
 }
 
+/* The indicator lens sits at the top centre of the key, as on the choice keys. */
+.preset .led {
+	position: absolute;
+	top: 9px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
 .preset__name {
 	align-self: start;
 	font-weight: 600;
@@ -1096,7 +1128,10 @@ select {
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
-	overflow-wrap: anywhere;
+	overflow-wrap: break-word;
+	-webkit-hyphens: auto;
+	hyphens: auto;
+	hyphenate-limit-chars: 7 3 3;
 }
 
 /* The playing preset stays pressed in; its name is set larger, not coloured. */
@@ -1116,73 +1151,73 @@ select {
 	color: var(--ink-2);
 }
 
-.preset__meta {
+/* The round: a groove cut into the key, the needle where the round stands. */
+.preset__meter {
+	grid-row: 4;
 	display: grid;
-	gap: 5px;
+	gap: 6px;
+}
+
+.groove {
+	position: relative;
+	display: block;
+	height: 4px;
+	border-radius: 2px;
+	background: var(--well);
+	box-shadow: inset 0 1px 1px var(--well-shade);
+	overflow: hidden;
+}
+
+.groove__fill {
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: calc(var(--pos, 0) * 100%);
+	min-width: 2px;
+	border-radius: 2px;
+	background: var(--lit);
+}
+
+.preset--playing .groove__fill {
+	box-shadow: 0 0 6px var(--lit-glow);
+}
+
+.preset__count {
+	display: flex;
+	justify-content: space-between;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1;
+	color: var(--ink-2);
+	white-space: nowrap;
+}
+
+.preset__status {
+	grid-row: 4;
 	font-size: 12px;
 	font-weight: 500;
 	color: var(--ink-2);
 }
 
-.preset__round {
-	display: flex;
-	justify-content: space-between;
-	gap: 6px;
-	white-space: nowrap;
-}
-
-.preset .scale {
-	height: 9px;
-	color: var(--ink-3);
-}
-
-.preset .scale__ticks {
-	bottom: 3px;
-	height: 6px;
-}
-
-.preset .scale__minor {
-	display: none;
-}
-
-.preset .scale__major {
-	opacity: 0.5;
-}
-
-.preset .scale__base {
-	bottom: 3px;
-	opacity: 0.45;
-}
-
-.preset .scale__fill {
-	bottom: 2px;
-	height: 2px;
-	opacity: 0.8;
-}
-
+/* Einstellen: a small key legend in the top corner, its own 44px target. */
 .preset__tune {
-	position: relative;
-	appearance: none;
-	border: 0;
-	background: transparent;
-	border-radius: 0 var(--r-key) var(--r-key) 0;
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 44px;
+	height: 44px;
 	display: grid;
 	place-items: center;
+	border-radius: 0 var(--r-key) 0 var(--r-key);
 	color: var(--ink-3);
-	cursor: pointer;
 	transition:
 		background-color var(--t-fast) var(--ease),
 		color var(--t-fast) var(--ease);
 }
 
-.preset__tune::before {
-	content: "";
-	position: absolute;
-	left: 0;
-	top: 16px;
-	bottom: 16px;
-	width: 1px;
-	background: var(--seam-soft);
+.preset__tune .icon {
+	width: 18px;
+	height: 18px;
 }
 
 .preset__tune:hover {
@@ -1190,17 +1225,21 @@ select {
 	color: var(--ink);
 }
 
-/* A free memory slot: sunk into the plate, waiting for a station. */
+.preset__tune:focus-visible {
+	outline-offset: -4px;
+}
+
+/* A free memory slot: an empty seat in the bank, waiting for a station. */
 .preset--add {
 	display: grid;
 	place-content: center;
 	justify-items: center;
 	gap: 6px;
 	height: 100%;
-	min-height: 100px;
+	min-height: 104px;
 	border-radius: var(--r-key);
-	background: var(--well);
-	box-shadow: var(--sh-well);
+	background: transparent;
+	box-shadow: inset 0 0 0 1px var(--seam-soft);
 	color: var(--ink-2);
 	font-weight: 600;
 	font-size: 13px;
@@ -1213,6 +1252,7 @@ select {
 
 .preset--add:hover {
 	color: var(--ink);
+	background: var(--row-hover);
 }
 
 /* skeleton */
@@ -2249,7 +2289,8 @@ details.more > .more__body {
 	color: var(--ink);
 }
 
-.row__sub--wrap {
+.row__sub--wrap,
+.track__sub--wrap {
 	white-space: normal;
 }
 
