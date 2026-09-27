@@ -1,516 +1,373 @@
 ---
 name: true-shuffle
-description: The station memory of a car radio, built like a good one, in two illuminations.
+description: The front of a 1950s German tube radio, in two illuminations. Stations are printed on its lit glass dial.
 colors:
-  # Day illumination (default): satin silver faceplate
-  plate: "#dcdfe2"
-  plate-top: "#e5e7ea"
-  plate-deep: "#cdd0d5"
-  key-top: "#fbfbfc"
-  key-bot: "#eceef1"
-  key-hover-top: "#ffffff"
-  key-hover-bot: "#f3f4f6"
-  key-press: "#e1e4e8"
-  key-edge: "rgba(22, 26, 32, 0.17)"
-  key-cast: "rgba(22, 26, 32, 0.26)"
-  seam: "#a9aeb5"
-  seam-soft: "rgba(22, 26, 32, 0.1)"
-  inlay: "#eef0f2"
-  inlay-edge: "rgba(22, 26, 32, 0.1)"
-  well: "#d3d6da"
-  control-edge: "rgba(22, 26, 32, 0.5)"
-  ink: "#15171b"
-  ink-2: "#444950"
-  ink-3: "#565c64"
-  led-off: "#c3c7cd"
-  lit: "#f0a13a"
-  lit-top: "#f8bb62"
-  lit-ink: "#1c1203"
-  lit-text: "#9a4a06"
-  lit-soft: "rgba(240, 161, 58, 0.22)"
-  danger: "#a8231a"
-  danger-ink: "#7d140c"
-  danger-soft: "rgba(168, 35, 26, 0.1)"
-  focus: "#0b5fd1"
-  # Night illumination: graphite faceplate
-  plate-night: "#141518"
-  plate-top-night: "#18191d"
-  plate-deep-night: "#0b0c0e"
-  key-top-night: "#2a2c31"
-  key-bot-night: "#1f2125"
-  key-hover-top-night: "#303238"
-  key-hover-bot-night: "#24262a"
-  key-press-night: "#1b1d20"
-  key-edge-night: "rgba(0, 0, 0, 0.75)"
-  key-cast-night: "rgba(0, 0, 0, 0.6)"
-  seam-night: "#3a3d44"
-  seam-soft-night: "rgba(255, 255, 255, 0.07)"
-  inlay-night: "#0f1012"
-  inlay-edge-night: "rgba(255, 255, 255, 0.055)"
-  well-night: "#0e0f11"
-  control-edge-night: "rgba(255, 255, 255, 0.34)"
-  ink-night: "#ecebe7"
-  ink-2-night: "#a8acb3"
-  ink-3-night: "#90959d"
-  led-off-night: "#34373d"
-  lit-night: "#ffab2e"
-  lit-top-night: "#ffc062"
-  lit-text-night: "#ffab2e"
-  lit-soft-night: "rgba(255, 171, 46, 0.14)"
-  danger-night: "#ff7a66"
-  danger-soft-night: "rgba(255, 122, 102, 0.12)"
-  focus-night: "#7fb4ff"
-  # Display glass: identical in both illuminations
-  glass: "#0d0e10"
-  glass-night: "#08090a"
-  glass-ink: "#f1ede5"
-  glass-ink-2: "#aba69d"
-  glass-ink-3: "#8a857d"
-  glass-rule: "rgba(241, 237, 229, 0.14)"
-  glass-bezel-night: "rgba(0, 0, 0, 0.9)"
-  vfd: "#ffb547"
-  vfd-2: "#c98d3c"
-  vfd-ghost: "rgba(255, 181, 71, 0.16)"
-  vfd-glow: "rgba(255, 160, 40, 0.42)"
-  danger-glass: "#ff8a73"
-  focus-glass: "#7fb4ff"
-  led-inset: "rgba(0, 0, 0, 0.3)"
+  # Day illumination (default): the radio on a sideboard by a light wall
+  wall: "#dddecf"
+  wall-2: "#cfd1c1"
+  wall-ink: "#2f2b24"
+  walnut: "#5e371d"
+  walnut-deep: "#3d2312"
+  brass-hi: "#f5e2a6"
+  brass: "#c89c48"
+  brass-lo: "#7c5719"
+  cloth: "#b4965c"
+  wood-ink: "#f4e3b6"
+  wood-ink-2: "#ecd6a2"
+  glass-hi: "#fbf3d9"
+  glass: "#f2e4be"
+  glass-lo: "#e4cf9e"
+  glass-edge: "#e2c285"
+  halo: "#f4e7c4"
+  print: "#2b1d12"
+  print-2: "#5a4230"
+  lit: "#a8221a"
+  lit-deep: "#8c1a12"
+  eye: "#40cf84"
+  eye-lo: "#0d4a2b"
+  ivory-hi: "#fdf8ea"
+  ivory: "#f0e6cd"
+  ivory-lo: "#dccfae"
+  ivory-front: "#b9a57f"
+  ivory-lip: "#a38e66"
+  engrave: "#5a4934"
+  slot: "#1a110a"
+  bakelite: "#2d1c12"
+  key-brass: "#cfa24c"
+  key-brass-ink: "#22160a"
+  danger-key: "#981e15"
+  card: "#f5efe1"
+  paper: "#f6eedb"
+  paper-2: "#eee3c8"
+  ink: "#2a2119"
+  ink-2: "#564a3c"
+  ink-3: "#655648"
+  rule: "rgba(88, 62, 34, 0.24)"
+  rule-strong: "rgba(70, 48, 24, 0.6)"
+  field: "#fcf8ee"
+  lit-ink: "#a3231a"
+  board: "#7b5637"
+  board-2: "#6b492d"
+  board-ink: "#f7ebcf"
+  board-field: "#5a3c24"
+  board-lit: "#ffd0c4"
+  focus-on-light: "#1b4fb3"
+  focus-on-dark: "#ffd978"
+  # Night illumination: a dark room, dial and magic eye glow (same names, other values)
+  wall-night: "#16140f"
+  glass-night: "#f6d796"
+  lit-night: "#931a12"
+  eye-night: "#4cf596"
+  ivory-night: "#ddd0b1"
+  paper-night: "#cdbb95"
+  ink-night: "#231a10"
+  board-night: "#3d2a1a"
 typography:
-  display:
-    fontFamily: "Doto Variable, Doto, ui-monospace, monospace"
-    fontSize: "30px"
-    fontWeight: 720
+  badge:
+    fontFamily: "Yellowtail, Brush Script MT, cursive"
+    fontSize: "clamp(24px, 7.4vw, 30px)"
+    fontWeight: 400
+    lineHeight: 1
+    letterSpacing: "0.01em"
+  dial-title:
+    fontFamily: "Barlow Condensed, Jost Variable, Jost, sans-serif"
+    fontSize: "25px"
+    fontWeight: 600
     lineHeight: 1.1
     letterSpacing: "0.05em"
-  display-wide:
-    fontFamily: "Doto Variable, Doto, ui-monospace, monospace"
-    fontSize: "42px"
-    fontWeight: 720
-    lineHeight: 1.1
-    letterSpacing: "0.05em"
-  page-title:
-    fontFamily: "Doto Variable, Doto, ui-monospace, monospace"
-    fontSize: "22px"
-    fontWeight: 800
-    lineHeight: 1.15
-    letterSpacing: "0.05em"
-  legend:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "10px"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "0.12em"
-  label:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "11px"
-    fontWeight: 600
-    letterSpacing: "0.16em"
-  key-legend:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "12px"
-    fontWeight: 600
-    letterSpacing: "0.16em"
-  song:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
+  dial-station:
+    fontFamily: "Barlow Condensed, Jost Variable, Jost, sans-serif"
     fontSize: "18px"
-    fontWeight: 600
-    lineHeight: 1.25
-    letterSpacing: "-0.005em"
-  song-wide:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "21px"
-    fontWeight: 600
-    lineHeight: 1.25
-  artist:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "15px"
     fontWeight: 500
+    lineHeight: 1.06
+    letterSpacing: "0.05em"
+  display:
+    fontFamily: "Jost Variable, Jost, Futura, Century Gothic, system-ui, sans-serif"
+    fontSize: "clamp(28px, 8.4vw, 36px)"
+    fontWeight: 600
+    lineHeight: 1.06
+    letterSpacing: "-0.01em"
+  headline:
+    fontFamily: "Jost Variable, Jost, Futura, Century Gothic, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 650
     lineHeight: 1.3
-  preset-name:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "16px"
+    letterSpacing: "-0.005em"
+  title:
+    fontFamily: "Jost Variable, Jost, Futura, Century Gothic, system-ui, sans-serif"
+    fontSize: "17.5px"
     fontWeight: 600
     lineHeight: 1.2
-  preset-name-playing:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "18px"
-    fontWeight: 700
-    lineHeight: 1.15
   body:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
+    fontFamily: "Jost Variable, Jost, Futura, Century Gothic, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.45
   lede:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "15px"
+    fontFamily: "Jost Variable, Jost, Futura, Century Gothic, system-ui, sans-serif"
+    fontSize: "15.5px"
     fontWeight: 400
-    lineHeight: 1.55
-  lede-large:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "17px"
-    fontWeight: 400
-    lineHeight: 1.55
-  row-title:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "15px"
+    lineHeight: 1.6
+  label:
+    fontFamily: "Barlow Condensed, Jost Variable, Jost, sans-serif"
+    fontSize: "14.5px"
     fontWeight: 600
-    lineHeight: 1.3
-  machine-string:
-    fontFamily: "ui-monospace, monospace"
+    lineHeight: 1.1
+    letterSpacing: "0.08em"
+  label-small:
+    fontFamily: "Barlow Condensed, Jost Variable, Jost, sans-serif"
     fontSize: "12px"
-    fontWeight: 400
-    lineHeight: 1.4
-  key-text:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "15px"
     fontWeight: 600
-    letterSpacing: "0.01em"
-  key-text-small:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "14px"
-    fontWeight: 600
-  note:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "14px"
-    fontWeight: 500
-    lineHeight: 1.45
-  sub:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "13px"
-    fontWeight: 500
-    lineHeight: 1.4
-  meta:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "12px"
-    fontWeight: 500
-    fontFeature: "tnum"
-  count:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "22px"
-    fontWeight: 600
-    lineHeight: 1
-    fontFeature: "tnum"
-  scale-majors:
-    fontFamily: "Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "10px"
-    fontWeight: 500
-    fontFeature: "tnum"
+    lineHeight: 1.2
+    letterSpacing: "0.18em"
 rounded:
-  plate: "24px"
-  glass: "16px"
-  switch: "15px"
-  panel: "14px"
-  bed: "12px"
-  key: "8px"
-  field: "10px"
-  cover-display: "8px"
-  check: "7px"
-  thumb: "6px"
-  focus-well: "6px"
-  led: "2px"
-  segment: "2px"
-  needle: "1px"
-  pill: "999px"
+  hairline: "1px"
+  sheet: "2px"
+  paper: "3px"
+  plate: "6px"
+  window: "8px"
+  glass: "9px"
+  bezel: "14px"
+  cabinet: "30px 30px 16px 16px / 24px 24px 14px 14px"
+  round: "50%"
 spacing:
-  unit: "4px"
-  key-gap: "10px"
-  bed-gap: "6px"
-  gap: "12px"
-  home-gap: "14px"
-  pad: "16px"
-  page-gap: "20px"
-  desk-gutter: "32px"
+  xs: "6px"
+  sm: "10px"
+  md: "12px"
+  lg: "20px"
+  xl: "26px"
+  page: "18px"
 components:
-  display:
-    backgroundColor: "{colors.glass}"
-    textColor: "{colors.glass-ink}"
-    rounded: "{rounded.glass}"
-    padding: "14px 16px"
-  display-cover:
-    rounded: "{rounded.cover-display}"
-    size: "84px"
-  display-cover-wide:
-    rounded: "{rounded.cover-display}"
-    size: "136px"
-  page-head-window:
-    backgroundColor: "{colors.glass}"
-    textColor: "{colors.vfd}"
-    typography: "{typography.page-title}"
-    rounded: "{rounded.glass}"
-    padding: "12px 16px"
   key:
-    backgroundColor: "{colors.key-top}"
-    textColor: "{colors.ink}"
-    typography: "{typography.key-text}"
-    rounded: "{rounded.key}"
-    padding: "0 20px"
-    height: "52px"
-  key-hover:
-    backgroundColor: "{colors.key-hover-top}"
-  key-press:
-    backgroundColor: "{colors.key-press}"
-  key-lit:
-    backgroundColor: "{colors.lit}"
-    textColor: "{colors.lit-ink}"
-    rounded: "{rounded.key}"
-    height: "52px"
-  key-disabled:
-    textColor: "{colors.ink-3}"
-  transport-bar:
-    backgroundColor: "{colors.key-top}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.key}"
-    height: "58px"
-  choice-row:
-    backgroundColor: "{colors.key-top}"
-    textColor: "{colors.ink}"
-    typography: "{typography.key-text-small}"
-    rounded: "{rounded.key}"
-    height: "52px"
-  faceplate-bar-key:
-    backgroundColor: "{colors.key-top}"
-    textColor: "{colors.ink}"
-    typography: "{typography.key-legend}"
-    rounded: "{rounded.key}"
-    height: "48px"
-  preset-key:
-    backgroundColor: "{colors.key-top}"
-    textColor: "{colors.ink}"
-    typography: "{typography.preset-name}"
-    rounded: "{rounded.key}"
-    padding: "12px 12px 12px 14px"
-    height: "104px"
-  preset-key-playing:
-    backgroundColor: "{colors.key-press}"
-    typography: "{typography.preset-name-playing}"
-  preset-bank:
-    backgroundColor: "{colors.well}"
-    rounded: "{rounded.bed}"
-    padding: "6px"
-  preset-slot:
-    textColor: "{colors.ink-2}"
-    rounded: "{rounded.key}"
-    height: "104px"
-  menu-key:
-    backgroundColor: "{colors.key-top}"
-    textColor: "{colors.ink}"
-    typography: "{typography.key-legend}"
-    rounded: "{rounded.key}"
-    padding: "14px 14px 12px"
-    height: "76px"
-  inlay:
-    backgroundColor: "{colors.inlay}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.panel}"
-  track-row:
-    typography: "{typography.row-title}"
-    padding: "9px 14px"
+    backgroundColor: "{colors.ivory}"
+    textColor: "{colors.engrave}"
+    typography: "{typography.label}"
+    rounded: "{rounded.sheet}"
+    padding: "0 16px 9px"
+    height: "50px"
+  key-pressed:
+    backgroundColor: "{colors.ivory-lo}"
+    textColor: "{colors.engrave}"
+  key-danger:
+    backgroundColor: "{colors.ivory}"
+    textColor: "{colors.danger-key}"
+  piano-key:
+    backgroundColor: "{colors.ivory}"
+    textColor: "{colors.engrave}"
+    rounded: "2px 2px 0 0"
+    padding: "6px 2px 16px"
     height: "60px"
-  cover:
-    backgroundColor: "{colors.well}"
-    rounded: "{rounded.thumb}"
-    size: "40px"
-  balance-bar:
+  piano-key-latched:
+    backgroundColor: "{colors.ivory-lo}"
+    textColor: "{colors.lit-deep}"
+  dial-glass:
     backgroundColor: "{colors.glass}"
-    textColor: "{colors.vfd}"
+    textColor: "{colors.print}"
     rounded: "{rounded.glass}"
-    padding: "14px 16px"
+  station-lit:
+    textColor: "{colors.lit}"
+    typography: "{typography.dial-station}"
+  program-card:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.paper}"
+    padding: "10px 12px 4px"
+  program-sheet:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sheet}"
+    padding: "18px 18px 30px"
+  back-panel:
+    backgroundColor: "{colors.board}"
+    textColor: "{colors.board-ink}"
+    rounded: "5px"
+    padding: "58px 18px 30px"
   input:
-    backgroundColor: "{colors.well}"
+    backgroundColor: "{colors.field}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.field}"
-    padding: "0 14px"
-    height: "52px"
-  note:
-    backgroundColor: "{colors.lit-soft}"
-    textColor: "{colors.ink}"
-    typography: "{typography.note}"
-    rounded: "{rounded.field}"
-    padding: "12px 14px"
-  reason-lit:
-    textColor: "{colors.lit-text}"
-    typography: "{typography.legend}"
-    rounded: "{rounded.pill}"
-    padding: "3px 7px 2px"
-  tag:
-    textColor: "{colors.ink-2}"
-    typography: "{typography.legend}"
-    rounded: "{rounded.pill}"
-    padding: "3px 7px 2px"
-  message-strip:
+    rounded: "3px 3px 1px 1px"
+    padding: "0 12px"
+    height: "48px"
+  status-strip:
     backgroundColor: "{colors.glass}"
-    textColor: "{colors.vfd}"
-    rounded: "{rounded.glass}"
-    padding: "12px 16px"
+    textColor: "{colors.print}"
+    rounded: "10px"
+    padding: "11px 16px 12px"
 ---
 
 # Design System: true-shuffle
 
 ## Overview
 
-**Creative North Star: "The Station Memory"**
+**Creative North Star: "The Radio on the Sideboard"**
 
-The interface is a car radio's faceplate, and since 2026-09-27 a good one. There is a display window at the top, a transport bar under it, a preset bank where each station is a numbered key, and a faceplate bar at the foot. Everything a listener needs is readable in a two-second glance and tappable one-handed; the screen serves seconds, the music serves hours.
+The phone screen is the front of a 1950s German tube radio, and nothing else. One walnut cabinet under lacquer with rounded, lit shoulders and a thin brass trim; a golden speaker cloth carrying the brass badge and the green magic eye; a cream glass dial lit from behind with every station printed on it; the program card behind a brass-framed window; two bakelite knobs; one slot of ivory piano keys. Everything the listener touches is a physical part of that cabinet. Pages that do not fit on the front are printed program sheets (Programmheft paper) or the radio's own back panel (hardboard with vent holes, screws and a riveted brass type plate).
 
-**Premium-Radio (2026-09-27).** The owner judged the first build "irgendwie billig" and chose, of the offered directions, *Premium-Radio*: "Radio-Idee bleibt, aber edel: Albumcover im Display, feinere Materialien statt grauer Kästen, dezentere LED-Schrift, bessere Typografie und Abstände." The radio, its routes, behaviour and German copy stayed. What changed is how it is made: the display is one piece of black glass lit like a vacuum-fluorescent display (VFD) and carries the song's cover; keys are machined, not moulded; lists are inlaid into the plate; the dot-matrix face shrank to one line and got round dots.
+Density is that of a real appliance: a glance of two or three seconds reads the lit station on the dial and the song on the card; a tap on a printed station name sends the red pointer gliding there. All options are always present at once. Every station stays printed on the glass, the playing one struck forward and lit, the others printed and quiet. The world has two illuminations, same token names, other values: **Day** (a pale plaster wall, the radio lit by the room) and **Night** (a dark room where wood, cloth and paper fall into shadow and only the dial lamp, the magic eye and the paper glow carry light). Night follows `prefers-color-scheme: dark` unless the user pins `data-illumination`.
 
-The world has two illuminations, like a radio's dimmer. Day is a satin silver faceplate, night is graphite. The display glass is the same black glass in both, so the radio reads as one object whatever the light. Night follows `prefers-color-scheme: dark` unless the listener forces an illumination from the menu (`data-illumination="day" | "night"` on the root). Both illuminations share every token name; only values change.
-
-Settings live behind the MENÜ and each preset's tune key, in the radio's own menu grammar: a small glass window for each page head, faceplate keys for choices, one machined bar for a row of choices, a segmented balance bar for "Entdecken ↔ Vertraut". The previous record-crate world ("Plattenschrank") is a confirmed anti-reference, and so is the first build's grey-green calculator LCD.
+Confirmed rejections (owner, 2026-09-27): app cards, streaming-app chrome, a numbers cockpit, anything playful or cold, and the previous car head-unit world (black VFD glass, machined keys, dot-matrix type), which is now an anti-reference.
 
 **Key Characteristics:**
-- The display is the jewel: black glass, amber VFD light, the cover beside the song.
-- One dot-matrix line (the station name, round dots); every other word is Overpass.
-- Three materials: satin plate, machined keys, inlaid panels. Glass only where the radio would show something.
-- Amber marks only what is lit.
-- Progress is a tuner scale with a needle, numbered majors and a plain-language readout.
+- One object: the cabinet is a single walnut body; dial, window, knobs and keys are seated in it, never floating tiles.
+- Real material: walnut and cloth are sourced CC0 rasters; paper grain, brushed brass, plaster and hardboard are small inline SVG noise filters.
+- Print, not UI: dial lettering is condensed caps printed on glass; lists are set like a printed running order with rules and leaders.
+- One signal red for "this is the one": the pointer, the lit station, pilot lamps, the latched key's legend.
+- One living light: the green magic eye.
 
 ## Colors
 
-A cool neutral ramp per illumination, one amber accent, and a small shared palette for the display glass.
+A warm, lamp-lit palette of walnut, brass, cream glass, ivory and paper, with a single signal red and a single phosphor green.
 
 ### Primary
-- **Lamp Amber** (`lit` day / `lit-night`, top stop `lit-top`): the only accent on the plate. Fills the primary key (Spielen, Mit Spotify anmelden), lit LEDs (playing preset, latched choice, checked check key, selected radio dot), the switch when on, progress bars and the preset scale's needle. Text on it is `lit-ink`. Where amber is text or an icon on the plate (a latched thumb, a lit reason tag) it uses `lit-text`, which holds 4.5:1 on every day surface.
+- **Dial Signal Red** (`lit`): the pointer needle, the lit and held station name, its number box and frequency, the round mark on the card's scale. Reserved for "the one that plays".
+- **Deep Signal Red** (`lit-deep`, `lit-ink`): red set as ink: the latched piano key's legend, lit wave-band lamps' text, danger actions and error notes on paper. On the back panel it becomes `board-lit` (a pale coral) to hold contrast on hardboard.
 
-### Display glass (both illuminations)
-- **Black Glass** (`glass` day, `glass-night` night; the night glass is a shade deeper): the display, page head windows, the balance bar, the message strip.
-- **VFD Amber** (`vfd`, `vfd-2`, `vfd-ghost`, `vfd-glow`): the station name, lit indicator legends, the needle and the lit balance segment in `vfd`; the scale, readout lines and balance ends in `vfd-2`; unlit legends and segments in `vfd-ghost` (deliberately faint, never the only carrier of a state); `vfd-glow` is the light around lit amber.
-- **Glass Inks** (`glass-ink`, `glass-ink-2`, `glass-ink-3`): song in warm white, artist and readouts stepped down, time, device and scale majors quietest. All hold 5:1 or more on glass.
-- `danger-glass` and `focus-glass` are the error text and focus ring on glass in both illuminations.
+### Secondary
+- **Lacquered Brass** (`brass-hi`, `brass`, `brass-lo`): trim inlay round the cabinet, the rings round the cloth, dial bezel and window, knob rings, the magic-eye bezel, the brass borders of the status strip and the rating slip. Always a gradient of the three stops, never a flat fill.
+- **Key Brass** (`key-brass`, `key-brass-ink`): the back panel's riveted type plate and the toggle lever's nut.
+
+### Tertiary
+- **Magic Eye Green** (`eye`, `eye-lo`, `eye-hi`): only the EM-tube fan in the cloth. It is the radio's one living light; it opens when playing, closes while tuning, dims when off.
 
 ### Neutral
-- **Faceplate** (`plate`, `plate-top`, `plate-deep`): the page is a vertical satin gradient from `plate-top` to `plate`; `plate-deep` is the desk behind the desktop faceplate.
-- **Key Faces** (`key-top` → `key-bot`, hover and press): a key is a vertical gradient lit from above, edged by `key-edge` and cast by `key-cast`.
-- **Inlays and Wells** (`inlay`, `inlay-edge`, `well`, `control-edge`): lists and settings are inlaid panels; inputs, check keys, switches and the free preset slot are sunk wells. A form control's rim is `control-edge`, which holds 3:1 against the inlay and the plate.
-- **Seams** (`seam`, `seam-soft`): hairlines between rows and between the keys of one bar.
-- **Legend Inks** (`ink`, `ink-2`, `ink-3`): primary text, secondary text and section heads, tertiary text (preset numbers, sequence numbers, the quiet reason, meta). `ink-3` holds 4.5:1 on every surface it is used on, in both illuminations.
-
-### Status
-- **Fault Red** (`danger`, `danger-ink`, `danger-soft`): destructive key legends and error notes use `danger-ink` for text.
-- **Focus Blue** (`focus`): the 2px focus ring only, never decoration.
+- **Plaster Wall** (`wall`, `wall-2`, `wall-ink`): the room behind the radio; the page background under a plaster-noise texture.
+- **Walnut** (`walnut`, `walnut-deep`): the cabinet colour under the walnut raster; `wood-ink` and `wood-ink-2` are the pale legends printed on wood (knob names, detents).
+- **Speaker Cloth Gold** (`cloth`): the base under the cloth raster.
+- **Backlit Dial Glass** (`glass-hi` → `glass` → `glass-lo` → `glass-edge`): a radial lamp falloff, brightest at the centre; `halo` is the soft glow behind printed dial letters. `print` and `print-2` are the brown-black dial inks.
+- **Ivory** (`ivory-hi`, `ivory`, `ivory-lo`, `ivory-front`, `ivory-lip`): piano-key faces, front lips and pressed faces; `engrave` is the cut legend.
+- **Key Slot** (`slot`) and **Bakelite** (`bakelite`): the dark slot keys sit in and the knob caps.
+- **Programmheft Paper** (`paper`, `paper-2`, `card`, `field`): program sheets, the program card, form fields. Inks `ink`, `ink-2`, `ink-3`; hairlines `rule`, `rule-strong`.
+- **Hardboard** (`board`, `board-2`, `board-ink`, `board-field`): the back panel (menu). A page switches to it by re-pointing the paper ink and rule tokens, so every sheet component works on it unchanged.
+- **Focus** (`focus-on-light` blue, `focus-on-dark` pale gold): the only non-period colours, used solely for the 3px focus outline. Each surface sets `--focus` for its own ground (dial and keys: blue; cabinet and back panel: gold).
 
 ### Named Rules
-**The Lit-Only Rule.** Amber appears only on something that is lit: the playing station, the current selection, the primary action, and the station name the display is showing. Nothing is amber for decoration.
+**The One Signal Rule.** Red means "the station that plays" or "this key is down"; it never decorates. Pilot lamps (a red radial bulb), the pointer, the lit station and the latched legend are its only homes, plus error and danger text.
 
-**The Size-Not-Colour Rule.** The playing preset is marked by staying pressed in, by a larger, heavier name (18px/700) and by its lit LED; the key face never turns amber.
-
-**The Shared-Names Rule.** A new colour is defined for both illuminations under one custom property name; components never reference a day or night value directly. Glass tokens are defined once because the glass does not change with the light.
+**The Two Illuminations Rule.** Every colour exists for Day and Night under the same name. New surfaces use tokens, never literal hex, so that Night comes for free. Night lowers wood, cloth and paper and raises the dial glow (`spill`), the eye glow and a warm `paper-glow`.
 
 ## Typography
 
-**Display Font:** Doto (dot-matrix variable, self-hosted via `@fontsource-variable/doto/full.css`, which carries both axes; fallback `ui-monospace`)
-**Body Font:** Overpass (variable, self-hosted via `@fontsource-variable/overpass`, fallback `system-ui`)
+**Badge Font:** Yellowtail (with Brush Script MT, cursive)
+**Body Font:** Jost Variable (with Jost, Futura, Century Gothic, system-ui)
+**Dial / Label Font:** Barlow Condensed 500 and 600 (with Jost)
 
-**Character:** Overpass descends from highway signage: at its lighter weights it reads like the printed legends of a well-made head unit. Doto is the display's dot matrix; with `font-variation-settings: "ROND" 100` its dots are round, as on a VFD, instead of square pixels.
+All three are self-hosted through @fontsource (`@fontsource-variable/jost`, `@fontsource/barlow-condensed` latin 500/600, `@fontsource/yellowtail` latin 400).
+
+**Character:** A period geometric sans for everything printed on paper, a narrow condensed face for everything printed on glass, ivory or brass, and one chrome-script signature on the badge. It reads like a 1950s radio and its program booklet.
 
 ### Hierarchy
-- **Display** (Doto 720, ROND 100, 30px/1.1, 0.05em, `vfd` with a 14px glow): the station name. 42px once the plate is 560px wide.
-- **Page title** (Doto 800, ROND 100, 22px/1.15, uppercase): the name in a page head window. Heavier than the display so the smaller dots still close up.
-- **Legend** (Overpass 600, 10px, 0.12em, uppercase): indicator legends on the glass (UNGEHÖRT … PAUSE), reason tags, tags, balance ends (0.16em).
-- **Label** (Overpass 600, 11px, 0.16em, uppercase, `ink-2`): section heads. **Key legend** (600, 12px, 0.14–0.16em, uppercase): faceplate bar keys, menu keys, the Erweitert summary.
-- **Song** (Overpass 600, 18px/1.25, at most two lines; 21px wide) in `glass-ink`; **artist** 15px/500 (16px wide) in `glass-ink-2`; **meta** (time · device) 12px/500 tabular in `glass-ink-3`.
-- **Preset name** (Overpass 600, 16px/1.2, max two lines; playing 700, 18px/1.15).
-- **Row title** (600, 15px/1.3) over a **sub** (500, 13px/1.4, `ink-2`). **Body** 400 at 16px/1.45; **ledes** 15px/1.55 capped at 62ch (17px on the sign-in page).
-- **Count** (600, 22px, tabular) and **scale** readings (majors 10px, readout 12px, tabular).
-- **Machine string** (system `ui-monospace`, 12px; 13px in the key field, `ink`, wraps anywhere): only strings a listener copies into another app, the remote key and command addresses on the Fernbedienung page. Everything a listener reads stays Overpass.
-- Weights stop at 700; there is no 750–850 any more.
+- **Badge** (Yellowtail 400, clamp(24px, 7.4vw, 30px), 1): only the brand badge on the cloth, "true-shuffle", dark brown engraved into brushed brass.
+- **Dial title** (Barlow Condensed 600, 25px, 1.1, 0.05em, uppercase): words on the dial (sign-in, switching on, Suchlauf, faults).
+- **Dial station** (Barlow Condensed 500, 18px, 1.06, 0.05em, uppercase; 16px under 360px): station names printed on the glass; lit and selected go to 600. Frequency line 13px, number box 12px.
+- **Display** (Jost 600, clamp(28px, 8.4vw, 36px), 1.06, -0.01em): program-sheet masthead titles. On the back panel's plate: 26px, 0.02em.
+- **Headline** (Jost 650, 18px, 1.3): run-in section heads, set inline with their text followed by ". ".
+- **Title** (Jost 600, 17.5px, 1.2): song title on the program card, two lines max.
+- **Body** (Jost 400, 16px, 1.45); **Lede** (15.5px, 1.6, max 62ch); **Hint** (13.5px, 1.5).
+- **Label** (Barlow Condensed 600, 14.5px, 0.08em, uppercase): key legends on sheet keys; piano-key legends 11.5px, 0.04em (13px, 0.08em on desktop); terminal legends 16px.
+- **Label small** (Barlow Condensed 600, 12px, 0.18em, uppercase): knob names (KLANG, SENDERWAHL), band legends, wave-band lamps, detents.
 
 ### Named Rules
-**The Name Rule.** The product is written *true-shuffle*: lower case, with a hyphen, everywhere — the brand row, the displays, page copy, Spotify playlist names ("true-shuffle · Sender") and docs. It is never set in capitals, not even in tracked legends or on the glass; where a head window would uppercase it, the title names the page instead ("Info") and the sub-line carries the name.
+**The Name Rule.** The name is always "true-shuffle", lower case with a hyphen, never "True Shuffle" and never set in capitals. It must never sit inside an uppercase-transformed element (dial lettering, key legends, terminal legends, tags). On the badge it is set in Yellowtail.
 
-**The One-Line Doto Rule.** Doto sets only the station name in the display and the title in a page head window. Indicators, reasons, sequence numbers, balance ends, songs, artists and counts are Overpass, the way a real display prints its fixed legends in a clean sans and keeps the matrix for the text that changes.
-
-**The Tabular Count Rule.** Every number that counts uses tabular numerals and sits next to what it counts ("10 von 400 gehört", "Runde 1 7 / 400"). A share and its name never break apart ("30 % Neuentdeckungen").
+**The Printed-Where-It-Lives Rule.** Condensed uppercase belongs to glass, ivory, brass and printed legends; running text on paper is Jost in sentence case. Don't set paragraphs in Barlow Condensed or legends in Jost.
 
 ## Layout
 
-Phone first: one column, max 560px, 16px side padding (safe-area aware). On home the blocks are 14px apart, with 20px before the preset bank and before the faceplate bar: brand row, display, transport bar, the preset bank (2 columns, 6px gaps inside a 6px bed; 3 from 700px), MENÜ / VERLAUF. Pages stack their sections 20px apart; a section head sits 10px above its content.
+Phone first: a single column `shell` (max 560px, 10px side padding, 16px from 420px, safe-area aware), gap 20px. The cabinet is a grid of five stacked areas: cloth (badge and eye), dial, window (program card), extra (knobs and keys), base; gap 10px, padding 10px. The phone dial is a vertical scale down the right edge with the string and pointer on it; station rows sit on their own short strip of printed scale, each at least 44px tall.
 
-- **The display arranges itself by its plate** (`container: plate` on `.main`): below 560px the cover (84px) sits under the station name beside the song; from 560px the cover (136px) spans the name and song rows and the name moves beside it.
-- **Desktop faceplate (≥980px):** two columns, max 1320px, `minmax(0,1fr)` radio and a 380–460px side panel, 32px gutter, on `plate-deep`. The faceplate is one plate (24px radius, 22px 28px 28px padding) sticky at top 28px that hugs its content. Pages open in the side panel (the playing or last-played station by default); the panel scrolls on its own with its page head sticky. The phone message strip is hidden there.
-- **Touch targets:** keys 52px (faceplate bar 48, choice row 46, back key 48 square), transport 58px, rows 56–60px, the preset tune key 44×100.
+Desktop (from 980px): the radio becomes landscape, max 1360px; the dial turns horizontal with stations in bands (auto-fit columns, min 118px) under printed band legends and the pointer running across. Station pages use a split: the radio (max 860px, sticky at 24px) and the station's program sheet beside it (360–440px), gap 36px; the radio stands on a walnut sideboard edge drawn under it.
+
+Program sheets: padding 18px 18px 30px, sections 26px apart, section inner gap 10px, stacks 12px. Rows are 56px minimum; terminals 58px; keys 50px (back key 44px); every tap target is at least 44px.
 
 ## Elevation & Depth
 
-Depth is physical: raised keys, a flush plate, inlaid panels and sunk wells, and one sheet of recessed glass. No card floats.
+Depth is physical and lit from above: highlights on top edges (inset white or cream 1px lines), shade under lips and in slots (inset dark shadows), and a cast shadow on the wall below the cabinet. Nothing floats on a neutral drop shadow; every shadow belongs to a material (lacquer, brass edge, key lip, slot, paper lying on a surface). Night deepens `cast` and dims wood via `wood-dim`.
 
 ### Shadow Vocabulary
-- **Key** (`--sh-key`): `inset 0 1px 0 key-hi, inset 0 -1px 0 key-lo, 0 0 0 1px key-edge, 0 1px 0 key-cast, 0 3px 4px -2px key-cast`. A chamfer highlight on top, a hairline edge and a tight contact shadow; the face is a top-lit gradient. No long soft drop shadow: that is what made the first keys read as floating cards. The primary (lit) key takes the same tight shadow and no amber halo.
-- **Pressed** (`--sh-key-press`): `inset 0 1px 3px key-cast, 0 0 0 1px key-edge` + 1px travel.
-- **Latched** (`--sh-latched`): the playing preset stays down; a latched segment in a bar shows `inset 0 2px 4px key-cast`.
-- **Inlay** (`--sh-inlay`): `inset 0 1px 2px inlay-shade, inset 0 0 0 1px inlay-edge, 0 1px 0 seam-hi`.
-- **Well** (`--sh-well`, and `--sh-control` with the `control-edge` rim for form controls).
-- **Glass** (`--glass-inset` + `--glass-bezel`): an inner top shadow, a 1px dark edge and, on the plate, a 1px light lip under it, so the window sits in the plate. A linear sheen (`--glass-sheen`) lies over the top of the glass. No radial glows.
-- **Faceplate** (desktop only): `inset 0 1px 0 plate-hi, 0 0 0 1px plate-edge, 0 2px 4px, 0 32px 64px -32px`.
-- **Light, not shadow:** lit LEDs, lit legends and the needle glow (`vfd-glow`, `lit-glow`); the display cover casts its own colours onto the glass (a blurred copy at 50% under the cover).
+- **Cabinet on the wall** (`inset 0 2px 1px rgba(255,238,208,.55), inset 0 12px 16px -10px rgba(255,230,190,.3), inset 0 -6px 10px rgba(0,0,0,.42), 0 2px 2px rgba(0,0,0,.35), 0 30px 40px -22px var(--cast)`): the one cabinet.
+- **Brass ring** (`0 0 0 2px var(--brass), 0 0 0 3px rgba(30,16,4,.55–.6)`): cloth and dial bezel.
+- **Slot** (`inset 0 4px 8px rgba(0,0,0,.9)` over a `#050201 → slot → #24160c` gradient): the keyboard and any shared key row.
+- **Ivory key joint** (inset 1px lit left edge, shaded right edge); **key pressed** (`inset 0 5px 7px rgba(30,18,4,.55)` plus a 7px sink).
+- **Window paper** (`inset 0 4px 9px rgba(40,20,5,.42)`): the card seen through the brass window.
+- **Sheet on a surface** (`0 1px 1px rgba(30,20,5,.2), 0 14px 30px -16px rgba(30,20,5,.55)`); desktop side sheet adds a second page edge.
+- **Glow** (`0 0 38px var(--spill)` dial, `0 0 22px var(--eye-glow)` eye, `0 0 7px rgba(230,70,40,.65)` pilot lamp): light, not elevation; zero or faint by day, visible by night.
 
 ### Named Rules
-**The Three Materials Rule.** Every surface is a key (raised, machined), the plate (flush), an inlay or well (recessed), or glass (recessed, black). Nothing hovers above the plate except the transient message strip.
+**The Lit-From-Above Rule.** Every raised part has a light top edge and a shaded foot; every recessed part has its shadow at the top. If a shadow does not name a material and a light source, it does not belong.
 
 ## Shapes
 
-Precise rounded rectangles, tight like machined parts. Faceplate 24px, glass 16px, inlay panels 14px, the preset bank 12px, keys and bars 8px, fields and notes 10px, the display cover 8px, check keys 7px, list covers 6px. Switches and radio dots are round; tags and lit reasons are pills. LEDs are 2px-radius lenses, 16×3, at the top centre of a preset key or above a choice key's legend. Keys in one bar share the outer radius and are split by a `seam-soft` hairline. Row hairlines start under the text, not under the cover.
+Soft period forms. The cabinet has rounded shoulders and a flatter foot (30px 30px 16px 16px / 24px 24px 14px 14px), the cloth follows it inset (22px/16px top, 5px foot); the dial bezel is 14px with 9px glass; the brass window 8px with 3px paper; the badge plate 6px. Paper is nearly square (2px), keys are 2px with square feet where they meet the slot (2px 2px 0 0). Everything round is truly round: knobs, eye, screws, pilot lamps, detent dots (50%). Screws are small radial-gradient brass heads with a rotated slot, each at a different angle.
 
 ## Components
 
-### Display
-The radio's window: black glass, 16px radius, 14px 16px padding (18px 22px wide). Top: the five indicator legends (lit in `vfd` with glow, unlit in `vfd-ghost`). Then the Doto station name (a name that is not a station, such as idle, steps back to `vfd-2`). Then the cover and the song block: song (two lines max), artist, and a meta line with the time and the output device (speaker icon) split by a `glass-rule` hairline. Then one status line (`vfd-2`) or a message, then the tuner scale. **Cover:** 84px (136px wide), 8px radius, 1px light outline, a contact shadow, fading in (420ms) when the song changes, with its blurred glow behind it. Missing or failing covers show a drawn disc on dark glass, never a broken image; while a station tunes, or when nothing plays, the station's own playlist image stands in. Sign-in, loading, error and first-run displays have no cover slot.
+### Piano keys (the cabinet keyboard)
+Ivory keys touching in one continuous dark slot; the slot's upper lip shades them.
+- **Shape:** 2px 2px 0 0, min height 60px, legend cut just above an 8px front lip.
+- **Colour:** ivory gradient face, `ivory-front`/`ivory-lip` lip, `engrave` legend with a shaded top edge and a lit lower edge.
+- **Hover / Focus:** brightness 1.04; focus outline inset -6px.
+- **Pressed / Latched:** sinks 7px, lip disappears below the slot edge, the slot's shadow falls on its face; a latched key (pause) stays down and its legend turns `lit-deep`. The pause key is a latching toggle named by its engraving.
+- **Power key:** larger (64px) with a red pilot lamp beside a 16px legend.
 
-### Tuner scale with numbered majors and readout
-A round's progress as a frequency band: an SVG graduation (minor ticks every 2%, majors every 10%, crisp 1px strokes), a 1px baseline, a 3px fill and a 2px needle. On glass the band is `vfd-2` and the needle `vfd` with glow; on a preset key it becomes the plain groove described there. Under the band: five numbered majors and the readout "Runde n" / "x von y gehört". **Signature interaction:** pressing a preset tunes; the needle sweeps across and settles at the station's position (900ms) while the station name rewrites from ghost to lit in four steps (520ms). Only transform and colour animate.
+### Sheet keys
+The same ivory key family on paper, each seated in a slot of its own (a 3px `slot` rim drawn by shadows); Barlow Condensed 600 14.5px uppercase legend.
+- **Primary:** same ivory, with a lit red pilot lamp (8px) before the legend. There is no coloured button fill anywhere.
+- **Danger:** `danger-key` legend. **Back:** 44px. **Small:** 46px.
+- **Shared slot:** keys side by side touch in one slot (`row-actions`).
 
-### Transport bar
-One machined bar split into four keys (Daumen runter, Pause/Play, Weiter, Daumen hoch), 58px tall, 24px icons at stroke 2, so they read like printed legends. A latched thumb stays down and lights its icon in `lit-text` (`aria-pressed`). With nothing playing the whole bar sinks flush.
+### Printed actions
+What should not look like a key is printed: a full-width line of Jost 600 16px ruled above and below with a dotted leader running to the margin; hover tints the row with `row-hover`; danger in `lit-ink`.
 
-### Preset keys
-**The preset bank** is one cut-out in the plate (`well`, 12px radius, 6px padding and gaps) with the station keys seated in it, as a head unit's preset keys sit in their frame; keys never float on the plate by themselves. Each key (min 104px) carries: the number top left (700, 13px, tabular, `ink-3`), the LED lens at the top centre, the Einstellen legend top right (sliders icon 18px in `ink-3`, its own 44px target), the name (two lines, German hyphenation, a break allowed after "/", never inside a word), and at the foot the round as a groove cut into the key (4px, `well`, amber fill to the station's position) over the count "x / y"; "Runde n" joins the count from the second round on. The playing preset latches down, its name grows to 18px/700, its LED lights and the groove's fill glows. A free memory slot is an empty seat in the bank: a hairline outline, a plus and "Sender anlegen".
+### The dial (signature)
+A brass-ringed dark bezel holding the backlit glass with a bright top edge and a diagonal reflection band. Stations are rows of number box, condensed uppercase name and a small frequency-style count. States: waiting (print-2), selected with the knob (600), lit (red, scale 1.05, red glow), held in pause (red, not glowing). Hover underlines the name. Along the foot of the glass a row of wave-band lamps (7px dots, lit red when on).
+- **Pointer:** a red needle with a dark rider on a thin string, gliding to the lit station over 1150ms with `--ease-string` (`cubic-bezier(0.34, 1.26, 0.5, 1)`), a slight string overshoot. While switching on (Suchlauf) it sweeps the scale, 3.4s ease-in-out alternate.
 
-### Choice rows
-Three choices (mix presets, illumination) machined from one bar, 52px tall; each key carries its LED lens above the legend, and the latched choice stays down with its LED lit.
+### Magic eye
+A 52px brass-ringed lens with two green half-disc fans. States: open (playing), weak, tuned, tuning (closes and reopens during a pointer glide), off. Transitions 900ms `--ease`.
 
-### Faceplate bar and menu keys
-MENÜ and VERLAUF as keys with 12px tracked legends. Menu choices are keys in a two-column grid (min 76px, legend over a 13px sub-line).
+### Knobs and detents
+Bakelite caps (66px, 60px under 380px) in a brass conic ring with an inlaid ivory pointer line and printed ticks round them; names in label small, `wood-ink` on wood, `ink` on paper. Klang has three detents printed round it, each a 44px button with a dot that lights red when chosen. Knobs turn by drag (`--turn`).
 
-### Page head (small display window)
-A 48px square back key beside a glass window with the Doto title, an Overpass sub-line in `glass-ink-2`, and optionally the station's tuner scale. On desktop the back key is omitted where there is nothing to go back to, and the head is sticky.
+### Program card
+The card behind the brass window: paper texture on `card`, cover art 64px (2px radius, fades in 420ms), song in title style, artist, reason, and the round as a printed tick scale with a red 3px mark at the position.
 
-### Track lists (inlays)
-Läuft gerade, Als Nächstes, Zuletzt auf diesem Sender and Verlauf are inlaid panels of 60px rows: an optional tabular sequence number (`ink-3`), a cover (40px; 44px in Verlauf, 48px for the song that plays), title and artist, and on the right either the reason, a relative time or a clock time. Reasons are quiet: "Ungehört" is a plain `ink-3` legend; Favorit and Entdeckung are lit pills in `lit-text`. Discovery counts use the same rows with a 22px tabular count.
+### Program sheets and back panel
+- **Sheet:** paper gradient with grain and a double-rule masthead (3px double `rule-strong`), title in display style.
+- **Back panel:** hardboard texture, a row of vent holes, four corner screws, and a riveted key-brass type plate as the masthead. It re-points ink and rule tokens so every sheet component renders on it.
+- **Lists:** printed running order: rows ruled with `rule`, framed by `rule-strong`; reasons as small condensed uppercase marks with a ring bullet, favourites and discoveries in `lit-ink`. Tables (`ledger`) follow the same ruling.
+- **Terminals (menu entries):** a 16px brass screw head, a condensed uppercase legend, a Jost sub-line, a line under it.
 
-### Balance bar
-"Entdecken ↔ Vertraut" as 21 segments on glass: unlit in `vfd-ghost`, the chosen one in `vfd` with glow; Overpass end legends; the shares below never split a share from its name. A transparent native range input carries interaction; its focus ring is `focus-glass`.
+### Inputs and switches
+- **Field:** `field` fill, 1.5px `rule-strong` border with a 2.5px `ink-2` underline, 3px 3px 1px 1px, min height 48px, 16px text; caret in `lit-ink`.
+- **Checks and radios:** a printed box on the sheet, ticked in ink with an SVG tick mask.
+- **Toggle lever:** a bakelite bat on a brass nut thrown from -34deg (Aus) to 34deg (An), legends either side, the active one bold.
+- **Selectors:** positions with a pilot lamp over each; the chosen lamp lit red.
 
-### Inputs, switches, check keys
-Inputs, selects, switches (52×30) and check keys (24px, an amber bar with glow when checked) are wells with the `control-edge` rim. Radio options are hairline-separated rows with an amber dot. Focus is the global 2px `focus` outline at 2px offset; inside bars the ring sits 4px inside the key.
-
-### Message strip
-On phones, when a page covers the radio, messages appear in a strip of black glass fixed at the bottom, fading and rising 12px in over 220ms. Hidden on the desktop faceplate.
-
-### Notes and tags
-Notes (warnings the display cannot hold) are `lit-soft` or `danger-soft` panels, 10px radius, 14px/500. Tags (Gast) are 10px tracked pills outlined in `seam`.
+### Status strip and rating slip
+- **Strip:** a fixed message at the foot in dial glass with a 3px brass gradient border, 10px radius; slides up 12px and fades in over 220ms.
+- **Slip:** a paper dialog with a brass border (7px radius), dimmed backdrop `rgba(20,12,4,.55)`, actions as sheet keys.
 
 ### Icons and rasters
-UI icons are lucide outline icons at 20px (24px in the transport bar, 16–18px in legends), stroke 1.75. The app icon's source of truth is `src/client/public/icon.svg`; `icon-192.png`, `icon-512.png` and `apple-touch-icon.png` are rendered from it by `scripts/render-icons.mjs` (`npm run icons`). Fonts are self-hosted; covers load from Spotify's image hosts, which the CSP allows (`src/client/public/_headers`).
+- **Icons:** Lucide line icons via `lucide-preact` (ThumbsUp/ThumbsDown, Disc3, Music2, Speaker, Minus, Plus), 20px at 1.9 stroke by default; small marks (ticks, scale, holes) are inline SVG data URIs or masks. No emoji or Unicode glyphs as icons.
+- **Rasters:** `/tex/walnut.webp`, Poly Haven "Smoked Walnut Veneer", CC0 1.0, scaled 2048 to 1600px and graded as lacquered walnut; `/tex/cloth.webp`, Poly Haven "Hessian 380", CC0 1.0, 900px crop graded golden. Each carries its origin, licence and processing in a `.json` beside it. Any new shipping raster must carry the same provenance file.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** define every new colour for both illuminations under one custom property name; define glass colours once.
-- **Do** reserve amber for what is lit: the playing station, the current selection, the primary action, the station name on the glass.
-- **Do** show the song's cover in the display and beside every song in a list, with the drawn stand-in when there is none.
-- **Do** set Doto only for the station name and page titles, with round dots.
-- **Do** set counts in tabular numerals next to the thing they count.
-- **Do** make every control a key (raised, machined), a segment of a bar, or a well with a visible rim.
-- **Do** keep touch targets at 44px or more (keys 48–58px, rows 56–60px).
-- **Do** animate only transform, opacity and colour with `--ease`; reduced motion collapses all of it to 1ms.
+- **Do** build every control as a physical part of the radio: an ivory key in a slot, a bakelite knob in a brass ring, a lever, a printed station on the glass, a screw-terminal on the back panel.
+- **Do** keep every station printed on the dial at all times; mark the playing one by striking it forward and lighting it red, not by hiding the others.
+- **Do** use tokens for every colour so Day and Night both work; set `--focus` for the surface's ground.
+- **Do** mark a primary key with a red pilot lamp beside its legend, never with a coloured fill.
+- **Do** set lists and settings as a printed Programmheft: rules, run-in heads, dotted leaders, condensed legends.
+- **Do** keep tap targets at least 44px.
+- **Do** keep `--ease-string` (`cubic-bezier(0.34, 1.26, 0.5, 1)`) on the dial pointer's glide: it is the one sanctioned exception to the no-bounce rule (recorded in `.impeccable/config.json` `detector.ignoreValues`), and reduced motion reduces it to 1ms.
+- **Do** give every shipping raster a provenance `.json` beside it (origin, licence, processing).
 
 ### Don't:
-- **Don't** mark the playing station by turning its key amber; it latches down, its name grows, its LED lights.
-- **Don't** use Doto for indicators, reasons, sequence numbers, songs, artists, counts or anything on the plate.
-- **Don't** build cover-art grids, a round green play button or dark streaming chrome; covers accompany songs, they are not the navigation.
-- **Don't** reuse the discarded "Plattenschrank" record-crate world or the first build's grey-green LCD.
-- **Don't** put lists on display glass; glass is for what the radio itself would show.
-- **Don't** use radial spotlight glows, pixel-cell textures or repeating-gradient stripes as decoration.
-- **Don't** float cards above the plate; use the three materials.
-- **Don't** use unicode glyphs as icons; use lucide outline icons.
+- **Don't** write the name as "True Shuffle" or set it in capitals, or place it inside an uppercase-transformed element.
+- **Don't** use overshoot or bounce easing anywhere except the dial pointer; everything else moves on `--ease` (`cubic-bezier(0.16, 1, 0.3, 1)`) at 120ms or 220ms, the eye at 900ms.
+- **Don't** bring back the car head-unit world: black VFD glass, machined silver keys, dot-matrix display type.
+- **Don't** use app cards, floating tiles, streaming-app chrome or a numbers cockpit; progress is a small printed scale with a red mark.
+- **Don't** introduce a second accent hue; red is the signal, green is only the magic eye, brass is metal.
+- **Don't** use flat brass; brass is always a lit gradient.
+- **Don't** add emoji, Unicode glyphs as icons, or generic drop shadows that name no material.
