@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from "preact/hooks";
-import type { AppState } from "../shared/api";
+import type { AppState, TrackView } from "../shared/api";
 import { ApiError, api } from "./api";
 
 export type Load =
@@ -25,6 +25,10 @@ class Store {
 	load: Load = { kind: "loading" };
 	flash: Flash | null = null;
 	tuning: { stationId: number; since: number } | null = null;
+	/** The song whose rating sheet is open. */
+	rating: TrackView | null = null;
+	/** Thumbs given here, shown at once in every list until the next load has them. */
+	thumbs = new Map<string, -1 | 0 | 1>();
 	/** When the last snapshot arrived (for counting song progress locally). */
 	receivedAt = Date.now();
 	private listeners = new Set<Listener>();
@@ -38,6 +42,15 @@ class Store {
 
 	emit(): void {
 		for (const l of this.listeners) l();
+	}
+
+	rate(t: TrackView | null): void {
+		this.rating = t;
+		this.emit();
+	}
+
+	thumbOf(t: { id: string; thumb: -1 | 0 | 1 }): -1 | 0 | 1 {
+		return this.thumbs.get(t.id) ?? t.thumb;
 	}
 
 	refresh(live = true): Promise<void> {

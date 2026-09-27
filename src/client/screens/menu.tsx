@@ -10,6 +10,7 @@ import {
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api } from "../api";
 import { Cover, PageBar, Section } from "../components/radio";
+import { RateHit, ThumbMark } from "../components/rate";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
 const DEVICE_TYPES: Record<string, string> = {
@@ -285,7 +286,8 @@ export function HistoryScreen() {
 				<Section key={d} title={d} id={`d-${d}`}>
 					<ol class="inlay tracks tracks--covers">
 						{list.map((t) => (
-							<li key={`${t.id}-${t.playedAt}`} class="track">
+							<li key={`${t.id}-${t.playedAt}`} class="track track--rate">
+								<RateHit t={t} />
 								<Cover src={t.imageUrl} class="cover--md" />
 								<span class="track__main">
 									<span class="track__title">{t.name}</span>
@@ -294,6 +296,7 @@ export function HistoryScreen() {
 										{t.stationName ? `${SEP}${t.stationName}` : ""}
 									</span>
 								</span>
+								<ThumbMark t={t} />
 								<span class="track__meta">
 									<span class="num">{clock(t.playedAt)}</span>
 									{t.ignored ? <span class="tag">Gast</span> : null}

@@ -121,6 +121,15 @@ test.describe("a listener's day", () => {
 		await expect(page.getByText(/≈ 50 % ungehört/)).toBeVisible();
 		await page.getByRole("button", { name: "Entdecker" }).click();
 		await expect(page.getByText(/≈ 60 % ungehört/)).toBeVisible();
+
+		// Rated afterwards, not only while it plays: a song further down the list.
+		const third = next.nth(2);
+		await third.getByRole("button", { name: / bewerten$/ }).click();
+		const sheet = page.getByRole("dialog");
+		await expect(sheet).toBeVisible();
+		await sheet.getByRole("button", { name: "Daumen runter: nie wieder" }).click();
+		await expect(sheet).toBeHidden();
+		await expect(third.getByRole("img", { name: "Kommt nie wieder" })).toBeVisible();
 	});
 
 	test("guest mode keeps someone else's music out of the memory", async ({ page }) => {

@@ -2134,3 +2134,92 @@ details.more > .more__body {
 		/* biome-ignore-end lint/complexity/noImportantStyles: see above */
 	}
 }
+
+/* ---------------------------------------- rating a song from a list */
+
+.track--rate {
+	border-radius: 10px;
+	transition: background-color var(--t-fast) var(--ease);
+}
+
+.track--rate:hover {
+	background: var(--row-hover);
+}
+
+/* The whole row is the button; its content stays readable text beside it. */
+.track__hit {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: inherit;
+	background: transparent;
+	cursor: pointer;
+}
+
+.track__hit:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.track__thumb {
+	flex: none;
+	width: 16px;
+	height: 16px;
+	color: var(--ink-3);
+}
+
+.track__thumb--up {
+	color: var(--lit-text);
+}
+
+.sheet {
+	width: min(440px, calc(100vw - 24px));
+	margin: auto auto max(12px, env(safe-area-inset-bottom));
+	padding: 0;
+	border: 0;
+	border-radius: var(--r-panel);
+	background: var(--inlay);
+	color: var(--ink);
+	box-shadow:
+		var(--sh-inlay),
+		0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.sheet::backdrop {
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.sheet__body {
+	display: grid;
+	gap: 14px;
+	padding: 16px;
+}
+
+.sheet__song {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+}
+
+.sheet__song p {
+	margin: 0;
+}
+
+.sheet__actions {
+	display: grid;
+	gap: 8px;
+}
+
+.sheet__actions .btn {
+	justify-content: flex-start;
+}
+
+@media (min-width: 720px) {
+	.sheet {
+		margin: auto;
+	}
+}

@@ -34,6 +34,8 @@ export interface TrackView {
 	album: string;
 	imageUrl: string | null;
 	durationMs: number;
+	/** Thumb in True Shuffle: -1 never again, 1 favourite, 0 none. */
+	thumb: -1 | 0 | 1;
 }
 
 export interface NowPlaying extends TrackView {

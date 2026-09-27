@@ -5,6 +5,7 @@ import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
 import { Cover, PageBar, Scale, Section } from "../components/radio";
+import { RateHit, ThumbMark } from "../components/rate";
 import { ago, DECK_PREFIX, num, pct, SEP } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
@@ -336,12 +337,14 @@ export function Station({
 			{np && np.stationId === id ? (
 				<Section title="Läuft gerade" id="now">
 					<ul class="inlay tracks tracks--now">
-						<li class="track">
+						<li class="track track--rate">
+							<RateHit t={np} />
 							<Cover src={np.imageUrl} class="cover--lg" />
 							<span class="track__main">
 								<span class="track__title">{np.name}</span>
 								<span class="track__sub">{np.artists}</span>
 							</span>
+							<ThumbMark t={np} />
 							{np.kind ? (
 								<Reason kind={np.kind} />
 							) : (
@@ -361,7 +364,8 @@ export function Station({
 					// The queue in order: numbered, each song with its cover and its reason.
 					<ol class="inlay tracks tracks--numbered">
 						{d.upcoming.map((t, i) => (
-							<li key={t.id} class="track">
+							<li key={t.id} class="track track--rate">
+								<RateHit t={t} />
 								<span class="track__n num" aria-hidden="true">
 									{String(i + 1).padStart(2, "0")}
 								</span>
@@ -370,6 +374,7 @@ export function Station({
 									<span class="track__title">{t.name}</span>
 									<span class="track__sub">{t.artists}</span>
 								</span>
+								<ThumbMark t={t} />
 								<Reason kind={t.kind} />
 							</li>
 						))}
@@ -381,12 +386,14 @@ export function Station({
 				<Section title="Zuletzt auf diesem Sender" id="recent">
 					<ul class="inlay tracks tracks--covers">
 						{d.recent.slice(0, 8).map((t) => (
-							<li key={`${t.id}-${t.playedAt}`} class="track">
+							<li key={`${t.id}-${t.playedAt}`} class="track track--rate">
+								<RateHit t={t} />
 								<Cover src={t.imageUrl} />
 								<span class="track__main">
 									<span class="track__title">{t.name}</span>
 									<span class="track__sub">{t.artists}</span>
 								</span>
+								<ThumbMark t={t} />
 								<span class="track__meta">{ago(t.playedAt)}</span>
 							</li>
 						))}

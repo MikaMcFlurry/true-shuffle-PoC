@@ -3979,6 +3979,7 @@ export class HubCore {
 			album: t[3],
 			imageUrl: t[4],
 			durationMs: t[5],
+			thumb: (this.liveRow(t[0])?.thumb ?? 0) as -1 | 0 | 1,
 		};
 	}
 

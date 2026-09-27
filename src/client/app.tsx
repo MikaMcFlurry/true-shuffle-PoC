@@ -1,5 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { Display } from "./components/radio";
+import { RateSheet } from "./components/rate";
 import { useRoute } from "./router";
 import { Home } from "./screens/home";
 import {
@@ -123,6 +124,7 @@ export function App() {
 			)}
 			{side ? <aside class="side">{side}</aside> : null}
 			{side && !desk ? <FlashStrip /> : null}
+			<RateSheet />
 		</div>
 	);
 }
