@@ -248,10 +248,11 @@ async def run_error_handler(request: Request, exc: RunError):
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     if request.url.path.startswith(("/api/", "/export/")):
-        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code,
+                            headers=exc.headers)
     return _templates.TemplateResponse(
         request, "error.html", {"status": exc.status_code, "detail": exc.detail},
-        status_code=exc.status_code,
+        status_code=exc.status_code, headers=exc.headers,
     )
 
 

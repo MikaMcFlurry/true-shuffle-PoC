@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-29T00:00:00Z",
+  "title": "Design System: true-shuffle \u2014 Listening Room",
+  "extensions": {
+    "colorMeta": {
+      "signal": {
+        "role": "primary",
+        "displayName": "Soft mint"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Warm near-black"
+      },
+      "light-signal": {
+        "role": "primary",
+        "displayName": "Deep green"
+      }
+    },
+    "shadows": [
+      {
+        "name": "shared-shadow",
+        "value": "0 10px 28px rgba(0,0,0,.38)",
+        "purpose": "Shared token; explicitly removed from Listening Room cards, run cards and artwork."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fast",
+        "value": "150ms ease",
+        "purpose": "Shared control feedback, suppressed with reduced motion."
+      },
+      {
+        "name": "medium",
+        "value": "220ms",
+        "purpose": "Shared transition duration; use only where existing primitives apply it."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone-max",
+        "value": "639px"
+      },
+      {
+        "name": "rail-min",
+        "value": "1100px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary form or lifecycle action.",
+      "html": "<button class=\"ds-button\">Fortsetzen</button>",
+      "css": ".ds-button{font-family:var(--font);font-size:var(--text-base);font-weight:650;min-height:44px;padding:10px 20px;border:1.5px solid var(--signal);border-radius:6px;background:var(--signal);color:var(--signal-ink);cursor:pointer;transition:background-color 150ms ease,transform 150ms ease}.ds-button:hover{filter:brightness(1.06)}.ds-button:active{transform:scale(.97)}.ds-button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Main transport",
+      "kind": "button",
+      "refersTo": "transport-main",
+      "description": "Start/pause; this static example depicts Start.",
+      "html": "<button class=\"ds-transport\" aria-label=\"Start\"><svg viewBox=\"0 0 24 24\" width=\"28\" height=\"28\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M8 5v14l11-7z\"/></svg></button>",
+      "css": ".ds-transport{display:grid;place-items:center;width:72px;height:72px;border:0;border-radius:50%;background:var(--signal);color:var(--signal-ink);cursor:pointer;transition:background-color 150ms ease,transform 150ms ease}.ds-transport:hover{background:var(--ink);color:var(--canvas)}.ds-transport:active{transform:scale(.95)}.ds-transport:focus-visible{outline:2px solid var(--signal);outline-offset:2px}@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Output field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Native output selector for remote playback.",
+      "html": "<label class=\"ds-field\">Abspielen auf<select class=\"ds-select\"><option>Wohnzimmer \u00b7 speaker</option></select></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;color:var(--muted);font:700 12px var(--font)}.ds-select{width:100%;min-height:44px;padding:0 12px;border-radius:9px;border:1.5px solid var(--line-strong);background:var(--canvas);color:var(--ink);font:15px var(--font)}.ds-select:focus-visible{outline:2px solid var(--signal);outline-offset:2px}@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Desktop navigation item",
+      "kind": "nav",
+      "description": "Current destination in the desktop rail.",
+      "html": "<nav aria-label=\"Hauptnavigation\"><a class=\"ds-nav\" aria-current=\"page\" href=\"/runs\">H\u00f6rvorg\u00e4nge</a></nav>",
+      "css": ".ds-nav{display:block;padding:12px;border-radius:6px;min-height:44px;box-sizing:border-box;font:500 14px var(--font);color:var(--signal);background:var(--surface-2);text-decoration:none}.ds-nav:hover{color:var(--ink)}.ds-nav:focus-visible{outline:2px solid var(--signal);outline-offset:2px}@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Control ownership chip",
+      "kind": "chip",
+      "description": "Ownership statement; never proof of audible playback.",
+      "html": "<span class=\"ds-chip\">True Shuffle steuert</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:6px;font:700 12px/1 var(--font);border-radius:999px;padding:7px 12px;background:var(--signal);color:var(--signal-ink);white-space:nowrap}@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Card surface",
+      "kind": "card",
+      "description": "Supporting content outside the flat playback and queue zones.",
+      "html": "<section class=\"ds-card\"><h2>Ausgeschlossene Titel</h2><p>Keine ausgeschlossenen Titel in diesem H\u00f6rvorgang.</p></section>",
+      "css": ".ds-card{padding:16px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:none;font:15px/1.5 var(--font)}.ds-card h2{font-size:17px;margin:0 0 8px}.ds-card p{color:var(--muted);margin:0}@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Listening Room",
+    "overview": "A calm music-player interface centres the current song, familiar transport and selected output. The saved queue and progress explain the listening session beside it. Cover art is secondary; absent art has an honest fallback. German is the interface language; implementation and documentation remain English.\n\nThis is the implemented direction approved on 2026-09-29 in `docs/persistent-queue/DESIGN_DIRECTION.md`. It replaces the previous visual identity. It records the current surface, not a promise that every continuity target in `PRODUCT.md` is delivered.",
+    "keyCharacteristics": [
+      "Warm near-black, soft mint and explicit light mode.",
+      "Archivo, restrained panels and readable song titles.",
+      "Desktop navigation rail; compact phone song row and full-width controls.",
+      "State expressed in words and shape as well as colour."
+    ],
+    "rules": [
+      {
+        "name": "Evidence",
+        "body": "Colour and watcher liveness never establish audible playback. An active run is not necessarily playing. Remote playing state uses provider `is_playing` observations; a freshly loaded web player begins idle. Status chips describe control ownership, not proof that sound is audible.",
+        "section": "colors"
+      },
+      {
+        "name": "Transport First",
+        "body": "Player notes and state banners follow the song and transport region in DOM order. Errors and manual-control messages remain discoverable without displacing the primary controls above them.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "Keep the current song, transport and selected output easy to find on desktop and phone.",
+      "Use runtime tokens and the final Listening Room stylesheet when extending the interface.",
+      "Preserve provider attribution, selection rules, recommendations, favourites, exclusions, import/export, history and run lifecycle.",
+      "Describe known playback and continuity state with words the evidence supports."
+    ],
+    "donts": [
+      "Restore the superseded record-crate, divider or oversized remaining-count hierarchy.",
+      "Turn watcher liveness, a control-ownership chip or an active database run into a claim that sound is playing.",
+      "Hide provider restrictions or claim unverified Spotify, cross-browser or HA/MA continuity.",
+      "Add auroras, gradients or glowing panels to this visual direction."
+    ]
+  }
+}

@@ -246,6 +246,15 @@ export class RunPlayer {
     this.slotBlockerName = null;
     this.position = { ms: 0, at: 0, known: false };
     this._posTimer = null;
+    this.pollBusy = false;
+    this.refreshOnReturn = () => {
+      if (document.hidden || !this.isRemote) return;
+      this.guard(async () => {
+        await this.refreshState();
+        await this.loadDevices();
+        this.startPolling();
+      });
+    };
   }
 
   get isRemote() { return this.provider.playback === "remote_device"; }
@@ -257,16 +266,21 @@ export class RunPlayer {
     // playing made a freshly dealt run claim it was running with Pause
     // enabled before anyone had pressed anything.
     //
-    // Remote: the server only runs a watcher while it is actually driving
-    // playback, so that flag is the honest answer.
+    // Remote: a watcher can be alive while the device is silent. Only a
+    // provider observation, not task liveness, proves audible playback.
     // Web player: this tab just loaded, so it is playing nothing, full stop.
     this.playing = this.isRemote
       && this.state.status === "active"
-      && Boolean(this.state.watcher?.watching);
+      && this.state.watcher?.playback?.is_playing === true;
     this.render();
     this.loadSkipped();
     this.loadExcluded();
-    if (this.isRemote && this.playing) this.startPolling();
+    if (this.isRemote) {
+      this.startPolling();
+      document.addEventListener("visibilitychange", this.refreshOnReturn);
+      window.addEventListener("pageshow", this.refreshOnReturn);
+      window.addEventListener("online", this.refreshOnReturn);
+    }
 
     if (this.isRemote) {
       await this.loadDevices();
@@ -325,6 +339,10 @@ export class RunPlayer {
   /* -- transport ---------------------------------------------------------- */
 
   async start() {
+    // Devices disappear while the phone sleeps or the listener leaves a car.
+    // Refresh the targets before resuming, retaining an explicit selection
+    // only if that device is still present.
+    if (this.isRemote) await this.loadDevices();
     const deviceId = $("#deviceSelect")?.value || null;
     this.state = await api(`/api/runs/${this.runId}/start`, {
       method: "POST", body: { device_id: deviceId },
@@ -370,7 +388,7 @@ export class RunPlayer {
     await api(`/api/runs/${this.runId}/pause`, { method: "POST" });
     await this.web?.pause();
     this.playing = false;
-    this.stopPolling();
+    if (!this.isRemote) this.stopPolling();
     this.stopPositionTimer();
     this.state = await api(`/api/runs/${this.runId}`);
     this.render();
@@ -399,29 +417,47 @@ export class RunPlayer {
   startPolling() {
     if (!this.isRemote || this.poller) return;
     this.poller = setInterval(async () => {
-      try {
-        const next = await api(`/api/runs/${this.runId}`);
-        const changed = next.cursor !== this.state?.cursor || next.status !== this.state?.status
-          || next.watcher?.watching !== this.state?.watcher?.watching
-          || next.watcher?.drifted !== this.state?.watcher?.drifted;
-        this.state = next;
-        if (changed) this.render();
-        if (next.status !== "active") this.stopPolling();
-      } catch { /* transient; the next tick retries */ }
+      if (document.hidden || this.pollBusy) return;
+      try { await this.refreshState(); }
+      catch { /* transient; visibility/online and the next tick retry */ }
     }, 4000);
+  }
+
+  async refreshState() {
+    if (this.pollBusy) return;
+    this.pollBusy = true;
+    try {
+      const next = await api(`/api/runs/${this.runId}`);
+      this.state = next;
+      const sample = next.watcher?.playback;
+      if (sample) {
+        this.playing = next.status === "active" && sample.is_playing;
+        if (sample.track_id === next.current?.id) {
+          this.trackPosition(sample.progress_ms);
+          if (sample.observed_at) this.position.at = sample.observed_at * 1000;
+        }
+      } else {
+        this.playing = false;
+      }
+      this.render();
+      if (["completed", "cancelled", "archived"].includes(next.status)) this.stopPolling();
+    } finally { this.pollBusy = false; }
   }
 
   stopPolling() { clearInterval(this.poller); this.poller = null; }
 
   async loadDevices() {
     const select = $("#deviceSelect");
+    const selected = select?.value;
     try {
       const { devices } = await api(`/api/devices?provider=${this.provider.id}`);
       this.noDevices = devices.length === 0;
       if (select) {
         select.replaceChildren(
           ...(devices.length
-            ? devices.map((d) => el("option", { value: d.id, selected: d.is_active || null },
+            ? devices.map((d) => el("option", { value: d.id,
+                selected: (devices.some((item) => item.id === selected)
+                  ? d.id === selected : d.is_active) || null },
                 `${d.name} · ${d.kind}`))
             : [el("option", { value: "" }, "Kein Gerät gefunden")])
         );

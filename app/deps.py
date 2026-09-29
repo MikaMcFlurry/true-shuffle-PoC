@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import math
 import secrets
 from typing import Any, Dict, Optional
 
 from fastapi import HTTPException, Request
 
 from app import db
-from providers.base import ProviderError, user_message
+from providers.base import ProviderError, ProviderQuotaError, user_message
 
 _SESSION_KEY = "ts_user"
 
@@ -60,5 +61,7 @@ async def require_run(request: Request, run_id: int) -> Dict[str, Any]:
 def http_error(exc: ProviderError) -> HTTPException:
     """Translate a connector failure into an HTTP response."""
     return HTTPException(
-        status_code=getattr(exc, "status_code", 502), detail=user_message(exc)
+        status_code=getattr(exc, "status_code", 502), detail=user_message(exc),
+        headers={"Retry-After": str(max(1, math.ceil(exc.retry_after_s)))}
+        if isinstance(exc, ProviderQuotaError) and exc.retry_after_s else None,
     )

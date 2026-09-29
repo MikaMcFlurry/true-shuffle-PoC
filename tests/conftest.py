@@ -19,6 +19,14 @@ os.environ["SECRET_KEY"] = TEST_SECRET
 import pytest
 import pytest_asyncio
 
+
+@pytest.fixture(autouse=True)
+def isolated_provider_cooldowns():
+    from providers import http
+    http._cooldowns.clear()
+    yield
+    http._cooldowns.clear()
+
 from core.models import (
     UNKNOWN_TRACK_COUNT,
     Device,

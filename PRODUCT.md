@@ -20,8 +20,9 @@ every day. They listen while driving, working, and moving around — not while
 staring at a screen. Their frustration is concrete: the same songs keep coming
 back, and large parts of the playlist are never heard at all.
 
-They are not building a playlist, curating, or discovering. They already made
-the playlist. They want it to actually play through.
+They already made the playlist and want neglected songs to actually play.
+Optional discovery, suggestions and existing individual selection rules are
+part of the current product and must survive continuity improvements.
 
 **Secondary: the closed-beta tester.** Five Spotify Premium accounts. Same job,
 plus a willingness to report what broke.
@@ -113,6 +114,23 @@ A Spotify Extended Streaming History analysis over 100,022 personal track plays
 found an 86.7% shuffle share, and track repeats within 8.0% of 50-play windows.
 This describes personal listening, **not** any streaming service's playlist
 algorithm, and must never be presented as the latter.
+
+## Owner requirements added 2026-09-29
+
+The target is an indefinitely resumable listening session: the same queue,
+history, unfinished song and preferences across leaving a car, long pauses,
+Spotify-side Play, browser/device changes and Home Assistant / Music
+Assistant outputs. Prefer the persisted observed offset; when unavailable,
+restart the unfinished song instead of silently shuffling a new run.
+
+These are target requirements, not a statement that all paths work today.
+Current browser-session ownership, PAUSED-run supervision and lack of a native
+MA adapter prevent the full promise. See `CODEX_START.md` and
+`docs/persistent-queue/ANALYSIS.md` for the implementation boundary.
+
+The owner selected a calm dark music-player direction for the redesign. The
+new Listening Room visual system replaces Nachtpult / Laufzettel while
+preserving product functions. Surface details live in DESIGN.md.
 
 ## Open decisions
 

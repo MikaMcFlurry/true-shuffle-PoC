@@ -1,5 +1,13 @@
 # true-shuffle
 
+> **Continuity redesign branch (2026-09-29):** Start with [CODEX_START.md](CODEX_START.md).
+> This branch fixes rate-limit handling, adds persisted-checkpoint safeguards and replaces the UI.
+> Cross-browser identity, Spotify-side resume after a True Shuffle pause and native
+> Home Assistant / Music Assistant support still need implementation and live verification.
+> See [analysis and limits](docs/persistent-queue/ANALYSIS.md) and
+> [current validation](docs/persistent-queue/VALIDATION.md); older claims below are not a
+> substitute for those results.
+
 > Plays a playlist like a deck of cards: **every playable, unique track exactly
 > once per run**, no repeats until the deck is done, and exact resume across
 > sessions — on Spotify, Apple Music and YouTube Music.

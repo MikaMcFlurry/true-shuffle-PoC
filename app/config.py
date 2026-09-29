@@ -50,9 +50,9 @@ class Settings(BaseSettings):
     #: unwatched (redeploy, crash, silent task death).
     watcher_supervisor_seconds: float = 60.0
     #: How old a position observation may be and still be used to resume a
-    #: half-played track.  Older than this and the card starts from the top —
-    #: an hour-old position is a memory, not a place in the music.
-    resume_position_max_age_seconds: int = 600
+    #: half-played track. Zero keeps the saved position indefinitely; a
+    #: positive value opts into restarting old checkpoints from the top.
+    resume_position_max_age_seconds: int = 0
     #: How often to reconcile a Handoff-Mode deck against listening history.
     #: Services only keep ~50 recent entries, so this has to be well inside the
     #: time it takes to play 50 tracks (~2.5 hours) — a minute is generous.

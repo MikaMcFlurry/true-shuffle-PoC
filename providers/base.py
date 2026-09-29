@@ -62,6 +62,12 @@ class ProviderQuotaError(ProviderError):
 
     status_code = 429
 
+    def __init__(self, message: str, *, retry_after_s: float = 0,
+                 reason: str = "") -> None:
+        super().__init__(message)
+        self.retry_after_s = retry_after_s
+        self.reason = reason
+
 
 class ProviderPaidTierRequired(ProviderError):
     """The account lacks the subscription this operation needs.
@@ -132,6 +138,20 @@ def user_message(exc: BaseException) -> str:
     Both entry points need this — HTTP handlers and background jobs — and the
     listener does not care which one they were standing in when it broke.
     """
+    if isinstance(exc, ProviderQuotaError):
+        wait = max(1, int(exc.retry_after_s))
+        if exc.reason == "QUOTA_EXCEEDED":
+            return (
+                "Spotify meldet QUOTA_EXCEEDED. Das API-Kontingent ist gesperrt; "
+                "dein Hörvorgang und Verlauf bleiben gespeichert. "
+                f"True Shuffle wartet mindestens {wait} Sekunden vor dem nächsten Versuch. "
+                "Spotify nennt damit keinen garantierten Freigabezeitpunkt."
+            )
+        if exc.retry_after_s:
+            return (
+                f"Der Dienst begrenzt gerade die Anfragen. Bitte in {wait} Sekunden "
+                "erneut versuchen. Dein Hörvorgang bleibt gespeichert."
+            )
     for kind, text in _USER_MESSAGES.items():
         if isinstance(exc, kind):
             return text

@@ -11,6 +11,7 @@ import json
 import logging
 import time
 from typing import Any, Dict, Optional
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -32,6 +33,40 @@ _RETRY_STATUS = (500, 502, 503, 504)
 #: going too fast".  The distinction matters: the second is worth waiting out,
 #: the first is not, and burning three retries on it only makes the hole deeper.
 QUOTA_REASONS = frozenset({"QUOTA_EXCEEDED"})
+
+# One Spotify application serves all connected listeners in this process.
+# Library, UI and watcher requests must all respect the same refusal. This
+# guard is deliberately process-local; durable coordination across replicas
+# is tracked in the persistent-queue handoff.
+_cooldowns: Dict[str, tuple[float, str]] = {}
+QUOTA_PROBE_SECONDS = 900
+
+
+def _cooldown_key(provider: str, url: str) -> str:
+    return f"{provider}:{urlsplit(url).netloc}"
+
+
+def _blocked(key: str) -> None:
+    until, reason = _cooldowns.get(key, (0.0, ""))
+    remaining = until - time.monotonic()
+    if remaining > 0:
+        raise ProviderQuotaError(
+            "Provider cooldown is still active", retry_after_s=remaining,
+            reason=reason,
+        )
+    _cooldowns.pop(key, None)
+
+
+def _limit_error(key: str, provider: str, delay: float, reason: str = ""):
+    until = time.monotonic() + delay
+    old_until, old_reason = _cooldowns.get(key, (0.0, ""))
+    if old_until > until:
+        until, reason = old_until, old_reason
+    _cooldowns[key] = (until, reason)
+    return ProviderQuotaError(
+        f"{provider}: requests limited ({reason or 'rate limit'})",
+        retry_after_s=max(1.0, until - time.monotonic()), reason=reason,
+    )
 
 #: Player APIs must not be called concurrently for the same account or the
 #: provider's queue ends up in a state nobody can predict.  Keyed by
@@ -114,10 +149,13 @@ async def request(
     which connectors use for the request storms that batch removals created.
     """
     last_error: Optional[str] = None
+    cooldown_key = _cooldown_key(provider, url)
 
     for attempt in range(1, MAX_RETRIES + 1):
+        _blocked(cooldown_key)
         if throttle_key:
             await throttle(throttle_key)
+        _blocked(cooldown_key)
         owns_client = client is None
         active = client or httpx.AsyncClient(timeout=DEFAULT_TIMEOUT)
         try:
@@ -143,20 +181,28 @@ async def request(
                 # every client id of ours is out at the same time.  Waiting a
                 # few seconds cannot fix that; say so instead of retrying.
                 logger.warning("%s quota exhausted (%s)", provider, reason)
-                raise ProviderQuotaError(
-                    f"{provider}: quota exhausted ({reason}) — the developer "
-                    f"account's API allowance is used up, not just this request"
+                raise _limit_error(
+                    cooldown_key, provider,
+                    max(_retry_after(resp), QUOTA_PROBE_SECONDS), reason,
                 )
             retry_after = _retry_after(resp)
             logger.warning(
                 "%s rate-limited (attempt %d/%d), waiting %ss",
                 provider, attempt, MAX_RETRIES, retry_after,
             )
-            if attempt == MAX_RETRIES:
-                raise ProviderQuotaError(
-                    f"{provider}: rate limited, retry after {retry_after}s"
+            if attempt == MAX_RETRIES or retry_after > 30:
+                raise _limit_error(
+                    cooldown_key, provider, retry_after,
                 )
-            await asyncio.sleep(min(retry_after, 30))
+            # Bound foreground latency by returning long waits to the caller,
+            # never by shortening the provider's required wait.
+            waiting = (time.monotonic() + retry_after, "")
+            _cooldowns[cooldown_key] = waiting
+            await asyncio.sleep(retry_after)
+            # Clear only our own wait: another in-flight request may have
+            # received a longer refusal while this request was sleeping.
+            if _cooldowns.get(cooldown_key) == waiting:
+                _cooldowns.pop(cooldown_key, None)
             continue
 
         if resp.status_code in _RETRY_STATUS and attempt < MAX_RETRIES:
@@ -247,7 +293,7 @@ def _auth_error(provider: str, resp: httpx.Response) -> ProviderError:
     # difference matters a lot to the user, so keep the provider's own words.
     reason = error_reason(resp)
     lowered = body.lower()
-    if reason in QUOTA_REASONS or "quota" in lowered or "rate" in lowered:
+    if reason in QUOTA_REASONS or "quota" in lowered or "rate limit" in lowered:
         return ProviderQuotaError(f"{provider}: quota exceeded — {body}")
     # Since Spotify removed ``product`` from GET /me, a refusal like this is
     # the *first* moment we can know the listener has no Premium — so it has to

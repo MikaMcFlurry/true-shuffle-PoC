@@ -28,19 +28,15 @@
     <span class="chip chip-mini hidden" id="stateChipMini" aria-hidden="true"></span>
 </section>
 
-<div class="note hidden" id="playerNote"></div>
-
-<div class="banner hidden" id="stateBanner"></div>
-
-<div class="player-grid">
+<div class="player-grid listening-player">
     <section class="zone zone-playback" id="zonePlayback" aria-label="Wiedergabe über {{ provider.display_name }}">
-        <p class="zone-caption">Wiedergabe · <b>{{ provider.display_name }}</b></p>
+        <p class="zone-caption">Wiedergabe über <b>{{ provider.display_name }}</b></p>
         <div class="nowplaying">
             <div id="coverWrap"></div>
             <div class="nowplaying-text">
                 <h2 class="track-title wrap-anywhere" id="trackTitle" lang="de">Wird geladen…</h2>
                 <p class="track-artist" id="trackArtist"></p>
-                <p class="track-position tabular" id="trackPosition">–:– / –:–</p>
+                <p class="track-position tabular" aria-live="off" id="trackPosition">–:– / –:–</p>
                 <div id="attributionWrap"></div>
 
                 <div class="transport" role="group" aria-label="Wiedergabesteuerung" id="transport">
@@ -59,23 +55,26 @@
                     <span class="field-label">Abspielen auf</span>
                     <select id="deviceSelect"></select>
                 </label>
+                <button class="btn btn-quiet" id="refreshDevicesBtn" type="button">Geräte aktualisieren</button>
                 {% endif %}
 
                 {% if provider.playback == 'web_player' and provider.id != 'apple' %}
                 <div id="ytmount" style="margin-top: var(--space-4)"></div>
                 {% endif %}
 
-                <p class="keys" aria-hidden="true" style="margin-top: var(--space-4)">
+                <p class="keys desktop-keys" aria-hidden="true" style="margin-top: var(--space-4)">
                     <span><kbd>Leer</kbd> Start / Pause</span>
                     <span><kbd>→</kbd> Überspringen</span>
                     <span><kbd>←</kbd> Zurück</span>
                 </p>
             </div>
         </div>
+        <div class="note hidden" id="playerNote" role="status"></div>
+        <div class="banner hidden" id="stateBanner"></div>
     </section>
 
     <section class="zone zone-run" id="zoneRun" aria-label="Hörvorgang von True Shuffle">
-        <p class="zone-caption">Hörvorgang · <b>True Shuffle</b></p>
+        <p class="zone-caption">Warteschlange · <b>True Shuffle</b></p>
         <span class="chip hidden" id="stateChip"></span>
         <p class="run-context">
             <b>Ohne Wiederholungen</b> · <span class="wrap-anywhere">{{ playlist_name or '—' }}</span>
@@ -198,6 +197,7 @@ function bindTransport(id, fn) {
 bindTransport("#mainBtn", () => player.toggle());
 bindTransport("#nextBtn", () => player.next());
 bindTransport("#prevBtn", () => player.previous());
+$("#refreshDevicesBtn")?.addEventListener("click", () => player.guard(() => player.loadDevices()));
 
 $("#cancelBtn").addEventListener("click", () => player.guard(async () => {
     if ($("#cancelBtn").disabled) return;
@@ -210,6 +210,7 @@ $("#cancelBtn").addEventListener("click", () => player.guard(async () => {
 addEventListener("keydown", (ev) => {
     const tag = document.activeElement?.tagName;
     if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+    if (document.activeElement?.closest("button, a, summary, [contenteditable='true'], [role='button']")) return;
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
 
     if (ev.code === "Space") {

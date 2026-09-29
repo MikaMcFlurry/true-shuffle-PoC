@@ -60,6 +60,7 @@ class WatchHandle:
     started_at: float = field(default_factory=time.time)
     drifted: bool = False
     last_state: Optional[PlaybackState] = None
+    last_poll_at: float = 0.0
     #: How often we have tried to switch the service's own shuffle/repeat off
     #: on this device without it sticking (see MAX_MODE_CORRECTIONS).
     mode_fixes: int = 0
@@ -168,7 +169,16 @@ class Watcher:
         handle = self._handles.get(run_id)
         if handle is None or handle.task.done():
             return {"watching": False, "drifted": False}
-        return {"watching": True, "drifted": handle.drifted}
+        playback = handle.last_state
+        return {
+            "watching": True, "drifted": handle.drifted,
+            "playback": {
+                "is_playing": playback.is_playing,
+                "track_id": playback.track_id,
+                "progress_ms": playback.progress_ms,
+                "observed_at": handle.last_poll_at,
+            } if playback is not None else None,
+        }
 
     # -- history loop (Handoff Mode — nothing of ours is open) ------------
 
@@ -297,6 +307,10 @@ class Watcher:
                     continue
 
                 consecutive_errors = 0
+                handle = self._handles.get(run_id)
+                if handle is not None:
+                    handle.last_state = playback
+                    handle.last_poll_at = time.time()
 
                 # Everything the engine needs to judge this snapshot has to be
                 # written down BEFORE it judges: how far the card got, and
@@ -737,12 +751,12 @@ def _next_delay(
     # which exists to bound how long we may sleep while DRIVING — does not
     # apply to it.
     if paused:
-        return max(base * 2, MIN_SLEEP)
+        return max(base * 2, max_poll or 0, MIN_SLEEP)
     # A configured 0 is how an operator writes "no cap"; taken literally it
     # would collapse the sleep to MIN_SLEEP and poll 3 600 times an hour.
     ceiling = float("inf") if not max_poll else max(max_poll, base)
     if playback is None or not playback.is_playing:
-        return max(min(base, ceiling), MIN_SLEEP)
+        return max(base, max_poll or base, MIN_SLEEP)
     remaining = playback.remaining_ms / 1000.0
     if remaining <= 0:
         return MIN_SLEEP

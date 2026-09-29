@@ -1435,6 +1435,19 @@ async def run_tracks_by_provider_ids(
     return out
 
 
+async def run_track_metadata(run_id: int, provider_track_ids: Sequence[str]) -> Dict[str, Any]:
+    """Read imported display metadata without spending provider quota."""
+    ids = list(dict.fromkeys(provider_track_ids))
+    if not ids:
+        return {}
+    cur = await get_db().execute(
+        f"SELECT t.* FROM run_tracks rt JOIN tracks t ON t.id = rt.track_id "
+        f"WHERE rt.run_id = ? AND t.provider_track_id IN ({','.join('?' * len(ids))})",
+        (run_id, *ids),
+    )
+    return {str(row["provider_track_id"]): dict(row) for row in await cur.fetchall()}
+
+
 async def set_run_track(run_track_id: int, **fields: Any) -> None:
     """Mutate one deck card (favorite, state, admitted, exclusion columns …).
 

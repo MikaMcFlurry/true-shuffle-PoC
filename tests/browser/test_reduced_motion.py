@@ -50,23 +50,12 @@ def test_theme_switch_does_not_animate_under_reduced_motion(context_factory, dea
     assert not running, f"theme switch animates under reduced motion: {running}"
 
 
-def test_motion_exists_when_it_is_not_suppressed(context_factory):
-    """A control test: the reduce result above must mean something.
-
-    If nothing on the home page ever animates, the assertion above would pass
-    for the wrong reason. The Aurora arc is declared as an infinite animation
-    in style.css, so with motion allowed it has to be reported.
-    """
+def test_home_has_no_decorative_animation_when_motion_allowed(context_factory):
+    """Listening Room removes the old Aurora, including with motion allowed."""
     page = context_factory(reduced_motion="no-preference").new_page()
     page.goto("/", wait_until="networkidle")
     page.wait_for_timeout(600)
     declared = page.evaluate(
-        """() => document.getAnimations().map((a) => ({
-             name: a.animationName || a.transitionProperty || '?',
-             state: a.playState,
-           }))"""
+        "() => document.getAnimations().filter(a => a.playState === 'running').length"
     )
-    assert declared, (
-        "no animation at all with motion allowed — the reduced-motion test "
-        "above cannot prove anything"
-    )
+    assert declared == 0, "the quiet home surface should not animate decoratively"

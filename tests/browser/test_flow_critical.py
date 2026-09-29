@@ -52,7 +52,7 @@ def test_critical_flow_deal_start_pause_resume_dashboard_history(page):
     playback_caption = playback_zone.locator(".zone-caption").text_content()
     run_caption = run_zone.locator(".zone-caption").text_content()
     assert "Wiedergabe" in playback_caption and "Demo-Dienst" in playback_caption
-    assert "Hörvorgang" in run_caption and "True Shuffle" in run_caption
+    assert "Warteschlange" in run_caption and "True Shuffle" in run_caption
     boxes = [playback_zone.bounding_box(), run_zone.bounding_box()]
     assert all(boxes), "a zone did not render"
     # They must not be drawn as one object (ADR-001: "Run und Spotify trennen").

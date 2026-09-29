@@ -52,3 +52,6 @@ app/static/_preview_*.html
 
 # Local harness settings (impeccable design hook, permissions)
 .claude/settings.local.json
+
+# Local design workflow scratch; approved captures live under docs/
+.impeccable/

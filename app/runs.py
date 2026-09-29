@@ -787,8 +787,8 @@ async def start(
 
     # ADR-004 parity for a plain resume: when the listener stopped MID-track,
     # pick the song up where they left it instead of starting it over.  Only
-    # a fresh observation of this very card counts — an hour-old position is a
-    # memory, not a place in the music.
+    # an observation of this very card counts. By default it stays a usable
+    # checkpoint even weeks later, until the card is satisfied or replaced.
     position_ms = _resume_position_ms(state)
 
     await _apply(session, state, decision,
@@ -865,10 +865,8 @@ def _resume_position_ms(state: RunState) -> int:
     if not state.observed_progress_ms or state.card_satisfied:
         return 0
     max_age = get_settings().resume_position_max_age_seconds
-    if max_age <= 0:
-        return 0
     age = _observation_age_seconds(state)
-    if age is None or age > max_age:
+    if max_age > 0 and (age is None or age > max_age):
         return 0
     return int(state.observed_progress_ms)
 
@@ -2595,10 +2593,17 @@ async def describe(
     # +1 because the window below renders cursor+1 … cursor+window inclusive;
     # without it the last row of "up next" shows a bare track id.
     ids = state.order[max(0, state.cursor - 1) : state.cursor + window + 1]
-    meta: Dict[str, Track] = {}
-    if session and ids:
+    saved = await db.run_track_metadata(state.run_id, ids)
+    meta: Dict[str, Track] = {
+        tid: Track(provider=row["provider"], id=tid, name=row["name"],
+                   artist=row["artist"], duration_ms=row["duration_ms"],
+                   artwork_url=row["artwork_url"])
+        for tid, row in saved.items()
+    }
+    missing = [tid for tid in ids if tid not in meta]
+    if session and missing:
         try:
-            meta = await session.provider.resolve_tracks(session.token, ids)
+            meta.update(await session.provider.resolve_tracks(session.token, missing))
         except ProviderError as exc:
             logger.info("track metadata unavailable: %s", exc)
 

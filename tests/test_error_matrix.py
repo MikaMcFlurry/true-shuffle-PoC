@@ -500,7 +500,8 @@ def test_err04_quota_answers_429_and_sends_no_second_command(
         started = client.post(f"/api/runs/{run_id}/start",
                               json={"device_id": "dev1"})
         assert started.status_code == 429, started.text
-        assert "Kontingent" in started.json()["detail"]
+        assert "30 Sekunden" in started.json()["detail"]
+        assert started.headers["Retry-After"] == "30"
 
         advanced = client.post(f"/api/runs/{run_id}/advance",
                                json={"reason": "track_ended"})
