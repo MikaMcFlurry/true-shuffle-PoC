@@ -699,6 +699,14 @@ export class HubCore {
 			this.kvDel(key);
 			this.kvDel(`${key}_revision`);
 		}
+		// Old guard errors have no confirmed provider response for this job's operation.
+		// Admit those jobs once under the new policy; genuine provider failures keep their schedule.
+		this.db.run(
+			"UPDATE jobs SET run_after=MIN(run_after,?),error=NULL,updated_at=? WHERE error=?",
+			this.now(),
+			this.now(),
+			"Spotify wartet auf die Freigabe weiterer Anfragen",
+		);
 		this.kvSet("spotify_operation_policy_backup", { at: this.now(), legacy });
 		this.kvDel("spotify_availability_experiment");
 		this.kvSet("spotify_operation_policy", 2);

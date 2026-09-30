@@ -2,7 +2,7 @@
 
 Verdict: **READY**, bounded local policy/tracker change only. Independence: **FRESH**. Open findings: **none**.
 
-Subject: frozen working application/test bytes against `1b04a30c8cbeb649db0b2c3543a85c2d06ad813a`, exactly identified by the SHA-256 manifest below. Reviewer implemented no application repairs and used only synthetic providers. The final source hashes match the isolated snapshot used for tests. This review supersedes [the historical NOT_READY review](CONFIRMED_REQUEST_TRACKER_PRE_REPAIR.md); historical failure logs remain evidence of issues subsequently repaired.
+Subject: frozen working application/test bytes against `516dea17fda6aaa2410ab3765bc25e70287a3f54`, exactly identified by the SHA-256 manifest below. Reviewer implemented no application repairs and used only synthetic providers. The final source hashes match the isolated snapshot used for tests. This review supersedes [the historical NOT_READY review](CONFIRMED_REQUEST_TRACKER_PRE_REPAIR.md); historical failure logs remain evidence of issues subsequently repaired.
 
 ## Verified contract
 
@@ -23,13 +23,19 @@ GET `/api/spotify/usage` passes the shared authenticated API middleware and User
 
 ## Final evidence
 
-**63 tests PASS, ten files, 1.51 seconds**, including **11 reviewer-authored attacks**. Capacity/privacy/retention checks independently exercise seven listeners, 730 hourly observations retaining720 buckets, 210 episodes retaining200 rows, exact listener/method isolation, and stale CAS. Existing focused tests also cover independent availability GETs, one-refresh budgets, current holds, queue/history continuity and unknown background retry behavior.
+**64 tests PASS, ten files, 2.98 seconds**, including **11 reviewer-authored attacks**. Capacity/privacy/retention checks independently exercise seven listeners, 730 hourly observations retaining720 buckets, 210 episodes retaining200 rows, exact listener/method isolation, and stale CAS. Existing focused tests also cover independent availability GETs, one-refresh budgets, current holds, queue/history continuity and unknown background retry behavior.
 
 **Six executions of actual transpiled UI components PASS:** future, expired, boundary and unknown operation deadlines; pending and recovered shared tracker episodes. Known deadlines disable only the affected recheck; unknown/expired values permit explicit recheck. The UI retains untested-control status, labels Retry-After as a saved value rather than a countdown, separates local/token/network accounting, qualifies partial hourly coverage, and states that other apps' usage and exact reset times are unavailable.
 
 [Final tests](CONFIRMED_REQUEST_TRACKER_FINAL_TESTS.log), [actual component renders](CONFIRMED_REQUEST_TRACKER_FINAL_RENDER.log), [source hashes](CONFIRMED_REQUEST_TRACKER_SOURCE_HASHES.json). Portable reviewer attack sources are saved beside this report as `.test.ts.txt`; copy them into `test/spotify/` in an isolated checkout to run Vitest. The OAuth test executes the actual callback policy extracted from that checkout. The render harness is saved as `.mjs.txt`; adjust its absolute source path for another workspace.
 
-Parent separately reports **357 integrated tests across24 files, 20 browser cases, typecheck, lint and build PASS** on the frozen change. Those comprehensive results are builder evidence, distinct from the independently reproduced final run. Deployment/publication evidence must bind the same application bytes.
+Parent separately reports **357 integrated tests across24 files, 20 browser cases, typecheck, lint and build PASS** before the narrow migration amendment below. The integrated358-test rerun on the amended source is pending at this report update; it must pass and bind the same application bytes before activation. Those comprehensive results are builder evidence, distinct from the independently reproduced final run.
+
+## Narrow migration amendment — independently rechecked
+
+The once-only policy activation now admits jobs postponed by the exact old local-guard message `Spotify wartet auf die Freigabe weiterer Anfragen`. Its SQL changes only those rows' run_after to MIN(saved_time, now), clears that local error and updates the timestamp. Genuine provider-error schedules and normal future jobs retain their times. Job state, priority and attempts, histories, queues and player snapshots are not rewritten. Activation performs no Spotify HTTP. The policy-version marker prevents repeat admission; this applies to the first policy2 migration, consistent with the parent reporting the prior reviewed source uploaded but not activated.
+
+The new focused regression initially failed before exercising migration because it used the wrong kv column name. Parent corrected key to k; the fresh complete64-test run now passes the actual migration and its one-time boundary. The original six UI component renders remain valid: their exact source hash is unchanged. Only Hub implementation and the added quota regression changed from the preceding review; all other manifest hashes were independently compared and remain identical. No new bounded finding remains.
 
 ## Limits and remaining live acceptance
 
@@ -42,7 +48,7 @@ Full mission acceptance remains **BLOCKED**. **NOT_RUN by this reviewer:** real 
 | `src/worker/spotify/client.ts` | `5a656b43eea5fd99bfa08f9368274a0b200a1cdf2fb9686c86dcd7334077828f` |
 | `src/worker/spotify/usage.ts` | `6aa573588e901e987a3c2234d798689863d2f01f9fda4d71db563835610dddd1` |
 | `src/worker/spotify/operation-gates.ts` | `e7917e4c7239ad93e97240cf9ae79fdcc09d3092836c997e69fb5a06101b5c39` |
-| `src/worker/hub/hub.ts` | `1a99ba57f1303026abbf1f0a50149e2262e2602b11531acb1d8dbf0dd1e53425` |
+| `src/worker/hub/hub.ts` | `a1f9d479d9a6eab1d10fafa0fe9a0bb0aa9fbfba71595f25ba747fcfde28369d` |
 | `src/worker/registry.ts` | `65da4c66f0037b5b674ca41af28fac17fad295c92e9ecafd7b608813e30fecac` |
 | `src/worker/userhub.ts` | `8c7b45955aaaedc2fec101ab7dcfb4ac9d4c3a71f29c9dd8deaee24b37dd5ca3` |
 | `src/worker/index.ts` | `5c5852940dc30b132167e5a4fc153a25a2878c3f399d581d885d2e940bc372bd` |
@@ -55,3 +61,4 @@ Full mission acceptance remains **BLOCKED**. **NOT_RUN by this reviewer:** real 
 | `test/spotify/availability.test.ts` | `51ee7aedbb15438e8ff7b7fbd8b23515f41b3272d739d57cedf6420cc81391ff` |
 | `test/spotify/operation-fixture.ts` | `7356e0e04a2f518f074679a56b1c0e2f835e2a706d98acbc833a15360dbd14d4` |
 | `e2e/app.spec.ts` | `85a1aef823350316d769be296e234c7c33249c0b47a5af132509a8c8aa80a23a` |
+| `test/hub/quota.test.ts` | `099dde6a6d1f98ce60c31f0ae8e41d607fca572151efecc2464eeffb56609e5a` |

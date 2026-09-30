@@ -2,7 +2,7 @@
   "src/worker/spotify/client.ts": "5a656b43eea5fd99bfa08f9368274a0b200a1cdf2fb9686c86dcd7334077828f",
   "src/worker/spotify/usage.ts": "6aa573588e901e987a3c2234d798689863d2f01f9fda4d71db563835610dddd1",
   "src/worker/spotify/operation-gates.ts": "e7917e4c7239ad93e97240cf9ae79fdcc09d3092836c997e69fb5a06101b5c39",
-  "src/worker/hub/hub.ts": "1a99ba57f1303026abbf1f0a50149e2262e2602b11531acb1d8dbf0dd1e53425",
+  "src/worker/hub/hub.ts": "a1f9d479d9a6eab1d10fafa0fe9a0bb0aa9fbfba71595f25ba747fcfde28369d",
   "src/worker/registry.ts": "65da4c66f0037b5b674ca41af28fac17fad295c92e9ecafd7b608813e30fecac",
   "src/worker/userhub.ts": "8c7b45955aaaedc2fec101ab7dcfb4ac9d4c3a71f29c9dd8deaee24b37dd5ca3",
   "src/worker/index.ts": "5c5852940dc30b132167e5a4fc153a25a2878c3f399d581d885d2e940bc372bd",
@@ -14,5 +14,6 @@
   "test/spotify/usage.test.ts": "b075a1413a2465f47d84dcbf715b5dd8b89416d68d4f063131abfabca48dc637",
   "test/spotify/availability.test.ts": "51ee7aedbb15438e8ff7b7fbd8b23515f41b3272d739d57cedf6420cc81391ff",
   "test/spotify/operation-fixture.ts": "7356e0e04a2f518f074679a56b1c0e2f835e2a706d98acbc833a15360dbd14d4",
-  "e2e/app.spec.ts": "85a1aef823350316d769be296e234c7c33249c0b47a5af132509a8c8aa80a23a"
+  "e2e/app.spec.ts": "85a1aef823350316d769be296e234c7c33249c0b47a5af132509a8c8aa80a23a",
+  "test/hub/quota.test.ts": "099dde6a6d1f98ce60c31f0ae8e41d607fca572151efecc2464eeffb56609e5a"
 }

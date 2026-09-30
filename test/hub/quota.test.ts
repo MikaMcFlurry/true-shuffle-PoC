@@ -87,3 +87,45 @@ describe("durable exact operation cooldown", () => {
 		).toBe(h.clock.t);
 	});
 });
+
+it("migration admits jobs delayed by old local guard without changing genuine provider or normal schedules", async () => {
+	const h = await onboarded({ tracks: 20 });
+	h.sql.run("DELETE FROM kv WHERE k='spotify_operation_policy'");
+	const future = h.clock.t + 3600000;
+	for (const [key, error] of [
+		["legacy-blocked", "Spotify wartet auf die Freigabe weiterer Anfragen"],
+		["provider-confirmed", "Spotify bremst gerade (zu viele Anfragen)"],
+		["normal-schedule", null],
+	] as const)
+		h.sql.run(
+			"INSERT INTO jobs(key,kind,state,priority,run_after,attempts,error,created_at,updated_at) VALUES(?, 'playlists', '{}', 5, ?, 0, ?, ?, ?)",
+			key,
+			future,
+			error,
+			h.clock.t,
+			h.clock.t,
+		);
+	await h.hub.spotifyDiagnostics();
+	expect(
+		h.sql.first<{ run_after: number; error: string | null }>(
+			"SELECT run_after,error FROM jobs WHERE key='legacy-blocked'",
+		),
+	).toEqual({ run_after: h.clock.t, error: null });
+	expect(
+		h.sql.first<{ run_after: number }>("SELECT run_after FROM jobs WHERE key='provider-confirmed'")
+			?.run_after,
+	).toBe(future);
+	expect(
+		h.sql.first<{ run_after: number }>("SELECT run_after FROM jobs WHERE key='normal-schedule'")
+			?.run_after,
+	).toBe(future);
+	h.sql.run(
+		"UPDATE jobs SET run_after=?,error='Spotify wartet auf die Freigabe weiterer Anfragen' WHERE key='legacy-blocked'",
+		future,
+	);
+	await h.hub.spotifyDiagnostics();
+	expect(
+		h.sql.first<{ run_after: number }>("SELECT run_after FROM jobs WHERE key='legacy-blocked'")
+			?.run_after,
+	).toBe(future);
+});
