@@ -1,0 +1,285 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-09-30T03:54:02.239928+00:00",
+  "project": "true-shuffle Cloudflare restart preparation",
+  "subject": {
+    "revision": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
+    "artifact_ref": "https://github.com/MikaMcFlurry/true-shuffle-PoC/tree/codex/cloudflare-restart-plan",
+    "environment": "local analysis of unchanged Cloudflare application",
+    "environment_class": "LOCAL"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "PARTIAL",
+  "material_release": false,
+  "change_profiles": [
+    "NONE"
+  ],
+  "independent_review_level": "COMPROMISED",
+  "independent_review_verdict": "BLOCKED",
+  "required_categories": [
+    "build",
+    "critical_journey"
+  ],
+  "external_blockers": [
+    {
+      "id": "B-LIVE",
+      "type": "CREDENTIAL",
+      "description": "Scoped Spotify test account and Cloudflare deployment/log access absent; live playback/quota identity unverified.",
+      "evidence_ref": "docs/ai-dev/PROJECT_CONTEXT.md"
+    },
+    {
+      "id": "B-HA",
+      "type": "CREDENTIAL",
+      "description": "Owner HA/MA instances and actual capabilities unavailable.",
+      "evidence_ref": "docs/ai-dev/PROJECT_CONTEXT.md"
+    },
+    {
+      "id": "B-BROWSER",
+      "type": "TOOL_UNAVAILABLE",
+      "description": "Chromium missing; attempted install failed invalid ZIP, browser suite did not execute product scenarios.",
+      "evidence_ref": "e2e/app.spec.ts"
+    }
+  ],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "269da5a304e5a65c109fa5983656bb27f987ca7ce53af25ebbd54c707b11e255",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-NN-01"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-NN-02"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-NN-03"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-NN-04"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-NN-05"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-NN-06"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-NN-07"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-NN-08"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-NN-09"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-NN-10"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-NN-11"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "G-01",
+      "title": "Legacy resume/rebuild contract conflicts with same unfinished queue.",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "G-02",
+      "title": "Live quota reason and request pressure not captured.",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "G-03",
+      "title": "Native HA/MA route and integration acceptance absent.",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "G-04",
+      "title": "Current visual design rejected; independent replacement not built.",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "G-05",
+      "title": "Exact Worker deployment version/build configuration not verified.",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "G-06",
+      "title": "Local browser acceptance blocked before application execution.",
+      "severity": "P2",
+      "blocking": true
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-NN-01",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Continue the actual Cloudflare application; establish source and deployment identity before live changes. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-02",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Preserve the existing listener history, memory, stations, preferences and account isolation. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-03",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-04",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-05",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-06",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-07",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-08",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-09",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-10",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-NN-11",
+      "category": "critical_journey",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop. Target acceptance remains pending; baseline behavior is not substitute evidence."
+    },
+    {
+      "id": "G-BASELINE",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "RUN-BASELINE",
+          "kind": "local command suite",
+          "ref": "docs/ai-dev/PROJECT_CONTEXT.md",
+          "result": "Fresh npm build, typecheck, lint and Vitest rerun passed: 9 files, 280 tests, 71.86s. Wrangler 4.141.0 dry-run passed with existing bindings; no upload.",
+          "subject_revision": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
+          "observed_at": "2026-09-30T03:54:02.239928+00:00"
+        }
+      ],
+      "rationale": "Source unchanged from application baseline; this validates current behavior only."
+    }
+  ]
+}

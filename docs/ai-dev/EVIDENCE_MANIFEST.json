@@ -1,0 +1,214 @@
+{
+  "schema_version": "mika.repo-handoff-evidence.v2",
+  "generated_at": "2026-09-30T03:54:02.239928+00:00",
+  "analysis_baseline": {
+    "repository_id": "R-1",
+    "ref": "codex/cloudflare-restart-plan",
+    "commit_sha": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9"
+  },
+  "packet_sha256": "f192a89628f1a32360ac82295467ba006d1dcae7c8f65ec087c976221a3269fd",
+  "artifacts": [
+    {
+      "path": "AGENTS.md",
+      "treatment": "UPDATE",
+      "authority": "CANONICAL",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "agent_entry"
+      ]
+    },
+    {
+      "path": "CODEX_START.md",
+      "treatment": "UPDATE",
+      "authority": "CANONICAL",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "start_here"
+      ]
+    },
+    {
+      "path": "docs/ai-dev/MISSION.md",
+      "treatment": "CREATE",
+      "authority": "CANONICAL",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "mission",
+        "owner_decisions"
+      ]
+    },
+    {
+      "path": "docs/ai-dev/PROJECT_CONTEXT.md",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "current_state",
+        "architecture_runtime",
+        "run_deploy_operations",
+        "production_baseline"
+      ]
+    },
+    {
+      "path": "PRODUCT.md",
+      "treatment": "LINK",
+      "authority": "CANONICAL",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-03"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "product_truth"
+      ]
+    },
+    {
+      "path": "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "feature_inventory",
+        "intelligence_markdown"
+      ]
+    },
+    {
+      "path": "docs/ai-dev/repository-intelligence.json",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "intelligence_json"
+      ]
+    },
+    {
+      "path": "docs/ai-dev/EXECUTION_PLAN.md",
+      "treatment": "CREATE",
+      "authority": "CANONICAL",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "quality_risks",
+        "execution_plan"
+      ]
+    },
+    {
+      "path": "docs/ai-dev/EVIDENCE.json",
+      "treatment": "CREATE",
+      "authority": "SUPPORTING",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "verification_ledger"
+      ]
+    },
+    {
+      "path": "docs/ai-dev/EVIDENCE_MANIFEST.json",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "roles": [
+        "evidence_manifest"
+      ]
+    }
+  ]
+}
