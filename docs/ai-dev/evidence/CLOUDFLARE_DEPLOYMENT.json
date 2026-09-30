@@ -1,13 +1,13 @@
 {
   "schema_version": "true-shuffle.deployment.v1",
-  "recorded_at": "2026-09-30T12:11:06.473055+00:00",
-  "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+  "recorded_at": "2026-09-30T13:21:24.213546+00:00",
+  "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
   "worker": "true-shuffle",
   "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
-  "version_id": "1e607dc2-48a9-4724-a9df-4b0a02218219",
-  "deployment_id": "9199fa19-a506-4a6a-a921-02ef39e7880f",
+  "version_id": "4f5e1037-e616-4df2-9f93-15dbdaf8ee5f",
+  "deployment_id": "7121bf97-6fe9-465f-8ded-22605729b85e",
   "percentage": 100,
-  "deployed_at": "2026-09-30T12:09:53.169296Z",
+  "deployed_at": "2026-09-30T13:20:39.077875Z",
   "previous_version": "c193ca15-8503-4e18-ac78-a8ac398289cb",
   "previous_deployment": "7d44a8ca-6244-4a8b-9ef7-ca5b4e8647aa",
   "intermediate_version": "79c415cd-64b7-4046-96a4-dc3e7f63a061",
@@ -28,19 +28,19 @@
   "existing_secret_bindings_preserved": true,
   "deployment_authority": "Explicit owner implementation/deployment request, full access and completed Cloudflare device OAuth. Wrangler used because plugin search found no Cloudflare connector.",
   "public_readback": {
-    "tested_at": "2026-09-30T12:10:23.837587+00:00",
+    "tested_at": "2026-09-30T13:21:02.219226+00:00",
     "target": "https://true-shuffle.mikahertler-72c.workers.dev",
-    "source_commit": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+    "source_commit": "a46bc043717b113dc37d1989ab4323bf166d2da9",
     "checks": [
       {
         "path": "/",
         "status": 200
       },
       {
-        "path": "/assets/index-Co-L4pQg.js",
+        "path": "/assets/index-4KDSlEsQ.js",
         "status": 200,
         "local_build_bytes_match": true,
-        "sha256": "edd72b659a6aeba49e018965f2d0083bfd26b49dd9aa37a5df013b7cdaab2928"
+        "sha256": "e3dcc4fb68e0f8aef562a64851ff9ca329ceb4da023c86a18144108a7df35737"
       },
       {
         "path": "/assets/index-DU4lTMlv.css",
@@ -77,6 +77,18 @@
         "method": "POST without required header",
         "status": 403,
         "csrf_rejected": true
+      },
+      {
+        "path": "/api/spotify/availability-test",
+        "method": "POST",
+        "status": 403,
+        "authenticated_trial_protected": true
+      },
+      {
+        "path": "/api/spotify/availability-test",
+        "method": "POST",
+        "status": 401,
+        "authenticated_trial_protected": true
       }
     ],
     "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
@@ -89,7 +101,7 @@
     "javascript_errors": [],
     "horizontal_overflow": false,
     "capture": ".impeccable/review/signin-live.png",
-    "current_log": "production-browser-scope.log"
+    "current_log": "production-browser-trial.log"
   },
   "recovery": {
     "old_worker_version_retained": true,
@@ -103,12 +115,12 @@
   "provider_journeys": "NOT_RUN: owner-authenticated Spotify and private HA/MA unavailable; no playback commands sent by smoke test.",
   "acceptance_claim": "PARTIAL; deployment is an observed fact, not complete live provider/recovery acceptance.",
   "github_ci": {
-    "run_id": 36712289545,
-    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36712289545",
-    "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+    "run_id": 36720476950,
+    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36720476950",
+    "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
     "conclusion": "success",
-    "unit_tests": 341,
-    "browser_tests": 18
+    "unit_tests": 356,
+    "browser_tests": 20
   },
   "rollout_history": [
     {
@@ -246,6 +258,74 @@
         "unit_tests": 325,
         "browser_tests": 17
       }
+    },
+    {
+      "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+      "version_id": "1e607dc2-48a9-4724-a9df-4b0a02218219",
+      "deployment_id": "9199fa19-a506-4a6a-a921-02ef39e7880f",
+      "deployed_at": "2026-09-30T12:09:53.169296Z",
+      "public_readback": {
+        "tested_at": "2026-09-30T12:10:23.837587+00:00",
+        "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+        "source_commit": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+        "checks": [
+          {
+            "path": "/",
+            "status": 200
+          },
+          {
+            "path": "/assets/index-Co-L4pQg.js",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "edd72b659a6aeba49e018965f2d0083bfd26b49dd9aa37a5df013b7cdaab2928"
+          },
+          {
+            "path": "/assets/index-DU4lTMlv.css",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+          },
+          {
+            "path": "/api/health",
+            "status": 200,
+            "body": {
+              "ok": true,
+              "version": "1.0.0",
+              "configured": true
+            }
+          },
+          {
+            "path": "/api/state",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/native/devices",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/spotify/diagnostics",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/player",
+            "method": "POST without required header",
+            "status": 403,
+            "csrf_rejected": true
+          }
+        ],
+        "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+      },
+      "github_ci": {
+        "run_id": 36712289545,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36712289545",
+        "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+        "conclusion": "success",
+        "unit_tests": 341,
+        "browser_tests": 18
+      }
     }
   ],
   "diagnostics_followup": {
@@ -262,5 +342,14 @@
     "bindings_identical": true,
     "runtime_identical": true,
     "old_global_deadline_retained": "Ambiguous old holds remain effective until their saved deadline; owner screenshot deadline 2026-09-30 20:20:03 Europe/Berlin, recovery not guaranteed."
+  },
+  "availability_trial_followup": {
+    "scope": "Explicit authenticated trial quarantines only exact ambiguous legacy quota, retaining original/stronger catalog and control deadlines. At most3 read GETs and1 refresh; new global rate/unknown failures prevail. No daily capacity or HA recovery claim.",
+    "review": "AVAILABILITY_TRIAL_REVIEW.md",
+    "provider_recovery": "NOT_RUN",
+    "owner_trial": "NOT_RUN; owner must invoke authenticated button; no session extraction performed",
+    "cloudflare_access": "Wrangler using existing authorized OAuth; no callable Cloudflare connector available",
+    "storage_changes": "Additive Registry tables, existing namespaces/migration v1 preserved; actual PITR restore NOT_RUN",
+    "rollback": "Previous version1e607dc2 retained; old code does not understand new quarantine tables, prefer forward repair; no automatic state erasure"
   }
 }

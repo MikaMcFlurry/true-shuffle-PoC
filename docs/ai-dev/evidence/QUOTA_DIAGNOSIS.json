@@ -1,6 +1,6 @@
 {
   "schema_version": "true-shuffle.quota-diagnosis.v1",
-  "recorded_at": "2026-09-30T12:11:06.473055+00:00",
+  "recorded_at": "2026-09-30T13:21:24.213546+00:00",
   "owner_report": {
     "reason": "QUOTA_EXCEEDED",
     "endpoint": "/me/player/devices",
@@ -86,5 +86,12 @@
     "review": "ARTIST_ALBUMS_SCOPE_REVIEW.md",
     "browser_tests": 18
   },
-  "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246"
+  "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
+  "availability_trial_followup": {
+    "status": "DEPLOYED_PUBLIC_READBACK_PASS_OWNER_RECOVERY_NOT_RUN",
+    "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
+    "version_id": "4f5e1037-e616-4df2-9f93-15dbdaf8ee5f",
+    "review": "AVAILABILITY_TRIAL_REVIEW.md",
+    "browser_tests": 20
+  }
 }

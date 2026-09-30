@@ -18,7 +18,8 @@
     "Fixed live401falseoffline and passed16browser plus5independentstore cases",
     "Exact active deployment and public/API/browser readback",
     "Quota wait, stored metrics and developer-account sharing clarified;17 browser cases plus4 independent render cases pass.",
-    "Artist-albums quota isolated and retained legacy deadlines independently reviewed; 341 unit/Worker and18 browser checks; promoted100% with preserved bindings/runtime and public readback."
+    "Artist-albums quota isolated and retained legacy deadlines independently reviewed; 341 unit/Worker and18 browser checks; promoted100% with preserved bindings/runtime and public readback.",
+    "Explicit bounded availability trial independently reviewed; 356 unit/Worker and20 browser checks; promoted100% with preserved bindings/runtime and public readback."
   ],
   "in_progress": [],
   "blocked": [
@@ -26,9 +27,9 @@
     "Actual populated Durable Object migration/history invariants and restore verification"
   ],
   "deployment": {
-    "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
-    "version_id": "1e607dc2-48a9-4724-a9df-4b0a02218219",
-    "deployment_id": "9199fa19-a506-4a6a-a921-02ef39e7880f",
+    "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
+    "version_id": "4f5e1037-e616-4df2-9f93-15dbdaf8ee5f",
+    "deployment_id": "7121bf97-6fe9-465f-8ded-22605729b85e",
     "traffic_percentage": 100,
     "evidence": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
   },
@@ -37,6 +38,6 @@
     "Run owner-authenticated mid-song/device/browser/Spotify-quota and HA/MA acceptance",
     "Verify populated production storage invariants and actual PITR restore in an isolated recovery process"
   ],
-  "updated_at": "2026-09-30T12:11:06.473055+00:00",
-  "quota_diagnosis": "Owner screenshot establishes actual artist-albums429 and locally blocked device attempts. Scoped fix deployed; old global deadlines retained. Actual Spotify/HA recovery, daily traffic attribution and sustained capacity remain unverified."
+  "updated_at": "2026-09-30T13:21:24.213546+00:00",
+  "quota_diagnosis": "Owner authorized bounded reset; authenticated trial deployed, actual owner trial/provider/HA recovery and daily capacity NOT_RUN."
 }
