@@ -1,7 +1,7 @@
 {
   "schema_version": "mika.repository-intelligence.v2",
   "packet_status": "ALIGNED",
-  "generated_at": "2026-09-30T13:22:18.173393+00:00",
+  "generated_at": "2026-09-30T18:51:39.901267+00:00",
   "analysis_modes": [
     "LIVE_BASELINE",
     "LOST_CONTEXT",
@@ -16,8 +16,8 @@
       "visibility": "public",
       "default_branch": "main",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
-      "notes": "Supporting baseline; application identical to deployed a46bc043717b113dc37d1989ab4323bf166d2da9. Explicit availability trial: deployed source `a46bc043717b113dc37d1989ab4323bf166d2da9`, version `4f5e1037-e616-4df2-9f93-15dbdaf8ee5f`, deployment `7121bf97-6fe9-465f-8ded-22605729b85e` at100%. Owner-authorized authenticated button quarantines an identical ambiguous legacy quota with atomic revision/probe checks and bounded original backup. Catalog and playback writes retain original/stronger deadline. At most3 essential GETs and1 token refresh, no transport retries; cache60s and concurrent coalescing. Actual per-family quota holds, general rate/unknown precedence, history fallback without queue mutation and partial24-hour first429 counters verified. Fresh independent review AVAILABILITY_TRIAL_REVIEW.md READY,62 tests/5 renders; integrated356 tests/20 browser cases and source CI36720476950 PASS. Exact assets/API/anonymous browser readback PASS; owner trial, Spotify/HA recovery, sustained multiuser capacity and populated-storage restore NOT_RUN. Full acceptance PARTIAL/BLOCKED."
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
+      "notes": "Supporting baseline; application identical to deployed 1328f8f562adbcc7454b6ee8b7d6a224f6cdca95. Confirmed-operation/shared-tracker rollout: source `1328f8f562adbcc7454b6ee8b7d6a224f6cdca95`, version `cfcd030c-2004-4816-9e5d-170b0c421ac2`, deployment `4498733e-8b5b-482e-a653-ce85aa5384b1` at100%. Only actualSpotify429 establishes a listener-specific HTTPmethod/sanitizedendpoint wait; oldblanket/quarantine/backoff archived and retired. Genuine RetryAfter enforced onlymatchingoperation; unknownwait explicitboundedretry. Shared720hour/200episode tracker, fiveanonymoususers+overflow/signin totals, privateactor/starttime/revisionfences. No otherappvisibility, guessedbudget, automaticstress or exactreset claim. Fresh CONFIRMED_REQUEST_TRACKER_REVIEW.md scopedREADY:64tests/6renders; integrated358tests/20browser and sourceActions36760609139PASS. Exactpublicassets/auth/anonymousbrowserPASS. Ownercurrenttracker/control/HA, sustainedmultilistenercapacity andpopulatedrestore NOT_RUN; fullacceptancePARTIAL/BLOCKED."
     },
     {
       "id": "R-2",
@@ -34,7 +34,7 @@
   "primary_baseline": {
     "repository_id": "R-1",
     "ref": "codex/implement-cloudflare-restart",
-    "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
+    "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
     "deployment_refs": [
       "https://true-shuffle.mikahertler-72c.workers.dev/"
     ],
@@ -55,7 +55,8 @@
       "EV-13",
       "EV-14",
       "EV-15",
-      "EV-16"
+      "EV-16",
+      "EV-17"
     ],
     "target_intent_evidence_ids": [
       "EV-02"
@@ -222,7 +223,7 @@
       "group": "Reliability",
       "evidence_state": "PARTIAL",
       "owner_disposition": "IMPROVE",
-      "summary": "Explicit availability trial: deployed source `a46bc043717b113dc37d1989ab4323bf166d2da9`, version `4f5e1037-e616-4df2-9f93-15dbdaf8ee5f`, deployment `7121bf97-6fe9-465f-8ded-22605729b85e` at100%. Owner-authorized authenticated button quarantines an identical ambiguous legacy quota with atomic revision/probe checks and bounded original backup. Catalog and playback writes retain original/stronger deadline. At most3 essential GETs and1 token refresh, no transport retries; cache60s and concurrent coalescing. Actual per-family quota holds, general rate/unknown precedence, history fallback without queue mutation and partial24-hour first429 counters verified. Fresh independent review AVAILABILITY_TRIAL_REVIEW.md READY,62 tests/5 renders; integrated356 tests/20 browser cases and source CI36720476950 PASS. Exact assets/API/anonymous browser readback PASS; owner trial, Spotify/HA recovery, sustained multiuser capacity and populated-storage restore NOT_RUN. Full acceptance PARTIAL/BLOCKED.",
+      "summary": "Confirmed-operation/shared-tracker rollout: source `1328f8f562adbcc7454b6ee8b7d6a224f6cdca95`, version `cfcd030c-2004-4816-9e5d-170b0c421ac2`, deployment `4498733e-8b5b-482e-a653-ce85aa5384b1` at100%. Only actualSpotify429 establishes a listener-specific HTTPmethod/sanitizedendpoint wait; oldblanket/quarantine/backoff archived and retired. Genuine RetryAfter enforced onlymatchingoperation; unknownwait explicitboundedretry. Shared720hour/200episode tracker, fiveanonymoususers+overflow/signin totals, privateactor/starttime/revisionfences. No otherappvisibility, guessedbudget, automaticstress or exactreset claim. Fresh CONFIRMED_REQUEST_TRACKER_REVIEW.md scopedREADY:64tests/6renders; integrated358tests/20browser and sourceActions36760609139PASS. Exactpublicassets/auth/anonymousbrowserPASS. Ownercurrenttracker/control/HA, sustainedmultilistenercapacity andpopulatedrestore NOT_RUN; fullacceptancePARTIAL/BLOCKED.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -231,7 +232,8 @@
         "EV-13",
         "EV-14",
         "EV-15",
-        "EV-16"
+        "EV-16",
+        "EV-17"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -339,7 +341,7 @@
       }
     ],
     "deployment": {
-      "summary": "Explicit availability trial: deployed source `a46bc043717b113dc37d1989ab4323bf166d2da9`, version `4f5e1037-e616-4df2-9f93-15dbdaf8ee5f`, deployment `7121bf97-6fe9-465f-8ded-22605729b85e` at100%. Owner-authorized authenticated button quarantines an identical ambiguous legacy quota with atomic revision/probe checks and bounded original backup. Catalog and playback writes retain original/stronger deadline. At most3 essential GETs and1 token refresh, no transport retries; cache60s and concurrent coalescing. Actual per-family quota holds, general rate/unknown precedence, history fallback without queue mutation and partial24-hour first429 counters verified. Fresh independent review AVAILABILITY_TRIAL_REVIEW.md READY,62 tests/5 renders; integrated356 tests/20 browser cases and source CI36720476950 PASS. Exact assets/API/anonymous browser readback PASS; owner trial, Spotify/HA recovery, sustained multiuser capacity and populated-storage restore NOT_RUN. Full acceptance PARTIAL/BLOCKED.",
+      "summary": "Confirmed-operation/shared-tracker rollout: source `1328f8f562adbcc7454b6ee8b7d6a224f6cdca95`, version `cfcd030c-2004-4816-9e5d-170b0c421ac2`, deployment `4498733e-8b5b-482e-a653-ce85aa5384b1` at100%. Only actualSpotify429 establishes a listener-specific HTTPmethod/sanitizedendpoint wait; oldblanket/quarantine/backoff archived and retired. Genuine RetryAfter enforced onlymatchingoperation; unknownwait explicitboundedretry. Shared720hour/200episode tracker, fiveanonymoususers+overflow/signin totals, privateactor/starttime/revisionfences. No otherappvisibility, guessedbudget, automaticstress or exactreset claim. Fresh CONFIRMED_REQUEST_TRACKER_REVIEW.md scopedREADY:64tests/6renders; integrated358tests/20browser and sourceActions36760609139PASS. Exactpublicassets/auth/anonymousbrowserPASS. Ownercurrenttracker/control/HA, sustainedmultilistenercapacity andpopulatedrestore NOT_RUN; fullacceptancePARTIAL/BLOCKED.",
       "evidence_ids": [
         "EV-12"
       ]
@@ -602,7 +604,7 @@
       "claim": "Fresh build/typecheck/lint and 280 Vitest tests in nine files pass; Wrangler dry-run passes. Source unchanged from c9bd082. Baseline application equivalence rechecked at the implementation start; this historical check does not certify current working tree.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
       "path_or_url": "docs/ai-dev/EVIDENCE.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "EV-04",
@@ -707,7 +709,7 @@
       "claim": "Integrated implementation, actual Cloudflare deployment and partial live acceptance; see ledger.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
       "path_or_url": "docs/ai-dev/EVIDENCE.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/EVIDENCE.json",
@@ -719,14 +721,14 @@
       "id": "EV-12",
       "type": "FILE",
       "evidence_level": "OBSERVED_RUNTIME",
-      "claim": "Current version 4f5e1037-e616-4df2-9f93-15dbdaf8ee5f sourcea46bc043717b113dc37d1989ab4323bf166d2da9 at100%; exact public readback PASS, owner recovery NOT_RUN.",
+      "claim": "Current version cfcd030c-2004-4816-9e5d-170b0c421ac2 source1328f8f562adbcc7454b6ee8b7d6a224f6cdca95 at100%; exact public readback PASS, owner recovery NOT_RUN.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
       "path_or_url": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
       "environment": "Production Cloudflare true-shuffle version c7b059ed-ab7c-45f5-88f2-3219ec3dd628; anonymous public readback only",
       "artifact_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
-      "observed_at": "2026-09-30T13:22:18.173393+00:00",
+      "observed_at": "2026-09-30T18:51:39.901267+00:00",
       "source_status": "CURRENT_SUPPORTING",
       "sensitivity": "PUBLIC"
     },
@@ -737,7 +739,7 @@
       "claim": "Quota diagnostics clarification passes17 fixture browser cases and4 independent actual-render cases; owner-reported provider restriction and shared developer-account quota are distinguished from recovery.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
       "path_or_url": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
@@ -752,7 +754,7 @@
       "claim": "Real HubCore/FakeSpotify24h audit reproduces856/2015/1748 HTTP calls and confirms fresh Spotify history feed stops during the audited account cooldown.3/5-user totals are arithmetic, quota units/viability unknown.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
       "path_or_url": "docs/ai-dev/evidence/FULL_DAY_USAGE_AUDIT.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/FULL_DAY_USAGE_AUDIT.json",
@@ -767,7 +769,7 @@
       "claim": "Exactartist-albums scopedgate, retainedlegacydeadline andUI independently reviewed; 341 unit/Worker and18browser cases pass; actualSpotify/HArecoveryNOT_RUN.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
       "path_or_url": "docs/ai-dev/evidence/ARTIST_ALBUMS_SCOPE_REVIEW.md",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/ARTIST_ALBUMS_SCOPE_REVIEW.md",
@@ -782,11 +784,26 @@
       "claim": "Explicit availability trial: deployed source `a46bc043717b113dc37d1989ab4323bf166d2da9`, version `4f5e1037-e616-4df2-9f93-15dbdaf8ee5f`, deployment `7121bf97-6fe9-465f-8ded-22605729b85e` at100%. Owner-authorized authenticated button quarantines an identical ambiguous legacy quota with atomic revision/probe checks and bounded original backup. Catalog and playback writes retain original/stronger deadline. At most3 essential GETs and1 token refresh, no transport retries; cache60s and concurrent coalescing. Actual per-family quota holds, general rate/unknown precedence, history fallback without queue mutation and partial24-hour first429 counters verified. Fresh independent review AVAILABILITY_TRIAL_REVIEW.md READY,62 tests/5 renders; integrated356 tests/20 browser cases and source CI36720476950 PASS. Exact assets/API/anonymous browser readback PASS; owner trial, Spotify/HA recovery, sustained multiuser capacity and populated-storage restore NOT_RUN. Full acceptance PARTIAL/BLOCKED.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "4f80c3080b0595fc930941c6fd8063b37fecfb4a",
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
       "path_or_url": "docs/ai-dev/evidence/AVAILABILITY_TRIAL_REVIEW.md",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/AVAILABILITY_TRIAL_REVIEW.md",
       "observed_at": "2026-09-30T13:22:18.173393+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-17",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Confirmed-operation/shared-tracker rollout: source `1328f8f562adbcc7454b6ee8b7d6a224f6cdca95`, version `cfcd030c-2004-4816-9e5d-170b0c421ac2`, deployment `4498733e-8b5b-482e-a653-ce85aa5384b1` at100%. Only actualSpotify429 establishes a listener-specific HTTPmethod/sanitizedendpoint wait; oldblanket/quarantine/backoff archived and retired. Genuine RetryAfter enforced onlymatchingoperation; unknownwait explicitboundedretry. Shared720hour/200episode tracker, fiveanonymoususers+overflow/signin totals, privateactor/starttime/revisionfences. No otherappvisibility, guessedbudget, automaticstress or exactreset claim. Fresh CONFIRMED_REQUEST_TRACKER_REVIEW.md scopedREADY:64tests/6renders; integrated358tests/20browser and sourceActions36760609139PASS. Exactpublicassets/auth/anonymousbrowserPASS. Ownercurrenttracker/control/HA, sustainedmultilistenercapacity andpopulatedrestore NOT_RUN; fullacceptancePARTIAL/BLOCKED.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b",
+      "path_or_url": "docs/ai-dev/evidence/CONFIRMED_REQUEST_TRACKER_REVIEW.md",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/evidence/CONFIRMED_REQUEST_TRACKER_REVIEW.md",
+      "observed_at": "2026-09-30T18:51:39.901267+00:00",
       "source_status": "CURRENT_SUPPORTING",
       "sensitivity": "PUBLIC"
     }
