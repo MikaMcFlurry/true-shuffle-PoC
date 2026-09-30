@@ -1,0 +1,112 @@
+{
+  "schema_version": "true-shuffle.deployment.v1",
+  "recorded_at": "2026-09-30T09:27:10.165966+00:00",
+  "source_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+  "worker": "true-shuffle",
+  "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
+  "version_id": "c7b059ed-ab7c-45f5-88f2-3219ec3dd628",
+  "deployment_id": "dc7496dc-b106-4daf-9925-f4e8ce81d2bd",
+  "percentage": 100,
+  "deployed_at": "2026-09-30T09:24:13.777709Z",
+  "previous_version": "c193ca15-8503-4e18-ac78-a8ac398289cb",
+  "previous_deployment": "7d44a8ca-6244-4a8b-9ef7-ca5b4e8647aa",
+  "intermediate_version": "79c415cd-64b7-4046-96a4-dc3e7f63a061",
+  "migration_tag": "v1",
+  "namespaces": {
+    "USER_HUB": {
+      "id": "59222ef9f3a642d4b90776fafa0eac84",
+      "class_name": "UserHub",
+      "sqlite": true
+    },
+    "REGISTRY": {
+      "id": "2ccba352966f46a3b289eb159ccb3bc4",
+      "class_name": "Registry",
+      "sqlite": true
+    }
+  },
+  "existing_bindings_preserved": true,
+  "existing_secret_bindings_preserved": true,
+  "deployment_authority": "Explicit owner implementation/deployment request, full access and completed Cloudflare device OAuth. Wrangler used because plugin search found no Cloudflare connector.",
+  "public_readback": {
+    "tested_at": "2026-09-30T09:25:00.911911+00:00",
+    "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+    "source_commit": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+    "checks": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/assets/index-BvawSEfm.js",
+        "status": 200,
+        "local_build_bytes_match": true,
+        "sha256": "29ba8a2f3871dc0eb03892ea995db9835b2a339d9144bccb5602c6af46113c68"
+      },
+      {
+        "path": "/assets/index-DU4lTMlv.css",
+        "status": 200,
+        "local_build_bytes_match": true,
+        "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+      },
+      {
+        "path": "/api/health",
+        "status": 200,
+        "body": {
+          "ok": true,
+          "version": "1.0.0",
+          "configured": true
+        }
+      },
+      {
+        "path": "/api/state",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/native/devices",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/spotify/diagnostics",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/player",
+        "method": "POST without required header",
+        "status": 403,
+        "csrf_rejected": true
+      }
+    ],
+    "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+  },
+  "browser_smoke": {
+    "status": "PASS",
+    "viewport": "390x844",
+    "signin_visible": true,
+    "false_offline_banner": false,
+    "javascript_errors": [],
+    "horizontal_overflow": false,
+    "capture": ".impeccable/review/signin-live.png"
+  },
+  "recovery": {
+    "old_worker_version_retained": true,
+    "original_version_metadata_recorded": true,
+    "sqlite_pitr_documentation": "https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/",
+    "documented_window_days": 30,
+    "actual_object_bookmark_or_restore": "NOT_RUN",
+    "production_database_export": "NOT_RUN",
+    "behavioral_rollback_compatibility": "NOT_VERIFIED: old code can reshuffle and ignores new checkpoint contract; prefer forward repair; never remove session tables."
+  },
+  "provider_journeys": "NOT_RUN: owner-authenticated Spotify and private HA/MA unavailable; no playback commands sent by smoke test.",
+  "acceptance_claim": "PARTIAL; deployment is an observed fact, not complete live provider/recovery acceptance.",
+  "github_ci": {
+    "run_id": 36695723423,
+    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36695723423",
+    "source_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+    "conclusion": "success",
+    "unit_tests": 325,
+    "browser_tests": 16
+  }
+}

@@ -3,7 +3,7 @@
   "project": "true-shuffle",
   "subject_revision": "Bound to implementation commit in HANDOFF_MAP.json and EVIDENCE.json",
   "branch": "codex/implement-cloudflare-restart",
-  "phase": "LOCAL_VERIFIED_EXTERNAL_BLOCKED",
+  "phase": "DEPLOYED_LIVE_ACCEPTANCE_PARTIAL",
   "execution_status": "PARTIAL",
   "plan_ref": "docs/ai-dev/EXECUTION_PLAN.md",
   "completed": [
@@ -12,20 +12,28 @@
     "capability-based HA/MA bridge and local recovery",
     "Impeccable player implementation and scoped fresh finish review",
     "325 unit/Worker and15 browser checks",
-    "49 fresh independent targeted checks"
+    "49 fresh independent targeted checks",
+    "Cloudflare authenticated target/namespace/secret identity",
+    "Uploaded and promoted reviewed implementation",
+    "Fixed live401falseoffline and passed16browser plus5independentstore cases",
+    "Exact active deployment and public/API/browser readback"
   ],
   "in_progress": [],
   "blocked": [
-    "Cloudflare version/deployment access",
-    "live Spotify/HA/MA credentials"
+    "Owner-authenticated Spotify/HA/MA acceptance",
+    "Actual populated Durable Object migration/history invariants and restore verification"
   ],
-  "deployment": "UNCHANGED",
+  "deployment": {
+    "source_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+    "version_id": "c7b059ed-ab7c-45f5-88f2-3219ec3dd628",
+    "deployment_id": "dc7496dc-b106-4daf-9925-f4e8ce81d2bd",
+    "traffic_percentage": 100,
+    "evidence": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
+  },
   "recovery": "LOCAL_ADDITIVE_MIGRATION_AND_BACKUP_REOPEN_PASS; PRODUCTION_NOT_RUN",
   "next_actions": [
-    "Publish reviewed draft PR",
-    "Obtain Cloudflare and owner Spotify/HA/MA access",
-    "Verify exact production identity, backup and live acceptance",
-    "Deploy reviewed revision and read back"
+    "Run owner-authenticated mid-song/device/browser/Spotify-quota and HA/MA acceptance",
+    "Verify populated production storage invariants and actual PITR restore in an isolated recovery process"
   ],
-  "updated_at": "2026-09-30T08:47:37.845866+00:00"
+  "updated_at": "2026-09-30T09:27:10.165966+00:00"
 }
