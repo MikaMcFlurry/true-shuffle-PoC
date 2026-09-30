@@ -1,0 +1,130 @@
+{
+  "schema_version": "mika.repository-intelligence.v2",
+  "packet_status": "ALIGNED",
+  "generated_at": "2026-08-26T08:00:00Z",
+  "analysis_modes": ["LOST_CONTEXT", "SPEC_IMPLEMENTATION_GAP"],
+  "repositories": [
+    {
+      "id": "R-1",
+      "full_name": "example/project",
+      "url": "https://github.com/example/project",
+      "role": "CURRENT_PRIMARY",
+      "visibility": "private",
+      "default_branch": "main",
+      "ref": "main",
+      "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "notes": "Example only"
+    }
+  ],
+  "primary_baseline": {
+    "repository_id": "R-1",
+    "ref": "main",
+    "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "deployment_refs": [],
+    "unavailable_systems": ["production runtime"]
+  },
+  "authority_map": {
+    "current_reality_evidence_ids": ["EV-1"],
+    "target_intent_evidence_ids": ["EV-2"],
+    "governance_evidence_ids": [],
+    "conflicts": []
+  },
+  "product": {
+    "name": "Example Product",
+    "summary": "Example packet for deterministic validation.",
+    "users": ["owner"],
+    "delivery_state": "PROTOTYPE",
+    "environments": [],
+    "owner_satisfaction": "MIXED"
+  },
+  "features": [
+    {
+      "id": "F-1",
+      "name": "Core flow",
+      "group": "Core",
+      "evidence_state": "IMPLEMENTED_TESTED",
+      "owner_disposition": "IMPROVE",
+      "summary": "Implemented and covered by CI for the analyzed commit.",
+      "evidence_ids": ["EV-1"],
+      "quality_note": "Runtime not observed."
+    }
+  ],
+  "architecture": {
+    "summary": "Single application.",
+    "components": [],
+    "data_stores": [],
+    "integrations": [],
+    "deployment": {"summary": "Not verified", "evidence_ids": []},
+    "operations": {"summary": "Not verified", "evidence_ids": []}
+  },
+  "quality": {
+    "checks": [
+      {"category": "tests", "status": "PASS", "evidence_ids": ["EV-1"], "notes": "CI passed for the analyzed commit."},
+      {"category": "runtime", "status": "BLOCKED", "evidence_ids": [], "notes": "Production unavailable."}
+    ]
+  },
+  "gaps": [
+    {
+      "id": "G-1",
+      "class": "UNVERIFIED_CLAIM",
+      "severity": "P2",
+      "summary": "Production state is inaccessible.",
+      "evidence_ids": ["EV-1"],
+      "owner_decision_required": false,
+      "blocking": false,
+      "resolution_decision_id": null,
+      "recommended_resolution": "Verify production during delivery."
+    }
+  ],
+  "owner_alignment": {
+    "questions": [],
+    "decisions": [
+      {
+        "id": "D-1",
+        "decision": "Improve the core flow.",
+        "disposition": "IMPROVE",
+        "source": "owner statement",
+        "recorded_at": "2026-08-26T08:00:00Z"
+      }
+    ]
+  },
+  "handoff_readiness": {"status": "READY", "blocker_ids": [], "reason": "Target intent is aligned; runtime gap is non-blocking for handoff."},
+  "recommendation": {
+    "engagement_types": ["TAKEOVER"],
+    "handoff_profiles": ["STANDARD"],
+    "read_first": "REPOSITORY_INTELLIGENCE.md",
+    "next_action": "Create a mapped AI Dev handoff if repository guidance is insufficient."
+  },
+  "evidence": [
+    {
+      "id": "EV-1",
+      "type": "CI",
+      "evidence_level": "CI_CONFIRMED",
+      "claim": "The core suite passed for the analyzed commit.",
+      "repository_id": "R-1",
+      "ref": "main",
+      "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "path_or_url": ".github/workflows/ci.yml",
+      "environment": "ci",
+      "artifact_ref": "run-123",
+      "observed_at": "2026-08-26T07:30:00Z",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "INTERNAL"
+    },
+    {
+      "id": "EV-2",
+      "type": "OWNER_STATEMENT",
+      "evidence_level": "DOC_CORROBORATED",
+      "claim": "The owner wants the core flow improved.",
+      "repository_id": null,
+      "ref": null,
+      "commit_sha": null,
+      "path_or_url": null,
+      "environment": null,
+      "artifact_ref": "owner-message-1",
+      "observed_at": "2026-08-26T07:45:00Z",
+      "source_status": "AUTHORITATIVE",
+      "sensitivity": "INTERNAL"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+# AI Dev Start Here — {{PROJECT_NAME}}
+
+- Generated: {{GENERATED_AT}}
+- Intelligence baseline: `{{REPOSITORY}}` / `{{REF}}` / `{{COMMIT_SHA}}`
+- Profiles: {{PROFILES}}
+- Map: `{{MAP_PATH}}`
+
+## Current reality
+
+{{CURRENT_REALITY}}
+
+## Read order
+
+{{READ_ORDER}}
+
+## Authority notes
+
+{{AUTHORITY_NOTES}}
+
+## Current mission
+
+{{MISSION_SUMMARY}}
+
+## Freshness
+
+Refresh when repository code, deployment, target intent, governance, or mapped canonical sources change materially.

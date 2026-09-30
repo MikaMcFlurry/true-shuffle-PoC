@@ -1,0 +1,14 @@
+interface:
+  display_name: Mika Verification
+  short_description: Produce auditable software evidence
+  default_prompt: Use $mika-verification to verify this product or release with direct,
+    auditable evidence.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

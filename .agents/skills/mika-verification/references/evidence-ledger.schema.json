@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mika.local/schemas/evidence-ledger-1.2.json",
+  "title": "Mika Evidence Ledger 1.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at",
+    "project",
+    "subject",
+    "mode",
+    "delivery_target",
+    "claim",
+    "material_release",
+    "change_profiles",
+    "independent_review_level",
+    "independent_review_verdict",
+    "required_categories",
+    "external_blockers",
+    "requirements_snapshot",
+    "protected_requirements",
+    "open_findings",
+    "gates"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.2"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "project": {"type": "string", "minLength": 1},
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "artifact_ref", "environment", "environment_class"],
+      "properties": {
+        "revision": {"type": "string", "minLength": 1},
+        "artifact_ref": {"type": "string", "minLength": 1},
+        "environment": {"type": "string", "minLength": 1},
+        "environment_class": {"enum": ["LOCAL", "CI", "PREVIEW", "STAGING", "PRODUCTION", "EXPERIMENT", "OTHER"]}
+      }
+    },
+    "mode": {"enum": ["AUTONOMOUS_BUILD", "GOVERNED_EXECUTION", "EXPERIMENT"]},
+    "delivery_target": {"enum": ["PRODUCTION_LIVE", "RELEASE_CANDIDATE", "VERIFIED_PROTOTYPE"]},
+    "claim": {"enum": ["PRODUCTION_LIVE", "RELEASE_CANDIDATE", "VERIFIED_PROTOTYPE", "PARTIAL", "BLOCKED"]},
+    "material_release": {"type": "boolean"},
+    "change_profiles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["USER_FACING", "PERSISTENT_STATE_CHANGE", "AUTHORIZATION_OR_SENSITIVE_DATA", "PAYMENTS_OR_FINANCIAL_STATE", "AI_TOOL_SIDE_EFFECTS", "REALTIME_OR_MULTIPLAYER_AUTHORITY", "PERFORMANCE_CRITICAL", "NONE"]}
+    },
+    "independent_review_level": {"enum": ["FRESH", "PARTIALLY_INDEPENDENT", "COMPROMISED", "NOT_REQUIRED", "NOT_RUN"]},
+    "independent_review_verdict": {"enum": ["READY", "READY_WITH_NON_BLOCKING_FINDINGS", "NOT_READY", "BLOCKED", "NOT_REQUIRED", "NOT_RUN"]},
+    "required_categories": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "external_blockers": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/externalBlocker"}
+    },
+    "requirements_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_ref", "source_revision", "non_negotiable_ids"],
+      "properties": {
+        "source_ref": {"type": "string", "minLength": 1},
+        "source_revision": {"type": "string", "minLength": 1},
+        "non_negotiable_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "protected_requirements": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/protectedRequirement"}
+    },
+    "open_findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "gates": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/gate"}
+    }
+  },
+  "$defs": {
+    "externalBlocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "description", "evidence_ref"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {"enum": ["AUTHORITY", "CREDENTIAL", "PROVIDER_REVIEW", "CERTIFICATE", "CONTRACT", "THIRD_PARTY_APPROVAL", "TOOL_UNAVAILABLE"]},
+        "description": {"type": "string", "minLength": 1},
+        "evidence_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "protectedRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "gate_ids"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "statement": {"type": "string", "minLength": 1},
+        "gate_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "severity", "blocking"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["P0", "P1", "P2", "P3"]},
+        "blocking": {"type": "boolean"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "ref", "result", "subject_revision", "observed_at"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "minLength": 1},
+        "ref": {"type": "string", "minLength": 1},
+        "result": {"type": "string", "minLength": 1},
+        "subject_revision": {"type": "string", "minLength": 1},
+        "observed_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category", "required", "status", "evidence", "rationale"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "category": {"type": "string", "minLength": 1},
+        "required": {"type": "boolean"},
+        "status": {"enum": ["PASS", "FAIL", "NOT_RUN", "NOT_APPLICABLE"]},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "rationale": {"type": "string"}
+      }
+    }
+  }
+}

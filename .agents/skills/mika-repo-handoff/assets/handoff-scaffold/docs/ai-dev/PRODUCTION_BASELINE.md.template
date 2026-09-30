@@ -1,0 +1,24 @@
+# Production Baseline — {{PROJECT_NAME}}
+
+- Verified: {{GENERATED_AT}}
+- Deployed artifact/ref: {{DEPLOYED_ARTIFACT}}
+
+## Critical journeys and active users
+
+{{PRODUCTION_JOURNEYS}}
+
+## Data, migrations, and integrations
+
+{{DATA_MIGRATIONS_INTEGRATIONS}}
+
+## Observability, incidents, and ownership
+
+{{OBSERVABILITY_AND_OWNERSHIP}}
+
+## Backup, restore, rollback, and staged rollout
+
+{{RECOVERY_AND_ROLLOUT}}
+
+## Continuity risks
+
+{{CONTINUITY_RISKS}}

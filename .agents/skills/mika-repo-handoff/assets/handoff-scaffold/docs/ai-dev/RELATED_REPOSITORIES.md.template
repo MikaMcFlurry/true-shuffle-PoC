@@ -1,0 +1,15 @@
+# Related Repositories — {{PROJECT_NAME}}
+
+{{REPOSITORY_ROLE_TABLE}}
+
+## Canonical boundaries and interfaces
+
+{{BOUNDARIES_AND_INTERFACES}}
+
+## Coordinated change/release order
+
+{{CHANGE_RELEASE_ORDER}}
+
+## Unique artifacts and read order
+
+{{UNIQUE_ARTIFACTS_AND_READ_ORDER}}

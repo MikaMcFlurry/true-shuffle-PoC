@@ -1,0 +1,14 @@
+interface:
+  display_name: Mika Dev Studio
+  short_description: Autonomous end-to-end software studio
+  default_prompt: Use $mika-dev-studio to take this software project from rough handoff
+    to the highest evidence-supported delivery state.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

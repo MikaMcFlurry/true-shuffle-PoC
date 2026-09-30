@@ -1,0 +1,13 @@
+# Architecture Truth
+
+## System and ownership
+[Components, data/state owners, trust boundaries]
+
+## Critical flows and failure behavior
+[Runtime/data paths, degraded states, recovery]
+
+## External systems and operations
+[Providers, environments, deployment, observability]
+
+## Decisions
+[Links to current ADRs and migration constraints]

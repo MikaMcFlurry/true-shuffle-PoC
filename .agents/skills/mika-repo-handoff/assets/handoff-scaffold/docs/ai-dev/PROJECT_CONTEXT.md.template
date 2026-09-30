@@ -1,0 +1,33 @@
+# Project Context — {{PROJECT_NAME}}
+
+- Intelligence baseline: `{{COMMIT_SHA}}`
+- Generated: {{GENERATED_AT}}
+- Authority: role-scoped; `{{MAP_PATH}}` is authoritative for each section's role, source, and freshness. No section becomes canonical merely by appearing here.
+
+## Current state and environments — default `GENERATED_VIEW`
+
+{{CURRENT_STATE}}
+
+## Product truth and owner decisions — default `SUPPORTING`
+
+{{PRODUCT_TRUTH_AND_DECISIONS}}
+
+## Feature inventory — default `GENERATED_VIEW`
+
+{{FEATURE_INVENTORY}}
+
+## Architecture and runtime — default `GENERATED_VIEW`
+
+{{ARCHITECTURE_RUNTIME}}
+
+## Run, deploy, operations, and recovery — default `GENERATED_VIEW`
+
+{{RUN_DEPLOY_OPERATIONS}}
+
+## Quality, evidence, and risks — default `GENERATED_VIEW`
+
+{{QUALITY_RISKS}}
+
+## Freshness triggers
+
+{{FRESHNESS_TRIGGERS}}

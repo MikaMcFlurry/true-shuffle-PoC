@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "project": "[project-name]",
+  "subject": {
+    "revision": "[commit, content hash, or immutable version]",
+    "artifact_ref": "[build/deployment/workspace reference]"
+  },
+  "phase": "GROUND",
+  "status": "PARTIAL",
+  "active_plan_ref": "[path or durable reference]",
+  "owners": [],
+  "completed": [],
+  "in_progress": [],
+  "blocked": [],
+  "capability_blockers": [],
+  "recovery_state": [],
+  "next_actions": [],
+  "updated_at": "[ISO-8601 timestamp]"
+}

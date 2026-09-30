@@ -1,0 +1,96 @@
+{
+  "copied_at": "2026-09-30",
+  "purpose": "Repository-local copies for the authorized Codex continuation; existing skills, no personal skill installation claimed.",
+  "files": {
+    "mika-dev-studio": {
+      "SKILL.md": "4f4f5aa17f70e978765040eb5ec0dabe57edd97abc188de75d479ebb4320fbf5",
+      "agents/openai.yaml": "810dffa06ae8a696feededa148d4d0e2a1a429b3753b27db561b3e380763ced8",
+      "assets/icon.svg": "72343cc4b66256ae7de8474c7cad14e711ad84a94c473732a44f96a56124c42d",
+      "assets/repo-scaffold/AGENTS.md.template": "92e8588509033272fc6507df7daf9fd023558d1e46eca089b48377e1e812e484",
+      "assets/repo-scaffold/docs/architecture/ARCHITECTURE.md.template": "d6989810e7ac6ed675c8212095a8c43fa60073aa322b81f29af8d222545bf091",
+      "assets/repo-scaffold/docs/exec-plans/EXECUTION_CHECKPOINT.template.json": "bc7e82d0d370ff9dd57986e6f65baf8afaeb5e7913fa9b833b47ebc567df0090",
+      "assets/repo-scaffold/docs/exec-plans/EXECUTION_PLAN.md.template": "dd4ce457ad7a82ad7f31aedfd072c71f03e00619dd72e510ed427cc902ee6a69",
+      "assets/repo-scaffold/docs/handoffs/RESULT.md.template": "ce1b98b5bed786b4cb4cdb614e2f0762e58a38f5aea8d510440f88d1c3092467",
+      "assets/repo-scaffold/docs/product/PROJECT.md.template": "9237fb993a8d8f191bcc539753a9ed18c4ef1cd22ac45b8fa4aba46e246d301d",
+      "assets/repo-scaffold/docs/quality/EVIDENCE.template.json": "10fc4d041a8234cdc882d8069d24d5063daac0151fb308af3420a1c64f2e5233",
+      "assets/repo-scaffold/docs/references/CURRENT_FACTS.md.template": "b9d2d66c597bf59bb1ae1301e8abd9715c99ff8317eb4241ff7a803e4e79a58d",
+      "references/engagement-contract.md": "aa63160f34e8ccb9fb2b4f2fa63c5169d175a7212e3512062fce8be27eb471f9",
+      "references/lifecycle-and-handoffs.md": "e56ec61808b77dfaa8f51a2a68e5a317c387fbd8976b0a9f6dd8da6134e920fc",
+      "references/repository-control-plane.md": "8e0c525e887914d4bd543711598a5dd93c27e822f587b43d7b84aa95ff2ac84f",
+      "references/resumption-and-freshness.md": "795f90a6e90790b279e54aaf110b7e3c3ec618d55dcaf83a653144c01938b251",
+      "references/specialist-fallback-contracts.md": "5fd289c637ac757a69e66edc5b4ef615fd6501ac4da9526b10b56b3888dc024e",
+      "scripts/validate_checkpoint.py": "f422eb810371b8ac13a766031770f520725134640a7ce01b8b0299bcd5de0c35"
+    },
+    "mika-repo-intelligence": {
+      "SKILL.md": "bb89d356b5f6a044c5b66126be10be5082455b544b080102fbce2975d42bdb63",
+      "agents/openai.yaml": "37612b04c9f9467cb4d70482ea68fb3dc9b0144fc10479f9292f8210259c4d3f",
+      "assets/icon.svg": "e9301497fa98ef56aaca7ede0857b9a18dc06c34040f0679c609a6bf49b1d38b",
+      "references/evidence-authority.md": "d2297191aa2dc21810c3f7948e922d4e12c5d921f0321e81a3aa07397a7945cd",
+      "references/example-packet.json": "f6bd9c7684ef9bc41d6148af19816ee2d91be710b409d8538c7b48b9316300e2",
+      "references/github-inspection.md": "b9674e03b43bdbb3e02d8a1c5da71ff176363ed94f15c02e41dbdf5aeaec2436",
+      "references/live-system.md": "e02425aa0637442de5932215f9d63aa6877069cba59c11a3ee17cd83990534d0",
+      "references/modes.md": "981e265dde3c23eacaeae8c62afc516cf14e8acccbff83e7aa8f02ea8a3f0f77",
+      "references/multi-repo.md": "a54ca04823d39c1c147f1a423f69b60a2ba297761e84946c9db520626fc5ee90",
+      "references/output-contract.md": "a3eb5426879f4c714b470615fdb44d244a805e23ea28bf9dab54852727301100",
+      "references/owner-alignment.md": "4c3d4569e73f7dabaccaad0ce20f80aa756fb0328b9d9d31cf32e5405f0f92ad",
+      "references/repository-intelligence.schema.json": "0dee2889fa003713a7b8267b0cd5210f98379891b6f8015be1aff98491da0b2b",
+      "references/spec-gap.md": "5c214e001642bab9dc1be58b2cd11adc26368320baa98dbc03134b5467b3a320",
+      "scripts/validate_packet.py": "e9b3bf4c11e4aa2552787dfe42864249639cf6f6a3631f83b69d2756d330912d"
+    },
+    "mika-repo-handoff": {
+      "SKILL.md": "9072b98b81452ccd1ec39f18e639b6d52ce52f5b570e05c6f57d8aae4f6ac343",
+      "agents/openai.yaml": "efd570e86de5e5bdf6b9cbbbf7d7fc1df50ebeab4af9679745b7129056b5d098",
+      "assets/handoff-scaffold/AGENTS.md.template": "a8de111f76c735a2bed264e0d9a90430c031bc4474dd6099516d08b24f7aa344",
+      "assets/handoff-scaffold/docs/ai-dev/00_START_HERE.md.template": "22d8417854ec7fbb0055ef6e9bda7ee0012a25b9dadba1450b7f2427ad57c6be",
+      "assets/handoff-scaffold/docs/ai-dev/AI_DEV_MISSION.md.template": "50d7a38a3368525dddf448da2709305654a046d750187a23a11512bde52b5061",
+      "assets/handoff-scaffold/docs/ai-dev/EVIDENCE_MANIFEST.json.template": "42899ce5cdafab9946d22b971b64064d89a63c876ddcc237bf35ea1cc4a77301",
+      "assets/handoff-scaffold/docs/ai-dev/HANDOFF_MAP.json.template": "ca06632609b1899751ae3671b0a65c99292d85de98846e8f0c36f201afb06eba",
+      "assets/handoff-scaffold/docs/ai-dev/PRODUCTION_BASELINE.md.template": "dfa69370926b35bc9b0c8a4909b0d862977d03c28a78332980f3ded74f27b8d2",
+      "assets/handoff-scaffold/docs/ai-dev/PROJECT_CONTEXT.md.template": "2efae105f9fa0008881f66800dd609c4059ffceb9cc72d7997d899d38078fed0",
+      "assets/handoff-scaffold/docs/ai-dev/RELATED_REPOSITORIES.md.template": "5be4d6185b592e6d6efd71eed9adb10637ac678fe7522d54e062f0f8b039feae",
+      "assets/icon.svg": "e9301497fa98ef56aaca7ede0857b9a18dc06c34040f0679c609a6bf49b1d38b",
+      "references/agents-md-contract.md": "cb41242616007696403e0f10add4a16e013a4cab4cf924ebf2b1d8620ffdc7ad",
+      "references/ai-dev-integration.md": "0da597441316a3b56d8e5ca5eb25d477bacd9708bc2337fa1c5e2814100e4364",
+      "references/handoff-evidence.schema.json": "f719354c29be0d89d5a99e10824457352f1b3e344a1e109974b0701b28dbd25d",
+      "references/handoff-map.schema.json": "826ebae6eb18dc7ea18a2f9616be6f8922eb37cf28b37a94b89b960d2627988d",
+      "references/handoff-topology.md": "69cef606f30e1f67c9c41bd43b8092ccfe13bc4d37d754e715c777ea44240f31",
+      "references/output-contract.md": "0c77525be07bea9f2cc393581e0983d5e6e4e57214b5ea955cf552fe5c6b09a7",
+      "references/profiles.md": "b462ee69e4d10fd4b04cbd64cd1703f2c76e1230dc1e84758ef691d4c5b879bd",
+      "references/write-and-preservation.md": "2d6cd1fdd0b82f239fa3c30a7ebc6f0099e6a2c4b9082438b71b0671b0bb8d1d",
+      "scripts/validate_handoff.py": "96f55c8fa000f84f21dea72781063f8adffafe05f3bbaf06f9289dfcfe3cdbe0"
+    },
+    "mika-product-director": {
+      "SKILL.md": "47e86c8eaf20588f525ee842d6d929ee08dbcece3152d54f8f4f5708ba532ddd",
+      "agents/openai.yaml": "8daed2e21df19d71637b697af06d4fd85cc87c5143244c51eaa9eb7f6e02719a",
+      "assets/icon.svg": "72343cc4b66256ae7de8474c7cad14e711ad84a94c473732a44f96a56124c42d",
+      "references/benchmark-method.md": "c02608be78f7dec5e6690bf707aa11e5ddfcd08d867627277e089a5773ebf70b",
+      "references/product-decision-contract.md": "2bf00e53739dd6597a450f2581896359205ebe029ebf27adfa2d13746b777788"
+    },
+    "mika-engineering": {
+      "SKILL.md": "38d7caf0aa5693192e42a36c5d6c7b4522e804177e1fed80d8933cab5f956f92",
+      "agents/openai.yaml": "4bd2600e11b2d9ae1f0a8c48430d18e87453cd90d30caff1240d0b0feb7b9968",
+      "assets/icon.svg": "8936b24f674a1250d999e2c2b5901374fb4240426f32bd1ae340c352a90d617d",
+      "references/delivery-and-recovery.md": "c8de9d54068a2f75070661b278e006080c667a7b35addd2112e5cdfb52210cf0",
+      "references/harness-and-agent-legibility.md": "3e6ab07382d293ff362a5182ab42b35a7d2e6bab2b25c760b312eb36731ef20c",
+      "references/platform-routing.md": "2219680767b0933dd894c3a90c8ef0662e1c9e2069a0d982bc98e9d7512388da"
+    },
+    "mika-verification": {
+      "SKILL.md": "ad049819a40c35de897bd06b2ed903530315cafd5ea385a2b8f7df78860210bb",
+      "agents/openai.yaml": "4a381e0dd5c93b9714e6e2826f5e82ddec9d80503f02cfa054116e256a4e247f",
+      "assets/icon.svg": "e9301497fa98ef56aaca7ede0857b9a18dc06c34040f0679c609a6bf49b1d38b",
+      "references/evidence-ledger.md": "2461d13874c0bf94dccab9d7c9a53b99a6eb3bdb95899456b6e8fafe7c83e260",
+      "references/evidence-ledger.schema.json": "f1d42c8a68eacbbdf75eced006ab2fa7ee46f7a8480cc26631fcebbb12432ef9",
+      "references/release-state-contract.md": "46ade5814a50d96b911e46cb00dfdd88fe4b549591f7c4a27e075d66616a3731",
+      "references/ui-runtime.md": "07d4fbfc504d6ae4e8f5cc81d0863d11e451fa251e2e84d4603cdf40cb788928",
+      "references/verification-matrix.md": "b87a3e498ae72c02d05681978cbc2e887562d46accfb90cf58652def9732525e",
+      "scripts/validate_evidence.py": "980df47ee01faffd88c8aa98d1383c3510d05dad70a9d14b73806a9a2eae956a"
+    },
+    "mika-red-team": {
+      "SKILL.md": "38254c37eec8696e060954f2d43673f801e30ed05cc388363216d8bc7c8c877c",
+      "agents/openai.yaml": "5d60a61ba17905ae62b1053afdfbf3e47f8b5700771e46f1ad5b5283c413663c",
+      "assets/icon.svg": "e9301497fa98ef56aaca7ede0857b9a18dc06c34040f0679c609a6bf49b1d38b",
+      "references/attack-catalog.md": "1e2fec05323c20789637423da2d01f43274c206312a4b5c77b3fddffb3431d64",
+      "references/independent-review-contract.md": "de0f5289b2074025d643f27f5afe3cda1a8fdb7a414a2c62cbe21469119a8d88"
+    }
+  }
+}
