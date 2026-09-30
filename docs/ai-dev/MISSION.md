@@ -32,7 +32,7 @@ The first screen answers three questions: What will continue? Where will it play
 
 Use a quiet music-player visual system: restrained surfaces, strong hierarchy, one accent, readable text, generous transport hit areas, and stable artwork/queue alignment. Keep lower-case hyphenated true-shuffle branding. Support dark and light modes, keyboard focus, reduced motion, touch and screen-reader labels. Do not carry wood, radio knobs, skeuomorphic speaker grilles or the legacy Python Listening Room layout into the new design by default. Loading, empty, quota, no-device, stale/offline, unrelated playback and interrupted-session states belong in the design from the beginning.
 
-Impeccable direction candidates within this fixed product brief (planning only; no UI has been built):
+Historical Impeccable direction candidates within this product brief (the implemented player and current evidence are recorded in EVIDENCE.json):
 1. Focused artwork player — large artwork with compact ordered list.
 2. Editorial listening desk — strong typographic song hierarchy and a fine-lined queue.
 3. Soft album canvas — artwork-derived muted field and transport shelf.
@@ -42,3 +42,5 @@ Impeccable direction candidates within this fixed product brief (planning only; 
 7. Compact listening journal — current playback followed by clearly separate upcoming and recent listening lists.
 
 These span artwork, editorial/list and workspace families. Local Impeccable seed e3d1637a selected candidate 5 in degraded mode. The roll service remained unavailable after an escalated same-seed retry; no challenger or quality-board result exists. The pinned owner brief overrides any roll. Codex must run its context workflow and present/render the real first surface before treating this proposal as a finished visual design. Keep the current DESIGN.md as incumbent evidence until an actual replacement is built, then update design truth and sidecars together.
+
+Latest owner troubleshooting intent, September 30: fresh Spotify history entries coexist with missing devices and failed home music automations. The later screenshot identifies actual artist-albums QUOTA_EXCEEDED and locally blocked device attempts. Deployed source `eb09bcb5ef5ccedc9be951aa38b7042952f3c246` separates only new genuine GET artist-albums quota; unknown/other quota, ordinary rate limits and ambiguous old gates remain global. The saved old deadline may still hold until 20:20:03 Europe/Berlin today; no automatic legacy clearing or provider recovery promise. Other development apps under the same developer account are owner-confirmed, but traffic attribution and HA recovery are unmeasured. Full-day fixture pressure remains substantial; sustained 3/5-user capacity, paused/background optimization and an isolated dedicated-developer-account experiment remain open. Do not reopen completed deployment approval or Cloudflare login; preserve identities and collect truthful owner-provider evidence next.
