@@ -619,4 +619,147 @@ test.describe("truthful Spotify quota diagnostics", () => {
 		await expect(page.getByRole("button", { name: "Spotify-Freigabe prüfen" })).toBeEnabled();
 		await checkPage(page, "unknown quota wait");
 	});
+	test("keeps working devices separate from an artist-albums quota", async ({ page }) => {
+		let artist: {
+			until: number | null;
+			kind: string;
+			reason: string;
+			retryAfter: string | null;
+			observedAt: number;
+			endpoint: string;
+			scope: string;
+		} | null = {
+			until: Date.now() + 25902_000,
+			kind: "quota",
+			reason: "QUOTA_EXCEEDED",
+			retryAfter: "25902",
+			observedAt: Date.now(),
+			endpoint: "/artists/:id/albums",
+			scope: "artist-albums",
+		};
+		let global: typeof artist | null = null;
+		let deviceReads = 0;
+		let probes = 0;
+		await page.route("**/api/spotify/diagnostics", (route) =>
+			route.fulfill({
+				json: {
+					cooldown: global,
+					artistAlbumsCooldown: artist,
+					requests: {
+						hour: 0,
+						counts: {
+							"read:/me/player/devices:200:none": 2,
+							"read:/artists/:id/albums:429:quota": 1,
+						},
+						latest: { endpoint: "/artists/:id/albums", status: 429, retryCategory: "quota" },
+					},
+				},
+			}),
+		);
+		await page.route("**/api/devices", (route) => {
+			deviceReads++;
+			return route.fulfill({
+				json: [
+					{
+						id: "mika-phone",
+						name: "Mikas iPhone",
+						type: "Smartphone",
+						active: true,
+						restricted: false,
+					},
+				],
+			});
+		});
+		await page.route("**/api/spotify/retry", (route) => {
+			probes++;
+			artist = null;
+			return route.fulfill({ json: { ok: true } });
+		});
+		await signIn(page);
+		await page.goto("/geraete");
+		const onboarding = page.getByText("Wähle, welche Sender werden", { exact: true });
+		const diagnostics = page.getByText("Spotify-Freigabe & Anfragestatus", { exact: true });
+		await expect(onboarding.or(diagnostics)).toBeVisible();
+		if (await onboarding.isVisible()) {
+			await page.getByRole("button", { name: "Nur mit „Alles“ starten" }).click();
+			await expect(page.getByRole("button", { name: /^Alles/ })).toBeEnabled({ timeout: 60_000 });
+			await page.goto("/geraete");
+		}
+		await diagnostics.click();
+		await expect(page.getByText("Mikas iPhone", { exact: true })).toBeVisible();
+		await expect(
+			page.getByText("Keine gespeicherte Sperre für Wiedergabe und Geräte.", { exact: true }),
+		).toBeVisible();
+		await expect(
+			page.getByRole("heading", { name: "Musikentdeckung wartet auf Spotify" }),
+		).toBeVisible();
+		await expect(
+			page.getByText("7 Stunden, 11 Minuten, 42 Sekunden (25.902 Sekunden)", { exact: true }),
+		).toBeVisible();
+		await expect(
+			page.getByText(/blockiert Wiedergabe, Verlauf und Geräte nicht zusätzlich/),
+		).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Künstleralben-Freigabe prüfen" }),
+		).toBeDisabled();
+		await page.getByRole("button", { name: "Geräte neu suchen" }).click();
+		await expect.poll(() => deviceReads).toBeGreaterThanOrEqual(2);
+		expect(probes).toBe(0);
+		await checkPage(page, "scoped artist albums mobile");
+		await checkText(page, "scoped artist albums mobile");
+		await page.emulateMedia({ colorScheme: "light" });
+		await page.evaluate(() => {
+			(document.activeElement as HTMLElement)?.blur();
+			window.scrollTo(0, 0);
+		});
+		await page.screenshot({
+			path: ".impeccable/review/quota-artist-albums-mobile-light.png",
+			fullPage: true,
+		});
+		await page.emulateMedia({ colorScheme: "dark" });
+		await checkText(page, "scoped artist albums dark mobile");
+		await page.evaluate(() => {
+			(document.activeElement as HTMLElement)?.blur();
+			window.scrollTo(0, 0);
+		});
+		await page.screenshot({
+			path: ".impeccable/review/quota-artist-albums-mobile-dark.png",
+			fullPage: true,
+		});
+		global = {
+			...artist!,
+			until: Date.now() - 60_000,
+			endpoint: "/me/player",
+			scope: "",
+		};
+		await page.getByRole("button", { name: "Status aktualisieren" }).click();
+		await expect(
+			page.getByRole("button", { name: "Künstleralben-Freigabe prüfen" }),
+		).toBeDisabled();
+		await expect(page.getByText(/Die gespeicherte Wartefrist ist abgelaufen/)).toBeVisible();
+		artist = { ...artist!, until: null, retryAfter: null };
+		await page.getByRole("button", { name: "Status aktualisieren" }).click();
+		await expect(page.getByRole("button", { name: "Künstleralben-Freigabe prüfen" })).toBeEnabled();
+		await expect(
+			page.getByText(/wiederholt nur die betroffene Künstleralben-Abfrage/),
+		).toBeVisible();
+		await page.getByRole("button", { name: "Künstleralben-Freigabe prüfen" }).click();
+		await expect(
+			page.getByRole("heading", { name: "Musikentdeckung wartet auf Spotify" }),
+		).toBeHidden();
+		expect(probes).toBe(1);
+		global = {
+			until: Date.now() + 120_000,
+			kind: "rate",
+			reason: "RATE_LIMITED",
+			retryAfter: "120",
+			observedAt: Date.now(),
+			endpoint: "/me/player",
+			scope: "",
+		};
+		await page.getByRole("button", { name: "Status aktualisieren" }).click();
+		await expect(page.getByRole("button", { name: "Spotify-Freigabe prüfen" })).toBeDisabled();
+		await expect(page.getByText("/me/player", { exact: true })).toBeVisible();
+		await checkPage(page, "independent global rate gate");
+	});
 });

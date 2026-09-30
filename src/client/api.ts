@@ -64,14 +64,18 @@ export interface NativeDevice {
 	pause: boolean;
 	queue: boolean;
 }
+export interface SpotifyCooldownView {
+	until: number | null;
+	kind: string;
+	reason?: string;
+	retryAfter: string | null;
+	observedAt: number;
+	endpoint?: string;
+	scope?: "artist-albums";
+}
 export interface SpotifyDiagnostics {
-	cooldown: {
-		until: number | null;
-		kind: string;
-		reason: string;
-		retryAfter: string | null;
-		observedAt: number;
-	} | null;
+	cooldown: SpotifyCooldownView | null;
+	artistAlbumsCooldown?: SpotifyCooldownView | null;
 	requests: { hour: number; counts: Record<string, number>; latest: unknown } | null;
 }
 export const api = {

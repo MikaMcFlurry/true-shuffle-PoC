@@ -82,14 +82,17 @@ import { type Keys, randomToken } from "../lib/crypto";
 import type { SqlDb } from "../lib/sql";
 import {
 	type Fetcher,
+	publicCooldown,
 	RequestBudget,
 	SpotifyClient,
 	type SpotifyCooldown,
+	type SpotifyCooldownScope,
 	type SpotifyEndpoints,
 	SpotifyError,
 	type SpotifyRequestMetric,
 	type SpotifyTokens,
 	type TokenStore,
+	validArtistAlbumsProbe,
 } from "../spotify/client";
 import type { SpPlaybackState, SpTrack } from "../spotify/types";
 import { type AiRunner, type DiscoveryState, discoverStep } from "./discovery";
@@ -231,11 +234,13 @@ export interface HubDeps {
 	ai: AiRunner | null;
 	wipe?: () => Promise<void>;
 	sharedSpotify?: {
-		getCooldown(): Promise<SpotifyCooldown | null>;
-		getSnapshot(): Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
+		getCooldown(scope?: SpotifyCooldownScope): Promise<SpotifyCooldown | null>;
+		getSnapshot(
+			scope?: SpotifyCooldownScope,
+		): Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
 		setCooldown(value: SpotifyCooldown): Promise<number>;
-		beginRecheck(): Promise<boolean>;
-		finishRecheck(success: boolean): Promise<void>;
+		beginRecheck(scope?: SpotifyCooldownScope): Promise<boolean>;
+		finishRecheck(success: boolean, scope?: SpotifyCooldownScope): Promise<void>;
 	};
 }
 
@@ -609,10 +614,10 @@ export class HubCore {
 			fetch: this.d.fetch,
 			now: () => this.now(),
 			policy: {
-				getCooldown: async () => {
-					await this.reconcileSharedCooldown();
-					const local = this.providerCooldown();
-					const shared = await this.d.sharedSpotify?.getCooldown();
+				getCooldown: async (scope) => {
+					await this.reconcileSharedCooldown(scope);
+					const local = this.providerCooldown(scope);
+					const shared = await this.d.sharedSpotify?.getCooldown(scope);
 					if (!local) return shared ?? null;
 					if (!shared) return local;
 					if (shared.until === null || local.until === null)
@@ -620,16 +625,15 @@ export class HubCore {
 					return shared.until >= local.until ? shared : local;
 				},
 				setCooldown: async (cooldown) => {
-					const old = this.kvGet<SpotifyCooldown>("spotify_cooldown");
+					const old = this.providerCooldown(cooldown.scope);
 					const until =
 						old?.until === null || cooldown.until === null
 							? null
 							: Math.max(old?.until ?? 0, cooldown.until);
-					this.kvSet("spotify_cooldown", { ...cooldown, until });
-					this.kvSet("backoff", { until: until ?? Number.MAX_SAFE_INTEGER, kind: cooldown.kind });
+					this.saveProviderCooldown({ ...cooldown, until });
 					if (this.d.sharedSpotify) {
 						const revision = await this.d.sharedSpotify.setCooldown({ ...cooldown, until });
-						this.kvSet("spotify_cooldown_revision", revision);
+						this.kvSet(this.cooldownRevisionKey(cooldown.scope), revision);
 					}
 				},
 				record: (metric) => this.recordSpotifyRequest(metric),
@@ -637,35 +641,50 @@ export class HubCore {
 		});
 	}
 
-	private async reconcileSharedCooldown(): Promise<void> {
+	private cooldownKey(scope?: SpotifyCooldownScope): string {
+		return scope ? "spotify_artist_albums_cooldown" : "spotify_cooldown";
+	}
+	private cooldownRevisionKey(scope?: SpotifyCooldownScope): string {
+		return `${this.cooldownKey(scope)}_revision`;
+	}
+	private saveProviderCooldown(cooldown: SpotifyCooldown): void {
+		this.kvSet(this.cooldownKey(cooldown.scope), cooldown);
+		if (!cooldown.scope)
+			this.kvSet("backoff", {
+				until: cooldown.until ?? Number.MAX_SAFE_INTEGER,
+				kind: cooldown.kind,
+			});
+	}
+	private clearProviderCooldown(scope?: SpotifyCooldownScope): void {
+		this.kvDel(this.cooldownKey(scope));
+		if (!scope) this.kvDel("backoff");
+	}
+	private async reconcileSharedCooldown(scope?: SpotifyCooldownScope): Promise<void> {
 		if (!this.d.sharedSpotify) return;
-		const snapshot = await this.d.sharedSpotify.getSnapshot();
-		const local = this.providerCooldown();
-		const localRevision = this.kvGet<number>("spotify_cooldown_revision");
-		if (localRevision !== null && snapshot.revision > localRevision) {
-			if (snapshot.cooldown) {
-				this.kvSet("spotify_cooldown", snapshot.cooldown);
-				this.kvSet("backoff", {
-					until: snapshot.cooldown.until ?? Number.MAX_SAFE_INTEGER,
-					kind: snapshot.cooldown.kind,
-				});
-			} else {
-				this.kvDel("spotify_cooldown");
-				this.kvDel("backoff");
-			}
-			this.kvSet("spotify_cooldown_revision", snapshot.revision);
+		const snapshot = await this.d.sharedSpotify.getSnapshot(scope);
+		const local = this.providerCooldown(scope);
+		const revisionKey = this.cooldownRevisionKey(scope);
+		const localRevision = this.kvGet<number>(revisionKey);
+		if (scope && snapshot.cooldown && !local) {
+			this.saveProviderCooldown(snapshot.cooldown);
+			this.kvSet(revisionKey, snapshot.revision);
 			return;
 		}
-		// Publish a legacy/local gate once. A successfully cleared shared revision
-		// supersedes an already-published local gate; it must never resurrect it.
+		if (localRevision !== null && snapshot.revision > localRevision) {
+			if (snapshot.cooldown) this.saveProviderCooldown(snapshot.cooldown);
+			else this.clearProviderCooldown(scope);
+			this.kvSet(revisionKey, snapshot.revision);
+			return;
+		}
 		if (local && localRevision === null && (local.until === null || local.until > this.now())) {
 			const revision = await this.d.sharedSpotify.setCooldown(local);
-			this.kvSet("spotify_cooldown_revision", revision);
+			this.kvSet(revisionKey, revision);
 		}
 	}
 
-	private providerCooldown(): SpotifyCooldown | null {
-		const saved = this.kvGet<SpotifyCooldown>("spotify_cooldown");
+	private providerCooldown(scope?: SpotifyCooldownScope): SpotifyCooldown | null {
+		const saved = this.kvGet<SpotifyCooldown>(this.cooldownKey(scope));
+		if (scope) return saved;
 		if (saved) return saved;
 		const legacy = this.kvGet<{ until: number; kind: string }>("backoff");
 		if (
@@ -690,42 +709,60 @@ export class HubCore {
 	/** Explicit owner recheck for an unknown provider reset; known deadlines stay enforced. */
 	async retryQuota(): Promise<void> {
 		await this.reconcileSharedCooldown();
-		const cooldown = this.providerCooldown();
-		if (cooldown?.until !== null && this.backoffUntil() > this.now())
+		await this.reconcileSharedCooldown("artist-albums");
+		const global = this.providerCooldown() ?? (await this.d.sharedSpotify?.getCooldown());
+		const artist =
+			this.providerCooldown("artist-albums") ??
+			(await this.d.sharedSpotify?.getCooldown("artist-albums"));
+		const active = (c: SpotifyCooldown | null | undefined) =>
+			!!c && (c.until === null || c.until > this.now());
+		const scope: SpotifyCooldownScope | undefined =
+			!active(global) && artist ? "artist-albums" : undefined;
+		const cooldown = scope ? artist : global;
+		if (cooldown?.until !== null && (cooldown?.until ?? 0) > this.now())
 			throw new HubError(
 				"quota",
 				"Spotify hat weitere Anfragen bis zur angegebenen Freigabe gesperrt.",
 				429,
 			);
-		const shared = await this.d.sharedSpotify?.getCooldown();
-		if (shared && !(await this.d.sharedSpotify!.beginRecheck()))
+		if (scope && !validArtistAlbumsProbe(cooldown?.probePath))
+			throw new HubError(
+				"quota",
+				"Die Quelle der gesperrten Künstleralben-Abfrage fehlt; eine sichere Prüfung ist derzeit nicht möglich.",
+				409,
+			);
+		const shared = await this.d.sharedSpotify?.getCooldown(scope);
+		if (shared && !(await this.d.sharedSpotify!.beginRecheck(scope)))
 			throw new HubError(
 				"quota",
 				"Die Spotify-Freigabe ist noch gesperrt oder wird bereits geprüft.",
 				429,
 			);
-		this.kvDel("spotify_cooldown");
-		this.kvDel("backoff");
+		this.clearProviderCooldown(scope);
 		let success = false;
 		try {
-			// One observation only; no queue rewrite or playback command is retried.
-			await this.client(new RequestBudget(2)).player();
+			const client = this.client(new RequestBudget(2));
+			if (scope)
+				await client.request("GET", cooldown!.probePath!, {
+					query: { limit: 1, market: "from_token" },
+				});
+			else await client.player();
 			success = true;
 		} finally {
-			await this.d.sharedSpotify?.finishRecheck(success);
-			if (!success && cooldown && !this.kvGet("spotify_cooldown")) {
-				this.kvSet("spotify_cooldown", cooldown);
-				this.kvSet("backoff", {
-					until: cooldown.until ?? Number.MAX_SAFE_INTEGER,
-					kind: cooldown.kind,
-				});
-			}
+			await this.d.sharedSpotify?.finishRecheck(success, scope);
+			if (!success && cooldown && !this.providerCooldown(scope))
+				this.saveProviderCooldown(cooldown);
 		}
 	}
 
-	spotifyDiagnostics(): unknown {
+	async spotifyDiagnostics(): Promise<unknown> {
+		await this.reconcileSharedCooldown();
+		await this.reconcileSharedCooldown("artist-albums");
 		return {
-			cooldown: this.kvGet<SpotifyCooldown>("spotify_cooldown"),
+			cooldown: publicCooldown(this.kvGet<SpotifyCooldown>("spotify_cooldown")),
+			artistAlbumsCooldown: publicCooldown(
+				this.kvGet<SpotifyCooldown>("spotify_artist_albums_cooldown"),
+			),
 			requests: this.kvGet("spotify_request_metrics"),
 		};
 	}
@@ -870,10 +907,11 @@ export class HubCore {
 		const msg = err instanceof Error ? err.message : String(err);
 		if (err instanceof SpotifyError) {
 			if (err.kind === "rate" || err.kind === "quota") {
-				this.setBackoff(err.retryAfterMs, err.kind);
+				if (!err.scope) this.setBackoff(err.retryAfterMs, err.kind);
 				this.db.run(
 					`UPDATE jobs SET run_after = ?, error = ? WHERE key = ?`,
-					this.now() + err.retryAfterMs,
+					this.now() +
+						(err.scope && err.retryAfterMs === 0 ? HOUR_MS : Math.max(1000, err.retryAfterMs)),
 					msg,
 					job.key,
 				);
@@ -2784,7 +2822,7 @@ export class HubCore {
 		if (err instanceof SpotifyError) {
 			if (err.kind === "budget") return;
 			if (err.kind === "rate" || err.kind === "quota") {
-				this.setBackoff(err.retryAfterMs, err.kind);
+				if (!err.scope) this.setBackoff(err.retryAfterMs, err.kind);
 				return;
 			}
 			if (err.kind === "auth") {
@@ -4731,7 +4769,7 @@ export class HubCore {
 					this.setBackoff(err.retryAfterMs, "rate");
 					return fail("rate", "Spotify bremst gerade — gleich noch einmal versuchen.");
 				case "quota":
-					this.setBackoff(err.retryAfterMs, "quota");
+					if (!err.scope) this.setBackoff(err.retryAfterMs, "quota");
 					return fail("quota", "Spotify-Kontingent aufgebraucht — bitte später erneut.");
 				case "auth":
 					this.markAuthLost();
@@ -5124,6 +5162,7 @@ export class HubCore {
 
 	async state(opts: { live?: boolean } = {}): Promise<AppState> {
 		await this.reconcileSharedCooldown();
+		await this.reconcileSharedCooldown("artist-albums");
 		const profile = this.kvGet<{ id: string; name: string; imageUrl: string | null }>(
 			"profile",
 		) ?? {

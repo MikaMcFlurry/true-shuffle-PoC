@@ -24,7 +24,9 @@ describe("NN-09 durable hub provider cooldown", () => {
 		await h.hub.alarm();
 		await expect(h.hub.retryQuota()).rejects.toMatchObject({ status: 429 });
 		expect(h.fake.calls.length).toBe(calls);
-		expect(JSON.stringify(h.hub.spotifyDiagnostics())).not.toMatch(/sensitive|spotify:|Bearer/);
+		expect(JSON.stringify(await h.hub.spotifyDiagnostics())).not.toMatch(
+			/sensitive|spotify:|Bearer/,
+		);
 	});
 	it("unknown cooldown uses valid local maintenance alarms without provider retries", async () => {
 		const h = await onboarded({ tracks: 30 });

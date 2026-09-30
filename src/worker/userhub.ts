@@ -22,7 +22,7 @@ import { type Env, hubEnv } from "./env";
 import { HubCore, HubError } from "./hub/hub";
 import { Keys } from "./lib/crypto";
 import type { SqlDb, SqlValue } from "./lib/sql";
-import { SpotifyError, type SpotifyTokens } from "./spotify/client";
+import { type SpotifyCooldownScope, SpotifyError, type SpotifyTokens } from "./spotify/client";
 import { boundedSpotifyRpc } from "./spotify/rpc";
 
 export type RpcResult<T> =
@@ -37,22 +37,26 @@ export class UserHub extends DurableObject<Env> {
 		if (!this.core) {
 			const storage = this.ctx.storage;
 			const registry = this.env.REGISTRY.get(this.env.REGISTRY.idFromName("registry"));
-			let probeToken: string | null = null;
+			const probeTokens = new Map<SpotifyCooldownScope | undefined, string>();
 			this.core = new HubCore({
 				sql: durableObjectSql(storage),
 				sharedSpotify: {
-					getCooldown: () => boundedSpotifyRpc(registry.spotifyCooldown(probeToken)),
-					getSnapshot: () => boundedSpotifyRpc(registry.spotifyGateSnapshot(probeToken)),
+					getCooldown: (scope) =>
+						boundedSpotifyRpc(registry.spotifyCooldown(probeTokens.get(scope), scope)),
+					getSnapshot: (scope) =>
+						boundedSpotifyRpc(registry.spotifyGateSnapshot(probeTokens.get(scope), scope)),
 					setCooldown: (cooldown) =>
-						boundedSpotifyRpc(registry.spotifyBlocked(cooldown, probeToken)),
-					beginRecheck: async () => {
-						probeToken = await boundedSpotifyRpc(registry.beginSpotifyRecheck());
-						return probeToken !== null;
+						boundedSpotifyRpc(registry.spotifyBlocked(cooldown, probeTokens.get(cooldown.scope))),
+					beginRecheck: async (scope) => {
+						const token = await boundedSpotifyRpc(registry.beginSpotifyRecheck(scope));
+						if (token) probeTokens.set(scope, token);
+						return token !== null;
 					},
-					finishRecheck: async (success) => {
-						const token = probeToken;
-						probeToken = null;
-						if (token) await boundedSpotifyRpc(registry.finishSpotifyRecheck(token, success));
+					finishRecheck: async (success, scope) => {
+						const token = probeTokens.get(scope);
+						probeTokens.delete(scope);
+						if (token)
+							await boundedSpotifyRpc(registry.finishSpotifyRecheck(token, success, scope));
 					},
 				},
 				fetch: (req) => fetch(req),

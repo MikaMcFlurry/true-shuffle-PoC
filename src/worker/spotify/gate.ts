@@ -38,10 +38,22 @@ export class SpotifyGate {
 			previous?.until === null || cooldown.until === null
 				? null
 				: Math.max(previous?.until ?? 0, cooldown.until);
+		const retainPrevious =
+			previous &&
+			previous.kind === cooldown.kind &&
+			((previous.until === null &&
+				(cooldown.until !== null || cooldown.observedAt < previous.observedAt)) ||
+				(previous.until !== null && cooldown.until !== null && previous.until > cooldown.until));
+		const source = retainPrevious ? previous : cooldown;
 		this.store.set({
 			revision: state.revision + 1,
 			probe: null,
-			cooldown: { ...cooldown, until, kind: previous?.kind === "quota" ? "quota" : cooldown.kind },
+			cooldown: {
+				...source,
+				probePath: source.probePath ?? cooldown.probePath,
+				until,
+				kind: previous?.kind === "quota" ? "quota" : cooldown.kind,
+			},
 		});
 		return state.revision + 1;
 	}

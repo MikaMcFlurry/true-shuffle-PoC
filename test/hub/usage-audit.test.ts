@@ -78,7 +78,7 @@ it("audits full-day Spotify pressure and the history feed during a device cooldo
 			{
 				simulated: true,
 				noRealSpotifyRequests: true,
-				sourceRevision: "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+				sourceRevision: process.env.AUDIT_SOURCE_REVISION ?? "WORKSPACE",
 				profiles,
 				historyFeed: {
 					ordinaryHistoryPopulatedBySync: true,

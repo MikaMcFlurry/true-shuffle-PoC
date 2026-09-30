@@ -85,6 +85,8 @@ export class SpotifyError extends Error {
 		readonly retryAfterMs = 0,
 		readonly reason?: string,
 		readonly retryAfter: string | null = null,
+		readonly scope?: SpotifyCooldownScope,
+		readonly endpoint?: string,
 	) {
 		super(message);
 		this.name = "SpotifyError";
@@ -109,7 +111,14 @@ export class RequestBudget {
 export type Fetcher = (input: Request) => Promise<Response>;
 
 /** Account-owned provider gate. A null deadline is unknown, never a guessed reset. */
+export type SpotifyCooldownScope = "artist-albums";
+export const ARTIST_ALBUMS_ENDPOINT = "/artists/:id/albums";
+
 export interface SpotifyCooldown {
+	scope?: SpotifyCooldownScope;
+	endpoint?: string;
+	/** Private provider source; never exposed in diagnostics. */
+	probePath?: string;
 	until: number | null;
 	kind: "rate" | "quota";
 	reason?: string;
@@ -126,7 +135,9 @@ export interface SpotifyRequestMetric {
 	at: number;
 }
 export interface SpotifyRequestPolicy {
-	getCooldown(): SpotifyCooldown | null | Promise<SpotifyCooldown | null>;
+	getCooldown(
+		scope?: SpotifyCooldownScope,
+	): SpotifyCooldown | null | Promise<SpotifyCooldown | null>;
 	setCooldown(value: SpotifyCooldown): void | Promise<void>;
 	record?(metric: SpotifyRequestMetric): void | Promise<void>;
 }
@@ -148,6 +159,7 @@ type Query = Record<string, string | number | boolean | undefined | null>;
 export class SpotifyClient {
 	private cached: SpotifyTokens | null = null;
 	private cooldown: SpotifyCooldown | null = null;
+	private artistCooldown: SpotifyCooldown | null = null;
 
 	constructor(private readonly o: ClientOptions) {}
 
@@ -172,18 +184,27 @@ export class SpotifyClient {
 	}
 
 	private async guard(endpoint: string, category: SpotifyRequestMetric["category"]): Promise<void> {
-		const saved = await this.o.policy?.getCooldown();
-		const c = saved ?? this.cooldown;
-		if (c && (c.until === null || c.until > this.o.now())) {
-			await this.metric(endpoint, category, 429, "blocked", c.reason, c.retryAfter);
-			throw new SpotifyError(
-				c.kind,
-				"Spotify wartet auf die Freigabe weiterer Anfragen",
-				429,
-				c.until === null ? 0 : c.until - this.o.now(),
-				c.reason,
-				c.retryAfter,
-			);
+		for (const scope of [
+			undefined,
+			...(category === "read" && endpoint === ARTIST_ALBUMS_ENDPOINT
+				? ["artist-albums" as const]
+				: []),
+		]) {
+			const saved = await this.o.policy?.getCooldown(scope);
+			const c = saved ?? (scope ? this.artistCooldown : this.cooldown);
+			if (c && (c.until === null || c.until > this.o.now())) {
+				await this.metric(endpoint, category, 429, "blocked", c.reason, c.retryAfter);
+				throw new SpotifyError(
+					c.kind,
+					"Spotify wartet auf die Freigabe weiterer Anfragen",
+					429,
+					c.until === null ? 0 : c.until - this.o.now(),
+					c.reason,
+					c.retryAfter,
+					c.scope,
+					c.endpoint,
+				);
+			}
 		}
 	}
 
@@ -206,23 +227,50 @@ export class SpotifyClient {
 		});
 	}
 
-	private async failure(res: Response): Promise<SpotifyError> {
-		const error = await toError(res, this.o.now());
+	private async failure(
+		res: Response,
+		endpoint?: string,
+		method?: string,
+		path?: string,
+	): Promise<SpotifyError> {
+		const parsed = await toError(res, this.o.now());
+		const scope: SpotifyCooldownScope | undefined =
+			parsed.kind === "quota" &&
+			parsed.reason === "QUOTA_EXCEEDED" &&
+			method === "GET" &&
+			endpoint === ARTIST_ALBUMS_ENDPOINT
+				? "artist-albums"
+				: undefined;
+		const error = new SpotifyError(
+			parsed.kind,
+			parsed.message,
+			parsed.status,
+			parsed.retryAfterMs,
+			parsed.reason,
+			parsed.retryAfter,
+			scope,
+			endpoint,
+		);
 		if (error.kind === "rate" || error.kind === "quota") {
-			const previous = (await this.o.policy?.getCooldown()) ?? this.cooldown;
+			const previous =
+				(await this.o.policy?.getCooldown(scope)) ?? (scope ? this.artistCooldown : this.cooldown);
 			const proposed = error.retryAfter === null ? null : this.o.now() + error.retryAfterMs;
 			const until =
 				previous?.until === null || proposed === null
 					? null
 					: Math.max(previous?.until ?? 0, proposed);
 			const c: SpotifyCooldown = {
+				scope,
+				endpoint,
+				probePath: scope && validArtistAlbumsProbe(path) ? path : undefined,
 				until,
 				kind: previous?.kind === "quota" ? "quota" : error.kind,
 				reason: error.reason,
 				retryAfter: error.retryAfter,
 				observedAt: this.o.now(),
 			};
-			this.cooldown = c;
+			if (scope) this.artistCooldown = c;
+			else this.cooldown = c;
 			await this.o.policy?.setCooldown(c);
 		}
 		return error;
@@ -422,7 +470,12 @@ export class SpotifyClient {
 				continue;
 			}
 			if (!res.ok) {
-				const error = await this.failure(res);
+				const error = await this.failure(
+					res,
+					endpoint,
+					method,
+					url.pathname.slice(base.pathname.length),
+				);
 				await this.metric(
 					endpoint,
 					category,
@@ -748,4 +801,15 @@ function sanitizedEndpoint(path: string): string {
 		.split("/")
 		.map((part) => (!part || known.has(part) ? part : ":id"))
 		.join("/");
+}
+
+export function validArtistAlbumsProbe(path: unknown): path is string {
+	return typeof path === "string" && /^\/artists\/[a-zA-Z0-9]{22}\/albums$/.test(path);
+}
+export function publicCooldown(
+	c: SpotifyCooldown | null,
+): Omit<SpotifyCooldown, "probePath"> | null {
+	if (!c) return null;
+	const { probePath: _privateSource, ...safe } = c;
+	return safe;
 }

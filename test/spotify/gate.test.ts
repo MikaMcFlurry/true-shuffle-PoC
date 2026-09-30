@@ -83,7 +83,7 @@ describe("NN-09 deployment-wide provider gate", () => {
 		await expect(a.hub.devices()).rejects.toMatchObject({ kind: "quota", retryAfterMs: 3600000 });
 		expect(shared.gate().get()?.until).not.toBeNull();
 		expect(
-			(a.hub.spotifyDiagnostics() as { cooldown: { until: number | null } }).cooldown.until,
+			((await a.hub.spotifyDiagnostics()) as { cooldown: { until: number | null } }).cooldown.until,
 		).toBe(shared.gate().get()?.until);
 	});
 	it("enforces known deadline across accounts without early manual retry", async () => {

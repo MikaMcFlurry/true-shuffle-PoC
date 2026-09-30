@@ -5,7 +5,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./env";
-import type { SpotifyCooldown } from "./spotify/client";
+import type { SpotifyCooldown, SpotifyCooldownScope } from "./spotify/client";
 import { SpotifyGate, type SpotifyGateState } from "./spotify/gate";
 
 export class Registry extends DurableObject<Env> {
@@ -19,22 +19,26 @@ export class Registry extends DurableObject<Env> {
 		this.ctx.storage.sql.exec(
 			`CREATE TABLE IF NOT EXISTS spotify_gate (id INTEGER PRIMARY KEY CHECK(id = 1), state TEXT NOT NULL)`,
 		);
+		this.ctx.storage.sql.exec(
+			`CREATE TABLE IF NOT EXISTS spotify_artist_albums_gate (id INTEGER PRIMARY KEY CHECK(id = 1), state TEXT NOT NULL)`,
+		);
 		this.ready = true;
 	}
 
-	private gate(): SpotifyGate {
+	private gate(scope?: SpotifyCooldownScope): SpotifyGate {
 		this.init();
+		const table = scope === "artist-albums" ? "spotify_artist_albums_gate" : "spotify_gate";
 		return new SpotifyGate(
 			{
 				get: () => {
 					const row = this.ctx.storage.sql
-						.exec<{ state: string }>(`SELECT state FROM spotify_gate WHERE id = 1`)
+						.exec<{ state: string }>(`SELECT state FROM ${table} WHERE id = 1`)
 						.toArray()[0];
 					return row ? (JSON.parse(row.state) as SpotifyGateState) : null;
 				},
 				set: (state) => {
 					this.ctx.storage.sql.exec(
-						`INSERT INTO spotify_gate (id, state) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET state = excluded.state`,
+						`INSERT INTO ${table} (id, state) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET state = excluded.state`,
 						JSON.stringify(state),
 					);
 				},
@@ -43,23 +47,29 @@ export class Registry extends DurableObject<Env> {
 		);
 	}
 
-	spotifyCooldown(probeToken?: string | null): SpotifyCooldown | null {
-		return this.gate().get(probeToken);
+	spotifyCooldown(
+		probeToken?: string | null,
+		scope?: SpotifyCooldownScope,
+	): SpotifyCooldown | null {
+		return this.gate(scope).get(probeToken);
 	}
-	spotifyGateSnapshot(probeToken?: string | null): {
+	spotifyGateSnapshot(
+		probeToken?: string | null,
+		scope?: SpotifyCooldownScope,
+	): {
 		revision: number;
 		cooldown: SpotifyCooldown | null;
 	} {
-		return this.gate().snapshot(probeToken);
+		return this.gate(scope).snapshot(probeToken);
 	}
 	spotifyBlocked(cooldown: SpotifyCooldown, probeToken?: string | null): number {
-		return this.gate().block(cooldown, probeToken);
+		return this.gate(cooldown.scope).block(cooldown, probeToken);
 	}
-	beginSpotifyRecheck(): string | null {
-		return this.gate().begin(crypto.randomUUID());
+	beginSpotifyRecheck(scope?: SpotifyCooldownScope): string | null {
+		return this.gate(scope).begin(crypto.randomUUID());
 	}
-	finishSpotifyRecheck(token: string, success: boolean): void {
-		this.gate().finish(token, success);
+	finishSpotifyRecheck(token: string, success: boolean, scope?: SpotifyCooldownScope): void {
+		this.gate(scope).finish(token, success);
 	}
 
 	register(uid: string): void {

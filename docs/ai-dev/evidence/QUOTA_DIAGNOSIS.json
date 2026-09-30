@@ -1,7 +1,6 @@
 {
   "schema_version": "true-shuffle.quota-diagnosis.v1",
   "recorded_at": "2026-09-30T10:44:58.849329+00:00",
-  "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
   "owner_report": {
     "reason": "QUOTA_EXCEEDED",
     "endpoint": "/me/player/devices",
@@ -19,8 +18,8 @@
     "A new app owned by the same developer account is not a quota reset.",
     "No quota size or fixed monthly/daily reset window is inferred; Retry-After is the earliest recheck, not guaranteed recovery.",
     "11 blocked records are locally prevented attempts before provider transport, not 11 new Spotify responses.",
-    "History is SQLite data and does not establish a live Spotify history query.",
-    "Home Assistant documents polling at least every 30 seconds, faster near track end; actual shared-budget consumption/attribution remains unmeasured."
+    "Home Assistant documents polling at least every 30 seconds, faster near track end; actual shared-budget consumption/attribution remains unmeasured.",
+    "New listening history is fed by Spotify observations; the later screenshot proves successful recent-history/player transport in its recorded hour, followed by metadata quota and local device blocking."
   ],
   "official_sources": [
     {
@@ -62,5 +61,25 @@
     "isolated_browser_tests": 1,
     "independent_render_cases": 4
   },
-  "remaining": "Actual later provider recovery, account-wide attribution and sustained live usage NOT_RUN. Full acceptance remains PARTIAL."
+  "remaining": "Actual later provider recovery, account-wide attribution and sustained live usage NOT_RUN. Full acceptance remains PARTIAL.",
+  "historical_source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+  "scope_followup": {
+    "status": "IMPLEMENTING_NOT_YET_DEPLOYED",
+    "owner_screenshot_time": "2026-09-30 13:18 Europe/Berlin",
+    "provider_source": "/artists/:id/albums",
+    "provider_reason": "QUOTA_EXCEEDED",
+    "retry_after_seconds": 25902,
+    "earliest_recheck": "2026-09-30 20:20:03 Europe/Berlin",
+    "stored_hour_counts": {
+      "read:/me/player/devices:429:blocked": 9,
+      "refresh:/api/token:200:none": 1,
+      "read:/me/player:200:none": 3,
+      "read:/me/player/recently-played:200:none": 1,
+      "read:/me/tracks:200:none": 1,
+      "read:/me/player/devices:200:none": 2,
+      "read:/artists/:id/albums:429:quota": 1
+    },
+    "interpretation": "Actual artist-albums quota led to overbroad local device blocking. Hourly successes do not prove ongoing endpoint availability after that response.",
+    "home_automation": "Owner reports failures since several days; actual HA/MA traffic, quota status and recovery NOT_RUN."
+  }
 }

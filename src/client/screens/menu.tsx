@@ -401,10 +401,18 @@ export function DevicesScreen() {
 	};
 	useEffect(load, []);
 	const cooldown = diagnostics?.cooldown;
-	const deadlinePending = cooldown?.until != null && cooldown.until > Date.now();
+	const artistCooldown = diagnostics?.artistAlbumsCooldown;
+	const globalActive = cooldown != null && (cooldown.until === null || cooldown.until > Date.now());
+	const recheckArtist = !globalActive && artistCooldown != null;
+	const recheckCooldown = recheckArtist ? artistCooldown : cooldown;
+	const deadlinePending = recheckCooldown?.until != null && recheckCooldown.until > Date.now();
 	const retrySeconds =
 		cooldown?.retryAfter != null && /^\d+(?:\.\d+)?$/.test(cooldown.retryAfter)
 			? Number(cooldown.retryAfter)
+			: null;
+	const artistRetrySeconds =
+		artistCooldown?.retryAfter != null && /^\d+(?:\.\d+)?$/.test(artistCooldown.retryAfter)
+			? Number(artistCooldown.retryAfter)
 			: null;
 	const choose = (id: string | null) => {
 		setChosen(id);
@@ -422,7 +430,7 @@ export function DevicesScreen() {
 				Spotify zeigt nur Geräte, auf denen die Spotify-App gerade offen ist. Siehst du deins nicht,
 				öffne dort kurz Spotify und lade neu.
 			</p>
-			{err ? <p class="note note--error">{err}</p> : null}
+			{err ? <p class="note note--error">Letzte Geräteabfrage: {err}</p> : null}
 			<ul class="list">
 				<li>
 					<label class="row">
@@ -477,6 +485,12 @@ export function DevicesScreen() {
 							<dd>{diagnostics.cooldown.reason}</dd>
 							<dt>Art</dt>
 							<dd>{diagnostics.cooldown.kind}</dd>
+							{diagnostics.cooldown.endpoint ? (
+								<>
+									<dt>Quelle der Sperre</dt>
+									<dd>{diagnostics.cooldown.endpoint}</dd>
+								</>
+							) : null}
 							<dt>Von Spotify gemeldete Wartezeit</dt>
 							<dd>
 								{diagnostics.cooldown.retryAfter === null
@@ -494,18 +508,64 @@ export function DevicesScreen() {
 						</dl>
 					) : (
 						<p class="hint">
-							{diagnostics ? "Keine gespeicherte Spotify-Sperre." : "Anfragestatus wird geladen …"}
+							{diagnostics
+								? "Keine gespeicherte Sperre für Wiedergabe und Geräte."
+								: "Anfragestatus wird geladen …"}
 						</p>
 					)}
 					{cooldown ? (
 						<p class="hint">
 							{cooldown.until === null
 								? "Spotify hat keinen Freigabezeitpunkt angegeben. true-shuffle hält weitere Anfragen zurück; mit der Freigabeprüfung ist ein einzelner erneuter Versuch möglich."
-								: deadlinePending
+								: globalActive
 									? "true-shuffle hält weitere Spotify-Anfragen zurück. Nach der Frist ist eine erneute Prüfung möglich; eine Freigabe durch Spotify ist dann noch nicht garantiert."
 									: "Die gespeicherte Wartefrist ist abgelaufen. Mit der Freigabeprüfung kannst du klären, ob Spotify wieder Anfragen zulässt."}{" "}
 							Der gespeicherte Verlauf und die Warteschlange bleiben verfügbar.
 						</p>
+					) : null}
+					{cooldown && !cooldown.endpoint ? (
+						<p class="hint">
+							Bei dieser älteren Sperre ist die ursprüngliche Quelle nicht sicher gespeichert. Die
+							gemeldete Wartefrist bleibt deshalb bestehen. Neue Sperren für Künstleralben werden
+							künftig separat behandelt.
+						</p>
+					) : null}
+					{artistCooldown ? (
+						<>
+							<h3>Musikentdeckung wartet auf Spotify</h3>
+							<p class="hint">
+								Die Abfrage nach Alben eines Künstlers wird separat zurückgehalten. Diese Sperre
+								blockiert Wiedergabe, Verlauf und Geräte nicht zusätzlich. Jede dieser Funktionen
+								kann von Spotify weiterhin eine eigene Fehlermeldung erhalten.
+							</p>
+							<dl>
+								<dt>Quelle der Sperre</dt>
+								<dd>{artistCooldown.endpoint ?? "/artists/:id/albums"}</dd>
+								<dt>Provider-Grund</dt>
+								<dd>{artistCooldown.reason}</dd>
+								<dt>Von Spotify gemeldete Wartezeit für Künstleralben</dt>
+								<dd>
+									{artistCooldown.retryAfter === null
+										? "Nicht von Spotify angegeben"
+										: artistRetrySeconds !== null && Number.isFinite(artistRetrySeconds)
+											? `${quotaWait(artistRetrySeconds)} (${num(artistRetrySeconds)} Sekunden)`
+											: artistCooldown.retryAfter}
+								</dd>
+								<dt>Früheste erneute Prüfung der Künstleralben</dt>
+								<dd>
+									{artistCooldown.until === null
+										? "Unbekannt · keine Reset-Zeit von Spotify angegeben"
+										: `${new Date(artistCooldown.until).toLocaleString("de-DE")} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}
+								</dd>
+							</dl>
+							<p class="hint">
+								{artistCooldown.until === null
+									? "Spotify hat keinen Freigabezeitpunkt angegeben. Eine ausdrückliche Prüfung wiederholt nur die betroffene Künstleralben-Abfrage, wenn deren Quelle gespeichert ist."
+									: artistCooldown.until > Date.now()
+										? "Die Künstleralben-Abfragen warten bis zur gemeldeten Frist. Eine Freigabe durch Spotify ist danach noch nicht garantiert."
+										: "Die gespeicherte Wartefrist für Künstleralben ist abgelaufen. Eine erneute Prüfung zeigt, ob Spotify diese Abfrage wieder zulässt."}
+							</p>
+						</>
 					) : null}
 					{diagnostics ? (
 						<>
@@ -538,7 +598,7 @@ export function DevicesScreen() {
 									.catch((e: Error) => setDiagnosticError(e.message))
 							}
 						>
-							Spotify-Freigabe prüfen
+							{recheckArtist ? "Künstleralben-Freigabe prüfen" : "Spotify-Freigabe prüfen"}
 						</button>
 					</div>
 				</div>
