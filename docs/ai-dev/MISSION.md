@@ -1,6 +1,6 @@
 # True Shuffle restart — owner intent
 
-The owner instructs a fresh restart from the current Cloudflare app, with Mika Dev Studio, Impeccable and the relevant Mika workflows, and a complete self-contained Codex implementation handoff. This packet completes that preparation. Application implementation remains pending. Verdict: ACCEPT_WITH_REDESIGN.
+The owner instructs a fresh restart from the current Cloudflare app, with Mika Dev Studio, Impeccable and the relevant Mika workflows, and a complete self-contained Codex implementation handoff. This sentence records the original preparation scope. The downstream implementation and authorized Cloudflare rollout are now complete; current acceptance remains PARTIAL as recorded in EVIDENCE.json. Verdict: ACCEPT_WITH_REDESIGN.
 
 KEEP the effective discovery and forgotten-playlist experience, preferences and accumulated history. IMPROVE recovery, quota behavior and device handling. ADD a stable session/checkpoint contract and explicit HA/MA capabilities. REDESIGN the entire radio interface independently. The latest owner request supersedes old radio design instructions and the old restart-means-reshuffle contract. No automatic new queue on a normal Play.
 

@@ -1,6 +1,6 @@
 # Implementation continuation
 
-This mandate has been implemented locally on `codex/implement-cloudflare-restart`. Read `docs/ai-dev/EVIDENCE.json` and `PROJECT_CONTEXT.md` for current results and exact remaining live/deployment gates. The original task below remains historical authority for requirements. The user explicitly authorized deployment in this execution; absent Cloudflare authentication and live provider access prevent it, rather than missing approval.
+This mandate has been implemented and deployed on `codex/implement-cloudflare-restart`. Read `docs/ai-dev/EVIDENCE.json` and `PROJECT_CONTEXT.md` for current results and exact remaining live/deployment gates. The original task below remains historical authority for requirements. The user explicitly authorized deployment in this execution; Cloudflare OAuth was completed and the reviewed Worker was uploaded/promoted/read back. Remaining live owner Spotify/HA and actual storage-restore acceptance require their specific evidence, rather than another deployment approval.
 
 # Start the Cloudflare implementation
 

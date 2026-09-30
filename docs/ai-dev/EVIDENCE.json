@@ -1,12 +1,12 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-09-30T08:48:59.957620+00:00",
+  "generated_at": "2026-09-30T09:34:25.906746+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
-    "revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-    "artifact_ref": "https://github.com/MikaMcFlurry/true-shuffle-PoC/tree/codex/implement-cloudflare-restart",
-    "environment": "Actual local Cloudflare Worker, SQLite Durable Objects, Chromium and synthetic Spotify/HA fixtures",
-    "environment_class": "LOCAL"
+    "revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+    "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
+    "environment": "Actual production Cloudflare version c7b059ed-ab7c-45f5-88f2-3219ec3dd628; public/anonymous smoke and unchanged-source local fixtures/CI. Owner provider and populated storage restore not exercised.",
+    "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
   "delivery_target": "PRODUCTION_LIVE",
@@ -38,12 +38,6 @@
   ],
   "external_blockers": [
     {
-      "id": "B-CF",
-      "type": "TOOL_UNAVAILABLE",
-      "description": "Cloudflare connector is unavailable; Wrangler is not authenticated. Exact production version, bindings, recovery and deployment cannot be established.",
-      "evidence_ref": "docs/ai-dev/evidence/BASELINE.json"
-    },
-    {
       "id": "B-SPOTIFY",
       "type": "CREDENTIAL",
       "description": "Signed-in owner Spotify test account and real playback/quota evidence unavailable.",
@@ -54,11 +48,17 @@
       "type": "CREDENTIAL",
       "description": "Private owner HA/MA installation and real Spotify Connect/native devices unavailable.",
       "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
+    },
+    {
+      "id": "B-STORAGE",
+      "type": "TOOL_UNAVAILABLE",
+      "description": "Actual populated object bookmark/restore and history/migration-invariant acceptance have not been executed; existing app exposes no isolated authenticated recovery interface. SQLitePITR is documented, not verified by restore.",
+      "evidence_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
     }
   ],
   "requirements_snapshot": {
     "source_ref": "docs/ai-dev/MISSION.md",
-    "source_revision": "269da5a304e5a65c109fa5983656bb27f987ca7ce53af25ebbd54c707b11e255",
+    "source_revision": "dad403609bfe2cccb0777dbf0d92af1a8bacbd3695f3000f355092d57a4d6413",
     "non_negotiable_ids": [
       "NN-01",
       "NN-02",
@@ -79,7 +79,8 @@
       "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
       "gate_ids": [
         "G-LOCAL-NN-01",
-        "G-LIVE-PRODUCTION"
+        "G-LIVE-PRODUCTION",
+        "G-CF-IDENTITY"
       ]
     },
     {
@@ -158,14 +159,15 @@
       "id": "NN-11",
       "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
       "gate_ids": [
-        "G-LOCAL-NN-11"
+        "G-LOCAL-NN-11",
+        "G-CF-BROWSER"
       ]
     }
   ],
   "open_findings": [
     {
       "id": "LIVE-CF",
-      "title": "Exact production identity, recovery and rollout not verified",
+      "title": "Populated production migration/history invariants and an actual Durable Object restore remain unverified; deployment identity/readback now verified",
       "severity": "P1",
       "blocking": true
     },
@@ -193,9 +195,9 @@
           "id": "EV-G-LOCAL-NN-01",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -210,9 +212,9 @@
           "id": "EV-G-LOCAL-NN-02",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -227,9 +229,9 @@
           "id": "EV-G-LOCAL-NN-03",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -244,9 +246,9 @@
           "id": "EV-G-LOCAL-NN-04",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -261,9 +263,9 @@
           "id": "EV-G-LOCAL-NN-05",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -278,9 +280,9 @@
           "id": "EV-G-LOCAL-NN-06",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -295,9 +297,9 @@
           "id": "EV-G-LOCAL-NN-07",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -312,9 +314,9 @@
           "id": "EV-G-LOCAL-NN-08",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -329,9 +331,9 @@
           "id": "EV-G-LOCAL-NN-09",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -346,9 +348,9 @@
           "id": "EV-G-LOCAL-NN-10",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -363,9 +365,9 @@
           "id": "EV-G-LOCAL-NN-11",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -380,9 +382,9 @@
           "id": "EV-G-BUILD",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -397,9 +399,9 @@
           "id": "EV-G-STATIC",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -414,9 +416,9 @@
           "id": "EV-G-MIGRATION",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -431,9 +433,9 @@
           "id": "EV-G-RECOVERY",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -448,9 +450,9 @@
           "id": "EV-G-QUOTA",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -465,9 +467,9 @@
           "id": "EV-G-BROWSER",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -478,7 +480,7 @@
       "required": true,
       "status": "NOT_RUN",
       "evidence": [],
-      "rationale": "Fresh independent local review performed; production readiness verdict BLOCKED by missing real provider/deployment evidence. This release gate is not satisfied by a local review alone."
+      "rationale": "Fresh backend and narrow Store reviews pass locally; full production acceptance remains blocked only by owner provider and actual populated-storage restore evidence, not absent Cloudflare login/deployment."
     },
     {
       "id": "G-LIVE-SPOTIFY",
@@ -498,11 +500,11 @@
     },
     {
       "id": "G-LIVE-PRODUCTION",
-      "category": "deployment",
+      "category": "recovery",
       "required": true,
       "status": "NOT_RUN",
       "evidence": [],
-      "rationale": "Production identity, backup/recovery, rollout and read-back unavailable without Cloudflare authentication."
+      "rationale": "Deployment identity, preserved bindings and public readback now pass. Populated production migration/history invariants and an actual object restore remain NOT_RUN."
     },
     {
       "id": "G-LOCAL-INDEPENDENT",
@@ -514,9 +516,17 @@
           "id": "EV-LOCAL-INDEPENDENT",
           "kind": "fresh independent review",
           "ref": "docs/ai-dev/evidence/INDEPENDENT_REVIEW.json",
-          "result": "49 targeted independent tests pass; exact source manifest verified by VALIDATION.json. No open local blocking code finding; live release blocked.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "49 targeted independent tests pass; exact source manifest verified by VALIDATION.json. No open local blocking code finding; live release blocked. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+        },
+        {
+          "id": "EV-INDEPENDENT-STORE-DELTA",
+          "kind": "fresh source delta review",
+          "ref": "docs/ai-dev/evidence/DEPLOYMENT_REVIEW.json",
+          "result": "Five actual Store state cases pass; all previously reviewed application hashes match except the independently reviewed one-line Store fix.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Fresh local review complete; separately recorded live release gate remains NOT_RUN."
@@ -531,9 +541,9 @@
           "id": "EV-ACCESSIBILITY",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/browser-tests.log",
-          "result": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed."
@@ -548,9 +558,9 @@
           "id": "EV-DATA_INVARIANTS",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/unit-tests.log",
-          "result": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass."
@@ -565,9 +575,9 @@
           "id": "EV-PERFORMANCE_RELIABILITY",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/NN-09-request-pressure.json",
-          "result": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally."
@@ -582,12 +592,63 @@
           "id": "EV-SECURITY_PRIVACY",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/unit-tests.log",
-          "result": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN.",
-          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
-          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+          "result": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
         }
       ],
       "rationale": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN."
+    },
+    {
+      "id": "G-CF-IDENTITY",
+      "category": "deployment",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-CF-IDENTITY",
+          "kind": "production readback",
+          "ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
+          "result": "Authenticated existing Worker/version/namespace/secret readback and corrected version promotion100% pass.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+        }
+      ],
+      "rationale": "Authenticated existing Worker/version/namespace/secret readback and corrected version promotion100% pass. Does not establish owner-authenticated playback or populated object recovery."
+    },
+    {
+      "id": "G-CF-PUBLIC",
+      "category": "deployment",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-CF-PUBLIC",
+          "kind": "production readback",
+          "ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
+          "result": "Public health/configured, exactlocalJS/CSS assets, anonymous401 and CSRF403 pass.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+        }
+      ],
+      "rationale": "Public health/configured, exactlocalJS/CSS assets, anonymous401 and CSRF403 pass. Does not establish owner-authenticated playback or populated object recovery."
+    },
+    {
+      "id": "G-CF-BROWSER",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-CF-BROWSER",
+          "kind": "production readback",
+          "ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
+          "result": "Actual mobile production Chromium signin renders without false offline banner, errors or horizontal overflow.",
+          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+        }
+      ],
+      "rationale": "Actual mobile production Chromium signin renders without false offline banner, errors or horizontal overflow. Does not establish owner-authenticated playback or populated object recovery."
     }
   ]
 }

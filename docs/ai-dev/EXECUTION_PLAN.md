@@ -2,7 +2,7 @@
 
 Implementation delivered on codex/implement-cloudflare-restart. Source identity, durable queue/checkpoints, persistent quota protection, capability-based native HA/MA, explicit native/Spotify newQueue and the actual calm Preact player are implemented. Integrated local results and fresh review evidence are recorded in EVIDENCE.json and evidence/VALIDATION.json. Repaired Red Team findings and Impeccable corrections retain their scoped evidence.
 
-Remaining work requires external access: exact Cloudflare version/bindings/backup, real Spotify quota/playback acceptance, private HA/MA and MA Spotify Connect acceptance, then the explicitly authorized rollout and production read-back. Current claim PARTIAL; no production changes. Follow RELEASE_RECOVERY.md. The original acceptance specification follows; it is no longer a list of unimplemented local features.
+The authorized Cloudflare rollout and public/API/anonymous-browser readback are complete. Active source 1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9, version c7b059ed-ab7c-45f5-88f2-3219ec3dd628, deployment dc7496dc-b106-4daf-9925-f4e8ce81d2bd at 100% traffic; binding/secret identities remain unchanged. Remaining work is actual populated-storage restore/invariants, owner Spotify quota/playback and private HA/MA/MA Spotify Connect acceptance. Current full-acceptance claim remains PARTIAL. Follow RELEASE_RECOVERY.md. The original acceptance specification follows; it is no longer a list of unimplemented local features.
 
 
 # Implementation contracts and delivery order
