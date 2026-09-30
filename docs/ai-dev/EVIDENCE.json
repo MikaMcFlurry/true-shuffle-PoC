@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-09-30T10:46:00.494888+00:00",
+  "generated_at": "2026-09-30T11:08:05.693865+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
     "revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
@@ -453,6 +453,14 @@
           "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
           "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
           "observed_at": "2026-09-30T10:46:00.494888+00:00"
+        },
+        {
+          "id": "EV-FULL-DAY-USAGE",
+          "kind": "local full-day usage and fresh independent replay",
+          "ref": "docs/ai-dev/evidence/FULL_DAY_USAGE_AUDIT.json",
+          "result": "Three24h real-Hub/FakeSpotify profiles reproduce856/2015/1748 HTTP calls, including24 token refreshes. Independent clock/count replay passes;326 local unit/Worker tests pass.3/5 totals are arithmetic; no actual account-wide quota allowance, live history discrepancy or sustainable multi-user capacity established. Application/deployment unchanged.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T11:08:05.693865+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
