@@ -358,6 +358,20 @@ export function HistoryScreen() {
 	);
 }
 
+function quotaWait(seconds: number): string {
+	const whole = Math.ceil(seconds);
+	const hours = Math.floor(whole / 3600);
+	const minutes = Math.floor((whole % 3600) / 60);
+	const remaining = whole % 60;
+	return [
+		hours ? `${hours} ${hours === 1 ? "Stunde" : "Stunden"}` : null,
+		minutes ? `${minutes} ${minutes === 1 ? "Minute" : "Minuten"}` : null,
+		remaining || whole === 0 ? `${remaining} ${remaining === 1 ? "Sekunde" : "Sekunden"}` : null,
+	]
+		.filter(Boolean)
+		.join(", ");
+}
+
 export function DevicesScreen() {
 	const [diagnostics, setDiagnostics] = useState<SpotifyDiagnostics | null>(null);
 	const [diagnosticError, setDiagnosticError] = useState("");
@@ -386,6 +400,12 @@ export function DevicesScreen() {
 			.catch((e: Error) => setErr(e.message));
 	};
 	useEffect(load, []);
+	const cooldown = diagnostics?.cooldown;
+	const deadlinePending = cooldown?.until != null && cooldown.until > Date.now();
+	const retrySeconds =
+		cooldown?.retryAfter != null && /^\d+(?:\.\d+)?$/.test(cooldown.retryAfter)
+			? Number(cooldown.retryAfter)
+			: null;
 	const choose = (id: string | null) => {
 		setChosen(id);
 		try {
@@ -446,8 +466,10 @@ export function DevicesScreen() {
 				<summary>Spotify-Freigabe & Anfragestatus</summary>
 				<div class="more__body">
 					<p>
-						Spotify Connect nutzt die Freigabe deines Spotify-Kontos. Native HA/MA-Geräte werden
-						separat auf der Hörseite angeboten, wenn der Server dafür eingerichtet ist.
+						Spotify Connect nutzt die Spotify-Web-API. Im Development-Modus teilen Apps desselben
+						Entwicklerkontos ein Anfragebudget; Spotify fasst manche Funktionen in gemeinsame
+						Kontingente zusammen. Native HA/MA-Geräte werden separat auf der Hörseite angeboten,
+						wenn der Server dafür eingerichtet ist.
 					</p>
 					{diagnostics?.cooldown ? (
 						<dl>
@@ -455,17 +477,19 @@ export function DevicesScreen() {
 							<dd>{diagnostics.cooldown.reason}</dd>
 							<dt>Art</dt>
 							<dd>{diagnostics.cooldown.kind}</dd>
-							<dt>Retry-After</dt>
+							<dt>Von Spotify gemeldete Wartezeit</dt>
 							<dd>
 								{diagnostics.cooldown.retryAfter === null
 									? "Nicht von Spotify angegeben"
-									: diagnostics.cooldown.retryAfter}
+									: retrySeconds !== null && Number.isFinite(retrySeconds)
+										? `${quotaWait(retrySeconds)} (${num(retrySeconds)} Sekunden)`
+										: diagnostics.cooldown.retryAfter}
 							</dd>
-							<dt>Frühestens erneut</dt>
+							<dt>Früheste erneute Prüfung</dt>
 							<dd>
 								{diagnostics.cooldown.until === null
 									? "Unbekannt · keine Reset-Zeit von Spotify angegeben"
-									: new Date(diagnostics.cooldown.until).toLocaleString("de-DE")}
+									: `${new Date(diagnostics.cooldown.until).toLocaleString("de-DE")} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}
 							</dd>
 						</dl>
 					) : (
@@ -473,13 +497,26 @@ export function DevicesScreen() {
 							{diagnostics ? "Keine gespeicherte Spotify-Sperre." : "Anfragestatus wird geladen …"}
 						</p>
 					)}
+					{cooldown ? (
+						<p class="hint">
+							{cooldown.until === null
+								? "Spotify hat keinen Freigabezeitpunkt angegeben. true-shuffle hält weitere Anfragen zurück; mit der Freigabeprüfung ist ein einzelner erneuter Versuch möglich."
+								: deadlinePending
+									? "true-shuffle hält weitere Spotify-Anfragen zurück. Nach der Frist ist eine erneute Prüfung möglich; eine Freigabe durch Spotify ist dann noch nicht garantiert."
+									: "Die gespeicherte Wartefrist ist abgelaufen. Mit der Freigabeprüfung kannst du klären, ob Spotify wieder Anfragen zulässt."}{" "}
+							Der gespeicherte Verlauf und die Warteschlange bleiben verfügbar.
+						</p>
+					) : null}
 					{diagnostics ? (
 						<>
-							<h3>Anfragen pro Endpunkt in dieser Stunde</h3>
+							<h3>Gespeicherte Anfrageversuche pro Stunde</h3>
+							<p class="hint">
+								Einträge mit „blocked“ wurden lokal zurückgehalten und nicht an Spotify gesendet.
+							</p>
 							<pre class="diagnostic-data">
 								{JSON.stringify(diagnostics.requests?.counts ?? {}, null, 2)}
 							</pre>
-							<h3>Letzte bereinigte Provider-Antwort</h3>
+							<h3>Letzter Anfrageversuch</h3>
 							<pre class="diagnostic-data">
 								{JSON.stringify(diagnostics.requests?.latest ?? null, null, 2)}
 							</pre>
@@ -493,6 +530,7 @@ export function DevicesScreen() {
 						<button
 							type="button"
 							class="key"
+							disabled={deadlinePending}
 							onClick={() =>
 								void api
 									.retrySpotify()
