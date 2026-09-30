@@ -36,7 +36,18 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 		throw new ApiError(0, "offline", "Keine Verbindung — bist du online?");
 	}
 	const text = await res.text();
-	const data = text ? (JSON.parse(text) as unknown) : null;
+	let data: unknown = null;
+	if (text) {
+		try {
+			data = JSON.parse(text);
+		} catch {
+			throw new ApiError(
+				res.status,
+				"invalid_response",
+				"Der Server antwortet gerade nicht richtig. Bitte erneut verbinden.",
+			);
+		}
+	}
 	if (!res.ok) {
 		const err = (data as { error?: { code?: string; message?: string } } | null)?.error;
 		throw new ApiError(res.status, err?.code ?? "error", err?.message ?? "Das hat nicht geklappt.");
@@ -44,7 +55,53 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 	return data as T;
 }
 
+export interface NativeDevice {
+	id: string;
+	name: string;
+	provider: "home-assistant";
+	seek: boolean;
+	resume: boolean;
+	pause: boolean;
+	queue: boolean;
+}
+export interface SpotifyDiagnostics {
+	cooldown: {
+		until: number | null;
+		kind: string;
+		reason: string;
+		retryAfter: string | null;
+		observedAt: number;
+	} | null;
+	requests: { hour: number; counts: Record<string, number>; latest: unknown } | null;
+}
 export const api = {
+	nativeDevices: () =>
+		call<{ configured: boolean; devices: NativeDevice[] }>("GET", "/api/native/devices"),
+	nativePlay: (
+		stationId: number,
+		deviceId: string,
+		expected?: { sessionId?: string; entryId?: string; orderRevision?: number; newQueue?: boolean },
+	) =>
+		call<{ accepted: boolean }>("POST", "/api/native/play", {
+			stationId,
+			deviceId,
+			...expected,
+		}).then((r): PlayResult => ({ ok: r.accepted })),
+	nativePlayer: (
+		stationId: number,
+		deviceId: string,
+		action: "resume" | "pause" | "next",
+		expected?: { sessionId?: string; entryId?: string; orderRevision?: number },
+	) =>
+		call<{ accepted: boolean }>("POST", "/api/native/player", {
+			stationId,
+			deviceId,
+			action,
+			...expected,
+		}).then((r): PlayResult => ({ ok: r.accepted })),
+	nativeCancel: (expected?: { sessionId?: string; entryId?: string; orderRevision?: number }) =>
+		call<unknown>("POST", "/api/native/cancel", expected),
+	spotifyDiagnostics: () => call<SpotifyDiagnostics>("GET", "/api/spotify/diagnostics"),
 	state: (live = true) => call<AppState>("GET", `/api/state${live ? "?live=1" : ""}`),
 	playlists: () => call<PlaylistView[]>("GET", "/api/playlists"),
 	onboard: (playlistIds: string[]) => call<unknown>("POST", "/api/onboarding", { playlistIds }),
@@ -59,10 +116,14 @@ export const api = {
 		patch: { name?: string; rules?: Partial<StationRules>; sources?: StationSource[] },
 	) => call<unknown>("PATCH", `/api/stations/${id}`, patch),
 	deleteStation: (id: number) => call<unknown>("DELETE", `/api/stations/${id}`),
-	play: (id: number, deviceId?: string) =>
-		call<PlayResult>("POST", `/api/stations/${id}/play`, deviceId ? { deviceId } : {}),
-	player: (action: "pause" | "resume" | "next") =>
-		call<PlayResult>("POST", `/api/player/${action}`),
+	play: (id: number, deviceId?: string, opts?: { newQueue?: boolean; sessionId?: string }) =>
+		call<PlayResult>("POST", `/api/stations/${id}/play`, {
+			...(deviceId ? { deviceId } : {}),
+			...opts,
+		}),
+	retrySpotify: () => call<unknown>("POST", "/api/spotify/retry"),
+	player: (action: "pause" | "resume" | "next", opts?: { sessionId?: string; entryId?: string }) =>
+		call<PlayResult>("POST", `/api/player/${action}`, opts),
 	devices: () => call<DeviceView[]>("GET", "/api/devices"),
 	thumb: (trackId: string, value: -1 | 0 | 1) =>
 		call<{ skipped?: boolean }>("POST", `/api/tracks/${trackId}/thumb`, { value }),

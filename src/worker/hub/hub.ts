@@ -84,8 +84,10 @@ import {
 	type Fetcher,
 	RequestBudget,
 	SpotifyClient,
+	type SpotifyCooldown,
 	type SpotifyEndpoints,
 	SpotifyError,
+	type SpotifyRequestMetric,
 	type SpotifyTokens,
 	type TokenStore,
 } from "../spotify/client";
@@ -228,6 +230,13 @@ export interface HubDeps {
 	alarms: { set(at: number): Promise<void>; get(): Promise<number | null> };
 	ai: AiRunner | null;
 	wipe?: () => Promise<void>;
+	sharedSpotify?: {
+		getCooldown(): Promise<SpotifyCooldown | null>;
+		getSnapshot(): Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
+		setCooldown(value: SpotifyCooldown): Promise<number>;
+		beginRecheck(): Promise<boolean>;
+		finishRecheck(success: boolean): Promise<void>;
+	};
 }
 
 interface StationRow {
@@ -446,6 +455,28 @@ export class HubError extends Error {
 
 // ---------------------------------------------------------------------------
 
+export interface SavedSession {
+	sessionId: string;
+	stationId: number;
+	orderRevision: number;
+	entryIds: string[];
+	currentIndex: number;
+	progressMs: number | null;
+	observedAt: number | null;
+	playbackEpoch: number;
+	contextUri: string;
+	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
+	sequence?: number;
+	controller?: "native" | "spotify";
+	pending: {
+		operationId: string;
+		kind: "resume" | "publish" | "next";
+		deviceId?: string | null;
+		phase?: "prepared" | "submitted";
+		startedAt?: number;
+	} | null;
+}
+
 export class HubCore {
 	private readonly db: SqlDb;
 	private sourceCache = new Map<string, PackedTrack[]>();
@@ -577,7 +608,140 @@ export class HubCore {
 			budget,
 			fetch: this.d.fetch,
 			now: () => this.now(),
+			policy: {
+				getCooldown: async () => {
+					await this.reconcileSharedCooldown();
+					const local = this.providerCooldown();
+					const shared = await this.d.sharedSpotify?.getCooldown();
+					if (!local) return shared ?? null;
+					if (!shared) return local;
+					if (shared.until === null || local.until === null)
+						return { ...shared, until: null, kind: local.kind === "quota" ? "quota" : shared.kind };
+					return shared.until >= local.until ? shared : local;
+				},
+				setCooldown: async (cooldown) => {
+					const old = this.kvGet<SpotifyCooldown>("spotify_cooldown");
+					const until =
+						old?.until === null || cooldown.until === null
+							? null
+							: Math.max(old?.until ?? 0, cooldown.until);
+					this.kvSet("spotify_cooldown", { ...cooldown, until });
+					this.kvSet("backoff", { until: until ?? Number.MAX_SAFE_INTEGER, kind: cooldown.kind });
+					if (this.d.sharedSpotify) {
+						const revision = await this.d.sharedSpotify.setCooldown({ ...cooldown, until });
+						this.kvSet("spotify_cooldown_revision", revision);
+					}
+				},
+				record: (metric) => this.recordSpotifyRequest(metric),
+			},
 		});
+	}
+
+	private async reconcileSharedCooldown(): Promise<void> {
+		if (!this.d.sharedSpotify) return;
+		const snapshot = await this.d.sharedSpotify.getSnapshot();
+		const local = this.providerCooldown();
+		const localRevision = this.kvGet<number>("spotify_cooldown_revision");
+		if (localRevision !== null && snapshot.revision > localRevision) {
+			if (snapshot.cooldown) {
+				this.kvSet("spotify_cooldown", snapshot.cooldown);
+				this.kvSet("backoff", {
+					until: snapshot.cooldown.until ?? Number.MAX_SAFE_INTEGER,
+					kind: snapshot.cooldown.kind,
+				});
+			} else {
+				this.kvDel("spotify_cooldown");
+				this.kvDel("backoff");
+			}
+			this.kvSet("spotify_cooldown_revision", snapshot.revision);
+			return;
+		}
+		// Publish a legacy/local gate once. A successfully cleared shared revision
+		// supersedes an already-published local gate; it must never resurrect it.
+		if (local && localRevision === null && (local.until === null || local.until > this.now())) {
+			const revision = await this.d.sharedSpotify.setCooldown(local);
+			this.kvSet("spotify_cooldown_revision", revision);
+		}
+	}
+
+	private providerCooldown(): SpotifyCooldown | null {
+		const saved = this.kvGet<SpotifyCooldown>("spotify_cooldown");
+		if (saved) return saved;
+		const legacy = this.kvGet<{ until: number; kind: string }>("backoff");
+		if (
+			!legacy ||
+			legacy.until <= this.now() ||
+			(legacy.kind !== "quota" && legacy.kind !== "rate")
+		)
+			return null;
+		// Older quota code invented a one-hour reset. It cannot establish a provider deadline.
+		const migrated: SpotifyCooldown = {
+			until: legacy.kind === "quota" ? null : legacy.until,
+			kind: legacy.kind,
+			retryAfter: null,
+			observedAt: this.now(),
+		};
+		this.kvSet("spotify_cooldown", migrated);
+		if (migrated.until === null)
+			this.kvSet("backoff", { ...legacy, until: Number.MAX_SAFE_INTEGER });
+		return migrated;
+	}
+
+	/** Explicit owner recheck for an unknown provider reset; known deadlines stay enforced. */
+	async retryQuota(): Promise<void> {
+		await this.reconcileSharedCooldown();
+		const cooldown = this.providerCooldown();
+		if (cooldown?.until !== null && this.backoffUntil() > this.now())
+			throw new HubError(
+				"quota",
+				"Spotify hat weitere Anfragen bis zur angegebenen Freigabe gesperrt.",
+				429,
+			);
+		const shared = await this.d.sharedSpotify?.getCooldown();
+		if (shared && !(await this.d.sharedSpotify!.beginRecheck()))
+			throw new HubError(
+				"quota",
+				"Die Spotify-Freigabe ist noch gesperrt oder wird bereits geprüft.",
+				429,
+			);
+		this.kvDel("spotify_cooldown");
+		this.kvDel("backoff");
+		let success = false;
+		try {
+			// One observation only; no queue rewrite or playback command is retried.
+			await this.client(new RequestBudget(2)).player();
+			success = true;
+		} finally {
+			await this.d.sharedSpotify?.finishRecheck(success);
+			if (!success && cooldown && !this.kvGet("spotify_cooldown")) {
+				this.kvSet("spotify_cooldown", cooldown);
+				this.kvSet("backoff", {
+					until: cooldown.until ?? Number.MAX_SAFE_INTEGER,
+					kind: cooldown.kind,
+				});
+			}
+		}
+	}
+
+	spotifyDiagnostics(): unknown {
+		return {
+			cooldown: this.kvGet<SpotifyCooldown>("spotify_cooldown"),
+			requests: this.kvGet("spotify_request_metrics"),
+		};
+	}
+
+	/** Bounded, account-owned aggregates: no URLs, IDs, tokens or listener history. */
+	private recordSpotifyRequest(metric: SpotifyRequestMetric): void {
+		const hour = Math.floor(metric.at / HOUR_MS);
+		const previous = this.kvGet<{
+			hour: number;
+			counts: Record<string, number>;
+			latest: SpotifyRequestMetric;
+		}>("spotify_request_metrics");
+		const counts = previous?.hour === hour ? previous.counts : {};
+		const key = `${metric.category}:${metric.endpoint}:${metric.status}:${metric.retryCategory}`;
+		counts[key] = (counts[key] ?? 0) + 1;
+		this.kvSet("spotify_request_metrics", { hour, counts, latest: metric });
 	}
 
 	isConnected(): boolean {
@@ -670,6 +834,7 @@ export class HubCore {
 	private async runJobs(budget: RequestBudget): Promise<void> {
 		const client = this.client(budget);
 		for (let guard = 0; guard < 50; guard++) {
+			await this.reconcileSharedCooldown();
 			if (this.backoffUntil() > this.now()) return;
 			if (budget.left < 6) return;
 			const job = this.db.first<JobRow>(
@@ -748,13 +913,17 @@ export class HubCore {
 	}
 
 	private setBackoff(ms: number, kind: string): void {
-		const until = this.now() + Math.max(1000, ms);
-		this.kvSet("backoff", { until, kind });
+		const cooldown = this.kvGet<SpotifyCooldown>("spotify_cooldown");
+		const until =
+			cooldown?.until === null
+				? Number.MAX_SAFE_INTEGER
+				: Math.max(this.backoffUntil(), cooldown?.until ?? 0, this.now() + Math.max(0, ms));
+		this.kvSet("backoff", { until, kind: cooldown?.kind === "quota" ? "quota" : kind });
 		if (kind === "quota")
 			this.log(
 				"warn",
 				"quota",
-				"Spotify-Kontingent aufgebraucht — true-shuffle pausiert eine Stunde",
+				"Spotify-Kontingent aufgebraucht — weitere Anfragen warten auf die Anbieterfreigabe",
 			);
 	}
 
@@ -1661,6 +1830,7 @@ export class HubCore {
 		// Planning reads every candidate's memory: fetch them in one sweep.
 		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
 		const prev = this.deckOf(st);
+		if (mode === "background" && prev && this.savedSession(st.id)) return prev;
 		// Continue, rather than replan, when a player may still hold this
 		// playlist (paused in it, or gone quiet while in it) and resume it.
 		const lastUse = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
@@ -1767,25 +1937,44 @@ export class HubCore {
 		// Never half a playlist: the whole write must fit this invocation.
 		if (client.requestsLeft < Math.ceil(uris.length / 100) + 2)
 			throw new SpotifyError("budget", "Anfragebudget reicht nicht für die ganze Playlist");
+		const savedIntent = this.kvGet<{ layout: PlannedSlot[]; version: number; writtenAt: number }>(
+			`deck_intent:${st.id}`,
+		);
+		if (savedIntent) layout = savedIntent.layout;
+		const intent = savedIntent ?? {
+			layout,
+			version: (prev?.version ?? 0) + 1,
+			writtenAt: this.now(),
+		};
 		let playlistId = await this.ensurePlaylist(client, st);
+		this.kvSet(`deck_intent:${st.id}`, intent);
+		const draft = newDeck(intent.layout, intent.version, intent.writtenAt);
+		this.saveDeck(st.id, draft);
+		st.deck = JSON.stringify(draft);
+		if (mode === "start") {
+			const publishing = this.createSession(st, draft);
+			publishing.pending = { operationId: crypto.randomUUID(), kind: "publish" };
+			this.saveSession(publishing);
+		}
+		const intendedUris = intent.layout.map((slot) => `spotify:track:${slot.trackId}`);
 		try {
-			await client.replaceItems(playlistId, uris.slice(0, 100));
+			await client.replaceItems(playlistId, intendedUris.slice(0, 100));
 		} catch (err) {
 			if (err instanceof SpotifyError && (err.kind === "not_found" || err.kind === "forbidden")) {
 				// The listener deleted the playlist in Spotify — make a new one.
 				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, st.id);
 				st.playlist_id = null;
 				playlistId = await this.ensurePlaylist(client, st);
-				await client.replaceItems(playlistId, uris.slice(0, 100));
+				await client.replaceItems(playlistId, intendedUris.slice(0, 100));
 			} else {
 				throw err;
 			}
 		}
-		for (let i = 100; i < uris.length; i += 100) {
-			await client.addItems(playlistId, uris.slice(i, i + 100));
+		for (let i = 100; i < intendedUris.length; i += 100) {
+			await client.addItems(playlistId, intendedUris.slice(i, i + 100));
 		}
 		if (prev) this.carryPasses(st.id, prev);
-		const deck = newDeck(layout, (prev?.version ?? 0) + 1, this.now());
+		const deck = newDeck(layout, intent.version, intent.writtenAt);
 		// Positions stay trustworthy only through a continuation of an order we
 		// trusted. A fresh plan nobody started is not ours until true-shuffle
 		// starts it: a player may still carry on with what it had loaded.
@@ -1921,6 +2110,7 @@ export class HubCore {
 		);
 		st.deck = JSON.stringify(deck);
 		st.deck_dirty = 0;
+		this.kvDel(`deck_intent:${st.id}`);
 		return deck;
 	}
 
@@ -1930,6 +2120,7 @@ export class HubCore {
 		stationId: number,
 	): Promise<StepResult> {
 		const st = this.stationRow(stationId);
+		if (this.savedSession(stationId)) return { done: true };
 		if (!st) return { done: true };
 		if (!this.stationReady(st)) {
 			// Waiting is only worth it while something is being read in; otherwise
@@ -1971,38 +2162,104 @@ export class HubCore {
 		const st = this.stationRow(stationId);
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck || !st.playlist_id) return { done: true };
-		if (remainingAhead(deck) >= EXTEND_BELOW) return { done: true };
-		// Never a song twice in one playlist: positions must stay unambiguous.
-		const inDeck = new Set(deck.items.map((i) => i.id));
-		const banned = new Set([...this.bans(st.id), ...inDeck]);
-		const pool = this.stationPool(st);
-		const discoveries = this.discoveryEntries(st);
-		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
-		const res = planQueue({
-			now: this.now(),
-			roundStartedAt: st.round_started_at,
-			rules: this.rulesOf(st),
-			pool,
-			memory: (id) => this.memory(id),
-			banned,
-			discoveries,
-			size: 100,
-			rng: this.d.rng,
-		});
-		if (res.slots.length === 0) return { done: true };
-		await client.addItems(
-			st.playlist_id,
-			res.slots.map((s) => `spotify:track:${s.trackId}`),
-		);
-		deck.items.push(
-			...res.slots.map((s) => ({
-				id: s.trackId,
-				kind: s.kind,
-				state: "pending" as const,
-				at: null,
-			})),
-		);
-		this.saveDeck(st.id, deck);
+		const session = this.savedSession(stationId);
+		const from = session?.currentIndex ?? position(deck) ?? 0;
+		if (deck.items.length - from - 1 >= EXTEND_BELOW) return { done: true };
+		const intentKey = `extend_intent:${stationId}`;
+		let intent = this.kvGet<{ items: Deck["items"]; entryIds: string[]; trim: number }>(intentKey);
+		if (!intent) {
+			const held = new Set(deck.items.slice(session ? from : 0).map((it) => it.id));
+			const pool = this.stationPool(st);
+			const discoveries = this.discoveryEntries(st);
+			this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
+			const input = {
+				now: this.now(),
+				roundStartedAt: st.round_started_at,
+				rules: this.rulesOf(st),
+				pool,
+				memory: (id: TrackId) => this.memory(id),
+				banned: new Set([...this.bans(st.id), ...held]),
+				discoveries,
+				size: 100,
+				rng: this.d.rng,
+			};
+			let res = planQueue(input);
+			if (res.slots.length === 0 && session) {
+				// Reserve the next round; history alone advances the completed round counter.
+				res = planQueue({ ...input, roundStartedAt: this.now() + 1 });
+			}
+			if (!res.slots.length) return { done: true };
+			const repeatsCompleted = res.slots.some((slot) =>
+				deck.items.slice(0, from).some((it) => it.id === slot.trackId),
+			);
+			const trim = session && (deck.items.length > 800 || repeatsCompleted) ? from : 0;
+			const items = [
+				...deck.items.slice(trim),
+				...res.slots.map((slot) => ({
+					id: slot.trackId,
+					kind: slot.kind,
+					state: "pending" as const,
+					at: null,
+				})),
+			];
+			const entryIds = [
+				...(session?.entryIds.slice(trim) ?? []),
+				...res.slots.map(() => crypto.randomUUID()),
+			];
+			intent = { items, entryIds, trim };
+			this.kvSet(intentKey, intent);
+		}
+		// Restart a complete replacement on retry. POST append alone cannot be retried safely.
+		const uris = intent.items.map((it) => `spotify:track:${it.id}`);
+		if (client.requestsLeft < Math.ceil(uris.length / 100) + (intent.trim > 0 ? 2 : 0))
+			return { done: false, state: { stationId }, delayMs: MINUTE_MS };
+		if (session && intent.trim > 0 && !session.pending) {
+			session.currentIndex = 0;
+			session.entryIds = intent.entryIds;
+			session.pending = { operationId: crypto.randomUUID(), kind: "publish" };
+			this.saveSession(session);
+			deck.items = intent.items;
+			deck.lastIndex = 0;
+			deck.lastTrackId = deck.items[0]?.id ?? null;
+			deck.version += 1;
+			this.saveDeck(stationId, deck);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: intent.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+		}
+		await client.replaceItems(st.playlist_id, uris.slice(0, 100));
+		for (let i = 100; i < uris.length; i += 100)
+			await client.addItems(st.playlist_id, uris.slice(i, i + 100));
+		deck.items = intent.items;
+		this.saveDeck(stationId, deck);
+		if (session) {
+			session.entryIds = intent.entryIds;
+			if (intent.trim > 0) {
+				const observed = toObservation(await client.player(), this.now());
+				if (
+					observed?.contextUri === session.contextUri &&
+					observed.isPlaying &&
+					observed.trackId === deck.items[0]?.id
+				) {
+					session.progressMs = observed.progressMs;
+					session.observedAt = observed.at;
+					await client.play({
+						contextUri: session.contextUri,
+						position: 0,
+						progressMs: session.progressMs ?? 0,
+					});
+					session.pending = null;
+					session.playbackEpoch += 1;
+				}
+				session.pending = null;
+				this.kvDel(`deck_intent:${stationId}`);
+			}
+			session.orderRevision += 1;
+			this.saveSession(session);
+		}
+		this.kvDel(intentKey);
 		return { done: true };
 	}
 
@@ -2032,11 +2289,22 @@ export class HubCore {
 	// Sync — read Spotify, update memory and decks
 	// =======================================================================
 
-	async sync(budget: RequestBudget, opts: { force?: boolean } = {}): Promise<void> {
+	async sync(
+		budget: RequestBudget,
+		opts: { force?: boolean; observationOnly?: boolean } = {},
+	): Promise<void> {
 		if (!this.isConnected()) return;
+		await this.reconcileSharedCooldown();
 		if (this.backoffUntil() > this.now()) return;
 		const client = this.client(budget);
 		const s = this.syncState();
+		const observationAt = this.now();
+		const epochs = new Map(
+			this.stations().map((st) => {
+				const session = this.savedSession(st.id);
+				return [st.id, session ? `${session.sessionId}:${session.playbackEpoch}` : null];
+			}),
+		);
 		let state: SpPlaybackState | null;
 		try {
 			state = await client.player();
@@ -2044,7 +2312,7 @@ export class HubCore {
 			this.handleSyncError(err);
 			return;
 		}
-		const obs = toObservation(state, this.now());
+		const obs = toObservation(state, observationAt);
 		this.notePrivate(
 			state?.device ? state.device.is_private_session === true : null,
 			s.lastPlayerAt,
@@ -2097,12 +2365,23 @@ export class HubCore {
 			s.idleSince = this.now();
 		}
 
-		// Recently played: while something plays, right after it stopped, and
-		// otherwise every 30 min. The moment playback stops matters most: the
-		// last songs of a session must be in memory before any deck is rewritten.
+		// Read fresh history on a provider transition, backwards seek/repeat, stop,
+		// or every 90 seconds of unchanged active playback. Player observations
+		// and queue checkpoints still run independently at their existing cadence.
 		const justStopped = !obs?.isPlaying && wasPlaying;
+		const changedPlayback =
+			!!obs &&
+			(obs.trackId !== before?.obs?.trackId ||
+				obs.contextUri !== before?.obs?.contextUri ||
+				(obs.progressMs !== null &&
+					before?.obs?.progressMs !== null &&
+					before?.obs?.progressMs !== undefined &&
+					obs.progressMs < before.obs.progressMs));
 		const recentDue =
-			opts.force || obs?.isPlaying || justStopped || this.now() - s.lastRecentAt >= 30 * MINUTE_MS;
+			opts.force ||
+			justStopped ||
+			(!!obs?.isPlaying && (changedPlayback || this.now() - s.lastRecentAt >= 90_000)) ||
+			this.now() - s.lastRecentAt >= 30 * MINUTE_MS;
 		let plays: RecentPlay[] = [];
 		if (recentDue) {
 			try {
@@ -2144,6 +2423,11 @@ export class HubCore {
 			let deck = this.deckOf(st);
 			const uri = this.deckUri(st);
 			if (!deck || !uri) continue;
+			const currentSession = this.savedSession(st.id);
+			const epoch = currentSession
+				? `${currentSession.sessionId}:${currentSession.playbackEpoch}`
+				: null;
+			if (epochs.get(st.id) === epoch) this.checkpoint(st, deck, obs);
 			let changed = false;
 			if (plays.length > 0) {
 				const r = applyPlays(deck, plays, uri);
@@ -2179,7 +2463,13 @@ export class HubCore {
 						/* Free account or restricted device: the warning below says it. */
 					}
 				}
-				if (obs.isPlaying && remainingAhead(deck) < EXTEND_BELOW && deck.items.length > 0) {
+				if (
+					obs.isPlaying &&
+					(this.savedSession(st.id)
+						? deck.items.length - this.savedSession(st.id)!.currentIndex - 1
+						: remainingAhead(deck)) < EXTEND_BELOW &&
+					deck.items.length > 0
+				) {
 					this.enqueue(`extend:${st.id}`, "extend", { stationId: st.id }, 1);
 				}
 			}
@@ -2203,14 +2493,18 @@ export class HubCore {
 			// Rewrite a deck once nobody has listened to it for a while.
 			const consumed = consumedCount(deck) > 0;
 			const stale = this.now() - deck.writtenAt > DECK_MAX_AGE_MS;
-			if ((consumed || st.deck_dirty || stale) && !this.jobExists(`deck:${st.id}`)) {
+			if (
+				!this.savedSession(st.id) &&
+				(consumed || st.deck_dirty || stale) &&
+				!this.jobExists(`deck:${st.id}`)
+			) {
 				const lastActive = activity[String(st.id)] ?? 0;
 				const wait = Math.max(0, lastActive + IDLE_BEFORE_REBUILD_MS - this.now());
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3, wait);
 			}
 		}
 		this.watchCurrent(obs, inStation);
-		await this.guardStation(client, obs, inStation);
+		if (!opts.observationOnly) await this.guardStation(client, obs, inStation);
 		for (const st of this.stations()) {
 			if (!st.deck && this.stationReady(st) && !this.jobExists(`deck:${st.id}`)) {
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3);
@@ -2326,6 +2620,7 @@ export class HubCore {
 		const st = this.stationRow(at.st);
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck) return;
+		if (this.savedSession(st.id) && this.memory(obs.trackId).thumb !== -1) return;
 		const m = this.memory(obs.trackId);
 		if (m.thumb !== -1 && obs.progressMs >= 30_000) return;
 		const heardToday = m.lastPlayedAt !== null && this.now() - m.lastPlayedAt < RECENT_GUARD_MS;
@@ -3746,95 +4041,668 @@ export class HubCore {
 	// Playback
 	// =======================================================================
 
-	async play(stationId: number, deviceId?: string | null): Promise<PlayResult> {
+	private commandTail: Promise<unknown> = Promise.resolve();
+
+	/** Serialize commands across awaited provider requests; a stale tab cannot replace a run. */
+	play(
+		stationId: number,
+		deviceId?: string | null,
+		opts: { newQueue?: boolean; sessionId?: string } = {},
+	): Promise<PlayResult> {
+		const task = this.commandTail.then(() => this.resumeSession(stationId, deviceId, opts));
+		this.commandTail = task.catch(() => undefined);
+		return task;
+	}
+
+	public savedSession(stationId?: number): SavedSession | null {
+		const id = stationId ?? this.kvGet<number>("active_session_station");
+		if (id == null) return null;
+		const row = this.db.first<{ data: string }>(
+			`SELECT data FROM playback_sessions WHERE station_id = ?`,
+			id,
+		);
+		return row ? (JSON.parse(row.data) as SavedSession) : null;
+	}
+
+	private saveSession(session: SavedSession): void {
+		this.db.run(
+			`INSERT INTO playback_sessions (station_id, data) VALUES (?, ?) ON CONFLICT(station_id) DO UPDATE SET data = excluded.data WHERE playback_sessions.data <> excluded.data`,
+			session.stationId,
+			JSON.stringify(session),
+		);
+	}
+
+	private createSession(st: StationRow, deck: Deck): SavedSession {
+		const sessionId = crypto.randomUUID();
+		const index = deck.lastTrackId ? deck.items.findIndex((it) => it.id === deck.lastTrackId) : -1;
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const trustworthy =
+			index >= 0 &&
+			snap?.obs?.contextUri === this.deckUri(st) &&
+			snap.obs.trackId === deck.lastTrackId;
+		const session: SavedSession = {
+			sessionId,
+			stationId: st.id,
+			orderRevision: deck.version,
+			entryIds: deck.items.map((_, i) => `${sessionId}:${i}`),
+			currentIndex: Math.max(0, index),
+			progressMs: trustworthy ? snap.obs!.progressMs : null,
+			observedAt: trustworthy ? snap!.obs!.at : null,
+			playbackEpoch: 0,
+			contextUri: this.deckUri(st)!,
+			status: "saved",
+			pending: null,
+		};
+		this.saveSession(session);
+		return session;
+	}
+
+	/** Deliberate local replacement; normal native resume never calls this planner. */
+	public newNativeQueue(stationId: number): SavedSession {
 		const st = this.stationRow(stationId);
-		if (!st) return fail("unknown", "Diesen Sender gibt es nicht.");
-		if (this.backoffUntil() > this.now()) {
-			const kind = this.kvGet<{ kind: string }>("backoff")?.kind === "quota" ? "quota" : "rate";
-			return fail(
-				kind,
-				kind === "quota"
-					? "Spotify-Kontingent aufgebraucht — bitte später erneut."
-					: "Spotify bremst gerade — gleich noch einmal versuchen.",
+		if (!st || !this.stationReady(st))
+			throw new HubError("not_ready", "Diese Warteschlange wird noch vorbereitet.");
+		const pool = this.stationPool(st);
+		const discoveries = this.discoveryEntries(st);
+		this.preloadMemory([...pool.map((it) => it.id), ...discoveries.map((it) => it.id)]);
+		const input = {
+			now: this.now(),
+			roundStartedAt: st.round_started_at,
+			rules: this.rulesOf(st),
+			pool,
+			memory: (id: TrackId) => this.memory(id),
+			banned: this.bans(stationId),
+			discoveries,
+			size: DECK_SIZE,
+			rng: this.d.rng,
+		};
+		let result = planQueue(input);
+		if (!result.slots.length && result.poolSize > 0)
+			result = planQueue({ ...input, roundStartedAt: this.now() + 1 });
+		if (!result.slots.length)
+			throw new HubError("empty", "Diese Warteschlange hat keine abspielbaren Songs.");
+		const deck = newDeck(result.slots, (this.deckOf(st)?.version ?? 0) + 1, this.now());
+		return this.db.transaction(() => {
+			this.saveDeck(stationId, deck);
+			st.deck = JSON.stringify(deck);
+			const session = this.createSession(st, deck);
+			session.controller = "native";
+			session.contextUri = this.deckUri(st) ?? `native:station:${stationId}`;
+			this.saveSession(session);
+			this.kvSet("active_session_station", stationId);
+			this.kvDel(`native_tail:${stationId}`);
+			this.kvDel(`extend_intent:${stationId}`);
+			this.kvDel(`native_heard:${stationId}`);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: result.slots,
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+			this.db.run(
+				`UPDATE stations SET deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
+				result.freshRemaining,
+				result.poolSize,
+				JSON.stringify(result.counts),
+				stationId,
 			);
+			return session;
+		});
+	}
+
+	public nativeSession(stationId: number, advance = false): SavedSession {
+		const st = this.stationRow(stationId);
+		const deck = st ? this.deckOf(st) : null;
+		if (!st || !deck?.items.length)
+			throw new HubError("not_ready", "Diese Warteschlange wird noch vorbereitet.");
+		const session = this.savedSession(stationId) ?? this.createSession(st, deck);
+		if (advance && session.currentIndex + 1 < session.entryIds.length) {
+			session.currentIndex += 1;
+			session.progressMs = 0;
+			session.observedAt = this.now();
 		}
+		session.controller = "native";
+		session.pending = null;
+		session.playbackEpoch += 1;
+		session.sequence = -1;
+		session.status = "saved";
+		this.saveSession(session);
+		this.kvSet("active_session_station", stationId);
+		return session;
+	}
+
+	/** Reserve a local ordered tail. Transport retries receive exactly the same occurrence IDs. */
+	public prepareNativeTail(
+		stationId: number,
+	): { orderRevision: number; entries: { entryId: string; mediaId: string }[] } | null {
+		const session = this.savedSession(stationId);
+		const st = this.stationRow(stationId);
+		const deck = st ? this.deckOf(st) : null;
+		if (session?.controller !== "native" || !st || !deck) return null;
+		const key = `native_tail:${stationId}`;
+		const pending = this.kvGet<{
+			sessionId: string;
+			orderRevision: number;
+			entries: { entryId: string; mediaId: string }[];
+		}>(key);
+		if (pending?.sessionId === session.sessionId)
+			return { orderRevision: pending.orderRevision, entries: pending.entries };
+		if (deck.items.length - session.currentIndex - 1 >= EXTEND_BELOW) return null;
+		const pool = this.stationPool(st);
+		const discoveries = this.discoveryEntries(st);
+		this.preloadMemory([...pool.map((it) => it.id), ...discoveries.map((it) => it.id)]);
+		const prefix = deck.items.slice(0, session.currentIndex);
+		const suffix = deck.items.slice(session.currentIndex);
+		const blocked = new Set([...this.bans(st.id), ...suffix.map((it) => it.id)]);
+		const input = {
+			now: this.now(),
+			roundStartedAt: st.round_started_at,
+			rules: this.rulesOf(st),
+			pool,
+			memory: (id: TrackId) => this.memory(id),
+			banned: new Set([...blocked, ...prefix.map((it) => it.id)]),
+			discoveries,
+			size: 100,
+			rng: this.d.rng,
+		};
+		let result = planQueue(input);
+		if (!result.slots.length)
+			result = planQueue({ ...input, banned: blocked, roundStartedAt: this.now() + 1 });
+		if (!result.slots.length) return null;
+		const appended = result.slots.map((slot) => ({
+			id: slot.trackId,
+			kind: slot.kind,
+			state: "pending" as const,
+			at: null,
+		}));
+		const entries = appended.map((it) => ({
+			entryId: crypto.randomUUID(),
+			mediaId: it.id,
+		}));
+		const trim =
+			deck.items.length > 800 || appended.some((it) => prefix.some((old) => old.id === it.id))
+				? session.currentIndex
+				: 0;
+		this.db.transaction(() => {
+			deck.items = [...deck.items.slice(trim), ...appended];
+			deck.lastIndex = session.currentIndex - trim;
+			deck.version += 1;
+			session.entryIds = [...session.entryIds.slice(trim), ...entries.map((it) => it.entryId)];
+			session.currentIndex -= trim;
+			session.orderRevision += 1;
+			this.saveDeck(stationId, deck);
+			this.saveSession(session);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: deck.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+			this.kvSet(key, {
+				sessionId: session.sessionId,
+				orderRevision: session.orderRevision,
+				entries,
+			});
+		});
+		return { orderRevision: session.orderRevision, entries };
+	}
+
+	public acknowledgeNativeTail(stationId: number, revision: number): boolean {
+		const key = `native_tail:${stationId}`;
+		const intent = this.kvGet<{ sessionId: string; orderRevision: number }>(key);
+		if (
+			!intent ||
+			intent.orderRevision !== revision ||
+			this.savedSession(stationId)?.sessionId !== intent.sessionId
+		)
+			return false;
+		this.kvDel(key);
+		return true;
+	}
+
+	/** Compare-and-swap native command recovery; trusted events win over stale intents. */
+	public commitNativeSession(
+		snapshot: SavedSession,
+		expectedEpoch: number,
+		expectedSequence = -1,
+	): boolean {
+		const current = this.savedSession(snapshot.stationId);
+		if (
+			!current ||
+			current.sessionId !== snapshot.sessionId ||
+			current.playbackEpoch !== expectedEpoch ||
+			(current.sequence ?? -1) !== expectedSequence
+		)
+			return false;
+		this.saveSession({
+			...snapshot,
+			playbackEpoch: current.playbackEpoch,
+			sequence: current.sequence,
+			controller: "native",
+		});
+		return true;
+	}
+
+	public nativeObservationStatus(
+		stationId: number,
+		sessionId: string,
+		playbackEpoch: number,
+		status: "active" | "paused" | "disconnected" | "external" | "ambiguous",
+		sequence?: number,
+	): boolean {
+		const session = this.savedSession(stationId);
+		if (
+			session?.controller !== "native" ||
+			session.sessionId !== sessionId ||
+			session.playbackEpoch !== playbackEpoch
+		)
+			return false;
+		if (sequence != null && (!Number.isInteger(sequence) || sequence <= (session.sequence ?? -1)))
+			return false;
+		if (sequence != null) session.sequence = sequence;
+		session.status = status;
+		this.saveSession(session);
+		return true;
+	}
+
+	private noteNativeSample(
+		session: SavedSession,
+		entryId: string,
+		progress: number | null,
+		playing: boolean,
+	): void {
+		const key = `native_heard:${session.stationId}`;
+		type Sample = {
+			entryId: string;
+			epoch: number;
+			at: number;
+			progress: number | null;
+			playing: boolean;
+			listened: number;
+			start: number;
+			ignored: boolean;
+			recorded: boolean;
+		};
+		const now = this.now();
+		const prev = this.kvGet<Sample>(key);
+		const sameEntry = prev?.entryId === entryId;
+		const same = sameEntry && prev.epoch === session.playbackEpoch;
+		const sample: Sample = sameEntry
+			? { ...prev, epoch: session.playbackEpoch }
+			: {
+					entryId,
+					epoch: session.playbackEpoch,
+					at: now,
+					progress,
+					playing,
+					listened: 0,
+					start: now,
+					ignored: this.inGuest(now),
+					recorded: false,
+				};
+		if (same && prev.playing && progress != null && prev.progress != null) {
+			const delta = progress - prev.progress;
+			const elapsed = now - prev.at;
+			// Provider movement corroborates heard time. A seek or wall time alone counts nothing.
+			if (delta >= 0 && elapsed >= 0 && delta <= elapsed + 2000)
+				sample.listened += Math.min(delta, elapsed);
+		}
+		sample.ignored ||=
+			this.inGuest(now) ||
+			this.guestPeriods().some((period) => period.from <= now && period.to > sample.at);
+		sample.at = now;
+		sample.progress = progress;
+		sample.playing = playing;
+		if (sample.listened >= 30_000 && !sample.recorded) {
+			const st = this.stationRow(session.stationId);
+			const deck = st ? this.deckOf(st) : null;
+			const index = session.entryIds.indexOf(entryId);
+			const id = index >= 0 ? deck?.items[index]?.id : null;
+			const track = id ? this.lookupTracks([id], this.usedSources()).get(id) : null;
+			if (id && track) {
+				if (sample.ignored)
+					this.db.run(
+						`INSERT OR IGNORE INTO plays (played_at,track_id,context_uri,station_id,ignored,meta) VALUES (?,?,?,?,1,?)`,
+						now,
+						id,
+						session.contextUri,
+						session.stationId,
+						JSON.stringify(track),
+					);
+				else
+					this.recordSeenPlay({
+						id,
+						at: now,
+						start: sample.start,
+						end: now,
+						after: sample.start,
+						contextUri: session.contextUri,
+						track,
+					});
+				sample.recorded = true;
+			}
+		}
+		this.kvSet(key, sample);
+	}
+
+	/** Native events are fenced by account, session, occurrence, epoch and sequence. */
+	public acceptSessionObservation(
+		stationId: number,
+		obs: {
+			sessionId: string;
+			entryId: string;
+			playbackEpoch: number;
+			sequence: number;
+			progressMs: number | null;
+			isPlaying: boolean;
+		},
+	): boolean {
+		const session = this.savedSession(stationId);
+		if (
+			!session ||
+			session.sessionId !== obs.sessionId ||
+			session.playbackEpoch !== obs.playbackEpoch ||
+			obs.sequence <= (session.sequence ?? -1)
+		)
+			return false;
+		const index = session.entryIds.indexOf(obs.entryId);
+		if (
+			index < 0 ||
+			(obs.progressMs != null && (!Number.isFinite(obs.progressMs) || obs.progressMs < 0))
+		)
+			return false;
+		this.noteNativeSample(session, obs.entryId, obs.progressMs, obs.isPlaying);
+		if (index !== session.currentIndex || obs.progressMs != null)
+			session.progressMs = obs.progressMs;
+		session.currentIndex = index;
+		session.sequence = obs.sequence;
+		session.controller = "native";
+		session.observedAt = this.now();
+		session.status = obs.isPlaying ? "active" : "paused";
+		this.saveSession(session);
+		return true;
+	}
+
+	public sessionView(stationId?: number, limit = 12) {
+		const session = this.savedSession(stationId);
+		const st = session ? this.stationRow(session.stationId) : null;
+		const deck = st ? this.deckOf(st) : null;
+		if (!session || !deck) return null;
+		const upcoming = deck.items.slice(
+			session.currentIndex,
+			session.currentIndex + Math.min(1000, Math.max(1, limit)),
+		);
+		const tracks = this.lookupTracks(
+			upcoming.map((it) => it.id),
+			this.usedSources(),
+		);
+		const queue = upcoming.flatMap((it, n) => {
+			const track = tracks.get(it.id);
+			return track
+				? [{ entryId: session.entryIds[session.currentIndex + n]!, track: this.view(track) }]
+				: [];
+		});
+		return {
+			sessionId: session.sessionId,
+			stationId: session.stationId,
+			entryId: session.entryIds[session.currentIndex]!,
+			orderRevision: session.orderRevision,
+			progressMs: session.progressMs,
+			observedAt: session.observedAt,
+			status: session.status,
+			pending:
+				session.pending !== null ||
+				(session.controller !== "native" && !!this.kvGet(`deck_intent:${session.stationId}`)),
+			queue,
+		};
+	}
+
+	private checkpoint(st: StationRow, deck: Deck, obs: PlayerObservation | null): void {
+		let session = this.savedSession(st.id);
+		if (!session && (deck.lastTrackId || obs?.contextUri === this.deckUri(st)))
+			session = this.createSession(st, deck);
+		if (
+			session?.pending?.kind === "resume" &&
+			session.controller !== "native" &&
+			obs?.contextUri === session.contextUri &&
+			obs.isPlaying &&
+			obs.at >= (session.pending.startedAt ?? session.observedAt ?? 0)
+		) {
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const index =
+				obs.contextOffset != null && matches.includes(obs.contextOffset)
+					? obs.contextOffset
+					: matches.length === 1
+						? matches[0]!
+						: -1;
+			// A fresh own-context observation confirms the desired state. Unrelated
+			// playback and ambiguous occurrences cannot acknowledge the operation.
+			if (index >= 0 && (session.pending.phase === "prepared" || index === session.currentIndex))
+				session.pending = null;
+		}
+		if (session?.pending?.kind === "next" && obs?.contextUri === session.contextUri) {
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const index =
+				obs.contextOffset != null && matches.includes(obs.contextOffset)
+					? obs.contextOffset
+					: matches.length === 1
+						? matches[0]!
+						: -1;
+			if (index > session.currentIndex) {
+				session.pending = null;
+				session.currentIndex = index;
+				session.progressMs = obs.progressMs;
+				session.observedAt = obs.at;
+				this.saveSession(session);
+			}
+		}
+		if (
+			!session ||
+			(session.pending &&
+				!(session.pending.kind === "resume" && session.pending.phase === "prepared")) ||
+			session.controller === "native"
+		)
+			return;
+		if (!obs) session.status = "disconnected";
+		else if (obs.contextUri !== session.contextUri) session.status = "external";
+		else if (session.observedAt == null || obs.at >= session.observedAt) {
+			if (this.kvGet<number>("active_session_station") !== st.id)
+				this.kvSet("active_session_station", st.id);
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const offset = obs.contextOffset;
+			if (matches.length > 1 && offset == null) {
+				session.status = "ambiguous";
+				this.saveSession(session);
+				return;
+			}
+			const index =
+				offset != null && matches.includes(offset)
+					? offset
+					: matches.length === 1
+						? matches[0]!
+						: matches.includes(session.currentIndex)
+							? session.currentIndex
+							: -1;
+			if (index >= 0) {
+				session.currentIndex = index;
+				// Latest valid provider observation wins, including a backwards seek.
+				session.progressMs =
+					Number.isFinite(obs.progressMs) && obs.progressMs >= 0 ? obs.progressMs : null;
+				session.observedAt = obs.at;
+				session.status = obs.isPlaying ? "active" : "paused";
+			} else session.status = "ambiguous";
+		}
+		this.saveSession(session);
+	}
+
+	private async resumeSession(
+		stationId: number,
+		deviceId?: string | null,
+		opts: { newQueue?: boolean; sessionId?: string } = {},
+	): Promise<PlayResult> {
+		const st = this.stationRow(stationId);
+		if (!st) return fail("unknown", "Diese Warteschlange gibt es nicht.");
+		let session = this.savedSession(stationId);
+		if (opts.sessionId && session?.sessionId !== opts.sessionId)
+			return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
 		const budget = new RequestBudget(BUDGET_PER_INVOCATION);
 		const client = this.client(budget);
 		try {
-			await this.sync(budget, { force: true });
-			const shown = this.shownHeardSong();
-			const fresh = this.stationRow(stationId)!;
-			let deck = this.deckOf(fresh);
-			const needsRebuild =
-				!deck ||
-				fresh.deck_dirty === 1 ||
-				consumedCount(deck) > 0 ||
-				deck.continued === true ||
-				this.now() - deck.writtenAt > DECK_MAX_AGE_MS ||
-				!fresh.playlist_id ||
-				// The song the player shows, heard 30 s or more, still waits in it.
-				(shown !== null && deck.items.some((it) => it.id === shown && it.state === "pending"));
-			if (needsRebuild) deck = await this.rebuildDeck(client, fresh, "start", shown);
-			const target = await this.pickDevice(client, deviceId ?? null);
-			if (!target)
-				return fail(
-					"no_device",
-					"Öffne Spotify auf einem Gerät (Handy, PC, Box) — dann nochmal tippen.",
-				);
-			// Our order only holds with the service's own shuffle and repeat off.
-			for (const fix of [
-				() => client.setShuffle(false, target.id),
-				() => client.setRepeat("off", target.id),
-			]) {
-				try {
-					await fix();
-				} catch (err) {
-					if (err instanceof SpotifyError && (err.kind === "premium" || err.kind === "restricted"))
-						throw err;
-				}
+			const intent = this.kvGet<{ layout: PlannedSlot[] }>(`deck_intent:${stationId}`);
+			if (intent && st.playlist_id) {
+				const uris = intent.layout.map((slot) => `spotify:track:${slot.trackId}`);
+				await client.replaceItems(st.playlist_id, uris.slice(0, 100));
+				for (let i = 100; i < uris.length; i += 100)
+					await client.addItems(st.playlist_id, uris.slice(i, i + 100));
+				this.kvDel(`deck_intent:${stationId}`);
+				this.kvDel(`extend_intent:${stationId}`);
 			}
+			await this.sync(budget, { force: true });
+			const fresh = this.stationRow(stationId)!;
+			if (!session && this.stationOrphaned(fresh))
+				throw new HubError(
+					"gone",
+					"Die Playlist dieses Senders gibt es in deinem Spotify nicht mehr. Wähle unter Quellen eine andere.",
+				);
+			let deck = this.deckOf(fresh);
+			if (
+				(opts.newQueue && !intent) ||
+				(!session && fresh.deck_dirty === 1) ||
+				!deck ||
+				!fresh.playlist_id
+			) {
+				if (opts.newQueue)
+					this.db.run(`DELETE FROM playback_sessions WHERE station_id = ?`, stationId);
+				deck = await this.rebuildDeck(
+					client,
+					fresh,
+					"start",
+					opts.newQueue ? this.shownHeardSong() : null,
+				);
+				session = this.savedSession(stationId);
+			}
+			if (!deck?.items.length) return fail("empty", "Diese Warteschlange hat keine Songs.");
+			session = session ? this.savedSession(stationId) : null;
+			session ??= this.createSession(fresh, deck);
+			this.kvSet("active_session_station", stationId);
+			// Journal before provider work. Failures retain the exact intent and occurrence.
+			session.pending = {
+				operationId: session.pending?.operationId ?? crypto.randomUUID(),
+				kind: "resume",
+				deviceId,
+				phase: "prepared",
+				startedAt: this.now(),
+			};
+			this.saveSession(session);
+			const target = await this.pickDevice(client, deviceId ?? null);
+			if (!target) {
+				const current = this.savedSession(stationId);
+				if (
+					current?.sessionId === session.sessionId &&
+					current.pending?.operationId === session.pending?.operationId
+				) {
+					current.pending = null;
+					current.status = "disconnected";
+					this.saveSession(current);
+				}
+				return fail("no_device", "Öffne Spotify auf einem Gerät und setze dann fort.");
+			}
+			const snapshot = this.kvGet<PlayerSnapshot>("player");
+			if (
+				!opts.newQueue &&
+				session.controller !== "native" &&
+				snapshot?.obs?.isPlaying &&
+				snapshot.obs.contextUri === session.contextUri &&
+				snapshot.obs.trackId === deck.items[session.currentIndex]?.id &&
+				(!deviceId || deviceId === snapshot.device?.id)
+			) {
+				session.pending = null;
+				session.controller = "spotify";
+				session.playbackEpoch += 1;
+				session.status = "active";
+				this.saveSession(session);
+				return { ok: true, deviceName: target.name };
+			}
+			const replacedSong = this.shownHeardSong();
+			await client.setShuffle(false, target.id);
+			await client.setRepeat("off", target.id);
+			session.pending = { ...session.pending!, phase: "submitted" };
+			this.saveSession(session);
 			try {
 				await client.play({
-					contextUri: `spotify:playlist:${fresh.playlist_id}`,
-					position: 0,
+					contextUri: session.contextUri,
+					position: session.currentIndex,
+					progressMs: session.progressMs ?? 0,
 					deviceId: target.id,
 				});
 			} catch (err) {
 				if (!(err instanceof SpotifyError && err.kind === "not_found")) throw err;
-				// The listener deleted the station's playlist in Spotify: make a new one.
-				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, fresh.id);
+				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, stationId);
 				fresh.playlist_id = null;
-				deck = await this.rebuildDeck(client, fresh, "start", shown);
+				const playlistId = await this.ensurePlaylist(client, fresh);
+				session.contextUri = `spotify:playlist:${playlistId}`;
+				this.saveSession(session);
+				this.kvSet(`deck_intent:${stationId}`, {
+					layout: deck.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+					version: deck.version,
+					writtenAt: deck.writtenAt,
+				});
+				const uris = deck.items.map((it) => `spotify:track:${it.id}`);
+				await client.replaceItems(playlistId, uris.slice(0, 100));
+				for (let i = 100; i < uris.length; i += 100)
+					await client.addItems(playlistId, uris.slice(i, i + 100));
+				this.kvDel(`deck_intent:${stationId}`);
 				await client.play({
-					contextUri: `spotify:playlist:${fresh.playlist_id}`,
-					position: 0,
+					contextUri: session.contextUri,
+					position: session.currentIndex,
+					progressMs: session.progressMs ?? 0,
 					deviceId: target.id,
 				});
 			}
-			if (deck) {
-				// We started it at the top: positions from here on are ours.
-				deck.lastIndex = null;
-				deck.lastTrackId = null;
-				deck.lastObservedAt = null;
-				deck.ours = true;
-				deck.top = true;
-				deck.inOrder = true;
-				delete deck.strayedUntil;
-				this.saveDeck(fresh.id, deck);
-			}
-			this.noteShownPending(shown);
-			const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
-			activity[String(fresh.id)] = this.now();
-			this.kvSet("deck_activity", activity);
-			this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), fresh.id);
-			this.log("info", "play", `„${fresh.name}“ gestartet auf ${target.name}`);
+			if (replacedSong && replacedSong !== deck.items[session.currentIndex]?.id)
+				this.noteShownPending(replacedSong);
+			session.pending = null;
+			session.controller = "spotify";
+			session.playbackEpoch += 1;
+			session.status = "active";
+			this.saveSession(session);
+			deck.ours = true;
+			deck.inOrder = true;
+			deck.top = session.currentIndex === 0;
+			this.saveDeck(stationId, deck);
 			this.kvSet("player_stale", 1);
-			// The deck is current now: a rewrite queued before would only wait on
-			// its own clock and come late after the next stop.
-			this.db.run(`DELETE FROM jobs WHERE key = ?`, `deck:${fresh.id}`);
-			await this.scheduleSoon(20_000);
+			this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), stationId);
+			await this.scheduleSoon(4000);
 			return { ok: true, deviceName: target.name };
 		} catch (err) {
+			const current = this.savedSession(stationId);
+			const definitelyRejected =
+				err instanceof SpotifyError &&
+				[
+					"premium",
+					"no_device",
+					"restricted",
+					"auth",
+					"rate",
+					"quota",
+					"forbidden",
+					"not_found",
+				].includes(err.kind);
+			// Rejected commands and preflight failures did not start playback. Keep
+			// the checkpoint, but release the pending control so the listener can retry.
+			if (
+				current?.pending?.kind === "resume" &&
+				current.sessionId === session?.sessionId &&
+				current.pending.operationId === session.pending?.operationId &&
+				(current.pending.phase === "prepared" || definitelyRejected || err instanceof HubError)
+			) {
+				current.pending = null;
+				this.saveSession(current);
+			}
 			return this.playError(err);
 		}
 	}
@@ -3885,7 +4753,7 @@ export class HubCore {
 		const devices = await client.devices();
 		if (wanted) {
 			const d = devices.find((x) => x.id === wanted);
-			if (d?.id) return { id: d.id, name: d.name };
+			if (d?.id && !d.is_restricted) return { id: d.id, name: d.name };
 		}
 		const usable = devices.filter((d) => d.id && !d.is_restricted);
 		const active = usable.find((d) => d.is_active);
@@ -3907,13 +4775,70 @@ export class HubCore {
 			}));
 	}
 
-	async playerAction(action: "pause" | "resume" | "next"): Promise<PlayResult> {
+	playerAction(
+		action: "pause" | "resume" | "next",
+		expected: { sessionId?: string; entryId?: string } = {},
+	): Promise<PlayResult> {
+		const task = this.commandTail.then(() => this.performPlayerAction(action, expected));
+		this.commandTail = task.catch(() => undefined);
+		return task;
+	}
+	private async performPlayerAction(
+		action: "pause" | "resume" | "next",
+		expected: { sessionId?: string; entryId?: string },
+	): Promise<PlayResult> {
+		const current = this.savedSession();
+		if (
+			(expected.sessionId && current?.sessionId !== expected.sessionId) ||
+			(expected.entryId && current?.entryIds[current.currentIndex] !== expected.entryId)
+		)
+			return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
+		if (action === "next" && current?.pending?.kind === "next")
+			return fail(
+				"unknown",
+				"Spotify hat den letzten Sprung noch nicht bestätigt. Die Warteschlange bleibt gespeichert.",
+			);
 		const budget = new RequestBudget(6);
 		const client = this.client(budget);
 		try {
-			if (action === "pause") await client.pause();
-			else if (action === "resume") await client.resume();
-			else await client.next();
+			if (action === "resume") {
+				const session = this.savedSession();
+				if (session) return this.resumeSession(session.stationId);
+			}
+			if (action === "pause") {
+				await this.sync(new RequestBudget(8), { force: true, observationOnly: true });
+				await client.pause();
+				const session = this.savedSession();
+				if (
+					session &&
+					session.controller !== "native" &&
+					this.kvGet<PlayerSnapshot>("player")?.obs?.contextUri === session.contextUri
+				) {
+					session.status = "paused";
+					session.playbackEpoch += 1;
+					this.saveSession(session);
+				}
+			} else if (action === "resume") await client.resume();
+			else {
+				await this.sync(new RequestBudget(8), { force: true, observationOnly: true });
+				const session = this.savedSession();
+				const obs = this.kvGet<PlayerSnapshot>("player")?.obs;
+				const own =
+					session && session.controller !== "native" && obs?.contextUri === session.contextUri;
+				if (own) {
+					session.pending = { operationId: crypto.randomUUID(), kind: "next" };
+					this.saveSession(session);
+				}
+				await client.next();
+				if (own && session.currentIndex + 1 < session.entryIds.length) {
+					session.pending = null;
+					session.playbackEpoch += 1;
+					session.currentIndex += 1;
+					session.progressMs = 0;
+					session.observedAt = this.now();
+					this.saveSession(session);
+				}
+			}
 			// The next look at the interface must read the player, not the old snapshot.
 			this.kvSet("player_stale", 1);
 			await this.scheduleSoon(4000);
@@ -3959,8 +4884,9 @@ export class HubCore {
 			// Skip it only while it plays. The stored picture of the player can be
 			// a minute old: when it says so, a fresh look confirms it, or a song the
 			// listener already left would take the next one with it.
-			let now = playing;
-			if (now === undefined) {
+			const native = this.savedSession()?.controller === "native";
+			let now = native ? false : playing;
+			if (!native && now === undefined) {
 				const snap = this.kvGet<PlayerSnapshot>("player");
 				if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) {
 					try {
@@ -4197,6 +5123,7 @@ export class HubCore {
 	// =======================================================================
 
 	async state(opts: { live?: boolean } = {}): Promise<AppState> {
+		await this.reconcileSharedCooldown();
 		const profile = this.kvGet<{ id: string; name: string; imageUrl: string | null }>(
 			"profile",
 		) ?? {
@@ -4235,8 +5162,10 @@ export class HubCore {
 				code: backoff.kind,
 				message:
 					backoff.kind === "quota"
-						? "Spotify-Kontingent aufgebraucht — true-shuffle macht kurz Pause."
-						: "Spotify bremst gerade — true-shuffle wartet kurz.",
+						? this.providerCooldown()?.until === null
+							? "Spotify-Kontingent aufgebraucht — die Warteschlange bleibt gespeichert; der Freigabezeitpunkt ist unbekannt."
+							: "Spotify-Kontingent aufgebraucht — die Warteschlange bleibt gespeichert; weitere Anfragen warten bis zur gemeldeten Freigabe."
+						: "Spotify bremst gerade — die Warteschlange bleibt gespeichert; true-shuffle wartet auf die Freigabe.",
 			});
 		}
 		if (this.inPrivateNow())
@@ -4303,6 +5232,7 @@ export class HubCore {
 			onboarded: this.kvGet<boolean>("onboarded") === true,
 			stations,
 			nowPlaying: np,
+			session: this.sessionView(),
 			guest: { active: !!guestNow, until: guestNow?.to ?? null },
 			warnings,
 			jobs: this.jobViews(),
@@ -4611,7 +5541,8 @@ export class HubCore {
 		// Spotify access gone: nothing can be read or written until the listener
 		// connects again (which wakes the hub at once). One try an hour.
 		if (this.kvGet("auth_lost")) {
-			await this.d.alarms.set(Math.max(now + HOUR_MS, backoff + 1000));
+			// Keep alarm timestamps representable; waking local maintenance never clears the provider gate.
+			await this.d.alarms.set(now + HOUR_MS);
 			return;
 		}
 		const job =
@@ -4698,7 +5629,7 @@ export class HubCore {
 			candidates.push(now + 60 * MINUTE_MS);
 		else candidates.push(now + 20 * MINUTE_MS);
 		let at = Math.min(...candidates);
-		if (backoff > now) at = Math.max(at, backoff + 1000);
+		if (backoff > now) at = Math.max(at, Math.min(backoff + 1000, now + HOUR_MS));
 		await this.d.alarms.set(at);
 	}
 

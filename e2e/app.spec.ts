@@ -3,7 +3,7 @@
  * Spotify stand-in (synthetic demo library, see e2e/fake-server.ts).
  */
 
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 const FAKE = "http://127.0.0.1:8788/__control";
 
@@ -111,7 +111,7 @@ test.describe("a listener's day", () => {
 
 		// Home: the automatic "Alles" plus the two stations, ready once imported.
 		for (const name of ["Alles", "Indie & Gitarren", "Lange Autofahrt"]) {
-			await expect(page.getByRole("button", { name: `${name} starten` })).toBeEnabled({
+			await expect(page.getByRole("button", { name: new RegExp(`^${name}`) })).toBeEnabled({
 				timeout: 60_000,
 			});
 		}
@@ -120,10 +120,11 @@ test.describe("a listener's day", () => {
 
 	test("starts a station in Spotify, in true-shuffle's order", async ({ page }) => {
 		await signIn(page);
-		await page.getByRole("button", { name: "Indie & Gitarren starten" }).click();
-		const display = page.getByRole("region", { name: "Anzeige" });
-		await expect(display).toContainText("Indie & Gitarren");
-		await expect(display).toContainText("Noch nicht gehört in Runde 1");
+		await page.getByRole("button", { name: /^Indie & Gitarren/ }).click();
+		await page.getByRole("button", { name: "Wiedergabe starten" }).click();
+		const display = page.locator(".player");
+		await expect(page.locator(".station-actions")).toContainText("Indie & Gitarren");
+		await expect(display).toContainText("Song und Reihenfolge bleiben gespeichert");
 		await expect(display).toContainText("Mikas iPhone");
 
 		const s = await fake("status");
@@ -131,7 +132,7 @@ test.describe("a listener's day", () => {
 		expect(s.shuffle).toBe(false);
 		expect(s.context).toMatch(/^spotify:playlist:/);
 		// Playing now: a tap opens the station instead of starting it over.
-		const tile = page.getByRole("button", { name: "Indie & Gitarren öffnen (läuft gerade)" });
+		const tile = page.getByRole("link", { name: "Indie & Gitarren: Mix und Regeln" });
 		await expect(tile).toBeVisible();
 		await tile.click();
 		await expect(page.getByRole("heading", { name: "Indie & Gitarren", level: 1 })).toBeVisible();
@@ -141,11 +142,11 @@ test.describe("a listener's day", () => {
 
 	test("skips and bans a song from the transport keys", async ({ page }) => {
 		await signIn(page);
-		const song = page.getByRole("region", { name: "Anzeige" }).locator(".card__song");
+		const song = page.locator(".now-copy h2");
 		await expect(song).not.toBeEmpty();
 		const first = await song.textContent();
 
-		await page.getByRole("button", { name: "Nächster Song" }).click();
+		await page.getByRole("button", { name: "Weiter: Nächster Song" }).click();
 		await expect(song).not.toHaveText(first ?? "", { timeout: 20_000 });
 
 		const before = (await fake("status")).current;
@@ -160,7 +161,7 @@ test.describe("a listener's day", () => {
 		await page.getByRole("link", { name: "Menü" }).click();
 		await page.getByRole("link", { name: "Indie & Gitarren einstellen" }).click();
 		await expect(page.getByRole("heading", { name: "Indie & Gitarren", level: 1 })).toBeVisible();
-		const panel = page.getByRole("complementary");
+		const panel = page.locator(".page");
 		await expect(panel.getByText(/von 400 gehört/)).toBeVisible();
 		const next = page.getByRole("region", { name: "Als Nächstes" }).getByRole("listitem");
 		await expect(next.first()).toBeVisible();
@@ -168,9 +169,9 @@ test.describe("a listener's day", () => {
 
 		// On the sheet the mix is printed as the knob's three positions to choose from.
 		await page.getByRole("radio", { name: "Vertraut" }).check();
-		await expect(page.getByText(/≈ 50 % ungehört/)).toBeVisible();
+		await expect(page.getByText(/50 % ungehört/)).toBeVisible();
 		await page.getByRole("radio", { name: "Entdecker" }).check();
-		await expect(page.getByText(/≈ 60 % ungehört/)).toBeVisible();
+		await expect(page.getByText(/60 % ungehört/)).toBeVisible();
 
 		// Rated afterwards, not only while it plays: a song further down the list.
 		const third = next.nth(2);
@@ -189,7 +190,7 @@ test.describe("a listener's day", () => {
 		await page.getByRole("switch", { name: /Gast-Modus/ }).check();
 		await expect(page.getByText(/Gast-Modus an/)).toBeVisible();
 		await page.getByRole("button", { name: "Zurück" }).click();
-		await expect(page.locator(".seg.on", { hasText: "GAST" })).toBeVisible();
+		await expect(page.locator(".player-heading").getByText(/Gast-Modus/)).toBeVisible();
 
 		await page.getByRole("link", { name: "Menü" }).click();
 		await page.getByRole("switch", { name: /Gast-Modus/ }).uncheck();
@@ -232,7 +233,7 @@ test.describe("a listener's day", () => {
 
 	test("every page reads well on a phone", async ({ page }) => {
 		await signIn(page);
-		await expect(page.getByRole("button", { name: /^Alles starten/ })).toBeVisible();
+		await expect(page.getByRole("button", { name: /^Alles/ })).toBeVisible();
 		for (const path of [
 			"/verlauf",
 			"/import",
@@ -263,9 +264,7 @@ test.describe("a listener's day", () => {
 		// The smallest phones reflow too (WCAG 1.4.10): home and a station page at 320 px.
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto("/");
-		await expect(
-			page.getByRole("button", { name: /^Alles (starten|öffnen|weiterspielen)/ }),
-		).toBeVisible();
+		await expect(page.getByRole("button", { name: /^Alles/ })).toBeVisible();
 		await checkPage(page, "/ at 320 px");
 		await page.goto("/menu");
 		const station = await page
@@ -359,7 +358,7 @@ test.describe("a listener's day", () => {
 				await page.setViewportSize({ width: w, height: 700 });
 				await page.goto("/");
 				await expect(
-					page.getByRole("region", { name: "Anzeige" }).getByText(device, { exact: true }),
+					page.locator(".device-note").getByText(`Zuletzt auf ${device}`, { exact: true }),
 				).toBeVisible({ timeout: 20_000 });
 				await checkPage(page, `/ at ${w} px with a long device name`);
 				await checkContained(page, `/ at ${w} px with a long device name`);
@@ -393,7 +392,7 @@ test.describe("a listener's day", () => {
 		};
 		await page.goto(`/sender/${st.nowPlaying.stationId}`);
 		await expect(page.getByRole("heading", { name: "Pausiert" })).toBeVisible();
-		await page.getByRole("button", { name: "Weiterspielen" }).click();
+		await page.getByRole("button", { name: "Fortsetzen" }).click();
 		await expect.poll(async () => (await fake("status")).playing).toBe(true);
 		expect((await fake("status")).current).toBe(playing.current);
 	});
@@ -403,15 +402,22 @@ test.describe("a listener's day", () => {
 		await fake("pause");
 
 		await fake("premium?on=0");
-		await page.getByRole("button", { name: /^Lange Autofahrt starten/ }).click();
-		await expect(page.getByText(/nur mit Premium/)).toBeVisible();
-		await fake("premium?on=1");
-
+		try {
+			await page.getByRole("button", { name: /^Lange Autofahrt/ }).click();
+			await page.locator(".transport-main").click();
+			await expect(page.getByText(/nur mit Premium/)).toBeVisible();
+		} finally {
+			await fake("premium?on=1");
+		}
 		await fake("devices?none=1");
-		await expect(page.getByRole("button", { name: /^Lange Autofahrt starten/ })).toBeEnabled();
-		await page.getByRole("button", { name: /^Lange Autofahrt starten/ }).click();
-		await expect(page.getByText(/Öffne Spotify|Kein Spotify-Gerät/)).toBeVisible();
-		await fake("devices?none=0");
+		try {
+			await page.getByRole("button", { name: /^Lange Autofahrt/ }).click();
+			await expect(page.locator(".transport-main")).toBeEnabled();
+			await page.locator(".transport-main").click();
+			await expect(page.getByText(/Öffne Spotify|Kein Spotify-Gerät/)).toBeVisible();
+		} finally {
+			await fake("devices?none=0");
+		}
 	});
 
 	test("signs out and keeps the memory", async ({ page }) => {
@@ -429,98 +435,86 @@ test.describe("a listener's day", () => {
 		await page.goto("/");
 
 		await page.getByRole("link", { name: "Mit Spotify anmelden" }).click();
-		await expect(
-			page.getByRole("button", { name: /^Indie & Gitarren (starten|öffnen|weiterspielen)/ }),
-		).toBeVisible();
+		await expect(page.getByRole("button", { name: /^Indie & Gitarren/ })).toBeVisible();
 	});
 });
 
-test.describe("desktop", () => {
+test.describe("calm player", () => {
 	test.use({ viewport: { width: 1440, height: 900 } });
-
-	test("keeps the radio and puts the station beside it", async ({ page }) => {
+	test("shows current music and ordered queue beside the library", async ({ page }) => {
 		await signIn(page);
-		await expect(page.getByRole("button", { name: /^Alles starten/ })).toBeVisible();
-		// The station that played last opens beside the radio.
-		await expect(page.locator(".side").getByRole("heading", { level: 1 })).toBeVisible();
-		await checkPage(page, "desktop home");
-		await page.getByRole("link", { name: "Menü" }).click();
-		await expect(page.locator(".side").getByRole("heading", { name: "Menü" })).toBeVisible();
-		await expect(page.getByRole("region", { name: "Anzeige" })).toBeVisible();
-		await checkPage(page, "desktop menu");
+		await expect(page.locator(".player")).toBeVisible();
+		await expect(page.getByRole("complementary", { name: "Deine Sender" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Als Nächstes" })).toBeVisible();
+		await checkPage(page, "desktop player");
+		await page.screenshot({ path: ".impeccable/review/desktop.png", fullPage: true });
+		await page.getByRole("link", { name: "Menü", exact: true }).click();
+		await expect(page.getByRole("heading", { name: "Menü" })).toBeVisible();
+		await checkPage(page, "desktop settings");
 	});
-});
-
-test.describe("on a touch screen", () => {
-	test.use({ viewport: { width: 390, height: 700 }, hasTouch: true });
-
-	test("a swipe across Klang never keeps it in hand", async ({ page }) => {
-		// The dial's selection falls back after 20 s untouched: let the test say when.
-		await page.clock.install();
+	test("keeps saved song, progress and queue across reload and another browser", async ({
+		page,
+		browser,
+	}) => {
 		await signIn(page);
-		const tune = page.getByRole("slider", { name: "Senderwahl" });
-		const klang = page.getByRole("slider", { name: /^Klang für / });
-		await expect(tune).toBeVisible();
-		const stationOf = {
-			tune: async () => (await tune.getAttribute("aria-valuetext"))?.replace(/^\d+ von \d+: /, ""),
-			klang: async () =>
-				(await klang.getAttribute("aria-label"))?.replace(
-					/^Klang für (.*): Entdecken oder Vertraut$/,
-					"$1",
-				),
-			dial: () =>
-				page.evaluate(() => {
-					const at = document.querySelector<HTMLElement>(".dial")?.dataset.pointer;
-					return document.querySelector(`[data-at="${at}"] .station__name`)?.textContent?.trim();
-				}),
-		};
-		const agree = async () => {
-			const t = await stationOf.tune();
-			expect(await stationOf.klang(), "Klang turns the station Senderwahl shows").toBe(t);
-			expect(await stationOf.dial(), "the dial points where Senderwahl stands").toBe(t);
-			return t;
-		};
-		const resting = await agree();
-		const cdp = await page.context().newCDPSession(page);
-		// A finger lands on the target and drags the page down: the browser takes
-		// it as a scroll (pointerdown, pointercancel — no pointerup, no focus).
-		const swipeFrom = async (target: Locator) => {
-			await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-			const box = await target.boundingBox();
-			expect(box).not.toBeNull();
-			const x = Math.round(box!.x + box!.width / 2);
-			const y = Math.round(box!.y + box!.height / 2);
-			const before = await page.evaluate(() => window.scrollY);
-			await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
-			for (let i = 1; i <= 8; i++) {
-				await cdp.send("Input.dispatchTouchEvent", {
-					type: "touchMove",
-					touchPoints: [{ x, y: y + i * 20 }],
-				});
-			}
-			await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-			await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(before);
-		};
-		// Senderwahl turned to another station, then let go of.
-		const turnAway = async () => {
-			await tune.focus();
-			await page.keyboard.press("End");
-			if ((await stationOf.tune()) === resting) await page.keyboard.press("Home");
-			await tune.blur();
-			expect(await agree()).not.toBe(resting);
-		};
-		for (const [what, from] of [
-			["a detent", page.getByRole("button", { name: "Vertraut", exact: true })],
-			["the KLANG label", page.locator(".knob-unit--mix > .knob-unit__name")],
-		] as const) {
-			await turnAway();
-			await swipeFrom(from);
-			// Untouched for 20 s, the dial falls back to the station that plays (or played last).
-			await page.clock.fastForward(21_000);
-			await expect.poll(stationOf.tune, { message: `after a swipe from ${what}` }).toBe(resting);
-			await agree();
+		await page.getByRole("button", { name: /^Indie & Gitarren/ }).click();
+		await page.getByRole("button", { name: /Fortsetzen|Wiedergabe starten/ }).click();
+		await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeEnabled();
+		await expect.poll(async () => (await fake("status")).playing).toBe(true);
+		await fake("position?ms=97000&paused=1");
+		await page.request.post("/api/sync", { headers: { "x-ts": "1" } });
+		await page.reload();
+		await expect(page.getByText("1:37 gespeichert")).toBeVisible();
+		const before = await (await page.request.get("/api/state")).json();
+		await page.reload();
+		await expect(page.getByText("1:37 gespeichert")).toBeVisible();
+		const context = await browser.newContext({
+			baseURL: new URL(page.url()).origin,
+			locale: "de-DE",
+			timezoneId: "Europe/Berlin",
+		});
+		try {
+			const other = await context.newPage();
+			await signIn(other);
+			await expect(other.getByText("1:37 gespeichert")).toBeVisible();
+			await other.getByRole("button", { name: "Fortsetzen" }).click();
+			await expect.poll(async () => (await fake("status")).playing).toBe(true);
+			const after = await (await other.request.get("/api/state")).json();
+			expect(after.session.sessionId).toBe(before.session.sessionId);
+			expect(after.session.entryId).toBe(before.session.entryId);
+			expect(after.session.queue.map((e: { entryId: string }) => e.entryId)).toEqual(
+				before.session.queue.map((e: { entryId: string }) => e.entryId),
+			);
+		} finally {
+			await context.close();
 		}
-		// And Klang follows Senderwahl again at once.
-		await turnAway();
+	});
+	test("handles offline state, light and dark mobile, keyboard and deliberate new queue", async ({
+		page,
+	}) => {
+		await signIn(page);
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+		await checkPage(page, "dark mobile");
+		await page.screenshot({
+			path: ".impeccable/review/mobile.png",
+			fullPage: true,
+		});
+		await page.emulateMedia({ colorScheme: "light" });
+		await page.screenshot({
+			path: ".impeccable/review/mobile-light.png",
+			fullPage: true,
+		});
+		await page.getByRole("button", { name: "Neue Warteschlange", exact: true }).click();
+		await expect(page.getByRole("button", { name: "Neue Warteschlange beginnen" })).toBeVisible();
+		await page.getByRole("button", { name: "Abbrechen", exact: true }).click();
+		await page.context().setOffline(true);
+		await page.getByRole("button", { name: "Geräte aktualisieren" }).click();
+		await expect(page.getByText(/Geräte nicht geladen/)).toBeVisible();
+		await page.screenshot({ path: ".impeccable/review/mobile-offline.png", fullPage: true });
+		await page.context().setOffline(false);
+		await page.keyboard.press("Tab");
+		const focused = await page.evaluate(() => document.activeElement?.tagName);
+		expect(["BUTTON", "A", "SELECT"]).toContain(focused);
 	});
 });

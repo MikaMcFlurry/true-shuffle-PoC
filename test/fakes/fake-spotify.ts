@@ -671,6 +671,7 @@ export class FakeSpotify {
 				}
 				const off = data.offset as { position?: number } | undefined;
 				this.startContext(u.id, String(data.context_uri), off?.position ?? 0, deviceId, true);
+				p.progressMs = Number(data.position_ms ?? 0);
 			} else if (Array.isArray(data.uris)) {
 				const ids = (data.uris as string[]).map((x) => x.replace("spotify:track:", ""));
 				p.contextUri = null;

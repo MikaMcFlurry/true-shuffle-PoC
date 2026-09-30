@@ -24,6 +24,12 @@ type Listener = () => void;
 class Store {
 	load: Load = { kind: "loading" };
 	flash: Flash | null = null;
+	stale = false;
+	private tick: (() => void) | null = null;
+	private offline = () => {
+		this.stale = true;
+		this.emit();
+	};
 	tuning: { stationId: number; since: number } | null = null;
 	/**
 	 * The station the tuning knob has turned the pointer to. Turning only
@@ -112,13 +118,30 @@ class Store {
 		this.inflight = api
 			.state(live)
 			.then((state) => {
+				this.stale = false;
+				const previousIdentity = this.load.kind === "ready" ? this.load.state.profile.id : null;
+				if (previousIdentity !== state.profile.id) {
+					this.thumbs.clear();
+					this.rating = null;
+					this.selected = null;
+				}
 				this.load = { kind: "ready", state };
 				this.receivedAt = Date.now();
 				if (state.nowPlaying) this.settleThumbs([state.nowPlaying], started);
+				if (state.session)
+					this.settleThumbs(
+						state.session.queue.map((entry) => entry.track),
+						started,
+					);
 			})
 			.catch((err: unknown) => {
-				if (err instanceof ApiError && err.status === 401) this.load = { kind: "signed-out" };
-				else if (this.load.kind !== "ready") {
+				this.stale = true;
+				if (err instanceof ApiError && err.status === 401) {
+					this.load = { kind: "signed-out" };
+					this.thumbs.clear();
+					this.rating = null;
+					this.selected = null;
+				} else if (this.load.kind !== "ready") {
 					this.load = { kind: "error", message: err instanceof Error ? err.message : String(err) };
 				}
 			})
@@ -134,10 +157,13 @@ class Store {
 		const tick = () => {
 			if (document.visibilityState === "visible") void this.refresh(true);
 		};
+		this.tick = tick;
 		void this.refresh(true);
 		this.timer = window.setInterval(tick, 15_000);
 		document.addEventListener("visibilitychange", tick);
 		window.addEventListener("focus", tick);
+		window.addEventListener("online", tick);
+		window.addEventListener("offline", this.offline);
 	}
 
 	say(text: string, tone: Flash["tone"] = "info", ms = 7000): void {
@@ -153,6 +179,13 @@ class Store {
 
 	stop(): void {
 		if (this.timer !== null) window.clearInterval(this.timer);
+		if (this.tick) {
+			document.removeEventListener("visibilitychange", this.tick);
+			window.removeEventListener("focus", this.tick);
+			window.removeEventListener("online", this.tick);
+		}
+		this.tick = null;
+		window.removeEventListener("offline", this.offline);
 	}
 }
 

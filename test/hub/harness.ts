@@ -63,7 +63,13 @@ export interface Harness {
 }
 
 export async function makeHarness(
-	opts: { fake?: FakeSpotify; env?: Partial<HubEnv>; seed?: number; ai?: AiRunner | null } = {},
+	opts: {
+		fake?: FakeSpotify;
+		env?: Partial<HubEnv>;
+		seed?: number;
+		ai?: AiRunner | null;
+		sharedSpotify?: HubDeps["sharedSpotify"];
+	} = {},
 ): Promise<Harness> {
 	const clock = { t: T0 };
 	const now = () => clock.t;
@@ -86,6 +92,7 @@ export async function makeHarness(
 	};
 	const deps = (): HubDeps => ({
 		sql,
+		sharedSpotify: opts.sharedSpotify,
 		fetch: (req) => fake.handle(req),
 		now,
 		rng: seededRng(opts.seed ?? 7),
@@ -147,6 +154,7 @@ export async function onboarded(
 		fake?: FakeSpotify;
 		ai?: AiRunner | null;
 		seed?: number;
+		sharedSpotify?: HubDeps["sharedSpotify"];
 	} = {},
 ): Promise<Harness & { stationIds: number[]; allId: number }> {
 	const fake = opts.fake ?? new FakeSpotify();
@@ -165,7 +173,13 @@ export async function onboarded(
 		return p;
 	});
 	fake.user("mika").liked = tracks.slice(0, opts.liked ?? 0).map((t) => t.id);
-	const h = await makeHarness({ fake, env: opts.env, ai: opts.ai, seed: opts.seed });
+	const h = await makeHarness({
+		fake,
+		env: opts.env,
+		ai: opts.ai,
+		seed: opts.seed,
+		sharedSpotify: opts.sharedSpotify,
+	});
 	const refresh = "rt-seed";
 	fake.refreshTokens.set(refresh, "mika");
 	await h.hub.connect(

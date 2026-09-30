@@ -65,9 +65,9 @@ export function MagicEye({ state }: { state: Eye }) {
  * the screen is its face in close-up, edge to edge; a desktop shows the
  * whole landscape table radio standing on its feet.
  */
+/** Shared welcome/onboarding surface. Legacy callers retain their content slots. */
 export function Cabinet(props: {
 	eye: Eye;
-	/** Changes on every new tuning, so the eye plays its sweep again. */
 	eyeKey?: string | number;
 	dial: ComponentChildren;
 	window?: ComponentChildren;
@@ -75,64 +75,14 @@ export function Cabinet(props: {
 	left?: ComponentChildren;
 	right?: ComponentChildren;
 	keys?: ComponentChildren;
-	/** The face fills a phone's screen; spare height goes to the speaker cloth. */
 	fill?: boolean;
 }) {
-	// On a desktop the radio stands on a sideboard that runs from the window's
-	// left edge to the sheet beside it (or across the whole window when the
-	// sheet lies below): measure how far that is on either side.
-	const root = useRef<HTMLDivElement>(null);
-	useLayoutEffect(() => {
-		const el = root.current;
-		if (!el) return;
-		const measure = () => {
-			const r = el.getBoundingClientRect();
-			const side = document.querySelector<HTMLElement>(".side")?.getBoundingClientRect();
-			const end =
-				side && side.left >= r.right - 1 ? side.left : document.documentElement.clientWidth;
-			el.style.setProperty("--board-l", `${Math.max(0, Math.ceil(r.left))}px`);
-			el.style.setProperty("--board-r", `${Math.max(0, Math.floor(end - r.right))}px`);
-		};
-		measure();
-		const ro = new ResizeObserver(measure);
-		ro.observe(el);
-		ro.observe(document.documentElement);
-		window.addEventListener("resize", measure);
-		return () => {
-			ro.disconnect();
-			window.removeEventListener("resize", measure);
-		};
-	}, []);
 	return (
-		<div ref={root} class={`cabinet${props.fill ? " cabinet--fill" : ""}`}>
-			<div class="cabinet__body">
-				<div class="cabinet__cloth">
-					{/* Cast brass letters on the cloth; the trim bars run level with the hyphen. */}
-					<h1 class="emblem">true-shuffle</h1>
-				</div>
-				{/* The magic eye is seated in the dial's bezel: at the head of the pointer's scale on a
-				    phone, in its own brass-rimmed end cell beside the stations on a desktop. */}
-				<div class="cabinet__dial">
-					{props.dial}
-					<span class="cabinet__eye">
-						<MagicEye key={props.eyeKey} state={props.eye} />
-					</span>
-				</div>
-				{props.window ? <div class="cabinet__window">{props.window}</div> : null}
-				{props.extra ? <div class="cabinet__extra">{props.extra}</div> : null}
-				{props.left || props.right || props.keys ? (
-					// Keys first: on a phone they sit above the knobs, and focus follows what the eye sees.
-					<div class="cabinet__base">
-						{props.keys ? <div class="cabinet__keys">{props.keys}</div> : null}
-						{props.left ? <div class="cabinet__knob cabinet__knob--l">{props.left}</div> : null}
-						{props.right ? <div class="cabinet__knob cabinet__knob--r">{props.right}</div> : null}
-					</div>
-				) : null}
-			</div>
-			<div class="cabinet__plinth" aria-hidden="true">
-				<span class="cabinet__foot cabinet__foot--l" />
-				<span class="cabinet__foot cabinet__foot--r" />
-			</div>
+		<div class="welcome-surface">
+			{props.dial}
+			{props.window ? <div class="welcome-copy">{props.window}</div> : null}
+			{props.extra}
+			{props.keys ? <div class="welcome-actions">{props.keys}</div> : null}
 		</div>
 	);
 }
@@ -270,7 +220,7 @@ export function DialText(props: {
 }) {
 	return (
 		<div class="dial__text">
-			<p class="dial__title">{props.title}</p>
+			<h1 class="dial__title">{props.title}</h1>
 			{props.sub ? <p class="dial__sub">{props.sub}</p> : null}
 			{props.message ? (
 				<p

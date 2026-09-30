@@ -63,7 +63,21 @@ export interface JobView {
 	error: string | null;
 }
 
+export interface SessionView {
+	controller?: { kind: "spotify" | "home-assistant"; deviceId: string; deviceName?: string };
+	sessionId: string;
+	stationId: number;
+	entryId: string;
+	orderRevision: number;
+	progressMs: number | null;
+	observedAt: number | null;
+	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
+	pending: boolean;
+	queue: { entryId: string; track: TrackView }[];
+}
+
 export interface AppState {
+	session?: SessionView | null;
 	profile: { id: string; name: string; imageUrl: string | null };
 	onboarded: boolean;
 	stations: StationSummary[];

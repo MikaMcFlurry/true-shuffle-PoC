@@ -7,6 +7,7 @@
  * table costs that table's size), "rows written" as rows changed.
  */
 
+import { writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { DAY_MS, HOUR_MS, MINUTE_MS } from "../../src/core/types";
 import { HubCore } from "../../src/worker/hub/hub";
@@ -17,7 +18,13 @@ type H = Awaited<ReturnType<typeof onboarded>>;
 function instrument(h: H) {
 	const db = h.sql.db;
 	const planCache = new Map<string, string[]>();
-	const c = { read: 0, written: 0, stmts: 0, byQuery: new Map<string, number>() };
+	const c = {
+		read: 0,
+		written: 0,
+		stmts: 0,
+		byQuery: new Map<string, number>(),
+		byWriteQuery: new Map<string, number>(),
+	};
 	const scanned = (q: string, params: unknown[]): number => {
 		let tables = planCache.get(q);
 		if (!tables) {
@@ -67,6 +74,7 @@ function instrument(h: H) {
 		c.stmts++;
 		const r = db.prepare(q).run(...norm(p));
 		c.written += Number(r.changes);
+		c.byWriteQuery.set(key(q), (c.byWriteQuery.get(key(q)) ?? 0) + Number(r.changes));
 		if (/^\s*(UPDATE|DELETE)/i.test(q)) addRead(q, scanned(q, p));
 	}) as never;
 	return c;
@@ -161,6 +169,20 @@ async function listenerDay(opts: { stations: number; memory: number; followed: n
 			proto[name] = originals[i]!;
 		});
 	}
+	writeFileSync(
+		`/tmp/true-shuffle-row-budget-${opts.stations}.json`,
+		JSON.stringify(
+			{
+				read: c.read,
+				written: c.written,
+				stmts: c.stmts,
+				writeQueries: [...c.byWriteQuery.entries()].sort((a, b) => b[1] - a[1]),
+				queries: [...c.byQuery.entries()].sort((a, b) => b[1] - a[1]),
+			},
+			null,
+			2,
+		),
+	);
 	return c;
 }
 

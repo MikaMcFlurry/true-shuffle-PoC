@@ -1,0 +1,221 @@
+{
+  "requirement": "NN-09",
+  "evidenceKind": "simulated-real-HubCore-with-FakeSpotify",
+  "liveSpotifyVerified": false,
+  "providerTimeoutMs": 15000,
+  "baseline": "pristine baseline copied by root into /tmp/true-shuffle-baseline",
+  "method": "same deterministic fixture, two hours alarm settlement, 15-minute observation windows, production 15-second visible UI refresh, three sequential tabs through serialized hub semantics, per-minute device reads/restarts",
+  "before": {
+    "simulated": true,
+    "cadenceSeconds": 15,
+    "settlementSeconds": 7200,
+    "results": {
+      "visible": {
+        "windowSeconds": 900,
+        "total": 50,
+        "spotify": 50,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 20,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "hidden": {
+        "windowSeconds": 900,
+        "total": 22,
+        "spotify": 22,
+        "counts": {
+          "GET /v1/me/player": 6,
+          "GET /v1/me/player/recently-played": 6,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "paused": {
+        "windowSeconds": 900,
+        "total": 30,
+        "spotify": 30,
+        "counts": {
+          "GET /v1/me/player": 30
+        }
+      },
+      "device": {
+        "windowSeconds": 900,
+        "total": 65,
+        "spotify": 65,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 20,
+          "GET /v1/me/tracks": 2,
+          "GET /v1/me/player/devices": 15,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "reload": {
+        "windowSeconds": 900,
+        "total": 50,
+        "spotify": 50,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 20,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "multiple_tabs": {
+        "windowSeconds": 900,
+        "total": 50,
+        "spotify": 50,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 20,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      }
+    }
+  },
+  "after": {
+    "simulated": true,
+    "cadenceSeconds": 15,
+    "settlementSeconds": 7200,
+    "results": {
+      "visible": {
+        "windowSeconds": 900,
+        "total": 41,
+        "spotify": 41,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 11,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "hidden": {
+        "windowSeconds": 900,
+        "total": 20,
+        "spotify": 20,
+        "counts": {
+          "GET /v1/me/player": 5,
+          "GET /v1/me/player/recently-played": 5,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "paused": {
+        "windowSeconds": 900,
+        "total": 15,
+        "spotify": 15,
+        "counts": {
+          "GET /v1/me/player": 15
+        }
+      },
+      "device": {
+        "windowSeconds": 900,
+        "total": 56,
+        "spotify": 56,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 11,
+          "GET /v1/me/tracks": 2,
+          "GET /v1/me/player/devices": 15,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "reload": {
+        "windowSeconds": 900,
+        "total": 41,
+        "spotify": 41,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 11,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "multiple_tabs": {
+        "windowSeconds": 900,
+        "total": 41,
+        "spotify": 41,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 11,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      }
+    }
+  },
+  "rowBudgets": {
+    "8": {
+      "read": 119703,
+      "written": 4562,
+      "statements": 205016
+    },
+    "29": {
+      "read": 199897,
+      "written": 5826,
+      "statements": 407876
+    }
+  },
+  "limits": "Provider metadata/status reasons/retry headers verified by deterministic mocked responses. Counts are fixture pressure, not Spotify live acceptance or a daily production forecast. Registry coordination covers this deployment only. Durable account and deployment gates do not coordinate other apps/Client IDs. Current gates preserve sessions; generic native service calls are independent of Spotify quota.",
+  "baselineSourceSha256": {
+    "src/worker/hub/hub.ts": "6ffd511ee63f74eb38beddd8ac773f433a4f71a2daab325535100771145175b8",
+    "src/worker/spotify/client.ts": "284c6f69b4820738755f659c3a3ca2de978d7d4b2934973c6ecaadf2946d1c67"
+  },
+  "measuredSourceSha256": {
+    "src/worker/hub/hub.ts": "461abc7b7f0ed839a2e31fbe2d74c40da81b9eef03081acc67ce11fb8e6d8a5b",
+    "src/worker/spotify/client.ts": "36c22af1d41e04d5a9d914e9560dd0530c7e347306718e113480f84f77a1b973",
+    "src/worker/spotify/gate.ts": "40cb77b489aed58e3a313f9f899463d3b7a00d5b4023a72416bb82cc64493ddb",
+    "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
+    "src/worker/registry.ts": "c8255728ec5a6a7c3cbc0dd43fdccdf37d5212635a8042db51763c8546f63e59",
+    "src/worker/userhub.ts": "e0a4f45fb9f0abd1c7d779e1c18b0ba06acb55caad2d02d4a7588168db6accbc",
+    "src/worker/index.ts": "a35182f4fc528edc76976e9a37f4cd205f7f934686075c101f02a466fdcc7e30",
+    "test/hub/request-pressure.test.ts": "9bbf93da047d282eaf4bf0eae0d48fc5f13a2d65866bf3a6ca541a75fe4d5d4a",
+    "test/hub/budget.test.ts": "10a7a127fc66161cee8e83372ca229444f0ea706e74dbc91bb94d0a4f9bbd91a"
+  },
+  "rowBudgetNote": "Both pre-existing daily row-budget tests passed without threshold relaxation. Row budget counts were measured before the subsequent explicit native-only newQueue helper and final native RPC/route wiring; that helper performs no Spotify requests and does not change the normal daily fixture path. Final current-source pressure and quota tests were rerun after those changes. Counters approximate SQL rows scanned/read and report actual changed rows written.",
+  "verification": {
+    "command": "npx vitest run test/hub/request-pressure.test.ts test/spotify test/hub/quota.test.ts",
+    "testFilesPassed": 5,
+    "testsPassed": 24,
+    "finalRefreshUtc": "2026-09-30 08:03 UTC",
+    "finalIntegratedRun": {
+      "result": "PASS",
+      "tests": 325,
+      "files": 20,
+      "evidence": "unit-tests.log"
+    }
+  },
+  "coordination": "Registry revisions supersede published account-local gates after an explicit shared recheck. Successful recheck clears stale local gates; a failed recheck with known Retry-After replaces older unknown metadata. Operation lease fencing rejects stale success callbacks. Unknown provider cooldown retains valid bounded local maintenance alarms without provider retries.",
+  "rowBudgetVerification": {
+    "command": "npx vitest run test/hub/budget.test.ts",
+    "testFilesPassed": 1,
+    "testsPassed": 2,
+    "sourceMatchedPressureMeasurement": false,
+    "subsequentChangeScope": "Explicit native-only newQueue helper and native RPC/route wiring; normal daily budget fixture path unchanged."
+  },
+  "sourceHashesRemainCurrent": true,
+  "rowBudgetMeasuredSourceSha256": {
+    "src/worker/hub/hub.ts": "cb266d4c64ba656705736dc1f0d3ef8632e251172befb437a852139a4fcb6d81",
+    "src/worker/spotify/client.ts": "36c22af1d41e04d5a9d914e9560dd0530c7e347306718e113480f84f77a1b973",
+    "src/worker/spotify/gate.ts": "40cb77b489aed58e3a313f9f899463d3b7a00d5b4023a72416bb82cc64493ddb",
+    "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
+    "src/worker/registry.ts": "c8255728ec5a6a7c3cbc0dd43fdccdf37d5212635a8042db51763c8546f63e59",
+    "src/worker/userhub.ts": "00419d76c82229e33c301e0a813e3f5f3f0a879cdaab3dbbddbbc72e57d9cb3f",
+    "src/worker/index.ts": "2152f6245aaee13e5140dfd69a76b4138b80b2aa0e2cf0a63c22e322cd6b884a",
+    "test/hub/request-pressure.test.ts": "9bbf93da047d282eaf4bf0eae0d48fc5f13a2d65866bf3a6ca541a75fe4d5d4a",
+    "test/hub/budget.test.ts": "10a7a127fc66161cee8e83372ca229444f0ea706e74dbc91bb94d0a4f9bbd91a"
+  }
+}

@@ -7,7 +7,7 @@ import {
 	toRows,
 } from "../../core/history";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
-import { api } from "../api";
+import { api, type SpotifyDiagnostics } from "../api";
 import { Detents, PageBar, Section } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
@@ -359,6 +359,16 @@ export function HistoryScreen() {
 }
 
 export function DevicesScreen() {
+	const [diagnostics, setDiagnostics] = useState<SpotifyDiagnostics | null>(null);
+	const [diagnosticError, setDiagnosticError] = useState("");
+	const loadDiagnostics = () => {
+		setDiagnosticError("");
+		void api
+			.spotifyDiagnostics()
+			.then(setDiagnostics)
+			.catch((e: Error) => setDiagnosticError(e.message));
+	};
+	useEffect(loadDiagnostics, []);
 	const [devices, setDevices] = useState<DeviceView[] | null>(null);
 	const [err, setErr] = useState<string | null>(null);
 	const [chosen, setChosen] = useState<string | null>(() => {
@@ -432,6 +442,70 @@ export function DevicesScreen() {
 					</li>
 				))}
 			</ul>
+			<details class="more">
+				<summary>Spotify-Freigabe & Anfragestatus</summary>
+				<div class="more__body">
+					<p>
+						Spotify Connect nutzt die Freigabe deines Spotify-Kontos. Native HA/MA-Geräte werden
+						separat auf der Hörseite angeboten, wenn der Server dafür eingerichtet ist.
+					</p>
+					{diagnostics?.cooldown ? (
+						<dl>
+							<dt>Provider-Grund</dt>
+							<dd>{diagnostics.cooldown.reason}</dd>
+							<dt>Art</dt>
+							<dd>{diagnostics.cooldown.kind}</dd>
+							<dt>Retry-After</dt>
+							<dd>
+								{diagnostics.cooldown.retryAfter === null
+									? "Nicht von Spotify angegeben"
+									: diagnostics.cooldown.retryAfter}
+							</dd>
+							<dt>Frühestens erneut</dt>
+							<dd>
+								{diagnostics.cooldown.until === null
+									? "Unbekannt · keine Reset-Zeit von Spotify angegeben"
+									: new Date(diagnostics.cooldown.until).toLocaleString("de-DE")}
+							</dd>
+						</dl>
+					) : (
+						<p class="hint">
+							{diagnostics ? "Keine gespeicherte Spotify-Sperre." : "Anfragestatus wird geladen …"}
+						</p>
+					)}
+					{diagnostics ? (
+						<>
+							<h3>Anfragen pro Endpunkt in dieser Stunde</h3>
+							<pre class="diagnostic-data">
+								{JSON.stringify(diagnostics.requests?.counts ?? {}, null, 2)}
+							</pre>
+							<h3>Letzte bereinigte Provider-Antwort</h3>
+							<pre class="diagnostic-data">
+								{JSON.stringify(diagnostics.requests?.latest ?? null, null, 2)}
+							</pre>
+						</>
+					) : null}
+					{diagnosticError ? <p class="note note--error">{diagnosticError}</p> : null}
+					<div class="row-actions">
+						<button type="button" class="key" onClick={loadDiagnostics}>
+							Status aktualisieren
+						</button>
+						<button
+							type="button"
+							class="key"
+							onClick={() =>
+								void api
+									.retrySpotify()
+									.then(loadDiagnostics)
+									.catch((e: Error) => setDiagnosticError(e.message))
+							}
+						>
+							Spotify-Freigabe prüfen
+						</button>
+					</div>
+				</div>
+			</details>
+
 			<button type="button" class="key btn btn--wide" onClick={load}>
 				Geräte neu suchen
 			</button>
@@ -445,11 +519,12 @@ export function AboutScreen() {
 			<PageBar title="Info" sub="Wie true-shuffle arbeitet" backTo="/menu" />
 			<Section title="Wie es funktioniert" id="how">
 				<p class="lede">
-					Jeder Sender ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify. Sie enthält
-					nicht alle Songs des Senders, sondern die nächsten 300 (rund 17 Stunden), und true-shuffle
-					schreibt sie aus deinem Gedächtnis neu, immer dann, wenn gerade niemand sie hört. So kommt
-					nach und nach jeder Song des Senders dran. Spotify spielt sie ganz normal ab — auf jedem
-					Gerät, auch im Auto, auch wenn du sie direkt in Spotify startest.
+					Jeder Sender nutzt eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify. Darin steht
+					deine geordnete Warteschlange. „Fortsetzen“ führt denselben Lauf weiter: derselbe
+					unvollendete Song, an der zuletzt beobachteten Position. Ist die Position unbekannt,
+					beginnt dieser Song von vorne. Nur „Neue Warteschlange“ ersetzt den Lauf bewusst. Die
+					Reihenfolge wächst automatisch weiter, auch über Pausen, App-Schließungen und
+					Gerätewechsel hinweg.
 				</p>
 				<p class="lede">
 					Alle paar Minuten liest true-shuffle, was du gehört hast. Jeder Song ab 30 Sekunden kommt
@@ -457,14 +532,27 @@ export function AboutScreen() {
 					wieder.
 				</p>
 			</Section>
+			<Section title="Wiedergabe auf deinen Geräten" id="playback-routes">
+				<p>
+					Music-Assistant-Geräte, die in Spotify sichtbar sind, nutzt du über Spotify Connect. Die
+					separate native HA/MA-Route zeigt nur konfigurierte Geräte und deren tatsächliche
+					Fähigkeiten. Ohne Seek beginnt derselbe Song von vorne; ohne Warteschlangen-Unterstützung
+					spielt das Gerät nur einen Song.
+				</p>
+				<a class="act" href="/geraete">
+					Geräte & Provider-Status ansehen
+				</a>
+			</Section>
+
 			<Section title="Was Spotify nicht zulässt" id="limits">
 				<ul class="list">
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Autoplay</span>
 							<span class="row__sub">
-								Ist eine Playlist zu Ende, spielt Spotify eigene Empfehlungen. Die Sender sind lang
-								genug, dass das kaum passiert.
+								Kann true-shuffle die Warteschlange gerade nicht erweitern, etwa bei einer
+								Spotify-Sperre, kann Spotify am Ende eigene Empfehlungen spielen. Dein gespeicherter
+								Lauf bleibt erhalten.
 							</span>
 						</span>
 					</li>

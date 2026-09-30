@@ -3,12 +3,12 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
-import { Cover, Detents, MixScale, PageBar, Scale, Section, useWide } from "../components/radio";
+import { Cover, Detents, MixScale, PageBar, Scale, Section } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
 import { ago, DECK_PREFIX, num, pct } from "../format";
 import { navigate } from "../router";
-import { store, useStore } from "../store";
-import { MixReadout, playStation, pointedStation } from "./home";
+import { store } from "../store";
+import { MixReadout, playStation } from "./home";
 
 const KIND: Record<SlotKind, string> = {
 	fresh: "Ungehört",
@@ -155,8 +155,7 @@ export function Station({
 	const [editSources, setEditSources] = useState<StationSource[] | null>(null);
 	const saveTimer = useRef<number | null>(null);
 	const flushMix = useRef(() => {});
-	const wide = useWide();
-	const radio = useStore();
+	const wide = false;
 
 	const load = () => {
 		const started = Date.now();
@@ -257,20 +256,8 @@ export function Station({
 	}
 
 	const summary = state.stations.find((s) => s.id === id) ?? d;
-	// The radio's Klang knob turns the station its pointer stands on.
-	const frontKnob =
-		wide && pointedStation(state, radio.tuning?.stationId ?? null, radio.selected)?.id === id;
+	const frontKnob = false;
 	const np = state.nowPlaying;
-	// Paused in this station: the key plays on, it never starts the station over.
-	const held = !!np && np.stationId === id && !np.isPlaying;
-	const resume = () =>
-		api
-			.player("resume")
-			.then((r) => {
-				if (!r.ok) store.say(r.error?.message ?? "Das hat nicht geklappt.", "error");
-			})
-			.catch((e: Error) => store.say(e.message, "error"))
-			.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
 	const heard =
 		d.poolSize !== null && d.freshRemaining !== null ? d.poolSize - d.freshRemaining : null;
 	const rules = d.rules;
@@ -301,9 +288,9 @@ export function Station({
 					type="button"
 					class="key key--lit"
 					disabled={!summary.ready || !!store.tuning}
-					onClick={() => (held ? resume() : playStation(summary))}
+					onClick={() => void playStation(summary)}
 				>
-					{summary.playing ? "Neu starten" : held ? "Weiterspielen" : "Spielen"}
+					{state.session?.stationId === id ? "Fortsetzen" : "Spielen"}
 				</button>
 				{d.playlistId ? (
 					<a
@@ -325,7 +312,7 @@ export function Station({
 			    Elsewhere the sheet prints the knob's three positions to choose from; the knob stays on the radio. */}
 			<Section title="Mischung" id="mix" lead={<MixReadout s={summary} mix={value} />}>
 				{frontKnob ? (
-					<p class="hint">Am Klang-Knopf des Radios einstellbar.</p>
+					<p class="hint">Entdecken und Vertraut bestimmen, welche Songs deinen Mix ergänzen.</p>
 				) : (
 					<MixScale value={value} station={d.name} onChange={onMix} />
 				)}

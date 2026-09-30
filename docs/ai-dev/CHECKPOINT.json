@@ -1,0 +1,31 @@
+{
+  "schema_version": "mika.studio-checkpoint.v1",
+  "project": "true-shuffle",
+  "subject_revision": "Bound to implementation commit in HANDOFF_MAP.json and EVIDENCE.json",
+  "branch": "codex/implement-cloudflare-restart",
+  "phase": "LOCAL_VERIFIED_EXTERNAL_BLOCKED",
+  "execution_status": "PARTIAL",
+  "plan_ref": "docs/ai-dev/EXECUTION_PLAN.md",
+  "completed": [
+    "durable checkpoint/queue implementation",
+    "persistent shared quota gate and measured pressure",
+    "capability-based HA/MA bridge and local recovery",
+    "Impeccable player implementation and scoped fresh finish review",
+    "325 unit/Worker and15 browser checks",
+    "49 fresh independent targeted checks"
+  ],
+  "in_progress": [],
+  "blocked": [
+    "Cloudflare version/deployment access",
+    "live Spotify/HA/MA credentials"
+  ],
+  "deployment": "UNCHANGED",
+  "recovery": "LOCAL_ADDITIVE_MIGRATION_AND_BACKUP_REOPEN_PASS; PRODUCTION_NOT_RUN",
+  "next_actions": [
+    "Publish reviewed draft PR",
+    "Obtain Cloudflare and owner Spotify/HA/MA access",
+    "Verify exact production identity, backup and live acceptance",
+    "Deploy reviewed revision and read back"
+  ],
+  "updated_at": "2026-09-30T08:47:37.845866+00:00"
+}

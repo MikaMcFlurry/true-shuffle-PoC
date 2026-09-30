@@ -1,0 +1,6 @@
+{
+	"origin": "Authored src/client/public/icon.svg",
+	"licence": "Project application asset",
+	"processing": "scripts/render-icons.mjs via Playwright Chromium; rendered SVG at output dimensions",
+	"description": "Calm forest-green true-shuffle mark, replaces legacy radio icon; 2026-09-30"
+}
