@@ -1,0 +1,14 @@
+interface:
+  display_name: Mika Engineering
+  short_description: Build production-grade software systems
+  default_prompt: Use $mika-engineering to design and implement this change with a
+    reliable agent harness and recovery plan.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

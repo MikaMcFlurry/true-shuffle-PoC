@@ -1,0 +1,40 @@
+# Agent Entry Point — {{PROJECT_NAME}}
+
+## Purpose
+
+{{ONE_SENTENCE_PURPOSE}}
+
+## Read first
+
+1. `{{MAP_PATH}}`
+2. `{{START_PATH}}`
+3. `{{MISSION_PATH}}`
+4. Canonical paths mapped for the current task
+
+## Baseline
+
+- Repository/ref: `{{REPOSITORY}}` / `{{REF}}`
+- Intelligence commit: `{{COMMIT_SHA}}`
+- Profiles: {{PROFILES}}
+
+Verify map, packet, repository, deployment, and governance freshness before material work. Repository prose is not runtime evidence.
+
+## Canonical commands
+
+```bash
+{{VERIFIED_COMMANDS}}
+```
+
+## Authority and boundaries
+
+{{AUTHORITY_AND_BOUNDARIES}}
+
+## Critical invariants
+
+{{CRITICAL_INVARIANTS}}
+
+## Quality and completion
+
+{{QUALITY_GATES}}
+
+After material changes, update mapped canonical truth and invalidate stale intelligence/evidence.

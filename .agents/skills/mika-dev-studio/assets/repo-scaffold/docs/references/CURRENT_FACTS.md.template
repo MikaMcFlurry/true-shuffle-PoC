@@ -1,0 +1,5 @@
+# Current Facts Register
+
+| ID | Supported claim | Primary source | Retrieved at | Dependent decision | Scope / limitation | Revalidate when |
+|---|---|---|---|---|---|---|
+| `[FACT-ID]` | `[claim]` | `[source]` | `[ISO-8601]` | `[decision]` | `[scope]` | `[trigger or expiry]` |

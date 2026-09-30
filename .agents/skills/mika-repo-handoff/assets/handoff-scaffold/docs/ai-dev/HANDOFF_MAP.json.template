@@ -1,0 +1,44 @@
+{
+  "schema_version": "mika.repo-handoff-map.v2",
+  "generated_at": "{{GENERATED_AT}}",
+  "map_path": "docs/ai-dev/HANDOFF_MAP.json",
+  "profiles": ["STANDARD"],
+  "analysis_baseline": {
+    "repository_id": "{{REPOSITORY_ID}}",
+    "repository": "{{REPOSITORY}}",
+    "ref": "{{REF}}",
+    "commit_sha": "{{COMMIT_SHA}}",
+    "intelligence_schema": "mika.repository-intelligence.v2",
+    "intelligence_status": "ALIGNED",
+    "packet_sha256": "{{PACKET_SHA256}}"
+  },
+  "write_scope": {
+    "base_commit": "{{COMMIT_SHA}}",
+    "branch": "{{HANDOFF_BRANCH}}",
+    "allowed_paths": [
+      "AGENTS.md",
+      "docs/ai-dev/00_START_HERE.md",
+      "docs/ai-dev/AI_DEV_MISSION.md",
+      "docs/ai-dev/EVIDENCE_MANIFEST.json",
+      "docs/ai-dev/HANDOFF_MAP.json",
+      "docs/ai-dev/PROJECT_CONTEXT.md",
+      "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
+      "docs/ai-dev/repository-intelligence.json"
+    ]
+  },
+  "roles": {
+    "agent_entry": {"path": "AGENTS.md", "treatment": "CREATE", "authority": "SUPPORTING", "reason": "Concise agent map", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "mapped role or command change"},
+    "start_here": {"path": "docs/ai-dev/00_START_HERE.md", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Read order", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "baseline or mission change"},
+    "mission": {"path": "docs/ai-dev/AI_DEV_MISSION.md", "treatment": "CREATE", "authority": "SUPPORTING", "reason": "Next objective", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "owner direction or mission change"},
+    "current_state": {"path": "docs/ai-dev/PROJECT_CONTEXT.md", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Consolidated project context", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "material repository or deployment change"},
+    "product_truth": {"path": "docs/ai-dev/PROJECT_CONTEXT.md", "treatment": "CREATE", "authority": "SUPPORTING", "reason": "Consolidated target intent", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "owner decision change"},
+    "feature_inventory": {"path": "docs/ai-dev/PROJECT_CONTEXT.md", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Consolidated feature evidence", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "feature or evidence change"},
+    "architecture_runtime": {"path": "docs/ai-dev/PROJECT_CONTEXT.md", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Consolidated architecture map", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "architecture or runtime change"},
+    "run_deploy_operations": {"path": "docs/ai-dev/PROJECT_CONTEXT.md", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Consolidated operations map", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "command, provider, or recovery change"},
+    "quality_risks": {"path": "docs/ai-dev/PROJECT_CONTEXT.md", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Consolidated quality evidence", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "evidence or risk change"},
+    "owner_decisions": {"path": "docs/ai-dev/PROJECT_CONTEXT.md", "treatment": "CREATE", "authority": "SUPPORTING", "reason": "Consolidated current decisions", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "owner decision change"},
+    "intelligence_markdown": {"path": "docs/ai-dev/REPOSITORY_INTELLIGENCE.md", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Owner-readable packet", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "packet refresh"},
+    "intelligence_json": {"path": "docs/ai-dev/repository-intelligence.json", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Machine packet", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "packet refresh"},
+    "evidence_manifest": {"path": "docs/ai-dev/EVIDENCE_MANIFEST.json", "treatment": "CREATE", "authority": "GENERATED_VIEW", "reason": "Role provenance", "evidence_ids": ["{{EVIDENCE_ID}}"], "owner_decision_ids": [], "freshness_trigger": "mapped artifact change"}
+  }
+}
