@@ -137,6 +137,7 @@ class Store {
 			.catch((err: unknown) => {
 				this.stale = true;
 				if (err instanceof ApiError && err.status === 401) {
+					this.stale = false;
 					this.load = { kind: "signed-out" };
 					this.thumbs.clear();
 					this.rating = null;

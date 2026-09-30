@@ -99,6 +99,16 @@ test.describe.configure({ mode: "serial" });
 test.describe("a listener's day", () => {
 	test.use({ viewport: { width: 390, height: 844 } });
 
+	test("shows signed-out users as online after a normal authentication response", async ({
+		page,
+	}) => {
+		const response = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/state");
+		await page.goto("/");
+		expect((await response).status()).toBe(401);
+		await expect(page.getByRole("link", { name: "Mit Spotify anmelden" })).toBeVisible();
+		await expect(page.getByText("Offline oder nicht erreichbar.", { exact: false })).toBeHidden();
+	});
+
 	test("signs in with Spotify and saves playlists as stations", async ({ page }) => {
 		await signIn(page);
 		await expect(page.getByText("Wähle, welche Sender werden")).toBeVisible();
