@@ -5,12 +5,16 @@
 
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./env";
+import type { SqlDb, SqlValue } from "./lib/sql";
+import type { SpotifyRequestMetric } from "./spotify/client";
 import {
 	SPOTIFY_COOLDOWN_SCOPES,
 	type SpotifyCooldown,
 	type SpotifyCooldownScope,
 } from "./spotify/client";
 import { SpotifyGate, type SpotifyGateState } from "./spotify/gate";
+import { SpotifyOperationGates } from "./spotify/operation-gates";
+import { SpotifyUsageTracker } from "./spotify/usage";
 
 export class Registry extends DurableObject<Env> {
 	private ready = false;
@@ -100,6 +104,35 @@ export class Registry extends DurableObject<Env> {
 				catalogRevision: this.gate("legacy-catalog").snapshot().revision,
 			};
 		});
+	}
+
+	private database(): SqlDb {
+		const storage = this.ctx.storage;
+		return {
+			all: <T>(query: string, ...params: SqlValue[]) =>
+				storage.sql.exec(query, ...params).toArray() as T[],
+			first: <T>(query: string, ...params: SqlValue[]) =>
+				(storage.sql.exec(query, ...params).toArray()[0] as T) ?? null,
+			run: (query, ...params) => {
+				storage.sql.exec(query, ...params);
+			},
+			transaction: (fn) => storage.transactionSync(fn),
+		};
+	}
+	spotifyOperationSnapshot(listener: string, operation: string) {
+		return new SpotifyOperationGates(this.database()).snapshot(listener, operation);
+	}
+	spotifyOperationBlocked(listener: string, cooldown: SpotifyCooldown) {
+		return new SpotifyOperationGates(this.database()).block(listener, cooldown);
+	}
+	finishSpotifyOperation(listener: string, operation: string, revision: number) {
+		new SpotifyOperationGates(this.database()).finish(listener, operation, revision);
+	}
+	recordSpotifyUsage(listener: string, metric: SpotifyRequestMetric) {
+		new SpotifyUsageTracker(this.database(), () => Date.now()).record(listener, metric);
+	}
+	spotifyUsage() {
+		return new SpotifyUsageTracker(this.database(), () => Date.now()).report(this.list().length);
 	}
 
 	register(uid: string): void {

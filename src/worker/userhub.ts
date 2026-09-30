@@ -41,6 +41,16 @@ export class UserHub extends DurableObject<Env> {
 			this.core = new HubCore({
 				sql: durableObjectSql(storage),
 				sharedSpotify: {
+					getOperationSnapshot: (operation) =>
+						boundedSpotifyRpc(registry.spotifyOperationSnapshot(this.ctx.id.toString(), operation)),
+					setOperationCooldown: (cooldown) =>
+						boundedSpotifyRpc(registry.spotifyOperationBlocked(this.ctx.id.toString(), cooldown)),
+					finishOperation: (operation, revision) =>
+						boundedSpotifyRpc(
+							registry.finishSpotifyOperation(this.ctx.id.toString(), operation, revision),
+						),
+					recordRequest: (metric) =>
+						boundedSpotifyRpc(registry.recordSpotifyUsage(this.ctx.id.toString(), metric)),
 					getCooldown: (scope) =>
 						boundedSpotifyRpc(registry.spotifyCooldown(probeTokens.get(scope), scope)),
 					getSnapshot: (scope) =>
@@ -497,6 +507,13 @@ export class UserHub extends DurableObject<Env> {
 	}
 	retryQuota(epoch: number, scope?: Exclude<SpotifyCooldownScope, "legacy-catalog">) {
 		return this.session(epoch, () => this.hub().retryQuota(scope));
+	}
+	spotifyUsage(epoch: number) {
+		return this.session(epoch, () =>
+			boundedSpotifyRpc(
+				this.env.REGISTRY.get(this.env.REGISTRY.idFromName("registry")).spotifyUsage(),
+			),
+		);
 	}
 	spotifyDiagnostics(epoch: number) {
 		return this.session(epoch, () => this.hub().spotifyDiagnostics());

@@ -1,17 +1,56 @@
-import type { SpotifyDiagnostics, SpotifyFunction } from "../api";
+import type { SpotifyCooldownView, SpotifyDiagnostics, SpotifyFunction } from "../api";
 import { num } from "../format";
 
-const functions: Array<[SpotifyFunction, string]> = [
-	["devices", "Geräte"],
-	["player", "Wiedergabestatus"],
-	["history", "Spotify-Verlauf"],
+const functions: Array<[SpotifyFunction, string, string]> = [
+	["devices", "Geräte", "GET /me/player/devices"],
+	["player", "Wiedergabestatus", "GET /me/player"],
+	["history", "Spotify-Verlauf", "GET /me/player/recently-played"],
 ];
 const labels = {
 	available: "Abfrage erfolgreich",
-	held: "Abfrage zurückgestellt",
+	held: "Letzte Abfrage zurückgestellt",
 	failed: "Abfrage fehlgeschlagen",
 	not_tested: "Nicht geprüft",
 };
+function wait(seconds: number): string {
+	const whole = Math.ceil(seconds);
+	const hours = Math.floor(whole / 3600);
+	const minutes = Math.floor((whole % 3600) / 60);
+	const remaining = whole % 60;
+	return [
+		hours ? `${hours} ${hours === 1 ? "Stunde" : "Stunden"}` : null,
+		minutes ? `${minutes} ${minutes === 1 ? "Minute" : "Minuten"}` : null,
+		remaining || whole === 0 ? `${remaining} ${remaining === 1 ? "Sekunde" : "Sekunden"}` : null,
+	]
+		.filter(Boolean)
+		.join(", ");
+}
+export function ProviderWait({ gate }: { gate: SpotifyCooldownView }) {
+	const seconds =
+		gate.retryAfter !== null && /^\d+(?:\.\d+)?$/.test(gate.retryAfter)
+			? Number(gate.retryAfter)
+			: null;
+	return (
+		<dl>
+			<dt>Provider-Grund</dt>
+			<dd>{gate.reason ?? "Kein Grund angegeben"}</dd>
+			<dt>Von Spotify gemeldete Wartezeit</dt>
+			<dd>
+				{seconds !== null
+					? `${wait(seconds)} (${num(seconds)} Sekunden)`
+					: (gate.retryAfter ?? "Nicht von Spotify angegeben")}
+			</dd>
+			<dt>Gespeicherter Wert, kein Countdown</dt>
+			<dd>Die gemeldete Wartezeit bleibt gleich. Maßgeblich ist die Frist unten.</dd>
+			<dt>Früheste erneute Prüfung</dt>
+			<dd>
+				{gate.until === null
+					? "Unbekannt · keine Reset-Zeit von Spotify angegeben"
+					: `${new Date(gate.until).toLocaleString("de-DE")} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}
+			</dd>
+		</dl>
+	);
+}
 
 export function SpotifyFunctionStatus({
 	diagnostics,
@@ -19,51 +58,33 @@ export function SpotifyFunctionStatus({
 	busy,
 }: {
 	diagnostics: SpotifyDiagnostics;
-	onRetry: (scope: SpotifyFunction) => void;
+	onRetry: (scope: SpotifyFunction | "artist-albums") => void;
 	busy: boolean;
 }) {
 	const experiment = diagnostics.availability;
+	const gates = Object.fromEntries(
+		(diagnostics.operationCooldowns ?? []).map((gate) => [gate.operation, gate]),
+	);
 	const now = Date.now();
-	const gates = {
-		devices: diagnostics.devicesCooldown,
-		player: diagnostics.playerCooldown,
-		history: diagnostics.historyCooldown,
-	};
-	const history = diagnostics.recentRequests;
-	const totals = { read: 0, write: 0, refresh: 0, blocked: 0, quota: 0 };
-	for (const hour of history?.hours ?? [])
-		for (const [key, count] of Object.entries(hour.counts)) {
-			if (key.endsWith(":blocked")) totals.blocked += count;
-			else {
-				if (key.startsWith("read:")) totals.read += count;
-				if (key.startsWith("write:")) totals.write += count;
-				if (key.startsWith("refresh:")) totals.refresh += count;
-				if (key.endsWith(":429:quota")) totals.quota += count;
-			}
-		}
-	const first = history?.hours
-		.filter((h) => h.firstQuotaAt != null)
-		.sort((a, b) => a.firstQuotaAt! - b.firstQuotaAt!)[0];
 	return (
 		<>
 			<h3>Welche Funktionen antworten?</h3>
 			<p class="hint">
-				Der Test prüft Geräte, Wiedergabestatus und Verlauf jeweils einmal. Er startet keine Musik.
-				Er sichert eine alte lokale Quota-Sperre und lässt Katalogabfragen weiter warten. Neue
-				allgemeine Sperren bleiben wirksam. Bekannte Wartefristen werden ausgelassen; Wiederholungen
-				innerhalb einer Minute nutzen das gespeicherte Ergebnis.
+				Der Test fragt Geräte, Wiedergabestatus und Verlauf jeweils einmal ab. Er startet keine
+				Musik. Nur eine von Spotify bestätigte 429 hält dieselbe betroffene Operation zurück; aus
+				einer Sperre wird keine Sperre anderer Funktionen abgeleitet. Wiederholungen innerhalb einer
+				Minute nutzen das gespeicherte Testergebnis.
 			</p>
 			{experiment ? (
 				<>
 					<p class="hint">
-						Letzter Test: {new Date(experiment.testedAt).toLocaleString("de-DE")}. Erfolge gelten
-						für diese Abfrage; spätere Freigaben sind damit nicht garantiert.
+						Letzter Test: {new Date(experiment.testedAt).toLocaleString("de-DE")}. Eine erfolgreiche
+						Abfrage bestätigt diesen Versuch, keine dauerhafte Freigabe.
 					</p>
-
 					{experiment.stopped ? (
 						<p class="note">
 							Der Test wurde nach einer Fehlermeldung gestoppt. Weitere Abfragen wurden nicht
-							gesendet. Die Einzelwerte zeigen den Grund.
+							gesendet.
 						</p>
 					) : null}
 					<p class="hint">
@@ -75,105 +96,224 @@ export function SpotifyFunctionStatus({
 				<p class="hint">Noch kein gezielter Test gespeichert.</p>
 			)}
 			<ul class="list">
-				{functions.map(([key, name]) => {
+				{functions.map(([key, name, operation]) => {
+					const gate = gates[operation];
 					const outcome = experiment?.outcomes[key];
-					const global = diagnostics.cooldown;
-					const gate =
-						global && (global.until === null || global.until > now) ? global : gates[key];
-					const held = gate && (gate.until === null || gate.until > now);
+					const held = !!gate && (gate.until === null || gate.until > now);
 					return (
 						<li key={key} class="row">
 							<span class="row__main">
 								<span class="row__title">{name}</span>
 								<span class="row__sub">
-									{held ? "Abfrage zurückgestellt" : labels[outcome?.state ?? "not_tested"]}
+									{held
+										? "Bestätigte 429 · diese Abfrage wartet"
+										: labels[outcome?.state ?? "not_tested"]}
 									{!held && outcome?.status != null
 										? outcome.status === 0
 											? " · keine Antwort"
 											: ` · ${outcome.status}`
 										: ""}
-									{(held ? gate.reason : outcome?.reason)
-										? ` · ${held ? gate.reason : outcome?.reason}`
+									{(held ? gate?.reason : outcome?.reason)
+										? ` · ${held ? gate?.reason : outcome?.reason}`
 										: ""}
 								</span>
-								{held ? (
-									<span class="row__sub">
-										{gate.until === null
-											? "Keine Freigabezeit von Spotify angegeben."
-											: `Frühestens erneut: ${new Date(gate.until).toLocaleString("de-DE")}`}
-									</span>
-								) : null}
-								{gates[key] ? (
-									<button
-										type="button"
-										class="key"
-										disabled={
-											busy ||
-											!!(
-												diagnostics.cooldown &&
-												(diagnostics.cooldown.until === null || diagnostics.cooldown.until > now)
-											) ||
-											(gates[key]!.until !== null && gates[key]!.until! > now)
-										}
-										onClick={() => onRetry(key)}
-									>
-										{name}-Freigabe prüfen
-									</button>
+								{gate ? (
+									<>
+										<ProviderWait gate={gate} />
+										<p class="hint">
+											{gate.until !== null && gate.until <= now
+												? "Die gespeicherte Wartefrist ist abgelaufen. Eine Freigabe durch Spotify ist damit nicht garantiert."
+												: "Die Wartefrist betrifft nur diese bestätigte Operation."}
+										</p>
+										<button
+											type="button"
+											class="key"
+											disabled={busy || (gate.until !== null && gate.until > now)}
+											onClick={() => onRetry(key)}
+										>
+											{name}-Freigabe prüfen
+										</button>
+									</>
 								) : null}
 							</span>
 						</li>
 					);
 				})}
 			</ul>
-			{diagnostics.catalogQuarantine ? (
+			{Object.entries(gates)
+				.filter(([operation]) => !functions.some(([, , known]) => known === operation))
+				.map(([operation, gate]) => (
+					<details class="more" key={operation}>
+						<summary>Bestätigte 429: {operation}</summary>
+						<ProviderWait gate={gate} />
+						<p class="hint">
+							Nur diese Operation wartet. Andere Funktionen werden daraus nicht als gesperrt
+							behandelt.
+						</p>
+						{operation === "GET /artists/:id/albums" ? (
+							<button
+								type="button"
+								class="key"
+								disabled={busy || (gate.until !== null && gate.until > now)}
+								onClick={() => onRetry("artist-albums")}
+							>
+								Künstleralben-Freigabe prüfen
+							</button>
+						) : null}
+					</details>
+				))}
+			{!Object.keys(gates).length ? (
 				<p class="hint">
-					{diagnostics.catalogQuarantine.until === null || diagnostics.catalogQuarantine.until > now
-						? "Die alte Sperre bleibt für ungetestete Katalog- und Steuerungsabfragen erhalten."
-						: "Die gespeicherte Wartefrist für Katalog- und Steuerungsabfragen ist abgelaufen; eine Freigabe durch Spotify ist damit nicht garantiert."}{" "}
-					{diagnostics.catalogQuarantine.until === null
-						? "Spotify hat keine Freigabezeit angegeben."
-						: `Gespeicherte Frist: ${new Date(diagnostics.catalogQuarantine.until).toLocaleString("de-DE")}.`}{" "}
-					Gespeicherte Sender, Verlauf und Warteschlangen bleiben erhalten.
+					Keine bestätigte 429-Sperre gespeichert. Das verbleibende Spotify-Budget ist unbekannt.
 				</p>
 			) : null}
-			{history ? (
-				<>
-					<h3>Anfragen im Messzeitraum</h3>
-					<p class="hint">
-						Aufzeichnung seit {new Date(history.startedAt).toLocaleString("de-DE")}. Gespeichert
-						werden bis zu 24 Stundenblöcke; das ist noch keine vollständige Tagesmessung.
-					</p>
-					<dl>
-						<dt>An Spotify gesendete Leseversuche</dt>
-						<dd>{num(totals.read)}</dd>
-						<dt>Gesendete Schreibversuche</dt>
-						<dd>{num(totals.write)}</dd>
-						<dt>Token-Erneuerungen, separat</dt>
-						<dd>{num(totals.refresh)}</dd>
-						<dt>Echte Quota-Antworten</dt>
-						<dd>{num(totals.quota)}</dd>
-						<dt>Lokal zurückgehalten</dt>
-						<dd>{num(totals.blocked)}</dd>
-					</dl>
-					{first ? (
-						<p class="hint">
-							Erste aufgezeichnete Quota-Antwort:{" "}
-							{new Date(first.firstQuotaAt!).toLocaleString("de-DE")}
-							{first.firstQuotaEndpoint ? ` · ${first.firstQuotaEndpoint}` : ""}. Das verbleibende
-							Spotify-Budget und die Zuordnung gemeinsamer Kontingente sind unbekannt.
-						</p>
-					) : (
-						<p class="hint">
-							Im Messzeitraum wurde noch keine echte Quota-Antwort aufgezeichnet. Daraus lässt sich
-							das verbleibende Budget nicht bestimmen.
-						</p>
-					)}
-					<details>
-						<summary>Stunden und Endpunkte anzeigen</summary>
-						<pre class="diagnostic-data">{JSON.stringify(history.hours, null, 2)}</pre>
-					</details>
-				</>
-			) : null}
 		</>
+	);
+}
+
+import type { SpotifyUsageReport, SpotifyUsageTotals } from "../../shared/spotify-usage";
+
+function counted(value: number, singular: string, plural: string): string {
+	return `${num(value)} ${value === 1 ? singular : plural}`;
+}
+function totalsText(t: SpotifyUsageTotals): string {
+	return `${counted(t.read, "Leseversuch", "Leseversuche")} · ${counted(t.write, "Schreibversuch", "Schreibversuche")} · ${counted(t.refresh, "Token-Erneuerung", "Token-Erneuerungen")} · ${num(t.blocked)} lokal zurückgehalten · ${counted(t.quota + t.rate, "echte 429-Antwort", "echte 429-Antworten")} (${num(t.quota)} Quota, ${num(t.rate)} Rate) · ${num(t.network)} ohne Antwort`;
+}
+
+function date(at: number | null): string {
+	return at === null ? "Nicht beobachtet" : new Date(at).toLocaleString("de-DE");
+}
+export function SpotifyUsageTracker({ report }: { report: SpotifyUsageReport }) {
+	const boundary = Math.floor(report.generatedAt / 3600_000) - 23;
+	const day: SpotifyUsageTotals = {
+		sent: 0,
+		read: 0,
+		write: 0,
+		refresh: 0,
+		blocked: 0,
+		quota: 0,
+		rate: 0,
+		network: 0,
+	};
+	for (const hour of report.hours.filter((h) => h.hour >= boundary))
+		for (const key of Object.keys(day) as Array<keyof SpotifyUsageTotals>)
+			day[key] += hour.totals[key];
+	return (
+		<section aria-labelledby="shared-usage-title" class="section">
+			<h3 id="shared-usage-title">Gemeinsame Spotify-Nutzung</h3>
+			<p class="hint">
+				Alle App-Konten zusammen. {counted(report.observedListeners, "Konto", "Konten")} mit
+				beobachteten Anfragen im gespeicherten Zeitraum;{" "}
+				{counted(report.registeredListeners, "angemeldetes Konto", "angemeldete Konten")}. Bis zu{" "}
+				{num(report.listenerCapacity)} Konten werden einzeln anonym angezeigt.
+				{report.overflowObserved ? " Weitere beobachtete Konten sind zusammengefasst." : ""}
+			</p>
+			<p class="hint">
+				Das verbleibende Spotify-Budget ist unbekannt. Andere Apps und deren Anfragen sind hier
+				nicht sichtbar. Diese Anzeige erzeugt keine zusätzlichen Spotify-Anfragen.
+			</p>
+			<dl>
+				<dt>Letzte 24 Stundenblöcke</dt>
+				<dd>{totalsText(day)}</dd>
+				<dt>Gespeicherte 30-Tage-Beobachtung</dt>
+				<dd>{totalsText(report.totals)}</dd>
+			</dl>
+			<p class="hint">
+				{report.startedAt === null
+					? "Noch keine Anfrageaufzeichnung."
+					: `Aufzeichnung seit ${date(report.startedAt)}.`}{" "}
+				Stand: {date(report.generatedAt)} ({Intl.DateTimeFormat().resolvedOptions().timeZone}). Bis
+				zu {num(report.retentionHours)} Stundenblöcke bleiben gespeichert; ältere Daten fehlen.
+				Begann die Aufzeichnung später, sind 24 Stunden und 30 Tage noch nicht vollständig
+				abgedeckt. Lokal zurückgehaltene Versuche wurden nicht an Spotify gesendet. „Ohne Antwort“
+				zählt gesendete Versuche, keine bestätigten Spotify-Antworten.
+			</p>
+			<details class="more">
+				<summary>Operationen und anonyme Konten</summary>
+				<h3>Anfragen nach Operation</h3>
+				{report.operations.length ? (
+					<ul class="list">
+						{report.operations.map((o) => (
+							<li class="row" key={o.operation}>
+								<span class="row__main">
+									<span class="row__title">{o.operation}</span>
+									<span class="row__sub">{totalsText(o.totals)}</span>
+									<span class="row__sub">
+										Antworten:{" "}
+										{Object.entries(o.responses)
+											.map(([status, count]) => `${status}: ${num(count)}`)
+											.join(" · ") || "Keine Antwort aufgezeichnet"}
+									</span>
+								</span>
+							</li>
+						))}
+					</ul>
+				) : (
+					<p class="hint">Noch keine Operationen aufgezeichnet.</p>
+				)}
+				<h3>Anfragen je anonymem Konto</h3>
+				{report.listeners.length ? (
+					<ul class="list">
+						{report.listeners.map((l) => (
+							<li class="row" key={l.listener}>
+								<span class="row__main">
+									<span class="row__title">{l.listener}</span>
+									<span class="row__sub">{totalsText(l.totals)}</span>
+								</span>
+							</li>
+						))}
+					</ul>
+				) : (
+					<p class="hint">Noch keine Konten mit Anfragen aufgezeichnet.</p>
+				)}
+			</details>
+			<details class="more">
+				<summary>Bestätigte 429 und beobachtete Erholung</summary>
+				<p class="hint">
+					Die Liste enthält nur gespeicherte Episoden; ältere Episoden können fehlen. Die erste
+					erfolgreiche Antwort danach bestätigt die Erholung dieser Operation für dieses Konto bei
+					diesem Versuch. Sie verrät nicht den genauen Reset-Zeitpunkt und bestätigt keine Freigabe
+					anderer Operationen.
+				</p>
+				{report.episodes.length ? (
+					report.episodes.map((e) => (
+						<details class="more" key={e.id}>
+							<summary>
+								{e.listener} · {e.operation} ·{" "}
+								{e.firstSuccessAt === null
+									? "Noch kein anschließender Erfolg"
+									: "Erfolg danach beobachtet"}
+							</summary>
+							<dl>
+								<dt>Erste bestätigte 429</dt>
+								<dd>{date(e.firstFailureAt)}</dd>
+								<dt>Letzte bestätigte 429</dt>
+								<dd>{date(e.lastFailureAt)}</dd>
+								<dt>Provider-Grund</dt>
+								<dd>{e.reason ?? "Nicht angegeben"}</dd>
+								<dt>Retry-After</dt>
+								<dd>{e.retryAfter ?? "Nicht von Spotify angegeben"}</dd>
+								<dt>Früheste erneute Prüfung</dt>
+								<dd>
+									{e.earliestRetryAt === null
+										? "Unbekannt · keine Reset-Zeit von Spotify angegeben"
+										: date(e.earliestRetryAt)}
+								</dd>
+								<dt>Letzter Anfrageversuch</dt>
+								<dd>
+									{date(e.lastAttemptAt)} ·{" "}
+									{e.lastStatus === 0 ? "keine Antwort" : `HTTP ${e.lastStatus}`} ·{" "}
+									{num(e.attempts)} Versuche
+								</dd>
+								<dt>Erster anschließender Erfolg</dt>
+								<dd>{date(e.firstSuccessAt)}</dd>
+							</dl>
+						</details>
+					))
+				) : (
+					<p class="hint">Noch keine bestätigte 429-Episode aufgezeichnet.</p>
+				)}
+			</details>
+		</section>
 	);
 }

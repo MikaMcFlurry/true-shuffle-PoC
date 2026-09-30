@@ -20,6 +20,7 @@ function fixture(responses: (Response | Promise<Response>)[], expiresAt = 9e15) 
 		expiresAt,
 		scope: "",
 	};
+	const states = new Map<string, { revision: number; cooldown: SpotifyCooldown | null }>();
 	const create = () =>
 		new SpotifyClient({
 			endpoints: {
@@ -41,6 +42,22 @@ function fixture(responses: (Response | Promise<Response>)[], expiresAt = 9e15) 
 			},
 			policy: {
 				getCooldown: () => cooldown,
+				getOperationSnapshot: (op) => states.get(op) ?? { revision: 0, cooldown: null },
+				setOperationCooldown: (c) => {
+					const old = states.get(c.operation!);
+					cooldown = {
+						...c,
+						until:
+							old?.cooldown?.until !== null && old?.cooldown?.until !== undefined
+								? Math.max(old.cooldown.until, c.until ?? 0)
+								: c.until,
+					};
+					states.set(c.operation!, { revision: (old?.revision ?? 0) + 1, cooldown });
+				},
+				finishOperation: (op, rev) => {
+					if (states.get(op)?.revision === rev)
+						states.set(op, { revision: rev + 1, cooldown: null });
+				},
 				setCooldown: (c) => {
 					cooldown = c;
 				},
@@ -63,6 +80,7 @@ function fixture(responses: (Response | Promise<Response>)[], expiresAt = 9e15) 
 		},
 		setCooldown: (c: SpotifyCooldown) => {
 			cooldown = c;
+			if (c.operation) states.set(c.operation, { revision: 1, cooldown: c });
 		},
 	};
 }
@@ -76,7 +94,7 @@ function quota(retry?: string, reason = "QUOTA_EXCEEDED") {
 }
 
 describe("NN-09 centralized provider gate", () => {
-	it("keeps long quota Retry-After and blocks every authenticated path after recreation", async () => {
+	it("keeps long Retry-After only for the confirmed operation after recreation", async () => {
 		const f = fixture([quota("172800")]);
 		await expect(f.create().devices()).rejects.toMatchObject({
 			kind: "quota",
@@ -86,7 +104,6 @@ describe("NN-09 centralized provider gate", () => {
 		const c = f.create();
 		const actions = [
 			() => c.player(),
-			() => c.devices(),
 			() => c.play({ contextUri: "spotify:playlist:secret" }),
 			() => c.pause(),
 			() => c.resume(),
@@ -99,10 +116,11 @@ describe("NN-09 centralized provider gate", () => {
 			() => c.replaceItems("secret", []),
 			() => c.searchTracks("private search"),
 		];
-		for (const action of actions) await expect(action()).rejects.toMatchObject({ kind: "quota" });
+		for (const action of actions) await action();
+		await expect(c.devices()).rejects.toMatchObject({ operation: "GET /me/player/devices" });
 		f.advance(3600000);
 		await expect(f.create().devices()).rejects.toBeInstanceOf(SpotifyError);
-		expect(f.calls).toBe(1);
+		expect(f.calls).toBe(13);
 		expect(JSON.stringify(f.metrics)).not.toMatch(/private|secret|spotify:|token/);
 	});
 	it.each([undefined, "invalid secret"])(
@@ -115,8 +133,8 @@ describe("NN-09 centralized provider gate", () => {
 			});
 			expect(f.cooldown?.until).toBeNull();
 			f.advance(7 * 86400000);
-			await expect(f.create().devices()).rejects.toMatchObject({ kind: "quota" });
-			expect(f.calls).toBe(1);
+			await f.create().player();
+			expect(f.calls).toBe(2);
 		},
 	);
 	it("preserves HTTP date reset and permits requests only after deadline", async () => {
@@ -130,7 +148,13 @@ describe("NN-09 centralized provider gate", () => {
 	});
 	it("does not refresh an expired token during cooldown", async () => {
 		const f = fixture([], 0);
-		f.setCooldown({ until: null, kind: "quota", retryAfter: null, observedAt: 0 });
+		f.setCooldown({
+			operation: "POST /api/token",
+			until: 9e15,
+			kind: "quota",
+			retryAfter: "1",
+			observedAt: 0,
+		});
 		await expect(f.create().devices()).rejects.toMatchObject({ kind: "quota" });
 		expect(f.calls).toBe(0);
 	});
@@ -158,12 +182,69 @@ describe("NN-09 centralized provider gate", () => {
 		const shortRequest = f.create().pause();
 		// Wait for the first request to pass its gate before the second response records cooldown.
 		for (let i = 0; i < 10 && f.calls === 0; i++) await Promise.resolve();
-		await expect(f.create().player()).rejects.toBeInstanceOf(SpotifyError);
+		await expect(f.create().pause()).rejects.toBeInstanceOf(SpotifyError);
 		const later = f.cooldown?.until;
 		resolveShort(quota("2"));
 		await expect(shortRequest).rejects.toBeInstanceOf(SpotifyError);
 		expect(f.cooldown?.until).toBe(later);
 	});
+	it("normalizes HTTP method once for transport, cooldown key, retry policy and metrics", async () => {
+		const f = fixture([quota("60")]);
+		await expect(f.create().request("get", "/me/player/devices")).rejects.toMatchObject({
+			operation: "GET /me/player/devices",
+		});
+		expect(f.metrics[0]).toMatchObject({
+			method: "GET",
+			operation: "GET /me/player/devices",
+			category: "read",
+		});
+		const before = f.calls;
+		await expect(f.create().request("GeT", "/me/player/devices")).rejects.toMatchObject({
+			operation: "GET /me/player/devices",
+		});
+		expect(f.calls).toBe(before);
+		await f.create().request("put", "/me/player/play");
+		expect(f.metrics.at(-1)).toMatchObject({
+			method: "PUT",
+			operation: "PUT /me/player/play",
+			category: "write",
+		});
+	});
+
+	it("request-local success fence cannot clear newer429 after another guard updates", async () => {
+		let resolve!: (r: Response) => void;
+		const pending = new Promise<Response>((r) => {
+			resolve = r;
+		});
+		const f = fixture([pending, quota("3600")]);
+		const c = f.create();
+		const old = c.devices();
+		for (let i = 0; i < 20 && f.calls === 0; i++) await Promise.resolve();
+		await expect(c.devices()).rejects.toMatchObject({ status: 429 });
+		await expect(c.devices()).rejects.toMatchObject({ status: 429 });
+		resolve(new Response(JSON.stringify({ devices: [] }), { status: 200 }));
+		await old;
+		const before = f.calls;
+		await expect(f.create().devices()).rejects.toMatchObject({ status: 429 });
+		expect(f.calls).toBe(before);
+	});
+
+	it("reports transport start separately from delayed response for recovery ordering", async () => {
+		let resolve!: (r: Response) => void;
+		const f = fixture([
+			new Promise<Response>((r) => {
+				resolve = r;
+			}),
+		]);
+		const pending = f.create().devices();
+		for (let i = 0; i < 20 && f.calls === 0; i++) await Promise.resolve();
+		f.advance(5000);
+		resolve(new Response(JSON.stringify({ devices: [] }), { status: 200 }));
+		await pending;
+		const metric = f.metrics[0]!;
+		expect(metric.startedAt).toBe(metric.at - 5000);
+	});
+
 	it("bounds a hanging player command with abort and never blindly retries the write", async () => {
 		const controller = new AbortController();
 		let calls = 0;
@@ -209,7 +290,17 @@ describe("NN-09 centralized provider gate", () => {
 	it("authorization exchange obeys deployment gate before sending a code", async () => {
 		let calls = 0;
 		const policy = {
-			getCooldown: () => ({ until: null, kind: "quota" as const, retryAfter: null, observedAt: 0 }),
+			getCooldown: () => null,
+			getOperationSnapshot: () => ({
+				revision: 1,
+				cooldown: {
+					operation: "POST /api/token",
+					until: 9e15,
+					kind: "quota" as const,
+					retryAfter: "1",
+					observedAt: 0,
+				},
+			}),
 			setCooldown: () => {},
 		};
 		await expect(

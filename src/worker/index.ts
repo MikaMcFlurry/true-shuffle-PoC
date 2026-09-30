@@ -108,11 +108,19 @@ app.get("/auth/callback", async (c) => {
 	if (!code) return c.redirect("/?login=denied");
 	const e = endpoints(c.env);
 	const registry = c.env.REGISTRY.get(c.env.REGISTRY.idFromName("registry"));
+	const flowKey = `@signin:${await sha256b64url(state)}`;
 	const spotifyPolicy = {
-		getCooldown: () => boundedSpotifyRpc(registry.spotifyCooldown()),
-		setCooldown: async (cooldown: import("./spotify/client").SpotifyCooldown) => {
-			await boundedSpotifyRpc(registry.spotifyBlocked(cooldown));
+		getCooldown: () => null,
+		setCooldown: () => {},
+		getOperationSnapshot: (operation: string) =>
+			boundedSpotifyRpc(registry.spotifyOperationSnapshot(flowKey, operation)),
+		setOperationCooldown: async (cooldown: import("./spotify/client").SpotifyCooldown) => {
+			await boundedSpotifyRpc(registry.spotifyOperationBlocked(flowKey, cooldown));
 		},
+		finishOperation: (operation: string, revision: number) =>
+			boundedSpotifyRpc(registry.finishSpotifyOperation(flowKey, operation, revision)),
+		record: (metric: import("./spotify/client").SpotifyRequestMetric) =>
+			boundedSpotifyRpc(registry.recordSpotifyUsage(flowKey, metric)),
 	};
 	let tokens: SpotifyTokens;
 	try {
@@ -451,6 +459,7 @@ app.post("/api/spotify/retry", async (c) => {
 	const scope = b.scope as "artist-albums" | "devices" | "player" | "history" | undefined;
 	return unwrap(c, c.var.hub.retryQuota(c.var.epoch, scope));
 });
+app.get("/api/spotify/usage", (c) => unwrap(c, c.var.hub.spotifyUsage(c.var.epoch)));
 app.get("/api/spotify/diagnostics", (c) => unwrap(c, c.var.hub.spotifyDiagnostics(c.var.epoch)));
 
 app.get("/api/devices", (c) => unwrap(c, c.var.hub.devices(c.var.epoch)));

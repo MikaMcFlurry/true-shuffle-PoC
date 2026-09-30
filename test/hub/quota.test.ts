@@ -1,61 +1,89 @@
 import { describe, expect, it } from "vitest";
 import { RequestBudget, type SpotifyClient } from "../../src/worker/spotify/client";
+import { onboarded } from "./harness";
 
 const provider = (h: { hub: unknown }) =>
 	(h.hub as { client(b: RequestBudget): SpotifyClient }).client(new RequestBudget(10));
-
-import { onboarded } from "./harness";
-
-function failQuota(retry?: string) {
-	return {
-		status: 429,
-		count: 1,
-		body: {
-			error: { status: 429, reason: "QUOTA_EXCEEDED", message: "sensitive provider message" },
-		},
-		headers: retry === undefined ? undefined : { "Retry-After": retry },
-	};
-}
-
-describe("NN-09 durable hub provider cooldown", () => {
-	it("survives eviction and suppresses device, play and background calls until long deadline", async () => {
+const quota = (retry?: string) => ({
+	status: 429,
+	count: 1,
+	body: { error: { reason: "QUOTA_EXCEEDED", message: "private provider" } },
+	headers: retry ? { "Retry-After": retry } : undefined,
+});
+describe("durable exact operation cooldown", () => {
+	it("survives restart for matching operation while playback/history/catalog continue", async () => {
 		const h = await onboarded({ tracks: 30 });
-		h.fake.failNext = failQuota("172800");
-		await expect(provider(h).me()).rejects.toMatchObject({ kind: "quota" });
-		const calls = h.fake.calls.length;
+		h.fake.failNext = quota("172800");
+		await expect(h.hub.devices()).rejects.toMatchObject({ operation: "GET /me/player/devices" });
 		h.restart();
-		await expect(provider(h).me()).rejects.toMatchObject({ kind: "quota" });
-		expect((await h.hub.play(h.allId)).ok).toBe(false);
-		await h.hub.alarm();
-		await expect(h.hub.retryQuota()).rejects.toMatchObject({ status: 429 });
-		expect(h.fake.calls.length).toBe(calls);
+		const before = h.fake.calls.length;
+		await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		expect(h.fake.calls.length).toBe(before);
+		await provider(h).player();
+		await provider(h).recentlyPlayed();
+		await provider(h).me();
+		expect((await h.hub.play(h.allId, "device-1")).ok).toBe(true);
 		expect(JSON.stringify(await h.hub.spotifyDiagnostics())).not.toMatch(
-			/sensitive|spotify:|Bearer/,
+			/private provider|Bearer|spotify:/,
 		);
 	});
-	it("unknown cooldown uses valid local maintenance alarms without provider retries", async () => {
+	it("unknown next invocation makes exactly one real attempt and then succeeds without invented deadline", async () => {
 		const h = await onboarded({ tracks: 30 });
-		h.fake.failNext = failQuota();
-		await expect(provider(h).me()).rejects.toMatchObject({ kind: "quota" });
-		const calls = h.fake.calls.length;
-		await h.hub.alarm();
-		expect(Number.isFinite(new Date(h.alarmAt()!).getTime())).toBe(true);
-		await h.listen(3600000);
-		expect(h.fake.calls.length).toBe(calls);
-	});
-	it("unknown reset needs explicit recheck; another quota restores the gate", async () => {
-		const h = await onboarded({ tracks: 30 });
-		h.fake.failNext = failQuota();
-		await expect(provider(h).me()).rejects.toMatchObject({ kind: "quota" });
-		h.restart();
-		const calls = h.fake.calls.length;
-		h.fake.failNext = { ...failQuota(), body: { error: { reason: "UNKNOWN" } } };
-		await expect(h.hub.retryQuota()).rejects.toMatchObject({ kind: "rate" });
-		expect(h.fake.calls.length).toBe(calls + 1);
-		await expect(provider(h).me()).rejects.toMatchObject({ kind: "rate" });
-		expect(h.fake.calls.length).toBe(calls + 1);
-		await h.hub.retryQuota();
+		h.fake.failNext = quota();
+		await expect(h.hub.devices()).rejects.toMatchObject({ retryAfter: null });
+		const before = h.fake.calls.length;
 		await h.hub.devices();
-		expect(h.fake.calls.length).toBe(calls + 3);
+		expect(h.fake.calls.length - before).toBe(1);
+		expect(
+			((await h.hub.spotifyDiagnostics()) as { operationCooldowns: unknown[] }).operationCooldowns,
+		).toEqual([]);
+	});
+	it("deadline expiry permits actual same-operation retry and clears only after success", async () => {
+		const h = await onboarded({ tracks: 30 });
+		h.fake.failNext = quota("10");
+		await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		const before = h.fake.calls.length;
+		h.clock.t += 9999;
+		await expect(h.hub.devices()).rejects.toMatchObject({ status: 429 });
+		expect(h.fake.calls.length).toBe(before);
+		h.clock.t++;
+		await h.hub.devices();
+		expect(h.fake.calls.length).toBe(before + 1);
+	});
+	it("unknown background operation does not loop alarms; explicit same operation can recheck", async () => {
+		const h = await onboarded({ tracks: 30 });
+		h.fake.failNext = quota();
+		await expect(provider(h).player()).rejects.toMatchObject({ retryAfter: null });
+		const before = h.fake.calls.filter((c) => c === "GET /v1/me/player").length;
+		await h.hub.sync(new RequestBudget(10));
+		await h.hub.sync(new RequestBudget(10));
+		expect(h.fake.calls.filter((c) => c === "GET /v1/me/player").length).toBe(before);
+		await h.hub.retryQuota("player");
+		expect(h.fake.calls.filter((c) => c === "GET /v1/me/player").length).toBe(before + 1);
+	});
+	it("unknown job is suspended without retries and resumes only after confirmed explicit success", async () => {
+		const h = await onboarded({ tracks: 30 });
+		h.sql.run(
+			"INSERT INTO jobs(key,kind,state,priority,run_after,attempts,error,created_at,updated_at) VALUES('unknown-probe','playlists','{}',1,?,0,NULL,?,?)",
+			h.clock.t,
+			h.clock.t,
+			h.clock.t,
+		);
+		h.fake.failNext = quota();
+		await (h.hub as unknown as { runJobs(b: RequestBudget): Promise<void> }).runJobs(
+			new RequestBudget(10),
+		);
+		const before = h.fake.calls.filter((c) => c === "GET /v1/me/playlists").length;
+		const job = h.sql.first<{ run_after: number }>(
+			"SELECT run_after FROM jobs WHERE key='unknown-probe'",
+		);
+		expect(job?.run_after).toBe(Number.MAX_SAFE_INTEGER);
+		await h.hub.alarm();
+		expect(h.fake.calls.filter((c) => c === "GET /v1/me/playlists").length).toBe(before);
+		await provider(h).myPlaylists();
+		expect(
+			h.sql.first<{ run_after: number }>("SELECT run_after FROM jobs WHERE key='unknown-probe'")
+				?.run_after,
+		).toBe(h.clock.t);
 	});
 });

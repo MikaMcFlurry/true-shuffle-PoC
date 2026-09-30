@@ -9,6 +9,7 @@ import type {
 	StationDetail,
 	StationSource,
 } from "../shared/api";
+import type { SpotifyUsageReport } from "../shared/spotify-usage";
 
 export class ApiError extends Error {
 	constructor(
@@ -92,6 +93,8 @@ export interface SpotifyAvailabilityExperiment {
 	devices?: DeviceView[];
 }
 export interface SpotifyDiagnostics {
+	policyVersion?: 2;
+	operationCooldowns?: Array<SpotifyCooldownView & { operation: string }>;
 	cooldown: SpotifyCooldownView | null;
 	artistAlbumsCooldown?: SpotifyCooldownView | null;
 	devicesCooldown?: SpotifyCooldownView | null;
@@ -138,6 +141,7 @@ export const api = {
 		}).then((r): PlayResult => ({ ok: r.accepted })),
 	nativeCancel: (expected?: { sessionId?: string; entryId?: string; orderRevision?: number }) =>
 		call<unknown>("POST", "/api/native/cancel", expected),
+	spotifyUsage: () => call<SpotifyUsageReport>("GET", "/api/spotify/usage"),
 	spotifyDiagnostics: () => call<SpotifyDiagnostics>("GET", "/api/spotify/diagnostics"),
 	testSpotifyAvailability: () =>
 		call<SpotifyAvailabilityExperiment>("POST", "/api/spotify/availability-test"),

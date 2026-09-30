@@ -292,36 +292,30 @@ describe("errors", () => {
 		expect(res.error!.code).toBe("no_device");
 	});
 
-	it("keeps an unknown Spotify quota reset blocked until an explicit recheck", async () => {
+	it("legacy provider-wide quota never blocks untested operations under confirmed-operation policy", async () => {
 		const h = await onboarded();
+		h.sql.run("DELETE FROM kv WHERE k='spotify_operation_policy'");
 		h.sql.run(
-			"INSERT INTO kv(k,v) VALUES('spotify_cooldown',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+			"INSERT INTO kv(k,v) VALUES('spotify_cooldown',?) ON CONFLICT(k)DO UPDATE SET v=excluded.v",
 			JSON.stringify({
 				kind: "quota",
 				reason: "QUOTA_EXCEEDED",
 				until: null,
 				retryAfter: null,
 				observedAt: h.clock.t,
-				endpoint: "/me",
 			}),
 		);
 		h.sql.run(
-			"INSERT INTO kv(k,v) VALUES('backoff',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+			"INSERT INTO kv(k,v)VALUES('backoff',?) ON CONFLICT(k)DO UPDATE SET v=excluded.v",
 			JSON.stringify({ kind: "quota", until: Number.MAX_SAFE_INTEGER }),
 		);
-		await h.listen(25 * MINUTE_MS);
-		const st = await h.hub.state();
-		expect(st.warnings.some((w) => w.code === "quota")).toBe(true);
-		const calls = h.fake.calls.length;
-		// Without Retry-After, elapsed wall time cannot establish a reset.
-		await h.listen(30 * MINUTE_MS);
-		expect(h.fake.calls.length).toBe(calls);
-		// Waiting another hour preserves the gate and the saved queue.
-		await h.listen(HOUR_MS);
-		expect(h.fake.calls.length).toBe(calls);
+		h.restart();
+		const before = h.fake.calls.length;
+		await h.hub.devices();
 		await h.hub.retryQuota();
-		expect(h.fake.calls.length).toBeGreaterThan(calls);
+		expect(h.fake.calls.length).toBe(before + 2);
 		expect((await h.hub.state()).warnings.some((w) => w.code === "quota")).toBe(false);
+		expect(h.sql.first("SELECT v FROM kv WHERE k='spotify_operation_policy_backup'")).toBeTruthy();
 	});
 
 	it("recreates the deck playlist if the listener deleted it in Spotify", async () => {

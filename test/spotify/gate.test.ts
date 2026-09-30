@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { RequestBudget, type SpotifyClient } from "../../src/worker/spotify/client";
-
-const provider = (h: { hub: unknown }) =>
-	(h.hub as { client(b: RequestBudget): SpotifyClient }).client(new RequestBudget(10));
 
 import type { HubDeps } from "../../src/worker/hub/hub";
 import { SpotifyGate, type SpotifyGateState } from "../../src/worker/spotify/gate";
 import { onboarded } from "../hub/harness";
+import { operationFixture } from "./operation-fixture";
 
 function sharedFixture() {
 	let state: SpotifyGateState | null = null;
@@ -48,48 +45,37 @@ function sharedFixture() {
 }
 
 describe("NN-09 deployment-wide provider gate", () => {
-	it("blocks a second isolated account after first account quota and hub restart", async () => {
-		const shared = sharedFixture();
-		const a = await onboarded({ tracks: 30, sharedSpotify: shared.account() });
-		const b = await onboarded({ tracks: 35, sharedSpotify: shared.account() });
-		a.fake.failNext = { status: 429, count: 1, body: { error: { reason: "QUOTA_EXCEEDED" } } };
-		await expect(provider(a).me()).rejects.toMatchObject({ kind: "quota" });
-		const before = b.fake.calls.length;
-		b.restart();
-		await expect(b.hub.devices()).rejects.toMatchObject({ kind: "quota" });
-		expect(b.fake.calls.length).toBe(before);
-		await b.hub.retryQuota();
-		await b.hub.devices();
-		expect(b.fake.calls.length).toBe(before + 2);
-		// Successful shared recheck supersedes A's published local gate even after restart.
+	it("confirmed operation survives same-user eviction without blocking untested other user", async () => {
+		const f = operationFixture();
+		const a = await onboarded({ tracks: 30, sharedSpotify: f.account("a") });
+		const b = await onboarded({ tracks: 30, sharedSpotify: f.account("b") });
+		a.fake.failNext = {
+			status: 429,
+			count: 1,
+			body: { error: { reason: "QUOTA_EXCEEDED" } },
+			headers: { "Retry-After": "3600" },
+		};
+		await expect(a.hub.devices()).rejects.toMatchObject({ operation: "GET /me/player/devices" });
 		a.restart();
-		await a.hub.devices();
-		expect(shared.gate().get()).toBeNull();
-		expect((await a.hub.play(a.allId)).ok).toBe(true);
-		expect(shared.gate().get()).toBeNull();
+		await expect(a.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		await b.hub.devices();
+		expect((await a.hub.play(a.allId, "device-1")).ok).toBe(true);
 	});
-	it("a shared recheck with a new known deadline supersedes another account's old unknown gate", async () => {
-		const shared = sharedFixture();
-		const a = await onboarded({ tracks: 30, sharedSpotify: shared.account() });
-		const b = await onboarded({ tracks: 35, sharedSpotify: shared.account() });
-		a.fake.failNext = { status: 429, count: 1, body: { error: { reason: "QUOTA_EXCEEDED" } } };
-		await expect(provider(a).me()).rejects.toMatchObject({ kind: "quota" });
-		b.fake.failNext = {
+	it("successful expired operation reset is revision fenced", async () => {
+		const f = operationFixture();
+		const a = await onboarded({ tracks: 30, sharedSpotify: f.account("a") });
+		a.fake.failNext = {
 			status: 429,
 			count: 1,
 			body: { error: { reason: "UNKNOWN" } },
-			headers: { "Retry-After": "3600" },
+			headers: { "Retry-After": "1" },
 		};
-		await expect(b.hub.retryQuota()).rejects.toMatchObject({
-			kind: "rate",
-			retryAfterMs: 3600000,
-		});
-		a.restart();
-		await expect(provider(a).me()).rejects.toMatchObject({ kind: "rate", retryAfterMs: 3600000 });
-		expect(shared.gate().get()?.until).not.toBeNull();
+		await expect(a.hub.devices()).rejects.toMatchObject({ kind: "rate" });
+		a.clock.t += 1000;
+		await a.hub.devices();
 		expect(
-			((await a.hub.spotifyDiagnostics()) as { cooldown: { until: number | null } }).cooldown.until,
-		).toBe(shared.gate().get()?.until);
+			(await f.account("a").getOperationSnapshot!("GET /me/player/devices")).cooldown,
+		).toBeNull();
 	});
 	it("enforces known deadline across accounts without early manual retry", async () => {
 		const f = sharedFixture();

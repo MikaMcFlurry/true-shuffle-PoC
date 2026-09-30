@@ -7,10 +7,11 @@ import {
 	toRows,
 } from "../../core/history";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
+import type { SpotifyUsageReport } from "../../shared/spotify-usage";
 import { api, type SpotifyDiagnostics } from "../api";
 import { Detents, PageBar, Section } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
-import { SpotifyFunctionStatus } from "../components/spotify-availability";
+import { SpotifyFunctionStatus, SpotifyUsageTracker } from "../components/spotify-availability";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
 const DEVICE_TYPES: Record<string, string> = {
@@ -359,40 +360,29 @@ export function HistoryScreen() {
 	);
 }
 
-function quotaWait(seconds: number): string {
-	const whole = Math.ceil(seconds);
-	const hours = Math.floor(whole / 3600);
-	const minutes = Math.floor((whole % 3600) / 60);
-	const remaining = whole % 60;
-	return [
-		hours ? `${hours} ${hours === 1 ? "Stunde" : "Stunden"}` : null,
-		minutes ? `${minutes} ${minutes === 1 ? "Minute" : "Minuten"}` : null,
-		remaining || whole === 0 ? `${remaining} ${remaining === 1 ? "Sekunde" : "Sekunden"}` : null,
-	]
-		.filter(Boolean)
-		.join(", ");
-}
-
 export function DevicesScreen() {
 	const [testing, setTesting] = useState(false);
-	const [now, setNow] = useState(Date.now());
-	useEffect(() => {
-		const timer = setInterval(() => setNow(Date.now()), 30_000);
-		return () => clearInterval(timer);
-	}, []);
 	const [diagnostics, setDiagnostics] = useState<SpotifyDiagnostics | null>(null);
 	const [diagnosticError, setDiagnosticError] = useState("");
-	const loadDiagnostics = () => {
+	const [usage, setUsage] = useState<SpotifyUsageReport | null>(null);
+	const [usageError, setUsageError] = useState("");
+	const loadDiagnostics = async (): Promise<void> => {
 		setDiagnosticError("");
-		void api
-			.spotifyDiagnostics()
-			.then((value) => {
-				setDiagnostics(value);
-				setNow(Date.now());
-			})
-			.catch((e: Error) => setDiagnosticError(e.message));
+		setUsageError("");
+		await Promise.allSettled([
+			api
+				.spotifyUsage()
+				.then(setUsage)
+				.catch((e: Error) => setUsageError(e.message)),
+			api
+				.spotifyDiagnostics()
+				.then(setDiagnostics)
+				.catch((e: Error) => setDiagnosticError(e.message)),
+		]);
 	};
-	useEffect(loadDiagnostics, []);
+	useEffect(() => {
+		void loadDiagnostics();
+	}, []);
 	const [devices, setDevices] = useState<DeviceView[] | null>(null);
 	const [err, setErr] = useState<string | null>(null);
 	const [chosen, setChosen] = useState<string | null>(() => {
@@ -410,20 +400,6 @@ export function DevicesScreen() {
 			.catch((e: Error) => setErr(e.message));
 	};
 	useEffect(load, []);
-	const cooldown = diagnostics?.cooldown;
-	const artistCooldown = diagnostics?.artistAlbumsCooldown;
-	const globalActive = cooldown != null && (cooldown.until === null || cooldown.until > now);
-	const recheckArtist = !globalActive && artistCooldown != null;
-	const recheckCooldown = recheckArtist ? artistCooldown : cooldown;
-	const deadlinePending = recheckCooldown?.until != null && recheckCooldown.until > now;
-	const retrySeconds =
-		cooldown?.retryAfter != null && /^\d+(?:\.\d+)?$/.test(cooldown.retryAfter)
-			? Number(cooldown.retryAfter)
-			: null;
-	const artistRetrySeconds =
-		artistCooldown?.retryAfter != null && /^\d+(?:\.\d+)?$/.test(artistCooldown.retryAfter)
-			? Number(artistCooldown.retryAfter)
-			: null;
 	const choose = (id: string | null) => {
 		setChosen(id);
 		try {
@@ -484,106 +460,11 @@ export function DevicesScreen() {
 				<summary>Spotify-Freigabe & Anfragestatus</summary>
 				<div class="more__body">
 					<p>
-						Spotify Connect nutzt die Spotify-Web-API. Im Development-Modus teilen Apps desselben
-						Entwicklerkontos ein Anfragebudget; Spotify fasst manche Funktionen in gemeinsame
-						Kontingente zusammen. Native HA/MA-Geräte werden separat auf der Hörseite angeboten,
-						wenn der Server dafür eingerichtet ist.
+						Hier siehst du bestätigte Antworten von Spotify. Eine 429 betrifft zunächst nur die
+						Operation, für die Spotify sie tatsächlich gemeldet hat. Gespeicherter Verlauf und
+						Warteschlangen bleiben erhalten.
 					</p>
-					{diagnostics?.cooldown ? (
-						<dl>
-							<dt>Provider-Grund</dt>
-							<dd>{diagnostics.cooldown.reason}</dd>
-							<dt>Art</dt>
-							<dd>{diagnostics.cooldown.kind}</dd>
-							{diagnostics.cooldown.endpoint ? (
-								<>
-									<dt>Quelle der Sperre</dt>
-									<dd>{diagnostics.cooldown.endpoint}</dd>
-								</>
-							) : null}
-							<dt>Von Spotify gemeldete Wartezeit</dt>
-							<dd>
-								{diagnostics.cooldown.retryAfter === null
-									? "Nicht von Spotify angegeben"
-									: retrySeconds !== null && Number.isFinite(retrySeconds)
-										? `${quotaWait(retrySeconds)} (${num(retrySeconds)} Sekunden)`
-										: diagnostics.cooldown.retryAfter}
-							</dd>
-							<dt>Gespeicherter Wert, kein Countdown</dt>
-							<dd>Die gemeldete Wartezeit bleibt gleich. Maßgeblich ist die Frist unten.</dd>
-							<dt>Früheste erneute Prüfung</dt>
-							<dd>
-								{diagnostics.cooldown.until === null
-									? "Unbekannt · keine Reset-Zeit von Spotify angegeben"
-									: `${new Date(diagnostics.cooldown.until).toLocaleString("de-DE")} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}
-							</dd>
-						</dl>
-					) : (
-						<p class="hint">
-							{diagnostics
-								? diagnostics.catalogQuarantine ||
-									diagnostics.devicesCooldown ||
-									diagnostics.playerCooldown ||
-									diagnostics.historyCooldown
-									? "Keine allgemeine Sperre gespeichert. Einzelne Funktionen können trotzdem warten."
-									: "Keine gespeicherte Sperre für Wiedergabe und Geräte."
-								: "Anfragestatus wird geladen …"}
-						</p>
-					)}
-					{cooldown ? (
-						<p class="hint">
-							{cooldown.until === null
-								? "Spotify hat keinen Freigabezeitpunkt angegeben. true-shuffle hält weitere Anfragen zurück; mit der Freigabeprüfung ist ein einzelner erneuter Versuch möglich."
-								: globalActive
-									? "true-shuffle hält weitere Spotify-Anfragen zurück. Nach der Frist ist eine erneute Prüfung möglich; eine Freigabe durch Spotify ist dann noch nicht garantiert."
-									: "Die gespeicherte Wartefrist ist abgelaufen. Mit der Freigabeprüfung kannst du klären, ob Spotify wieder Anfragen zulässt."}{" "}
-							Der gespeicherte Verlauf und die Warteschlange bleiben verfügbar.
-						</p>
-					) : null}
-					{cooldown && !cooldown.endpoint ? (
-						<p class="hint">
-							Bei dieser älteren Sperre ist die ursprüngliche Quelle nicht sicher gespeichert. Die
-							gemeldete Wartefrist bleibt deshalb bestehen. Neue Sperren für Künstleralben werden
-							künftig separat behandelt.
-						</p>
-					) : null}
-					{artistCooldown ? (
-						<>
-							<h3>Musikentdeckung wartet auf Spotify</h3>
-							<p class="hint">
-								Die Abfrage nach Alben eines Künstlers wird separat zurückgehalten. Diese Sperre
-								blockiert Wiedergabe, Verlauf und Geräte nicht zusätzlich. Jede dieser Funktionen
-								kann von Spotify weiterhin eine eigene Fehlermeldung erhalten.
-							</p>
-							<dl>
-								<dt>Quelle der Sperre</dt>
-								<dd>{artistCooldown.endpoint ?? "/artists/:id/albums"}</dd>
-								<dt>Provider-Grund</dt>
-								<dd>{artistCooldown.reason}</dd>
-								<dt>Von Spotify gemeldete Wartezeit für Künstleralben</dt>
-								<dd>
-									{artistCooldown.retryAfter === null
-										? "Nicht von Spotify angegeben"
-										: artistRetrySeconds !== null && Number.isFinite(artistRetrySeconds)
-											? `${quotaWait(artistRetrySeconds)} (${num(artistRetrySeconds)} Sekunden)`
-											: artistCooldown.retryAfter}
-								</dd>
-								<dt>Früheste erneute Prüfung der Künstleralben</dt>
-								<dd>
-									{artistCooldown.until === null
-										? "Unbekannt · keine Reset-Zeit von Spotify angegeben"
-										: `${new Date(artistCooldown.until).toLocaleString("de-DE")} (${Intl.DateTimeFormat().resolvedOptions().timeZone})`}
-								</dd>
-							</dl>
-							<p class="hint">
-								{artistCooldown.until === null
-									? "Spotify hat keinen Freigabezeitpunkt angegeben. Eine ausdrückliche Prüfung wiederholt nur die betroffene Künstleralben-Abfrage, wenn deren Quelle gespeichert ist."
-									: artistCooldown.until > Date.now()
-										? "Die Künstleralben-Abfragen warten bis zur gemeldeten Frist. Eine Freigabe durch Spotify ist danach noch nicht garantiert."
-										: "Die gespeicherte Wartefrist für Künstleralben ist abgelaufen. Eine erneute Prüfung zeigt, ob Spotify diese Abfrage wieder zulässt."}
-							</p>
-						</>
-					) : null}
+
 					{diagnostics ? (
 						<>
 							<SpotifyFunctionStatus
@@ -613,7 +494,7 @@ export function DevicesScreen() {
 												setDevices(result.devices);
 												setErr(null);
 											}
-											loadDiagnostics();
+											return loadDiagnostics();
 										})
 										.catch((e: Error) => setDiagnosticError(e.message))
 										.finally(() => setTesting(false));
@@ -634,26 +515,25 @@ export function DevicesScreen() {
 							</pre>
 						</>
 					) : null}
+					{usageError ? (
+						<p class="note note--error" role="alert">
+							Gemeinsame Nutzung nicht aktualisiert: {usageError}
+							{usage ? " Der letzte erfolgreiche Stand bleibt sichtbar." : ""}
+						</p>
+					) : null}
+					{usage ? (
+						<SpotifyUsageTracker report={usage} />
+					) : !usageError ? (
+						<p class="hint" aria-busy="true">
+							Gemeinsame Spotify-Nutzung wird geladen …
+						</p>
+					) : null}
+
 					{diagnosticError ? <p class="note note--error">{diagnosticError}</p> : null}
 					<div class="row-actions">
 						<button type="button" class="key" onClick={loadDiagnostics}>
 							Status aktualisieren
 						</button>
-						{cooldown || artistCooldown ? (
-							<button
-								type="button"
-								class="key"
-								disabled={deadlinePending}
-								onClick={() =>
-									void api
-										.retrySpotify()
-										.then(loadDiagnostics)
-										.catch((e: Error) => setDiagnosticError(e.message))
-								}
-							>
-								{recheckArtist ? "Künstleralben-Freigabe prüfen" : "Spotify-Freigabe prüfen"}
-							</button>
-						) : null}
 					</div>
 				</div>
 			</details>

@@ -4,6 +4,7 @@
  */
 
 import { expect, type Page, test } from "@playwright/test";
+import type { SpotifyUsageReport, SpotifyUsageTotals } from "../src/shared/spotify-usage";
 
 const FAKE = "http://127.0.0.1:8788/__control";
 
@@ -532,340 +533,9 @@ test.describe("calm player", () => {
 	});
 });
 
-test.describe("truthful Spotify quota diagnostics", () => {
+test.describe("confirmed Spotify operations and shared usage", () => {
 	test.use({ viewport: { width: 390, height: 844 }, timezoneId: "Europe/Berlin" });
-
-	test("explains provider wait seconds and locally blocked attempts without promising a reset", async ({
-		page,
-	}) => {
-		let cooldown: {
-			until: number | null;
-			kind: string;
-			reason: string;
-			retryAfter: string | null;
-			observedAt: number;
-		} = {
-			until: Date.now() + 30363_000,
-			kind: "quota",
-			reason: "QUOTA_EXCEEDED",
-			retryAfter: "30363",
-			observedAt: Date.now(),
-		};
-		await page.route("**/api/spotify/diagnostics", (route) =>
-			route.fulfill({
-				json: {
-					cooldown,
-					requests: {
-						hour: 0,
-						counts: { "read:/me/player/devices:429:blocked": 11 },
-						latest: {
-							endpoint: "/me/player/devices",
-							category: "read",
-							status: 429,
-							retryCategory: "blocked",
-							reason: "QUOTA_EXCEEDED",
-							retryAfter: "30363",
-							at: Date.now(),
-						},
-					},
-				},
-			}),
-		);
-		await page.route("**/api/devices", (route) =>
-			route.fulfill({
-				status: 429,
-				json: {
-					error: { code: "quota", message: "Spotify wartet auf die Freigabe weiterer Anfragen" },
-				},
-			}),
-		);
-		await signIn(page);
-		await page.goto("/geraete");
-		// An isolated run starts with an empty account; complete its normal onboarding.
-		const onboarding = page.getByText("Wähle, welche Sender werden", { exact: true });
-		const diagnostics = page.getByText("Spotify-Freigabe & Anfragestatus", { exact: true });
-		await expect(onboarding.or(diagnostics)).toBeVisible();
-		if (await onboarding.isVisible()) {
-			await page.getByRole("button", { name: "Nur mit „Alles“ starten" }).click();
-			await expect(page.getByRole("button", { name: /^Alles/ })).toBeEnabled({ timeout: 60_000 });
-			await page.goto("/geraete");
-		}
-		await page.getByText("Spotify-Freigabe & Anfragestatus", { exact: true }).click();
-		await expect(
-			page.getByText("8 Stunden, 26 Minuten, 3 Sekunden (30.363 Sekunden)", { exact: true }),
-		).toBeVisible();
-		await expect(page.getByText(/Europe\/Berlin/)).toBeVisible();
-		await expect(page.getByRole("heading", { name: "Letzter Anfrageversuch" })).toBeVisible();
-		await expect(
-			page.getByRole("heading", { name: "Gespeicherte Anfrageversuche pro Stunde" }),
-		).toBeVisible();
-		await expect(
-			page.getByText(/lokal zurückgehalten und nicht an Spotify gesendet/),
-		).toBeVisible();
-		await expect(
-			page.getByText(/eine Freigabe durch Spotify ist dann noch nicht garantiert/),
-		).toBeVisible();
-		await expect(page.getByRole("button", { name: "Spotify-Freigabe prüfen" })).toBeDisabled();
-		await checkPage(page, "long known quota wait");
-		await checkText(page, "long known quota wait");
-		await page.screenshot({ path: ".impeccable/review/quota-known-mobile.png", fullPage: true });
-		cooldown = { ...cooldown, until: Date.now() - 1 };
-		await page.getByRole("button", { name: "Status aktualisieren" }).click();
-		await expect(page.getByText(/Die gespeicherte Wartefrist ist abgelaufen/)).toBeVisible();
-		await expect(page.getByRole("button", { name: "Spotify-Freigabe prüfen" })).toBeEnabled();
-		cooldown = { ...cooldown, until: null, retryAfter: null };
-		await page.getByRole("button", { name: "Status aktualisieren" }).click();
-		await expect(page.getByText("Nicht von Spotify angegeben", { exact: true })).toBeVisible();
-		await expect(page.getByText(/Unbekannt · keine Reset-Zeit/)).toBeVisible();
-		await expect(page.getByRole("button", { name: "Spotify-Freigabe prüfen" })).toBeEnabled();
-		await checkPage(page, "unknown quota wait");
-	});
-	test("keeps working devices separate from an artist-albums quota", async ({ page }) => {
-		let artist: {
-			until: number | null;
-			kind: string;
-			reason: string;
-			retryAfter: string | null;
-			observedAt: number;
-			endpoint: string;
-			scope: string;
-		} | null = {
-			until: Date.now() + 25902_000,
-			kind: "quota",
-			reason: "QUOTA_EXCEEDED",
-			retryAfter: "25902",
-			observedAt: Date.now(),
-			endpoint: "/artists/:id/albums",
-			scope: "artist-albums",
-		};
-		let global: typeof artist | null = null;
-		let deviceReads = 0;
-		let probes = 0;
-		await page.route("**/api/spotify/diagnostics", (route) =>
-			route.fulfill({
-				json: {
-					cooldown: global,
-					artistAlbumsCooldown: artist,
-					requests: {
-						hour: 0,
-						counts: {
-							"read:/me/player/devices:200:none": 2,
-							"read:/artists/:id/albums:429:quota": 1,
-						},
-						latest: { endpoint: "/artists/:id/albums", status: 429, retryCategory: "quota" },
-					},
-				},
-			}),
-		);
-		await page.route("**/api/devices", (route) => {
-			deviceReads++;
-			return route.fulfill({
-				json: [
-					{
-						id: "mika-phone",
-						name: "Mikas iPhone",
-						type: "Smartphone",
-						active: true,
-						restricted: false,
-					},
-				],
-			});
-		});
-		await page.route("**/api/spotify/retry", (route) => {
-			probes++;
-			artist = null;
-			return route.fulfill({ json: { ok: true } });
-		});
-		await signIn(page);
-		await page.goto("/geraete");
-		const onboarding = page.getByText("Wähle, welche Sender werden", { exact: true });
-		const diagnostics = page.getByText("Spotify-Freigabe & Anfragestatus", { exact: true });
-		await expect(onboarding.or(diagnostics)).toBeVisible();
-		if (await onboarding.isVisible()) {
-			await page.getByRole("button", { name: "Nur mit „Alles“ starten" }).click();
-			await expect(page.getByRole("button", { name: /^Alles/ })).toBeEnabled({ timeout: 60_000 });
-			await page.goto("/geraete");
-		}
-		await diagnostics.click();
-		await expect(page.getByText("Mikas iPhone", { exact: true })).toBeVisible();
-		await expect(
-			page.getByText("Keine gespeicherte Sperre für Wiedergabe und Geräte.", { exact: true }),
-		).toBeVisible();
-		await expect(
-			page.getByRole("heading", { name: "Musikentdeckung wartet auf Spotify" }),
-		).toBeVisible();
-		await expect(
-			page.getByText("7 Stunden, 11 Minuten, 42 Sekunden (25.902 Sekunden)", { exact: true }),
-		).toBeVisible();
-		await expect(
-			page.getByText(/blockiert Wiedergabe, Verlauf und Geräte nicht zusätzlich/),
-		).toBeVisible();
-		await expect(
-			page.getByRole("button", { name: "Künstleralben-Freigabe prüfen" }),
-		).toBeDisabled();
-		await page.getByRole("button", { name: "Geräte neu suchen" }).click();
-		await expect.poll(() => deviceReads).toBeGreaterThanOrEqual(2);
-		expect(probes).toBe(0);
-		await checkPage(page, "scoped artist albums mobile");
-		await checkText(page, "scoped artist albums mobile");
-		await page.emulateMedia({ colorScheme: "light" });
-		await page.evaluate(() => {
-			(document.activeElement as HTMLElement)?.blur();
-			window.scrollTo(0, 0);
-		});
-		await page.screenshot({
-			path: ".impeccable/review/quota-artist-albums-mobile-light.png",
-			fullPage: true,
-		});
-		await page.emulateMedia({ colorScheme: "dark" });
-		await checkText(page, "scoped artist albums dark mobile");
-		await page.evaluate(() => {
-			(document.activeElement as HTMLElement)?.blur();
-			window.scrollTo(0, 0);
-		});
-		await page.screenshot({
-			path: ".impeccable/review/quota-artist-albums-mobile-dark.png",
-			fullPage: true,
-		});
-		global = {
-			...artist!,
-			until: Date.now() - 60_000,
-			endpoint: "/me/player",
-			scope: "",
-		};
-		await page.getByRole("button", { name: "Status aktualisieren" }).click();
-		await expect(
-			page.getByRole("button", { name: "Künstleralben-Freigabe prüfen" }),
-		).toBeDisabled();
-		await expect(page.getByText(/Die gespeicherte Wartefrist ist abgelaufen/)).toBeVisible();
-		artist = { ...artist!, until: null, retryAfter: null };
-		await page.getByRole("button", { name: "Status aktualisieren" }).click();
-		await expect(page.getByRole("button", { name: "Künstleralben-Freigabe prüfen" })).toBeEnabled();
-		await expect(
-			page.getByText(/wiederholt nur die betroffene Künstleralben-Abfrage/),
-		).toBeVisible();
-		await page.getByRole("button", { name: "Künstleralben-Freigabe prüfen" }).click();
-		await expect(
-			page.getByRole("heading", { name: "Musikentdeckung wartet auf Spotify" }),
-		).toBeHidden();
-		expect(probes).toBe(1);
-		global = {
-			until: Date.now() + 120_000,
-			kind: "rate",
-			reason: "RATE_LIMITED",
-			retryAfter: "120",
-			observedAt: Date.now(),
-			endpoint: "/me/player",
-			scope: "",
-		};
-		await page.getByRole("button", { name: "Status aktualisieren" }).click();
-		await expect(page.getByRole("button", { name: "Spotify-Freigabe prüfen" })).toBeDisabled();
-		await expect(page.getByText("/me/player", { exact: true })).toBeVisible();
-		await checkPage(page, "independent global rate gate");
-	});
-	test("tests partial functions without reporting playback control recovery", async ({ page }) => {
-		const until = Date.now() + 25902_000;
-		const old = {
-			until,
-			kind: "quota",
-			reason: "QUOTA_EXCEEDED",
-			retryAfter: "25902",
-			observedAt: Date.now(),
-		};
-		let tested = false;
-		let tests = 0;
-		let deviceReads = 0;
-		const experiment = {
-			testedAt: Date.now(),
-			outcomes: {
-				devices: { state: "available", status: 200 },
-				player: { state: "available", status: 204 },
-				history: { state: "held", status: 429, kind: "quota", reason: "QUOTA_EXCEEDED" },
-			},
-			controls: "untested",
-			catalog: "held",
-			stopped: false,
-		};
-		await page.route("**/api/devices", (route) => {
-			deviceReads++;
-			return route.fulfill(
-				tested
-					? {
-							json: [
-								{
-									id: "phone",
-									name: "Test-Handy",
-									type: "Smartphone",
-									active: true,
-									restricted: false,
-								},
-							],
-						}
-					: {
-							status: 429,
-							json: {
-								error: {
-									code: "quota",
-									message: "Spotify wartet auf die Freigabe weiterer Anfragen",
-								},
-							},
-						},
-			);
-		});
-		await page.route("**/api/spotify/diagnostics", (route) =>
-			route.fulfill({
-				json: {
-					cooldown: tested ? null : old,
-					artistAlbumsCooldown: null,
-					devicesCooldown: null,
-					playerCooldown: null,
-					historyCooldown: tested
-						? { ...old, endpoint: "/me/player/recently-played", scope: "history" }
-						: null,
-					catalogQuarantine: tested ? { ...old, scope: "legacy-catalog" } : null,
-					availability: tested ? experiment : null,
-					requests: { hour: 0, counts: { "read:/me/player/devices:429:blocked": 9 }, latest: null },
-					recentRequests: tested
-						? {
-								startedAt: Date.now(),
-								hours: [
-									{
-										hour: Math.floor(Date.now() / 3600_000),
-										counts: {
-											"read:/me/player/devices:200:none": 1,
-											"read:/me/player:204:none": 1,
-											"read:/me/player/recently-played:429:quota": 1,
-											"refresh:/api/token:200:none": 1,
-											"read:/me/player/devices:429:blocked": 9,
-										},
-										firstQuotaAt: Date.now(),
-										firstQuotaEndpoint: "/me/player/recently-played",
-										firstQuotaReason: "QUOTA_EXCEEDED",
-									},
-								],
-							}
-						: undefined,
-				},
-			}),
-		);
-		await page.route("**/api/spotify/availability-test", (route) => {
-			tests++;
-			tested = true;
-			return route.fulfill({
-				json: {
-					...experiment,
-					devices: [
-						{
-							id: "phone",
-							name: "Test-Handy",
-							type: "Smartphone",
-							active: true,
-							restricted: false,
-						},
-					],
-				},
-			});
-		});
+	async function openDiagnostics(page: Page): Promise<void> {
 		await signIn(page);
 		await page.goto("/geraete");
 		const onboarding = page.getByText("Wähle, welche Sender werden", { exact: true });
@@ -877,46 +547,251 @@ test.describe("truthful Spotify quota diagnostics", () => {
 			await page.goto("/geraete");
 		}
 		await details.click();
-		await expect(
-			page.getByText("Gespeicherter Wert, kein Countdown", { exact: true }),
-		).toBeVisible();
-		const readsBefore = deviceReads;
-		await page.getByRole("button", { name: "Funktionen gezielt testen", exact: true }).click();
-		await expect(page.getByText("Test-Handy", { exact: true })).toBeVisible();
-		await expect(page.getByText("Abfrage erfolgreich · 200", { exact: true })).toBeVisible();
-		await expect(page.getByText("Abfrage erfolgreich · 204", { exact: true })).toBeVisible();
-		await expect(page.getByText(/Abfrage zurückgestellt · QUOTA_EXCEEDED/)).toBeVisible();
-		await expect(
-			page.getByText(/Starten, Pausieren und Übertragen wurden nicht geprüft/),
-		).toBeVisible();
-		await expect(page.getByText(/Die alte Sperre bleibt für ungetestete Katalog-/)).toBeVisible();
-		await expect(page.getByText(/Erste aufgezeichnete Quota-Antwort:/)).toContainText(
-			"/me/player/recently-played",
+	}
+	function usage(now: number): SpotifyUsageReport {
+		const day: SpotifyUsageTotals = {
+			sent: 5,
+			read: 3,
+			write: 1,
+			refresh: 1,
+			blocked: 9,
+			quota: 1,
+			rate: 0,
+			network: 0,
+		};
+		const older: SpotifyUsageTotals = {
+			sent: 10,
+			read: 7,
+			write: 2,
+			refresh: 1,
+			blocked: 0,
+			quota: 0,
+			rate: 0,
+			network: 0,
+		};
+		const totals: SpotifyUsageTotals = {
+			sent: 15,
+			read: 10,
+			write: 3,
+			refresh: 2,
+			blocked: 9,
+			quota: 1,
+			rate: 0,
+			network: 0,
+		};
+		return {
+			policy: "confirmed-operation-v1",
+			generatedAt: now,
+			startedAt: now - 40 * 3600_000,
+			retentionHours: 720,
+			listenerCapacity: 5,
+			registeredListeners: 5,
+			observedListeners: 2,
+			overflowObserved: false,
+			totals,
+			listeners: [
+				{ listener: "Nutzer 1", totals: day },
+				{ listener: "Nutzer 2", totals: older },
+			],
+			operations: [
+				{
+					operation: "GET /artists/:id/albums",
+					totals: day,
+					responses: { "429:quota": 1, "200:none": 2 },
+				},
+				{ operation: "PUT /me/player/play", totals: older, responses: { "204:none": 2 } },
+			],
+			hours: [
+				{ hour: Math.floor(now / 3600_000), totals: day },
+				{ hour: Math.floor(now / 3600_000) - 40, totals: older },
+			],
+			episodes: [
+				{
+					id: 1,
+					listener: "Nutzer 1",
+					operation: "GET /artists/:id/albums",
+					firstFailureAt: now - 60_000,
+					lastFailureAt: now - 50_000,
+					reason: "QUOTA_EXCEEDED",
+					retryAfter: "49",
+					earliestRetryAt: now - 1000,
+					attempts: 3,
+					lastAttemptAt: now,
+					lastStatus: 200,
+					firstSuccessAt: now,
+				},
+			],
+		};
+	}
+	test("shows app-wide observations without exposing identities or inventing remaining capacity", async ({
+		page,
+	}) => {
+		const now = Date.now();
+		const report = usage(now);
+		let reads = 0;
+		await page.route("**/api/spotify/usage", (route) => {
+			reads++;
+			return route.fulfill({ json: report });
+		});
+		await page.route("**/api/spotify/diagnostics", (route) =>
+			route.fulfill({
+				json: { policyVersion: 2, cooldown: null, operationCooldowns: [], requests: null },
+			}),
 		);
-		expect(tests).toBe(1);
-		expect(deviceReads).toBe(readsBefore);
-		await checkPage(page, "partial Spotify availability");
-		await checkText(page, "partial Spotify availability");
+		await openDiagnostics(page);
+		const tracker = page.getByRole("region", { name: "Gemeinsame Spotify-Nutzung" });
+		await expect(tracker).toContainText("2 Konten mit beobachteten Anfragen");
+		await expect(tracker).toContainText("5 angemeldete Konten");
+		await expect(tracker).toContainText("Bis zu 5 Konten");
+		await expect(tracker).toContainText(
+			"3 Leseversuche · 1 Schreibversuch · 1 Token-Erneuerung · 9 lokal zurückgehalten · 1 echte 429-Antwort",
+		);
+		await expect(tracker).toContainText(
+			"10 Leseversuche · 3 Schreibversuche · 2 Token-Erneuerungen",
+		);
+		await expect(tracker).toContainText("720 Stundenblöcke");
+		await expect(tracker).toContainText("Andere Apps und deren Anfragen sind hier nicht sichtbar");
+		await tracker.getByText("Operationen und anonyme Konten", { exact: true }).click();
+		await expect(tracker.getByText("Nutzer 1", { exact: true })).toBeVisible();
+		await expect(tracker.getByText("Nutzer 2", { exact: true })).toBeVisible();
+		await tracker.getByText("Bestätigte 429 und beobachtete Erholung", { exact: true }).click();
+		await tracker
+			.getByText(/Nutzer 1 · GET \/artists\/:id\/albums · Erfolg danach beobachtet/)
+			.click();
+		await expect(tracker.getByText("Erster anschließender Erfolg", { exact: true })).toBeVisible();
+		await expect(tracker).toContainText("nicht den genauen Reset-Zeitpunkt");
+		await expect(tracker).toContainText("HTTP 200 · 3 Versuche");
+		expect(await tracker.textContent()).not.toMatch(
+			/spotify:user:|Bearer|access_token|mika@|remainingcapacity|übrige Anfragen/,
+		);
+		expect(reads).toBeGreaterThan(0);
+		await checkPage(page, "shared usage mobile");
+		await checkText(page, "shared usage mobile");
 		for (const theme of ["light", "dark"] as const) {
-			await page.emulateMedia({ colorScheme: theme });
-			await page.evaluate(() => {
+			await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+			await page.evaluate(async () => {
 				(document.activeElement as HTMLElement)?.blur();
 				window.scrollTo(0, 0);
+				await new Promise(requestAnimationFrame);
+				await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {})));
 			});
 			await page.screenshot({
-				path: `.impeccable/review/spotify-function-test-${theme}.png`,
+				path: `.impeccable/review/spotify-usage-${theme}.png`,
 				fullPage: true,
 			});
 		}
 	});
+	test("holds only confirmed operations and never revives a legacy inferred global gate", async ({
+		page,
+	}) => {
+		let until: number | null = Date.now() + 30363_000;
+		const legacy = {
+			until: Date.now() + 300_000,
+			kind: "quota",
+			reason: "LEGACY_INFERRED",
+			retryAfter: "300",
+			observedAt: Date.now(),
+		};
+		await page.route("**/api/spotify/usage", (route) => route.fulfill({ json: usage(Date.now()) }));
+		await page.route("**/api/spotify/diagnostics", (route) =>
+			route.fulfill({
+				json: {
+					policyVersion: 2,
+					cooldown: legacy,
+					catalogQuarantine: legacy,
+					operationCooldowns: [
+						{
+							operation: "GET /me/player/devices",
+							until,
+							kind: "quota",
+							reason: "QUOTA_EXCEEDED",
+							retryAfter: until === null ? null : "30363",
+							observedAt: Date.now(),
+						},
+					],
+					availability: {
+						testedAt: Date.now(),
+						outcomes: {
+							devices: { state: "held", status: 429, reason: "QUOTA_EXCEEDED" },
+							player: { state: "available", status: 204 },
+							history: { state: "available", status: 200 },
+						},
+						catalog: "untested",
+						controls: "untested",
+						stopped: false,
+					},
+					requests: null,
+				},
+			}),
+		);
+		await openDiagnostics(page);
+		await expect(page.getByText("Abfrage erfolgreich · 204", { exact: true })).toBeVisible();
+		await expect(page.getByText("Abfrage erfolgreich · 200", { exact: true })).toBeVisible();
+		await expect(page.getByText(/Bestätigte 429 · diese Abfrage wartet/)).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Geräte-Freigabe prüfen", exact: true }),
+		).toBeDisabled();
+		await expect(
+			page.getByText("8 Stunden, 26 Minuten, 3 Sekunden (30.363 Sekunden)", { exact: true }),
+		).toBeVisible();
+		await expect(page.getByText(/Europe\/Berlin/).first()).toBeVisible();
+		expect(await page.locator(".more__body").first().textContent()).not.toContain(
+			"LEGACY_INFERRED",
+		);
+		await expect(
+			page.getByText(/Starten, Pausieren und Übertragen wurden nicht geprüft/),
+		).toBeVisible();
+		until = Date.now() - 1;
+		await page.getByRole("button", { name: "Status aktualisieren", exact: true }).click();
+		await expect(
+			page.getByRole("button", { name: "Geräte-Freigabe prüfen", exact: true }),
+		).toBeEnabled();
+		until = null;
+		await page.getByRole("button", { name: "Status aktualisieren", exact: true }).click();
+		await expect(page.getByText("Nicht von Spotify angegeben", { exact: true })).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Geräte-Freigabe prüfen", exact: true }),
+		).toBeEnabled();
+		await checkPage(page, "confirmed operation gates");
+		await checkText(page, "confirmed operation gates");
+	});
+	test("shows tracking failure with a retry and does not turn it into a Spotify block", async ({
+		page,
+	}) => {
+		let fail = true;
+		await page.route("**/api/spotify/usage", (route) =>
+			route.fulfill(
+				fail
+					? {
+							status: 503,
+							json: {
+								error: { code: "tracking_unavailable", message: "Messdaten nicht erreichbar" },
+							},
+						}
+					: { json: usage(Date.now()) },
+			),
+		);
+		await page.route("**/api/spotify/diagnostics", (route) =>
+			route.fulfill({
+				json: { policyVersion: 2, cooldown: null, operationCooldowns: [], requests: null },
+			}),
+		);
+		await openDiagnostics(page);
+		await expect(page.getByRole("alert")).toContainText("Messdaten nicht erreichbar");
+		await expect(
+			page.getByRole("button", { name: "Funktionen gezielt testen", exact: true }),
+		).toBeEnabled();
+		fail = false;
+		await page.getByRole("button", { name: "Status aktualisieren", exact: true }).click();
+		await expect(page.getByRole("region", { name: "Gemeinsame Spotify-Nutzung" })).toBeVisible();
+	});
 	test("requires authentication and request protection for the availability trial", async ({
 		request,
 	}) => {
-		const withoutHeader = await request.post("/api/spotify/availability-test");
-		expect(withoutHeader.status()).toBe(403);
-		const signedOut = await request.post("/api/spotify/availability-test", {
-			headers: { "x-ts": "1" },
-		});
-		expect(signedOut.status()).toBe(401);
+		expect((await request.post("/api/spotify/availability-test")).status()).toBe(403);
+		expect(
+			(await request.post("/api/spotify/availability-test", { headers: { "x-ts": "1" } })).status(),
+		).toBe(401);
+		expect((await request.get("/api/spotify/usage")).status()).toBe(401);
 	});
 });
