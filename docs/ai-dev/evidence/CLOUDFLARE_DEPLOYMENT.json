@@ -1,13 +1,13 @@
 {
   "schema_version": "true-shuffle.deployment.v1",
-  "recorded_at": "2026-09-30T10:44:58.849329+00:00",
-  "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+  "recorded_at": "2026-09-30T12:11:06.473055+00:00",
+  "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
   "worker": "true-shuffle",
   "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
-  "version_id": "c3c3324b-cdab-4cee-a1a8-af69ca289d97",
-  "deployment_id": "e414b5c1-0a5e-46d3-871a-c5d6f1ce5f23",
+  "version_id": "1e607dc2-48a9-4724-a9df-4b0a02218219",
+  "deployment_id": "9199fa19-a506-4a6a-a921-02ef39e7880f",
   "percentage": 100,
-  "deployed_at": "2026-09-30T10:42:28.93968Z",
+  "deployed_at": "2026-09-30T12:09:53.169296Z",
   "previous_version": "c193ca15-8503-4e18-ac78-a8ac398289cb",
   "previous_deployment": "7d44a8ca-6244-4a8b-9ef7-ca5b4e8647aa",
   "intermediate_version": "79c415cd-64b7-4046-96a4-dc3e7f63a061",
@@ -28,19 +28,19 @@
   "existing_secret_bindings_preserved": true,
   "deployment_authority": "Explicit owner implementation/deployment request, full access and completed Cloudflare device OAuth. Wrangler used because plugin search found no Cloudflare connector.",
   "public_readback": {
-    "tested_at": "2026-09-30T10:44:18.001383+00:00",
+    "tested_at": "2026-09-30T12:10:23.837587+00:00",
     "target": "https://true-shuffle.mikahertler-72c.workers.dev",
-    "source_commit": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+    "source_commit": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
     "checks": [
       {
         "path": "/",
         "status": 200
       },
       {
-        "path": "/assets/index-uOVAHBmf.js",
+        "path": "/assets/index-Co-L4pQg.js",
         "status": 200,
         "local_build_bytes_match": true,
-        "sha256": "8e7470381ad987d52dd57aabcdaeb8c3df707c2a94c270414c0231970644466d"
+        "sha256": "edd72b659a6aeba49e018965f2d0083bfd26b49dd9aa37a5df013b7cdaab2928"
       },
       {
         "path": "/assets/index-DU4lTMlv.css",
@@ -89,7 +89,7 @@
     "javascript_errors": [],
     "horizontal_overflow": false,
     "capture": ".impeccable/review/signin-live.png",
-    "current_log": "production-browser-quota.log"
+    "current_log": "production-browser-scope.log"
   },
   "recovery": {
     "old_worker_version_retained": true,
@@ -103,12 +103,12 @@
   "provider_journeys": "NOT_RUN: owner-authenticated Spotify and private HA/MA unavailable; no playback commands sent by smoke test.",
   "acceptance_claim": "PARTIAL; deployment is an observed fact, not complete live provider/recovery acceptance.",
   "github_ci": {
-    "run_id": 36703665557,
-    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36703665557",
-    "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+    "run_id": 36712289545,
+    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36712289545",
+    "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
     "conclusion": "success",
-    "unit_tests": 325,
-    "browser_tests": 17
+    "unit_tests": 341,
+    "browser_tests": 18
   },
   "rollout_history": [
     {
@@ -178,6 +178,74 @@
         "unit_tests": 325,
         "browser_tests": 16
       }
+    },
+    {
+      "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+      "version_id": "c3c3324b-cdab-4cee-a1a8-af69ca289d97",
+      "deployment_id": "e414b5c1-0a5e-46d3-871a-c5d6f1ce5f23",
+      "deployed_at": "2026-09-30T10:42:28.93968Z",
+      "public_readback": {
+        "tested_at": "2026-09-30T10:44:18.001383+00:00",
+        "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+        "source_commit": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+        "checks": [
+          {
+            "path": "/",
+            "status": 200
+          },
+          {
+            "path": "/assets/index-uOVAHBmf.js",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "8e7470381ad987d52dd57aabcdaeb8c3df707c2a94c270414c0231970644466d"
+          },
+          {
+            "path": "/assets/index-DU4lTMlv.css",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+          },
+          {
+            "path": "/api/health",
+            "status": 200,
+            "body": {
+              "ok": true,
+              "version": "1.0.0",
+              "configured": true
+            }
+          },
+          {
+            "path": "/api/state",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/native/devices",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/spotify/diagnostics",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/player",
+            "method": "POST without required header",
+            "status": 403,
+            "csrf_rejected": true
+          }
+        ],
+        "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+      },
+      "github_ci": {
+        "run_id": 36703665557,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36703665557",
+        "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+        "conclusion": "success",
+        "unit_tests": 325,
+        "browser_tests": 17
+      }
     }
   ],
   "diagnostics_followup": {
@@ -185,5 +253,14 @@
     "review": "QUOTA_COPY_REVIEW.md",
     "browser_tests": 17,
     "provider_recovery": "NOT_RUN; owner screenshot shows QUOTA_EXCEEDED, no owner credentials used by this agent."
+  },
+  "artist_albums_followup": {
+    "scope": "Only exact GET artist-albums QUOTA_EXCEEDED is scoped; global rate/other/unknown quota maintained. Old ambiguous global gates retained; no automated legacy clearing. No daily cadence optimization or HA recovery claimed.",
+    "review": "ARTIST_ALBUMS_SCOPE_REVIEW.md",
+    "provider_recovery": "NOT_RUN",
+    "version_resources_compared_to": "c3c3324b-cdab-4cee-a1a8-af69ca289d97",
+    "bindings_identical": true,
+    "runtime_identical": true,
+    "old_global_deadline_retained": "Ambiguous old holds remain effective until their saved deadline; owner screenshot deadline 2026-09-30 20:20:03 Europe/Berlin, recovery not guaranteed."
   }
 }

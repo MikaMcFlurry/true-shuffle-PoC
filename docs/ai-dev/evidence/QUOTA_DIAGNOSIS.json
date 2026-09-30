@@ -1,6 +1,6 @@
 {
   "schema_version": "true-shuffle.quota-diagnosis.v1",
-  "recorded_at": "2026-09-30T10:44:58.849329+00:00",
+  "recorded_at": "2026-09-30T12:11:06.473055+00:00",
   "owner_report": {
     "reason": "QUOTA_EXCEEDED",
     "endpoint": "/me/player/devices",
@@ -64,7 +64,7 @@
   "remaining": "Actual later provider recovery, account-wide attribution and sustained live usage NOT_RUN. Full acceptance remains PARTIAL.",
   "historical_source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
   "scope_followup": {
-    "status": "IMPLEMENTING_NOT_YET_DEPLOYED",
+    "status": "DEPLOYED_PUBLIC_READBACK_PASS_OWNER_RECOVERY_NOT_RUN",
     "owner_screenshot_time": "2026-09-30 13:18 Europe/Berlin",
     "provider_source": "/artists/:id/albums",
     "provider_reason": "QUOTA_EXCEEDED",
@@ -80,6 +80,11 @@
       "read:/artists/:id/albums:429:quota": 1
     },
     "interpretation": "Actual artist-albums quota led to overbroad local device blocking. Hourly successes do not prove ongoing endpoint availability after that response.",
-    "home_automation": "Owner reports failures since several days; actual HA/MA traffic, quota status and recovery NOT_RUN."
-  }
+    "home_automation": "Owner reports failures since several days; actual HA/MA traffic, quota status and recovery NOT_RUN.",
+    "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+    "version_id": "1e607dc2-48a9-4724-a9df-4b0a02218219",
+    "review": "ARTIST_ALBUMS_SCOPE_REVIEW.md",
+    "browser_tests": 18
+  },
+  "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246"
 }

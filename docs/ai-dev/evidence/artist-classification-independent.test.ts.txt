@@ -1,0 +1,14 @@
+import {it,expect} from 'vitest';
+import {onboarded} from '../hub/harness';
+import {RequestBudget,type SpotifyClient} from '../../src/worker/spotify/client';
+const id='A'.repeat(22);
+it.each([['POST',`/artists/${id}/albums`,'QUOTA_EXCEEDED'],['GET',`/artists/${id}`,'QUOTA_EXCEEDED'],['GET',`/artists/${id}/albums`,'UNKNOWN']])('no scoped bypass for %s %s %s',async(method,path,reason)=>{
+ const h=await onboarded({tracks:30});
+ const client=(h.hub as unknown as {client(b:RequestBudget):SpotifyClient}).client(new RequestBudget(40));
+ h.fake.failNext={status:429,count:1,body:{error:{status:429,reason}},headers:{'Retry-After':'25902'}};
+ await expect(client.request(method,path)).rejects.toMatchObject({scope:undefined,status:429});
+ const before=h.fake.calls.length;
+ h.restart();
+ await expect(h.hub.devices()).rejects.toMatchObject({status:429});
+ expect(h.fake.calls.length).toBe(before);
+});

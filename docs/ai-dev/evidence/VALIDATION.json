@@ -1,7 +1,7 @@
 {
   "schema_version": "true-shuffle.validation.v1",
-  "generated_at": "2026-09-30T10:44:58.849329+00:00",
-  "revision_binding": "Original source_sha256 preserves initial review provenance. current_source_sha256 binds the deployed application including independently reviewed401 fix and quota clarification; source b64e03c09569bb4b763980ebdb6d0d5c78e5d263. Backend hashes unchanged. Later supporting/canonical commits change documentation only.",
+  "generated_at": "2026-09-30T12:11:06.473055+00:00",
+  "revision_binding": "Original reports/source hashes preserve historical provenance. Current_source_sha256 binds artist-albums fix application source eb09bcb5ef5ccedc9be951aa38b7042952f3c246; supporting/canonical later commits only document this rollout.",
   "review_source_manifest_sha256": "0526b7e98f40e3a226b645cf3ad97bf7529903f8583e069cb589da482bb1e3ba",
   "source_sha256": {
     "scripts/native/ha-bridge.mjs": "43c6f165a4cf57509e0f4dc5426c59ff9c8655013cc388766f78b2985c238c93",
@@ -135,7 +135,7 @@
   },
   "current_source_sha256": {
     "scripts/native/ha-bridge.mjs": "43c6f165a4cf57509e0f4dc5426c59ff9c8655013cc388766f78b2985c238c93",
-    "src/client/api.ts": "a46baff66d25f69ed4452d6f5b3749c716081484e72c7ae3648c1e6c01578aea",
+    "src/client/api.ts": "1e4aa0a7d51892bbf5ff3c7950e07f8f623a4781b6c830f664cc16148a9663d4",
     "src/client/app.tsx": "32e8d7dc08426ab1212d965222f6cb0f3371e5ffcccbcaa742b7b96268e245b6",
     "src/client/components/radio.tsx": "f2604949c2bd8e28bfa9ed3c29d482ba443a6f08c32cd4123c9bdf8352fae98c",
     "src/client/components/rate.tsx": "9285539d7d8014d471eb8fb7cf59d42e6c36b862e07737193bf9872c16df1aa4",
@@ -157,7 +157,7 @@
     "src/client/public/tex/walnut.webp.json": "422ef6afa373aa6037162adf5a96bdccc90cba082adcd20b0b09b23205a9aac4",
     "src/client/router.ts": "fa22830c610804611e3a85215521c4b347cbd93024c37b26e4323693947855cd",
     "src/client/screens/home.tsx": "7bf2a0864e5b3dfccec819e963652e72fc6b387ba8a8ae50160ce109c50c9060",
-    "src/client/screens/menu.tsx": "8124f3bf442db9d3b8160aa0d1bcc59339df1bed6c4d3b370cae14b5675b2bbc",
+    "src/client/screens/menu.tsx": "10975a4ec31411c9a6102d6a5a11330bb98dee6cf680b5fd24368876de29ec89",
     "src/client/screens/remote.tsx": "d4f2e3ce2414afa1eca46d4be0cca979eff97c0025baf99eb68e9c823be30e0b",
     "src/client/screens/scan.tsx": "2d4899f0799a643e1a56e5c2570dc8b13d6f2e1677634ce4d9ac11d267ce4c10",
     "src/client/screens/signin.tsx": "be6c82b59265c37df85183bfa95506a962436d171c0c835f9e9299ec38bc0695",
@@ -175,23 +175,23 @@
     "src/worker/controllers/native.ts": "67c271d9df897b275ffe94ccbacfd63eb38f7bc5bddac6d77d9fff9005c0699a",
     "src/worker/env.ts": "891b0f826606078f4152b3ff275dfc33ac228b8862976f0d3b7384431284361b",
     "src/worker/hub/discovery.ts": "1cab47dd61920f52a01c518b3a7fb4d0c159ca116aa7cd4eb68271fd9914f710",
-    "src/worker/hub/hub.ts": "461abc7b7f0ed839a2e31fbe2d74c40da81b9eef03081acc67ce11fb8e6d8a5b",
+    "src/worker/hub/hub.ts": "fbd846b653dbaea1f556832d77cca749b7e97fa3f0304bf7beb22101cba54735",
     "src/worker/hub/library.ts": "b26300aa65092f08342032564024022d84c0c75499b426ac18134853495c3a55",
     "src/worker/hub/schema.ts": "3a1461556ec63f4467c70be9733fcc4976c0835ca9ccbe12b3a9dd88303a1da0",
     "src/worker/index.ts": "a35182f4fc528edc76976e9a37f4cd205f7f934686075c101f02a466fdcc7e30",
     "src/worker/lib/crypto.ts": "9248fb9ecc5d5ca573af36fb73981942b4526ee494ed4732c8f531f3d8882dc1",
     "src/worker/lib/remote-key.ts": "da04c8cdf149e1c44037fcd05b004778d560ca7472821218ee118dbedab72d37",
     "src/worker/lib/sql.ts": "8ead9cebc819adcd6a80b4288df04202633c2ac7d445ef5bd0ae9d203be227db",
-    "src/worker/registry.ts": "c8255728ec5a6a7c3cbc0dd43fdccdf37d5212635a8042db51763c8546f63e59",
-    "src/worker/spotify/client.ts": "36c22af1d41e04d5a9d914e9560dd0530c7e347306718e113480f84f77a1b973",
-    "src/worker/spotify/gate.ts": "40cb77b489aed58e3a313f9f899463d3b7a00d5b4023a72416bb82cc64493ddb",
+    "src/worker/registry.ts": "da6338ca09708242fc0db985c96aba6423ed355a72ed3a2957f660a8f0c23bad",
+    "src/worker/spotify/client.ts": "00cfa5bb97f175d03c22a7b6a1f8cac6ae304b6a39e47f446b9b1b6e83a46ad3",
+    "src/worker/spotify/gate.ts": "ea4c44ae1519456d15a49886a5e5926274ce4cd65549ee58a68cbabf666c00b0",
     "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
     "src/worker/spotify/types.ts": "f9520e5ec6936825b94ff0940c9d8ea543172878e05337e25f1a045edfbaf7e5",
-    "src/worker/userhub.ts": "e0a4f45fb9f0abd1c7d779e1c18b0ba06acb55caad2d02d4a7588168db6accbc",
+    "src/worker/userhub.ts": "e069b87914303d47bf97badf3cc3dceafac967cafad310780219eda92b32e68b",
     "wrangler.jsonc": "6aedb923406d1de811ec56dd64cabc017cea70e191aeafa28c39b270c61ef7a2",
     "wrangler.preview.jsonc": "605b95881ea83061e4a29c6be80f885125aa557c56bdf4b0bd15a3a41868b2f7"
   },
-  "current_source_manifest_sha256": "4cf94690844687ded9faf7c6a55f08e481c3d22f4064597934b8527c5ceb8a17",
+  "current_source_manifest_sha256": "cc667b012ed5718722cc9d141103482da49ae9a1260d2264978decf40fd3b1a6",
   "quota_copy_followup": {
     "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
     "browser_tests": 17,
@@ -201,5 +201,21 @@
     "diagnosis": "QUOTA_DIAGNOSIS.json",
     "github_ci_run": 36703665557,
     "scope": "Copy only; provider recovery not established."
+  },
+  "artist_albums_scope_followup": {
+    "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+    "review": "ARTIST_ALBUMS_SCOPE_REVIEW.md",
+    "unit_tests": 341,
+    "browser_tests": 18,
+    "github_ci_run": 36712289545,
+    "local_logs": [
+      "artist-scope-typecheck.log",
+      "artist-scope-lint.log",
+      "artist-scope-build.log",
+      "artist-scope-unit.log",
+      "artist-scope-browser.log",
+      "artist-scope-dry-run.log"
+    ],
+    "owner_provider_and_ha_recovery": "NOT_RUN"
   }
 }
