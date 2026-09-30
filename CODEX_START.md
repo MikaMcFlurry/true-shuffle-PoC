@@ -6,7 +6,7 @@ Repository: `MikaMcFlurry/true-shuffle-PoC`. Work on `codex/cloudflare-persisten
 
 `main` is the legacy Python/Fly.io prototype. Closed PR #7 mistakenly changed that prototype. Its 752 Python/29 browser test results and Listening Room screenshots DO NOT verify or modify the deployed Cloudflare app. Do not port Python code, ownership assumptions, migration commands or Fly deployment instructions into this implementation. This branch is a corrected continuation packet; it has no new functional fixes or redesigned UI yet.
 
-Read `docs/CLOUDFLARE_CONTINUATION.md`, `docs/SETUP.md`, `docs/LIVE_TEST.md`, `docs/adr/ADR-006-cloudflare-neustart.md`, `DESIGN.md`, then the installed project-local Impeccable skill.
+Read `docs/LIVE_BASELINE_REVIEW.md` first: it records direct domain/asset comparison, all branch-head dates, withdrawn legacy claims and the explicit old test contract that conflicts with unfinished-song resume. Then read `docs/CLOUDFLARE_CONTINUATION.md`, `docs/SETUP.md`, `docs/LIVE_TEST.md`, `docs/adr/ADR-006-cloudflare-neustart.md`, `DESIGN.md`, and the installed project-local Impeccable skill. Matching frontend assets do not prove the deployed Worker commit; verify Cloudflare deployment metadata before live changes.
 
 ## Owner's requested outcome
 
