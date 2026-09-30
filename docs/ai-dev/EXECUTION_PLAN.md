@@ -1,3 +1,10 @@
+## Current implementation outcome
+
+Implementation delivered on codex/implement-cloudflare-restart. Source identity, durable queue/checkpoints, persistent quota protection, capability-based native HA/MA, explicit native/Spotify newQueue and the actual calm Preact player are implemented. Integrated local results and fresh review evidence are recorded in EVIDENCE.json and evidence/VALIDATION.json. Repaired Red Team findings and Impeccable corrections retain their scoped evidence.
+
+Remaining work requires external access: exact Cloudflare version/bindings/backup, real Spotify quota/playback acceptance, private HA/MA and MA Spotify Connect acceptance, then the explicitly authorized rollout and production read-back. Current claim PARTIAL; no production changes. Follow RELEASE_RECOVERY.md. The original acceptance specification follows; it is no longer a list of unimplemented local features.
+
+
 # Implementation contracts and delivery order
 
 Implement using Mika Dev Studio in AUTONOMOUS_BUILD mode. Start with refreshed Repository Intelligence; resolve actual deployment identity, then Product Director, Engineering, Impeccable, Verification and fresh Red Team as applicable. This is an implementation mission, not permission to stop at another handoff. Missing live access blocks only the corresponding live claims.

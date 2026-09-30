@@ -1,3 +1,7 @@
+# Implementation continuation
+
+This mandate has been implemented locally on `codex/implement-cloudflare-restart`. Read `docs/ai-dev/EVIDENCE.json` and `PROJECT_CONTEXT.md` for current results and exact remaining live/deployment gates. The original task below remains historical authority for requirements. The user explicitly authorized deployment in this execution; absent Cloudflare authentication and live provider access prevent it, rather than missing approval.
+
 # Start the Cloudflare implementation
 
 Select `MikaMcFlurry/true-shuffle-PoC` and branch `codex/cloudflare-restart-plan` in Codex. No merge is required to start. This branch is a full restart/handoff, not a testable redesigned application.

@@ -1,7 +1,7 @@
 {
   "schema_version": "mika.repository-intelligence.v2",
   "packet_status": "ALIGNED",
-  "generated_at": "2026-09-30T03:54:02.239928+00:00",
+  "generated_at": "2026-09-30T08:48:59.924919+00:00",
   "analysis_modes": [
     "LIVE_BASELINE",
     "LOST_CONTEXT",
@@ -15,9 +15,9 @@
       "role": "CURRENT_PRIMARY",
       "visibility": "public",
       "default_branch": "main",
-      "ref": "codex/cloudflare-restart-plan",
-      "commit_sha": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
-      "notes": "Preparation baseline; application unchanged from R-2."
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+      "notes": "Integrated implementation baseline; local validation documented in EVIDENCE.json. Exact production Worker identity and live provider acceptance remain unverified."
     },
     {
       "id": "R-2",
@@ -33,16 +33,15 @@
   ],
   "primary_baseline": {
     "repository_id": "R-1",
-    "ref": "codex/cloudflare-restart-plan",
-    "commit_sha": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
+    "ref": "codex/implement-cloudflare-restart",
+    "commit_sha": "23111bdc668bbae81ec03090ca45b6310e95c46d",
     "deployment_refs": [
       "https://true-shuffle.mikahertler-72c.workers.dev/"
     ],
     "unavailable_systems": [
       "Cloudflare deployment metadata and production logs",
       "Signed-in Spotify account/history/playback",
-      "Home Assistant and Music Assistant instances",
-      "Runnable local Chromium"
+      "Home Assistant and Music Assistant instances"
     ]
   },
   "authority_map": {
@@ -50,7 +49,8 @@
       "EV-01",
       "EV-03",
       "EV-04",
-      "EV-05"
+      "EV-05",
+      "EV-11"
     ],
     "target_intent_evidence_ids": [
       "EV-02"
@@ -86,7 +86,7 @@
           "EV-02"
         ],
         "blocking": false,
-        "resolution": "D-02 supersedes the old contract; actual implementation remains pending."
+        "resolution": "D-02 implemented as durable sessions with explicit newQueue; local tests and independent review documented separately from live acceptance."
       },
       {
         "id": "AC-03",
@@ -125,7 +125,7 @@
       {
         "name": "Local Worker + simulated Spotify",
         "type": "LOCAL",
-        "status": "UNVERIFIED",
+        "status": "VERIFIED",
         "evidence_ids": [
           "EV-04",
           "EV-06"
@@ -145,7 +145,8 @@
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -159,7 +160,8 @@
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -173,7 +175,8 @@
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -181,13 +184,14 @@
       "id": "F-04",
       "name": "Pause and external playback reconciliation",
       "group": "Continuity",
-      "evidence_state": "PARTIAL",
+      "evidence_state": "IMPLEMENTED_TESTED",
       "owner_disposition": "IMPROVE",
-      "summary": "Already implemented observers; unfinished stable queue contract conflicts with restart test.",
+      "summary": "Durable unfinished entry checkpoints preserve latest observations and reject unrelated/stale playback.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -195,13 +199,14 @@
       "id": "F-05",
       "name": "Persistent exact unfinished queue resume",
       "group": "Continuity",
-      "evidence_state": "PLANNED_ONLY",
+      "evidence_state": "IMPLEMENTED_TESTED",
       "owner_disposition": "ADD",
-      "summary": "Stable entry/session checkpoint and new-vs-resume action not yet implemented.",
+      "summary": "SQLite sessions, stable entry IDs, explicit newQueue, bounded rolling queue and intent recovery implemented and locally tested.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -211,11 +216,12 @@
       "group": "Reliability",
       "evidence_state": "PARTIAL",
       "owner_disposition": "IMPROVE",
-      "summary": "Fixed quota retry and overwritable cooldown require correction and measured live diagnosis.",
+      "summary": "Persistent shared quota gate with raw provider metadata, revision fencing and measured request reduction; live quota cause unverified.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -223,13 +229,14 @@
       "id": "F-07",
       "name": "Cross-device/browser controls",
       "group": "Devices",
-      "evidence_state": "PARTIAL",
+      "evidence_state": "IMPLEMENTED_TESTED",
       "owner_disposition": "IMPROVE",
-      "summary": "Account-owned Hub and fresh device selection exist; robust resume/transfer acceptance still required.",
+      "summary": "Account-owned sessions and stale command fences implemented; local browser/device scenarios tested, real owner device acceptance unavailable.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -237,13 +244,14 @@
       "id": "F-08",
       "name": "Native HA/MA controller",
       "group": "Integration",
-      "evidence_state": "PLANNED_ONLY",
+      "evidence_state": "PARTIAL",
       "owner_disposition": "ADD",
-      "summary": "Existing personal action keys are not a playback/seek/context adapter.",
+      "summary": "Separate capability-based native controller and authenticated local HA bridge implemented; real HA/MA acceptance unavailable.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -251,13 +259,14 @@
       "id": "F-09",
       "name": "Current radio UI",
       "group": "Design",
-      "evidence_state": "IMPLEMENTED_UNVERIFIED",
+      "evidence_state": "IMPLEMENTED_TESTED",
       "owner_disposition": "REDESIGN",
-      "summary": "Owner rejects current design; replacement brief delegated and not implemented.",
+      "summary": "Independent calm German player replacement implemented in actual Preact application; desktop/mobile/dark/light evidence and fresh finish review referenced in ledger.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     }
@@ -312,7 +321,7 @@
       {
         "id": "I-02",
         "name": "MA/HA target",
-        "summary": "Separate Spotify Connect/native adapter contracts planned; no instance access.",
+        "summary": "Spotify Connect remains the Spotify route. Distinct native controller uses per-account server-side bridge configuration and declared HA/MA capabilities; private instances unavailable.",
         "evidence_ids": [
           "EV-08",
           "EV-02"
@@ -343,7 +352,7 @@
         "evidence_ids": [
           "EV-04"
         ],
-        "notes": "Baseline build/typecheck/lint passed; fresh command rerun recorded in ledger."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       },
       {
         "category": "tests",
@@ -351,32 +360,32 @@
         "evidence_ids": [
           "EV-04"
         ],
-        "notes": "280 Vitest tests in nine files on the Cloudflare application baseline."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       },
       {
         "category": "runtime",
-        "status": "BLOCKED",
+        "status": "PASS",
         "evidence_ids": [
           "EV-03",
           "EV-06"
         ],
-        "notes": "Public signed-out UI observed; local browser launch blocked and live playback inaccessible."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       },
       {
         "category": "migration",
-        "status": "NOT_RUN",
+        "status": "PASS",
         "evidence_ids": [
           "EV-01"
         ],
-        "notes": "No product/schema change delivered; future checkpoint migration unverified."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       },
       {
         "category": "recovery",
-        "status": "NOT_RUN",
+        "status": "PASS",
         "evidence_ids": [
           "EV-02"
         ],
-        "notes": "Requested new session recovery contract remains to implement."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       }
     ]
   },
@@ -385,7 +394,7 @@
       "id": "G-01",
       "class": "FEATURE_PRESENT_BUT_OWNER_REJECTED",
       "severity": "P1",
-      "summary": "Legacy resume/rebuild contract conflicts with same unfinished queue.",
+      "summary": "Original local implementation gap repaired; current tests and review in EVIDENCE.json.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -394,13 +403,13 @@
       "owner_decision_required": false,
       "blocking": false,
       "resolution_decision_id": "D-02",
-      "recommended_resolution": "Execute the mapped implementation and verification plan; these gaps block product release claims, not an aligned handoff."
+      "recommended_resolution": "Retain regression evidence; production acceptance remains separately gated."
     },
     {
       "id": "G-02",
       "class": "UNVERIFIED_CLAIM",
       "severity": "P1",
-      "summary": "Live quota reason and request pressure not captured.",
+      "summary": "Persistent quota handling and local request pressure measured; actual live Spotify restriction remains unavailable.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -413,9 +422,9 @@
     },
     {
       "id": "G-03",
-      "class": "PLANNED_NOT_IMPLEMENTED",
+      "class": "UNVERIFIED_CLAIM",
       "severity": "P1",
-      "summary": "Native HA/MA route and integration acceptance absent.",
+      "summary": "Native HA/MA implementation locally tested; private instance and real MA Spotify Connect acceptance unavailable.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -430,7 +439,7 @@
       "id": "G-04",
       "class": "FEATURE_PRESENT_BUT_OWNER_REJECTED",
       "severity": "P2",
-      "summary": "Current visual design rejected; independent replacement not built.",
+      "summary": "Original local implementation gap repaired; current tests and review in EVIDENCE.json.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -439,13 +448,13 @@
       "owner_decision_required": false,
       "blocking": false,
       "resolution_decision_id": "D-04",
-      "recommended_resolution": "Execute the mapped implementation and verification plan; these gaps block product release claims, not an aligned handoff."
+      "recommended_resolution": "Retain regression evidence; production acceptance remains separately gated."
     },
     {
       "id": "G-05",
       "class": "DEPLOYED_BUT_NOT_REPRODUCIBLE",
       "severity": "P2",
-      "summary": "Exact Worker deployment version/build configuration not verified.",
+      "summary": "Exact production Worker version/bindings and production recovery remain unavailable without Cloudflare authentication.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -460,7 +469,7 @@
       "id": "G-06",
       "class": "UNVERIFIED_CLAIM",
       "severity": "P2",
-      "summary": "Local browser acceptance blocked before application execution.",
+      "summary": "Original local implementation gap repaired; current tests and review in EVIDENCE.json.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -469,7 +478,7 @@
       "owner_decision_required": false,
       "blocking": false,
       "resolution_decision_id": null,
-      "recommended_resolution": "Execute the mapped implementation and verification plan; these gaps block product release claims, not an aligned handoff."
+      "recommended_resolution": "Retain regression evidence; production acceptance remains separately gated."
     }
   ],
   "owner_alignment": {
@@ -529,7 +538,7 @@
       "LIVE_SYSTEM"
     ],
     "read_first": "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
-    "next_action": "Implement the mapped mission in Codex, refreshing changed baseline evidence first."
+    "next_action": "Obtain Cloudflare and live Spotify/HA/MA access; run remaining protected live acceptance, verify production recovery, then deploy the reviewed revision. Do not replay the old preparation as a new implementation task."
   },
   "evidence": [
     {
@@ -581,10 +590,10 @@
       "id": "EV-04",
       "type": "TEST_RUN",
       "evidence_level": "TEST_CONFIRMED",
-      "claim": "Fresh build/typecheck/lint and 280 Vitest tests in nine files pass; Wrangler dry-run passes. Source unchanged from c9bd082.",
+      "claim": "Fresh build/typecheck/lint and 280 Vitest tests in nine files pass; Wrangler dry-run passes. Source unchanged from c9bd082. Baseline application equivalence rechecked at the implementation start; this historical check does not certify current working tree.",
       "repository_id": "R-1",
-      "ref": "codex/cloudflare-restart-plan",
-      "commit_sha": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "23111bdc668bbae81ec03090ca45b6310e95c46d",
       "path_or_url": "docs/ai-dev/EVIDENCE.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "EV-04",
@@ -679,6 +688,21 @@
       "environment": "analysis/local or named external provider",
       "artifact_ref": "EV-10",
       "observed_at": "2026-09-30T03:54:02.239928+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-11",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Integrated local implementation and validation; production and live provider gates explicitly NOT_RUN.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+      "path_or_url": "docs/ai-dev/EVIDENCE.json",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/EVIDENCE.json",
+      "observed_at": "2026-09-30T08:48:59.924919+00:00",
       "source_status": "CURRENT_SUPPORTING",
       "sensitivity": "PUBLIC"
     }

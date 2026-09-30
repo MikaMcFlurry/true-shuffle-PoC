@@ -1,44 +1,59 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-09-30T03:54:02.239928+00:00",
-  "project": "true-shuffle Cloudflare restart preparation",
+  "generated_at": "2026-09-30T08:48:59.957620+00:00",
+  "project": "true-shuffle Cloudflare implementation",
   "subject": {
-    "revision": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
-    "artifact_ref": "https://github.com/MikaMcFlurry/true-shuffle-PoC/tree/codex/cloudflare-restart-plan",
-    "environment": "local analysis of unchanged Cloudflare application",
+    "revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+    "artifact_ref": "https://github.com/MikaMcFlurry/true-shuffle-PoC/tree/codex/implement-cloudflare-restart",
+    "environment": "Actual local Cloudflare Worker, SQLite Durable Objects, Chromium and synthetic Spotify/HA fixtures",
     "environment_class": "LOCAL"
   },
   "mode": "AUTONOMOUS_BUILD",
   "delivery_target": "PRODUCTION_LIVE",
   "claim": "PARTIAL",
-  "material_release": false,
+  "material_release": true,
   "change_profiles": [
-    "NONE"
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA",
+    "PERFORMANCE_CRITICAL"
   ],
-  "independent_review_level": "COMPROMISED",
+  "independent_review_level": "FRESH",
   "independent_review_verdict": "BLOCKED",
   "required_categories": [
     "build",
-    "critical_journey"
+    "static",
+    "critical_journey",
+    "migration",
+    "recovery",
+    "quota",
+    "ui_runtime",
+    "independent_review",
+    "live_provider",
+    "deployment",
+    "accessibility",
+    "data_invariants",
+    "performance_reliability",
+    "security_privacy"
   ],
   "external_blockers": [
     {
-      "id": "B-LIVE",
+      "id": "B-CF",
+      "type": "TOOL_UNAVAILABLE",
+      "description": "Cloudflare connector is unavailable; Wrangler is not authenticated. Exact production version, bindings, recovery and deployment cannot be established.",
+      "evidence_ref": "docs/ai-dev/evidence/BASELINE.json"
+    },
+    {
+      "id": "B-SPOTIFY",
       "type": "CREDENTIAL",
-      "description": "Scoped Spotify test account and Cloudflare deployment/log access absent; live playback/quota identity unverified.",
-      "evidence_ref": "docs/ai-dev/PROJECT_CONTEXT.md"
+      "description": "Signed-in owner Spotify test account and real playback/quota evidence unavailable.",
+      "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
     },
     {
       "id": "B-HA",
       "type": "CREDENTIAL",
-      "description": "Owner HA/MA instances and actual capabilities unavailable.",
-      "evidence_ref": "docs/ai-dev/PROJECT_CONTEXT.md"
-    },
-    {
-      "id": "B-BROWSER",
-      "type": "TOOL_UNAVAILABLE",
-      "description": "Chromium missing; attempted install failed invalid ZIP, browser suite did not execute product scenarios.",
-      "evidence_ref": "e2e/app.spec.ts"
+      "description": "Private owner HA/MA installation and real Spotify Connect/native devices unavailable.",
+      "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
     }
   ],
   "requirements_snapshot": {
@@ -63,223 +78,516 @@
       "id": "NN-01",
       "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
       "gate_ids": [
-        "G-NN-01"
+        "G-LOCAL-NN-01",
+        "G-LIVE-PRODUCTION"
       ]
     },
     {
       "id": "NN-02",
       "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
       "gate_ids": [
-        "G-NN-02"
+        "G-LOCAL-NN-02",
+        "G-LIVE-PRODUCTION"
       ]
     },
     {
       "id": "NN-03",
       "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
       "gate_ids": [
-        "G-NN-03"
+        "G-LOCAL-NN-03",
+        "G-LIVE-SPOTIFY"
       ]
     },
     {
       "id": "NN-04",
       "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
       "gate_ids": [
-        "G-NN-04"
+        "G-LOCAL-NN-04",
+        "G-LIVE-SPOTIFY"
       ]
     },
     {
       "id": "NN-05",
       "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
       "gate_ids": [
-        "G-NN-05"
+        "G-LOCAL-NN-05",
+        "G-LIVE-SPOTIFY"
       ]
     },
     {
       "id": "NN-06",
       "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
       "gate_ids": [
-        "G-NN-06"
+        "G-LOCAL-NN-06",
+        "G-LIVE-SPOTIFY"
       ]
     },
     {
       "id": "NN-07",
       "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
       "gate_ids": [
-        "G-NN-07"
+        "G-LOCAL-NN-07",
+        "G-LIVE-SPOTIFY"
       ]
     },
     {
       "id": "NN-08",
       "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
       "gate_ids": [
-        "G-NN-08"
+        "G-LOCAL-NN-08",
+        "G-LIVE-SPOTIFY"
       ]
     },
     {
       "id": "NN-09",
       "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
       "gate_ids": [
-        "G-NN-09"
+        "G-LOCAL-NN-09",
+        "G-LIVE-SPOTIFY"
       ]
     },
     {
       "id": "NN-10",
       "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
       "gate_ids": [
-        "G-NN-10"
+        "G-LOCAL-NN-10",
+        "G-LIVE-HA-MA"
       ]
     },
     {
       "id": "NN-11",
       "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
       "gate_ids": [
-        "G-NN-11"
+        "G-LOCAL-NN-11"
       ]
     }
   ],
   "open_findings": [
     {
-      "id": "G-01",
-      "title": "Legacy resume/rebuild contract conflicts with same unfinished queue.",
+      "id": "LIVE-CF",
+      "title": "Exact production identity, recovery and rollout not verified",
       "severity": "P1",
       "blocking": true
     },
     {
-      "id": "G-02",
-      "title": "Live quota reason and request pressure not captured.",
+      "id": "LIVE-SPOTIFY",
+      "title": "Real Spotify continuation and actual quota restriction not verified",
       "severity": "P1",
       "blocking": true
     },
     {
-      "id": "G-03",
-      "title": "Native HA/MA route and integration acceptance absent.",
+      "id": "LIVE-HA-MA",
+      "title": "Real owner HA/MA routes not verified",
       "severity": "P1",
-      "blocking": true
-    },
-    {
-      "id": "G-04",
-      "title": "Current visual design rejected; independent replacement not built.",
-      "severity": "P2",
-      "blocking": true
-    },
-    {
-      "id": "G-05",
-      "title": "Exact Worker deployment version/build configuration not verified.",
-      "severity": "P2",
-      "blocking": true
-    },
-    {
-      "id": "G-06",
-      "title": "Local browser acceptance blocked before application execution.",
-      "severity": "P2",
       "blocking": true
     }
   ],
   "gates": [
     {
-      "id": "G-NN-01",
+      "id": "G-LOCAL-NN-01",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Continue the actual Cloudflare application; establish source and deployment identity before live changes. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-01",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-02",
+      "id": "G-LOCAL-NN-02",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Preserve the existing listener history, memory, stations, preferences and account isolation. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-02",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-03",
+      "id": "G-LOCAL-NN-03",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-03",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-04",
+      "id": "G-LOCAL-NN-04",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-04",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-05",
+      "id": "G-LOCAL-NN-05",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-05",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-06",
+      "id": "G-LOCAL-NN-06",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-06",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-07",
+      "id": "G-LOCAL-NN-07",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-07",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-08",
+      "id": "G-LOCAL-NN-08",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-08",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-09",
+      "id": "G-LOCAL-NN-09",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-09",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-10",
+      "id": "G-LOCAL-NN-10",
       "category": "critical_journey",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-10",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-NN-11",
-      "category": "critical_journey",
+      "id": "G-LOCAL-NN-11",
+      "category": "ui_runtime",
       "required": true,
-      "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop. Target acceptance remains pending; baseline behavior is not substitute evidence."
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-11",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
     },
     {
-      "id": "G-BASELINE",
+      "id": "G-BUILD",
       "category": "build",
       "required": true,
       "status": "PASS",
       "evidence": [
         {
-          "id": "RUN-BASELINE",
-          "kind": "local command suite",
-          "ref": "docs/ai-dev/PROJECT_CONTEXT.md",
-          "result": "Fresh npm build, typecheck, lint and Vitest rerun passed: 9 files, 280 tests, 71.86s. Wrangler 4.141.0 dry-run passed with existing bindings; no upload.",
-          "subject_revision": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
-          "observed_at": "2026-09-30T03:54:02.239928+00:00"
+          "id": "EV-G-BUILD",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
         }
       ],
-      "rationale": "Source unchanged from application baseline; this validates current behavior only."
+      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+    },
+    {
+      "id": "G-STATIC",
+      "category": "static",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-STATIC",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-MIGRATION",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+    },
+    {
+      "id": "G-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-RECOVERY",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+    },
+    {
+      "id": "G-QUOTA",
+      "category": "quota",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-QUOTA",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+    },
+    {
+      "id": "G-BROWSER",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-BROWSER",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/VALIDATION.json",
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+    },
+    {
+      "id": "G-INDEPENDENT",
+      "category": "independent_review",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Fresh independent local review performed; production readiness verdict BLOCKED by missing real provider/deployment evidence. This release gate is not satisfied by a local review alone."
+    },
+    {
+      "id": "G-LIVE-SPOTIFY",
+      "category": "live_provider",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Real Spotify resume, devices and quota diagnosis unavailable."
+    },
+    {
+      "id": "G-LIVE-HA-MA",
+      "category": "live_provider",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Real native HA/MA and MA Spotify Connect acceptance unavailable."
+    },
+    {
+      "id": "G-LIVE-PRODUCTION",
+      "category": "deployment",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Production identity, backup/recovery, rollout and read-back unavailable without Cloudflare authentication."
+    },
+    {
+      "id": "G-LOCAL-INDEPENDENT",
+      "category": "independent_review",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-LOCAL-INDEPENDENT",
+          "kind": "fresh independent review",
+          "ref": "docs/ai-dev/evidence/INDEPENDENT_REVIEW.json",
+          "result": "49 targeted independent tests pass; exact source manifest verified by VALIDATION.json. No open local blocking code finding; live release blocked.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Fresh local review complete; separately recorded live release gate remains NOT_RUN."
+    },
+    {
+      "id": "G-ACCESSIBILITY",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-ACCESSIBILITY",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/browser-tests.log",
+          "result": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed."
+    },
+    {
+      "id": "G-DATA_INVARIANTS",
+      "category": "data_invariants",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-DATA_INVARIANTS",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/unit-tests.log",
+          "result": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass."
+    },
+    {
+      "id": "G-PERFORMANCE_RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-PERFORMANCE_RELIABILITY",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/NN-09-request-pressure.json",
+          "result": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally."
+    },
+    {
+      "id": "G-SECURITY_PRIVACY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-SECURITY_PRIVACY",
+          "kind": "local verification",
+          "ref": "docs/ai-dev/evidence/unit-tests.log",
+          "result": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN.",
+          "subject_revision": "23111bdc668bbae81ec03090ca45b6310e95c46d",
+          "observed_at": "2026-09-30T08:48:59.957620+00:00"
+        }
+      ],
+      "rationale": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN."
     }
   ]
 }

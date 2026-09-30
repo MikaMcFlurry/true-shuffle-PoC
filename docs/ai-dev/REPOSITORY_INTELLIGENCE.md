@@ -1,47 +1,29 @@
-# Repository Intelligence — synchronized V2 view
+# Repository intelligence — implemented local baseline
 
-Status **ALIGNED / handoff READY**, generated 2026-09-30T03:54:02.239928+00:00. This means preparation can proceed; it does not mean the requested product passes acceptance. Machine packet: repository-intelligence.json.
+Analysis baseline: `23111bdc668bbae81ec03090ca45b6310e95c46d` on `codex/implement-cloudflare-restart`. This generated view is bound to `repository-intelligence.json` and `HANDOFF_MAP.json`.
 
-Primary R-1: `MikaMcFlurry/true-shuffle-PoC`, `codex/cloudflare-restart-plan`, `59174f6fc3d9da38dcc3a944c3524f8a6bc428f9`. Application/production-source candidate R-2: `claude/true-shuffle-spotify-95zw0m`, `c9bd08246487df1edcb5d19d39ec96c93f04fb9d`. Live frontend matches R-2 assets; exact deployed Worker version unverified. Default main is the unrelated legacy baseline. Authority is current source/runtime for reality and latest owner requests for target; no formal governance regime was activated.
+The Cloudflare/Preact implementation is complete locally. Durable per-station sessions retain the exact unfinished entry and latest observed progress; ordinary Resume preserves order, while explicit newQueue starts a new order. Queue extension and provider effects are journaled and fenced. The shared persistent quota gate records real provider metadata and blocks unknown-deadline requests until a deliberate probe. A separate authenticated HA/MA bridge declares actual capabilities and uses bounded native queue continuation.
 
-Product: live private Spotify station app, owner satisfaction MIXED. Keep valuable discovery/history/rules; improve continuation and device reliability; add exact unfinished occurrence/native adapter; redesign rejected radio UI. Architecture, operations and the live boundary are in PROJECT_CONTEXT.md. NN-01–11 and D-01–05 are in MISSION.md. No material owner decision is outstanding; Studio has delegated design/implementation detail authority.
+The actual player was redesigned using the installed Impeccable skill. Five desktop/mobile/theme/offline captures, an explicit ambiguous-provider recovery capture and the scoped fresh finish verdict are committed. Existing rules, history, guest/private modes, favorites and bans remain supported.
 
-## Feature inventory
+Validation: 325 unit/Worker tests, 15 browser cases, typecheck, lint, build and both deployment dry-runs pass. Fresh independent local review reports 49 targeted passing tests and no open blocking code finding. `EVIDENCE.json` remains PARTIAL and the production release verdict BLOCKED; fixtures do not establish live provider acceptance.
 
-| ID | Feature | Evidence state | Disposition |
-|---|---|---|---|
-| F-01 | Cloudflare station playback | IMPLEMENTED_TESTED | KEEP |
-| F-02 | Discovery, resurfacing and advanced mix | IMPLEMENTED_TESTED | KEEP |
-| F-03 | Listening history/import/memory | IMPLEMENTED_TESTED | KEEP |
-| F-04 | Pause and external playback reconciliation | PARTIAL | IMPROVE |
-| F-05 | Persistent exact unfinished queue resume | PLANNED_ONLY | ADD |
-| F-06 | Quota handling | PARTIAL | IMPROVE |
-| F-07 | Cross-device/browser controls | PARTIAL | IMPROVE |
-| F-08 | Native HA/MA controller | PLANNED_ONLY | ADD |
-| F-09 | Current radio UI | IMPLEMENTED_UNVERIFIED | REDESIGN |
+## Features
 
-## Gaps and release boundaries
+- F-01: Existing Worker/HubCore and fixtures; live authenticated behavior unavailable. (IMPLEMENTED_TESTED).
+- F-02: Existing rules, history-driven deck and preferences; owner values results. (IMPLEMENTED_TESTED).
+- F-03: Preserve existing storage and global taste accounting. (IMPLEMENTED_TESTED).
+- F-04: Durable unfinished entry checkpoints preserve latest observations and reject unrelated/stale playback. (IMPLEMENTED_TESTED).
+- F-05: SQLite sessions, stable entry IDs, explicit newQueue, bounded rolling queue and intent recovery implemented and locally tested. (IMPLEMENTED_TESTED).
+- F-06: Persistent shared quota gate with raw provider metadata, revision fencing and measured request reduction; live quota cause unverified. (PARTIAL).
+- F-07: Account-owned sessions and stale command fences implemented; local browser/device scenarios tested, real owner device acceptance unavailable. (IMPLEMENTED_TESTED).
+- F-08: Separate capability-based native controller and authenticated local HA bridge implemented; real HA/MA acceptance unavailable. (PARTIAL).
+- F-09: Independent calm German player replacement implemented in actual Preact application; desktop/mobile/dark/light evidence and fresh finish review referenced in ledger. (IMPLEMENTED_TESTED).
 
-- G-01 (P1, FEATURE_PRESENT_BUT_OWNER_REJECTED): Legacy resume/rebuild contract conflicts with same unfinished queue.
-- G-02 (P1, UNVERIFIED_CLAIM): Live quota reason and request pressure not captured.
-- G-03 (P1, PLANNED_NOT_IMPLEMENTED): Native HA/MA route and integration acceptance absent.
-- G-04 (P2, FEATURE_PRESENT_BUT_OWNER_REJECTED): Current visual design rejected; independent replacement not built.
-- G-05 (P2, DEPLOYED_BUT_NOT_REPRODUCIBLE): Exact Worker deployment version/build configuration not verified.
-- G-06 (P2, UNVERIFIED_CLAIM): Local browser acceptance blocked before application execution.
+## Remaining access-dependent work
 
-These gaps are non-blocking for preparing the aligned handoff, but must not be interpreted as waived product acceptance. No new functional/UI changes, schema migration, live Spotify or HA/MA verification are delivered here. Baseline unit/build results are limited to current behavior, including behavior the owner now rejects.
+Cloudflare connector/authentication is absent. The public production URL responds, but exact deployed version, namespace/binding identity, APP_SECRET continuity and production backup/recovery are unverified. No production deployment occurred. Owner Spotify and private HA/MA credentials/devices are absent, so real resume, quota diagnosis, native transport and MA Spotify Connect acceptance are NOT_RUN.
 
-## Evidence index
+Continue with the existing reviewed implementation: obtain those accesses, verify target and recovery, run protected live acceptance, deploy the reviewed revision and read it back. User authorization for deployment already exists. Use the prepared isolated preview configuration where appropriate. See `docs/RELEASE_RECOVERY.md`, `docs/NATIVE_PLAYBACK.md` and the verification ledger.
 
-- EV-01: CODE_CONFIRMED — Actual app architecture and restart/quota contract findings. Source: src/worker/hub/hub.ts.
-- EV-02: DOC_CORROBORATED — Owner requests same durable queue/unfinished song, redesign, integrations and fresh Codex handoff. Source: owner conversation normalized in MISSION.
-- EV-03: OBSERVED_RUNTIME — Signed-out domain frontend assets match local build; no deployed Worker SHA proof. Source: https://true-shuffle.mikahertler-72c.workers.dev/.
-- EV-04: TEST_CONFIRMED — Cloudflare baseline build/static checks and 280 Vitest tests pass; application source unchanged by packet. Source: docs/ai-dev/EVIDENCE.json.
-- EV-05: PROVIDER_CONFIRMED — All branch heads compared; default main is legacy; newest pre-existing app branch is c9bd082. Source: https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/branches.
-- EV-06: TEST_CONFIRMED — E2E browser launch blocked: executable absent; installation returns invalid ZIP. Source: e2e/app.spec.ts.
-- EV-07: PROVIDER_CONFIRMED — Official Spotify quota/rate guidance inspected September 30; per-developer development quota and reason handling. Source: https://developer.spotify.com/blog/2026-07-23-web-api-quota-updates.
-- EV-08: PROVIDER_CONFIRMED — MA documents a Spotify Connect plugin; route/device/network capabilities must be checked live. Source: https://www.music-assistant.io/plugins/spotify-connect/.
-- EV-09: DOC_CORROBORATED — Screenshot/log show root / and failure before build; empty-root correction not yet verified. Source: docs/LIVE_BASELINE_REVIEW.md.
-- EV-10: TEST_CONFIRMED — Impeccable online check failed DNS; existing 4.1.2 retained; seed retry degraded. Source: .agents/skills/impeccable/SKILL.md.
-
-No standalone issues or releases were found in the fresh GitHub inspection. Historic PRs and ADR narratives are supporting context, not proof of present runtime. Related HA/MA instances are external integration targets, not inspected source repositories. Read-first and implementation path: CODEX_START.md → mapped mission/context/plan → canonical incumbent functional documents as relevant. Revalidate source, deployment, tests, external guidance and owner decisions whenever those materially change.
+Historical application provenance: `claude/true-shuffle-spotify-95zw0m` at `c9bd08246487df1edcb5d19d39ec96c93f04fb9d`. Task base: `codex/cloudflare-restart-plan` at `5ffe99b929b6a8ddf93035370e156fe036fe6a83`. Default main is the legacy Python/Fly implementation and is not this PR target.
