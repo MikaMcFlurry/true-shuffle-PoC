@@ -1,7 +1,7 @@
 {
   "schema_version": "true-shuffle.validation.v1",
-  "generated_at": "2026-09-30T13:21:24.213546+00:00",
-  "revision_binding": "Original reports/source hashes preserve historical provenance. Current_source_sha256 binds explicit availability trial application source a46bc043717b113dc37d1989ab4323bf166d2da9; supporting/canonical later commits only document this rollout.",
+  "generated_at": "2026-09-30T18:50:25.366800+00:00",
+  "revision_binding": "Historical evidence retains originalprovenance. Current_source_sha256 binds confirmedoperation/tracker application1328f8f562adbcc7454b6ee8b7d6a224f6cdca95; subsequent commits update support/canonicaldocs only.",
   "review_source_manifest_sha256": "0526b7e98f40e3a226b645cf3ad97bf7529903f8583e069cb589da482bb1e3ba",
   "source_sha256": {
     "scripts/native/ha-bridge.mjs": "43c6f165a4cf57509e0f4dc5426c59ff9c8655013cc388766f78b2985c238c93",
@@ -135,7 +135,7 @@
   },
   "current_source_sha256": {
     "scripts/native/ha-bridge.mjs": "43c6f165a4cf57509e0f4dc5426c59ff9c8655013cc388766f78b2985c238c93",
-    "src/client/api.ts": "53fc433d58d17ce41b8f0d9379d0240db3ae5181db874e2e3fcfe8958414e957",
+    "src/client/api.ts": "954d87add42538c96d392ecda151014c2aab86b1e9242f4480b942fef3d67a03",
     "src/client/app.tsx": "32e8d7dc08426ab1212d965222f6cb0f3371e5ffcccbcaa742b7b96268e245b6",
     "src/client/components/radio.tsx": "f2604949c2bd8e28bfa9ed3c29d482ba443a6f08c32cd4123c9bdf8352fae98c",
     "src/client/components/rate.tsx": "9285539d7d8014d471eb8fb7cf59d42e6c36b862e07737193bf9872c16df1aa4",
@@ -157,7 +157,7 @@
     "src/client/public/tex/walnut.webp.json": "422ef6afa373aa6037162adf5a96bdccc90cba082adcd20b0b09b23205a9aac4",
     "src/client/router.ts": "fa22830c610804611e3a85215521c4b347cbd93024c37b26e4323693947855cd",
     "src/client/screens/home.tsx": "7bf2a0864e5b3dfccec819e963652e72fc6b387ba8a8ae50160ce109c50c9060",
-    "src/client/screens/menu.tsx": "24e231f6995caf8c6741965267e2b327cb93fd289fb4091b1bb71d113b57857b",
+    "src/client/screens/menu.tsx": "c949e1607c17986f69b5bd132f5ebbc1c35ca07db5f10a5e3001b4a87cc6cc02",
     "src/client/screens/remote.tsx": "d4f2e3ce2414afa1eca46d4be0cca979eff97c0025baf99eb68e9c823be30e0b",
     "src/client/screens/scan.tsx": "2d4899f0799a643e1a56e5c2570dc8b13d6f2e1677634ce4d9ac11d267ce4c10",
     "src/client/screens/signin.tsx": "be6c82b59265c37df85183bfa95506a962436d171c0c835f9e9299ec38bc0695",
@@ -175,24 +175,27 @@
     "src/worker/controllers/native.ts": "67c271d9df897b275ffe94ccbacfd63eb38f7bc5bddac6d77d9fff9005c0699a",
     "src/worker/env.ts": "891b0f826606078f4152b3ff275dfc33ac228b8862976f0d3b7384431284361b",
     "src/worker/hub/discovery.ts": "1cab47dd61920f52a01c518b3a7fb4d0c159ca116aa7cd4eb68271fd9914f710",
-    "src/worker/hub/hub.ts": "1c4563507ce839fceca78da24ccd69009b497d578606fa9e72972b2b3d53b13a",
+    "src/worker/hub/hub.ts": "a1f9d479d9a6eab1d10fafa0fe9a0bb0aa9fbfba71595f25ba747fcfde28369d",
     "src/worker/hub/library.ts": "b26300aa65092f08342032564024022d84c0c75499b426ac18134853495c3a55",
     "src/worker/hub/schema.ts": "3a1461556ec63f4467c70be9733fcc4976c0835ca9ccbe12b3a9dd88303a1da0",
-    "src/worker/index.ts": "ba84206af54ef450fc2d5b5c98413fbd90e908af2b4e074d9220ca51330e4662",
+    "src/worker/index.ts": "5c5852940dc30b132167e5a4fc153a25a2878c3f399d581d885d2e940bc372bd",
     "src/worker/lib/crypto.ts": "9248fb9ecc5d5ca573af36fb73981942b4526ee494ed4732c8f531f3d8882dc1",
     "src/worker/lib/remote-key.ts": "da04c8cdf149e1c44037fcd05b004778d560ca7472821218ee118dbedab72d37",
     "src/worker/lib/sql.ts": "8ead9cebc819adcd6a80b4288df04202633c2ac7d445ef5bd0ae9d203be227db",
-    "src/worker/registry.ts": "a80c49252e48d386ed823ee030c1e5d9f3d46f6636d62358153e8c8d17f879b7",
-    "src/worker/spotify/client.ts": "c27117e1264164c0e961822b629fa505f89075b459ffff5b1e597824b5f02175",
+    "src/worker/registry.ts": "65da4c66f0037b5b674ca41af28fac17fad295c92e9ecafd7b608813e30fecac",
+    "src/worker/spotify/client.ts": "5a656b43eea5fd99bfa08f9368274a0b200a1cdf2fb9686c86dcd7334077828f",
     "src/worker/spotify/gate.ts": "343a95e99b22ab7f89b4d27e4f22d147b72da3b0647cd67b9bc189afae651cac",
     "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
     "src/worker/spotify/types.ts": "f9520e5ec6936825b94ff0940c9d8ea543172878e05337e25f1a045edfbaf7e5",
-    "src/worker/userhub.ts": "679e15aeae6f6407b878faaa4776d3465bc2b3c2fe4af8c363ddd563febbd29b",
+    "src/worker/userhub.ts": "8c7b45955aaaedc2fec101ab7dcfb4ac9d4c3a71f29c9dd8deaee24b37dd5ca3",
     "wrangler.jsonc": "6aedb923406d1de811ec56dd64cabc017cea70e191aeafa28c39b270c61ef7a2",
     "wrangler.preview.jsonc": "605b95881ea83061e4a29c6be80f885125aa557c56bdf4b0bd15a3a41868b2f7",
-    "src/client/components/spotify-availability.tsx": "9fc73ecde04f21e671a432d67a202f65438b8b1830e1f7b3eecb257e357d1c49"
+    "src/client/components/spotify-availability.tsx": "49e670d19808af7a5a7828d134fe685adae47edc98e456347051307948e33286",
+    "src/shared/spotify-usage.ts": "850a7e4aa5b7e7ff59c87f66a65a320ffcdc449826fa2a0d9e4319af3aacaa8c",
+    "src/worker/spotify/operation-gates.ts": "e7917e4c7239ad93e97240cf9ae79fdcc09d3092836c997e69fb5a06101b5c39",
+    "src/worker/spotify/usage.ts": "6aa573588e901e987a3c2234d798689863d2f01f9fda4d71db563835610dddd1"
   },
-  "current_source_manifest_sha256": "5cd7a22fc1bdbdc088cef28778576f1a84bcbc6877cf2536bb5adc19bec25075",
+  "current_source_manifest_sha256": "07c94272e2bee9a81a5d62d6050946f6033fc2351196baf7e9fc76e20c57fc30",
   "quota_copy_followup": {
     "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
     "browser_tests": 17,
@@ -233,5 +236,23 @@
       "availability-trial-browser.log"
     ],
     "owner_provider_and_ha_recovery": "NOT_RUN"
+  },
+  "confirmed_tracker_followup": {
+    "source_revision": "1328f8f562adbcc7454b6ee8b7d6a224f6cdca95",
+    "review": "CONFIRMED_REQUEST_TRACKER_REVIEW.md",
+    "unit_tests": 358,
+    "browser_tests": 20,
+    "independent_tests": 64,
+    "independent_renders": 6,
+    "github_ci_run": 36760609139,
+    "local_logs": [
+      "confirmed-tracker-typecheck.log",
+      "confirmed-tracker-lint.log",
+      "confirmed-tracker-build.log",
+      "confirmed-tracker-unit.log",
+      "confirmed-tracker-browser.log",
+      "confirmed-tracker-usage.log"
+    ],
+    "owner_tracker_provider_ha_and_restore": "NOT_RUN"
   }
 }

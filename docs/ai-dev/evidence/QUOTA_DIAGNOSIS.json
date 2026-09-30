@@ -1,6 +1,6 @@
 {
   "schema_version": "true-shuffle.quota-diagnosis.v1",
-  "recorded_at": "2026-09-30T13:21:24.213546+00:00",
+  "recorded_at": "2026-09-30T18:50:25.366800+00:00",
   "owner_report": {
     "reason": "QUOTA_EXCEEDED",
     "endpoint": "/me/player/devices",
@@ -86,12 +86,21 @@
     "review": "ARTIST_ALBUMS_SCOPE_REVIEW.md",
     "browser_tests": 18
   },
-  "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
+  "source_revision": "1328f8f562adbcc7454b6ee8b7d6a224f6cdca95",
   "availability_trial_followup": {
     "status": "DEPLOYED_PUBLIC_READBACK_PASS_OWNER_RECOVERY_NOT_RUN",
     "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
     "version_id": "4f5e1037-e616-4df2-9f93-15dbdaf8ee5f",
     "review": "AVAILABILITY_TRIAL_REVIEW.md",
     "browser_tests": 20
+  },
+  "confirmed_tracker_followup": {
+    "status": "DEPLOYED_PUBLIC_READBACK_PASS_AUTHENTICATED_OWNER_TRACKER_NOT_RUN",
+    "source_revision": "1328f8f562adbcc7454b6ee8b7d6a224f6cdca95",
+    "version_id": "cfcd030c-2004-4816-9e5d-170b0c421ac2",
+    "policy": "Confirmed429 only, perlistener/HTTPmethod/sanitizedendpoint; legacy blanket/quarantine retired with bounded localbackup. Actual RetryAfter sameoperation, bounded explicit unknownretry. Shared720hour/200episode tracker with five anonymous labels, overflow/signin aggregates, privateactor recovery and startedAt fence. No automaticstress, inferred bucket/allowance or exactreset guarantee.",
+    "review": "CONFIRMED_REQUEST_TRACKER_REVIEW.md",
+    "owner_evidence": "Owner screenshots30Sep15:30-15:33 Europe/Berlin: devices200,player204then200,history200,activeiPhone,11sentreadattempts and0newquota. These are previousapplication a46bc04 observations, not newtracker/controlacceptance.",
+    "remaining": "Otherdeveloperaccountapptraffic, actualcurrentownertracker, realcontrolresponse, sustained3/5usercapacity andexactproviderreset unverified"
   }
 }
