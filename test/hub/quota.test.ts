@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { RequestBudget, type SpotifyClient } from "../../src/worker/spotify/client";
+
+const provider = (h: { hub: unknown }) =>
+	(h.hub as { client(b: RequestBudget): SpotifyClient }).client(new RequestBudget(10));
+
 import { onboarded } from "./harness";
 
 function failQuota(retry?: string) {
@@ -16,10 +21,10 @@ describe("NN-09 durable hub provider cooldown", () => {
 	it("survives eviction and suppresses device, play and background calls until long deadline", async () => {
 		const h = await onboarded({ tracks: 30 });
 		h.fake.failNext = failQuota("172800");
-		await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		await expect(provider(h).me()).rejects.toMatchObject({ kind: "quota" });
 		const calls = h.fake.calls.length;
 		h.restart();
-		await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		await expect(provider(h).me()).rejects.toMatchObject({ kind: "quota" });
 		expect((await h.hub.play(h.allId)).ok).toBe(false);
 		await h.hub.alarm();
 		await expect(h.hub.retryQuota()).rejects.toMatchObject({ status: 429 });
@@ -31,7 +36,7 @@ describe("NN-09 durable hub provider cooldown", () => {
 	it("unknown cooldown uses valid local maintenance alarms without provider retries", async () => {
 		const h = await onboarded({ tracks: 30 });
 		h.fake.failNext = failQuota();
-		await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		await expect(provider(h).me()).rejects.toMatchObject({ kind: "quota" });
 		const calls = h.fake.calls.length;
 		await h.hub.alarm();
 		expect(Number.isFinite(new Date(h.alarmAt()!).getTime())).toBe(true);
@@ -41,13 +46,13 @@ describe("NN-09 durable hub provider cooldown", () => {
 	it("unknown reset needs explicit recheck; another quota restores the gate", async () => {
 		const h = await onboarded({ tracks: 30 });
 		h.fake.failNext = failQuota();
-		await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		await expect(provider(h).me()).rejects.toMatchObject({ kind: "quota" });
 		h.restart();
 		const calls = h.fake.calls.length;
-		h.fake.failNext = failQuota();
-		await expect(h.hub.retryQuota()).rejects.toMatchObject({ kind: "quota" });
+		h.fake.failNext = { ...failQuota(), body: { error: { reason: "UNKNOWN" } } };
+		await expect(h.hub.retryQuota()).rejects.toMatchObject({ kind: "rate" });
 		expect(h.fake.calls.length).toBe(calls + 1);
-		await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		await expect(provider(h).me()).rejects.toMatchObject({ kind: "rate" });
 		expect(h.fake.calls.length).toBe(calls + 1);
 		await h.hub.retryQuota();
 		await h.hub.devices();

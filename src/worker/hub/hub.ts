@@ -81,9 +81,11 @@ import type {
 import { type Keys, randomToken } from "../lib/crypto";
 import type { SqlDb } from "../lib/sql";
 import {
+	eligibleLegacy,
 	type Fetcher,
 	publicCooldown,
 	RequestBudget,
+	SPOTIFY_COOLDOWN_SCOPES,
 	SpotifyClient,
 	type SpotifyCooldown,
 	type SpotifyCooldownScope,
@@ -239,9 +241,32 @@ export interface HubDeps {
 			scope?: SpotifyCooldownScope,
 		): Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
 		setCooldown(value: SpotifyCooldown): Promise<number>;
+		quarantineLegacyGlobal?(
+			expected: SpotifyCooldown,
+			revision: number,
+		): Promise<{ quarantined: boolean; globalRevision: number; catalogRevision: number }>;
 		beginRecheck(scope?: SpotifyCooldownScope): Promise<boolean>;
 		finishRecheck(success: boolean, scope?: SpotifyCooldownScope): Promise<void>;
 	};
+}
+
+export interface SpotifyAvailabilityExperiment {
+	testedAt: number;
+	cached?: boolean;
+	outcomes: Record<
+		"devices" | "player" | "history",
+		{
+			state: "available" | "held" | "failed" | "not_tested";
+			status?: number;
+			kind?: string;
+			reason?: string;
+			retryAfter?: string | null;
+		}
+	>;
+	controls: "untested";
+	catalog: "held" | "untested";
+	stopped: boolean;
+	devices?: DeviceView[];
 }
 
 interface StationRow {
@@ -606,8 +631,9 @@ export class HubCore {
 		};
 	}
 
-	private client(budget: RequestBudget): SpotifyClient {
+	private client(budget: RequestBudget, singleTransport = false): SpotifyClient {
 		return new SpotifyClient({
+			singleTransport,
 			endpoints: this.d.env.endpoints,
 			tokens: this.tokenStore(),
 			budget,
@@ -642,7 +668,7 @@ export class HubCore {
 	}
 
 	private cooldownKey(scope?: SpotifyCooldownScope): string {
-		return scope ? "spotify_artist_albums_cooldown" : "spotify_cooldown";
+		return scope ? `spotify_${scope.replaceAll("-", "_")}_cooldown` : "spotify_cooldown";
 	}
 	private cooldownRevisionKey(scope?: SpotifyCooldownScope): string {
 		return `${this.cooldownKey(scope)}_revision`;
@@ -665,7 +691,7 @@ export class HubCore {
 		const local = this.providerCooldown(scope);
 		const revisionKey = this.cooldownRevisionKey(scope);
 		const localRevision = this.kvGet<number>(revisionKey);
-		if (scope && snapshot.cooldown && !local) {
+		if (snapshot.cooldown && !local) {
 			this.saveProviderCooldown(snapshot.cooldown);
 			this.kvSet(revisionKey, snapshot.revision);
 			return;
@@ -707,25 +733,27 @@ export class HubCore {
 	}
 
 	/** Explicit owner recheck for an unknown provider reset; known deadlines stay enforced. */
-	async retryQuota(): Promise<void> {
-		await this.reconcileSharedCooldown();
-		await this.reconcileSharedCooldown("artist-albums");
+	async retryQuota(
+		requestedScope?: Exclude<SpotifyCooldownScope, "legacy-catalog">,
+	): Promise<void> {
+		for (const candidate of [undefined, "artist-albums", "devices", "player", "history"] as const)
+			await this.reconcileSharedCooldown(candidate);
 		const global = this.providerCooldown() ?? (await this.d.sharedSpotify?.getCooldown());
-		const artist =
-			this.providerCooldown("artist-albums") ??
-			(await this.d.sharedSpotify?.getCooldown("artist-albums"));
 		const active = (c: SpotifyCooldown | null | undefined) =>
 			!!c && (c.until === null || c.until > this.now());
-		const scope: SpotifyCooldownScope | undefined =
-			!active(global) && artist ? "artist-albums" : undefined;
-		const cooldown = scope ? artist : global;
+		let scope: SpotifyCooldownScope | undefined;
+		if (!active(global)) {
+			if (requestedScope) scope = requestedScope;
+			else if (this.providerCooldown("artist-albums")) scope = "artist-albums";
+		}
+		const cooldown = scope ? this.providerCooldown(scope) : global;
 		if (cooldown?.until !== null && (cooldown?.until ?? 0) > this.now())
 			throw new HubError(
 				"quota",
 				"Spotify hat weitere Anfragen bis zur angegebenen Freigabe gesperrt.",
 				429,
 			);
-		if (scope && !validArtistAlbumsProbe(cooldown?.probePath))
+		if (scope === "artist-albums" && !validArtistAlbumsProbe(cooldown?.probePath))
 			throw new HubError(
 				"quota",
 				"Die Quelle der gesperrten Künstleralben-Abfrage fehlt; eine sichere Prüfung ist derzeit nicht möglich.",
@@ -742,10 +770,13 @@ export class HubCore {
 		let success = false;
 		try {
 			const client = this.client(new RequestBudget(2));
-			if (scope)
+			if (scope === "artist-albums")
 				await client.request("GET", cooldown!.probePath!, {
 					query: { limit: 1, market: "from_token" },
 				});
+			else if (scope === "devices") await client.devices();
+			else if (scope === "history")
+				await client.request("GET", "/me/player/recently-played", { query: { limit: 1 } });
 			else await client.player();
 			success = true;
 		} finally {
@@ -755,14 +786,166 @@ export class HubCore {
 		}
 	}
 
+	/** Explicit owner experiment: no inference about writes or untested catalog routes. */
+	private availabilityFlight: Promise<SpotifyAvailabilityExperiment> | null = null;
+	testSpotifyAvailability(): Promise<SpotifyAvailabilityExperiment> {
+		if (this.availabilityFlight) return this.availabilityFlight;
+		const task = this.performAvailabilityTest();
+		this.availabilityFlight = task;
+		void task
+			.finally(() => {
+				this.availabilityFlight = null;
+			})
+			.catch(() => undefined);
+		return task;
+	}
+	private async performAvailabilityTest(): Promise<SpotifyAvailabilityExperiment> {
+		for (const scope of [undefined, ...SPOTIFY_COOLDOWN_SCOPES])
+			await this.reconcileSharedCooldown(scope);
+		const previous = this.kvGet<SpotifyAvailabilityExperiment>("spotify_availability_experiment");
+		if (previous && this.now() - previous.testedAt >= 0 && this.now() - previous.testedAt < 60000) {
+			const cached = { ...previous, cached: true, outcomes: { ...previous.outcomes } };
+			const global = this.providerCooldown();
+			if (global && (global.until === null || global.until > this.now())) cached.stopped = true;
+			for (const family of ["devices", "player", "history"] as const) {
+				const hold =
+					global && (global.until === null || global.until > this.now())
+						? global
+						: this.providerCooldown(family);
+				if (hold && (hold.until === null || hold.until > this.now()))
+					cached.outcomes[family] = {
+						state: "held",
+						status: 429,
+						kind: hold.kind,
+						reason: hold.reason,
+						retryAfter: hold.retryAfter,
+					};
+			}
+			return cached;
+		}
+		const result: SpotifyAvailabilityExperiment = {
+			testedAt: this.now(),
+			outcomes: {
+				devices: { state: "not_tested" },
+				player: { state: "not_tested" },
+				history: { state: "not_tested" },
+			},
+			controls: "untested",
+			catalog: "untested",
+			stopped: false,
+		};
+		await this.reconcileSharedCooldown();
+		const global = this.providerCooldown();
+		if (global && (global.until === null || global.until > this.now())) {
+			if (!eligibleLegacy(global) || !this.d.sharedSpotify?.quarantineLegacyGlobal)
+				throw new HubError(
+					"quota",
+					"Diese Spotify-Sperre darf nicht durch einen Verfügbarkeitstest umgangen werden.",
+					429,
+				);
+			const snapshot = await this.d.sharedSpotify.getSnapshot();
+			const moved = await this.d.sharedSpotify.quarantineLegacyGlobal(global, snapshot.revision);
+			if (!moved.quarantined)
+				throw new HubError(
+					"quota",
+					"Die Spotify-Sperre hat sich geändert. Bitte Status neu laden.",
+					409,
+				);
+			this.kvSet("spotify_legacy_quarantine_backup", { at: this.now(), cooldown: global });
+			this.clearProviderCooldown();
+			this.kvSet(this.cooldownRevisionKey(), moved.globalRevision);
+			const quarantinedCatalog = await this.d.sharedSpotify.getSnapshot("legacy-catalog");
+			if (quarantinedCatalog.cooldown) this.saveProviderCooldown(quarantinedCatalog.cooldown);
+			else this.clearProviderCooldown("legacy-catalog");
+			this.kvSet(this.cooldownRevisionKey("legacy-catalog"), quarantinedCatalog.revision);
+		}
+		await this.reconcileSharedCooldown("legacy-catalog");
+		const catalog = this.providerCooldown("legacy-catalog");
+		result.catalog =
+			catalog && (catalog.until === null || catalog.until > this.now()) ? "held" : "untested";
+		const client = this.client(new RequestBudget(4), true);
+		for (const family of ["devices", "player", "history"] as const) {
+			await this.reconcileSharedCooldown(family);
+			const hold = this.providerCooldown(family);
+			if (hold && (hold.until === null || hold.until > this.now())) {
+				result.outcomes[family] = {
+					state: "held",
+					status: 429,
+					kind: hold.kind,
+					reason: hold.reason,
+					retryAfter: hold.retryAfter,
+				};
+				continue;
+			}
+			try {
+				if (family === "devices") {
+					const devices = await client.devices();
+					result.devices = devices
+						.filter((d) => d.id)
+						.map((d) => ({
+							id: d.id!,
+							name: d.name,
+							type: d.type,
+							active: d.is_active,
+							restricted: d.is_restricted,
+						}));
+				} else if (family === "player") await client.player();
+				else await client.request("GET", "/me/player/recently-played", { query: { limit: 1 } });
+				result.outcomes[family] = {
+					state: "available",
+					status:
+						this.kvGet<{ latest: SpotifyRequestMetric }>("spotify_request_metrics")?.latest
+							.status ?? 200,
+				};
+			} catch (e) {
+				if (!(e instanceof SpotifyError)) throw e;
+				result.outcomes[family] = {
+					state: e.scope === family ? "held" : "failed",
+					status: e.status,
+					kind: e.kind,
+					reason: e.reason,
+					retryAfter: e.retryAfter,
+				};
+				if (e.scope !== family) {
+					result.stopped = true;
+					break;
+				}
+			}
+		}
+		await this.reconcileSharedCooldown();
+		const finalGlobal = this.providerCooldown();
+		if (finalGlobal && (finalGlobal.until === null || finalGlobal.until > this.now())) {
+			result.stopped = true;
+			for (const family of ["devices", "player", "history"] as const)
+				if (result.outcomes[family].state === "available")
+					result.outcomes[family] = {
+						state: "held",
+						status: 429,
+						kind: finalGlobal.kind,
+						reason: finalGlobal.reason,
+						retryAfter: finalGlobal.retryAfter,
+					};
+			delete result.devices;
+		}
+		const { devices: _devices, ...publicResult } = result;
+		this.kvSet("spotify_availability_experiment", publicResult);
+		return result;
+	}
+
 	async spotifyDiagnostics(): Promise<unknown> {
 		await this.reconcileSharedCooldown();
-		await this.reconcileSharedCooldown("artist-albums");
+		for (const scope of SPOTIFY_COOLDOWN_SCOPES) await this.reconcileSharedCooldown(scope);
 		return {
 			cooldown: publicCooldown(this.kvGet<SpotifyCooldown>("spotify_cooldown")),
 			artistAlbumsCooldown: publicCooldown(
 				this.kvGet<SpotifyCooldown>("spotify_artist_albums_cooldown"),
 			),
+			devicesCooldown: publicCooldown(this.providerCooldown("devices")),
+			playerCooldown: publicCooldown(this.providerCooldown("player")),
+			historyCooldown: publicCooldown(this.providerCooldown("history")),
+			catalogQuarantine: publicCooldown(this.providerCooldown("legacy-catalog")),
+			availability: this.kvGet("spotify_availability_experiment"),
+			recentRequests: this.kvGet("spotify_recent_requests"),
 			requests: this.kvGet("spotify_request_metrics"),
 		};
 	}
@@ -779,6 +962,30 @@ export class HubCore {
 		const key = `${metric.category}:${metric.endpoint}:${metric.status}:${metric.retryCategory}`;
 		counts[key] = (counts[key] ?? 0) + 1;
 		this.kvSet("spotify_request_metrics", { hour, counts, latest: metric });
+		type Hour = {
+			hour: number;
+			counts: Record<string, number>;
+			firstQuotaAt?: number;
+			firstQuotaEndpoint?: string;
+			firstQuotaReason?: string;
+		};
+		const recent = this.kvGet<{ startedAt: number; hours: Hour[] }>("spotify_recent_requests") ?? {
+			startedAt: metric.at,
+			hours: [],
+		};
+		recent.hours = recent.hours.filter((h) => h.hour >= hour - 23 && h.hour <= hour);
+		let bucket = recent.hours.find((h) => h.hour === hour);
+		if (!bucket) {
+			bucket = { hour, counts: {} };
+			recent.hours.push(bucket);
+		}
+		bucket.counts[key] = (bucket.counts[key] ?? 0) + 1;
+		if (metric.retryCategory === "quota" && bucket.firstQuotaAt === undefined) {
+			bucket.firstQuotaAt = metric.at;
+			bucket.firstQuotaEndpoint = metric.endpoint;
+			bucket.firstQuotaReason = metric.reason;
+		}
+		this.kvSet("spotify_recent_requests", recent);
 	}
 
 	isConnected(): boolean {
@@ -2348,6 +2555,20 @@ export class HubCore {
 			state = await client.player();
 		} catch (err) {
 			this.handleSyncError(err);
+			if (err instanceof SpotifyError && err.scope === "player") {
+				const previouslyActive = s.idleSince === null && s.lastActivityAt > 0;
+				if (
+					opts.force ||
+					this.now() - s.lastRecentAt >= (previouslyActive ? 90_000 : 30 * MINUTE_MS)
+				) {
+					try {
+						await this.readRecent(client, s);
+						this.setSyncState(s);
+					} catch (historyError) {
+						this.handleSyncError(historyError);
+					}
+				}
+			}
 			return;
 		}
 		const obs = toObservation(state, observationAt);

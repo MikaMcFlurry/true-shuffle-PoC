@@ -5,7 +5,11 @@
 
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./env";
-import type { SpotifyCooldown, SpotifyCooldownScope } from "./spotify/client";
+import {
+	SPOTIFY_COOLDOWN_SCOPES,
+	type SpotifyCooldown,
+	type SpotifyCooldownScope,
+} from "./spotify/client";
 import { SpotifyGate, type SpotifyGateState } from "./spotify/gate";
 
 export class Registry extends DurableObject<Env> {
@@ -22,12 +26,21 @@ export class Registry extends DurableObject<Env> {
 		this.ctx.storage.sql.exec(
 			`CREATE TABLE IF NOT EXISTS spotify_artist_albums_gate (id INTEGER PRIMARY KEY CHECK(id = 1), state TEXT NOT NULL)`,
 		);
+		for (const scope of SPOTIFY_COOLDOWN_SCOPES)
+			this.ctx.storage.sql.exec(
+				`CREATE TABLE IF NOT EXISTS spotify_${scope.replaceAll("-", "_")}_gate (id INTEGER PRIMARY KEY CHECK(id = 1), state TEXT NOT NULL)`,
+			);
+		this.ctx.storage.sql.exec(
+			`CREATE TABLE IF NOT EXISTS spotify_quarantine_backup (id INTEGER PRIMARY KEY CHECK(id=1), data TEXT NOT NULL)`,
+		);
 		this.ready = true;
 	}
 
 	private gate(scope?: SpotifyCooldownScope): SpotifyGate {
 		this.init();
-		const table = scope === "artist-albums" ? "spotify_artist_albums_gate" : "spotify_gate";
+		if (scope && !SPOTIFY_COOLDOWN_SCOPES.includes(scope))
+			throw new Error("Invalid Spotify gate scope");
+		const table = scope ? `spotify_${scope.replaceAll("-", "_")}_gate` : "spotify_gate";
 		return new SpotifyGate(
 			{
 				get: () => {
@@ -70,6 +83,23 @@ export class Registry extends DurableObject<Env> {
 	}
 	finishSpotifyRecheck(token: string, success: boolean, scope?: SpotifyCooldownScope): void {
 		this.gate(scope).finish(token, success);
+	}
+
+	quarantineSpotifyLegacy(expected: SpotifyCooldown, revision: number) {
+		this.init();
+		return this.ctx.storage.transactionSync(() => {
+			const quarantined = this.gate().quarantine(expected, revision, this.gate("legacy-catalog"));
+			if (quarantined)
+				this.ctx.storage.sql.exec(
+					`INSERT INTO spotify_quarantine_backup(id,data) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data`,
+					JSON.stringify({ at: Date.now(), cooldown: expected }),
+				);
+			return {
+				quarantined,
+				globalRevision: this.gate().snapshot().revision,
+				catalogRevision: this.gate("legacy-catalog").snapshot().revision,
+			};
+		});
 	}
 
 	register(uid: string): void {

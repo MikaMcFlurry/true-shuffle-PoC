@@ -1,4 +1,4 @@
-import type { SpotifyCooldown } from "./client";
+import { eligibleLegacy, type SpotifyCooldown } from "./client";
 
 export interface SpotifyGateState {
 	revision: number;
@@ -50,12 +50,26 @@ export class SpotifyGate {
 			probe: null,
 			cooldown: {
 				...source,
+				endpoint: source.scope ? source.endpoint : (previous?.endpoint ?? cooldown.endpoint),
 				probePath: source.probePath ?? cooldown.probePath,
 				until,
 				kind: previous?.kind === "quota" ? "quota" : cooldown.kind,
 			},
 		});
 		return state.revision + 1;
+	}
+	quarantine(expected: SpotifyCooldown, revision: number, catalog: SpotifyGate): boolean {
+		const state = this.state();
+		if (
+			state.revision !== revision ||
+			state.probe ||
+			!eligibleLegacy(state.cooldown) ||
+			JSON.stringify(state.cooldown) !== JSON.stringify(expected)
+		)
+			return false;
+		catalog.block({ ...state.cooldown, scope: "legacy-catalog" });
+		this.store.set({ revision: state.revision + 1, cooldown: null, probe: null });
+		return true;
 	}
 	begin(token: string): string | null {
 		const state = this.state();

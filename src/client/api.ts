@@ -71,11 +71,44 @@ export interface SpotifyCooldownView {
 	retryAfter: string | null;
 	observedAt: number;
 	endpoint?: string;
-	scope?: "artist-albums";
+	scope?: "artist-albums" | "devices" | "player" | "history" | "legacy-catalog";
+}
+export type SpotifyFunction = "devices" | "player" | "history";
+export interface SpotifyAvailabilityExperiment {
+	testedAt: number;
+	outcomes: Record<
+		SpotifyFunction,
+		{
+			state: "available" | "held" | "failed" | "not_tested";
+			status?: number;
+			kind?: string;
+			reason?: string;
+			retryAfter?: string | null;
+		}
+	>;
+	controls: "untested";
+	catalog: "held" | "untested";
+	stopped: boolean;
+	devices?: DeviceView[];
 }
 export interface SpotifyDiagnostics {
 	cooldown: SpotifyCooldownView | null;
 	artistAlbumsCooldown?: SpotifyCooldownView | null;
+	devicesCooldown?: SpotifyCooldownView | null;
+	playerCooldown?: SpotifyCooldownView | null;
+	historyCooldown?: SpotifyCooldownView | null;
+	catalogQuarantine?: SpotifyCooldownView | null;
+	availability?: SpotifyAvailabilityExperiment | null;
+	recentRequests?: {
+		startedAt: number;
+		hours: Array<{
+			hour: number;
+			counts: Record<string, number>;
+			firstQuotaAt?: number;
+			firstQuotaEndpoint?: string;
+			firstQuotaReason?: string;
+		}>;
+	};
 	requests: { hour: number; counts: Record<string, number>; latest: unknown } | null;
 }
 export const api = {
@@ -106,6 +139,8 @@ export const api = {
 	nativeCancel: (expected?: { sessionId?: string; entryId?: string; orderRevision?: number }) =>
 		call<unknown>("POST", "/api/native/cancel", expected),
 	spotifyDiagnostics: () => call<SpotifyDiagnostics>("GET", "/api/spotify/diagnostics"),
+	testSpotifyAvailability: () =>
+		call<SpotifyAvailabilityExperiment>("POST", "/api/spotify/availability-test"),
 	state: (live = true) => call<AppState>("GET", `/api/state${live ? "?live=1" : ""}`),
 	playlists: () => call<PlaylistView[]>("GET", "/api/playlists"),
 	onboard: (playlistIds: string[]) => call<unknown>("POST", "/api/onboarding", { playlistIds }),
@@ -125,7 +160,8 @@ export const api = {
 			...(deviceId ? { deviceId } : {}),
 			...opts,
 		}),
-	retrySpotify: () => call<unknown>("POST", "/api/spotify/retry"),
+	retrySpotify: (scope?: SpotifyFunction | "artist-albums") =>
+		call<unknown>("POST", "/api/spotify/retry", scope ? { scope } : undefined),
 	player: (action: "pause" | "resume" | "next", opts?: { sessionId?: string; entryId?: string }) =>
 		call<PlayResult>("POST", `/api/player/${action}`, opts),
 	devices: () => call<DeviceView[]>("GET", "/api/devices"),

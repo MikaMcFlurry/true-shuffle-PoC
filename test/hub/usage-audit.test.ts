@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { RequestBudget } from "../../src/worker/spotify/client";
 import { onboarded } from "./harness";
 
-it("audits full-day Spotify pressure and the history feed during a device cooldown", async () => {
+it("audits full-day Spotify pressure and continued history during a device-only quota", async () => {
 	const profiles = [];
 	for (const profile of [
 		"paused_closed",
@@ -70,8 +70,11 @@ it("audits full-day Spotify pressure and the history feed during a device cooldo
 	const providerCallsAtGate = h.fake.calls.length;
 	await h.listen(30 * 60_000);
 	await h.hub.state({ live: true });
-	expect(h.fake.calls.length).toBe(providerCallsAtGate);
-	expect(h.hub.history(200)).toEqual(before);
+	expect(h.fake.calls.length).toBeGreaterThan(providerCallsAtGate);
+	expect(h.hub.history(200).length).toBeGreaterThan(before.length);
+	const afterSync = h.fake.calls.length;
+	await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota", scope: "devices" });
+	expect(h.fake.calls.length).toBe(afterSync);
 	writeFileSync(
 		"/tmp/ts-full-day-usage-audit.json",
 		JSON.stringify(
@@ -82,8 +85,9 @@ it("audits full-day Spotify pressure and the history feed during a device cooldo
 				profiles,
 				historyFeed: {
 					ordinaryHistoryPopulatedBySync: true,
-					deviceQuotaStopsAllEndpointsForAuditedAccount: true,
-					newHistoryRecordsDuringKnownCooldown: 0,
+					deviceQuotaStopsAllEndpointsForAuditedAccount: false,
+					deviceQuotaKeepsPlayerHistoryAvailable: true,
+					newHistoryRecordsDuringKnownCooldown: h.hub.history(200).length - before.length,
 					elapsedMinutes: 30,
 				},
 			},

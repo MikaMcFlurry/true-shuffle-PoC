@@ -111,7 +111,32 @@ export class RequestBudget {
 export type Fetcher = (input: Request) => Promise<Response>;
 
 /** Account-owned provider gate. A null deadline is unknown, never a guessed reset. */
-export type SpotifyCooldownScope = "artist-albums";
+export type SpotifyCooldownScope =
+	| "artist-albums"
+	| "devices"
+	| "player"
+	| "history"
+	| "legacy-catalog";
+export const SPOTIFY_COOLDOWN_SCOPES: SpotifyCooldownScope[] = [
+	"artist-albums",
+	"devices",
+	"player",
+	"history",
+	"legacy-catalog",
+];
+export function readScope(endpoint: string): SpotifyCooldownScope | undefined {
+	return (
+		{
+			"/artists/:id/albums": "artist-albums",
+			"/me/player/devices": "devices",
+			"/me/player": "player",
+			"/me/player/recently-played": "history",
+		} as Record<string, SpotifyCooldownScope>
+	)[endpoint];
+}
+export function eligibleLegacy(c: SpotifyCooldown | null): c is SpotifyCooldown {
+	return !!c && !c.scope && !c.endpoint && c.kind === "quota" && c.reason === "QUOTA_EXCEEDED";
+}
 export const ARTIST_ALBUMS_ENDPOINT = "/artists/:id/albums";
 
 export interface SpotifyCooldown {
@@ -150,6 +175,7 @@ export interface ClientOptions {
 	now: () => number;
 	policy?: SpotifyRequestPolicy;
 	requestTimeoutMs?: number;
+	singleTransport?: boolean;
 	/** Deterministic timeout injection for the transport harness. */
 	timeoutSignal?: (timeoutMs: number) => AbortSignal;
 }
@@ -159,7 +185,8 @@ type Query = Record<string, string | number | boolean | undefined | null>;
 export class SpotifyClient {
 	private cached: SpotifyTokens | null = null;
 	private cooldown: SpotifyCooldown | null = null;
-	private artistCooldown: SpotifyCooldown | null = null;
+	private scopedCooldowns = new Map<SpotifyCooldownScope, SpotifyCooldown>();
+	private refreshes = 0;
 
 	constructor(private readonly o: ClientOptions) {}
 
@@ -184,14 +211,14 @@ export class SpotifyClient {
 	}
 
 	private async guard(endpoint: string, category: SpotifyRequestMetric["category"]): Promise<void> {
-		for (const scope of [
-			undefined,
-			...(category === "read" && endpoint === ARTIST_ALBUMS_ENDPOINT
-				? ["artist-albums" as const]
-				: []),
-		]) {
+		const family = category === "read" ? readScope(endpoint) : undefined;
+		const essentialRead = family === "devices" || family === "player" || family === "history";
+		const scopes: (SpotifyCooldownScope | undefined)[] = [undefined];
+		if (!essentialRead && category !== "refresh") scopes.push("legacy-catalog");
+		if (family) scopes.push(family);
+		for (const scope of scopes) {
 			const saved = await this.o.policy?.getCooldown(scope);
-			const c = saved ?? (scope ? this.artistCooldown : this.cooldown);
+			const c = saved ?? (scope ? this.scopedCooldowns.get(scope) : this.cooldown);
 			if (c && (c.until === null || c.until > this.o.now())) {
 				await this.metric(endpoint, category, 429, "blocked", c.reason, c.retryAfter);
 				throw new SpotifyError(
@@ -234,12 +261,9 @@ export class SpotifyClient {
 		path?: string,
 	): Promise<SpotifyError> {
 		const parsed = await toError(res, this.o.now());
-		const scope: SpotifyCooldownScope | undefined =
-			parsed.kind === "quota" &&
-			parsed.reason === "QUOTA_EXCEEDED" &&
-			method === "GET" &&
-			endpoint === ARTIST_ALBUMS_ENDPOINT
-				? "artist-albums"
+		const scope =
+			parsed.kind === "quota" && parsed.reason === "QUOTA_EXCEEDED" && method === "GET"
+				? readScope(endpoint ?? "")
 				: undefined;
 		const error = new SpotifyError(
 			parsed.kind,
@@ -253,7 +277,8 @@ export class SpotifyClient {
 		);
 		if (error.kind === "rate" || error.kind === "quota") {
 			const previous =
-				(await this.o.policy?.getCooldown(scope)) ?? (scope ? this.artistCooldown : this.cooldown);
+				(await this.o.policy?.getCooldown(scope)) ??
+				(scope ? this.scopedCooldowns.get(scope) : this.cooldown);
 			const proposed = error.retryAfter === null ? null : this.o.now() + error.retryAfterMs;
 			const until =
 				previous?.until === null || proposed === null
@@ -269,7 +294,7 @@ export class SpotifyClient {
 				retryAfter: error.retryAfter,
 				observedAt: this.o.now(),
 			};
-			if (scope) this.artistCooldown = c;
+			if (scope) this.scopedCooldowns.set(scope, c);
 			else this.cooldown = c;
 			await this.o.policy?.setCooldown(c);
 		}
@@ -331,7 +356,7 @@ export class SpotifyClient {
 			}),
 		);
 		if (!res.ok) {
-			const error = await transport.failure(res);
+			const error = await transport.failure(res, "/api/token", "POST");
 			await transport.metric(
 				"/api/token",
 				"refresh",
@@ -365,6 +390,9 @@ export class SpotifyClient {
 	}
 
 	private async refresh(t: SpotifyTokens): Promise<SpotifyTokens> {
+		if (this.o.singleTransport && this.refreshes >= 1)
+			throw new SpotifyError("auth", "Spotify-Anmeldung konnte nicht bestätigt werden", 401);
+		this.refreshes++;
 		await this.guard("/api/token", "refresh");
 		this.o.budget.take();
 		const body = new URLSearchParams({
@@ -386,7 +414,7 @@ export class SpotifyClient {
 			throw new SpotifyError("network", "Spotify nicht erreichbar");
 		}
 		if (!res.ok) {
-			const e = await this.failure(res);
+			const e = await this.failure(res, "/api/token", "POST");
 			await this.metric(
 				"/api/token",
 				"refresh",
@@ -457,15 +485,15 @@ export class SpotifyClient {
 				);
 			} catch {
 				await this.metric(endpoint, category, 0, "network");
-				if (method === "GET" && attempt++ < 1) continue;
+				if (!this.o.singleTransport && method === "GET" && attempt++ < 1) continue;
 				throw new SpotifyError("network", "Spotify nicht erreichbar");
 			}
-			if (res.status === 401 && !forced) {
+			if (!this.o.singleTransport && res.status === 401 && !forced) {
 				await this.metric(endpoint, category, res.status, "auth");
 				forced = true;
 				continue;
 			}
-			if (method === "GET" && res.status >= 500 && attempt++ < 1) {
+			if (!this.o.singleTransport && method === "GET" && res.status >= 500 && attempt++ < 1) {
 				await this.metric(endpoint, category, res.status, "server");
 				continue;
 			}

@@ -10,6 +10,7 @@ import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api, type SpotifyDiagnostics } from "../api";
 import { Detents, PageBar, Section } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
+import { SpotifyFunctionStatus } from "../components/spotify-availability";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
 const DEVICE_TYPES: Record<string, string> = {
@@ -373,13 +374,22 @@ function quotaWait(seconds: number): string {
 }
 
 export function DevicesScreen() {
+	const [testing, setTesting] = useState(false);
+	const [now, setNow] = useState(Date.now());
+	useEffect(() => {
+		const timer = setInterval(() => setNow(Date.now()), 30_000);
+		return () => clearInterval(timer);
+	}, []);
 	const [diagnostics, setDiagnostics] = useState<SpotifyDiagnostics | null>(null);
 	const [diagnosticError, setDiagnosticError] = useState("");
 	const loadDiagnostics = () => {
 		setDiagnosticError("");
 		void api
 			.spotifyDiagnostics()
-			.then(setDiagnostics)
+			.then((value) => {
+				setDiagnostics(value);
+				setNow(Date.now());
+			})
 			.catch((e: Error) => setDiagnosticError(e.message));
 	};
 	useEffect(loadDiagnostics, []);
@@ -402,10 +412,10 @@ export function DevicesScreen() {
 	useEffect(load, []);
 	const cooldown = diagnostics?.cooldown;
 	const artistCooldown = diagnostics?.artistAlbumsCooldown;
-	const globalActive = cooldown != null && (cooldown.until === null || cooldown.until > Date.now());
+	const globalActive = cooldown != null && (cooldown.until === null || cooldown.until > now);
 	const recheckArtist = !globalActive && artistCooldown != null;
 	const recheckCooldown = recheckArtist ? artistCooldown : cooldown;
-	const deadlinePending = recheckCooldown?.until != null && recheckCooldown.until > Date.now();
+	const deadlinePending = recheckCooldown?.until != null && recheckCooldown.until > now;
 	const retrySeconds =
 		cooldown?.retryAfter != null && /^\d+(?:\.\d+)?$/.test(cooldown.retryAfter)
 			? Number(cooldown.retryAfter)
@@ -499,6 +509,8 @@ export function DevicesScreen() {
 										? `${quotaWait(retrySeconds)} (${num(retrySeconds)} Sekunden)`
 										: diagnostics.cooldown.retryAfter}
 							</dd>
+							<dt>Gespeicherter Wert, kein Countdown</dt>
+							<dd>Die gemeldete Wartezeit bleibt gleich. Maßgeblich ist die Frist unten.</dd>
 							<dt>Früheste erneute Prüfung</dt>
 							<dd>
 								{diagnostics.cooldown.until === null
@@ -509,7 +521,12 @@ export function DevicesScreen() {
 					) : (
 						<p class="hint">
 							{diagnostics
-								? "Keine gespeicherte Sperre für Wiedergabe und Geräte."
+								? diagnostics.catalogQuarantine ||
+									diagnostics.devicesCooldown ||
+									diagnostics.playerCooldown ||
+									diagnostics.historyCooldown
+									? "Keine allgemeine Sperre gespeichert. Einzelne Funktionen können trotzdem warten."
+									: "Keine gespeicherte Sperre für Wiedergabe und Geräte."
 								: "Anfragestatus wird geladen …"}
 						</p>
 					)}
@@ -569,6 +586,41 @@ export function DevicesScreen() {
 					) : null}
 					{diagnostics ? (
 						<>
+							<SpotifyFunctionStatus
+								diagnostics={diagnostics}
+								busy={testing}
+								onRetry={(scope) => {
+									setTesting(true);
+									setDiagnosticError("");
+									void api
+										.retrySpotify(scope)
+										.then(loadDiagnostics)
+										.catch((e: Error) => setDiagnosticError(e.message))
+										.finally(() => setTesting(false));
+								}}
+							/>
+							<button
+								type="button"
+								class="key btn"
+								disabled={testing}
+								onClick={() => {
+									setTesting(true);
+									setDiagnosticError("");
+									void api
+										.testSpotifyAvailability()
+										.then((result) => {
+											if (result.devices) {
+												setDevices(result.devices);
+												setErr(null);
+											}
+											loadDiagnostics();
+										})
+										.catch((e: Error) => setDiagnosticError(e.message))
+										.finally(() => setTesting(false));
+								}}
+							>
+								{testing ? "Funktionen werden geprüft …" : "Funktionen gezielt testen"}
+							</button>
 							<h3>Gespeicherte Anfrageversuche pro Stunde</h3>
 							<p class="hint">
 								Einträge mit „blocked“ wurden lokal zurückgehalten und nicht an Spotify gesendet.
@@ -587,19 +639,21 @@ export function DevicesScreen() {
 						<button type="button" class="key" onClick={loadDiagnostics}>
 							Status aktualisieren
 						</button>
-						<button
-							type="button"
-							class="key"
-							disabled={deadlinePending}
-							onClick={() =>
-								void api
-									.retrySpotify()
-									.then(loadDiagnostics)
-									.catch((e: Error) => setDiagnosticError(e.message))
-							}
-						>
-							{recheckArtist ? "Künstleralben-Freigabe prüfen" : "Spotify-Freigabe prüfen"}
-						</button>
+						{cooldown || artistCooldown ? (
+							<button
+								type="button"
+								class="key"
+								disabled={deadlinePending}
+								onClick={() =>
+									void api
+										.retrySpotify()
+										.then(loadDiagnostics)
+										.catch((e: Error) => setDiagnosticError(e.message))
+								}
+							>
+								{recheckArtist ? "Künstleralben-Freigabe prüfen" : "Spotify-Freigabe prüfen"}
+							</button>
+						) : null}
 					</div>
 				</div>
 			</details>

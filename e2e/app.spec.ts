@@ -158,6 +158,7 @@ test.describe("a listener's day", () => {
 		expect(first).not.toBeNull();
 
 		await page.getByRole("button", { name: "Weiter: Nächster Song" }).click();
+		await expect(page.getByRole("button", { name: "Weiter: Nächster Song" })).toBeEnabled();
 		// Synthetic tracks reuse titles; Spotify track identity must change.
 		await expect.poll(async () => (await fake("status")).current).not.toBe(first);
 
@@ -761,5 +762,161 @@ test.describe("truthful Spotify quota diagnostics", () => {
 		await expect(page.getByRole("button", { name: "Spotify-Freigabe prüfen" })).toBeDisabled();
 		await expect(page.getByText("/me/player", { exact: true })).toBeVisible();
 		await checkPage(page, "independent global rate gate");
+	});
+	test("tests partial functions without reporting playback control recovery", async ({ page }) => {
+		const until = Date.now() + 25902_000;
+		const old = {
+			until,
+			kind: "quota",
+			reason: "QUOTA_EXCEEDED",
+			retryAfter: "25902",
+			observedAt: Date.now(),
+		};
+		let tested = false;
+		let tests = 0;
+		let deviceReads = 0;
+		const experiment = {
+			testedAt: Date.now(),
+			outcomes: {
+				devices: { state: "available", status: 200 },
+				player: { state: "available", status: 204 },
+				history: { state: "held", status: 429, kind: "quota", reason: "QUOTA_EXCEEDED" },
+			},
+			controls: "untested",
+			catalog: "held",
+			stopped: false,
+		};
+		await page.route("**/api/devices", (route) => {
+			deviceReads++;
+			return route.fulfill(
+				tested
+					? {
+							json: [
+								{
+									id: "phone",
+									name: "Test-Handy",
+									type: "Smartphone",
+									active: true,
+									restricted: false,
+								},
+							],
+						}
+					: {
+							status: 429,
+							json: {
+								error: {
+									code: "quota",
+									message: "Spotify wartet auf die Freigabe weiterer Anfragen",
+								},
+							},
+						},
+			);
+		});
+		await page.route("**/api/spotify/diagnostics", (route) =>
+			route.fulfill({
+				json: {
+					cooldown: tested ? null : old,
+					artistAlbumsCooldown: null,
+					devicesCooldown: null,
+					playerCooldown: null,
+					historyCooldown: tested
+						? { ...old, endpoint: "/me/player/recently-played", scope: "history" }
+						: null,
+					catalogQuarantine: tested ? { ...old, scope: "legacy-catalog" } : null,
+					availability: tested ? experiment : null,
+					requests: { hour: 0, counts: { "read:/me/player/devices:429:blocked": 9 }, latest: null },
+					recentRequests: tested
+						? {
+								startedAt: Date.now(),
+								hours: [
+									{
+										hour: Math.floor(Date.now() / 3600_000),
+										counts: {
+											"read:/me/player/devices:200:none": 1,
+											"read:/me/player:204:none": 1,
+											"read:/me/player/recently-played:429:quota": 1,
+											"refresh:/api/token:200:none": 1,
+											"read:/me/player/devices:429:blocked": 9,
+										},
+										firstQuotaAt: Date.now(),
+										firstQuotaEndpoint: "/me/player/recently-played",
+										firstQuotaReason: "QUOTA_EXCEEDED",
+									},
+								],
+							}
+						: undefined,
+				},
+			}),
+		);
+		await page.route("**/api/spotify/availability-test", (route) => {
+			tests++;
+			tested = true;
+			return route.fulfill({
+				json: {
+					...experiment,
+					devices: [
+						{
+							id: "phone",
+							name: "Test-Handy",
+							type: "Smartphone",
+							active: true,
+							restricted: false,
+						},
+					],
+				},
+			});
+		});
+		await signIn(page);
+		await page.goto("/geraete");
+		const onboarding = page.getByText("Wähle, welche Sender werden", { exact: true });
+		const details = page.getByText("Spotify-Freigabe & Anfragestatus", { exact: true });
+		await expect(onboarding.or(details)).toBeVisible();
+		if (await onboarding.isVisible()) {
+			await page.getByRole("button", { name: "Nur mit „Alles“ starten" }).click();
+			await expect(page.getByRole("button", { name: /^Alles/ })).toBeEnabled({ timeout: 60000 });
+			await page.goto("/geraete");
+		}
+		await details.click();
+		await expect(
+			page.getByText("Gespeicherter Wert, kein Countdown", { exact: true }),
+		).toBeVisible();
+		const readsBefore = deviceReads;
+		await page.getByRole("button", { name: "Funktionen gezielt testen", exact: true }).click();
+		await expect(page.getByText("Test-Handy", { exact: true })).toBeVisible();
+		await expect(page.getByText("Abfrage erfolgreich · 200", { exact: true })).toBeVisible();
+		await expect(page.getByText("Abfrage erfolgreich · 204", { exact: true })).toBeVisible();
+		await expect(page.getByText(/Abfrage zurückgestellt · QUOTA_EXCEEDED/)).toBeVisible();
+		await expect(
+			page.getByText(/Starten, Pausieren und Übertragen wurden nicht geprüft/),
+		).toBeVisible();
+		await expect(page.getByText(/Die alte Sperre bleibt für ungetestete Katalog-/)).toBeVisible();
+		await expect(page.getByText(/Erste aufgezeichnete Quota-Antwort:/)).toContainText(
+			"/me/player/recently-played",
+		);
+		expect(tests).toBe(1);
+		expect(deviceReads).toBe(readsBefore);
+		await checkPage(page, "partial Spotify availability");
+		await checkText(page, "partial Spotify availability");
+		for (const theme of ["light", "dark"] as const) {
+			await page.emulateMedia({ colorScheme: theme });
+			await page.evaluate(() => {
+				(document.activeElement as HTMLElement)?.blur();
+				window.scrollTo(0, 0);
+			});
+			await page.screenshot({
+				path: `.impeccable/review/spotify-function-test-${theme}.png`,
+				fullPage: true,
+			});
+		}
+	});
+	test("requires authentication and request protection for the availability trial", async ({
+		request,
+	}) => {
+		const withoutHeader = await request.post("/api/spotify/availability-test");
+		expect(withoutHeader.status()).toBe(403);
+		const signedOut = await request.post("/api/spotify/availability-test", {
+			headers: { "x-ts": "1" },
+		});
+		expect(signedOut.status()).toBe(401);
 	});
 });

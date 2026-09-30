@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { RequestBudget, type SpotifyClient } from "../../src/worker/spotify/client";
+
+const provider = (h: { hub: unknown }) =>
+	(h.hub as { client(b: RequestBudget): SpotifyClient }).client(new RequestBudget(10));
+
 import type { HubDeps } from "../../src/worker/hub/hub";
 import { SpotifyGate, type SpotifyGateState } from "../../src/worker/spotify/gate";
 import { onboarded } from "../hub/harness";
@@ -48,7 +53,7 @@ describe("NN-09 deployment-wide provider gate", () => {
 		const a = await onboarded({ tracks: 30, sharedSpotify: shared.account() });
 		const b = await onboarded({ tracks: 35, sharedSpotify: shared.account() });
 		a.fake.failNext = { status: 429, count: 1, body: { error: { reason: "QUOTA_EXCEEDED" } } };
-		await expect(a.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		await expect(provider(a).me()).rejects.toMatchObject({ kind: "quota" });
 		const before = b.fake.calls.length;
 		b.restart();
 		await expect(b.hub.devices()).rejects.toMatchObject({ kind: "quota" });
@@ -68,19 +73,19 @@ describe("NN-09 deployment-wide provider gate", () => {
 		const a = await onboarded({ tracks: 30, sharedSpotify: shared.account() });
 		const b = await onboarded({ tracks: 35, sharedSpotify: shared.account() });
 		a.fake.failNext = { status: 429, count: 1, body: { error: { reason: "QUOTA_EXCEEDED" } } };
-		await expect(a.hub.devices()).rejects.toMatchObject({ kind: "quota" });
+		await expect(provider(a).me()).rejects.toMatchObject({ kind: "quota" });
 		b.fake.failNext = {
 			status: 429,
 			count: 1,
-			body: { error: { reason: "QUOTA_EXCEEDED" } },
+			body: { error: { reason: "UNKNOWN" } },
 			headers: { "Retry-After": "3600" },
 		};
 		await expect(b.hub.retryQuota()).rejects.toMatchObject({
-			kind: "quota",
+			kind: "rate",
 			retryAfterMs: 3600000,
 		});
 		a.restart();
-		await expect(a.hub.devices()).rejects.toMatchObject({ kind: "quota", retryAfterMs: 3600000 });
+		await expect(provider(a).me()).rejects.toMatchObject({ kind: "rate", retryAfterMs: 3600000 });
 		expect(shared.gate().get()?.until).not.toBeNull();
 		expect(
 			((await a.hub.spotifyDiagnostics()) as { cooldown: { until: number | null } }).cooldown.until,

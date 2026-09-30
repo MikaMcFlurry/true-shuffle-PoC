@@ -434,7 +434,23 @@ app.post("/api/native/player", async (c) => {
 		),
 	);
 });
-app.post("/api/spotify/retry", (c) => unwrap(c, c.var.hub.retryQuota(c.var.epoch)));
+app.post("/api/spotify/availability-test", (c) =>
+	unwrap(c, c.var.hub.testSpotifyAvailability(c.var.epoch)),
+);
+app.post("/api/spotify/retry", async (c) => {
+	const b = await body<{ scope?: unknown }>(c);
+	if (
+		!b ||
+		typeof b !== "object" ||
+		Array.isArray(b) ||
+		(b.scope !== undefined &&
+			(typeof b.scope !== "string" ||
+				!["artist-albums", "devices", "player", "history"].includes(b.scope)))
+	)
+		return c.json({ error: { code: "bad_request", message: "Unbekannte Spotify-Funktion." } }, 400);
+	const scope = b.scope as "artist-albums" | "devices" | "player" | "history" | undefined;
+	return unwrap(c, c.var.hub.retryQuota(c.var.epoch, scope));
+});
 app.get("/api/spotify/diagnostics", (c) => unwrap(c, c.var.hub.spotifyDiagnostics(c.var.epoch)));
 
 app.get("/api/devices", (c) => unwrap(c, c.var.hub.devices(c.var.epoch)));

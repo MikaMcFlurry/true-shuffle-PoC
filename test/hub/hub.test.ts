@@ -294,11 +294,21 @@ describe("errors", () => {
 
 	it("keeps an unknown Spotify quota reset blocked until an explicit recheck", async () => {
 		const h = await onboarded();
-		h.fake.failNext = {
-			status: 429,
-			count: 1,
-			body: { error: { status: 429, message: "quota", reason: "QUOTA_EXCEEDED" } },
-		};
+		h.sql.run(
+			"INSERT INTO kv(k,v) VALUES('spotify_cooldown',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+			JSON.stringify({
+				kind: "quota",
+				reason: "QUOTA_EXCEEDED",
+				until: null,
+				retryAfter: null,
+				observedAt: h.clock.t,
+				endpoint: "/me",
+			}),
+		);
+		h.sql.run(
+			"INSERT INTO kv(k,v) VALUES('backoff',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+			JSON.stringify({ kind: "quota", until: Number.MAX_SAFE_INTEGER }),
+		);
 		await h.listen(25 * MINUTE_MS);
 		const st = await h.hub.state();
 		expect(st.warnings.some((w) => w.code === "quota")).toBe(true);

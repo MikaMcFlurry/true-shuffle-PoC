@@ -214,7 +214,7 @@ describe("exact application artist-albums quota scope", () => {
 			scope: "artist-albums",
 		});
 		h.fake.failNext = fail();
-		await expect(client(h).player()).rejects.toMatchObject({ scope: undefined });
+		await expect(client(h).me()).rejects.toMatchObject({ scope: undefined });
 		await expect(client(h).artistAlbums(artistId)).rejects.toMatchObject({ scope: undefined });
 		await h.hub.retryQuota();
 		await h.hub.devices();

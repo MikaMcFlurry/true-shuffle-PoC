@@ -47,6 +47,8 @@ export class UserHub extends DurableObject<Env> {
 						boundedSpotifyRpc(registry.spotifyGateSnapshot(probeTokens.get(scope), scope)),
 					setCooldown: (cooldown) =>
 						boundedSpotifyRpc(registry.spotifyBlocked(cooldown, probeTokens.get(cooldown.scope))),
+					quarantineLegacyGlobal: (expected, revision) =>
+						boundedSpotifyRpc(registry.quarantineSpotifyLegacy(expected, revision)),
 					beginRecheck: async (scope) => {
 						const token = await boundedSpotifyRpc(registry.beginSpotifyRecheck(scope));
 						if (token) probeTokens.set(scope, token);
@@ -490,8 +492,11 @@ export class UserHub extends DurableObject<Env> {
 	nativeState(epoch: number, uid: string) {
 		return this.session(epoch, () => this.observeNative(uid));
 	}
-	retryQuota(epoch: number) {
-		return this.session(epoch, () => this.hub().retryQuota());
+	testSpotifyAvailability(epoch: number) {
+		return this.session(epoch, () => this.hub().testSpotifyAvailability());
+	}
+	retryQuota(epoch: number, scope?: Exclude<SpotifyCooldownScope, "legacy-catalog">) {
+		return this.session(epoch, () => this.hub().retryQuota(scope));
 	}
 	spotifyDiagnostics(epoch: number) {
 		return this.session(epoch, () => this.hub().spotifyDiagnostics());
