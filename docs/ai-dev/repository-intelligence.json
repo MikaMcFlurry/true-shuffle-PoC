@@ -1,7 +1,7 @@
 {
   "schema_version": "mika.repository-intelligence.v2",
   "packet_status": "ALIGNED",
-  "generated_at": "2026-09-30T09:34:25.906746+00:00",
+  "generated_at": "2026-09-30T10:46:00.494888+00:00",
   "analysis_modes": [
     "LIVE_BASELINE",
     "LOST_CONTEXT",
@@ -16,8 +16,8 @@
       "visibility": "public",
       "default_branch": "main",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "19da26e9cd7ff3c892ef3baa942e36eaa9d5efa1",
-      "notes": "Current evidence baseline. Deployed application source 1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9 has identical application bytes; exact production version/bindings and anonymous readback verified. Owner provider/actual populated recovery still unverified."
+      "commit_sha": "d9cfbb6c7484c42c829eb46d0e49fab217cc8004",
+      "notes": "Current supporting-evidence baseline; deployed application b64e03c09569bb4b763980ebdb6d0d5c78e5d263 has identical app bytes. Quota copy clarified; actual owner provider recovery and populated object restore unverified."
     },
     {
       "id": "R-2",
@@ -34,7 +34,7 @@
   "primary_baseline": {
     "repository_id": "R-1",
     "ref": "codex/implement-cloudflare-restart",
-    "commit_sha": "19da26e9cd7ff3c892ef3baa942e36eaa9d5efa1",
+    "commit_sha": "d9cfbb6c7484c42c829eb46d0e49fab217cc8004",
     "deployment_refs": [
       "https://true-shuffle.mikahertler-72c.workers.dev/"
     ],
@@ -51,7 +51,8 @@
       "EV-04",
       "EV-05",
       "EV-11",
-      "EV-12"
+      "EV-12",
+      "EV-13"
     ],
     "target_intent_evidence_ids": [
       "EV-02"
@@ -218,12 +219,13 @@
       "group": "Reliability",
       "evidence_state": "PARTIAL",
       "owner_disposition": "IMPROVE",
-      "summary": "Persistent shared quota gate with raw provider metadata, revision fencing and measured request reduction; live quota cause unverified.",
+      "summary": "Persistent quota gate and measured local pressure reduction; truthful wait/blocked-attempt diagnostics. Owner restriction observed; shared developer-account budget documented, actual recovery/attribution/sustained usage unverified.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
         "EV-04",
-        "EV-11"
+        "EV-11",
+        "EV-13"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -331,7 +333,7 @@
       }
     ],
     "deployment": {
-      "summary": "Actual production version c7b059ed-ab7c-45f5-88f2-3219ec3dd628, deployment dc7496dc-b106-4daf-9925-f4e8ce81d2bd, source 1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9 at100%; namespace and secret identities preserved; anonymous readback passed.",
+      "summary": "Current version c3c3324b-cdab-4cee-a1a8-af69ca289d97, deployment e414b5c1-0a5e-46d3-871a-c5d6f1ce5f23, source b64e03c09569bb4b763980ebdb6d0d5c78e5d263 at100%; bindings/runtime unchanged, exact public assets/API and anonymous browser verified.",
       "evidence_ids": [
         "EV-12"
       ]
@@ -410,7 +412,7 @@
       "id": "G-02",
       "class": "UNVERIFIED_CLAIM",
       "severity": "P1",
-      "summary": "Persistent quota handling and local request pressure measured; actual live Spotify restriction remains unavailable.",
+      "summary": "Owner QUOTA_EXCEEDED observed and shared developer-account quota documented. Exact bucket allowance/reset, app traffic attribution and later provider recovery/sustained usage remain unverified.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -594,7 +596,7 @@
       "claim": "Fresh build/typecheck/lint and 280 Vitest tests in nine files pass; Wrangler dry-run passes. Source unchanged from c9bd082. Baseline application equivalence rechecked at the implementation start; this historical check does not certify current working tree.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "19da26e9cd7ff3c892ef3baa942e36eaa9d5efa1",
+      "commit_sha": "d9cfbb6c7484c42c829eb46d0e49fab217cc8004",
       "path_or_url": "docs/ai-dev/EVIDENCE.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "EV-04",
@@ -699,7 +701,7 @@
       "claim": "Integrated implementation, actual Cloudflare deployment and partial live acceptance; see ledger.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "19da26e9cd7ff3c892ef3baa942e36eaa9d5efa1",
+      "commit_sha": "d9cfbb6c7484c42c829eb46d0e49fab217cc8004",
       "path_or_url": "docs/ai-dev/EVIDENCE.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/EVIDENCE.json",
@@ -711,14 +713,29 @@
       "id": "EV-12",
       "type": "FILE",
       "evidence_level": "OBSERVED_RUNTIME",
-      "claim": "Actual authenticated Cloudflare deployment identity, preserved namespaces/secrets and public/API/browser smoke; owner provider and actual restore NOT_RUN.",
+      "claim": "Current Cloudflare version c3c3324b-cdab-4cee-a1a8-af69ca289d97 verified at100% with unchanged bindings/runtime and public/anonymous readback; owner provider recovery NOT_RUN.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "19da26e9cd7ff3c892ef3baa942e36eaa9d5efa1",
+      "commit_sha": "d9cfbb6c7484c42c829eb46d0e49fab217cc8004",
       "path_or_url": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
       "environment": "Production Cloudflare true-shuffle version c7b059ed-ab7c-45f5-88f2-3219ec3dd628; anonymous public readback only",
       "artifact_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
-      "observed_at": "2026-09-30T09:34:25.906746+00:00",
+      "observed_at": "2026-09-30T10:46:00.494888+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-13",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Quota diagnostics clarification passes17 fixture browser cases and4 independent actual-render cases; owner-reported provider restriction and shared developer-account quota are distinguished from recovery.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "d9cfbb6c7484c42c829eb46d0e49fab217cc8004",
+      "path_or_url": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
+      "observed_at": "2026-09-30T10:46:00.494888+00:00",
       "source_status": "CURRENT_SUPPORTING",
       "sensitivity": "PUBLIC"
     }

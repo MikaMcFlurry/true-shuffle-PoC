@@ -21,3 +21,5 @@ Erhalte Durable-Object-Identität, Klassen, Bindings, Migrationen, APP_SECRET un
 ```
 
 Use this existing branch as the starting point; create an implementation branch if repository policy requires it. The preparation allowlist in HANDOFF_MAP applies to construction of this handoff, not a prohibition on the explicitly authorized downstream application changes. Rebind/refresh the map and execution contract before implementation writes.
+
+Quota clarification followup: current source `b64e03c09569bb4b763980ebdb6d0d5c78e5d263` and GitHub Actions 36703665557 pass 325 unit/Worker tests and 17 browser cases. Four fresh independent actual-render cases cover known, expired, boundary and unknown waits. Backend/provider cadence is unchanged. Owner screenshot reports QUOTA_EXCEEDED with 30363-second Retry-After; owner confirms other development apps in the same developer account. Spotify documents a shared developer-account budget. Exact attribution, bucket size/reset window, later provider recovery and sustained owner usage remain unverified. See `docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json`. Full acceptance stays PARTIAL.

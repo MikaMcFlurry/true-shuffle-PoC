@@ -1,11 +1,11 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-09-30T09:34:25.906746+00:00",
+  "generated_at": "2026-09-30T10:46:00.494888+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
-    "revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+    "revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "Actual production Cloudflare version c7b059ed-ab7c-45f5-88f2-3219ec3dd628; public/anonymous smoke and unchanged-source local fixtures/CI. Owner provider and populated storage restore not exercised.",
+    "environment": "Actual Cloudflare version c3c3324b-cdab-4cee-a1a8-af69ca289d97; public/anonymous production smoke plus local fixtures/CI. Owner screenshot documents active quota, not recovery. Authenticated provider and populated storage restore journeys not exercised.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -173,7 +173,7 @@
     },
     {
       "id": "LIVE-SPOTIFY",
-      "title": "Real Spotify continuation and actual quota restriction not verified",
+      "title": "Owner quota restriction observed; actual recovery, developer-account traffic attribution and authenticated playback acceptance remain unverified",
       "severity": "P1",
       "blocking": true
     },
@@ -195,9 +195,9 @@
           "id": "EV-G-LOCAL-NN-01",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -212,9 +212,9 @@
           "id": "EV-G-LOCAL-NN-02",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -229,9 +229,9 @@
           "id": "EV-G-LOCAL-NN-03",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -246,9 +246,9 @@
           "id": "EV-G-LOCAL-NN-04",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -263,9 +263,9 @@
           "id": "EV-G-LOCAL-NN-05",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -280,9 +280,9 @@
           "id": "EV-G-LOCAL-NN-06",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -297,9 +297,9 @@
           "id": "EV-G-LOCAL-NN-07",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -314,9 +314,9 @@
           "id": "EV-G-LOCAL-NN-08",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -331,9 +331,9 @@
           "id": "EV-G-LOCAL-NN-09",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -348,9 +348,9 @@
           "id": "EV-G-LOCAL-NN-10",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -365,9 +365,9 @@
           "id": "EV-G-LOCAL-NN-11",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
@@ -382,9 +382,9 @@
           "id": "EV-G-BUILD",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -399,9 +399,9 @@
           "id": "EV-G-STATIC",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -416,9 +416,9 @@
           "id": "EV-G-MIGRATION",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -433,9 +433,9 @@
           "id": "EV-G-RECOVERY",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -450,9 +450,9 @@
           "id": "EV-G-QUOTA",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -467,9 +467,17 @@
           "id": "EV-G-BROWSER",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/VALIDATION.json",
-          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Final integrated source validated locally; see recorded commands/results and source binding. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
+        },
+        {
+          "id": "EV-QUOTA-COPY-BROWSER",
+          "kind": "local browser and fresh independent render",
+          "ref": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
+          "result": "17 browser cases, isolated quota case and4 independent actual-render cases pass; wait/metric claims remain truthful. Fixture responses, not live provider recovery.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
@@ -488,7 +496,7 @@
       "required": true,
       "status": "NOT_RUN",
       "evidence": [],
-      "rationale": "Real Spotify resume, devices and quota diagnosis unavailable."
+      "rationale": "Owner screenshot documents QUOTA_EXCEEDED; other same-developer apps confirmed. Shared budget is documented by Spotify. Actual later recovery, usage attribution, sustained usage and owner playback continuity remain NOT_RUN."
     },
     {
       "id": "G-LIVE-HA-MA",
@@ -516,17 +524,17 @@
           "id": "EV-LOCAL-INDEPENDENT",
           "kind": "fresh independent review",
           "ref": "docs/ai-dev/evidence/INDEPENDENT_REVIEW.json",
-          "result": "49 targeted independent tests pass; exact source manifest verified by VALIDATION.json. No open local blocking code finding; live release blocked. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "49 targeted independent tests pass; exact source manifest verified by VALIDATION.json. No open local blocking code finding; live release blocked. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         },
         {
           "id": "EV-INDEPENDENT-STORE-DELTA",
           "kind": "fresh source delta review",
           "ref": "docs/ai-dev/evidence/DEPLOYMENT_REVIEW.json",
-          "result": "Five actual Store state cases pass; all previously reviewed application hashes match except the independently reviewed one-line Store fix.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Five actual Store state cases pass; all previously reviewed application hashes match except the independently reviewed one-line Store fix. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Fresh local review complete; separately recorded live release gate remains NOT_RUN."
@@ -541,9 +549,9 @@
           "id": "EV-ACCESSIBILITY",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/browser-tests.log",
-          "result": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed."
@@ -558,9 +566,9 @@
           "id": "EV-DATA_INVARIANTS",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/unit-tests.log",
-          "result": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass."
@@ -575,9 +583,9 @@
           "id": "EV-PERFORMANCE_RELIABILITY",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/NN-09-request-pressure.json",
-          "result": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally."
@@ -592,9 +600,9 @@
           "id": "EV-SECURITY_PRIVACY",
           "kind": "local verification",
           "ref": "docs/ai-dev/evidence/unit-tests.log",
-          "result": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN. Revalidated on deployed source via unchanged backend hashes, additive Store review and successful GitHub Actions36695723423; original report provenance is retained. Quota-copy followup: backend hashes unchanged; new menu copy independently checked in4 actual-render cases; source CI36703665557 passes325 unit/Worker and17 browser cases. Original reports retain historical provenance.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN."
@@ -609,9 +617,9 @@
           "id": "EV-CF-IDENTITY",
           "kind": "production readback",
           "ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
-          "result": "Authenticated existing Worker/version/namespace/secret readback and corrected version promotion100% pass.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Current version c3c3324b-cdab-4cee-a1a8-af69ca289d97 and source b64e03c09569bb4b763980ebdb6d0d5c78e5d263 promoted100%; bindings/runtime identical; exact public asset/API and anonymous browser smoke pass. Owner provider recovery NOT_RUN.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Authenticated existing Worker/version/namespace/secret readback and corrected version promotion100% pass. Does not establish owner-authenticated playback or populated object recovery."
@@ -626,9 +634,9 @@
           "id": "EV-CF-PUBLIC",
           "kind": "production readback",
           "ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
-          "result": "Public health/configured, exactlocalJS/CSS assets, anonymous401 and CSRF403 pass.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Current version c3c3324b-cdab-4cee-a1a8-af69ca289d97 and source b64e03c09569bb4b763980ebdb6d0d5c78e5d263 promoted100%; bindings/runtime identical; exact public asset/API and anonymous browser smoke pass. Owner provider recovery NOT_RUN.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Public health/configured, exactlocalJS/CSS assets, anonymous401 and CSRF403 pass. Does not establish owner-authenticated playback or populated object recovery."
@@ -643,9 +651,9 @@
           "id": "EV-CF-BROWSER",
           "kind": "production readback",
           "ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
-          "result": "Actual mobile production Chromium signin renders without false offline banner, errors or horizontal overflow.",
-          "subject_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-          "observed_at": "2026-09-30T09:34:25.906746+00:00"
+          "result": "Current version c3c3324b-cdab-4cee-a1a8-af69ca289d97 and source b64e03c09569bb4b763980ebdb6d0d5c78e5d263 promoted100%; bindings/runtime identical; exact public asset/API and anonymous browser smoke pass. Owner provider recovery NOT_RUN.",
+          "subject_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+          "observed_at": "2026-09-30T10:46:00.494888+00:00"
         }
       ],
       "rationale": "Actual mobile production Chromium signin renders without false offline banner, errors or horizontal overflow. Does not establish owner-authenticated playback or populated object recovery."
