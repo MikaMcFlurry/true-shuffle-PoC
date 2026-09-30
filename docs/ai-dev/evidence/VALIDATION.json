@@ -1,7 +1,7 @@
 {
   "schema_version": "true-shuffle.validation.v1",
-  "generated_at": "2026-09-30T08:47:37.845866+00:00",
-  "revision_binding": "Initial source_sha256 retains original review provenance. current_source_sha256 binds the deployed application including separately reviewed401fix; code revision1fd551e is recorded in CLOUDFLARE_DEPLOYMENT.json. Later evidence/handoff commits change documentation only.",
+  "generated_at": "2026-09-30T10:44:58.849329+00:00",
+  "revision_binding": "Original source_sha256 preserves initial review provenance. current_source_sha256 binds the deployed application including independently reviewed401 fix and quota clarification; source b64e03c09569bb4b763980ebdb6d0d5c78e5d263. Backend hashes unchanged. Later supporting/canonical commits change documentation only.",
   "review_source_manifest_sha256": "0526b7e98f40e3a226b645cf3ad97bf7529903f8583e069cb589da482bb1e3ba",
   "source_sha256": {
     "scripts/native/ha-bridge.mjs": "43c6f165a4cf57509e0f4dc5426c59ff9c8655013cc388766f78b2985c238c93",
@@ -157,7 +157,7 @@
     "src/client/public/tex/walnut.webp.json": "422ef6afa373aa6037162adf5a96bdccc90cba082adcd20b0b09b23205a9aac4",
     "src/client/router.ts": "fa22830c610804611e3a85215521c4b347cbd93024c37b26e4323693947855cd",
     "src/client/screens/home.tsx": "7bf2a0864e5b3dfccec819e963652e72fc6b387ba8a8ae50160ce109c50c9060",
-    "src/client/screens/menu.tsx": "9f61177e7d10f8b3b1e081990c3602b455c09b2aeb2c7cd203afb3fe94d8a079",
+    "src/client/screens/menu.tsx": "8124f3bf442db9d3b8160aa0d1bcc59339df1bed6c4d3b370cae14b5675b2bbc",
     "src/client/screens/remote.tsx": "d4f2e3ce2414afa1eca46d4be0cca979eff97c0025baf99eb68e9c823be30e0b",
     "src/client/screens/scan.tsx": "2d4899f0799a643e1a56e5c2570dc8b13d6f2e1677634ce4d9ac11d267ce4c10",
     "src/client/screens/signin.tsx": "be6c82b59265c37df85183bfa95506a962436d171c0c835f9e9299ec38bc0695",
@@ -191,5 +191,15 @@
     "wrangler.jsonc": "6aedb923406d1de811ec56dd64cabc017cea70e191aeafa28c39b270c61ef7a2",
     "wrangler.preview.jsonc": "605b95881ea83061e4a29c6be80f885125aa557c56bdf4b0bd15a3a41868b2f7"
   },
-  "current_source_manifest_sha256": "46d53afda677e48f778bff7bf2b20a9830edd08d4768b2ac757925b1971edd9b"
+  "current_source_manifest_sha256": "4cf94690844687ded9faf7c6a55f08e481c3d22f4064597934b8527c5ceb8a17",
+  "quota_copy_followup": {
+    "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+    "browser_tests": 17,
+    "isolated_browser_tests": 1,
+    "independent_render_cases": 4,
+    "review": "QUOTA_COPY_REVIEW.md",
+    "diagnosis": "QUOTA_DIAGNOSIS.json",
+    "github_ci_run": 36703665557,
+    "scope": "Copy only; provider recovery not established."
+  }
 }

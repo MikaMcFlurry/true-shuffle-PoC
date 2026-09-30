@@ -16,7 +16,8 @@
     "Cloudflare authenticated target/namespace/secret identity",
     "Uploaded and promoted reviewed implementation",
     "Fixed live401falseoffline and passed16browser plus5independentstore cases",
-    "Exact active deployment and public/API/browser readback"
+    "Exact active deployment and public/API/browser readback",
+    "Quota wait, stored metrics and developer-account sharing clarified;17 browser cases plus4 independent render cases pass."
   ],
   "in_progress": [],
   "blocked": [
@@ -24,9 +25,9 @@
     "Actual populated Durable Object migration/history invariants and restore verification"
   ],
   "deployment": {
-    "source_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
-    "version_id": "c7b059ed-ab7c-45f5-88f2-3219ec3dd628",
-    "deployment_id": "dc7496dc-b106-4daf-9925-f4e8ce81d2bd",
+    "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+    "version_id": "c3c3324b-cdab-4cee-a1a8-af69ca289d97",
+    "deployment_id": "e414b5c1-0a5e-46d3-871a-c5d6f1ce5f23",
     "traffic_percentage": 100,
     "evidence": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
   },
@@ -35,5 +36,6 @@
     "Run owner-authenticated mid-song/device/browser/Spotify-quota and HA/MA acceptance",
     "Verify populated production storage invariants and actual PITR restore in an isolated recovery process"
   ],
-  "updated_at": "2026-09-30T09:27:10.165966+00:00"
+  "updated_at": "2026-09-30T10:44:58.849329+00:00",
+  "quota_diagnosis": "Owner screenshot QUOTA_EXCEEDED with30363-second Retry-After; other developer-account apps confirmed; actual provider recovery and account-wide traffic unmeasured."
 }
