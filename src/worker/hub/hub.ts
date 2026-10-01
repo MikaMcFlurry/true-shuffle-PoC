@@ -4913,8 +4913,9 @@ export class HubCore {
 			if (!deck?.items.length) return fail("empty", "Diese Warteschlange hat keine Songs.");
 			session = session ? this.savedSession(stationId) : null;
 			session ??= this.createSession(fresh, deck);
-			this.kvSet("active_session_station", stationId);
-			// Journal before provider work. Failures retain the exact intent and occurrence.
+			// Journal the candidate without replacing the visible saved station.
+			// A definitive refusal must leave the previous station available.
+			// Submitted ambiguous commands still become visible for reconciliation.
 			session.pending = {
 				operationId: session.pending?.operationId ?? crypto.randomUUID(),
 				kind: "resume",
@@ -4953,6 +4954,7 @@ export class HubCore {
 				session.playbackEpoch += 1;
 				session.status = "active";
 				this.saveSession(session);
+				this.kvSet("active_session_station", stationId);
 				await this.deferPlayerObservation();
 				return { ok: true, deviceName: target.name, acceptedAt: this.now() };
 			}
@@ -5026,6 +5028,7 @@ export class HubCore {
 			session.playbackEpoch += 1;
 			session.status = "active";
 			this.saveSession(session);
+			this.kvSet("active_session_station", stationId);
 			this.transportRevision += 1;
 			deck.ours = true;
 			deck.inOrder = true;
@@ -5053,7 +5056,10 @@ export class HubCore {
 				current.pending = null;
 				this.saveSession(current);
 			}
-			if (result.uncertain) this.transportRevision += 1;
+			if (result.uncertain) {
+				this.kvSet("active_session_station", stationId);
+				this.transportRevision += 1;
+			}
 			if (result.uncertain || this.savedSession(stationId)?.pending?.phase === "submitted") {
 				this.kvSet("player_stale", 1);
 				await this.deferPlayerObservation();
