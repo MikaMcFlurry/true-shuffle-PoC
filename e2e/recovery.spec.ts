@@ -42,10 +42,14 @@ test("deliberately recovers an unconfirmed Spotify resume without changing its o
 	try {
 		await page.getByRole("button", { name: "Fortsetzen", exact: true }).click();
 		const recovery = page.getByRole("button", {
-			name: "Gespeicherten Song erneut fortsetzen",
+			name: "Gespeicherten Befehl erneut versuchen",
 			exact: true,
 		});
 		await expect(recovery).toBeVisible();
+		await expect(page.locator(".session-status")).toHaveText("Bestätigung steht aus");
+		await expect(
+			page.getByRole("button", { name: "Befehl erneut versuchen", exact: true }),
+		).toHaveCount(0);
 		await expect(page.locator(".transport-main")).toBeDisabled();
 		const pending = ((await (await page.request.get("/api/state")).json()) as AppState).session;
 		expect(pending?.pending).toBe(true);

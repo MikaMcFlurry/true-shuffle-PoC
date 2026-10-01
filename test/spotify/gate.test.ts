@@ -59,7 +59,7 @@ describe("NN-09 deployment-wide provider gate", () => {
 		a.restart();
 		await expect(a.hub.devices()).rejects.toMatchObject({ kind: "quota" });
 		await b.hub.devices();
-		expect((await a.hub.play(a.allId, "device-1")).ok).toBe(true);
+		expect((await a.hub.play(a.allId, a.fake.user().devices[0]!.id)).ok).toBe(true);
 	});
 	it("successful expired operation reset is revision fenced", async () => {
 		const f = operationFixture();

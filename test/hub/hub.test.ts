@@ -76,7 +76,7 @@ describe("listening", () => {
 		h.fake.user().player.shuffle = true;
 		h.fake.user().player.repeat = "context";
 		const res = await h.hub.play(h.stationIds[0]!);
-		expect(res).toEqual({ ok: true, deviceName: "iPhone" });
+		expect(res).toEqual({ ok: true, deviceName: "iPhone", acceptedAt: h.clock.t });
 		const p = h.fake.user().player;
 		expect(p.contextUri).toBe(`spotify:playlist:${deckPlaylist(h, h.stationIds[0]!).id}`);
 		expect(p.shuffle).toBe(false);

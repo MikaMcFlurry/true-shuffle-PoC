@@ -267,7 +267,11 @@ async function body<T>(c: { req: { json: () => Promise<unknown> } }): Promise<T>
 }
 
 app.get("/api/state", async (c) => {
-	const r = (await c.var.hub.state(c.var.epoch, c.req.query("live") === "1")) as RpcResult<{
+	const r = (await c.var.hub.state(
+		c.var.epoch,
+		c.req.query("live") === "1",
+		c.req.query("refresh") === "1",
+	)) as RpcResult<{
 		profile: { id: string };
 	}>;
 	if (r.ok && !r.value.profile.id) {

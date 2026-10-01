@@ -22,7 +22,7 @@ describe("durable exact operation cooldown", () => {
 		await provider(h).player();
 		await provider(h).recentlyPlayed();
 		await provider(h).me();
-		expect((await h.hub.play(h.allId, "device-1")).ok).toBe(true);
+		expect((await h.hub.play(h.allId, h.fake.user().devices[0]!.id)).ok).toBe(true);
 		expect(JSON.stringify(await h.hub.spotifyDiagnostics())).not.toMatch(
 			/private provider|Bearer|spotify:/,
 		);

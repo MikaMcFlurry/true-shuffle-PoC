@@ -372,6 +372,7 @@ describe("a small station after a car stop (NN-03/04)", () => {
 			await h.hub.play(sid);
 			await h.listen(25 * MINUTE_MS);
 			await h.hub.playerAction("pause");
+			await h.listen(1000); // The accepted pause is observed by its durable alarm.
 			const before = h.hub.savedSession(sid)!;
 			const order = stationDeck(h, sid).pl.items.slice();
 			await h.hub.updateStation(sid, { rules: {} });
@@ -1911,7 +1912,7 @@ describe("the twenty-second review's cases", () => {
 				const pl = own(h);
 				h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, 20, u.devices[0]!.id, false);
 				await h.listen(3_000);
-				await h.hub.state({ live: true }); // the app is open
+				await h.hub.state({ live: true, refresh: true }); // the app is opened
 				const x = h.fake.current()!;
 				await h.listen(60_000);
 				await h.hub.state({ live: true });
@@ -2124,7 +2125,7 @@ describe("the twenty-third review's cases", () => {
 			const { own, other } = lists(h);
 			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 7, u.devices[0]!.id, false);
 			await h.listen(3_000);
-			await h.hub.state({ live: true });
+			await h.hub.state({ live: true, refresh: true }); // open the app
 			const a = h.fake.current()!;
 			await h.listen(60_000);
 			await h.hub.state({ live: true }); // looks saw A play a minute
@@ -2350,7 +2351,7 @@ describe("the twenty-fourth review's cases", () => {
 			const dev = u.devices[0]!.id;
 			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, dev, false);
 			await h.listen(3_000);
-			await h.hub.state({ live: true });
+			await h.hub.state({ live: true, refresh: true });
 			const c0 = h.fake.current();
 			while (h.fake.current() === c0) await h.listen(1_000);
 			await h.listen(50_000);

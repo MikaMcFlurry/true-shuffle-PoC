@@ -9,15 +9,16 @@ import {
 	Speaker,
 	ThumbsDown,
 } from "lucide-preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { sharesForRules } from "../../core/mix";
 import type { AppState, DeviceView, StationSummary, TrackView } from "../../shared/api";
-import { api, type NativeDevice } from "../api";
+import { ApiError, api, type NativeDevice } from "../api";
 import { Cover } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
 import { SongProgress } from "../components/song-progress";
 import { duration, pct } from "../format";
-import { store, useStore } from "../store";
+import { playbackView } from "../playback-view";
+import { type PlaybackAction, store, useStore } from "../store";
 
 export function roundLabel(s: StationSummary): string {
 	return `Runde ${s.roundNo || 1}`;
@@ -52,32 +53,52 @@ export function Home({ state }: { state: AppState }) {
 		}
 	});
 	const [deviceError, setDeviceError] = useState("");
-	const [busy, setBusy] = useState(false);
+	const [now, setNow] = useState(Date.now());
+	useEffect(() => {
+		store.setTransportVisible(true);
+		return () => store.setTransportVisible(false);
+	}, []);
+	useEffect(() => {
+		const timer = window.setInterval(() => setNow(Date.now()), 1000);
+		return () => window.clearInterval(timer);
+	}, []);
+	const command = s.command;
+	const busy = command?.phase === "sending" || command?.phase === "accepted";
+	const unsettled = !!command && command.phase !== "failed";
+	const deviceNames = useRef(new Map<string, string>());
+	const deviceRequest = useRef(0);
 	const [confirm, setConfirm] = useState(false);
 	const refreshDevices = () => {
 		setDeviceError("");
+		const request = ++deviceRequest.current;
 		void api
 			.nativeDevices()
 			.then((result) => {
+				if (request !== deviceRequest.current) return;
+				for (const d of result.devices) deviceNames.current.set(`native:${d.id}`, d.name);
 				setNativeDevices(result.devices);
 				setNativeConfigured(result.configured);
 				setNativeError("");
 			})
-			.catch((e: Error) => setNativeError(e.message));
+			.catch((e: Error) => {
+				if (request === deviceRequest.current) setNativeError(e.message);
+			});
 		void api
 			.devices()
 			.then((list) => {
+				if (request !== deviceRequest.current) return;
+				for (const d of list) deviceNames.current.set(d.id, d.name);
 				setDevices(list);
-				setDevice((current) =>
-					current.startsWith("native:") || list.some((d) => d.id === current && !d.restricted)
-						? current
-						: "",
-				);
 			})
-			.catch((e: Error) => setDeviceError(e.message));
+			.catch((e: Error) => {
+				if (request === deviceRequest.current) setDeviceError(e.message);
+			});
 	};
 	useEffect(() => {
 		refreshDevices();
+		return () => {
+			deviceRequest.current++;
+		};
 	}, []);
 	const savedTrack =
 		session?.queue.find((e) => e.entryId === session.entryId)?.track ?? session?.queue[0]?.track;
@@ -87,8 +108,33 @@ export function Home({ state }: { state: AppState }) {
 		(!savedTrack || state.nowPlaying.id === savedTrack.id)
 			? state.nowPlaying
 			: null;
-	const track = savedTrack ?? ownNow;
-	const progress = session ? session.progressMs : ownNow ? ownNow.progressMs : null;
+	const view = playbackView(state, s.receivedAt, now, s.stale, unsettled ? command?.frozen : null);
+	const track = view.track;
+	const chooseDevice = (value: string) => {
+		setDevice(value);
+		try {
+			if (value) localStorage.setItem("ts-device", value);
+			else localStorage.removeItem("ts-device");
+			const name = deviceNames.current.get(value);
+			if (name) localStorage.setItem("ts-device-name", name);
+			else localStorage.removeItem("ts-device-name");
+		} catch {
+			/* Keep this selection for the current page in private mode. */
+		}
+	};
+	const missingDevice =
+		device &&
+		device !== "spotify" &&
+		!devices?.some((d) => d.id === device) &&
+		!nativeDevices.some((d) => `native:${d.id}` === device);
+	let savedDeviceName = deviceNames.current.get(device);
+	if (!savedDeviceName) {
+		try {
+			savedDeviceName = localStorage.getItem("ts-device-name") ?? undefined;
+		} catch {
+			/* private mode */
+		}
+	}
 	const nativeController =
 		session?.controller?.kind === "home-assistant" ? session.controller : null;
 	const activeNative = nativeDevices.find((d) => d.id === nativeController?.deviceId);
@@ -104,9 +150,28 @@ export function Home({ state }: { state: AppState }) {
 				orderRevision: session.orderRevision,
 			}
 		: undefined;
-	const act = async (action: "play" | "pause" | "next" | "new") => {
-		if (busy || s.stale) return;
-		setBusy(true);
+	const act = async (action: PlaybackAction, retry = false) => {
+		const targetStation =
+			action === "pause" || action === "next"
+				? state.stations.find((candidate) => candidate.id === session?.stationId)
+				: retry && command
+					? state.stations.find((candidate) => candidate.id === command.stationId)
+					: station;
+		if (
+			busy ||
+			s.stale ||
+			!targetStation ||
+			(view.projected && action === "next") ||
+			(unsettled && !retry)
+		)
+			return;
+		const commandId = store.beginCommand(action, targetStation.id, {
+			entryId: view.entryId,
+			position: view.position,
+			track: view.track,
+			projected: view.projected,
+		});
+		if (commandId === null) return;
 		try {
 			let result = null;
 			if ((action === "pause" || action === "next") && nativeController && session)
@@ -121,70 +186,70 @@ export function Home({ state }: { state: AppState }) {
 					sessionId: session?.sessionId,
 					entryId: session?.entryId,
 				});
-			else if (station && selectedNative)
-				result = await api.nativePlay(station.id, selectedNative.id, {
+			else if (targetStation && device.startsWith("native:"))
+				result = await api.nativePlay(targetStation.id, device.slice("native:".length), {
 					...expected,
 					newQueue: action === "new",
 				});
-			else if (station && nativeController && !device && action === "new")
-				result = await api.nativePlay(station.id, nativeController.deviceId, {
+			else if (targetStation && nativeController && !device && action === "new")
+				result = await api.nativePlay(targetStation.id, nativeController.deviceId, {
 					...expected,
 					newQueue: true,
 				});
 			else if (
-				station &&
+				targetStation &&
 				nativeController &&
 				!device &&
 				action === "play" &&
-				station.id === session?.stationId
+				targetStation.id === session?.stationId
 			)
-				result = await api.nativePlayer(station.id, nativeController.deviceId, "resume", expected);
-			else if (station)
+				result = await api.nativePlayer(
+					targetStation.id,
+					nativeController.deviceId,
+					"resume",
+					expected,
+				);
+			else if (targetStation)
 				result = await api.play(
-					station.id,
+					targetStation.id,
 					device === "spotify" ? undefined : device || undefined,
 					{
 						newQueue: action === "new",
-						sessionId: station.id === session?.stationId ? session.sessionId : undefined,
+						sessionId: targetStation.id === session?.stationId ? session.sessionId : undefined,
 					},
 				);
 
-			if (result && !result.ok)
-				store.say(result.error?.message ?? "Wiedergabe nicht möglich.", "error");
-			else if (action === "new") {
-				setConfirm(false);
-				store.say("Neue Warteschlange gespeichert");
-			}
-			await store.refresh(true);
+			if (!result) throw new Error("Wähle einen Sender und versuche es erneut.");
+			const accepted = store.acceptCommand(commandId, result);
+			if (accepted && action === "new") setConfirm(false);
+			// Do not reuse a poll that started before this command. This read is not UI busy time.
+			void store.refresh(true, true);
 		} catch (e) {
-			store.say(e instanceof Error ? e.message : String(e), "error");
-		} finally {
-			setBusy(false);
+			store.failCommand(
+				commandId,
+				e instanceof Error ? e.message : String(e),
+				!(e instanceof ApiError) ||
+					e.status === 0 ||
+					e.status >= 500 ||
+					e.code === "invalid_response",
+			);
+			void store.refresh(false, true);
 		}
 	};
-	const retrySaved = async () => {
-		if (!session || busy || s.stale) return;
-		setBusy(true);
-		try {
-			const spotifyDevice =
-				device && device !== "spotify" && !device.startsWith("native:") ? device : undefined;
-			const result = await api.play(session.stationId, spotifyDevice, {
-				sessionId: session.sessionId,
-			});
-			if (!result.ok)
-				store.say(
-					result.error?.message ?? "Der gespeicherte Song konnte noch nicht fortgesetzt werden.",
-					"error",
-				);
-			await store.refresh(true);
-		} catch (e) {
-			store.say(e instanceof Error ? e.message : String(e), "error");
-		} finally {
-			setBusy(false);
-		}
-	};
+	const retrySaved = () => act("play", true);
+	const commandLabel =
+		command?.phase === "failed"
+			? "Befehl fehlgeschlagen"
+			: command?.phase === "unconfirmed"
+				? "Bestätigung steht aus"
+				: command?.action === "pause"
+					? "Pause angefordert …"
+					: command?.action === "next"
+						? "Songwechsel angefordert …"
+						: "Start angefordert …";
+
 	const thumb = async (value: -1 | 1) => {
-		if (!track) return;
+		if (!track || view.projected || view.awaitingObservation || unsettled) return;
 		try {
 			const next = store.thumbOf(track) === value ? 0 : value;
 			await api.thumb(track.id, next);
@@ -215,9 +280,20 @@ export function Home({ state }: { state: AppState }) {
 				<div class="now-shelf">
 					<Cover src={track?.imageUrl ?? station?.imageUrl} class="player-art" />
 					<div class="now-copy">
-						<p class="session-status">
+						<p class="session-status" role="status">
 							<Check size={16} aria-hidden="true" />
-							{session ? SESSION_LABELS[session.status] : "Bereit für deine Musik"}
+							{command
+								? commandLabel
+								: view.projected
+									? "Nächster Song · geschätzt"
+									: view.awaitingObservation ||
+											session?.pending ||
+											(session?.status === "active" && !view.playing) ||
+											(session?.status === "paused" && !nativeController && ownNow?.isPlaying)
+										? "Gerätebestätigung steht aus"
+										: session
+											? SESSION_LABELS[session.status]
+											: "Bereit für deine Musik"}
 						</p>
 						<h2>{track?.name ?? "Dein nächster Lieblingssong"}</h2>
 						<p class="artist">
@@ -233,21 +309,76 @@ export function Home({ state }: { state: AppState }) {
 				</div>
 				{track ? (
 					<SongProgress
-						key={session?.entryId ?? track.id}
-						position={progress}
-						observedAt={session ? session.observedAt : (ownNow?.observedAt ?? null)}
-						serverTime={state.serverTime}
-						receivedAt={s.receivedAt}
-						playing={playing && !s.stale && !session?.pending}
+						position={view.position}
+						estimating={view.estimating}
+						pending={unsettled}
 						durationMs={track.durationMs}
 					/>
 				) : null}
-				{session?.pending ? (
+				{view.awaitingObservation ? (
+					<p class="notice">
+						Letzter bestätigter Song. Eine aktuelle Gerätebeobachtung fehlt noch.
+					</p>
+				) : null}
+				{view.projected ? (
+					<p class="notice" role="status">
+						Geschätzter Songwechsel aus deiner Warteschlange. Spotify hat diesen Song noch nicht
+						bestätigt.
+					</p>
+				) : null}
+				{command ? (
+					<div class="notice" role={command.phase === "failed" ? "alert" : "status"}>
+						<p>
+							{command.phase === "failed"
+								? `${command.error} Bitte erneut versuchen.`
+								: command.phase === "sending"
+									? "Befehl wird gesendet. Die Anzeige wartet auf die Bestätigung des Geräts."
+									: command.phase === "accepted"
+										? "Befehl angenommen. Das Gerät hat die Wiedergabe noch nicht bestätigt."
+										: `${command.error ? `${command.error} ` : ""}Die Gerätebestätigung fehlt noch. Der gespeicherte Song bleibt erhalten. Erneutes Fortsetzen kann zur gespeicherten Position zurückspringen.`}
+						</p>
+						{command.phase === "failed" || command.phase === "unconfirmed" ? (
+							<div class="row-actions">
+								{command.phase === "unconfirmed" && command.action === "pause" ? (
+									<button
+										type="button"
+										class="key"
+										disabled={s.stale}
+										onClick={() => void act("play", true)}
+									>
+										Gespeicherten Song fortsetzen
+									</button>
+								) : null}
+								<button
+									type="button"
+									class="key"
+									disabled={s.stale}
+									onClick={() =>
+										void act(
+											command.action === "new" ||
+												(command.phase === "unconfirmed" && command.action === "next")
+												? "play"
+												: command.action,
+											true,
+										)
+									}
+								>
+									{command.phase === "unconfirmed"
+										? command.action === "pause"
+											? "Pause erneut versuchen"
+											: "Gespeicherten Befehl erneut versuchen"
+										: "Befehl erneut versuchen"}
+								</button>
+							</div>
+						) : null}
+					</div>
+				) : null}
+				{session?.pending && !command ? (
 					<p class="notice">
 						Das Gerät bestätigt den Wechsel noch. Der bisherige Song bleibt gesichert.
 					</p>
 				) : null}
-				{session?.pending && !nativeController ? (
+				{session?.pending && !nativeController && !command ? (
 					<div class="notice">
 						<p>
 							Es ist unklar, ob Spotify den Befehl ausgeführt hat. Erneutes Fortsetzen spielt
@@ -277,7 +408,7 @@ export function Home({ state }: { state: AppState }) {
 							type="button"
 							class="primary transport-main"
 							disabled={
-								busy ||
+								unsettled ||
 								s.stale ||
 								!station?.ready ||
 								session?.pending ||
@@ -286,8 +417,8 @@ export function Home({ state }: { state: AppState }) {
 							onClick={() => void act(playing ? "pause" : "play")}
 						>
 							{playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
-							{busy
-								? "Bitte warten …"
+							{unsettled
+								? commandLabel
 								: playing
 									? "Pause"
 									: session?.stationId === station?.id
@@ -299,9 +430,11 @@ export function Home({ state }: { state: AppState }) {
 							class="icon-button"
 							aria-label="Weiter: Nächster Song"
 							disabled={
-								busy ||
+								unsettled ||
 								s.stale ||
 								!session ||
+								view.projected ||
+								view.awaitingObservation ||
 								session.pending ||
 								session.status === "ambiguous" ||
 								(!!nativeController && !activeNative?.queue)
@@ -315,7 +448,9 @@ export function Home({ state }: { state: AppState }) {
 							class="icon-button"
 							aria-label="Daumen hoch: Favorit"
 							aria-pressed={!!track && store.thumbOf(track) === 1}
-							disabled={!track || s.stale}
+							disabled={
+								!track || s.stale || view.projected || view.awaitingObservation || unsettled
+							}
 							onClick={() => void thumb(1)}
 						>
 							<Heart aria-hidden="true" />
@@ -325,7 +460,9 @@ export function Home({ state }: { state: AppState }) {
 							class="icon-button"
 							aria-label="Daumen runter: diesen Song nie wieder"
 							aria-pressed={!!track && store.thumbOf(track) === -1}
-							disabled={!track || s.stale}
+							disabled={
+								!track || s.stale || view.projected || view.awaitingObservation || unsettled
+							}
 							onClick={() => void thumb(-1)}
 						>
 							<ThumbsDown aria-hidden="true" />
@@ -334,13 +471,23 @@ export function Home({ state }: { state: AppState }) {
 					<label class="device-select">
 						<Speaker size={18} aria-hidden="true" />
 						<span>Wiedergabegerät</span>
-						<select value={device} onChange={(e) => setDevice(e.currentTarget.value)}>
+						<select
+							aria-label="Wiedergabegerät"
+							value={device}
+							disabled={busy}
+							onChange={(e) => chooseDevice(e.currentTarget.value)}
+						>
 							<option value="">
 								{nativeController
 									? `Gespeichert: ${nativeController.deviceName ?? nativeController.deviceId}`
 									: "Aktives Spotify-Gerät"}
 							</option>
 							<option value="spotify">Spotify · aktives Gerät</option>
+							{missingDevice ? (
+								<option value={device}>
+									{savedDeviceName ?? "Gespeichertes Gerät"} · zurzeit nicht sichtbar
+								</option>
+							) : null}
 							{nativeDevices.map((d) => (
 								<option key={d.id} value={`native:${d.id}`}>
 									{d.name} · HA/MA{d.queue ? " · Warteschlange" : " · ein Song"}
@@ -449,8 +596,8 @@ export function Home({ state }: { state: AppState }) {
 					{session?.queue.length ? (
 						<ol class="queue-list">
 							{session.queue
-								.filter((e) => e.entryId !== session.entryId)
-								.slice(0, 12)
+								.slice(Math.max(0, session.queue.findIndex((e) => e.entryId === view.entryId) + 1))
+								.slice(0, 50)
 								.map((e, i) => (
 									<QueueRow key={e.entryId} track={e.track} index={i + 1} />
 								))}
@@ -520,7 +667,7 @@ export function Home({ state }: { state: AppState }) {
 									<button
 										type="button"
 										class="key key--lit"
-										disabled={busy || s.stale || session?.pending}
+										disabled={unsettled || s.stale || session?.pending}
 										onClick={() => void act("new")}
 									>
 										Neue Warteschlange beginnen
@@ -531,7 +678,7 @@ export function Home({ state }: { state: AppState }) {
 							<button
 								type="button"
 								class="act"
-								disabled={busy || s.stale || session?.pending}
+								disabled={unsettled || s.stale || session?.pending}
 								onClick={() => setConfirm(true)}
 							>
 								Neue Warteschlange

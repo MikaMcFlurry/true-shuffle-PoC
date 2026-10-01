@@ -13,6 +13,7 @@ function fixture(responses: (Response | Promise<Response>)[], expiresAt = 9e15) 
 	let now = Date.UTC(2026, 8, 30);
 	let cooldown: SpotifyCooldown | null = null;
 	let calls = 0;
+	let finishes = 0;
 	const metrics: SpotifyRequestMetric[] = [];
 	let tokens: SpotifyTokens = {
 		accessToken: "private-token",
@@ -55,6 +56,7 @@ function fixture(responses: (Response | Promise<Response>)[], expiresAt = 9e15) 
 					states.set(c.operation!, { revision: (old?.revision ?? 0) + 1, cooldown });
 				},
 				finishOperation: (op, rev) => {
+					finishes++;
 					if (states.get(op)?.revision === rev)
 						states.set(op, { revision: rev + 1, cooldown: null });
 				},
@@ -71,6 +73,9 @@ function fixture(responses: (Response | Promise<Response>)[], expiresAt = 9e15) 
 		metrics,
 		get calls() {
 			return calls;
+		},
+		get finishes() {
+			return finishes;
 		},
 		get cooldown() {
 			return cooldown;
@@ -94,6 +99,25 @@ function quota(retry?: string, reason = "QUOTA_EXCEEDED") {
 }
 
 describe("NN-09 centralized provider gate", () => {
+	it("records ordinary success without a redundant shared recovery write", async () => {
+		const f = fixture([new Response(null, { status: 204 })]);
+		await f.create().pause();
+		expect(f.finishes).toBe(0);
+		expect(f.metrics).toMatchObject([{ operation: "PUT /me/player/pause", status: 204 }]);
+	});
+	it("still clears a genuinely expired confirmed hold through revision-fenced recovery", async () => {
+		const f = fixture([new Response(null, { status: 204 })]);
+		f.setCooldown({
+			operation: "GET /me/player",
+			until: 0,
+			kind: "rate",
+			retryAfter: "1",
+			observedAt: 0,
+		});
+		await f.create().player();
+		expect(f.finishes).toBe(1);
+		expect(f.metrics[0]).toMatchObject({ operation: "GET /me/player", status: 204 });
+	});
 	it("keeps long Retry-After only for the confirmed operation after recreation", async () => {
 		const f = fixture([quota("172800")]);
 		await expect(f.create().devices()).rejects.toMatchObject({

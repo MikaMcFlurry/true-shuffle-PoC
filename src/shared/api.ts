@@ -146,7 +146,11 @@ export type PlayErrorCode =
 	| "unknown";
 
 export interface PlayResult {
+	/** Transport outcome cannot be established from a lost or server-error response. */
+	uncertain?: boolean;
 	ok: boolean;
+	/** Server time of a successful provider acknowledgment, not a playback observation. */
+	acceptedAt?: number;
 	error?: { code: PlayErrorCode; message: string };
 	deviceName?: string;
 }

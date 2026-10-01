@@ -5,7 +5,7 @@ import { onboarded } from "./harness";
 const observe = async (h: Awaited<ReturnType<typeof onboarded>>) =>
 	h.hub.sync(new RequestBudget(25), { force: true });
 
-it("sends pause before waiting for observation and saves the stopped position", async () => {
+it("acknowledges pause before observation, then durably saves the stopped position", async () => {
 	const h = await onboarded();
 	const id = h.stationIds[0]!;
 	await h.hub.play(id);
@@ -21,13 +21,22 @@ it("sends pause before waiting for observation and saves the stopped position", 
 			await gate;
 		return handle(request);
 	};
-	const pending = h.hub.playerAction("pause");
+	let acknowledged = false;
+	const pending = h.hub.playerAction("pause").then((result) => {
+		acknowledged = result.ok;
+		return result;
+	});
 	try {
-		await expect.poll(() => h.fake.user().player.isPlaying).toBe(false);
+		await expect.poll(() => acknowledged).toBe(true);
+		expect(h.fake.user().player.isPlaying).toBe(false);
+		expect(h.hub.savedSession(id)!.progressMs).toBe(before.progressMs);
+		expect(h.hub.savedSession(id)!.observedAt).toBe(before.observedAt);
 	} finally {
 		release();
 	}
-	expect(await pending).toMatchObject({ ok: true });
+	expect(await pending).toMatchObject({ ok: true, acceptedAt: h.clock.t });
+	h.restart();
+	await h.listen(1000);
 	expect(h.hub.savedSession(id)).toMatchObject({
 		status: "paused",
 		progressMs: 97000,
@@ -126,6 +135,7 @@ it("appends rolling rounds while preserving current occurrence and restart posit
 	expect(h.sql.all("SELECT * FROM plays WHERE station_id = ?", id).length).toBeGreaterThan(44);
 	expect(new Set(session.entryIds).size).toBe(session.entryIds.length);
 	await h.hub.playerAction("pause");
+	await h.listen(1000);
 	const paused = h.hub.savedSession(id)!;
 	const current = paused.entryIds[paused.currentIndex];
 	h.restart();
@@ -242,6 +252,16 @@ it("bounds rolling storage after more than 10000 ordered occurrences without cha
 			JSON.stringify(session),
 			id,
 		);
+		// Extension now verifies the provider occurrence before trimming. Keep
+		// this accelerated fixture's actual player aligned with its checkpoint.
+		h.fake.startContext(
+			"mika",
+			session.contextUri,
+			session.currentIndex,
+			h.fake.user().devices[0]!.id,
+			false,
+		);
+		h.fake.user().player.progressMs = session.progressMs!;
 		h.fake.pause();
 		await core.stepExtend(core.client(new RequestBudget(25)), id);
 		const after = h.hub.savedSession(id)!;
@@ -265,6 +285,7 @@ it("fences duplicated stale skip commands and leaves unrelated music outside hel
 		h.hub.playerAction("next", expected),
 	]);
 	expect(results.map((r) => r.ok)).toEqual([true, false]);
+	await observe(h);
 	const saved = h.hub.savedSession(id)!;
 	h.fake.user().player.contextUri = "spotify:playlist:unrelated";
 	await h.hub.playerAction("next");

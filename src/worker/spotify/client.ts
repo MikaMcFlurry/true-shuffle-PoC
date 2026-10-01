@@ -228,7 +228,7 @@ export class SpotifyClient {
 		endpoint: string,
 		category: SpotifyRequestMetric["category"],
 		method = category === "refresh" ? "POST" : "GET",
-	): Promise<{ revision: number; generation: number }> {
+	): Promise<{ revision: number; generation: number; hadCooldown: boolean }> {
 		const operation = `${method} ${endpoint}`;
 		const snapshot = await this.o.policy?.getOperationSnapshot?.(operation);
 		const generation = this.operationRevisions.get(operation) ?? 0;
@@ -252,15 +252,18 @@ export class SpotifyClient {
 				operation,
 			);
 		}
-		return { revision: snapshot?.revision ?? generation, generation };
+		return { revision: snapshot?.revision ?? generation, generation, hadCooldown: !!c };
 	}
 	private async succeeded(
 		endpoint: string,
 		method: string,
-		fence: { revision: number; generation: number },
+		fence: { revision: number; generation: number; hadCooldown: boolean },
 	): Promise<void> {
 		const operation = `${method} ${endpoint}`;
-		await this.o.policy?.finishOperation?.(operation, fence.revision);
+		// Ordinary successes have no saved hold to clear. Avoid a shared write
+		// and readback; a newer concurrent hold remains untouched. Real recovery
+		// still uses the exact revision captured immediately before transport.
+		if (fence.hadCooldown) await this.o.policy?.finishOperation?.(operation, fence.revision);
 		if ((this.operationRevisions.get(operation) ?? 0) === fence.generation) {
 			this.operationCooldowns.delete(operation);
 			this.failedOperations.delete(operation);
@@ -480,7 +483,17 @@ export class SpotifyClient {
 			);
 		} catch {
 			await this.metric("/api/token", "refresh", 0, "network", undefined, null, "POST", startedAt);
-			throw new SpotifyError("network", "Spotify nicht erreichbar");
+			throw new SpotifyError(
+				"network",
+				"Spotify nicht erreichbar",
+				0,
+				0,
+				undefined,
+				null,
+				undefined,
+				"/api/token",
+				"POST /api/token",
+			);
 		}
 		if (!res.ok) {
 			const e = await this.failure(res, "/api/token", "POST");
@@ -569,7 +582,17 @@ export class SpotifyClient {
 			} catch {
 				await this.metric(endpoint, category, 0, "network", undefined, null, method, startedAt);
 				if (!this.o.singleTransport && method === "GET" && attempt++ < 1) continue;
-				throw new SpotifyError("network", "Spotify nicht erreichbar");
+				throw new SpotifyError(
+					"network",
+					"Spotify nicht erreichbar",
+					0,
+					0,
+					undefined,
+					null,
+					undefined,
+					endpoint,
+					`${method} ${endpoint}`,
+				);
 			}
 			if (!this.o.singleTransport && res.status === 401 && !forced) {
 				await this.metric(

@@ -90,7 +90,7 @@ export function App() {
 					content = <Scan state={state} />;
 					break;
 				default:
-					content = <Home state={state} />;
+					content = <Home key={state.profile.id} state={state} />;
 			}
 	}
 	return (

@@ -405,6 +405,9 @@ export function DevicesScreen() {
 		try {
 			if (id) localStorage.setItem("ts-device", id);
 			else localStorage.removeItem("ts-device");
+			const name = devices?.find((device) => device.id === id)?.name;
+			if (name) localStorage.setItem("ts-device-name", name);
+			else localStorage.removeItem("ts-device-name");
 		} catch {
 			/* ignore */
 		}
@@ -433,6 +436,27 @@ export function DevicesScreen() {
 						</span>
 					</label>
 				</li>
+				{chosen && !devices?.some((device) => device.id === chosen) ? (
+					<li>
+						<p class="row">
+							<span class="row__main">
+								<span class="row__title">
+									{chosen === "spotify"
+										? "Spotify · aktives Gerät"
+										: chosen.startsWith("native:")
+											? "Gespeichertes HA/MA-Gerät"
+											: "Gespeichertes Spotify-Gerät"}
+								</span>
+								<span class="row__sub">
+									Auswahl bleibt erhalten ·{" "}
+									{chosen === "spotify"
+										? "automatische Spotify-Auswahl"
+										: "zurzeit nicht in der Spotify-Geräteliste"}
+								</span>
+							</span>
+						</p>
+					</li>
+				) : null}
 				{(devices ?? []).map((d) => (
 					<li key={d.id}>
 						<label class="row" aria-disabled={d.restricted}>

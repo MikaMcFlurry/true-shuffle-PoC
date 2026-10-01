@@ -141,9 +141,9 @@ export class UserHub extends DurableObject<Env> {
 	isConnected() {
 		return this.exclusive(() => this.hub().isConnected());
 	}
-	state(epoch: number, live: boolean) {
+	state(epoch: number, live: boolean, refresh = false) {
 		return this.session(epoch, async () => {
-			const state = await this.hub().state({ live });
+			const state = await this.hub().state({ live, refresh });
 			const transport = await this.ctx.storage.get<{
 				stationId: number;
 				deviceId: string;
@@ -554,7 +554,7 @@ export class UserHub extends DurableObject<Env> {
 	}
 	syncNow(epoch: number) {
 		return this.session(epoch, async () => {
-			await this.hub().scheduleSoon(0);
+			await this.hub().requestSync();
 		});
 	}
 	ensureAlarm() {
