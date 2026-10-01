@@ -1,117 +1,92 @@
 {
 	"schemaVersion": 2,
-	"generatedAt": "2026-09-30T08:06:21.154575+00:00",
+	"generatedAt": "2026-10-01T11:57:44.165976+00:00",
 	"title": "Design System: true-shuffle",
 	"extensions": {
 		"colorMeta": {
 			"bg": {
 				"role": "neutral",
-				"displayName": "Bg",
-				"canonical": "#f6f5f1",
+				"displayName": "Paper",
+				"canonical": "#f3f3f1",
 				"tonalRamp": [
-					"oklch(15% 0.0054 95.10)",
-					"oklch(26% 0.0054 95.10)",
-					"oklch(38% 0.0054 95.10)",
-					"oklch(49% 0.0054 95.10)",
-					"oklch(61% 0.0054 95.10)",
-					"oklch(72% 0.0054 95.10)",
-					"oklch(84% 0.0054 95.10)",
-					"oklch(95% 0.0054 95.10)"
+					"oklch(15% 0.0027 106.45)",
+					"oklch(26% 0.0027 106.45)",
+					"oklch(38% 0.0027 106.45)",
+					"oklch(49% 0.0027 106.45)",
+					"oklch(61% 0.0027 106.45)",
+					"oklch(72% 0.0027 106.45)",
+					"oklch(84% 0.0027 106.45)",
+					"oklch(95% 0.0027 106.45)"
 				]
 			},
-			"surface": {
+			"fg": {
 				"role": "neutral",
-				"displayName": "Surface",
-				"canonical": "#fffefa",
+				"displayName": "Ink Black",
+				"canonical": "#111111",
 				"tonalRamp": [
-					"oklch(15% 0.0054 95.10)",
-					"oklch(26% 0.0054 95.10)",
-					"oklch(38% 0.0054 95.10)",
-					"oklch(49% 0.0054 95.10)",
-					"oklch(61% 0.0054 95.10)",
-					"oklch(72% 0.0054 95.10)",
-					"oklch(84% 0.0054 95.10)",
-					"oklch(95% 0.0054 95.10)"
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
 				]
 			},
-			"layer": {
+			"fg-2": {
 				"role": "neutral",
-				"displayName": "Layer",
-				"canonical": "#eeede7",
+				"displayName": "Graphite",
+				"canonical": "#55575a",
 				"tonalRamp": [
-					"oklch(15% 0.0081 98.88)",
-					"oklch(26% 0.0081 98.88)",
-					"oklch(38% 0.0081 98.88)",
-					"oklch(49% 0.0081 98.88)",
-					"oklch(61% 0.0081 98.88)",
-					"oklch(72% 0.0081 98.88)",
-					"oklch(84% 0.0081 98.88)",
-					"oklch(95% 0.0081 98.88)"
+					"oklch(15% 0.0055 258.34)",
+					"oklch(26% 0.0055 258.34)",
+					"oklch(38% 0.0055 258.34)",
+					"oklch(49% 0.0055 258.34)",
+					"oklch(61% 0.0055 258.34)",
+					"oklch(72% 0.0055 258.34)",
+					"oklch(84% 0.0055 258.34)",
+					"oklch(95% 0.0055 258.34)"
 				]
 			},
-			"ink": {
+			"rule": {
 				"role": "neutral",
-				"displayName": "Ink",
-				"canonical": "#202b28",
+				"displayName": "Rule Black",
+				"canonical": "#111111",
 				"tonalRamp": [
-					"oklch(15% 0.0162 176.59)",
-					"oklch(26% 0.0162 176.59)",
-					"oklch(38% 0.0162 176.59)",
-					"oklch(49% 0.0162 176.59)",
-					"oklch(61% 0.0162 176.59)",
-					"oklch(72% 0.0162 176.59)",
-					"oklch(84% 0.0162 176.59)",
-					"oklch(95% 0.0162 176.59)"
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
 				]
 			},
-			"muted": {
+			"hair": {
 				"role": "neutral",
-				"displayName": "Muted",
-				"canonical": "#626c66",
+				"displayName": "Hairline",
+				"canonical": "#c9cbcd",
 				"tonalRamp": [
-					"oklch(15% 0.0153 159.54)",
-					"oklch(26% 0.0153 159.54)",
-					"oklch(38% 0.0153 159.54)",
-					"oklch(49% 0.0153 159.54)",
-					"oklch(61% 0.0153 159.54)",
-					"oklch(72% 0.0153 159.54)",
-					"oklch(84% 0.0153 159.54)",
-					"oklch(95% 0.0153 159.54)"
+					"oklch(15% 0.0035 247.87)",
+					"oklch(26% 0.0035 247.87)",
+					"oklch(38% 0.0035 247.87)",
+					"oklch(49% 0.0035 247.87)",
+					"oklch(61% 0.0035 247.87)",
+					"oklch(72% 0.0035 247.87)",
+					"oklch(84% 0.0035 247.87)",
+					"oklch(95% 0.0035 247.87)"
 				]
 			},
-			"line": {
+			"grid": {
 				"role": "neutral",
-				"displayName": "Line",
-				"canonical": "#d7dbd3",
-				"tonalRamp": [
-					"oklch(15% 0.0116 128.61)",
-					"oklch(26% 0.0116 128.61)",
-					"oklch(38% 0.0116 128.61)",
-					"oklch(49% 0.0116 128.61)",
-					"oklch(61% 0.0116 128.61)",
-					"oklch(72% 0.0116 128.61)",
-					"oklch(84% 0.0116 128.61)",
-					"oklch(95% 0.0116 128.61)"
-				]
+				"displayName": "Construction Grid",
+				"canonical": "rgb(17 17 17 / 0.08)"
 			},
-			"accent": {
-				"role": "primary",
-				"displayName": "Accent",
-				"canonical": "#245c49",
-				"tonalRamp": [
-					"oklch(15% 0.0674 167.98)",
-					"oklch(26% 0.0674 167.98)",
-					"oklch(38% 0.0674 167.98)",
-					"oklch(49% 0.0674 167.98)",
-					"oklch(61% 0.0674 167.98)",
-					"oklch(72% 0.0674 167.98)",
-					"oklch(84% 0.0674 167.98)",
-					"oklch(95% 0.0674 167.98)"
-				]
-			},
-			"on-accent": {
-				"role": "primary",
-				"displayName": "On Accent",
+			"raise": {
+				"role": "neutral",
+				"displayName": "Raised Sheet",
 				"canonical": "#ffffff",
 				"tonalRamp": [
 					"oklch(15% 0.0000 89.88)",
@@ -125,344 +100,871 @@
 				]
 			},
 			"danger": {
-				"role": "primary",
-				"displayName": "Danger",
-				"canonical": "#a13232",
+				"role": "neutral",
+				"displayName": "Danger Red",
+				"canonical": "#b3261e",
 				"tonalRamp": [
-					"oklch(15% 0.1467 24.48)",
-					"oklch(26% 0.1467 24.48)",
-					"oklch(38% 0.1467 24.48)",
-					"oklch(49% 0.1467 24.48)",
-					"oklch(61% 0.1467 24.48)",
-					"oklch(72% 0.1467 24.48)",
-					"oklch(84% 0.1467 24.48)",
-					"oklch(95% 0.1467 24.48)"
+					"oklch(15% 0.1783 28.70)",
+					"oklch(26% 0.1783 28.70)",
+					"oklch(38% 0.1783 28.70)",
+					"oklch(49% 0.1783 28.70)",
+					"oklch(61% 0.1783 28.70)",
+					"oklch(72% 0.1783 28.70)",
+					"oklch(84% 0.1783 28.70)",
+					"oklch(95% 0.1783 28.70)"
+				]
+			},
+			"warn-bg": {
+				"role": "neutral",
+				"displayName": "Warning Field",
+				"canonical": "#fff3c4",
+				"tonalRamp": [
+					"oklch(15% 0.0619 95.40)",
+					"oklch(26% 0.0619 95.40)",
+					"oklch(38% 0.0619 95.40)",
+					"oklch(49% 0.0619 95.40)",
+					"oklch(61% 0.0619 95.40)",
+					"oklch(72% 0.0619 95.40)",
+					"oklch(84% 0.0619 95.40)",
+					"oklch(95% 0.0619 95.40)"
+				]
+			},
+			"warn-fg": {
+				"role": "neutral",
+				"displayName": "Warning Ink",
+				"canonical": "#3b2f00",
+				"tonalRamp": [
+					"oklch(15% 0.0634 93.48)",
+					"oklch(26% 0.0634 93.48)",
+					"oklch(38% 0.0634 93.48)",
+					"oklch(49% 0.0634 93.48)",
+					"oklch(61% 0.0634 93.48)",
+					"oklch(72% 0.0634 93.48)",
+					"oklch(84% 0.0634 93.48)",
+					"oklch(95% 0.0634 93.48)"
 				]
 			},
 			"focus": {
-				"role": "primary",
-				"displayName": "Focus",
-				"canonical": "#197752",
+				"role": "neutral",
+				"displayName": "Focus Ultramarine",
+				"canonical": "#1f3bd0",
 				"tonalRamp": [
-					"oklch(15% 0.1033 161.46)",
-					"oklch(26% 0.1033 161.46)",
-					"oklch(38% 0.1033 161.46)",
-					"oklch(49% 0.1033 161.46)",
-					"oklch(61% 0.1033 161.46)",
-					"oklch(72% 0.1033 161.46)",
-					"oklch(84% 0.1033 161.46)",
-					"oklch(95% 0.1033 161.46)"
+					"oklch(15% 0.2000 266.77)",
+					"oklch(26% 0.2000 266.77)",
+					"oklch(38% 0.2000 266.77)",
+					"oklch(49% 0.2000 266.77)",
+					"oklch(61% 0.2000 266.77)",
+					"oklch(72% 0.2000 266.77)",
+					"oklch(84% 0.2000 266.77)",
+					"oklch(95% 0.2000 266.77)"
+				]
+			},
+			"select": {
+				"role": "neutral",
+				"displayName": "Selection Yellow",
+				"canonical": "#f4c20d",
+				"tonalRamp": [
+					"oklch(15% 0.1689 89.62)",
+					"oklch(26% 0.1689 89.62)",
+					"oklch(38% 0.1689 89.62)",
+					"oklch(49% 0.1689 89.62)",
+					"oklch(61% 0.1689 89.62)",
+					"oklch(72% 0.1689 89.62)",
+					"oklch(84% 0.1689 89.62)",
+					"oklch(95% 0.1689 89.62)"
 				]
 			},
 			"bg-night": {
 				"role": "neutral",
-				"displayName": "Bg Night",
-				"canonical": "#151b19",
+				"displayName": "Paper (night)",
+				"canonical": "#0b0b0c",
 				"tonalRamp": [
-					"oklch(15% 0.0098 173.19)",
-					"oklch(26% 0.0098 173.19)",
-					"oklch(38% 0.0098 173.19)",
-					"oklch(49% 0.0098 173.19)",
-					"oklch(61% 0.0098 173.19)",
-					"oklch(72% 0.0098 173.19)",
-					"oklch(84% 0.0098 173.19)",
-					"oklch(95% 0.0098 173.19)"
+					"oklch(15% 0.0021 286.14)",
+					"oklch(26% 0.0021 286.14)",
+					"oklch(38% 0.0021 286.14)",
+					"oklch(49% 0.0021 286.14)",
+					"oklch(61% 0.0021 286.14)",
+					"oklch(72% 0.0021 286.14)",
+					"oklch(84% 0.0021 286.14)",
+					"oklch(95% 0.0021 286.14)"
 				]
 			},
-			"surface-night": {
+			"fg-night": {
 				"role": "neutral",
-				"displayName": "Surface Night",
-				"canonical": "#1c2420",
+				"displayName": "Ink Black (night)",
+				"canonical": "#f2f2ee",
 				"tonalRamp": [
-					"oklch(15% 0.0137 163.62)",
-					"oklch(26% 0.0137 163.62)",
-					"oklch(38% 0.0137 163.62)",
-					"oklch(49% 0.0137 163.62)",
-					"oklch(61% 0.0137 163.62)",
-					"oklch(72% 0.0137 163.62)",
-					"oklch(84% 0.0137 163.62)",
-					"oklch(95% 0.0137 163.62)"
+					"oklch(15% 0.0053 106.50)",
+					"oklch(26% 0.0053 106.50)",
+					"oklch(38% 0.0053 106.50)",
+					"oklch(49% 0.0053 106.50)",
+					"oklch(61% 0.0053 106.50)",
+					"oklch(72% 0.0053 106.50)",
+					"oklch(84% 0.0053 106.50)",
+					"oklch(95% 0.0053 106.50)"
 				]
 			},
-			"layer-night": {
+			"fg-2-night": {
 				"role": "neutral",
-				"displayName": "Layer Night",
-				"canonical": "#242e28",
+				"displayName": "Graphite (night)",
+				"canonical": "#a3a5a8",
 				"tonalRamp": [
-					"oklch(15% 0.0176 158.76)",
-					"oklch(26% 0.0176 158.76)",
-					"oklch(38% 0.0176 158.76)",
-					"oklch(49% 0.0176 158.76)",
-					"oklch(61% 0.0176 158.76)",
-					"oklch(72% 0.0176 158.76)",
-					"oklch(84% 0.0176 158.76)",
-					"oklch(95% 0.0176 158.76)"
+					"oklch(15% 0.0049 258.33)",
+					"oklch(26% 0.0049 258.33)",
+					"oklch(38% 0.0049 258.33)",
+					"oklch(49% 0.0049 258.33)",
+					"oklch(61% 0.0049 258.33)",
+					"oklch(72% 0.0049 258.33)",
+					"oklch(84% 0.0049 258.33)",
+					"oklch(95% 0.0049 258.33)"
 				]
 			},
-			"ink-night": {
+			"rule-night": {
 				"role": "neutral",
-				"displayName": "Ink Night",
-				"canonical": "#f0f2e9",
+				"displayName": "Rule Black (night)",
+				"canonical": "#f2f2ee",
 				"tonalRamp": [
-					"oklch(15% 0.0121 116.81)",
-					"oklch(26% 0.0121 116.81)",
-					"oklch(38% 0.0121 116.81)",
-					"oklch(49% 0.0121 116.81)",
-					"oklch(61% 0.0121 116.81)",
-					"oklch(72% 0.0121 116.81)",
-					"oklch(84% 0.0121 116.81)",
-					"oklch(95% 0.0121 116.81)"
+					"oklch(15% 0.0053 106.50)",
+					"oklch(26% 0.0053 106.50)",
+					"oklch(38% 0.0053 106.50)",
+					"oklch(49% 0.0053 106.50)",
+					"oklch(61% 0.0053 106.50)",
+					"oklch(72% 0.0053 106.50)",
+					"oklch(84% 0.0053 106.50)",
+					"oklch(95% 0.0053 106.50)"
 				]
 			},
-			"muted-night": {
+			"hair-night": {
 				"role": "neutral",
-				"displayName": "Muted Night",
-				"canonical": "#b0bbae",
+				"displayName": "Hairline (night)",
+				"canonical": "#303236",
 				"tonalRamp": [
-					"oklch(15% 0.0218 140.89)",
-					"oklch(26% 0.0218 140.89)",
-					"oklch(38% 0.0218 140.89)",
-					"oklch(49% 0.0218 140.89)",
-					"oklch(61% 0.0218 140.89)",
-					"oklch(72% 0.0218 140.89)",
-					"oklch(84% 0.0218 140.89)",
-					"oklch(95% 0.0218 140.89)"
+					"oklch(15% 0.0076 264.46)",
+					"oklch(26% 0.0076 264.46)",
+					"oklch(38% 0.0076 264.46)",
+					"oklch(49% 0.0076 264.46)",
+					"oklch(61% 0.0076 264.46)",
+					"oklch(72% 0.0076 264.46)",
+					"oklch(84% 0.0076 264.46)",
+					"oklch(95% 0.0076 264.46)"
 				]
 			},
-			"line-night": {
+			"grid-night": {
 				"role": "neutral",
-				"displayName": "Line Night",
-				"canonical": "#39463c",
-				"tonalRamp": [
-					"oklch(15% 0.0238 152.08)",
-					"oklch(26% 0.0238 152.08)",
-					"oklch(38% 0.0238 152.08)",
-					"oklch(49% 0.0238 152.08)",
-					"oklch(61% 0.0238 152.08)",
-					"oklch(72% 0.0238 152.08)",
-					"oklch(84% 0.0238 152.08)",
-					"oklch(95% 0.0238 152.08)"
-				]
+				"displayName": "Construction Grid (night)",
+				"canonical": "rgb(242 242 238 / 0.075)"
 			},
-			"accent-night": {
-				"role": "primary",
-				"displayName": "Accent Night",
-				"canonical": "#b5d6a6",
+			"raise-night": {
+				"role": "neutral",
+				"displayName": "Raised Sheet (night)",
+				"canonical": "#17181a",
 				"tonalRamp": [
-					"oklch(15% 0.0741 135.97)",
-					"oklch(26% 0.0741 135.97)",
-					"oklch(38% 0.0741 135.97)",
-					"oklch(49% 0.0741 135.97)",
-					"oklch(61% 0.0741 135.97)",
-					"oklch(72% 0.0741 135.97)",
-					"oklch(84% 0.0741 135.97)",
-					"oklch(95% 0.0741 135.97)"
-				]
-			},
-			"on-accent-night": {
-				"role": "primary",
-				"displayName": "On Accent Night",
-				"canonical": "#172719",
-				"tonalRamp": [
-					"oklch(15% 0.0340 147.62)",
-					"oklch(26% 0.0340 147.62)",
-					"oklch(38% 0.0340 147.62)",
-					"oklch(49% 0.0340 147.62)",
-					"oklch(61% 0.0340 147.62)",
-					"oklch(72% 0.0340 147.62)",
-					"oklch(84% 0.0340 147.62)",
-					"oklch(95% 0.0340 147.62)"
+					"oklch(15% 0.0042 264.48)",
+					"oklch(26% 0.0042 264.48)",
+					"oklch(38% 0.0042 264.48)",
+					"oklch(49% 0.0042 264.48)",
+					"oklch(61% 0.0042 264.48)",
+					"oklch(72% 0.0042 264.48)",
+					"oklch(84% 0.0042 264.48)",
+					"oklch(95% 0.0042 264.48)"
 				]
 			},
 			"danger-night": {
-				"role": "primary",
-				"displayName": "Danger Night",
-				"canonical": "#f4aaa2",
+				"role": "neutral",
+				"displayName": "Danger Red (night)",
+				"canonical": "#ff8a7f",
 				"tonalRamp": [
-					"oklch(15% 0.0887 26.07)",
-					"oklch(26% 0.0887 26.07)",
-					"oklch(38% 0.0887 26.07)",
-					"oklch(49% 0.0887 26.07)",
-					"oklch(61% 0.0887 26.07)",
-					"oklch(72% 0.0887 26.07)",
-					"oklch(84% 0.0887 26.07)",
-					"oklch(95% 0.0887 26.07)"
+					"oklch(15% 0.1437 26.58)",
+					"oklch(26% 0.1437 26.58)",
+					"oklch(38% 0.1437 26.58)",
+					"oklch(49% 0.1437 26.58)",
+					"oklch(61% 0.1437 26.58)",
+					"oklch(72% 0.1437 26.58)",
+					"oklch(84% 0.1437 26.58)",
+					"oklch(95% 0.1437 26.58)"
+				]
+			},
+			"warn-bg-night": {
+				"role": "neutral",
+				"displayName": "Warning Field (night)",
+				"canonical": "#3b2f00",
+				"tonalRamp": [
+					"oklch(15% 0.0634 93.48)",
+					"oklch(26% 0.0634 93.48)",
+					"oklch(38% 0.0634 93.48)",
+					"oklch(49% 0.0634 93.48)",
+					"oklch(61% 0.0634 93.48)",
+					"oklch(72% 0.0634 93.48)",
+					"oklch(84% 0.0634 93.48)",
+					"oklch(95% 0.0634 93.48)"
+				]
+			},
+			"warn-fg-night": {
+				"role": "neutral",
+				"displayName": "Warning Ink (night)",
+				"canonical": "#ffe9a3",
+				"tonalRamp": [
+					"oklch(15% 0.0913 92.69)",
+					"oklch(26% 0.0913 92.69)",
+					"oklch(38% 0.0913 92.69)",
+					"oklch(49% 0.0913 92.69)",
+					"oklch(61% 0.0913 92.69)",
+					"oklch(72% 0.0913 92.69)",
+					"oklch(84% 0.0913 92.69)",
+					"oklch(95% 0.0913 92.69)"
 				]
 			},
 			"focus-night": {
-				"role": "primary",
-				"displayName": "Focus Night",
-				"canonical": "#c0e5ae",
+				"role": "neutral",
+				"displayName": "Focus Ultramarine (night)",
+				"canonical": "#8fa3ff",
 				"tonalRamp": [
-					"oklch(15% 0.0833 135.53)",
-					"oklch(26% 0.0833 135.53)",
-					"oklch(38% 0.0833 135.53)",
-					"oklch(49% 0.0833 135.53)",
-					"oklch(61% 0.0833 135.53)",
-					"oklch(72% 0.0833 135.53)",
-					"oklch(84% 0.0833 135.53)",
-					"oklch(95% 0.0833 135.53)"
+					"oklch(15% 0.1351 273.36)",
+					"oklch(26% 0.1351 273.36)",
+					"oklch(38% 0.1351 273.36)",
+					"oklch(49% 0.1351 273.36)",
+					"oklch(61% 0.1351 273.36)",
+					"oklch(72% 0.1351 273.36)",
+					"oklch(84% 0.1351 273.36)",
+					"oklch(95% 0.1351 273.36)"
+				]
+			},
+			"ink-ultra": {
+				"role": "primary",
+				"displayName": "Ultramarine",
+				"canonical": "#1f3bd0",
+				"tonalRamp": [
+					"oklch(15% 0.2000 266.77)",
+					"oklch(26% 0.2000 266.77)",
+					"oklch(38% 0.2000 266.77)",
+					"oklch(49% 0.2000 266.77)",
+					"oklch(61% 0.2000 266.77)",
+					"oklch(72% 0.2000 266.77)",
+					"oklch(84% 0.2000 266.77)",
+					"oklch(95% 0.2000 266.77)"
+				]
+			},
+			"on-ultra": {
+				"role": "primary",
+				"displayName": "On Ultra",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-ultra-2": {
+				"role": "primary",
+				"displayName": "On Ultra 2",
+				"canonical": "#dfe4ff",
+				"tonalRamp": [
+					"oklch(15% 0.0371 277.32)",
+					"oklch(26% 0.0371 277.32)",
+					"oklch(38% 0.0371 277.32)",
+					"oklch(49% 0.0371 277.32)",
+					"oklch(61% 0.0371 277.32)",
+					"oklch(72% 0.0371 277.32)",
+					"oklch(84% 0.0371 277.32)",
+					"oklch(95% 0.0371 277.32)"
+				]
+			},
+			"ink-verm": {
+				"role": "primary",
+				"displayName": "Vermilion",
+				"canonical": "#c8380e",
+				"tonalRamp": [
+					"oklch(15% 0.1869 35.02)",
+					"oklch(26% 0.1869 35.02)",
+					"oklch(38% 0.1869 35.02)",
+					"oklch(49% 0.1869 35.02)",
+					"oklch(61% 0.1869 35.02)",
+					"oklch(72% 0.1869 35.02)",
+					"oklch(84% 0.1869 35.02)",
+					"oklch(95% 0.1869 35.02)"
+				]
+			},
+			"on-verm": {
+				"role": "primary",
+				"displayName": "On Verm",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-verm-2": {
+				"role": "primary",
+				"displayName": "On Verm 2",
+				"canonical": "#fff0ea",
+				"tonalRamp": [
+					"oklch(15% 0.0182 43.23)",
+					"oklch(26% 0.0182 43.23)",
+					"oklch(38% 0.0182 43.23)",
+					"oklch(49% 0.0182 43.23)",
+					"oklch(61% 0.0182 43.23)",
+					"oklch(72% 0.0182 43.23)",
+					"oklch(84% 0.0182 43.23)",
+					"oklch(95% 0.0182 43.23)"
+				]
+			},
+			"ink-green": {
+				"role": "primary",
+				"displayName": "Print Green",
+				"canonical": "#006e4e",
+				"tonalRamp": [
+					"oklch(15% 0.1006 164.75)",
+					"oklch(26% 0.1006 164.75)",
+					"oklch(38% 0.1006 164.75)",
+					"oklch(49% 0.1006 164.75)",
+					"oklch(61% 0.1006 164.75)",
+					"oklch(72% 0.1006 164.75)",
+					"oklch(84% 0.1006 164.75)",
+					"oklch(95% 0.1006 164.75)"
+				]
+			},
+			"on-green": {
+				"role": "primary",
+				"displayName": "On Green",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-green-2": {
+				"role": "primary",
+				"displayName": "On Green 2",
+				"canonical": "#dff5ec",
+				"tonalRamp": [
+					"oklch(15% 0.0260 169.30)",
+					"oklch(26% 0.0260 169.30)",
+					"oklch(38% 0.0260 169.30)",
+					"oklch(49% 0.0260 169.30)",
+					"oklch(61% 0.0260 169.30)",
+					"oklch(72% 0.0260 169.30)",
+					"oklch(84% 0.0260 169.30)",
+					"oklch(95% 0.0260 169.30)"
+				]
+			},
+			"ink-violet": {
+				"role": "primary",
+				"displayName": "Violet",
+				"canonical": "#5b30c0",
+				"tonalRamp": [
+					"oklch(15% 0.2000 289.04)",
+					"oklch(26% 0.2000 289.04)",
+					"oklch(38% 0.2000 289.04)",
+					"oklch(49% 0.2000 289.04)",
+					"oklch(61% 0.2000 289.04)",
+					"oklch(72% 0.2000 289.04)",
+					"oklch(84% 0.2000 289.04)",
+					"oklch(95% 0.2000 289.04)"
+				]
+			},
+			"on-violet": {
+				"role": "primary",
+				"displayName": "On Violet",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-violet-2": {
+				"role": "primary",
+				"displayName": "On Violet 2",
+				"canonical": "#ece5ff",
+				"tonalRamp": [
+					"oklch(15% 0.0356 298.01)",
+					"oklch(26% 0.0356 298.01)",
+					"oklch(38% 0.0356 298.01)",
+					"oklch(49% 0.0356 298.01)",
+					"oklch(61% 0.0356 298.01)",
+					"oklch(72% 0.0356 298.01)",
+					"oklch(84% 0.0356 298.01)",
+					"oklch(95% 0.0356 298.01)"
+				]
+			},
+			"ink-petrol": {
+				"role": "primary",
+				"displayName": "Petrol",
+				"canonical": "#00657a",
+				"tonalRamp": [
+					"oklch(15% 0.0844 218.63)",
+					"oklch(26% 0.0844 218.63)",
+					"oklch(38% 0.0844 218.63)",
+					"oklch(49% 0.0844 218.63)",
+					"oklch(61% 0.0844 218.63)",
+					"oklch(72% 0.0844 218.63)",
+					"oklch(84% 0.0844 218.63)",
+					"oklch(95% 0.0844 218.63)"
+				]
+			},
+			"on-petrol": {
+				"role": "primary",
+				"displayName": "On Petrol",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-petrol-2": {
+				"role": "primary",
+				"displayName": "On Petrol 2",
+				"canonical": "#dcf3f7",
+				"tonalRamp": [
+					"oklch(15% 0.0248 209.25)",
+					"oklch(26% 0.0248 209.25)",
+					"oklch(38% 0.0248 209.25)",
+					"oklch(49% 0.0248 209.25)",
+					"oklch(61% 0.0248 209.25)",
+					"oklch(72% 0.0248 209.25)",
+					"oklch(84% 0.0248 209.25)",
+					"oklch(95% 0.0248 209.25)"
+				]
+			},
+			"ink-yellow": {
+				"role": "primary",
+				"displayName": "Signal Yellow",
+				"canonical": "#f4c20d",
+				"tonalRamp": [
+					"oklch(15% 0.1689 89.62)",
+					"oklch(26% 0.1689 89.62)",
+					"oklch(38% 0.1689 89.62)",
+					"oklch(49% 0.1689 89.62)",
+					"oklch(61% 0.1689 89.62)",
+					"oklch(72% 0.1689 89.62)",
+					"oklch(84% 0.1689 89.62)",
+					"oklch(95% 0.1689 89.62)"
+				]
+			},
+			"on-yellow": {
+				"role": "primary",
+				"displayName": "On Yellow",
+				"canonical": "#111111",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-yellow-2": {
+				"role": "primary",
+				"displayName": "On Yellow 2",
+				"canonical": "#3a3000",
+				"tonalRamp": [
+					"oklch(15% 0.0640 96.46)",
+					"oklch(26% 0.0640 96.46)",
+					"oklch(38% 0.0640 96.46)",
+					"oklch(49% 0.0640 96.46)",
+					"oklch(61% 0.0640 96.46)",
+					"oklch(72% 0.0640 96.46)",
+					"oklch(84% 0.0640 96.46)",
+					"oklch(95% 0.0640 96.46)"
+				]
+			},
+			"ink-all": {
+				"role": "primary",
+				"displayName": "Alles Ink",
+				"canonical": "#111111",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-all": {
+				"role": "primary",
+				"displayName": "On All",
+				"canonical": "#f3f3f1",
+				"tonalRamp": [
+					"oklch(15% 0.0027 106.45)",
+					"oklch(26% 0.0027 106.45)",
+					"oklch(38% 0.0027 106.45)",
+					"oklch(49% 0.0027 106.45)",
+					"oklch(61% 0.0027 106.45)",
+					"oklch(72% 0.0027 106.45)",
+					"oklch(84% 0.0027 106.45)",
+					"oklch(95% 0.0027 106.45)"
+				]
+			},
+			"on-all-2": {
+				"role": "primary",
+				"displayName": "On All 2",
+				"canonical": "#c6c6c4",
+				"tonalRamp": [
+					"oklch(15% 0.0028 106.46)",
+					"oklch(26% 0.0028 106.46)",
+					"oklch(38% 0.0028 106.46)",
+					"oklch(49% 0.0028 106.46)",
+					"oklch(61% 0.0028 106.46)",
+					"oklch(72% 0.0028 106.46)",
+					"oklch(84% 0.0028 106.46)",
+					"oklch(95% 0.0028 106.46)"
+				]
+			},
+			"ink-all-night": {
+				"role": "primary",
+				"displayName": "Alles Ink (night)",
+				"canonical": "#f2f2ee",
+				"tonalRamp": [
+					"oklch(15% 0.0053 106.50)",
+					"oklch(26% 0.0053 106.50)",
+					"oklch(38% 0.0053 106.50)",
+					"oklch(49% 0.0053 106.50)",
+					"oklch(61% 0.0053 106.50)",
+					"oklch(72% 0.0053 106.50)",
+					"oklch(84% 0.0053 106.50)",
+					"oklch(95% 0.0053 106.50)"
+				]
+			},
+			"on-all-night": {
+				"role": "primary",
+				"displayName": "On All Night",
+				"canonical": "#0b0b0c",
+				"tonalRamp": [
+					"oklch(15% 0.0021 286.14)",
+					"oklch(26% 0.0021 286.14)",
+					"oklch(38% 0.0021 286.14)",
+					"oklch(49% 0.0021 286.14)",
+					"oklch(61% 0.0021 286.14)",
+					"oklch(72% 0.0021 286.14)",
+					"oklch(84% 0.0021 286.14)",
+					"oklch(95% 0.0021 286.14)"
+				]
+			},
+			"on-all-2-night": {
+				"role": "primary",
+				"displayName": "On All 2 Night",
+				"canonical": "#393939",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
 				]
 			}
 		},
 		"typographyMeta": {
+			"display": {
+				"displayName": "Poster Title",
+				"purpose": "Current song title on the poster, phone and tablet."
+			},
+			"display-desktop": {
+				"displayName": "Poster Title (desktop)",
+				"purpose": "Current song title from 1100px."
+			},
+			"masthead": {
+				"displayName": "Masthead",
+				"purpose": "Page titles and the station ink band."
+			},
 			"headline": {
-				"displayName": "Headline",
-				"purpose": "Page headings."
+				"displayName": "Section Head",
+				"purpose": "Section heads over a 3px rule."
 			},
 			"title": {
-				"displayName": "Title",
-				"purpose": "Section headings."
+				"displayName": "Sender Name",
+				"purpose": "Sender name in the poster head and on tiles."
+			},
+			"brand": {
+				"displayName": "Brand",
+				"purpose": "Lower-case true-shuffle in the header."
 			},
 			"body": {
-				"displayName": "Body",
-				"purpose": "German running text."
+				"displayName": "Text",
+				"purpose": "Prose, notices, hints at normal width."
 			},
-			"action": {
-				"displayName": "Action",
-				"purpose": "Transport and supporting controls."
+			"key": {
+				"displayName": "Key Label",
+				"purpose": "Keys and buttons."
+			},
+			"figures": {
+				"displayName": "Figures",
+				"purpose": "Times, queue numbers, counts in tabular figures."
+			},
+			"signal": {
+				"displayName": "Signal",
+				"purpose": "Command signal steps and reason chips."
 			}
 		},
 		"shadows": [
 			{
-				"name": "artwork",
-				"value": "0 10px 28px #00000016",
-				"purpose": "Current album artwork."
-			},
-			{
-				"name": "toast",
-				"value": "0 6px 20px #00000024",
-				"purpose": "Temporary status feedback."
-			},
-			{
 				"name": "dialog",
-				"value": "0 12px 40px #00000030",
-				"purpose": "Rating dialog."
+				"value": "0 24px 60px -20px rgb(0 0 0 / 0.5)",
+				"purpose": "Rating sheet only, over a rgb(0 0 0 / 0.55) backdrop."
 			}
 		],
 		"motion": [
 			{
-				"name": "button-background",
-				"value": "background 160ms ease-out",
-				"purpose": "Button state changes; disabled under reduced motion."
+				"name": "ease",
+				"value": "cubic-bezier(0.16, 1, 0.3, 1)",
+				"purpose": "Shared curve for every state change."
+			},
+			{
+				"name": "t",
+				"value": "180ms",
+				"purpose": "Key fills, signal steps, header underline, switch."
+			},
+			{
+				"name": "t-slow",
+				"value": "500ms",
+				"purpose": "Ink field change, round-figure arc, import meter."
 			},
 			{
 				"name": "reduced-motion",
-				"value": "transition: none; animation: none; scroll-behavior: auto",
-				"purpose": "All descendants and pseudo-elements under reduced-motion preference."
+				"value": "0ms",
+				"purpose": "Both durations under prefers-reduced-motion; smooth scroll off."
 			}
 		],
 		"breakpoints": [
 			{
-				"name": "compact-desktop",
-				"value": "1050px"
+				"name": "narrow",
+				"value": "max-width: 380px"
 			},
 			{
-				"name": "mobile",
-				"value": "780px"
+				"name": "phone",
+				"value": "max-width: 559px"
 			},
 			{
-				"name": "narrow-mobile",
-				"value": "360px"
+				"name": "tablet",
+				"value": "560px"
+			},
+			{
+				"name": "wide",
+				"value": "900px"
+			},
+			{
+				"name": "desktop",
+				"value": "1100px"
+			},
+			{
+				"name": "shell-max",
+				"value": "1440px"
 			}
 		]
 	},
 	"components": [
 		{
-			"name": "Resume button",
+			"name": "Key",
 			"kind": "button",
-			"refersTo": "button-primary",
-			"description": "Primary transport with busy and disabled states.",
-			"html": "<button class=\"ds-primary\">Fortsetzen</button>",
-			"css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border:1px solid var(--line,#d7dbd3);border-radius:6px;font-size:1rem;font-weight:500;font-family:\"Jost Variable\",system-ui,sans-serif;transition:background 160ms ease-out;background:var(--accent,#245c49);color:var(--on-accent,#fff);border-color:var(--accent,#245c49);}.ds-primary:hover{filter:brightness(1.06);}.ds-primary:focus-visible{outline:3px solid var(--focus,#197752);outline-offset:4px;}.ds-primary:disabled{opacity:.5;cursor:default;} @media(prefers-reduced-motion:reduce){[class^=\"ds-\"]{transition:none;animation:none;}}"
+			"refersTo": "key",
+			"description": "Default printed key: square, 2px ink outline, fills solid on hover.",
+			"html": "<button class=\"ds-key\">Mix &amp; Regeln anpassen</button>",
+			"css": ".ds-key{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 18px;border:2px solid var(--fg,#111);border-radius:0;background:transparent;color:var(--fg,#111);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;font-weight:700;font-stretch:92%;line-height:1.15;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1),color 180ms cubic-bezier(.16,1,.3,1)}.ds-key:hover{background:var(--fg,#111);color:var(--bg,#f3f3f1)}.ds-key:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}.ds-key:disabled{opacity:.42;cursor:default}"
 		},
 		{
-			"name": "Secondary button",
+			"name": "Quiet Key",
 			"kind": "button",
-			"refersTo": "button-secondary",
-			"description": "Explicit supporting action.",
-			"html": "<button class=\"ds-secondary\">Abbrechen</button>",
-			"css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border:1px solid var(--line,#d7dbd3);border-radius:6px;font-size:1rem;font-weight:500;font-family:\"Jost Variable\",system-ui,sans-serif;transition:background 160ms ease-out;background:var(--surface,#fffefa);color:var(--ink,#202b28);}.ds-secondary:hover{background:var(--layer,#eeede7);}.ds-secondary:focus-visible{outline:3px solid var(--focus,#197752);outline-offset:4px;}.ds-secondary:disabled{opacity:.5;cursor:default;} @media(prefers-reduced-motion:reduce){[class^=\"ds-\"]{transition:none;animation:none;}}"
+			"refersTo": "key",
+			"description": "Hairline-outlined key for a deliberate, secondary action such as Neue Warteschlange.",
+			"html": "<button class=\"ds-key-quiet\">Neue Warteschlange</button>",
+			"css": ".ds-key-quiet{display:inline-flex;align-items:center;min-height:48px;padding:10px 18px;border:2px solid var(--hair,#c9cbcd);border-radius:0;background:transparent;color:var(--fg,#111);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;font-weight:700;font-stretch:92%;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1),color 180ms}.ds-key-quiet:hover{background:var(--fg,#111);color:var(--bg,#f3f3f1)}.ds-key-quiet:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}"
 		},
 		{
-			"name": "Transport icon",
-			"kind": "button",
-			"refersTo": "icon-button",
-			"description": "44px next-song control; runtime capabilities gate availability.",
-			"html": "<button class=\"ds-icon\" aria-label=\"Weiter: N\u00e4chster Song\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m5 4 10 8-10 8V4Z\"/><path d=\"M19 4v16\"/></svg></button>",
-			"css": ".ds-icon{display:grid;place-items:center;width:44px;height:44px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--muted,#626c66);}.ds-icon:hover{background:var(--layer,#eeede7);}.ds-icon[aria-pressed=true]{background:var(--layer,#eeede7);color:var(--accent,#245c49);}.ds-icon:focus-visible{outline:3px solid var(--focus,#197752);outline-offset:4px;}.ds-icon:disabled{opacity:.5;cursor:default;} @media(prefers-reduced-motion:reduce){[class^=\"ds-\"]{transition:none;animation:none;}}"
+			"name": "Poster Transport",
+			"kind": "custom",
+			"refersTo": "transport-main",
+			"description": "Signature: the poster's ink field with the solid main key and three outlined 52px keys; the second variant shows the overprint (requested) state.",
+			"html": "<div class=\"ds-poster\"><div class=\"ds-transport\"><button class=\"ds-main\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M6 4l14 8-14 8z\"/></svg>Fortsetzen</button><button class=\"ds-ikey\" aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 4l10 8-10 8z\"/><path d=\"M19 5v14\"/></svg></button><button class=\"ds-ikey\" aria-label=\"Favorit\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z\"/></svg></button><button class=\"ds-ikey\" aria-label=\"nie wieder\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M17 14V2M9 18.1L10 14H4.2a2 2 0 0 1-2-2.3l1.4-8A2 2 0 0 1 5.5 2H17\"/></svg></button></div><div class=\"ds-transport\"><button class=\"ds-main\" disabled>Pause angefordert …</button><button class=\"ds-ikey\" disabled aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 4l10 8-10 8z\"/><path d=\"M19 5v14\"/></svg></button></div></div>",
+			"css": ".ds-poster{display:grid;gap:12px;padding:20px 16px;background-color:#c8380e;background-image:repeating-linear-gradient(to right,rgb(255 255 255/.13) 0 1px,transparent 1px 25%);color:#fff;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-transport{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,52px);gap:8px}.ds-main{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:64px;padding:10px 16px;border:2px solid #fff;border-radius:0;background:#fff;color:#c8380e;font:inherit;font-size:1.2rem;font-weight:800;font-stretch:85%;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1)}.ds-main:hover:not(:disabled){background:color-mix(in srgb,#fff 92%,#c8380e)}.ds-main:disabled{background:transparent;color:#fff;border-style:dashed;font-size:.98rem;cursor:default}.ds-ikey{display:inline-flex;align-items:center;justify-content:center;width:52px;min-height:64px;padding:0;border:2px solid #fff;border-radius:0;background:transparent;color:#fff;cursor:pointer}.ds-ikey:hover:not(:disabled){background:rgb(255 255 255/.16)}.ds-ikey:disabled{opacity:.45;cursor:default}.ds-main:focus-visible,.ds-ikey:focus-visible{outline:3px solid #fff;outline-offset:3px}"
 		},
 		{
-			"name": "Text field",
+			"name": "Command Signal",
+			"kind": "custom",
+			"refersTo": "poster",
+			"description": "Signature: requested, accepted, confirmed. Solid only when reached; waiting steps print dashed.",
+			"html": "<div class=\"ds-sigwrap\"><p class=\"ds-sigstat\">Pause angenommen …</p><ol class=\"ds-signal\"><li class=\"on\">Angefordert</li><li class=\"on wait\">Angenommen</li><li>Bestätigt</li></ol></div>",
+			"css": ".ds-sigwrap{display:grid;gap:8px;padding:16px;background:#1f3bd0;color:#fff;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-sigstat{margin:0;font-weight:700;font-stretch:90%;font-size:.95rem}.ds-signal{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.ds-signal li{padding-top:8px;border-top:6px solid rgb(255 255 255/.26);font-size:.78rem;font-weight:650;font-stretch:90%;color:#dfe4ff;transition:border-color 180ms cubic-bezier(.16,1,.3,1)}.ds-signal li.on{border-top-color:#fff;color:#fff}.ds-signal li.wait{border-top-style:dashed}"
+		},
+		{
+			"name": "Progress Rule",
+			"kind": "custom",
+			"refersTo": "poster",
+			"description": "Thick printed progress rule; solid for the observed position, hatched while held or estimated.",
+			"html": "<div class=\"ds-prog-wrap\"><div class=\"ds-prog\"><span style=\"width:44%\"></span></div><div class=\"ds-times\"><span>1:37 gespeichert</span><span>3:40</span></div><div class=\"ds-prog ds-prog--held\"><span style=\"width:20%\"></span></div><div class=\"ds-times\"><span>0:44 · Bestätigung ausstehend</span><span>3:40</span></div></div>",
+			"css": ".ds-prog-wrap{display:grid;gap:8px;padding:16px;background:#006e4e;color:#fff;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-prog{height:12px;border:2px solid #fff;overflow:hidden}.ds-prog span{display:block;height:100%;background:#fff;transition:width 500ms cubic-bezier(.16,1,.3,1)}.ds-prog--held span{background:repeating-linear-gradient(135deg,#fff 0 3px,transparent 3px 7px)}.ds-times{display:flex;justify-content:space-between;font-size:1.05rem;font-weight:750;font-stretch:85%;font-variant-numeric:tabular-nums}"
+		},
+		{
+			"name": "Station Tile",
+			"kind": "card",
+			"refersTo": "station-tile",
+			"description": "A Sender on the poster wall: flat ink, name, meta, round figure; selected adds an 8px top bar.",
+			"html": "<div class=\"ds-wall\"><div class=\"ds-tile ds-tile--sel\"><button><span class=\"ds-tname\">Indie &amp; Gitarren</span><svg class=\"ds-fig\" viewBox=\"0 0 100 100\" width=\"48\" height=\"48\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"44\" stroke-width=\"10\" opacity=\".28\"/><circle cx=\"50\" cy=\"50\" r=\"44\" stroke-width=\"10\" stroke-dasharray=\"110 276\" transform=\"rotate(-90 50 50)\"/><circle cx=\"50\" cy=\"50\" r=\"30\" stroke-width=\"4\"/><circle cx=\"50\" cy=\"50\" r=\"18\" stroke-width=\"4\"/><circle cx=\"50\" cy=\"50\" r=\"7\" fill=\"currentColor\" stroke=\"none\"/></svg><span class=\"ds-tmeta\">400 Songs · Runde 1</span></button><a href=\"#\">Mix &amp; Regeln</a></div><div class=\"ds-tile ds-tile--petrol\"><button><span class=\"ds-tname\">Lange Autofahrt</span><span class=\"ds-tmeta\">600 Songs · Runde 1</span></button><a href=\"#\">Mix &amp; Regeln</a></div></div>",
+			"css": ".ds-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-tile{display:grid;background:#c8380e;color:#fff;border-top:8px solid transparent}.ds-tile--sel{border-top-color:#fff}.ds-tile--petrol{background:#00657a}.ds-tile button{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 1fr;gap:6px 10px;min-height:112px;padding:14px 14px 10px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.ds-tile button:hover{background:rgb(255 255 255/.1)}.ds-tile button:focus-visible{outline:3px solid #fff;outline-offset:3px}.ds-tname{font-size:1.2rem;font-weight:800;font-stretch:80%;line-height:1.05}.ds-tmeta{grid-column:1;align-self:end;font-size:.8rem;font-weight:550;color:#fff0ea}.ds-fig{grid-column:2;grid-row:1/span 2;fill:none;stroke:currentColor}.ds-tile a{display:flex;align-items:center;min-height:44px;padding:0 14px;border-top:1.5px solid rgb(255 255 255/.45);color:inherit;font-size:.88rem;font-weight:700;text-decoration:none}.ds-tile a:hover{text-decoration:underline}"
+		},
+		{
+			"name": "Device Select",
 			"kind": "input",
 			"refersTo": "input",
-			"description": "Native form field, 48px minimum height.",
-			"html": "<label class=\"ds-label\">Sendername<input class=\"ds-input\" value=\"Abendmusik\"/></label>",
-			"css": ".ds-label{display:grid;gap:10px;color:var(--ink,#202b28);font-family:\"Jost Variable\",system-ui,sans-serif;}.ds-input{min-height:48px;padding:10px 12px;border:1px solid var(--line,#d7dbd3);border-radius:5px;background:var(--surface,#fffefa);color:var(--ink,#202b28);font:inherit;caret-color:var(--accent,#245c49);}.ds-input:focus-visible{outline:3px solid var(--focus,#197752);outline-offset:4px;} @media(prefers-reduced-motion:reduce){[class^=\"ds-\"]{transition:none;animation:none;}}"
+			"description": "Square field with a 2px ink outline and drawn chevron.",
+			"html": "<label class=\"ds-field\"><span>Wiedergabegerät</span><select class=\"ds-select\"><option>Aktives Spotify-Gerät</option><option>Wohnzimmer · HA/MA · ein Song</option></select></label>",
+			"css": ".ds-field{display:grid;gap:6px;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;color:var(--fg,#111)}.ds-field>span{font-weight:700;font-stretch:90%;font-size:.95rem}.ds-select{width:100%;min-height:52px;padding:10px 44px 10px 14px;border:2px solid var(--fg,#111);border-radius:0;background-color:var(--raise,#fff);background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 22px) 52%,calc(100% - 16px) 52%;background-size:6px 6px;background-repeat:no-repeat;appearance:none;-webkit-appearance:none;font:inherit;font-weight:600;color:inherit}.ds-select:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}"
 		},
 		{
-			"name": "Header navigation",
-			"kind": "nav",
-			"description": "Current route uses a neutral layer, with plain German links.",
-			"html": "<nav class=\"ds-nav\" aria-label=\"Hauptnavigation\"><a href=\"#\" aria-current=\"page\">H\u00f6ren</a><a href=\"#\">Verlauf</a><a href=\"#\">Men\u00fc</a></nav>",
-			"css": ".ds-nav{display:flex;gap:8px;font-family:\"Jost Variable\",system-ui,sans-serif;}.ds-nav a{padding:10px 16px;border-radius:6px;color:var(--muted,#626c66);text-decoration:none;}.ds-nav a[aria-current=page]{color:var(--ink,#202b28);background:var(--layer,#eeede7);}.ds-nav a:focus-visible{outline:3px solid var(--focus,#197752);outline-offset:4px;} @media(prefers-reduced-motion:reduce){[class^=\"ds-\"]{transition:none;animation:none;}}"
-		},
-		{
-			"name": "Checked mix option",
+			"name": "Segmented Positions",
 			"kind": "chip",
-			"description": "Labeled native radio option retains the real form-control affordance.",
-			"html": "<label class=\"ds-option\"><input type=\"radio\" name=\"mix\" checked/>Entdecker</label>",
-			"css": ".ds-option{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 12px;border:1px solid var(--line,#d7dbd3);border-radius:5px;color:var(--ink,#202b28);font-family:\"Jost Variable\",system-ui,sans-serif;}.ds-option:has(input:checked){background:var(--layer,#eeede7);border-color:var(--accent,#245c49);}.ds-option input{width:19px;height:19px;accent-color:var(--accent,#245c49);}.ds-option input:focus-visible{outline:3px solid var(--focus,#197752);outline-offset:4px;} @media(prefers-reduced-motion:reduce){[class^=\"ds-\"]{transition:none;animation:none;}}"
+			"refersTo": "segmented-option",
+			"description": "Entdecken ↔ Vertraut as three printed positions over native radios.",
+			"html": "<fieldset class=\"ds-seg\"><label><input type=\"radio\" name=\"ds-mix\" checked><span>Entdecker</span></label><label><input type=\"radio\" name=\"ds-mix\"><span>Ausgewogen</span></label><label><input type=\"radio\" name=\"ds-mix\"><span>Vertraut</span></label></fieldset>",
+			"css": ".ds-seg{display:flex;flex-wrap:wrap;gap:2px;margin:0;padding:0;background:var(--fg,#111);border:2px solid var(--fg,#111);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-seg label{position:relative;display:flex;flex:1 1 84px;align-items:center;justify-content:center;min-height:52px;padding:8px 12px;background:var(--bg,#f3f3f1);color:var(--fg,#111);font-weight:700;font-stretch:90%;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1),color 180ms}.ds-seg input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}.ds-seg label:has(input:checked){background:var(--fg,#111);color:var(--bg,#f3f3f1)}.ds-seg label:hover:not(:has(input:checked)){background:color-mix(in srgb,var(--fg,#111) 8%,var(--bg,#f3f3f1))}.ds-seg label:has(input:focus-visible){outline:3px solid var(--focus,#1f3bd0);outline-offset:3px;z-index:1}"
 		},
 		{
-			"name": "Offline notice",
-			"kind": "custom",
-			"refersTo": "notice",
-			"description": "Layered status with reconnect; saved shelf remains outside the notice.",
-			"html": "<div class=\"ds-notice\" role=\"status\">Offline oder nicht erreichbar. Letzter gespeicherter Stand bleibt sichtbar. <button class=\"ds-reconnect\">Erneut verbinden</button></div>",
-			"css": ".ds-notice{background:var(--layer,#eeede7);border:1px solid var(--line,#d7dbd3);border-radius:6px;padding:13px 16px;font-size:.95rem;color:var(--ink,#202b28);font-family:\"Jost Variable\",system-ui,sans-serif;}.ds-reconnect{background:transparent;border:0;padding:8px 0;min-height:44px;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:4px;}.ds-reconnect:focus-visible{outline:3px solid var(--focus,#197752);outline-offset:4px;} @media(prefers-reduced-motion:reduce){[class^=\"ds-\"]{transition:none;animation:none;}}"
+			"name": "Header Navigation",
+			"kind": "nav",
+			"refersTo": "key",
+			"description": "64px bar over a 3px rule: lower-case brand with concentric mark, three links with a 3px current underline.",
+			"html": "<header class=\"ds-head\"><a class=\"ds-brand\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10.5\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/></svg>true-shuffle</a><nav><a href=\"#\" aria-current=\"page\">Hören</a><a href=\"#\">Verlauf</a><a href=\"#\">Menü</a></nav></header>",
+			"css": ".ds-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 12px;min-height:64px;border-bottom:3px solid var(--rule,#111);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;color:var(--fg,#111)}.ds-brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-size:1.45rem;font-weight:800;font-stretch:82%;letter-spacing:-.03em;color:inherit;text-decoration:none}.ds-head nav{display:flex;gap:2px}.ds-head nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;margin-bottom:-3px;border-bottom:3px solid transparent;color:inherit;font-weight:650;font-stretch:90%;text-decoration:none;transition:border-color 180ms cubic-bezier(.16,1,.3,1)}.ds-head nav a:hover{border-bottom-color:var(--fg-2,#55575a)}.ds-head nav a[aria-current]{border-bottom-color:var(--fg,#111);font-weight:800}.ds-head a:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}"
+		},
+		{
+			"name": "Warning Notice",
+			"kind": "card",
+			"refersTo": "notice-warn",
+			"description": "Unresolved command or offline: warning field, square outline, retry key.",
+			"html": "<div class=\"ds-notice\"><p>Es ist unklar, ob Spotify den Befehl ausgeführt hat. Erneutes Fortsetzen spielt denselben gespeicherten Song.</p><button class=\"ds-nkey\">Gespeicherten Song erneut fortsetzen</button></div>",
+			"css": ".ds-notice{display:grid;gap:10px;padding:14px 16px;border:2px solid currentColor;background:var(--warn-bg,#fff3c4);color:var(--warn-fg,#3b2f00);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;font-size:.95rem}.ds-notice p{margin:0;max-width:68ch}.ds-nkey{justify-self:start;min-height:48px;padding:10px 18px;border:2px solid currentColor;border-radius:0;background:transparent;color:inherit;font:inherit;font-weight:700;font-stretch:92%;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1),color 180ms}.ds-nkey:hover{background:var(--warn-fg,#3b2f00);color:var(--warn-bg,#fff3c4)}.ds-nkey:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}"
 		}
 	],
 	"narrative": {
-		"northStar": "The Persistent Listening Shelf",
-		"overview": "A quiet album-library desk gives the unfinished song, observed position and ordered queue a stable home. Album artwork, self-hosted Jost and fine separators carry the character; the German controls serve brief visits between long listening sessions.\n\nWarm off-white and deep forest neutral themes share the same structure. Lower-case true-shuffle remains the name. This records the built Preact interface, replacing the rejected radio documentation; surface-specific composition and direction evidence live in `.impeccable/surfaces/src-client.md`.",
+		"northStar": "The Concert Poster",
+		"overview": "The current song is a printed concert poster for its Sender. One flat field of printing ink carries the Sender name, the round figure, the cover, the title at poster scale, the progress rule, the command signal and the transport keys. The saved order runs beneath it like the programme, and the other Sender hang as a poster wall. The lineage is the Swiss concert poster (Tonhalle, Musica Viva): flat ink, one grotesk, a visible construction grid, square corners.\n\nPaper-white (`bg`) or black (`bg-night`) ground; hairline grid columns printed behind everything; Archivo Variable as the only family, set condensed and heavy for display and at normal width for text. The ink is honest: solid ink means confirmed. Anything requested, awaited or estimated prints as overprint (outline, dashes, hatch), never in the solid confirmed ink. This world replaces the earlier \"quiet album-library desk\" in full; nothing of that system (Jost, green accent, rounded controls, artwork shadows) carries over. Surface composition and direction evidence live in `.impeccable/surfaces/src-client.md`.",
 		"keyCharacteristics": [
-			"Album artwork anchors the current song.",
-			"Fine rules organize continuous lists.",
-			"Muted green marks actions and selected state.",
-			"Saved listening remains visible through interruption."
+			"One flat printing ink per Sender; \"Alles\" prints in the page's own ink.",
+			"Archivo Variable only: condensed heavy display, normal-width text, tabular figures.",
+			"Visible hairline construction grid: 4 columns on phone, 12 at 1100px and up.",
+			"Square corners everywhere; flat print with no shadows except the rating dialog.",
+			"Overprint means unconfirmed: outline title, hatched progress, dashed keys and signal steps.",
+			"The round figure prints the real heard share of the round, never a rounded-up one."
 		],
 		"rules": [
 			{
-				"name": "The Paired Theme Rule",
-				"body": "Use the semantic CSS properties for every new surface. System dark preference applies unless day is pinned; `data-illumination=\"night\"` pins night.",
+				"name": "The One Ink Per Sender Rule",
+				"body": "A Sender prints in exactly one ink, as a flat field. The poster, the station page band and the station tile share it. Never tint, gradient or mix a second ink into the same field; the only texture allowed on ink is the grid hairline at 13% of its `on` colour.",
 				"section": "colors"
 			},
 			{
-				"name": "The Name Rule",
-				"body": "Keep true-shuffle lower case with its hyphen and German interface labels in sentence case.",
+				"name": "The Solid Means Confirmed Rule",
+				"body": "Solid ink states are reserved for what a fresh observation confirmed. Requested, accepted-but-unconfirmed and estimated states print as overprint: outline title, hatched progress fill, dashed key and signal borders. Overprint never edits or replaces the confirmed ink beneath it.",
+				"section": "colors"
+			},
+			{
+				"name": "The Paired Theme Rule",
+				"body": "Use the semantic custom properties (`--bg`, `--fg`, `--fg-2`, `--rule`, `--hair`, `--raise`, …) for every new surface. System dark preference applies unless day is pinned; `data-illumination=\"night\"` and `data-illumination=\"day\"` pin a theme. Station inks are identical in both themes; only \"Alles\" inverts with the page.",
+				"section": "colors"
+			},
+			{
+				"name": "The One Family Rule",
+				"body": "Archivo Variable is the only shipped family. Hierarchy comes from width and weight, never from a second face. (Code, URL and diagnostic text fall back to the system monospace; that is a utility, not a type role.)",
 				"section": "typography"
 			},
 			{
-				"name": "The Continuous List Rule",
-				"body": "Group content with spacing and fine rules; use the ordered queue's sequence as its hierarchy.",
+				"name": "The Name Rule",
+				"body": "The product is always \"true-shuffle\": lower case, hyphenated, never in capitals, never \"True Shuffle\". German interface labels are in sentence case.",
+				"section": "typography"
+			},
+			{
+				"name": "The Programme Rule",
+				"body": "The queue reads like a printed programme: numbered rows, the cover at 48px, title and artist, duration in tabular figures, a hairline under each. Its fixed order is its hierarchy; it never reshuffles visually.",
 				"section": "layout"
 			},
 			{
+				"name": "The Flat Print Rule",
+				"body": "Nothing on the page casts a shadow except the dialog. Covers, posters, tiles and keys sit flat on the paper.",
+				"section": "elevation"
+			},
+			{
 				"name": "The Observed Position Rule",
-				"body": "Progress displays the last observed position, without fabricated ticking. Unknown position says the same song starts from the beginning. Fortsetzen becomes Pause only for the associated active session. Station selection preserves saved content while playback is unresolved. \u201cNeue Warteschlange\u201d asks inline before replacement and sends an explicit newQueue request on both Spotify Connect and native HA/MA transports.",
+				"body": "Progress shows the last observed position, counted forward only while a fresh observation says it is playing and stopped the moment it goes stale, is paused or a command is out. Pause freezes the clock and the rule turns to hatch at once. Unknown position says the same song starts from the beginning.",
+				"section": "components"
+			},
+			{
+				"name": "The Three-Layer Command Rule",
+				"body": "A command is requested, then accepted by Spotify or the device, then confirmed only by a fresh observation. The interface never prints a later layer before it happens. Unresolved commands keep the saved song and position and offer an explicit retry (\"Gespeicherten Song erneut fortsetzen\", \"Pause erneut versuchen\") or, on native devices, discarding the command.",
+				"section": "components"
+			},
+			{
+				"name": "The Estimated Next Song Rule",
+				"body": "When a song should have ended, the poster may show the single known successor from the saved queue as \"Nächster Song · geschätzt\", with the outline title, dotted third signal step and a dashed notice (\"Geschätzter Songwechsel aus deiner Warteschlange. Spotify hat diesen Song noch nicht bestätigt.\"). It is display only: rating and \"Weiter\" are disabled, nothing is written, and it never chains past one song.",
+				"section": "components"
+			},
+			{
+				"name": "The Resume Rule",
+				"body": "\"Fortsetzen\" keeps the same saved occurrence and position. \"Neue Warteschlange\" is a separate quiet key that asks inline (\"Neue Warteschlange für … beginnen? Der aktuelle Lauf wird ersetzt.\") before replacement.",
+				"section": "components"
+			},
+			{
+				"name": "The Native Capability Rule",
+				"body": "Device copy states what a native Home Assistant / Music Assistant route can actually do: \"Geordnete Warteschlange unterstützt.\" or \"Dieses Gerät spielt einen Song; automatisches Weiterschalten ist nicht verfügbar.\", and \"Gespeicherte Position wird übernommen.\" or \"Ohne Seek startet derselbe Song von vorne.\" Pause and \"Weiter\" are disabled where the device lacks them. Without native setup the hint says Music-Assistant devices visible in Spotify run through Spotify Connect.",
+				"section": "components"
+			},
+			{
+				"name": "The Offline Rule",
+				"body": "Offline keeps the last saved song, queue and wall visible under a warning bar (\"Offline oder nicht erreichbar. Letzter gespeicherter Stand bleibt sichtbar.\") with \"Erneut verbinden\"; dependent keys are disabled and print as overprint.",
 				"section": "components"
 			}
 		],
 		"dos": [
-			"**Do** preserve the saved song, observed position and ordered queue through interrupted states.",
-			"**Do** use semantic theme colors, visible focus and 44px transport targets.",
-			"**Do** show device capabilities and pending or unavailable states in plain German."
+			"Do print each Sender in its single flat ink with its paired `on` and `on-2` colours, in both themes.",
+			"Do reserve solid ink for confirmed state and print requested, awaited and estimated state as outline, dashes or hatch.",
+			"Do set display type in Archivo Variable at 70–85% width and 800–850 weight, and all times and counts in tabular figures.",
+			"Do keep square corners (0px), 2px key outlines, 3px rules under heads and 1px hairlines between rows.",
+			"Do keep transport targets at 64px tall and at least 52px wide (46px at 380px and below), and every text action at a 44px target.",
+			"Do keep the saved song, observed position and ordered queue visible through pending, offline and estimated states.",
+			"Do state device capabilities and Spotify's own behaviour in plain German, quoting what the device can and cannot do."
 		],
 		"donts": [
-			"**Don't** replace ordinary resume with a new queue or silently imply unsupported seek or automatic next.",
-			"**Don't** reintroduce the rejected wood, knobs, grilles or radio ornament.",
-			"**Don't** invent listening progress, metrics or successful live-device verification."
+			"Don't fill a requested or estimated state with solid confirmed ink, or show \"Bestätigt\" before a fresh observation.",
+			"Don't add a second typeface, rounded corners, gradients across ink fields or shadows outside the rating dialog.",
+			"Don't mix two inks in one Sender's field or recolour a Sender between poster, band and tile.",
+			"Don't replace ordinary \"Fortsetzen\" with a new queue, or imply seek or automatic next on a device that lacks them.",
+			"Don't let the estimated next song accept ratings, skips or writes, or chain past one song.",
+			"Don't set true-shuffle in capitals or title case.",
+			"Don't reintroduce the discarded album-library desk (Jost, muted green accent, rounded controls, artwork shadows) or the earlier record-crate world."
 		]
 	}
 }

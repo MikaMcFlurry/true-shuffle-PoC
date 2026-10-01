@@ -1021,9 +1021,6 @@ select.input {
 
 .notice .key:hover:not(:disabled) {
 	background: currentColor;
-}
-
-.notice .key:hover:not(:disabled) {
 	color: var(--raise);
 }
 
@@ -2189,7 +2186,6 @@ input[type="radio"].check {
 	background: var(--fg);
 	color: var(--bg);
 	font-weight: 700;
-	box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.45);
 	transition:
 		opacity var(--t) var(--ease),
 		transform var(--t) var(--ease);
