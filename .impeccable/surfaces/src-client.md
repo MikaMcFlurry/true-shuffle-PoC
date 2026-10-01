@@ -6,23 +6,15 @@ related_targets: []
 ---
 
 # true-shuffle app
-
-Mode: Operate. Build path: code-led, owner-delegated replacement world (MISSION D-04/NN-11).
-
+Mode: Operate. Build path: code-led (recorded default). Replacement world confirmed by owner 2026-10-01 ("Konzertplakat", focus "Song + Play/Pause").
 ## Direction contract
-
-THESIS: A persistent listening shelf: the unfinished song and its observed position stay anchored above controls and a saved ordered queue, making leaving and returning ordinary.
-OWN-WORLD: Quiet album-library desk. Warm off-white or deep forest neutral surfaces, muted green action colour, self-hosted Jost, fine separators, album artwork and restrained six-pixel controls. Brand stays lower-case true-shuffle. Rejected radio materials are removed.
-STORY: What continues, where it plays, then what comes next. Choose a station without silently replacing the current queue; deliberate new queue asks inline before replacing it. Discovery, mix, rules, history, imports, favourites, bans and guest settings remain reachable.
-FIRST VIEWPORT: Header with brand/Hören/Verlauf/Menü. Current album at left of song/artist/status, observed progress line below, large Fortsetzen/Pause with device selector. Ordered queue continues below. Desktop library occupies a narrower right column, mobile places library after playback/queue.
-FORM: Corroborated local concept seed 0e2bfeff / assigned index 7 (degraded compact listening journal), translated into the persistent listening shelf within D-04 delegation; no approved comp or quality-board card. One continuous task surface, separated by fine rules. No wood, knobs, grilles, decorative panels, eyebrow headings or floating metric cards. Standard links, native selects, 44px transport targets, visible keyboard focus. Dark/light are complete neutral systems; reduced motion suppresses transitions.
-SIGNATURE INTERACTION: Fortsetzen reuses the same occurrence and saved observed position. It becomes Pause only when the associated session is playing; choosing another station leaves the saved current song visible until playback succeeds. New queue is a distinct inline confirmation, never the default play action; it sends explicit newQueue on both Spotify Connect and native HA/MA transports.
-MOTION: 160ms hover/state transitions; no staged entrance or fabricated progress ticking.
-
-## Direction evidence
-
-Grounded list inherited from MISSION: artwork player, editorial desk, soft album canvas, queue-led player, persistent shelf, split workspace, compact listening journal. Local concept seed 0e2bfeff assigned 7 (degraded, no challengers). The fixed calm owner brief carries the persistent shelf; the assigned journal contributes fine-ruled ordered reading and separation of queue/history. A network-enabled same-seed retry remained pending and was interrupted by the parent; it did not succeed. No quality-board or fresh user screenshot approval is claimed. D-04 delegates this code-led implementation within the brief.
-
+THESIS: The current song is a concert poster for this station: one printed field per Sender carries title, artist, cover and transport at poster scale, and the saved order runs beneath like the programme. Refuses the category default (dark Spotify clone with small art and a bottom bar) and the previous quiet library desk of uniform rows.
+OWN-WORLD: Swiss concert-poster system. Each Sender owns one flat printing ink (ultramarine, vermilion, signal yellow, green, violet, petrol; "Alles" prints in the page ink (black on paper, paper-light on night)). Paper-white or black ground, visible hairline construction grid, Archivo Variable grotesk only: condensed heavy display, normal-width text, tabular numerals. Square corners, no shadows except the dialog. Concentric round figure prints the real round share (heard of total). Overprint rule: requested and estimated states print as outline/hatched overprint, never in the solid confirmed ink.
+STORY: Glance: which song, on which Sender, playing or not, is it confirmed. Tap: Fortsetzen/Pause, Weiter, Favorit, nie wieder, device. Scroll: Als Nächstes (stored order, progressive), then the poster wall of Sender to pick another without replacing the saved song; Mix & Regeln, Verlauf, Menü one tap away.
+FIRST VIEWPORT: Header bar: lowercase true-shuffle, Hören/Verlauf/Menü. Mobile: full-width ink poster: Sender name + round figure top, cover square, huge condensed title, artist/album, thick progress rule with times, signal row Angefordert/Angenommen/Bestätigt, 64px play key plus three 52px keys. Device select directly under the poster. Desktop ≥1100px: 12-col grid, poster column 7 cols left (not sticky: it carries device and recovery controls taller than a laptop viewport, which sticking would hide), queue 5 cols right, poster wall full width below with tiles stretching across all 12 columns.
+FORM: Swiss concert poster (Tonhalle/Musica Viva lineage), own grounded list position 4, seed key f264702d. Raises: visible grid armature (from Crouwel specimen); overprint never edits confirmed ink (from orienteering course layer); cancelled/heard stays visible rather than vanishing (from ticket wallet).
+SIGNATURE INTERACTION: The three-step signal under the title: a command lights "Angefordert", the provider acknowledgment "Angenommen", and only a fresh observation prints "Bestätigt" solid; Pause freezes the clock and the bar turns to outline at once. Fortsetzen keeps the same saved occurrence and position; Neue Warteschlange stays a separate inline confirmation.
+MOTION: 180ms ease-out state fills on keys and signal steps; progress bar width eases; no entrance choreography; reduced motion removes all transitions.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 ## Verification boundary
-
-Built Preact surfaces and API wiring; simulation and real Spotify/HA/MA acceptance remain distinct. Fresh finish review is required after actual integrated desktop/mobile screenshots. Native notices distinguish queue support from single-song playback and seek support from same-song restart; pause and next are gated by capabilities. Pending commands retain saved content and allow explicit cancellation. Offline retains the last saved song and ordered queue with reconnect and disabled dependent actions. Local Worker captures use synthetic Spotify and artwork; no live Spotify or native HA/MA acceptance is claimed.
+Local Worker + FakeSpotify captures with synthetic artwork; live Spotify, physical iPhone and HA/MA remain NOT_RUN. Functional client state machines (store, playbackView, command handling) are carried over unchanged.

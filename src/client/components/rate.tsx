@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { TrackView } from "../../shared/api";
 import { api } from "../api";
 import { store, useStore } from "../store";
-import { Cover } from "./radio";
+import { Cover } from "./ui";
 
 const SAID = {
 	1: "Als Favorit gemerkt",

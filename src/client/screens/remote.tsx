@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { RemoteAction, RemoteKeyView } from "../../shared/api";
 import { api } from "../api";
-import { PageBar, Section } from "../components/radio";
+import { PageBar, Section } from "../components/ui";
 import { clock, day, SEP } from "../format";
 import { store } from "../store";
 
