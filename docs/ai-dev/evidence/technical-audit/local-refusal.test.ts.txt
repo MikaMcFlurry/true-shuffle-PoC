@@ -1,0 +1,32 @@
+import { expect, it } from "vitest";
+import { RequestBudget } from "../../src/worker/spotify/client";
+import { onboarded } from "../hub/harness";
+
+it("AUDIT: a locally held PUT /me/player/play is reported like a live Spotify 429", async () => {
+	const h = await onboarded();
+	const id = h.stationIds[0]!;
+	expect(await h.hub.play(id)).toMatchObject({ ok: true });
+	await h.hub.sync(new RequestBudget(25), { force: true });
+	await h.hub.playerAction("pause");
+	const handle = h.fake.handle.bind(h.fake);
+	let plays = 0;
+	h.fake.handle = async (request) => {
+		const path = new URL(request.url).pathname;
+		if (request.method === "PUT" && path.endsWith("/me/player/play")) {
+			plays++;
+			return new Response(JSON.stringify({ error: { status: 429, message: "API rate limit exceeded" } }), { status: 429, headers: { "retry-after": "600", "content-type": "application/json" } });
+		}
+		return handle(request);
+	};
+	const first = await h.hub.play(id);
+	const callsBefore = h.fake.calls.length;
+	await h.listen(5_000);
+	const mark = h.fake.calls.length;
+	const second = await h.hub.play(id);
+	const secondCalls = h.fake.calls.slice(mark);
+	const other = await h.hub.playerAction("pause");
+	console.log(JSON.stringify({ plays, first, second, secondCalls, pauseWhileHeld: other, warnings: (await h.hub.state()).warnings }));
+	expect(plays).toBe(1);
+	expect(second.error?.message).toBe(first.error?.message);
+	void callsBefore;
+});
