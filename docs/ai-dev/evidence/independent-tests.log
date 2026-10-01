@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /tmp/mika-independent-review
+
+
+ Test Files  9 passed (9)
+      Tests  49 passed (49)
+   Start at  08:38:41
+   Duration  6.30s (tests 77%, import 14%, transform 8%)
+

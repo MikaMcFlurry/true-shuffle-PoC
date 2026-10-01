@@ -7,11 +7,11 @@ Du brauchst etwa 20 Minuten. Du brauchst:
 - die bestehende Spotify-App im [Spotify Developer Dashboard](https://developer.spotify.com/dashboard),
 - Spotify Premium für alle, die true-shuffle nutzen.
 
-Die alten Daten vom Fly.io-Prototyp werden nicht übernommen. true-shuffle startet mit leerem Gedächtnis. Mit dem Hörverlauf-Import (Schritt 7) füllst du es in Minuten wieder.
+Diese Anleitung richtet eine neue Cloudflare-Installation ein. Für den vorhandenen Worker bleiben Name, Durable-Object-Klassen, Bindings, Migrationstag und `APP_SECRET` unverändert. Bestehende Cloudflare-Verläufe, Sender und Bewertungen bleiben erhalten; nicht neu anlegen oder zurücksetzen. Die Warteschlangen-Erweiterung ergänzt die bestehende SQLite-Datenbank.
 
 ## 1. Code auf den Produktionszweig bringen
 
-Cloudflare baut bei jedem Push auf den Produktionszweig, normalerweise `main`. Führe den Zweig mit dem neuen true-shuffle (`claude/true-shuffle-spotify-95zw0m`) per Pull Request in `main` zusammen. Alternativ stellst du in Schritt 2 diesen Zweig als Produktionszweig ein.
+`main` enthält in diesem Repository noch den historischen Python/Fly-Prototyp. Der Implementierungszweig ist `codex/implement-cloudflare-restart`, Ausgangsstand `codex/cloudflare-restart-plan`. Wähle den getesteten Cloudflare-Zweig bewusst; ein Push auf einen beliebigen Zweig veröffentlicht ihn nicht automatisch. Für den bestehenden Worker zuerst Deployment-Version, Bindings und Wiederherstellung prüfen. Die aktuelle Release-Autorisierung erlaubt eine Veröffentlichung erst nach den erforderlichen Prüfergebnissen und mit vorhandenem Cloudflare-Zugriff.
 
 ## 2. Worker in Cloudflare anlegen (Workers Builds)
 

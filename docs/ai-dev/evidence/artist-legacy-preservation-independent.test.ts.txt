@@ -1,0 +1,21 @@
+import {it,expect} from 'vitest';
+import {onboarded} from '../hub/harness';
+import {SpotifyGate,type SpotifyGateState} from '../../src/worker/spotify/gate';
+it.each([false,true])('RT-A02 old merged artist-looking global metadata is preserved (shared=%s)',async shared=>{
+ let state:SpotifyGateState|null=null;
+ const gate=new SpotifyGate({get:()=>state,set:s=>{state=s}},()=>Date.now());
+ const h=await onboarded({tracks:30,sharedSpotify:shared?{getCooldown:async()=>gate.get(),getSnapshot:async()=>gate.snapshot(),setCooldown:async c=>gate.block(c),beginRecheck:async()=>false,finishRecheck:async()=>{}}:undefined});
+ const now=h.clock.t;
+ const c={kind:'quota' as const,reason:'QUOTA_EXCEEDED',observedAt:now,until:now+25902000,retryAfter:'25902'};
+ const metrics={hour:Math.floor(now/3600000),counts:{'read:/artists/:id/albums:429:quota':1,'read:/me/player:200:none':3,'read:/me/player/devices:200:none':2,'read:/me/player/recently-played:200:none':1,'read:/me/player/devices:429:blocked':9}};
+ for(const [k,v] of [['spotify_cooldown',c],['spotify_request_metrics',metrics],['backoff',{until:c.until,kind:'quota'}]] as const) h.sql.run('INSERT INTO kv(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v',k,JSON.stringify(v));
+ if(shared){gate.block({kind:'rate',observedAt:now-3600000,until:now+600000,retryAfter:'4200',endpoint:'/me/player'});gate.block(c);}
+ const before=h.fake.calls.length;
+ await h.hub.spotifyDiagnostics();
+ await expect(h.hub.devices()).rejects.toMatchObject({kind:'quota'});
+ await expect(h.hub.retryQuota()).rejects.toMatchObject({code:'quota',status:429});
+ expect(h.fake.calls.length).toBe(before);
+ expect(JSON.parse(h.sql.first<{v:string}>('SELECT v FROM kv WHERE k=?','spotify_cooldown')!.v).until).toBe(c.until);
+ expect(h.sql.first('SELECT v FROM kv WHERE k=?','spotify_artist_albums_cooldown')).toBeNull();
+ if(shared) expect(gate.get()?.until).toBe(c.until);
+});

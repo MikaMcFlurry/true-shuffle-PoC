@@ -7,9 +7,11 @@ import { defineConfig } from "@playwright/test";
  * story, so the tests run in order on one worker.
  */
 
-const PREINSTALLED = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-const executablePath =
-	process.env.CHROMIUM_PATH ?? (existsSync(PREINSTALLED) ? PREINSTALLED : undefined);
+const PREINSTALLED = [
+	"/usr/bin/chromium",
+	"/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+].find((path) => existsSync(path));
+const executablePath = process.env.CHROMIUM_PATH ?? PREINSTALLED;
 
 export default defineConfig({
 	testDir: "e2e",

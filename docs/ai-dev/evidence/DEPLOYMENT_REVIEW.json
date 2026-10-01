@@ -1,0 +1,44 @@
+{
+  "schema": "mika.red-team-deployment-followup.v1",
+  "generated_at": "2026-09-30T09:24:35.205604+00:00",
+  "independence": "FRESH",
+  "verdict": "BLOCKED",
+  "local_code_assessment": "No blocking finding in narrow online401/offline correction; reviewed backend hashes preserved.",
+  "subject": {
+    "source": "src/client/store.ts",
+    "sha256": "fefd35840fefa82dda3f02184c03e5be7eadcf3c68d28c5a289ff3b27e5b3a61",
+    "previous_backend_review": "/tmp/ts-independent-final.json",
+    "only_changed_previous_application_source": "src/client/store.ts"
+  },
+  "findings": [],
+  "independent_checks": {
+    "actual_store_refresh": "5PASS",
+    "evidence": "/tmp/ts-independent-store.log",
+    "public_live_get": "NOT_REPRODUCED; default urllib failed and curl could not connect proxy port8080"
+  },
+  "inspected_evidence": {
+    "public_deployment_readback": "/tmp/ts-postdeploy.json",
+    "uploaded_version_metadata": {
+      "version_id": "79c415cd-64b7-4046-96a4-dc3e7f63a061",
+      "created_on": "2026-09-30T09:11:50.31789Z"
+    },
+    "promoted_deployment_id": "9d2c58b7-8e2a-4df0-95b1-3b37bca0dd35",
+    "browser": {
+      "path": "/tmp/ts-e2e-auth-fix.log",
+      "result": "16PASS"
+    },
+    "lint": {
+      "path": "/tmp/ts-lint-auth-fix.log",
+      "result": "PASS"
+    },
+    "typecheck": "PASS reported by root"
+  },
+  "binding_limit": "Previous promoted version readback does not establish publication of the corrected Store subject. Capture next uploaded/promotedversion after release.",
+  "not_run": [
+    "OwnerSpotify unfinishedoccurrence/progress, auto-stop and device/browser acceptance",
+    "Live quota diagnosis and provider cooldown acceptance",
+    "Actual ownerHA/MA mediaidentity/capabilities/nativecontinuation",
+    "Populated productionUserHub migration/data invariants and performed DurableObject restore"
+  ],
+  "disposition": "PARTIAL production acceptance; published public surface and authentication boundary evidence exists; backend live acceptance and actualrestore proof absent."
+}

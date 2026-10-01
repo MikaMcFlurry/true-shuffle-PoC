@@ -1,0 +1,3 @@
+COMP_ROUND_OPEN: a direction was chosen (concept-seed rolled) but build-phase.mjs start never ran. A detector pass is not a finish: run node /workspace/true-shuffle-PoC/.agents/skills/impeccable/scripts/build-phase.mjs status and follow its NEXT line before treating this page as built.
+impeccable detect: DEGRADED - HTML parser modules unavailable (htmlparser2, css-select, css-tree, domutils).
+Falling back to regex matching. Custom properties, selector matching and computed contrast are NOT evaluated; findings are an undercount, not a clean bill of health.

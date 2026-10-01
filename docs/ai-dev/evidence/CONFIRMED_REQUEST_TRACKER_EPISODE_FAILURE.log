@@ -1,0 +1,53 @@
+
+ RUN  v5.0.2 /tmp/mika-independent-review
+
+ ❯ test/spotify/usage-independent.test.ts (2 tests | 2 failed) 11ms
+   × RT-T01 another overflow listener cannot close failing listeners episode 8ms
+   × RT-T01 prelogin aggregate must not imply identified user recovery 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/spotify/usage-independent.test.ts > RT-T01 another overflow listener cannot close failing listeners episode
+AssertionError: expected 1790316000000 to be null
+
+- Expected:
+null
+
++ Received:
+1790316000000
+
+ ❯ test/spotify/usage-independent.test.ts:9:69
+      7|  for(let i=1;i<=5;i++)t.record('listener-'+i,metric(200));
+      8|  t.record('listener-6',metric(429));t.record('listener-7',metric(200));
+      9|  const report=t.report(7);expect(report.episodes[0].firstSuccessAt).to…
+       |                                                                     ^
+     10|  t.record('listener-6',metric(200));expect(t.report(7).episodes[0].fir…
+     11| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/spotify/usage-independent.test.ts > RT-T01 prelogin aggregate must not imply identified user recovery
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/spotify/usage-independent.test.ts:14:65
+     12| it('RT-T01 prelogin aggregate must not imply identified user recovery'…
+     13|  const t=new SpotifyUsageTracker(nodeSql(),()=>T0);t.record('@signin',…
+     14|  expect(t.report(0).episodes.every(e=>e.firstSuccessAt===null)).toBe(t…
+       |                                                                 ^
+     15| });
+     16|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  13:48:41
+   Duration  569ms (transform 79%, import 18%, tests 2%, worker 1%)
+

@@ -1,0 +1,6 @@
+{
+	"origin": "Authored src/client/public/icon.svg",
+	"licence": "Project application asset",
+	"processing": "scripts/render-icons.mjs via Playwright Chromium; rendered SVG at output dimensions",
+	"description": "Ultramarine concert-poster true-shuffle mark (concentric rings), replaces forest-green mark; 2026-10-01"
+}

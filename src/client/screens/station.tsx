@@ -3,12 +3,12 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
-import { Cover, Detents, MixScale, PageBar, Scale, Section, useWide } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
+import { Cover, Detents, inkOf, MixScale, PageBar, RoundFigure, Section } from "../components/ui";
 import { ago, DECK_PREFIX, num, pct } from "../format";
 import { navigate } from "../router";
-import { store, useStore } from "../store";
-import { MixReadout, playStation, pointedStation } from "./home";
+import { store } from "../store";
+import { MixReadout, playStation } from "./home";
 
 const KIND: Record<SlotKind, string> = {
 	fresh: "Ungehört",
@@ -155,8 +155,7 @@ export function Station({
 	const [editSources, setEditSources] = useState<StationSource[] | null>(null);
 	const saveTimer = useRef<number | null>(null);
 	const flushMix = useRef(() => {});
-	const wide = useWide();
-	const radio = useStore();
+	const wide = false;
 
 	const load = () => {
 		const started = Date.now();
@@ -257,20 +256,8 @@ export function Station({
 	}
 
 	const summary = state.stations.find((s) => s.id === id) ?? d;
-	// The radio's Klang knob turns the station its pointer stands on.
-	const frontKnob =
-		wide && pointedStation(state, radio.tuning?.stationId ?? null, radio.selected)?.id === id;
+	const frontKnob = false;
 	const np = state.nowPlaying;
-	// Paused in this station: the key plays on, it never starts the station over.
-	const held = !!np && np.stationId === id && !np.isPlaying;
-	const resume = () =>
-		api
-			.player("resume")
-			.then((r) => {
-				if (!r.ok) store.say(r.error?.message ?? "Das hat nicht geklappt.", "error");
-			})
-			.catch((e: Error) => store.say(e.message, "error"))
-			.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
 	const heard =
 		d.poolSize !== null && d.freshRemaining !== null ? d.poolSize - d.freshRemaining : null;
 	const rules = d.rules;
@@ -283,55 +270,54 @@ export function Station({
 				sub={d.kind === "all" ? "Alle deine Sender und Lieblingssongs" : undefined}
 				backTo="/"
 				noBack={embedded}
+				ink={inkOf(summary)}
 			>
-				<Scale
-					pos={d.progress ?? 0}
-					label={
-						heard !== null && d.poolSize !== null
-							? `Runde ${d.roundNo}: ${num(heard)} von ${num(d.poolSize)} gehört, ${num(d.freshRemaining ?? 0)} offen`
-							: `Runde ${d.roundNo}`
-					}
-					reading={{ round: d.roundNo, heard, total: d.poolSize }}
-				/>
+				<div class="masthead__round">
+					<RoundFigure progress={d.progress} size={72} />
+					<p class="num">
+						<strong>Runde {d.roundNo}</strong>
+						<span>
+							{heard !== null && d.poolSize !== null
+								? `${num(heard)} von ${num(d.poolSize)} gehört`
+								: "zählt ab dem ersten Song"}
+						</span>
+						{d.freshRemaining !== null ? <span>{num(d.freshRemaining)} noch offen</span> : null}
+					</p>
+				</div>
+				<div class="acts">
+					<button
+						type="button"
+						class="key key--poster"
+						disabled={!summary.ready || !!store.tuning}
+						onClick={() => void playStation(summary)}
+					>
+						{state.session?.stationId === id ? "Fortsetzen" : "Spielen"}
+					</button>
+					{d.playlistId ? (
+						<a
+							class="key key--poster-quiet"
+							href={`https://open.spotify.com/playlist/${d.playlistId}`}
+							target="_blank"
+							rel="noopener"
+						>
+							In Spotify
+						</a>
+					) : (
+						<span class="key key--poster-quiet" aria-disabled="true">
+							wird vorbereitet
+						</span>
+					)}
+				</div>
 			</PageBar>
 
-			{/* Printed on the sheet, not keys of the radio: what to do with this station, ruled like a program line. */}
-			<div class="acts">
-				<button
-					type="button"
-					class="key key--lit"
-					disabled={!summary.ready || !!store.tuning}
-					onClick={() => (held ? resume() : playStation(summary))}
-				>
-					{summary.playing ? "Neu starten" : held ? "Weiterspielen" : "Spielen"}
-				</button>
-				{d.playlistId ? (
-					<a
-						class="key"
-						href={`https://open.spotify.com/playlist/${d.playlistId}`}
-						target="_blank"
-						rel="noopener"
-					>
-						In Spotify
-					</a>
-				) : (
-					<span class="key" aria-disabled="true">
-						wird vorbereitet
-					</span>
-				)}
-			</div>
-
-			{/* Beside the radio, its Klang knob already turns this station: the sheet only prints the mix.
-			    Elsewhere the sheet prints the knob's three positions to choose from; the knob stays on the radio. */}
 			<Section title="Mischung" id="mix" lead={<MixReadout s={summary} mix={value} />}>
 				{frontKnob ? (
-					<p class="hint">Am Klang-Knopf des Radios einstellbar.</p>
+					<p class="hint">Entdecken und Vertraut bestimmen, welche Songs deinen Mix ergänzen.</p>
 				) : (
 					<MixScale value={value} station={d.name} onChange={onMix} />
 				)}
 			</Section>
 
-			{/* On a desktop the program card heads this sheet and names the song; it is said once. */}
 			{np && np.stationId === id && !wide ? (
 				<Section title={np.isPlaying ? "Läuft gerade" : "Pausiert"} id="now">
 					<ul class="order order--now">
@@ -542,9 +528,6 @@ export function Station({
 							<span class="row__sub">Songs, die nicht in deinen Playlists stehen</span>
 						</span>
 						<span class="lever">
-							<span class="lever__legend" aria-hidden="true">
-								Aus
-							</span>
 							<input
 								type="checkbox"
 								role="switch"
@@ -555,8 +538,8 @@ export function Station({
 									setRule({ discoveryEnabled: (e.target as HTMLInputElement).checked })
 								}
 							/>
-							<span class="lever__legend" aria-hidden="true">
-								An
+							<span class="lever__state" aria-hidden="true">
+								{rules.discoveryEnabled ? "An" : "Aus"}
 							</span>
 						</span>
 					</label>

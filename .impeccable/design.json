@@ -1,1371 +1,970 @@
 {
-  "schemaVersion": 2,
-  "generatedAt": "2026-09-27T10:08:23Z",
-  "title": "Design System: true-shuffle",
-  "extensions": {
-    "colorMeta": {
-      "wall": {
-        "role": "neutral",
-        "displayName": "Plaster Wall",
-        "canonical": "#dddecf",
-        "tonalRamp": [
-          "#0b0c07",
-          "#24251e",
-          "#404137",
-          "#5e5f53",
-          "#7e7e71",
-          "#9fa093",
-          "#c4c5ba",
-          "#efefe6"
-        ]
-      },
-      "wall-2": {
-        "role": "neutral",
-        "displayName": "Plaster Wall Shade",
-        "canonical": "#cfd1c1",
-        "tonalRamp": [
-          "#0b0c07",
-          "#24251d",
-          "#404137",
-          "#5d5f53",
-          "#7d7f70",
-          "#9ea092",
-          "#c4c5b9",
-          "#eef0e5"
-        ]
-      },
-      "wall-ink": {
-        "role": "neutral",
-        "displayName": "Wall Ink",
-        "canonical": "#2f2b24",
-        "tonalRamp": [
-          "#0e0b05",
-          "#27231d",
-          "#433f38",
-          "#615d55",
-          "#817d74",
-          "#a39e95",
-          "#c9c3ba",
-          "#f3eee4"
-        ]
-      },
-      "walnut": {
-        "role": "neutral",
-        "displayName": "Lacquered Walnut",
-        "canonical": "#5e371d",
-        "tonalRamp": [
-          "#160701",
-          "#341e0f",
-          "#553826",
-          "#78543e",
-          "#9d7257",
-          "#bd957c",
-          "#e0bca6",
-          "#ffe8d5"
-        ]
-      },
-      "walnut-deep": {
-        "role": "neutral",
-        "displayName": "Deep Walnut",
-        "canonical": "#3d2312",
-        "tonalRamp": [
-          "#130803",
-          "#302016",
-          "#4f3b2e",
-          "#715748",
-          "#957663",
-          "#b59886",
-          "#d8beaf",
-          "#ffeadc"
-        ]
-      },
-      "brass-hi": {
-        "role": "secondary",
-        "displayName": "Brass Highlight",
-        "canonical": "#f5e2a6",
-        "tonalRamp": [
-          "#110a00",
-          "#2c2303",
-          "#4b3f17",
-          "#6b5d2d",
-          "#8e7c44",
-          "#ae9e6b",
-          "#d2c498",
-          "#faeeca"
-        ]
-      },
-      "brass": {
-        "role": "secondary",
-        "displayName": "Lacquered Brass",
-        "canonical": "#c89c48",
-        "tonalRamp": [
-          "#170700",
-          "#351f00",
-          "#563a00",
-          "#7a5700",
-          "#9f751b",
-          "#bf9850",
-          "#e1bf83",
-          "#ffebb9"
-        ]
-      },
-      "brass-lo": {
-        "role": "secondary",
-        "displayName": "Brass Shade",
-        "canonical": "#7c5719",
-        "tonalRamp": [
-          "#160700",
-          "#331f00",
-          "#543a10",
-          "#775726",
-          "#9c763c",
-          "#bb9865",
-          "#debf93",
-          "#ffeac6"
-        ]
-      },
-      "emblem-face-hi": {
-        "role": "secondary",
-        "displayName": "Cast Brass, light",
-        "canonical": "#dcb766",
-        "tonalRamp": [
-          "#1e0200",
-          "#3c1d00",
-          "#5c3b00",
-          "#7d5b00",
-          "#a07d27",
-          "#c4a04e",
-          "#e9c473",
-          "#ffea98"
-        ]
-      },
-      "emblem-face-lo": {
-        "role": "secondary",
-        "displayName": "Cast Brass",
-        "canonical": "#c8a150",
-        "tonalRamp": [
-          "#1f0100",
-          "#3d1c00",
-          "#5d3a00",
-          "#7f5a00",
-          "#a17c27",
-          "#c69f4e",
-          "#ebc372",
-          "#ffe997"
-        ]
-      },
-      "cloth": {
-        "role": "neutral",
-        "displayName": "Speaker Cloth Gold",
-        "canonical": "#b4965c",
-        "tonalRamp": [
-          "#140900",
-          "#302101",
-          "#503c13",
-          "#725a29",
-          "#957940",
-          "#b59b68",
-          "#d8c195",
-          "#ffecc8"
-        ]
-      },
-      "wood-ink": {
-        "role": "neutral",
-        "displayName": "Legend on Wood",
-        "canonical": "#f4e3b6",
-        "tonalRamp": [
-          "#100a00",
-          "#2b230c",
-          "#493f22",
-          "#695c3a",
-          "#8b7c53",
-          "#ac9d78",
-          "#d0c3a2",
-          "#f8eed2"
-        ]
-      },
-      "wood-ink-2": {
-        "role": "neutral",
-        "displayName": "Legend on Wood, quiet",
-        "canonical": "#ecd6a2",
-        "tonalRamp": [
-          "#120a00",
-          "#2d2207",
-          "#4c3e1c",
-          "#6c5c33",
-          "#8f7b4a",
-          "#af9d70",
-          "#d3c39c",
-          "#fbedce"
-        ]
-      },
-      "glass-hi": {
-        "role": "neutral",
-        "displayName": "Dial Lamp Centre",
-        "canonical": "#fbf3d9",
-        "tonalRamp": [
-          "#0e0b04",
-          "#282418",
-          "#444030",
-          "#635d4a",
-          "#847d66",
-          "#a59e89",
-          "#cac4b1",
-          "#f3eedf"
-        ]
-      },
-      "glass": {
-        "role": "neutral",
-        "displayName": "Backlit Dial Glass",
-        "canonical": "#f2e4be",
-        "tonalRamp": [
-          "#0f0b01",
-          "#2a2311",
-          "#483f27",
-          "#675d40",
-          "#897c5a",
-          "#a99e7e",
-          "#cec4a8",
-          "#f7eed7"
-        ]
-      },
-      "glass-lo": {
-        "role": "neutral",
-        "displayName": "Dial Glass Falloff",
-        "canonical": "#e4cf9e",
-        "tonalRamp": [
-          "#110a00",
-          "#2d2309",
-          "#4b3e1e",
-          "#6c5c35",
-          "#8e7b4d",
-          "#ae9d73",
-          "#d2c39e",
-          "#faedcf"
-        ]
-      },
-      "glass-edge": {
-        "role": "neutral",
-        "displayName": "Dial Glass Edge",
-        "canonical": "#e2c285",
-        "tonalRamp": [
-          "#140900",
-          "#312100",
-          "#503c11",
-          "#725927",
-          "#96783e",
-          "#b69a66",
-          "#d9c194",
-          "#ffecc7"
-        ]
-      },
-      "halo": {
-        "role": "neutral",
-        "displayName": "Print Halo",
-        "canonical": "#f4e7c4",
-        "tonalRamp": [
-          "#0f0b02",
-          "#2a2313",
-          "#473f2a",
-          "#675d42",
-          "#887c5d",
-          "#a99e81",
-          "#cdc4aa",
-          "#f6eed9"
-        ]
-      },
-      "print": {
-        "role": "neutral",
-        "displayName": "Dial Print",
-        "canonical": "#2b1d12",
-        "tonalRamp": [
-          "#100a06",
-          "#2b221b",
-          "#493d34",
-          "#695a50",
-          "#8b796c",
-          "#ab9b8f",
-          "#d0c1b6",
-          "#f8ece3"
-        ]
-      },
-      "print-2": {
-        "role": "neutral",
-        "displayName": "Dial Print, quiet",
-        "canonical": "#5a4230",
-        "tonalRamp": [
-          "#120903",
-          "#2e2117",
-          "#4d3c2f",
-          "#6e5949",
-          "#927764",
-          "#b29987",
-          "#d5bfb0",
-          "#fdebdd"
-        ]
-      },
-      "lit": {
-        "role": "primary",
-        "displayName": "Dial Signal Red",
-        "canonical": "#a8221a",
-        "tonalRamp": [
-          "#250000",
-          "#4b0000",
-          "#751812",
-          "#a13127",
-          "#ce4b3e",
-          "#ee7566",
-          "#ffa393",
-          "#ffd4c6"
-        ]
-      },
-      "lit-deep": {
-        "role": "primary",
-        "displayName": "Deep Signal Red",
-        "canonical": "#8c1a12",
-        "tonalRamp": [
-          "#230000",
-          "#470805",
-          "#6f2119",
-          "#9a3a2f",
-          "#c65446",
-          "#e57c6d",
-          "#ffa899",
-          "#ffd8cb"
-        ]
-      },
-      "eye": {
-        "role": "tertiary",
-        "displayName": "Magic Eye Green",
-        "canonical": "#40cf84",
-        "tonalRamp": [
-          "#001300",
-          "#00310b",
-          "#005121",
-          "#007339",
-          "#009852",
-          "#3fb877",
-          "#7ddca2",
-          "#b7ffd2"
-        ]
-      },
-      "eye-lo": {
-        "role": "tertiary",
-        "displayName": "Magic Eye Shadow",
-        "canonical": "#0d4a2b",
-        "tonalRamp": [
-          "#001005",
-          "#0b2b19",
-          "#224932",
-          "#3a694d",
-          "#548c69",
-          "#7aac8c",
-          "#a5d0b4",
-          "#d5f9e1"
-        ]
-      },
-      "ivory-hi": {
-        "role": "neutral",
-        "displayName": "Ivory Highlight",
-        "canonical": "#fdf8ea",
-        "tonalRamp": [
-          "#0e0b03",
-          "#272419",
-          "#443f34",
-          "#625d52",
-          "#817d71",
-          "#a39e91",
-          "#c9c4b6",
-          "#f3eee0"
-        ]
-      },
-      "ivory": {
-        "role": "neutral",
-        "displayName": "Ivory",
-        "canonical": "#f0e6cd",
-        "tonalRamp": [
-          "#0e0b04",
-          "#282418",
-          "#453f30",
-          "#645d4a",
-          "#867d66",
-          "#a69e89",
-          "#cbc4b1",
-          "#f4eedf"
-        ]
-      },
-      "ivory-lo": {
-        "role": "neutral",
-        "displayName": "Pressed Ivory",
-        "canonical": "#dccfae",
-        "tonalRamp": [
-          "#0f0b02",
-          "#2a2313",
-          "#473f2a",
-          "#675d43",
-          "#887c5e",
-          "#a99e82",
-          "#cdc3ab",
-          "#f6eed9"
-        ]
-      },
-      "ivory-front": {
-        "role": "neutral",
-        "displayName": "Ivory Front",
-        "canonical": "#b9a57f",
-        "tonalRamp": [
-          "#110a01",
-          "#2c220f",
-          "#4b3e25",
-          "#6b5b3d",
-          "#8e7b56",
-          "#ae9c7b",
-          "#d2c2a5",
-          "#faedd5"
-        ]
-      },
-      "ivory-lip": {
-        "role": "neutral",
-        "displayName": "Ivory Lip",
-        "canonical": "#a38e66",
-        "tonalRamp": [
-          "#110a00",
-          "#2d220d",
-          "#4b3e23",
-          "#6c5b3a",
-          "#8f7a53",
-          "#af9c78",
-          "#d3c2a3",
-          "#fbedd3"
-        ]
-      },
-      "engrave": {
-        "role": "neutral",
-        "displayName": "Engraved Legend",
-        "canonical": "#5a4934",
-        "tonalRamp": [
-          "#100a03",
-          "#2c2216",
-          "#4a3d2e",
-          "#6a5b48",
-          "#8c7a64",
-          "#ad9b87",
-          "#d1c1af",
-          "#f9ecdd"
-        ]
-      },
-      "slot": {
-        "role": "neutral",
-        "displayName": "Key Slot",
-        "canonical": "#1a110a",
-        "tonalRamp": [
-          "#0e0a07",
-          "#29231e",
-          "#463e38",
-          "#655b54",
-          "#877b72",
-          "#a79c94",
-          "#ccc2bb",
-          "#f5ede6"
-        ]
-      },
-      "bakelite-hi": {
-        "role": "neutral",
-        "displayName": "Bakelite, lit edge",
-        "canonical": "#5b3d29",
-        "tonalRamp": [
-          "#1b0400",
-          "#381d09",
-          "#583a26",
-          "#795944",
-          "#9c7a65",
-          "#c09d86",
-          "#e5c1a9",
-          "#ffe6ce"
-        ]
-      },
-      "bakelite": {
-        "role": "neutral",
-        "displayName": "Bakelite",
-        "canonical": "#2d1c12",
-        "tonalRamp": [
-          "#110906",
-          "#2c211b",
-          "#4b3c34",
-          "#6b594f",
-          "#8e786c",
-          "#ae9a8f",
-          "#d2c0b6",
-          "#faebe3"
-        ]
-      },
-      "bakelite-lo": {
-        "role": "neutral",
-        "displayName": "Bakelite, shade",
-        "canonical": "#170d07",
-        "tonalRamp": [
-          "#120904",
-          "#2e221b",
-          "#4b3f38",
-          "#6b5e56",
-          "#8d7f77",
-          "#b0a299",
-          "#d5c6bd",
-          "#fbebe2"
-        ]
-      },
-      "bakelite-ink": {
-        "role": "neutral",
-        "displayName": "Bakelite Legend Fill",
-        "canonical": "#f0e3c4",
-        "tonalRamp": [
-          "#130900",
-          "#2e2409",
-          "#4c4126",
-          "#6b6045",
-          "#8d8165",
-          "#b0a487",
-          "#d5c8aa",
-          "#fbeece"
-        ]
-      },
-      "key-brass": {
-        "role": "secondary",
-        "displayName": "Key Brass",
-        "canonical": "#cfa24c",
-        "tonalRamp": [
-          "#170700",
-          "#351f00",
-          "#573a00",
-          "#7a5600",
-          "#a07516",
-          "#bf984e",
-          "#e1bf81",
-          "#ffeab8"
-        ]
-      },
-      "key-brass-ink": {
-        "role": "secondary",
-        "displayName": "Key Brass Ink",
-        "canonical": "#22160a",
-        "tonalRamp": [
-          "#0f0a05",
-          "#2a221b",
-          "#483e34",
-          "#685b4f",
-          "#8a7a6c",
-          "#aa9c8e",
-          "#cec2b6",
-          "#f7ece2"
-        ]
-      },
-      "danger-key": {
-        "role": "primary",
-        "displayName": "Danger Legend",
-        "canonical": "#981e15",
-        "tonalRamp": [
-          "#240000",
-          "#490503",
-          "#721e16",
-          "#9c372b",
-          "#ca5142",
-          "#e97969",
-          "#ffa696",
-          "#ffd6c9"
-        ]
-      },
-      "card": {
-        "role": "neutral",
-        "displayName": "Program Card",
-        "canonical": "#f5efe1",
-        "tonalRamp": [
-          "#0f0b03",
-          "#282419",
-          "#443f34",
-          "#625d51",
-          "#827d70",
-          "#a49e91",
-          "#c9c4b6",
-          "#f4eee0"
-        ]
-      },
-      "window-paper": {
-        "role": "neutral",
-        "displayName": "Window Paper",
-        "canonical": "#f5efe1",
-        "tonalRamp": [
-          "#0f0b03",
-          "#29251a",
-          "#464236",
-          "#666155",
-          "#878275",
-          "#aaa597",
-          "#cec9bb",
-          "#f4eee0"
-        ]
-      },
-      "window-ink": {
-        "role": "neutral",
-        "displayName": "Window Ink",
-        "canonical": "#2a2119",
-        "tonalRamp": [
-          "#110904",
-          "#2c231b",
-          "#4a4037",
-          "#6a5f56",
-          "#8b8076",
-          "#aea398",
-          "#d3c7bc",
-          "#f9ece1"
-        ]
-      },
-      "paper": {
-        "role": "neutral",
-        "displayName": "Programmheft Paper",
-        "canonical": "#f6eedb",
-        "tonalRamp": [
-          "#0d0b05",
-          "#27241b",
-          "#443f34",
-          "#635d4f",
-          "#847d6c",
-          "#a49e8e",
-          "#c9c4b6",
-          "#f3eee2"
-        ]
-      },
-      "paper-2": {
-        "role": "neutral",
-        "displayName": "Paper Shade",
-        "canonical": "#eee3c8",
-        "tonalRamp": [
-          "#0e0b03",
-          "#292317",
-          "#463f2f",
-          "#655d49",
-          "#867c64",
-          "#a79e87",
-          "#ccc4b0",
-          "#f5eedd"
-        ]
-      },
-      "ink": {
-        "role": "neutral",
-        "displayName": "Sheet Ink",
-        "canonical": "#2a2119",
-        "tonalRamp": [
-          "#110904",
-          "#2b221a",
-          "#483e35",
-          "#665b52",
-          "#867b71",
-          "#a89c92",
-          "#cec2b7",
-          "#f9ece1"
-        ]
-      },
-      "ink-2": {
-        "role": "neutral",
-        "displayName": "Sheet Ink, quiet",
-        "canonical": "#564a3c",
-        "tonalRamp": [
-          "#0f0a05",
-          "#29231b",
-          "#473e34",
-          "#665c4f",
-          "#887b6c",
-          "#a89c8e",
-          "#cdc2b6",
-          "#f6ede3"
-        ]
-      },
-      "ink-3": {
-        "role": "neutral",
-        "displayName": "Sheet Ink, faint",
-        "canonical": "#655648",
-        "tonalRamp": [
-          "#100a05",
-          "#2a221b",
-          "#483e34",
-          "#685b4f",
-          "#8a7a6b",
-          "#aa9b8e",
-          "#cfc2b5",
-          "#f7ece2"
-        ]
-      },
-      "rule": {
-        "role": "neutral",
-        "displayName": "Hairline Rule",
-        "canonical": "rgba(88, 62, 34, 0.24)"
-      },
-      "rule-strong": {
-        "role": "neutral",
-        "displayName": "Strong Rule",
-        "canonical": "rgba(70, 48, 24, 0.6)"
-      },
-      "field": {
-        "role": "neutral",
-        "displayName": "Field Paper",
-        "canonical": "#fcf8ee",
-        "tonalRamp": [
-          "#0e0b05",
-          "#27241c",
-          "#433f38",
-          "#615d55",
-          "#817d74",
-          "#a29e95",
-          "#c8c4ba",
-          "#f2eee4"
-        ]
-      },
-      "lit-ink": {
-        "role": "primary",
-        "displayName": "Red Ink",
-        "canonical": "#a3231a",
-        "tonalRamp": [
-          "#250000",
-          "#4a0201",
-          "#731b14",
-          "#9f3429",
-          "#cc4e40",
-          "#ec7767",
-          "#ffa495",
-          "#ffd5c7"
-        ]
-      },
-      "board": {
-        "role": "neutral",
-        "displayName": "Hardboard",
-        "canonical": "#7b5637",
-        "tonalRamp": [
-          "#150700",
-          "#331f0e",
-          "#533924",
-          "#76563c",
-          "#9b7455",
-          "#ba9679",
-          "#ddbda4",
-          "#ffe9d4"
-        ]
-      },
-      "board-2": {
-        "role": "neutral",
-        "displayName": "Hardboard Shade",
-        "canonical": "#6b492d",
-        "tonalRamp": [
-          "#150801",
-          "#321f10",
-          "#523a26",
-          "#75563e",
-          "#997558",
-          "#b9977c",
-          "#dcbea6",
-          "#ffe9d6"
-        ]
-      },
-      "board-ink": {
-        "role": "neutral",
-        "displayName": "Back Panel Print",
-        "canonical": "#f7ebcf",
-        "tonalRamp": [
-          "#0f0b03",
-          "#292316",
-          "#463f2e",
-          "#665d48",
-          "#877c63",
-          "#a89e86",
-          "#ccc3af",
-          "#f5eedd"
-        ]
-      },
-      "board-field": {
-        "role": "neutral",
-        "displayName": "Back Panel Field",
-        "canonical": "#5a3c24",
-        "tonalRamp": [
-          "#140802",
-          "#312012",
-          "#513a29",
-          "#735742",
-          "#97765c",
-          "#b79780",
-          "#dabea9",
-          "#ffead8"
-        ]
-      },
-      "board-lit": {
-        "role": "primary",
-        "displayName": "Red on Hardboard",
-        "canonical": "#ffd0c4",
-        "tonalRamp": [
-          "#150704",
-          "#331e18",
-          "#543831",
-          "#76544b",
-          "#9b7267",
-          "#bb948a",
-          "#debbb2",
-          "#ffe7df"
-        ]
-      },
-      "focus-on-light": {
-        "role": "neutral",
-        "displayName": "Focus Blue",
-        "canonical": "#1b4fb3",
-        "tonalRamp": [
-          "#00052e",
-          "#041f56",
-          "#163b81",
-          "#2c59af",
-          "#4278df",
-          "#699cfb",
-          "#96c4ff",
-          "#c8efff"
-        ]
-      },
-      "focus-on-dark": {
-        "role": "neutral",
-        "displayName": "Focus Gold",
-        "canonical": "#ffd978",
-        "tonalRamp": [
-          "#160800",
-          "#332000",
-          "#543c00",
-          "#765900",
-          "#9b7800",
-          "#ba9a46",
-          "#ddc17c",
-          "#ffedb4"
-        ]
-      },
-      "wall-night": {
-        "role": "neutral",
-        "displayName": "Plaster Wall (night)",
-        "canonical": "#16140f",
-        "tonalRamp": [
-          "#0d0b07",
-          "#26241e",
-          "#42403a",
-          "#605d57",
-          "#807d76",
-          "#a19e97",
-          "#c7c4bd",
-          "#f1eee7"
-        ]
-      },
-      "glass-night": {
-        "role": "neutral",
-        "displayName": "Backlit Dial Glass (night)",
-        "canonical": "#f6d796",
-        "tonalRamp": [
-          "#140900",
-          "#302100",
-          "#503d0e",
-          "#725a24",
-          "#95793a",
-          "#b59b64",
-          "#d8c192",
-          "#ffecc5"
-        ]
-      },
-      "lit-night": {
-        "role": "primary",
-        "displayName": "Dial Signal Red (night)",
-        "canonical": "#931a12",
-        "tonalRamp": [
-          "#240000",
-          "#490503",
-          "#711e17",
-          "#9c372c",
-          "#c95143",
-          "#e8796a",
-          "#ffa697",
-          "#ffd7c9"
-        ]
-      },
-      "eye-night": {
-        "role": "tertiary",
-        "displayName": "Magic Eye Green (night)",
-        "canonical": "#4cf596",
-        "tonalRamp": [
-          "#001400",
-          "#003202",
-          "#005316",
-          "#00762c",
-          "#009b43",
-          "#1bbc6b",
-          "#6fdf99",
-          "#aeffcb"
-        ]
-      },
-      "emblem-face-hi-night": {
-        "role": "secondary",
-        "displayName": "Cast Brass, light (night)",
-        "canonical": "#b8964f",
-        "tonalRamp": [
-          "#1d0200",
-          "#3b1e00",
-          "#5a3c00",
-          "#7b5b07",
-          "#9e7d35",
-          "#c2a059",
-          "#e7c47d",
-          "#ffeaa1"
-        ]
-      },
-      "emblem-face-lo-night": {
-        "role": "secondary",
-        "displayName": "Cast Brass (night)",
-        "canonical": "#a4843f",
-        "tonalRamp": [
-          "#1c0300",
-          "#3a1e00",
-          "#593c00",
-          "#7a5c0e",
-          "#9d7d38",
-          "#c1a05c",
-          "#e6c47f",
-          "#ffeaa3"
-        ]
-      },
-      "ivory-night": {
-        "role": "neutral",
-        "displayName": "Ivory (night)",
-        "canonical": "#ddd0b1",
-        "tonalRamp": [
-          "#0f0b02",
-          "#2a2314",
-          "#473f2c",
-          "#675d45",
-          "#887c60",
-          "#a99e83",
-          "#cdc3ac",
-          "#f6eedb"
-        ]
-      },
-      "paper-night": {
-        "role": "neutral",
-        "displayName": "Programmheft Paper (night)",
-        "canonical": "#cdbb95",
-        "tonalRamp": [
-          "#100a01",
-          "#2c230f",
-          "#4a3e26",
-          "#6a5c3e",
-          "#8c7b58",
-          "#ac9d7c",
-          "#d0c3a6",
-          "#f9edd5"
-        ]
-      },
-      "ink-night": {
-        "role": "neutral",
-        "displayName": "Sheet Ink (night)",
-        "canonical": "#231a10",
-        "tonalRamp": [
-          "#0e0a06",
-          "#29231d",
-          "#463e36",
-          "#655c52",
-          "#867b6f",
-          "#a79c91",
-          "#ccc2b8",
-          "#f5ede5"
-        ]
-      },
-      "window-paper-night": {
-        "role": "neutral",
-        "displayName": "Window Paper (night, about L* 60)",
-        "canonical": "#a0906f",
-        "tonalRamp": [
-          "#150800",
-          "#302303",
-          "#4e4021",
-          "#6e5f40",
-          "#908060",
-          "#b3a382",
-          "#d8c7a5",
-          "#feedc9"
-        ]
-      },
-      "window-ink-2-night": {
-        "role": "neutral",
-        "displayName": "Window Ink 2 (night)",
-        "canonical": "#2f2418",
-        "tonalRamp": [
-          "#120902",
-          "#2e2317",
-          "#4c4033",
-          "#6c5f51",
-          "#8d8072",
-          "#b0a294",
-          "#d5c6b7",
-          "#fbecdc"
-        ]
-      },
-      "window-lit-night": {
-        "role": "primary",
-        "displayName": "Window Red Ink (night)",
-        "canonical": "#560d07",
-        "tonalRamp": [
-          "#2a0000",
-          "#4c0200",
-          "#70261e",
-          "#94473c",
-          "#b9695c",
-          "#df8b7e",
-          "#ffafa1",
-          "#ffd4c5"
-        ]
-      },
-      "board-night": {
-        "role": "neutral",
-        "displayName": "Hardboard (night)",
-        "canonical": "#3d2a1a",
-        "tonalRamp": [
-          "#110904",
-          "#2d2118",
-          "#4b3c30",
-          "#6c5a4b",
-          "#8f7866",
-          "#af9a89",
-          "#d3c0b1",
-          "#fbebdf"
-        ]
-      }
-    },
-    "typographyMeta": {
-      "emblem": {
-        "displayName": "Emblem",
-        "purpose": "The maker's emblem on the cloth only: \"true-shuffle\" in lower case, cast brass Jost 560; clamp(40px, 3.9vw, 56px) from 980px."
-      },
-      "dial-title": {
-        "displayName": "Dial Title",
-        "purpose": "Words printed on the dial: sign-in, switching on, Suchlauf, faults. Uppercase."
-      },
-      "dial-station": {
-        "displayName": "Dial Station",
-        "purpose": "Station names printed on the glass. Uppercase; 600 when selected or lit."
-      },
-      "dial-station-dense": {
-        "displayName": "Dial station, dense",
-        "purpose": "Desktop dial past two rows: 13px names, the count 11px on its own line under the name, band legends 11px."
-      },
-      "display": {
-        "displayName": "Display",
-        "purpose": "Program-sheet masthead titles."
-      },
-      "headline": {
-        "displayName": "Headline",
-        "purpose": "Run-in section heads set inline with their text."
-      },
-      "title": {
-        "displayName": "Title",
-        "purpose": "Song title on the program card, two lines max."
-      },
-      "action-primary": {
-        "displayName": "Action, primary",
-        "purpose": "The main action printed on paper: bold ink, no underline."
-      },
-      "action": {
-        "displayName": "Action",
-        "purpose": "Secondary actions printed on paper: underlined like a reference; danger in red ink."
-      },
-      "body": {
-        "displayName": "Body",
-        "purpose": "Running text on paper."
-      },
-      "lede": {
-        "displayName": "Lede",
-        "purpose": "Introductory paragraphs on sheets, max 62ch."
-      },
-      "label": {
-        "displayName": "Label",
-        "purpose": "Key legends on sheet keys, terminal legends. Uppercase."
-      },
-      "label-small": {
-        "displayName": "Label Small",
-        "purpose": "Knob names, band legends, wave-band lamps, detents. Uppercase."
-      }
-    },
-    "shadows": [
-      {
-        "name": "lacquered-front",
-        "value": "inset 0 2px 1px rgba(255,238,208,.6), inset 0 14px 18px -12px rgba(255,230,190,.34), inset 0 -8px 12px rgba(0,0,0,.42), 0 2px 2px rgba(0,0,0,.35)",
-        "purpose": "The desktop front: lit shoulders, shaded foot. The phone face, being the screen, casts nothing."
-      },
-      {
-        "name": "sideboard",
-        "value": "0 1px 0 rgba(0,0,0,.35), 0 20px 30px -18px var(--cast)",
-        "purpose": "The walnut sideboard the desktop radio stands on, cast onto the wall."
-      },
-      {
-        "name": "foot",
-        "value": "inset 0 1px 1px rgba(0,0,0,.6), 0 3px 3px -1px rgba(0,0,0,.6)",
-        "purpose": "The bakelite feet, cast onto the sideboard's top face."
-      },
-      {
-        "name": "cast-emblem",
-        "value": "drop-shadow(0 -1px 0 var(--emblem-edge)) drop-shadow(0 1px 0 var(--emblem-side)) drop-shadow(1px 2.5px 1px var(--emblem-cast))",
-        "purpose": "filter on the emblem: lit top chamfer, dark side, crisp shadow on the weave; letters and trim bars alike."
-      },
-      {
-        "name": "brass-ring",
-        "value": "0 0 0 2px var(--brass), 0 0 0 3px rgba(30,16,4,.6)",
-        "purpose": "Brass rings round the cloth, the dial bezel and the eye's escutcheon."
-      },
-      {
-        "name": "slot",
-        "value": "inset 0 4px 8px rgba(0,0,0,.9)",
-        "purpose": "The dark slot the keys sit in."
-      },
-      {
-        "name": "key-pressed",
-        "value": "inset 0 5px 7px rgba(30,18,4,.55)",
-        "purpose": "An ivory key sunk into its slot, with a 7px translate; bakelite uses rgba(0,0,0,.7)."
-      },
-      {
-        "name": "window-paper",
-        "value": "0 0 0 2px rgba(40,24,4,.55), inset 0 4px 9px rgba(40,20,5,.42), inset 0 0 0 1px rgba(40,20,5,.3)",
-        "purpose": "The program card seen behind the brass window."
-      },
-      {
-        "name": "sheet",
-        "value": "0 1px 1px rgba(30,20,5,.2), 0 14px 30px -16px rgba(30,20,5,.55)",
-        "purpose": "A program sheet lying on a surface."
-      },
-      {
-        "name": "dial-spill",
-        "value": "0 0 38px var(--spill)",
-        "purpose": "Dial lamp light spilling onto the wood; transparent by day, warm by night."
-      },
-      {
-        "name": "eye-glow",
-        "value": "0 0 22px var(--eye-glow)",
-        "purpose": "Magic-eye glow."
-      },
-      {
-        "name": "pilot-lamp",
-        "value": "0 0 7px rgba(230,70,40,.6)",
-        "purpose": "Lit red pilot lamps and wave-band lamps."
-      }
-    ],
-    "motion": [
-      {
-        "name": "ease",
-        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Default easing for every state change."
-      },
-      {
-        "name": "ease-string",
-        "value": "cubic-bezier(0.34, 1.26, 0.5, 1)",
-        "purpose": "Dial pointer glide only (1150ms), a slight string overshoot. The one sanctioned exception to the no-bounce rule, recorded in .impeccable/config.json detector.ignoreValues."
-      },
-      {
-        "name": "t-fast",
-        "value": "120ms",
-        "purpose": "Key press, hover brightness."
-      },
-      {
-        "name": "t",
-        "value": "220ms",
-        "purpose": "Colour and lamp changes, status strip."
-      },
-      {
-        "name": "eye",
-        "value": "900ms",
-        "purpose": "Magic-eye fans opening and closing."
-      },
-      {
-        "name": "sweep",
-        "value": "3.4s ease-in-out infinite alternate",
-        "purpose": "Suchlauf: the pointer searching the scale while switching on."
-      },
-      {
-        "name": "reduced-motion",
-        "value": "1ms",
-        "purpose": "prefers-reduced-motion reduces every animation and transition to 1ms, one iteration."
-      }
-    ],
-    "breakpoints": [
-      {
-        "name": "narrow",
-        "value": "359px"
-      },
-      {
-        "name": "small",
-        "value": "379px"
-      },
-      {
-        "name": "phone-wide",
-        "value": "420px"
-      },
-      {
-        "name": "page-centred",
-        "value": "560px"
-      },
-      {
-        "name": "slip",
-        "value": "720px"
-      },
-      {
-        "name": "desktop",
-        "value": "980px",
-        "note": "Landscape table radio on a sideboard, max 940px; card and sheet stacked below at max 640px."
-      },
-      {
-        "name": "desktop-split",
-        "value": "1200px",
-        "note": "Side column beside the radio, 320px; the program card heads it."
-      },
-      {
-        "name": "desktop-wide",
-        "value": "1400px",
-        "note": "Side column 400px."
-      },
-      {
-        "name": "cabinet-row",
-        "value": "@container cabinet 710px",
-        "note": "Knobs flank the keyboard in one row."
-      }
-    ]
-  },
-  "components": [
-    {
-      "name": "Maker's Emblem",
-      "kind": "custom",
-      "refersTo": "emblem",
-      "description": "\"true-shuffle\" in cast brass lower-case Jost 560 on the speaker cloth, between two trim bars of the same casting set level with the hyphen. No plate, no screws, no script.",
-      "html": "<div class=\"ds-cloth\"><h1 class=\"ds-emblem\">true-shuffle</h1></div>",
-      "css": ".ds-cloth{padding:28px 0;border-radius:10px;background:repeating-linear-gradient(90deg,rgba(255,226,150,.16) 0 1px,transparent 1px 7px),repeating-linear-gradient(0deg,rgba(90,60,20,.18) 0 1px,transparent 1px 3px),linear-gradient(180deg,#c3a567,#9c7e45);box-shadow:0 0 0 2px #c89c48,0 0 0 3px rgba(30,16,4,.55),inset 0 6px 12px rgba(30,16,2,.45);} .ds-emblem{--face:color-mix(in oklab,#dcb766 45%,#c8a150);display:flex;align-items:baseline;margin:0;font-family:'Jost Variable','Jost','Futura',sans-serif;font-size:40px;font-weight:560;line-height:1.2;letter-spacing:.05em;white-space:nowrap;color:var(--face);filter:drop-shadow(0 -1px 0 rgba(255,250,226,.85)) drop-shadow(0 1px 0 rgba(62,36,4,.95)) drop-shadow(1px 2.5px 1px rgba(22,10,0,.62));} .ds-emblem::before,.ds-emblem::after{content:'';flex:1 1 0;min-width:10px;height:.11em;border-radius:1px;background:var(--face);transform:translateY(-.18em);} .ds-emblem::before{margin-right:.45em;} .ds-emblem::after{margin-left:.4em;}"
-    },
-    {
-      "name": "Piano Keyboard",
-      "kind": "custom",
-      "refersTo": "piano-key",
-      "description": "One dark slot: shorter bakelite MENÜ and VERLAUF keys either side of four ivory play keys; a pressed key sinks 7px, a latched key stays down with a red legend.",
-      "html": "<div class=\"ds-kb\"><button class=\"ds-pk ds-pk--bk\">Menü</button><div class=\"ds-play\"><button class=\"ds-pk\">Nie wieder</button><button class=\"ds-pk ds-pk--down\" aria-pressed=\"true\">Pause</button><button class=\"ds-pk\">Weiter</button><button class=\"ds-pk\">Favorit</button></div><button class=\"ds-pk ds-pk--bk\">Verlauf</button></div>",
-      "css": ".ds-kb{display:grid;grid-template-columns:minmax(46px,.6fr) minmax(0,4fr) minmax(46px,.6fr);max-width:480px;padding:5px 5px 0;border-radius:8px 8px 3px 3px;overflow:hidden;background:linear-gradient(180deg,#050201,#1a110a 40%,#24160c);box-shadow:inset 0 4px 8px rgba(0,0,0,.9);} .ds-pk{display:flex;align-items:flex-end;justify-content:center;min-height:60px;padding:6px 2px 16px;border:0;border-radius:2px 2px 0 0;background:linear-gradient(180deg,#fdf8ea 0,#f0e6cd 14%,#dccfae calc(100% - 9px),rgba(255,252,240,.85) calc(100% - 9px),rgba(255,252,240,.85) calc(100% - 8px),#b9a57f calc(100% - 8px),#a38e66 100%);color:#5a4934;font-family:'Barlow Condensed','Jost',sans-serif;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,255,255,.85),0 -1px 0 rgba(50,32,10,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.55),inset -1px 0 0 rgba(90,64,30,.5);cursor:pointer;transition:transform 120ms cubic-bezier(.16,1,.3,1);} .ds-pk:hover{filter:brightness(1.04);} .ds-pk:focus-visible{outline:3px solid #1b4fb3;outline-offset:-6px;} .ds-pk:active,.ds-pk--down{transform:translateY(7px);background:linear-gradient(180deg,#b9a882 0,#dccfae 22%,#cdbe9b calc(100% - 9px),#b9a57f calc(100% - 9px),#a38e66 100%);box-shadow:inset 0 5px 7px rgba(30,18,4,.55),inset 1px 0 0 rgba(255,255,255,.25),inset -1px 0 0 rgba(90,64,30,.5);} .ds-pk--down{color:#8c1a12;} .ds-play{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));} .ds-pk--bk{align-self:end;min-height:50px;padding-bottom:14px;background:linear-gradient(180deg,#5b3d29 0,#2d1c12 20%,#170d07 calc(100% - 9px),rgba(255,220,180,.26) calc(100% - 9px),rgba(255,220,180,.26) calc(100% - 8px),#1c110a calc(100% - 8px),#0b0604 100%);color:#f0e3c4;text-shadow:0 -1px 0 rgba(0,0,0,.75),0 1px 0 rgba(255,220,180,.16);box-shadow:inset 0 1px 0 rgba(255,220,180,.32),inset 1px 0 0 rgba(255,220,180,.16),inset -1px 0 0 rgba(0,0,0,.6);} .ds-pk--bk:focus-visible{outline-color:#ffd978;} .ds-pk--bk:active{background:linear-gradient(180deg,#120a05 0,#170d07 24%,#2d1c12 calc(100% - 9px),#1c110a calc(100% - 9px),#0b0604 100%);box-shadow:inset 0 5px 7px rgba(0,0,0,.7);}"
-    },
-    {
-      "name": "Dial with stations",
-      "kind": "custom",
-      "refersTo": "dial-glass",
-      "description": "The backlit glass dial in its brass bezel: every station printed, the playing one struck forward and lit red, the pointer on it.",
-      "html": "<div class=\"ds-dial\"><div class=\"ds-glass\"><button class=\"ds-st\"><span class=\"ds-no\">1</span><span class=\"ds-name\">Abendmusik</span><span class=\"ds-freq\">Runde 3</span></button><button class=\"ds-st ds-st--lit\"><span class=\"ds-no\">2</span><span class=\"ds-name\">Jazz am Sonntag</span><span class=\"ds-freq\">Runde 7</span></button><button class=\"ds-st\"><span class=\"ds-no\">3</span><span class=\"ds-name\">Hörspiel</span><span class=\"ds-freq\">Runde 1</span></button><span class=\"ds-needle\"></span></div></div>",
-      "css": ".ds-dial{max-width:380px;padding:6px;border-radius:14px;background:linear-gradient(180deg,#1c120a,#0c0703);box-shadow:inset 0 3px 5px rgba(0,0,0,.85),0 0 0 2px #c89c48,0 0 0 3px rgba(30,16,4,.6);} .ds-glass{position:relative;padding:4px 50px 4px 8px;border-radius:9px;color:#2b1d12;background:radial-gradient(95% 75% at 50% 46%,#fbf3d9 0%,#f2e4be 42%,#e4cf9e 82%,#e2c285 100%);box-shadow:inset 0 4px 10px rgba(60,30,5,.45),inset 0 0 44px rgba(120,62,10,.32);} .ds-st{display:grid;grid-template-columns:24px 1fr auto;align-items:baseline;column-gap:10px;width:100%;min-height:44px;padding:6px 4px 7px;border:0;border-radius:3px;background:transparent;color:inherit;text-align:left;cursor:pointer;font-family:'Barlow Condensed','Jost',sans-serif;} .ds-no{align-self:center;border:1px solid rgba(43,29,18,.5);border-radius:2px;font-size:12px;font-weight:600;text-align:center;color:#5a4230;} .ds-name{font-size:18px;font-weight:500;line-height:1.06;letter-spacing:.05em;text-transform:uppercase;text-shadow:0 0 2px #f4e7c4,0 0 3px #f4e7c4;transform-origin:left center;transition:color 220ms cubic-bezier(.16,1,.3,1),transform 500ms cubic-bezier(.16,1,.3,1);} .ds-freq{font-size:13px;font-weight:500;letter-spacing:.06em;color:#5a4230;} .ds-st:hover .ds-name{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;} .ds-st:focus-visible{outline:3px solid #1b4fb3;outline-offset:-2px;} .ds-st--lit .ds-name{color:#a8221a;font-weight:600;transform:scale(1.05);text-shadow:0 0 2px #f4e7c4,0 0 3px #f4e7c4,0 0 12px rgba(222,72,40,.28);} .ds-st--lit .ds-freq,.ds-st--lit .ds-no{color:#a8221a;border-color:#a8221a;} .ds-needle{position:absolute;right:10px;top:70px;width:44px;height:3px;border-radius:2px 1px 1px 2px;background:linear-gradient(180deg,#d0473a,#a8221a 55%,#7a120c);box-shadow:0 0 8px rgba(222,72,40,.28);transition:top 1150ms cubic-bezier(.34,1.26,.5,1);}"
-    },
-    {
-      "name": "Primary Printed Action",
-      "kind": "button",
-      "refersTo": "action-primary",
-      "description": "The main action on paper: bold Jost in the sheet's black on a line of its own, ruled above and below. No key, no fill, no lamp.",
-      "html": "<div class=\"ds-paper\"><button class=\"ds-act-p\">Spielen</button></div>",
-      "css": ".ds-paper{padding:16px;background:linear-gradient(180deg,#f6eedb,#eee3c8);color:#2a2119;} .ds-act-p{display:flex;align-items:center;width:100%;min-height:52px;padding:0 2px;border:0;border-top:1px solid rgba(70,48,24,.6);border-bottom:1px solid rgba(70,48,24,.6);background:none;color:#2a2119;font-family:'Jost Variable','Jost',sans-serif;font-size:17.5px;font-weight:700;letter-spacing:-.005em;text-align:left;cursor:pointer;} .ds-act-p:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;} .ds-act-p:focus-visible{outline:3px solid #1b4fb3;outline-offset:2px;}"
-    },
-    {
-      "name": "Printed Action",
-      "kind": "button",
-      "refersTo": "action",
-      "description": "A secondary action on paper, underlined like a reference; danger in red ink. Targets at least 44px.",
-      "html": "<div class=\"ds-paper\"><button class=\"ds-act\">In Spotify</button> <button class=\"ds-act ds-act--danger\">Sender löschen</button></div>",
-      "css": ".ds-paper{display:flex;gap:24px;padding:16px;background:linear-gradient(180deg,#f6eedb,#eee3c8);} .ds-act{display:inline-flex;align-items:center;min-width:44px;min-height:44px;padding:0 2px;border:0;border-radius:2px;background:none;color:#564a3c;font-family:'Jost Variable','Jost',sans-serif;font-size:15.5px;font-weight:500;text-decoration:underline;text-decoration-color:rgba(70,48,24,.6);text-decoration-thickness:1px;text-underline-offset:4px;cursor:pointer;} .ds-act:hover{color:#2a2119;text-decoration-color:currentColor;} .ds-act:focus-visible{outline:3px solid #1b4fb3;outline-offset:2px;} .ds-act--danger{color:#a3231a;text-decoration-color:currentColor;}"
-    },
-    {
-      "name": "Mix Scale",
-      "kind": "custom",
-      "refersTo": "mix-scale",
-      "description": "Klang printed on the station sheet: a radiogroup of the knob's three detents on a strip of scale. A position is marked only when the mix stands exactly on it; between detents none is marked.",
-      "html": "<fieldset class=\"ds-mix\"><label class=\"ds-mix__o\"><input type=\"radio\" name=\"m\" checked><span class=\"ds-mix__l\">Entdecker</span><i></i></label><label class=\"ds-mix__o\"><input type=\"radio\" name=\"m\"><span class=\"ds-mix__l\">Ausgewogen</span><i></i></label><label class=\"ds-mix__o\"><input type=\"radio\" name=\"m\"><span class=\"ds-mix__l\">Vertraut</span><i></i></label></fieldset>",
-      "css": ".ds-mix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;padding:0;border:0;border-top:1px solid rgba(70,48,24,.6);background:#f6eedb repeating-linear-gradient(90deg,rgba(43,29,18,.5) 0 1px,transparent 1px 6px) left bottom/100% 3px no-repeat;} .ds-mix__o{position:relative;display:flex;align-items:center;justify-content:center;min-height:56px;padding:8px 2px 18px;cursor:pointer;} .ds-mix__o:hover{background:rgba(88,62,34,.06);} .ds-mix__o input{position:absolute;width:1px;height:1px;margin:0;opacity:0;} .ds-mix__o:has(input:focus-visible){outline:3px solid #1b4fb3;outline-offset:-3px;} .ds-mix__l{font-family:'Barlow Condensed','Jost',sans-serif;font-size:14.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#564a3c;} .ds-mix__o i{position:absolute;bottom:0;left:50%;width:1px;height:8px;transform:translateX(-50%);background:#564a3c;} .ds-mix__o:has(input:checked) .ds-mix__l{font-weight:700;color:#2a2119;} .ds-mix__o:has(input:checked) i{width:3px;height:14px;border-radius:1px;background:#a3231a;}"
-    },
-    {
-      "name": "Field",
-      "kind": "input",
-      "refersTo": "input",
-      "description": "A form field on the sheet: field paper, ruled border with a heavier ink underline.",
-      "html": "<div class=\"ds-wrap\"><label class=\"ds-lab\">Name des Senders<input class=\"ds-input\" value=\"Abendmusik\"></label></div>",
-      "css": ".ds-wrap{padding:16px;background:linear-gradient(180deg,#f6eedb,#eee3c8);color:#2a2119;} .ds-lab{display:grid;gap:7px;font-family:'Jost',sans-serif;font-size:13.5px;font-weight:600;} .ds-input{width:100%;min-height:48px;padding:0 12px;border:1.5px solid rgba(70,48,24,.6);border-bottom:2.5px solid #564a3c;border-radius:3px 3px 1px 1px;background:#fcf8ee;color:#2a2119;font:inherit;font-size:16px;font-weight:400;caret-color:#a3231a;} .ds-input:focus-visible{outline:3px solid #1b4fb3;outline-offset:2px;}"
-    },
-    {
-      "name": "Back Panel Terminal",
-      "kind": "nav",
-      "refersTo": "back-panel",
-      "description": "A menu entry on the radio back panel: brass screw head, condensed legend, sub-line, rule under it.",
-      "html": "<div class=\"ds-board\"><a class=\"ds-term\" href=\"#\"><i class=\"ds-scr\"></i><span class=\"ds-plate\"><b class=\"ds-leg\">Gerät</b><span class=\"ds-sub\">Wo true-shuffle startet</span></span></a><a class=\"ds-term\" href=\"#\"><i class=\"ds-scr\"></i><span class=\"ds-plate\"><b class=\"ds-leg\">Info</b><span class=\"ds-sub\">Wie true-shuffle arbeitet</span></span></a></div>",
-      "css": ".ds-board{padding:12px 18px;border-radius:5px;background:linear-gradient(180deg,#7b5637,#6b492d);color:#f7ebcf;border-top:1px solid rgba(247,235,207,.7);} .ds-term{display:flex;align-items:center;gap:12px;min-height:58px;padding:9px 4px;border-bottom:1px solid rgba(247,235,207,.24);color:inherit;text-decoration:none;} .ds-term:hover{background:rgba(255,240,210,.06);} .ds-term:focus-visible{outline:3px solid #ffd978;outline-offset:-3px;} .ds-scr{flex:none;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff2c6,#b08a3e 50%,#5b3f0f);box-shadow:0 0 0 2px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.5);} .ds-plate{display:grid;gap:1px;} .ds-leg{font-family:'Barlow Condensed','Jost',sans-serif;font-size:16px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;} .ds-sub{font-family:'Jost',sans-serif;font-size:13.5px;color:#f0e2c2;}"
-    }
-  ],
-  "narrative": {
-    "northStar": "The Radio on the Sideboard",
-    "overview": "The screen is the front of a 1950s German tube radio. One walnut front under lacquer; a golden speaker cloth across the top carrying the maker's emblem, \"true-shuffle\" in cast brass letters between two brass trim bars; a cream glass dial lit from behind with every station printed on it and the green magic eye seated at its end; the program card behind a brass-framed window; two bakelite knobs; one slot of ivory piano keys flanked by two shorter bakelite keys. Everything the listener touches on the radio is a physical part of it. Pages that do not fit on the front are printed program sheets (Programmheft paper) or the radio's own back panel (hardboard with vent holes, screws and a riveted brass type plate); paper carries print, not keys.\n\nThe silhouette answers to the screen. On a phone the screen is the face in close-up: walnut to the screen's edges, no cabinet outline of its own, and the face ends in the plinth's moulding. From 980px the whole table radio stands on a walnut sideboard: landscape, softly rounded lit shoulders, straight sides, a darker plinth with two feet. Density is that of a real appliance: a glance of two or three seconds reads the lit station on the dial and the song on the card; a tap on a printed station name sends the red pointer gliding there. Every station stays printed on the glass, the playing one struck forward and lit, the others printed and quiet. The world has two illuminations, same token names, other values: **Day** (a pale plaster wall, the radio lit by the room) and **Night** (a dark room where wood, cloth and paper fall into shadow and only the dial lamp, the magic eye and the paper glow carry light). Night follows `prefers-color-scheme: dark` unless the user pins `data-illumination`.\n\nConfirmed rejections (owner, 2026-09-27): app cards, streaming-app chrome, a numbers cockpit, anything playful or cold; the previous car head-unit world (black VFD glass, machined keys, dot-matrix type); a script badge on a screwed plate; a radio silhouette that merely follows the viewport (a tall wooden phone case, a flat pinboard panel).",
-    "keyCharacteristics": [
-      "One object: the front is a single walnut body; dial, eye, window, knobs and keys are seated in it, never floating tiles.",
-      "A maker's emblem, not a sign: cast brass lower-case Jost letters on the cloth, the trim bars level with the hyphen.",
-      "Real material: walnut and cloth are sourced CC0 rasters; paper grain, brushed brass, plaster and hardboard are small inline SVG noise filters.",
-      "Print, not UI: dial lettering is condensed caps printed on glass; paper pages are set like a printed running order, and their actions are printed too.",
-      "One signal red for \"this is the one\": the pointer, the lit station, pilot lamps, the latched key's legend, the chosen mark on a printed scale.",
-      "One living light: the green magic eye."
-    ],
-    "rules": [
-      {
-        "name": "The One Signal Rule",
-        "body": "Red means \"the station that plays\", \"this key is down\" or \"this is the chosen position\"; it never decorates. Pilot lamps (a red radial bulb), the pointer, the lit station, the latched legend and a chosen scale tick are its homes, plus error and danger text.",
-        "section": "colors"
-      },
-      {
-        "name": "The Two Illuminations Rule",
-        "body": "Every colour exists for Day and Night under the same name. New surfaces use tokens, never literal hex, so that Night comes for free. Night darkens the wood (`wood-dim` 0.74) and cloth (`cloth-dim` 0.6), dims the window paper, and raises the dial glow (`spill`), the eye glow and a warm `paper-glow`.",
-        "section": "colors"
-      },
-      {
-        "name": "The Card-in-the-Dark Rule",
-        "body": "Paper seen inside the cabinet at night is lit only by the room: it drops to about L* 60 and carries its own inks (`window-ink`, `window-ink-2`, `window-lit`), each at least 4.5:1 on it. Paper outside the cabinet keeps the sheet's inks.",
-        "section": "colors"
-      },
-      {
-        "name": "The Name Rule",
-        "body": "The name is always \"true-shuffle\", lower case with a hyphen, never \"True Shuffle\" and never set in capitals. It must never sit inside an uppercase-transformed element (dial lettering, key legends, terminal legends, tags). On the cloth it is the cast Jost emblem; nowhere is it set in a script.",
-        "section": "typography"
-      },
-      {
-        "name": "The Printed-Where-It-Lives Rule",
-        "body": "Condensed uppercase belongs to glass, ivory, bakelite, brass and printed legends; running text and actions on paper are Jost in sentence case. Don't set paragraphs or paper actions in Barlow Condensed, or legends in Jost.",
-        "section": "typography"
-      },
-      {
-        "name": "The Lit-From-Above Rule",
-        "body": "Every raised part has a light top edge and a shaded foot; every recessed part has its shadow at the top. If a shadow does not name a material and a light source, it does not belong.",
-        "section": "elevation"
-      },
-      {
-        "name": "The Stands-On-Something Rule",
-        "body": "A cast shadow needs a surface to fall on: the emblem on the cloth, the feet on the sideboard, the sideboard on the wall, a sheet on the desk. The phone face, being the screen, casts nothing.",
-        "section": "elevation"
-      }
-    ],
-    "dos": [
-      "**Do** build every control on the radio as a physical part of it: an ivory or bakelite key in the slot, a bakelite knob in a brass ring, a lever, a printed station on the glass, a screw terminal on the back panel.",
-      "**Do** print actions on paper in the sheet's type: the primary one bold, the others underlined, danger in red ink, each at least 44px.",
-      "**Do** keep every station printed on the dial at all times; mark the playing one by striking it forward and lighting it red, not by hiding the others.",
-      "**Do** let the silhouette answer the screen: the face edge to edge ending in its plinth on a phone; the landscape table radio with shoulders, plinth, feet and sideboard from 980px.",
-      "**Do** use tokens for every colour so Day and Night both work; set `--focus` for the surface's ground.",
-      "**Do** set lists and settings as a printed Programmheft: rules, run-in heads, condensed legends.",
-      "**Do** keep tap targets at least 44px.",
-      "**Do** keep `--ease-string` (`cubic-bezier(0.34, 1.26, 0.5, 1)`) on the dial pointer's glide: it is the one sanctioned exception to the no-bounce rule (recorded in `.impeccable/config.json` `detector.ignoreValues`), and reduced motion reduces it to 1ms.",
-      "**Do** give every shipping raster a provenance `.json` beside it (origin, licence, processing)."
-    ],
-    "donts": [
-      "**Don't** write the name as \"True Shuffle\" or set it in capitals, or place it inside an uppercase-transformed element.",
-      "**Don't** mount the emblem on a plate, fix it with screws or set it in a script face; it is cast Jost letters on the cloth.",
-      "**Don't** put keys, key slots or dotted leaders on paper, or mark a paper action with a pilot lamp.",
-      "**Don't** use overshoot or bounce easing anywhere except the dial pointer; everything else moves on `--ease` (`cubic-bezier(0.16, 1, 0.3, 1)`) at 120ms or 220ms, the eye at 900ms.",
-      "**Don't** bring back the car head-unit world: black VFD glass, machined silver keys, dot-matrix display type.",
-      "**Don't** use app cards, floating tiles, streaming-app chrome or a numbers cockpit; progress is a small printed scale with a red mark.",
-      "**Don't** introduce a second accent hue; red is the signal, green is only the magic eye, brass is metal.",
-      "**Don't** use flat brass panels; brass is a lit gradient or ring, and the emblem's one cast face is carried by its chamfer and shadow.",
-      "**Don't** add emoji, Unicode glyphs as icons, or generic drop shadows that name no material."
-    ]
-  }
+	"schemaVersion": 2,
+	"generatedAt": "2026-10-01T11:57:44.165976+00:00",
+	"title": "Design System: true-shuffle",
+	"extensions": {
+		"colorMeta": {
+			"bg": {
+				"role": "neutral",
+				"displayName": "Paper",
+				"canonical": "#f3f3f1",
+				"tonalRamp": [
+					"oklch(15% 0.0027 106.45)",
+					"oklch(26% 0.0027 106.45)",
+					"oklch(38% 0.0027 106.45)",
+					"oklch(49% 0.0027 106.45)",
+					"oklch(61% 0.0027 106.45)",
+					"oklch(72% 0.0027 106.45)",
+					"oklch(84% 0.0027 106.45)",
+					"oklch(95% 0.0027 106.45)"
+				]
+			},
+			"fg": {
+				"role": "neutral",
+				"displayName": "Ink Black",
+				"canonical": "#111111",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"fg-2": {
+				"role": "neutral",
+				"displayName": "Graphite",
+				"canonical": "#55575a",
+				"tonalRamp": [
+					"oklch(15% 0.0055 258.34)",
+					"oklch(26% 0.0055 258.34)",
+					"oklch(38% 0.0055 258.34)",
+					"oklch(49% 0.0055 258.34)",
+					"oklch(61% 0.0055 258.34)",
+					"oklch(72% 0.0055 258.34)",
+					"oklch(84% 0.0055 258.34)",
+					"oklch(95% 0.0055 258.34)"
+				]
+			},
+			"rule": {
+				"role": "neutral",
+				"displayName": "Rule Black",
+				"canonical": "#111111",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"hair": {
+				"role": "neutral",
+				"displayName": "Hairline",
+				"canonical": "#c9cbcd",
+				"tonalRamp": [
+					"oklch(15% 0.0035 247.87)",
+					"oklch(26% 0.0035 247.87)",
+					"oklch(38% 0.0035 247.87)",
+					"oklch(49% 0.0035 247.87)",
+					"oklch(61% 0.0035 247.87)",
+					"oklch(72% 0.0035 247.87)",
+					"oklch(84% 0.0035 247.87)",
+					"oklch(95% 0.0035 247.87)"
+				]
+			},
+			"grid": {
+				"role": "neutral",
+				"displayName": "Construction Grid",
+				"canonical": "rgb(17 17 17 / 0.08)"
+			},
+			"raise": {
+				"role": "neutral",
+				"displayName": "Raised Sheet",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"danger": {
+				"role": "neutral",
+				"displayName": "Danger Red",
+				"canonical": "#b3261e",
+				"tonalRamp": [
+					"oklch(15% 0.1783 28.70)",
+					"oklch(26% 0.1783 28.70)",
+					"oklch(38% 0.1783 28.70)",
+					"oklch(49% 0.1783 28.70)",
+					"oklch(61% 0.1783 28.70)",
+					"oklch(72% 0.1783 28.70)",
+					"oklch(84% 0.1783 28.70)",
+					"oklch(95% 0.1783 28.70)"
+				]
+			},
+			"warn-bg": {
+				"role": "neutral",
+				"displayName": "Warning Field",
+				"canonical": "#fff3c4",
+				"tonalRamp": [
+					"oklch(15% 0.0619 95.40)",
+					"oklch(26% 0.0619 95.40)",
+					"oklch(38% 0.0619 95.40)",
+					"oklch(49% 0.0619 95.40)",
+					"oklch(61% 0.0619 95.40)",
+					"oklch(72% 0.0619 95.40)",
+					"oklch(84% 0.0619 95.40)",
+					"oklch(95% 0.0619 95.40)"
+				]
+			},
+			"warn-fg": {
+				"role": "neutral",
+				"displayName": "Warning Ink",
+				"canonical": "#3b2f00",
+				"tonalRamp": [
+					"oklch(15% 0.0634 93.48)",
+					"oklch(26% 0.0634 93.48)",
+					"oklch(38% 0.0634 93.48)",
+					"oklch(49% 0.0634 93.48)",
+					"oklch(61% 0.0634 93.48)",
+					"oklch(72% 0.0634 93.48)",
+					"oklch(84% 0.0634 93.48)",
+					"oklch(95% 0.0634 93.48)"
+				]
+			},
+			"focus": {
+				"role": "neutral",
+				"displayName": "Focus Ultramarine",
+				"canonical": "#1f3bd0",
+				"tonalRamp": [
+					"oklch(15% 0.2000 266.77)",
+					"oklch(26% 0.2000 266.77)",
+					"oklch(38% 0.2000 266.77)",
+					"oklch(49% 0.2000 266.77)",
+					"oklch(61% 0.2000 266.77)",
+					"oklch(72% 0.2000 266.77)",
+					"oklch(84% 0.2000 266.77)",
+					"oklch(95% 0.2000 266.77)"
+				]
+			},
+			"select": {
+				"role": "neutral",
+				"displayName": "Selection Yellow",
+				"canonical": "#f4c20d",
+				"tonalRamp": [
+					"oklch(15% 0.1689 89.62)",
+					"oklch(26% 0.1689 89.62)",
+					"oklch(38% 0.1689 89.62)",
+					"oklch(49% 0.1689 89.62)",
+					"oklch(61% 0.1689 89.62)",
+					"oklch(72% 0.1689 89.62)",
+					"oklch(84% 0.1689 89.62)",
+					"oklch(95% 0.1689 89.62)"
+				]
+			},
+			"bg-night": {
+				"role": "neutral",
+				"displayName": "Paper (night)",
+				"canonical": "#0b0b0c",
+				"tonalRamp": [
+					"oklch(15% 0.0021 286.14)",
+					"oklch(26% 0.0021 286.14)",
+					"oklch(38% 0.0021 286.14)",
+					"oklch(49% 0.0021 286.14)",
+					"oklch(61% 0.0021 286.14)",
+					"oklch(72% 0.0021 286.14)",
+					"oklch(84% 0.0021 286.14)",
+					"oklch(95% 0.0021 286.14)"
+				]
+			},
+			"fg-night": {
+				"role": "neutral",
+				"displayName": "Ink Black (night)",
+				"canonical": "#f2f2ee",
+				"tonalRamp": [
+					"oklch(15% 0.0053 106.50)",
+					"oklch(26% 0.0053 106.50)",
+					"oklch(38% 0.0053 106.50)",
+					"oklch(49% 0.0053 106.50)",
+					"oklch(61% 0.0053 106.50)",
+					"oklch(72% 0.0053 106.50)",
+					"oklch(84% 0.0053 106.50)",
+					"oklch(95% 0.0053 106.50)"
+				]
+			},
+			"fg-2-night": {
+				"role": "neutral",
+				"displayName": "Graphite (night)",
+				"canonical": "#a3a5a8",
+				"tonalRamp": [
+					"oklch(15% 0.0049 258.33)",
+					"oklch(26% 0.0049 258.33)",
+					"oklch(38% 0.0049 258.33)",
+					"oklch(49% 0.0049 258.33)",
+					"oklch(61% 0.0049 258.33)",
+					"oklch(72% 0.0049 258.33)",
+					"oklch(84% 0.0049 258.33)",
+					"oklch(95% 0.0049 258.33)"
+				]
+			},
+			"rule-night": {
+				"role": "neutral",
+				"displayName": "Rule Black (night)",
+				"canonical": "#f2f2ee",
+				"tonalRamp": [
+					"oklch(15% 0.0053 106.50)",
+					"oklch(26% 0.0053 106.50)",
+					"oklch(38% 0.0053 106.50)",
+					"oklch(49% 0.0053 106.50)",
+					"oklch(61% 0.0053 106.50)",
+					"oklch(72% 0.0053 106.50)",
+					"oklch(84% 0.0053 106.50)",
+					"oklch(95% 0.0053 106.50)"
+				]
+			},
+			"hair-night": {
+				"role": "neutral",
+				"displayName": "Hairline (night)",
+				"canonical": "#303236",
+				"tonalRamp": [
+					"oklch(15% 0.0076 264.46)",
+					"oklch(26% 0.0076 264.46)",
+					"oklch(38% 0.0076 264.46)",
+					"oklch(49% 0.0076 264.46)",
+					"oklch(61% 0.0076 264.46)",
+					"oklch(72% 0.0076 264.46)",
+					"oklch(84% 0.0076 264.46)",
+					"oklch(95% 0.0076 264.46)"
+				]
+			},
+			"grid-night": {
+				"role": "neutral",
+				"displayName": "Construction Grid (night)",
+				"canonical": "rgb(242 242 238 / 0.075)"
+			},
+			"raise-night": {
+				"role": "neutral",
+				"displayName": "Raised Sheet (night)",
+				"canonical": "#17181a",
+				"tonalRamp": [
+					"oklch(15% 0.0042 264.48)",
+					"oklch(26% 0.0042 264.48)",
+					"oklch(38% 0.0042 264.48)",
+					"oklch(49% 0.0042 264.48)",
+					"oklch(61% 0.0042 264.48)",
+					"oklch(72% 0.0042 264.48)",
+					"oklch(84% 0.0042 264.48)",
+					"oklch(95% 0.0042 264.48)"
+				]
+			},
+			"danger-night": {
+				"role": "neutral",
+				"displayName": "Danger Red (night)",
+				"canonical": "#ff8a7f",
+				"tonalRamp": [
+					"oklch(15% 0.1437 26.58)",
+					"oklch(26% 0.1437 26.58)",
+					"oklch(38% 0.1437 26.58)",
+					"oklch(49% 0.1437 26.58)",
+					"oklch(61% 0.1437 26.58)",
+					"oklch(72% 0.1437 26.58)",
+					"oklch(84% 0.1437 26.58)",
+					"oklch(95% 0.1437 26.58)"
+				]
+			},
+			"warn-bg-night": {
+				"role": "neutral",
+				"displayName": "Warning Field (night)",
+				"canonical": "#3b2f00",
+				"tonalRamp": [
+					"oklch(15% 0.0634 93.48)",
+					"oklch(26% 0.0634 93.48)",
+					"oklch(38% 0.0634 93.48)",
+					"oklch(49% 0.0634 93.48)",
+					"oklch(61% 0.0634 93.48)",
+					"oklch(72% 0.0634 93.48)",
+					"oklch(84% 0.0634 93.48)",
+					"oklch(95% 0.0634 93.48)"
+				]
+			},
+			"warn-fg-night": {
+				"role": "neutral",
+				"displayName": "Warning Ink (night)",
+				"canonical": "#ffe9a3",
+				"tonalRamp": [
+					"oklch(15% 0.0913 92.69)",
+					"oklch(26% 0.0913 92.69)",
+					"oklch(38% 0.0913 92.69)",
+					"oklch(49% 0.0913 92.69)",
+					"oklch(61% 0.0913 92.69)",
+					"oklch(72% 0.0913 92.69)",
+					"oklch(84% 0.0913 92.69)",
+					"oklch(95% 0.0913 92.69)"
+				]
+			},
+			"focus-night": {
+				"role": "neutral",
+				"displayName": "Focus Ultramarine (night)",
+				"canonical": "#8fa3ff",
+				"tonalRamp": [
+					"oklch(15% 0.1351 273.36)",
+					"oklch(26% 0.1351 273.36)",
+					"oklch(38% 0.1351 273.36)",
+					"oklch(49% 0.1351 273.36)",
+					"oklch(61% 0.1351 273.36)",
+					"oklch(72% 0.1351 273.36)",
+					"oklch(84% 0.1351 273.36)",
+					"oklch(95% 0.1351 273.36)"
+				]
+			},
+			"ink-ultra": {
+				"role": "primary",
+				"displayName": "Ultramarine",
+				"canonical": "#1f3bd0",
+				"tonalRamp": [
+					"oklch(15% 0.2000 266.77)",
+					"oklch(26% 0.2000 266.77)",
+					"oklch(38% 0.2000 266.77)",
+					"oklch(49% 0.2000 266.77)",
+					"oklch(61% 0.2000 266.77)",
+					"oklch(72% 0.2000 266.77)",
+					"oklch(84% 0.2000 266.77)",
+					"oklch(95% 0.2000 266.77)"
+				]
+			},
+			"on-ultra": {
+				"role": "primary",
+				"displayName": "On Ultra",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-ultra-2": {
+				"role": "primary",
+				"displayName": "On Ultra 2",
+				"canonical": "#dfe4ff",
+				"tonalRamp": [
+					"oklch(15% 0.0371 277.32)",
+					"oklch(26% 0.0371 277.32)",
+					"oklch(38% 0.0371 277.32)",
+					"oklch(49% 0.0371 277.32)",
+					"oklch(61% 0.0371 277.32)",
+					"oklch(72% 0.0371 277.32)",
+					"oklch(84% 0.0371 277.32)",
+					"oklch(95% 0.0371 277.32)"
+				]
+			},
+			"ink-verm": {
+				"role": "primary",
+				"displayName": "Vermilion",
+				"canonical": "#c8380e",
+				"tonalRamp": [
+					"oklch(15% 0.1869 35.02)",
+					"oklch(26% 0.1869 35.02)",
+					"oklch(38% 0.1869 35.02)",
+					"oklch(49% 0.1869 35.02)",
+					"oklch(61% 0.1869 35.02)",
+					"oklch(72% 0.1869 35.02)",
+					"oklch(84% 0.1869 35.02)",
+					"oklch(95% 0.1869 35.02)"
+				]
+			},
+			"on-verm": {
+				"role": "primary",
+				"displayName": "On Verm",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-verm-2": {
+				"role": "primary",
+				"displayName": "On Verm 2",
+				"canonical": "#fff0ea",
+				"tonalRamp": [
+					"oklch(15% 0.0182 43.23)",
+					"oklch(26% 0.0182 43.23)",
+					"oklch(38% 0.0182 43.23)",
+					"oklch(49% 0.0182 43.23)",
+					"oklch(61% 0.0182 43.23)",
+					"oklch(72% 0.0182 43.23)",
+					"oklch(84% 0.0182 43.23)",
+					"oklch(95% 0.0182 43.23)"
+				]
+			},
+			"ink-green": {
+				"role": "primary",
+				"displayName": "Print Green",
+				"canonical": "#006e4e",
+				"tonalRamp": [
+					"oklch(15% 0.1006 164.75)",
+					"oklch(26% 0.1006 164.75)",
+					"oklch(38% 0.1006 164.75)",
+					"oklch(49% 0.1006 164.75)",
+					"oklch(61% 0.1006 164.75)",
+					"oklch(72% 0.1006 164.75)",
+					"oklch(84% 0.1006 164.75)",
+					"oklch(95% 0.1006 164.75)"
+				]
+			},
+			"on-green": {
+				"role": "primary",
+				"displayName": "On Green",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-green-2": {
+				"role": "primary",
+				"displayName": "On Green 2",
+				"canonical": "#dff5ec",
+				"tonalRamp": [
+					"oklch(15% 0.0260 169.30)",
+					"oklch(26% 0.0260 169.30)",
+					"oklch(38% 0.0260 169.30)",
+					"oklch(49% 0.0260 169.30)",
+					"oklch(61% 0.0260 169.30)",
+					"oklch(72% 0.0260 169.30)",
+					"oklch(84% 0.0260 169.30)",
+					"oklch(95% 0.0260 169.30)"
+				]
+			},
+			"ink-violet": {
+				"role": "primary",
+				"displayName": "Violet",
+				"canonical": "#5b30c0",
+				"tonalRamp": [
+					"oklch(15% 0.2000 289.04)",
+					"oklch(26% 0.2000 289.04)",
+					"oklch(38% 0.2000 289.04)",
+					"oklch(49% 0.2000 289.04)",
+					"oklch(61% 0.2000 289.04)",
+					"oklch(72% 0.2000 289.04)",
+					"oklch(84% 0.2000 289.04)",
+					"oklch(95% 0.2000 289.04)"
+				]
+			},
+			"on-violet": {
+				"role": "primary",
+				"displayName": "On Violet",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-violet-2": {
+				"role": "primary",
+				"displayName": "On Violet 2",
+				"canonical": "#ece5ff",
+				"tonalRamp": [
+					"oklch(15% 0.0356 298.01)",
+					"oklch(26% 0.0356 298.01)",
+					"oklch(38% 0.0356 298.01)",
+					"oklch(49% 0.0356 298.01)",
+					"oklch(61% 0.0356 298.01)",
+					"oklch(72% 0.0356 298.01)",
+					"oklch(84% 0.0356 298.01)",
+					"oklch(95% 0.0356 298.01)"
+				]
+			},
+			"ink-petrol": {
+				"role": "primary",
+				"displayName": "Petrol",
+				"canonical": "#00657a",
+				"tonalRamp": [
+					"oklch(15% 0.0844 218.63)",
+					"oklch(26% 0.0844 218.63)",
+					"oklch(38% 0.0844 218.63)",
+					"oklch(49% 0.0844 218.63)",
+					"oklch(61% 0.0844 218.63)",
+					"oklch(72% 0.0844 218.63)",
+					"oklch(84% 0.0844 218.63)",
+					"oklch(95% 0.0844 218.63)"
+				]
+			},
+			"on-petrol": {
+				"role": "primary",
+				"displayName": "On Petrol",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-petrol-2": {
+				"role": "primary",
+				"displayName": "On Petrol 2",
+				"canonical": "#dcf3f7",
+				"tonalRamp": [
+					"oklch(15% 0.0248 209.25)",
+					"oklch(26% 0.0248 209.25)",
+					"oklch(38% 0.0248 209.25)",
+					"oklch(49% 0.0248 209.25)",
+					"oklch(61% 0.0248 209.25)",
+					"oklch(72% 0.0248 209.25)",
+					"oklch(84% 0.0248 209.25)",
+					"oklch(95% 0.0248 209.25)"
+				]
+			},
+			"ink-yellow": {
+				"role": "primary",
+				"displayName": "Signal Yellow",
+				"canonical": "#f4c20d",
+				"tonalRamp": [
+					"oklch(15% 0.1689 89.62)",
+					"oklch(26% 0.1689 89.62)",
+					"oklch(38% 0.1689 89.62)",
+					"oklch(49% 0.1689 89.62)",
+					"oklch(61% 0.1689 89.62)",
+					"oklch(72% 0.1689 89.62)",
+					"oklch(84% 0.1689 89.62)",
+					"oklch(95% 0.1689 89.62)"
+				]
+			},
+			"on-yellow": {
+				"role": "primary",
+				"displayName": "On Yellow",
+				"canonical": "#111111",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-yellow-2": {
+				"role": "primary",
+				"displayName": "On Yellow 2",
+				"canonical": "#3a3000",
+				"tonalRamp": [
+					"oklch(15% 0.0640 96.46)",
+					"oklch(26% 0.0640 96.46)",
+					"oklch(38% 0.0640 96.46)",
+					"oklch(49% 0.0640 96.46)",
+					"oklch(61% 0.0640 96.46)",
+					"oklch(72% 0.0640 96.46)",
+					"oklch(84% 0.0640 96.46)",
+					"oklch(95% 0.0640 96.46)"
+				]
+			},
+			"ink-all": {
+				"role": "primary",
+				"displayName": "Alles Ink",
+				"canonical": "#111111",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			},
+			"on-all": {
+				"role": "primary",
+				"displayName": "On All",
+				"canonical": "#f3f3f1",
+				"tonalRamp": [
+					"oklch(15% 0.0027 106.45)",
+					"oklch(26% 0.0027 106.45)",
+					"oklch(38% 0.0027 106.45)",
+					"oklch(49% 0.0027 106.45)",
+					"oklch(61% 0.0027 106.45)",
+					"oklch(72% 0.0027 106.45)",
+					"oklch(84% 0.0027 106.45)",
+					"oklch(95% 0.0027 106.45)"
+				]
+			},
+			"on-all-2": {
+				"role": "primary",
+				"displayName": "On All 2",
+				"canonical": "#c6c6c4",
+				"tonalRamp": [
+					"oklch(15% 0.0028 106.46)",
+					"oklch(26% 0.0028 106.46)",
+					"oklch(38% 0.0028 106.46)",
+					"oklch(49% 0.0028 106.46)",
+					"oklch(61% 0.0028 106.46)",
+					"oklch(72% 0.0028 106.46)",
+					"oklch(84% 0.0028 106.46)",
+					"oklch(95% 0.0028 106.46)"
+				]
+			},
+			"ink-all-night": {
+				"role": "primary",
+				"displayName": "Alles Ink (night)",
+				"canonical": "#f2f2ee",
+				"tonalRamp": [
+					"oklch(15% 0.0053 106.50)",
+					"oklch(26% 0.0053 106.50)",
+					"oklch(38% 0.0053 106.50)",
+					"oklch(49% 0.0053 106.50)",
+					"oklch(61% 0.0053 106.50)",
+					"oklch(72% 0.0053 106.50)",
+					"oklch(84% 0.0053 106.50)",
+					"oklch(95% 0.0053 106.50)"
+				]
+			},
+			"on-all-night": {
+				"role": "primary",
+				"displayName": "On All Night",
+				"canonical": "#0b0b0c",
+				"tonalRamp": [
+					"oklch(15% 0.0021 286.14)",
+					"oklch(26% 0.0021 286.14)",
+					"oklch(38% 0.0021 286.14)",
+					"oklch(49% 0.0021 286.14)",
+					"oklch(61% 0.0021 286.14)",
+					"oklch(72% 0.0021 286.14)",
+					"oklch(84% 0.0021 286.14)",
+					"oklch(95% 0.0021 286.14)"
+				]
+			},
+			"on-all-2-night": {
+				"role": "primary",
+				"displayName": "On All 2 Night",
+				"canonical": "#393939",
+				"tonalRamp": [
+					"oklch(15% 0.0000 89.88)",
+					"oklch(26% 0.0000 89.88)",
+					"oklch(38% 0.0000 89.88)",
+					"oklch(49% 0.0000 89.88)",
+					"oklch(61% 0.0000 89.88)",
+					"oklch(72% 0.0000 89.88)",
+					"oklch(84% 0.0000 89.88)",
+					"oklch(95% 0.0000 89.88)"
+				]
+			}
+		},
+		"typographyMeta": {
+			"display": {
+				"displayName": "Poster Title",
+				"purpose": "Current song title on the poster, phone and tablet."
+			},
+			"display-desktop": {
+				"displayName": "Poster Title (desktop)",
+				"purpose": "Current song title from 1100px."
+			},
+			"masthead": {
+				"displayName": "Masthead",
+				"purpose": "Page titles and the station ink band."
+			},
+			"headline": {
+				"displayName": "Section Head",
+				"purpose": "Section heads over a 3px rule."
+			},
+			"title": {
+				"displayName": "Sender Name",
+				"purpose": "Sender name in the poster head and on tiles."
+			},
+			"brand": {
+				"displayName": "Brand",
+				"purpose": "Lower-case true-shuffle in the header."
+			},
+			"body": {
+				"displayName": "Text",
+				"purpose": "Prose, notices, hints at normal width."
+			},
+			"key": {
+				"displayName": "Key Label",
+				"purpose": "Keys and buttons."
+			},
+			"figures": {
+				"displayName": "Figures",
+				"purpose": "Times, queue numbers, counts in tabular figures."
+			},
+			"signal": {
+				"displayName": "Signal",
+				"purpose": "Command signal steps and reason chips."
+			}
+		},
+		"shadows": [
+			{
+				"name": "dialog",
+				"value": "0 24px 60px -20px rgb(0 0 0 / 0.5)",
+				"purpose": "Rating sheet only, over a rgb(0 0 0 / 0.55) backdrop."
+			}
+		],
+		"motion": [
+			{
+				"name": "ease",
+				"value": "cubic-bezier(0.16, 1, 0.3, 1)",
+				"purpose": "Shared curve for every state change."
+			},
+			{
+				"name": "t",
+				"value": "180ms",
+				"purpose": "Key fills, signal steps, header underline, switch."
+			},
+			{
+				"name": "t-slow",
+				"value": "500ms",
+				"purpose": "Ink field change, round-figure arc, import meter."
+			},
+			{
+				"name": "reduced-motion",
+				"value": "0ms",
+				"purpose": "Both durations under prefers-reduced-motion; smooth scroll off."
+			}
+		],
+		"breakpoints": [
+			{
+				"name": "narrow",
+				"value": "max-width: 380px"
+			},
+			{
+				"name": "phone",
+				"value": "max-width: 559px"
+			},
+			{
+				"name": "tablet",
+				"value": "560px"
+			},
+			{
+				"name": "wide",
+				"value": "900px"
+			},
+			{
+				"name": "desktop",
+				"value": "1100px"
+			},
+			{
+				"name": "shell-max",
+				"value": "1440px"
+			}
+		]
+	},
+	"components": [
+		{
+			"name": "Key",
+			"kind": "button",
+			"refersTo": "key",
+			"description": "Default printed key: square, 2px ink outline, fills solid on hover.",
+			"html": "<button class=\"ds-key\">Mix &amp; Regeln anpassen</button>",
+			"css": ".ds-key{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 18px;border:2px solid var(--fg,#111);border-radius:0;background:transparent;color:var(--fg,#111);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;font-weight:700;font-stretch:92%;line-height:1.15;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1),color 180ms cubic-bezier(.16,1,.3,1)}.ds-key:hover{background:var(--fg,#111);color:var(--bg,#f3f3f1)}.ds-key:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}.ds-key:disabled{opacity:.42;cursor:default}"
+		},
+		{
+			"name": "Quiet Key",
+			"kind": "button",
+			"refersTo": "key",
+			"description": "Hairline-outlined key for a deliberate, secondary action such as Neue Warteschlange.",
+			"html": "<button class=\"ds-key-quiet\">Neue Warteschlange</button>",
+			"css": ".ds-key-quiet{display:inline-flex;align-items:center;min-height:48px;padding:10px 18px;border:2px solid var(--hair,#c9cbcd);border-radius:0;background:transparent;color:var(--fg,#111);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;font-weight:700;font-stretch:92%;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1),color 180ms}.ds-key-quiet:hover{background:var(--fg,#111);color:var(--bg,#f3f3f1)}.ds-key-quiet:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}"
+		},
+		{
+			"name": "Poster Transport",
+			"kind": "custom",
+			"refersTo": "transport-main",
+			"description": "Signature: the poster's ink field with the solid main key and three outlined 52px keys; the second variant shows the overprint (requested) state.",
+			"html": "<div class=\"ds-poster\"><div class=\"ds-transport\"><button class=\"ds-main\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M6 4l14 8-14 8z\"/></svg>Fortsetzen</button><button class=\"ds-ikey\" aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 4l10 8-10 8z\"/><path d=\"M19 5v14\"/></svg></button><button class=\"ds-ikey\" aria-label=\"Favorit\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z\"/></svg></button><button class=\"ds-ikey\" aria-label=\"nie wieder\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M17 14V2M9 18.1L10 14H4.2a2 2 0 0 1-2-2.3l1.4-8A2 2 0 0 1 5.5 2H17\"/></svg></button></div><div class=\"ds-transport\"><button class=\"ds-main\" disabled>Pause angefordert …</button><button class=\"ds-ikey\" disabled aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 4l10 8-10 8z\"/><path d=\"M19 5v14\"/></svg></button></div></div>",
+			"css": ".ds-poster{display:grid;gap:12px;padding:20px 16px;background-color:#c8380e;background-image:repeating-linear-gradient(to right,rgb(255 255 255/.13) 0 1px,transparent 1px 25%);color:#fff;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-transport{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,52px);gap:8px}.ds-main{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:64px;padding:10px 16px;border:2px solid #fff;border-radius:0;background:#fff;color:#c8380e;font:inherit;font-size:1.2rem;font-weight:800;font-stretch:85%;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1)}.ds-main:hover:not(:disabled){background:color-mix(in srgb,#fff 92%,#c8380e)}.ds-main:disabled{background:transparent;color:#fff;border-style:dashed;font-size:.98rem;cursor:default}.ds-ikey{display:inline-flex;align-items:center;justify-content:center;width:52px;min-height:64px;padding:0;border:2px solid #fff;border-radius:0;background:transparent;color:#fff;cursor:pointer}.ds-ikey:hover:not(:disabled){background:rgb(255 255 255/.16)}.ds-ikey:disabled{opacity:.45;cursor:default}.ds-main:focus-visible,.ds-ikey:focus-visible{outline:3px solid #fff;outline-offset:3px}"
+		},
+		{
+			"name": "Command Signal",
+			"kind": "custom",
+			"refersTo": "poster",
+			"description": "Signature: requested, accepted, confirmed. Solid only when reached; waiting steps print dashed.",
+			"html": "<div class=\"ds-sigwrap\"><p class=\"ds-sigstat\">Pause angenommen …</p><ol class=\"ds-signal\"><li class=\"on\">Angefordert</li><li class=\"on wait\">Angenommen</li><li>Bestätigt</li></ol></div>",
+			"css": ".ds-sigwrap{display:grid;gap:8px;padding:16px;background:#1f3bd0;color:#fff;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-sigstat{margin:0;font-weight:700;font-stretch:90%;font-size:.95rem}.ds-signal{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.ds-signal li{padding-top:8px;border-top:6px solid rgb(255 255 255/.26);font-size:.78rem;font-weight:650;font-stretch:90%;color:#dfe4ff;transition:border-color 180ms cubic-bezier(.16,1,.3,1)}.ds-signal li.on{border-top-color:#fff;color:#fff}.ds-signal li.wait{border-top-style:dashed}"
+		},
+		{
+			"name": "Progress Rule",
+			"kind": "custom",
+			"refersTo": "poster",
+			"description": "Thick printed progress rule; solid for the observed position, hatched while held or estimated.",
+			"html": "<div class=\"ds-prog-wrap\"><div class=\"ds-prog\"><span style=\"width:44%\"></span></div><div class=\"ds-times\"><span>1:37 gespeichert</span><span>3:40</span></div><div class=\"ds-prog ds-prog--held\"><span style=\"width:20%\"></span></div><div class=\"ds-times\"><span>0:44 · Bestätigung ausstehend</span><span>3:40</span></div></div>",
+			"css": ".ds-prog-wrap{display:grid;gap:8px;padding:16px;background:#006e4e;color:#fff;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-prog{height:12px;border:2px solid #fff;overflow:hidden}.ds-prog span{display:block;height:100%;background:#fff;transition:width 500ms cubic-bezier(.16,1,.3,1)}.ds-prog--held span{background:repeating-linear-gradient(135deg,#fff 0 3px,transparent 3px 7px)}.ds-times{display:flex;justify-content:space-between;font-size:1.05rem;font-weight:750;font-stretch:85%;font-variant-numeric:tabular-nums}"
+		},
+		{
+			"name": "Station Tile",
+			"kind": "card",
+			"refersTo": "station-tile",
+			"description": "A Sender on the poster wall: flat ink, name, meta, round figure; selected adds an 8px top bar.",
+			"html": "<div class=\"ds-wall\"><div class=\"ds-tile ds-tile--sel\"><button><span class=\"ds-tname\">Indie &amp; Gitarren</span><svg class=\"ds-fig\" viewBox=\"0 0 100 100\" width=\"48\" height=\"48\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"44\" stroke-width=\"10\" opacity=\".28\"/><circle cx=\"50\" cy=\"50\" r=\"44\" stroke-width=\"10\" stroke-dasharray=\"110 276\" transform=\"rotate(-90 50 50)\"/><circle cx=\"50\" cy=\"50\" r=\"30\" stroke-width=\"4\"/><circle cx=\"50\" cy=\"50\" r=\"18\" stroke-width=\"4\"/><circle cx=\"50\" cy=\"50\" r=\"7\" fill=\"currentColor\" stroke=\"none\"/></svg><span class=\"ds-tmeta\">400 Songs · Runde 1</span></button><a href=\"#\">Mix &amp; Regeln</a></div><div class=\"ds-tile ds-tile--petrol\"><button><span class=\"ds-tname\">Lange Autofahrt</span><span class=\"ds-tmeta\">600 Songs · Runde 1</span></button><a href=\"#\">Mix &amp; Regeln</a></div></div>",
+			"css": ".ds-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-tile{display:grid;background:#c8380e;color:#fff;border-top:8px solid transparent}.ds-tile--sel{border-top-color:#fff}.ds-tile--petrol{background:#00657a}.ds-tile button{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 1fr;gap:6px 10px;min-height:112px;padding:14px 14px 10px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.ds-tile button:hover{background:rgb(255 255 255/.1)}.ds-tile button:focus-visible{outline:3px solid #fff;outline-offset:3px}.ds-tname{font-size:1.2rem;font-weight:800;font-stretch:80%;line-height:1.05}.ds-tmeta{grid-column:1;align-self:end;font-size:.8rem;font-weight:550;color:#fff0ea}.ds-fig{grid-column:2;grid-row:1/span 2;fill:none;stroke:currentColor}.ds-tile a{display:flex;align-items:center;min-height:44px;padding:0 14px;border-top:1.5px solid rgb(255 255 255/.45);color:inherit;font-size:.88rem;font-weight:700;text-decoration:none}.ds-tile a:hover{text-decoration:underline}"
+		},
+		{
+			"name": "Device Select",
+			"kind": "input",
+			"refersTo": "input",
+			"description": "Square field with a 2px ink outline and drawn chevron.",
+			"html": "<label class=\"ds-field\"><span>Wiedergabegerät</span><select class=\"ds-select\"><option>Aktives Spotify-Gerät</option><option>Wohnzimmer · HA/MA · ein Song</option></select></label>",
+			"css": ".ds-field{display:grid;gap:6px;font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;color:var(--fg,#111)}.ds-field>span{font-weight:700;font-stretch:90%;font-size:.95rem}.ds-select{width:100%;min-height:52px;padding:10px 44px 10px 14px;border:2px solid var(--fg,#111);border-radius:0;background-color:var(--raise,#fff);background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 22px) 52%,calc(100% - 16px) 52%;background-size:6px 6px;background-repeat:no-repeat;appearance:none;-webkit-appearance:none;font:inherit;font-weight:600;color:inherit}.ds-select:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}"
+		},
+		{
+			"name": "Segmented Positions",
+			"kind": "chip",
+			"refersTo": "segmented-option",
+			"description": "Entdecken ↔ Vertraut as three printed positions over native radios.",
+			"html": "<fieldset class=\"ds-seg\"><label><input type=\"radio\" name=\"ds-mix\" checked><span>Entdecker</span></label><label><input type=\"radio\" name=\"ds-mix\"><span>Ausgewogen</span></label><label><input type=\"radio\" name=\"ds-mix\"><span>Vertraut</span></label></fieldset>",
+			"css": ".ds-seg{display:flex;flex-wrap:wrap;gap:2px;margin:0;padding:0;background:var(--fg,#111);border:2px solid var(--fg,#111);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif}.ds-seg label{position:relative;display:flex;flex:1 1 84px;align-items:center;justify-content:center;min-height:52px;padding:8px 12px;background:var(--bg,#f3f3f1);color:var(--fg,#111);font-weight:700;font-stretch:90%;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1),color 180ms}.ds-seg input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}.ds-seg label:has(input:checked){background:var(--fg,#111);color:var(--bg,#f3f3f1)}.ds-seg label:hover:not(:has(input:checked)){background:color-mix(in srgb,var(--fg,#111) 8%,var(--bg,#f3f3f1))}.ds-seg label:has(input:focus-visible){outline:3px solid var(--focus,#1f3bd0);outline-offset:3px;z-index:1}"
+		},
+		{
+			"name": "Header Navigation",
+			"kind": "nav",
+			"refersTo": "key",
+			"description": "64px bar over a 3px rule: lower-case brand with concentric mark, three links with a 3px current underline.",
+			"html": "<header class=\"ds-head\"><a class=\"ds-brand\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10.5\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/></svg>true-shuffle</a><nav><a href=\"#\" aria-current=\"page\">Hören</a><a href=\"#\">Verlauf</a><a href=\"#\">Menü</a></nav></header>",
+			"css": ".ds-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 12px;min-height:64px;border-bottom:3px solid var(--rule,#111);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;color:var(--fg,#111)}.ds-brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-size:1.45rem;font-weight:800;font-stretch:82%;letter-spacing:-.03em;color:inherit;text-decoration:none}.ds-head nav{display:flex;gap:2px}.ds-head nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;margin-bottom:-3px;border-bottom:3px solid transparent;color:inherit;font-weight:650;font-stretch:90%;text-decoration:none;transition:border-color 180ms cubic-bezier(.16,1,.3,1)}.ds-head nav a:hover{border-bottom-color:var(--fg-2,#55575a)}.ds-head nav a[aria-current]{border-bottom-color:var(--fg,#111);font-weight:800}.ds-head a:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}"
+		},
+		{
+			"name": "Warning Notice",
+			"kind": "card",
+			"refersTo": "notice-warn",
+			"description": "Unresolved command or offline: warning field, square outline, retry key.",
+			"html": "<div class=\"ds-notice\"><p>Es ist unklar, ob Spotify den Befehl ausgeführt hat. Erneutes Fortsetzen spielt denselben gespeicherten Song.</p><button class=\"ds-nkey\">Gespeicherten Song erneut fortsetzen</button></div>",
+			"css": ".ds-notice{display:grid;gap:10px;padding:14px 16px;border:2px solid currentColor;background:var(--warn-bg,#fff3c4);color:var(--warn-fg,#3b2f00);font-family:\"Archivo Variable\", \"Archivo\", system-ui, sans-serif;font-size:.95rem}.ds-notice p{margin:0;max-width:68ch}.ds-nkey{justify-self:start;min-height:48px;padding:10px 18px;border:2px solid currentColor;border-radius:0;background:transparent;color:inherit;font:inherit;font-weight:700;font-stretch:92%;cursor:pointer;transition:background-color 180ms cubic-bezier(.16,1,.3,1),color 180ms}.ds-nkey:hover{background:var(--warn-fg,#3b2f00);color:var(--warn-bg,#fff3c4)}.ds-nkey:focus-visible{outline:3px solid var(--focus,#1f3bd0);outline-offset:3px}"
+		}
+	],
+	"narrative": {
+		"northStar": "The Concert Poster",
+		"overview": "The current song is a printed concert poster for its Sender. One flat field of printing ink carries the Sender name, the round figure, the cover, the title at poster scale, the progress rule, the command signal and the transport keys. The saved order runs beneath it like the programme, and the other Sender hang as a poster wall. The lineage is the Swiss concert poster (Tonhalle, Musica Viva): flat ink, one grotesk, a visible construction grid, square corners.\n\nPaper-white (`bg`) or black (`bg-night`) ground; hairline grid columns printed behind everything; Archivo Variable as the only family, set condensed and heavy for display and at normal width for text. The ink is honest: solid ink means confirmed. Anything requested, awaited or estimated prints as overprint (outline, dashes, hatch), never in the solid confirmed ink. This world replaces the earlier \"quiet album-library desk\" in full; nothing of that system (Jost, green accent, rounded controls, artwork shadows) carries over. Surface composition and direction evidence live in `.impeccable/surfaces/src-client.md`.",
+		"keyCharacteristics": [
+			"One flat printing ink per Sender; \"Alles\" prints in the page's own ink.",
+			"Archivo Variable only: condensed heavy display, normal-width text, tabular figures.",
+			"Visible hairline construction grid: 4 columns on phone, 12 at 1100px and up.",
+			"Square corners everywhere; flat print with no shadows except the rating dialog.",
+			"Overprint means unconfirmed: outline title, hatched progress, dashed keys and signal steps.",
+			"The round figure prints the real heard share of the round, never a rounded-up one."
+		],
+		"rules": [
+			{
+				"name": "The One Ink Per Sender Rule",
+				"body": "A Sender prints in exactly one ink, as a flat field. The poster, the station page band and the station tile share it. Never tint, gradient or mix a second ink into the same field; the only texture allowed on ink is the grid hairline at 13% of its `on` colour.",
+				"section": "colors"
+			},
+			{
+				"name": "The Solid Means Confirmed Rule",
+				"body": "Solid ink states are reserved for what a fresh observation confirmed. Requested, accepted-but-unconfirmed and estimated states print as overprint: outline title, hatched progress fill, dashed key and signal borders. Overprint never edits or replaces the confirmed ink beneath it.",
+				"section": "colors"
+			},
+			{
+				"name": "The Paired Theme Rule",
+				"body": "Use the semantic custom properties (`--bg`, `--fg`, `--fg-2`, `--rule`, `--hair`, `--raise`, …) for every new surface. System dark preference applies unless day is pinned; `data-illumination=\"night\"` and `data-illumination=\"day\"` pin a theme. Station inks are identical in both themes; only \"Alles\" inverts with the page.",
+				"section": "colors"
+			},
+			{
+				"name": "The One Family Rule",
+				"body": "Archivo Variable is the only shipped family. Hierarchy comes from width and weight, never from a second face. (Code, URL and diagnostic text fall back to the system monospace; that is a utility, not a type role.)",
+				"section": "typography"
+			},
+			{
+				"name": "The Name Rule",
+				"body": "The product is always \"true-shuffle\": lower case, hyphenated, never in capitals, never \"True Shuffle\". German interface labels are in sentence case.",
+				"section": "typography"
+			},
+			{
+				"name": "The Programme Rule",
+				"body": "The queue reads like a printed programme: numbered rows, the cover at 48px, title and artist, duration in tabular figures, a hairline under each. Its fixed order is its hierarchy; it never reshuffles visually.",
+				"section": "layout"
+			},
+			{
+				"name": "The Flat Print Rule",
+				"body": "Nothing on the page casts a shadow except the dialog. Covers, posters, tiles and keys sit flat on the paper.",
+				"section": "elevation"
+			},
+			{
+				"name": "The Observed Position Rule",
+				"body": "Progress shows the last observed position, counted forward only while a fresh observation says it is playing and stopped the moment it goes stale, is paused or a command is out. Pause freezes the clock and the rule turns to hatch at once. Unknown position says the same song starts from the beginning.",
+				"section": "components"
+			},
+			{
+				"name": "The Three-Layer Command Rule",
+				"body": "A command is requested, then accepted by Spotify or the device, then confirmed only by a fresh observation. The interface never prints a later layer before it happens. Unresolved commands keep the saved song and position and offer an explicit retry (\"Gespeicherten Song erneut fortsetzen\", \"Pause erneut versuchen\") or, on native devices, discarding the command.",
+				"section": "components"
+			},
+			{
+				"name": "The Estimated Next Song Rule",
+				"body": "When a song should have ended, the poster may show the single known successor from the saved queue as \"Nächster Song · geschätzt\", with the outline title, dotted third signal step and a dashed notice (\"Geschätzter Songwechsel aus deiner Warteschlange. Spotify hat diesen Song noch nicht bestätigt.\"). It is display only: rating and \"Weiter\" are disabled, nothing is written, and it never chains past one song.",
+				"section": "components"
+			},
+			{
+				"name": "The Resume Rule",
+				"body": "\"Fortsetzen\" keeps the same saved occurrence and position. \"Neue Warteschlange\" is a separate quiet key that asks inline (\"Neue Warteschlange für … beginnen? Der aktuelle Lauf wird ersetzt.\") before replacement.",
+				"section": "components"
+			},
+			{
+				"name": "The Native Capability Rule",
+				"body": "Device copy states what a native Home Assistant / Music Assistant route can actually do: \"Geordnete Warteschlange unterstützt.\" or \"Dieses Gerät spielt einen Song; automatisches Weiterschalten ist nicht verfügbar.\", and \"Gespeicherte Position wird übernommen.\" or \"Ohne Seek startet derselbe Song von vorne.\" Pause and \"Weiter\" are disabled where the device lacks them. Without native setup the hint says Music-Assistant devices visible in Spotify run through Spotify Connect.",
+				"section": "components"
+			},
+			{
+				"name": "The Offline Rule",
+				"body": "Offline keeps the last saved song, queue and wall visible under a warning bar (\"Offline oder nicht erreichbar. Letzter gespeicherter Stand bleibt sichtbar.\") with \"Erneut verbinden\"; dependent keys are disabled and print as overprint.",
+				"section": "components"
+			}
+		],
+		"dos": [
+			"Do print each Sender in its single flat ink with its paired `on` and `on-2` colours, in both themes.",
+			"Do reserve solid ink for confirmed state and print requested, awaited and estimated state as outline, dashes or hatch.",
+			"Do set display type in Archivo Variable at 70–85% width and 800–850 weight, and all times and counts in tabular figures.",
+			"Do keep square corners (0px), 2px key outlines, 3px rules under heads and 1px hairlines between rows.",
+			"Do keep transport targets at 64px tall and at least 52px wide (46px at 380px and below), and every text action at a 44px target.",
+			"Do keep the saved song, observed position and ordered queue visible through pending, offline and estimated states.",
+			"Do state device capabilities and Spotify's own behaviour in plain German, quoting what the device can and cannot do."
+		],
+		"donts": [
+			"Don't fill a requested or estimated state with solid confirmed ink, or show \"Bestätigt\" before a fresh observation.",
+			"Don't add a second typeface, rounded corners, gradients across ink fields or shadows outside the rating dialog.",
+			"Don't mix two inks in one Sender's field or recolour a Sender between poster, band and tile.",
+			"Don't replace ordinary \"Fortsetzen\" with a new queue, or imply seek or automatic next on a device that lacks them.",
+			"Don't let the estimated next song accept ratings, skips or writes, or chain past one song.",
+			"Don't set true-shuffle in capitals or title case.",
+			"Don't reintroduce the discarded album-library desk (Jost, muted green accent, rounded controls, artwork shadows) or the earlier record-crate world."
+		]
+	}
 }

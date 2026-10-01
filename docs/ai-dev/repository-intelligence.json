@@ -1,7 +1,7 @@
 {
   "schema_version": "mika.repository-intelligence.v2",
   "packet_status": "ALIGNED",
-  "generated_at": "2026-09-30T03:54:02.239928+00:00",
+  "generated_at": "2026-10-01T14:33:44.836488+00:00",
   "analysis_modes": [
     "LIVE_BASELINE",
     "LOST_CONTEXT",
@@ -15,9 +15,9 @@
       "role": "CURRENT_PRIMARY",
       "visibility": "public",
       "default_branch": "main",
-      "ref": "codex/cloudflare-restart-plan",
-      "commit_sha": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
-      "notes": "Preparation baseline; application unchanged from R-2."
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "notes": "Supporting baseline, application identical to deployed 0cad1775b0c9d7e4723b3c864eb63b2b10a86580. Current concert-poster UI release: source `0cad1775b0c9d7e4723b3c864eb63b2b10a86580`, Cloudflare version `60e34407-fd2a-43b8-8837-d894aec2f5a6`, deployment `4c79c507-76a5-47e8-acc4-b08a28cc7c8c` at 100%. Claude PR11 presentation redesign and its long-metadata overflow repair are integrated with separate PR12 refusal continuity/error correction. Requested, accepted and observed playback stay distinct; projection is display-only; queue/observed checkpoints and native/account isolation preserved. 444 unit/Worker and 40 browser checks plus source CI 36876091612 PASS; fresh scoped independent verdict READY. Exact public assets/auth/browser and preserved binding/runtime/secret readback PASS. Physical iPhone, live Spotify transport/latency, private HA/MA and populated restore remain NOT_RUN; full mission PARTIAL. Current evidence: docs/ai-dev/evidence/UI_RELEASE.json. Older pressure simulations retain their original source and do not establish live quota capacity."
     },
     {
       "id": "R-2",
@@ -33,16 +33,15 @@
   ],
   "primary_baseline": {
     "repository_id": "R-1",
-    "ref": "codex/cloudflare-restart-plan",
-    "commit_sha": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
+    "ref": "codex/implement-cloudflare-restart",
+    "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
     "deployment_refs": [
       "https://true-shuffle.mikahertler-72c.workers.dev/"
     ],
     "unavailable_systems": [
-      "Cloudflare deployment metadata and production logs",
-      "Signed-in Spotify account/history/playback",
-      "Home Assistant and Music Assistant instances",
-      "Runnable local Chromium"
+      "Owner-authenticated Spotify playback/history",
+      "Private Home Assistant and Music Assistant",
+      "Actual populated-object restore acceptance"
     ]
   },
   "authority_map": {
@@ -50,7 +49,16 @@
       "EV-01",
       "EV-03",
       "EV-04",
-      "EV-05"
+      "EV-05",
+      "EV-11",
+      "EV-12",
+      "EV-13",
+      "EV-14",
+      "EV-15",
+      "EV-16",
+      "EV-17",
+      "EV-19",
+      "EV-20"
     ],
     "target_intent_evidence_ids": [
       "EV-02"
@@ -86,7 +94,7 @@
           "EV-02"
         ],
         "blocking": false,
-        "resolution": "D-02 supersedes the old contract; actual implementation remains pending."
+        "resolution": "D-02 implemented as durable sessions with explicit newQueue; local tests and independent review documented separately from live acceptance."
       },
       {
         "id": "AC-03",
@@ -119,13 +127,14 @@
         "type": "PRODUCTION",
         "status": "VERIFIED",
         "evidence_ids": [
-          "EV-03"
+          "EV-03",
+          "EV-12"
         ]
       },
       {
         "name": "Local Worker + simulated Spotify",
         "type": "LOCAL",
-        "status": "UNVERIFIED",
+        "status": "VERIFIED",
         "evidence_ids": [
           "EV-04",
           "EV-06"
@@ -145,7 +154,8 @@
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -159,7 +169,8 @@
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -173,7 +184,8 @@
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -181,13 +193,14 @@
       "id": "F-04",
       "name": "Pause and external playback reconciliation",
       "group": "Continuity",
-      "evidence_state": "PARTIAL",
+      "evidence_state": "IMPLEMENTED_TESTED",
       "owner_disposition": "IMPROVE",
-      "summary": "Already implemented observers; unfinished stable queue contract conflicts with restart test.",
+      "summary": "Durable unfinished entry checkpoints preserve latest observations and reject unrelated/stale playback.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -195,13 +208,14 @@
       "id": "F-05",
       "name": "Persistent exact unfinished queue resume",
       "group": "Continuity",
-      "evidence_state": "PLANNED_ONLY",
+      "evidence_state": "IMPLEMENTED_TESTED",
       "owner_disposition": "ADD",
-      "summary": "Stable entry/session checkpoint and new-vs-resume action not yet implemented.",
+      "summary": "SQLite sessions, stable entry IDs, explicit newQueue, bounded rolling queue and intent recovery implemented and locally tested.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -211,11 +225,17 @@
       "group": "Reliability",
       "evidence_state": "PARTIAL",
       "owner_disposition": "IMPROVE",
-      "summary": "Fixed quota retry and overwritable cooldown require correction and measured live diagnosis.",
+      "summary": "Confirmed-operation/shared-tracker rollout: source `1328f8f562adbcc7454b6ee8b7d6a224f6cdca95`, version `cfcd030c-2004-4816-9e5d-170b0c421ac2`, deployment `4498733e-8b5b-482e-a653-ce85aa5384b1` at100%. Only actualSpotify429 establishes a listener-specific HTTPmethod/sanitizedendpoint wait; oldblanket/quarantine/backoff archived and retired. Genuine RetryAfter enforced onlymatchingoperation; unknownwait explicitboundedretry. Shared720hour/200episode tracker, fiveanonymoususers+overflow/signin totals, privateactor/starttime/revisionfences. No otherappvisibility, guessedbudget, automaticstress or exactreset claim. Fresh CONFIRMED_REQUEST_TRACKER_REVIEW.md scopedREADY:64tests/6renders; integrated358tests/20browser and sourceActions36760609139PASS. Exactpublicassets/auth/anonymousbrowserPASS. Ownercurrenttracker/control/HA, sustainedmultilistenercapacity andpopulatedrestore NOT_RUN; fullacceptancePARTIAL/BLOCKED.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11",
+        "EV-13",
+        "EV-14",
+        "EV-15",
+        "EV-16",
+        "EV-17"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -223,13 +243,14 @@
       "id": "F-07",
       "name": "Cross-device/browser controls",
       "group": "Devices",
-      "evidence_state": "PARTIAL",
+      "evidence_state": "IMPLEMENTED_TESTED",
       "owner_disposition": "IMPROVE",
-      "summary": "Account-owned Hub and fresh device selection exist; robust resume/transfer acceptance still required.",
+      "summary": "Account-owned sessions and stale command fences implemented; local browser/device scenarios tested, real owner device acceptance unavailable.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -237,13 +258,14 @@
       "id": "F-08",
       "name": "Native HA/MA controller",
       "group": "Integration",
-      "evidence_state": "PLANNED_ONLY",
+      "evidence_state": "PARTIAL",
       "owner_disposition": "ADD",
-      "summary": "Existing personal action keys are not a playback/seek/context adapter.",
+      "summary": "Separate capability-based native controller and authenticated local HA bridge implemented; real HA/MA acceptance unavailable.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     },
@@ -251,13 +273,14 @@
       "id": "F-09",
       "name": "Current radio UI",
       "group": "Design",
-      "evidence_state": "IMPLEMENTED_UNVERIFIED",
+      "evidence_state": "IMPLEMENTED_TESTED",
       "owner_disposition": "REDESIGN",
-      "summary": "Owner rejects current design; replacement brief delegated and not implemented.",
+      "summary": "Independent calm German player replacement implemented in actual Preact application; desktop/mobile/dark/light evidence and fresh finish review referenced in ledger.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
-        "EV-04"
+        "EV-04",
+        "EV-11"
       ],
       "quality_note": "Fixture/code evidence does not establish live owner acceptance."
     }
@@ -312,7 +335,7 @@
       {
         "id": "I-02",
         "name": "MA/HA target",
-        "summary": "Separate Spotify Connect/native adapter contracts planned; no instance access.",
+        "summary": "Spotify Connect remains the Spotify route. Distinct native controller uses per-account server-side bridge configuration and declared HA/MA capabilities; private instances unavailable.",
         "evidence_ids": [
           "EV-08",
           "EV-02"
@@ -320,10 +343,12 @@
       }
     ],
     "deployment": {
-      "summary": "workers.dev observed; matching frontend assets only, exact Worker version unavailable.",
+      "summary": "Current concert-poster UI release: source `0cad1775b0c9d7e4723b3c864eb63b2b10a86580`, Cloudflare version `60e34407-fd2a-43b8-8837-d894aec2f5a6`, deployment `4c79c507-76a5-47e8-acc4-b08a28cc7c8c` at 100%. Claude PR11 presentation redesign and its long-metadata overflow repair are integrated with separate PR12 refusal continuity/error correction. Requested, accepted and observed playback stay distinct; projection is display-only; queue/observed checkpoints and native/account isolation preserved. 444 unit/Worker and 40 browser checks plus source CI 36876091612 PASS; fresh scoped independent verdict READY. Exact public assets/auth/browser and preserved binding/runtime/secret readback PASS. Physical iPhone, live Spotify transport/latency, private HA/MA and populated restore remain NOT_RUN; full mission PARTIAL. Current evidence: docs/ai-dev/evidence/UI_RELEASE.json. Older pressure simulations retain their original source and do not establish live quota capacity.",
       "evidence_ids": [
-        "EV-03",
-        "EV-09"
+        "EV-12",
+        "EV-18",
+        "EV-19",
+        "EV-20"
       ]
     },
     "operations": {
@@ -343,7 +368,7 @@
         "evidence_ids": [
           "EV-04"
         ],
-        "notes": "Baseline build/typecheck/lint passed; fresh command rerun recorded in ledger."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       },
       {
         "category": "tests",
@@ -351,32 +376,32 @@
         "evidence_ids": [
           "EV-04"
         ],
-        "notes": "280 Vitest tests in nine files on the Cloudflare application baseline."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       },
       {
         "category": "runtime",
-        "status": "BLOCKED",
+        "status": "PASS",
         "evidence_ids": [
           "EV-03",
           "EV-06"
         ],
-        "notes": "Public signed-out UI observed; local browser launch blocked and live playback inaccessible."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       },
       {
         "category": "migration",
-        "status": "NOT_RUN",
+        "status": "PASS",
         "evidence_ids": [
           "EV-01"
         ],
-        "notes": "No product/schema change delivered; future checkpoint migration unverified."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       },
       {
         "category": "recovery",
-        "status": "NOT_RUN",
+        "status": "PASS",
         "evidence_ids": [
           "EV-02"
         ],
-        "notes": "Requested new session recovery contract remains to implement."
+        "notes": "Local integrated evidence in docs/ai-dev/EVIDENCE.json; no claim of live provider or production acceptance."
       }
     ]
   },
@@ -385,7 +410,7 @@
       "id": "G-01",
       "class": "FEATURE_PRESENT_BUT_OWNER_REJECTED",
       "severity": "P1",
-      "summary": "Legacy resume/rebuild contract conflicts with same unfinished queue.",
+      "summary": "Original local implementation gap repaired; current tests and review in EVIDENCE.json.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -394,13 +419,13 @@
       "owner_decision_required": false,
       "blocking": false,
       "resolution_decision_id": "D-02",
-      "recommended_resolution": "Execute the mapped implementation and verification plan; these gaps block product release claims, not an aligned handoff."
+      "recommended_resolution": "Retain regression evidence; production acceptance remains separately gated."
     },
     {
       "id": "G-02",
       "class": "UNVERIFIED_CLAIM",
       "severity": "P1",
-      "summary": "Live quota reason and request pressure not captured.",
+      "summary": "Actualartist-albumsquota andoverbroadlocaldeviceblock identified; scopedfixdeployed/reviewed. ActualownerSpotify/HArecovery, account-wideusage and sustainablemultiusercapacity remain unverified.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -413,9 +438,9 @@
     },
     {
       "id": "G-03",
-      "class": "PLANNED_NOT_IMPLEMENTED",
+      "class": "UNVERIFIED_CLAIM",
       "severity": "P1",
-      "summary": "Native HA/MA route and integration acceptance absent.",
+      "summary": "Native HA/MA implementation locally tested; private instance and real MA Spotify Connect acceptance unavailable.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -430,7 +455,7 @@
       "id": "G-04",
       "class": "FEATURE_PRESENT_BUT_OWNER_REJECTED",
       "severity": "P2",
-      "summary": "Current visual design rejected; independent replacement not built.",
+      "summary": "Original local implementation gap repaired; current tests and review in EVIDENCE.json.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -439,13 +464,13 @@
       "owner_decision_required": false,
       "blocking": false,
       "resolution_decision_id": "D-04",
-      "recommended_resolution": "Execute the mapped implementation and verification plan; these gaps block product release claims, not an aligned handoff."
+      "recommended_resolution": "Retain regression evidence; production acceptance remains separately gated."
     },
     {
       "id": "G-05",
       "class": "DEPLOYED_BUT_NOT_REPRODUCIBLE",
       "severity": "P2",
-      "summary": "Exact Worker deployment version/build configuration not verified.",
+      "summary": "Cloudflare target/bindings/promotion/public smoke verified; actual populated database restoration and authenticated migration/history invariants remain NOT_RUN.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -460,7 +485,7 @@
       "id": "G-06",
       "class": "UNVERIFIED_CLAIM",
       "severity": "P2",
-      "summary": "Local browser acceptance blocked before application execution.",
+      "summary": "Original local implementation gap repaired; current tests and review in EVIDENCE.json.",
       "evidence_ids": [
         "EV-01",
         "EV-02",
@@ -469,7 +494,7 @@
       "owner_decision_required": false,
       "blocking": false,
       "resolution_decision_id": null,
-      "recommended_resolution": "Execute the mapped implementation and verification plan; these gaps block product release claims, not an aligned handoff."
+      "recommended_resolution": "Retain regression evidence; production acceptance remains separately gated."
     }
   ],
   "owner_alignment": {
@@ -529,7 +554,7 @@
       "LIVE_SYSTEM"
     ],
     "read_first": "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
-    "next_action": "Implement the mapped mission in Codex, refreshing changed baseline evidence first."
+    "next_action": "Owner weekend UI/playback/device verification and real tracker analysis; audit F02/F04 confirmation lag and background serialization remain scoped followups."
   },
   "evidence": [
     {
@@ -581,10 +606,10 @@
       "id": "EV-04",
       "type": "TEST_RUN",
       "evidence_level": "TEST_CONFIRMED",
-      "claim": "Fresh build/typecheck/lint and 280 Vitest tests in nine files pass; Wrangler dry-run passes. Source unchanged from c9bd082.",
+      "claim": "Fresh build/typecheck/lint and 280 Vitest tests in nine files pass; Wrangler dry-run passes. Source unchanged from c9bd082. Baseline application equivalence rechecked at the implementation start; this historical check does not certify current working tree.",
       "repository_id": "R-1",
-      "ref": "codex/cloudflare-restart-plan",
-      "commit_sha": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/EVIDENCE.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "EV-04",
@@ -679,6 +704,156 @@
       "environment": "analysis/local or named external provider",
       "artifact_ref": "EV-10",
       "observed_at": "2026-09-30T03:54:02.239928+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-11",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Integrated implementation, actual Cloudflare deployment and partial live acceptance; see ledger.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/EVIDENCE.json",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/EVIDENCE.json",
+      "observed_at": "2026-09-30T08:48:59.924919+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-12",
+      "type": "FILE",
+      "evidence_level": "OBSERVED_RUNTIME",
+      "claim": "Current concert-poster UI release: source `0cad1775b0c9d7e4723b3c864eb63b2b10a86580`, Cloudflare version `60e34407-fd2a-43b8-8837-d894aec2f5a6`, deployment `4c79c507-76a5-47e8-acc4-b08a28cc7c8c` at 100%. Claude PR11 presentation redesign and its long-metadata overflow repair are integrated with separate PR12 refusal continuity/error correction. Requested, accepted and observed playback stay distinct; projection is display-only; queue/observed checkpoints and native/account isolation preserved. 444 unit/Worker and 40 browser checks plus source CI 36876091612 PASS; fresh scoped independent verdict READY. Exact public assets/auth/browser and preserved binding/runtime/secret readback PASS. Physical iPhone, live Spotify transport/latency, private HA/MA and populated restore remain NOT_RUN; full mission PARTIAL. Current evidence: docs/ai-dev/evidence/UI_RELEASE.json. Older pressure simulations retain their original source and do not establish live quota capacity.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
+      "environment": "Production Cloudflare version 60e34407-fd2a-43b8-8837-d894aec2f5a6; actual public readback only",
+      "artifact_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
+      "observed_at": "2026-10-01T14:33:44.836488+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-13",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Quota diagnostics clarification passes17 fixture browser cases and4 independent actual-render cases; owner-reported provider restriction and shared developer-account quota are distinguished from recovery.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
+      "observed_at": "2026-09-30T10:46:00.494888+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-14",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Real HubCore/FakeSpotify24h audit reproduces856/2015/1748 HTTP calls and confirms fresh Spotify history feed stops during the audited account cooldown.3/5-user totals are arithmetic, quota units/viability unknown.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/FULL_DAY_USAGE_AUDIT.json",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/evidence/FULL_DAY_USAGE_AUDIT.json",
+      "observed_at": "2026-09-30T11:08:05.693865+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-15",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Exactartist-albums scopedgate, retainedlegacydeadline andUI independently reviewed; 341 unit/Worker and18browser cases pass; actualSpotify/HArecoveryNOT_RUN.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/ARTIST_ALBUMS_SCOPE_REVIEW.md",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/evidence/ARTIST_ALBUMS_SCOPE_REVIEW.md",
+      "observed_at": "2026-09-30T12:12:46.532146+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-16",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Explicit availability trial: deployed source `a46bc043717b113dc37d1989ab4323bf166d2da9`, version `4f5e1037-e616-4df2-9f93-15dbdaf8ee5f`, deployment `7121bf97-6fe9-465f-8ded-22605729b85e` at100%. Owner-authorized authenticated button quarantines an identical ambiguous legacy quota with atomic revision/probe checks and bounded original backup. Catalog and playback writes retain original/stronger deadline. At most3 essential GETs and1 token refresh, no transport retries; cache60s and concurrent coalescing. Actual per-family quota holds, general rate/unknown precedence, history fallback without queue mutation and partial24-hour first429 counters verified. Fresh independent review AVAILABILITY_TRIAL_REVIEW.md READY,62 tests/5 renders; integrated356 tests/20 browser cases and source CI36720476950 PASS. Exact assets/API/anonymous browser readback PASS; owner trial, Spotify/HA recovery, sustained multiuser capacity and populated-storage restore NOT_RUN. Full acceptance PARTIAL/BLOCKED.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/AVAILABILITY_TRIAL_REVIEW.md",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/evidence/AVAILABILITY_TRIAL_REVIEW.md",
+      "observed_at": "2026-09-30T13:22:18.173393+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-17",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Confirmed-operation/shared-tracker rollout: source `1328f8f562adbcc7454b6ee8b7d6a224f6cdca95`, version `cfcd030c-2004-4816-9e5d-170b0c421ac2`, deployment `4498733e-8b5b-482e-a653-ce85aa5384b1` at100%. Only actualSpotify429 establishes a listener-specific HTTPmethod/sanitizedendpoint wait; oldblanket/quarantine/backoff archived and retired. Genuine RetryAfter enforced onlymatchingoperation; unknownwait explicitboundedretry. Shared720hour/200episode tracker, fiveanonymoususers+overflow/signin totals, privateactor/starttime/revisionfences. No otherappvisibility, guessedbudget, automaticstress or exactreset claim. Fresh CONFIRMED_REQUEST_TRACKER_REVIEW.md scopedREADY:64tests/6renders; integrated358tests/20browser and sourceActions36760609139PASS. Exactpublicassets/auth/anonymousbrowserPASS. Ownercurrenttracker/control/HA, sustainedmultilistenercapacity andpopulatedrestore NOT_RUN; fullacceptancePARTIAL/BLOCKED.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/CONFIRMED_REQUEST_TRACKER_REVIEW.md",
+      "environment": "analysis/local or named external provider",
+      "artifact_ref": "docs/ai-dev/evidence/CONFIRMED_REQUEST_TRACKER_REVIEW.md",
+      "observed_at": "2026-09-30T18:51:39.901267+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-18",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Current song-clock followup: source `0a05d4fb3aa7f6549ac0ec74c3505ab7f5ea6edd`, Cloudflare version `f007976e-fc51-4f67-acb0-0916e981f530`, deployment `09b41e8d-abf8-4ee4-af85-d51404801c25` at100%. Display-only progress advances locally each second and reconciles provider observations without extra Spotify requests or durable checkpoint writes. Pause transport precedes observation; explicit resume suppresses automatic playback guard before device selection. 365 unit/Worker,21 browser and source CI36834917166 PASS; fresh scoped review READY with163 tests and9 rendered cases. Exact public assets/auth/anonymous-browser readback PASS. Automatic active-iPhone owner defect remains unreproduced/unfixed; live latency is unmeasured and UI still awaits reconciliation. Idle scheduling unchanged; broad UI redesign belongs to owner external agent. Full acceptance remains PARTIAL. Evidence: docs/ai-dev/evidence/SONG_CLOCK.json and SONG_CLOCK_REVIEW.md.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/SONG_CLOCK.json",
+      "environment": "Real Worker/FakeSpotify and Chromium fixtures; public production readback; authenticated owner clock/latency/device NOT_RUN",
+      "artifact_ref": "docs/ai-dev/evidence/SONG_CLOCK.json",
+      "observed_at": "2026-10-01T08:20:54.472398+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-19",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Current responsiveness optimization: source `30ae6a2d5349e3f37bce18ab39b3c920c5543c35`, Cloudflare version `bab24efb-3177-4ebf-ba9b-402322622b14`, deployment `7ba67458-b339-40d1-8a48-2e5aa86bec27` at100%. Immediate honest command feedback/frozen pause clock, bounded display-only next-song projection, stale response/identity fencing and preserved explicit Spotify-device selections. Provider acknowledgments return before reconciliation; actual device failures remain visible. Preview reads50 successors locally. Durable absolute observation deadlines reduce background traffic while preserving private/guest/guard checks; fresh reopen is coalesced. 428 unit/Worker and39 browser checks and source CI36844884695 PASS; fresh scoped independent verdict READY. Equal-window before/after Real-Hub/FakeSpotify counts are archived simulations, not provider capacity. Bindings/runtime/secrets preserved; exact assets/auth/public browser readback PASS. Physical iPhone wake/latency, owner HA and populated restore NOT_RUN; full acceptance PARTIAL. Evidence: docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json. External redesign/audit prompt: docs/UI_UX_START.md.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json",
+      "environment": "Real Worker/FakeSpotify and actual Chromium fixtures; production public readback; physical authenticated iPhone/HA NOT_RUN",
+      "artifact_ref": "docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json",
+      "observed_at": "2026-10-01T09:53:08.464936+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-20",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Current concert-poster UI release: source `0cad1775b0c9d7e4723b3c864eb63b2b10a86580`, Cloudflare version `60e34407-fd2a-43b8-8837-d894aec2f5a6`, deployment `4c79c507-76a5-47e8-acc4-b08a28cc7c8c` at 100%. Claude PR11 presentation redesign and its long-metadata overflow repair are integrated with separate PR12 refusal continuity/error correction. Requested, accepted and observed playback stay distinct; projection is display-only; queue/observed checkpoints and native/account isolation preserved. 444 unit/Worker and 40 browser checks plus source CI 36876091612 PASS; fresh scoped independent verdict READY. Exact public assets/auth/browser and preserved binding/runtime/secret readback PASS. Physical iPhone, live Spotify transport/latency, private HA/MA and populated restore remain NOT_RUN; full mission PARTIAL. Current evidence: docs/ai-dev/evidence/UI_RELEASE.json. Older pressure simulations retain their original source and do not establish live quota capacity.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/UI_RELEASE.json",
+      "environment": "Real Worker/FakeSpotify and actual Chromium fixtures; production public readback; physical authenticated iPhone/HA NOT_RUN",
+      "artifact_ref": "docs/ai-dev/evidence/UI_RELEASE.json",
+      "observed_at": "2026-10-01T14:33:44.836488+00:00",
       "source_status": "CURRENT_SUPPORTING",
       "sensitivity": "PUBLIC"
     }

@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from "preact/hooks";
-import type { AppState, TrackView } from "../shared/api";
+import type { AppState, PlayResult, TrackView } from "../shared/api";
 import { ApiError, api } from "./api";
 
 export type Load =
@@ -19,11 +19,40 @@ export interface Flash {
 	until: number;
 }
 
+export type PlaybackAction = "play" | "pause" | "next" | "new";
+
+export interface PlaybackCommand {
+	id: number;
+	profileId: string;
+	sessionId: string | null;
+	entryId: string | null;
+	stationId: number;
+	action: PlaybackAction;
+	phase: "sending" | "accepted" | "unconfirmed" | "failed";
+	observedAt: number | null;
+	acceptedAt: number | null;
+	newSessionExpected: boolean;
+	frozen: {
+		entryId: string | null;
+		position: number | null;
+		track: TrackView | null;
+		projected: boolean;
+	};
+	error?: string;
+}
+
 type Listener = () => void;
 
 class Store {
 	load: Load = { kind: "loading" };
 	flash: Flash | null = null;
+	stale = false;
+	private tick: (() => void) | null = null;
+	private offline = () => {
+		this.epoch++;
+		this.stale = true;
+		this.emit();
+	};
 	tuning: { stationId: number; since: number } | null = null;
 	/**
 	 * The station the tuning knob has turned the pointer to. Turning only
@@ -40,6 +69,138 @@ class Store {
 	private listeners = new Set<Listener>();
 	private timer: number | null = null;
 	private inflight: Promise<void> | null = null;
+	private followup: Promise<void> | null = null;
+	private followupLive = false;
+	private followupFresh = false;
+	private inflightFresh = false;
+	private epoch = 0;
+	private commandTimer: number | null = null;
+	private commandReads: number[] = [];
+	private running = false;
+	command: PlaybackCommand | null = null;
+
+	beginCommand(
+		action: PlaybackAction,
+		stationId: number,
+		frozen: PlaybackCommand["frozen"],
+	): number | null {
+		if (
+			this.load.kind !== "ready" ||
+			this.stale ||
+			(this.command && this.command.phase !== "failed" && this.command.phase !== "unconfirmed")
+		)
+			return null;
+		const state = this.load.state;
+		const id = ++this.epoch;
+		this.clearCommand();
+		this.command = {
+			id,
+			action,
+			stationId,
+			frozen,
+			profileId: state.profile.id,
+			sessionId: state.session?.sessionId ?? null,
+			entryId: state.session?.entryId ?? null,
+			observedAt: state.session?.observedAt ?? null,
+			acceptedAt: null,
+			newSessionExpected: action === "new" || state.session?.stationId !== stationId,
+			phase: "sending",
+		};
+		this.emit();
+		return id;
+	}
+
+	acceptCommand(id: number, result: PlayResult): boolean {
+		if (this.command?.id !== id) return false;
+		// Anything already being fetched may predate completion of the transport request.
+		this.epoch++;
+		if (!result.ok) {
+			this.failCommand(
+				id,
+				result.error?.message ?? "Wiedergabe nicht möglich.",
+				result.uncertain === true,
+			);
+			return false;
+		}
+		this.command.phase = "accepted";
+		this.command.acceptedAt = result.acceptedAt ?? null;
+		// The accepted command belongs to the visible app, including after a route change.
+		this.commandReads = (this.running ? [1500, 4000] : []).map((delay) =>
+			window.setTimeout(() => {
+				if (
+					this.running &&
+					document.visibilityState === "visible" &&
+					this.command?.id === id &&
+					this.command.phase === "accepted"
+				)
+					void this.refresh(false, true);
+			}, delay),
+		);
+		this.commandTimer = window.setTimeout(() => {
+			if (this.command?.id !== id || this.command.phase !== "accepted") return;
+			this.command.phase = "unconfirmed";
+			this.emit();
+		}, 20_000);
+		this.emit();
+		return true;
+	}
+
+	failCommand(id: number, message: string, uncertain = false): void {
+		if (this.command?.id !== id) return;
+		this.epoch++;
+		this.command.phase = uncertain ? "unconfirmed" : "failed";
+		this.command.error = message;
+		this.emit();
+	}
+
+	private clearCommand(): void {
+		for (const timer of this.commandReads) window.clearTimeout(timer);
+		this.commandReads = [];
+		if (this.commandTimer !== null) window.clearTimeout(this.commandTimer);
+		this.commandTimer = null;
+		this.command = null;
+	}
+
+	private reconcileCommand(state: AppState): void {
+		const command = this.command;
+		if (!command) return;
+		if (command.profileId !== state.profile.id) {
+			this.clearCommand();
+			return;
+		}
+		// A same-account snapshot is not evidence that a rejected command succeeded.
+		// Keep its explanation until the listener replaces it with another command.
+		if (command.phase === "failed") return;
+		const session = state.session;
+		if (session?.sessionId !== command.sessionId && !command.newSessionExpected) {
+			this.clearCommand();
+			return;
+		}
+		if (command.phase === "sending" || !session) return;
+		const newer =
+			session.observedAt !== null &&
+			(command.acceptedAt !== null
+				? session.observedAt >= command.acceptedAt
+				: session.observedAt > (command.observedAt ?? 0));
+		if (!newer || session.pending) return;
+		const sameStation = session.stationId === command.stationId;
+		const native = session.controller?.kind === "home-assistant";
+		const entry = session.queue.find((candidate) => candidate.entryId === session.entryId);
+		const ownNow =
+			!!state.nowPlaying &&
+			state.nowPlaying.stationId === session.stationId &&
+			state.nowPlaying.id === entry?.track.id &&
+			(command.acceptedAt !== null
+				? state.nowPlaying.observedAt >= command.acceptedAt
+				: state.nowPlaying.observedAt > (command.observedAt ?? 0));
+		const confirmed =
+			command.action === "pause"
+				? session.status === "paused" && (native || (ownNow && !state.nowPlaying?.isPlaying))
+				: command.action === "next"
+					? session.entryId !== command.entryId && (native || ownNow)
+					: session.status === "active" && (native || (ownNow && !!state.nowPlaying?.isPlaying));
+		if (sameStation && confirmed) this.clearCommand();
+	}
 
 	subscribe(l: Listener): () => void {
 		this.listeners.add(l);
@@ -106,24 +267,80 @@ class Store {
 		}
 	}
 
-	refresh(live = true): Promise<void> {
-		if (this.inflight) return this.inflight;
+	/** A command can request one serialized read after an older in-flight poll. */
+	refresh(live = true, afterInflight = false, fresh = false): Promise<void> {
+		if (this.inflight) {
+			if (!afterInflight && !fresh) return this.followup ?? this.inflight;
+			if (!afterInflight && this.inflightFresh && !this.followup) return this.inflight;
+			this.followupLive ||= live;
+			this.followupFresh ||= fresh;
+			if (!this.followup) {
+				this.followup = this.inflight.then(() => {
+					const nextLive = this.followupLive;
+					const nextFresh = this.followupFresh;
+					this.followupLive = false;
+					this.followupFresh = false;
+					this.followup = null;
+					return this.refresh(nextLive, false, nextFresh);
+				});
+			}
+			return this.followup;
+		}
 		const started = Date.now();
+		const epoch = this.epoch;
+		this.inflightFresh = fresh;
 		this.inflight = api
-			.state(live)
+			.state(live, fresh)
 			.then((state) => {
+				if (epoch !== this.epoch) return;
+				const previous = this.load.kind === "ready" ? this.load.state : null;
+				if (previous?.profile.id === state.profile.id) {
+					if (state.serverTime < previous.serverTime) return;
+					if (
+						previous.session?.sessionId === state.session?.sessionId &&
+						previous.session &&
+						state.session &&
+						(state.session.orderRevision < previous.session.orderRevision ||
+							(state.session.observedAt !== null &&
+								previous.session.observedAt !== null &&
+								state.session.observedAt < previous.session.observedAt))
+					)
+						return;
+				} else {
+					this.thumbs.clear();
+					this.rating = null;
+					this.selected = null;
+					this.clearCommand();
+				}
+				this.stale = false;
+				this.reconcileCommand(state);
 				this.load = { kind: "ready", state };
-				this.receivedAt = Date.now();
+				if (previous?.profile.id !== state.profile.id || previous.serverTime !== state.serverTime)
+					this.receivedAt = Date.now();
 				if (state.nowPlaying) this.settleThumbs([state.nowPlaying], started);
+				if (state.session)
+					this.settleThumbs(
+						state.session.queue.map((entry) => entry.track),
+						started,
+					);
 			})
 			.catch((err: unknown) => {
-				if (err instanceof ApiError && err.status === 401) this.load = { kind: "signed-out" };
-				else if (this.load.kind !== "ready") {
+				if (epoch !== this.epoch) return;
+				this.stale = true;
+				if (err instanceof ApiError && err.status === 401) {
+					this.stale = false;
+					this.load = { kind: "signed-out" };
+					this.thumbs.clear();
+					this.rating = null;
+					this.selected = null;
+					this.clearCommand();
+				} else if (this.load.kind !== "ready") {
 					this.load = { kind: "error", message: err instanceof Error ? err.message : String(err) };
 				}
 			})
 			.finally(() => {
 				this.inflight = null;
+				this.inflightFresh = false;
 				this.emit();
 			});
 		return this.inflight;
@@ -131,13 +348,20 @@ class Store {
 
 	/** Poll every 15 s while visible; the hub itself syncs in the background. */
 	start(): void {
+		this.running = true;
 		const tick = () => {
 			if (document.visibilityState === "visible") void this.refresh(true);
 		};
-		void this.refresh(true);
+		const returned = () => {
+			if (document.visibilityState === "visible") void this.refresh(true, false, true);
+		};
+		this.tick = returned;
+		void this.refresh(true, false, true);
 		this.timer = window.setInterval(tick, 15_000);
-		document.addEventListener("visibilitychange", tick);
-		window.addEventListener("focus", tick);
+		document.addEventListener("visibilitychange", returned);
+		window.addEventListener("focus", returned);
+		window.addEventListener("online", returned);
+		window.addEventListener("offline", this.offline);
 	}
 
 	say(text: string, tone: Flash["tone"] = "info", ms = 7000): void {
@@ -152,7 +376,17 @@ class Store {
 	}
 
 	stop(): void {
+		this.running = false;
+		for (const timer of this.commandReads) window.clearTimeout(timer);
+		this.commandReads = [];
 		if (this.timer !== null) window.clearInterval(this.timer);
+		if (this.tick) {
+			document.removeEventListener("visibilitychange", this.tick);
+			window.removeEventListener("focus", this.tick);
+			window.removeEventListener("online", this.tick);
+		}
+		this.tick = null;
+		window.removeEventListener("offline", this.offline);
 	}
 }
 

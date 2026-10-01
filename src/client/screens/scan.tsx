@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, PlaylistView } from "../../shared/api";
 import { api } from "../api";
-import { Cabinet, Cover, Dial, DialText, PageBar } from "../components/radio";
+import { Cover, PageBar } from "../components/ui";
 import { num } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
@@ -151,22 +151,18 @@ export function Scan({ state }: { state: AppState }) {
 		</div>
 	);
 
-	// Once onboarded this is a page like the others; on first run the radio itself searches.
+	// Once onboarded this is a page like the others; on first run a poster announces the search.
 	if (state.onboarded) return sheet;
 	return (
 		<>
-			<Cabinet
-				eye={lists ? "weak" : "open"}
-				dial={
-					// While searching, the pointer sweeps; a found list has nothing left to measure.
-					<Dial label="Senderskala" at={null} sweep={!lists}>
-						<DialText
-							title={found ?? "Suchlauf …"}
-							sub={lists ? "Wähle, welche Sender werden" : "true-shuffle sucht deine Playlists"}
-						/>
-					</Dial>
-				}
-			/>
+			<section
+				class="poster poster--scan ink-ultra"
+				aria-labelledby="scan-title"
+				aria-busy={lists ? undefined : "true"}
+			>
+				<h1 id="scan-title">{found ?? "Suchlauf …"}</h1>
+				<p>{lists ? "Wähle, welche Sender werden" : "true-shuffle sucht deine Playlists"}</p>
+			</section>
 			{sheet}
 		</>
 	);

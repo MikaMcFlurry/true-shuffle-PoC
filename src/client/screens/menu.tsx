@@ -1,3 +1,4 @@
+import { ChevronRight, LogOut } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import {
 	aggregateHistory,
@@ -7,9 +8,11 @@ import {
 	toRows,
 } from "../../core/history";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
-import { api } from "../api";
-import { Detents, PageBar, Section } from "../components/radio";
+import type { SpotifyUsageReport } from "../../shared/spotify-usage";
+import { api, type SpotifyDiagnostics } from "../api";
 import { RateHit, ThumbMark } from "../components/rate";
+import { SpotifyFunctionStatus, SpotifyUsageTracker } from "../components/spotify-availability";
+import { Detents, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
 const DEVICE_TYPES: Record<string, string> = {
@@ -43,10 +46,7 @@ const ILLUMINATIONS = [
 	["night", "Nacht"],
 ] as const;
 
-/**
- * A terminal on the back panel's strip: a brass screw, an engraved label,
- * a line under it. The whole row is the link.
- */
+/** One menu entry: the whole row is the link. */
 function Terminal(props: {
 	href: string;
 	legend: string;
@@ -58,17 +58,12 @@ function Terminal(props: {
 	return (
 		<li>
 			<a class="terminal" href={props.href} aria-label={props.label}>
-				<span class="terminal__screw" aria-hidden="true" />
-				{props.n !== undefined ? (
-					<span class="terminal__n num" aria-hidden="true">
-						{props.n}
-					</span>
-				) : null}
 				<span class="terminal__plate">
 					<span class="terminal__legend">{props.legend}</span>
 					<span class="terminal__sub">{props.sub}</span>
 				</span>
 				{props.act ? <span class="terminal__act">{props.act}</span> : null}
+				<ChevronRight class="terminal__chev" size={20} aria-hidden="true" />
 			</a>
 		</li>
 	);
@@ -95,9 +90,8 @@ export function MenuScreen({ state }: { state: AppState }) {
 			})
 			.catch((e: Error) => store.say(e.message, "error"));
 
-	// The menu is the radio's back panel: hardboard, printed labels, real switches.
 	return (
-		<div class="page page--back">
+		<div class="page">
 			<PageBar title="Menü" sub={state.profile.name} backTo="/" />
 
 			<Section title="Gäste" id="guest">
@@ -112,9 +106,6 @@ export function MenuScreen({ state }: { state: AppState }) {
 							</span>
 						</span>
 						<span class="lever">
-							<span class="lever__legend" aria-hidden="true">
-								Aus
-							</span>
 							<input
 								type="checkbox"
 								role="switch"
@@ -123,8 +114,8 @@ export function MenuScreen({ state }: { state: AppState }) {
 								checked={guest.active}
 								onChange={(e) => toggleGuest((e.target as HTMLInputElement).checked)}
 							/>
-							<span class="lever__legend" aria-hidden="true">
-								An
+							<span class="lever__state" aria-hidden="true">
+								{guest.active ? "An" : "Aus"}
 							</span>
 						</span>
 					</label>
@@ -187,16 +178,15 @@ export function MenuScreen({ state }: { state: AppState }) {
 					/>
 				</ul>
 			</Section>
-			<Section title="Beleuchtung" id="illum">
-				{/* A rotary switch: the knob points at the chosen light. */}
-				<fieldset class="dimmer" aria-labelledby="illum">
-					<div class="dimmer__legends">
+			<Section title="Darstellung" id="illum">
+				<fieldset class="segmented" aria-labelledby="illum">
+					<div class="segmented__row">
 						{ILLUMINATIONS.map(([v, label]) => (
 							<button
 								key={v}
 								type="button"
 								aria-pressed={illum === v}
-								class="dimmer__pos"
+								class="segmented__opt segmented__opt--button"
 								onClick={() => {
 									setIllumination(v);
 									setIllum(v);
@@ -206,16 +196,6 @@ export function MenuScreen({ state }: { state: AppState }) {
 							</button>
 						))}
 					</div>
-					<span class="knob knob--static" aria-hidden="true">
-						<span class="knob__ring">
-							<span
-								class="knob__cap"
-								style={{
-									"--turn": `${ILLUMINATIONS.findIndex(([v]) => v === illum) * 50 - 50}deg`,
-								}}
-							/>
-						</span>
-					</span>
 				</fieldset>
 			</Section>
 
@@ -234,11 +214,11 @@ export function MenuScreen({ state }: { state: AppState }) {
 								})
 							}
 						>
-							<span class="terminal__screw" aria-hidden="true" />
 							<span class="terminal__plate">
 								<span class="terminal__legend">Abmelden</span>
 								<span class="terminal__sub">Gedächtnis bleibt</span>
 							</span>
+							<LogOut class="terminal__chev" size={20} aria-hidden="true" />
 						</button>
 					</li>
 				</ul>
@@ -359,6 +339,28 @@ export function HistoryScreen() {
 }
 
 export function DevicesScreen() {
+	const [testing, setTesting] = useState(false);
+	const [diagnostics, setDiagnostics] = useState<SpotifyDiagnostics | null>(null);
+	const [diagnosticError, setDiagnosticError] = useState("");
+	const [usage, setUsage] = useState<SpotifyUsageReport | null>(null);
+	const [usageError, setUsageError] = useState("");
+	const loadDiagnostics = async (): Promise<void> => {
+		setDiagnosticError("");
+		setUsageError("");
+		await Promise.allSettled([
+			api
+				.spotifyUsage()
+				.then(setUsage)
+				.catch((e: Error) => setUsageError(e.message)),
+			api
+				.spotifyDiagnostics()
+				.then(setDiagnostics)
+				.catch((e: Error) => setDiagnosticError(e.message)),
+		]);
+	};
+	useEffect(() => {
+		void loadDiagnostics();
+	}, []);
 	const [devices, setDevices] = useState<DeviceView[] | null>(null);
 	const [err, setErr] = useState<string | null>(null);
 	const [chosen, setChosen] = useState<string | null>(() => {
@@ -381,6 +383,9 @@ export function DevicesScreen() {
 		try {
 			if (id) localStorage.setItem("ts-device", id);
 			else localStorage.removeItem("ts-device");
+			const name = devices?.find((device) => device.id === id)?.name;
+			if (name) localStorage.setItem("ts-device-name", name);
+			else localStorage.removeItem("ts-device-name");
 		} catch {
 			/* ignore */
 		}
@@ -392,7 +397,7 @@ export function DevicesScreen() {
 				Spotify zeigt nur Geräte, auf denen die Spotify-App gerade offen ist. Siehst du deins nicht,
 				öffne dort kurz Spotify und lade neu.
 			</p>
-			{err ? <p class="note note--error">{err}</p> : null}
+			{err ? <p class="note note--error">Letzte Geräteabfrage: {err}</p> : null}
 			<ul class="list">
 				<li>
 					<label class="row">
@@ -409,6 +414,27 @@ export function DevicesScreen() {
 						</span>
 					</label>
 				</li>
+				{chosen && !devices?.some((device) => device.id === chosen) ? (
+					<li>
+						<p class="row">
+							<span class="row__main">
+								<span class="row__title">
+									{chosen === "spotify"
+										? "Spotify · aktives Gerät"
+										: chosen.startsWith("native:")
+											? "Gespeichertes HA/MA-Gerät"
+											: "Gespeichertes Spotify-Gerät"}
+								</span>
+								<span class="row__sub">
+									Auswahl bleibt erhalten ·{" "}
+									{chosen === "spotify"
+										? "automatische Spotify-Auswahl"
+										: "zurzeit nicht in der Spotify-Geräteliste"}
+								</span>
+							</span>
+						</p>
+					</li>
+				) : null}
 				{(devices ?? []).map((d) => (
 					<li key={d.id}>
 						<label class="row" aria-disabled={d.restricted}>
@@ -432,6 +458,88 @@ export function DevicesScreen() {
 					</li>
 				))}
 			</ul>
+			<details class="more">
+				<summary>Spotify-Freigabe & Anfragestatus</summary>
+				<div class="more__body">
+					<p>
+						Hier siehst du bestätigte Antworten von Spotify. Eine 429 betrifft zunächst nur die
+						Operation, für die Spotify sie tatsächlich gemeldet hat. Gespeicherter Verlauf und
+						Warteschlangen bleiben erhalten.
+					</p>
+
+					{diagnostics ? (
+						<>
+							<SpotifyFunctionStatus
+								diagnostics={diagnostics}
+								busy={testing}
+								onRetry={(scope) => {
+									setTesting(true);
+									setDiagnosticError("");
+									void api
+										.retrySpotify(scope)
+										.then(loadDiagnostics)
+										.catch((e: Error) => setDiagnosticError(e.message))
+										.finally(() => setTesting(false));
+								}}
+							/>
+							<button
+								type="button"
+								class="key btn"
+								disabled={testing}
+								onClick={() => {
+									setTesting(true);
+									setDiagnosticError("");
+									void api
+										.testSpotifyAvailability()
+										.then((result) => {
+											if (result.devices) {
+												setDevices(result.devices);
+												setErr(null);
+											}
+											return loadDiagnostics();
+										})
+										.catch((e: Error) => setDiagnosticError(e.message))
+										.finally(() => setTesting(false));
+								}}
+							>
+								{testing ? "Funktionen werden geprüft …" : "Funktionen gezielt testen"}
+							</button>
+							<h3>Gespeicherte Anfrageversuche pro Stunde</h3>
+							<p class="hint">
+								Einträge mit „blocked“ wurden lokal zurückgehalten und nicht an Spotify gesendet.
+							</p>
+							<pre class="diagnostic-data">
+								{JSON.stringify(diagnostics.requests?.counts ?? {}, null, 2)}
+							</pre>
+							<h3>Letzter Anfrageversuch</h3>
+							<pre class="diagnostic-data">
+								{JSON.stringify(diagnostics.requests?.latest ?? null, null, 2)}
+							</pre>
+						</>
+					) : null}
+					{usageError ? (
+						<p class="note note--error" role="alert">
+							Gemeinsame Nutzung nicht aktualisiert: {usageError}
+							{usage ? " Der letzte erfolgreiche Stand bleibt sichtbar." : ""}
+						</p>
+					) : null}
+					{usage ? (
+						<SpotifyUsageTracker report={usage} />
+					) : !usageError ? (
+						<p class="hint" aria-busy="true">
+							Gemeinsame Spotify-Nutzung wird geladen …
+						</p>
+					) : null}
+
+					{diagnosticError ? <p class="note note--error">{diagnosticError}</p> : null}
+					<div class="row-actions">
+						<button type="button" class="key" onClick={loadDiagnostics}>
+							Status aktualisieren
+						</button>
+					</div>
+				</div>
+			</details>
+
 			<button type="button" class="key btn btn--wide" onClick={load}>
 				Geräte neu suchen
 			</button>
@@ -445,11 +553,12 @@ export function AboutScreen() {
 			<PageBar title="Info" sub="Wie true-shuffle arbeitet" backTo="/menu" />
 			<Section title="Wie es funktioniert" id="how">
 				<p class="lede">
-					Jeder Sender ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify. Sie enthält
-					nicht alle Songs des Senders, sondern die nächsten 300 (rund 17 Stunden), und true-shuffle
-					schreibt sie aus deinem Gedächtnis neu, immer dann, wenn gerade niemand sie hört. So kommt
-					nach und nach jeder Song des Senders dran. Spotify spielt sie ganz normal ab — auf jedem
-					Gerät, auch im Auto, auch wenn du sie direkt in Spotify startest.
+					Jeder Sender nutzt eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify. Darin steht
+					deine geordnete Warteschlange. „Fortsetzen“ führt denselben Lauf weiter: derselbe
+					unvollendete Song, an der zuletzt beobachteten Position. Ist die Position unbekannt,
+					beginnt dieser Song von vorne. Nur „Neue Warteschlange“ ersetzt den Lauf bewusst. Die
+					Reihenfolge wächst automatisch weiter, auch über Pausen, App-Schließungen und
+					Gerätewechsel hinweg.
 				</p>
 				<p class="lede">
 					Alle paar Minuten liest true-shuffle, was du gehört hast. Jeder Song ab 30 Sekunden kommt
@@ -457,14 +566,27 @@ export function AboutScreen() {
 					wieder.
 				</p>
 			</Section>
+			<Section title="Wiedergabe auf deinen Geräten" id="playback-routes">
+				<p>
+					Music-Assistant-Geräte, die in Spotify sichtbar sind, nutzt du über Spotify Connect. Die
+					separate native HA/MA-Route zeigt nur konfigurierte Geräte und deren tatsächliche
+					Fähigkeiten. Ohne Seek beginnt derselbe Song von vorne; ohne Warteschlangen-Unterstützung
+					spielt das Gerät nur einen Song.
+				</p>
+				<a class="act" href="/geraete">
+					Geräte & Provider-Status ansehen
+				</a>
+			</Section>
+
 			<Section title="Was Spotify nicht zulässt" id="limits">
 				<ul class="list">
 					<li class="row">
 						<span class="row__main">
 							<span class="row__title">Autoplay</span>
 							<span class="row__sub">
-								Ist eine Playlist zu Ende, spielt Spotify eigene Empfehlungen. Die Sender sind lang
-								genug, dass das kaum passiert.
+								Kann true-shuffle die Warteschlange gerade nicht erweitern, etwa bei einer
+								Spotify-Sperre, kann Spotify am Ende eigene Empfehlungen spielen. Dein gespeicherter
+								Lauf bleibt erhalten.
 							</span>
 						</span>
 					</li>

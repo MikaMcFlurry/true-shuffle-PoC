@@ -1,704 +1,870 @@
+import {
+	ChevronDown,
+	Heart,
+	ListMusic,
+	Music2,
+	Pause,
+	Play,
+	Plus,
+	RefreshCw,
+	Settings2,
+	SkipForward,
+	Speaker,
+	ThumbsDown,
+	Upload,
+} from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { sharesForRules } from "../../core/mix";
-import type { AppState, NowPlaying, StationSummary } from "../../shared/api";
-import { api } from "../api";
-import {
-	Breakable,
-	Cabinet,
-	Dial,
-	type Eye,
-	type Indicator,
-	Knob,
-	MixKnob,
-	ProgramCard,
-	type RoundReading,
-	useWide,
-} from "../components/radio";
-import { duration, num, pct, SEP } from "../format";
-import { navigate } from "../router";
-import { store, useStore } from "../store";
+import type { AppState, DeviceView, StationSummary, TrackView } from "../../shared/api";
+import { ApiError, api, type NativeDevice } from "../api";
+import { RateHit, ThumbMark } from "../components/rate";
+import { SongProgress } from "../components/song-progress";
+import { Cover, inkOf, RoundFigure, roundText } from "../components/ui";
+import { duration, pct } from "../format";
+import { playbackView } from "../playback-view";
+import { type PlaybackAction, store, useStore } from "../store";
 
-const KIND_TEXT = {
-	fresh: (round: number) => `Noch nicht gehört in Runde ${round}`,
-	favorite: () => "Favorit — kommt höchstens einmal pro Woche",
-	discovery: () => "Neuentdeckung",
-} as const;
-
-function heardOf(s: StationSummary): number | null {
-	return s.poolSize !== null && s.freshRemaining !== null
-		? Math.max(0, s.poolSize - s.freshRemaining)
-		: null;
-}
-
-function reading(s: StationSummary): RoundReading {
-	return { round: s.roundNo, heard: heardOf(s), total: s.poolSize };
-}
-
-/** The round in small print beside a station's name, like its frequency. */
-export function freq(s: StationSummary): string {
-	const heard = heardOf(s);
-	const count = heard !== null && s.poolSize !== null ? `${num(heard)}/${num(s.poolSize)}` : "";
-	if (s.roundNo > 1) return count ? `R${s.roundNo}${SEP}${count}` : `Runde ${s.roundNo}`;
-	return count || `Runde ${s.roundNo}`;
-}
-
-/** The same, spelled out for a screen reader. */
 export function roundLabel(s: StationSummary): string {
-	const heard = heardOf(s);
-	if (heard === null || s.poolSize === null) return `Runde ${s.roundNo}`;
-	return `Runde ${s.roundNo}, ${num(heard)} von ${num(s.poolSize)} gehört`;
+	return `Runde ${s.roundNo || 1}`;
 }
 
-/** "≈ 60 % ungehört · 10 % Favoriten · 30 % Neuentdeckungen" for a mix. */
-export function mixText(s: StationSummary, mix: number, sep = SEP): string {
-	const sh = sharesForRules({ ...s.rules, mix });
-	return `≈ ${pct(sh.fresh)} ungehört${sep}${pct(sh.favorite)} Favoriten${sep}${pct(sh.discovery)} Neuentdeckungen`;
-}
+const SESSION_LABELS = {
+	active: "Spielt",
+	paused: "Pausiert",
+	disconnected: "Gerät nicht verbunden",
+	external: "Andere Musik spielt",
+	ambiguous: "Geräte-Position nicht eindeutig",
+	saved: "Zum Fortsetzen gespeichert",
+};
 
-/** The same, printed: a share and its name never break apart. */
-export function MixReadout({ s, mix }: { s: StationSummary; mix: number }) {
-	const sh = sharesForRules({ ...s.rules, mix });
-	return (
-		<>
-			<span class="nowrap">≈ {pct(sh.fresh)} ungehört</span>
-			{SEP}
-			<span class="nowrap">{pct(sh.favorite)} Favoriten</span>
-			{SEP}
-			<span class="nowrap">{pct(sh.discovery)} Neuentdeckungen</span>
-		</>
-	);
-}
-
-function useTick(active: boolean): number {
+export function Home({ state }: { state: AppState }) {
+	const s = useStore();
+	const session = state.session;
+	const [selected, setSelected] = useState<number | null>(null);
+	const station =
+		state.stations.find((x) => x.id === (selected ?? session?.stationId)) ??
+		state.stations.find((x) => x.playing) ??
+		state.stations[0];
+	const [nativeDevices, setNativeDevices] = useState<NativeDevice[]>([]);
+	const [nativeConfigured, setNativeConfigured] = useState(false);
+	const [nativeError, setNativeError] = useState("");
+	const [devices, setDevices] = useState<DeviceView[] | null>(null);
+	const [device, setDevice] = useState(() => {
+		try {
+			return localStorage.getItem("ts-device") ?? "";
+		} catch {
+			return "";
+		}
+	});
+	const [deviceError, setDeviceError] = useState("");
 	const [now, setNow] = useState(Date.now());
 	useEffect(() => {
-		if (!active) return;
-		const t = window.setInterval(() => setNow(Date.now()), 1000);
-		return () => window.clearInterval(t);
-	}, [active]);
-	return now;
-}
-
-export function playStation(s: StationSummary): void {
-	if (store.tuning) return;
-	store.tuning = { stationId: s.id, since: Date.now() };
-	store.selected = null;
-	store.flash = null;
-	store.emit();
-	let deviceId: string | undefined;
-	try {
-		deviceId = localStorage.getItem("ts-device") ?? undefined;
-	} catch {
-		deviceId = undefined;
-	}
-	api
-		.play(s.id, deviceId)
-		.then((r) => {
-			if (r.ok) store.say(`Läuft auf ${r.deviceName ?? "deinem Gerät"}`, "info", 5000);
-			else store.say(r.error?.message ?? "Das hat nicht geklappt.", "error", 12000);
-		})
-		.catch((e: Error) => store.say(e.message, "error", 10000))
-		.finally(() => {
-			window.setTimeout(() => {
-				store.tuning = null;
-				void store.refresh(true);
-			}, 900);
-		});
-}
-
-function resumePlayback(): void {
-	store.selected = null;
-	api
-		.player("resume")
-		.then((r) => {
-			if (!r.ok) store.say(r.error?.message ?? "Das hat nicht geklappt.", "error");
-		})
-		.catch((e: Error) => store.say(e.message, "error"))
-		.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
-}
-
-function lastPlayed(state: AppState): StationSummary | null {
-	return (
-		state.stations
-			.filter((x) => x.lastPlayedAt !== null)
-			.sort((a, b) => (b.lastPlayedAt ?? 0) - (a.lastPlayedAt ?? 0))[0] ?? null
-	);
-}
-
-/** The station that plays or is held, else the one that played last. */
-export function currentStation(state: AppState): StationSummary | null {
-	const np = state.nowPlaying;
-	if (np?.stationId != null) {
-		const s = state.stations.find((x) => x.id === np.stationId);
-		if (s) return s;
-	}
-	return lastPlayed(state);
-}
-
-/** Where the pointer stands: tuning, then the knob's selection, then the current station. */
-export function pointedStation(
-	state: AppState,
-	tuningId: number | null,
-	selected: number | null,
-): StationSummary | null {
-	for (const id of [tuningId, selected]) {
-		if (id === null) continue;
-		const s = state.stations.find((x) => x.id === id);
-		if (s) return s;
-	}
-	return currentStation(state);
-}
-
-function eyeFor(state: AppState, tuning: boolean): Eye {
-	if (tuning) return "tuning";
-	const np = state.nowPlaying;
-	if (!np) return "open";
-	if (!np.isPlaying) return "weak";
-	return np.stationId !== null ? "tuned" : "weak";
-}
-
-function lampsFor(state: AppState): Indicator[] {
-	const np = state.nowPlaying;
-	const lit: Indicator[] = [];
-	if (np?.kind === "fresh") lit.push("Ungehört");
-	if (np && (np.kind === "favorite" || np.thumb === 1)) lit.push("Favorit");
-	if (np?.kind === "discovery") lit.push("Entdeckung");
-	if (state.guest.active) lit.push("Gast");
-	if (np && !np.isPlaying) lit.push("Pause");
-	return lit;
-}
-
-// ------------------------------------------------------------- the dial
-
-function jobFor(state: AppState, s: StationSummary) {
-	return (
-		state.jobs.find((j) => j.key.startsWith("import:") && j.total !== null) ??
-		state.jobs.find((j) => j.key === `deck:${s.id}`)
-	);
-}
-
-/** One station printed on the dial. Tapping it tunes in. */
-function DialStation({
-	s,
-	n,
-	state,
-	selected,
-}: {
-	s: StationSummary;
-	n: number;
-	state: AppState;
-	selected: boolean;
-}) {
-	const store = useStore();
-	const tuning = store.tuning?.stationId === s.id;
-	const held = state.nowPlaying?.stationId === s.id;
-	const job = !s.ready ? jobFor(state, s) : undefined;
-	const status = s.importing
-		? job?.total
-			? `liest ein${SEP}${num(job.done ?? 0)}/${num(job.total)}`
-			: "liest ein …"
-		: !s.ready
-			? "wird vorbereitet …"
+		const timer = window.setInterval(() => setNow(Date.now()), 1000);
+		return () => window.clearInterval(timer);
+	}, []);
+	const command = s.command;
+	const busy = command?.phase === "sending" || command?.phase === "accepted";
+	const unsettled = !!command && command.phase !== "failed";
+	const deviceNames = useRef(new Map<string, string>());
+	const deviceRequest = useRef(0);
+	const [confirm, setConfirm] = useState(false);
+	/** Progressive reveal of the stored plan; presentation only, no extra requests. */
+	const [shown, setShown] = useState(12);
+	const refreshDevices = () => {
+		setDeviceError("");
+		const request = ++deviceRequest.current;
+		void api
+			.nativeDevices()
+			.then((result) => {
+				if (request !== deviceRequest.current) return;
+				for (const d of result.devices) deviceNames.current.set(`native:${d.id}`, d.name);
+				setNativeDevices(result.devices);
+				setNativeConfigured(result.configured);
+				setNativeError("");
+			})
+			.catch((e: Error) => {
+				if (request === deviceRequest.current) setNativeError(e.message);
+			});
+		void api
+			.devices()
+			.then((list) => {
+				if (request !== deviceRequest.current) return;
+				for (const d of list) deviceNames.current.set(d.id, d.name);
+				setDevices(list);
+			})
+			.catch((e: Error) => {
+				if (request === deviceRequest.current) setDeviceError(e.message);
+			});
+	};
+	useEffect(() => {
+		refreshDevices();
+		return () => {
+			deviceRequest.current++;
+		};
+	}, []);
+	const savedTrack =
+		session?.queue.find((e) => e.entryId === session.entryId)?.track ?? session?.queue[0]?.track;
+	const ownNow =
+		state.nowPlaying &&
+		state.nowPlaying.stationId === session?.stationId &&
+		(!savedTrack || state.nowPlaying.id === savedTrack.id)
+			? state.nowPlaying
 			: null;
-	const lit = s.playing || tuning;
-	const freqId = `freq-${s.id}`;
-	const cls = lit ? " station--lit" : held ? " station--held" : selected ? " station--sel" : "";
+	const view = playbackView(state, s.receivedAt, now, s.stale, unsettled ? command?.frozen : null);
+	const track = view.track;
+	const chooseDevice = (value: string) => {
+		setDevice(value);
+		try {
+			if (value) localStorage.setItem("ts-device", value);
+			else localStorage.removeItem("ts-device");
+			const name = deviceNames.current.get(value);
+			if (name) localStorage.setItem("ts-device-name", name);
+			else localStorage.removeItem("ts-device-name");
+		} catch {
+			/* Keep this selection for the current page in private mode. */
+		}
+	};
+	const missingDevice =
+		device &&
+		device !== "spotify" &&
+		!devices?.some((d) => d.id === device) &&
+		!nativeDevices.some((d) => `native:${d.id}` === device);
+	let savedDeviceName = deviceNames.current.get(device);
+	if (!savedDeviceName) {
+		try {
+			savedDeviceName = localStorage.getItem("ts-device-name") ?? undefined;
+		} catch {
+			/* private mode */
+		}
+	}
+	const nativeController =
+		session?.controller?.kind === "home-assistant" ? session.controller : null;
+	const activeNative = nativeDevices.find((d) => d.id === nativeController?.deviceId);
+	const selectedNative = nativeDevices.find((d) => `native:${d.id}` === device);
+	const playing =
+		session?.status === "active" &&
+		(!!ownNow?.isPlaying || !!nativeController) &&
+		station?.id === session.stationId;
+	const expected = session
+		? {
+				sessionId: session.sessionId,
+				entryId: session.entryId,
+				orderRevision: session.orderRevision,
+			}
+		: undefined;
+	const act = async (action: PlaybackAction, retry = false) => {
+		const targetStation =
+			action === "pause" || action === "next"
+				? state.stations.find((candidate) => candidate.id === session?.stationId)
+				: retry && command
+					? state.stations.find((candidate) => candidate.id === command.stationId)
+					: station;
+		if (
+			busy ||
+			s.stale ||
+			!targetStation ||
+			(view.projected && action === "next") ||
+			(unsettled && !retry)
+		)
+			return;
+		const commandId = store.beginCommand(action, targetStation.id, {
+			entryId: view.entryId,
+			position: view.position,
+			track: view.track,
+			projected: view.projected,
+		});
+		if (commandId === null) return;
+		try {
+			let result = null;
+			if ((action === "pause" || action === "next") && nativeController && session)
+				result = await api.nativePlayer(
+					session.stationId,
+					nativeController.deviceId,
+					action,
+					expected,
+				);
+			else if (action === "pause" || action === "next")
+				result = await api.player(action, {
+					sessionId: session?.sessionId,
+					entryId: session?.entryId,
+				});
+			else if (targetStation && device.startsWith("native:"))
+				result = await api.nativePlay(targetStation.id, device.slice("native:".length), {
+					...expected,
+					newQueue: action === "new",
+				});
+			else if (targetStation && nativeController && !device && action === "new")
+				result = await api.nativePlay(targetStation.id, nativeController.deviceId, {
+					...expected,
+					newQueue: true,
+				});
+			else if (
+				targetStation &&
+				nativeController &&
+				!device &&
+				action === "play" &&
+				targetStation.id === session?.stationId
+			)
+				result = await api.nativePlayer(
+					targetStation.id,
+					nativeController.deviceId,
+					"resume",
+					expected,
+				);
+			else if (targetStation)
+				result = await api.play(
+					targetStation.id,
+					device === "spotify" ? undefined : device || undefined,
+					{
+						newQueue: action === "new",
+						sessionId: targetStation.id === session?.stationId ? session.sessionId : undefined,
+					},
+				);
+
+			if (!result) throw new Error("Wähle einen Sender und versuche es erneut.");
+			const accepted = store.acceptCommand(commandId, result);
+			if (accepted && action === "new") setConfirm(false);
+			// Do not reuse a poll that started before this command. This read is not UI busy time.
+			void store.refresh(true, true);
+		} catch (e) {
+			store.failCommand(
+				commandId,
+				e instanceof Error ? e.message : String(e),
+				!(e instanceof ApiError) ||
+					e.status === 0 ||
+					e.status >= 500 ||
+					e.code === "invalid_response",
+			);
+			void store.refresh(false, true);
+		}
+	};
+	const retrySaved = () => act("play", true);
+	const commandLabel =
+		command?.phase === "failed"
+			? "Befehl fehlgeschlagen"
+			: command?.phase === "unconfirmed"
+				? "Bestätigung steht aus"
+				: command?.phase === "accepted"
+					? command.action === "pause"
+						? "Pause angenommen …"
+						: command.action === "next"
+							? "Songwechsel angenommen …"
+							: "Start angenommen …"
+					: command?.action === "pause"
+						? "Pause angefordert …"
+						: command?.action === "next"
+							? "Songwechsel angefordert …"
+							: "Start angefordert …";
+
+	const thumb = async (value: -1 | 1) => {
+		if (!track || view.projected || view.awaitingObservation || unsettled) return;
+		try {
+			const next = store.thumbOf(track) === value ? 0 : value;
+			await api.thumb(track.id, next);
+			store.setThumb(track.id, next);
+			store.say(
+				next === 1
+					? "Als Favorit gemerkt"
+					: next === -1
+						? "Kommt nie wieder"
+						: "Bewertung zurückgesetzt",
+			);
+			await store.refresh(true);
+		} catch (e) {
+			store.say(e instanceof Error ? e.message : String(e), "error");
+		}
+	};
+	// Presentation only: which station the poster prints, and how far the command signal has come.
+	const posterStation = state.stations.find((x) => x.id === session?.stationId) ?? station ?? null;
+	const startsOther = !!station && !!session && station.id !== session.stationId;
+	const statusText = command
+		? commandLabel
+		: view.projected
+			? "Nächster Song · geschätzt"
+			: view.awaitingObservation ||
+					session?.pending ||
+					(session?.status === "active" && !view.playing) ||
+					(session?.status === "paused" && !nativeController && ownNow?.isPlaying)
+				? "Gerätebestätigung steht aus"
+				: session
+					? SESSION_LABELS[session.status]
+					: "Bereit für deine Musik";
+	// 1 requested, 2 accepted by Spotify/device, 3 confirmed by a fresh observation.
+	const signal: { level: 0 | 1 | 2 | 3; tone: "ok" | "wait" | "estimate" | "error" } = command
+		? command.phase === "sending"
+			? { level: 1, tone: "wait" }
+			: command.phase === "accepted"
+				? { level: 2, tone: "wait" }
+				: command.phase === "unconfirmed"
+					? { level: 2, tone: "error" }
+					: { level: 1, tone: "error" }
+		: !session
+			? { level: 0, tone: "ok" }
+			: view.projected
+				? { level: 3, tone: "estimate" }
+				: statusText === "Gerätebestätigung steht aus"
+					? { level: 2, tone: "wait" }
+					: { level: 3, tone: "ok" };
+	const successors = session?.queue.length
+		? session.queue
+				.slice(Math.max(0, session.queue.findIndex((e) => e.entryId === view.entryId) + 1))
+				.slice(0, 50)
+		: [];
 	return (
-		<li class={`station${cls}${s.ready ? "" : " station--wait"}`} data-at={String(s.id)}>
-			<button
-				type="button"
-				class="station__tune"
-				disabled={!s.ready || !!store.tuning}
-				aria-label={
-					s.playing
-						? `${s.name} öffnen (läuft gerade)`
-						: held
-							? `${s.name} weiterspielen`
-							: `${s.name} starten`
-				}
-				aria-describedby={freqId}
-				// Already playing: open it; paused in it: play on — never start it over.
-				onClick={() =>
-					s.playing ? navigate(`/sender/${s.id}`) : held ? resumePlayback() : playStation(s)
-				}
-			>
-				<span class="station__no num" aria-hidden="true">
-					{n}
-				</span>
-				<span class="station__name">
-					<Breakable text={s.name} />
-				</span>
-				<span class="station__freq num" id={freqId}>
-					<span aria-hidden="true">{status ?? freq(s)}</span>
-					<span class="sr-only">{status ?? roundLabel(s)}</span>
-				</span>
-			</button>
+		<div class="listening-workspace">
+			<section class="player" aria-labelledby="listen-title">
+				<div
+					class={`poster ink-${inkOf(posterStation)}${unsettled ? " poster--pending" : ""}${view.projected ? " poster--estimate" : ""}`}
+				>
+					<header class="player-heading poster__head">
+						<RoundFigure progress={posterStation?.progress ?? null} size={56} />
+						<div class="poster__station">
+							<h1 id="listen-title">{posterStation?.name ?? "Deine Sender"}</h1>
+							<p>
+								{posterStation
+									? roundText(posterStation)
+									: "Entdecken, wiederfinden, in Ruhe weiterhören."}
+							</p>
+							{state.guest.active ? (
+								<p class="poster__guest">Gast-Modus · zählt nicht ins Gedächtnis</p>
+							) : null}
+						</div>
+					</header>
+					<div class="now-shelf">
+						<Cover src={track?.imageUrl ?? posterStation?.imageUrl} class="player-art" eager />
+						<div class="now-copy">
+							<h2>{posterTitle(track?.name ?? "Dein nächster Lieblingssong")}</h2>
+							<p class="artist">
+								{track?.artists ?? "Wähle einen Sender und starte deine Warteschlange."}
+							</p>
+							{track?.album ? <p class="album">{track.album}</p> : null}
+						</div>
+					</div>
+					{track ? (
+						<SongProgress
+							position={view.position}
+							estimating={view.estimating}
+							pending={unsettled}
+							projected={view.projected}
+							durationMs={track.durationMs}
+						/>
+					) : null}
+					<div class="signal-block">
+						<p class="session-status" role="status">
+							{statusText}
+						</p>
+						<ol class={`signal signal--${signal.tone}`} aria-hidden="true">
+							{(["Angefordert", "Angenommen", "Bestätigt"] as const).map((label, i) => (
+								<li
+									key={label}
+									class={i < signal.level ? "signal__step signal__step--on" : "signal__step"}
+								>
+									{label}
+								</li>
+							))}
+						</ol>
+					</div>
+					<div class="transport-shelf">
+						<div class="transport">
+							<button
+								type="button"
+								class="primary transport-main"
+								disabled={
+									unsettled ||
+									s.stale ||
+									!station?.ready ||
+									session?.pending ||
+									(playing && !!nativeController && !activeNative?.pause)
+								}
+								onClick={() => void act(playing ? "pause" : "play")}
+							>
+								{playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+								{unsettled
+									? keyLabel(commandLabel)
+									: playing
+										? "Pause"
+										: session?.stationId === station?.id
+											? "Fortsetzen"
+											: "Wiedergabe starten"}
+							</button>
+							<button
+								type="button"
+								class="icon-button"
+								aria-label="Weiter: Nächster Song"
+								disabled={
+									unsettled ||
+									s.stale ||
+									!session ||
+									view.projected ||
+									view.awaitingObservation ||
+									session.pending ||
+									session.status === "ambiguous" ||
+									(!!nativeController && !activeNative?.queue)
+								}
+								onClick={() => void act("next")}
+							>
+								<SkipForward aria-hidden="true" />
+							</button>
+							<button
+								type="button"
+								class="icon-button"
+								aria-label="Daumen hoch: Favorit"
+								aria-pressed={!!track && store.thumbOf(track) === 1}
+								disabled={
+									!track || s.stale || view.projected || view.awaitingObservation || unsettled
+								}
+								onClick={() => void thumb(1)}
+							>
+								<Heart aria-hidden="true" />
+							</button>
+							<button
+								type="button"
+								class="icon-button"
+								aria-label="Daumen runter: diesen Song nie wieder"
+								aria-pressed={!!track && store.thumbOf(track) === -1}
+								disabled={
+									!track || s.stale || view.projected || view.awaitingObservation || unsettled
+								}
+								onClick={() => void thumb(-1)}
+							>
+								<ThumbsDown aria-hidden="true" />
+							</button>
+						</div>
+						{startsOther && !playing && !unsettled ? (
+							<p class="poster__note">
+								Startet {station.name}. Der gespeicherte Song bleibt erhalten.
+							</p>
+						) : null}
+					</div>
+					<p class="saved-note">
+						{session
+							? "Song und Reihenfolge bleiben gespeichert — auch wenn du die App schließt."
+							: "Deine Playlists, mit einem Gedächtnis für jeden Song."}
+					</p>
+				</div>
+
+				<div class="player-side">
+					{view.awaitingObservation ? (
+						<p class="notice">
+							Letzter bestätigter Song. Eine aktuelle Gerätebeobachtung fehlt noch.
+						</p>
+					) : null}
+					{view.projected ? (
+						<p class="notice notice--estimate" role="status">
+							Geschätzter Songwechsel aus deiner Warteschlange. Spotify hat diesen Song noch nicht
+							bestätigt.
+						</p>
+					) : null}
+					{command ? (
+						<div
+							class={`notice${command.phase === "failed" ? " notice--error" : command.phase === "unconfirmed" ? " notice--warn" : ""}`}
+							role={command.phase === "failed" ? "alert" : "status"}
+						>
+							<p>
+								{command.phase === "failed"
+									? `${command.error} Bitte erneut versuchen.`
+									: command.phase === "sending"
+										? "Befehl wird gesendet. Die Anzeige wartet auf die Bestätigung des Geräts."
+										: command.phase === "accepted"
+											? "Befehl angenommen. Das Gerät hat die Wiedergabe noch nicht bestätigt."
+											: `${command.error ? `${command.error} ` : ""}Die Gerätebestätigung fehlt noch. Der gespeicherte Song bleibt erhalten. Erneutes Fortsetzen kann zur gespeicherten Position zurückspringen.`}
+							</p>
+							{command.phase === "failed" || command.phase === "unconfirmed" ? (
+								<div class="row-actions">
+									{command.phase === "unconfirmed" && command.action === "pause" ? (
+										<button
+											type="button"
+											class="key"
+											disabled={s.stale}
+											onClick={() => void act("play", true)}
+										>
+											Gespeicherten Song fortsetzen
+										</button>
+									) : null}
+									<button
+										type="button"
+										class="key"
+										disabled={s.stale}
+										onClick={() =>
+											void act(
+												command.action === "new" ||
+													(command.phase === "unconfirmed" && command.action === "next")
+													? "play"
+													: command.action,
+												true,
+											)
+										}
+									>
+										{command.phase === "unconfirmed"
+											? command.action === "pause"
+												? "Pause erneut versuchen"
+												: "Gespeicherten Befehl erneut versuchen"
+											: "Befehl erneut versuchen"}
+									</button>
+								</div>
+							) : null}
+						</div>
+					) : null}
+					{session?.pending && !command ? (
+						<p class="notice">
+							Das Gerät bestätigt den Wechsel noch. Der bisherige Song bleibt gesichert.
+						</p>
+					) : null}
+					{session?.pending && !nativeController && !command ? (
+						<div class="notice notice--warn">
+							<p>
+								Es ist unklar, ob Spotify den Befehl ausgeführt hat. Erneutes Fortsetzen spielt
+								denselben gespeicherten Song und kann auf die zuletzt gespeicherte Position
+								zurückspringen.
+							</p>
+							<button
+								type="button"
+								class="key"
+								disabled={busy || s.stale}
+								onClick={() => void retrySaved()}
+							>
+								Gespeicherten Song erneut fortsetzen
+							</button>
+						</div>
+					) : null}
+					{session?.status === "external" ? (
+						<p class="notice">
+							Deine gespeicherte Warteschlange bleibt erhalten. „Fortsetzen“ wechselt bewusst zurück
+							zu true-shuffle.
+						</p>
+					) : null}
+
+					<div class="device-panel">
+						<label class="device-select">
+							<span class="device-select__label">
+								<Speaker size={18} aria-hidden="true" />
+								Wiedergabegerät
+							</span>
+							<select
+								aria-label="Wiedergabegerät"
+								value={device}
+								disabled={busy}
+								onChange={(e) => chooseDevice(e.currentTarget.value)}
+							>
+								<option value="">
+									{nativeController
+										? `Gespeichert: ${nativeController.deviceName ?? nativeController.deviceId}`
+										: "Aktives Spotify-Gerät"}
+								</option>
+								<option value="spotify">Spotify · aktives Gerät</option>
+								{missingDevice ? (
+									<option value={device}>
+										{savedDeviceName ?? "Gespeichertes Gerät"} · zurzeit nicht sichtbar
+									</option>
+								) : null}
+								{nativeDevices.map((d) => (
+									<option key={d.id} value={`native:${d.id}`}>
+										{d.name} · HA/MA{d.queue ? " · Warteschlange" : " · ein Song"}
+									</option>
+								))}
+								{devices?.map((d) => (
+									<option key={d.id} value={d.id} disabled={d.restricted}>
+										{d.name}
+										{d.restricted ? " · nicht steuerbar" : d.active ? " · aktiv" : ""}
+									</option>
+								))}
+							</select>
+						</label>
+						<div class="device-note">
+							<span>
+								{ownNow?.deviceName
+									? `Zuletzt auf ${ownNow.deviceName}`
+									: devices?.length === 0
+										? "Kein Spotify-Gerät sichtbar. Öffne Spotify auf deinem Gerät."
+										: "Spotify Connect · für in Spotify sichtbare Geräte."}
+							</span>
+							<button type="button" class="act" onClick={refreshDevices}>
+								<RefreshCw size={15} aria-hidden="true" />
+								Geräte aktualisieren
+							</button>
+							<a href="/geraete">Geräte & HA/MA</a>
+						</div>
+						{selectedNative || nativeController ? (
+							<p class="hint">
+								Native Home-Assistant-/Music-Assistant-Route ·{" "}
+								{(selectedNative ?? activeNative)?.queue
+									? "Geordnete Warteschlange unterstützt."
+									: "Dieses Gerät spielt einen Song; automatisches Weiterschalten ist nicht verfügbar."}{" "}
+								{(selectedNative ?? activeNative)?.seek
+									? "Gespeicherte Position wird übernommen."
+									: "Ohne Seek startet derselbe Song von vorne."}
+							</p>
+						) : null}
+						{!nativeConfigured ? (
+							<p class="hint">
+								Native HA/MA ist nicht eingerichtet. In Spotify sichtbare Music-Assistant-Geräte
+								nutzt du über Spotify Connect.
+							</p>
+						) : null}
+						{nativeError && !deviceError ? (
+							<p class="note note--error">Native Geräte nicht erreichbar: {nativeError}</p>
+						) : null}
+						{deviceError ? (
+							<p class="note note--error" role="alert">
+								Geräte nicht geladen: {deviceError}
+							</p>
+						) : null}
+					</div>
+					{nativeController && session?.pending ? (
+						<div class="notice notice--warn">
+							<p>
+								Ein Gerätebefehl ist noch ungeklärt. Du kannst ihn verwerfen und die gespeicherte
+								Position behalten.
+							</p>
+							<button
+								type="button"
+								class="key"
+								onClick={() =>
+									void api
+										.nativeCancel(expected)
+										.then(() => store.refresh(false))
+										.catch((e: Error) => store.say(e.message, "error"))
+								}
+							>
+								Befehl verwerfen · Position beibehalten
+							</button>
+						</div>
+					) : null}
+					{state.warnings.map((w) => (
+						<p class="notice notice--warn" key={w.code}>
+							{w.message}
+							{/quota|rate/.test(w.code) ? (
+								<>
+									{" "}
+									<button
+										type="button"
+										class="act"
+										onClick={() =>
+											void api
+												.retrySpotify()
+												.then(() => store.refresh(true))
+												.catch((e: Error) => store.say(e.message, "error"))
+										}
+									>
+										Spotify-Freigabe prüfen
+									</button>
+								</>
+							) : null}
+						</p>
+					))}
+				</div>
+			</section>
+
+			<section class="queue" aria-labelledby="queue-title">
+				<div class="section__head">
+					<h2 id="queue-title">
+						<ListMusic size={22} aria-hidden="true" />
+						Als Nächstes
+					</h2>
+					<span class="section__lead">
+						{successors.length
+							? `${successors.length} ${successors.length === 1 ? "Song" : "Songs"} aus dem gespeicherten Plan`
+							: "Gespeicherte Reihenfolge"}
+					</span>
+				</div>
+				{successors.length ? (
+					<>
+						<ol class="queue-list">
+							{successors.slice(0, shown).map((e, i) => (
+								<QueueRow key={e.entryId} track={e.track} index={i + 1} />
+							))}
+						</ol>
+						{successors.length > shown ? (
+							<button
+								type="button"
+								class="key key--wide"
+								onClick={() => setShown((n) => Math.min(successors.length, n + 20))}
+							>
+								<ChevronDown size={18} aria-hidden="true" />
+								Weitere {Math.min(20, successors.length - shown)} Songs zeigen
+							</button>
+						) : null}
+					</>
+				) : (
+					<p class="empty-state">
+						Starte einen Sender. Deine nächsten Songs erscheinen hier in ihrer festen Reihenfolge.
+					</p>
+				)}
+				<p class="hint">
+					Die Warteschlange wächst automatisch weiter. Normales Fortsetzen mischt sie nicht neu. Was
+					Spotify außerhalb von true-shuffle einreiht, zeigt diese Liste nicht.
+				</p>
+			</section>
+
+			<aside class="library" aria-labelledby="stations-title">
+				<div class="section__head">
+					<h2 id="stations-title">Deine Sender</h2>
+					<a class="act" href="/sender/neu">
+						<Plus size={16} aria-hidden="true" />
+						Neuer Sender
+					</a>
+				</div>
+				<ul class="station-list">
+					{state.stations.map((x) => (
+						<li
+							class={`station-choice ink-${inkOf(x)}${station?.id === x.id ? " station-choice--selected" : ""}`}
+							key={x.id}
+						>
+							<button
+								type="button"
+								aria-pressed={station?.id === x.id}
+								onClick={() => {
+									setSelected(x.id);
+									setConfirm(false);
+								}}
+							>
+								<span class="station-choice__name">{x.name}</span>
+								<span class="station-choice__meta">
+									{x.importing
+										? "Wird eingelesen …"
+										: `${x.poolSize ?? "–"} Songs · ${roundLabel(x)}`}
+									{session?.stationId === x.id ? " · gespeicherter Lauf" : ""}
+								</span>
+								<RoundFigure progress={x.progress} size={40} />
+							</button>
+							<a href={`/sender/${x.id}`} aria-label={`${x.name}: Mix und Regeln`}>
+								Mix & Regeln
+							</a>
+						</li>
+					))}
+				</ul>
+				{station ? (
+					<div class="station-actions">
+						<p>
+							Ausgewählt: <strong>{station.name}</strong>
+						</p>
+						<div class="row-actions">
+							<a class="key" href={`/sender/${station.id}`}>
+								Mix & Regeln anpassen
+							</a>
+							{confirm ? null : (
+								<button
+									type="button"
+									class="key key--quiet"
+									disabled={unsettled || s.stale || session?.pending}
+									onClick={() => setConfirm(true)}
+								>
+									Neue Warteschlange
+								</button>
+							)}
+						</div>
+						{confirm ? (
+							<div class="new-queue-confirm">
+								<p>
+									Neue Warteschlange für {station.name} beginnen? Der aktuelle Lauf wird ersetzt.
+								</p>
+								<div class="row-actions">
+									<button type="button" class="key" onClick={() => setConfirm(false)}>
+										Abbrechen
+									</button>
+									<button
+										type="button"
+										class="key key--lit"
+										disabled={unsettled || s.stale || session?.pending}
+										onClick={() => void act("new")}
+									>
+										Neue Warteschlange beginnen
+									</button>
+								</div>
+							</div>
+						) : null}
+					</div>
+				) : (
+					<a href="/suchlauf">Playlists als Sender speichern</a>
+				)}
+				<nav class="library-links" aria-label="Mehr zu deinen Sendern">
+					<a href="/suchlauf">
+						<Music2 size={18} aria-hidden="true" />
+						Playlists hinzufügen
+					</a>
+					<a href="/import">
+						<Upload size={18} aria-hidden="true" />
+						Hörverlauf importieren
+					</a>
+					<a href="/menu">
+						<Settings2 size={18} aria-hidden="true" />
+						Gast-Modus & Einstellungen
+					</a>
+				</nav>
+			</aside>
+		</div>
+	);
+}
+
+/** Keep the last word and its ellipsis together on a held key. */
+function keyLabel(label: string) {
+	const cut = label.lastIndexOf(" ", label.length - 3);
+	if (!label.endsWith(" …") || cut < 0) return label;
+	return (
+		<span>
+			{label.slice(0, cut + 1)}
+			<span class="nowrap">{label.slice(cut + 1)}</span>
+		</span>
+	);
+}
+
+/** Keep a title's dash with the word before it, so no poster line opens with "–". */
+function posterTitle(name: string): string {
+	return name.replace(/ ([–—-]) /g, "\u00a0$1 ");
+}
+
+function QueueRow({ track, index }: { track: TrackView; index: number }) {
+	return (
+		<li class="queue-row track--rate">
+			<span class="queue-number" aria-hidden="true">
+				{String(index).padStart(2, "0")}
+			</span>
+			<Cover src={track.imageUrl} />
+			<span class="track__main">
+				<strong>{track.name}</strong>
+				<span class="muted">{track.artists}</span>
+			</span>
+			<ThumbMark t={track} />
+			<span class="queue-duration">{duration(track.durationMs)}</span>
+			<RateHit t={track} />
 		</li>
 	);
 }
 
-/** The narrowest column a station name is printed in on the wide dial, and its band legend. */
-const COLUMN_PX = 100;
-const DENSE_COLUMN_PX = 84;
-const LEGEND_PX = 40;
-/** More rows than this, and the dial is printed denser: smaller lettering, the count under the name. */
-const DENSE_ROWS = 2;
-
-/** How wide a column must be to print the longest word of any name whole (roughly, per letter). */
-function columnFor(stations: StationSummary[], dense: boolean): number {
-	let longest = 0;
-	for (const x of stations)
-		for (const w of x.name.split(/[\s/-]+/)) longest = Math.max(longest, w.length);
-	const need = Math.round(longest * (dense ? 6.4 : 8.8) + (dense ? 10 : 12));
-	return Math.min(150, Math.max(dense ? DENSE_COLUMN_PX : COLUMN_PX, need));
-}
-
-/**
- * How many stations share a wave band: as many as the glass has room for,
- * at most `most`, and the bands evened out, so twelve read as two of six.
- */
-function bandSize(n: number, fieldPx: number | null, columnPx: number, most: number): number {
-	const fits = fieldPx === null ? 3 : Math.floor((fieldPx - LEGEND_PX) / columnPx);
-	const room = Math.max(3, Math.min(most, fits));
-	const bands = Math.max(1, Math.ceil(n / room));
-	return Math.max(1, Math.ceil(n / bands));
-}
-
-function StationDial({ state }: { state: AppState }) {
-	const s = useStore();
-	const wide = useWide();
-	const [fieldPx, setFieldPx] = useState<number | null>(null);
-	const at = pointedStation(state, s.tuning?.stationId ?? null, s.selected);
-	// A phone prints one station per line; the wide dial prints bands across.
-	const n = state.stations.length;
-	let per = wide ? bandSize(n, fieldPx, columnFor(state.stations, false), 8) : 3;
-	// Past two rows the dial is printed denser, with up to eight columns on a wide glass.
-	const dense = wide && Math.ceil(n / per) > DENSE_ROWS;
-	if (dense)
-		per = bandSize(
-			n,
-			fieldPx,
-			columnFor(state.stations, true),
-			fieldPx !== null && fieldPx >= 760 ? 8 : 6,
-		);
-	const bands: StationSummary[][] = [];
-	state.stations.forEach((x, i) => {
-		if (i % per === 0) bands.push([]);
-		bands[bands.length - 1]!.push(x);
-	});
+export function MixReadout({ s, mix }: { s: StationSummary; mix: number }) {
+	const shares = sharesForRules({ ...s.rules, mix });
 	return (
-		<Dial
-			label="Senderskala"
-			at={at ? String(at.id) : null}
-			lamps={lampsFor(state)}
-			onFieldWidth={(px) => setFieldPx(Math.round(px))}
-		>
-			{bands.length > 0 ? (
-				<ol
-					class={`dial__bands${dense ? " dial__bands--dense" : ""}`}
-					style={{ "--per": String(per) }}
-				>
-					{bands.map((band, b) => {
-						const first = b * per + 1;
-						const last = first + band.length - 1;
-						return (
-							<li key={band[0]!.id} class="band">
-								<span class="band__legend num" aria-hidden="true">
-									{first === last ? first : `${first}–${last}`}
-								</span>
-								<ul class="band__stations">
-									{band.map((x, i) => (
-										<DialStation
-											key={x.id}
-											s={x}
-											n={first + i}
-											state={state}
-											selected={s.selected === x.id}
-										/>
-									))}
-								</ul>
-							</li>
-						);
-					})}
-				</ol>
-			) : (
-				<p class="dial__empty">Noch kein Sender — lege im Menü einen an.</p>
-			)}
-		</Dial>
+		<span>
+			{pct(shares.fresh)} ungehört · {pct(shares.favorite)} Favoriten · {pct(shares.discovery)}{" "}
+			Entdeckungen
+		</span>
 	);
 }
-
-// -------------------------------------------------------- program card
-
-function SetUp({ s }: { s: StationSummary }) {
-	return (
-		<a class="card__setup" href={`/sender/${s.id}`}>
-			{s.name} einstellen
-		</a>
-	);
-}
-
-/** The program card: what plays, why, how far the round is. On a desktop it heads the sheet beside the radio. */
-export function NowCard({ state }: { state: AppState }) {
-	const s = useStore();
-	const np = state.nowPlaying;
-	const now = useTick(!!np?.isPlaying);
-	const tuning = s.tuning ? state.stations.find((x) => x.id === s.tuning?.stationId) : null;
-	const flash = s.flash && s.flash.until > Date.now() ? s.flash : null;
-	const warning = state.warnings[0];
-	const message = flash ?? (warning ? { text: warning.message, tone: "warn" as const } : null);
-	const guest = state.guest.active;
-	const current = currentStation(state);
-	const picked =
-		s.selected !== null && s.selected !== current?.id
-			? state.stations.find((x) => x.id === s.selected)
-			: s.selected !== null && np && !np.isPlaying
-				? state.stations.find((x) => x.id === s.selected)
+export async function playStation(station: StationSummary) {
+	if (!station.ready || store.tuning || store.stale) return;
+	store.tuning = { stationId: station.id, since: Date.now() };
+	store.emit();
+	try {
+		const session = store.load.kind === "ready" ? store.load.state.session : null;
+		const native =
+			session?.stationId === station.id && session.controller?.kind === "home-assistant"
+				? session.controller
 				: null;
-
-	if (tuning) {
-		return (
-			<ProgramCard
-				song="Sender wird eingestellt …"
-				artist="true-shuffle bereitet deine Playlist in Spotify vor"
-				reading={reading(tuning)}
-				pos={tuning.progress}
-				art={{ src: tuning.imageUrl }}
-				live
-				foot={<SetUp s={tuning} />}
-			/>
-		);
+		const result = native
+			? await api.nativePlayer(station.id, native.deviceId, "resume", {
+					sessionId: session?.sessionId,
+					entryId: session?.entryId,
+					orderRevision: session?.orderRevision,
+				})
+			: await api.play(station.id, undefined, {
+					sessionId: session?.stationId === station.id ? session.sessionId : undefined,
+				});
+		if (!result.ok) store.say(result.error?.message ?? "Wiedergabe nicht möglich", "error");
+		await store.refresh(true);
+	} catch (e) {
+		store.say(e instanceof Error ? e.message : String(e), "error");
+	} finally {
+		store.tuning = null;
+		store.emit();
 	}
-
-	// The tuning knob has turned the pointer to a station: the card offers it, nothing plays yet.
-	if (picked) {
-		const held = np?.stationId === picked.id;
-		return (
-			<ProgramCard
-				song={picked.name}
-				artist={held ? "Eingestellt — hier pausiert" : "Eingestellt — spielt erst auf Tastendruck"}
-				message={message}
-				reading={reading(picked)}
-				pos={picked.progress}
-				art={{ src: picked.imageUrl }}
-				live
-				foot={
-					<>
-						<button
-							type="button"
-							class="key key--lit btn--small"
-							disabled={!picked.ready || !!s.tuning}
-							aria-label={`${held ? "Eingestellten Sender weiterspielen" : "Eingestellten Sender spielen"}: ${picked.name}`}
-							onClick={() => (held ? resumePlayback() : playStation(picked))}
-						>
-							{held ? "Weiterspielen" : "Spielen"}
-						</button>
-						<SetUp s={picked} />
-					</>
-				}
-			/>
-		);
-	}
-
-	if (np) {
-		const station =
-			np.stationId !== null ? state.stations.find((x) => x.id === np.stationId) : null;
-		// The hub reports progress as of its answer; count on from when it arrived.
-		const elapsed = Math.min(
-			np.durationMs,
-			np.progressMs + (np.isPlaying ? Math.max(0, now - s.receivedAt) : 0),
-		);
-		return (
-			<ProgramCard
-				song={np.name}
-				artist={np.artists}
-				time={`${duration(elapsed)} / ${duration(np.durationMs)}`}
-				device={np.deviceName}
-				message={message}
-				line={
-					station
-						? np.kind
-							? KIND_TEXT[np.kind](station.roundNo)
-							: "Nicht aus der Reihenfolge dieses Senders"
-						: guest
-							? "Gast-Modus: zählt nicht ins Gedächtnis"
-							: "Außerhalb von true-shuffle — zählt trotzdem"
-				}
-				reading={station ? reading(station) : null}
-				pos={station?.progress}
-				art={{ src: np.imageUrl }}
-				live
-				foot={station ? <SetUp s={station} /> : null}
-			/>
-		);
-	}
-
-	const last = lastPlayed(state);
-	return (
-		<ProgramCard
-			song={last ? "Tippe den Sender, um weiterzuhören" : "Tippe einen Sender"}
-			artist="Spotify spielt, true-shuffle merkt sich alles"
-			message={message}
-			reading={last ? reading(last) : null}
-			pos={last?.progress}
-			art={{ src: last?.imageUrl ?? null }}
-			foot={last ? <SetUp s={last} /> : null}
-		/>
-	);
-}
-
-// ---------------------------------------------------------------- knobs
-
-/**
- * Klang: Entdecken ↔ Vertraut of the station the pointer stands on (the one
- * the card shows), saved a moment after the last turn, and at once when
- * the listener leaves the radio before that.
- */
-function KlangKnob({ state }: { state: AppState }) {
-	const s = useStore();
-	// In hand, the knob keeps the station it was taken up on, whatever the pointer does.
-	const [pinned, setPinned] = useState<number | null>(null);
-	const station = s.tuning
-		? null
-		: ((pinned !== null ? state.stations.find((x) => x.id === pinned) : undefined) ??
-			pointedStation(state, null, s.selected));
-	const [local, setLocal] = useState<{ id: number; mix: number } | null>(null);
-	const pending = useRef<{ id: number; mix: number; timer: number } | null>(null);
-	const save = (id: number, mix: number) =>
-		api
-			.updateStation(id, { rules: { mix } })
-			.then(() => store.refresh(false))
-			.catch((e: Error) => {
-				// Not saved: the knob goes back to what the station really has.
-				if (pending.current?.id !== id) setLocal((l) => (l?.id === id ? null : l));
-				store.say(`Klang nicht gespeichert: ${e.message}`, "error");
-				void store.refresh(false);
-			});
-	const hold = (on: boolean) => {
-		if (on && !station) return;
-		setPinned(on ? (station?.id ?? null) : null);
-		store.holdSelection(on);
-	};
-	const flush = useRef(() => {});
-	flush.current = () => {
-		const p = pending.current;
-		if (!p) return;
-		window.clearTimeout(p.timer);
-		pending.current = null;
-		void save(p.id, p.mix);
-	};
-	useEffect(() => {
-		const onHide = () => flush.current();
-		window.addEventListener("pagehide", onHide);
-		return () => {
-			window.removeEventListener("pagehide", onHide);
-			flush.current();
-			store.holdSelection(false);
-		};
-	}, []);
-	// Once the hub has the value turned here, its word counts again.
-	useEffect(() => {
-		if (local && !pending.current && station?.id === local.id && station.rules.mix === local.mix)
-			setLocal(null);
-	});
-	const value = station ? (local?.id === station.id ? local.mix : station.rules.mix) : null;
-	const change = (v: number) => {
-		if (!station) return;
-		setLocal({ id: station.id, mix: v });
-		store.say(
-			`Klang für ${station.name} ${mixText(station, v)}. Gilt, sobald du den Sender das nächste Mal startest.`,
-			"info",
-			4500,
-		);
-		if (pending.current && pending.current.id !== station.id) flush.current();
-		if (pending.current) window.clearTimeout(pending.current.timer);
-		const id = station.id;
-		pending.current = {
-			id,
-			mix: v,
-			timer: window.setTimeout(() => {
-				pending.current = null;
-				void save(id, v);
-			}, 700),
-		};
-	};
-	return (
-		<MixKnob
-			value={value}
-			valueText={
-				station && value !== null
-					? `${station.name}: ${mixText(station, value, ", ")}`
-					: "kein Sender"
-			}
-			station={station?.name ?? null}
-			onChange={change}
-			disabled={!station}
-			showTarget
-			onHold={hold}
-		/>
-	);
-}
-
-/** The tuning knob: it moves the pointer from station to station. Playing is a separate press. */
-function TuneKnob({ state }: { state: AppState }) {
-	const s = useStore();
-	const list = state.stations;
-	const n = list.length;
-	// It stands where the pointer stands; with nothing tuned yet, on the first station.
-	const at = pointedStation(state, s.tuning?.stationId ?? null, s.selected) ?? list[0] ?? null;
-	const idx = at
-		? Math.max(
-				0,
-				list.findIndex((x) => x.id === at.id),
-			)
-		: 0;
-	const angle = (i: number) => (n > 1 ? -120 + (240 * i) / (n - 1) : 0);
-	return (
-		<div class="knob-unit knob-unit--tune">
-			<Knob
-				label="Senderwahl"
-				min={0}
-				max={Math.max(0, n - 1)}
-				step={1}
-				value={idx}
-				valueText={at ? `${idx + 1} von ${n}: ${at.name}` : "kein Sender"}
-				angle={angle}
-				onChange={(i) => {
-					const next = list[i];
-					if (next) store.select(next.id);
-				}}
-				disabled={n === 0 || !!s.tuning}
-				ticks={list.map((_, i) => angle(i))}
-				pitch={22}
-				tapSteps
-				emitSame
-			/>
-			<span class="knob-unit__name" aria-hidden="true">
-				Senderwahl
-			</span>
-		</div>
-	);
-}
-
-// ---------------------------------------------------------- the keyboard
-
-/**
- * One keyboard in one slot: the four ivory keys that act on the song, and
- * either side of them the smaller bakelite keys Menü and Verlauf. A latched
- * key stays down.
- */
-function Keyboard({ np }: { np: NowPlaying | null }) {
-	const disabled = !np;
-	const thumbNow = np?.thumb ?? 0;
-	const act = (a: "pause" | "resume" | "next") => {
-		api
-			.player(a)
-			.then((r) => {
-				if (!r.ok) store.say(r.error?.message ?? "Das hat nicht geklappt.", "error");
-			})
-			.catch((e: Error) => store.say(e.message, "error"))
-			.finally(() => window.setTimeout(() => void store.refresh(true), 1200));
-	};
-	const thumb = (v: -1 | 1) => {
-		if (!np) return;
-		const next = np.thumb === v ? 0 : v;
-		api
-			.thumb(np.id, next)
-			.then((r) => {
-				store.setThumb(np.id, next);
-				// Say what happened: skipped on only when Spotify actually moved on.
-				if (next === -1)
-					store.say(
-						r?.skipped ? "Kommt nie wieder — übersprungen" : "Kommt nie wieder",
-						"info",
-						4000,
-					);
-				else if (next === 1) store.say("Als Favorit gemerkt", "info", 3000);
-			})
-			.catch((e: Error) => store.say(e.message, "error"))
-			.finally(() => window.setTimeout(() => void store.refresh(true), 800));
-	};
-	// Paused, the pause key stays down, like a tape deck's.
-	const paused = !!np && !np.isPlaying;
-	return (
-		<div class={`keyboard${disabled ? " keyboard--off" : ""}`}>
-			<a class="pkey pkey--end pkey--bakelite" href="/menu">
-				<span class="pkey__legend">Menü</span>
-			</a>
-			<fieldset class="keyboard__play">
-				<legend class="sr-only">Wiedergabe</legend>
-				<button
-					type="button"
-					class={`pkey${thumbNow === -1 ? " pkey--down" : ""}`}
-					disabled={disabled}
-					aria-pressed={thumbNow === -1}
-					aria-label="Daumen runter: diesen Song nie wieder"
-					onClick={() => thumb(-1)}
-				>
-					<span class="pkey__legend">nie wieder</span>
-				</button>
-				<button
-					type="button"
-					class={`pkey${paused ? " pkey--down" : ""}`}
-					disabled={disabled}
-					// A latching key: "Pause", pressed while paused; pressing it again plays on.
-					aria-label="Pause"
-					aria-pressed={paused}
-					onClick={() => act(np?.isPlaying ? "pause" : "resume")}
-				>
-					{/* Engraved once: the key sinks and its legend reddens while paused. */}
-					<span class="pkey__legend">Pause</span>
-				</button>
-				<button
-					type="button"
-					class="pkey"
-					disabled={disabled}
-					aria-label="Weiter: Nächster Song"
-					onClick={() => act("next")}
-				>
-					<span class="pkey__legend">Weiter</span>
-				</button>
-				<button
-					type="button"
-					class={`pkey${thumbNow === 1 ? " pkey--down" : ""}`}
-					disabled={disabled}
-					aria-pressed={thumbNow === 1}
-					aria-label="Daumen hoch: Favorit"
-					onClick={() => thumb(1)}
-				>
-					<span class="pkey__legend">Favorit</span>
-				</button>
-			</fieldset>
-			<a class="pkey pkey--end pkey--bakelite" href="/verlauf">
-				<span class="pkey__legend">Verlauf</span>
-			</a>
-		</div>
-	);
-}
-
-export function Home({ state }: { state: AppState }) {
-	const s = useStore();
-	// On a desktop the card leaves the cabinet and heads the program sheet beside it.
-	const wide = useWide();
-	return (
-		<Cabinet
-			fill
-			eye={eyeFor(state, !!s.tuning)}
-			eyeKey={s.tuning?.since ?? "steady"}
-			dial={<StationDial state={state} />}
-			window={wide ? undefined : <NowCard state={state} />}
-			extra={
-				state.warnings.length > 1
-					? state.warnings.slice(1).map((w) => (
-							<p key={w.code} class="slip">
-								{w.message}
-							</p>
-						))
-					: null
-			}
-			left={<KlangKnob state={state} />}
-			right={<TuneKnob state={state} />}
-			keys={<Keyboard np={state.nowPlaying} />}
-		/>
-	);
 }

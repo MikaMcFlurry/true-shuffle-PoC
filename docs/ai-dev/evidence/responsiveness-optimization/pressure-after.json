@@ -1,0 +1,77 @@
+{
+  "simulated": true,
+  "cadenceSeconds": 15,
+  "settlementSeconds": 7200,
+  "results": {
+    "visible": {
+      "windowSeconds": 900,
+      "total": 40,
+      "spotify": 40,
+      "counts": {
+        "GET /v1/me/player": 20,
+        "GET /v1/me/player/recently-played": 10,
+        "GET /v1/me/tracks": 2,
+        "PUT /v1/playlists/:id/items": 4,
+        "POST /v1/playlists/:id/items": 4
+      }
+    },
+    "hidden": {
+      "windowSeconds": 900,
+      "total": 20,
+      "spotify": 20,
+      "counts": {
+        "GET /v1/me/player": 5,
+        "GET /v1/me/player/recently-played": 5,
+        "GET /v1/me/tracks": 2,
+        "PUT /v1/playlists/:id/items": 4,
+        "POST /v1/playlists/:id/items": 4
+      }
+    },
+    "paused": {
+      "windowSeconds": 900,
+      "total": 15,
+      "spotify": 15,
+      "counts": {
+        "GET /v1/me/player": 15
+      }
+    },
+    "device": {
+      "windowSeconds": 900,
+      "total": 55,
+      "spotify": 55,
+      "counts": {
+        "GET /v1/me/player": 20,
+        "GET /v1/me/player/recently-played": 10,
+        "GET /v1/me/tracks": 2,
+        "GET /v1/me/player/devices": 15,
+        "PUT /v1/playlists/:id/items": 4,
+        "POST /v1/playlists/:id/items": 4
+      }
+    },
+    "reload": {
+      "windowSeconds": 900,
+      "total": 40,
+      "spotify": 40,
+      "counts": {
+        "GET /v1/me/player": 20,
+        "GET /v1/me/player/recently-played": 10,
+        "GET /v1/me/tracks": 2,
+        "PUT /v1/playlists/:id/items": 4,
+        "POST /v1/playlists/:id/items": 4
+      }
+    },
+    "multiple_tabs": {
+      "windowSeconds": 900,
+      "total": 40,
+      "spotify": 40,
+      "counts": {
+        "GET /v1/me/player": 20,
+        "GET /v1/me/player/recently-played": 10,
+        "GET /v1/me/tracks": 2,
+        "PUT /v1/playlists/:id/items": 4,
+        "POST /v1/playlists/:id/items": 4
+      }
+    }
+  },
+  "sourceRevision": "f5c8e0f36c6cc909e3329eeec77c3a1ef672d10d"
+}

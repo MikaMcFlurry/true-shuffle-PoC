@@ -1,0 +1,28 @@
+import { expect, it } from "vitest";
+import { RequestBudget } from "../../src/worker/spotify/client";
+import { onboarded } from "../hub/harness";
+
+it("AUDIT: a skip Spotify accepted but never applied leaves a durable next-pending", async () => {
+	const h = await onboarded();
+	const id = h.stationIds[0]!;
+	expect(await h.hub.play(id)).toMatchObject({ ok: true });
+	await h.hub.sync(new RequestBudget(25), { force: true });
+	const handle = h.fake.handle.bind(h.fake);
+	h.fake.handle = async (request) => {
+		const path = new URL(request.url).pathname;
+		if (request.method === "POST" && path.endsWith("/me/player/next")) return new Response(null, { status: 204 });
+		return handle(request);
+	};
+	const s0 = h.hub.savedSession(id)!;
+	const r1 = await h.hub.playerAction("next", { sessionId: s0.sessionId, entryId: s0.entryIds[s0.currentIndex] });
+	h.fake.handle = handle;
+	await h.listen(1000);
+	const at1 = h.hub.savedSession(id)!;
+	// listener pauses on the phone; song ends; hours pass
+	await h.listen(10 * 60_000);
+	const view = h.hub.sessionView(id)!;
+	const s = h.hub.savedSession(id)!;
+	const r2 = await h.hub.playerAction("next", { sessionId: s.sessionId, entryId: s.entryIds[s.currentIndex] });
+	const r3 = await h.hub.playerAction("next");
+	console.log(JSON.stringify({ r1, pendingAfter1s: at1.pending?.kind ?? null, after10min: { pending: s.pending?.kind ?? null, viewPending: view.pending, status: s.status, idx: s.currentIndex, idx0: s0.currentIndex, fakeTrackIdx: h.fake.user().player }, r2, r3 }, (k, v) => (k === "fakeTrackIdx" ? { isPlaying: v.isPlaying, progressMs: v.progressMs } : v)));
+});

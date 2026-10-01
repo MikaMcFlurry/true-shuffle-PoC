@@ -1,0 +1,30 @@
+import {expect,it} from 'vitest';
+import {onboarded} from '../hub/harness';
+import {RequestBudget} from '../../src/worker/spotify/client';
+
+it.each(['rate','quota'])('independent %s provider429 preserves prior saved occurrence and operation-local gate',async(kind)=>{
+ const h=await onboarded({playlists:[60,60]});const [a,b]=h.stationIds as [number,number];
+ await h.hub.play(a);h.fake.user().player.progressMs=97000;await h.hub.sync(new RequestBudget(25),{force:true});await h.hub.playerAction('pause');
+ const saved=h.hub.savedSession(a)!;const before=structuredClone(saved);let writes=0;
+ const original=h.fake.handle.bind(h.fake);
+ h.fake.handle=async(req)=>{
+  if(req.method==='PUT' && new URL(req.url).pathname==='/v1/me/player/play'){
+   writes++;return new Response(JSON.stringify({error:{status:429,message:kind,reason:kind==='quota'?'QUOTA_EXCEEDED':'RATE_LIMITED'}}),{status:429,headers:{'Retry-After':'600'}});
+  }return original(req);
+ };
+ const r=await h.hub.play(b,'explicit-iphone');expect(r.ok).toBe(false);expect(r.uncertain).toBeUndefined();
+ expect(h.hub.savedSession()).toMatchObject({stationId:a,sessionId:before.sessionId,entryIds:before.entryIds,currentIndex:before.currentIndex,progressMs:97000});
+ expect(h.hub.savedSession(b)?.pending).toBeNull();
+ h.restart();await h.hub.play(b,'explicit-iphone');expect(writes).toBe(1);expect(h.hub.savedSession()?.stationId).toBe(a);
+ expect((await h.hub.playerAction('pause')).ok).toBe(true);
+});
+
+it('independent definitive explicitSpotify404 retains native prior station/controller/checkpoint',async()=>{
+ const h=await onboarded({playlists:[60,60]});const [a,b]=h.stationIds as [number,number];
+ const saved=h.hub.nativeSession(a);h.hub.acceptSessionObservation(a,{sessionId:saved.sessionId,entryId:saved.entryIds[saved.currentIndex]!,playbackEpoch:saved.playbackEpoch,sequence:1,progressMs:97000,isPlaying:false});
+ const original=h.fake.handle.bind(h.fake);let writes=0;
+ h.fake.handle=async(req)=>{if(req.method==='PUT' && new URL(req.url).pathname==='/v1/me/player/play'){writes++;return new Response(JSON.stringify({error:{status:404,reason:'NO_ACTIVE_DEVICE',message:'no device'}}),{status:404});}return original(req)};
+ expect(await h.hub.play(b,'explicit-iphone')).toMatchObject({ok:false,error:{code:'no_device'}});expect(writes).toBe(1);
+ expect(h.hub.savedSession()).toMatchObject({stationId:a,sessionId:saved.sessionId,entryIds:saved.entryIds,progressMs:97000,controller:'native',status:'paused'});
+ h.restart();expect(h.hub.savedSession()?.stationId).toBe(a);
+});

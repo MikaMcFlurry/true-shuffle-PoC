@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/true-shuffle-PoC
+
+
+ Test Files  4 passed (4)
+      Tests  132 passed (132)
+   Start at  08:10:12
+   Duration  88.72s (tests 99%, transform 1%)
+

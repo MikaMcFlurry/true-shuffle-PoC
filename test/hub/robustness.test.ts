@@ -1,10 +1,14 @@
 /**
  * Real-life situations that must not corrupt the memory or stop a station.
  * Several of these were found by the independent red-team review (RT-n).
+ * Deprecated automatic continuation rewrites are superseded by the durable
+ * session recovery cases in session.test.ts. Explicit new-queue accounting
+ * remains covered separately from ordinary Play.
  */
 
 import { describe, expect, it } from "vitest";
 import { MINUTE_MS } from "../../src/core/types";
+import { RequestBudget } from "../../src/worker/spotify/client";
 import { FakeSpotify } from "../fakes/fake-spotify";
 import { onboarded } from "./harness";
 
@@ -38,7 +42,7 @@ describe("car stop: the deck is rewritten while the player is paused in it (RT-1
 		h.fake.pause();
 		await h.listen(15 * MINUTE_MS);
 		const { deck: after, pl } = stationDeck(h, sid);
-		expect(after.version).toBeGreaterThan(before.version);
+		expect(after.version).toBe(before.version);
 		// Spotify resumes: the loaded song ends, then it continues with the new
 		// playlist contents after the old position (skipping the song at it).
 		const p = h.fake.user().player;
@@ -205,33 +209,6 @@ describe("plays that reach recently-played late (RT-2)", () => {
 });
 
 describe("a rewrite continues what a player may still have loaded", () => {
-	it("keeps the songs after the paused one at their places, with no heard song anywhere", async () => {
-		const h = await onboarded({ tracks: 600 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(30 * MINUTE_MS);
-		h.fake.pause();
-		await h.hub.state({ live: true });
-		const before = stationDeck(h, sid);
-		const beforeItems = before.pl.items.slice();
-		const held = before.deck.lastIndex!;
-		const pausedSong = beforeItems[held]!;
-		h.clock.t += 15 * MINUTE_MS;
-		await h.listen(1_000);
-		const after = stationDeck(h, sid);
-		expect(after.deck.version).toBeGreaterThan(before.deck.version);
-		// Resuming by position or by the loaded order plays the same songs.
-		expect(after.pl.items.slice(held + 1, held + 40)).toEqual(
-			beforeItems.slice(held + 1, held + 40),
-		);
-		// A restart from the top plays nothing heard today, not even the paused song.
-		const heard = new Set(
-			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
-		);
-		for (const id of after.pl.items) expect(heard.has(id)).toBe(false);
-		expect(after.pl.items.includes(pausedSong)).toBe(false);
-	});
-
 	it("a mix changed in the app applies at the next start from the app", async () => {
 		const h = await onboarded({ tracks: 600 });
 		const sid = h.stationIds[0]!;
@@ -387,59 +364,29 @@ describe("a song turned down that a player still has queued", () => {
 	});
 });
 
-describe("a small station after a car stop (red-team 4)", () => {
-	for (const size of [60, 100, 200, 300]) {
-		it(`keeps every song ahead and fills the front without repeats (${size} songs)`, async () => {
+describe("a small station after a car stop (NN-03/04)", () => {
+	for (const size of [60, 100, 200, 300])
+		it(`retains the unfinished entry and every ordered song ahead (${size} songs)`, async () => {
 			const h = await onboarded({ tracks: size });
 			const sid = h.stationIds[0]!;
-			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.hub.play(sid);
 			await h.listen(25 * MINUTE_MS);
-			h.fake.pause();
-			await h.hub.state({ live: true });
-			const before = stationDeck(h, sid);
-			const items = before.pl.items.slice();
-			const held = before.deck.lastIndex!;
-			h.clock.t += 15 * MINUTE_MS;
-			await h.listen(1_000);
-			const after = stationDeck(h, sid).pl.items.slice();
-			// The songs after the paused one: at their places; at most the last
-			// half of them moved to the front.
-			const ahead = items.length - held - 1;
-			const kept = after.slice(held + 1);
-			expect(kept).toEqual(items.slice(held + 1, held + 1 + kept.length));
-			expect(kept.length).toBeGreaterThanOrEqual(Math.ceil(ahead / 2));
-			expect(after.length).toBeGreaterThanOrEqual(held + 1 + kept.length);
-			// Nothing heard today anywhere: resuming by position, by song, or from the top.
-			const heard = new Set(
-				h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
-			);
-			expect(after.filter((id) => heard.has(id))).toEqual([]);
-			expect(new Set(after).size).toBe(after.length);
+			await h.hub.playerAction("pause");
+			await h.listen(1000); // The accepted pause is observed by its durable alarm.
+			const before = h.hub.savedSession(sid)!;
+			const order = stationDeck(h, sid).pl.items.slice();
+			await h.hub.updateStation(sid, { rules: {} });
+			await h.listen(40 * MINUTE_MS);
+			h.restart();
+			await h.hub.play(sid);
+			const after = h.hub.savedSession(sid)!;
+			expect(after.sessionId).toBe(before.sessionId);
+			expect(after.entryIds).toEqual(before.entryIds);
+			expect(after.currentIndex).toBe(before.currentIndex);
+			expect(after.progressMs).toBe(before.progressMs);
+			expect(stationDeck(h, sid).pl.items).toEqual(order);
+			expect(falseSkips(h)).toBe(0);
 		});
-	}
-});
-
-describe("a song heard somewhere else while a player holds the station (red-team 4)", () => {
-	it("gives up its place in the continued playlist", async () => {
-		const h = await onboarded({ tracks: 600 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(20 * MINUTE_MS);
-		h.fake.pause();
-		await h.hub.state({ live: true });
-		const before = stationDeck(h, sid);
-		const items = before.pl.items.slice();
-		const held = before.deck.lastIndex!;
-		const elsewhere = items[held + 5]!;
-		// Heard in full on another device, no context reported.
-		h.fake.user().recent.unshift({ trackId: elsewhere, playedAt: h.clock.t, contextUri: null });
-		h.clock.t += 15 * MINUTE_MS;
-		await h.listen(1_000);
-		const after = stationDeck(h, sid).pl.items.slice();
-		expect(after).not.toContain(elsewhere);
-		expect(after.slice(held + 1, held + 5)).toEqual(items.slice(held + 1, held + 5));
-		expect(after.slice(held + 6, held + 30)).toEqual(items.slice(held + 6, held + 30));
-	});
 });
 
 describe("skip rules the hub sees with the app closed (red-team 4)", () => {
@@ -489,26 +436,6 @@ describe("skip rules the hub sees with the app closed (red-team 4)", () => {
 	});
 });
 
-describe("the rewrite after a stop (red-team 4)", () => {
-	it("comes ten minutes after the last song, even with a rewrite queued while playing", async () => {
-		// Whenever the stop falls between two looks of a waiting rewrite.
-		for (let extra = 0; extra < 10; extra++) {
-			const h = await onboarded({ tracks: 600 });
-			const sid = h.stationIds[0]!;
-			expect((await h.hub.play(sid)).ok).toBe(true);
-			await h.listen(4 * MINUTE_MS);
-			h.fake.skip(); // queues a rewrite for when nobody listens
-			await h.listen((12 + extra) * MINUTE_MS);
-			const version = stationDeck(h, sid).deck.version;
-			h.fake.pause();
-			const stoppedAt = h.clock.t;
-			while (stationDeck(h, sid).deck.version === version && h.clock.t - stoppedAt < 30 * MINUTE_MS)
-				await h.listen(15_000);
-			expect(h.clock.t - stoppedAt, `stop ${extra} min later`).toBeLessThanOrEqual(11 * MINUTE_MS);
-		}
-	});
-});
-
 describe("songs a player brings back on its own (red-team 5)", () => {
 	/** How long each song was heard every time it ended, from the simulator's side. */
 	function earsOn(h: H) {
@@ -522,31 +449,6 @@ describe("songs a player brings back on its own (red-team 5)", () => {
 		};
 		return heard;
 	}
-
-	it("skips a song heard elsewhere that an old loaded order still has, and books nothing", async () => {
-		const h = await onboarded({ tracks: 600 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(20 * MINUTE_MS);
-		h.fake.pause();
-		await h.hub.state({ live: true });
-		const before = stationDeck(h, sid);
-		const items = before.pl.items.slice();
-		const held = before.deck.lastIndex!;
-		const x = items[held + 2]!;
-		h.fake.user().recent.unshift({ trackId: x, playedAt: h.clock.t, contextUri: null });
-		h.clock.t += 15 * MINUTE_MS;
-		await h.listen(1_000);
-		const after = stationDeck(h, sid).pl.items.slice();
-		const f = after[held + 2]!; // x's place in the new version
-		expect(f).not.toBe(x);
-		const heard = earsOn(h);
-		h.fake.user().player.isPlaying = true; // the phone plays on in the order it had loaded
-		await h.listen(40 * MINUTE_MS);
-		expect(heard.get(x)?.length).toBe(1);
-		expect(heard.get(x)![0]).toBeLessThan(30_000);
-		expect(falseSkips(h)).toBe(0);
-	});
 
 	for (const idle of [30 * MINUTE_MS, 8 * 60 * MINUTE_MS])
 		it(`skips a song turned down while the player held the station (${idle / MINUTE_MS} min pause)`, async () => {
@@ -584,28 +486,6 @@ describe("songs a player brings back on its own (red-team 5)", () => {
 		await h.listen(20 * MINUTE_MS);
 		expect(heard.get(t)?.length).toBe(2);
 		for (const ms of heard.get(t)!) expect(ms).toBeLessThan(30_000);
-	});
-
-	it("a small station started from the top in Spotify later the same day repeats nothing", async () => {
-		const h = await onboarded({ tracks: 120 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(3 * 60 * MINUTE_MS);
-		h.fake.pause(); // car stop
-		await h.listen(2 * 60 * MINUTE_MS); // continued meanwhile, its front full of today's songs
-		const { pl, deck } = stationDeck(h, sid);
-		expect((deck as { continued?: boolean }).continued).toBe(true);
-		const heard = earsOn(h);
-		const before = new Set(
-			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
-		);
-		const phone = h.fake.user().player.deviceId!;
-		h.fake.startContext("mika", `spotify:playlist:${pl.id}`, 0, phone, false);
-		await h.listen(60 * MINUTE_MS);
-		const repeats = [...heard.entries()].filter(
-			([id, ms]) => before.has(id) && ms.some((x) => x >= 30_000),
-		);
-		expect(repeats.length).toBeLessThanOrEqual(1);
 	});
 });
 
@@ -660,55 +540,6 @@ describe("the listener's own choices and long stops (red-team 6)", () => {
 			expect(heard.get(t)![0]).toBeLessThan(30_000);
 		});
 
-	it("a continued small station started from the top the next day repeats nothing", async () => {
-		const h = await onboarded({ tracks: 120 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(3 * 60 * MINUTE_MS);
-		h.fake.pause();
-		await h.listen(13 * 60 * MINUTE_MS);
-		const { pl } = stationDeck(h, sid);
-		const heard = earsOn(h);
-		const since = h.clock.t - 24 * 60 * MINUTE_MS;
-		const before = new Set(
-			h.sql
-				.all<{ track_id: string }>(`SELECT track_id FROM plays WHERE played_at >= ?`, since)
-				.map((r) => r.track_id),
-		);
-		h.fake.startContext(
-			"mika",
-			`spotify:playlist:${pl.id}`,
-			0,
-			h.fake.user().player.deviceId!,
-			false,
-		);
-		await h.listen(60 * MINUTE_MS);
-		const repeats = [...heard.entries()].filter(
-			([id, ms]) => before.has(id) && ms.some((x) => x >= 30_000),
-		);
-		expect(repeats).toEqual([]);
-	});
-
-	for (const size of [80, 120, 300])
-		it(`a second rewrite during one stop invents no skip and keeps the paused song out (${size} songs)`, async () => {
-			const h = await onboarded({ tracks: size });
-			const sid = h.stationIds[0]!;
-			expect((await h.hub.play(sid)).ok).toBe(true);
-			await h.listen(110 * MINUTE_MS);
-			const p = h.fake.user().player;
-			p.isPlaying = false;
-			const paused = h.fake.current()!;
-			await h.listen(30 * MINUTE_MS); // first continuation
-			await h.hub.updateStation(sid, { rules: {} }); // marks the deck, like new discoveries
-			await h.listen(30 * MINUTE_MS); // second continuation
-			const { deck, pl } = stationDeck(h, sid);
-			expect(deck.version).toBeGreaterThanOrEqual(3);
-			expect(pl.items).not.toContain(paused);
-			p.isPlaying = true; // the loaded order goes on
-			await h.listen(60 * MINUTE_MS);
-			expect(falseSkips(h)).toBe(0);
-		});
-
 	it("without Spotify access the hub looks only a few times an hour", async () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
@@ -730,18 +561,6 @@ describe("the listener's own choices and long stops (red-team 6)", () => {
 });
 
 describe("the seventh review's cases", () => {
-	function earsOn(h: H) {
-		const heard = new Map<string, number[]>();
-		const f = h.fake as unknown as { moveNext: (u: unknown, at: number) => void };
-		const orig = f.moveNext.bind(h.fake);
-		f.moveNext = (user: unknown, at: number) => {
-			const cur = h.fake.current();
-			if (cur) heard.set(cur, [...(heard.get(cur) ?? []), h.fake.user().player.listenedMs]);
-			orig(user, at);
-		};
-		return heard;
-	}
-
 	it("a guest's early skip shortly before guest mode ends stays out of memory", async () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
@@ -766,73 +585,6 @@ describe("the seventh review's cases", () => {
 		expect(row?.early_skips ?? 0).toBe(0);
 		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, g)).toBeNull();
 	});
-
-	it("forgets songs of older versions after 36 h: a queued one plays", async () => {
-		const h = await onboarded({ tracks: 600 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(20 * MINUTE_MS);
-		const first = stationDeck(h, sid).pl.items.slice();
-		// When each song was last seen in a version of the station.
-		const lastIn = new Map<string, number>();
-		const sample = () => {
-			for (const id of stationDeck(h, sid).pl.items) lastIn.set(id, h.clock.t);
-		};
-		// Three days of one session a day, each started from the app.
-		for (let day = 0; day < 3; day++) {
-			h.fake.pause();
-			// Rewritten in the background meanwhile, maybe more than once.
-			for (let hour = 0; hour < 22; hour++) {
-				await h.listen(60 * MINUTE_MS);
-				sample();
-			}
-			expect((await h.hub.play(sid)).ok).toBe(true);
-			sample();
-			await h.listen(20 * MINUTE_MS);
-			sample();
-		}
-		// In no version of the last 36 hours.
-		const x = first
-			.slice(150)
-			.find((id) => (lastIn.get(id) ?? 0) < h.clock.t - 37 * 60 * MINUTE_MS)!;
-		expect(x).toBeDefined();
-		h.fake.user().recent.unshift({ trackId: x, playedAt: h.clock.t, contextUri: null }); // heard today
-		const heard = earsOn(h);
-		h.fake.user().player.userQueue.push(x);
-		await h.listen(15 * MINUTE_MS);
-		expect(heard.get(x)?.[0]).toBeGreaterThanOrEqual(30_000);
-	});
-
-	for (const size of [120, 600])
-		it(`a song turned down during a stop is caught in an order two versions old (${size} songs)`, async () => {
-			const h = await onboarded({ tracks: size });
-			const sid = h.stationIds[0]!;
-			expect((await h.hub.play(sid)).ok).toBe(true);
-			await h.listen(30 * MINUTE_MS);
-			const p = h.fake.user().player;
-			p.isPlaying = false;
-			const t = p.order[p.index + 3]!;
-			const before = p.order[p.index + 2]!;
-			await h.listen(12 * MINUTE_MS); // first continuation
-			await h.hub.thumb(t, -1); // turned down in the app while the car is parked
-			await h.listen(30 * MINUTE_MS); // a continuation without it
-			await h.hub.thumb(p.order[p.index + 9]!, -1); // another one: a further continuation
-			await h.listen(30 * MINUTE_MS);
-			expect(stationDeck(h, sid).deck.version).toBeGreaterThanOrEqual(3);
-			const heard = earsOn(h);
-			p.isPlaying = true; // the loaded order goes on …
-			let skipped = false;
-			for (let i = 0; i < 480; i++) {
-				await h.listen(5_000);
-				// … the song before t is skipped by hand after 5 s: t comes up
-				if (!skipped && h.fake.current() === before && p.listenedMs >= 5_000) {
-					h.fake.skip();
-					skipped = true;
-				}
-			}
-			expect(heard.get(t)?.length).toBe(1);
-			expect(heard.get(t)![0]).toBeLessThan(30_000);
-		});
 });
 
 describe("the eighth review's cases", () => {
@@ -856,16 +608,12 @@ describe("the eighth review's cases", () => {
 			await h.hub.setGuest(true, 1);
 			const end = (await h.hub.state()).guest.until!;
 			expect((await h.hub.play(sid)).ok).toBe(true);
-			await h.listen(end - h.clock.t - beforeEnd * 1000 - 4 * MINUTE_MS);
-			let g: string | null = null;
-			for (let i = 0; i < 600 && !g; i++) {
-				await h.listen(1_000);
-				const p = h.fake.user().player;
-				if (h.clock.t >= end - beforeEnd * 1000 && p.listenedMs >= 8_000 && p.listenedMs < 12_000) {
-					g = h.fake.current();
-					h.fake.skip();
-				}
-			}
+			await h.listen(end - h.clock.t - beforeEnd * 1000 - 10_000);
+			h.fake.skip();
+			await h.listen(9_000);
+			await h.hub.state({ live: true });
+			const g = h.fake.current()!;
+			h.fake.skip();
 			expect(h.clock.t).toBeLessThan(end);
 			await h.listen(40 * MINUTE_MS); // guest mode ends; the owner listens on
 			const row = h.sql.first<{ early_skips: number }>(
@@ -900,34 +648,6 @@ describe("the eighth review's cases", () => {
 		}
 		expect(heard.get(x)?.length).toBe(1);
 		expect(heard.get(x)![0]).toBeLessThan(30_000);
-	});
-
-	it("started from the top, the first song skipped early: today's songs behind it are jumped", async () => {
-		const h = await onboarded({ tracks: 120 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(3 * 60 * MINUTE_MS);
-		h.fake.pause();
-		await h.listen(40 * MINUTE_MS);
-		const { pl } = stationDeck(h, sid);
-		const today = new Set(
-			h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
-		);
-		const heard = earsOn(h);
-		const p = h.fake.user().player;
-		h.fake.startContext("mika", `spotify:playlist:${pl.id}`, 0, p.deviceId!, false);
-		let skipped = false;
-		for (let i = 0; i < 3600; i++) {
-			await h.listen(1_000);
-			if (!skipped && p.index === 0 && p.listenedMs >= 5_000) {
-				h.fake.skip();
-				skipped = true;
-			}
-		}
-		const repeats = [...heard.entries()].filter(
-			([id, ms]) => today.has(id) && ms.some((x) => x >= 30_000),
-		);
-		expect(repeats).toEqual([]);
 	});
 
 	it('in "Alles", never played before, a song the listener queues plays', async () => {
@@ -996,69 +716,6 @@ describe("the ninth review's cases", () => {
 		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, g)).toBeNull();
 	});
 
-	it("infers no skip across a place the new version changed", async () => {
-		const h = await onboarded({ tracks: 600 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(30 * MINUTE_MS);
-		const p = h.fake.user().player;
-		p.isPlaying = false;
-		const before = p.order[p.index + 2]!;
-		const y = p.order[p.index + 3]!;
-		await h.listen(15 * MINUTE_MS);
-		await h.hub.thumb(y, -1); // the continuation puts another song in its place
-		await h.listen(30 * MINUTE_MS);
-		const replacement = stationDeck(h, sid).pl.items[p.index + 3]!;
-		p.isPlaying = true; // the loaded order goes on
-		let stage = 0;
-		for (let i = 0; i < 900; i++) {
-			await h.listen(1_000);
-			const cur = h.fake.current();
-			if (stage === 0 && cur === before && p.listenedMs >= 5_000) {
-				h.fake.skip();
-				stage = 1;
-			} else if (stage === 1 && cur === y && p.listenedMs >= 2_000) {
-				h.fake.skip();
-				stage = 2;
-			}
-		}
-		await h.listen(30 * MINUTE_MS);
-		const row = h.sql.first<{ early_skips: number }>(
-			`SELECT early_skips FROM memory WHERE id = ?`,
-			replacement,
-		);
-		expect(row?.early_skips ?? 0).toBe(0);
-	});
-
-	for (const hours of [4, 8])
-		it(`started from the top ${hours} h after a stop, the first song skipped early: nothing repeats`, async () => {
-			const h = await onboarded({ tracks: 120 });
-			const sid = h.stationIds[0]!;
-			expect((await h.hub.play(sid)).ok).toBe(true);
-			await h.listen(3 * 60 * MINUTE_MS);
-			h.fake.pause();
-			await h.listen(hours * 60 * MINUTE_MS);
-			const { pl } = stationDeck(h, sid);
-			const today = new Set(
-				h.sql.all<{ track_id: string }>(`SELECT track_id FROM plays`).map((r) => r.track_id),
-			);
-			const heard = earsOn(h);
-			const p = h.fake.user().player;
-			h.fake.startContext("mika", `spotify:playlist:${pl.id}`, 0, p.deviceId!, false);
-			let skipped = false;
-			for (let i = 0; i < 3600; i++) {
-				await h.listen(1_000);
-				if (!skipped && p.index === 0 && p.listenedMs >= 5_000) {
-					h.fake.skip();
-					skipped = true;
-				}
-			}
-			const repeats = [...heard.entries()].filter(
-				([id, ms]) => today.has(id) && ms.some((x) => x >= 30_000),
-			);
-			expect(repeats).toEqual([]);
-		});
-
 	it("a turned-down song is skipped after a weekend with the phone out of sight", async () => {
 		const h = await onboarded({ tracks: 600 });
 		const sid = h.stationIds[0]!;
@@ -1082,40 +739,6 @@ describe("the ninth review's cases", () => {
 });
 
 describe("the tenth look: older orders and the edges of guest time", () => {
-	it("infers no skip from an older order that runs past the songs a continuation kept", async () => {
-		// A small station deep into its round: the continuation keeps the songs
-		// after the held one at their places, but moves the last two forward.
-		const h = await onboarded({ tracks: 24 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		const p = h.fake.user().player;
-		while (p.index < 8) await h.listen(5_000);
-		await h.listen(60_000);
-		h.fake.pause();
-		const loaded = p.order.slice();
-		await h.listen(40 * MINUTE_MS);
-		const { deck, pl } = stationDeck(h, sid);
-		expect(deck.version).toBe(2);
-		// The last songs of the order the phone still has sit in front now,
-		// with songs it already played between them.
-		const tail = loaded.slice(-2);
-		expect(pl.items.indexOf(tail[0]!)).toBeLessThan(pl.items.indexOf(tail[1]!) - 1);
-		p.isPlaying = true; // the loaded order goes on to its end, nothing skipped
-		await h.listen(80 * MINUTE_MS);
-		expect(p.order).toEqual(loaded);
-		await h.listen(40 * MINUTE_MS);
-		expect(falseSkips(h)).toBe(0);
-		expect(
-			(
-				JSON.parse(
-					h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!.deck,
-				) as {
-					strayedUntil?: number;
-				}
-			).strayedUntil,
-		).toBeGreaterThan(h.clock.t);
-	});
-
 	for (const owner of ["skips it", "hears it on"] as const)
 		it(`a song still playing when guest mode goes off: the guest's unless the owner hears 30 s of it (${owner})`, async () => {
 			const h = await onboarded({ tracks: 300 });
@@ -1165,17 +788,6 @@ describe("the tenth look: older orders and the edges of guest time", () => {
 });
 
 describe("the tenth review's cases", () => {
-	function deckOf(h: H, sid: number) {
-		return JSON.parse(
-			h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!.deck,
-		) as {
-			version: number;
-			items: { id: string }[];
-			heldAt: number | null;
-			changedAt?: number[];
-			strayedUntil?: number;
-		};
-	}
 	const ignoredOf = (h: H, id: string) =>
 		h.sql.first<{ ignored: number }>(
 			`SELECT ignored FROM plays WHERE track_id = ? ORDER BY played_at DESC`,
@@ -1249,7 +861,10 @@ describe("the tenth review's cases", () => {
 		while (h.fake.current() === y) await h.listen(1_000);
 		const x = h.fake.current()!;
 		while (p.listenedMs < 15_000) await h.listen(1_000);
+		await h.hub.sync(new RequestBudget(8), { force: true });
 		h.fake.skip();
+		h.clock.t += 16_000;
+		await h.hub.sync(new RequestBudget(8), { force: true });
 		await h.listen(25 * MINUTE_MS);
 		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, x)).not.toBeNull();
 		await h.hub.setGuest(true, 6);
@@ -1267,73 +882,6 @@ describe("the tenth review's cases", () => {
 		);
 		expect(mem?.early_skips).toBe(1);
 		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, x)).not.toBeNull();
-	});
-
-	it("restarting a continued playlist from the top keeps inferring skips", async () => {
-		const h = await onboarded({ tracks: 600 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(25 * MINUTE_MS);
-		h.fake.pause();
-		await h.listen(15 * MINUTE_MS);
-		const { deck, pl } = stationDeck(h, sid);
-		expect(deck.version).toBe(2);
-		const p = h.fake.user().player;
-		const live = pl.items.slice();
-		p.order = live; // resumes the new version where it stopped
-		p.currentFromQueue = null;
-		p.isPlaying = true;
-		await h.listen(4 * MINUTE_MS);
-		p.index = 0; // then the listener starts it from the top in Spotify
-		p.progressMs = 0;
-		p.listenedMs = 0;
-		await h.listen(60_000);
-		// Two songs skipped in a row: the second is never seen playing.
-		while (h.fake.current() === live[0]) await h.listen(1_000);
-		await h.listen(8_000);
-		h.fake.skip();
-		const unseen = h.fake.current()!;
-		await h.listen(3_000);
-		h.fake.skip();
-		await h.listen(30 * MINUTE_MS);
-		expect(deckOf(h, sid).strayedUntil).toBeUndefined();
-		const mem = h.sql.first<{ early_skips: number }>(
-			`SELECT early_skips FROM memory WHERE id = ?`,
-			unseen,
-		);
-		expect(mem?.early_skips).toBe(1);
-	});
-
-	it("a later continuation still knows where an older version changed", async () => {
-		const h = await onboarded({ tracks: 600 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		await h.listen(20 * MINUTE_MS);
-		const p = h.fake.user().player;
-		p.isPlaying = false;
-		const loaded = p.order.slice();
-		const x = loaded[p.index + 8]!;
-		await h.listen(5 * MINUTE_MS);
-		await h.hub.thumb(x, -1); // v2 takes it out: the old order differs there
-		await h.listen(20 * MINUTE_MS);
-		const v2 = deckOf(h, sid);
-		// Where the old order has the turned-down song, v2 has another one.
-		const mark = v2.changedAt?.[0];
-		expect(mark).toBeDefined();
-		expect(loaded.slice(loaded.indexOf(x) - 1, loaded.indexOf(x))).toContain(
-			v2.items[mark! - 1]!.id,
-		);
-		const there = v2.items[mark!]!.id;
-		p.isPlaying = true; // the old order goes on for a song, then stops again
-		const cur = h.fake.current();
-		while (h.fake.current() === cur) await h.listen(1_000);
-		await h.listen(60_000);
-		p.isPlaying = false;
-		await h.hub.thumb(loaded[loaded.indexOf(x) + 4]!, -1); // another rewrite
-		await h.listen(20 * MINUTE_MS);
-		const v3 = deckOf(h, sid);
-		expect(v3.version).toBeGreaterThan(v2.version);
-		expect(v3.changedAt).toContain(v3.items.findIndex((it) => it.id === there));
 	});
 });
 
@@ -1419,27 +967,6 @@ describe("the twelfth review's cases", () => {
 		h.fake.pause();
 		await h.listen(45 * MINUTE_MS);
 		expect(falseSkips(h)).toBe(0);
-	});
-
-	it("a small station's continuation knows where every order has the same songs", async () => {
-		const h = await onboarded({ tracks: 24 });
-		const sid = h.stationIds[0]!;
-		expect((await h.hub.play(sid)).ok).toBe(true);
-		const p = h.fake.user().player;
-		while (p.index < 8) await h.listen(5_000);
-		await h.listen(60_000);
-		h.fake.pause();
-		const v1 = p.order.slice();
-		await h.listen(40 * MINUTE_MS);
-		const d = JSON.parse(
-			h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!.deck,
-		) as { items: { id: string }[]; sharedAt?: [number, number][] };
-		const shared = (i: number) => (d.sharedAt ?? []).some(([a, b]) => i >= a && i < b);
-		for (let i = 0; i + 1 < d.items.length; i++) {
-			const j = v1.indexOf(d.items[i]!.id);
-			expect(shared(i)).toBe(j >= 0 && v1[j + 1] === d.items[i + 1]!.id);
-		}
-		expect(d.sharedAt?.length).toBeGreaterThan(0);
 	});
 
 	it("a guest who skips just after the last look: the next song stays the guest's when the owner leaves it", async () => {
@@ -1933,7 +1460,7 @@ describe("the eighteenth review's cases", () => {
 			const h = await onboarded({ tracks: 60 });
 			const sid = h.stationIds[0]!;
 			const u = h.fake.user();
-			expect((await h.hub.play(sid)).ok).toBe(true);
+			expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
 			if (priv) u.devices.find((d) => d.id === u.player.deviceId)!.privateSession = true;
 			await h.listen(10 * MINUTE_MS);
 			const c0 = h.fake.current();
@@ -1942,7 +1469,7 @@ describe("the eighteenth review's cases", () => {
 			await h.listen(60_000);
 			h.fake.pause();
 			await h.listen(2 * 60 * MINUTE_MS);
-			expect((await h.hub.play(sid)).ok).toBe(true);
+			expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
 			expect(stationDeck(h, sid).pl.items).not.toContain(x);
 			let again = false;
 			for (let t = 0; t < 120 * MINUTE_MS; t += 5_000) {
@@ -2017,10 +1544,10 @@ describe("the nineteenth review's cases", () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
 		await h.hub.updateStation(sid, { rules: { skipPolicy: "ban" } });
-		expect((await h.hub.play(sid)).ok).toBe(true);
+		expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
 		const x = h.fake.current()!;
 		await h.listen(60_000);
-		expect((await h.hub.play(sid)).ok).toBe(true); // tapped again: starts over
+		expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true); // tapped again: starts over
 		expect(stationDeck(h, sid).pl.items).not.toContain(x);
 		const heard = heardFrom(h);
 		await h.listen(40 * MINUTE_MS);
@@ -2081,14 +1608,14 @@ describe("the nineteenth review's cases", () => {
 			const h = await onboarded({ tracks: 300 });
 			const sid = h.stationIds[0]!;
 			const u = h.fake.user();
-			expect((await h.hub.play(sid)).ok).toBe(true);
+			expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
 			h.fake.pause();
 			await h.listen(2 * MINUTE_MS);
 			const pl = stationDeck(h, sid).pl;
 			h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, pos, u.devices[0]!.id, false);
 			const x = h.fake.current()!;
 			await h.listen(60_000);
-			expect((await h.hub.play(sid)).ok).toBe(true);
+			expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
 			const heard = heardFrom(h);
 			await h.listen(4 * 60 * MINUTE_MS);
 			expect(heard.has(x)).toBe(false);
@@ -2157,13 +1684,13 @@ describe("the twentieth review's cases", () => {
 			const h = await onboarded({ tracks: 300 });
 			const sid = h.stationIds[0]!;
 			h.fake.user().listReplaced = listed;
-			expect((await h.hub.play(sid)).ok).toBe(true);
+			expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
 			await h.listen(10 * MINUTE_MS);
 			const c0 = h.fake.current();
 			while (h.fake.current() === c0) await h.listen(1_000);
 			const x = h.fake.current()!;
 			await h.listen(60_000);
-			expect((await h.hub.play(sid)).ok).toBe(true); // tapped again
+			expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true); // tapped again
 			const heard = heardFrom(h);
 			await h.listen(10 * 60 * MINUTE_MS);
 			expect(rows(h, x)).toBe(1);
@@ -2299,15 +1826,15 @@ describe("the twenty-first review's cases", () => {
 			const h = await onboarded({ tracks: 300, playlists: [150, 150] });
 			const [a, b] = h.stationIds as [number, number];
 			h.fake.user().listReplaced = listed;
-			expect((await h.hub.play(a)).ok).toBe(true);
+			expect((await h.hub.play(a, null, { newQueue: true })).ok).toBe(true);
 			await h.listen(10 * MINUTE_MS);
 			await nextSong(h);
 			await h.listen(60_000);
 			const s1 = h.fake.current()!;
-			expect((await h.hub.play(b)).ok).toBe(true);
+			expect((await h.hub.play(b, null, { newQueue: true })).ok).toBe(true);
 			await h.listen(3 * MINUTE_MS);
 			const s2 = h.fake.current()!;
-			expect((await h.hub.play(a)).ok).toBe(true);
+			expect((await h.hub.play(a, null, { newQueue: true })).ok).toBe(true);
 			await h.listen(2 * 60 * MINUTE_MS);
 			h.fake.pause();
 			await h.listen(60 * MINUTE_MS);
@@ -2321,11 +1848,11 @@ describe("the twenty-first review's cases", () => {
 			const u = h.fake.user();
 			u.listReplaced = true;
 			// A start replaces a song heard a minute: Spotify lists it.
-			expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+			expect((await h.hub.play(h.stationIds[0]!, null, { newQueue: true })).ok).toBe(true);
 			await h.listen(10 * MINUTE_MS);
 			await nextSong(h);
 			await h.listen(60_000);
-			expect((await h.hub.play(h.stationIds[1]!)).ok).toBe(true);
+			expect((await h.hub.play(h.stationIds[1]!, null, { newQueue: true })).ok).toBe(true);
 			await h.listen(30 * MINUTE_MS);
 			h.fake.pause();
 			await h.listen(60 * MINUTE_MS);
@@ -2338,7 +1865,7 @@ describe("the twenty-first review's cases", () => {
 			await h.listen(4_000);
 			if (paused) h.fake.pause();
 			await h.listen(3_000);
-			expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
+			expect((await h.hub.play(h.stationIds[0]!, null, { newQueue: true })).ok).toBe(true);
 			await h.listen(60 * MINUTE_MS);
 			h.fake.pause();
 			await h.listen(60 * MINUTE_MS);
@@ -2385,7 +1912,7 @@ describe("the twenty-second review's cases", () => {
 				const pl = own(h);
 				h.fake.startContext(u.id, `spotify:playlist:${pl.id}`, 20, u.devices[0]!.id, false);
 				await h.listen(3_000);
-				await h.hub.state({ live: true }); // the app is open
+				await h.hub.state({ live: true, refresh: true }); // the app is opened
 				const x = h.fake.current()!;
 				await h.listen(60_000);
 				await h.hub.state({ live: true });
@@ -2598,7 +2125,7 @@ describe("the twenty-third review's cases", () => {
 			const { own, other } = lists(h);
 			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 7, u.devices[0]!.id, false);
 			await h.listen(3_000);
-			await h.hub.state({ live: true });
+			await h.hub.state({ live: true, refresh: true }); // open the app
 			const a = h.fake.current()!;
 			await h.listen(60_000);
 			await h.hub.state({ live: true }); // looks saw A play a minute
@@ -2824,7 +2351,7 @@ describe("the twenty-fourth review's cases", () => {
 			const dev = u.devices[0]!.id;
 			h.fake.startContext(u.id, `spotify:playlist:${own.id}`, 3, dev, false);
 			await h.listen(3_000);
-			await h.hub.state({ live: true });
+			await h.hub.state({ live: true, refresh: true });
 			const c0 = h.fake.current();
 			while (h.fake.current() === c0) await h.listen(1_000);
 			await h.listen(50_000);

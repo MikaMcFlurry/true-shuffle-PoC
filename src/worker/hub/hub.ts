@@ -82,12 +82,18 @@ import { type Keys, randomToken } from "../lib/crypto";
 import type { SqlDb } from "../lib/sql";
 import {
 	type Fetcher,
+	publicCooldown,
 	RequestBudget,
+	SPOTIFY_COOLDOWN_SCOPES,
 	SpotifyClient,
+	type SpotifyCooldown,
+	type SpotifyCooldownScope,
 	type SpotifyEndpoints,
 	SpotifyError,
+	type SpotifyRequestMetric,
 	type SpotifyTokens,
 	type TokenStore,
+	validArtistAlbumsProbe,
 } from "../spotify/client";
 import type { SpPlaybackState, SpTrack } from "../spotify/types";
 import { type AiRunner, type DiscoveryState, discoverStep } from "./discovery";
@@ -100,6 +106,12 @@ import {
 	sourceKey,
 	toPoolEntry,
 } from "./library";
+import {
+	foregroundObservationDeadline,
+	MAX_RECENT_INTERVAL_MS,
+	observationDeadline,
+	pausedObservationPace,
+} from "./observation-policy";
 import { migrate } from "./schema";
 
 // ---------------------------------------------------------------------------
@@ -228,6 +240,44 @@ export interface HubDeps {
 	alarms: { set(at: number): Promise<void>; get(): Promise<number | null> };
 	ai: AiRunner | null;
 	wipe?: () => Promise<void>;
+	sharedSpotify?: {
+		getOperationSnapshot?(
+			operation: string,
+		): Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
+		setOperationCooldown?(cooldown: SpotifyCooldown): Promise<number>;
+		finishOperation?(operation: string, revision: number): Promise<void>;
+		recordRequest?(metric: SpotifyRequestMetric): Promise<void>;
+		getCooldown(scope?: SpotifyCooldownScope): Promise<SpotifyCooldown | null>;
+		getSnapshot(
+			scope?: SpotifyCooldownScope,
+		): Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
+		setCooldown(value: SpotifyCooldown): Promise<number>;
+		quarantineLegacyGlobal?(
+			expected: SpotifyCooldown,
+			revision: number,
+		): Promise<{ quarantined: boolean; globalRevision: number; catalogRevision: number }>;
+		beginRecheck(scope?: SpotifyCooldownScope): Promise<boolean>;
+		finishRecheck(success: boolean, scope?: SpotifyCooldownScope): Promise<void>;
+	};
+}
+
+export interface SpotifyAvailabilityExperiment {
+	testedAt: number;
+	cached?: boolean;
+	outcomes: Record<
+		"devices" | "player" | "history",
+		{
+			state: "available" | "held" | "failed" | "not_tested";
+			status?: number;
+			kind?: string;
+			reason?: string;
+			retryAfter?: string | null;
+		}
+	>;
+	controls: "untested";
+	catalog: "held" | "untested";
+	stopped: boolean;
+	devices?: DeviceView[];
 }
 
 interface StationRow {
@@ -314,6 +364,7 @@ interface PlayerSnapshot {
 	obs: PlayerObservation | null;
 	track: PackedTrack | null;
 	device: { id: string | null; name: string; restricted: boolean } | null;
+	repeat?: SpPlaybackState["repeat_state"];
 	at: number;
 }
 
@@ -446,6 +497,28 @@ export class HubError extends Error {
 
 // ---------------------------------------------------------------------------
 
+export interface SavedSession {
+	sessionId: string;
+	stationId: number;
+	orderRevision: number;
+	entryIds: string[];
+	currentIndex: number;
+	progressMs: number | null;
+	observedAt: number | null;
+	playbackEpoch: number;
+	contextUri: string;
+	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
+	sequence?: number;
+	controller?: "native" | "spotify";
+	pending: {
+		operationId: string;
+		kind: "resume" | "publish" | "next";
+		deviceId?: string | null;
+		phase?: "prepared" | "submitted";
+		startedAt?: number;
+	} | null;
+}
+
 export class HubCore {
 	private readonly db: SqlDb;
 	private sourceCache = new Map<string, PackedTrack[]>();
@@ -476,6 +549,8 @@ export class HubCore {
 	private readonly cache: { stations: StationRow[] | null } = { stations: null };
 	/** When this instance last looked at the player (also when nothing changed). */
 	private lastLookAt = 0;
+	/** Reject observations that began before a transport command changed the player. */
+	private transportRevision = 0;
 
 	private now(): number {
 		return this.d.now();
@@ -521,7 +596,7 @@ export class HubCore {
 	}
 
 	private syncState(): SyncState {
-		return {
+		const s: SyncState = {
 			recentCursor: 0,
 			lastRecentAt: 0,
 			lastPlayerAt: 0,
@@ -532,6 +607,9 @@ export class HubCore {
 			lastLikedAt: 0,
 			...(this.kvGet<Partial<SyncState>>("sync") ?? {}),
 		};
+		s.lastPlayerAt = this.kvGet<number>("player_checked_at") ?? s.lastPlayerAt;
+		s.lastRecentAt = this.kvGet<number>("history_checked_at") ?? s.lastRecentAt;
+		return s;
 	}
 
 	/**
@@ -570,14 +648,298 @@ export class HubCore {
 		};
 	}
 
-	private client(budget: RequestBudget): SpotifyClient {
+	private client(
+		budget: RequestBudget,
+		singleTransport = false,
+		allowUnknownRetry = true,
+	): SpotifyClient {
 		return new SpotifyClient({
+			singleTransport,
+			allowUnknownRetry,
 			endpoints: this.d.env.endpoints,
 			tokens: this.tokenStore(),
 			budget,
 			fetch: this.d.fetch,
 			now: () => this.now(),
+			policy: {
+				getCooldown: () => null,
+				setCooldown: () => {},
+				getOperationSnapshot: (operation) => this.operationSnapshot(operation),
+				setOperationCooldown: async (cooldown) => {
+					if (
+						cooldown.operation === "GET /artists/:id/albums" &&
+						validArtistAlbumsProbe(cooldown.probePath)
+					)
+						this.kvSet("spotify_artist_probe_source", cooldown.probePath);
+					const revision = await this.d.sharedSpotify?.setOperationCooldown?.(cooldown);
+					const states = this.operationStates();
+					states[cooldown.operation!] = {
+						revision: revision ?? (states[cooldown.operation!]?.revision ?? 0) + 1,
+						cooldown,
+					};
+					this.kvSet("spotify_operation_cooldowns", states);
+				},
+				finishOperation: async (operation, revision) => {
+					await this.d.sharedSpotify?.finishOperation?.(operation, revision);
+					if (this.d.sharedSpotify?.getOperationSnapshot) {
+						const snapshot = await this.operationSnapshot(operation);
+						if (!snapshot.cooldown) this.resumeOperationJobs(operation);
+					} else {
+						const states = this.operationStates();
+						if (states[operation]?.revision === revision) {
+							states[operation] = { revision: revision + 1, cooldown: null };
+							this.kvSet("spotify_operation_cooldowns", states);
+							this.resumeOperationJobs(operation);
+						}
+					}
+				},
+				record: (metric) => this.recordSpotifyRequest(metric),
+			},
 		});
+	}
+
+	private activateOperationPolicy(): void {
+		if (this.kvGet("spotify_operation_policy") === 2) return;
+		const legacy: Record<string, unknown> = {};
+		for (const key of [
+			"spotify_cooldown",
+			"backoff",
+			...SPOTIFY_COOLDOWN_SCOPES.map((scope) => this.cooldownKey(scope)),
+		]) {
+			const value = this.kvGet(key);
+			if (value !== null) legacy[key] = value;
+			this.kvDel(key);
+			this.kvDel(`${key}_revision`);
+		}
+		// Old guard errors have no confirmed provider response for this job's operation.
+		// Admit those jobs once under the new policy; genuine provider failures keep their schedule.
+		this.db.run(
+			"UPDATE jobs SET run_after=MIN(run_after,?),error=NULL,updated_at=? WHERE error=?",
+			this.now(),
+			this.now(),
+			"Spotify wartet auf die Freigabe weiterer Anfragen",
+		);
+		this.kvSet("spotify_operation_policy_backup", { at: this.now(), legacy });
+		this.kvDel("spotify_availability_experiment");
+		this.kvSet("spotify_operation_policy", 2);
+	}
+	private operationStates(): Record<
+		string,
+		{ revision: number; cooldown: SpotifyCooldown | null }
+	> {
+		this.activateOperationPolicy();
+		return this.kvGet("spotify_operation_cooldowns") ?? {};
+	}
+	private resumeOperationJobs(operation: string): void {
+		const paused = this.kvGet<Record<string, string>>("spotify_unknown_jobs") ?? {};
+		let changed = false;
+		for (const [key, blocked] of Object.entries(paused))
+			if (blocked === operation) {
+				this.db.run("UPDATE jobs SET run_after=? WHERE key=?", this.now(), key);
+				delete paused[key];
+				changed = true;
+			}
+		if (changed) this.kvSet("spotify_unknown_jobs", paused);
+	}
+	private async operationSnapshot(
+		operation: string,
+	): Promise<{ revision: number; cooldown: SpotifyCooldown | null }> {
+		const states = this.operationStates();
+		const shared = await this.d.sharedSpotify?.getOperationSnapshot?.(operation);
+		if (shared) {
+			const previous = states[operation];
+			if (JSON.stringify(states[operation]) !== JSON.stringify(shared)) {
+				states[operation] = shared;
+				this.kvSet("spotify_operation_cooldowns", states);
+				if (previous?.cooldown && !shared.cooldown && shared.revision > previous.revision)
+					this.resumeOperationJobs(operation);
+			}
+			return shared;
+		}
+		return states[operation] ?? { revision: 0, cooldown: null };
+	}
+
+	private cooldownKey(scope?: SpotifyCooldownScope): string {
+		return scope ? `spotify_${scope.replaceAll("-", "_")}_cooldown` : "spotify_cooldown";
+	}
+
+	private async reconcileSharedCooldown(_scope?: SpotifyCooldownScope): Promise<void> {
+		this.activateOperationPolicy();
+	}
+
+	private providerCooldown(_scope?: SpotifyCooldownScope): SpotifyCooldown | null {
+		return null;
+	}
+
+	/** Explicit owner recheck for an unknown provider reset; known deadlines stay enforced. */
+	async retryQuota(
+		requestedScope?: Exclude<SpotifyCooldownScope, "legacy-catalog">,
+	): Promise<void> {
+		this.activateOperationPolicy();
+		const family = requestedScope ?? "player";
+		const path = {
+			devices: "/me/player/devices",
+			player: "/me/player",
+			history: "/me/player/recently-played",
+			"artist-albums": "/artists/:id/albums",
+		}[family];
+		let target = path;
+		if (family === "artist-albums") {
+			const saved = (await this.operationSnapshot(`GET ${path}`)).cooldown;
+			const source = saved?.probePath ?? this.kvGet<string>("spotify_artist_probe_source");
+			if (!validArtistAlbumsProbe(source))
+				throw new HubError("quota", "Die Quelle der Künstleralben-Abfrage fehlt.", 409);
+			target = source;
+		}
+		await this.client(new RequestBudget(2), true).request("GET", target, { query: { limit: 1 } });
+	}
+
+	private availabilityFlight: Promise<SpotifyAvailabilityExperiment> | null = null;
+	testSpotifyAvailability(): Promise<SpotifyAvailabilityExperiment> {
+		if (this.availabilityFlight) return this.availabilityFlight;
+		const task = this.performAvailabilityTest();
+		this.availabilityFlight = task;
+		void task
+			.finally(() => {
+				this.availabilityFlight = null;
+			})
+			.catch(() => undefined);
+		return task;
+	}
+	private async performAvailabilityTest(): Promise<SpotifyAvailabilityExperiment> {
+		this.activateOperationPolicy();
+		const previous = this.kvGet<SpotifyAvailabilityExperiment>("spotify_availability_experiment");
+		if (previous && this.now() - previous.testedAt >= 0 && this.now() - previous.testedAt < 60000) {
+			const cached = { ...previous, cached: true, outcomes: { ...previous.outcomes } };
+			for (const family of ["devices", "player", "history"] as const) {
+				const endpoint = {
+					devices: "/me/player/devices",
+					player: "/me/player",
+					history: "/me/player/recently-played",
+				}[family];
+				const hold = (await this.operationSnapshot(`GET ${endpoint}`)).cooldown;
+				if (hold?.until !== null && (hold?.until ?? 0) > this.now())
+					cached.outcomes[family] = {
+						state: "held",
+						status: 429,
+						kind: hold!.kind,
+						reason: hold!.reason,
+						retryAfter: hold!.retryAfter,
+					};
+			}
+			return cached;
+		}
+		const result: SpotifyAvailabilityExperiment = {
+			testedAt: this.now(),
+			outcomes: {
+				devices: { state: "not_tested" },
+				player: { state: "not_tested" },
+				history: { state: "not_tested" },
+			},
+			controls: "untested",
+			catalog: "untested",
+			stopped: false,
+		};
+		const client = this.client(new RequestBudget(4), true);
+		for (const family of ["devices", "player", "history"] as const) {
+			try {
+				if (family === "devices") {
+					const devices = await client.devices();
+					result.devices = devices
+						.filter((d) => d.id)
+						.map((d) => ({
+							id: d.id!,
+							name: d.name,
+							type: d.type,
+							active: d.is_active,
+							restricted: d.is_restricted,
+						}));
+				} else if (family === "player") await client.player();
+				else await client.request("GET", "/me/player/recently-played", { query: { limit: 1 } });
+				result.outcomes[family] = {
+					state: "available",
+					status:
+						this.kvGet<{ latest: SpotifyRequestMetric }>("spotify_request_metrics")?.latest
+							.status ?? 200,
+				};
+			} catch (e) {
+				if (!(e instanceof SpotifyError)) throw e;
+				result.outcomes[family] = {
+					state: e.status === 429 ? "held" : "failed",
+					status: e.status,
+					kind: e.kind,
+					reason: e.reason,
+					retryAfter: e.retryAfter,
+				};
+				if ((e.kind !== "rate" && e.kind !== "quota") || e.operation === "POST /api/token") {
+					result.stopped = true;
+					break;
+				}
+			}
+		}
+		const { devices: _devices, ...saved } = result;
+		this.kvSet("spotify_availability_experiment", saved);
+		return result;
+	}
+
+	async spotifyDiagnostics(): Promise<unknown> {
+		const states = this.operationStates();
+		for (const operation of Object.keys(states)) await this.operationSnapshot(operation);
+		const current = this.operationStates();
+		return {
+			policyVersion: 2,
+			operationCooldowns: Object.values(current).flatMap((s) =>
+				s.cooldown ? [publicCooldown(s.cooldown)] : [],
+			),
+			cooldown: null,
+			artistAlbumsCooldown: null,
+			devicesCooldown: null,
+			playerCooldown: null,
+			historyCooldown: null,
+			catalogQuarantine: null,
+			availability: this.kvGet("spotify_availability_experiment"),
+			requests: this.kvGet("spotify_request_metrics"),
+			recentRequests: this.kvGet("spotify_recent_requests"),
+		};
+	}
+
+	/** Bounded, account-owned aggregates: no URLs, IDs, tokens or listener history. */
+	private async recordSpotifyRequest(metric: SpotifyRequestMetric): Promise<void> {
+		const hour = Math.floor(metric.at / HOUR_MS);
+		const previous = this.kvGet<{
+			hour: number;
+			counts: Record<string, number>;
+			latest: SpotifyRequestMetric;
+		}>("spotify_request_metrics");
+		const counts = previous?.hour === hour ? previous.counts : {};
+		const key = `${metric.category}:${metric.endpoint}:${metric.status}:${metric.retryCategory}`;
+		counts[key] = (counts[key] ?? 0) + 1;
+		this.kvSet("spotify_request_metrics", { hour, counts, latest: metric });
+		type Hour = {
+			hour: number;
+			counts: Record<string, number>;
+			firstQuotaAt?: number;
+			firstQuotaEndpoint?: string;
+			firstQuotaReason?: string;
+		};
+		const recent = this.kvGet<{ startedAt: number; hours: Hour[] }>("spotify_recent_requests") ?? {
+			startedAt: metric.at,
+			hours: [],
+		};
+		recent.hours = recent.hours.filter((h) => h.hour >= hour - 23 && h.hour <= hour);
+		let bucket = recent.hours.find((h) => h.hour === hour);
+		if (!bucket) {
+			bucket = { hour, counts: {} };
+			recent.hours.push(bucket);
+		}
+		bucket.counts[key] = (bucket.counts[key] ?? 0) + 1;
+		if (metric.retryCategory === "quota" && bucket.firstQuotaAt === undefined) {
+			bucket.firstQuotaAt = metric.at;
+			bucket.firstQuotaEndpoint = metric.endpoint;
+			bucket.firstQuotaReason = metric.reason;
+		}
+		this.kvSet("spotify_recent_requests", recent);
+		await this.d.sharedSpotify?.recordRequest?.(metric);
 	}
 
 	isConnected(): boolean {
@@ -668,8 +1030,9 @@ export class HubCore {
 	}
 
 	private async runJobs(budget: RequestBudget): Promise<void> {
-		const client = this.client(budget);
+		const client = this.client(budget, false, false);
 		for (let guard = 0; guard < 50; guard++) {
+			await this.reconcileSharedCooldown();
 			if (this.backoffUntil() > this.now()) return;
 			if (budget.left < 6) return;
 			const job = this.db.first<JobRow>(
@@ -705,10 +1068,16 @@ export class HubCore {
 		const msg = err instanceof Error ? err.message : String(err);
 		if (err instanceof SpotifyError) {
 			if (err.kind === "rate" || err.kind === "quota") {
-				this.setBackoff(err.retryAfterMs, err.kind);
+				if (err.retryAfter === null && err.operation) {
+					const paused = this.kvGet<Record<string, string>>("spotify_unknown_jobs") ?? {};
+					paused[job.key] = err.operation;
+					this.kvSet("spotify_unknown_jobs", paused);
+				}
 				this.db.run(
-					`UPDATE jobs SET run_after = ?, error = ? WHERE key = ?`,
-					this.now() + err.retryAfterMs,
+					"UPDATE jobs SET run_after=?,error=? WHERE key=?",
+					err.retryAfter === null
+						? Number.MAX_SAFE_INTEGER
+						: this.now() + Math.max(1000, err.retryAfterMs),
 					msg,
 					job.key,
 				);
@@ -744,18 +1113,11 @@ export class HubCore {
 	}
 
 	private backoffUntil(): number {
-		return this.kvGet<{ until: number }>("backoff")?.until ?? 0;
+		this.activateOperationPolicy();
+		return 0;
 	}
-
-	private setBackoff(ms: number, kind: string): void {
-		const until = this.now() + Math.max(1000, ms);
-		this.kvSet("backoff", { until, kind });
-		if (kind === "quota")
-			this.log(
-				"warn",
-				"quota",
-				"Spotify-Kontingent aufgebraucht — true-shuffle pausiert eine Stunde",
-			);
+	private setBackoff(_ms: number, _kind: string): void {
+		this.activateOperationPolicy();
 	}
 
 	private async step(
@@ -772,7 +1134,7 @@ export class HubCore {
 			case "deck":
 				return this.stepDeck(client, budget, Number(state.stationId));
 			case "extend":
-				return this.stepExtend(client, Number(state.stationId));
+				return this.stepExtend(client, Number(state.stationId), budget);
 			case "keep":
 				return this.stepKeep(client, String(state.trackId));
 			case "unfollow":
@@ -1661,6 +2023,7 @@ export class HubCore {
 		// Planning reads every candidate's memory: fetch them in one sweep.
 		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
 		const prev = this.deckOf(st);
+		if (mode === "background" && prev && this.savedSession(st.id)) return prev;
 		// Continue, rather than replan, when a player may still hold this
 		// playlist (paused in it, or gone quiet while in it) and resume it.
 		const lastUse = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
@@ -1767,25 +2130,44 @@ export class HubCore {
 		// Never half a playlist: the whole write must fit this invocation.
 		if (client.requestsLeft < Math.ceil(uris.length / 100) + 2)
 			throw new SpotifyError("budget", "Anfragebudget reicht nicht für die ganze Playlist");
+		const savedIntent = this.kvGet<{ layout: PlannedSlot[]; version: number; writtenAt: number }>(
+			`deck_intent:${st.id}`,
+		);
+		if (savedIntent) layout = savedIntent.layout;
+		const intent = savedIntent ?? {
+			layout,
+			version: (prev?.version ?? 0) + 1,
+			writtenAt: this.now(),
+		};
 		let playlistId = await this.ensurePlaylist(client, st);
+		this.kvSet(`deck_intent:${st.id}`, intent);
+		const draft = newDeck(intent.layout, intent.version, intent.writtenAt);
+		this.saveDeck(st.id, draft);
+		st.deck = JSON.stringify(draft);
+		if (mode === "start") {
+			const publishing = this.createSession(st, draft);
+			publishing.pending = { operationId: crypto.randomUUID(), kind: "publish" };
+			this.saveSession(publishing);
+		}
+		const intendedUris = intent.layout.map((slot) => `spotify:track:${slot.trackId}`);
 		try {
-			await client.replaceItems(playlistId, uris.slice(0, 100));
+			await client.replaceItems(playlistId, intendedUris.slice(0, 100));
 		} catch (err) {
 			if (err instanceof SpotifyError && (err.kind === "not_found" || err.kind === "forbidden")) {
 				// The listener deleted the playlist in Spotify — make a new one.
 				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, st.id);
 				st.playlist_id = null;
 				playlistId = await this.ensurePlaylist(client, st);
-				await client.replaceItems(playlistId, uris.slice(0, 100));
+				await client.replaceItems(playlistId, intendedUris.slice(0, 100));
 			} else {
 				throw err;
 			}
 		}
-		for (let i = 100; i < uris.length; i += 100) {
-			await client.addItems(playlistId, uris.slice(i, i + 100));
+		for (let i = 100; i < intendedUris.length; i += 100) {
+			await client.addItems(playlistId, intendedUris.slice(i, i + 100));
 		}
 		if (prev) this.carryPasses(st.id, prev);
-		const deck = newDeck(layout, (prev?.version ?? 0) + 1, this.now());
+		const deck = newDeck(layout, intent.version, intent.writtenAt);
 		// Positions stay trustworthy only through a continuation of an order we
 		// trusted. A fresh plan nobody started is not ours until true-shuffle
 		// starts it: a player may still carry on with what it had loaded.
@@ -1921,6 +2303,7 @@ export class HubCore {
 		);
 		st.deck = JSON.stringify(deck);
 		st.deck_dirty = 0;
+		this.kvDel(`deck_intent:${st.id}`);
 		return deck;
 	}
 
@@ -1930,6 +2313,7 @@ export class HubCore {
 		stationId: number,
 	): Promise<StepResult> {
 		const st = this.stationRow(stationId);
+		if (this.savedSession(stationId)) return { done: true };
 		if (!st) return { done: true };
 		if (!this.stationReady(st)) {
 			// Waiting is only worth it while something is being read in; otherwise
@@ -1967,48 +2351,171 @@ export class HubCore {
 	}
 
 	/** Append more songs to a deck that is running out while it plays. */
-	private async stepExtend(client: SpotifyClient, stationId: number): Promise<StepResult> {
+	private async stepExtend(
+		client: SpotifyClient,
+		stationId: number,
+		budget: RequestBudget = new RequestBudget(8),
+	): Promise<StepResult> {
+		// A maintenance alarm no longer guarantees a preceding player/history read.
+		// Capture a real current occurrence before planning or trimming its prefix.
+		if (!this.playerFresh(1000)) {
+			await this.sync(budget, { playerOnly: true });
+			if (!this.playerFresh(1000)) return { done: false, state: { stationId }, delayMs: MINUTE_MS };
+		}
+		try {
+			await this.freshenMemory(client);
+		} catch (err) {
+			// A confirmed history-only wait leaves fresh player observations and
+			// playlist writes available. Preserve the old best-known-memory refill.
+			if (
+				!(err instanceof SpotifyError) ||
+				err.operation !== "GET /me/player/recently-played" ||
+				err.status !== 429 ||
+				!this.operationStates()[err.operation]?.cooldown
+			)
+				throw err;
+			this.handleSyncError(err);
+			this.kvSet("history_due", 1);
+			if (this.kvGet("history_due_at") === null) this.kvSet("history_due_at", this.now());
+		}
 		const st = this.stationRow(stationId);
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck || !st.playlist_id) return { done: true };
-		if (remainingAhead(deck) >= EXTEND_BELOW) return { done: true };
-		// Never a song twice in one playlist: positions must stay unambiguous.
-		const inDeck = new Set(deck.items.map((i) => i.id));
-		const banned = new Set([...this.bans(st.id), ...inDeck]);
-		const pool = this.stationPool(st);
-		const discoveries = this.discoveryEntries(st);
-		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
-		const res = planQueue({
-			now: this.now(),
-			roundStartedAt: st.round_started_at,
-			rules: this.rulesOf(st),
-			pool,
-			memory: (id) => this.memory(id),
-			banned,
-			discoveries,
-			size: 100,
-			rng: this.d.rng,
-		});
-		if (res.slots.length === 0) return { done: true };
-		await client.addItems(
-			st.playlist_id,
-			res.slots.map((s) => `spotify:track:${s.trackId}`),
-		);
-		deck.items.push(
-			...res.slots.map((s) => ({
-				id: s.trackId,
-				kind: s.kind,
-				state: "pending" as const,
-				at: null,
-			})),
-		);
-		this.saveDeck(st.id, deck);
+		const session = this.savedSession(stationId);
+		const from = session?.currentIndex ?? position(deck) ?? 0;
+		if (deck.items.length - from - 1 >= EXTEND_BELOW) return { done: true };
+		const intentKey = `extend_intent:${stationId}`;
+		let intent = this.kvGet<{ items: Deck["items"]; entryIds: string[]; trim: number }>(intentKey);
+		if (!intent) {
+			const held = new Set(deck.items.slice(session ? from : 0).map((it) => it.id));
+			const pool = this.stationPool(st);
+			const discoveries = this.discoveryEntries(st);
+			this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
+			const input = {
+				now: this.now(),
+				roundStartedAt: st.round_started_at,
+				rules: this.rulesOf(st),
+				pool,
+				memory: (id: TrackId) => this.memory(id),
+				banned: new Set([...this.bans(st.id), ...held]),
+				discoveries,
+				size: 100,
+				rng: this.d.rng,
+			};
+			let res = planQueue(input);
+			if (res.slots.length === 0 && session) {
+				// Reserve the next round; history alone advances the completed round counter.
+				res = planQueue({ ...input, roundStartedAt: this.now() + 1 });
+			}
+			if (!res.slots.length) return { done: true };
+			const repeatsCompleted = res.slots.some((slot) =>
+				deck.items.slice(0, from).some((it) => it.id === slot.trackId),
+			);
+			const trim = session && (deck.items.length > 800 || repeatsCompleted) ? from : 0;
+			const items = [
+				...deck.items.slice(trim),
+				...res.slots.map((slot) => ({
+					id: slot.trackId,
+					kind: slot.kind,
+					state: "pending" as const,
+					at: null,
+				})),
+			];
+			const entryIds = [
+				...(session?.entryIds.slice(trim) ?? []),
+				...res.slots.map(() => crypto.randomUUID()),
+			];
+			intent = { items, entryIds, trim };
+			this.kvSet(intentKey, intent);
+		}
+		// Restart a complete replacement on retry. POST append alone cannot be retried safely.
+		const uris = intent.items.map((it) => `spotify:track:${it.id}`);
+		if (client.requestsLeft < Math.ceil(uris.length / 100) + (intent.trim > 0 ? 2 : 0))
+			return { done: false, state: { stationId }, delayMs: MINUTE_MS };
+		if (session && intent.trim > 0 && !session.pending) {
+			session.currentIndex = 0;
+			session.entryIds = intent.entryIds;
+			session.pending = { operationId: crypto.randomUUID(), kind: "publish" };
+			this.saveSession(session);
+			deck.items = intent.items;
+			deck.lastIndex = 0;
+			deck.lastTrackId = deck.items[0]?.id ?? null;
+			deck.version += 1;
+			this.saveDeck(stationId, deck);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: intent.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+		}
+		await client.replaceItems(st.playlist_id, uris.slice(0, 100));
+		for (let i = 100; i < uris.length; i += 100)
+			await client.addItems(st.playlist_id, uris.slice(i, i + 100));
+		deck.items = intent.items;
+		this.saveDeck(stationId, deck);
+		if (session) {
+			session.entryIds = intent.entryIds;
+			if (intent.trim > 0) {
+				const observed = toObservation(await client.player(), this.now());
+				if (
+					observed?.contextUri === session.contextUri &&
+					observed.isPlaying &&
+					observed.trackId === deck.items[0]?.id
+				) {
+					session.progressMs = observed.progressMs;
+					session.observedAt = observed.at;
+					await client.play({
+						contextUri: session.contextUri,
+						position: 0,
+						progressMs: session.progressMs ?? 0,
+					});
+					session.pending = null;
+					session.playbackEpoch += 1;
+				}
+				session.pending = null;
+				this.kvDel(`deck_intent:${stationId}`);
+			}
+			session.orderRevision += 1;
+			this.saveSession(session);
+		}
+		this.kvDel(intentKey);
 		return { done: true };
 	}
 
-	private playerFresh(): boolean {
+	private playerCheckedAt(): number | null {
+		return (
+			this.kvGet<number>("player_checked_at") ?? this.kvGet<PlayerSnapshot>("player")?.at ?? null
+		);
+	}
+
+	private playerFresh(maxAge = PLAYER_FRESH_MS): boolean {
 		const snap = this.kvGet<PlayerSnapshot>("player");
-		return !!snap && this.now() - snap.at <= PLAYER_FRESH_MS;
+		const checkedAt = this.playerCheckedAt();
+		return (
+			!!snap &&
+			checkedAt !== null &&
+			!this.kvGet("player_stale") &&
+			this.now() - checkedAt <= maxAge
+		);
+	}
+
+	/** Only an actual failed GET advances this clock; a local 429 hold does not. */
+	private noteReadFailure(endpoint: string, startedAt: number): void {
+		const metric = this.kvGet<{ latest: SpotifyRequestMetric }>("spotify_request_metrics")?.latest;
+		if (
+			metric?.method === "GET" &&
+			metric.endpoint === endpoint &&
+			metric.at >= startedAt &&
+			metric.retryCategory !== "blocked" &&
+			(metric.status === 0 || metric.status >= 400)
+		)
+			this.kvSet(endpoint === "/me/player" ? "player_failed_at" : "history_failed_at", metric.at);
+	}
+
+	/** Scheduling reads a confirmed hold for this operation only; it never creates one. */
+	private automaticReadAt(operation: string, at: number): number {
+		const hold = this.operationStates()[operation]?.cooldown;
+		return hold ? (hold.until === null ? Number.POSITIVE_INFINITY : Math.max(at, hold.until)) : at;
 	}
 
 	/** Is the listener in this station's playlist right now (or was, moments ago)? */
@@ -2032,19 +2539,58 @@ export class HubCore {
 	// Sync — read Spotify, update memory and decks
 	// =======================================================================
 
-	async sync(budget: RequestBudget, opts: { force?: boolean } = {}): Promise<void> {
-		if (!this.isConnected()) return;
-		if (this.backoffUntil() > this.now()) return;
-		const client = this.client(budget);
+	async sync(
+		budget: RequestBudget,
+		opts: { force?: boolean; observationOnly?: boolean; playerOnly?: boolean } = {},
+	): Promise<boolean> {
+		if (!this.isConnected()) return false;
+		await this.reconcileSharedCooldown();
+		if (this.backoffUntil() > this.now()) return false;
+		const client = this.client(budget, false, opts.force === true);
 		const s = this.syncState();
+		// Paused snapshots may not be rewritten. Preserve the actual previous look
+		// across eviction for private/guest listening accounting as well as pacing.
+		s.lastPlayerAt = this.playerCheckedAt() ?? s.lastPlayerAt;
+		const observationAt = this.now();
+		const transportRevision = this.transportRevision;
+		const epochs = new Map(
+			this.stations().map((st) => {
+				const session = this.savedSession(st.id);
+				return [st.id, session ? `${session.sessionId}:${session.playbackEpoch}` : null];
+			}),
+		);
 		let state: SpPlaybackState | null;
 		try {
 			state = await client.player();
 		} catch (err) {
+			this.noteReadFailure("/me/player", observationAt);
+			// Token/budget failures also need bounded local scheduling, but cannot
+			// claim that a provider player request was sent or succeeded.
+			this.kvSet("player_retry_at", this.now() + 15_000);
 			this.handleSyncError(err);
-			return;
+			if (
+				!opts.playerOnly &&
+				err instanceof SpotifyError &&
+				err.operation === "GET /me/player" &&
+				err.status === 429
+			) {
+				const previouslyActive = s.idleSince === null && s.lastActivityAt > 0;
+				if (opts.force || this.historyReadAt(previouslyActive) <= this.now()) {
+					try {
+						await this.readRecent(client, s);
+						this.setSyncState(s);
+					} catch (historyError) {
+						this.handleSyncError(historyError);
+					}
+				}
+			}
+			return false;
 		}
-		const obs = toObservation(state, this.now());
+		if (transportRevision !== this.transportRevision) return false;
+		this.kvSet("player_checked_at", this.now());
+		if (this.kvGet("player_failed_at") !== null) this.kvDel("player_failed_at");
+		if (this.kvGet("player_retry_at") !== null) this.kvDel("player_retry_at");
+		const obs = toObservation(state, observationAt);
 		this.notePrivate(
 			state?.device ? state.device.is_private_session === true : null,
 			s.lastPlayerAt,
@@ -2075,6 +2621,7 @@ export class HubCore {
 			device: state?.device
 				? { id: state.device.id, name: state.device.name, restricted: state.device.is_restricted }
 				: null,
+			repeat: state?.repeat_state,
 			at: this.now(),
 		};
 		// The same picture as a few minutes ago (a paused player): not stored again.
@@ -2084,8 +2631,12 @@ export class HubCore {
 			this.now() - before.at < 3 * MINUTE_MS &&
 			JSON.stringify({ ...before, at: 0, obs: before.obs ? { ...before.obs, at: 0 } : null }) ===
 				JSON.stringify({ ...snap, at: 0, obs: snap.obs ? { ...snap.obs, at: 0 } : null });
-		if (!same) this.kvSet("player", snap);
+		if (!same || this.kvGet("player_stale") || this.kvGet("player_observation_due"))
+			this.kvSet("player", snap);
 		this.lastLookAt = this.now();
+		const observationDue = this.kvGet<number>("player_observation_due");
+		if (observationDue !== null && observationAt >= observationDue - 1000)
+			this.kvDel("player_observation_due");
 		if (this.kvGet("player_stale")) this.kvDel("player_stale");
 		if (obs?.contextUri && obs.contextUri !== this.kvGet<string>("last_context"))
 			this.kvSet("last_context", obs.contextUri);
@@ -2097,27 +2648,52 @@ export class HubCore {
 			s.idleSince = this.now();
 		}
 
-		// Recently played: while something plays, right after it stopped, and
-		// otherwise every 30 min. The moment playback stops matters most: the
-		// last songs of a session must be in memory before any deck is rewritten.
+		// Read fresh history on a provider transition, backwards seek/repeat, stop,
+		// or every 90 seconds of unchanged active playback. Player observations
+		// and queue checkpoints still run independently at their existing cadence.
 		const justStopped = !obs?.isPlaying && wasPlaying;
+		const changedPlayback =
+			!!obs &&
+			(obs.trackId !== before?.obs?.trackId ||
+				obs.contextUri !== before?.obs?.contextUri ||
+				(obs.progressMs !== null &&
+					before?.obs?.progressMs !== null &&
+					before?.obs?.progressMs !== undefined &&
+					obs.progressMs < before.obs.progressMs));
 		const recentDue =
-			opts.force || obs?.isPlaying || justStopped || this.now() - s.lastRecentAt >= 30 * MINUTE_MS;
+			opts.force ||
+			!!this.kvGet("history_due") ||
+			justStopped ||
+			(!!obs?.isPlaying && (changedPlayback || this.now() - s.lastRecentAt >= 90_000)) ||
+			this.now() - s.lastRecentAt >= MAX_RECENT_INTERVAL_MS;
 		let plays: RecentPlay[] = [];
-		if (recentDue) {
+		if (recentDue && opts.playerOnly) {
+			this.kvSet("history_due", 1);
+			if (this.kvGet("history_due_at") === null) this.kvSet("history_due_at", this.now() + 1000);
+		}
+		if (
+			recentDue &&
+			!opts.playerOnly &&
+			(opts.force ||
+				this.automaticReadAt(
+					"GET /me/player/recently-played",
+					this.kvGet<number>("history_retry_at") ?? 0,
+				) <= this.now())
+		) {
 			try {
 				plays = await this.readRecent(client, s);
 			} catch (err) {
 				this.handleSyncError(err);
 			}
 		}
-		if (obs?.isPlaying) {
+		if (obs?.isPlaying && !opts.playerOnly) {
 			try {
 				await this.peekLiked(client, s);
 			} catch (err) {
 				this.handleSyncError(err);
 			}
 		}
+		if (transportRevision !== this.transportRevision) return false;
 
 		if (heardPrivately) {
 			const own = this.recordSeenPlay(heardPrivately);
@@ -2144,6 +2720,11 @@ export class HubCore {
 			let deck = this.deckOf(st);
 			const uri = this.deckUri(st);
 			if (!deck || !uri) continue;
+			const currentSession = this.savedSession(st.id);
+			const epoch = currentSession
+				? `${currentSession.sessionId}:${currentSession.playbackEpoch}`
+				: null;
+			if (epochs.get(st.id) === epoch) this.checkpoint(st, deck, obs);
 			let changed = false;
 			if (plays.length > 0) {
 				const r = applyPlays(deck, plays, uri);
@@ -2166,7 +2747,12 @@ export class HubCore {
 				inStation = { st: st.id, uri, inDeck: r.index !== null, index: r.index };
 				if (obs.isPlaying && this.now() - (st.last_played_at ?? 0) >= 5 * MINUTE_MS)
 					this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), st.id);
-				if (r.orderBroken && obs.shuffle && this.now() - s.shuffleFixAt > 10 * MINUTE_MS) {
+				if (
+					!opts.observationOnly &&
+					r.orderBroken &&
+					obs.shuffle &&
+					this.now() - s.shuffleFixAt > 10 * MINUTE_MS
+				) {
 					s.shuffleFixAt = this.now();
 					try {
 						await client.setShuffle(false);
@@ -2179,7 +2765,13 @@ export class HubCore {
 						/* Free account or restricted device: the warning below says it. */
 					}
 				}
-				if (obs.isPlaying && remainingAhead(deck) < EXTEND_BELOW && deck.items.length > 0) {
+				if (
+					obs.isPlaying &&
+					(this.savedSession(st.id)
+						? deck.items.length - this.savedSession(st.id)!.currentIndex - 1
+						: remainingAhead(deck)) < EXTEND_BELOW &&
+					deck.items.length > 0
+				) {
 					this.enqueue(`extend:${st.id}`, "extend", { stationId: st.id }, 1);
 				}
 			}
@@ -2203,14 +2795,18 @@ export class HubCore {
 			// Rewrite a deck once nobody has listened to it for a while.
 			const consumed = consumedCount(deck) > 0;
 			const stale = this.now() - deck.writtenAt > DECK_MAX_AGE_MS;
-			if ((consumed || st.deck_dirty || stale) && !this.jobExists(`deck:${st.id}`)) {
+			if (
+				!this.savedSession(st.id) &&
+				(consumed || st.deck_dirty || stale) &&
+				!this.jobExists(`deck:${st.id}`)
+			) {
 				const lastActive = activity[String(st.id)] ?? 0;
 				const wait = Math.max(0, lastActive + IDLE_BEFORE_REBUILD_MS - this.now());
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3, wait);
 			}
 		}
 		this.watchCurrent(obs, inStation);
-		await this.guardStation(client, obs, inStation);
+		if (!opts.observationOnly) await this.guardStation(client, obs, inStation);
 		for (const st of this.stations()) {
 			if (!st.deck && this.stationReady(st) && !this.jobExists(`deck:${st.id}`)) {
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3);
@@ -2231,6 +2827,7 @@ export class HubCore {
 		}
 		this.prune();
 		this.setSyncState(s);
+		return true;
 	}
 
 	/**
@@ -2251,17 +2848,29 @@ export class HubCore {
 	}
 
 	private async readRecent(client: SpotifyClient, s: SyncState): Promise<RecentPlay[]> {
-		const page = await client.recentlyPlayed();
+		const startedAt = this.now();
+		let page: Awaited<ReturnType<SpotifyClient["recentlyPlayed"]>>;
+		try {
+			page = await client.recentlyPlayed();
+		} catch (err) {
+			this.noteReadFailure("/me/player/recently-played", startedAt);
+			this.kvSet("history_retry_at", this.now() + 15_000);
+			throw err;
+		}
+		if (this.kvGet("history_due")) this.kvDel("history_due");
+		for (const key of ["history_due_at", "history_retry_at", "history_failed_at"])
+			if (this.kvGet(key) !== null) this.kvDel(key);
 		s.lastRecentAt = this.now();
+		this.kvSet("history_checked_at", this.now());
 		const plays = this.recordPlays(page?.items ?? [], s);
 		this.takeBackQueuedSkips(plays);
 		return plays;
 	}
 
 	/** Make memory current before planning: read recently-played unless just read. */
-	private async freshenMemory(client: SpotifyClient): Promise<void> {
+	private async freshenMemory(client: SpotifyClient, force = false): Promise<void> {
 		const s = this.syncState();
-		if (this.now() - s.lastRecentAt < 60_000) return;
+		if (!force && this.now() - s.lastRecentAt < 60_000) return;
 		const plays = await this.readRecent(client, s);
 		this.setSyncState(s);
 		if (plays.length === 0) return;
@@ -2326,6 +2935,7 @@ export class HubCore {
 		const st = this.stationRow(at.st);
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck) return;
+		if (this.savedSession(st.id) && this.memory(obs.trackId).thumb !== -1) return;
 		const m = this.memory(obs.trackId);
 		if (m.thumb !== -1 && obs.progressMs >= 30_000) return;
 		const heardToday = m.lastPlayedAt !== null && this.now() - m.lastPlayedAt < RECENT_GUARD_MS;
@@ -2489,7 +3099,7 @@ export class HubCore {
 		if (err instanceof SpotifyError) {
 			if (err.kind === "budget") return;
 			if (err.kind === "rate" || err.kind === "quota") {
-				this.setBackoff(err.retryAfterMs, err.kind);
+				if (!err.scope) this.setBackoff(err.retryAfterMs, err.kind);
 				return;
 			}
 			if (err.kind === "auth") {
@@ -3746,100 +4356,733 @@ export class HubCore {
 	// Playback
 	// =======================================================================
 
-	async play(stationId: number, deviceId?: string | null): Promise<PlayResult> {
+	private commandTail: Promise<unknown> = Promise.resolve();
+
+	/** Serialize commands across awaited provider requests; a stale tab cannot replace a run. */
+	play(
+		stationId: number,
+		deviceId?: string | null,
+		opts: { newQueue?: boolean; sessionId?: string } = {},
+	): Promise<PlayResult> {
+		const task = this.commandTail.then(() => this.resumeSession(stationId, deviceId, opts));
+		this.commandTail = task.catch(() => undefined);
+		return task;
+	}
+
+	public savedSession(stationId?: number): SavedSession | null {
+		const id = stationId ?? this.kvGet<number>("active_session_station");
+		if (id == null) return null;
+		const row = this.db.first<{ data: string }>(
+			`SELECT data FROM playback_sessions WHERE station_id = ?`,
+			id,
+		);
+		return row ? (JSON.parse(row.data) as SavedSession) : null;
+	}
+
+	private saveSession(session: SavedSession): void {
+		this.db.run(
+			`INSERT INTO playback_sessions (station_id, data) VALUES (?, ?) ON CONFLICT(station_id) DO UPDATE SET data = excluded.data WHERE playback_sessions.data <> excluded.data`,
+			session.stationId,
+			JSON.stringify(session),
+		);
+	}
+
+	private createSession(st: StationRow, deck: Deck): SavedSession {
+		const sessionId = crypto.randomUUID();
+		const index = deck.lastTrackId ? deck.items.findIndex((it) => it.id === deck.lastTrackId) : -1;
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const trustworthy =
+			index >= 0 &&
+			snap?.obs?.contextUri === this.deckUri(st) &&
+			snap.obs.trackId === deck.lastTrackId;
+		const session: SavedSession = {
+			sessionId,
+			stationId: st.id,
+			orderRevision: deck.version,
+			entryIds: deck.items.map((_, i) => `${sessionId}:${i}`),
+			currentIndex: Math.max(0, index),
+			progressMs: trustworthy ? snap.obs!.progressMs : null,
+			observedAt: trustworthy ? snap!.obs!.at : null,
+			playbackEpoch: 0,
+			contextUri: this.deckUri(st)!,
+			status: "saved",
+			pending: null,
+		};
+		this.saveSession(session);
+		return session;
+	}
+
+	/** Deliberate local replacement; normal native resume never calls this planner. */
+	public newNativeQueue(stationId: number): SavedSession {
 		const st = this.stationRow(stationId);
-		if (!st) return fail("unknown", "Diesen Sender gibt es nicht.");
-		if (this.backoffUntil() > this.now()) {
-			const kind = this.kvGet<{ kind: string }>("backoff")?.kind === "quota" ? "quota" : "rate";
-			return fail(
-				kind,
-				kind === "quota"
-					? "Spotify-Kontingent aufgebraucht — bitte später erneut."
-					: "Spotify bremst gerade — gleich noch einmal versuchen.",
+		if (!st || !this.stationReady(st))
+			throw new HubError("not_ready", "Diese Warteschlange wird noch vorbereitet.");
+		const pool = this.stationPool(st);
+		const discoveries = this.discoveryEntries(st);
+		this.preloadMemory([...pool.map((it) => it.id), ...discoveries.map((it) => it.id)]);
+		const input = {
+			now: this.now(),
+			roundStartedAt: st.round_started_at,
+			rules: this.rulesOf(st),
+			pool,
+			memory: (id: TrackId) => this.memory(id),
+			banned: this.bans(stationId),
+			discoveries,
+			size: DECK_SIZE,
+			rng: this.d.rng,
+		};
+		let result = planQueue(input);
+		if (!result.slots.length && result.poolSize > 0)
+			result = planQueue({ ...input, roundStartedAt: this.now() + 1 });
+		if (!result.slots.length)
+			throw new HubError("empty", "Diese Warteschlange hat keine abspielbaren Songs.");
+		const deck = newDeck(result.slots, (this.deckOf(st)?.version ?? 0) + 1, this.now());
+		return this.db.transaction(() => {
+			this.saveDeck(stationId, deck);
+			st.deck = JSON.stringify(deck);
+			const session = this.createSession(st, deck);
+			session.controller = "native";
+			session.contextUri = this.deckUri(st) ?? `native:station:${stationId}`;
+			this.saveSession(session);
+			this.kvSet("active_session_station", stationId);
+			this.kvDel(`native_tail:${stationId}`);
+			this.kvDel(`extend_intent:${stationId}`);
+			this.kvDel(`native_heard:${stationId}`);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: result.slots,
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+			this.db.run(
+				`UPDATE stations SET deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
+				result.freshRemaining,
+				result.poolSize,
+				JSON.stringify(result.counts),
+				stationId,
 			);
+			return session;
+		});
+	}
+
+	public nativeSession(stationId: number, advance = false): SavedSession {
+		const st = this.stationRow(stationId);
+		const deck = st ? this.deckOf(st) : null;
+		if (!st || !deck?.items.length)
+			throw new HubError("not_ready", "Diese Warteschlange wird noch vorbereitet.");
+		const session = this.savedSession(stationId) ?? this.createSession(st, deck);
+		if (advance && session.currentIndex + 1 < session.entryIds.length) {
+			session.currentIndex += 1;
+			session.progressMs = 0;
+			session.observedAt = this.now();
 		}
+		session.controller = "native";
+		session.pending = null;
+		session.playbackEpoch += 1;
+		session.sequence = -1;
+		session.status = "saved";
+		this.saveSession(session);
+		this.kvSet("active_session_station", stationId);
+		return session;
+	}
+
+	/** Reserve a local ordered tail. Transport retries receive exactly the same occurrence IDs. */
+	public prepareNativeTail(
+		stationId: number,
+	): { orderRevision: number; entries: { entryId: string; mediaId: string }[] } | null {
+		const session = this.savedSession(stationId);
+		const st = this.stationRow(stationId);
+		const deck = st ? this.deckOf(st) : null;
+		if (session?.controller !== "native" || !st || !deck) return null;
+		const key = `native_tail:${stationId}`;
+		const pending = this.kvGet<{
+			sessionId: string;
+			orderRevision: number;
+			entries: { entryId: string; mediaId: string }[];
+		}>(key);
+		if (pending?.sessionId === session.sessionId)
+			return { orderRevision: pending.orderRevision, entries: pending.entries };
+		if (deck.items.length - session.currentIndex - 1 >= EXTEND_BELOW) return null;
+		const pool = this.stationPool(st);
+		const discoveries = this.discoveryEntries(st);
+		this.preloadMemory([...pool.map((it) => it.id), ...discoveries.map((it) => it.id)]);
+		const prefix = deck.items.slice(0, session.currentIndex);
+		const suffix = deck.items.slice(session.currentIndex);
+		const blocked = new Set([...this.bans(st.id), ...suffix.map((it) => it.id)]);
+		const input = {
+			now: this.now(),
+			roundStartedAt: st.round_started_at,
+			rules: this.rulesOf(st),
+			pool,
+			memory: (id: TrackId) => this.memory(id),
+			banned: new Set([...blocked, ...prefix.map((it) => it.id)]),
+			discoveries,
+			size: 100,
+			rng: this.d.rng,
+		};
+		let result = planQueue(input);
+		if (!result.slots.length)
+			result = planQueue({ ...input, banned: blocked, roundStartedAt: this.now() + 1 });
+		if (!result.slots.length) return null;
+		const appended = result.slots.map((slot) => ({
+			id: slot.trackId,
+			kind: slot.kind,
+			state: "pending" as const,
+			at: null,
+		}));
+		const entries = appended.map((it) => ({
+			entryId: crypto.randomUUID(),
+			mediaId: it.id,
+		}));
+		const trim =
+			deck.items.length > 800 || appended.some((it) => prefix.some((old) => old.id === it.id))
+				? session.currentIndex
+				: 0;
+		this.db.transaction(() => {
+			deck.items = [...deck.items.slice(trim), ...appended];
+			deck.lastIndex = session.currentIndex - trim;
+			deck.version += 1;
+			session.entryIds = [...session.entryIds.slice(trim), ...entries.map((it) => it.entryId)];
+			session.currentIndex -= trim;
+			session.orderRevision += 1;
+			this.saveDeck(stationId, deck);
+			this.saveSession(session);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: deck.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+			this.kvSet(key, {
+				sessionId: session.sessionId,
+				orderRevision: session.orderRevision,
+				entries,
+			});
+		});
+		return { orderRevision: session.orderRevision, entries };
+	}
+
+	public acknowledgeNativeTail(stationId: number, revision: number): boolean {
+		const key = `native_tail:${stationId}`;
+		const intent = this.kvGet<{ sessionId: string; orderRevision: number }>(key);
+		if (
+			!intent ||
+			intent.orderRevision !== revision ||
+			this.savedSession(stationId)?.sessionId !== intent.sessionId
+		)
+			return false;
+		this.kvDel(key);
+		return true;
+	}
+
+	/** Compare-and-swap native command recovery; trusted events win over stale intents. */
+	public commitNativeSession(
+		snapshot: SavedSession,
+		expectedEpoch: number,
+		expectedSequence = -1,
+	): boolean {
+		const current = this.savedSession(snapshot.stationId);
+		if (
+			!current ||
+			current.sessionId !== snapshot.sessionId ||
+			current.playbackEpoch !== expectedEpoch ||
+			(current.sequence ?? -1) !== expectedSequence
+		)
+			return false;
+		this.saveSession({
+			...snapshot,
+			playbackEpoch: current.playbackEpoch,
+			sequence: current.sequence,
+			controller: "native",
+		});
+		return true;
+	}
+
+	public nativeObservationStatus(
+		stationId: number,
+		sessionId: string,
+		playbackEpoch: number,
+		status: "active" | "paused" | "disconnected" | "external" | "ambiguous",
+		sequence?: number,
+	): boolean {
+		const session = this.savedSession(stationId);
+		if (
+			session?.controller !== "native" ||
+			session.sessionId !== sessionId ||
+			session.playbackEpoch !== playbackEpoch
+		)
+			return false;
+		if (sequence != null && (!Number.isInteger(sequence) || sequence <= (session.sequence ?? -1)))
+			return false;
+		if (sequence != null) session.sequence = sequence;
+		session.status = status;
+		this.saveSession(session);
+		return true;
+	}
+
+	private noteNativeSample(
+		session: SavedSession,
+		entryId: string,
+		progress: number | null,
+		playing: boolean,
+	): void {
+		const key = `native_heard:${session.stationId}`;
+		type Sample = {
+			entryId: string;
+			epoch: number;
+			at: number;
+			progress: number | null;
+			playing: boolean;
+			listened: number;
+			start: number;
+			ignored: boolean;
+			recorded: boolean;
+		};
+		const now = this.now();
+		const prev = this.kvGet<Sample>(key);
+		const sameEntry = prev?.entryId === entryId;
+		const same = sameEntry && prev.epoch === session.playbackEpoch;
+		const sample: Sample = sameEntry
+			? { ...prev, epoch: session.playbackEpoch }
+			: {
+					entryId,
+					epoch: session.playbackEpoch,
+					at: now,
+					progress,
+					playing,
+					listened: 0,
+					start: now,
+					ignored: this.inGuest(now),
+					recorded: false,
+				};
+		if (same && prev.playing && progress != null && prev.progress != null) {
+			const delta = progress - prev.progress;
+			const elapsed = now - prev.at;
+			// Provider movement corroborates heard time. A seek or wall time alone counts nothing.
+			if (delta >= 0 && elapsed >= 0 && delta <= elapsed + 2000)
+				sample.listened += Math.min(delta, elapsed);
+		}
+		sample.ignored ||=
+			this.inGuest(now) ||
+			this.guestPeriods().some((period) => period.from <= now && period.to > sample.at);
+		sample.at = now;
+		sample.progress = progress;
+		sample.playing = playing;
+		if (sample.listened >= 30_000 && !sample.recorded) {
+			const st = this.stationRow(session.stationId);
+			const deck = st ? this.deckOf(st) : null;
+			const index = session.entryIds.indexOf(entryId);
+			const id = index >= 0 ? deck?.items[index]?.id : null;
+			const track = id ? this.lookupTracks([id], this.usedSources()).get(id) : null;
+			if (id && track) {
+				if (sample.ignored)
+					this.db.run(
+						`INSERT OR IGNORE INTO plays (played_at,track_id,context_uri,station_id,ignored,meta) VALUES (?,?,?,?,1,?)`,
+						now,
+						id,
+						session.contextUri,
+						session.stationId,
+						JSON.stringify(track),
+					);
+				else
+					this.recordSeenPlay({
+						id,
+						at: now,
+						start: sample.start,
+						end: now,
+						after: sample.start,
+						contextUri: session.contextUri,
+						track,
+					});
+				sample.recorded = true;
+			}
+		}
+		this.kvSet(key, sample);
+	}
+
+	/** Native events are fenced by account, session, occurrence, epoch and sequence. */
+	public acceptSessionObservation(
+		stationId: number,
+		obs: {
+			sessionId: string;
+			entryId: string;
+			playbackEpoch: number;
+			sequence: number;
+			progressMs: number | null;
+			isPlaying: boolean;
+		},
+	): boolean {
+		const session = this.savedSession(stationId);
+		if (
+			!session ||
+			session.sessionId !== obs.sessionId ||
+			session.playbackEpoch !== obs.playbackEpoch ||
+			obs.sequence <= (session.sequence ?? -1)
+		)
+			return false;
+		const index = session.entryIds.indexOf(obs.entryId);
+		if (
+			index < 0 ||
+			(obs.progressMs != null && (!Number.isFinite(obs.progressMs) || obs.progressMs < 0))
+		)
+			return false;
+		this.noteNativeSample(session, obs.entryId, obs.progressMs, obs.isPlaying);
+		if (index !== session.currentIndex || obs.progressMs != null)
+			session.progressMs = obs.progressMs;
+		session.currentIndex = index;
+		session.sequence = obs.sequence;
+		session.controller = "native";
+		session.observedAt = this.now();
+		session.status = obs.isPlaying ? "active" : "paused";
+		this.saveSession(session);
+		return true;
+	}
+
+	public sessionView(stationId?: number, limit = 51) {
+		const session = this.savedSession(stationId);
+		const st = session ? this.stationRow(session.stationId) : null;
+		const deck = st ? this.deckOf(st) : null;
+		if (!session || !deck) return null;
+		const upcoming = deck.items.slice(
+			session.currentIndex,
+			session.currentIndex + Math.min(1000, Math.max(1, limit)),
+		);
+		const tracks = this.lookupTracks(
+			upcoming.map((it) => it.id),
+			this.usedSources(),
+		);
+		const queue = upcoming.flatMap((it, n) => {
+			const track = tracks.get(it.id);
+			return track
+				? [{ entryId: session.entryIds[session.currentIndex + n]!, track: this.view(track) }]
+				: [];
+		});
+		return {
+			sessionId: session.sessionId,
+			stationId: session.stationId,
+			entryId: session.entryIds[session.currentIndex]!,
+			orderRevision: session.orderRevision,
+			progressMs: session.progressMs,
+			observedAt: session.observedAt,
+			status: session.status,
+			pending:
+				session.pending !== null ||
+				(session.controller !== "native" && !!this.kvGet(`deck_intent:${session.stationId}`)),
+			queue,
+		};
+	}
+
+	private checkpoint(st: StationRow, deck: Deck, obs: PlayerObservation | null): void {
+		let session = this.savedSession(st.id);
+		if (!session && (deck.lastTrackId || obs?.contextUri === this.deckUri(st)))
+			session = this.createSession(st, deck);
+		if (
+			session?.pending?.kind === "resume" &&
+			session.controller !== "native" &&
+			obs?.contextUri === session.contextUri &&
+			obs.isPlaying &&
+			obs.at >= (session.pending.startedAt ?? session.observedAt ?? 0)
+		) {
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const index =
+				obs.contextOffset != null && matches.includes(obs.contextOffset)
+					? obs.contextOffset
+					: matches.length === 1
+						? matches[0]!
+						: -1;
+			// A fresh own-context observation confirms the desired state. Unrelated
+			// playback and ambiguous occurrences cannot acknowledge the operation.
+			if (index >= 0 && (session.pending.phase === "prepared" || index === session.currentIndex))
+				session.pending = null;
+		}
+		if (session?.pending?.kind === "next" && obs?.contextUri === session.contextUri) {
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const index =
+				obs.contextOffset != null && matches.includes(obs.contextOffset)
+					? obs.contextOffset
+					: matches.length === 1
+						? matches[0]!
+						: -1;
+			if (index > session.currentIndex) {
+				session.pending = null;
+				session.currentIndex = index;
+				session.progressMs = obs.progressMs;
+				session.observedAt = obs.at;
+				this.saveSession(session);
+			}
+		}
+		if (
+			!session ||
+			(session.pending &&
+				!(session.pending.kind === "resume" && session.pending.phase === "prepared")) ||
+			session.controller === "native"
+		)
+			return;
+		if (!obs) session.status = "disconnected";
+		else if (obs.contextUri !== session.contextUri) session.status = "external";
+		else if (session.observedAt == null || obs.at >= session.observedAt) {
+			if (this.kvGet<number>("active_session_station") !== st.id)
+				this.kvSet("active_session_station", st.id);
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const offset = obs.contextOffset;
+			if (matches.length > 1 && offset == null) {
+				session.status = "ambiguous";
+				this.saveSession(session);
+				return;
+			}
+			const index =
+				offset != null && matches.includes(offset)
+					? offset
+					: matches.length === 1
+						? matches[0]!
+						: matches.includes(session.currentIndex)
+							? session.currentIndex
+							: -1;
+			if (index >= 0) {
+				session.currentIndex = index;
+				// Latest valid provider observation wins, including a backwards seek.
+				session.progressMs =
+					Number.isFinite(obs.progressMs) && obs.progressMs >= 0 ? obs.progressMs : null;
+				session.observedAt = obs.at;
+				session.status = obs.isPlaying ? "active" : "paused";
+			} else session.status = "ambiguous";
+		}
+		this.saveSession(session);
+	}
+
+	private async resumeSession(
+		stationId: number,
+		deviceId?: string | null,
+		opts: { newQueue?: boolean; sessionId?: string } = {},
+	): Promise<PlayResult> {
+		const st = this.stationRow(stationId);
+		if (!st) return fail("unknown", "Diese Warteschlange gibt es nicht.");
+		let session = this.savedSession(stationId);
+		if (opts.sessionId && session?.sessionId !== opts.sessionId)
+			return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
 		const budget = new RequestBudget(BUDGET_PER_INVOCATION);
 		const client = this.client(budget);
+		let transportAttempted = false;
 		try {
-			await this.sync(budget, { force: true });
-			const shown = this.shownHeardSong();
+			this.transportRevision += 1;
+			const intent = this.kvGet<{ layout: PlannedSlot[] }>(`deck_intent:${stationId}`);
+			if (intent && st.playlist_id) {
+				const uris = intent.layout.map((slot) => `spotify:track:${slot.trackId}`);
+				await client.replaceItems(st.playlist_id, uris.slice(0, 100));
+				for (let i = 100; i < uris.length; i += 100)
+					await client.addItems(st.playlist_id, uris.slice(i, i + 100));
+				this.kvDel(`deck_intent:${stationId}`);
+				this.kvDel(`extend_intent:${stationId}`);
+			}
+			// Capture the checkpoint without running automatic playback repair
+			// ahead of this explicit start/device-selection command.
+			const observed = await this.sync(budget, {
+				force: true,
+				observationOnly: true,
+				// Replanning still needs fresh history; a stable resume only needs
+				// the actual unfinished occurrence and provider mode/device sample.
+				playerOnly: !!session && !opts.newQueue && !!st.deck && !!st.playlist_id && !intent,
+			});
 			const fresh = this.stationRow(stationId)!;
-			let deck = this.deckOf(fresh);
-			const needsRebuild =
-				!deck ||
-				fresh.deck_dirty === 1 ||
-				consumedCount(deck) > 0 ||
-				deck.continued === true ||
-				this.now() - deck.writtenAt > DECK_MAX_AGE_MS ||
-				!fresh.playlist_id ||
-				// The song the player shows, heard 30 s or more, still waits in it.
-				(shown !== null && deck.items.some((it) => it.id === shown && it.state === "pending"));
-			if (needsRebuild) deck = await this.rebuildDeck(client, fresh, "start", shown);
-			const target = await this.pickDevice(client, deviceId ?? null);
-			if (!target)
-				return fail(
-					"no_device",
-					"Öffne Spotify auf einem Gerät (Handy, PC, Box) — dann nochmal tippen.",
+			if (!session && this.stationOrphaned(fresh))
+				throw new HubError(
+					"gone",
+					"Die Playlist dieses Senders gibt es in deinem Spotify nicht mehr. Wähle unter Quellen eine andere.",
 				);
-			// Our order only holds with the service's own shuffle and repeat off.
-			for (const fix of [
-				() => client.setShuffle(false, target.id),
-				() => client.setRepeat("off", target.id),
-			]) {
-				try {
-					await fix();
-				} catch (err) {
-					if (err instanceof SpotifyError && (err.kind === "premium" || err.kind === "restricted"))
-						throw err;
+			let deck = this.deckOf(fresh);
+			if (
+				(opts.newQueue && !intent) ||
+				(!session && fresh.deck_dirty === 1) ||
+				!deck ||
+				!fresh.playlist_id
+			) {
+				if (opts.newQueue)
+					this.db.run(`DELETE FROM playback_sessions WHERE station_id = ?`, stationId);
+				deck = await this.rebuildDeck(
+					client,
+					fresh,
+					"start",
+					opts.newQueue ? this.shownHeardSong() : null,
+				);
+				session = this.savedSession(stationId);
+			}
+			if (!deck?.items.length) return fail("empty", "Diese Warteschlange hat keine Songs.");
+			session = session ? this.savedSession(stationId) : null;
+			session ??= this.createSession(fresh, deck);
+			// Journal the candidate without replacing the visible saved station.
+			// A definitive refusal must leave the previous station available.
+			// Submitted ambiguous commands still become visible for reconciliation.
+			session.pending = {
+				operationId: session.pending?.operationId ?? crypto.randomUUID(),
+				kind: "resume",
+				deviceId,
+				phase: "prepared",
+				startedAt: this.now(),
+			};
+			this.saveSession(session);
+			let target = await this.pickDevice(client, deviceId ?? null, { observed });
+			if (!target) {
+				const current = this.savedSession(stationId);
+				if (
+					current?.sessionId === session.sessionId &&
+					current.pending?.operationId === session.pending?.operationId
+				) {
+					current.pending = null;
+					current.status = "disconnected";
+					this.saveSession(current);
 				}
+				return fail("no_device", "Öffne Spotify auf einem Gerät und setze dann fort.");
 			}
+			const snapshot = this.kvGet<PlayerSnapshot>("player");
+			if (
+				observed &&
+				!opts.newQueue &&
+				session.controller !== "native" &&
+				snapshot?.obs?.isPlaying &&
+				!snapshot.obs.shuffle &&
+				snapshot.repeat === "off" &&
+				snapshot.obs.contextUri === session.contextUri &&
+				snapshot.obs.trackId === deck.items[session.currentIndex]?.id &&
+				target.id === snapshot.device?.id
+			) {
+				session.pending = null;
+				session.controller = "spotify";
+				session.playbackEpoch += 1;
+				session.status = "active";
+				this.saveSession(session);
+				this.kvSet("active_session_station", stationId);
+				await this.deferPlayerObservation();
+				return { ok: true, deviceName: target.name, acceptedAt: this.now() };
+			}
+			const replacedSong = this.shownHeardSong();
+			const start = async (device: { id: string; name: string }) => {
+				// Only a successful observation from this command can avoid mode writes.
+				// Unknown modes and a different target retain the ordered-start sequence.
+				const sameDevice = observed && snapshot?.device?.id === device.id;
+				if (!sameDevice || !snapshot?.obs || snapshot.obs.shuffle)
+					await client.setShuffle(false, device.id);
+				if (!sameDevice || snapshot?.repeat !== "off") await client.setRepeat("off", device.id);
+				session!.pending = { ...session!.pending!, phase: "submitted" };
+				this.saveSession(session!);
+				transportAttempted = true;
+				await client.play({
+					contextUri: session!.contextUri,
+					position: session!.currentIndex,
+					progressMs: session!.progressMs ?? 0,
+					deviceId: device.id,
+				});
+			};
 			try {
-				await client.play({
-					contextUri: `spotify:playlist:${fresh.playlist_id}`,
-					position: 0,
-					deviceId: target.id,
-				});
+				try {
+					await start(target);
+				} catch (err) {
+					if (!(err instanceof SpotifyError && err.kind === "no_device")) throw err;
+					this.kvDel("spotify_devices");
+					if (deviceId) throw err;
+					// One definitive device rejection permits one fresh discovery; never
+					// retry the vanished device or silently redirect an explicit selection.
+					const fallback = await this.pickDevice(client, null, { exclude: target.id });
+					if (!fallback) throw err;
+					target = fallback;
+					await start(target);
+				}
 			} catch (err) {
-				if (!(err instanceof SpotifyError && err.kind === "not_found")) throw err;
-				// The listener deleted the station's playlist in Spotify: make a new one.
-				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, fresh.id);
+				if (
+					!(
+						err instanceof SpotifyError &&
+						err.kind === "not_found" &&
+						err.operation === "PUT /me/player/play"
+					)
+				)
+					throw err;
+				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, stationId);
 				fresh.playlist_id = null;
-				deck = await this.rebuildDeck(client, fresh, "start", shown);
+				const playlistId = await this.ensurePlaylist(client, fresh);
+				session.contextUri = `spotify:playlist:${playlistId}`;
+				this.saveSession(session);
+				this.kvSet(`deck_intent:${stationId}`, {
+					layout: deck.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+					version: deck.version,
+					writtenAt: deck.writtenAt,
+				});
+				const uris = deck.items.map((it) => `spotify:track:${it.id}`);
+				await client.replaceItems(playlistId, uris.slice(0, 100));
+				for (let i = 100; i < uris.length; i += 100)
+					await client.addItems(playlistId, uris.slice(i, i + 100));
+				this.kvDel(`deck_intent:${stationId}`);
 				await client.play({
-					contextUri: `spotify:playlist:${fresh.playlist_id}`,
-					position: 0,
+					contextUri: session.contextUri,
+					position: session.currentIndex,
+					progressMs: session.progressMs ?? 0,
 					deviceId: target.id,
 				});
 			}
-			if (deck) {
-				// We started it at the top: positions from here on are ours.
-				deck.lastIndex = null;
-				deck.lastTrackId = null;
-				deck.lastObservedAt = null;
-				deck.ours = true;
-				deck.top = true;
-				deck.inOrder = true;
-				delete deck.strayedUntil;
-				this.saveDeck(fresh.id, deck);
-			}
-			this.noteShownPending(shown);
-			const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
-			activity[String(fresh.id)] = this.now();
-			this.kvSet("deck_activity", activity);
-			this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), fresh.id);
-			this.log("info", "play", `„${fresh.name}“ gestartet auf ${target.name}`);
+			if (replacedSong && replacedSong !== deck.items[session.currentIndex]?.id)
+				this.noteShownPending(replacedSong);
+			session.pending = null;
+			session.controller = "spotify";
+			session.playbackEpoch += 1;
+			session.status = "active";
+			this.saveSession(session);
+			this.kvSet("active_session_station", stationId);
+			this.transportRevision += 1;
+			deck.ours = true;
+			deck.inOrder = true;
+			deck.top = session.currentIndex === 0;
+			this.saveDeck(stationId, deck);
 			this.kvSet("player_stale", 1);
-			// The deck is current now: a rewrite queued before would only wait on
-			// its own clock and come late after the next stop.
-			this.db.run(`DELETE FROM jobs WHERE key = ?`, `deck:${fresh.id}`);
-			await this.scheduleSoon(20_000);
-			return { ok: true, deviceName: target.name };
+			this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), stationId);
+			await this.deferPlayerObservation();
+			return { ok: true, deviceName: target.name, acceptedAt: this.now() };
 		} catch (err) {
-			return this.playError(err);
+			if (err instanceof SpotifyError && ["no_device", "restricted"].includes(err.kind))
+				this.kvDel("spotify_devices");
+			const current = this.savedSession(stationId);
+			const result = this.playError(err, transportAttempted);
+			// Rejected commands and preflight failures did not start playback. Keep
+			// the checkpoint, but release the pending control so the listener can retry.
+			// This includes a rejected 401 followed by a failed token refresh: the
+			// refresh operation is distinct from an ambiguous player-write outcome.
+			if (
+				current?.pending?.kind === "resume" &&
+				current.sessionId === session?.sessionId &&
+				current.pending.operationId === session.pending?.operationId &&
+				(current.pending.phase === "prepared" || !result.uncertain)
+			) {
+				current.pending = null;
+				this.saveSession(current);
+			}
+			if (result.uncertain) {
+				this.kvSet("active_session_station", stationId);
+				this.transportRevision += 1;
+			}
+			if (result.uncertain || this.savedSession(stationId)?.pending?.phase === "submitted") {
+				this.kvSet("player_stale", 1);
+				await this.deferPlayerObservation();
+			}
+			return result;
 		}
 	}
 
-	private playError(err: unknown): PlayResult {
+	private playError(err: unknown, transportAttempted = false): PlayResult {
+		if (
+			transportAttempted &&
+			!(err instanceof HubError) &&
+			(!(err instanceof SpotifyError) ||
+				((err.kind === "network" || err.kind === "server") &&
+					(!err.operation || /^(PUT|POST) \/me\/player\/(play|pause|next)$/.test(err.operation))))
+		)
+			return {
+				...fail(
+					"unknown",
+					"Spotify hat den Befehl noch nicht bestätigt. Der Zustand wird geprüft.",
+				),
+				uncertain: true,
+			};
 		if (err instanceof HubError) {
 			const code: PlayErrorCode =
 				err.code === "not_ready" || err.code === "empty" ? err.code : "unknown";
@@ -3863,7 +5106,7 @@ export class HubCore {
 					this.setBackoff(err.retryAfterMs, "rate");
 					return fail("rate", "Spotify bremst gerade — gleich noch einmal versuchen.");
 				case "quota":
-					this.setBackoff(err.retryAfterMs, "quota");
+					if (!err.scope) this.setBackoff(err.retryAfterMs, "quota");
 					return fail("quota", "Spotify-Kontingent aufgebraucht — bitte später erneut.");
 				case "auth":
 					this.markAuthLost();
@@ -3881,23 +5124,67 @@ export class HubCore {
 	private async pickDevice(
 		client: SpotifyClient,
 		wanted: string | null,
+		opts: { observed?: boolean; exclude?: string } = {},
 	): Promise<{ id: string; name: string } | null> {
-		const devices = await client.devices();
-		if (wanted) {
-			const d = devices.find((x) => x.id === wanted);
-			if (d?.id) return { id: d.id, name: d.name };
+		const snapshot = this.kvGet<PlayerSnapshot>("player");
+		const known = snapshot?.device;
+		const cached = this.kvGet<{ at: number; devices: DeviceView[] }>("spotify_devices");
+		if (wanted)
+			return {
+				id: wanted,
+				name:
+					known?.id === wanted
+						? known.name
+						: (cached?.devices.find((d) => d.id === wanted)?.name ?? "Spotify"),
+			};
+		if (!opts.exclude && opts.observed && known?.id && !known.restricted)
+			return { id: known.id, name: known.name };
+		const usable = (devices: DeviceView[]) => {
+			const candidates = devices.filter((d) => !d.restricted && d.id !== opts.exclude);
+			return (
+				candidates.find((d) => d.active) ??
+				candidates.find((d) => d.type === "Smartphone") ??
+				candidates[0] ??
+				null
+			);
+		};
+		if (!opts.exclude && cached && this.now() - cached.at < 60_000) {
+			const pick = usable(cached.devices);
+			if (pick) return pick;
 		}
-		const usable = devices.filter((d) => d.id && !d.is_restricted);
-		const active = usable.find((d) => d.is_active);
-		const pick = active ?? usable.find((d) => d.type === "Smartphone") ?? usable[0];
-		return pick?.id ? { id: pick.id, name: pick.name } : null;
+		try {
+			return usable(await this.readDevices(client));
+		} catch (e) {
+			if (
+				!(e instanceof SpotifyError) ||
+				e.operation !== "GET /me/player/devices" ||
+				e.status !== 429
+			)
+				throw e;
+			if (
+				snapshot &&
+				this.now() - snapshot.at < 60_000 &&
+				known?.id &&
+				!known.restricted &&
+				known.id !== opts.exclude
+			)
+				return { id: known.id, name: known.name };
+			return null;
+		}
 	}
 
 	async devices(): Promise<DeviceView[]> {
-		const budget = new RequestBudget(4);
-		const list = await this.client(budget).devices();
-		return list
+		const cached = this.kvGet<{ at: number; devices: DeviceView[] }>("spotify_devices");
+		if (cached && this.now() - cached.at < (cached.devices.length ? 60_000 : 5000))
+			return cached.devices;
+		return this.readDevices(this.client(new RequestBudget(4)));
+	}
+
+	private async readDevices(client: SpotifyClient): Promise<DeviceView[]> {
+		const list = await client.devices();
+		const devices = list
 			.filter((d) => d.id)
+			.slice(0, 100)
 			.map((d) => ({
 				id: d.id!,
 				name: d.name,
@@ -3905,21 +5192,139 @@ export class HubCore {
 				active: d.is_active,
 				restricted: d.is_restricted,
 			}));
+		this.kvSet("spotify_devices", { at: this.now(), devices });
+		return devices;
 	}
 
-	async playerAction(action: "pause" | "resume" | "next"): Promise<PlayResult> {
+	private async deferPlayerObservation(): Promise<void> {
+		this.kvSet("player_observation_due", this.now() + 1000);
+		await this.scheduleSoon(1000);
+	}
+
+	playerAction(
+		action: "pause" | "resume" | "next",
+		expected: { sessionId?: string; entryId?: string } = {},
+	): Promise<PlayResult> {
+		const task = this.commandTail.then(() => this.performPlayerAction(action, expected));
+		this.commandTail = task.catch(() => undefined);
+		return task;
+	}
+	private async performPlayerAction(
+		action: "pause" | "resume" | "next",
+		expected: { sessionId?: string; entryId?: string },
+	): Promise<PlayResult> {
+		let current = this.savedSession();
+		let nextObserved = false;
+		// Unfenced remotes can request the next song immediately after a skip.
+		// Reconcile the previous intent first; replaying an old entry stays rejected.
+		if (action === "next" && current?.pending?.kind === "next" && !expected.entryId) {
+			nextObserved = await this.sync(new RequestBudget(8), {
+				force: true,
+				observationOnly: true,
+				playerOnly: true,
+			});
+			current = this.savedSession();
+		}
+		if (
+			(expected.sessionId && current?.sessionId !== expected.sessionId) ||
+			(expected.entryId && current?.entryIds[current.currentIndex] !== expected.entryId)
+		)
+			return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
+		if (action === "next" && current?.pending?.kind === "next")
+			return fail(
+				"unknown",
+				"Spotify hat den letzten Sprung noch nicht bestätigt. Die Warteschlange bleibt gespeichert.",
+			);
 		const budget = new RequestBudget(6);
 		const client = this.client(budget);
+		let transportAttempted = false;
 		try {
-			if (action === "pause") await client.pause();
-			else if (action === "resume") await client.resume();
-			else await client.next();
+			if (action === "resume") {
+				const session = this.savedSession();
+				if (session) return this.resumeSession(session.stationId);
+			}
+			if (action === "pause") {
+				this.transportRevision += 1;
+				transportAttempted = true;
+				await client.pause();
+				this.transportRevision += 1;
+				// Acknowledgement changes transport status, never observed position.
+				// The durable alarm reads the stopped position after this response.
+				const session = this.savedSession();
+				if (
+					session &&
+					session.controller !== "native" &&
+					this.kvGet<PlayerSnapshot>("player")?.obs?.contextUri === session.contextUri
+				) {
+					session.status = "paused";
+					session.playbackEpoch += 1;
+					this.saveSession(session);
+				}
+			} else if (action === "resume") {
+				this.transportRevision += 1;
+				transportAttempted = true;
+				await client.resume();
+				this.transportRevision += 1;
+			} else {
+				this.transportRevision += 1;
+				const observed =
+					nextObserved ||
+					(await this.sync(new RequestBudget(8), {
+						force: true,
+						observationOnly: true,
+						playerOnly: true,
+					}));
+				const session = this.savedSession();
+				// The player can advance naturally after the UI was drawn. Check the
+				// newly observed occurrence before journaling or sending a skip.
+				if (
+					(expected.sessionId && session?.sessionId !== expected.sessionId) ||
+					(expected.entryId && session?.entryIds[session.currentIndex] !== expected.entryId)
+				)
+					return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
+				const obs = this.kvGet<PlayerSnapshot>("player")?.obs;
+				const own =
+					observed &&
+					session &&
+					session.controller !== "native" &&
+					obs?.contextUri === session.contextUri;
+				if (expected.entryId && (!own || session.status === "ambiguous"))
+					return fail("unknown", "Der angezeigte Song ist nicht bestätigt. Bitte aktualisieren.");
+				if (own) {
+					session.pending = {
+						operationId: crypto.randomUUID(),
+						kind: "next",
+						phase: "submitted",
+						startedAt: this.now(),
+					};
+					this.saveSession(session);
+				}
+				transportAttempted = true;
+				await client.next();
+				this.transportRevision += 1;
+				if (own) {
+					session.pending = { ...session.pending!, phase: "submitted" };
+					session.playbackEpoch += 1;
+					this.saveSession(session);
+				}
+			}
 			// The next look at the interface must read the player, not the old snapshot.
 			this.kvSet("player_stale", 1);
-			await this.scheduleSoon(4000);
-			return { ok: true };
+			await this.deferPlayerObservation();
+			return { ok: true, acceptedAt: this.now() };
 		} catch (err) {
-			return this.playError(err);
+			const result = this.playError(err, transportAttempted);
+			const pending = this.savedSession();
+			if (action === "next" && pending?.pending?.kind === "next" && !result.uncertain) {
+				pending.pending = null;
+				this.saveSession(pending);
+			}
+			if (result.uncertain) {
+				this.transportRevision += 1;
+				this.kvSet("player_stale", 1);
+				await this.deferPlayerObservation();
+			}
+			return result;
 		}
 	}
 
@@ -3959,8 +5364,9 @@ export class HubCore {
 			// Skip it only while it plays. The stored picture of the player can be
 			// a minute old: when it says so, a fresh look confirms it, or a song the
 			// listener already left would take the next one with it.
-			let now = playing;
-			if (now === undefined) {
+			const native = this.savedSession()?.controller === "native";
+			let now = native ? false : playing;
+			if (!native && now === undefined) {
 				const snap = this.kvGet<PlayerSnapshot>("player");
 				if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) {
 					try {
@@ -4196,7 +5602,9 @@ export class HubCore {
 	// Reading for the interface
 	// =======================================================================
 
-	async state(opts: { live?: boolean } = {}): Promise<AppState> {
+	async state(opts: { live?: boolean; refresh?: boolean } = {}): Promise<AppState> {
+		await this.reconcileSharedCooldown();
+		await this.reconcileSharedCooldown("artist-albums");
 		const profile = this.kvGet<{ id: string; name: string; imageUrl: string | null }>(
 			"profile",
 		) ?? {
@@ -4205,16 +5613,35 @@ export class HubCore {
 			imageUrl: null,
 		};
 		if (opts.live && this.isConnected()) {
-			// An open app looks at Spotify when the picture may have changed: after
-			// a tap, when the song should have ended, and otherwise every 45 s — the
-			// display runs the progress on by itself in between.
 			const snap = this.kvGet<PlayerSnapshot>("player");
-			const age = snap ? this.now() - Math.max(snap.at, this.lastLookAt) : Number.POSITIVE_INFINITY;
-			const ended =
-				!!snap?.obs?.isPlaying &&
-				snap.obs.durationMs > 0 &&
-				snap.obs.progressMs + age > snap.obs.durationMs + 2000;
-			if (!snap || this.kvGet("player_stale") || age > 45_000 || (ended && age > 5_000)) {
+			const now = this.now();
+			const checkedAt = this.playerCheckedAt();
+			// Reopen/focus within the shared five-second window still asks for a
+			// new look. Keep one durable deadline rather than dropping that intent.
+			if (opts.refresh && checkedAt !== null && now - checkedAt < 5000) {
+				const due = checkedAt + 5000;
+				const requested = this.kvGet<number>("player_observation_due");
+				if (requested === null || requested > due) this.kvSet("player_observation_due", due);
+				await this.scheduleSoon(Math.max(1, due - now));
+			}
+			const foregroundAt = foregroundObservationDeadline({
+				now,
+				checkedAt,
+				playing: snap?.obs?.isPlaying === true,
+				observedAt: snap?.obs?.at,
+				durationMs: snap?.obs?.durationMs,
+				progressMs: snap?.obs?.progressMs,
+				failedAt: this.kvGet<number>("player_failed_at"),
+			}).at;
+			const refreshAt = opts.refresh ? (checkedAt ?? now - 5000) + 5000 : Infinity;
+			const at = this.automaticReadAt(
+				"GET /me/player",
+				Math.max(
+					Math.min(foregroundAt, refreshAt, this.backgroundObservationAt()),
+					this.kvGet<number>("player_retry_at") ?? 0,
+				),
+			);
+			if (at <= now) {
 				const budget = new RequestBudget(8);
 				await this.sync(budget);
 				// What this look saw decides the next one (a song end, a held station).
@@ -4235,8 +5662,10 @@ export class HubCore {
 				code: backoff.kind,
 				message:
 					backoff.kind === "quota"
-						? "Spotify-Kontingent aufgebraucht — true-shuffle macht kurz Pause."
-						: "Spotify bremst gerade — true-shuffle wartet kurz.",
+						? this.providerCooldown()?.until === null
+							? "Spotify-Kontingent aufgebraucht — die Warteschlange bleibt gespeichert; der Freigabezeitpunkt ist unbekannt."
+							: "Spotify-Kontingent aufgebraucht — die Warteschlange bleibt gespeichert; weitere Anfragen warten bis zur gemeldeten Freigabe."
+						: "Spotify bremst gerade — die Warteschlange bleibt gespeichert; true-shuffle wartet auf die Freigabe.",
 			});
 		}
 		if (this.inPrivateNow())
@@ -4303,6 +5732,7 @@ export class HubCore {
 			onboarded: this.kvGet<boolean>("onboarded") === true,
 			stations,
 			nowPlaying: np,
+			session: this.sessionView(),
 			guest: { active: !!guestNow, until: guestNow?.to ?? null },
 			warnings,
 			jobs: this.jobViews(),
@@ -4594,8 +6024,15 @@ export class HubCore {
 		const budget = new RequestBudget(BUDGET_PER_INVOCATION);
 		try {
 			this.renameLegacyPlaylists();
-			// Sync first: memory must be current before any deck is planned.
-			await this.sync(budget);
+			// Jobs, player observations and history have independent deadlines.
+			if (this.backgroundObservationAt() <= this.now()) await this.sync(budget);
+			if (this.historyReadAt() <= this.now()) {
+				try {
+					await this.freshenMemory(this.client(budget, false, false), true);
+				} catch (err) {
+					this.handleSyncError(err);
+				}
+			}
 			await this.runJobs(budget);
 		} catch (err) {
 			this.log("error", "alarm", err instanceof Error ? err.message : String(err));
@@ -4604,102 +6041,108 @@ export class HubCore {
 		}
 	}
 
-	private async scheduleNext(budget: RequestBudget): Promise<void> {
+	/** An independent history deadline cannot force repeated player requests. */
+	private historyReadAt(
+		active = !!this.operationStates()["GET /me/player"]?.cooldown &&
+			this.kvGet<PlayerSnapshot>("player")?.obs?.isPlaying === true,
+	): number {
+		const checkedAt = this.syncState().lastRecentAt;
+		let at = checkedAt + (active ? 90_000 : MAX_RECENT_INTERVAL_MS);
+		if (this.kvGet("history_due"))
+			at = Math.min(
+				at,
+				this.kvGet<number>("history_due_at") ?? (this.playerCheckedAt() ?? this.now()) + 1000,
+			);
+		return this.automaticReadAt(
+			"GET /me/player/recently-played",
+			Math.max(at, this.kvGet<number>("history_retry_at") ?? 0),
+		);
+	}
+
+	/** Every interval is anchored to a successful GET, never an unrelated job wake. */
+	private backgroundObservationAt(): number {
 		const now = this.now();
+		const checkedAt = this.playerCheckedAt();
+		const base = checkedAt ?? now;
 		const candidates: number[] = [];
-		const backoff = this.backoffUntil();
-		// Spotify access gone: nothing can be read or written until the listener
-		// connects again (which wakes the hub at once). One try an hour.
-		if (this.kvGet("auth_lost")) {
-			await this.d.alarms.set(Math.max(now + HOUR_MS, backoff + 1000));
-			return;
-		}
-		const job =
-			this.db.first<{ t: number | null }>(`SELECT MIN(run_after) AS t FROM jobs`)?.t ?? null;
-		if (job !== null) {
-			// Work left over because the budget ran out: continue almost at once.
-			candidates.push(budget.left < 6 && job <= now ? now + 2000 : Math.max(job, now + 1000));
-		}
 		const s = this.syncState();
-		// Only a look that worked sets a quick pace: without one (Spotify access
-		// lost, a pause Spotify asked for) the picture is old and the slow pace holds.
-		const seen = this.kvGet<PlayerSnapshot>("player");
-		const snap =
-			seen &&
-			this.isConnected() &&
-			!this.kvGet("auth_lost") &&
-			now - Math.max(seen.at, this.lastLookAt) <= PLAYER_FRESH_MS
-				? seen
-				: null;
+		const snap = this.kvGet<PlayerSnapshot>("player");
 		const inDeck = snap?.obs?.contextUri
 			? this.stations().some((st) => this.deckUri(st) === snap.obs?.contextUri)
 			: false;
-		// Just moved the player (a tap, or past a song): see where it went.
-		if (snap && this.kvGet("player_stale")) candidates.push(now + 15_000);
-		// A few songs ahead the player may meet one true-shuffle would not play
-		// (turned down, or replaced since the player loaded the playlist): look
-		// every 20 s, so a skip by hand onto it is caught too.
+		const requested = this.kvGet<number>("player_observation_due");
+		if (requested !== null) candidates.push(requested);
+		else if (this.kvGet("player_stale")) candidates.push(base + 1000);
 		if (snap?.obs?.isPlaying && this.guardedAhead(snap.obs.contextUri))
-			candidates.push(now + 20_000);
-		// A station playing a song its playlist no longer holds: the player
-		// follows an older order, and what comes next is unknown — look often.
-		if (snap?.obs?.isPlaying && this.olderOrder(snap.obs)) candidates.push(now + 30_000);
-		// In a private session Spotify may never list a play: see every song
-		// once it has played 30 s, wherever it plays — that look counts it.
+			candidates.push(base + 20_000);
+		if (snap?.obs?.isPlaying && this.olderOrder(snap.obs)) candidates.push(base + 30_000);
 		const privately = snap?.obs?.isPlaying === true && this.inPrivateNow();
 		if (privately && snap!.obs!.progressMs < 30_000)
-			candidates.push(Math.max(now + 15_000, snap!.at + 32_000 - snap!.obs!.progressMs));
-		// …and a song skipped into is seen within 30 s, so its own look is timed.
-		if (privately) candidates.push(now + 30_000);
-		// A private session lately: the next one is seen within 2 minutes.
-		if (this.privateLately()) candidates.push(now + 2 * MINUTE_MS);
-		// The end of guest time: a look right after it finds the play across it.
+			candidates.push(Math.max(base + 15_000, snap!.obs!.at + 32_000 - snap!.obs!.progressMs));
+		if (privately) candidates.push(base + 30_000);
+		if (this.privateLately()) candidates.push(base + 2 * MINUTE_MS);
 		const gp = this.guestPeriods().at(-1);
-		if (gp && now < gp.to) candidates.push(gp.to + 2_000);
+		if (gp && base < gp.to) candidates.push(gp.to + 2000);
 		else if (gp && gp.last === undefined && now - gp.to < 10 * MINUTE_MS)
-			candidates.push(now + 15_000);
-		// The guest's last play, still on the player: seen right after its end
-		// (a run to its end is the owner's), and paused, within 2 minutes of a
-		// resume — up to 6 hours.
-		// The same for the first play seen after the end when it may be the guest's:
-		// what the owner hears of it to its end is seen, and counts for the owner.
+			candidates.push(base + 15_000);
 		const last = this.guestLastOpen() ?? this.guestNextOpen();
 		if (last && snap?.obs?.trackId === last.id) {
 			const left = snap.obs.durationMs - snap.obs.progressMs;
 			if (snap.obs.isPlaying && left > 0)
-				candidates.push(Math.max(now + 15_000, snap.at + left + 2000));
+				candidates.push(Math.max(base + 15_000, snap.obs.at + left + 2000));
 			else if (!snap.obs.isPlaying && now - last.to < 6 * HOUR_MS)
-				candidates.push(now + 2 * MINUTE_MS);
+				candidates.push(base + 2 * MINUTE_MS);
 		}
+		let interval: number;
 		if (snap?.obs?.isPlaying && (inDeck || privately)) {
-			// Look right after the song ends: the next one is then seen in its
-			// first seconds — a song turned down is skipped before it is heard,
-			// and a skip is seen rather than inferred. Songs longer than a few
-			// minutes get a look in between.
 			const left = snap.obs.durationMs - snap.obs.progressMs;
-			const end = snap.at + left + 2000;
+			const end = snap.obs.at + left + 1000;
 			const aligned =
 				snap.obs.durationMs > 0 &&
 				left > 0 &&
-				now - snap.at <= PLAYER_FRESH_MS &&
-				end - now <= 4 * MINUTE_MS;
-			candidates.push(aligned ? Math.max(now + 15_000, end) : now + 3 * MINUTE_MS);
-		} else if (snap?.obs?.isPlaying) candidates.push(now + 10 * MINUTE_MS);
-		else if (this.inPrivateNow() && s.idleSince !== null && now - s.idleSince < 6 * HOUR_MS)
-			// A private session paused anywhere, or its player out of sight for a
-			// moment: whatever plays on must be seen at 30 s — nothing else will
-			// list it.
-			candidates.push(now + (now - s.idleSince < 30 * MINUTE_MS ? 30_000 : 2 * MINUTE_MS));
-		else if (snap && this.heldPace(snap) !== null)
-			// A player holds a station (paused, or out of sight): whatever it plays
-			// on resume is seen within its first seconds.
-			candidates.push(now + this.heldPace(snap)!);
-		else if (s.idleSince !== null && now - s.idleSince > 6 * HOUR_MS)
-			candidates.push(now + 60 * MINUTE_MS);
-		else candidates.push(now + 20 * MINUTE_MS);
-		let at = Math.min(...candidates);
-		if (backoff > now) at = Math.max(at, backoff + 1000);
-		await this.d.alarms.set(at);
+				base - snap.obs.at <= PLAYER_FRESH_MS &&
+				end - base <= 4 * MINUTE_MS;
+			interval = aligned ? Math.max(1000, end - base) : 3 * MINUTE_MS;
+			if (aligned) candidates.push(Math.max(base + 1000, end));
+		} else if (snap?.obs?.isPlaying) interval = 10 * MINUTE_MS;
+		else if (this.inPrivateNow() && s.idleSince !== null && base - s.idleSince < 6 * HOUR_MS)
+			interval = base - s.idleSince < 30 * MINUTE_MS ? 30_000 : 2 * MINUTE_MS;
+		else
+			interval =
+				this.heldPace(snap, base) ??
+				(s.idleSince === null ? 20 * MINUTE_MS : pausedObservationPace(base - s.idleSince));
+		const deadline = observationDeadline({
+			now,
+			checkedAt,
+			intervalMs: interval,
+			earlierAt: candidates,
+			failedAt: this.kvGet<number>("player_failed_at"),
+		});
+		return this.automaticReadAt(
+			"GET /me/player",
+			Math.max(deadline.at, this.kvGet<number>("player_retry_at") ?? 0),
+		);
+	}
+
+	private async scheduleNext(budget: RequestBudget): Promise<void> {
+		const now = this.now();
+		if (this.kvGet("auth_lost")) {
+			await this.d.alarms.set(now + HOUR_MS);
+			return;
+		}
+		const candidates = [this.backgroundObservationAt(), this.historyReadAt()];
+		const job =
+			this.db.first<{ t: number | null }>(`SELECT MIN(run_after) AS t FROM jobs`)?.t ?? null;
+		if (job !== null)
+			candidates.push(
+				budget.left < 6 && job <= now
+					? now + 2000
+					: Math.min(Math.max(job, now + 1000), now + HOUR_MS),
+			);
+		const at = Math.min(...candidates);
+		// Unknown operation waits do not generate provider probes. A slow local
+		// wake can still discover configuration/auth changes and pending jobs.
+		await this.d.alarms.set(Number.isFinite(at) ? (at > now ? at : now + 1000) : now + HOUR_MS);
 	}
 
 	private olderOrder(obs: PlayerObservation): boolean {
@@ -4735,30 +6178,41 @@ export class HubCore {
 		return false;
 	}
 
-	/** A player paused in a station's playlist, or gone quiet in it, within the last 36 h. */
-	/**
-	 * How often to look while a player holds a station, or null if none does:
-	 * every 30 s in the first hours after the last listening (a car stop, a
-	 * restart from the top soon after), then every minute up to 36 h, and
-	 * beyond that every 2 min for as long as Spotify still shows the player
-	 * paused in the station.
-	 */
-	private heldPace(snap: PlayerSnapshot | null): number | null {
+	/** Ordinary pauses slow down; legacy recently-heard fronts retain their guard. */
+	private heldPace(snap: PlayerSnapshot | null, checkedAt: number): number | null {
 		const uri = snap?.obs ? snap.obs.contextUri : this.kvGet<string>("last_context");
 		if (!uri) return null;
 		const st = this.stations().find((x) => this.deckUri(x) === uri);
 		if (!st) return null;
-		const active = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
-		const since = this.now() - active;
-		// A continued playlist whose front holds today's songs: a restart from
-		// the top must be seen before the second song is 30 s in.
+		const active = Math.max(
+			this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0,
+			st.last_played_at ?? 0,
+		);
 		const deck = this.deckOf(st);
-		if (since < 3 * HOUR_MS || (deck?.frontHeardUntil ?? 0) > this.now()) return 30_000;
-		if (since < HOLD_WATCH_MS) return MINUTE_MS;
-		// Longer: while Spotify still shows the player paused there, or for a
-		// long weekend while the station was the last thing played.
-		if (snap?.obs || since < 72 * HOUR_MS) return 2 * MINUTE_MS;
-		return null;
+		// A resumed old order or a restart from the top can reach any held
+		// turned-down song. Keep the guard responsive even after a long pause.
+		if (
+			deck &&
+			(this.guardedAhead(uri) ||
+				this.db.first(
+					`SELECT 1 FROM json_each(?) held JOIN memory ON memory.id = held.value
+					 WHERE memory.thumb = -1 LIMIT 1`,
+					JSON.stringify([...deck.items.map((it) => it.id), ...(deck.formerOff ?? [])]),
+				))
+		)
+			return 20_000;
+		return pausedObservationPace(checkedAt - active, (deck?.frontHeardUntil ?? 0) > this.now());
+	}
+
+	/** Explicit Sync queues observations even when the ordinary cache is fresh. */
+	async requestSync(): Promise<void> {
+		const now = this.now();
+		for (const key of ["player_observation_due", "history_due_at"]) {
+			const due = this.kvGet<number>(key);
+			if (due === null || due > now) this.kvSet(key, now);
+		}
+		this.kvSet("history_due", 1);
+		await this.scheduleSoon(0);
 	}
 
 	async scheduleSoon(ms: number): Promise<void> {

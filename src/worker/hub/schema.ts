@@ -126,6 +126,9 @@ const MIGRATIONS: string[][] = [
 		// round; one only inferred does not (last_skipped_at covers both).
 		`ALTER TABLE memory ADD COLUMN consumed_at INTEGER`,
 	],
+	[
+		`CREATE TABLE IF NOT EXISTS playback_sessions (station_id INTEGER PRIMARY KEY, data TEXT NOT NULL)`,
+	],
 ];
 
 export function migrate(db: SqlDb): void {

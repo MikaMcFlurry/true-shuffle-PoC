@@ -1,0 +1,1134 @@
+{
+  "schema_version": "true-shuffle.deployment.v1",
+  "recorded_at": "2026-10-01T14:32:07.776089+00:00",
+  "source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+  "worker": "true-shuffle",
+  "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
+  "version_id": "60e34407-fd2a-43b8-8837-d894aec2f5a6",
+  "deployment_id": "4c79c507-76a5-47e8-acc4-b08a28cc7c8c",
+  "percentage": 100,
+  "deployed_at": "2026-10-01T14:30:43.384464Z",
+  "previous_version": "bab24efb-3177-4ebf-ba9b-402322622b14",
+  "previous_deployment": "7ba67458-b339-40d1-8a48-2e5aa86bec27",
+  "intermediate_version": "79c415cd-64b7-4046-96a4-dc3e7f63a061",
+  "migration_tag": "v1",
+  "namespaces": {
+    "USER_HUB": {
+      "id": "59222ef9f3a642d4b90776fafa0eac84",
+      "class_name": "UserHub",
+      "sqlite": true
+    },
+    "REGISTRY": {
+      "id": "2ccba352966f46a3b289eb159ccb3bc4",
+      "class_name": "Registry",
+      "sqlite": true
+    }
+  },
+  "existing_bindings_preserved": true,
+  "existing_secret_bindings_preserved": true,
+  "deployment_authority": "Explicit owner implementation/deployment request, full access and completed Cloudflare device OAuth. Wrangler used because plugin search found no Cloudflare connector.",
+  "public_readback": {
+    "tested_at": "2026-10-01T14:31:00.501782+00:00",
+    "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+    "source_commit": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+    "checks": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/assets/index-C8HUn-6b.js",
+        "status": 200,
+        "local_build_bytes_match": true,
+        "sha256": "85d7ab656bec66652a0c9c21a2583f7916d6ced7a7c429ed5bef98e731ba4d86"
+      },
+      {
+        "path": "/assets/index-BOGpDpEB.css",
+        "status": 200,
+        "local_build_bytes_match": true,
+        "sha256": "0fc17dbca8bbbd1ec43defa9d944b0c7587b31d23b45c2ee7067d9b0d38a9a1c"
+      },
+      {
+        "path": "/api/health",
+        "status": 200,
+        "body": {
+          "ok": true,
+          "version": "1.0.0",
+          "configured": true
+        }
+      },
+      {
+        "path": "/api/state",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/native/devices",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/spotify/diagnostics",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/spotify/usage",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/player",
+        "method": "POST without required header",
+        "status": 403,
+        "csrf_rejected": true
+      },
+      {
+        "path": "/api/spotify/availability-test",
+        "method": "POST",
+        "status": 403,
+        "authenticated_trial_protected": true
+      },
+      {
+        "path": "/api/spotify/availability-test",
+        "method": "POST",
+        "status": 401,
+        "authenticated_trial_protected": true
+      }
+    ],
+    "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+  },
+  "browser_smoke": {
+    "status": 200,
+    "title": "true-shuffle",
+    "signinButtonVisible": true,
+    "pageErrors": [],
+    "horizontalOverflow": false
+  },
+  "recovery": {
+    "old_worker_version_retained": true,
+    "original_version_metadata_recorded": true,
+    "sqlite_pitr_documentation": "https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/",
+    "documented_window_days": 30,
+    "actual_object_bookmark_or_restore": "NOT_RUN",
+    "production_database_export": "NOT_RUN",
+    "behavioral_rollback_compatibility": "NOT_VERIFIED: old code can reshuffle and ignores new checkpoint contract; prefer forward repair; never remove session tables."
+  },
+  "provider_journeys": "NOT_RUN: owner-authenticated Spotify and private HA/MA unavailable; no playback commands sent by smoke test.",
+  "acceptance_claim": "PARTIAL; deployment is an observed fact, not complete live provider/recovery acceptance.",
+  "github_ci": {
+    "run_id": 36876091612,
+    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36876091612",
+    "source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+    "status": "PASS",
+    "jobs": [
+      {
+        "id": 110415780598,
+        "name": "verify",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 36876091612,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run npm ci",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run npm run build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run npm run typecheck",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run npm run lint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run npm test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run npx playwright install --with-deps chromium",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Run npm run test:e2e",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Run npx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 12
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25
+          }
+        ]
+      }
+    ]
+  },
+  "rollout_history": [
+    {
+      "source_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+      "version_id": "c7b059ed-ab7c-45f5-88f2-3219ec3dd628",
+      "deployment_id": "dc7496dc-b106-4daf-9925-f4e8ce81d2bd",
+      "deployed_at": "2026-09-30T09:24:13.777709Z",
+      "public_readback": {
+        "tested_at": "2026-09-30T09:25:00.911911+00:00",
+        "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+        "source_commit": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+        "checks": [
+          {
+            "path": "/",
+            "status": 200
+          },
+          {
+            "path": "/assets/index-BvawSEfm.js",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "29ba8a2f3871dc0eb03892ea995db9835b2a339d9144bccb5602c6af46113c68"
+          },
+          {
+            "path": "/assets/index-DU4lTMlv.css",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+          },
+          {
+            "path": "/api/health",
+            "status": 200,
+            "body": {
+              "ok": true,
+              "version": "1.0.0",
+              "configured": true
+            }
+          },
+          {
+            "path": "/api/state",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/native/devices",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/spotify/diagnostics",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/player",
+            "method": "POST without required header",
+            "status": 403,
+            "csrf_rejected": true
+          }
+        ],
+        "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+      },
+      "github_ci": {
+        "run_id": 36695723423,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36695723423",
+        "source_revision": "1fd551e2a1abebe1d1b2d93ff9db6403f69c4df9",
+        "conclusion": "success",
+        "unit_tests": 325,
+        "browser_tests": 16
+      }
+    },
+    {
+      "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+      "version_id": "c3c3324b-cdab-4cee-a1a8-af69ca289d97",
+      "deployment_id": "e414b5c1-0a5e-46d3-871a-c5d6f1ce5f23",
+      "deployed_at": "2026-09-30T10:42:28.93968Z",
+      "public_readback": {
+        "tested_at": "2026-09-30T10:44:18.001383+00:00",
+        "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+        "source_commit": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+        "checks": [
+          {
+            "path": "/",
+            "status": 200
+          },
+          {
+            "path": "/assets/index-uOVAHBmf.js",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "8e7470381ad987d52dd57aabcdaeb8c3df707c2a94c270414c0231970644466d"
+          },
+          {
+            "path": "/assets/index-DU4lTMlv.css",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+          },
+          {
+            "path": "/api/health",
+            "status": 200,
+            "body": {
+              "ok": true,
+              "version": "1.0.0",
+              "configured": true
+            }
+          },
+          {
+            "path": "/api/state",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/native/devices",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/spotify/diagnostics",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/player",
+            "method": "POST without required header",
+            "status": 403,
+            "csrf_rejected": true
+          }
+        ],
+        "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+      },
+      "github_ci": {
+        "run_id": 36703665557,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36703665557",
+        "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+        "conclusion": "success",
+        "unit_tests": 325,
+        "browser_tests": 17
+      }
+    },
+    {
+      "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+      "version_id": "1e607dc2-48a9-4724-a9df-4b0a02218219",
+      "deployment_id": "9199fa19-a506-4a6a-a921-02ef39e7880f",
+      "deployed_at": "2026-09-30T12:09:53.169296Z",
+      "public_readback": {
+        "tested_at": "2026-09-30T12:10:23.837587+00:00",
+        "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+        "source_commit": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+        "checks": [
+          {
+            "path": "/",
+            "status": 200
+          },
+          {
+            "path": "/assets/index-Co-L4pQg.js",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "edd72b659a6aeba49e018965f2d0083bfd26b49dd9aa37a5df013b7cdaab2928"
+          },
+          {
+            "path": "/assets/index-DU4lTMlv.css",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+          },
+          {
+            "path": "/api/health",
+            "status": 200,
+            "body": {
+              "ok": true,
+              "version": "1.0.0",
+              "configured": true
+            }
+          },
+          {
+            "path": "/api/state",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/native/devices",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/spotify/diagnostics",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/player",
+            "method": "POST without required header",
+            "status": 403,
+            "csrf_rejected": true
+          }
+        ],
+        "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+      },
+      "github_ci": {
+        "run_id": 36712289545,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36712289545",
+        "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+        "conclusion": "success",
+        "unit_tests": 341,
+        "browser_tests": 18
+      }
+    },
+    {
+      "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
+      "version_id": "4f5e1037-e616-4df2-9f93-15dbdaf8ee5f",
+      "deployment_id": "7121bf97-6fe9-465f-8ded-22605729b85e",
+      "deployed_at": "2026-09-30T13:20:39.077875Z",
+      "public_readback": {
+        "tested_at": "2026-09-30T13:21:02.219226+00:00",
+        "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+        "source_commit": "a46bc043717b113dc37d1989ab4323bf166d2da9",
+        "checks": [
+          {
+            "path": "/",
+            "status": 200
+          },
+          {
+            "path": "/assets/index-4KDSlEsQ.js",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "e3dcc4fb68e0f8aef562a64851ff9ca329ceb4da023c86a18144108a7df35737"
+          },
+          {
+            "path": "/assets/index-DU4lTMlv.css",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+          },
+          {
+            "path": "/api/health",
+            "status": 200,
+            "body": {
+              "ok": true,
+              "version": "1.0.0",
+              "configured": true
+            }
+          },
+          {
+            "path": "/api/state",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/native/devices",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/spotify/diagnostics",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/player",
+            "method": "POST without required header",
+            "status": 403,
+            "csrf_rejected": true
+          },
+          {
+            "path": "/api/spotify/availability-test",
+            "method": "POST",
+            "status": 403,
+            "authenticated_trial_protected": true
+          },
+          {
+            "path": "/api/spotify/availability-test",
+            "method": "POST",
+            "status": 401,
+            "authenticated_trial_protected": true
+          }
+        ],
+        "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+      },
+      "github_ci": {
+        "run_id": 36720476950,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36720476950",
+        "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
+        "conclusion": "success",
+        "unit_tests": 356,
+        "browser_tests": 20
+      }
+    },
+    {
+      "source_revision": "1328f8f562adbcc7454b6ee8b7d6a224f6cdca95",
+      "version_id": "cfcd030c-2004-4816-9e5d-170b0c421ac2",
+      "deployment_id": "4498733e-8b5b-482e-a653-ce85aa5384b1",
+      "deployed_at": "2026-09-30T18:48:17.231837Z",
+      "percentage": 100
+    },
+    {
+      "source_revision": "0a05d4fb3aa7f6549ac0ec74c3505ab7f5ea6edd",
+      "version_id": "f007976e-fc51-4f67-acb0-0916e981f530",
+      "deployment_id": "09b41e8d-abf8-4ee4-af85-d51404801c25",
+      "deployed_at": "2026-10-01T08:17:00.525302Z",
+      "percentage": 100
+    },
+    {
+      "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "version_id": "bab24efb-3177-4ebf-ba9b-402322622b14",
+      "deployment_id": "7ba67458-b339-40d1-8a48-2e5aa86bec27",
+      "deployed_at": "2026-10-01T09:50:55.278242Z",
+      "public_readback": {
+        "tested_at": "2026-10-01T09:51:14.297984+00:00",
+        "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+        "source_commit": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+        "checks": [
+          {
+            "path": "/",
+            "status": 200
+          },
+          {
+            "path": "/assets/index-DWjkR4la.js",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "043a5391edd5faf4d63142bcaa39a44dd2a1a55872e558bb2aa6e3ded01d6ded"
+          },
+          {
+            "path": "/assets/index-DU4lTMlv.css",
+            "status": 200,
+            "local_build_bytes_match": true,
+            "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+          },
+          {
+            "path": "/api/health",
+            "status": 200,
+            "body": {
+              "ok": true,
+              "version": "1.0.0",
+              "configured": true
+            }
+          },
+          {
+            "path": "/api/state",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/native/devices",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/spotify/diagnostics",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/spotify/usage",
+            "status": 401,
+            "authentication_required": true
+          },
+          {
+            "path": "/api/player",
+            "method": "POST without required header",
+            "status": 403,
+            "csrf_rejected": true
+          },
+          {
+            "path": "/api/spotify/availability-test",
+            "method": "POST",
+            "status": 403,
+            "authenticated_trial_protected": true
+          },
+          {
+            "path": "/api/spotify/availability-test",
+            "method": "POST",
+            "status": 401,
+            "authenticated_trial_protected": true
+          }
+        ],
+        "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+      },
+      "github_ci": {
+        "status": "PASS",
+        "run_id": 36844884695,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36844884695",
+        "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+        "jobs": [
+          {
+            "id": 110312533325,
+            "name": "verify",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 36844884695,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run npm run typecheck",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Run npm run lint",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run npm test",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run npx playwright install --with-deps chromium",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Run npm run test:e2e",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Run npx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 12
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 23
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25
+              }
+            ]
+          }
+        ],
+        "observed_counts": [
+          "2026-10-01T09:48:35.4183977Z  Test Files  28 passed (28)",
+          "2026-10-01T09:48:35.4184518Z       Tests  428 passed (428)",
+          "2026-10-01T09:48:35.4184953Z    Start at  09:46:52",
+          "2026-10-01T09:48:35.4187293Z    Duration  103.39s (tests 98%, import 1%, transform 1%)",
+          "2026-10-01T09:50:24.3225748Z   39 passed (1.4m)"
+        ]
+      }
+    }
+  ],
+  "diagnostics_followup": {
+    "scope": "Copy and recheck-button clarification only; backend and Spotify request cadence unchanged. Does not remove Spotify quota.",
+    "review": "QUOTA_COPY_REVIEW.md",
+    "browser_tests": 17,
+    "provider_recovery": "NOT_RUN; owner screenshot shows QUOTA_EXCEEDED, no owner credentials used by this agent."
+  },
+  "artist_albums_followup": {
+    "scope": "Only exact GET artist-albums QUOTA_EXCEEDED is scoped; global rate/other/unknown quota maintained. Old ambiguous global gates retained; no automated legacy clearing. No daily cadence optimization or HA recovery claimed.",
+    "review": "ARTIST_ALBUMS_SCOPE_REVIEW.md",
+    "provider_recovery": "NOT_RUN",
+    "version_resources_compared_to": "c3c3324b-cdab-4cee-a1a8-af69ca289d97",
+    "bindings_identical": true,
+    "runtime_identical": true,
+    "old_global_deadline_retained": "Ambiguous old holds remain effective until their saved deadline; owner screenshot deadline 2026-09-30 20:20:03 Europe/Berlin, recovery not guaranteed."
+  },
+  "availability_trial_followup": {
+    "scope": "Explicit authenticated trial quarantines only exact ambiguous legacy quota, retaining original/stronger catalog and control deadlines. At most3 read GETs and1 refresh; new global rate/unknown failures prevail. No daily capacity or HA recovery claim.",
+    "review": "AVAILABILITY_TRIAL_REVIEW.md",
+    "provider_recovery": "NOT_RUN",
+    "owner_trial": "NOT_RUN; owner must invoke authenticated button; no session extraction performed",
+    "cloudflare_access": "Wrangler using existing authorized OAuth; no callable Cloudflare connector available",
+    "storage_changes": "Additive Registry tables, existing namespaces/migration v1 preserved; actual PITR restore NOT_RUN",
+    "rollback": "Previous version1e607dc2 retained; old code does not understand new quarantine tables, prefer forward repair; no automatic state erasure"
+  },
+  "confirmed_tracker_followup": {
+    "scope": "Confirmed429 only, perlistener/HTTPmethod/sanitizedendpoint; legacy blanket/quarantine retired with bounded localbackup. Actual RetryAfter sameoperation, bounded explicit unknownretry. Shared720hour/200episode tracker with five anonymous labels, overflow/signin aggregates, privateactor recovery and startedAt fence. No automaticstress, inferred bucket/allowance or exactreset guarantee.",
+    "review": "CONFIRMED_REQUEST_TRACKER_REVIEW.md",
+    "provider_recovery": "Owner earlier screenshots show reads200/player204then200 and activeiPhone; currentauthenticatedtracker/control/recovery readback NOT_RUN",
+    "cloudflare_access": "Wrangler existing authorized OAuth; Cloudflare connector unavailable",
+    "storage": "Additive tracker/operationgate tables; namespaces/classes/migrationv1/secrets preserved. Oldtracker actorlessrow migration tested; actualpopulatedPITRrestore NOT_RUN. Prefer forwardrepair: prior versiondoesnotunderstandnewoperationpolicy."
+  },
+  "song_clock_followup": {
+    "schema_version": "true-shuffle.song-clock.v1",
+    "recorded_at": "2026-10-01T08:18:30.164065+00:00",
+    "source_revision": "0a05d4fb3aa7f6549ac0ec74c3505ab7f5ea6edd",
+    "version_id": "f007976e-fc51-4f67-acb0-0916e981f530",
+    "deployment_id": "09b41e8d-abf8-4ee4-af85-d51404801c25",
+    "percentage": 100,
+    "scope": [
+      "Display-only second-by-second progress anchored to provider observedAt and serverTime, bounded by track duration; provider updates override estimates",
+      "Pause command sent before player/history observation; confirmed pause success is not undone by failed subsequent reads",
+      "Explicit resume observation suppresses automatic playback guard before selected-device command"
+    ],
+    "unit_worker_tests": {
+      "status": "PASS",
+      "count": 365,
+      "ref": "docs/ai-dev/evidence/song-clock/unit.log"
+    },
+    "browser_tests": {
+      "status": "PASS",
+      "count": 21,
+      "ref": "docs/ai-dev/evidence/song-clock/browser.log"
+    },
+    "static_build_lint": "PASS",
+    "independent_review": {
+      "independence": "FRESH",
+      "verdict": "READY",
+      "tests": 163,
+      "render_cases": 9,
+      "ref": "docs/ai-dev/evidence/SONG_CLOCK_REVIEW.md"
+    },
+    "github_ci": {
+      "status": "PASS",
+      "run_id": 36834917166,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36834917166"
+    },
+    "public_readback": {
+      "tested_at": "2026-10-01T08:17:23.709596+00:00",
+      "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+      "source_commit": "0a05d4fb3aa7f6549ac0ec74c3505ab7f5ea6edd",
+      "checks": [
+        {
+          "path": "/",
+          "status": 200
+        },
+        {
+          "path": "/assets/index-CFHfDmaD.js",
+          "status": 200,
+          "local_build_bytes_match": true,
+          "sha256": "06e39e306e05c02049df7f05f2c44b742057cadd5054419c6f103448077fa572"
+        },
+        {
+          "path": "/assets/index-DU4lTMlv.css",
+          "status": 200,
+          "local_build_bytes_match": true,
+          "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+        },
+        {
+          "path": "/api/health",
+          "status": 200,
+          "body": {
+            "ok": true,
+            "version": "1.0.0",
+            "configured": true
+          }
+        },
+        {
+          "path": "/api/state",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/native/devices",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/spotify/diagnostics",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/spotify/usage",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/player",
+          "method": "POST without required header",
+          "status": 403,
+          "csrf_rejected": true
+        },
+        {
+          "path": "/api/spotify/availability-test",
+          "method": "POST",
+          "status": 403,
+          "authenticated_trial_protected": true
+        },
+        {
+          "path": "/api/spotify/availability-test",
+          "method": "POST",
+          "status": 401,
+          "authenticated_trial_protected": true
+        }
+      ],
+      "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+    },
+    "browser_smoke": {
+      "status": 200,
+      "title": "true-shuffle",
+      "signinButtonVisible": true,
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    "limitations": [
+      "Owner automatic active-iPhone issue remains unreproduced and unfixed; exact error requested",
+      "No owner-authenticated live latency measurement; pause response/UI busy state still waits for reconciliation",
+      "No idle-polling reduction or daily capacity claim",
+      "Simulated time never advances durable queue, updates stored checkpoints or establishes listening completion",
+      "Full live Spotify/HA and populated-storage restore acceptance remains PARTIAL"
+    ]
+  },
+  "responsiveness_optimization": {
+    "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+    "version_id": "bab24efb-3177-4ebf-ba9b-402322622b14",
+    "deployment_id": "7ba67458-b339-40d1-8a48-2e5aa86bec27",
+    "deployed_at": "2026-10-01T09:50:55.278242Z",
+    "scope": [
+      "Responsive honest transport feedback and route-stable confirmation",
+      "Display-only second clock and bounded known successor",
+      "Actual explicit/automatic device attempts and deliberate recovery",
+      "Durable absolute observation deadlines, adaptive paused polling, independent history",
+      "Preserved queue occurrence/checkpoint, 50 local successors",
+      "External UI-only redesign and independent read-only audit brief"
+    ],
+    "unit_worker_tests": {
+      "status": "PASS",
+      "count": 428,
+      "ref": "docs/ai-dev/evidence/responsiveness-optimization/unit.log",
+      "local_execution_revision": "f5c8e0f36c6cc909e3329eeec77c3a1ef672d10d",
+      "carry_forward_basis": "Worker/core/shared and unit test content unchanged; final-source GitHub CI independently reran all428."
+    },
+    "browser_tests": {
+      "status": "PASS",
+      "count": 39,
+      "ref": "docs/ai-dev/evidence/responsiveness-optimization/browser.log",
+      "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "retries": 0
+    },
+    "static_build_lint": "PASS",
+    "independent_review": {
+      "independence": "FRESH",
+      "verdict": "READY",
+      "tests": 140,
+      "render_cases": 25,
+      "ref": "docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION_REVIEW.md"
+    },
+    "github_ci": {
+      "status": "PASS",
+      "run_id": 36844884695,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36844884695",
+      "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "jobs": [
+        {
+          "id": 110312533325,
+          "name": "verify",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 36844884695,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run npm ci",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run npm run build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run npm run typecheck",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run npm run lint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run npm test",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run npx playwright install --with-deps chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run npm run test:e2e",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Run npx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            }
+          ]
+        }
+      ],
+      "observed_counts": [
+        "2026-10-01T09:48:35.4183977Z  Test Files  28 passed (28)",
+        "2026-10-01T09:48:35.4184518Z       Tests  428 passed (428)",
+        "2026-10-01T09:48:35.4184953Z    Start at  09:46:52",
+        "2026-10-01T09:48:35.4187293Z    Duration  103.39s (tests 98%, import 1%, transform 1%)",
+        "2026-10-01T09:50:24.3225748Z   39 passed (1.4m)"
+      ]
+    },
+    "resources_preserved": {
+      "bindings": true,
+      "runtime": true,
+      "secrets": true,
+      "namespace_identity": true,
+      "migration": "v1"
+    },
+    "source_bound_day_simulation": {
+      "before": "2d96fb6890e070af7c141e9cb59b80c704709d82",
+      "after": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "totals_before": [
+        856,
+        2015,
+        1748
+      ],
+      "totals_after": [
+        269,
+        810,
+        487
+      ],
+      "real_spotify_load": false
+    },
+    "schema_version": "true-shuffle.responsiveness-optimization.v1",
+    "recorded_at": "2026-10-01T09:51:58.708058+00:00",
+    "percentage": 100,
+    "public_readback": {
+      "tested_at": "2026-10-01T09:51:14.297984+00:00",
+      "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+      "source_commit": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "checks": [
+        {
+          "path": "/",
+          "status": 200
+        },
+        {
+          "path": "/assets/index-DWjkR4la.js",
+          "status": 200,
+          "local_build_bytes_match": true,
+          "sha256": "043a5391edd5faf4d63142bcaa39a44dd2a1a55872e558bb2aa6e3ded01d6ded"
+        },
+        {
+          "path": "/assets/index-DU4lTMlv.css",
+          "status": 200,
+          "local_build_bytes_match": true,
+          "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+        },
+        {
+          "path": "/api/health",
+          "status": 200,
+          "body": {
+            "ok": true,
+            "version": "1.0.0",
+            "configured": true
+          }
+        },
+        {
+          "path": "/api/state",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/native/devices",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/spotify/diagnostics",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/spotify/usage",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/player",
+          "method": "POST without required header",
+          "status": 403,
+          "csrf_rejected": true
+        },
+        {
+          "path": "/api/spotify/availability-test",
+          "method": "POST",
+          "status": 403,
+          "authenticated_trial_protected": true
+        },
+        {
+          "path": "/api/spotify/availability-test",
+          "method": "POST",
+          "status": 401,
+          "authenticated_trial_protected": true
+        }
+      ],
+      "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+    },
+    "browser_smoke": {
+      "status": 200,
+      "title": "true-shuffle",
+      "signinButtonVisible": true,
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    "limitations": [
+      "No physical iPhone or owner-authenticated latency/wake acceptance; provider can reject an unavailable device.",
+      "Before/after counts are equal-window Real-Hub/FakeSpotify simulations, not Spotify quota capacity. Other development apps are invisible.",
+      "Projected successor and clock do not modify durable listening, queue occurrence or checkpoints.",
+      "Existing history catch-up is one page of50; no arbitrary-long offline lossless guarantee.",
+      "Durable Object still serializes network-backed work; no production latency SLA.",
+      "Full live Spotify/HA and populated-storage restore acceptance remains PARTIAL."
+    ]
+  },
+  "ui_release": "UI_RELEASE.json"
+}

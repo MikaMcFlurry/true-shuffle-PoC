@@ -1,0 +1,33 @@
+
+ RUN  v5.0.2 /tmp/mika-independent-review
+
+ ❯ test/spotify/artist-independent-extra.test.ts (15 tests | 1 failed) 12ms
+   × RT-A02 preceding-hour still-active global rate must survive later artist metadata 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/spotify/artist-independent-extra.test.ts > RT-A02 preceding-hour still-active global rate must survive later artist metadata
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/spotify/artist-independent-extra.test.ts:19:54
+     17|  const merged=global.get()!;
+     18|  expect(provesLegacyArtistAlbums(merged,{hour:Math.floor(now/3600000),…
+     19|  expect(splitLegacyArtistGate(global,artist,merged)).toBe(false);
+       |                                                      ^
+     20|  expect(global.get()).not.toBeNull();
+     21| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  11:52:25
+   Duration  223ms (transform 70%, import 15%, tests 12%, worker 4%)
+
