@@ -1,12 +1,12 @@
 {
   "schema_version": "mika.repo-handoff-evidence.v2",
-  "generated_at": "2026-09-30T18:51:39.901267+00:00",
+  "generated_at": "2026-10-01T08:20:54.472398+00:00",
   "analysis_baseline": {
     "repository_id": "R-1",
     "ref": "codex/implement-cloudflare-restart",
-    "commit_sha": "d31e4e05e4cbcba024e5852e1fa94cba88a3462b"
+    "commit_sha": "3f4eb83b7994d450516b19875f78fada06674312"
   },
-  "packet_sha256": "4af19b89067b1f35e6efe09d98ad10883fea7b2632a843eec5bed92a7221adf5",
+  "packet_sha256": "0a1a59962c86079d786d99a8dff28704b2cdabb9df7ff94cac11225648d2a687",
   "artifacts": [
     {
       "path": "AGENTS.md",
