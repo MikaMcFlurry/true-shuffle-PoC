@@ -1,0 +1,41 @@
+{
+  "schema_version": "true-shuffle.ui-redesign.v1",
+  "recorded_at": "2026-10-01",
+  "source_base": "b5a18561f8316ad83a2cfb09150fe7b3fb6b35ce",
+  "source_tested": "948c7d8 (claude/true-shuffle-redesign); later commits on this branch add documentation only",
+  "scope": "Presentation-only redesign of src/client (concert-poster world). store.ts, playback-view.ts, api.ts, progress.ts, router.ts, src/shared, src/worker, src/core and test/ are byte-identical to the base.",
+  "tooling": {
+    "impeccable": "4.3.1 (user-level install; vendored .agents/skills/impeccable 4.1.2 untouched)",
+    "orchestrator": "Mika Dev Studio (AUTONOMOUS_BUILD)",
+    "direction_seed": "f264702d, assigned grounded direction 4, owner chose 'Konzertplakat' and focus 'Song + Play/Pause'"
+  },
+  "gates": {
+    "build": "PASS",
+    "typecheck": "PASS",
+    "lint": "PASS (0 warnings, 2 infos as base)",
+    "unit_worker": "PASS 28 files / 428 tests",
+    "wrangler_dry_run": "PASS (911.98 KiB / gzip 193.06 KiB)",
+    "browser": "PASS 39/39 on 948c7d8 (local Worker + FakeSpotify, Chromium)",
+    "browser_note": "e2e/app.spec.ts 'says clearly when Spotify refuses: no Premium, no device' is intermittent: FAILED 4/4 on the unmodified base b5a1856 in this environment, intermittent on the redesign, PASS in the final run. Root cause lies in unchanged store reconciliation (see technical audit); not a redesign regression.",
+    "assertion_changes": "2 client-playback assertions now expect the accepted-phase label 'Start angenommen …' instead of 'Start angefordert …'; they still assert the command is not yet confirmed."
+  },
+  "design_review": {
+    "reviewer": "fresh Impeccable finish-reviewer context (general-purpose agent loading the shipped impeccable-finish-reviewer role)",
+    "rounds": [
+      "recapture (stale scan capture)",
+      "fix: 8 material findings",
+      "verdict: 6 resolved, 2 partial",
+      "verdict: 1 resolved, 1 partial (lone ellipsis); final micro-fix self-verified by capture, not re-reviewed"
+    ],
+    "detector": "impeccable detect: 0 anti-pattern findings; remaining design-system advisories (font-size steps, monospace utility)"
+  },
+  "screenshots": ".impeccable/review/{desktop,desktop-dark,mobile,mobile-light,mobile-offline,pending-mobile,accepted-mobile,after-pause-mobile,signin-*,scan-mobile,station-*,menu-*,history-mobile,devices-mobile,import-mobile}.png (synthetic FakeSpotify content)",
+  "live": {
+    "production_before": "assets index-DU4lTMlv.css / index-DWjkR4la.js served at https://true-shuffle.mikahertler-72c.workers.dev/ equal the base b5a1856 build output (read-only check 2026-10-01); /api/health ok",
+    "deployment": "NOT_RUN - no Cloudflare deploy credential in this session (Cloudflare connector is read-only); release is handed to the reviewing agent after merge",
+    "live_spotify": "NOT_RUN",
+    "physical_iphone": "NOT_RUN",
+    "ha_ma": "NOT_RUN",
+    "populated_restore": "NOT_RUN"
+  }
+}
