@@ -1,0 +1,44 @@
+
+Running 7 tests using 1 worker
+
+(node:124684) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+OVERFLOW light 1440 [
+  [ 'H2', '', 4952.9375 ],
+  [ 'P', 'artist', 4952.9375 ],
+  [ 'P', 'album', 4952.9375 ]
+]
+  ✘  1 e2e/independent-release.spec.ts:143:1 › independent themes, 320px long content, keyboard and 50 locally revealed successors (1.0s)
+(node:124820) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 e2e/independent-release.spec.ts:170:1 › independent requested versus accepted versus observed signal and frozen pause clock (605ms)
+  ✓  3 e2e/independent-release.spec.ts:182:1 › independent display projection never sends rating or skip and does not chain (580ms)
+  ✓  4 e2e/independent-release.spec.ts:191:1 › independent offline disables transports while saved queue and rating recovery remain visible (508ms)
+  ✓  5 e2e/independent-release.spec.ts:200:1 › independent accepted play survives route change and settles only on newer actual observation (598ms)
+  ✓  6 e2e/independent-release.spec.ts:211:1 › independent guest and confirmed native pause never borrow cached Spotify active state (421ms)
+  ✓  7 e2e/independent-release.spec.ts:220:1 › independent desktop sender wall materializes when scrolled and can select without replacing saved occurrence (698ms)
+
+
+  1) e2e/independent-release.spec.ts:143:1 › independent themes, 320px long content, keyboard and 50 locally revealed successors 
+
+    Error: light/1440
+
+    expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 0
+    Received:    3861
+
+      153 |   for(const width of [320,390,1440]){
+      154 |    await page.setViewportSize({width,height:900});
+    > 155 |    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth); if(overflow){console.log('OVERFLOW',theme,width,await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.getBoundingClientRect().right>innerWidth+2).map(el=>[el.tagName,el.className,el.getBoundingClientRect().width]).slice(-25)));await page.screenshot({path:'/tmp/ui-review-overflow.png',fullPage:true});} expect(overflow,`${theme}/${width}`).toBeLessThanOrEqual(0);
+          |                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ^
+      156 |    await expect(page.locator(".now-copy h2")).toHaveText(long);
+      157 |   }
+      158 |  }
+        at /tmp/ts-ui-independent/e2e/independent-release.spec.ts:155:458
+
+    Error Context: test-results/independent-release-indepe-676fb-locally-revealed-successors/error-context.md
+
+  1 failed
+    e2e/independent-release.spec.ts:143:1 › independent themes, 320px long content, keyboard and 50 locally revealed successors 
+  6 passed (5.9s)
