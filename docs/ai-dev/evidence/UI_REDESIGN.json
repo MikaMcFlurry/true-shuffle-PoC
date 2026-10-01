@@ -37,5 +37,20 @@
     "physical_iphone": "NOT_RUN",
     "ha_ma": "NOT_RUN",
     "populated_restore": "NOT_RUN"
-  }
+  },
+  "followups": [
+    {
+      "finding": "Independent release review P2: very long unbroken song metadata overflowed the desktop page (~3.6-3.9k px at 1440px)",
+      "cause": ".now-copy implicit auto grid column at >=560px plus overflow-wrap: break-word on the poster title",
+      "fix": ".now-copy grid-template-columns: minmax(0, 1fr) and overflow-wrap: anywhere on the poster title",
+      "regression_test": "e2e/client-playback.spec.ts 'very long unbroken song metadata wraps without page overflow on desktop and phone' (1440/1024/560/390/320, light+dark, current and queued song); failed before the fix with 3611px overflow, passes after",
+      "gates_after": {
+        "build": "PASS",
+        "typecheck": "PASS",
+        "lint": "PASS (0 warnings)",
+        "unit_worker": "PASS 28 files / 428 tests",
+        "browser": "PASS 40/40"
+      }
+    }
+  ]
 }

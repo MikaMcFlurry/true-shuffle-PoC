@@ -645,3 +645,42 @@ test("bounded command confirmation reads stay silent while the app is hidden", a
 	await advance(page, 4500);
 	expect(model.stateCalls).toBe(2);
 });
+
+test("very long unbroken song metadata wraps without page overflow on desktop and phone", async ({
+	page,
+}) => {
+	const model = await setup(page);
+	const long = (word: string, times: number) => word.repeat(times);
+	const current = model.state.session!.queue[0]!.track;
+	current.name = long("Donaudampfschifffahrt", 7);
+	current.artists = long("Wohnzimmerlautsprecher", 5);
+	current.album = long("Kapitänsmützenhalterung", 5);
+	const next = model.state.session!.queue[1]!.track;
+	next.name = long("Leuchtturmwärterhäuschen", 6);
+	next.artists = long("Rundfunksinfonieorchester", 4);
+	Object.assign(model.state.nowPlaying!, {
+		name: current.name,
+		artists: current.artists,
+		album: current.album,
+	});
+	await refresh(page);
+	await expect(page.locator(".now-copy h2")).toHaveText(current.name);
+	for (const scheme of ["light", "dark"] as const) {
+		await page.emulateMedia({ colorScheme: scheme });
+		for (const width of [1440, 1024, 560, 390, 320]) {
+			await page.setViewportSize({ width, height: 900 });
+			const overflow = await page.evaluate(
+				() => document.documentElement.scrollWidth - window.innerWidth,
+			);
+			expect(overflow, `${scheme} ${width}px: horizontal overflow`).toBeLessThanOrEqual(0);
+			const title = await page.locator(".now-copy h2").evaluate((el) => {
+				const box = el.getBoundingClientRect();
+				const parent = el.closest(".poster")!.getBoundingClientRect();
+				return { right: box.right, parentRight: parent.right };
+			});
+			expect(title.right, `${scheme} ${width}px: title inside poster`).toBeLessThanOrEqual(
+				title.parentRight + 1,
+			);
+		}
+	}
+});

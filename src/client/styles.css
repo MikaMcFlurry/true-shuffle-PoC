@@ -626,7 +626,7 @@ main h1[tabindex="-1"]:focus {
 
 .now-copy h2 {
 	grid-area: title;
-	overflow-wrap: break-word;
+	overflow-wrap: anywhere;
 	font-size: clamp(2.6rem, 12.5vw, 4.25rem);
 	font-weight: 850;
 	font-stretch: 72%;
@@ -2226,6 +2226,7 @@ input[type="radio"].check {
 	.now-copy {
 		grid-area: copy;
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: 6px;
 		min-width: 0;
 	}
