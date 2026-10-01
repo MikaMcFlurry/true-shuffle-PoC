@@ -5,6 +5,37 @@ import { onboarded } from "./harness";
 const observe = async (h: Awaited<ReturnType<typeof onboarded>>) =>
 	h.hub.sync(new RequestBudget(25), { force: true });
 
+it("sends pause before waiting for observation and saves the stopped position", async () => {
+	const h = await onboarded();
+	const id = h.stationIds[0]!;
+	await h.hub.play(id);
+	h.fake.user().player.progressMs = 97000;
+	const before = h.hub.savedSession(id)!;
+	const handle = h.fake.handle.bind(h.fake);
+	let release!: () => void;
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	h.fake.handle = async (request) => {
+		if (request.method === "GET" && new URL(request.url).pathname.endsWith("/me/player"))
+			await gate;
+		return handle(request);
+	};
+	const pending = h.hub.playerAction("pause");
+	try {
+		await expect.poll(() => h.fake.user().player.isPlaying).toBe(false);
+	} finally {
+		release();
+	}
+	expect(await pending).toMatchObject({ ok: true });
+	expect(h.hub.savedSession(id)).toMatchObject({
+		status: "paused",
+		progressMs: 97000,
+		sessionId: before.sessionId,
+		entryIds: before.entryIds,
+	});
+});
+
 describe("durable listening session NN-02–07", () => {
 	it("resumes the same unfinished occurrence at 1:37 after restart, including backwards seek", async () => {
 		const h = await onboarded();

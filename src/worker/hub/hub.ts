@@ -4753,7 +4753,9 @@ export class HubCore {
 				this.kvDel(`deck_intent:${stationId}`);
 				this.kvDel(`extend_intent:${stationId}`);
 			}
-			await this.sync(budget, { force: true });
+			// Capture the checkpoint without running automatic playback repair
+			// ahead of this explicit start/device-selection command.
+			await this.sync(budget, { force: true, observationOnly: true });
 			const fresh = this.stationRow(stationId)!;
 			if (!session && this.stationOrphaned(fresh))
 				throw new HubError(
@@ -5012,8 +5014,14 @@ export class HubCore {
 				if (session) return this.resumeSession(session.stationId);
 			}
 			if (action === "pause") {
-				await this.sync(new RequestBudget(8), { force: true, observationOnly: true });
 				await client.pause();
+				// Do not delay the command behind player/history reads. Observe the
+				// stopped position afterwards; observation failure cannot undo a pause.
+				try {
+					await this.sync(new RequestBudget(8), { force: true, observationOnly: true });
+				} catch (err) {
+					this.log("warn", "pause-observation", err instanceof Error ? err.name : "failed");
+				}
 				const session = this.savedSession();
 				if (
 					session &&

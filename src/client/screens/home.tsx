@@ -15,6 +15,7 @@ import type { AppState, DeviceView, StationSummary, TrackView } from "../../shar
 import { api, type NativeDevice } from "../api";
 import { Cover } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
+import { SongProgress } from "../components/song-progress";
 import { duration, pct } from "../format";
 import { store, useStore } from "../store";
 
@@ -231,21 +232,15 @@ export function Home({ state }: { state: AppState }) {
 					</div>
 				</div>
 				{track ? (
-					<div class="progress-area">
-						<progress
-							aria-label="Zuletzt beobachtete Songposition"
-							max={track.durationMs || 1}
-							value={progress ?? 0}
-						/>
-						<div class="progress-labels">
-							<span>
-								{progress === null
-									? "Position unbekannt · derselbe Song von vorne"
-									: `${duration(progress)} gespeichert`}
-							</span>
-							<span>{duration(track.durationMs)}</span>
-						</div>
-					</div>
+					<SongProgress
+						key={session?.entryId ?? track.id}
+						position={progress}
+						observedAt={session ? session.observedAt : (ownNow?.observedAt ?? null)}
+						serverTime={state.serverTime}
+						receivedAt={s.receivedAt}
+						playing={playing && !s.stale && !session?.pending}
+						durationMs={track.durationMs}
+					/>
 				) : null}
 				{session?.pending ? (
 					<p class="notice">

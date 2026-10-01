@@ -151,6 +151,24 @@ test.describe("a listener's day", () => {
 		expect((await fake("status")).playing).toBe(true);
 	});
 
+	test("counts song time locally without additional API requests", async ({ page }) => {
+		await signIn(page);
+		const progress = page.getByRole("progressbar", { name: "Geschätzte Songposition" });
+		await expect(progress).toBeVisible();
+		const before = await progress.evaluate((el) => (el as HTMLProgressElement).value);
+		let calls = 0;
+		page.on("request", (request) => {
+			if (new URL(request.url()).pathname.startsWith("/api/")) calls++;
+		});
+		await expect
+			.poll(
+				async () => (await progress.evaluate((el) => (el as HTMLProgressElement).value)) - before,
+			)
+			.toBeGreaterThanOrEqual(1000);
+		expect(calls).toBe(0);
+		await expect(page.locator(".progress-labels")).not.toContainText("gespeichert");
+	});
+
 	test("skips and bans a song from the transport keys", async ({ page }) => {
 		await signIn(page);
 		const song = page.locator(".now-copy h2");
