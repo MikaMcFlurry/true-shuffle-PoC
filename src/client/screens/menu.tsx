@@ -1,3 +1,4 @@
+import { ChevronRight, LogOut } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import {
 	aggregateHistory,
@@ -9,9 +10,9 @@ import {
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import type { SpotifyUsageReport } from "../../shared/spotify-usage";
 import { api, type SpotifyDiagnostics } from "../api";
-import { Detents, PageBar, Section } from "../components/radio";
 import { RateHit, ThumbMark } from "../components/rate";
 import { SpotifyFunctionStatus, SpotifyUsageTracker } from "../components/spotify-availability";
+import { Detents, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 
 const DEVICE_TYPES: Record<string, string> = {
@@ -45,10 +46,7 @@ const ILLUMINATIONS = [
 	["night", "Nacht"],
 ] as const;
 
-/**
- * A terminal on the back panel's strip: a brass screw, an engraved label,
- * a line under it. The whole row is the link.
- */
+/** One menu entry: the whole row is the link. */
 function Terminal(props: {
 	href: string;
 	legend: string;
@@ -60,17 +58,12 @@ function Terminal(props: {
 	return (
 		<li>
 			<a class="terminal" href={props.href} aria-label={props.label}>
-				<span class="terminal__screw" aria-hidden="true" />
-				{props.n !== undefined ? (
-					<span class="terminal__n num" aria-hidden="true">
-						{props.n}
-					</span>
-				) : null}
 				<span class="terminal__plate">
 					<span class="terminal__legend">{props.legend}</span>
 					<span class="terminal__sub">{props.sub}</span>
 				</span>
 				{props.act ? <span class="terminal__act">{props.act}</span> : null}
+				<ChevronRight class="terminal__chev" size={20} aria-hidden="true" />
 			</a>
 		</li>
 	);
@@ -97,9 +90,8 @@ export function MenuScreen({ state }: { state: AppState }) {
 			})
 			.catch((e: Error) => store.say(e.message, "error"));
 
-	// The menu is the radio's back panel: hardboard, printed labels, real switches.
 	return (
-		<div class="page page--back">
+		<div class="page">
 			<PageBar title="Menü" sub={state.profile.name} backTo="/" />
 
 			<Section title="Gäste" id="guest">
@@ -114,9 +106,6 @@ export function MenuScreen({ state }: { state: AppState }) {
 							</span>
 						</span>
 						<span class="lever">
-							<span class="lever__legend" aria-hidden="true">
-								Aus
-							</span>
 							<input
 								type="checkbox"
 								role="switch"
@@ -125,9 +114,6 @@ export function MenuScreen({ state }: { state: AppState }) {
 								checked={guest.active}
 								onChange={(e) => toggleGuest((e.target as HTMLInputElement).checked)}
 							/>
-							<span class="lever__legend" aria-hidden="true">
-								An
-							</span>
 						</span>
 					</label>
 					{!guest.active ? (
@@ -189,16 +175,15 @@ export function MenuScreen({ state }: { state: AppState }) {
 					/>
 				</ul>
 			</Section>
-			<Section title="Beleuchtung" id="illum">
-				{/* A rotary switch: the knob points at the chosen light. */}
-				<fieldset class="dimmer" aria-labelledby="illum">
-					<div class="dimmer__legends">
+			<Section title="Darstellung" id="illum">
+				<fieldset class="segmented" aria-labelledby="illum">
+					<div class="segmented__row">
 						{ILLUMINATIONS.map(([v, label]) => (
 							<button
 								key={v}
 								type="button"
 								aria-pressed={illum === v}
-								class="dimmer__pos"
+								class="segmented__opt segmented__opt--button"
 								onClick={() => {
 									setIllumination(v);
 									setIllum(v);
@@ -208,16 +193,6 @@ export function MenuScreen({ state }: { state: AppState }) {
 							</button>
 						))}
 					</div>
-					<span class="knob knob--static" aria-hidden="true">
-						<span class="knob__ring">
-							<span
-								class="knob__cap"
-								style={{
-									"--turn": `${ILLUMINATIONS.findIndex(([v]) => v === illum) * 50 - 50}deg`,
-								}}
-							/>
-						</span>
-					</span>
 				</fieldset>
 			</Section>
 
@@ -236,11 +211,11 @@ export function MenuScreen({ state }: { state: AppState }) {
 								})
 							}
 						>
-							<span class="terminal__screw" aria-hidden="true" />
 							<span class="terminal__plate">
 								<span class="terminal__legend">Abmelden</span>
 								<span class="terminal__sub">Gedächtnis bleibt</span>
 							</span>
+							<LogOut class="terminal__chev" size={20} aria-hidden="true" />
 						</button>
 					</li>
 				</ul>

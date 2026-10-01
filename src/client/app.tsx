@@ -100,22 +100,29 @@ export function App() {
 			</a>
 			<header class="app-header">
 				<a class="brand" href="/">
+					<svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<circle cx="12" cy="12" r="10.5" />
+						<circle cx="12" cy="12" r="6" />
+						<circle cx="12" cy="12" r="2" />
+					</svg>
 					true-shuffle
 				</a>
-				<nav aria-label="Hauptnavigation">
-					<a href="/" aria-current={route.name === "home" ? "page" : undefined}>
-						Hören
-					</a>
-					<a href="/verlauf" aria-current={route.name === "history" ? "page" : undefined}>
-						Verlauf
-					</a>
-					<a href="/menu" aria-current={route.name === "menu" ? "page" : undefined}>
-						Menü
-					</a>
-				</nav>
+				{s.load.kind === "signed-out" ? null : (
+					<nav aria-label="Hauptnavigation">
+						<a href="/" aria-current={route.name === "home" ? "page" : undefined}>
+							Hören
+						</a>
+						<a href="/verlauf" aria-current={route.name === "history" ? "page" : undefined}>
+							Verlauf
+						</a>
+						<a href="/menu" aria-current={route.name === "menu" ? "page" : undefined}>
+							Menü
+						</a>
+					</nav>
+				)}
 			</header>
 			{s.stale ? (
-				<div class="notice" role="status">
+				<div class="notice notice--offline" role="status">
 					Offline oder nicht erreichbar. Letzter gespeicherter Stand bleibt sichtbar.{" "}
 					<button type="button" class="act" onClick={() => void store.refresh(true)}>
 						Erneut verbinden

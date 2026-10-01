@@ -1,4 +1,3 @@
-import { Cabinet, Dial, DialText, Window } from "../components/radio";
 import { DECK_PREFIX } from "../format";
 
 const LOGIN_MESSAGES: Record<string, string> = {
@@ -9,51 +8,46 @@ const LOGIN_MESSAGES: Record<string, string> = {
 		"Dieses Spotify-Konto ist für true-shuffle nicht freigeschaltet. Spotify erlaubt privaten Apps nur fünf Konten — frag den Besitzer der App.",
 };
 
-/** The radio, switched off: the dial says what it is, the one key switches it on. */
+/** Signed out: the poster says what this is; one key signs in. */
 export function SignIn() {
 	const params = new URLSearchParams(location.search);
 	const login = params.get("login");
 	const setup = params.get("setup");
 	const message = setup
-		? { text: `Noch nicht eingerichtet: ${setup}`, tone: "error" as const }
+		? `Noch nicht eingerichtet: ${setup}`
 		: login
-			? { text: LOGIN_MESSAGES[login] ?? LOGIN_MESSAGES.failed!, tone: "error" as const }
+			? (LOGIN_MESSAGES[login] ?? LOGIN_MESSAGES.failed)
 			: null;
 	return (
-		<div class="power">
-			<Cabinet
-				fill
-				eye="off"
-				dial={
-					<Dial label="Senderskala" at={null}>
-						<DialText
-							title="Deine Sender mit Gedächtnis"
-							sub="Keine schnellen Wiederholungen. Alles kommt irgendwann dran."
-							message={message}
-						/>
-					</Dial>
-				}
-				window={
-					<Window>
-						<p class="power__text">
-							true-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken —
-							auch über Tage, Geräte und alles, was du nebenbei hörst.
-						</p>
-						<p class="power__fine">
-							Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „
-							{DECK_PREFIX}…“ in deinem Konto an.
-						</p>
-					</Window>
-				}
-				keys={
-					<div class="keyboard keyboard--one">
-						<a class="pkey pkey--power" href="/auth/login">
-							<span class="pkey__lamp" aria-hidden="true" />
-							<span class="pkey__legend">Mit Spotify anmelden</span>
-						</a>
-					</div>
-				}
-			/>
+		<div class="welcome">
+			<section class="poster poster--welcome ink-ultra" aria-labelledby="welcome-title">
+				<svg class="welcome__figure" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+					<circle cx="100" cy="100" r="92" />
+					<circle cx="100" cy="100" r="68" />
+					<circle cx="100" cy="100" r="44" />
+					<circle class="welcome__core" cx="100" cy="100" r="18" />
+				</svg>
+				<h1 id="welcome-title">Deine Sender mit Gedächtnis</h1>
+				<p class="welcome__lede">Keine schnellen Wiederholungen. Alles kommt irgendwann dran.</p>
+				{message ? (
+					<p class="welcome__msg" role="status">
+						{message}
+					</p>
+				) : null}
+				<a class="key key--poster" href="/auth/login">
+					Mit Spotify anmelden
+				</a>
+			</section>
+			<div class="welcome__copy">
+				<p>
+					true-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken — auch
+					über Tage, Geräte und alles, was du nebenbei hörst.
+				</p>
+				<p class="hint">
+					Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
+					…“ in deinem Konto an.
+				</p>
+			</div>
 		</div>
 	);
 }

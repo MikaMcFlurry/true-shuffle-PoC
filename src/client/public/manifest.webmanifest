@@ -4,8 +4,8 @@
 	"description": "Deine Spotify-Sender mit Gedächtnis.",
 	"start_url": "/",
 	"display": "standalone",
-	"background_color": "#151b19",
-	"theme_color": "#151b19",
+	"background_color": "#0b0b0c",
+	"theme_color": "#1f3bd0",
 	"lang": "de",
 	"icons": [
 		{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },

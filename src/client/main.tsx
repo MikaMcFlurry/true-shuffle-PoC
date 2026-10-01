@@ -1,4 +1,4 @@
-import "@fontsource-variable/jost/wght.css";
+import "@fontsource-variable/archivo/standard.css";
 import "./styles.css";
 import { render } from "preact";
 import { App } from "./app";
