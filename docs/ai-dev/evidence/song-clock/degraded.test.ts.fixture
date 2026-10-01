@@ -1,0 +1,16 @@
+import {it,expect} from '/workspace/true-shuffle-PoC/node_modules/vitest/dist/index.js';
+import {RequestBudget} from '/workspace/true-shuffle-PoC/src/worker/spotify/client.ts';
+import {onboarded} from '/workspace/true-shuffle-PoC/test/hub/harness.ts';
+it('successful pause survives player observation transport failure without inventing progress',async()=>{
+ const h=await onboarded();const id=h.stationIds[0];await h.hub.play(id);await h.hub.sync(new RequestBudget(25),{force:true,observationOnly:true});
+ const before=h.hub.savedSession(id);const handle=h.fake.handle.bind(h.fake);
+ h.fake.handle=async req=> {if(req.method==='GET'&&new URL(req.url).pathname.endsWith('/me/player'))throw new Error('offline fixture');return handle(req);};
+ expect(await h.hub.playerAction('pause')).toMatchObject({ok:true});expect(h.fake.user().player.isPlaying).toBe(false);
+ expect(h.hub.savedSession(id)).toMatchObject({status:'paused',progressMs:before.progressMs,sessionId:before.sessionId,entryIds:before.entryIds});
+});
+it('provider rejects pause and saved checkpoint is preserved',async()=>{
+ const h=await onboarded();const id=h.stationIds[0];await h.hub.play(id);const before=h.hub.savedSession(id);
+ h.fake.failNext={status:429,count:1,body:{error:{reason:'QUOTA_EXCEEDED',message:'provider'}},headers:{'Retry-After':'30'}};
+ expect((await h.hub.playerAction('pause')).ok).toBe(false);expect(h.fake.user().player.isPlaying).toBe(true);
+ expect(h.hub.savedSession(id)).toEqual(before);
+});
