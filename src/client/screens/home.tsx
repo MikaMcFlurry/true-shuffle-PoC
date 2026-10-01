@@ -333,7 +333,7 @@ export function Home({ state }: { state: AppState }) {
 					<div class="now-shelf">
 						<Cover src={track?.imageUrl ?? posterStation?.imageUrl} class="player-art" eager />
 						<div class="now-copy">
-							<h2>{track?.name ?? "Dein nächster Lieblingssong"}</h2>
+							<h2>{posterTitle(track?.name ?? "Dein nächster Lieblingssong")}</h2>
 							<p class="artist">
 								{track?.artists ?? "Wähle einen Sender und starte deine Warteschlange."}
 							</p>
@@ -794,6 +794,11 @@ export function Home({ state }: { state: AppState }) {
 			</aside>
 		</div>
 	);
+}
+
+/** Keep a title's dash with the word before it, so no poster line opens with "–". */
+function posterTitle(name: string): string {
+	return name.replace(/ ([–—-]) /g, "\u00a0$1 ");
 }
 
 function QueueRow({ track, index }: { track: TrackView; index: number }) {

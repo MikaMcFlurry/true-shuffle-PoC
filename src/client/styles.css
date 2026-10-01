@@ -828,6 +828,8 @@ main h1[tabindex="-1"]:focus {
 
 /* Not available now (held, offline, not ready): the key prints as outline overprint. */
 .poster .transport-main:disabled {
+	opacity: 1;
+	text-wrap: balance;
 	background: transparent;
 	color: var(--on);
 	border-style: dashed;
