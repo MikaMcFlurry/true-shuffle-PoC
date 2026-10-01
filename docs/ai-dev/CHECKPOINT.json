@@ -1,7 +1,7 @@
 {
   "schema_version": "mika.studio-checkpoint.v1",
   "project": "true-shuffle",
-  "subject_revision": "Bound to implementation commit in HANDOFF_MAP.json and EVIDENCE.json",
+  "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
   "branch": "codex/implement-cloudflare-restart",
   "phase": "DEPLOYED_LIVE_ACCEPTANCE_PARTIAL",
   "execution_status": "PARTIAL",
@@ -22,7 +22,8 @@
     "Explicit bounded availability trial independently reviewed; 356 unit/Worker and20 browser checks; promoted100% with preserved bindings/runtime and public readback.",
     "Confirmed peroperation429 policy/sharedfiveusertracker integrated,358unit/20browser, fresh64test/6render review READY; CI and100% publicreadbackPASS.",
     "Local song clock and pause-first ordering deployed:365unit/21browser/163independent+9renderPASS,sourceCI36834917166,exactpublic/auth/browserreadbackPASS.",
-    "Responsiveness/Connect target/background scheduling optimization deployed; 428 unit/Worker, 39 browser, fresh independent scoped review READY; exact public readback PASS. Equal-window simulated pressure archived."
+    "Responsiveness/Connect target/background scheduling optimization deployed; 428 unit/Worker, 39 browser, fresh independent scoped review READY; exact public readback PASS. Equal-window simulated pressure archived.",
+    "PR12 refusal continuity and PR11 final UI merged in dependency order, source CI/444unit/40browser/independent19unit9browser PASS; exact Cloudflare assets/runtime/auth readback PASS."
   ],
   "in_progress": [],
   "blocked": [
@@ -30,20 +31,20 @@
     "Actual populated Durable Object migration/history invariants and restore verification"
   ],
   "deployment": {
-    "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
-    "version_id": "bab24efb-3177-4ebf-ba9b-402322622b14",
-    "deployment_id": "7ba67458-b339-40d1-8a48-2e5aa86bec27",
-    "traffic_percentage": 100,
+    "status": "DEPLOYED",
+    "source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+    "version_id": "60e34407-fd2a-43b8-8837-d894aec2f5a6",
+    "deployment_id": "4c79c507-76a5-47e8-acc4-b08a28cc7c8c",
+    "percentage": 100,
     "evidence": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
   },
   "recovery": "LOCAL_ADDITIVE_MIGRATION_AND_BACKUP_REOPEN_PASS; PRODUCTION_NOT_RUN",
   "next_actions": [
-    "Owner physical iPhone pause/resume/device and boundary feedback; inspect real rolling tracker after weekend usage.",
-    "External UX/UI redesign and separate read-only audit: docs/UI_UX_START.md.",
-    "Run owner-authenticated mid-song/device/browser/Spotify-quota and HA/MA acceptance",
-    "Verify populated production storage invariants and actual PITR restore in an isolated recovery process"
+    "Owner weekend UI/device/playback acceptance",
+    "Analyze observed request tracker; shared budget remains unknown",
+    "Existing confirmation lag/background serialization audit F02/F04 is a separately scoped followup"
   ],
-  "updated_at": "2026-10-01T09:51:58.708058+00:00",
+  "updated_at": "2026-10-01T14:32:07.776089+00:00",
   "quota_diagnosis": "Confirmed429 only, perlistener/HTTPmethod/sanitizedendpoint; legacy blanket/quarantine retired with bounded localbackup. Actual RetryAfter sameoperation, bounded explicit unknownretry. Shared720hour/200episode tracker with five anonymous labels, overflow/signin aggregates, privateactor recovery and startedAt fence. No automaticstress, inferred bucket/allowance or exactreset guarantee. Ownercurrenttracker/control/HArecovery NOT_RUN.",
-  "latest_followup": "docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json"
+  "latest_followup": "docs/ai-dev/evidence/UI_RELEASE.json"
 }
