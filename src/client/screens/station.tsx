@@ -538,6 +538,9 @@ export function Station({
 									setRule({ discoveryEnabled: (e.target as HTMLInputElement).checked })
 								}
 							/>
+							<span class="lever__state" aria-hidden="true">
+								{rules.discoveryEnabled ? "An" : "Aus"}
+							</span>
 						</span>
 					</label>
 					<Stepper

@@ -16,7 +16,7 @@
 	--fg-2: #55575a;
 	--rule: #111111;
 	--hair: #c9cbcd;
-	--grid: rgb(17 17 17 / 0.055);
+	--grid: rgb(17 17 17 / 0.08);
 	--raise: #ffffff;
 	--danger: #b3261e;
 	--warn-bg: #fff3c4;
@@ -48,7 +48,7 @@
 	--fg-2: #a3a5a8;
 	--rule: #f2f2ee;
 	--hair: #303236;
-	--grid: rgb(242 242 238 / 0.05);
+	--grid: rgb(242 242 238 / 0.075);
 	--raise: #17181a;
 	--danger: #ff8a7f;
 	--warn-bg: #3b2f00;
@@ -64,7 +64,7 @@
 		--fg-2: #a3a5a8;
 		--rule: #f2f2ee;
 		--hair: #303236;
-		--grid: rgb(242 242 238 / 0.05);
+		--grid: rgb(242 242 238 / 0.075);
 		--raise: #17181a;
 		--danger: #ff8a7f;
 		--warn-bg: #3b2f00;
@@ -347,7 +347,7 @@ svg {
 	border-bottom-color: var(--fg-2);
 }
 
-.app-header :where(nav a)[aria-current="page"] {
+.app-header :where(nav a)[aria-current] {
 	border-bottom-color: var(--fg);
 	font-weight: 800;
 }
@@ -501,7 +501,12 @@ main h1[tabindex="-1"]:focus {
 
 .poster {
 	position: relative;
-	background: var(--ink);
+	background-color: var(--ink);
+	background-image: repeating-linear-gradient(
+		to right,
+		color-mix(in srgb, var(--on) 13%, transparent) 0 1px,
+		transparent 1px 25%
+	);
 	color: var(--on);
 	padding: 20px var(--gutter) 22px;
 	display: grid;
@@ -581,11 +586,10 @@ main h1[tabindex="-1"]:focus {
 	display: grid;
 	grid-template-columns: min(34vw, 140px) minmax(0, 1fr);
 	grid-template-areas:
-		"art status"
+		"art artist"
 		"art album"
-		"title title"
-		"artist artist";
-	grid-template-rows: auto 1fr auto auto;
+		"title title";
+	grid-template-rows: 1fr auto auto;
 	column-gap: 16px;
 	row-gap: 6px;
 }
@@ -597,7 +601,6 @@ main h1[tabindex="-1"]:focus {
 	height: auto;
 	object-fit: cover;
 	background: color-mix(in srgb, var(--on) 14%, var(--ink));
-	box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.55);
 	margin-bottom: 10px;
 }
 
@@ -605,8 +608,12 @@ main h1[tabindex="-1"]:focus {
 	display: contents;
 }
 
+.signal-block {
+	display: grid;
+	gap: 8px;
+}
+
 .session-status {
-	grid-area: status;
 	font-weight: 700;
 	font-stretch: 90%;
 	font-size: 0.95rem;
@@ -615,7 +622,8 @@ main h1[tabindex="-1"]:focus {
 
 .now-copy h2 {
 	grid-area: title;
-	font-size: clamp(2.35rem, 11vw, 4.6rem);
+	overflow-wrap: break-word;
+	font-size: clamp(2.6rem, 12.5vw, 4.25rem);
 	font-weight: 850;
 	font-stretch: 72%;
 	line-height: 0.94;
@@ -625,6 +633,7 @@ main h1[tabindex="-1"]:focus {
 
 .now-copy .artist {
 	grid-area: artist;
+	align-self: end;
 	font-size: clamp(1.15rem, 4.6vw, 1.6rem);
 	font-weight: 600;
 	font-stretch: 88%;
@@ -697,9 +706,11 @@ main h1[tabindex="-1"]:focus {
 .progress-labels {
 	display: flex;
 	justify-content: space-between;
+	align-items: baseline;
 	gap: 12px;
-	font-size: 0.9rem;
-	font-weight: 600;
+	font-size: 1.05rem;
+	font-weight: 750;
+	font-stretch: 85%;
 }
 
 /* Signal: requested → accepted → confirmed. */
@@ -811,9 +822,17 @@ main h1[tabindex="-1"]:focus {
 	background: color-mix(in srgb, var(--on) 92%, var(--ink));
 }
 
-.poster .icon-button:disabled,
-.poster .primary:disabled {
+.poster .icon-button:disabled {
 	opacity: 0.45;
+}
+
+/* Not available now (held, offline, not ready): the key prints as outline overprint. */
+.poster .transport-main:disabled {
+	background: transparent;
+	color: var(--on);
+	border-style: dashed;
+	font-size: 1.02rem;
+	line-height: 1.15;
 }
 
 .poster__note {
@@ -1293,13 +1312,20 @@ select.input {
 	background: var(--ink);
 	color: var(--on);
 	min-width: 0;
-	outline: 3px solid transparent;
-	outline-offset: 3px;
-	transition: outline-color var(--t) var(--ease);
+	border-top: 8px solid transparent;
+	transition: border-color var(--t) var(--ease);
 }
 
 .station-choice--selected {
-	outline-color: var(--fg);
+	border-top-color: var(--on);
+}
+
+.station-choice--selected .station-choice__name::after {
+	content: " · ausgewählt";
+	font-size: 0.8rem;
+	font-weight: 650;
+	font-stretch: 90%;
+	letter-spacing: 0;
 }
 
 .station-choice button {
@@ -1583,6 +1609,13 @@ input[type="radio"].check {
 	flex: none;
 	display: inline-flex;
 	align-items: center;
+	gap: 10px;
+}
+
+.lever__state {
+	min-width: 3ch;
+	font-weight: 800;
+	font-stretch: 85%;
 }
 
 .switch {
@@ -2195,7 +2228,6 @@ input[type="radio"].check {
 		min-width: 0;
 	}
 
-	.now-copy .session-status,
 	.now-copy h2,
 	.now-copy .artist,
 	.now-copy .album {
@@ -2204,7 +2236,7 @@ input[type="radio"].check {
 	}
 
 	.now-copy h2 {
-		font-size: clamp(2.4rem, 7vw, 4.4rem);
+		font-size: clamp(2.8rem, 7.5vw, 4.6rem);
 	}
 }
 
@@ -2267,7 +2299,7 @@ input[type="radio"].check {
 	}
 
 	.now-copy h2 {
-		font-size: clamp(3rem, 4.6vw, 5.4rem);
+		font-size: clamp(3.4rem, 5.4vw, 6rem);
 	}
 
 	.library .station-actions,
@@ -2283,6 +2315,26 @@ input[type="radio"].check {
 	.library > .section__head,
 	.library > .station-list {
 		grid-column: 1 / -1;
+	}
+
+	.library > .station-list {
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: 10px;
+	}
+
+	.station-choice button {
+		min-height: 168px;
+		padding: 18px 18px 14px;
+	}
+
+	.station-choice__name {
+		font-size: clamp(1.6rem, 2.2vw, 2.25rem);
+		line-height: 0.98;
+	}
+
+	.station-choice .round-figure {
+		width: 56px;
+		height: 56px;
 	}
 
 	.library > .station-actions {

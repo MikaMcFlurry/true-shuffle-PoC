@@ -241,7 +241,7 @@ test("resume acceptance stays pending through old observations and exposes bound
 	model.state.session!.status = "active";
 	model.state.nowPlaying!.isPlaying = true;
 	await advance(page, 5000);
-	await expect(page.locator(".session-status")).toHaveText("Start angefordert …");
+	await expect(page.locator(".session-status")).toHaveText("Start angenommen …");
 	await expect(page.getByRole("progressbar")).toHaveAttribute("value", "12000");
 	await advance(page, 16_000);
 	await expect(page.locator(".session-status")).toHaveText("Bestätigung steht aus");
@@ -576,7 +576,7 @@ test("an unconfirmed pause with a vanished device allows deliberate saved-song r
 				body: { deviceId: "speaker", newQueue: false, sessionId: saved.sessionId },
 			},
 		]);
-	await expect(page.locator(".session-status")).toHaveText("Start angefordert …");
+	await expect(page.locator(".session-status")).toHaveText("Start angenommen …");
 	expect(model.state.session!.sessionId).toBe(saved.sessionId);
 	expect(model.state.session!.entryId).toBe(saved.entryId);
 	expect(model.state.session!.progressMs).toBe(saved.progressMs);

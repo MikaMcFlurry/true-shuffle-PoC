@@ -109,13 +109,33 @@ export function App() {
 				</a>
 				{s.load.kind === "signed-out" ? null : (
 					<nav aria-label="Hauptnavigation">
-						<a href="/" aria-current={route.name === "home" ? "page" : undefined}>
+						<a
+							href="/"
+							aria-current={
+								route.name === "home"
+									? "page"
+									: route.name === "station" ||
+											route.name === "new-station" ||
+											route.name === "scan"
+										? "true"
+										: undefined
+							}
+						>
 							Hören
 						</a>
 						<a href="/verlauf" aria-current={route.name === "history" ? "page" : undefined}>
 							Verlauf
 						</a>
-						<a href="/menu" aria-current={route.name === "menu" ? "page" : undefined}>
+						<a
+							href="/menu"
+							aria-current={
+								route.name === "menu"
+									? "page"
+									: ["import", "devices", "about", "remote"].includes(route.name)
+										? "true"
+										: undefined
+							}
+						>
 							Menü
 						</a>
 					</nav>

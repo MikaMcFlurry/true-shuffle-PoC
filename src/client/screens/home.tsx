@@ -244,11 +244,17 @@ export function Home({ state }: { state: AppState }) {
 			? "Befehl fehlgeschlagen"
 			: command?.phase === "unconfirmed"
 				? "Bestätigung steht aus"
-				: command?.action === "pause"
-					? "Pause angefordert …"
-					: command?.action === "next"
-						? "Songwechsel angefordert …"
-						: "Start angefordert …";
+				: command?.phase === "accepted"
+					? command.action === "pause"
+						? "Pause angenommen …"
+						: command.action === "next"
+							? "Songwechsel angenommen …"
+							: "Start angenommen …"
+					: command?.action === "pause"
+						? "Pause angefordert …"
+						: command?.action === "next"
+							? "Songwechsel angefordert …"
+							: "Start angefordert …";
 
 	const thumb = async (value: -1 | 1) => {
 		if (!track || view.projected || view.awaitingObservation || unsettled) return;
@@ -327,9 +333,6 @@ export function Home({ state }: { state: AppState }) {
 					<div class="now-shelf">
 						<Cover src={track?.imageUrl ?? posterStation?.imageUrl} class="player-art" eager />
 						<div class="now-copy">
-							<p class="session-status" role="status">
-								{statusText}
-							</p>
 							<h2>{track?.name ?? "Dein nächster Lieblingssong"}</h2>
 							<p class="artist">
 								{track?.artists ?? "Wähle einen Sender und starte deine Warteschlange."}
@@ -346,16 +349,21 @@ export function Home({ state }: { state: AppState }) {
 							durationMs={track.durationMs}
 						/>
 					) : null}
-					<ol class={`signal signal--${signal.tone}`} aria-hidden="true">
-						{(["Angefordert", "Angenommen", "Bestätigt"] as const).map((label, i) => (
-							<li
-								key={label}
-								class={i < signal.level ? "signal__step signal__step--on" : "signal__step"}
-							>
-								{label}
-							</li>
-						))}
-					</ol>
+					<div class="signal-block">
+						<p class="session-status" role="status">
+							{statusText}
+						</p>
+						<ol class={`signal signal--${signal.tone}`} aria-hidden="true">
+							{(["Angefordert", "Angenommen", "Bestätigt"] as const).map((label, i) => (
+								<li
+									key={label}
+									class={i < signal.level ? "signal__step signal__step--on" : "signal__step"}
+								>
+									{label}
+								</li>
+							))}
+						</ol>
+					</div>
 					<div class="transport-shelf">
 						<div class="transport">
 							<button
@@ -593,7 +601,7 @@ export function Home({ state }: { state: AppState }) {
 								nutzt du über Spotify Connect.
 							</p>
 						) : null}
-						{nativeError ? (
+						{nativeError && !deviceError ? (
 							<p class="note note--error">Native Geräte nicht erreichbar: {nativeError}</p>
 						) : null}
 						{deviceError ? (

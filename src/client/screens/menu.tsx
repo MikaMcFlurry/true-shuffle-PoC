@@ -114,6 +114,9 @@ export function MenuScreen({ state }: { state: AppState }) {
 								checked={guest.active}
 								onChange={(e) => toggleGuest((e.target as HTMLInputElement).checked)}
 							/>
+							<span class="lever__state" aria-hidden="true">
+								{guest.active ? "An" : "Aus"}
+							</span>
 						</span>
 					</label>
 					{!guest.active ? (
