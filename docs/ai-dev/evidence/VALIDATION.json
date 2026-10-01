@@ -1,7 +1,7 @@
 {
   "schema_version": "true-shuffle.validation.v1",
-  "generated_at": "2026-10-01T08:18:30.164065+00:00",
-  "revision_binding": "Historical evidence retains its provenance. Current source hashes bind song-clock/command-order application 0a05d4fb3aa7f6549ac0ec74c3505ab7f5ea6edd; later documentation commits do not change it.",
+  "generated_at": "2026-10-01T09:51:58.708058+00:00",
+  "revision_binding": "Historical evidence retains its provenance. Current source hashes bind responsiveness/scheduling application 30ae6a2d5349e3f37bce18ab39b3c920c5543c35; later documentation commits do not change it.",
   "review_source_manifest_sha256": "0526b7e98f40e3a226b645cf3ad97bf7529903f8583e069cb589da482bb1e3ba",
   "source_sha256": {
     "scripts/native/ha-bridge.mjs": "43c6f165a4cf57509e0f4dc5426c59ff9c8655013cc388766f78b2985c238c93",
@@ -134,15 +134,16 @@
     }
   },
   "current_source_sha256": {
-    "src/client/api.ts": "954d87add42538c96d392ecda151014c2aab86b1e9242f4480b942fef3d67a03",
-    "src/client/app.tsx": "32e8d7dc08426ab1212d965222f6cb0f3371e5ffcccbcaa742b7b96268e245b6",
+    "src/client/api.ts": "39646eda421a23839c230f69bb7725fb3070fbe468d7b13743ecd0b06c8d215f",
+    "src/client/app.tsx": "b0eff211b67afc195d3a1253dd02b1de1f432633a5e6e5d3153f55a5831a6f9e",
     "src/client/components/radio.tsx": "f2604949c2bd8e28bfa9ed3c29d482ba443a6f08c32cd4123c9bdf8352fae98c",
     "src/client/components/rate.tsx": "9285539d7d8014d471eb8fb7cf59d42e6c36b862e07737193bf9872c16df1aa4",
-    "src/client/components/song-progress.tsx": "2b87076f9ccfd3f05cb4c51b0a36e095eea86b516147969b5baf7888dd9d38c2",
+    "src/client/components/song-progress.tsx": "83b600eab6069dbcc9b3ff2e1dec832c89f5e4697a1776f231cfa243e5736aa0",
     "src/client/components/spotify-availability.tsx": "49e670d19808af7a5a7828d134fe685adae47edc98e456347051307948e33286",
     "src/client/format.ts": "4cd959d9119f261c4c5c07716e17de42f39cae96f6b54269588fe24ef829bca2",
     "src/client/index.html": "45f0a34f17f339edada20751d2a35f245b6f7c5ff188c4b92f837448908b5c72",
     "src/client/main.tsx": "7bb4ead1d4b6b5db2e2ed1c1fef7aa2c1b317b887911dbda1ccb4a1ffa44d857",
+    "src/client/playback-view.ts": "afe913741a881a8568448a33f21f0fd27c3f654edd5aee50b92b8944bbc31075",
     "src/client/progress.ts": "bca0e72292a77fc0ce9f4036cb7c44e62375d44f71faf19390c7e43a9fe64d32",
     "src/client/public/_headers": "c6ee3eb593b266fa4cb402cc01af94b65cab19b50e67326348c328b7168bec00",
     "src/client/public/apple-touch-icon.png": "ead05406b6b4c55b0200fff71ab4340949be72175c2b75dbd2685ad980ff7a7b",
@@ -158,13 +159,13 @@
     "src/client/public/tex/walnut.webp": "3ee256e8d5c702246fc095c27f2d1bdd8fa3fba27a7565d8b48e0ad83723ab46",
     "src/client/public/tex/walnut.webp.json": "422ef6afa373aa6037162adf5a96bdccc90cba082adcd20b0b09b23205a9aac4",
     "src/client/router.ts": "fa22830c610804611e3a85215521c4b347cbd93024c37b26e4323693947855cd",
-    "src/client/screens/home.tsx": "0549077bcd8e8c86add4999ff7d5afee0063a8db5dc2c69bb3276b7b851b1b0f",
-    "src/client/screens/menu.tsx": "c949e1607c17986f69b5bd132f5ebbc1c35ca07db5f10a5e3001b4a87cc6cc02",
+    "src/client/screens/home.tsx": "a8bef122638f9dcb4bfe59cedf6fa567c101a82791059b06fbcb55dc9e678361",
+    "src/client/screens/menu.tsx": "0a077416f561bd0fab3360b2a90ecdce2225539cbf76a363dbbe1aa038e48296",
     "src/client/screens/remote.tsx": "d4f2e3ce2414afa1eca46d4be0cca979eff97c0025baf99eb68e9c823be30e0b",
     "src/client/screens/scan.tsx": "2d4899f0799a643e1a56e5c2570dc8b13d6f2e1677634ce4d9ac11d267ce4c10",
     "src/client/screens/signin.tsx": "be6c82b59265c37df85183bfa95506a962436d171c0c835f9e9299ec38bc0695",
     "src/client/screens/station.tsx": "9f6ac6df17d9a83312dfa1a925e2a28fcffac46bedb478757037de6bb341c559",
-    "src/client/store.ts": "fefd35840fefa82dda3f02184c03e5be7eadcf3c68d28c5a289ff3b27e5b3a61",
+    "src/client/store.ts": "ffc893f1d4a5402d560d14222b61086710048f491dc634dd1c088be53e46d66f",
     "src/client/styles.css": "c925736862708c16a043364f71e259fbcaa49c20db25d1433d8667afba9ad0e8",
     "src/core/deck.ts": "69896f284addf2def1115d726be5a7eab9118b1c136df8f2dd8d5c2e0d6f6e85",
     "src/core/history.ts": "6e56193931187415545f487406ce7eb7b2cc34a9ec703854a88f29d34e20702e",
@@ -173,28 +174,29 @@
     "src/core/planner.ts": "ccc99911c3017a8384657c553c5bb7b27ec360c7ad39d736a487f916e446211f",
     "src/core/random.ts": "2f95ee0fe003c62c59b1ba67209ae7a19f9cd98b1c67506ddb4215ed41bc5e8c",
     "src/core/types.ts": "de6713f2623fe0d9a1c14e8f695f2cdf910576a91e3a413ac4443161faf8aa75",
-    "src/shared/api.ts": "3a0e568091bfe26f4d11b5f1b065f5f74a37a930074b17547bb96ecceee837c6",
+    "src/shared/api.ts": "581d1396d41916258fbcd99e2a89ab6dfabedf387d5861a849961a88324c6bd5",
     "src/shared/spotify-usage.ts": "850a7e4aa5b7e7ff59c87f66a65a320ffcdc449826fa2a0d9e4319af3aacaa8c",
     "src/worker/controllers/native.ts": "67c271d9df897b275ffe94ccbacfd63eb38f7bc5bddac6d77d9fff9005c0699a",
     "src/worker/env.ts": "891b0f826606078f4152b3ff275dfc33ac228b8862976f0d3b7384431284361b",
     "src/worker/hub/discovery.ts": "1cab47dd61920f52a01c518b3a7fb4d0c159ca116aa7cd4eb68271fd9914f710",
-    "src/worker/hub/hub.ts": "63da6524fc87305a3517614c8a2857fb659579fd750b36c6a6007bda9742f431",
+    "src/worker/hub/hub.ts": "5af1f54483c0a254f253f4d7fc149fe66bf5079d7b1d03ef40129645efb35489",
     "src/worker/hub/library.ts": "b26300aa65092f08342032564024022d84c0c75499b426ac18134853495c3a55",
+    "src/worker/hub/observation-policy.ts": "59e43847914884a79aa7a76a343ccd6e89f2fb067eb0e85b0678c017a332f2e4",
     "src/worker/hub/schema.ts": "3a1461556ec63f4467c70be9733fcc4976c0835ca9ccbe12b3a9dd88303a1da0",
-    "src/worker/index.ts": "5c5852940dc30b132167e5a4fc153a25a2878c3f399d581d885d2e940bc372bd",
+    "src/worker/index.ts": "c166089ad3b5232133a16115144f8c4b4f06404218178562c647b0ebd402257b",
     "src/worker/lib/crypto.ts": "9248fb9ecc5d5ca573af36fb73981942b4526ee494ed4732c8f531f3d8882dc1",
     "src/worker/lib/remote-key.ts": "da04c8cdf149e1c44037fcd05b004778d560ca7472821218ee118dbedab72d37",
     "src/worker/lib/sql.ts": "8ead9cebc819adcd6a80b4288df04202633c2ac7d445ef5bd0ae9d203be227db",
     "src/worker/registry.ts": "65da4c66f0037b5b674ca41af28fac17fad295c92e9ecafd7b608813e30fecac",
-    "src/worker/spotify/client.ts": "5a656b43eea5fd99bfa08f9368274a0b200a1cdf2fb9686c86dcd7334077828f",
+    "src/worker/spotify/client.ts": "85a31964aae888313f878f51a2cab0615f8f07fbc2f07a8dd2325598bdfb5d88",
     "src/worker/spotify/gate.ts": "343a95e99b22ab7f89b4d27e4f22d147b72da3b0647cd67b9bc189afae651cac",
     "src/worker/spotify/operation-gates.ts": "e7917e4c7239ad93e97240cf9ae79fdcc09d3092836c997e69fb5a06101b5c39",
     "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
     "src/worker/spotify/types.ts": "f9520e5ec6936825b94ff0940c9d8ea543172878e05337e25f1a045edfbaf7e5",
     "src/worker/spotify/usage.ts": "6aa573588e901e987a3c2234d798689863d2f01f9fda4d71db563835610dddd1",
-    "src/worker/userhub.ts": "8c7b45955aaaedc2fec101ab7dcfb4ac9d4c3a71f29c9dd8deaee24b37dd5ca3"
+    "src/worker/userhub.ts": "4a2760144070d82f5de7961f4e30c9abc41c9fe74478e2be7ee398c6c7592f64"
   },
-  "current_source_manifest_sha256": "c02d192ba7820bbad48b257801d2b868cfbecc1d1158d5db500dc20038b617cf",
+  "current_source_manifest_sha256": "f5bcb90a95700ac3f02931f347cd839ada4a2049fb4cad98663d147d06a0881d",
   "quota_copy_followup": {
     "source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
     "browser_tests": 17,
@@ -373,6 +375,268 @@
       "No idle-polling reduction or daily capacity claim",
       "Simulated time never advances durable queue, updates stored checkpoints or establishes listening completion",
       "Full live Spotify/HA and populated-storage restore acceptance remains PARTIAL"
+    ]
+  },
+  "responsiveness_optimization": {
+    "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+    "version_id": "bab24efb-3177-4ebf-ba9b-402322622b14",
+    "deployment_id": "7ba67458-b339-40d1-8a48-2e5aa86bec27",
+    "deployed_at": "2026-10-01T09:50:55.278242Z",
+    "scope": [
+      "Responsive honest transport feedback and route-stable confirmation",
+      "Display-only second clock and bounded known successor",
+      "Actual explicit/automatic device attempts and deliberate recovery",
+      "Durable absolute observation deadlines, adaptive paused polling, independent history",
+      "Preserved queue occurrence/checkpoint, 50 local successors",
+      "External UI-only redesign and independent read-only audit brief"
+    ],
+    "unit_worker_tests": {
+      "status": "PASS",
+      "count": 428,
+      "ref": "docs/ai-dev/evidence/responsiveness-optimization/unit.log",
+      "local_execution_revision": "f5c8e0f36c6cc909e3329eeec77c3a1ef672d10d",
+      "carry_forward_basis": "Worker/core/shared and unit test content unchanged; final-source GitHub CI independently reran all428."
+    },
+    "browser_tests": {
+      "status": "PASS",
+      "count": 39,
+      "ref": "docs/ai-dev/evidence/responsiveness-optimization/browser.log",
+      "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "retries": 0
+    },
+    "static_build_lint": "PASS",
+    "independent_review": {
+      "independence": "FRESH",
+      "verdict": "READY",
+      "tests": 140,
+      "render_cases": 25,
+      "ref": "docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION_REVIEW.md"
+    },
+    "github_ci": {
+      "status": "PASS",
+      "run_id": 36844884695,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36844884695",
+      "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "jobs": [
+        {
+          "id": 110312533325,
+          "name": "verify",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 36844884695,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run npm ci",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run npm run build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run npm run typecheck",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run npm run lint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run npm test",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run npx playwright install --with-deps chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run npm run test:e2e",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Run npx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            }
+          ]
+        }
+      ],
+      "observed_counts": [
+        "2026-10-01T09:48:35.4183977Z  Test Files  28 passed (28)",
+        "2026-10-01T09:48:35.4184518Z       Tests  428 passed (428)",
+        "2026-10-01T09:48:35.4184953Z    Start at  09:46:52",
+        "2026-10-01T09:48:35.4187293Z    Duration  103.39s (tests 98%, import 1%, transform 1%)",
+        "2026-10-01T09:50:24.3225748Z   39 passed (1.4m)"
+      ]
+    },
+    "resources_preserved": {
+      "bindings": true,
+      "runtime": true,
+      "secrets": true,
+      "namespace_identity": true,
+      "migration": "v1"
+    },
+    "source_bound_day_simulation": {
+      "before": "2d96fb6890e070af7c141e9cb59b80c704709d82",
+      "after": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "totals_before": [
+        856,
+        2015,
+        1748
+      ],
+      "totals_after": [
+        269,
+        810,
+        487
+      ],
+      "real_spotify_load": false
+    },
+    "schema_version": "true-shuffle.responsiveness-optimization.v1",
+    "recorded_at": "2026-10-01T09:51:58.708058+00:00",
+    "percentage": 100,
+    "public_readback": {
+      "tested_at": "2026-10-01T09:51:14.297984+00:00",
+      "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+      "source_commit": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+      "checks": [
+        {
+          "path": "/",
+          "status": 200
+        },
+        {
+          "path": "/assets/index-DWjkR4la.js",
+          "status": 200,
+          "local_build_bytes_match": true,
+          "sha256": "043a5391edd5faf4d63142bcaa39a44dd2a1a55872e558bb2aa6e3ded01d6ded"
+        },
+        {
+          "path": "/assets/index-DU4lTMlv.css",
+          "status": 200,
+          "local_build_bytes_match": true,
+          "sha256": "4a6a05567cbc564fd07624ab07be7b0ca9694a6390553af5c6df7a198645f9f2"
+        },
+        {
+          "path": "/api/health",
+          "status": 200,
+          "body": {
+            "ok": true,
+            "version": "1.0.0",
+            "configured": true
+          }
+        },
+        {
+          "path": "/api/state",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/native/devices",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/spotify/diagnostics",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/spotify/usage",
+          "status": 401,
+          "authentication_required": true
+        },
+        {
+          "path": "/api/player",
+          "method": "POST without required header",
+          "status": 403,
+          "csrf_rejected": true
+        },
+        {
+          "path": "/api/spotify/availability-test",
+          "method": "POST",
+          "status": 403,
+          "authenticated_trial_protected": true
+        },
+        {
+          "path": "/api/spotify/availability-test",
+          "method": "POST",
+          "status": 401,
+          "authenticated_trial_protected": true
+        }
+      ],
+      "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+    },
+    "browser_smoke": {
+      "status": 200,
+      "title": "true-shuffle",
+      "signinButtonVisible": true,
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    "limitations": [
+      "No physical iPhone or owner-authenticated latency/wake acceptance; provider can reject an unavailable device.",
+      "Before/after counts are equal-window Real-Hub/FakeSpotify simulations, not Spotify quota capacity. Other development apps are invisible.",
+      "Projected successor and clock do not modify durable listening, queue occurrence or checkpoints.",
+      "Existing history catch-up is one page of50; no arbitrary-long offline lossless guarantee.",
+      "Durable Object still serializes network-backed work; no production latency SLA.",
+      "Full live Spotify/HA and populated-storage restore acceptance remains PARTIAL."
     ]
   }
 }

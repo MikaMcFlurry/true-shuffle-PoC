@@ -21,7 +21,8 @@
     "Artist-albums quota isolated and retained legacy deadlines independently reviewed; 341 unit/Worker and18 browser checks; promoted100% with preserved bindings/runtime and public readback.",
     "Explicit bounded availability trial independently reviewed; 356 unit/Worker and20 browser checks; promoted100% with preserved bindings/runtime and public readback.",
     "Confirmed peroperation429 policy/sharedfiveusertracker integrated,358unit/20browser, fresh64test/6render review READY; CI and100% publicreadbackPASS.",
-    "Local song clock and pause-first ordering deployed:365unit/21browser/163independent+9renderPASS,sourceCI36834917166,exactpublic/auth/browserreadbackPASS."
+    "Local song clock and pause-first ordering deployed:365unit/21browser/163independent+9renderPASS,sourceCI36834917166,exactpublic/auth/browserreadbackPASS.",
+    "Responsiveness/Connect target/background scheduling optimization deployed; 428 unit/Worker, 39 browser, fresh independent scoped review READY; exact public readback PASS. Equal-window simulated pressure archived."
   ],
   "in_progress": [],
   "blocked": [
@@ -29,19 +30,20 @@
     "Actual populated Durable Object migration/history invariants and restore verification"
   ],
   "deployment": {
-    "source_revision": "0a05d4fb3aa7f6549ac0ec74c3505ab7f5ea6edd",
-    "version_id": "f007976e-fc51-4f67-acb0-0916e981f530",
-    "deployment_id": "09b41e8d-abf8-4ee4-af85-d51404801c25",
+    "source_revision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+    "version_id": "bab24efb-3177-4ebf-ba9b-402322622b14",
+    "deployment_id": "7ba67458-b339-40d1-8a48-2e5aa86bec27",
     "traffic_percentage": 100,
     "evidence": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
   },
   "recovery": "LOCAL_ADDITIVE_MIGRATION_AND_BACKUP_REOPEN_PASS; PRODUCTION_NOT_RUN",
   "next_actions": [
-    "Owner verify new local song clock/pause response and supply automatic-device error; broad UI redesign belongs to owner external design agent",
+    "Owner physical iPhone pause/resume/device and boundary feedback; inspect real rolling tracker after weekend usage.",
+    "External UX/UI redesign and separate read-only audit: docs/UI_UX_START.md.",
     "Run owner-authenticated mid-song/device/browser/Spotify-quota and HA/MA acceptance",
     "Verify populated production storage invariants and actual PITR restore in an isolated recovery process"
   ],
-  "updated_at": "2026-10-01T08:18:30.164065+00:00",
+  "updated_at": "2026-10-01T09:51:58.708058+00:00",
   "quota_diagnosis": "Confirmed429 only, perlistener/HTTPmethod/sanitizedendpoint; legacy blanket/quarantine retired with bounded localbackup. Actual RetryAfter sameoperation, bounded explicit unknownretry. Shared720hour/200episode tracker with five anonymous labels, overflow/signin aggregates, privateactor recovery and startedAt fence. No automaticstress, inferred bucket/allowance or exactreset guarantee. Ownercurrenttracker/control/HArecovery NOT_RUN.",
-  "latest_followup": "docs/ai-dev/evidence/SONG_CLOCK.json"
+  "latest_followup": "docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json"
 }
