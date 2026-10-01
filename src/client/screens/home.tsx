@@ -55,10 +55,6 @@ export function Home({ state }: { state: AppState }) {
 	const [deviceError, setDeviceError] = useState("");
 	const [now, setNow] = useState(Date.now());
 	useEffect(() => {
-		store.setTransportVisible(true);
-		return () => store.setTransportVisible(false);
-	}, []);
-	useEffect(() => {
 		const timer = window.setInterval(() => setNow(Date.now()), 1000);
 		return () => window.clearInterval(timer);
 	}, []);

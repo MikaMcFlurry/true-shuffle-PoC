@@ -582,3 +582,66 @@ test("an unconfirmed pause with a vanished device allows deliberate saved-song r
 	expect(model.state.session!.progressMs).toBe(saved.progressMs);
 	expect(model.state.session!.queue).toEqual(saved.queue);
 });
+
+test("accepted playback confirms on the station page after navigating before the device observation", async ({
+	page,
+}) => {
+	const model = await setup(page, snapshot(false));
+	const cachedDetail = {
+		...model.state.stations[0]!,
+		upcoming: [],
+		recent: [],
+		counts: null,
+		discoveries: { pending: 0, kept: 0, rejected: 0 },
+	};
+	let detailReads = 0;
+	let playWrites = 0;
+	await page.route("**/api/stations/1", async (route) => {
+		detailReads++;
+		await route.fulfill({ json: cachedDetail });
+	});
+	await page.route("**/api/stations/1/play", async (route) => {
+		playWrites++;
+		model.state.session!.pending = true;
+		await route.fulfill({ json: { ok: true, acceptedAt: TIME + 500 } });
+	});
+	await page.getByRole("button", { name: "Fortsetzen", exact: true }).click();
+	await expect(page.getByText("Befehl angenommen.", { exact: false })).toBeVisible();
+	await page.getByRole("link", { name: "Test Sender: Mix und Regeln", exact: true }).click();
+	await expect(page.getByRole("heading", { name: "Test Sender", exact: true })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Läuft gerade", exact: true })).toHaveCount(0);
+	await expect.poll(() => model.stateQueries.slice(0, 2)).toEqual(["?live=1&refresh=1", "?live=1"]);
+	// The detail response stays paused. Only a new device observation may establish playing.
+	observe(model, { status: "active", pending: false, progressMs: 13_000 }, TIME + 1000);
+	model.state.nowPlaying!.isPlaying = true;
+	model.state.stations[0]!.playing = true;
+	await advance(page, 1500);
+	await expect(page.getByRole("heading", { name: "Läuft gerade", exact: true })).toBeVisible({
+		timeout: 4500,
+	});
+	const confirmationQueries = model.stateQueries.slice(2);
+	expect(confirmationQueries.length).toBeGreaterThanOrEqual(1);
+	expect(confirmationQueries.length).toBeLessThanOrEqual(2);
+	expect(confirmationQueries.every((query) => query === "")).toBe(true);
+	expect(detailReads).toBe(1);
+	expect(playWrites).toBe(1);
+	const callsAfterConfirmation = model.stateCalls;
+	await advance(page, 3000);
+	expect(model.stateCalls).toBe(callsAfterConfirmation);
+});
+
+test("bounded command confirmation reads stay silent while the app is hidden", async ({ page }) => {
+	const model = await setup(page, snapshot(false));
+	await page.route("**/api/stations/1/play", async (route) =>
+		route.fulfill({ json: { ok: true, acceptedAt: TIME + 500 } }),
+	);
+	await page.getByRole("button", { name: "Fortsetzen", exact: true }).click();
+	await expect(page.getByText("Befehl angenommen.", { exact: false })).toBeVisible();
+	await expect.poll(() => model.stateCalls).toBe(2);
+	await page.evaluate(() => {
+		Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+		document.dispatchEvent(new Event("visibilitychange"));
+	});
+	await advance(page, 4500);
+	expect(model.stateCalls).toBe(2);
+});

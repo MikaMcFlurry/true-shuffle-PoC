@@ -76,7 +76,7 @@ class Store {
 	private epoch = 0;
 	private commandTimer: number | null = null;
 	private commandReads: number[] = [];
-	private transportVisible = false;
+	private running = false;
 	command: PlaybackCommand | null = null;
 
 	beginCommand(
@@ -124,9 +124,15 @@ class Store {
 		}
 		this.command.phase = "accepted";
 		this.command.acceptedAt = result.acceptedAt ?? null;
-		this.commandReads = (this.transportVisible ? [1500, 4000] : []).map((delay) =>
+		// The accepted command belongs to the visible app, including after a route change.
+		this.commandReads = (this.running ? [1500, 4000] : []).map((delay) =>
 			window.setTimeout(() => {
-				if (this.command?.id === id && this.command.phase === "accepted")
+				if (
+					this.running &&
+					document.visibilityState === "visible" &&
+					this.command?.id === id &&
+					this.command.phase === "accepted"
+				)
 					void this.refresh(false, true);
 			}, delay),
 		);
@@ -145,14 +151,6 @@ class Store {
 		this.command.phase = uncertain ? "unconfirmed" : "failed";
 		this.command.error = message;
 		this.emit();
-	}
-
-	setTransportVisible(visible: boolean): void {
-		this.transportVisible = visible;
-		if (!visible) {
-			for (const timer of this.commandReads) window.clearTimeout(timer);
-			this.commandReads = [];
-		}
 	}
 
 	private clearCommand(): void {
@@ -351,6 +349,7 @@ class Store {
 
 	/** Poll every 15 s while visible; the hub itself syncs in the background. */
 	start(): void {
+		this.running = true;
 		const tick = () => {
 			if (document.visibilityState === "visible") void this.refresh(true);
 		};
@@ -378,6 +377,7 @@ class Store {
 	}
 
 	stop(): void {
+		this.running = false;
 		for (const timer of this.commandReads) window.clearTimeout(timer);
 		this.commandReads = [];
 		if (this.timer !== null) window.clearInterval(this.timer);
