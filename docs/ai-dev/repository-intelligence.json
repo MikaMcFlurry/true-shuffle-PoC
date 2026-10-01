@@ -1,7 +1,7 @@
 {
   "schema_version": "mika.repository-intelligence.v2",
   "packet_status": "ALIGNED",
-  "generated_at": "2026-10-01T09:53:08.464936+00:00",
+  "generated_at": "2026-10-01T14:33:44.836488+00:00",
   "analysis_modes": [
     "LIVE_BASELINE",
     "LOST_CONTEXT",
@@ -16,8 +16,8 @@
       "visibility": "public",
       "default_branch": "main",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
-      "notes": "Supporting baseline, application identical to deployed 30ae6a2d5349e3f37bce18ab39b3c920c5543c35. Current responsiveness optimization: source `30ae6a2d5349e3f37bce18ab39b3c920c5543c35`, Cloudflare version `bab24efb-3177-4ebf-ba9b-402322622b14`, deployment `7ba67458-b339-40d1-8a48-2e5aa86bec27` at100%. Immediate honest command feedback/frozen pause clock, bounded display-only next-song projection, stale response/identity fencing and preserved explicit Spotify-device selections. Provider acknowledgments return before reconciliation; actual device failures remain visible. Preview reads50 successors locally. Durable absolute observation deadlines reduce background traffic while preserving private/guest/guard checks; fresh reopen is coalesced. 428 unit/Worker and39 browser checks and source CI36844884695 PASS; fresh scoped independent verdict READY. Equal-window before/after Real-Hub/FakeSpotify counts are archived simulations, not provider capacity. Bindings/runtime/secrets preserved; exact assets/auth/public browser readback PASS. Physical iPhone wake/latency, owner HA and populated restore NOT_RUN; full acceptance PARTIAL. Evidence: docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json. External redesign/audit prompt: docs/UI_UX_START.md."
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "notes": "Supporting baseline, application identical to deployed 0cad1775b0c9d7e4723b3c864eb63b2b10a86580. Current concert-poster UI release: source `0cad1775b0c9d7e4723b3c864eb63b2b10a86580`, Cloudflare version `60e34407-fd2a-43b8-8837-d894aec2f5a6`, deployment `4c79c507-76a5-47e8-acc4-b08a28cc7c8c` at 100%. Claude PR11 presentation redesign and its long-metadata overflow repair are integrated with separate PR12 refusal continuity/error correction. Requested, accepted and observed playback stay distinct; projection is display-only; queue/observed checkpoints and native/account isolation preserved. 444 unit/Worker and 40 browser checks plus source CI 36876091612 PASS; fresh scoped independent verdict READY. Exact public assets/auth/browser and preserved binding/runtime/secret readback PASS. Physical iPhone, live Spotify transport/latency, private HA/MA and populated restore remain NOT_RUN; full mission PARTIAL. Current evidence: docs/ai-dev/evidence/UI_RELEASE.json. Older pressure simulations retain their original source and do not establish live quota capacity."
     },
     {
       "id": "R-2",
@@ -34,7 +34,7 @@
   "primary_baseline": {
     "repository_id": "R-1",
     "ref": "codex/implement-cloudflare-restart",
-    "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+    "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
     "deployment_refs": [
       "https://true-shuffle.mikahertler-72c.workers.dev/"
     ],
@@ -57,7 +57,8 @@
       "EV-15",
       "EV-16",
       "EV-17",
-      "EV-19"
+      "EV-19",
+      "EV-20"
     ],
     "target_intent_evidence_ids": [
       "EV-02"
@@ -342,11 +343,12 @@
       }
     ],
     "deployment": {
-      "summary": "Current responsiveness optimization: source `30ae6a2d5349e3f37bce18ab39b3c920c5543c35`, Cloudflare version `bab24efb-3177-4ebf-ba9b-402322622b14`, deployment `7ba67458-b339-40d1-8a48-2e5aa86bec27` at100%. Immediate honest command feedback/frozen pause clock, bounded display-only next-song projection, stale response/identity fencing and preserved explicit Spotify-device selections. Provider acknowledgments return before reconciliation; actual device failures remain visible. Preview reads50 successors locally. Durable absolute observation deadlines reduce background traffic while preserving private/guest/guard checks; fresh reopen is coalesced. 428 unit/Worker and39 browser checks and source CI36844884695 PASS; fresh scoped independent verdict READY. Equal-window before/after Real-Hub/FakeSpotify counts are archived simulations, not provider capacity. Bindings/runtime/secrets preserved; exact assets/auth/public browser readback PASS. Physical iPhone wake/latency, owner HA and populated restore NOT_RUN; full acceptance PARTIAL. Evidence: docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json. External redesign/audit prompt: docs/UI_UX_START.md.",
+      "summary": "Current concert-poster UI release: source `0cad1775b0c9d7e4723b3c864eb63b2b10a86580`, Cloudflare version `60e34407-fd2a-43b8-8837-d894aec2f5a6`, deployment `4c79c507-76a5-47e8-acc4-b08a28cc7c8c` at 100%. Claude PR11 presentation redesign and its long-metadata overflow repair are integrated with separate PR12 refusal continuity/error correction. Requested, accepted and observed playback stay distinct; projection is display-only; queue/observed checkpoints and native/account isolation preserved. 444 unit/Worker and 40 browser checks plus source CI 36876091612 PASS; fresh scoped independent verdict READY. Exact public assets/auth/browser and preserved binding/runtime/secret readback PASS. Physical iPhone, live Spotify transport/latency, private HA/MA and populated restore remain NOT_RUN; full mission PARTIAL. Current evidence: docs/ai-dev/evidence/UI_RELEASE.json. Older pressure simulations retain their original source and do not establish live quota capacity.",
       "evidence_ids": [
         "EV-12",
         "EV-18",
-        "EV-19"
+        "EV-19",
+        "EV-20"
       ]
     },
     "operations": {
@@ -552,7 +554,7 @@
       "LIVE_SYSTEM"
     ],
     "read_first": "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
-    "next_action": "Owner physical iPhone/device/boundary verification and weekend real tracker analysis; external UI-only redesign and independent read-only optimization comparison via docs/UI_UX_START.md."
+    "next_action": "Owner weekend UI/playback/device verification and real tracker analysis; audit F02/F04 confirmation lag and background serialization remain scoped followups."
   },
   "evidence": [
     {
@@ -607,7 +609,7 @@
       "claim": "Fresh build/typecheck/lint and 280 Vitest tests in nine files pass; Wrangler dry-run passes. Source unchanged from c9bd082. Baseline application equivalence rechecked at the implementation start; this historical check does not certify current working tree.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/EVIDENCE.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "EV-04",
@@ -712,7 +714,7 @@
       "claim": "Integrated implementation, actual Cloudflare deployment and partial live acceptance; see ledger.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/EVIDENCE.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/EVIDENCE.json",
@@ -724,14 +726,14 @@
       "id": "EV-12",
       "type": "FILE",
       "evidence_level": "OBSERVED_RUNTIME",
-      "claim": "Current responsiveness optimization: source `30ae6a2d5349e3f37bce18ab39b3c920c5543c35`, Cloudflare version `bab24efb-3177-4ebf-ba9b-402322622b14`, deployment `7ba67458-b339-40d1-8a48-2e5aa86bec27` at100%. Immediate honest command feedback/frozen pause clock, bounded display-only next-song projection, stale response/identity fencing and preserved explicit Spotify-device selections. Provider acknowledgments return before reconciliation; actual device failures remain visible. Preview reads50 successors locally. Durable absolute observation deadlines reduce background traffic while preserving private/guest/guard checks; fresh reopen is coalesced. 428 unit/Worker and39 browser checks and source CI36844884695 PASS; fresh scoped independent verdict READY. Equal-window before/after Real-Hub/FakeSpotify counts are archived simulations, not provider capacity. Bindings/runtime/secrets preserved; exact assets/auth/public browser readback PASS. Physical iPhone wake/latency, owner HA and populated restore NOT_RUN; full acceptance PARTIAL. Evidence: docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json. External redesign/audit prompt: docs/UI_UX_START.md.",
+      "claim": "Current concert-poster UI release: source `0cad1775b0c9d7e4723b3c864eb63b2b10a86580`, Cloudflare version `60e34407-fd2a-43b8-8837-d894aec2f5a6`, deployment `4c79c507-76a5-47e8-acc4-b08a28cc7c8c` at 100%. Claude PR11 presentation redesign and its long-metadata overflow repair are integrated with separate PR12 refusal continuity/error correction. Requested, accepted and observed playback stay distinct; projection is display-only; queue/observed checkpoints and native/account isolation preserved. 444 unit/Worker and 40 browser checks plus source CI 36876091612 PASS; fresh scoped independent verdict READY. Exact public assets/auth/browser and preserved binding/runtime/secret readback PASS. Physical iPhone, live Spotify transport/latency, private HA/MA and populated restore remain NOT_RUN; full mission PARTIAL. Current evidence: docs/ai-dev/evidence/UI_RELEASE.json. Older pressure simulations retain their original source and do not establish live quota capacity.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
-      "environment": "Production Cloudflare version bab24efb-3177-4ebf-ba9b-402322622b14; actual public readback only",
+      "environment": "Production Cloudflare version 60e34407-fd2a-43b8-8837-d894aec2f5a6; actual public readback only",
       "artifact_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
-      "observed_at": "2026-10-01T09:53:08.464936+00:00",
+      "observed_at": "2026-10-01T14:33:44.836488+00:00",
       "source_status": "CURRENT_SUPPORTING",
       "sensitivity": "PUBLIC"
     },
@@ -739,10 +741,10 @@
       "id": "EV-13",
       "type": "FILE",
       "evidence_level": "CODE_CONFIRMED",
-      "claim": "Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Quota diagnostics clarification passes17 fixture browser cases and4 independent actual-render cases; owner-reported provider restriction and shared developer-account quota are distinguished from recovery.",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Quota diagnostics clarification passes17 fixture browser cases and4 independent actual-render cases; owner-reported provider restriction and shared developer-account quota are distinguished from recovery.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/QUOTA_DIAGNOSIS.json",
@@ -754,10 +756,10 @@
       "id": "EV-14",
       "type": "FILE",
       "evidence_level": "CODE_CONFIRMED",
-      "claim": "Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Real HubCore/FakeSpotify24h audit reproduces856/2015/1748 HTTP calls and confirms fresh Spotify history feed stops during the audited account cooldown.3/5-user totals are arithmetic, quota units/viability unknown.",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Real HubCore/FakeSpotify24h audit reproduces856/2015/1748 HTTP calls and confirms fresh Spotify history feed stops during the audited account cooldown.3/5-user totals are arithmetic, quota units/viability unknown.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/evidence/FULL_DAY_USAGE_AUDIT.json",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/FULL_DAY_USAGE_AUDIT.json",
@@ -769,10 +771,10 @@
       "id": "EV-15",
       "type": "FILE",
       "evidence_level": "CODE_CONFIRMED",
-      "claim": "Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Exactartist-albums scopedgate, retainedlegacydeadline andUI independently reviewed; 341 unit/Worker and18browser cases pass; actualSpotify/HArecoveryNOT_RUN.",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Exactartist-albums scopedgate, retainedlegacydeadline andUI independently reviewed; 341 unit/Worker and18browser cases pass; actualSpotify/HArecoveryNOT_RUN.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/evidence/ARTIST_ALBUMS_SCOPE_REVIEW.md",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/ARTIST_ALBUMS_SCOPE_REVIEW.md",
@@ -784,10 +786,10 @@
       "id": "EV-16",
       "type": "FILE",
       "evidence_level": "CODE_CONFIRMED",
-      "claim": "Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Explicit availability trial: deployed source `a46bc043717b113dc37d1989ab4323bf166d2da9`, version `4f5e1037-e616-4df2-9f93-15dbdaf8ee5f`, deployment `7121bf97-6fe9-465f-8ded-22605729b85e` at100%. Owner-authorized authenticated button quarantines an identical ambiguous legacy quota with atomic revision/probe checks and bounded original backup. Catalog and playback writes retain original/stronger deadline. At most3 essential GETs and1 token refresh, no transport retries; cache60s and concurrent coalescing. Actual per-family quota holds, general rate/unknown precedence, history fallback without queue mutation and partial24-hour first429 counters verified. Fresh independent review AVAILABILITY_TRIAL_REVIEW.md READY,62 tests/5 renders; integrated356 tests/20 browser cases and source CI36720476950 PASS. Exact assets/API/anonymous browser readback PASS; owner trial, Spotify/HA recovery, sustained multiuser capacity and populated-storage restore NOT_RUN. Full acceptance PARTIAL/BLOCKED.",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Explicit availability trial: deployed source `a46bc043717b113dc37d1989ab4323bf166d2da9`, version `4f5e1037-e616-4df2-9f93-15dbdaf8ee5f`, deployment `7121bf97-6fe9-465f-8ded-22605729b85e` at100%. Owner-authorized authenticated button quarantines an identical ambiguous legacy quota with atomic revision/probe checks and bounded original backup. Catalog and playback writes retain original/stronger deadline. At most3 essential GETs and1 token refresh, no transport retries; cache60s and concurrent coalescing. Actual per-family quota holds, general rate/unknown precedence, history fallback without queue mutation and partial24-hour first429 counters verified. Fresh independent review AVAILABILITY_TRIAL_REVIEW.md READY,62 tests/5 renders; integrated356 tests/20 browser cases and source CI36720476950 PASS. Exact assets/API/anonymous browser readback PASS; owner trial, Spotify/HA recovery, sustained multiuser capacity and populated-storage restore NOT_RUN. Full acceptance PARTIAL/BLOCKED.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/evidence/AVAILABILITY_TRIAL_REVIEW.md",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/AVAILABILITY_TRIAL_REVIEW.md",
@@ -799,10 +801,10 @@
       "id": "EV-17",
       "type": "FILE",
       "evidence_level": "CODE_CONFIRMED",
-      "claim": "Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Confirmed-operation/shared-tracker rollout: source `1328f8f562adbcc7454b6ee8b7d6a224f6cdca95`, version `cfcd030c-2004-4816-9e5d-170b0c421ac2`, deployment `4498733e-8b5b-482e-a653-ce85aa5384b1` at100%. Only actualSpotify429 establishes a listener-specific HTTPmethod/sanitizedendpoint wait; oldblanket/quarantine/backoff archived and retired. Genuine RetryAfter enforced onlymatchingoperation; unknownwait explicitboundedretry. Shared720hour/200episode tracker, fiveanonymoususers+overflow/signin totals, privateactor/starttime/revisionfences. No otherappvisibility, guessedbudget, automaticstress or exactreset claim. Fresh CONFIRMED_REQUEST_TRACKER_REVIEW.md scopedREADY:64tests/6renders; integrated358tests/20browser and sourceActions36760609139PASS. Exactpublicassets/auth/anonymousbrowserPASS. Ownercurrenttracker/control/HA, sustainedmultilistenercapacity andpopulatedrestore NOT_RUN; fullacceptancePARTIAL/BLOCKED.",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Confirmed-operation/shared-tracker rollout: source `1328f8f562adbcc7454b6ee8b7d6a224f6cdca95`, version `cfcd030c-2004-4816-9e5d-170b0c421ac2`, deployment `4498733e-8b5b-482e-a653-ce85aa5384b1` at100%. Only actualSpotify429 establishes a listener-specific HTTPmethod/sanitizedendpoint wait; oldblanket/quarantine/backoff archived and retired. Genuine RetryAfter enforced onlymatchingoperation; unknownwait explicitboundedretry. Shared720hour/200episode tracker, fiveanonymoususers+overflow/signin totals, privateactor/starttime/revisionfences. No otherappvisibility, guessedbudget, automaticstress or exactreset claim. Fresh CONFIRMED_REQUEST_TRACKER_REVIEW.md scopedREADY:64tests/6renders; integrated358tests/20browser and sourceActions36760609139PASS. Exactpublicassets/auth/anonymousbrowserPASS. Ownercurrenttracker/control/HA, sustainedmultilistenercapacity andpopulatedrestore NOT_RUN; fullacceptancePARTIAL/BLOCKED.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/evidence/CONFIRMED_REQUEST_TRACKER_REVIEW.md",
       "environment": "analysis/local or named external provider",
       "artifact_ref": "docs/ai-dev/evidence/CONFIRMED_REQUEST_TRACKER_REVIEW.md",
@@ -814,10 +816,10 @@
       "id": "EV-18",
       "type": "FILE",
       "evidence_level": "CODE_CONFIRMED",
-      "claim": "Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Current song-clock followup: source `0a05d4fb3aa7f6549ac0ec74c3505ab7f5ea6edd`, Cloudflare version `f007976e-fc51-4f67-acb0-0916e981f530`, deployment `09b41e8d-abf8-4ee4-af85-d51404801c25` at100%. Display-only progress advances locally each second and reconciles provider observations without extra Spotify requests or durable checkpoint writes. Pause transport precedes observation; explicit resume suppresses automatic playback guard before device selection. 365 unit/Worker,21 browser and source CI36834917166 PASS; fresh scoped review READY with163 tests and9 rendered cases. Exact public assets/auth/anonymous-browser readback PASS. Automatic active-iPhone owner defect remains unreproduced/unfixed; live latency is unmeasured and UI still awaits reconciliation. Idle scheduling unchanged; broad UI redesign belongs to owner external agent. Full acceptance remains PARTIAL. Evidence: docs/ai-dev/evidence/SONG_CLOCK.json and SONG_CLOCK_REVIEW.md.",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Archived execution evidence retained at this supporting baseline; original execution revision and date remain in the artifact. Current song-clock followup: source `0a05d4fb3aa7f6549ac0ec74c3505ab7f5ea6edd`, Cloudflare version `f007976e-fc51-4f67-acb0-0916e981f530`, deployment `09b41e8d-abf8-4ee4-af85-d51404801c25` at100%. Display-only progress advances locally each second and reconciles provider observations without extra Spotify requests or durable checkpoint writes. Pause transport precedes observation; explicit resume suppresses automatic playback guard before device selection. 365 unit/Worker,21 browser and source CI36834917166 PASS; fresh scoped review READY with163 tests and9 rendered cases. Exact public assets/auth/anonymous-browser readback PASS. Automatic active-iPhone owner defect remains unreproduced/unfixed; live latency is unmeasured and UI still awaits reconciliation. Idle scheduling unchanged; broad UI redesign belongs to owner external agent. Full acceptance remains PARTIAL. Evidence: docs/ai-dev/evidence/SONG_CLOCK.json and SONG_CLOCK_REVIEW.md.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/evidence/SONG_CLOCK.json",
       "environment": "Real Worker/FakeSpotify and Chromium fixtures; public production readback; authenticated owner clock/latency/device NOT_RUN",
       "artifact_ref": "docs/ai-dev/evidence/SONG_CLOCK.json",
@@ -829,14 +831,29 @@
       "id": "EV-19",
       "type": "FILE",
       "evidence_level": "CODE_CONFIRMED",
-      "claim": "Current responsiveness optimization: source `30ae6a2d5349e3f37bce18ab39b3c920c5543c35`, Cloudflare version `bab24efb-3177-4ebf-ba9b-402322622b14`, deployment `7ba67458-b339-40d1-8a48-2e5aa86bec27` at100%. Immediate honest command feedback/frozen pause clock, bounded display-only next-song projection, stale response/identity fencing and preserved explicit Spotify-device selections. Provider acknowledgments return before reconciliation; actual device failures remain visible. Preview reads50 successors locally. Durable absolute observation deadlines reduce background traffic while preserving private/guest/guard checks; fresh reopen is coalesced. 428 unit/Worker and39 browser checks and source CI36844884695 PASS; fresh scoped independent verdict READY. Equal-window before/after Real-Hub/FakeSpotify counts are archived simulations, not provider capacity. Bindings/runtime/secrets preserved; exact assets/auth/public browser readback PASS. Physical iPhone wake/latency, owner HA and populated restore NOT_RUN; full acceptance PARTIAL. Evidence: docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json. External redesign/audit prompt: docs/UI_UX_START.md.",
+      "claim": "Historical artifact retained at current supporting baseline; execution provenance remains within artifact. Current responsiveness optimization: source `30ae6a2d5349e3f37bce18ab39b3c920c5543c35`, Cloudflare version `bab24efb-3177-4ebf-ba9b-402322622b14`, deployment `7ba67458-b339-40d1-8a48-2e5aa86bec27` at100%. Immediate honest command feedback/frozen pause clock, bounded display-only next-song projection, stale response/identity fencing and preserved explicit Spotify-device selections. Provider acknowledgments return before reconciliation; actual device failures remain visible. Preview reads50 successors locally. Durable absolute observation deadlines reduce background traffic while preserving private/guest/guard checks; fresh reopen is coalesced. 428 unit/Worker and39 browser checks and source CI36844884695 PASS; fresh scoped independent verdict READY. Equal-window before/after Real-Hub/FakeSpotify counts are archived simulations, not provider capacity. Bindings/runtime/secrets preserved; exact assets/auth/public browser readback PASS. Physical iPhone wake/latency, owner HA and populated restore NOT_RUN; full acceptance PARTIAL. Evidence: docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json. External redesign/audit prompt: docs/UI_UX_START.md.",
       "repository_id": "R-1",
       "ref": "codex/implement-cloudflare-restart",
-      "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
       "path_or_url": "docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json",
       "environment": "Real Worker/FakeSpotify and actual Chromium fixtures; production public readback; physical authenticated iPhone/HA NOT_RUN",
       "artifact_ref": "docs/ai-dev/evidence/RESPONSIVENESS_OPTIMIZATION.json",
       "observed_at": "2026-10-01T09:53:08.464936+00:00",
+      "source_status": "CURRENT_SUPPORTING",
+      "sensitivity": "PUBLIC"
+    },
+    {
+      "id": "EV-20",
+      "type": "FILE",
+      "evidence_level": "CODE_CONFIRMED",
+      "claim": "Current concert-poster UI release: source `0cad1775b0c9d7e4723b3c864eb63b2b10a86580`, Cloudflare version `60e34407-fd2a-43b8-8837-d894aec2f5a6`, deployment `4c79c507-76a5-47e8-acc4-b08a28cc7c8c` at 100%. Claude PR11 presentation redesign and its long-metadata overflow repair are integrated with separate PR12 refusal continuity/error correction. Requested, accepted and observed playback stay distinct; projection is display-only; queue/observed checkpoints and native/account isolation preserved. 444 unit/Worker and 40 browser checks plus source CI 36876091612 PASS; fresh scoped independent verdict READY. Exact public assets/auth/browser and preserved binding/runtime/secret readback PASS. Physical iPhone, live Spotify transport/latency, private HA/MA and populated restore remain NOT_RUN; full mission PARTIAL. Current evidence: docs/ai-dev/evidence/UI_RELEASE.json. Older pressure simulations retain their original source and do not establish live quota capacity.",
+      "repository_id": "R-1",
+      "ref": "codex/implement-cloudflare-restart",
+      "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+      "path_or_url": "docs/ai-dev/evidence/UI_RELEASE.json",
+      "environment": "Real Worker/FakeSpotify and actual Chromium fixtures; production public readback; physical authenticated iPhone/HA NOT_RUN",
+      "artifact_ref": "docs/ai-dev/evidence/UI_RELEASE.json",
+      "observed_at": "2026-10-01T14:33:44.836488+00:00",
       "source_status": "CURRENT_SUPPORTING",
       "sensitivity": "PUBLIC"
     }

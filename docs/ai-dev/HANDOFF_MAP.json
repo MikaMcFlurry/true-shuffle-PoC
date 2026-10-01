@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-01T09:53:08.464936+00:00",
+  "generated_at": "2026-10-01T14:33:44.836488+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -10,13 +10,13 @@
     "repository_id": "R-1",
     "repository": "MikaMcFlurry/true-shuffle-PoC",
     "ref": "codex/implement-cloudflare-restart",
-    "commit_sha": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+    "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
     "intelligence_schema": "mika.repository-intelligence.v2",
     "intelligence_status": "ALIGNED",
-    "packet_sha256": "0ff1debccc69c505ff5b6c69919b0e4e828417eb78bc105310a7e8301e4c46f9"
+    "packet_sha256": "74ceaa8f979284c8ac9bfee9c25c0daa47b593cc988a261e29a547e103bf7f52"
   },
   "write_scope": {
-    "base_commit": "9e60ebf5d405d01da45dcbb52da885311f6728ba",
+    "base_commit": "09d772e0f05b0ce175777868bc07d8af53a09204",
     "branch": "codex/implement-cloudflare-restart",
     "allowed_paths": [
       "AGENTS.md",
