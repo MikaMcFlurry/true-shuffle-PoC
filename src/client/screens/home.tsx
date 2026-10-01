@@ -380,7 +380,7 @@ export function Home({ state }: { state: AppState }) {
 							>
 								{playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
 								{unsettled
-									? commandLabel
+									? keyLabel(commandLabel)
 									: playing
 										? "Pause"
 										: session?.stationId === station?.id
@@ -793,6 +793,18 @@ export function Home({ state }: { state: AppState }) {
 				</nav>
 			</aside>
 		</div>
+	);
+}
+
+/** Keep the last word and its ellipsis together on a held key. */
+function keyLabel(label: string) {
+	const cut = label.lastIndexOf(" ", label.length - 3);
+	if (!label.endsWith(" …") || cut < 0) return label;
+	return (
+		<span>
+			{label.slice(0, cut + 1)}
+			<span class="nowrap">{label.slice(cut + 1)}</span>
+		</span>
 	);
 }
 

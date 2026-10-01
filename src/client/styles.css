@@ -231,6 +231,10 @@ svg {
 	font-variant-numeric: tabular-nums;
 }
 
+.nowrap {
+	white-space: nowrap;
+}
+
 .sr-only {
 	position: absolute;
 	width: 1px;
@@ -833,7 +837,7 @@ main h1[tabindex="-1"]:focus {
 	background: transparent;
 	color: var(--on);
 	border-style: dashed;
-	font-size: 1.02rem;
+	font-size: 0.98rem;
 	line-height: 1.15;
 }
 
