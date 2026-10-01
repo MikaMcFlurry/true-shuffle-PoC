@@ -168,16 +168,15 @@ class Store {
 			this.clearCommand();
 			return;
 		}
+		// A same-account snapshot is not evidence that a rejected command succeeded.
+		// Keep its explanation until the listener replaces it with another command.
+		if (command.phase === "failed") return;
 		const session = state.session;
 		if (session?.sessionId !== command.sessionId && !command.newSessionExpected) {
 			this.clearCommand();
 			return;
 		}
-		if (command.phase === "failed" && session?.entryId !== command.entryId) {
-			this.clearCommand();
-			return;
-		}
-		if (command.phase === "sending" || command.phase === "failed" || !session) return;
+		if (command.phase === "sending" || !session) return;
 		const newer =
 			session.observedAt !== null &&
 			(command.acceptedAt !== null
