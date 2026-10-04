@@ -1,3 +1,8 @@
+> Archivierte Claude-Notizen vom alten Branch `claude/true-shuffle-spotify-95zw0m`.
+> Aktueller Implementierungs- und Cloudflare-Build-Branch: `codex/implement-cloudflare-restart`.
+> Für den aktuellen Code- und Release-Stand gelten `AGENTS.md` und `docs/ai-dev/evidence/UI_RELEASE.json`; die Radio-Beschreibung und Setup-Aufgaben unten sind historisch.
+> Am 2026-10-04 erneut gepusht, nachdem der Besitzer den Cloudflare-Build-Branch geändert und die Wiederherstellung der neueren Version angefordert hat. Dies bestätigt noch keinen erfolgreichen Live-Deploy.
+
 # Notizen: Stand von true-shuffle
 
 Stand 2026-10-04, Branch `claude/true-shuffle-spotify-95zw0m`.
