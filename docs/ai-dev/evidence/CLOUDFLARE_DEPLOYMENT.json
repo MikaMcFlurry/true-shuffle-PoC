@@ -1,13 +1,13 @@
 {
   "schema_version": "true-shuffle.deployment.v1",
-  "recorded_at": "2026-10-01T14:32:07.776089+00:00",
-  "source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+  "recorded_at": "2026-10-04T18:57:35.263114+00:00",
+  "source_revision": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
   "worker": "true-shuffle",
   "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
-  "version_id": "60e34407-fd2a-43b8-8837-d894aec2f5a6",
-  "deployment_id": "4c79c507-76a5-47e8-acc4-b08a28cc7c8c",
+  "version_id": "d85912fa-57b2-4a66-a5b4-8b1d9444595d",
+  "deployment_id": "a55eafe0-2400-4f07-bd76-1d278eb1254a",
   "percentage": 100,
-  "deployed_at": "2026-10-01T14:30:43.384464Z",
+  "deployed_at": "2026-10-04T18:50:18.31555Z",
   "previous_version": "bab24efb-3177-4ebf-ba9b-402322622b14",
   "previous_deployment": "7ba67458-b339-40d1-8a48-2e5aa86bec27",
   "intermediate_version": "79c415cd-64b7-4046-96a4-dc3e7f63a061",
@@ -1130,5 +1130,14 @@
       "Full live Spotify/HA and populated-storage restore acceptance remains PARTIAL."
     ]
   },
-  "ui_release": "UI_RELEASE.json"
+  "ui_release": "UI_RELEASE.json",
+  "historical_release_identity": {
+    "source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+    "version_id": "60e34407-fd2a-43b8-8837-d894aec2f5a6",
+    "deployment_id": "4c79c507-76a5-47e8-acc4-b08a28cc7c8c",
+    "deployed_at": "2026-10-01T14:30:43.384464Z",
+    "recorded_at": "2026-10-01T14:32:07.776089+00:00"
+  },
+  "application_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+  "restoration_evidence": "docs/ai-dev/evidence/CLOUDFLARE_RESTORATION.json"
 }

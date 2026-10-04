@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-01T14:33:44.836488+00:00",
+  "generated_at": "2026-10-04T18:57:35.263114+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -10,17 +10,18 @@
     "repository_id": "R-1",
     "repository": "MikaMcFlurry/true-shuffle-PoC",
     "ref": "codex/implement-cloudflare-restart",
-    "commit_sha": "09d772e0f05b0ce175777868bc07d8af53a09204",
+    "commit_sha": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
     "intelligence_schema": "mika.repository-intelligence.v2",
     "intelligence_status": "ALIGNED",
-    "packet_sha256": "74ceaa8f979284c8ac9bfee9c25c0daa47b593cc988a261e29a547e103bf7f52"
+    "packet_sha256": "2a557256cae7cffe6fdc522315cfc26d63466e78774505eacdac3f7f93168e03"
   },
   "write_scope": {
-    "base_commit": "09d772e0f05b0ce175777868bc07d8af53a09204",
-    "branch": "codex/implement-cloudflare-restart",
+    "base_commit": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
+    "branch": "codex/record-cloudflare-restoration",
     "allowed_paths": [
       "AGENTS.md",
       "CODEX_START.md",
+      "docs/ai-dev/CHECKPOINT.json",
       "docs/ai-dev/EVIDENCE.json",
       "docs/ai-dev/EVIDENCE_MANIFEST.json",
       "docs/ai-dev/EXECUTION_PLAN.md",
@@ -28,6 +29,9 @@
       "docs/ai-dev/MISSION.md",
       "docs/ai-dev/PROJECT_CONTEXT.md",
       "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
+      "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
+      "docs/ai-dev/evidence/CLOUDFLARE_RESTORATION.json",
+      "docs/ai-dev/evidence/UI_RELEASE.json",
       "docs/ai-dev/repository-intelligence.json"
     ]
   },
@@ -315,6 +319,58 @@
         "D-05"
       ],
       "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "restoration_evidence_0": {
+      "path": "docs/ai-dev/CHECKPOINT.json",
+      "treatment": "UPDATE",
+      "authority": "SUPPORTING",
+      "reason": "Exact restoration deployment and verification evidence; preserves historical test provenance.",
+      "evidence_ids": [
+        "EV-03"
+      ],
+      "owner_decision_ids": [
+        "D-01"
+      ],
+      "freshness_trigger": "Production version or source change."
+    },
+    "restoration_evidence_1": {
+      "path": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json",
+      "treatment": "UPDATE",
+      "authority": "SUPPORTING",
+      "reason": "Exact restoration deployment and verification evidence; preserves historical test provenance.",
+      "evidence_ids": [
+        "EV-03"
+      ],
+      "owner_decision_ids": [
+        "D-01"
+      ],
+      "freshness_trigger": "Production version or source change."
+    },
+    "restoration_evidence_2": {
+      "path": "docs/ai-dev/evidence/UI_RELEASE.json",
+      "treatment": "UPDATE",
+      "authority": "SUPPORTING",
+      "reason": "Exact restoration deployment and verification evidence; preserves historical test provenance.",
+      "evidence_ids": [
+        "EV-03"
+      ],
+      "owner_decision_ids": [
+        "D-01"
+      ],
+      "freshness_trigger": "Production version or source change."
+    },
+    "restoration_evidence_3": {
+      "path": "docs/ai-dev/evidence/CLOUDFLARE_RESTORATION.json",
+      "treatment": "UPDATE",
+      "authority": "SUPPORTING",
+      "reason": "Exact restoration deployment and verification evidence; preserves historical test provenance.",
+      "evidence_ids": [
+        "EV-03"
+      ],
+      "owner_decision_ids": [
+        "D-01"
+      ],
+      "freshness_trigger": "Production version or source change."
     }
   }
 }

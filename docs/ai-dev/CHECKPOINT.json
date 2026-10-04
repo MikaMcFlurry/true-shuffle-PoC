@@ -1,9 +1,9 @@
 {
-  "schema_version": "mika.studio-checkpoint.v1",
+  "schema_version": "1.0",
   "project": "true-shuffle",
   "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
   "branch": "codex/implement-cloudflare-restart",
-  "phase": "DEPLOYED_LIVE_ACCEPTANCE_PARTIAL",
+  "phase": "POST_DEPLOY",
   "execution_status": "PARTIAL",
   "plan_ref": "docs/ai-dev/EXECUTION_PLAN.md",
   "completed": [
@@ -23,7 +23,8 @@
     "Confirmed peroperation429 policy/sharedfiveusertracker integrated,358unit/20browser, fresh64test/6render review READY; CI and100% publicreadbackPASS.",
     "Local song clock and pause-first ordering deployed:365unit/21browser/163independent+9renderPASS,sourceCI36834917166,exactpublic/auth/browserreadbackPASS.",
     "Responsiveness/Connect target/background scheduling optimization deployed; 428 unit/Worker, 39 browser, fresh independent scoped review READY; exact public readback PASS. Equal-window simulated pressure archived.",
-    "PR12 refusal continuity and PR11 final UI merged in dependency order, source CI/444unit/40browser/independent19unit9browser PASS; exact Cloudflare assets/runtime/auth readback PASS."
+    "PR12 refusal continuity and PR11 final UI merged in dependency order, source CI/444unit/40browser/independent19unit9browser PASS; exact Cloudflare assets/runtime/auth readback PASS.",
+    "2026-10-04 owner-triggered build branch restoration verified: CI37225939245 PASS, exact15assets and Worker etag/runtime/bindings, health/auth/CSRF and390/1440light/dark keyboard public browser PASS. Historical release independent review remains unchanged; no duplicate deploy."
   ],
   "in_progress": [],
   "blocked": [
@@ -32,9 +33,9 @@
   ],
   "deployment": {
     "status": "DEPLOYED",
-    "source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-    "version_id": "60e34407-fd2a-43b8-8837-d894aec2f5a6",
-    "deployment_id": "4c79c507-76a5-47e8-acc4-b08a28cc7c8c",
+    "source_revision": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
+    "version_id": "d85912fa-57b2-4a66-a5b4-8b1d9444595d",
+    "deployment_id": "a55eafe0-2400-4f07-bd76-1d278eb1254a",
     "percentage": 100,
     "evidence": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
   },
@@ -44,7 +45,23 @@
     "Analyze observed request tracker; shared budget remains unknown",
     "Existing confirmation lag/background serialization audit F02/F04 is a separately scoped followup"
   ],
-  "updated_at": "2026-10-01T14:32:07.776089+00:00",
+  "updated_at": "2026-10-04T18:57:35.263114+00:00",
   "quota_diagnosis": "Confirmed429 only, perlistener/HTTPmethod/sanitizedendpoint; legacy blanket/quarantine retired with bounded localbackup. Actual RetryAfter sameoperation, bounded explicit unknownretry. Shared720hour/200episode tracker with five anonymous labels, overflow/signin aggregates, privateactor recovery and startedAt fence. No automaticstress, inferred bucket/allowance or exactreset guarantee. Ownercurrenttracker/control/HArecovery NOT_RUN.",
-  "latest_followup": "docs/ai-dev/evidence/UI_RELEASE.json"
+  "latest_followup": "docs/ai-dev/evidence/UI_RELEASE.json",
+  "subject": {
+    "revision": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
+    "artifact_ref": "docs/ai-dev/evidence/CLOUDFLARE_RESTORATION.json"
+  },
+  "status": "PARTIAL",
+  "active_plan_ref": "docs/ai-dev/EXECUTION_PLAN.md",
+  "owners": [
+    "Codex"
+  ],
+  "capability_blockers": [
+    "Owner-authenticated Spotify/HA/MA acceptance",
+    "Actual populated Durable Object migration/history invariants and restore verification"
+  ],
+  "recovery_state": [
+    "LOCAL_ADDITIVE_MIGRATION_AND_BACKUP_REOPEN_PASS; PRODUCTION_NOT_RUN"
+  ]
 }

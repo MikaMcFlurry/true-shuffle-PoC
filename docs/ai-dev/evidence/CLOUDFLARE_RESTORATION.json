@@ -1,0 +1,272 @@
+{
+  "checked_at": "2026-10-04T18:57:35.263114+00:00",
+  "assets": [
+    {
+      "path": "/apple-touch-icon.png",
+      "exact": true,
+      "sha256": "8f60d6b320900e95d5752c226a8349efd034162f4d7657926eac311e6d390705"
+    },
+    {
+      "path": "/apple-touch-icon.png.json",
+      "exact": true,
+      "sha256": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a"
+    },
+    {
+      "path": "/assets/archivo-latin-ext-standard-normal-7khWdh9v.woff2",
+      "exact": true,
+      "sha256": "5717f37059660ca5c899bad6c48ee22c3ac55cb3c484055241689d0f905a1a86"
+    },
+    {
+      "path": "/assets/archivo-latin-standard-normal-DY7AcnAa.woff2",
+      "exact": true,
+      "sha256": "e3a28eade21a900c7155a247757f4b2834c07bb7ef07ad7efa55cebaac1e8f5e"
+    },
+    {
+      "path": "/assets/archivo-vietnamese-standard-normal-rJmnGBSt.woff2",
+      "exact": true,
+      "sha256": "332e6f66de84927cdffc60894e4e186ced783f5cb4b3e88200f45b7c1d306810"
+    },
+    {
+      "path": "/assets/index-BOGpDpEB.css",
+      "exact": true,
+      "sha256": "0fc17dbca8bbbd1ec43defa9d944b0c7587b31d23b45c2ee7067d9b0d38a9a1c"
+    },
+    {
+      "path": "/assets/index-C8HUn-6b.js",
+      "exact": true,
+      "sha256": "85d7ab656bec66652a0c9c21a2583f7916d6ced7a7c429ed5bef98e731ba4d86"
+    },
+    {
+      "path": "/assets/index-C8HUn-6b.js.map",
+      "exact": true,
+      "sha256": "70a99b2f28398ac561aef90b4e9a2a31a224222be6e803f2c4e495fe0faa6a29"
+    },
+    {
+      "path": "/icon-192.png",
+      "exact": true,
+      "sha256": "6d5e9bd88a8ca56d41d8710396868fba2473d4bc8c6337b312c387b2e22eb160"
+    },
+    {
+      "path": "/icon-192.png.json",
+      "exact": true,
+      "sha256": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a"
+    },
+    {
+      "path": "/icon-512.png",
+      "exact": true,
+      "sha256": "12e80a31772b667e941cc3ac03c3fd79f87898833f6dea8d5b0c462a44c79b99"
+    },
+    {
+      "path": "/icon-512.png.json",
+      "exact": true,
+      "sha256": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a"
+    },
+    {
+      "path": "/icon.svg",
+      "exact": true,
+      "sha256": "92591cd271b39de92aeca1b08a8702773e5b7c7bac45740c68655ce8c7a7c9bc"
+    },
+    {
+      "path": "/",
+      "exact": true,
+      "sha256": "a8184194de23343088593629463cfc37cfc07d89e7b6c00fd2f08b8fa38a10b8"
+    },
+    {
+      "path": "/manifest.webmanifest",
+      "exact": true,
+      "sha256": "7c33a2b886639d264b6df6e24eb5afabd09e2727037cd3ce249d1ec63ec16f3e"
+    }
+  ],
+  "api": [
+    {
+      "path": "/api/health",
+      "expected": 200,
+      "status": 200,
+      "pass": true
+    },
+    {
+      "path": "/api/state",
+      "expected": 401,
+      "status": 401,
+      "pass": true
+    },
+    {
+      "path": "/api/native/devices",
+      "expected": 401,
+      "status": 401,
+      "pass": true
+    },
+    {
+      "path": "/api/spotify/diagnostics",
+      "expected": 401,
+      "status": 401,
+      "pass": true
+    },
+    {
+      "path": "/api/spotify/usage",
+      "expected": 401,
+      "status": 401,
+      "pass": true
+    },
+    {
+      "path": "/api/player",
+      "expected": 403,
+      "status": 403,
+      "pass": true
+    },
+    {
+      "path": "/api/spotify/availability-test",
+      "expected": 403,
+      "status": 403,
+      "pass": true
+    },
+    {
+      "path": "/api/spotify/availability-test",
+      "expected": 401,
+      "status": 401,
+      "pass": true,
+      "request_header": "x-ts: 1"
+    }
+  ],
+  "resources_match": {
+    "script": true,
+    "script_runtime": true,
+    "bindings": true
+  },
+  "source_revision": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
+  "application_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+  "version_id": "d85912fa-57b2-4a66-a5b4-8b1d9444595d",
+  "deployment_id": "a55eafe0-2400-4f07-bd76-1d278eb1254a",
+  "percentage": 100,
+  "script_etag": "c3427886454227a553e43e9889a6c3c87bd42bdd655437a2d519c13ea6b67837",
+  "ci": {
+    "id": 37225939245,
+    "status": "PASS",
+    "checks": [
+      "build",
+      "typecheck",
+      "lint",
+      "unit/Worker",
+      "40 browser tests",
+      "Wrangler dry-run"
+    ],
+    "tested_checkout": "3e440fa06f61ef7d137884e1a77472e3a3e1fae4 (PR10 merge ref)",
+    "head_sha": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0"
+  },
+  "browser": [
+    {
+      "title": "true-shuffle",
+      "text": "Zum Inhalt\ntrue-shuffle\nDeine Sender mit Ged\u00e4chtnis\n\nKeine schnellen Wiederholungen. Alles kommt irgendwann dran.\n\nMit Spotify anmelden\n\ntrue-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken \u2014 auch \u00fcber Tage, Ger\u00e4te und alles, was du nebenbei h\u00f6rst.\n\nBraucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
+      "overflow": false,
+      "links": [
+        {
+          "text": "Zum Inhalt",
+          "href": "#content"
+        },
+        {
+          "text": "true-shuffle",
+          "href": "/"
+        },
+        {
+          "text": "Mit Spotify anmelden",
+          "href": "/auth/login"
+        }
+      ],
+      "keyboardFocus": "<a class=\"skip-link\" href=\"#content\">Zum Inhalt</a>",
+      "width": 390,
+      "theme": "light",
+      "errors": []
+    },
+    {
+      "title": "true-shuffle",
+      "text": "Zum Inhalt\ntrue-shuffle\nDeine Sender mit Ged\u00e4chtnis\n\nKeine schnellen Wiederholungen. Alles kommt irgendwann dran.\n\nMit Spotify anmelden\n\ntrue-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken \u2014 auch \u00fcber Tage, Ger\u00e4te und alles, was du nebenbei h\u00f6rst.\n\nBraucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
+      "overflow": false,
+      "links": [
+        {
+          "text": "Zum Inhalt",
+          "href": "#content"
+        },
+        {
+          "text": "true-shuffle",
+          "href": "/"
+        },
+        {
+          "text": "Mit Spotify anmelden",
+          "href": "/auth/login"
+        }
+      ],
+      "keyboardFocus": "<a class=\"skip-link\" href=\"#content\">Zum Inhalt</a>",
+      "width": 390,
+      "theme": "dark",
+      "errors": []
+    },
+    {
+      "title": "true-shuffle",
+      "text": "Zum Inhalt\ntrue-shuffle\nDeine Sender mit Ged\u00e4chtnis\n\nKeine schnellen Wiederholungen. Alles kommt irgendwann dran.\n\nMit Spotify anmelden\n\ntrue-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken \u2014 auch \u00fcber Tage, Ger\u00e4te und alles, was du nebenbei h\u00f6rst.\n\nBraucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
+      "overflow": false,
+      "links": [
+        {
+          "text": "Zum Inhalt",
+          "href": "#content"
+        },
+        {
+          "text": "true-shuffle",
+          "href": "/"
+        },
+        {
+          "text": "Mit Spotify anmelden",
+          "href": "/auth/login"
+        }
+      ],
+      "keyboardFocus": "<a class=\"skip-link\" href=\"#content\">Zum Inhalt</a>",
+      "width": 1440,
+      "theme": "light",
+      "errors": []
+    },
+    {
+      "title": "true-shuffle",
+      "text": "Zum Inhalt\ntrue-shuffle\nDeine Sender mit Ged\u00e4chtnis\n\nKeine schnellen Wiederholungen. Alles kommt irgendwann dran.\n\nMit Spotify anmelden\n\ntrue-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken \u2014 auch \u00fcber Tage, Ger\u00e4te und alles, was du nebenbei h\u00f6rst.\n\nBraucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
+      "overflow": false,
+      "links": [
+        {
+          "text": "Zum Inhalt",
+          "href": "#content"
+        },
+        {
+          "text": "true-shuffle",
+          "href": "/"
+        },
+        {
+          "text": "Mit Spotify anmelden",
+          "href": "/auth/login"
+        }
+      ],
+      "keyboardFocus": "<a class=\"skip-link\" href=\"#content\">Zum Inhalt</a>",
+      "width": 1440,
+      "theme": "dark",
+      "errors": []
+    }
+  ],
+  "closed_finding": {
+    "priority": "P1",
+    "comment_id": 5981065475,
+    "previous_version": "3321a51d-ef53-46e2-8442-061e887facbf",
+    "resolution": "Owner corrected build branch; Cloudflare rebuilt reviewed application. All15 assets, exact Worker etag, runtime and bindings match original accepted release."
+  },
+  "limits": [
+    "Physical iPhone/live Spotify latency/quota/private HA/populated restore NOT_RUN",
+    "Authenticated production browser NOT_RUN; prior independently reviewed simulations retain original provenance"
+  ],
+  "action": "Verified owner-triggered rebuild; no new application commits, merge or deployment performed by this watcher.",
+  "current_source_checks": {
+    "source_revision": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
+    "build": "PASS",
+    "typecheck": "PASS",
+    "lint": "PASS (2 pre-existing informational suggestions)",
+    "unit_worker": "444 PASS/30 files",
+    "browser": "40 PASS; real local Worker/FakeSpotify, not live transport acceptance",
+    "wrangler_dry_run": "PASS",
+    "build_assets": "14 runtime assets match clean current-source build; deployed sourcemap matches original reviewed build, while local sourcemap includes checkout-path variation"
+  },
+  "handoff_validation": "Packet, Evidence Ledger, checkpoint and handoff PASS; original test provenance retained."
+}

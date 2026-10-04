@@ -5,7 +5,7 @@
   "subject": {
     "revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "Cloudflare version 60e34407-fd2a-43b8-8837-d894aec2f5a6; exact public assets/auth/browser readback; source CI/local Worker+browser simulation. Physical iPhone/owner HA/populated restore NOT_RUN.",
+    "environment": "Cloudflare version d85912fa-57b2-4a66-a5b4-8b1d9444595d; exact public assets/auth/browser readback; source CI/local Worker+browser simulation. Physical iPhone/owner HA/populated restore NOT_RUN.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
