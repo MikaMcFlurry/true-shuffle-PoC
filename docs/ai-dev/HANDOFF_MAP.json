@@ -1,0 +1,320 @@
+{
+  "schema_version": "mika.repo-handoff-map.v2",
+  "generated_at": "2026-09-30T03:54:02.239928+00:00",
+  "map_path": "docs/ai-dev/HANDOFF_MAP.json",
+  "profiles": [
+    "LEAN",
+    "LIVE_SYSTEM"
+  ],
+  "analysis_baseline": {
+    "repository_id": "R-1",
+    "repository": "MikaMcFlurry/true-shuffle-PoC",
+    "ref": "codex/cloudflare-restart-plan",
+    "commit_sha": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
+    "intelligence_schema": "mika.repository-intelligence.v2",
+    "intelligence_status": "ALIGNED",
+    "packet_sha256": "f192a89628f1a32360ac82295467ba006d1dcae7c8f65ec087c976221a3269fd"
+  },
+  "write_scope": {
+    "base_commit": "59174f6fc3d9da38dcc3a944c3524f8a6bc428f9",
+    "branch": "codex/cloudflare-restart-plan",
+    "allowed_paths": [
+      "AGENTS.md",
+      "CODEX_START.md",
+      "docs/ai-dev/EVIDENCE.json",
+      "docs/ai-dev/EVIDENCE_MANIFEST.json",
+      "docs/ai-dev/EXECUTION_PLAN.md",
+      "docs/ai-dev/HANDOFF_MAP.json",
+      "docs/ai-dev/MISSION.md",
+      "docs/ai-dev/PROJECT_CONTEXT.md",
+      "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
+      "docs/ai-dev/repository-intelligence.json"
+    ]
+  },
+  "roles": {
+    "agent_entry": {
+      "path": "AGENTS.md",
+      "treatment": "UPDATE",
+      "authority": "CANONICAL",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "start_here": {
+      "path": "CODEX_START.md",
+      "treatment": "UPDATE",
+      "authority": "CANONICAL",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "mission": {
+      "path": "docs/ai-dev/MISSION.md",
+      "treatment": "CREATE",
+      "authority": "CANONICAL",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "owner_decisions": {
+      "path": "docs/ai-dev/MISSION.md",
+      "treatment": "CREATE",
+      "authority": "CANONICAL",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "current_state": {
+      "path": "docs/ai-dev/PROJECT_CONTEXT.md",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "architecture_runtime": {
+      "path": "docs/ai-dev/PROJECT_CONTEXT.md",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "run_deploy_operations": {
+      "path": "docs/ai-dev/PROJECT_CONTEXT.md",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "production_baseline": {
+      "path": "docs/ai-dev/PROJECT_CONTEXT.md",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "product_truth": {
+      "path": "PRODUCT.md",
+      "treatment": "LINK",
+      "authority": "CANONICAL",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-03"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "feature_inventory": {
+      "path": "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "intelligence_markdown": {
+      "path": "docs/ai-dev/REPOSITORY_INTELLIGENCE.md",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "intelligence_json": {
+      "path": "docs/ai-dev/repository-intelligence.json",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "quality_risks": {
+      "path": "docs/ai-dev/EXECUTION_PLAN.md",
+      "treatment": "CREATE",
+      "authority": "CANONICAL",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "execution_plan": {
+      "path": "docs/ai-dev/EXECUTION_PLAN.md",
+      "treatment": "CREATE",
+      "authority": "CANONICAL",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "verification_ledger": {
+      "path": "docs/ai-dev/EVIDENCE.json",
+      "treatment": "CREATE",
+      "authority": "SUPPORTING",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    },
+    "evidence_manifest": {
+      "path": "docs/ai-dev/EVIDENCE_MANIFEST.json",
+      "treatment": "CREATE",
+      "authority": "GENERATED_VIEW",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "evidence_ids": [
+        "EV-01",
+        "EV-02"
+      ],
+      "owner_decision_ids": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05"
+      ],
+      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+    }
+  }
+}

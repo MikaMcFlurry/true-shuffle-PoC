@@ -1,0 +1,22 @@
+# Agent Map
+
+## Objective and mode
+[Current product objective] — [AUTONOMOUS_BUILD | GOVERNED_EXECUTION | EXPERIMENT]
+
+## Authoritative project truth
+- Product: `[path]`
+- Architecture/decisions: `[path]`
+- Active plan: `[path]`
+- Quality/evidence: `[path]`
+- Operations/recovery: `[path]`
+
+## Canonical commands
+- Setup: `[command]`
+- Run: `[command]`
+- Verify: `[command]`
+
+## Boundaries and risks
+[Ownership, forbidden surfaces, migrations, high-risk invariants]
+
+## Completion
+[Evidence and review required before claiming completion]

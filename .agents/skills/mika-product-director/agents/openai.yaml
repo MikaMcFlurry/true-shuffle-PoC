@@ -1,0 +1,14 @@
+interface:
+  display_name: Mika Product Director
+  short_description: Challenge and sharpen product direction
+  default_prompt: Use $mika-product-director to challenge this product and return
+    an executable direction with measurable criteria.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

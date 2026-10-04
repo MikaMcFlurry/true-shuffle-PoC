@@ -1,0 +1,13 @@
+# Execution Plan
+
+## Objective, baseline and fixed constraints
+[Observable target, current evidence, non-negotiables]
+
+## Dependency graph and ownership
+[Workstreams, contracts, owners, isolation, integration owner]
+
+## Evidence and recovery
+[Required gates, migrations, rollback/restore]
+
+## Live state
+[Progress, decisions, integration notes, blockers, next executable work]

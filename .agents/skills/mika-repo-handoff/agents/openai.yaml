@@ -1,0 +1,14 @@
+interface:
+  display_name: Mika Repo Handoff
+  short_description: Create a canonical, validated AI Dev handoff
+  default_prompt: Use $mika-repo-handoff to turn this aligned repository packet into
+    a compact, canonical AI Dev handoff.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

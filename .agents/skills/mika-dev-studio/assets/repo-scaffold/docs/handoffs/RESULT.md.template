@@ -1,0 +1,16 @@
+# Studio Result
+
+## Outcome
+[Mode, intended/achieved delivery state, execution status]
+
+## Product and engineering
+[Material decisions, changed surfaces, external identifiers]
+
+## Evidence and independent review
+[Evidence Ledger, failed/not-run gates, red-team verdict]
+
+## Operations and recovery
+[Deployment, migration, monitoring actually configured, rollback/restore]
+
+## Remaining findings / blockers
+[Severity, impact, evidence, disposition, next action]

@@ -1,0 +1,14 @@
+interface:
+  display_name: Mika Repo Intelligence
+  short_description: Reconstruct repository truth before development
+  default_prompt: Use $mika-repo-intelligence to reconstruct this repository's current
+    reality, target intent, and risks before development.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

@@ -1,0 +1,14 @@
+interface:
+  display_name: Mika Red Team
+  short_description: Independently falsify release readiness
+  default_prompt: Use $mika-red-team in a fresh review context to try to disprove
+    this release is ready.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
