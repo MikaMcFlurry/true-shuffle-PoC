@@ -683,9 +683,10 @@
 [data-design="strich"] .lw--strich .now-shelf {
 	grid-template-columns: 112px minmax(0, 1fr);
 	grid-template-areas:
+		"title title"
 		"art artist"
-		"art album"
-		"title title";
+		"art album";
+	grid-template-rows: auto auto 1fr;
 	align-items: start;
 	column-gap: 16px;
 	row-gap: 2px;
@@ -844,4 +845,10 @@
 		width: 160px;
 		justify-self: end;
 	}
+}
+
+/* Artist and album stay together right under the title. */
+[data-design="strich"] .lw--strich .now-copy .artist,
+[data-design="strich"] .lw--strich .now-copy .album {
+	align-self: start;
 }
