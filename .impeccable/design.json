@@ -1,1433 +1,1818 @@
 {
 	"schemaVersion": 2,
-	"generatedAt": "2026-10-07T00:52:58.252830+00:00",
+	"generatedAt": "2026-10-07T08:39:36.255926+00:00",
 	"title": "Design System: true-shuffle",
 	"extensions": {
 		"colorMeta": {
-			"kontakt-photo-paper": {
+			"kontakt-light-table": {
 				"role": "neutral",
-				"displayName": "Kontaktbogen Photo Paper",
+				"displayName": "Leuchttisch Light Table",
 				"canonical": "#eeedea",
 				"tonalRamp": [
-					"#2a2822",
-					"#49463b",
-					"#686354",
-					"#87816e",
-					"#a19c8b",
-					"#bbb7aa",
-					"#d6d4cc",
-					"#f4f3f1"
+					"#0c0b09",
+					"#262523",
+					"#43423f",
+					"#62615f",
+					"#83827f",
+					"#a6a5a2",
+					"#cac9c6",
+					"#efeeeb"
 				],
 				"design": "kontakt",
 				"night": "#0d0b0a"
 			},
-			"kontakt-paper-raise": {
+			"kontakt-print-paper": {
 				"role": "neutral",
-				"displayName": "Kontaktbogen Paper Raise",
+				"displayName": "Leuchttisch Print Paper",
 				"canonical": "#f9f8f6",
 				"tonalRamp": [
-					"#2e291f",
-					"#504735",
-					"#71654b",
-					"#938362",
-					"#ab9d82",
-					"#c2b8a3",
-					"#dad4c8",
-					"#f5f3f0"
+					"#0c0b0a",
+					"#262523",
+					"#434240",
+					"#62615f",
+					"#838280",
+					"#a6a5a3",
+					"#cac9c7",
+					"#efeeec"
 				],
 				"design": "kontakt",
 				"night": "#161412"
 			},
 			"kontakt-film-black": {
 				"role": "tertiary",
-				"displayName": "Kontaktbogen Film Black",
+				"displayName": "Leuchttisch Film Black",
 				"canonical": "#141210",
 				"tonalRamp": [
-					"#2a2622",
-					"#4a423b",
-					"#695e54",
-					"#887a6d",
-					"#a2968b",
-					"#bbb2aa",
-					"#d6d1cc",
-					"#f4f2f1"
+					"#0d0b09",
+					"#272522",
+					"#44413f",
+					"#63615e",
+					"#84827f",
+					"#a7a4a2",
+					"#cbc8c6",
+					"#f1eeeb"
 				],
 				"design": "kontakt",
 				"night": "#1d1a17"
 			},
 			"kontakt-film-print": {
 				"role": "tertiary",
-				"displayName": "Kontaktbogen Film Print",
+				"displayName": "Leuchttisch Film Print",
 				"canonical": "#f2ede6",
 				"tonalRamp": [
-					"#32281a",
-					"#57462d",
-					"#7c6341",
-					"#a18154",
-					"#b79c75",
-					"#cbb79a",
-					"#e0d4c3",
-					"#f6f3ee"
+					"#0e0b06",
+					"#28241f",
+					"#45413c",
+					"#65605b",
+					"#86827b",
+					"#a9a49e",
+					"#cdc8c2",
+					"#f3eee7"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-film-print-dim": {
 				"role": "tertiary",
-				"displayName": "Kontaktbogen Film Print Dim",
+				"displayName": "Leuchttisch Film Print Dim",
 				"canonical": "#b0a99f",
 				"tonalRamp": [
-					"#2a2723",
-					"#49433c",
-					"#686055",
-					"#867c6f",
-					"#a1988c",
-					"#bab4ab",
-					"#d6d2cd",
-					"#f3f2f1"
+					"#0f0a04",
+					"#2a241c",
+					"#474138",
+					"#676057",
+					"#888178",
+					"#aba49a",
+					"#cfc8be",
+					"#f5ede3"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-edge-amber": {
 				"role": "tertiary",
-				"displayName": "Kontaktbogen Edge Amber",
+				"displayName": "Leuchttisch Edge Amber",
 				"canonical": "#e6b15c",
 				"tonalRamp": [
-					"#422d0a",
-					"#734e12",
-					"#a46e19",
-					"#d48f21",
-					"#e3a84a",
-					"#ebc07a",
-					"#f3d9af",
-					"#fcf4e9"
+					"#120900",
+					"#342100",
+					"#583c06",
+					"#815801",
+					"#aa7818",
+					"#cf9b44",
+					"#f5bf6a",
+					"#feecd1"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-graphite-quiet": {
 				"role": "neutral",
-				"displayName": "Kontaktbogen Graphite Quiet",
+				"displayName": "Leuchttisch Graphite Quiet",
 				"canonical": "#5c5853",
 				"tonalRamp": [
-					"#282624",
-					"#46433f",
-					"#635f59",
-					"#817b74",
-					"#9c9791",
-					"#b6b3af",
-					"#d3d1cf",
-					"#f3f2f2"
+					"#0e0b07",
+					"#282420",
+					"#45413d",
+					"#65605b",
+					"#86827c",
+					"#a9a49f",
+					"#cdc8c2",
+					"#f2eee8"
 				],
-				"design": "kontakt"
+				"design": "kontakt",
+				"night": "#a69e93"
 			},
 			"kontakt-paper-hair": {
 				"role": "neutral",
-				"displayName": "Kontaktbogen Paper Hair",
+				"displayName": "Leuchttisch Paper Hair",
 				"canonical": "#cfcbc5",
 				"tonalRamp": [
-					"#2a2723",
-					"#49443c",
-					"#676055",
-					"#867d6f",
-					"#a0988d",
-					"#bab4ab",
-					"#d5d2cd",
-					"#f3f2f1"
+					"#0d0b07",
+					"#282520",
+					"#45413d",
+					"#64615b",
+					"#85827c",
+					"#a8a49f",
+					"#ccc8c2",
+					"#f2eee8"
 				],
-				"design": "kontakt"
-			},
-			"kontakt-film-line": {
-				"role": "tertiary",
-				"displayName": "Kontaktbogen Film Line",
-				"canonical": "#3b3632",
-				"tonalRamp": [
-					"#292623",
-					"#48423d",
-					"#665d57",
-					"#857970",
-					"#9f958e",
-					"#b9b2ac",
-					"#d5d1cd",
-					"#f3f2f1"
-				],
-				"design": "kontakt"
+				"design": "kontakt",
+				"night": "#2e2a26"
 			},
 			"kontakt-grease-red": {
 				"role": "primary",
-				"displayName": "Kontaktbogen Grease Red",
+				"displayName": "Leuchttisch Grease Red",
 				"canonical": "#e2362a",
 				"tonalRamp": [
-					"#430d09",
-					"#751610",
-					"#a62017",
-					"#d7291d",
-					"#e65147",
-					"#ed8078",
-					"#f4b3ae",
-					"#fceae9"
+					"#1f0000",
+					"#4d0001",
+					"#810102",
+					"#b80706",
+					"#e5392d",
+					"#fe7564",
+					"#fdb4a8",
+					"#ffe9e5"
 				],
 				"design": "kontakt",
 				"night": "#ff5a3c"
 			},
 			"kontakt-darkroom": {
 				"role": "neutral",
-				"displayName": "Kontaktbogen Darkroom",
+				"displayName": "Leuchttisch Darkroom",
 				"canonical": "#0d0b0a",
 				"tonalRamp": [
-					"#2b2521",
-					"#4b3f3a",
-					"#6b5a52",
-					"#8a756a",
-					"#a49289",
-					"#bcafa9",
-					"#d7cfcb",
-					"#f4f2f1"
+					"#0d0b0a",
+					"#272423",
+					"#444140",
+					"#63605f",
+					"#848280",
+					"#a7a4a3",
+					"#cbc8c7",
+					"#f1eeec"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-darkroom-raise": {
 				"role": "neutral",
-				"displayName": "Kontaktbogen Darkroom Raise",
+				"displayName": "Leuchttisch Darkroom Raise",
 				"canonical": "#161412",
 				"tonalRamp": [
-					"#2a2622",
-					"#49423c",
-					"#685e55",
-					"#877a6e",
-					"#a1968c",
-					"#bab2ab",
-					"#d6d1cd",
-					"#f4f2f1"
-				],
-				"design": "kontakt"
-			},
-			"kontakt-darkroom-film": {
-				"role": "tertiary",
-				"displayName": "Kontaktbogen Darkroom Film",
-				"canonical": "#1d1a17",
-				"tonalRamp": [
-					"#2b2622",
-					"#4a423b",
-					"#695e53",
-					"#897a6c",
-					"#a3968a",
-					"#bbb2aa",
-					"#d6d1cc",
-					"#f4f2f1"
+					"#0d0b09",
+					"#272522",
+					"#44413f",
+					"#63615e",
+					"#84827f",
+					"#a7a4a2",
+					"#cbc8c6",
+					"#f1eeeb"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-darkroom-print": {
 				"role": "neutral",
-				"displayName": "Kontaktbogen Darkroom Print",
+				"displayName": "Leuchttisch Darkroom Print",
 				"canonical": "#ece6dd",
 				"tonalRamp": [
-					"#31281b",
-					"#554630",
-					"#796444",
-					"#9d8158",
-					"#b49c79",
-					"#c8b79d",
-					"#ded4c4",
-					"#f6f3ef"
-				],
-				"design": "kontakt"
-			},
-			"kontakt-darkroom-quiet": {
-				"role": "neutral",
-				"displayName": "Kontaktbogen Darkroom Quiet",
-				"canonical": "#a69e93",
-				"tonalRamp": [
-					"#2a2723",
-					"#49433c",
-					"#676055",
-					"#867c6f",
-					"#a1988c",
-					"#bab4ab",
-					"#d6d2cd",
-					"#f3f2f1"
+					"#0e0a05",
+					"#29241e",
+					"#46413a",
+					"#666059",
+					"#878179",
+					"#aaa49c",
+					"#cec8bf",
+					"#f4eee5"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-darkroom-red": {
 				"role": "primary",
-				"displayName": "Kontaktbogen Darkroom Red",
+				"displayName": "Leuchttisch Darkroom Red",
 				"canonical": "#ff5a3c",
 				"tonalRamp": [
-					"#4c0c00",
-					"#851400",
-					"#bd1d00",
-					"#f52600",
-					"#ff4e2e",
-					"#ff7e66",
-					"#ffb1a3",
-					"#ffe9e5"
-				],
-				"design": "kontakt"
-			},
-			"kontakt-safelight-hole": {
-				"role": "tertiary",
-				"displayName": "Kontaktbogen Safelight Hole",
-				"canonical": "#6b2f25",
-				"tonalRamp": [
-					"#391914",
-					"#632b22",
-					"#8c3e30",
-					"#b6503f",
-					"#c97264",
-					"#d8988d",
-					"#e7c1bb",
-					"#f8eeec"
+					"#1e0100",
+					"#490901",
+					"#7a1704",
+					"#af260b",
+					"#e33e20",
+					"#fc775e",
+					"#feb4a4",
+					"#ffe9e4"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-grease-blue": {
 				"role": "secondary",
-				"displayName": "Kontaktbogen Grease Blue",
+				"displayName": "Leuchttisch Grease Blue",
 				"canonical": "#4b86f0",
 				"tonalRamp": [
-					"#061d47",
-					"#0a327a",
-					"#0f48ae",
-					"#135de2",
-					"#3e7def",
-					"#72a0f3",
-					"#aac6f8",
-					"#e7effd"
+					"#000827",
+					"#001f5b",
+					"#013896",
+					"#225ac0",
+					"#437ee7",
+					"#72a4fc",
+					"#accafd",
+					"#e6efff"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-grease-vermilion": {
 				"role": "secondary",
-				"displayName": "Kontaktbogen Grease Vermilion",
+				"displayName": "Leuchttisch Grease Vermilion",
 				"canonical": "#ff4b2b",
 				"tonalRamp": [
-					"#4c0c00",
-					"#851400",
-					"#bd1c00",
-					"#f52500",
-					"#ff4d2e",
-					"#ff7d66",
-					"#ffb1a3",
-					"#ffe9e5"
+					"#1e0100",
+					"#4a0801",
+					"#7b1502",
+					"#b02307",
+					"#e9330e",
+					"#fd765c",
+					"#fdb5a5",
+					"#fee9e4"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-grease-green": {
 				"role": "secondary",
-				"displayName": "Kontaktbogen Grease Green",
+				"displayName": "Leuchttisch Grease Green",
 				"canonical": "#33c06d",
 				"tonalRamp": [
-					"#103c22",
-					"#1c693b",
-					"#289555",
-					"#33c16e",
-					"#5ad38c",
-					"#86dfab",
-					"#b6eccc",
-					"#ebfaf1"
+					"#001004",
+					"#022e14",
+					"#055027",
+					"#0d743d",
+					"#169b53",
+					"#36c26f",
+					"#63e892",
+					"#c8fed6"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-grease-magenta": {
 				"role": "secondary",
-				"displayName": "Kontaktbogen Grease Magenta",
+				"displayName": "Leuchttisch Grease Magenta",
 				"canonical": "#e05aa8",
 				"tonalRamp": [
-					"#400c2b",
-					"#70154a",
-					"#9f1e69",
-					"#ce2788",
-					"#de4fa2",
-					"#e77ebb",
-					"#f0b2d6",
-					"#fbeaf4"
+					"#1c0010",
+					"#47002f",
+					"#780051",
+					"#a51f74",
+					"#cd4897",
+					"#f56dbb",
+					"#fdadd6",
+					"#fee7f2"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-grease-orange": {
 				"role": "secondary",
-				"displayName": "Kontaktbogen Grease Orange",
+				"displayName": "Leuchttisch Grease Orange",
 				"canonical": "#ff8a1e",
 				"tonalRamp": [
-					"#4c2500",
-					"#854000",
-					"#bd5b00",
-					"#f57600",
-					"#ff922e",
-					"#ffaf66",
-					"#ffcfa3",
-					"#fff2e5"
+					"#170600",
+					"#3c1b01",
+					"#653304",
+					"#924c0a",
+					"#c16713",
+					"#f68108",
+					"#ffb786",
+					"#ffeadc"
 				],
 				"design": "kontakt"
 			},
 			"kontakt-grease-yellow": {
 				"role": "secondary",
-				"displayName": "Kontaktbogen Grease Yellow",
+				"displayName": "Leuchttisch Grease Yellow",
 				"canonical": "#f2c230",
 				"tonalRamp": [
-					"#483705",
-					"#7d6008",
-					"#b2880b",
-					"#e6b10e",
-					"#f3c53a",
-					"#f6d56f",
-					"#fae6a9",
-					"#fdf8e7"
+					"#100a00",
+					"#302300",
+					"#533f00",
+					"#785d02",
+					"#a07d06",
+					"#c99f16",
+					"#f3c331",
+					"#ffedc1"
 				],
 				"design": "kontakt"
 			},
 			"linie-station-wall": {
 				"role": "neutral",
-				"displayName": "Linienplan Station Wall",
+				"displayName": "Fahrt Station Wall",
 				"canonical": "#e9edf1",
 				"tonalRamp": [
-					"#1e262f",
-					"#344251",
-					"#495e73",
-					"#5f7a96",
-					"#7f96ae",
-					"#a2b3c3",
-					"#c7d1db",
-					"#eff2f5"
+					"#090b0e",
+					"#222528",
+					"#3f4246",
+					"#5e6265",
+					"#7f8386",
+					"#a2a5a9",
+					"#c6cacd",
+					"#ebeff3"
 				],
 				"design": "linie",
 				"night": "#0b1424"
 			},
 			"linie-signage-white": {
 				"role": "neutral",
-				"displayName": "Linienplan Signage White",
+				"displayName": "Fahrt Signage White",
 				"canonical": "#ffffff",
 				"tonalRamp": [
-					"#262626",
+					"#0b0b0b",
+					"#252525",
 					"#424242",
-					"#5e5e5e",
-					"#7a7a7a",
-					"#969696",
-					"#b2b2b2",
-					"#d1d1d1",
-					"#f2f2f2"
+					"#616161",
+					"#828282",
+					"#a5a5a5",
+					"#c9c9c9",
+					"#eeeeee"
 				],
 				"design": "linie",
 				"night": "#132038"
 			},
 			"linie-navy-ink": {
 				"role": "neutral",
-				"displayName": "Linienplan Navy Ink",
+				"displayName": "Fahrt Navy Ink",
 				"canonical": "#0f1d33",
 				"tonalRamp": [
-					"#11223b",
-					"#1e3a66",
-					"#2b5392",
-					"#386cbd",
-					"#5d8acf",
-					"#89a9dc",
-					"#b8ccea",
-					"#ebf1f9"
+					"#020a1f",
+					"#17253c",
+					"#33435b",
+					"#51627c",
+					"#72839f",
+					"#94a6c3",
+					"#b7cae8",
+					"#e5effe"
 				],
 				"design": "linie",
 				"night": "#f2f5f9"
 			},
 			"linie-navy-quiet": {
 				"role": "neutral",
-				"displayName": "Linienplan Navy Quiet",
+				"displayName": "Fahrt Navy Quiet",
 				"canonical": "#4a586c",
 				"tonalRamp": [
-					"#1f252d",
-					"#36404f",
-					"#4d5b70",
-					"#647691",
-					"#8393aa",
-					"#a4b0c1",
-					"#c9d0da",
-					"#f0f2f5"
+					"#030b1a",
+					"#192637",
+					"#354356",
+					"#546277",
+					"#748499",
+					"#97a6bd",
+					"#bacbe2",
+					"#e5efff"
 				],
-				"design": "linie"
+				"design": "linie",
+				"night": "#a6b2c3"
 			},
 			"linie-panel-hair": {
 				"role": "neutral",
-				"displayName": "Linienplan Panel Hair",
+				"displayName": "Fahrt Panel Hair",
 				"canonical": "#c7d0da",
 				"tonalRamp": [
-					"#1e262e",
-					"#354250",
-					"#4b5d72",
-					"#617993",
-					"#8195ac",
-					"#a3b2c2",
-					"#c8d1da",
-					"#f0f2f5"
+					"#060c12",
+					"#1f262d",
+					"#3b434b",
+					"#5a626b",
+					"#7b838c",
+					"#9da6b0",
+					"#c1cad4",
+					"#e6f0fa"
 				],
-				"design": "linie"
+				"design": "linie",
+				"night": "#283851"
 			},
 			"linie-signal-red": {
 				"role": "primary",
-				"displayName": "Linienplan Signal Red",
+				"displayName": "Fahrt Signal Red",
 				"canonical": "#e3001b",
 				"tonalRamp": [
-					"#4c0009",
-					"#850010",
-					"#bd0016",
-					"#f5001d",
-					"#ff2e47",
-					"#ff6678",
-					"#ffa3ae",
-					"#ffe5e9"
+					"#1f0001",
+					"#4c0305",
+					"#7e090e",
+					"#b5131a",
+					"#ef1f27",
+					"#ff7368",
+					"#feb3aa",
+					"#ffe9e6"
 				],
 				"design": "linie",
 				"night": "#ff3349"
 			},
+			"linie-board-amber": {
+				"role": "tertiary",
+				"displayName": "Fahrt Board Amber",
+				"canonical": "#ffc93c",
+				"tonalRamp": [
+					"#110a00",
+					"#312300",
+					"#543e00",
+					"#7a5c01",
+					"#a37c04",
+					"#cc9d14",
+					"#f6c130",
+					"#ffedc6"
+				],
+				"design": "linie"
+			},
+			"linie-board-quiet": {
+				"role": "tertiary",
+				"displayName": "Fahrt Board Quiet",
+				"canonical": "#b9c4d3",
+				"tonalRamp": [
+					"#050b15",
+					"#1d2631",
+					"#3a434f",
+					"#58626f",
+					"#798391",
+					"#9ba6b5",
+					"#bfcad9",
+					"#e5f0fe"
+				],
+				"design": "linie"
+			},
 			"linie-enamel-midnight": {
 				"role": "neutral",
-				"displayName": "Linienplan Enamel Midnight",
+				"displayName": "Fahrt Enamel Midnight",
 				"canonical": "#0b1424",
 				"tonalRamp": [
-					"#12213b",
-					"#1f3866",
-					"#2c5091",
-					"#3968bc",
-					"#5f87ce",
-					"#8aa7db",
-					"#b9caea",
-					"#ebf0f9"
+					"#040b1a",
+					"#1b2536",
+					"#374255",
+					"#566276",
+					"#778398",
+					"#99a6bc",
+					"#bdcae1",
+					"#e6efff"
 				],
 				"design": "linie"
 			},
 			"linie-enamel-raise": {
 				"role": "neutral",
-				"displayName": "Linienplan Enamel Raise",
+				"displayName": "Fahrt Enamel Raise",
 				"canonical": "#132038",
 				"tonalRamp": [
-					"#132139",
-					"#223963",
-					"#30518d",
-					"#3e68b7",
-					"#6387ca",
-					"#8da7d8",
-					"#bacae8",
-					"#ecf0f9"
+					"#020a20",
+					"#17253d",
+					"#33425d",
+					"#52627e",
+					"#7283a1",
+					"#94a6c5",
+					"#b8caea",
+					"#e6effe"
 				],
 				"design": "linie"
 			},
 			"linie-enamel-white": {
 				"role": "neutral",
-				"displayName": "Linienplan Enamel White",
+				"displayName": "Fahrt Enamel White",
 				"canonical": "#f2f5f9",
 				"tonalRamp": [
-					"#182434",
-					"#2a3f5b",
-					"#3c5981",
-					"#4d74a7",
-					"#7091bd",
-					"#96aecf",
-					"#c0cfe2",
-					"#eef2f7"
-				],
-				"design": "linie"
-			},
-			"linie-enamel-quiet": {
-				"role": "neutral",
-				"displayName": "Linienplan Enamel Quiet",
-				"canonical": "#a6b2c3",
-				"tonalRamp": [
-					"#1f252e",
-					"#35404f",
-					"#4c5b71",
-					"#637692",
-					"#8293ab",
-					"#a4b0c1",
-					"#c8d0da",
-					"#f0f2f5"
-				],
-				"design": "linie"
-			},
-			"linie-enamel-hair": {
-				"role": "neutral",
-				"displayName": "Linienplan Enamel Hair",
-				"canonical": "#283851",
-				"tonalRamp": [
-					"#192333",
-					"#2c3d59",
-					"#3e577e",
-					"#5171a4",
-					"#738fba",
-					"#99adcc",
-					"#c2cee1",
-					"#eef1f7"
+					"#090b0e",
+					"#232528",
+					"#404245",
+					"#5f6165",
+					"#808286",
+					"#a2a5a9",
+					"#c6c9cd",
+					"#eceff3"
 				],
 				"design": "linie"
 			},
 			"linie-night-signal-red": {
 				"role": "primary",
-				"displayName": "Linienplan Night Signal Red",
+				"displayName": "Fahrt Night Signal Red",
 				"canonical": "#ff3349",
 				"tonalRamp": [
-					"#4c0008",
-					"#85000e",
-					"#bd0014",
-					"#f5001a",
-					"#ff2e44",
-					"#ff6677",
-					"#ffa3ad",
-					"#ffe5e8"
+					"#1f0002",
+					"#4c020c",
+					"#7e061a",
+					"#b50f2b",
+					"#ee1a3c",
+					"#ff7273",
+					"#feb3af",
+					"#ffe8e7"
 				],
 				"design": "linie"
 			},
 			"linie-line-blue": {
 				"role": "secondary",
-				"displayName": "Linienplan Line Blue",
+				"displayName": "Fahrt Line Blue",
 				"canonical": "#0066b3",
 				"tonalRamp": [
-					"#002c4c",
-					"#004c85",
-					"#006cbd",
-					"#008bf5",
-					"#2ea5ff",
-					"#66bdff",
-					"#a3d8ff",
-					"#e5f4ff"
+					"#000b1d",
+					"#012647",
+					"#034378",
+					"#0963ac",
+					"#3286d5",
+					"#58aafc",
+					"#a1cefe",
+					"#e3f0ff"
 				],
 				"design": "linie",
 				"night": "#2f8ee0"
 			},
 			"linie-line-red": {
 				"role": "secondary",
-				"displayName": "Linienplan Line Red",
+				"displayName": "Fahrt Line Red",
 				"canonical": "#d6001c",
 				"tonalRamp": [
-					"#4c000a",
-					"#850011",
-					"#bd0019",
-					"#f50020",
-					"#ff2e49",
-					"#ff667a",
-					"#ffa3af",
-					"#ffe5e9"
+					"#1f0001",
+					"#4c0206",
+					"#7f070f",
+					"#b5111c",
+					"#eb2b30",
+					"#fb766c",
+					"#feb3ab",
+					"#ffe9e6"
 				],
 				"design": "linie",
 				"night": "#ef2a3c"
 			},
 			"linie-line-green": {
 				"role": "secondary",
-				"displayName": "Linienplan Line Green",
+				"displayName": "Fahrt Line Green",
 				"canonical": "#2f8a1f",
 				"tonalRamp": [
-					"#153e0e",
-					"#256c18",
-					"#349a23",
-					"#44c82d",
-					"#68d954",
-					"#91e382",
-					"#bdeeb4",
-					"#edfaea"
+					"#011000",
+					"#062e01",
+					"#105004",
+					"#1d750a",
+					"#409931",
+					"#64be56",
+					"#89e37b",
+					"#ccffc4"
 				],
 				"design": "linie",
 				"night": "#3fa52b"
 			},
 			"linie-line-violet": {
 				"role": "secondary",
-				"displayName": "Linienplan Line Violet",
+				"displayName": "Fahrt Line Violet",
 				"canonical": "#7b4fa6",
 				"tonalRamp": [
-					"#261934",
-					"#432b5a",
-					"#5f3d80",
-					"#7b4fa6",
-					"#9771bc",
-					"#b397ce",
-					"#d1c1e1",
-					"#f2eef7"
+					"#130024",
+					"#350356",
+					"#54277b",
+					"#74489f",
+					"#966ac4",
+					"#ba8dea",
+					"#d9b8fe",
+					"#f3eaff"
 				],
 				"design": "linie",
 				"night": "#9a74c6"
 			},
 			"linie-line-turquoise": {
 				"role": "secondary",
-				"displayName": "Linienplan Line Turquoise",
+				"displayName": "Fahrt Line Turquoise",
 				"canonical": "#00827e",
 				"tonalRamp": [
-					"#004c4a",
-					"#008581",
-					"#00bdb7",
-					"#00f5ed",
-					"#2efff9",
-					"#66fffa",
-					"#a3fffc",
-					"#e5fffe"
+					"#000f0e",
+					"#022c2a",
+					"#074c4a",
+					"#10706c",
+					"#279490",
+					"#53b8b3",
+					"#79ddd8",
+					"#b5fffa"
 				],
 				"design": "linie",
 				"night": "#12a39e"
 			},
 			"linie-line-yellow": {
 				"role": "secondary",
-				"displayName": "Linienplan Line Yellow",
+				"displayName": "Fahrt Line Yellow",
 				"canonical": "#f5c400",
 				"tonalRamp": [
-					"#4c3d00",
-					"#856a00",
-					"#bd9700",
-					"#f5c400",
-					"#ffd52e",
-					"#ffe066",
-					"#ffeda3",
-					"#fffae5"
+					"#100a00",
+					"#2f2401",
+					"#514003",
+					"#765e09",
+					"#9e7e11",
+					"#c8a002",
+					"#f2c326",
+					"#feeec0"
 				],
 				"design": "linie"
 			},
 			"strich-squared-paper": {
 				"role": "neutral",
-				"displayName": "Strichliste Squared Paper",
+				"displayName": "Notizblock Squared Paper",
 				"canonical": "#fbfbf9",
 				"tonalRamp": [
-					"#2e2e1f",
-					"#505035",
-					"#71714b",
-					"#939362",
-					"#abab82",
-					"#c2c2a3",
-					"#dadac8",
-					"#f5f5f0"
+					"#0b0b0a",
+					"#252524",
+					"#424240",
+					"#616160",
+					"#828281",
+					"#a5a5a3",
+					"#c9c9c7",
+					"#eeeeec"
 				],
 				"design": "strich",
 				"night": "#1d2723"
 			},
 			"strich-graphite": {
 				"role": "neutral",
-				"displayName": "Strichliste Graphite",
+				"displayName": "Notizblock Graphite",
 				"canonical": "#26292e",
 				"tonalRamp": [
-					"#23252a",
-					"#3c4149",
-					"#555c67",
-					"#6f7786",
-					"#8c94a0",
-					"#abb1ba",
-					"#cdd0d5",
-					"#f1f2f3"
+					"#090b10",
+					"#22252a",
+					"#3f4248",
+					"#5e6167",
+					"#7f8289",
+					"#a1a5ac",
+					"#c5c9d0",
+					"#ebeff5"
 				],
 				"design": "strich",
 				"night": "#eef0e9"
 			},
 			"strich-graphite-quiet": {
 				"role": "neutral",
-				"displayName": "Strichliste Graphite Quiet",
+				"displayName": "Notizblock Graphite Quiet",
 				"canonical": "#5b6169",
 				"tonalRamp": [
-					"#242629",
-					"#3e4247",
-					"#585d65",
-					"#727983",
-					"#8f959e",
-					"#adb2b8",
-					"#ced1d4",
-					"#f1f2f3"
+					"#070b11",
+					"#20252c",
+					"#3d424a",
+					"#5c626a",
+					"#7d838b",
+					"#9fa6ae",
+					"#c3cad3",
+					"#e8eff9"
 				],
-				"design": "strich"
+				"design": "strich",
+				"night": "#aab4ad"
 			},
 			"strich-paper-hair": {
 				"role": "neutral",
-				"displayName": "Strichliste Paper Hair",
+				"displayName": "Notizblock Paper Hair",
 				"canonical": "#cdd6e0",
 				"tonalRamp": [
-					"#1d262f",
-					"#334152",
-					"#485d74",
-					"#5e7997",
-					"#7e95af",
-					"#a1b2c4",
-					"#c6d1dc",
-					"#eff2f5"
+					"#060c12",
+					"#1f262d",
+					"#3b434b",
+					"#5a626b",
+					"#7b838c",
+					"#9da6b0",
+					"#c1cad4",
+					"#e6f0fa"
 				],
-				"design": "strich"
+				"design": "strich",
+				"night": "#3a4842"
 			},
 			"strich-grid-blue": {
 				"role": "tertiary",
-				"displayName": "Strichliste Grid Blue",
+				"displayName": "Notizblock Grid Blue",
 				"canonical": "#d9e6f3",
 				"tonalRamp": [
-					"#12263a",
-					"#204265",
-					"#2d5e8f",
-					"#3b7aba",
-					"#6096cd",
-					"#8bb3da",
-					"#b9d1e9",
-					"#ecf2f9"
+					"#040c14",
+					"#1c2630",
+					"#39434e",
+					"#57636e",
+					"#788490",
+					"#9aa7b3",
+					"#becbd8",
+					"#e3f0fd"
 				],
 				"design": "strich"
 			},
 			"strich-margin-pink": {
 				"role": "tertiary",
-				"displayName": "Strichliste Margin Pink",
+				"displayName": "Notizblock Margin Pink",
 				"canonical": "#ec8d86",
 				"tonalRamp": [
-					"#420e0a",
-					"#731912",
-					"#a3231a",
-					"#d42d21",
-					"#e3554a",
-					"#ea827b",
-					"#f3b4b0",
-					"#fceae9"
+					"#1e0001",
+					"#4c0107",
+					"#742020",
+					"#98423e",
+					"#be645e",
+					"#e58780",
+					"#ffb2ac",
+					"#fee9e7"
 				],
 				"design": "strich"
 			},
 			"strich-correction-red": {
 				"role": "primary",
-				"displayName": "Strichliste Correction Red",
+				"displayName": "Notizblock Correction Red",
 				"canonical": "#d63a2f",
 				"tonalRamp": [
-					"#40100d",
-					"#6f1c16",
-					"#9e271f",
-					"#cc3328",
-					"#dd5a50",
-					"#e6867f",
-					"#f0b6b2",
-					"#fbebea"
+					"#1f0000",
+					"#4c0202",
+					"#7f0606",
+					"#b6100e",
+					"#df4337",
+					"#fc7666",
+					"#ffb3a8",
+					"#fee9e6"
 				],
 				"design": "strich",
 				"night": "#ff8f80"
 			},
+			"strich-highlighter": {
+				"role": "tertiary",
+				"displayName": "Notizblock Highlighter",
+				"canonical": "#fff17a",
+				"tonalRamp": [
+					"#0e0b00",
+					"#2a2602",
+					"#4a4306",
+					"#6d6300",
+					"#918402",
+					"#b6a826",
+					"#dbcc54",
+					"#fef289"
+				],
+				"design": "strich"
+			},
+			"strich-page-white": {
+				"role": "neutral",
+				"displayName": "Notizblock Page White",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"#0b0b0b",
+					"#252525",
+					"#424242",
+					"#616161",
+					"#828282",
+					"#a5a5a5",
+					"#c9c9c9",
+					"#eeeeee"
+				],
+				"design": "strich",
+				"night": "#24302b"
+			},
 			"strich-slate": {
 				"role": "neutral",
-				"displayName": "Strichliste Slate",
+				"displayName": "Notizblock Slate",
 				"canonical": "#1d2723",
 				"tonalRamp": [
-					"#212c27",
-					"#394c44",
-					"#506c61",
-					"#688c7e",
-					"#87a69a",
-					"#a7beb5",
-					"#cad8d2",
-					"#f0f4f3"
+					"#050d0a",
+					"#1e2824",
+					"#3a4540",
+					"#596460",
+					"#7a8681",
+					"#9ca8a3",
+					"#c0cdc7",
+					"#e5f2ec"
 				],
 				"design": "strich"
 			},
 			"strich-slate-raise": {
 				"role": "neutral",
-				"displayName": "Strichliste Slate Raise",
+				"displayName": "Notizblock Slate Raise",
 				"canonical": "#24302b",
 				"tonalRamp": [
-					"#212c27",
-					"#394c44",
-					"#516c61",
-					"#698c7d",
-					"#88a599",
-					"#a8bdb4",
-					"#cbd8d2",
-					"#f0f4f3"
+					"#040e0a",
+					"#1c2823",
+					"#394540",
+					"#57655f",
+					"#788680",
+					"#9aa9a3",
+					"#becdc7",
+					"#e3f3ec"
 				],
 				"design": "strich"
 			},
 			"strich-chalk": {
 				"role": "neutral",
-				"displayName": "Strichliste Chalk",
+				"displayName": "Notizblock Chalk",
 				"canonical": "#eef0e9",
 				"tonalRamp": [
-					"#292d1f",
-					"#484f36",
-					"#66704c",
-					"#849263",
-					"#9faa83",
-					"#b9c1a4",
-					"#d5dac8",
-					"#f3f5f0"
-				],
-				"design": "strich"
-			},
-			"strich-chalk-quiet": {
-				"role": "neutral",
-				"displayName": "Strichliste Chalk Quiet",
-				"canonical": "#aab4ad",
-				"tonalRamp": [
-					"#242925",
-					"#3e4641",
-					"#58645c",
-					"#738277",
-					"#909d94",
-					"#aeb7b1",
-					"#ced4d0",
-					"#f1f3f2"
+					"#0b0c07",
+					"#242621",
+					"#41433d",
+					"#60625c",
+					"#81837d",
+					"#a4a69f",
+					"#c8cac3",
+					"#edefe8"
 				],
 				"design": "strich"
 			},
 			"strich-chalk-red": {
 				"role": "primary",
-				"displayName": "Strichliste Chalk Red",
+				"displayName": "Notizblock Chalk Red",
 				"canonical": "#ff8f80",
 				"tonalRamp": [
-					"#4c0900",
-					"#851000",
-					"#bd1600",
-					"#f51d00",
-					"#ff472e",
-					"#ff7866",
-					"#ffaea3",
-					"#ffe9e5"
+					"#1f0000",
+					"#4d0101",
+					"#7b140f",
+					"#a13a30",
+					"#c75d51",
+					"#ef8172",
+					"#fdb4a9",
+					"#fee9e5"
 				],
 				"design": "strich"
 			},
 			"strich-marker-blue": {
 				"role": "secondary",
-				"displayName": "Strichliste Marker Blue",
+				"displayName": "Notizblock Marker Blue",
 				"canonical": "#1f5fbf",
 				"tonalRamp": [
-					"#0b2142",
-					"#133972",
-					"#1a51a2",
-					"#2269d3",
-					"#4b87e2",
-					"#7ba7ea",
-					"#b0caf2",
-					"#e9f0fb"
+					"#000923",
+					"#022253",
+					"#053d8b",
+					"#1c5cbc",
+					"#4080e3",
+					"#6da5fc",
+					"#aacbfe",
+					"#e5efff"
 				],
 				"design": "strich",
 				"night": "#8cb8ff"
 			},
-			"strich-marker-red": {
-				"role": "secondary",
-				"displayName": "Strichliste Marker Red",
-				"canonical": "#d63a2f",
-				"tonalRamp": [
-					"#40100d",
-					"#6f1c16",
-					"#9e271f",
-					"#cc3328",
-					"#dd5a50",
-					"#e6867f",
-					"#f0b6b2",
-					"#fbebea"
-				],
-				"design": "strich",
-				"night": "#ff8f80"
-			},
 			"strich-marker-green": {
 				"role": "secondary",
-				"displayName": "Strichliste Marker Green",
+				"displayName": "Notizblock Marker Green",
 				"canonical": "#1d8048",
 				"tonalRamp": [
-					"#0e3e23",
-					"#186c3d",
-					"#239a57",
-					"#2dc870",
-					"#55d88e",
-					"#82e3ac",
-					"#b4eecd",
-					"#eafaf1"
+					"#001004",
+					"#012e14",
+					"#025028",
+					"#06753d",
+					"#3b975e",
+					"#61bb80",
+					"#86e1a3",
+					"#c7ffd6"
 				],
 				"design": "strich",
 				"night": "#86d6a3"
 			},
 			"strich-marker-violet": {
 				"role": "secondary",
-				"displayName": "Strichliste Marker Violet",
+				"displayName": "Notizblock Marker Violet",
 				"canonical": "#7a3fb0",
 				"tonalRamp": [
-					"#271438",
-					"#442362",
-					"#60328b",
-					"#7d41b4",
-					"#9965c8",
-					"#b48ed7",
-					"#d2bbe7",
-					"#f3ecf8"
+					"#130024",
+					"#350158",
+					"#58168a",
+					"#793eaf",
+					"#9b61d5",
+					"#bf85fc",
+					"#d8b9fe",
+					"#f3eaff"
 				],
 				"design": "strich",
 				"night": "#c9a6ff"
 			},
 			"strich-marker-petrol": {
 				"role": "secondary",
-				"displayName": "Strichliste Marker Petrol",
+				"displayName": "Notizblock Marker Petrol",
 				"canonical": "#0e7882",
 				"tonalRamp": [
-					"#074045",
-					"#0d6e78",
-					"#129daa",
-					"#18ccdd",
-					"#42dceb",
-					"#75e5f0",
-					"#acf0f6",
-					"#e8fbfd"
+					"#000e10",
+					"#012b2f",
+					"#034b52",
+					"#096e78",
+					"#34919b",
+					"#5cb5bf",
+					"#81dae4",
+					"#c9f9fe"
 				],
 				"design": "strich",
 				"night": "#7dd6de"
 			},
 			"strich-marker-ochre": {
 				"role": "secondary",
-				"displayName": "Strichliste Marker Ochre",
+				"displayName": "Notizblock Marker Ochre",
 				"canonical": "#e7a600",
 				"tonalRamp": [
-					"#4c3700",
-					"#855f00",
-					"#bd8800",
-					"#f5b000",
-					"#ffc42e",
-					"#ffd466",
-					"#ffe5a3",
-					"#fff8e5"
+					"#120900",
+					"#332201",
+					"#573d02",
+					"#7e5a05",
+					"#a8790c",
+					"#d3991b",
+					"#febc34",
+					"#feecce"
 				],
 				"design": "strich",
 				"night": "#ffd76a"
 			},
 			"klassik-ground": {
 				"role": "neutral",
-				"displayName": "Klassisch Ground",
+				"displayName": "Player Ground",
 				"canonical": "#f5f5f7",
 				"tonalRamp": [
-					"#22222a",
-					"#3b3b4a",
-					"#545469",
-					"#6d6d88",
-					"#8b8ba2",
-					"#aaaabb",
-					"#ccccd6",
-					"#f1f1f4"
+					"#0b0b0c",
+					"#252526",
+					"#424243",
+					"#616163",
+					"#828284",
+					"#a5a5a7",
+					"#c9c9cb",
+					"#eeeef0"
 				],
 				"design": "klassik",
 				"night": "#121214"
 			},
 			"klassik-card": {
 				"role": "neutral",
-				"displayName": "Klassisch Card",
+				"displayName": "Player Card",
 				"canonical": "#ffffff",
 				"tonalRamp": [
-					"#262626",
+					"#0b0b0b",
+					"#252525",
 					"#424242",
-					"#5e5e5e",
-					"#7a7a7a",
-					"#969696",
-					"#b2b2b2",
-					"#d1d1d1",
-					"#f2f2f2"
+					"#616161",
+					"#828282",
+					"#a5a5a5",
+					"#c9c9c9",
+					"#eeeeee"
 				],
 				"design": "klassik",
 				"night": "#1c1c1f"
 			},
 			"klassik-label": {
 				"role": "neutral",
-				"displayName": "Klassisch Label",
+				"displayName": "Player Label",
 				"canonical": "#1d1d1f",
 				"tonalRamp": [
-					"#252528",
-					"#404045",
-					"#5b5b61",
-					"#76767e",
-					"#93939a",
-					"#b0b0b5",
-					"#d0d0d3",
-					"#f2f2f3"
+					"#0b0b0d",
+					"#252527",
+					"#424244",
+					"#616163",
+					"#828284",
+					"#a5a5a7",
+					"#c9c9cb",
+					"#eeeef1"
 				],
 				"design": "klassik",
 				"night": "#f5f5f7"
 			},
 			"klassik-label-quiet": {
 				"role": "neutral",
-				"displayName": "Klassisch Label Quiet",
+				"displayName": "Player Label Quiet",
 				"canonical": "#6e6e73",
 				"tonalRamp": [
-					"#252527",
-					"#414144",
-					"#5c5c60",
-					"#78787d",
-					"#949499",
-					"#b1b1b4",
-					"#d0d0d2",
-					"#f2f2f3"
+					"#0b0b0e",
+					"#252529",
+					"#414146",
+					"#616165",
+					"#828287",
+					"#a4a4aa",
+					"#c8c8ce",
+					"#eeeef4"
 				],
-				"design": "klassik"
+				"design": "klassik",
+				"night": "#a1a1a6"
 			},
 			"klassik-separator": {
 				"role": "neutral",
-				"displayName": "Klassisch Separator",
+				"displayName": "Player Separator",
 				"canonical": "#d9d9de",
 				"tonalRamp": [
-					"#242429",
-					"#3e3e47",
-					"#585865",
-					"#727283",
-					"#8f8f9e",
-					"#adadb8",
-					"#ceced4",
-					"#f1f1f3"
+					"#0b0b0e",
+					"#252528",
+					"#414146",
+					"#616165",
+					"#828286",
+					"#a4a4a9",
+					"#c8c8cd",
+					"#eeeef3"
 				],
-				"design": "klassik"
+				"design": "klassik",
+				"night": "#2c2c30"
 			},
 			"klassik-violet": {
 				"role": "primary",
-				"displayName": "Klassisch Violet",
+				"displayName": "Player Violet",
 				"canonical": "#6a4cff",
 				"tonalRamp": [
-					"#0d004c",
-					"#160085",
-					"#2000bd",
-					"#2900f5",
-					"#512eff",
-					"#8066ff",
-					"#b3a3ff",
-					"#eae5ff"
+					"#0a002e",
+					"#23006d",
+					"#3e00b2",
+					"#5931e6",
+					"#7566fc",
+					"#9998fb",
+					"#c1c3fd",
+					"#ecedfe"
 				],
 				"design": "klassik",
 				"night": "#8f7bff"
 			},
 			"klassik-night": {
 				"role": "neutral",
-				"displayName": "Klassisch Night",
+				"displayName": "Player Night",
 				"canonical": "#121214",
 				"tonalRamp": [
-					"#242428",
-					"#3f3f46",
-					"#595963",
-					"#747481",
-					"#91919c",
-					"#aeaeb7",
-					"#cfcfd4",
-					"#f2f2f3"
+					"#0b0b0d",
+					"#252527",
+					"#424244",
+					"#616163",
+					"#828285",
+					"#a5a5a7",
+					"#c9c9cc",
+					"#eeeef1"
 				],
 				"design": "klassik"
 			},
 			"klassik-night-card": {
 				"role": "neutral",
-				"displayName": "Klassisch Night Card",
+				"displayName": "Player Night Card",
 				"canonical": "#1c1c1f",
 				"tonalRamp": [
-					"#242428",
-					"#3f3f46",
-					"#5a5a63",
-					"#747481",
-					"#91919c",
-					"#afafb6",
-					"#cfcfd3",
-					"#f2f2f3"
+					"#0b0b0e",
+					"#252528",
+					"#424245",
+					"#616164",
+					"#828286",
+					"#a4a4a8",
+					"#c9c9cd",
+					"#eeeef2"
 				],
 				"design": "klassik"
 			},
 			"klassik-night-label": {
 				"role": "neutral",
-				"displayName": "Klassisch Night Label",
+				"displayName": "Player Night Label",
 				"canonical": "#f5f5f7",
 				"tonalRamp": [
-					"#22222a",
-					"#3b3b4a",
-					"#545469",
-					"#6d6d88",
-					"#8b8ba2",
-					"#aaaabb",
-					"#ccccd6",
-					"#f1f1f4"
-				],
-				"design": "klassik"
-			},
-			"klassik-night-quiet": {
-				"role": "neutral",
-				"displayName": "Klassisch Night Quiet",
-				"canonical": "#a1a1a6",
-				"tonalRamp": [
-					"#252527",
-					"#404044",
-					"#5c5c61",
-					"#77777e",
-					"#949499",
-					"#b0b0b5",
-					"#d0d0d2",
-					"#f2f2f3"
+					"#0b0b0c",
+					"#252526",
+					"#424243",
+					"#616163",
+					"#828284",
+					"#a5a5a7",
+					"#c9c9cb",
+					"#eeeef0"
 				],
 				"design": "klassik"
 			},
 			"klassik-night-violet": {
 				"role": "primary",
-				"displayName": "Klassisch Night Violet",
+				"displayName": "Player Night Violet",
 				"canonical": "#8f7bff",
 				"tonalRamp": [
-					"#0c004c",
-					"#140085",
-					"#1d00bd",
-					"#2500f5",
-					"#4e2eff",
-					"#7d66ff",
-					"#b1a3ff",
-					"#e9e5ff"
+					"#0c002d",
+					"#270466",
+					"#431c9e",
+					"#6045c4",
+					"#7f69eb",
+					"#a095fb",
+					"#c5c2fd",
+					"#edecff"
 				],
 				"design": "klassik"
 			},
 			"klassik-accent-blue": {
 				"role": "secondary",
-				"displayName": "Klassisch Accent Blue",
+				"displayName": "Player Accent Blue",
 				"canonical": "#2f6bff",
 				"tonalRamp": [
-					"#00164c",
-					"#002685",
-					"#0036bd",
-					"#0047f5",
-					"#2e6aff",
-					"#6692ff",
-					"#a3beff",
-					"#e5edff"
+					"#000134",
+					"#00146d",
+					"#022bad",
+					"#164de0",
+					"#3f77fc",
+					"#78a3fb",
+					"#afc9fd",
+					"#e7effe"
 				],
 				"design": "klassik"
 			},
 			"klassik-accent-pink-red": {
 				"role": "secondary",
-				"displayName": "Klassisch Accent Pink Red",
+				"displayName": "Player Accent Pink Red",
 				"canonical": "#ff375f",
 				"tonalRamp": [
-					"#4c000f",
-					"#85001b",
-					"#bd0026",
-					"#f50031",
-					"#ff2e58",
-					"#ff6685",
-					"#ffa3b6",
-					"#ffe5eb"
+					"#1f0004",
+					"#4b0213",
+					"#7d0726",
+					"#b3113b",
+					"#ec1c50",
+					"#fd7180",
+					"#fdb2b6",
+					"#ffe8e9"
 				],
 				"design": "klassik"
 			},
 			"klassik-accent-green": {
 				"role": "secondary",
-				"displayName": "Klassisch Accent Green",
+				"displayName": "Player Accent Green",
 				"canonical": "#1f9d55",
 				"tonalRamp": [
-					"#0d4023",
-					"#166f3c",
-					"#1f9e55",
-					"#28cc6f",
-					"#50dd8c",
-					"#7fe6ab",
-					"#b2f0cd",
-					"#eafbf1"
+					"#001004",
+					"#022e14",
+					"#075027",
+					"#00753a",
+					"#1b9b53",
+					"#4cbf75",
+					"#74e598",
+					"#c6ffd4"
 				],
 				"design": "klassik"
 			},
 			"klassik-accent-violet": {
 				"role": "secondary",
-				"displayName": "Klassisch Accent Violet",
+				"displayName": "Player Accent Violet",
 				"canonical": "#8e5cff",
 				"tonalRamp": [
-					"#17004c",
-					"#290085",
-					"#3a00bd",
-					"#4b00f5",
-					"#6e2eff",
-					"#9566ff",
-					"#bfa3ff",
-					"#ede5ff"
+					"#0f002a",
+					"#2c0263",
+					"#4d05a3",
+					"#6c30d4",
+					"#8c59fc",
+					"#a991fb",
+					"#cabffd",
+					"#eeecff"
 				],
 				"design": "klassik"
 			},
 			"klassik-accent-petrol": {
 				"role": "secondary",
-				"displayName": "Klassisch Accent Petrol",
+				"displayName": "Player Accent Petrol",
 				"canonical": "#0a9396",
 				"tonalRamp": [
-					"#054648",
-					"#087a7c",
-					"#0cadb1",
-					"#0fe1e5",
-					"#3beef2",
-					"#70f3f5",
-					"#a9f8f9",
-					"#e7fdfd"
+					"#000e0f",
+					"#012b2d",
+					"#024c4e",
+					"#076f72",
+					"#0f9497",
+					"#47b8bb",
+					"#70dee0",
+					"#b9fdfe"
 				],
 				"design": "klassik"
 			},
 			"klassik-accent-yellow": {
 				"role": "secondary",
-				"displayName": "Klassisch Accent Yellow",
+				"displayName": "Player Accent Yellow",
 				"canonical": "#ffb800",
 				"tonalRamp": [
-					"#4c3700",
-					"#856000",
-					"#bd8800",
-					"#f5b100",
-					"#ffc52e",
-					"#ffd466",
-					"#ffe5a3",
-					"#fff8e5"
+					"#120900",
+					"#322202",
+					"#563d05",
+					"#7e5a0d",
+					"#a77916",
+					"#d4990e",
+					"#fdbd3c",
+					"#ffeccd"
 				],
 				"design": "klassik"
+			},
+			"umlauf-pale-sky": {
+				"role": "neutral",
+				"displayName": "Umlauf Pale Sky",
+				"canonical": "#e8eef7",
+				"tonalRamp": [
+					"#080b11",
+					"#21252c",
+					"#3e4249",
+					"#5c6269",
+					"#7d838b",
+					"#a0a5ae",
+					"#c4cad2",
+					"#e9eff8"
+				],
+				"design": "umlauf",
+				"night": "#0d1131"
+			},
+			"umlauf-cloud-white": {
+				"role": "neutral",
+				"displayName": "Umlauf Cloud White",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"#0b0b0b",
+					"#252525",
+					"#424242",
+					"#616161",
+					"#828282",
+					"#a5a5a5",
+					"#c9c9c9",
+					"#eeeeee"
+				],
+				"design": "umlauf",
+				"night": "#161c47"
+			},
+			"umlauf-indigo-ink": {
+				"role": "neutral",
+				"displayName": "Umlauf Indigo Ink",
+				"canonical": "#18204a",
+				"tonalRamp": [
+					"#04042b",
+					"#18204a",
+					"#333e6b",
+					"#515e8e",
+					"#7280b2",
+					"#93a3d7",
+					"#b7c7fd",
+					"#e9eefe"
+				],
+				"design": "umlauf",
+				"night": "#eef0ff"
+			},
+			"umlauf-indigo-quiet": {
+				"role": "neutral",
+				"displayName": "Umlauf Indigo Quiet",
+				"canonical": "#4d5684",
+				"tonalRamp": [
+					"#05042a",
+					"#1b2049",
+					"#363e6a",
+					"#545e8c",
+					"#757fb0",
+					"#97a2d5",
+					"#bac6fb",
+					"#e9eeff"
+				],
+				"design": "umlauf",
+				"night": "#a9aed6"
+			},
+			"umlauf-sky-hair": {
+				"role": "neutral",
+				"displayName": "Umlauf Sky Hair",
+				"canonical": "#c6cfe2",
+				"tonalRamp": [
+					"#060b17",
+					"#1e2533",
+					"#3b4251",
+					"#596172",
+					"#7a8294",
+					"#9da5b7",
+					"#c0c9dc",
+					"#e7efff"
+				],
+				"design": "umlauf",
+				"night": "#283062"
+			},
+			"umlauf-sun-orange": {
+				"role": "primary",
+				"displayName": "Umlauf Sun Orange",
+				"canonical": "#ff6a13",
+				"tonalRamp": [
+					"#1a0400",
+					"#411501",
+					"#6e2903",
+					"#9f4009",
+					"#d25711",
+					"#fe7838",
+					"#fdb698",
+					"#feeae1"
+				],
+				"design": "umlauf",
+				"night": "#ff9a4a"
+			},
+			"umlauf-night-indigo": {
+				"role": "neutral",
+				"displayName": "Umlauf Night Indigo",
+				"canonical": "#0d1131",
+				"tonalRamp": [
+					"#050625",
+					"#1c2243",
+					"#373f64",
+					"#565f85",
+					"#7680a9",
+					"#98a3cd",
+					"#bcc7f3",
+					"#e9eefe"
+				],
+				"design": "umlauf"
+			},
+			"umlauf-night-raise": {
+				"role": "neutral",
+				"displayName": "Umlauf Night Raise",
+				"canonical": "#161c47",
+				"tonalRamp": [
+					"#05032c",
+					"#19204b",
+					"#343e6c",
+					"#525e8f",
+					"#727fb3",
+					"#94a2d8",
+					"#b8c6fe",
+					"#e9eeff"
+				],
+				"design": "umlauf"
+			},
+			"umlauf-night-starlight": {
+				"role": "neutral",
+				"displayName": "Umlauf Night Starlight",
+				"canonical": "#eef0ff",
+				"tonalRamp": [
+					"#090a14",
+					"#23242f",
+					"#40414d",
+					"#5f606d",
+					"#80818f",
+					"#a2a4b2",
+					"#c6c8d6",
+					"#ebedfc"
+				],
+				"design": "umlauf"
+			},
+			"umlauf-night-sun": {
+				"role": "primary",
+				"displayName": "Umlauf Night Sun",
+				"canonical": "#ff9a4a",
+				"tonalRamp": [
+					"#170600",
+					"#3c1b00",
+					"#653301",
+					"#924c05",
+					"#c2670c",
+					"#ec8836",
+					"#ffb784",
+					"#ffeadc"
+				],
+				"design": "umlauf"
+			},
+			"umlauf-planet-blue": {
+				"role": "secondary",
+				"displayName": "Umlauf Planet Blue",
+				"canonical": "#3c6cff",
+				"tonalRamp": [
+					"#010134",
+					"#050577",
+					"#0e21b6",
+					"#244cde",
+					"#4876fa",
+					"#7ba1fe",
+					"#b0c9ff",
+					"#e7efff"
+				],
+				"design": "umlauf"
+			},
+			"umlauf-planet-green": {
+				"role": "secondary",
+				"displayName": "Umlauf Planet Green",
+				"canonical": "#14a874",
+				"tonalRamp": [
+					"#000f07",
+					"#002d1c",
+					"#004f34",
+					"#04734e",
+					"#099a69",
+					"#3cbf8a",
+					"#68e5ad",
+					"#c2ffdf"
+				],
+				"design": "umlauf"
+			},
+			"umlauf-planet-violet": {
+				"role": "secondary",
+				"displayName": "Umlauf Planet Violet",
+				"canonical": "#8b5cf6",
+				"tonalRamp": [
+					"#0f002a",
+					"#2c0163",
+					"#4d04a3",
+					"#6c35cf",
+					"#8b5df7",
+					"#a991fb",
+					"#cabffd",
+					"#efecff"
+				],
+				"design": "umlauf"
+			},
+			"umlauf-planet-petrol": {
+				"role": "secondary",
+				"displayName": "Umlauf Planet Petrol",
+				"canonical": "#0aa0b5",
+				"tonalRamp": [
+					"#000e11",
+					"#022b31",
+					"#064b55",
+					"#106d7c",
+					"#1a92a5",
+					"#38b7cd",
+					"#64ddf2",
+					"#cff7ff"
+				],
+				"design": "umlauf"
+			},
+			"umlauf-planet-yellow": {
+				"role": "secondary",
+				"displayName": "Umlauf Planet Yellow",
+				"canonical": "#f2b705",
+				"tonalRamp": [
+					"#110a00",
+					"#312200",
+					"#553e01",
+					"#7b5c05",
+					"#a47b0b",
+					"#ce9d1a",
+					"#fabf1f",
+					"#feedc8"
+				],
+				"design": "umlauf"
+			},
+			"fahrmodus-signal-yellow": {
+				"role": "neutral",
+				"displayName": "Fahrmodus Signal Yellow",
+				"canonical": "#ffd100",
+				"tonalRamp": [
+					"#100b00",
+					"#2e2401",
+					"#504004",
+					"#745f0b",
+					"#9b8014",
+					"#c5a10b",
+					"#f0c507",
+					"#ffeeb8"
+				],
+				"design": "fahrmodus",
+				"night": "#000000"
+			},
+			"fahrmodus-yellow-raise": {
+				"role": "neutral",
+				"displayName": "Fahrmodus Yellow Raise",
+				"canonical": "#ffe259",
+				"tonalRamp": [
+					"#0f0b00",
+					"#2c2501",
+					"#4d4204",
+					"#71610a",
+					"#978213",
+					"#bfa407",
+					"#e6c93a",
+					"#fff0ab"
+				],
+				"design": "fahrmodus",
+				"night": "#141100"
+			},
+			"fahrmodus-road-black": {
+				"role": "primary",
+				"displayName": "Fahrmodus Road Black",
+				"canonical": "#0b0b0b",
+				"tonalRamp": [
+					"#0b0b0b",
+					"#252525",
+					"#424242",
+					"#616161",
+					"#828282",
+					"#a5a5a5",
+					"#c9c9c9",
+					"#eeeeee"
+				],
+				"design": "fahrmodus",
+				"night": "#ffd100"
+			},
+			"fahrmodus-umber-quiet": {
+				"role": "neutral",
+				"displayName": "Fahrmodus Umber Quiet",
+				"canonical": "#2f2a10",
+				"tonalRamp": [
+					"#0f0b00",
+					"#2a250b",
+					"#484228",
+					"#676246",
+					"#888366",
+					"#aba688",
+					"#d0caab",
+					"#f5f0d0"
+				],
+				"design": "fahrmodus",
+				"night": "#e6c44a"
+			},
+			"fahrmodus-warning-red": {
+				"role": "neutral",
+				"displayName": "Fahrmodus Warning Red",
+				"canonical": "#a10a0a",
+				"tonalRamp": [
+					"#1f0000",
+					"#4d0101",
+					"#800204",
+					"#b0221b",
+					"#d84c3f",
+					"#fd7565",
+					"#fdb4a9",
+					"#fee9e5"
+				],
+				"design": "fahrmodus",
+				"night": "#ff6b6b"
+			},
+			"fahrmodus-night-black": {
+				"role": "neutral",
+				"displayName": "Fahrmodus Night Black",
+				"canonical": "#000000",
+				"tonalRamp": [
+					"#0b0b0b",
+					"#252525",
+					"#424242",
+					"#616161",
+					"#828282",
+					"#a5a5a5",
+					"#c9c9c9",
+					"#eeeeee"
+				],
+				"design": "fahrmodus"
+			},
+			"fahrmodus-night-quiet": {
+				"role": "neutral",
+				"displayName": "Fahrmodus Night Quiet",
+				"canonical": "#e6c44a",
+				"tonalRamp": [
+					"#100b00",
+					"#2e2400",
+					"#504001",
+					"#745f04",
+					"#9b800a",
+					"#c3a219",
+					"#e9c74d",
+					"#ffeeb7"
+				],
+				"design": "fahrmodus"
+			},
+			"fahrmodus-bar-blue": {
+				"role": "secondary",
+				"displayName": "Fahrmodus Bar Blue",
+				"canonical": "#0047ab",
+				"tonalRamp": [
+					"#000924",
+					"#012156",
+					"#033b8e",
+					"#1a5bc0",
+					"#3e7fe7",
+					"#6fa5fc",
+					"#abcbfe",
+					"#e5efff"
+				],
+				"design": "fahrmodus",
+				"night": "#5b9bff"
+			},
+			"fahrmodus-bar-red": {
+				"role": "secondary",
+				"displayName": "Fahrmodus Bar Red",
+				"canonical": "#c1121f",
+				"tonalRamp": [
+					"#1f0001",
+					"#4c0306",
+					"#7f0710",
+					"#b5121d",
+					"#e23d3c",
+					"#ff736a",
+					"#feb3ab",
+					"#ffe9e6"
+				],
+				"design": "fahrmodus",
+				"night": "#ff5a5f"
+			},
+			"fahrmodus-bar-green": {
+				"role": "secondary",
+				"displayName": "Fahrmodus Bar Green",
+				"canonical": "#006b3c",
+				"tonalRamp": [
+					"#000f05",
+					"#002e17",
+					"#00502b",
+					"#137444",
+					"#409664",
+					"#65ba86",
+					"#89dfa9",
+					"#c7fed9"
+				],
+				"design": "fahrmodus",
+				"night": "#2bd47d"
+			},
+			"fahrmodus-bar-violet": {
+				"role": "secondary",
+				"displayName": "Fahrmodus Bar Violet",
+				"canonical": "#5a189a",
+				"tonalRamp": [
+					"#120026",
+					"#32015c",
+					"#550f94",
+					"#753bba",
+					"#9660e0",
+					"#b788ff",
+					"#d2bcfd",
+					"#f1ebfe"
+				],
+				"design": "fahrmodus",
+				"night": "#b48cff"
+			},
+			"fahrmodus-bar-petrol": {
+				"role": "secondary",
+				"displayName": "Fahrmodus Bar Petrol",
+				"canonical": "#00525e",
+				"tonalRamp": [
+					"#000e12",
+					"#022b31",
+					"#074b55",
+					"#276c78",
+					"#4c8e9b",
+					"#6fb1be",
+					"#93d6e3",
+					"#cff7ff"
+				],
+				"design": "fahrmodus",
+				"night": "#2ec4d6"
+			},
+			"shell-focus-blue": {
+				"role": "neutral",
+				"displayName": "Shared shell Focus Blue",
+				"canonical": "#1f4fd0",
+				"tonalRamp": [
+					"#000134",
+					"#000578",
+					"#052bac",
+					"#2252d3",
+					"#4177fb",
+					"#77a2ff",
+					"#b0c9fd",
+					"#e7effe"
+				],
+				"design": "shell"
+			},
+			"shell-danger": {
+				"role": "neutral",
+				"displayName": "Shared shell Danger",
+				"canonical": "#b3261e",
+				"tonalRamp": [
+					"#1f0000",
+					"#4d0101",
+					"#800304",
+					"#b0221b",
+					"#d84c3f",
+					"#fd7565",
+					"#fdb4a9",
+					"#fee9e5"
+				],
+				"design": "shell"
 			}
 		},
 		"typographyMeta": {
 			"kontakt-display": {
-				"displayName": "Kontaktbogen Display",
-				"purpose": "Song title on the film strip and masthead titles in Kontaktbogen."
+				"displayName": "Leuchttisch Display",
+				"purpose": "Song title on the listening stage; the largest type on the screen."
 			},
 			"kontakt-body": {
-				"displayName": "Kontaktbogen Body",
-				"purpose": "All words in Kontaktbogen: nav, keys, lists, notes."
+				"displayName": "Leuchttisch Body",
+				"purpose": "Running text, notes, device panel, settings."
 			},
 			"kontakt-edge-print": {
-				"displayName": "Kontaktbogen Edge Print",
-				"purpose": "Martian Mono, Kontaktbogen only: frame numbers, times, queue numbers, round/count lines, Sender-card meta, signal labels."
+				"displayName": "Leuchttisch Edge Print",
+				"purpose": "Leuchttisch edge print only: frame numbers, times, counts, signal steps."
 			},
 			"linie-display": {
-				"displayName": "Linienplan Display",
-				"purpose": "Song title and masthead titles in Linienplan, set like station signage."
+				"displayName": "Fahrt Display",
+				"purpose": "Song title on the listening stage; the largest type on the screen."
 			},
 			"linie-body": {
-				"displayName": "Linienplan Body",
-				"purpose": "Every other text job in Linienplan, numbers included."
+				"displayName": "Fahrt Body",
+				"purpose": "Running text, notes, device panel, settings."
 			},
-			"linie-line-badge": {
-				"displayName": "Linienplan Line Badge",
-				"purpose": "S1, S2 … and A in the line badge."
+			"linie-board-legend": {
+				"displayName": "Fahrt Board Legend",
+				"purpose": "The 'Nächster Halt' legend on the Fahrt departure board."
 			},
 			"strich-display": {
-				"displayName": "Strichliste Display",
-				"purpose": "Song title above the marker scribble, masthead titles."
+				"displayName": "Notizblock Display",
+				"purpose": "Song title on the listening stage; the largest type on the screen."
 			},
 			"strich-body": {
-				"displayName": "Strichliste Body",
-				"purpose": "Every other text job in Strichliste, numbers included."
+				"displayName": "Notizblock Body",
+				"purpose": "Running text, notes, device panel, settings."
 			},
 			"klassik-display": {
-				"displayName": "Klassisch Display",
-				"purpose": "Song title under the big cover; platform display face, Klassisch only."
+				"displayName": "Player Display",
+				"purpose": "Song title on the listening stage; the largest type on the screen."
 			},
 			"klassik-body": {
-				"displayName": "Klassisch Body",
-				"purpose": "Every other text job in Klassisch."
+				"displayName": "Player Body",
+				"purpose": "Running text, notes, device panel, settings."
 			},
-			"headline": {
-				"displayName": "Headline",
-				"purpose": "Section heads (Als Nächstes, Deine Sender) in the active world's display face at --head-weight."
+			"umlauf-display": {
+				"displayName": "Umlauf Display",
+				"purpose": "Song title on the listening stage; the largest type on the screen."
 			},
-			"title": {
-				"displayName": "Title",
-				"purpose": "Station name on stage head and Sender cards."
+			"umlauf-body": {
+				"displayName": "Umlauf Body",
+				"purpose": "Running text, notes, device panel, settings."
 			},
-			"artist": {
-				"displayName": "Artist",
-				"purpose": "Artist line under the song title."
+			"fahrmodus-display": {
+				"displayName": "Fahrmodus Display",
+				"purpose": "Song title on the listening stage; the largest type on the screen."
 			},
-			"label": {
-				"displayName": "Label",
-				"purpose": "Signal steps, reasons, tags; sentence case at --label-weight."
-			}
-		},
-		"utilityFonts": [
-			{
-				"name": "utility-mono",
-				"value": "ui-monospace, \"SF Mono\", Menlo, monospace",
-				"purpose": "Code and diagnostic fields only (remote key input, .code, diagnostic data). Not a type role."
-			}
-		],
-		"designs": [
-			{
-				"id": "kontakt",
-				"name": "Kontaktbogen",
-				"default": true,
-				"signature": "Film strip with the current cover boxed in the Sender's grease pencil and the next queue frames beside it; round as barcode.",
-				"icon": "src/client/public/brand/kontakt/icon.svg"
+			"fahrmodus-body": {
+				"displayName": "Fahrmodus Body",
+				"purpose": "Running text, notes, device panel, settings."
 			},
-			{
-				"id": "linie",
-				"name": "Linienplan",
-				"default": false,
-				"signature": "Each Sender a line with badge S1…/A; Als Nächstes as stops down the line; round as line.",
-				"icon": "src/client/public/brand/linie/icon.svg"
+			"fahrmodus-key-label": {
+				"displayName": "Fahrmodus Key Label",
+				"purpose": "Fahrmodus main tile label."
 			},
-			{
-				"id": "strich",
-				"name": "Strichliste",
-				"default": false,
-				"signature": "Round counted in five-bundles; marker stroke under the title; signal as tick boxes.",
-				"icon": "src/client/public/brand/strich/icon.svg"
-			},
-			{
-				"id": "klassik",
-				"name": "Klassisch",
-				"default": false,
-				"signature": "Big centred cover, 76px round play key; round as ring.",
-				"icon": "src/client/public/brand/klassik/icon.svg"
-			}
-		],
-		"switching": {
-			"rootAttribute": "data-design",
-			"storageKey": "ts-design",
-			"urlParam": "design",
-			"illumination": {
-				"rootAttribute": "data-illumination",
-				"values": [
-					"day",
-					"night"
-				],
-				"default": "prefers-color-scheme",
-				"storageKey": "ts-illumination"
+			"utility-mono": {
+				"displayName": "Utility Mono",
+				"purpose": "Utility only: code input and diagnostics; never a design voice."
 			}
 		},
 		"shadows": [
 			{
+				"name": "slide-on-table",
+				"value": "0 18px 40px -24px rgb(0 0 0 / 0.55)",
+				"purpose": "Leuchttisch current frame on the lit table."
+			},
+			{
 				"name": "signage-panel",
-				"value": "0 1px 0 var(--hair), 0 10px 30px -18px rgb(15 29 51 / 0.35)",
-				"purpose": "Linienplan stage panel."
+				"value": "0 1px 0 var(--hair), 0 14px 34px -22px rgb(15 29 51 / 0.45)",
+				"purpose": "Fahrt current-stop panel."
 			},
 			{
-				"name": "hair-ledge",
+				"name": "hairline-step",
 				"value": "0 1px 0 var(--hair)",
-				"purpose": "Linienplan queue panel and Sender cards."
+				"purpose": "Fahrt head and device panels."
 			},
 			{
-				"name": "sleeve",
+				"name": "cover-lift",
 				"value": "0 22px 48px -22px rgb(0 0 0 / 0.55)",
-				"purpose": "Klassisch big cover."
+				"purpose": "Player cover."
 			},
 			{
-				"name": "card-lift",
-				"value": "0 1px 2px rgb(0 0 0 / 0.06)",
-				"purpose": "Klassisch Sender cards."
+				"name": "orbit-cover",
+				"value": "0 24px 50px -28px rgb(13 17 49 / 0.65)",
+				"purpose": "Umlauf round cover."
 			},
 			{
-				"name": "sheet",
+				"name": "sun-glow",
+				"value": "0 18px 36px -18px color-mix(in srgb, var(--brand) 70%, transparent)",
+				"purpose": "Umlauf main key only."
+			},
+			{
+				"name": "orbit-key",
+				"value": "0 6px 16px -10px rgb(13 17 49 / 0.45)",
+				"purpose": "Umlauf round icon keys."
+			},
+			{
+				"name": "dock-lift",
+				"value": "0 -12px 32px -20px rgb(0 0 0 / 0.5)",
+				"purpose": "Fixed transport docks (Leuchttisch, Fahrt)."
+			},
+			{
+				"name": "sheet-lift",
+				"value": "0 -18px 40px -30px rgb(0 0 0 / 0.5)",
+				"purpose": "Player queue sheet on phones."
+			},
+			{
+				"name": "dialog",
 				"value": "0 24px 60px -20px rgb(0 0 0 / 0.5)",
-				"purpose": "Rating sheet, every world; backdrop rgb(0 0 0 / 0.55)."
+				"purpose": "Rating sheet dialog; backdrop rgb(0 0 0 / 0.55)."
 			},
 			{
 				"name": "toast",
 				"value": "0 12px 32px -12px rgb(0 0 0 / 0.45)",
-				"purpose": "Feedback flash, every world."
+				"purpose": "Feedback toast."
 			}
 		],
 		"motion": [
 			{
 				"name": "ease",
 				"value": "cubic-bezier(0.16, 1, 0.3, 1)",
-				"purpose": "Every state transition."
+				"purpose": "All state transitions."
 			},
 			{
 				"name": "t",
 				"value": "180ms",
-				"purpose": "Hover, press, border, nav bar."
+				"purpose": "Key, border and signal transitions."
 			},
 			{
 				"name": "t-slow",
 				"value": "480ms",
-				"purpose": "Theme and stage colour changes, ring meter."
-			},
-			{
-				"name": "press",
-				"value": "scale(0.97)",
-				"purpose": "Active state of keys."
+				"purpose": "Day/night ground and ink cross-fade."
 			},
 			{
 				"name": "progress-tick",
-				"value": "inline-size 900ms linear",
-				"purpose": "Display-only progress advance."
+				"value": "900ms linear",
+				"purpose": "Display-only progress advancing once per second."
 			},
 			{
 				"name": "reduced-motion",
-				"value": "--t: 0ms; --t-slow: 0ms",
-				"purpose": "prefers-reduced-motion zeroes all durations."
+				"value": "0ms",
+				"purpose": "prefers-reduced-motion sets --t and --t-slow to 0."
 			}
 		],
 		"breakpoints": [
 			{
-				"name": "narrow",
-				"value": "max-width: 380px"
+				"name": "compact",
+				"value": "380px"
 			},
 			{
-				"name": "phone",
-				"value": "max-width: 559px"
+				"name": "phone-wide",
+				"value": "420px"
 			},
 			{
 				"name": "tablet",
@@ -1442,156 +1827,204 @@
 				"value": "1100px"
 			}
 		],
-		"honestState": {
-			"signal": "Angefordert → Angenommen → Bestätigt; wait dashed, estimate dotted, error double danger (per-world renderings in DESIGN.md).",
-			"progressHeld": "repeating-linear-gradient(135deg, var(--progress) 0 3px, transparent 3px 7px)",
-			"progressHeldStrich": "repeating-linear-gradient(100deg, var(--progress) 0 1px, transparent 1px 7px)",
-			"pendingTitle": "color: transparent; -webkit-text-stroke: 1.25px var(--stage-fg) (Klassisch: quiet ink italic, cover 55%)",
-			"unavailableMainKey": "transparent, dashed ink outline"
+		"designs": [
+			{
+				"id": "kontakt",
+				"name": "Leuchttisch",
+				"default": true,
+				"stylesheet": "src/client/styles/kontakt.css",
+				"icon": "src/client/public/brand/kontakt/icon.svg"
+			},
+			{
+				"id": "linie",
+				"name": "Fahrt",
+				"stylesheet": "src/client/styles/linie.css",
+				"icon": "src/client/public/brand/linie/icon.svg"
+			},
+			{
+				"id": "strich",
+				"name": "Notizblock",
+				"stylesheet": "src/client/styles/strich.css",
+				"icon": "src/client/public/brand/strich/icon.svg"
+			},
+			{
+				"id": "klassik",
+				"name": "Player",
+				"stylesheet": "src/client/styles/klassik.css",
+				"icon": "src/client/public/brand/klassik/icon.svg"
+			},
+			{
+				"id": "umlauf",
+				"name": "Umlauf",
+				"stylesheet": "src/client/styles/umlauf.css",
+				"icon": "src/client/public/brand/umlauf/icon.svg"
+			},
+			{
+				"id": "fahrmodus",
+				"name": "Fahrmodus",
+				"stylesheet": "src/client/styles/fahrmodus.css",
+				"icon": "src/client/public/brand/fahrmodus/icon.svg"
+			}
+		],
+		"switching": {
+			"storageKey": "ts-design",
+			"url": "?design=<id>",
+			"rootAttribute": "data-design",
+			"illumination": "prefers-color-scheme, overridden by data-illumination=day|night",
+			"brandDoc": "docs/BRAND.md"
 		}
 	},
 	"components": [
 		{
-			"name": "Main Transport Key (Kontaktbogen)",
-			"kind": "button",
-			"refersTo": "transport-main-kontakt",
-			"description": "Fortsetzen / Pause on the black film strip.",
-			"html": "<div class=\"ds-film\"><button class=\"ds-main\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" aria-hidden=\"true\"><path d=\"M7 4.5v15l12-7.5z\" fill=\"currentColor\"/></svg>Fortsetzen</button><button class=\"ds-main\" disabled>Warte auf Spotify</button></div>",
-			"css": ".ds-film{display:grid;gap:10px;padding:18px;background:#141210;font-family:'Hanken Grotesk Variable','Hanken Grotesk',system-ui,sans-serif}.ds-main{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:64px;padding:10px 16px;border:2px solid #f2ede6;border-radius:2px;background:#f2ede6;color:#141210;font:800 1.15rem/1.15 inherit;font-family:inherit;cursor:pointer;transition:background-color 180ms cubic-bezier(0.16,1,0.3,1),transform 180ms cubic-bezier(0.16,1,0.3,1)}.ds-main:hover:not(:disabled){background:color-mix(in srgb,#f2ede6 88%,#141210)}.ds-main:active:not(:disabled){transform:scale(0.97)}.ds-main:focus-visible{outline:3px solid #f2ede6;outline-offset:3px}.ds-main:disabled{background:transparent;color:#f2ede6;border-style:dashed;font-size:0.98rem;cursor:default}"
-		},
-		{
-			"name": "Main Transport Key (Linienplan)",
-			"kind": "button",
-			"refersTo": "transport-main-linie",
-			"description": "Pill main key in the Sender's line colour on a white signage panel (shown: line red).",
-			"html": "<button class=\"ds-main-linie\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" aria-hidden=\"true\"><path d=\"M7 4.5v15l12-7.5z\" fill=\"currentColor\"/></svg>Fortsetzen</button>",
-			"css": ".ds-main-linie{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:64px;padding:10px 16px;border:2px solid #d6001c;border-radius:999px;background:#d6001c;color:#ffffff;font-family:'Atkinson Hyperlegible Next Variable','Atkinson Hyperlegible Next',system-ui,sans-serif;font-weight:800;font-size:1.15rem;cursor:pointer;transition:background-color 180ms cubic-bezier(0.16,1,0.3,1),transform 180ms}.ds-main-linie:hover{background:color-mix(in srgb,#d6001c 88%,#ffffff)}.ds-main-linie:active{transform:scale(0.97)}.ds-main-linie:focus-visible{outline:3px solid #0066b3;outline-offset:3px}"
-		},
-		{
-			"name": "Round Play Key (Klassisch)",
-			"kind": "button",
-			"refersTo": "transport-main-klassik",
-			"description": "76px round play key leading the centred transport row, with circular icon keys.",
-			"html": "<div class=\"ds-k-row\"><button class=\"ds-k-play\" aria-label=\"Fortsetzen\"><svg viewBox=\"0 0 24 24\" width=\"32\" height=\"32\" aria-hidden=\"true\"><path d=\"M7 4.5v15l12-7.5z\" fill=\"currentColor\"/></svg></button><button class=\"ds-k-icon\" aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 5l10 7-10 7zM19 5v14\"/></svg></button><button class=\"ds-k-icon\" aria-pressed=\"true\" aria-label=\"Favorit\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z\" fill=\"currentColor\"/></svg></button></div>",
-			"css": ".ds-k-row{display:flex;justify-content:center;align-items:center;gap:18px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,system-ui,sans-serif}.ds-k-play{display:grid;place-items:center;width:76px;height:76px;padding:0;border:0;border-radius:50%;background:#1d1d1f;color:#f5f5f7;cursor:pointer;transition:transform 180ms cubic-bezier(0.16,1,0.3,1)}.ds-k-play:active{transform:scale(0.97)}.ds-k-play:focus-visible,.ds-k-icon:focus-visible{outline:3px solid #6a4cff;outline-offset:3px}.ds-k-icon{display:grid;place-items:center;width:52px;height:52px;padding:0;border:0;border-radius:50%;background:transparent;color:#1d1d1f;cursor:pointer}.ds-k-icon:hover{background:rgb(29 29 31 / 0.06)}.ds-k-icon[aria-pressed=true]{color:#ff375f}"
-		},
-		{
-			"name": "Key",
-			"kind": "button",
-			"refersTo": "key-kontakt",
-			"description": "Shared secondary key, Kontaktbogen paper values; hover fills with ink, pressed lit.",
-			"html": "<div class=\"ds-keys\"><button class=\"ds-key\">Mix &amp; Regeln anpassen</button><button class=\"ds-key ds-key--quiet\">Neue Warteschlange</button><button class=\"ds-key ds-key--danger\">Löschen</button></div>",
-			"css": ".ds-keys{display:flex;flex-wrap:wrap;gap:10px;font-family:'Hanken Grotesk Variable','Hanken Grotesk',system-ui,sans-serif}.ds-key{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 18px;border:2px solid #141210;border-radius:2px;background:transparent;color:#141210;font-family:inherit;font-weight:700;cursor:pointer;transition:background-color 180ms cubic-bezier(0.16,1,0.3,1),color 180ms,transform 180ms}.ds-key:hover{background:#141210;color:#eeedea}.ds-key:active{transform:scale(0.97)}.ds-key:focus-visible{outline:3px solid #d6331f;outline-offset:3px}.ds-key--quiet{border-color:#cfcbc5}.ds-key--danger{border-color:#b8261b;color:#b8261b}.ds-key--danger:hover{background:#b8261b;color:#eeedea}"
-		},
-		{
-			"name": "Signal",
+			"name": "Leuchttisch dock",
 			"kind": "custom",
-			"refersTo": "label",
-			"description": "Requested / accepted / confirmed; waiting steps dashed, never solid until confirmed.",
-			"html": "<ol class=\"ds-signal\"><li class=\"on\">Angefordert</li><li class=\"on wait\">Angenommen</li><li>Bestätigt</li></ol>",
-			"css": ".ds-signal{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;font-family:'Martian Mono Variable','Martian Mono',ui-monospace,monospace;font-size:0.66rem;letter-spacing:0.02em}.ds-signal li{padding-top:8px;border-top:3px solid rgb(20 18 16 / 0.22);color:#5c5853;font-weight:650;transition:border-color 180ms cubic-bezier(0.16,1,0.3,1)}.ds-signal li.on{border-top-color:#ff4b2b;color:#141210}.ds-signal li.wait{border-top-style:dashed}"
+			"refersTo": "kontakt-dock",
+			"description": "Film-black transport dock fixed under the thumb: progress, signal and keys; Sender ink on the top edge.",
+			"html": "<div class=\"ds-k-dock\"><div class=\"ds-k-prog\"><span></span></div><div class=\"ds-k-row\"><button class=\"ds-k-main\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M7 5v14l12-7z\" fill=\"currentColor\"/></svg> Fortsetzen</button><button class=\"ds-k-key\" aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M6 5l9 7-9 7z\"/><path d=\"M18 5v14\"/></svg></button><button class=\"ds-k-key ds-on\" aria-pressed=\"true\" aria-label=\"Favorit\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z\" fill=\"currentColor\"/></svg></button></div></div>",
+			"css": ".ds-k-dock{background:#141210;color:#f2ede6;border-top:4px solid #ff4b2b;padding:10px 16px;display:grid;gap:10px;font-family:'Hanken Grotesk Variable','Hanken Grotesk',system-ui,sans-serif}.ds-k-prog{height:5px;background:rgb(242 237 230/.16)}.ds-k-prog span{display:block;width:45%;height:100%;background:#ff4b2b}.ds-k-row{display:grid;grid-template-columns:1fr 52px 52px;gap:8px}.ds-k-main{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;border:2px solid #f2ede6;border-radius:2px;background:#f2ede6;color:#141210;font:inherit;font-size:1.15rem;font-weight:800;transition:background .18s cubic-bezier(.16,1,.3,1)}.ds-k-main:hover{background:#e0dad2}.ds-k-key{min-height:56px;border:2px solid rgb(242 237 230/.45);border-radius:2px;background:transparent;color:#f2ede6;display:grid;place-items:center}.ds-k-key:hover{background:rgb(242 237 230/.12);border-color:#f2ede6}.ds-k-key.ds-on{background:#ff4b2b;border-color:#ff4b2b;color:#141210}.ds-k-dock :focus-visible{outline:3px solid #d6331f;outline-offset:3px}"
 		},
 		{
-			"name": "Progress (held vs confirmed)",
+			"name": "Fahrt departure board",
 			"kind": "custom",
-			"refersTo": "label",
-			"description": "Confirmed progress solid in station ink; held or estimated as a 135° hatch.",
-			"html": "<div class=\"ds-prog\"><div class=\"ds-bar\"><span style=\"width:52%\"></span></div><div class=\"ds-bar ds-held\"><span style=\"width:52%\"></span></div></div>",
-			"css": ".ds-prog{display:grid;gap:12px}.ds-bar{height:6px;background:rgb(20 18 16 / 0.16);overflow:hidden}.ds-bar span{display:block;height:100%;background:#ff4b2b}.ds-held span{background:repeating-linear-gradient(135deg,#ff4b2b 0 3px,transparent 3px 7px)}"
+			"refersTo": "linie-board",
+			"description": "Navy board dock naming the next saved stop in amber beside the transport keys.",
+			"html": "<div class=\"ds-l-board\"><p class=\"ds-l-next\"><span class=\"ds-l-legend\">Nächster Halt</span><span class=\"ds-l-song\">Nie mehr Tanzfläche – Live</span></p><div class=\"ds-l-row\"><button class=\"ds-l-main\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M7 5v14l12-7z\" fill=\"currentColor\"/></svg> Fortsetzen</button><button class=\"ds-l-key\" aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M6 5l9 7-9 7z\"/><path d=\"M18 5v14\"/></svg></button></div></div>",
+			"css": ".ds-l-board{background:#0f1d33;color:#fff;padding:10px 16px;display:grid;gap:10px;font-family:'Atkinson Hyperlegible Next Variable','Atkinson Hyperlegible Next',system-ui,sans-serif}.ds-l-next{margin:0;display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}.ds-l-legend{padding:1px 8px;border-radius:4px;background:#d6001c;color:#fff;font-size:.74rem;font-weight:800;letter-spacing:.04em}.ds-l-song{color:#ffc93c;font-weight:800;font-size:1.05rem}.ds-l-row{display:grid;grid-template-columns:1fr 52px;gap:8px}.ds-l-main{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;border:0;border-radius:999px;background:#fff;color:#0f1d33;font:inherit;font-size:1.15rem;font-weight:800}.ds-l-main:hover{background:#e9edf1}.ds-l-key{min-height:56px;border:2px solid rgb(255 255 255/.35);border-radius:8px;background:transparent;color:#fff;display:grid;place-items:center}.ds-l-key:hover{background:rgb(255 255 255/.1)}.ds-l-board :focus-visible{outline:3px solid #6db7ff;outline-offset:3px}"
 		},
 		{
-			"name": "Line Badge (Linienplan)",
-			"kind": "chip",
-			"refersTo": "line-badge-linie",
-			"description": "Sender as transit line: S1, S2 …, A for Alles.",
-			"html": "<div class=\"ds-badges\"><span class=\"ds-badge\" style=\"background:#0f1d33\">A</span><span class=\"ds-badge\" style=\"background:#d6001c\">S1</span><span class=\"ds-badge\" style=\"background:#2f8a1f\">S2</span><span class=\"ds-badge\" style=\"background:#f5c400;color:#0f1d33\">S3</span></div>",
-			"css": ".ds-badges{display:flex;gap:8px}.ds-badge{display:inline-grid;place-items:center;min-width:46px;height:34px;padding:0 8px;border-radius:7px;color:#ffffff;font-family:'Atkinson Hyperlegible Next Variable','Atkinson Hyperlegible Next',system-ui,sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:-0.01em;line-height:1}"
-		},
-		{
-			"name": "Sender Card (Kontaktbogen)",
+			"name": "Fahrt current stop",
 			"kind": "card",
-			"refersTo": "station-card-kontakt",
-			"description": "Black film card with station top edge; selected gets a 4px station outline.",
-			"html": "<div class=\"ds-cards\"><div class=\"ds-card\" style=\"--st:#f2ede6\"><button><strong>Alles</strong><small>1056 Songs · Runde 1</small></button><a href=\"#\">Mix &amp; Regeln</a></div><div class=\"ds-card ds-sel\" style=\"--st:#ff4b2b\"><button><strong>Indie &amp; Gitarren</strong><small>400 Songs · Runde 1</small></button><a href=\"#\">Mix &amp; Regeln</a></div></div>",
-			"css": ".ds-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:8px;font-family:'Hanken Grotesk Variable','Hanken Grotesk',system-ui,sans-serif}.ds-card{display:grid;background:#141210;color:#f2ede6;border-top:6px solid var(--st);border-radius:3px}.ds-card button{display:grid;gap:6px;min-height:112px;padding:14px 14px 10px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;font-family:inherit}.ds-card button:hover{background:rgb(242 237 230 / 0.07)}.ds-card button:focus-visible{outline:3px solid #f2ede6;outline-offset:-3px}.ds-card strong{font-size:1.15rem;font-weight:780;line-height:1.08}.ds-card small{font-family:'Martian Mono Variable','Martian Mono',ui-monospace,monospace;font-size:0.68rem;color:var(--st)}.ds-card a{display:flex;align-items:center;min-height:44px;padding:0 14px;border-top:1px solid #3b3632;color:#f2ede6;font-weight:700;font-size:0.88rem;text-decoration:none}.ds-sel{outline:4px solid var(--st);outline-offset:4px}"
+			"refersTo": "linie-stop-panel",
+			"description": "Signage panel beside the line with an interchange ring on the line itself.",
+			"html": "<div class=\"ds-l-ride\"><div class=\"ds-l-now\"><strong>Nie mehr Golden Hour</strong><span>Sunday Aviators</span></div></div>",
+			"css": ".ds-l-ride{position:relative;padding:12px 0 12px 46px;background:#e9edf1;font-family:'Atkinson Hyperlegible Next Variable','Atkinson Hyperlegible Next',system-ui,sans-serif}.ds-l-ride::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:8px;background:#d6001c}.ds-l-now{position:relative;display:grid;gap:4px;padding:16px;border-radius:14px;background:#fff;color:#0f1d33;box-shadow:0 1px 0 #c7d0da,0 14px 34px -22px rgb(15 29 51/.45)}.ds-l-now::after{content:'';position:absolute;left:-52px;top:16px;width:32px;height:32px;border-radius:50%;border:8px solid #d6001c;background:#fff;box-shadow:0 0 0 4px #e9edf1;box-sizing:border-box}.ds-l-now strong{font-size:1.6rem;font-weight:800;line-height:1.08}.ds-l-now span{color:#4a586c}"
 		},
 		{
-			"name": "Device Select",
+			"name": "Notizblock entry card",
+			"kind": "card",
+			"refersTo": "strich-entry",
+			"description": "The current song as today's entry: title first, cover and transport inside a hand-drawn box on Karopapier.",
+			"html": "<div class=\"ds-s-page\"><div class=\"ds-s-entry\"><strong>Nie mehr Golden Hour</strong><span>Sunday Aviators · Nordsee Sessions</span><button class=\"ds-s-main\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M7 5v14l12-7z\" fill=\"currentColor\"/></svg> Fortsetzen</button></div></div>",
+			"css": ".ds-s-page{padding:16px;background-color:#fbfbf9;background-image:linear-gradient(#d9e6f3 1px,transparent 1px),linear-gradient(90deg,#d9e6f3 1px,transparent 1px);background-size:20px 20px;font-family:'Bricolage Grotesque Variable','Bricolage Grotesque',system-ui,sans-serif}.ds-s-entry{display:grid;gap:12px;padding:22px 18px 20px;border:2px solid #26292e;border-radius:16px 6px 18px 8px/8px 18px 6px 16px;background:#fff;color:#26292e}.ds-s-entry strong{font-size:2rem;font-weight:800;letter-spacing:-.035em;line-height:.98}.ds-s-entry span{color:#5b6169}.ds-s-main{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:64px;border:2px solid #26292e;border-radius:14px 6px 16px 7px/7px 16px 6px 14px;background:#26292e;color:#fbfbf9;font:inherit;font-size:1.15rem;font-weight:800}.ds-s-main:hover{background:#3a3e44}.ds-s-main:focus-visible{outline:3px solid #1f5fbf;outline-offset:3px}"
+		},
+		{
+			"name": "Player round play key",
+			"kind": "button",
+			"refersTo": "klassik-play",
+			"description": "The canon transport row: 76px round play key followed by round icon keys, in the platform face.",
+			"html": "<div class=\"ds-p-row\"><button class=\"ds-p-play\" aria-label=\"Fortsetzen\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M7 5v14l12-7z\" fill=\"currentColor\"/></svg></button><button class=\"ds-p-key\" aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M6 5l9 7-9 7z\"/><path d=\"M18 5v14\"/></svg></button><button class=\"ds-p-key ds-on\" aria-pressed=\"true\" aria-label=\"Favorit\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z\" fill=\"currentColor\"/></svg></button></div>",
+			"css": ".ds-p-row{display:flex;justify-content:center;align-items:center;gap:18px;padding:16px;background:#f5f5f7}.ds-p-play{width:76px;height:76px;border:0;border-radius:50%;background:#1d1d1f;color:#f5f5f7;display:grid;place-items:center}.ds-p-play svg{width:32px;height:32px}.ds-p-play:hover{background:#3a3a3d}.ds-p-key{width:52px;height:52px;border:0;border-radius:50%;background:transparent;color:#1d1d1f;display:grid;place-items:center}.ds-p-key:hover{background:rgb(29 29 31/.06)}.ds-p-key.ds-on{color:#ff375f}.ds-p-row :focus-visible{outline:3px solid #6a4cff;outline-offset:3px}"
+		},
+		{
+			"name": "Umlauf centre play",
+			"kind": "button",
+			"refersTo": "umlauf-play",
+			"description": "Big round sun-orange play key in the page centre with three round keys beneath.",
+			"html": "<div class=\"ds-u-t\"><button class=\"ds-u-play\" aria-label=\"Fortsetzen\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M7 5v14l12-7z\" fill=\"currentColor\"/></svg></button><div class=\"ds-u-keys\"><button class=\"ds-u-key\" aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M6 5l9 7-9 7z\"/><path d=\"M18 5v14\"/></svg></button><button class=\"ds-u-key ds-on\" aria-pressed=\"true\" aria-label=\"Favorit\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z\" fill=\"currentColor\"/></svg></button></div></div>",
+			"css": ".ds-u-t{display:grid;justify-items:center;gap:14px;padding:20px;background:#e8eef7}.ds-u-play{width:96px;height:96px;border:0;border-radius:50%;background:#ff6a13;color:#18204a;display:grid;place-items:center;box-shadow:0 18px 36px -18px rgb(255 106 19/.7)}.ds-u-play svg{width:36px;height:36px}.ds-u-play:hover{background:#f05f0c}.ds-u-keys{display:flex;gap:22px}.ds-u-key{width:52px;height:52px;border:0;border-radius:50%;background:#fff;color:#18204a;display:grid;place-items:center;box-shadow:0 6px 16px -10px rgb(13 17 49/.45)}.ds-u-key:hover{background:#ebedf3}.ds-u-key.ds-on{background:#3c6cff;color:#fff}.ds-u-t :focus-visible{outline:3px solid #3c5cff;outline-offset:3px}"
+		},
+		{
+			"name": "Fahrmodus key tiles",
+			"kind": "button",
+			"refersTo": "fahrmodus-play-tile",
+			"description": "Full-width 112px play tile and three 92px square keys; black on signal yellow.",
+			"html": "<div class=\"ds-f-t\"><button class=\"ds-f-main\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M7 5v14l12-7z\" fill=\"currentColor\"/></svg> Fortsetzen</button><button class=\"ds-f-key\" aria-label=\"Weiter\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M6 5l9 7-9 7z\"/><path d=\"M18 5v14\"/></svg></button><button class=\"ds-f-key ds-on\" aria-pressed=\"true\" aria-label=\"Favorit\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\"><path d=\"M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z\" fill=\"currentColor\"/></svg></button><button class=\"ds-f-key\" aria-label=\"nie wieder\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M6 5l9 7-9 7z\"/><path d=\"M18 5v14\"/></svg></button></div>",
+			"css": ".ds-f-t{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;background:#ffd100;font-family:'Overpass Variable','Overpass',system-ui,sans-serif}.ds-f-main{grid-column:1/-1;min-height:112px;border:3px solid #0b0b0b;border-radius:18px;background:#0b0b0b;color:#ffd100;display:inline-flex;align-items:center;justify-content:center;gap:10px;font:inherit;font-size:1.8rem;font-weight:900}.ds-f-main svg{width:40px;height:40px}.ds-f-main:hover{background:#2a2a2a}.ds-f-key{min-height:92px;border:4px solid #0b0b0b;border-radius:18px;background:transparent;color:#0b0b0b;display:grid;place-items:center}.ds-f-key svg{width:38px;height:38px}.ds-f-key:hover{background:rgb(11 11 11/.08)}.ds-f-key.ds-on{background:#0b0b0b;color:#ffd100}.ds-f-t :focus-visible{outline:3px solid #0b0b0b;outline-offset:3px}"
+		},
+		{
+			"name": "Honest signal and held progress",
+			"kind": "custom",
+			"description": "Shared requested/accepted/confirmed signal with a waiting (dashed) step and hatched held progress; never solid until confirmed.",
+			"html": "<div class=\"ds-h\"><div class=\"ds-h-prog\"><span></span></div><ol class=\"ds-h-sig\"><li class=\"on\">Angefordert</li><li class=\"on wait\">Angenommen</li><li>Bestätigt</li></ol><p class=\"ds-h-title\">Nie mehr Golden Hour</p></div>",
+			"css": ".ds-h{display:grid;gap:10px;padding:16px;background:#f4f4f2;color:#141414;font-family:system-ui,sans-serif}.ds-h-prog{height:8px;background:rgb(20 20 20/.16)}.ds-h-prog span{display:block;width:40%;height:100%;background:repeating-linear-gradient(135deg,#141414 0 3px,transparent 3px 7px)}.ds-h-sig{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ds-h-sig li{padding-top:8px;border-top:4px solid rgb(20 20 20/.22);font-size:.78rem;font-weight:650;color:#5a5c60}.ds-h-sig li.on{border-top-color:#141414;color:#141414}.ds-h-sig li.wait{border-top-style:dashed}.ds-h-title{margin:0;font-size:2rem;font-weight:800;color:transparent;-webkit-text-stroke:1.25px #141414}"
+		},
+		{
+			"name": "Utility code field",
 			"kind": "input",
-			"refersTo": "device-select",
-			"description": "52px select with drawn chevron; 3px focus outline.",
-			"html": "<select class=\"ds-select\"><option>Aktives Spotify-Gerät</option><option>Mikas iPhone</option></select>",
-			"css": ".ds-select{width:100%;min-height:52px;padding:10px 44px 10px 14px;border:2px solid #141210;border-radius:2px;background-color:#f9f8f6;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 22px) 52%,calc(100% - 16px) 52%;background-size:6px 6px;background-repeat:no-repeat;-webkit-appearance:none;appearance:none;color:#141210;font-family:'Hanken Grotesk Variable','Hanken Grotesk',system-ui,sans-serif;font-weight:600;font-size:1rem}.ds-select:focus-visible{outline:3px solid #d6331f;outline-offset:3px}"
-		},
-		{
-			"name": "Navigation",
-			"kind": "nav",
-			"refersTo": "label",
-			"description": "Mark, lowercase wordmark, three nav links; current page carries a brand bar.",
-			"html": "<header class=\"ds-head\"><a class=\"ds-brand\" href=\"#\"><svg viewBox=\"0 0 32 32\" width=\"30\" height=\"30\" aria-hidden=\"true\"><rect x=\"2\" y=\"5\" width=\"28\" height=\"22\" rx=\"1.5\" fill=\"#141210\"/><rect x=\"5\" y=\"11.2\" width=\"22\" height=\"9.6\" fill=\"#eeedea\"/><path d=\"M6.6 12.6c4.6-.7 13.4-.9 19 .1.4 2.2.3 4.4-.2 6.6-5.6.6-13.6.6-18.6-.2-.5-2-.6-4.5-.2-6.3\" fill=\"none\" stroke=\"#e2362a\" stroke-width=\"2.3\" stroke-linecap=\"round\"/></svg>true-shuffle</a><nav><a href=\"#\" aria-current=\"page\">Hören</a><a href=\"#\">Verlauf</a><a href=\"#\">Menü</a></nav></header>",
-			"css": ".ds-head{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:2px solid #141210;background:#eeedea;color:#141210;font-family:'Hanken Grotesk Variable','Hanken Grotesk',system-ui,sans-serif}.ds-brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-weight:800;font-size:1.35rem;letter-spacing:-0.035em;color:inherit;text-decoration:none}.ds-head nav{display:flex;gap:2px}.ds-head nav a{position:relative;display:inline-flex;align-items:center;min-height:44px;padding:0 12px;color:#5c5853;font-weight:650;text-decoration:none;transition:color 180ms cubic-bezier(0.16,1,0.3,1)}.ds-head nav a:hover,.ds-head nav a[aria-current]{color:#141210}.ds-head nav a[aria-current=page]{font-weight:750}.ds-head nav a::after{content:'';position:absolute;left:12px;right:12px;bottom:4px;height:3px;background:#e2362a;transform:scaleX(0);transition:transform 180ms cubic-bezier(0.16,1,0.3,1)}.ds-head nav a[aria-current]::after{transform:scaleX(1)}.ds-head a:focus-visible{outline:3px solid #d6331f;outline-offset:3px}"
+			"description": "Code entry and diagnostics: the only place system monospace appears.",
+			"html": "<input class=\"ds-code\" value=\"ABCD-1234\" aria-label=\"Code\">",
+			"css": ".ds-code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.88rem;min-height:48px;padding:10px 12px;border:2px solid #cfd0d2;background:#fff;color:#141414}.ds-code:focus-visible{outline:3px solid #1f4fd0;outline-offset:3px}"
 		}
 	],
 	"narrative": {
-		"northStar": "One Player, Four Papers",
-		"overview": "**Creative North Star: \"One Player, Four Papers\"**\n\ntrue-shuffle is one standard listening shell (header with mark, lowercase wordmark and Hören / Verlauf / Menü; the stage with Sender, song, progress, signal and transport; the device select; *Als Nächstes* in stored order; the Sender grid; menu pages) that carries four complete visual worlds. The listener picks one under Menü › Gestaltung; the choice is a per-device convenience (localStorage `ts-design`, also `?design=<id>`) painted as the root attribute `data-design`, plus the matching favicon, touch icon and browser-bar colour. Nothing functional depends on it. Kontaktbogen is the default; Linienplan, Strichliste and Klassisch are full alternatives, not skins of it.\n\nEach world lends exactly four things: type, palette, density and one signature move. Layout, controls, tap targets and every honest-state distinction stay shared, so a song, a Sender and a command state read the same way whichever world is on. Day and night are fully drawn for every world: they follow `prefers-color-scheme` unless Menü pins `data-illumination=\"day\"` or `\"night\"` (localStorage `ts-illumination`). The brand guide in `docs/BRAND.md` owns name, voice, the slot table and icon pipeline; this file owns the visual system as built.\n\nThe screen is open for seconds while music runs for hours: song and Fortsetzen / Pause always come first, and nothing unconfirmed is ever printed like a fact.",
+		"northStar": "Six Instruments, One Memory",
+		"overview": "true-shuffle ships one player and six ways to hold it. `src/client/screens/home.tsx` builds every part once (stage head, cover, title copy, progress, the requested/accepted/confirmed signal, the transport keys, device panel, queue, Sender list) with identical labels, handlers and honest states; `src/client/screens/home-layouts.tsx` then arranges those parts into six layouts that each own their structure, control placement and navigation. A design is chosen per device under Menü > Gestaltung (stored as `ts-design` in localStorage, openable by `?design=<id>`, painted as `data-design` on the root together with favicon and browser-bar colour). Day and night follow `prefers-color-scheme` unless `data-illumination` pins one; every design is fully drawn in both. Nothing functional depends on the choice. Name, voice, colour-slot table and icon pipeline live in `docs/BRAND.md`; this file records the visual system as built.\n\nThe six are worlds, not skins. **Leuchttisch** (`kontakt`, default) is a lit table: the current song lies large as a slide-mounted frame boxed in grease pencil, the Sender are film tabs, the queue is a contact sheet, and the transport sits in a film-black dock fixed at the bottom. **Fahrt** (`linie`) is one unbroken line: heard stops from stored history struck through above, the current stop as an interchange ring, the device panel beside the line, queue stops below, and a departure-board dock naming \"Nächster Halt\" in amber. **Notizblock** (`strich`) is Karopapier or Tafel: a big tally of the round, the song as an entry card (title first), a tick-off queue and filled register tabs. **Player** (`klassik`) is the canon full player: big cover, round play key, queue as a sheet with a grabber, cover shelf, bottom tab bar on phones, set in the platform face because that is the canon's native voice. **Umlauf** (`umlauf`) draws the round as an orbit of ticks around a circular cover with a big round play key in the page centre and Sender as small orbits. **Fahrmodus** (`fahrmodus`) is the car and one-hand mode: huge title, full-width play tile, three big square keys, big Sender cards, black on signal yellow.\n\nDensity is phone-first and glanceable: in every design the song and the main key are inside the first phone viewport, and the screen is meant to be open for seconds. The rejected direction was one shared layout reskinned in four colourways; the system now refuses any new design that only changes tokens.",
 		"keyCharacteristics": [
-			"One shell, four worlds: `kontakt` Kontaktbogen (default), `linie` Linienplan, `strich` Strichliste, `klassik` Klassisch.",
-			"A single token vocabulary (`--bg --fg --fg-2 --hair --rule --raise --sunk --brand`, station `--st`/`--on-st`, radii `--r --r-lg --r-art --r-main`, line weights `--bw --rule-w`, key and stage tokens, six ink slots) that every world fills.",
-			"Every Sender owns one of six ink slots and keeps that slot in every world.",
-			"One signature per world: film strip with grease-pencil box; line badges and the queue as stops; five-bundle tally and marker underline; big centred cover with round play key.",
-			"Requested, accepted and confirmed are three visibly different states; held and estimated never render solid.",
-			"Display-scale song title, 52px+ transport keys, 44px minimum targets."
+			"One shared part set, six layouts; each layout owns structure, control placement and navigation.",
+			"Every design has a full day and night palette and its own brand mark, favicon and app icon.",
+			"Unconfirmed state is never printed like confirmed state: outlined or dimmed titles, hatched progress, dashed or dotted signal steps, dashed disabled keys.",
+			"The Sender colour (`--st`) is the one accent per screen, applied in each world's own material (grease pencil, line colour, marker, accent, planet, bar).",
+			"Round progress is drawn as a world-native meter (barcode, line, tally, ring, orbit) and always floored, never rounded up."
 		],
 		"rules": [
 			{
-				"name": "The Fixed Slot Rule",
-				"body": "A Sender keeps the same ink slot in all four worlds (same ID, same slot); only the hue changes with the world. \"Alles\" never takes an ink slot; it takes the page ink.",
+				"name": "The One Sender Rule",
+				"body": "The only saturated accent on a listening screen besides the brand mark is the current Sender's ink (`--st`); everything else is ground, ink and hairline.",
 				"section": "colors"
 			},
 			{
-				"name": "The One Brand Colour Rule",
-				"body": "Each world has exactly one brand colour, used for the mark, the active navigation bar and the caret. Sender identity is carried by `--st`, never by `--brand`.",
+				"name": "The Closed Palette Rule",
+				"body": "A design's colours live under its own `:root[data-design=\"…\"]` block with a full night set in both `[data-illumination=\"night\"]` and `prefers-color-scheme: dark`; a new colour is added to all three places or not at all.",
 				"section": "colors"
 			},
 			{
-				"name": "The Edge Print Rule",
-				"body": "Martian Mono exists only in Kontaktbogen, as edge print on and around the film: frame numbers, times, queue numbers, round and count lines, Sender-card meta and signal step labels. It never sets a title, a key label or body copy.",
+				"name": "The Bar Not Background Rule",
+				"body": "In Fahrmodus the Sender colour appears only as a thick bar or line, never behind text.",
+				"section": "colors"
+			},
+			{
+				"name": "The One Voice Rule",
+				"body": "A design uses one family for everything except Leuchttisch's Martian Mono edge print (frame numbers, times, counts, signal steps). No design pairs a display face with a separate text face.",
 				"section": "typography"
 			},
 			{
 				"name": "The Utility Mono Rule",
-				"body": "The system monospace stack (`ui-monospace, \"SF Mono\", Menlo, monospace`) is a utility fallback for code and diagnostic fields only (remote key input, `.code`, diagnostic data). It is not a type role and no world styles with it.",
+				"body": "`ui-monospace, \"SF Mono\", Menlo, monospace` appears only for code input and diagnostics (`.input--code`, `.code`, `.diagnostic-data`); it is never a design voice.",
 				"section": "typography"
 			},
 			{
-				"name": "The Lowercase Name Rule",
-				"body": "The name is always \"true-shuffle\": lowercase, hyphenated, set in the active world's display face after its mark. Never capitalised, spaced, or abbreviated.",
+				"name": "The Canon Voice Rule",
+				"body": "Player's platform face is a cited choice: the canon is the native music app and SF/Roboto is its voice. It is not a fallback and not a licence to use system faces as display type elsewhere.",
 				"section": "typography"
 			},
 			{
-				"name": "The Material Depth Rule",
-				"body": "A world earns a shadow only if its material casts one. Selection, focus and pressed states are shown with outlines, ink fills and inset rings, never with lift.",
+				"name": "The Dot Fallback Rule",
+				"body": "\"Fahrmodus Dot\" is an `@font-face` that maps only U+00B7 (\"·\") to a local system sans because Overpass sets the middle dot hard against the next word. It is a glyph fallback, not a type role; never set text in it on purpose.",
+				"section": "typography"
+			},
+			{
+				"name": "The First Viewport Rule",
+				"body": "On a phone, the song title and the main play key are visible without scrolling in every design; docked keys (Leuchttisch, Fahrt) and bottom tab bars (Player, Fahrmodus) reserve bottom padding so nothing hides behind them.",
+				"section": "layout"
+			},
+			{
+				"name": "The Object Shadow Rule",
+				"body": "A shadow means a physical object resting on the world's surface or a fixed panel above content; flat list rows, keys and labels carry none.",
 				"section": "elevation"
+			},
+			{
+				"name": "The Native Mark Rule",
+				"body": "Each design's brand mark, round meter and stage art come from its own material (film frame with perforation, line with a 45 degree bend, four strokes and a red cross, resume arrow on violet, orbit with moon, yellow play on a black sign); they are SVG and never typed glyphs.",
+				"section": "shapes"
 			}
 		],
 		"dos": [
-			"**Do** build every new surface in the shared shell and read only tokens (`--bg --fg --fg-2 --hair --rule --raise --sunk --brand --st --on-st --r --r-lg --r-art --r-main --bw --rule-w --key* --stage-* --ink-*`), then check it in all four worlds by day and by night.",
-			"**Do** give a new world-specific detail to one world only, scoped under `[data-design=\"…\"]`, and keep it to type, palette, density or that world's existing signature.",
-			"**Do** keep requested, accepted and confirmed visibly distinct, and render held or estimated values as hatch, dash or outline: never solid.",
-			"**Do** print every fact a decorative signature draws (round share, queue position, song) as text beside it, and mark the drawing `aria-hidden`.",
-			"**Do** floor counts and meters; never round up.",
-			"**Do** keep transport keys at 52px or more and every target at 44px or more.",
-			"**Do** write the name as \"true-shuffle\", lowercase, after the active world's mark."
+			"Do build a new screen from the shared parts in `home.tsx` and give each design its own arrangement in `home-layouts.tsx`; labels, handlers and states stay identical.",
+			"Do define every new colour per design for day, `[data-illumination=\"night\"]` and `prefers-color-scheme: dark`.",
+			"Do render requested, accepted and confirmed differently, and keep held or estimated progress hatched (`repeating-linear-gradient(135deg, …)`).",
+			"Do floor round progress in every meter (`Math.floor`), and show the numbers beside it.",
+			"Do keep the song and the main key in the first phone viewport and reserve bottom space for docks and tab bars.",
+			"Do write the name as lowercase \"true-shuffle\", set in the active design's face with its mark before it."
 		],
 		"donts": [
-			"**Don't** fill an unconfirmed state solid: no solid progress while held or estimated, no filled title while pending, no solid main key while unavailable.",
-			"**Don't** let a world change layout, stage order, controls or copy; worlds differ in look only.",
-			"**Don't** put a Sender's identity in `--brand` or move a Sender to a different ink slot in another world.",
-			"**Don't** use Martian Mono outside Kontaktbogen, or the system monospace stack anywhere but code and diagnostic fields.",
-			"**Don't** add shadows to Kontaktbogen or Strichliste beyond the shared sheet and toast; their depth is film and paper.",
-			"**Don't** set labels in tracked capitals or add small labels above headings; section heads and labels stay sentence case.",
-			"**Don't** write \"True Shuffle\", \"TRUE-SHUFFLE\", \"Trueshuffle\" or \"TS\" as the name."
+			"Don't ship a design that only swaps tokens over another design's layout; the owner rejected exactly that.",
+			"Don't print a pending or estimated title as solid confirmed type, or a disabled main key as a filled key.",
+			"Don't let a display-only estimate trigger a request or change the saved occurrence.",
+			"Don't set any design's voice in system monospace; it is for code and diagnostics only.",
+			"Don't treat \"Fahrmodus Dot\" as a type role or the Player platform face as a general fallback display face.",
+			"Don't put the Sender colour behind text in Fahrmodus.",
+			"Don't mark a chosen Sender in Notizblock with a strike; a strike means done on that page, so chosen is circled.",
+			"Don't use hard offset shadows; depth is soft object shadow, hairline or ring."
 		]
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * The listener's chosen design. Four complete visual worlds share one app:
+ * The listener's chosen design. Six operating surfaces share one player:
  * the choice only switches presentation (a root attribute, the favicon and
  * the browser bar colour). It is a per-device convenience kept in
  * localStorage; nothing about stations, queue or history depends on it.

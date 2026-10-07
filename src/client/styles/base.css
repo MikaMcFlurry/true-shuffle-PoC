@@ -3,7 +3,8 @@
  *
  * Structure, spacing, states and accessibility for every design. Nothing
  * here picks a look: colours, faces, radii and line weights come from
- * tokens that each design file (kontakt, linie, strich, klassik) fills under
+ * tokens that each design file (kontakt, linie, strich, klassik, umlauf,
+ * fahrmodus) fills under
  * :root[data-design="…"]. Honest-state rule for all designs: anything
  * requested, awaited or estimated never prints like confirmed state.
  */
@@ -2514,9 +2515,7 @@ html:has(.dock) {
 }
 
 /* Read-only design parts that only some layouts draw. */
-.ride-switch,
-.ride-now__label,
-.entry__label {
+.ride-switch {
 	display: none;
 }
 

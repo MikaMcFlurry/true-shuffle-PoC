@@ -1,5 +1,5 @@
 /*
- * Strichliste — the tally.
+ * Notizblock — the notebook and its tally (id: strich).
  *
  * Day: squared school paper with graphite and one marker per Sender.
  * Night: the slate board in chalk. Every round is counted in bundles of
@@ -663,21 +663,6 @@
 	border: 2px solid var(--fg);
 	border-radius: var(--r-lg);
 	background: var(--raise);
-}
-
-[data-design="strich"] .entry__label {
-	display: inline-block;
-	position: absolute;
-	top: -15px;
-	left: 14px;
-	padding: 2px 10px;
-	border: 2px solid var(--fg);
-	border-radius: 6px 3px 7px 2px;
-	background: var(--select);
-	color: var(--select-fg);
-	font-weight: 800;
-	font-size: 0.85rem;
-	transform: rotate(-2deg);
 }
 
 [data-design="strich"] .lw--strich .now-shelf {
