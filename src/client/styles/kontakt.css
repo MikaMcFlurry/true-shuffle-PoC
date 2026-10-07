@@ -800,8 +800,12 @@
 
 /* Welcome and scan print on a film strip with its sprocket rows. */
 [data-design="kontakt"] :is(.stage--welcome, .stage--scan) {
-	padding-top: calc(var(--stage-pad) + 14px);
-	padding-bottom: calc(var(--stage-pad) + 14px);
+	--stage-bg: var(--film);
+	--stage-fg: var(--film-fg);
+	--stage-fg-2: var(--film-fg-2);
+	--stage-line: #3b3632;
+	padding: calc(var(--stage-pad) + 14px) 18px;
+	gap: 16px;
 	border-radius: 0;
 }
 
