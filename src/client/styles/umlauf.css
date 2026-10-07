@@ -620,3 +620,8 @@
 [data-design="umlauf"] .lw--umlauf .now-copy > * {
 	grid-area: auto;
 }
+
+/* The copy sits in the stage's single column, not in the shelf's named area. */
+[data-design="umlauf"] .lw--umlauf .now-copy {
+	grid-area: auto;
+}
