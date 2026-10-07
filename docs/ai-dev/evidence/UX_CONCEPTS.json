@@ -2,7 +2,7 @@
 	"branch": "claude/impeccable-ux-concepts",
 	"base": "claude/impeccable-rebrand @ d2e0d8b (live via codex/implement-cloudflare-restart since 2026-10-07)",
 	"date": "2026-10-07",
-	"status": "UNRELEASED — owner asked to see the six surfaces first; no merge to the production branch, no deploy",
+	"status": "RELEASE TRIGGERED 2026-10-07 on explicit owner instruction (\"Ja bitte\"): codex/implement-cloudflare-restart fast-forwarded from d2e0d8b; Cloudflare Workers Builds deploys it.",
 	"owner_request": "After the four-skin release the owner said it looked like the old version with different colours and asked for completely new operating surfaces: four offered concepts plus two new unique ones, switchable in settings.",
 	"scope": "Client presentation only. Six layouts (kontakt Leuchttisch default, linie Fahrt, strich Notizblock, klassik Player, umlauf Umlauf, fahrmodus Fahrmodus) in src/client/screens/home-layouts.tsx over shared parts built in home.tsx; new worlds umlauf.css and fahrmodus.css; icons for the two new designs.",
 	"unchanged": [
@@ -21,5 +21,11 @@
 		"finish_review": "disposition fix (8 material fixes) -> verdict passes: fixes resolved, 3 regressions then 1 regression found and fixed -> final disposition ship (scope: scored fixes, not a fresh full review)",
 		"captures": ".impeccable/review/designs/ (overview-mobile.png, overview-mobile-dark.png, overview-desktop.png, per-design files, strich-longtitle-mobile.png); Fahrt captures use three synthetic heard songs routed into /api/history, display only"
 	},
-	"not_run": ["live Spotify", "physical iPhone", "Home Assistant / Music Assistant", "Cloudflare deploy of this branch"]
+	"not_run": [
+		"live Spotify",
+		"physical iPhone",
+		"Home Assistant / Music Assistant",
+		"Cloudflare version/deployment id readback (no Cloudflare credentials in this session)"
+	],
+	"pre_release_checks": "build, typecheck, lint, wrangler dry-run (bindings USER_HUB/UserHub, REGISTRY/Registry unchanged); local build assets index-Bb5fgyLz.js, index-NUgv7ZaN.css"
 }
