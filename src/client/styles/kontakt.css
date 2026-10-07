@@ -296,7 +296,21 @@
 	color: var(--fg-2);
 }
 
-/* The current frame in its slide mount. */
+/* The lit table: a soft backlight behind the slide. */
+[data-design="kontakt"] {
+	--table-glow: #ffffff;
+}
+
+[data-design="kontakt"][data-illumination="night"] {
+	--table-glow: rgb(255 226 190 / 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+	[data-design="kontakt"]:not([data-illumination="day"]) {
+		--table-glow: rgb(255 226 190 / 0.1);
+	}
+}
+
 [data-design="kontakt"] .stage {
 	--stage-bg: transparent;
 	--stage-fg: var(--fg);
@@ -306,6 +320,66 @@
 	gap: 16px;
 }
 
+[data-design="kontakt"] .lw--kontakt .stage {
+	padding: 18px 16px 16px;
+	border-radius: 6px;
+	background:
+		radial-gradient(ellipse 70% 60% at 40% 38%, var(--table-glow), transparent 75%),
+		color-mix(in srgb, var(--table-glow) 35%, transparent);
+	box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+/* Device, actions and links printed like the contact sheet's margin. */
+[data-design="kontakt"] .lw--kontakt .device-panel {
+	padding: 14px 16px;
+	border: 0;
+	border-left: 0;
+	background: var(--film);
+	color: var(--film-fg);
+	border-radius: 2px;
+	--key-line: color-mix(in srgb, var(--film-fg) 45%, transparent);
+}
+
+[data-design="kontakt"] .lw--kontakt .device-panel select {
+	background-color: var(--film);
+	color: var(--film-fg);
+	border-color: color-mix(in srgb, var(--film-fg) 45%, transparent);
+}
+
+[data-design="kontakt"] .library-links a {
+	font-family: var(--font-num);
+	font-size: 0.8rem;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+}
+
+[data-design="kontakt"] .lw--kontakt .device-note,
+[data-design="kontakt"] .lw--kontakt .device-note > span,
+[data-design="kontakt"] .lw--kontakt .device-note a,
+[data-design="kontakt"] .lw--kontakt .device-note .act {
+	color: var(--film-fg);
+}
+
+[data-design="kontakt"] .lw--kontakt .device-panel .hint {
+	color: var(--film-fg-2);
+}
+
+[data-design="kontakt"] .masthead--station :focus-visible {
+	outline-color: var(--film-fg);
+}
+
+[data-design="kontakt"] .lw--kontakt .device-panel :focus-visible {
+	outline-color: var(--film-fg);
+}
+
+[data-design="kontakt"] .lw--kontakt .device-select__label {
+	font-family: var(--font-num);
+	font-size: 0.74rem;
+	font-weight: 500;
+	color: var(--edge);
+}
+
+/* The current frame in its slide mount. */
 [data-design="kontakt"] .stage__head {
 	grid-template-columns: minmax(0, 1fr) auto;
 	padding-bottom: 10px;
@@ -598,31 +672,51 @@
 }
 
 @media (min-width: 1100px) {
+	/* The slide lies on the lit table at the left, the contact sheet beside it. */
 	[data-design="kontakt"] .lw--kontakt {
 		grid-template-columns: repeat(12, minmax(0, 1fr));
-		column-gap: var(--gap);
-		row-gap: 36px;
+		grid-template-areas:
+			"player player player player player sheet sheet sheet sheet sheet sheet sheet"
+			"strip strip strip strip strip sheet sheet sheet sheet sheet sheet sheet"
+			"tail tail tail tail tail sheet sheet sheet sheet sheet sheet sheet";
+		column-gap: 40px;
+		row-gap: 28px;
 		align-items: start;
 	}
 
-	[data-design="kontakt"] .lw--kontakt > * {
-		grid-column: 1 / -1;
+	[data-design="kontakt"] .lw--kontakt > .player {
+		grid-area: player;
+	}
+
+	[data-design="kontakt"] .lw--kontakt > .library {
+		grid-area: strip;
+	}
+
+	[data-design="kontakt"] .lw--kontakt > .queue {
+		grid-area: sheet;
 	}
 
 	[data-design="kontakt"] .lw--kontakt > .home-tail {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-area: tail;
 	}
 
-	[data-design="kontakt"] .now-shelf {
-		grid-template-columns: 340px minmax(0, 1fr);
+	[data-design="kontakt"] .lw--kontakt .now-shelf {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			"art"
+			"copy";
 	}
 
-	[data-design="kontakt"] .now-copy h2 {
-		font-size: clamp(3rem, 4.6vw, 4.8rem);
+	[data-design="kontakt"] .lw--kontakt .frame-now {
+		width: min(100%, 380px);
+	}
+
+	[data-design="kontakt"] .lw--kontakt .now-copy h2 {
+		font-size: clamp(2.4rem, 3.2vw, 3.4rem);
 	}
 
 	[data-design="kontakt"] .queue-list {
-		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 	}
 
 	[data-design="kontakt"] .dock__inner {
@@ -680,10 +774,6 @@
 [data-design="kontakt"] .masthead--station .key--stage-quiet {
 	color: var(--film-fg);
 	border-color: color-mix(in srgb, var(--film-fg) 55%, transparent);
-}
-
-[data-design="kontakt"] .masthead--station :focus-visible {
-	outline-color: var(--film-fg);
 }
 
 [data-design="kontakt"] .masthead__title {

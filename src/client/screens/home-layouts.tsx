@@ -32,6 +32,8 @@ export interface HomeParts {
 	stageClass: string;
 	inkClass: string;
 	posterStation: StationSummary | null;
+	/** Title of the next saved stop, for display only. */
+	nextTitle: string | null;
 }
 
 export function HomeLayout(props: {
@@ -78,41 +80,53 @@ export function HomeLayout(props: {
 				</div>
 			);
 		case "linie":
-			// Fahrt: one line through the screen, heard stops above, "jetzt hier" in the middle,
-			// next stops below; the departure board holds the keys.
+			// Fahrt: one unbroken line through the screen, heard stops above, the current stop as the
+			// interchange, next stops below; the device stands beside the line and the keys sit on a
+			// departure board that names the next stop.
 			return (
 				<div class="listening-workspace lw lw--linie">
-					<section class="player" aria-labelledby="listen-title">
-						<div class={p.stageClass}>
-							{p.head}
-							<button
-								type="button"
-								class="act ride-switch"
-								onClick={() =>
-									document
-										.getElementById("stations-title")
-										?.scrollIntoView({ behavior: "smooth", block: "start" })
-								}
-							>
-								Linie wechseln
-							</button>
-							<RidePast entry={props.confirmedEntry} trackId={props.confirmedTrackId} />
-							<div class="ride-now">
-								<p class="ride-now__label" aria-hidden="true">
-									Jetzt hier
-								</p>
-								{p.nowShelf}
-								{p.progress}
-								{p.signalBlock}
+					<section class="player ride-grid" aria-labelledby="listen-title">
+						<div class={`ride ${p.inkClass}`}>
+							<div class={p.stageClass}>
+								{p.head}
+								<button
+									type="button"
+									class="act ride-switch"
+									onClick={() =>
+										document
+											.getElementById("stations-title")
+											?.scrollIntoView({ behavior: "smooth", block: "start" })
+									}
+								>
+									Linie wechseln
+								</button>
+								<RidePast entry={props.confirmedEntry} trackId={props.confirmedTrackId} />
+								<div class="ride-now">
+									{p.nowShelf}
+									{p.progress}
+									{p.signalBlock}
+								</div>
 							</div>
+							<div class="ride-notices">
+								{p.notices}
+								{p.lateNotices}
+							</div>
+							{p.queueSection}
+						</div>
+						<div class="player-side ride-side">
+							{p.devicePanel}
 							{p.savedNote}
 						</div>
 						<Dock ink={p.inkClass} board>
+							<p class="board-next">
+								<span class="board-next__label">Nächster Halt</span>
+								<span class="board-next__song">
+									{p.nextTitle ?? "Ende der gespeicherten Strecke"}
+								</span>
+							</p>
 							{p.transport}
 						</Dock>
-						{side}
 					</section>
-					{p.queueSection}
 					<aside class="library library--network" aria-labelledby="stations-title">
 						{p.libraryHead}
 						{p.stationList}
@@ -130,9 +144,6 @@ export function HomeLayout(props: {
 						<div class={p.stageClass}>
 							{p.head}
 							<div class="entry">
-								<p class="entry__label" aria-hidden="true">
-									Jetzt
-								</p>
 								{p.nowShelf}
 								{p.progress}
 								{p.signalBlock}
@@ -163,8 +174,8 @@ export function HomeLayout(props: {
 							{p.head}
 							{p.nowShelf}
 							{p.progress}
-							{p.transport}
 							{p.signalBlock}
+							{p.transport}
 							{p.savedNote}
 						</div>
 						<div class="player-side">
@@ -195,8 +206,8 @@ export function HomeLayout(props: {
 							{p.head}
 							{p.copy}
 							{p.progress}
-							{p.transport}
 							{p.signalBlock}
+							{p.transport}
 							{p.savedNote}
 						</div>
 						{side}

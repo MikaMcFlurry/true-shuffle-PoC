@@ -26,7 +26,7 @@
 	--brand: #0b0b0b;
 	--on-brand: #ffd100;
 
-	--font: "Overpass Variable", "Overpass", system-ui, sans-serif;
+	--font: "Fahrmodus Dot", "Overpass Variable", "Overpass", system-ui, sans-serif;
 	--font-display: var(--font);
 	--font-num: var(--font);
 	--display-weight: 900;
@@ -133,6 +133,15 @@
 
 .brand__mark--fahrmodus .bm-big-play {
 	fill: var(--bg, #ffd100);
+}
+
+/* Overpass draws the middle dot hard against the next word; only "·" comes from the system face. */
+@font-face {
+	font-family: "Fahrmodus Dot";
+	src:
+		local("Arial"), local("Helvetica"), local("Roboto"), local("DejaVu Sans"),
+		local("Liberation Sans");
+	unicode-range: U+00B7;
 }
 
 [data-design="fahrmodus"] .brand {
@@ -390,6 +399,13 @@
 	border-top-color: var(--bg);
 }
 
+[data-design="fahrmodus"] .library-links a {
+	min-height: 64px;
+	font-size: 1.15rem;
+	font-weight: 850;
+	border-bottom: 3px solid var(--fg);
+}
+
 [data-design="fahrmodus"] .library--chips .station-choice > a {
 	min-height: 48px;
 	border-top: 3px solid var(--fg);
@@ -554,4 +570,72 @@
 	[data-design="fahrmodus"] .lw--fahrmodus .now-copy h2 {
 		font-size: clamp(3.6rem, 5.6vw, 6rem);
 	}
+}
+
+/* One-hand reach: on phones the navigation sits at the bottom as big tabs. */
+@media (max-width: 899px) {
+	[data-design="fahrmodus"] .app-header nav {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 15;
+		gap: 0;
+		margin: 0;
+		padding: 6px max(var(--gutter), env(safe-area-inset-left))
+			calc(6px + env(safe-area-inset-bottom));
+		background: var(--fg);
+	}
+
+	[data-design="fahrmodus"] .app-header :where(nav a) {
+		flex: 1 1 0;
+		justify-content: center;
+		min-height: 60px;
+		font-size: 1.1rem;
+		color: var(--bg);
+	}
+
+	[data-design="fahrmodus"] .app-header :where(nav a)[aria-current] {
+		color: var(--bg);
+	}
+
+	[data-design="fahrmodus"] .app-header :where(nav a)::after {
+		background: var(--bg);
+		bottom: 6px;
+	}
+
+	[data-design="fahrmodus"] .app-header nav :focus-visible {
+		outline-color: var(--bg);
+	}
+
+	[data-design="fahrmodus"] .app-shell {
+		padding-bottom: calc(100px + env(safe-area-inset-bottom));
+	}
+
+	[data-design="fahrmodus"] .flash {
+		bottom: calc(86px + env(safe-area-inset-bottom));
+	}
+
+	html[data-design="fahrmodus"] {
+		scroll-padding-bottom: 100px;
+	}
+}
+
+/* The lower area in the same big, high-contrast rows. */
+[data-design="fahrmodus"] .device-select__label {
+	font-size: 1.1rem;
+	font-weight: 850;
+}
+
+[data-design="fahrmodus"] .device-select select {
+	min-height: 64px;
+	font-size: 1.1rem;
+	font-weight: 800;
+	border-width: 3px;
+	background-color: transparent;
+}
+
+[data-design="fahrmodus"] .station-actions .key {
+	min-height: 60px;
+	font-size: 1.05rem;
 }

@@ -137,10 +137,10 @@
 @media (min-width: 900px) {
 	[data-design="strich"] .app-shell::before {
 		content: "";
-		position: fixed;
+		position: absolute;
 		top: 0;
 		bottom: 0;
-		left: max(12px, calc((100vw - 1440px) / 2 + 12px));
+		left: 12px;
 		width: 2px;
 		background: var(--margin);
 		pointer-events: none;
@@ -201,9 +201,9 @@
 	font-weight: 750;
 	display: inline;
 	background: linear-gradient(
-		transparent 58%,
-		color-mix(in srgb, var(--st) 30%, transparent) 58% 92%,
-		transparent 92%
+		transparent 80%,
+		color-mix(in srgb, var(--st) 45%, transparent) 80% 98%,
+		transparent 98%
 	);
 	-webkit-box-decoration-break: clone;
 	box-decoration-break: clone;
@@ -450,12 +450,12 @@
 	box-shadow: 0 0 0 2px var(--st);
 }
 
+/* Chosen is circled, never struck: a strike means "done" on this page. */
 [data-design="strich"] .station-choice--selected .station-choice__name {
-	background: linear-gradient(
-		transparent 60%,
-		color-mix(in srgb, var(--st) 30%, transparent) 60% 92%,
-		transparent 92%
-	);
+	padding: 0 6px;
+	margin-left: -6px;
+	border-radius: 50% 46% 52% 44% / 60% 52% 58% 50%;
+	box-shadow: 0 0 0 2px var(--st);
 }
 
 [data-design="strich"] .station-choice > a {
@@ -586,9 +586,8 @@
 	transform: none;
 	border: 2px solid var(--fg);
 	border-bottom: 0;
-	border-top: 6px solid var(--st);
 	border-radius: 10px 12px 0 0;
-	background: var(--raise);
+	background: color-mix(in srgb, var(--st) 18%, var(--raise));
 	margin-bottom: -2px;
 }
 
@@ -627,9 +626,8 @@
 
 [data-design="strich"] .library--tabs .station-choice--selected {
 	box-shadow: none;
-	background: var(--bg);
+	background: color-mix(in srgb, var(--st) 34%, var(--raise));
 	border-color: var(--fg);
-	border-top-color: var(--st);
 	z-index: 1;
 }
 
@@ -784,15 +782,12 @@
 	[data-design="strich"] .library--tabs .station-choice {
 		border: 2px solid var(--fg);
 		border-left: 0;
-		border-right: 6px solid var(--st);
 		border-radius: 0 12px 12px 0;
 		margin: 0 0 0 -2px;
 	}
 
 	[data-design="strich"] .library--tabs .station-choice--selected {
-		border-right-color: var(--st);
 		margin-left: -2px;
-		background: var(--bg);
 	}
 
 	[data-design="strich"] .library--tabs .station-choice button {
@@ -808,4 +803,44 @@
 	overflow-wrap: normal;
 	font-size: 0.74rem;
 	padding-left: 24px;
+}
+
+/* On a wide page the entry is written out: title first, the cover pinned beside it. */
+@media (min-width: 1100px) {
+	[data-design="strich"] .lw--strich .now-shelf {
+		grid-template-columns: minmax(0, 1fr) 160px;
+		grid-template-areas:
+			"title art"
+			"artist art"
+			"album art";
+		align-items: start;
+	}
+
+	[data-design="strich"] .lw--strich .now-copy {
+		display: contents;
+	}
+
+	[data-design="strich"] .lw--strich .now-copy h2 {
+		grid-area: title;
+		font-size: clamp(2.2rem, 3vw, 3.2rem);
+	}
+
+	[data-design="strich"] .lw--strich .now-copy .scribble {
+		grid-area: title;
+		align-self: end;
+	}
+
+	[data-design="strich"] .lw--strich .now-copy .artist {
+		grid-area: artist;
+	}
+
+	[data-design="strich"] .lw--strich .now-copy .album {
+		grid-area: album;
+	}
+
+	[data-design="strich"] .lw--strich .cover.player-art {
+		grid-area: art;
+		width: 160px;
+		justify-self: end;
+	}
 }

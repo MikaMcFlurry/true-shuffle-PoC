@@ -176,7 +176,7 @@
 }
 
 [data-design="umlauf"] .library--orbits .station-choice {
-	flex: 0 1 104px;
+	flex: 0 0 104px;
 	min-width: 0;
 	background: transparent;
 	border: 0;
@@ -189,6 +189,7 @@
 	grid-template-columns: minmax(0, 1fr);
 	grid-template-rows: auto auto auto;
 	justify-items: center;
+	align-content: start;
 	gap: 4px;
 	min-height: 0;
 	padding: 4px 2px;
@@ -247,13 +248,14 @@
 [data-design="umlauf"] .library--orbits .station-choice--selected button::after {
 	content: "";
 	position: absolute;
-	top: 6px;
+	top: 8px;
 	left: 50%;
-	width: 8px;
-	height: 8px;
-	margin-left: 30px;
+	width: 10px;
+	height: 10px;
+	margin-left: 22px;
 	border-radius: 50%;
 	background: var(--st);
+	box-shadow: 0 0 0 3px var(--bg);
 }
 
 [data-design="umlauf"] .library--orbits .station-choice--selected .station-choice__name {
@@ -261,6 +263,15 @@
 	text-decoration-color: var(--st);
 	text-decoration-thickness: 3px;
 	text-underline-offset: 4px;
+}
+
+[data-design="umlauf"] .library-links a {
+	min-height: 44px;
+	padding: 0 16px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--raise);
+	box-shadow: inset 0 0 0 1.5px var(--hair);
 }
 
 [data-design="umlauf"] .library--orbits .station-choice > a {
@@ -285,7 +296,7 @@
 	position: relative;
 	display: grid;
 	place-items: center;
-	width: min(82vw, 340px);
+	width: min(64vw, 268px);
 	aspect-ratio: 1;
 	margin-top: 6px;
 }
@@ -584,7 +595,7 @@
 	[data-design="umlauf"] .lw--umlauf {
 		grid-template-columns: repeat(12, minmax(0, 1fr));
 		grid-template-areas:
-			"orbits orbits orbits orbits orbits orbits orbits orbits orbits orbits orbits orbits"
+			"player player player player player player player orbits orbits orbits orbits orbits"
 			"player player player player player player player queue queue queue queue queue"
 			"tail tail tail tail tail tail tail tail tail tail tail tail";
 		column-gap: var(--gap);
@@ -613,7 +624,11 @@
 	}
 
 	.orbit {
-		width: 380px;
+		width: 340px;
+	}
+
+	[data-design="umlauf"] .lw--umlauf > .player {
+		grid-row: 1 / span 2;
 	}
 }
 
@@ -624,4 +639,11 @@
 /* The copy sits in the stage's single column, not in the shelf's named area. */
 [data-design="umlauf"] .lw--umlauf .now-copy {
 	grid-area: auto;
+}
+
+/* Actions and links as round pills, in the orbit's own shape. */
+[data-design="umlauf"] .library-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 }

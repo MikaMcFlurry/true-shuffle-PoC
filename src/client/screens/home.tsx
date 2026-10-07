@@ -833,6 +833,7 @@ export function Home({ state }: { state: AppState }) {
 		stageClass,
 		inkClass: `ink-${inkOf(posterStation)}`,
 		posterStation,
+		nextTitle: successors[0]?.track.name ?? null,
 	};
 	return (
 		<HomeLayout

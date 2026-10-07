@@ -78,6 +78,29 @@ test("each design switches in the menu and keeps the saved player working", asyn
 		})
 		.toBe(97000);
 	await page.emulateMedia({ reducedMotion: "reduce" });
+	// Fahrt shows the last heard stops from stored history; the stand-in has none, so the
+	// capture serves three synthetic heard songs (display only, nothing is written).
+	const now = Date.now();
+	await page.route("**/api/history?*", (route) =>
+		route.fulfill({
+			json: [
+				["Nordsee – Live", "Stadtrand", 4],
+				["Leuchtturm (Echo)", "Lena Aurich", 8],
+				["Golden Hour – Live", "Die Heizkörper", 12],
+			].map(([name, artists, ago], i) => ({
+				id: `heard-${i}`,
+				name,
+				artists,
+				album: "",
+				imageUrl: null,
+				durationMs: 200000,
+				thumb: 0,
+				playedAt: now - Number(ago) * 60000,
+				stationName: "Indie & Gitarren",
+				ignored: false,
+			})),
+		}),
+	);
 
 	for (const [id, name] of DESIGNS) {
 		await page.setViewportSize({ width: 1440, height: 1000 });
