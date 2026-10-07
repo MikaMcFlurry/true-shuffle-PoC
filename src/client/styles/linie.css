@@ -52,8 +52,6 @@
 
 	--stage-bg: var(--raise);
 	--stage-line: var(--hair);
-	--main-bg: var(--st);
-	--main-fg: var(--on-st);
 
 	/* Line colours. */
 	--ink-ultra: #0066b3;
@@ -301,6 +299,12 @@
 
 [data-design="linie"] .icon-button {
 	border-radius: 12px;
+}
+
+/* The main key prints in the Sender's line colour. */
+[data-design="linie"] .stage {
+	--main-bg: var(--st);
+	--main-fg: var(--on-st);
 }
 
 [data-design="linie"] .transport-main {

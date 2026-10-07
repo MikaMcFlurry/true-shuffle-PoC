@@ -39,6 +39,15 @@
         ],
         "createdAt": "2026-10-07T00:40:23.791Z",
         "reason": "agent: the 6px grease-pencil stripe on the square film band is Kontaktbogen's Sender marker; band radius is 0"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "sf mono",
+        "files": [
+          "src/client/styles/base.css"
+        ],
+        "createdAt": "2026-10-07T00:55:14.442Z",
+        "reason": "agent: system monospace is a documented utility fallback for code/diagnostic fields only (DESIGN.md Utility Mono rule), not a type role"
       }
     ]
   }

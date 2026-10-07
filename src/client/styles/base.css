@@ -1450,6 +1450,11 @@ select.input {
 	hyphens: auto;
 }
 
+.station-choice__name,
+.station-choice__meta {
+	overflow-wrap: break-word;
+}
+
 .station-choice__meta {
 	grid-column: 1;
 	align-self: end;
@@ -1938,17 +1943,17 @@ input[type="radio"].check {
 	--bg: #141210;
 }
 .design-card--linie .design-card__swatch {
-	background: #f4f6f8;
+	background: #e9edf1;
 	color: #0f1d33;
 	--brand: #e3001b;
-	--bg: #f4f6f8;
+	--bg: #e9edf1;
 	box-shadow: inset 0 0 0 1px #c9d1da;
 }
 .design-card--strich .design-card__swatch {
 	background-color: #fbfbf8;
 	background-image:
-		linear-gradient(#bcd3ea 1px, transparent 1px),
-		linear-gradient(90deg, #bcd3ea 1px, transparent 1px);
+		linear-gradient(#d9e6f3 1px, transparent 1px),
+		linear-gradient(90deg, #d9e6f3 1px, transparent 1px);
 	background-size: 8px 8px;
 	color: #2b2e33;
 	--brand: #d63a2f;
@@ -1956,11 +1961,11 @@ input[type="radio"].check {
 	box-shadow: inset 0 0 0 1px #c9d1da;
 }
 .design-card--klassik .design-card__swatch {
-	background: #1b1b1f;
+	background: #121214;
 	color: #ffffff;
-	--brand: #7c5cff;
+	--brand: #6a4cff;
 	--on-brand: #ffffff;
-	--bg: #1b1b1f;
+	--bg: #121214;
 }
 
 /* Fields. */

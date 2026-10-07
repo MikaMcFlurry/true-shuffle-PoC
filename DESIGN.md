@@ -1,393 +1,439 @@
 ---
 name: true-shuffle
-description: A Swiss concert poster for the current song, one flat printing ink per Sender, with the saved order running beneath like the programme.
+description: Spotify-Sender mit Gedächtnis. One shared listening shell, four switchable designs (Kontaktbogen default, Linienplan, Strichliste, Klassisch), each drawn for day and night.
 colors:
-  bg: "#f3f3f1"
-  fg: "#111111"
-  fg-2: "#55575a"
-  rule: "#111111"
-  hair: "#c9cbcd"
-  grid: "rgb(17 17 17 / 0.08)"
-  raise: "#ffffff"
-  danger: "#b3261e"
-  warn-bg: "#fff3c4"
-  warn-fg: "#3b2f00"
-  focus: "#1f3bd0"
-  select: "#f4c20d"
-  bg-night: "#0b0b0c"
-  fg-night: "#f2f2ee"
-  fg-2-night: "#a3a5a8"
-  rule-night: "#f2f2ee"
-  hair-night: "#303236"
-  grid-night: "rgb(242 242 238 / 0.075)"
-  raise-night: "#17181a"
-  danger-night: "#ff8a7f"
-  warn-bg-night: "#3b2f00"
-  warn-fg-night: "#ffe9a3"
-  focus-night: "#8fa3ff"
-  ink-ultra: "#1f3bd0"
-  on-ultra: "#ffffff"
-  on-ultra-2: "#dfe4ff"
-  ink-verm: "#c8380e"
-  on-verm: "#ffffff"
-  on-verm-2: "#fff0ea"
-  ink-green: "#006e4e"
-  on-green: "#ffffff"
-  on-green-2: "#dff5ec"
-  ink-violet: "#5b30c0"
-  on-violet: "#ffffff"
-  on-violet-2: "#ece5ff"
-  ink-petrol: "#00657a"
-  on-petrol: "#ffffff"
-  on-petrol-2: "#dcf3f7"
-  ink-yellow: "#f4c20d"
-  on-yellow: "#111111"
-  on-yellow-2: "#3a3000"
-  ink-all: "#111111"
-  on-all: "#f3f3f1"
-  on-all-2: "#c6c6c4"
-  ink-all-night: "#f2f2ee"
-  on-all-night: "#0b0b0c"
-  on-all-2-night: "#393939"
+  # Kontaktbogen (data-design="kontakt", default). Day = contact print on photo paper, night = darkroom.
+  kontakt-photo-paper: "#eeedea"
+  kontakt-paper-raise: "#f9f8f6"
+  kontakt-film-black: "#141210"
+  kontakt-film-print: "#f2ede6"
+  kontakt-film-print-dim: "#b0a99f"
+  kontakt-edge-amber: "#e6b15c"
+  kontakt-graphite-quiet: "#5c5853"
+  kontakt-paper-hair: "#cfcbc5"
+  kontakt-film-line: "#3b3632"
+  kontakt-grease-red: "#e2362a"
+  kontakt-darkroom: "#0d0b0a"
+  kontakt-darkroom-raise: "#161412"
+  kontakt-darkroom-film: "#1d1a17"
+  kontakt-darkroom-print: "#ece6dd"
+  kontakt-darkroom-quiet: "#a69e93"
+  kontakt-darkroom-red: "#ff5a3c"
+  kontakt-safelight-hole: "#6b2f25"
+  kontakt-grease-blue: "#4b86f0"
+  kontakt-grease-vermilion: "#ff4b2b"
+  kontakt-grease-green: "#33c06d"
+  kontakt-grease-magenta: "#e05aa8"
+  kontakt-grease-orange: "#ff8a1e"
+  kontakt-grease-yellow: "#f2c230"
+  # Linienplan (data-design="linie"). Day = white signage on station-wall grey, night = midnight enamel.
+  linie-station-wall: "#e9edf1"
+  linie-signage-white: "#ffffff"
+  linie-navy-ink: "#0f1d33"
+  linie-navy-quiet: "#4a586c"
+  linie-panel-hair: "#c7d0da"
+  linie-signal-red: "#e3001b"
+  linie-enamel-midnight: "#0b1424"
+  linie-enamel-raise: "#132038"
+  linie-enamel-white: "#f2f5f9"
+  linie-enamel-quiet: "#a6b2c3"
+  linie-enamel-hair: "#283851"
+  linie-night-signal-red: "#ff3349"
+  linie-line-blue: "#0066b3"
+  linie-line-red: "#d6001c"
+  linie-line-green: "#2f8a1f"
+  linie-line-violet: "#7b4fa6"
+  linie-line-turquoise: "#00827e"
+  linie-line-yellow: "#f5c400"
+  # Strichliste (data-design="strich"). Day = squared school paper, night = slate board.
+  strich-squared-paper: "#fbfbf9"
+  strich-graphite: "#26292e"
+  strich-graphite-quiet: "#5b6169"
+  strich-paper-hair: "#cdd6e0"
+  strich-grid-blue: "#d9e6f3"
+  strich-margin-pink: "#ec8d86"
+  strich-correction-red: "#d63a2f"
+  strich-slate: "#1d2723"
+  strich-slate-raise: "#24302b"
+  strich-chalk: "#eef0e9"
+  strich-chalk-quiet: "#aab4ad"
+  strich-chalk-red: "#ff8f80"
+  strich-marker-blue: "#1f5fbf"
+  strich-marker-red: "#d63a2f"
+  strich-marker-green: "#1d8048"
+  strich-marker-violet: "#7a3fb0"
+  strich-marker-petrol: "#0e7882"
+  strich-marker-ochre: "#e7a600"
+  # Klassisch (data-design="klassik"). The familiar player, day and night.
+  klassik-ground: "#f5f5f7"
+  klassik-card: "#ffffff"
+  klassik-label: "#1d1d1f"
+  klassik-label-quiet: "#6e6e73"
+  klassik-separator: "#d9d9de"
+  klassik-violet: "#6a4cff"
+  klassik-night: "#121214"
+  klassik-night-card: "#1c1c1f"
+  klassik-night-label: "#f5f5f7"
+  klassik-night-quiet: "#a1a1a6"
+  klassik-night-violet: "#8f7bff"
+  klassik-accent-blue: "#2f6bff"
+  klassik-accent-pink-red: "#ff375f"
+  klassik-accent-green: "#1f9d55"
+  klassik-accent-violet: "#8e5cff"
+  klassik-accent-petrol: "#0a9396"
+  klassik-accent-yellow: "#ffb800"
 typography:
-  display:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
-    fontSize: "clamp(2.6rem, 12.5vw, 4.25rem)"
-    fontWeight: 850
-    lineHeight: 0.94
-    letterSpacing: "-0.025em"
-    fontVariation: "'wdth' 72"
-  display-desktop:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
-    fontSize: "clamp(3.4rem, 5.4vw, 6rem)"
-    fontWeight: 850
-    lineHeight: 0.94
-    letterSpacing: "-0.025em"
-    fontVariation: "'wdth' 72"
-  masthead:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
-    fontSize: "clamp(2.2rem, 10vw, 4rem)"
-    fontWeight: 850
+  kontakt-display:
+    fontFamily: "Hanken Grotesk Variable, Hanken Grotesk, system-ui, sans-serif"
+    fontSize: "clamp(2.3rem, 11vw, 3.7rem)"
+    fontWeight: 820
     lineHeight: 0.96
-    letterSpacing: "-0.02em"
-    fontVariation: "'wdth' 74"
-  headline:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
-    fontSize: "clamp(1.6rem, 6vw, 2.25rem)"
-    fontWeight: 800
-    lineHeight: 1.02
-    letterSpacing: "-0.02em"
-    fontVariation: "'wdth' 78"
-  title:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
-    fontSize: "1.35rem"
-    fontWeight: 800
-    lineHeight: 1.1
-    letterSpacing: "-0.015em"
-    fontVariation: "'wdth' 85"
-  brand:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
-    fontSize: "1.45rem"
-    fontWeight: 800
-    letterSpacing: "-0.03em"
-    fontVariation: "'wdth' 82"
-  body:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
+    letterSpacing: "-0.035em"
+  kontakt-body:
+    fontFamily: "Hanken Grotesk Variable, Hanken Grotesk, system-ui, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.5
-    fontVariation: "'wdth' 100"
-  key:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
+  kontakt-edge-print:
+    fontFamily: "Martian Mono Variable, Martian Mono, ui-monospace, monospace"
+    fontSize: "0.7rem"
+    fontWeight: 500
+    letterSpacing: "0.04em"
+    fontFeature: "tnum"
+  linie-display:
+    fontFamily: "Atkinson Hyperlegible Next Variable, Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "clamp(2rem, 9.5vw, 3.3rem)"
+    fontWeight: 800
+    lineHeight: 1.04
+    letterSpacing: "-0.015em"
+  linie-body:
+    fontFamily: "Atkinson Hyperlegible Next Variable, Atkinson Hyperlegible Next, system-ui, sans-serif"
     fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  linie-line-badge:
+    fontFamily: "Atkinson Hyperlegible Next Variable, Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "1.1rem"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "-0.01em"
+  strich-display:
+    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, system-ui, sans-serif"
+    fontSize: "clamp(2.3rem, 11vw, 3.9rem)"
+    fontWeight: 800
+    lineHeight: 0.98
+    letterSpacing: "-0.035em"
+  strich-body:
+    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, system-ui, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  klassik-display:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, Roboto, system-ui, sans-serif"
+    fontSize: "clamp(1.5rem, 6.2vw, 2.1rem)"
     fontWeight: 700
-    lineHeight: 1.15
-    fontVariation: "'wdth' 92"
-  figures:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
-    fontSize: "1.05rem"
-    fontWeight: 750
-    fontFeature: "'tnum' 1"
-    fontVariation: "'wdth' 85"
-  signal:
-    fontFamily: "Archivo Variable, Archivo, system-ui, sans-serif"
+    lineHeight: 1.08
+    letterSpacing: "-0.02em"
+  klassik-body:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, Roboto, system-ui, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  headline:
+    fontSize: "clamp(1.45rem, 5.4vw, 2rem)"
+    lineHeight: 1.08
+    letterSpacing: "-0.015em"
+  title:
+    fontSize: "1.15rem"
+    lineHeight: 1.08
+    letterSpacing: "-0.01em"
+  artist:
+    fontSize: "clamp(1.1rem, 4.4vw, 1.5rem)"
+    fontWeight: 600
+    lineHeight: 1.2
+  label:
     fontSize: "0.78rem"
     fontWeight: 650
-    fontVariation: "'wdth' 90"
+    lineHeight: 1.3
 rounded:
-  none: "0px"
+  kontakt-r: "2px"
+  kontakt-r-lg: "3px"
+  kontakt-r-art: "1px"
+  linie-r: "8px"
+  linie-r-lg: "14px"
+  linie-r-art: "6px"
+  linie-badge: "7px"
+  strich-r: "10px 4px 12px 5px / 5px 12px 4px 10px"
+  strich-r-lg: "16px 6px 18px 8px / 8px 18px 6px 16px"
+  strich-r-main: "14px 6px 16px 7px / 7px 16px 6px 14px"
+  strich-r-art: "3px"
+  klassik-r: "12px"
+  klassik-r-lg: "18px"
+  klassik-r-art: "12px"
+  klassik-panel: "24px"
+  pill: "999px"
 spacing:
   gutter-narrow: "14px"
-  gutter: "16px"
+  gutter-mobile: "16px"
   gutter-tablet: "24px"
   gutter-desktop: "32px"
   gap: "24px"
   gap-desktop: "32px"
-  section: "40px"
-  key-narrow: "46px"
+  stage-pad-mobile: "18px"
+  stage-pad-tablet: "24px"
+  stage-pad-desktop: "28px"
+  tap-min: "44px"
   key: "52px"
-  key-main: "64px"
+  key-narrow: "46px"
+  main-key: "64px"
 components:
-  key:
-    backgroundColor: "transparent"
-    textColor: "{colors.fg}"
-    typography: "{typography.key}"
-    rounded: "{rounded.none}"
-    padding: "10px 18px"
-    height: "48px"
-  key-hover:
-    backgroundColor: "{colors.fg}"
-    textColor: "{colors.bg}"
-  key-lit:
-    backgroundColor: "{colors.fg}"
-    textColor: "{colors.bg}"
-    rounded: "{rounded.none}"
-  key-danger:
-    textColor: "{colors.danger}"
-    rounded: "{rounded.none}"
-  poster:
-    backgroundColor: "{colors.ink-verm}"
-    textColor: "{colors.on-verm}"
-    rounded: "{rounded.none}"
-    padding: "20px 16px 22px"
-  transport-main:
-    backgroundColor: "{colors.on-verm}"
-    textColor: "{colors.ink-verm}"
-    typography: "{typography.key}"
-    rounded: "{rounded.none}"
+  transport-main-kontakt:
+    backgroundColor: "{colors.kontakt-film-print}"
+    textColor: "{colors.kontakt-film-black}"
+    rounded: "{rounded.kontakt-r}"
+    height: "64px"
     padding: "10px 16px"
+  transport-main-linie:
+    backgroundColor: "{colors.linie-line-red}"
+    textColor: "{colors.linie-signage-white}"
+    rounded: "{rounded.pill}"
     height: "64px"
-  transport-key:
-    backgroundColor: "transparent"
-    textColor: "{colors.on-verm}"
-    rounded: "{rounded.none}"
-    width: "{spacing.key}"
+    padding: "10px 16px"
+  transport-main-strich:
+    backgroundColor: "{colors.strich-graphite}"
+    textColor: "{colors.strich-squared-paper}"
+    rounded: "{rounded.strich-r-main}"
     height: "64px"
-  key-poster:
-    backgroundColor: "{colors.on-ultra}"
-    textColor: "{colors.ink-ultra}"
-    typography: "{typography.key}"
-    rounded: "{rounded.none}"
-    padding: "12px 22px"
-    height: "56px"
-  station-tile:
-    backgroundColor: "{colors.ink-green}"
-    textColor: "{colors.on-green}"
-    rounded: "{rounded.none}"
+    padding: "10px 16px"
+  transport-main-klassik:
+    backgroundColor: "{colors.klassik-label}"
+    textColor: "{colors.klassik-ground}"
+    rounded: "{rounded.pill}"
+    size: "76px"
+  icon-key:
+    size: "52px"
+    height: "64px"
+  key-kontakt:
+    textColor: "{colors.kontakt-film-black}"
+    rounded: "{rounded.kontakt-r}"
+    height: "48px"
+    padding: "10px 18px"
+  key-linie:
+    backgroundColor: "{colors.linie-signage-white}"
+    textColor: "{colors.linie-navy-ink}"
+    rounded: "{rounded.linie-r}"
+    height: "48px"
+    padding: "10px 18px"
+  key-strich:
+    textColor: "{colors.strich-graphite}"
+    rounded: "{rounded.strich-r}"
+    height: "48px"
+    padding: "10px 18px"
+  key-klassik:
+    textColor: "{colors.klassik-label}"
+    rounded: "{rounded.klassik-r}"
+    height: "48px"
+    padding: "10px 18px"
+  line-badge-linie:
+    backgroundColor: "{colors.linie-line-red}"
+    textColor: "{colors.linie-signage-white}"
+    typography: "{typography.linie-line-badge}"
+    rounded: "{rounded.linie-badge}"
+    height: "34px"
+    padding: "0 8px"
+  station-card-kontakt:
+    backgroundColor: "{colors.kontakt-film-black}"
+    textColor: "{colors.kontakt-film-print}"
+    rounded: "{rounded.kontakt-r-lg}"
     padding: "14px 14px 10px"
-    height: "112px"
-  input:
-    backgroundColor: "{colors.raise}"
-    textColor: "{colors.fg}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: "10px 14px"
+  station-card-linie:
+    backgroundColor: "{colors.linie-signage-white}"
+    textColor: "{colors.linie-navy-ink}"
+    rounded: "{rounded.linie-r-lg}"
+    padding: "14px 14px 10px"
+  station-card-strich:
+    backgroundColor: "{colors.strich-squared-paper}"
+    textColor: "{colors.strich-graphite}"
+    rounded: "{rounded.strich-r-lg}"
+    padding: "14px 14px 10px"
+  station-card-klassik:
+    backgroundColor: "{colors.klassik-card}"
+    textColor: "{colors.klassik-label}"
+    rounded: "{rounded.klassik-r-lg}"
+    padding: "14px 14px 10px"
+  device-select:
     height: "52px"
-  segmented-option:
-    backgroundColor: "{colors.bg}"
-    textColor: "{colors.fg}"
-    rounded: "{rounded.none}"
-    padding: "8px 12px"
-    height: "52px"
-  segmented-option-selected:
-    backgroundColor: "{colors.fg}"
-    textColor: "{colors.bg}"
-  notice:
-    backgroundColor: "{colors.raise}"
-    textColor: "{colors.fg}"
-    rounded: "{rounded.none}"
-    padding: "14px 16px"
-  notice-warn:
-    backgroundColor: "{colors.warn-bg}"
-    textColor: "{colors.warn-fg}"
-    rounded: "{rounded.none}"
-    padding: "14px 16px"
-  sheet:
-    backgroundColor: "{colors.bg}"
-    textColor: "{colors.fg}"
-    rounded: "{rounded.none}"
-    padding: "20px"
+    padding: "10px 44px 10px 14px"
 ---
 
 # Design System: true-shuffle
 
 ## Overview
 
-**Creative North Star: "The Concert Poster"**
+**Creative North Star: "One Player, Four Papers"**
 
-The current song is a printed concert poster for its Sender. One flat field of printing ink carries the Sender name, the round figure, the cover, the title at poster scale, the progress rule, the command signal and the transport keys. The saved order runs beneath it like the programme, and the other Sender hang as a poster wall. The lineage is the Swiss concert poster (Tonhalle, Musica Viva): flat ink, one grotesk, a visible construction grid, square corners.
+true-shuffle is one standard listening shell (header with mark, lowercase wordmark and Hören / Verlauf / Menü; the stage with Sender, song, progress, signal and transport; the device select; *Als Nächstes* in stored order; the Sender grid; menu pages) that carries four complete visual worlds. The listener picks one under Menü › Gestaltung; the choice is a per-device convenience (localStorage `ts-design`, also `?design=<id>`) painted as the root attribute `data-design`, plus the matching favicon, touch icon and browser-bar colour. Nothing functional depends on it. Kontaktbogen is the default; Linienplan, Strichliste and Klassisch are full alternatives, not skins of it.
 
-Paper-white (`bg`) or black (`bg-night`) ground; hairline grid columns printed behind everything; Archivo Variable as the only family, set condensed and heavy for display and at normal width for text. The ink is honest: solid ink means confirmed. Anything requested, awaited or estimated prints as overprint (outline, dashes, hatch), never in the solid confirmed ink. This world replaces the earlier "quiet album-library desk" in full; nothing of that system (Jost, green accent, rounded controls, artwork shadows) carries over. Surface composition and direction evidence live in `.impeccable/surfaces/src-client.md`.
+Each world lends exactly four things: type, palette, density and one signature move. Layout, controls, tap targets and every honest-state distinction stay shared, so a song, a Sender and a command state read the same way whichever world is on. Day and night are fully drawn for every world: they follow `prefers-color-scheme` unless Menü pins `data-illumination="day"` or `"night"` (localStorage `ts-illumination`). The brand guide in `docs/BRAND.md` owns name, voice, the slot table and icon pipeline; this file owns the visual system as built.
+
+The screen is open for seconds while music runs for hours: song and Fortsetzen / Pause always come first, and nothing unconfirmed is ever printed like a fact.
 
 **Key Characteristics:**
-- One flat printing ink per Sender; "Alles" prints in the page's own ink.
-- Archivo Variable only: condensed heavy display, normal-width text, tabular figures.
-- Visible hairline construction grid: 4 columns on phone, 12 at 1100px and up.
-- Square corners everywhere; flat print with no shadows except the rating dialog.
-- Overprint means unconfirmed: outline title, hatched progress, dashed keys and signal steps.
-- The round figure prints the real heard share of the round, never a rounded-up one.
+- One shell, four worlds: `kontakt` Kontaktbogen (default), `linie` Linienplan, `strich` Strichliste, `klassik` Klassisch.
+- A single token vocabulary (`--bg --fg --fg-2 --hair --rule --raise --sunk --brand`, station `--st`/`--on-st`, radii `--r --r-lg --r-art --r-main`, line weights `--bw --rule-w`, key and stage tokens, six ink slots) that every world fills.
+- Every Sender owns one of six ink slots and keeps that slot in every world.
+- One signature per world: film strip with grease-pencil box; line badges and the queue as stops; five-bundle tally and marker underline; big centred cover with round play key.
+- Requested, accepted and confirmed are three visibly different states; held and estimated never render solid.
+- Display-scale song title, 52px+ transport keys, 44px minimum targets.
 
 ## Colors
 
-A neutral paper-and-ink ground with six saturated printing inks, each assigned to a Sender and printed as a full flat field with its own type colour.
+Every world is a two-tone ground-and-ink palette plus one brand red or violet and six Sender inks; the token values above are normative for day, the night counterparts are listed with the night-prefixed names.
 
 ### Primary
-The six station inks. A Sender's ink is chosen deterministically from its id (ultramarine, vermilion, green, violet, petrol, signal yellow, in that cycle); the combined Sender "Alles" prints in the page ink instead. Every ink has an `on-` colour for its type and keys and an `on-…-2` colour for secondary lines (round text, album, notes). All pairs pass AA for body text (lowest: `on-verm-2` on vermilion, 4.69:1).
-- **Ultramarine** (`ink-ultra`): also the sign-in and scan posters' ink, and the day theme's focus colour.
-- **Vermilion** (`ink-verm`), **Green** (`ink-green`), **Violet** (`ink-violet`), **Petrol** (`ink-petrol`): white type, tinted secondary lines.
-- **Signal Yellow** (`ink-yellow`): the only light ink; type flips to near-black (`on-yellow`). The same yellow is the text selection colour (`select`).
-- **Alles** (`ink-all` / `ink-all-night`): the page's foreground printed as a field, so black on day and paper-light on night, with the ground colour as its type.
+- **Grease-Pencil Red** (`kontakt-grease-red`; night `kontakt-darkroom-red`): Kontaktbogen's brand: the box stroke in the mark, the active-nav underline, the caret, the first queue number.
+- **Signal Red** (`linie-signal-red`; night `linie-night-signal-red`): Linienplan's brand: the line in the mark, the 4px active-nav bar.
+- **Correction Red** (`strich-correction-red`; night `strich-chalk-red`): Strichliste's brand: the fifth cross stroke of each tally bundle, the hand-drawn nav underline, first queue number.
+- **Player Violet** (`klassik-violet`; night `klassik-night-violet`): Klassisch's brand: the mark tile, menu links on Sender cards, switches when on.
+
+### Secondary (Sender inks)
+Six slots per world, mapped by Sender ID: `ultra`, `verm`, `green`, `violet`, `petrol`, `yellow` (`--ink-*`, consumed as `--st` / `--on-st` via the `.ink-*` classes). Kontaktbogen's are grease pencils that read on black film and on paper (`kontakt-grease-*`, with dark `--on-ink`); Linienplan's are transit line colours (`linie-line-*`, brightened at night); Strichliste's are marker pens (`strich-marker-*`, pastel chalks at night); Klassisch's are accent colours (`klassik-accent-*`). The station colour drives the progress fill, the signal, the round meter, the selected Sender outline, the station masthead and pressed favourite. "Alles" takes the page ink (`--fg`), or grease-white `kontakt-film-print` on the film.
+
+### Tertiary (world materials)
+- **Film Black / Film Print** (`kontakt-film-black`, `kontakt-film-print`, `kontakt-film-print-dim`): the stage strip, Sender cards and station masthead in Kontaktbogen, in day and night alike (night film lifts to `kontakt-darkroom-film`). The day browser bar is film black too.
+- **Edge Amber** (`kontakt-edge-amber`): edge print on film: frame numbers, station round line, scan text.
+- **Safelight Hole** (`kontakt-safelight-hole`): sprocket holes at night; by day the holes cut through to the paper (`--hole: var(--bg)`).
+- **Grid Blue / Margin Pink** (`strich-grid-blue`, `strich-margin-pink`): the 20px squared ground and, from 900px, the 2px fixed margin line. At night both become faint chalk (7% grid, 35% red margin).
 
 ### Neutral
-- **Paper** (`bg`) and **Night Black** (`bg-night`): the page ground.
-- **Ink Black** (`fg`) and **Night Paper** (`fg-night`): text, key outlines, heavy 3px rules (`rule`), lit and selected states.
-- **Graphite** (`fg-2`): supporting text, queue numbers, metadata.
-- **Hairline** (`hair`): 1px row separators, quiet key outlines, skeleton hatch.
-- **Grid** (`grid`): the construction-grid hairlines behind the page.
-- **Raised Sheet** (`raise`): fields, selects, neutral notices, diagnostic blocks.
-- **Danger** (`danger`): errors, destructive keys and the "Sender löschen" action.
-- **Warning Ink** (`warn-bg` / `warn-fg`): unresolved-command and offline notices, small "warn" tags.
-- **Focus** (`focus`): the 3px keyboard outline; on any ink field the outline switches to that ink's `on` colour.
+- **Grounds**: `kontakt-photo-paper` / `kontakt-darkroom`, `linie-station-wall` / `linie-enamel-midnight`, `strich-squared-paper` / `strich-slate`, `klassik-ground` / `klassik-night`.
+- **Raised panels**: `kontakt-paper-raise`, `linie-signage-white` / `linie-enamel-raise`, white / `strich-slate-raise`, `klassik-card` / `klassik-night-card`.
+- **Ink and quiet ink**: `*-film-black`/`*-navy-ink`/`*-graphite`/`*-label` for text, the `*-quiet` tokens for secondary text.
+- **Hairlines**: `kontakt-paper-hair`, `linie-panel-hair`, `strich-paper-hair`, `klassik-separator`; `--sunk` is the ink at 5 to 8% for hover wash and Klassisch key fill.
+- Each world also sets its own `--danger`, `--warn-bg`/`--warn-fg`, `--focus`, `--select` (see the world's stylesheet); focus is always a 3px outline offset 3px.
 
 ### Named Rules
-**The One Ink Per Sender Rule.** A Sender prints in exactly one ink, as a flat field. The poster, the station page band and the station tile share it. Never tint, gradient or mix a second ink into the same field; the only texture allowed on ink is the grid hairline at 13% of its `on` colour.
+**The Fixed Slot Rule.** A Sender keeps the same ink slot in all four worlds (same ID, same slot); only the hue changes with the world. "Alles" never takes an ink slot; it takes the page ink.
 
-**The Solid Means Confirmed Rule.** Solid ink states are reserved for what a fresh observation confirmed. Requested, accepted-but-unconfirmed and estimated states print as overprint: outline title, hatched progress fill, dashed key and signal borders. Overprint never edits or replaces the confirmed ink beneath it.
-
-**The Paired Theme Rule.** Use the semantic custom properties (`--bg`, `--fg`, `--fg-2`, `--rule`, `--hair`, `--raise`, …) for every new surface. System dark preference applies unless day is pinned; `data-illumination="night"` and `data-illumination="day"` pin a theme. Station inks are identical in both themes; only "Alles" inverts with the page.
+**The One Brand Colour Rule.** Each world has exactly one brand colour, used for the mark, the active navigation bar and the caret. Sender identity is carried by `--st`, never by `--brand`.
 
 ## Typography
 
-**Display Font:** Archivo Variable (self-hosted via Fontsource, weight 100–900, width 62–125%), fallback system-ui, sans-serif
-**Body Font:** Archivo Variable at normal width
-**Label/Mono Font:** none; figures use Archivo's tabular numerals
+**Kontaktbogen:** Hanken Grotesk (variable), with Martian Mono as edge print.
+**Linienplan:** Atkinson Hyperlegible Next (variable), one face for every job.
+**Strichliste:** Bricolage Grotesque (variable, optical sizing), one face for every job.
+**Klassisch:** the platform face (`-apple-system` / SF Pro Display and Text / Segoe UI / Roboto).
 
-**Character:** One grotesk doing every job by width and weight alone: compressed to 70–80% and set at 800–850 for anything printed at poster scale, relaxed to 100% and 400 for reading. Headings balance their lines and hyphenate rather than overflow.
+**Character:** each world sets the same hierarchy in its own voice: Kontaktbogen tight and heavy like a contact-sheet caption, Linienplan open and signage-legible, Strichliste hand-lettered-adjacent and squat, Klassisch the quiet system player. Faces are self-hosted via `@fontsource-variable`.
 
 ### Hierarchy
-- **Display** (850, `clamp(2.6rem, 12.5vw, 4.25rem)` on phone, `clamp(2.8rem, 7.5vw, 4.6rem)` from 560px, `clamp(3.4rem, 5.4vw, 6rem)` from 1100px; line-height 0.94; width 72%): the current song's title on the poster. The welcome poster headline goes one step further (width 70%, up to 5.6rem).
-- **Masthead** (850, `clamp(2.2rem, 10vw, 4rem)`, 0.96, width 74%): page titles, including the station page's ink band.
-- **Headline** (800, `clamp(1.6rem, 6vw, 2.25rem)`, 1.02, width 78%): section heads such as "Als Nächstes", "Deine Sender", "Mischung", always over a 3px rule.
-- **Title** (800, 1.2–1.35rem, width 80–85%): Sender name in the poster head and on tiles (tiles grow to `clamp(1.6rem, 2.2vw, 2.25rem)` on desktop); the brand at 1.45rem, width 82%, tracking -0.03em.
-- **Body** (400, 1rem/1.5, width 100%): prose, notices and hints, held to 60–68ch.
-- **Key** (700, width 92%): key and button labels; the main transport key at 1.2rem/800.
-- **Figures** (750, 1.05rem, width 85%, tabular): progress times, queue numbers ("01", "02" …), ledger counts (1.6rem/850), import meter (2rem/850).
-- **Signal** (650, 0.78rem, width 90%): the "Angefordert / Angenommen / Bestätigt" steps and reason chips.
+- **Display** (song title and masthead title; per-world weight, size, leading and tracking in the frontmatter, via `--display-weight`, `--display-lh`, `--display-tracking`). Base size `clamp(2.2rem, 10.5vw, 3.6rem)`, from 560px `clamp(2.4rem, 6.5vw, 3.8rem)`, from 1100px `clamp(2.8rem, 4.4vw, 4.6rem)`; worlds override (Klassisch deliberately small at up to 2.1rem, under the cover).
+- **Headline** (`--head-weight`, 760 to 780, Klassisch 700): section heads *Als Nächstes*, *Deine Sender*, with an inline icon.
+- **Title** (1.15 to 1.25rem): station name on the stage head and Sender cards (cards grow to `clamp(1.35rem, 1.8vw, 1.8rem)` at desktop).
+- **Artist** (600, `clamp(1.1rem, 4.4vw, 1.5rem)`): under the title; album at 0.95rem in quiet ink.
+- **Body** (400, 1rem / 1.5): notes and hints capped at 62 to 68ch.
+- **Label** (`--label-weight` 650 to 700, 0.78rem): signal steps, reasons, tags, nav. Sentence case, never tracked capitals.
+- **Numbers** (`--font-num`, tabular figures): queue numbers, durations, progress times, history times.
 
 ### Named Rules
-**The One Family Rule.** Archivo Variable is the only shipped family. Hierarchy comes from width and weight, never from a second face. (Code, URL and diagnostic text fall back to the system monospace; that is a utility, not a type role.)
+**The Edge Print Rule.** Martian Mono exists only in Kontaktbogen, as edge print on and around the film: frame numbers, times, queue numbers, round and count lines, Sender-card meta and signal step labels. It never sets a title, a key label or body copy.
 
-**The Name Rule.** The product is always "true-shuffle": lower case, hyphenated, never in capitals, never "True Shuffle". German interface labels are in sentence case.
+**The Utility Mono Rule.** The system monospace stack (`ui-monospace, "SF Mono", Menlo, monospace`) is a utility fallback for code and diagnostic fields only (remote key input, `.code`, diagnostic data). It is not a type role and no world styles with it.
+
+**The Lowercase Name Rule.** The name is always "true-shuffle": lowercase, hyphenated, set in the active world's display face after its mark. Never capitalised, spaced, or abbreviated.
 
 ## Layout
 
-A centred shell, at most 1440px wide, with a gutter of 16px (14px at 380px and below, 24px from 560px, 32px from 900px) and a section gap of 24px (32px from 900px). Behind it, `grid` hairlines print the construction grid: four columns on phone and tablet, twelve from 1100px. Posters carry the same four-column hairline inside their ink at 25% steps.
+Single column on phones; content max 1440px with safe-area-aware gutters (14px under 380px, 16px, 24px from 560px, 32px from 900px). Section gap 24px, 32px from 900px. The header is a 64px row (56px in Klassisch) with the mark plus wordmark left and three nav links right, each a 44px target.
 
-The header is a 64px bar under a 3px rule: brand left, "Hören", "Verlauf", "Menü" right with a 3px underline for the current page.
+Stage order is fixed in every world: Sender line with round meter, cover (film strip in Kontaktbogen), title at display scale, artist and album, progress with times, status line and three-step signal, transport (main key plus Weiter, Favorit, nie wieder at the key size), saved note. The device select sits directly below the stage, then *Als Nächstes*, then *Deine Sender*.
 
-**Phone (below 560px):** posters print edge to edge (the shell drops its side padding) while header, device panel, queue, wall and page content keep the gutter. The poster stacks the head (round figure plus Sender name and round text), a cover square at `min(34vw, 140px)` beside artist and album, the title across the full width, the 12px progress rule with times, the three-step signal, and the transport row: the main key fills the remaining width, then three 52px keys (46px at 380px and below), all 64px tall. The device select follows directly under the poster.
+Breakpoints: under 380px keys shrink to 46px and the queue drops its thumbs column; from 560px the cover and copy sit side by side (cover 200px) and stage padding grows to 24px; from 900px Sender cards go to 190px minimum columns and stage padding 28px; from 1100px a 12-column grid puts the stage on 7 columns and the queue on 5 with the Sender grid full width below (240px minimum cards, 148px tall). Kontaktbogen and Klassisch keep the cover stacked above the copy at every width; Klassisch centres the copy from 560px.
 
-**From 560px:** cover 200px beside a grouped copy block aligned to the bottom.
-
-**From 1100px:** the listening workspace is a 12-column grid. The poster column spans 7 and is not sticky, because it also carries the device panel and recovery notices, which run taller than a laptop viewport. The queue spans 5. The poster wall runs full width underneath with tiles at `minmax(240px, 1fr)`, followed by station actions (7 columns) and library links (5 columns). The cover grows to 260px.
-
-Secondary pages hold to 860px. Sections sit 40px apart (22px inside a page). Lists separate rows with 1px hairlines and 10–12px vertical padding; no cards.
-
-**The Programme Rule.** The queue reads like a printed programme: numbered rows, the cover at 48px, title and artist, duration in tabular figures, a hairline under each. Its fixed order is its hierarchy; it never reshuffles visually.
+Density per world: Kontaktbogen and Linienplan pad the stage as a panel; Strichliste and Klassisch zero `--stage-pad` and sit the stage directly on the ground (Klassisch wraps player and queue in 24px-radius cards with 32px / 24px padding from 1100px).
 
 ## Elevation & Depth
 
-Flat print. Depth comes from ink fields against paper and from rule weight (3px structural rules, 2px key and field outlines, 1px hairlines), not from shadows or tonal layers.
+The shell is flat and draws depth with ink, rules and material, not light. Two worlds add measured shadow because their material has it: Linienplan's signage panels sit on the wall, and Klassisch's cover floats like an album sleeve. Kontaktbogen and Strichliste stay flat; their depth is the film strip on paper and the drawn box on squared paper. Shared overlays (rating sheet, toast) carry one diffuse shadow each.
 
 ### Shadow Vocabulary
-- **Dialog** (`box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.5)` over a `rgb(0 0 0 / 0.55)` backdrop): the rating sheet only, because it floats over the page.
+- **Signage panel** (`box-shadow: 0 1px 0 var(--hair), 0 10px 30px -18px rgb(15 29 51 / 0.35)`): Linienplan stage only; queue panel and Sender cards use the 1px hair ledge alone.
+- **Sleeve** (`box-shadow: 0 22px 48px -22px rgb(0 0 0 / 0.55)`): Klassisch's large cover.
+- **Card lift** (`box-shadow: 0 1px 2px rgb(0 0 0 / 0.06)`): Klassisch Sender cards.
+- **Sheet** (`box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.5)`, backdrop `rgb(0 0 0 / 0.55)`): the rating sheet in every world.
+- **Toast** (`box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.45)`): the feedback flash in every world.
 
 ### Named Rules
-**The Flat Print Rule.** Nothing on the page casts a shadow except the dialog. Covers, posters, tiles and keys sit flat on the paper.
+**The Material Depth Rule.** A world earns a shadow only if its material casts one. Selection, focus and pressed states are shown with outlines, ink fills and inset rings, never with lift.
 
 ## Shapes
 
-Square corners throughout (`rounded.none`, 0px), including keys, fields, selects, the switch, dialog, covers and progress rule. Form comes from rules and fields: thick outlines on keys, heavy rules under heads and sections, full-bleed ink rectangles for posters and tiles. The one round element is the round figure, concentric rings whose outer arc is the real heard share of the round, plus its smaller echo in the brand mark. Covers are always square; a missing cover prints a stand-in square with a music-note glyph.
+Radius is a world token, not a component decision: components read `--r` (keys, fields, notices), `--r-lg` (stage, cards, mastheads, sheet), `--r-art` (covers) and `--r-main` (the main transport key). Border weight is `--bw` (2px; 0 in Klassisch) and the header and section rule is `--rule-w` (2px; 0 in Linienplan and Klassisch).
+
+- **Kontaktbogen:** near-square cut film (2px / 3px / 1px). The stage has 10px sprocket rows masked top and bottom (10px holes on a 24px repeat). The grease box is a hand-drawn SVG path, 4px round-capped, overshooting the frame by 9px.
+- **Linienplan:** signage corners (8px / 14px / 6px), pills for the main key, "Weitere Songs" and switches, 7px line badges, 50% stop rings. Lines bend only at 45° and 90°.
+- **Strichliste:** drawn boxes whose corners do not agree (asymmetric elliptical radii, frontmatter `strich-*`), the cover tilted -1.2° (-1.6° from 560px), every second and third Sender card rotated +0.5° / -0.6°, dashed row dividers.
+- **Klassisch:** soft continuous rounding (12px / 18px / 12px), a 76px circular play key, 52px circular icon keys, pill nav highlights, no borders (inset 1px hair rings instead).
 
 ## Components
 
-### Keys
-Printed keys: outlined, square, heavy label.
-- **Shape:** square corners (0px), 2px outline in `fg`, minimum 48px tall (44px for small keys), padding 10px 18px.
-- **Default:** transparent with `fg` label. **Hover / pressed / lit:** fills solid `fg` with `bg` label; a lit key's hover steps to `fg-2`.
-- **Quiet:** hairline outline ("Neue Warteschlange" before confirmation). **Danger:** `danger` outline and label, fills `danger` on hover.
-- **Disabled:** 0.42 opacity, default cursor.
-- **Text action:** an underlined word with a 44px target ("Geräte aktualisieren", "Erneut verbinden"); underline thickens from 1.5px to 3px on hover.
-- **Transitions:** background, colour and border at 180ms on the shared expo-out curve.
+### Buttons
+- **Shape:** `--r` per world; the main transport key uses `--r-main` (pill in Linienplan, drawn box in Strichliste, circle in Klassisch).
+- **Key:** 48px minimum, 10px 18px padding, 700 weight, `--bw` border in `--key-line` on a transparent ground. Hover fills with `--key-hover-bg` (ink in Kontaktbogen and Strichliste, `--sunk` in Linienplan, 12% ink in Klassisch). Press scales to 0.97. Disabled at 42% opacity.
+- **Main transport key (Fortsetzen / Pause):** 64px high, 1.15rem 800, icon 26px. Kontaktbogen: film-print key on the film. Linienplan: pill in the Sender's line colour (shown: line red; "Alles" prints navy, night enamel white). Strichliste: graphite drawn box. Klassisch: 76px round key, icon only.
+- **Icon keys (Weiter, Favorit, nie wieder):** `--key` wide (52px, 46px narrow), 64px tall, 24px icons. Pressed: station ink fill in Kontaktbogen and Strichliste, lit navy in Linienplan, station-coloured icon on transparent in Klassisch.
+- **Quiet / danger / stage keys:** quiet uses a hair border; danger a danger border that fills on hover; `key--stage` (56px) inverts the station colour on mastheads and the welcome stage.
+- **Text action:** underlined word, 1.5px at 55% ink, 2.5px full ink on hover, 44px target.
 
-### Transport (signature)
-The keys printed on the poster. The main key ("Fortsetzen", "Pause", "Wiedergabe starten") is a solid `on` field with ink-coloured label and icon, 64px tall. "Weiter", the heart ("Daumen hoch: Favorit") and the thumbs-down ("Daumen runter: diesen Song nie wieder") are 52px outlined keys in the `on` colour; a pressed rating fills solid `on`. While a command is out or the key is unavailable (held, offline, not ready), the main key prints as overprint: transparent, dashed `on` outline, its label switches to the command text ("Pause angefordert …").
+### Chips
+- **Reason:** 0.78rem 700, 1.5px ink border, `--r`. Favourite is solid ink; Neuentdeckung is dashed.
+- **Line badge (Linienplan only):** S1, S2 … per own Sender in list order, "A" for Alles; 34px tall, 46px minimum, station fill. Hidden in every other world.
 
-### Command Signal (signature)
-A three-step rule under the title: "Angefordert", "Angenommen", "Bestätigt". Each step is a 6px top border at 26% `on` that turns solid `on` when reached. Sending lights step one; the provider's acknowledgment lights step two; only a fresh observation prints "Bestätigt" solid. While waiting, the reached later steps print dashed; an estimated song prints the third step dotted; a failed or unconfirmed command prints double. The status line above it says the same thing in words.
-
-### Progress Rule
-A 12px rule outlined 2px in `on`. Its solid fill is only the last observed position, or that position counted forward locally while a fresh observation says it is playing. While a command is held or the song is estimated, the fill turns to a 135° hatch. The time label reads "1:37 gespeichert" for a saved position, "· Bestätigung ausstehend" while held, and "Position unbekannt · derselbe Song von vorne" when no position exists.
-
-### Poster
-The ink field: grid hairlines in `on` at 13%, padding 20px gutter 22px (28px 32px 30px from 900px), a 2px `on` rule under the head, a 1px rule above the "Song und Reihenfolge bleiben gespeichert" note. In the pending and estimated states the title prints as outline type (1.5px stroke in `on`, transparent fill). The guest note ("Gast-Modus · zählt nicht ins Gedächtnis") prints reversed, `on` field with ink type.
-
-### Poster Wall (station tiles)
-Each Sender as a flat ink tile: name at title size, meta line ("1056 Songs · Runde 1"), round figure top right, "Mix & Regeln" link on a separating rule below. Minimum 112px tall (168px on desktop). The selected tile gains an 8px `on` bar on top and the suffix " · ausgewählt". Selecting a tile chooses a Sender without replacing the saved song.
+### Cards / Containers
+- **Sender card:** `--r-lg`, `--bw` hair border, `--raise` ground, 112px minimum (148px desktop), round meter in the card, a 44px "Mix & Regeln" footer link. Selected shows " · ausgewählt" after the name plus the world's mark: Kontaktbogen a 4px station outline offset 4px on a black film card with a 6px station top edge and 56/72px art; Linienplan a station border plus inset ring and the line badge; Strichliste a 2px station ring and a 30% marker highlight behind the name; Klassisch a 2px station ring around a white card with 64px art.
+- **Notices:** `--r`, `--bw` ink border (Linienplan and Klassisch use inset rings); warn and offline on `--warn-bg`; error in danger; estimate dashed.
+- **Station masthead:** the Sender's ink as ground with `--on-st` text (Kontaktbogen keeps the black film with a 6px station top edge).
 
 ### Inputs / Fields
-- **Style:** 2px `fg` outline, `raise` background, square, minimum 52px tall, padding 10px 14px. Selects use a drawn chevron instead of the native one.
-- **Focus:** 3px `focus` outline at 3px offset.
-- **Disabled:** 0.5 opacity.
-
-### Choice Controls
-- **Segmented positions** (Entdecker / Ausgewogen / Vertraut, and other detents): native radios under printed cells inside a 2px `fg` frame, 2px `fg` gaps between cells, 52px tall. The selected cell fills solid `fg`.
-- **Switch:** a 58×32px square outlined lever over a native checkbox; checked fills `fg` with a `bg` thumb, with an "An/Aus" word beside it.
-- **Checks and radios:** native, 22px, accent `fg`.
-
-### Notices
-Bordered blocks, square, padding 14px 16px. Neutral notices use `raise` and a 2px `fg` outline; warning notices use `warn-bg` / `warn-fg`; errors use a `danger` outline and text; estimated notices use a dashed outline. Inline notes are text over a 2px top rule. Reason chips ("Ungehört", "Favorit", "Entdeckung") are small outlined labels: favourite fills solid, discovery prints dashed.
+- **Style:** 52px minimum, `--bw` border in `--key-line`, `--r`, `--raise` ground; the device select carries a drawn chevron. Klassisch drops the border for a 1px inset hair ring.
+- **Focus:** 3px `--focus` outline offset 3px, in every world; on the Kontaktbogen film it switches to film print.
+- **Switch:** 56 × 32px, `--switch-r` (pill in Linienplan and Klassisch, else `--r`), brand fill when on.
+- **Segmented:** 48px options, checked option takes `--lit-bg`/`--lit-fg`. Kontaktbogen joins options in one ink frame with hair dividers; Strichliste spaces drawn boxes 8px apart.
 
 ### Navigation
-The header bar: brand with the concentric mark, then three text links with a 3px underline for the current page. Page heads print a "Zurück" key, the masthead title and a 3px rule; on the station page the head prints as an ink band in the Sender's ink. Menu entries are full-width rows at least 60px tall with a hairline under each.
+Three text links (Hören, Verlauf, Menü), 44px tall, `--label-weight`, quiet ink at rest and full ink when current. The current page carries a 3 to 4px bar under the word: square brand red in Kontaktbogen, 4px brand red in Linienplan (hair for a non-page current), a hand-drawn 4px correction-red stroke in Strichliste, and in Klassisch a pill `--sunk` highlight instead of a bar. Linienplan sets the header as a full-bleed white signage bar.
 
-### Rating Sheet and Toast
-The rating sheet is a native dialog, square, 3px `fg` outline, at most 560px wide, the one element with a shadow. The status toast is a solid `fg` (or `danger`) block fixed bottom centre.
+### Round meter
+The round's heard share drawn per world (all `aria-hidden`, the figure is always printed beside it, marks floored): Kontaktbogen a 56-bar barcode in station ink; Linienplan a line with a terminus tick; Strichliste 20 five-bundles with the fifth stroke crossing in red; Klassisch a 44px ring.
 
-### Honest States
-These are interface rules for the shipped client, not a claim of live Spotify, iPhone or HA/MA verification.
+### Signature moves
+- **Kontaktbogen film strip:** the current cover is a frame on black film, boxed in the Sender's grease pencil, with up to three next queue frames beside it at 62% opacity and 70% saturation (two on phones), each with edge print ("jetzt", 01, 02, 03).
+- **Linienplan queue as stops:** *Als Nächstes* runs down an 8px line in the station colour, each song a 28px stop ring (the next one 7px heavy), the line ending at the last stop. The signal becomes three stops on a short line.
+- **Strichliste tally and scribble:** the round counted in five-bundles; the current title underlined by a 7px marker stroke at 85% opacity; the signal as three tick boxes.
+- **Klassisch big cover:** cover up to 420px / 44vh centred, round play key leading a centred transport row.
 
-**The Observed Position Rule.** Progress shows the last observed position, counted forward only while a fresh observation says it is playing and stopped the moment it goes stale, is paused or a command is out. Pause freezes the clock and the rule turns to hatch at once. Unknown position says the same song starts from the beginning.
-
-**The Three-Layer Command Rule.** A command is requested, then accepted by Spotify or the device, then confirmed only by a fresh observation. The interface never prints a later layer before it happens. Unresolved commands keep the saved song and position and offer an explicit retry ("Gespeicherten Song erneut fortsetzen", "Pause erneut versuchen") or, on native devices, discarding the command.
-
-**The Estimated Next Song Rule.** When a song should have ended, the poster may show the single known successor from the saved queue as "Nächster Song · geschätzt", with the outline title, dotted third signal step and a dashed notice ("Geschätzter Songwechsel aus deiner Warteschlange. Spotify hat diesen Song noch nicht bestätigt."). It is display only: rating and "Weiter" are disabled, nothing is written, and it never chains past one song.
-
-**The Resume Rule.** "Fortsetzen" keeps the same saved occurrence and position. "Neue Warteschlange" is a separate quiet key that asks inline ("Neue Warteschlange für … beginnen? Der aktuelle Lauf wird ersetzt.") before replacement.
-
-**The Native Capability Rule.** Device copy states what a native Home Assistant / Music Assistant route can actually do: "Geordnete Warteschlange unterstützt." or "Dieses Gerät spielt einen Song; automatisches Weiterschalten ist nicht verfügbar.", and "Gespeicherte Position wird übernommen." or "Ohne Seek startet derselbe Song von vorne." Pause and "Weiter" are disabled where the device lacks them. Without native setup the hint says Music-Assistant devices visible in Spotify run through Spotify Connect.
-
-**The Offline Rule.** Offline keeps the last saved song, queue and wall visible under a warning bar ("Offline oder nicht erreichbar. Letzter gespeicherter Stand bleibt sichtbar.") with "Erneut verbinden"; dependent keys are disabled and print as overprint.
-
-### Motion
-State fills on keys, signal steps, header underline and switch take 180ms; the ink field change, round-figure arc and import meter ease over 500ms; both on `cubic-bezier(0.16, 1, 0.3, 1)`. No entrance choreography, no shimmer (skeletons are a static hatch). Reduced motion sets both durations to 0 and turns off smooth scroll.
+### Honest state (shared doctrine, per-world rendering)
+- **Signal (Angefordert → Angenommen → Bestätigt):** three steps, each lit only when reached. Shared: 4px bars in station ink; waiting steps dashed, an estimated confirmation dotted, an error double in danger. Kontaktbogen: 3px bars, mono labels. Linienplan: stops on a line; waiting segments dashed 8/5, estimate dotted 3/4, only the furthest reached stop filled, error a double danger ring. Strichliste: boxes ticked in station ink; waiting or estimated boxes dashed with a 45% tick, error a danger slash. Klassisch: 3px bars.
+- **Progress:** confirmed is a solid fill in station ink (Kontaktbogen 6px square, Linienplan 10px pill, Klassisch 5px pill in ink). Held while a command is out, or only estimated, it becomes a 135° hatch (3px ink, 4px gap). Strichliste's confirmed fill is already a dense pencil hatch (2/2px at 100°), so held and estimated thin it to 1px strokes on 7px.
+- **Pending title:** a requested or estimated song's title prints as a 1.25px outline with no fill (quiet ink where text-stroke is unsupported). Kontaktbogen also dashes the grease box 7/7; Strichliste dashes the marker underline 4/10 at 60%. Klassisch renders it in quiet ink italic with the cover at 55% instead of the outline.
+- **Unavailable main key:** transparent with a dashed ink outline, never the solid key.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** print each Sender in its single flat ink with its paired `on` and `on-2` colours, in both themes.
-- **Do** reserve solid ink for confirmed state and print requested, awaited and estimated state as outline, dashes or hatch.
-- **Do** set display type in Archivo Variable at 70–85% width and 800–850 weight, and all times and counts in tabular figures.
-- **Do** keep square corners (0px), 2px key outlines, 3px rules under heads and 1px hairlines between rows.
-- **Do** keep transport targets at 64px tall and at least 52px wide (46px at 380px and below), and every text action at a 44px target.
-- **Do** keep the saved song, observed position and ordered queue visible through pending, offline and estimated states.
-- **Do** state device capabilities and Spotify's own behaviour in plain German, quoting what the device can and cannot do.
+- **Do** build every new surface in the shared shell and read only tokens (`--bg --fg --fg-2 --hair --rule --raise --sunk --brand --st --on-st --r --r-lg --r-art --r-main --bw --rule-w --key* --stage-* --ink-*`), then check it in all four worlds by day and by night.
+- **Do** give a new world-specific detail to one world only, scoped under `[data-design="…"]`, and keep it to type, palette, density or that world's existing signature.
+- **Do** keep requested, accepted and confirmed visibly distinct, and render held or estimated values as hatch, dash or outline: never solid.
+- **Do** print every fact a decorative signature draws (round share, queue position, song) as text beside it, and mark the drawing `aria-hidden`.
+- **Do** floor counts and meters; never round up.
+- **Do** keep transport keys at 52px or more and every target at 44px or more.
+- **Do** write the name as "true-shuffle", lowercase, after the active world's mark.
 
 ### Don't:
-- **Don't** fill a requested or estimated state with solid confirmed ink, or show "Bestätigt" before a fresh observation.
-- **Don't** add a second typeface, rounded corners, gradients across ink fields or shadows outside the rating dialog.
-- **Don't** mix two inks in one Sender's field or recolour a Sender between poster, band and tile.
-- **Don't** replace ordinary "Fortsetzen" with a new queue, or imply seek or automatic next on a device that lacks them.
-- **Don't** let the estimated next song accept ratings, skips or writes, or chain past one song.
-- **Don't** set true-shuffle in capitals or title case.
-- **Don't** reintroduce the discarded album-library desk (Jost, muted green accent, rounded controls, artwork shadows) or the earlier record-crate world.
+- **Don't** fill an unconfirmed state solid: no solid progress while held or estimated, no filled title while pending, no solid main key while unavailable.
+- **Don't** let a world change layout, stage order, controls or copy; worlds differ in look only.
+- **Don't** put a Sender's identity in `--brand` or move a Sender to a different ink slot in another world.
+- **Don't** use Martian Mono outside Kontaktbogen, or the system monospace stack anywhere but code and diagnostic fields.
+- **Don't** add shadows to Kontaktbogen or Strichliste beyond the shared sheet and toast; their depth is film and paper.
+- **Don't** set labels in tracked capitals or add small labels above headings; section heads and labels stay sentence case.
+- **Don't** write "True Shuffle", "TRUE-SHUFFLE", "Trueshuffle" or "TS" as the name.

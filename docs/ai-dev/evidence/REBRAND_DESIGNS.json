@@ -1,0 +1,27 @@
+{
+	"branch": "claude/impeccable-rebrand",
+	"base": "codex/implement-cloudflare-restart @ 0d2799a (application 0cad1775b0c9d7e4723b3c864eb63b2b10a86580, live)",
+	"date": "2026-10-07",
+	"status": "UNRELEASED — not merged, not deployed",
+	"scope": "Client presentation only: four switchable designs (kontakt default, linie, strich, klassik) on one shared shell; brand marks, app icons, docs/BRAND.md, DESIGN.md and .impeccable/design.json rewritten.",
+	"unchanged": [
+		"src/worker, src/core, src/shared, wrangler configs, migrations, bindings, secrets",
+		"store/playback-view/api/router logic (store.ts gained only a theme-color sync call)",
+		"stored identity, history, queue occurrences and saved progress"
+	],
+	"design_choice_storage": "per-device localStorage key ts-design (default kontakt); ?design=<id> sets it; no server state",
+	"checks": {
+		"typecheck": "PASS",
+		"lint": "PASS (2 pre-existing infos)",
+		"unit_worker": "444 PASS / 30 files",
+		"browser": "42 PASS (40 pre-existing + e2e/designs.spec.ts) against local Worker + FakeSpotify; one pre-existing test updated for the renamed .poster -> .stage class"
+	},
+	"impeccable": {
+		"skill": "impeccable 4.5.0 installed project-scope in .claude/",
+		"seed": "1857f2c8",
+		"finish_review": "disposition fix (7 material fixes) -> verdict pass: all 7 resolved, disposition ship (scope: the listed fixes)",
+		"documenter": "DESIGN.md and .impeccable/design.json rewritten from the build",
+		"open_advisories": "68 design-system-font-size advisories (fine-grained size steps not on the documented ramp)"
+	},
+	"not_run": ["live Spotify", "physical iPhone", "Home Assistant / Music Assistant", "Cloudflare preview or production deploy"]
+}

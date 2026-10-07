@@ -47,7 +47,7 @@ Dichte und **ein** Erkennungsmerkmal mit.
 
 | Gestaltung | Welt | Schrift | Erkennungsmerkmal | Zeichen |
 |---|---|---|---|---|
-| **Kontaktbogen** (Standard) | Fotopapier am Tag, Dunkelkammer in der Nacht | Hanken Grotesk, Martian Mono nur für Bildnummern, Zeiten, Zählungen | Der laufende Song als Bild auf dem Filmstreifen, im Fettstift-Rahmen der Senderfarbe, die nächsten Bilder daneben. Die Runde als Strichcode. | Filmbild mit Perforation und rotem Fettstift-Rahmen |
+| **Kontaktbogen** (Standard) | Fotopapier am Tag, Dunkelkammer in der Nacht | Hanken Grotesk, Martian Mono nur für Bildnummern, Zeiten, Zählungen, Statusschritte und Sender-Kennzeilen | Der laufende Song als Bild auf dem Filmstreifen, im Fettstift-Rahmen der Senderfarbe, die nächsten Bilder daneben. Die Runde als Strichcode. | Filmbild mit Perforation und rotem Fettstift-Rahmen |
 | **Linienplan** | Weiße Stationsschilder, nachts Emaille-Mitternachtsblau | Atkinson Hyperlegible Next | Jeder Sender ist eine Linie (S1, S2 …, „Alles“ = A). *Als Nächstes* fährt Station für Station die Linie hinunter. | Rote Linie mit 45°-Knick durch einen Umsteigehalt |
 | **Strichliste** | Karopapier, nachts Schultafel | Bricolage Grotesque | Die Runde in Fünferbündeln gezählt, ein Markerstrich unter dem Songtitel, Häkchen für den Befehlsstand | Vier Striche, der fünfte rot quer |
 | **Klassisch** | Vertrauter Musik-Player | Systemschrift (SF / Segoe / Roboto) | Großes Cover in der Mitte, runde Play-Taste | Weißer Fortsetzen-Pfeil um ein Play-Dreieck auf Violett |
