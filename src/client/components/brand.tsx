@@ -208,7 +208,7 @@ export function StageArt(props: {
 			<div class="filmstrip__frame filmstrip__frame--now">
 				<Cover src={props.src} class="player-art" eager />
 				<GreaseBox />
-				<span class="filmstrip__edge">▸ {props.label}</span>
+				<span class="filmstrip__edge">{props.label}</span>
 			</div>
 			{props.next.slice(0, 3).map((t, i) => (
 				<div class="filmstrip__frame" key={`${t.id}-${i}`}>

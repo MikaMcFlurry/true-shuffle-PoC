@@ -428,6 +428,8 @@
 }
 
 [data-design="strich"] .station-choice__name {
+	justify-self: start;
+	width: fit-content;
 	font-weight: 800;
 	letter-spacing: -0.025em;
 }

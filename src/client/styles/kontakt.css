@@ -83,6 +83,7 @@
 	--brand: #ff5a3c;
 	--film: #1d1a17;
 	--stage-line: #3f3934;
+	--hole: #6b2f25;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -103,6 +104,7 @@
 		--brand: #ff5a3c;
 		--film: #1d1a17;
 		--stage-line: #3f3934;
+		--hole: #6b2f25;
 	}
 }
 
@@ -396,13 +398,14 @@
 	background: var(--film);
 	color: var(--film-fg);
 	border-color: var(--film);
+	border-top: 6px solid var(--st);
 	overflow: visible;
 }
 
 [data-design="kontakt"] .station-choice__meta {
 	font-family: var(--font-num);
 	font-size: 0.68rem;
-	color: var(--edge);
+	color: var(--st);
 }
 
 [data-design="kontakt"] .station-choice button {

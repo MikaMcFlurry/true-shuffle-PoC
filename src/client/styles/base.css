@@ -600,12 +600,13 @@ main h1[tabindex="-1"]:focus {
 
 .now-shelf {
 	display: grid;
-	grid-template-columns: min(36vw, 148px) minmax(0, 1fr);
+	grid-template-columns: minmax(0, 1fr);
 	grid-template-areas:
-		"art artist"
-		"art album"
-		"title title";
-	grid-template-rows: 1fr auto auto;
+		"art"
+		"title"
+		"artist"
+		"album";
+	grid-template-rows: auto;
 	column-gap: 16px;
 	row-gap: 6px;
 }
@@ -616,7 +617,7 @@ main h1[tabindex="-1"]:focus {
 }
 
 .cover.player-art {
-	width: 100%;
+	width: min(52vw, 208px);
 	height: auto;
 	aspect-ratio: 1;
 	object-fit: cover;
@@ -1804,6 +1805,16 @@ input[type="radio"].check {
 		color var(--t) var(--ease);
 }
 
+.segmented__opt,
+.segmented__opt span {
+	overflow-wrap: normal;
+	word-break: normal;
+}
+
+.segmented__opt {
+	min-width: max-content;
+}
+
 .segmented__opt input {
 	position: absolute;
 	opacity: 0;
@@ -2447,6 +2458,7 @@ input[type="radio"].check {
 	}
 
 	.cover.player-art {
+		width: 100%;
 		margin-bottom: 0;
 	}
 
