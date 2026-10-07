@@ -3,6 +3,43 @@
   "detector": {
     "ignoreRules": [],
     "ignoreFiles": [],
-    "ignoreValues": []
+    "ignoreValues": [
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "src/client/styles/strich.css"
+        ],
+        "createdAt": "2026-10-07T00:40:23.746Z",
+        "reason": "agent: Strichliste world is squared school paper (Karopapier), chosen in direction contract seed 1857f2c8; the grid is the world's literal material"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "src/client/styles/base.css"
+        ],
+        "createdAt": "2026-10-07T00:40:23.763Z",
+        "reason": "agent: only the Strichliste preview swatch in the design picker draws the Karopapier material"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/client/styles/strich.css"
+        ],
+        "createdAt": "2026-10-07T00:40:23.781Z",
+        "reason": "agent: false positive, border-right/bottom on a rotated pseudo-element draws a tick mark in the signal checkbox"
+      },
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "src/client/styles/kontakt.css"
+        ],
+        "createdAt": "2026-10-07T00:40:23.791Z",
+        "reason": "agent: the 6px grease-pencil stripe on the square film band is Kontaktbogen's Sender marker; band radius is 0"
+      }
+    ]
   }
 }
