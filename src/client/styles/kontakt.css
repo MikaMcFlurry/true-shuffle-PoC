@@ -169,6 +169,15 @@
 	padding-bottom: 6px;
 }
 
+[data-design="kontakt"] .now-copy h2 {
+	font-size: clamp(2.2rem, 10.5vw, 3.6rem);
+}
+
+[data-design="kontakt"] .section__head h2 {
+	font-weight: 800;
+	letter-spacing: -0.03em;
+}
+
 [data-design="kontakt"] .library--strip .section__head h2 {
 	font-size: 1rem;
 	letter-spacing: 0;
@@ -269,6 +278,19 @@
 	gap: 8px;
 }
 
+[data-design="kontakt"] .stage__station p {
+	font-family: var(--font-num);
+	font-size: 0.72rem;
+	color: var(--fg-2);
+	margin-top: 4px;
+}
+
+[data-design="kontakt"] .stage--scan p {
+	font-family: var(--font-num);
+	font-size: 0.8rem;
+	color: var(--edge);
+}
+
 [data-design="kontakt"] .library--strip .station-actions > p {
 	font-size: 0.9rem;
 	color: var(--fg-2);
@@ -293,13 +315,6 @@
 [data-design="kontakt"] .stage__station h1 {
 	font-size: 1.1rem;
 	font-weight: 760;
-}
-
-[data-design="kontakt"] .stage__station p {
-	font-family: var(--font-num);
-	font-size: 0.72rem;
-	color: var(--fg-2);
-	margin-top: 4px;
 }
 
 [data-design="kontakt"] .stage__guest {
@@ -345,6 +360,13 @@
 	border-radius: 1px;
 }
 
+.grease {
+	position: absolute;
+	fill: none;
+	overflow: visible;
+	pointer-events: none;
+}
+
 .frame-now .grease {
 	left: 4px;
 	top: 4px;
@@ -363,13 +385,6 @@
 	color: var(--st, var(--brand));
 }
 
-.grease {
-	position: absolute;
-	fill: none;
-	overflow: visible;
-	pointer-events: none;
-}
-
 .grease path {
 	stroke: var(--st, var(--brand));
 	stroke-width: 4px;
@@ -380,10 +395,6 @@
 
 [data-design="kontakt"] :where(.stage--pending, .stage--estimate) .grease path {
 	stroke-dasharray: 7 7;
-}
-
-[data-design="kontakt"] .now-copy h2 {
-	font-size: clamp(2.2rem, 10.5vw, 3.6rem);
 }
 
 [data-design="kontakt"] .saved-note {
@@ -475,11 +486,6 @@
 }
 
 /* ------------------------------------------------- contact sheet */
-
-[data-design="kontakt"] .section__head h2 {
-	font-weight: 800;
-	letter-spacing: -0.03em;
-}
 
 [data-design="kontakt"] .queue-list {
 	display: grid;
@@ -758,10 +764,4 @@
 
 [data-design="kontakt"] .stage--scan h1 {
 	color: var(--film-fg);
-}
-
-[data-design="kontakt"] .stage--scan p {
-	font-family: var(--font-num);
-	font-size: 0.8rem;
-	color: var(--edge);
 }

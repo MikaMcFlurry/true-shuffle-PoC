@@ -2707,6 +2707,25 @@ html:has(.dock) {
 	}
 }
 
+/* Narrow phones: the header fits on one line in every design. */
+@media (max-width: 420px) {
+	html .app-header .brand {
+		font-size: 1.08rem;
+		gap: 7px;
+		letter-spacing: -0.02em;
+	}
+
+	html .app-header .brand__mark {
+		width: 24px;
+		height: 24px;
+	}
+
+	html .app-header :where(nav a) {
+		padding: 0 7px;
+		font-size: 0.92rem;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	html {
 		scroll-behavior: auto;

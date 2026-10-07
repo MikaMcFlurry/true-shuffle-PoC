@@ -473,8 +473,16 @@
 	--tally-x: var(--on-st);
 }
 
+[data-design="strich"] .lw--strich .tally {
+	stroke-width: 2;
+}
+
 [data-design="strich"] .masthead--station .meter-tally .tally {
 	stroke-opacity: 0.3;
+}
+
+[data-design="strich"] .lw--strich .tally--on {
+	stroke-width: 2.6;
 }
 
 [data-design="strich"] .masthead--station .meter-tally .tally--on {
@@ -646,14 +654,6 @@
 	width: 100%;
 	max-width: 520px;
 	height: auto;
-}
-
-[data-design="strich"] .lw--strich .tally {
-	stroke-width: 2;
-}
-
-[data-design="strich"] .lw--strich .tally--on {
-	stroke-width: 2.6;
 }
 
 /* Today's entry. */

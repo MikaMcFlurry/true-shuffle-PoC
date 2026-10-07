@@ -222,6 +222,14 @@
 	box-shadow: 0 0 0 3px var(--fg);
 }
 
+[data-design="fahrmodus"] :where(.stage--pending, .stage--estimate) .now-copy h2 {
+	-webkit-text-stroke: 2px var(--fg);
+}
+
+[data-design="fahrmodus"] .section__head h2 {
+	font-weight: 900;
+}
+
 [data-design="fahrmodus"] .lw--fahrmodus .now-copy h2 {
 	margin-top: 10px;
 	font-size: clamp(2.6rem, 13vw, 5.4rem);
@@ -238,10 +246,6 @@
 	margin: 0;
 	color: var(--fg-2);
 	font-weight: 600;
-}
-
-[data-design="fahrmodus"] :where(.stage--pending, .stage--estimate) .now-copy h2 {
-	-webkit-text-stroke: 2px var(--fg);
 }
 
 [data-design="fahrmodus"] .progress-area {
@@ -280,6 +284,10 @@
 	font-size: 1.8rem;
 	font-weight: 900;
 	border-radius: 18px;
+}
+
+[data-design="fahrmodus"] .station-choice--selected button > svg {
+	color: var(--bg);
 }
 
 [data-design="fahrmodus"] .lw--fahrmodus .transport-main svg {
@@ -378,6 +386,10 @@
 	color: var(--fg);
 }
 
+[data-design="fahrmodus"] .station-choice--selected > a {
+	border-top-color: var(--bg);
+}
+
 [data-design="fahrmodus"] .library--chips .station-choice > a {
 	min-height: 48px;
 	border-top: 3px solid var(--fg);
@@ -395,23 +407,11 @@
 	color: var(--bg);
 }
 
-[data-design="fahrmodus"] .station-choice--selected button > svg {
-	color: var(--bg);
-}
-
-[data-design="fahrmodus"] .station-choice--selected > a {
-	border-top-color: var(--bg);
-}
-
 [data-design="fahrmodus"] .station-choice--selected :focus-visible {
 	outline-color: var(--bg);
 }
 
 /* ---------------------------------------------------------- lists */
-
-[data-design="fahrmodus"] .section__head h2 {
-	font-weight: 900;
-}
 
 [data-design="fahrmodus"] .queue-row {
 	padding: 14px 0;
