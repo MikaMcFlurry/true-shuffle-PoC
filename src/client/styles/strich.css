@@ -683,9 +683,9 @@
 [data-design="strich"] .lw--strich .now-shelf {
 	grid-template-columns: 112px minmax(0, 1fr);
 	grid-template-areas:
-		"art title"
 		"art artist"
-		"art album";
+		"art album"
+		"title title";
 	align-items: start;
 	column-gap: 16px;
 	row-gap: 2px;
@@ -731,6 +731,7 @@
 @media (min-width: 560px) {
 	[data-design="strich"] .lw--strich .now-shelf {
 		grid-template-columns: 180px minmax(0, 1fr);
+		grid-template-areas: "art copy";
 		align-items: end;
 	}
 

@@ -540,7 +540,37 @@
 }
 
 [data-design="linie"] .ride-grid {
-	gap: var(--gap);
+	gap: 0;
+}
+
+/* The line continues through every part of the ride: stops, device, queue. */
+[data-design="linie"] .ride-side,
+[data-design="linie"] .lw--linie .queue {
+	position: relative;
+}
+
+[data-design="linie"] .ride-side::before,
+[data-design="linie"] .lw--linie .queue::before {
+	content: "";
+	position: absolute;
+	left: calc(var(--line-x) - var(--line-w) / 2);
+	top: 0;
+	bottom: 0;
+	width: var(--line-w);
+	background: var(--st);
+}
+
+[data-design="linie"] .lw--linie .queue::before {
+	-webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 80px), transparent);
+	mask-image: linear-gradient(to bottom, #000 calc(100% - 80px), transparent);
+}
+
+[data-design="linie"] .ride-side {
+	padding: 18px 0 0 var(--beside);
+}
+
+[data-design="linie"] .lw--linie .queue {
+	padding-top: 22px;
 }
 
 /* The ride: everything on it hangs off one line. */
@@ -559,8 +589,6 @@
 	bottom: 0;
 	width: var(--line-w);
 	background: var(--st);
-	-webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 80px), transparent);
-	mask-image: linear-gradient(to bottom, #000 calc(100% - 80px), transparent);
 }
 
 [data-design="linie"] .lw--linie .stage {
@@ -820,7 +848,8 @@
 @media (min-width: 560px) {
 	[data-design="linie"] .lw--linie .now-shelf {
 		grid-template-columns: 150px minmax(0, 1fr);
-		align-items: end;
+		grid-template-areas: "art copy";
+		align-items: start;
 	}
 
 	[data-design="linie"] .lw--linie .cover.player-art {
@@ -850,12 +879,39 @@
 
 	[data-design="linie"] .ride-grid {
 		grid-template-columns: minmax(0, 1fr) 300px;
+		grid-template-areas:
+			"ride side"
+			"queue side";
+		column-gap: var(--gap);
 		align-items: start;
 	}
 
+	[data-design="linie"] .ride {
+		grid-area: ride;
+	}
+
+	[data-design="linie"] .lw--linie .queue {
+		grid-area: queue;
+	}
+
+	/* On a wide screen the device stands beside the line, off it. */
 	[data-design="linie"] .ride-side {
+		grid-area: side;
 		position: sticky;
 		top: 24px;
+		padding: 0;
+	}
+
+	[data-design="linie"] .ride-side::before {
+		display: none;
+	}
+
+	[data-design="linie"] .lw--linie .now-shelf {
+		align-items: start;
+	}
+
+	[data-design="linie"] .lw--linie .now-copy h2 {
+		font-size: clamp(1.9rem, 2.6vw, 2.8rem);
 	}
 
 	[data-design="linie"] .ride-switch {

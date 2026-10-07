@@ -111,12 +111,12 @@ export function HomeLayout(props: {
 								{p.notices}
 								{p.lateNotices}
 							</div>
-							{p.queueSection}
 						</div>
-						<div class="player-side ride-side">
+						<div class={`player-side ride-side ${p.inkClass}`}>
 							{p.devicePanel}
 							{p.savedNote}
 						</div>
+						{p.queueSection}
 						<Dock ink={p.inkClass} board>
 							<p class="board-next">
 								<span class="board-next__label">Nächster Halt</span>
