@@ -2,7 +2,7 @@
 	"branch": "claude/impeccable-rebrand",
 	"base": "codex/implement-cloudflare-restart @ 0d2799a (application 0cad1775b0c9d7e4723b3c864eb63b2b10a86580, live)",
 	"date": "2026-10-07",
-	"status": "UNRELEASED — not merged, not deployed",
+	"status": "RELEASE TRIGGERED 2026-10-07 on explicit owner instruction: fast-forward of codex/implement-cloudflare-restart (Cloudflare Workers Builds branch). Live version id and public readback NOT_RUN from this session (no Cloudflare credentials).",
 	"scope": "Client presentation only: four switchable designs (kontakt default, linie, strich, klassik) on one shared shell; brand marks, app icons, docs/BRAND.md, DESIGN.md and .impeccable/design.json rewritten.",
 	"unchanged": [
 		"src/worker, src/core, src/shared, wrangler configs, migrations, bindings, secrets",
@@ -23,5 +23,5 @@
 		"documenter": "DESIGN.md and .impeccable/design.json rewritten from the build",
 		"open_advisories": "68 design-system-font-size advisories (fine-grained size steps not on the documented ramp)"
 	},
-	"not_run": ["live Spotify", "physical iPhone", "Home Assistant / Music Assistant", "Cloudflare preview or production deploy"]
+	"not_run": ["live Spotify", "physical iPhone", "Home Assistant / Music Assistant", "Cloudflare deployment readback (version id, bindings) from this session"]
 }
