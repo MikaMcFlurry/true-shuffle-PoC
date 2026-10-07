@@ -2,7 +2,7 @@
 	"branch": "claude/impeccable-rebrand",
 	"base": "codex/implement-cloudflare-restart @ 0d2799a (application 0cad1775b0c9d7e4723b3c864eb63b2b10a86580, live)",
 	"date": "2026-10-07",
-	"status": "RELEASE TRIGGERED 2026-10-07 on explicit owner instruction: fast-forward of codex/implement-cloudflare-restart (Cloudflare Workers Builds branch). Live version id and public readback NOT_RUN from this session (no Cloudflare credentials).",
+	"status": "RELEASED 2026-10-07 on explicit owner instruction: codex/implement-cloudflare-restart fast-forwarded 0d2799a -> cc06aa2; Cloudflare Workers Builds deployed it.",
 	"scope": "Client presentation only: four switchable designs (kontakt default, linie, strich, klassik) on one shared shell; brand marks, app icons, docs/BRAND.md, DESIGN.md and .impeccable/design.json rewritten.",
 	"unchanged": [
 		"src/worker, src/core, src/shared, wrangler configs, migrations, bindings, secrets",
@@ -23,5 +23,23 @@
 		"documenter": "DESIGN.md and .impeccable/design.json rewritten from the build",
 		"open_advisories": "68 design-system-font-size advisories (fine-grained size steps not on the documented ramp)"
 	},
-	"not_run": ["live Spotify", "physical iPhone", "Home Assistant / Music Assistant", "Cloudflare deployment readback (version id, bindings) from this session"]
+	"not_run": [
+		"Cloudflare version/deployment id readback (no Cloudflare credentials in this session)",
+		"authenticated production browser",
+		"live Spotify",
+		"physical iPhone",
+		"Home Assistant / Music Assistant"
+	],
+	"public_readback": {
+		"checked_at": "2026-10-07T06:35Z",
+		"url": "https://true-shuffle.mikahertler-72c.workers.dev",
+		"assets": "index-C_6xFA4R.js and index-Hu9jAQfR.css served, identical to local build of cc06aa2",
+		"api": {
+			"/api/health": 200,
+			"/api/state (signed out)": 401
+		},
+		"brand_assets": "/brand/{kontakt,linie,strich,klassik} icons 200, manifest 200",
+		"anonymous_browser": "welcome page renders in all four designs (?design=…), correct data-design and self-hosted face; only console error is the expected signed-out 401",
+		"pre_release_checks": "build, typecheck, lint, wrangler dry-run (bindings USER_HUB/UserHub, REGISTRY/Registry unchanged)"
+	}
 }
