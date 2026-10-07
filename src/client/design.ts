@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "preact/hooks";
 
-export type Design = "kontakt" | "linie" | "strich" | "klassik";
+export type Design = "kontakt" | "linie" | "strich" | "klassik" | "umlauf" | "fahrmodus";
 
 export const DESIGNS: readonly {
 	id: Design;
@@ -16,23 +16,33 @@ export const DESIGNS: readonly {
 }[] = [
 	{
 		id: "kontakt",
-		name: "Kontaktbogen",
-		line: "Jeder Song ein Bild auf dem Filmstreifen, der laufende im Fettstift-Rahmen.",
+		name: "Leuchttisch",
+		line: "Die Warteschlange als Bilderbogen, der laufende Song im Fettstift-Rahmen, Tasten unten am Daumen.",
 	},
 	{
 		id: "linie",
-		name: "Linienplan",
-		line: "Jeder Sender eine Linie, die Warteschlange fährt Station für Station.",
+		name: "Fahrt",
+		line: "Eine Linie durch den Bildschirm: gehörte Stationen oben, jetzt hier, die nächsten Halte darunter.",
 	},
 	{
 		id: "strich",
-		name: "Strichliste",
-		line: "Das Gedächtnis auf Karopapier, jede Runde in Fünferbündeln gezählt.",
+		name: "Notizblock",
+		line: "Sender als Register, die Runde als Strichliste, die Warteschlange zum Abhaken.",
 	},
 	{
 		id: "klassik",
-		name: "Klassisch",
-		line: "Der vertraute Musik-Player: großes Cover, runde Tasten, ruhige Listen.",
+		name: "Player",
+		line: "Der vertraute Vollbild-Player mit großem Cover, Warteschlange als Blatt darunter.",
+	},
+	{
+		id: "umlauf",
+		name: "Umlauf",
+		line: "Die Runde als Kreis um das Cover, jeder Sender ein eigener kleiner Umlauf.",
+	},
+	{
+		id: "fahrmodus",
+		name: "Fahrmodus",
+		line: "Riesige Schrift und große Tasten für Auto und eine Hand, schwarz auf Signalgelb.",
 	},
 ];
 

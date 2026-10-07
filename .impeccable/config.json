@@ -48,6 +48,15 @@
         ],
         "createdAt": "2026-10-07T00:55:14.442Z",
         "reason": "agent: system monospace is a documented utility fallback for code/diagnostic fields only (DESIGN.md Utility Mono rule), not a type role"
+      },
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "src/client/styles/strich.css"
+        ],
+        "createdAt": "2026-10-07T06:54:55.497Z",
+        "reason": "agent: Notizblock register tabs are literal notebook index tabs; the coloured top edge is the Sender marker on a tab shape, chosen in the owner-approved Notizblock concept"
       }
     ]
   }

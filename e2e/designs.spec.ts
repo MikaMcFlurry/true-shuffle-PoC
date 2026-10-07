@@ -8,10 +8,12 @@
 import { expect, type Page, test } from "@playwright/test";
 
 const DESIGNS = [
-	["kontakt", "Kontaktbogen"],
-	["linie", "Linienplan"],
-	["strich", "Strichliste"],
-	["klassik", "Klassisch"],
+	["kontakt", "Leuchttisch"],
+	["linie", "Fahrt"],
+	["strich", "Notizblock"],
+	["klassik", "Player"],
+	["umlauf", "Umlauf"],
+	["fahrmodus", "Fahrmodus"],
 ] as const;
 
 const OUT = ".impeccable/review/designs";

@@ -9,7 +9,7 @@
 import { copyFileSync, existsSync, readFileSync } from "node:fs";
 import { chromium } from "@playwright/test";
 
-const DESIGNS = ["kontakt", "linie", "strich", "klassik"];
+const DESIGNS = ["kontakt", "linie", "strich", "klassik", "umlauf", "fahrmodus"];
 const DEFAULT = "kontakt";
 const PREINSTALLED = [
 	"/opt/pw-browsers/chromium",

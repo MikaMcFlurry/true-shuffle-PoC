@@ -539,3 +539,273 @@
 		transition: none;
 	}
 }
+
+/* ------------------------------------------------------ Notizblock */
+
+/*
+ * A notebook page: the Sender as register tabs, the round counted big on
+ * top, the current song as today's entry on its own card, and the queue as
+ * a numbered list waiting to be ticked off.
+ */
+
+/* Register tabs. */
+[data-design="strich"] .library--tabs {
+	gap: 6px;
+}
+
+[data-design="strich"] .library--tabs .section__head {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+
+[data-design="strich"] .library--tabs .section__head h2 {
+	font-size: 1rem;
+	letter-spacing: -0.01em;
+}
+
+[data-design="strich"] .library--tabs .station-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 0;
+	border-bottom: 2px solid var(--fg);
+}
+
+[data-design="strich"] .library--tabs .station-choice {
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 100%;
+	transform: none;
+	border: 2px solid var(--fg);
+	border-bottom: 0;
+	border-top: 6px solid var(--st);
+	border-radius: 10px 12px 0 0;
+	background: var(--raise);
+	margin-bottom: -2px;
+}
+
+[data-design="strich"] .library--tabs .station-choice:nth-child(n) {
+	transform: none;
+}
+
+[data-design="strich"] .library--tabs .station-choice button {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: auto auto;
+	gap: 0;
+	min-height: 0;
+	padding: 8px 14px 4px;
+}
+
+[data-design="strich"] .library--tabs .station-choice button > svg {
+	display: none;
+}
+
+[data-design="strich"] .library--tabs .station-choice__name {
+	font-size: 1rem;
+}
+
+[data-design="strich"] .library--tabs .station-choice__meta {
+	font-size: 0.74rem;
+}
+
+[data-design="strich"] .library--tabs .station-choice > a {
+	min-height: 32px;
+	padding: 0 14px 6px;
+	border-top: 0;
+	font-size: 0.78rem;
+	color: var(--fg-2);
+}
+
+[data-design="strich"] .library--tabs .station-choice--selected {
+	box-shadow: none;
+	background: var(--bg);
+	border-color: var(--fg);
+	border-top-color: var(--st);
+	z-index: 1;
+}
+
+/* The round, counted big. */
+[data-design="strich"] .lw--strich .stage {
+	gap: 22px;
+	padding-top: 10px;
+}
+
+[data-design="strich"] .lw--strich .stage__station h1 {
+	font-size: clamp(1.6rem, 7vw, 2.4rem);
+	font-weight: 800;
+	letter-spacing: -0.035em;
+}
+
+[data-design="strich"] .lw--strich .stage__station p {
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+[data-design="strich"] .lw--strich .stage .meter-tally {
+	width: 100%;
+	max-width: 520px;
+	height: auto;
+}
+
+[data-design="strich"] .lw--strich .tally {
+	stroke-width: 2;
+}
+
+[data-design="strich"] .lw--strich .tally--on {
+	stroke-width: 2.6;
+}
+
+/* Today's entry. */
+[data-design="strich"] .entry {
+	position: relative;
+	display: grid;
+	gap: 18px;
+	padding: 22px 18px 20px;
+	border: 2px solid var(--fg);
+	border-radius: var(--r-lg);
+	background: var(--raise);
+}
+
+[data-design="strich"] .entry__label {
+	display: inline-block;
+	position: absolute;
+	top: -15px;
+	left: 14px;
+	padding: 2px 10px;
+	border: 2px solid var(--fg);
+	border-radius: 6px 3px 7px 2px;
+	background: var(--select);
+	color: var(--select-fg);
+	font-weight: 800;
+	font-size: 0.85rem;
+	transform: rotate(-2deg);
+}
+
+[data-design="strich"] .lw--strich .now-shelf {
+	grid-template-columns: 112px minmax(0, 1fr);
+	grid-template-areas:
+		"art title"
+		"art artist"
+		"art album";
+	align-items: start;
+	column-gap: 16px;
+	row-gap: 2px;
+}
+
+[data-design="strich"] .lw--strich .cover.player-art {
+	width: 112px;
+	margin: 4px 0 0;
+}
+
+[data-design="strich"] .lw--strich .now-copy h2 {
+	font-size: clamp(1.7rem, 7.5vw, 2.8rem);
+}
+
+[data-design="strich"] .lw--strich .now-copy .artist {
+	align-self: start;
+	font-size: 1.05rem;
+}
+
+/* The queue: a list to tick off. */
+[data-design="strich"] .lw--strich .queue-row {
+	grid-template-columns: 22px 3.2ch 44px minmax(0, 1fr) auto auto;
+}
+
+[data-design="strich"] .lw--strich .queue-row::before {
+	content: "";
+	width: 18px;
+	height: 18px;
+	border: 2px solid var(--fg);
+	border-radius: 3px 1px 4px 2px;
+	background: var(--raise);
+}
+
+[data-design="strich"] .lw--strich .queue-row .cover {
+	width: 44px;
+	height: 44px;
+}
+
+[data-design="strich"] .home-tail .station-actions {
+	padding-top: 0;
+}
+
+@media (min-width: 560px) {
+	[data-design="strich"] .lw--strich .now-shelf {
+		grid-template-columns: 180px minmax(0, 1fr);
+		align-items: end;
+	}
+
+	[data-design="strich"] .lw--strich .cover.player-art {
+		width: 180px;
+	}
+}
+
+@media (min-width: 1100px) {
+	[data-design="strich"] .lw--strich {
+		grid-template-columns: repeat(12, minmax(0, 1fr));
+		grid-template-areas:
+			"player player player player player player player player player tabs tabs tabs"
+			"queue queue queue queue queue queue queue queue queue tabs tabs tabs"
+			"tail tail tail tail tail tail tail tail tail tabs tabs tabs";
+		column-gap: var(--gap);
+		row-gap: 36px;
+		align-items: start;
+	}
+
+	[data-design="strich"] .lw--strich > .player {
+		grid-area: player;
+	}
+
+	[data-design="strich"] .lw--strich > .queue {
+		grid-area: queue;
+	}
+
+	[data-design="strich"] .lw--strich > .home-tail {
+		grid-area: tail;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	/* On a wide page the register tabs stand at the right edge of the notebook. */
+	[data-design="strich"] .lw--strich > .library--tabs {
+		grid-area: tabs;
+		position: sticky;
+		top: 24px;
+	}
+
+	[data-design="strich"] .library--tabs .station-list {
+		flex-direction: column;
+		flex-wrap: nowrap;
+		gap: 8px;
+		border-bottom: 0;
+		border-left: 2px solid var(--fg);
+	}
+
+	[data-design="strich"] .library--tabs .station-choice {
+		border: 2px solid var(--fg);
+		border-left: 0;
+		border-right: 6px solid var(--st);
+		border-radius: 0 12px 12px 0;
+		margin: 0 0 0 -2px;
+	}
+
+	[data-design="strich"] .library--tabs .station-choice--selected {
+		border-right-color: var(--st);
+		margin-left: -2px;
+		background: var(--bg);
+	}
+
+	[data-design="strich"] .library--tabs .station-choice button {
+		padding: 12px 16px 4px;
+	}
+
+	[data-design="strich"] .library--tabs .station-choice__name {
+		font-size: 1.15rem;
+	}
+}
+
+[data-design="strich"] .signal__step {
+	overflow-wrap: normal;
+	font-size: 0.74rem;
+	padding-left: 24px;
+}

@@ -13,6 +13,20 @@ const PREINSTALLED = [
 ].find((path) => existsSync(path));
 const executablePath = process.env.CHROMIUM_PATH ?? PREINSTALLED;
 
+/** TS_DESIGN=<id> runs the whole suite in that design (stored like a listener's own choice). */
+const design = process.env.TS_DESIGN;
+const storageState = design
+	? {
+			cookies: [],
+			origins: [
+				{
+					origin: "http://127.0.0.1:8787",
+					localStorage: [{ name: "ts-design", value: design }],
+				},
+			],
+		}
+	: undefined;
+
 export default defineConfig({
 	testDir: "e2e",
 	testMatch: "*.spec.ts",
@@ -29,6 +43,7 @@ export default defineConfig({
 		timezoneId: "Europe/Berlin",
 		launchOptions: executablePath ? { executablePath } : {},
 		trace: "retain-on-failure",
+		storageState,
 	},
 	webServer: [
 		{

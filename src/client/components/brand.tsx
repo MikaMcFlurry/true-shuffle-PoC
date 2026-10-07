@@ -4,7 +4,7 @@
  * printed in text beside it.
  */
 
-import type { StationSummary, TrackView } from "../../shared/api";
+import type { StationSummary } from "../../shared/api";
 import { type Design, useDesign } from "../design";
 import { Cover } from "./ui";
 
@@ -44,6 +44,22 @@ export function BrandMark(props: { design?: Design; class?: string }) {
 			<svg class={cls} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
 				<path class="bm-tally" d="M7 6.5v19M12.2 5.8v19.6M17.4 6.4v19M22.6 5.9v19.4" />
 				<path class="bm-cross" d="M3.6 22.4 28.4 9.1" />
+			</svg>
+		);
+	if (d === "umlauf")
+		return (
+			<svg class={cls} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+				<circle class="bm-orbit" cx="16" cy="16" r="12.5" />
+				<path class="bm-orbit-done" d="M16 3.5A12.5 12.5 0 0 1 27.2 21.6" />
+				<circle class="bm-core" cx="16" cy="16" r="5.2" />
+				<circle class="bm-moon" cx="27.2" cy="21.6" r="3" />
+			</svg>
+		);
+	if (d === "fahrmodus")
+		return (
+			<svg class={cls} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+				<rect class="bm-sign" x="1.5" y="1.5" width="29" height="29" rx="4" />
+				<path class="bm-big-play" d="M10.5 8.5v15l13-7.5z" />
 			</svg>
 		);
 	return (
@@ -90,7 +106,7 @@ export function RoundMeter(props: { progress: number | null; size?: "lg" | "sm" 
 			</svg>
 		);
 	}
-	if (d === "linie") {
+	if (d === "linie" || d === "fahrmodus") {
 		const x = 6 + p * 188;
 		return (
 			<svg
@@ -192,30 +208,18 @@ export function LineBadge(props: {
 // ------------------------------------------------------------- stage art
 
 /**
- * The current cover. Kontaktbogen prints it as a frame on a film strip with
- * the next frames from the saved queue beside it, the current one boxed in
- * grease pencil; the other designs print the cover alone.
+ * The current cover. Leuchttisch prints it as a frame on the light table,
+ * boxed in grease pencil with its edge print; the other designs print the
+ * cover alone.
  */
-export function StageArt(props: {
-	src: string | null | undefined;
-	next: readonly TrackView[];
-	label: string;
-}) {
+export function StageArt(props: { src: string | null | undefined; label: string }) {
 	const d = useDesign();
 	if (d !== "kontakt") return <Cover src={props.src} class="player-art" eager />;
 	return (
-		<div class="filmstrip" aria-hidden="true">
-			<div class="filmstrip__frame filmstrip__frame--now">
-				<Cover src={props.src} class="player-art" eager />
-				<GreaseBox />
-				<span class="filmstrip__edge">{props.label}</span>
-			</div>
-			{props.next.slice(0, 3).map((t, i) => (
-				<div class="filmstrip__frame" key={`${t.id}-${i}`}>
-					<Cover src={t.imageUrl} class="filmstrip__next" />
-					<span class="filmstrip__edge">{String(i + 1).padStart(2, "0")}</span>
-				</div>
-			))}
+		<div class="frame-now" aria-hidden="true">
+			<Cover src={props.src} class="player-art" eager />
+			<GreaseBox />
+			<span class="frame-now__edge">{props.label}</span>
 		</div>
 	);
 }

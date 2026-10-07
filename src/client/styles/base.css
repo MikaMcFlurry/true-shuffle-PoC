@@ -262,7 +262,6 @@ svg {
 }
 
 /* Design-only parts: hidden unless their design shows them. */
-.filmstrip,
 .line-badge,
 .scribble,
 .station-choice__art {
@@ -612,7 +611,7 @@ main h1[tabindex="-1"]:focus {
 }
 
 .now-shelf > .cover,
-.now-shelf > .filmstrip {
+.now-shelf > .frame-now {
 	grid-area: art;
 }
 
@@ -1968,6 +1967,19 @@ input[type="radio"].check {
 	--bg: #121214;
 }
 
+.design-card--umlauf .design-card__swatch {
+	background: #18204a;
+	color: #eef0ff;
+	--brand: #ff9a4a;
+	--bg: #18204a;
+}
+.design-card--fahrmodus .design-card__swatch {
+	background: #ffd100;
+	color: #0b0b0b;
+	--bg: #ffd100;
+	box-shadow: inset 0 0 0 1px rgb(11 11 11 / 0.25);
+}
+
 /* Fields. */
 .field {
 	display: grid;
@@ -2446,6 +2458,68 @@ input[type="radio"].check {
 	color: var(--bg);
 }
 
+/* ------------------------------------------------- dock & tail */
+
+/* A transport panel fixed under the thumb (Leuchttisch, Fahrt). The page keeps room for it. */
+.dock {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 15;
+	padding: 10px max(var(--gutter), env(safe-area-inset-left))
+		calc(10px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-right));
+	background: var(--dock-bg, var(--raise));
+	color: var(--dock-fg, var(--fg));
+	box-shadow: 0 -12px 32px -20px rgb(0 0 0 / 0.5);
+	--stage-bg: var(--dock-bg, var(--raise));
+	--stage-fg: var(--dock-fg, var(--fg));
+	--stage-fg-2: var(--dock-fg-2, var(--fg-2));
+}
+
+.dock__inner {
+	display: grid;
+	gap: 8px;
+	max-width: 1440px;
+	margin: 0 auto;
+}
+
+.dock :focus-visible {
+	outline-color: var(--dock-fg, var(--focus));
+}
+
+html:has(.dock) {
+	scroll-padding-bottom: calc(var(--dock-h, 180px) + 16px);
+}
+
+.app-shell:has(.dock) {
+	padding-bottom: calc(var(--dock-h, 180px) + 32px + env(safe-area-inset-bottom));
+}
+
+.app-shell:has(.dock) .flash {
+	bottom: calc(var(--dock-h, 180px) + 12px + env(safe-area-inset-bottom));
+}
+
+.home-tail {
+	display: grid;
+	gap: var(--gap);
+	align-content: start;
+	min-width: 0;
+}
+
+.lw {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--gap);
+}
+
+/* Read-only design parts that only some layouts draw. */
+.ride-switch,
+.ride-now__label,
+.entry__label {
+	display: none;
+}
+
 /* --------------------------------------------------- breakpoints */
 
 @media (min-width: 560px) {
@@ -2519,64 +2593,12 @@ input[type="radio"].check {
 }
 
 @media (min-width: 1100px) {
-	.listening-workspace {
-		grid-template-columns: repeat(12, minmax(0, 1fr));
-		column-gap: var(--gap);
-		row-gap: 40px;
-		align-items: start;
-	}
-
-	.player {
-		grid-column: 1 / span 7;
-		grid-row: 1;
-	}
-
-	.queue {
-		grid-column: 8 / span 5;
-		grid-row: 1;
-	}
-
-	.library {
-		grid-column: 1 / -1;
-		grid-row: 2;
-		grid-template-columns: repeat(12, minmax(0, 1fr));
-		column-gap: var(--gap);
-	}
-
 	.now-shelf {
 		grid-template-columns: 240px minmax(0, 1fr);
 	}
 
 	.now-copy h2 {
 		font-size: clamp(2.8rem, 4.4vw, 4.6rem);
-	}
-
-	.library > .section__head,
-	.library > .station-list {
-		grid-column: 1 / -1;
-	}
-
-	.library > .station-list {
-		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-	}
-
-	.station-choice button {
-		min-height: 148px;
-		padding: 18px 18px 14px;
-	}
-
-	.station-choice__name {
-		font-size: clamp(1.35rem, 1.8vw, 1.8rem);
-	}
-
-	.library > .station-actions {
-		grid-column: 1 / span 7;
-	}
-
-	.library > .library-links {
-		grid-column: 8 / span 5;
-		align-self: start;
-		padding-top: 6px;
 	}
 
 	.stage--welcome {
