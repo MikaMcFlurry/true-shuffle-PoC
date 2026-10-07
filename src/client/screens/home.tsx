@@ -17,9 +17,10 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { sharesForRules } from "../../core/mix";
 import type { AppState, DeviceView, StationSummary, TrackView } from "../../shared/api";
 import { ApiError, api, type NativeDevice } from "../api";
+import { LineBadge, RoundMeter, Scribble, StageArt } from "../components/brand";
 import { RateHit, ThumbMark } from "../components/rate";
 import { SongProgress } from "../components/song-progress";
-import { Cover, inkOf, RoundFigure, roundText } from "../components/ui";
+import { Cover, inkOf, roundText } from "../components/ui";
 import { duration, pct } from "../format";
 import { playbackView } from "../playback-view";
 import { type PlaybackAction, store, useStore } from "../store";
@@ -274,7 +275,7 @@ export function Home({ state }: { state: AppState }) {
 			store.say(e instanceof Error ? e.message : String(e), "error");
 		}
 	};
-	// Presentation only: which station the poster prints, and how far the command signal has come.
+	// Presentation only: which station the stage prints, and how far the command signal has come.
 	const posterStation = state.stations.find((x) => x.id === session?.stationId) ?? station ?? null;
 	const startsOther = !!station && !!session && station.id !== session.stationId;
 	const statusText = command
@@ -314,11 +315,11 @@ export function Home({ state }: { state: AppState }) {
 		<div class="listening-workspace">
 			<section class="player" aria-labelledby="listen-title">
 				<div
-					class={`poster ink-${inkOf(posterStation)}${unsettled ? " poster--pending" : ""}${view.projected ? " poster--estimate" : ""}`}
+					class={`stage ink-${inkOf(posterStation)}${unsettled ? " stage--pending" : ""}${view.projected ? " stage--estimate" : ""}`}
 				>
-					<header class="player-heading poster__head">
-						<RoundFigure progress={posterStation?.progress ?? null} size={56} />
-						<div class="poster__station">
+					<header class="player-heading stage__head">
+						<LineBadge stations={state.stations} s={posterStation} />
+						<div class="stage__station">
 							<h1 id="listen-title">{posterStation?.name ?? "Deine Sender"}</h1>
 							<p>
 								{posterStation
@@ -326,14 +327,20 @@ export function Home({ state }: { state: AppState }) {
 									: "Entdecken, wiederfinden, in Ruhe weiterhören."}
 							</p>
 							{state.guest.active ? (
-								<p class="poster__guest">Gast-Modus · zählt nicht ins Gedächtnis</p>
+								<p class="stage__guest">Gast-Modus · zählt nicht ins Gedächtnis</p>
 							) : null}
 						</div>
+						<RoundMeter progress={posterStation?.progress ?? null} />
 					</header>
 					<div class="now-shelf">
-						<Cover src={track?.imageUrl ?? posterStation?.imageUrl} class="player-art" eager />
+						<StageArt
+							src={track?.imageUrl ?? posterStation?.imageUrl}
+							next={successors.map((e) => e.track)}
+							label="jetzt"
+						/>
 						<div class="now-copy">
 							<h2>{posterTitle(track?.name ?? "Dein nächster Lieblingssong")}</h2>
+							<Scribble />
 							<p class="artist">
 								{track?.artists ?? "Wähle einen Sender und starte deine Warteschlange."}
 							</p>
@@ -431,7 +438,7 @@ export function Home({ state }: { state: AppState }) {
 							</button>
 						</div>
 						{startsOther && !playing && !unsettled ? (
-							<p class="poster__note">
+							<p class="stage__note">
 								Startet {station.name}. Der gespeicherte Song bleibt erhalten.
 							</p>
 						) : null}
@@ -655,7 +662,7 @@ export function Home({ state }: { state: AppState }) {
 				</div>
 			</section>
 
-			<section class="queue" aria-labelledby="queue-title">
+			<section class={`queue ink-${inkOf(posterStation)}`} aria-labelledby="queue-title">
 				<div class="section__head">
 					<h2 id="queue-title">
 						<ListMusic size={22} aria-hidden="true" />
@@ -707,7 +714,7 @@ export function Home({ state }: { state: AppState }) {
 				<ul class="station-list">
 					{state.stations.map((x) => (
 						<li
-							class={`station-choice ink-${inkOf(x)}${station?.id === x.id ? " station-choice--selected" : ""}`}
+							class={`station-choice ink-${inkOf(x)}${station?.id === x.id ? " station-choice--selected" : ""}${session?.stationId === x.id ? " station-choice--saved" : ""}`}
 							key={x.id}
 						>
 							<button
@@ -718,6 +725,8 @@ export function Home({ state }: { state: AppState }) {
 									setConfirm(false);
 								}}
 							>
+								<Cover src={x.imageUrl} class="station-choice__art" />
+								<LineBadge stations={state.stations} s={x} />
 								<span class="station-choice__name">{x.name}</span>
 								<span class="station-choice__meta">
 									{x.importing
@@ -725,7 +734,7 @@ export function Home({ state }: { state: AppState }) {
 										: `${x.poolSize ?? "–"} Songs · ${roundLabel(x)}`}
 									{session?.stationId === x.id ? " · gespeicherter Lauf" : ""}
 								</span>
-								<RoundFigure progress={x.progress} size={40} />
+								<RoundMeter progress={x.progress} size="sm" />
 							</button>
 							<a href={`/sender/${x.id}`} aria-label={`${x.name}: Mix und Regeln`}>
 								Mix & Regeln
@@ -808,7 +817,7 @@ function keyLabel(label: string) {
 	);
 }
 
-/** Keep a title's dash with the word before it, so no poster line opens with "–". */
+/** Keep a title's dash with the word before it, so no title line opens with "–". */
 function posterTitle(name: string): string {
 	return name.replace(/ ([–—-]) /g, "\u00a0$1 ");
 }

@@ -1,3 +1,4 @@
+import { BrandMark } from "../components/brand";
 import { DECK_PREFIX } from "../format";
 
 const LOGIN_MESSAGES: Record<string, string> = {
@@ -8,7 +9,7 @@ const LOGIN_MESSAGES: Record<string, string> = {
 		"Dieses Spotify-Konto ist für true-shuffle nicht freigeschaltet. Spotify erlaubt privaten Apps nur fünf Konten — frag den Besitzer der App.",
 };
 
-/** Signed out: the poster says what this is; one key signs in. */
+/** Signed out: the stage says what this is; one key signs in. */
 export function SignIn() {
 	const params = new URLSearchParams(location.search);
 	const login = params.get("login");
@@ -20,13 +21,8 @@ export function SignIn() {
 			: null;
 	return (
 		<div class="welcome">
-			<section class="poster poster--welcome ink-ultra" aria-labelledby="welcome-title">
-				<svg class="welcome__figure" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
-					<circle cx="100" cy="100" r="92" />
-					<circle cx="100" cy="100" r="68" />
-					<circle cx="100" cy="100" r="44" />
-					<circle class="welcome__core" cx="100" cy="100" r="18" />
-				</svg>
+			<section class="stage stage--welcome ink-ultra" aria-labelledby="welcome-title">
+				<BrandMark class="welcome__figure" />
 				<h1 id="welcome-title">Deine Sender mit Gedächtnis</h1>
 				<p class="welcome__lede">Keine schnellen Wiederholungen. Alles kommt irgendwann dran.</p>
 				{message ? (
@@ -34,7 +30,7 @@ export function SignIn() {
 						{message}
 					</p>
 				) : null}
-				<a class="key key--poster" href="/auth/login">
+				<a class="key key--stage" href="/auth/login">
 					Mit Spotify anmelden
 				</a>
 			</section>

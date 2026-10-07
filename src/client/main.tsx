@@ -1,10 +1,21 @@
-import "@fontsource-variable/archivo/standard.css";
-import "./styles.css";
+import "@fontsource-variable/hanken-grotesk/wght.css";
+import "@fontsource-variable/martian-mono/standard.css";
+import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
+import "@fontsource-variable/bricolage-grotesque/standard.css";
+import "./styles/base.css";
+import "./styles/kontakt.css";
+import "./styles/linie.css";
+import "./styles/strich.css";
+import "./styles/klassik.css";
 import { render } from "preact";
 import { App } from "./app";
+import { applyDesign, designFromUrl, syncThemeColor } from "./design";
 import { onLink } from "./router";
 import { applyIllumination } from "./store";
 
 applyIllumination();
+applyDesign();
+designFromUrl();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncThemeColor);
 document.addEventListener("click", onLink);
 render(<App />, document.getElementById("app")!);

@@ -1,0 +1,525 @@
+/*
+ * Linienplan — the transit diagram.
+ *
+ * Day: white signage panels on station-wall grey. Night: midnight enamel.
+ * Each Sender is a line with its own colour and badge (S1, S2 …; "Alles"
+ * is the ring line A). The saved queue runs as stops down that line. Atkinson
+ * Hyperlegible Next, set like station signage: heavy, open, readable at a
+ * glance. Lines bend only at 45° and 90°.
+ */
+
+:root[data-design="linie"] {
+	color-scheme: light;
+	--bg: #e9edf1;
+	--bar: #ffffff;
+	--fg: #0f1d33;
+	--fg-2: #4a586c;
+	--hair: #c7d0da;
+	--rule: #0f1d33;
+	--raise: #ffffff;
+	--sunk: rgb(15 29 51 / 0.06);
+	--danger: #c4001a;
+	--warn-bg: #ffe680;
+	--warn-fg: #2b2300;
+	--focus: #0066b3;
+	--select: #ffd800;
+	--select-fg: #0f1d33;
+	--brand: #e3001b;
+	--on-brand: #ffffff;
+
+	--font:
+		"Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible Next", system-ui, sans-serif;
+	--font-display: var(--font);
+	--font-num: var(--font);
+	--display-weight: 800;
+	--display-tracking: -0.015em;
+	--display-lh: 1.04;
+	--head-weight: 780;
+	--label-weight: 700;
+
+	--r: 8px;
+	--r-lg: 14px;
+	--r-art: 6px;
+	--r-main: 999px;
+	--bw: 2px;
+	--rule-w: 0px;
+
+	--key-line: var(--hair);
+	--key-hover-bg: var(--sunk);
+	--key-hover-fg: var(--fg);
+	--lit-bg: var(--fg);
+	--lit-fg: #ffffff;
+
+	--stage-bg: var(--raise);
+	--stage-line: var(--hair);
+	--main-bg: var(--st);
+	--main-fg: var(--on-st);
+
+	/* Line colours. */
+	--ink-ultra: #0066b3;
+	--ink-verm: #d6001c;
+	--ink-green: #2f8a1f;
+	--ink-violet: #7b4fa6;
+	--ink-petrol: #00827e;
+	--ink-yellow: #f5c400;
+	--on-ink: #ffffff;
+	--on-ink-yellow: #0f1d33;
+	--switch-r: 999px;
+}
+
+:root[data-design="linie"][data-illumination="night"] {
+	color-scheme: dark;
+	--bg: #0b1424;
+	--bar: #0b1424;
+	--fg: #f2f5f9;
+	--fg-2: #a6b2c3;
+	--hair: #283851;
+	--rule: #f2f5f9;
+	--raise: #132038;
+	--sunk: rgb(242 245 249 / 0.07);
+	--danger: #ff8a95;
+	--warn-bg: #3a3000;
+	--warn-fg: #ffe680;
+	--focus: #6db7ff;
+	--brand: #ff3349;
+	--lit-bg: #f2f5f9;
+	--lit-fg: #0b1424;
+	--ink-ultra: #2f8ee0;
+	--ink-verm: #ef2a3c;
+	--ink-green: #3fa52b;
+	--ink-violet: #9a74c6;
+	--ink-petrol: #12a39e;
+	--on-ink: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root[data-design="linie"]:not([data-illumination="day"]) {
+		color-scheme: dark;
+		--bg: #0b1424;
+		--bar: #0b1424;
+		--fg: #f2f5f9;
+		--fg-2: #a6b2c3;
+		--hair: #283851;
+		--rule: #f2f5f9;
+		--raise: #132038;
+		--sunk: rgb(242 245 249 / 0.07);
+		--danger: #ff8a95;
+		--warn-bg: #3a3000;
+		--warn-fg: #ffe680;
+		--focus: #6db7ff;
+		--brand: #ff3349;
+		--lit-bg: #f2f5f9;
+		--lit-fg: #0b1424;
+		--ink-ultra: #2f8ee0;
+		--ink-verm: #ef2a3c;
+		--ink-green: #3fa52b;
+		--ink-violet: #9a74c6;
+		--ink-petrol: #12a39e;
+		--on-ink: #ffffff;
+	}
+}
+
+/* --------------------------------------------------------- the shell */
+
+/* A white signage bar across the full width. */
+[data-design="linie"] .app-header {
+	background: var(--raise);
+	box-shadow: 0 0 0 100vmax var(--raise);
+	clip-path: inset(0 -100vmax);
+	border-bottom: 0;
+	margin-bottom: calc(var(--gap) + 4px);
+}
+
+[data-design="linie"] .brand {
+	font-weight: 800;
+	letter-spacing: -0.02em;
+}
+
+.brand__mark--linie .bm-line {
+	fill: none;
+	stroke: var(--brand);
+	stroke-width: 4.2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.brand__mark--linie .bm-stop {
+	fill: var(--raise, #ffffff);
+	stroke: currentColor;
+	stroke-width: 3.2;
+}
+
+[data-design="linie"] .app-header :where(nav a)::after {
+	height: 4px;
+	bottom: 2px;
+	background: var(--brand);
+}
+
+[data-design="linie"] .app-header :where(nav a)[aria-current]:not([aria-current="page"])::after {
+	background: var(--hair);
+}
+
+/* Line badge: the Sender's name on the network. */
+[data-design="linie"] .line-badge {
+	display: inline-grid;
+	place-items: center;
+	min-width: 46px;
+	height: 34px;
+	padding: 0 8px;
+	border-radius: 7px;
+	background: var(--st);
+	color: var(--on-st);
+	font-weight: 800;
+	font-size: 1.1rem;
+	letter-spacing: -0.01em;
+	line-height: 1;
+	flex: none;
+}
+
+/* ------------------------------------------------------------ stage */
+
+[data-design="linie"] .stage {
+	box-shadow:
+		0 1px 0 var(--hair),
+		0 10px 30px -18px rgb(15 29 51 / 0.35);
+}
+
+[data-design="linie"] .stage__head {
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--hair);
+}
+
+[data-design="linie"] .stage__station h1 {
+	font-size: 1.2rem;
+	font-weight: 800;
+}
+
+[data-design="linie"] .stage__station p {
+	font-weight: 600;
+}
+
+[data-design="linie"] .stage__head .meter-line {
+	grid-column: 1 / -1;
+	width: 100%;
+	height: 14px;
+	margin-top: 4px;
+}
+
+[data-design="linie"] .meter-line__rest,
+[data-design="linie"] .meter-line__done {
+	stroke-width: 7;
+}
+
+[data-design="linie"] .meter-line__end {
+	stroke-width: 4;
+}
+
+[data-design="linie"] .stage__guest {
+	border-radius: 6px;
+}
+
+[data-design="linie"] .cover.player-art {
+	box-shadow: 0 0 0 1px var(--hair);
+}
+
+[data-design="linie"] .now-copy h2 {
+	font-size: clamp(2rem, 9.5vw, 3.3rem);
+}
+
+[data-design="linie"] .progress-area {
+	--progress: var(--st);
+}
+
+[data-design="linie"] .progress-area progress {
+	height: 10px;
+	border-radius: 999px;
+}
+
+[data-design="linie"] .progress-area progress::-webkit-progress-value,
+[data-design="linie"] .progress-area progress::-webkit-progress-bar {
+	border-radius: 999px;
+}
+
+[data-design="linie"] .signal {
+	--signal: var(--st);
+	position: relative;
+	gap: 0;
+}
+
+/* Three stops on a short line: requested, accepted, confirmed. */
+[data-design="linie"] .signal__step {
+	border-top: 0;
+	padding: 22px 0 0;
+}
+
+[data-design="linie"] .signal__step::before {
+	content: "";
+	position: absolute;
+	top: 7px;
+	left: 0;
+	right: 0;
+	height: 4px;
+	background: color-mix(in srgb, var(--stage-fg) 18%, transparent);
+}
+
+[data-design="linie"] .signal__step::after {
+	content: "";
+	position: absolute;
+	top: 1px;
+	left: 0;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	border: 3px solid color-mix(in srgb, var(--stage-fg) 28%, transparent);
+	background: var(--stage-bg);
+}
+
+[data-design="linie"] .signal__step--on::before {
+	background: var(--signal);
+}
+
+[data-design="linie"] .signal__step--on::after {
+	border-color: var(--signal);
+}
+
+[data-design="linie"] .signal--wait .signal__step--on:nth-child(n + 2)::before {
+	background: repeating-linear-gradient(90deg, var(--signal) 0 8px, transparent 8px 13px);
+}
+
+[data-design="linie"] .signal--estimate .signal__step--on:last-child::before {
+	background: repeating-linear-gradient(90deg, var(--signal) 0 3px, transparent 3px 7px);
+}
+
+[data-design="linie"] .signal--error .signal__step--on:last-of-type::after {
+	border-color: var(--danger);
+	border-style: double;
+}
+
+[data-design="linie"] .signal__step--on:last-of-type:not(:has(~ .signal__step--on))::after {
+	background: var(--signal);
+}
+
+[data-design="linie"] .icon-button {
+	border-radius: 12px;
+}
+
+[data-design="linie"] .transport-main {
+	font-weight: 800;
+}
+
+[data-design="linie"] .transport-main:disabled {
+	border-color: var(--hair);
+	color: var(--fg-2);
+}
+
+[data-design="linie"] .section__head {
+	border-bottom: 0;
+}
+
+[data-design="linie"] .section__head h2 {
+	font-weight: 800;
+	letter-spacing: -0.015em;
+}
+
+/* ------------------------------------------------- queue as stops */
+
+[data-design="linie"] .queue .section__head {
+	padding-bottom: 8px;
+}
+
+[data-design="linie"] .queue-list {
+	position: relative;
+	margin-top: 10px;
+}
+
+[data-design="linie"] .queue-row {
+	grid-template-columns: 28px 48px minmax(0, 1fr) auto auto;
+	border-bottom: 0;
+	padding: 9px 0;
+}
+
+/* The line itself, drawn row by row so it ends with the last stop. */
+[data-design="linie"] .queue-row::before {
+	content: "";
+	position: absolute;
+	left: 10px;
+	top: 0;
+	bottom: 0;
+	width: 8px;
+	background: var(--st);
+}
+
+[data-design="linie"] .queue-row:first-child::before {
+	top: 50%;
+}
+
+[data-design="linie"] .queue-row:last-child::before {
+	bottom: 50%;
+}
+
+[data-design="linie"] .queue-row:first-child:last-child::before {
+	display: none;
+}
+
+[data-design="linie"] .queue-number {
+	position: relative;
+	z-index: 0;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	border: 4px solid var(--st);
+	background: var(--bg);
+	font-size: 0;
+	color: transparent;
+}
+
+[data-design="linie"] .queue-row:first-child .queue-number {
+	border-width: 7px;
+}
+
+[data-design="linie"] .queue-row .track__main strong {
+	font-weight: 750;
+}
+
+[data-design="linie"] .queue-row:first-child .track__main strong {
+	font-weight: 800;
+	font-size: 1.05rem;
+}
+
+[data-design="linie"] .queue .key--wide {
+	border-radius: 999px;
+}
+
+/* ---------------------------------------------------- the network */
+
+[data-design="linie"] .station-choice {
+	border-color: transparent;
+	box-shadow: 0 1px 0 var(--hair);
+}
+
+[data-design="linie"] .station-choice button {
+	grid-template-columns: auto minmax(0, 1fr);
+	grid-template-rows: auto auto 1fr;
+	align-items: center;
+	gap: 8px 12px;
+}
+
+[data-design="linie"] .station-choice .line-badge {
+	grid-column: 1;
+	grid-row: 1;
+}
+
+[data-design="linie"] .station-choice__name {
+	grid-column: 2;
+	grid-row: 1;
+	font-weight: 800;
+}
+
+[data-design="linie"] .station-choice__meta {
+	grid-column: 1 / -1;
+	grid-row: 2;
+}
+
+[data-design="linie"] .station-choice button > svg {
+	grid-column: 1 / -1;
+	grid-row: 3;
+	align-self: end;
+	width: 100%;
+	color: var(--fg);
+}
+
+[data-design="linie"] .station-choice--selected {
+	border-color: var(--st);
+	box-shadow: inset 0 0 0 1px var(--st);
+}
+
+[data-design="linie"] .station-choice > a {
+	border-top-color: var(--hair);
+}
+
+[data-design="linie"] .masthead--station .line-badge {
+	display: none;
+}
+
+[data-design="linie"] .masthead--station {
+	border-radius: var(--r-lg);
+}
+
+[data-design="linie"] .masthead--station .meter-line {
+	width: 140px;
+}
+
+[data-design="linie"] .masthead--station .meter-line__rest {
+	stroke: var(--on-st);
+}
+
+[data-design="linie"] .segmented__opt {
+	border-radius: 6px;
+}
+
+[data-design="linie"] .terminal {
+	padding-left: 4px;
+}
+
+[data-design="linie"] .notice {
+	border-width: 0;
+	box-shadow: inset 0 0 0 2px var(--hair);
+	border-radius: 10px;
+}
+
+[data-design="linie"] .notice--warn,
+[data-design="linie"] .notice--offline {
+	box-shadow: none;
+}
+
+[data-design="linie"] .notice--error {
+	box-shadow: inset 0 0 0 2px var(--danger);
+}
+
+[data-design="linie"] .notice--estimate {
+	box-shadow: none;
+	border: 2px dashed var(--hair);
+}
+
+[data-design="linie"] .welcome__figure {
+	--raise: var(--st);
+	color: var(--on-st);
+	--brand: var(--on-st);
+}
+
+[data-design="linie"] .stage--welcome,
+[data-design="linie"] .stage--scan {
+	background: var(--st);
+	color: var(--on-st);
+	--stage-fg: var(--on-st);
+	--stage-bg: var(--st);
+	--stage-fg-2: color-mix(in srgb, var(--on-st) 82%, var(--st));
+	box-shadow: none;
+}
+
+[data-design="linie"] .stage--welcome .key--stage {
+	--on-st: #ffffff;
+	--st: #0066b3;
+	border-radius: 999px;
+}
+
+@media (min-width: 560px) {
+	[data-design="linie"] .stage__head .meter-line {
+		grid-column: auto;
+		width: 160px;
+		margin-top: 0;
+	}
+}
+
+@media (min-width: 1100px) {
+	[data-design="linie"] .queue {
+		padding: var(--stage-pad);
+		background: var(--raise);
+		border-radius: var(--r-lg);
+		box-shadow: 0 1px 0 var(--hair);
+	}
+
+	[data-design="linie"] .queue-number {
+		background: var(--raise);
+	}
+}

@@ -1,0 +1,588 @@
+/*
+ * Kontaktbogen — the contact sheet.
+ *
+ * Day: a contact print on white photo paper, the stage a strip of black
+ * film with sprocket holes. Night: the darkroom. Each Sender owns one
+ * grease-pencil colour; the current frame is boxed in it. Hanken Grotesk for
+ * words, Martian Mono only for edge print: frame numbers, times and counts.
+ */
+
+:root[data-design="kontakt"] {
+	color-scheme: light;
+	--bg: #eeedea;
+	--bar: #141210;
+	--fg: #141210;
+	--fg-2: #5c5853;
+	--hair: #cfcbc5;
+	--rule: #141210;
+	--raise: #f9f8f6;
+	--sunk: rgb(20 18 16 / 0.06);
+	--danger: #b8261b;
+	--warn-bg: #fbe7a6;
+	--warn-fg: #3a2c00;
+	--focus: #d6331f;
+	--select: #f2c230;
+	--select-fg: #141210;
+	--brand: #e2362a;
+	--on-brand: #ffffff;
+
+	--font: "Hanken Grotesk Variable", "Hanken Grotesk", system-ui, sans-serif;
+	--font-display: var(--font);
+	--font-num: "Martian Mono Variable", "Martian Mono", ui-monospace, monospace;
+	--display-weight: 820;
+	--display-tracking: -0.035em;
+	--display-lh: 0.96;
+	--head-weight: 780;
+	--label-weight: 650;
+
+	--r: 2px;
+	--r-lg: 3px;
+	--r-art: 1px;
+	--bw: 2px;
+	--rule-w: 2px;
+
+	--film: #141210;
+	--film-fg: #f2ede6;
+	--film-fg-2: #b0a99f;
+	--edge: #e6b15c;
+	--hole: var(--bg);
+
+	--stage-bg: var(--film);
+	--stage-fg: var(--film-fg);
+	--stage-fg-2: var(--film-fg-2);
+	--stage-line: #3b3632;
+	--main-bg: var(--film-fg);
+	--main-fg: var(--film);
+
+	/* Grease pencils: china-marker colours that read on film and on paper. */
+	--ink-ultra: #4b86f0;
+	--ink-verm: #ff4b2b;
+	--ink-green: #33c06d;
+	--ink-violet: #e05aa8;
+	--ink-petrol: #ff8a1e;
+	--ink-yellow: #f2c230;
+	--on-ink: #141210;
+	--on-ink-yellow: #141210;
+	--grease-white: #f2ede6;
+}
+
+:root[data-design="kontakt"][data-illumination="night"] {
+	color-scheme: dark;
+	--bg: #0d0b0a;
+	--bar: #0d0b0a;
+	--fg: #ece6dd;
+	--fg-2: #a69e93;
+	--hair: #2e2a26;
+	--rule: #ece6dd;
+	--raise: #161412;
+	--sunk: rgb(236 230 221 / 0.06);
+	--danger: #ff8b7c;
+	--warn-bg: #3b2c00;
+	--warn-fg: #ffe39a;
+	--focus: #ff6a4d;
+	--brand: #ff5a3c;
+	--film: #1d1a17;
+	--stage-line: #3f3934;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root[data-design="kontakt"]:not([data-illumination="day"]) {
+		color-scheme: dark;
+		--bg: #0d0b0a;
+		--bar: #0d0b0a;
+		--fg: #ece6dd;
+		--fg-2: #a69e93;
+		--hair: #2e2a26;
+		--rule: #ece6dd;
+		--raise: #161412;
+		--sunk: rgb(236 230 221 / 0.06);
+		--danger: #ff8b7c;
+		--warn-bg: #3b2c00;
+		--warn-fg: #ffe39a;
+		--focus: #ff6a4d;
+		--brand: #ff5a3c;
+		--film: #1d1a17;
+		--stage-line: #3f3934;
+	}
+}
+
+[data-design="kontakt"] .ink-all {
+	--st: var(--grease-white);
+	--on-st: var(--film);
+}
+
+/* ------------------------------------------------------------- brand */
+
+[data-design="kontakt"] .brand {
+	font-weight: 800;
+	letter-spacing: -0.035em;
+	font-size: 1.35rem;
+}
+
+.brand__mark--kontakt .bm-film {
+	fill: currentColor;
+}
+
+.brand__mark--kontakt .bm-hole rect,
+.brand__mark--kontakt .bm-window {
+	fill: var(--bg);
+}
+
+.brand__mark--kontakt .bm-grease {
+	fill: none;
+	stroke: var(--brand);
+	stroke-width: 2.3;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+[data-design="kontakt"] .app-header :where(nav a)::after {
+	border-radius: 0;
+	background: var(--brand);
+}
+
+/* ------------------------------------------------------------- stage */
+
+/* The film strip: sprocket rows cut through to the paper above and below. */
+[data-design="kontakt"] .stage {
+	padding-top: calc(var(--stage-pad) + 14px);
+	padding-bottom: calc(var(--stage-pad) + 14px);
+	border-radius: 0;
+}
+
+[data-design="kontakt"] .stage::before,
+[data-design="kontakt"] .stage::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 10px;
+	background: var(--hole);
+	-webkit-mask:
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='10'%3E%3Crect x='7' y='0' width='10' height='10' rx='2'/%3E%3C/svg%3E")
+		0 0 / 24px 10px repeat-x;
+	mask:
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='10'%3E%3Crect x='7' y='0' width='10' height='10' rx='2'/%3E%3C/svg%3E")
+		0 0 / 24px 10px repeat-x;
+	pointer-events: none;
+}
+
+[data-design="kontakt"] .stage::before {
+	top: 9px;
+}
+
+[data-design="kontakt"] .stage::after {
+	bottom: 9px;
+}
+
+[data-design="kontakt"] .stage__head {
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--stage-line);
+}
+
+[data-design="kontakt"] .stage__station h1 {
+	font-size: 1.15rem;
+	font-weight: 750;
+	letter-spacing: -0.01em;
+}
+
+[data-design="kontakt"] .stage__station p {
+	font-family: var(--font-num);
+	font-size: 0.74rem;
+	letter-spacing: 0.01em;
+	color: var(--edge);
+	margin-top: 4px;
+}
+
+[data-design="kontakt"] .stage__guest {
+	font-family: var(--font);
+	letter-spacing: 0;
+	background: var(--st);
+	color: var(--on-st);
+}
+
+[data-design="kontakt"] .stage .meter-code {
+	color: var(--stage-fg-2);
+}
+
+[data-design="kontakt"] .meter-code__bar--on {
+	fill: var(--st, var(--brand));
+}
+
+/* Film strip of frames: the current one in grease pencil, the next waiting beside it. */
+[data-design="kontakt"] .now-shelf {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas:
+		"art"
+		"title"
+		"artist"
+		"album";
+	grid-template-rows: auto;
+	row-gap: 6px;
+}
+
+[data-design="kontakt"] .filmstrip {
+	display: flex;
+	align-items: flex-end;
+	gap: 10px;
+	margin-bottom: 14px;
+	padding: 12px 0 0 12px;
+	min-width: 0;
+}
+
+.filmstrip__frame {
+	position: relative;
+	flex: 1 1 0;
+	min-width: 0;
+	max-width: 150px;
+	padding-bottom: 24px;
+}
+
+.filmstrip__frame--now {
+	flex: 0 0 52%;
+	max-width: 268px;
+	margin-right: 12px;
+}
+
+.filmstrip__frame .cover {
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1;
+	margin: 0;
+	border-radius: 1px;
+}
+
+.filmstrip__next {
+	opacity: 0.62;
+	filter: saturate(0.7);
+}
+
+.filmstrip__edge {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	font-family: var(--font-num);
+	font-size: 0.7rem;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	color: var(--edge);
+	white-space: nowrap;
+}
+
+.filmstrip__frame--now .filmstrip__edge {
+	color: var(--st, var(--brand));
+	font-weight: 700;
+}
+
+.grease {
+	position: absolute;
+	left: -9px;
+	top: -9px;
+	width: calc(100% + 18px);
+	height: calc(100% - 24px + 18px);
+	fill: none;
+	overflow: visible;
+	pointer-events: none;
+}
+
+.grease path {
+	stroke: var(--st, var(--brand));
+	stroke-width: 4px;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	vector-effect: non-scaling-stroke;
+}
+
+[data-design="kontakt"] :where(.stage--pending, .stage--estimate) .grease path {
+	stroke-dasharray: 7 7;
+}
+
+[data-design="kontakt"] .now-copy h2 {
+	font-size: clamp(2.3rem, 11vw, 3.7rem);
+}
+
+[data-design="kontakt"] .now-copy .album {
+	margin-bottom: 4px;
+}
+
+[data-design="kontakt"] .progress-area {
+	--progress: var(--st, var(--brand));
+}
+
+[data-design="kontakt"] .progress-area progress {
+	height: 6px;
+	border-radius: 0;
+}
+
+[data-design="kontakt"] .progress-labels {
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: var(--stage-fg-2);
+}
+
+[data-design="kontakt"] .progress-labels > span:first-child {
+	color: var(--stage-fg);
+}
+
+[data-design="kontakt"] .signal {
+	--signal: var(--st, var(--brand));
+}
+
+[data-design="kontakt"] .signal__step {
+	border-top-width: 3px;
+	font-family: var(--font-num);
+	font-size: 0.66rem;
+	letter-spacing: 0.02em;
+}
+
+[data-design="kontakt"] .stage .icon-button {
+	--key-line: color-mix(in srgb, var(--film-fg) 45%, transparent);
+	--key-fg: var(--film-fg);
+	--lit-bg: var(--film-fg);
+	--lit-fg: var(--film);
+}
+
+[data-design="kontakt"] .stage .icon-button:hover:not(:disabled, [aria-pressed="true"]) {
+	background: color-mix(in srgb, var(--film-fg) 12%, transparent);
+	border-color: var(--film-fg);
+}
+
+[data-design="kontakt"] .stage .icon-button[aria-pressed="true"] {
+	background: var(--st, var(--film-fg));
+	border-color: var(--st, var(--film-fg));
+	color: var(--on-st, var(--film));
+}
+
+[data-design="kontakt"] .stage :focus-visible {
+	outline-color: var(--film-fg);
+}
+
+[data-design="kontakt"] .saved-note {
+	font-size: 0.8rem;
+}
+
+/* ------------------------------------------------------------- queue */
+
+[data-design="kontakt"] .section__head h2 {
+	font-weight: 800;
+	letter-spacing: -0.03em;
+}
+
+[data-design="kontakt"] .queue-number {
+	font-size: 0.75rem;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+}
+
+[data-design="kontakt"] .queue-row:first-child .queue-number {
+	color: var(--brand);
+	font-weight: 700;
+}
+
+[data-design="kontakt"] .queue-duration,
+[data-design="kontakt"] .order__when {
+	font-size: 0.76rem;
+}
+
+[data-design="kontakt"] .queue-row .cover,
+[data-design="kontakt"] .order__row .cover {
+	outline: 3px solid var(--film);
+	outline-offset: 0;
+}
+
+/* ---------------------------------------------------------- Sender */
+
+[data-design="kontakt"] .station-choice {
+	background: var(--film);
+	color: var(--film-fg);
+	border-color: var(--film);
+	overflow: visible;
+}
+
+[data-design="kontakt"] .station-choice__meta {
+	font-family: var(--font-num);
+	font-size: 0.68rem;
+	color: var(--edge);
+}
+
+[data-design="kontakt"] .station-choice button {
+	grid-template-columns: 56px minmax(0, 1fr);
+	grid-template-rows: auto auto 1fr;
+	align-items: start;
+}
+
+[data-design="kontakt"] .station-choice__art {
+	display: grid;
+	grid-column: 1;
+	grid-row: 1 / span 3;
+	width: 56px;
+	height: 56px;
+}
+
+[data-design="kontakt"] .station-choice__name,
+[data-design="kontakt"] .station-choice__meta {
+	grid-column: 2;
+}
+
+[data-design="kontakt"] .station-choice button > svg {
+	grid-column: 2;
+	grid-row: 3;
+	align-self: end;
+	width: 100%;
+	max-width: 120px;
+	color: var(--film-fg-2);
+}
+
+[data-design="kontakt"] .station-choice button:hover {
+	background: color-mix(in srgb, var(--film-fg) 7%, transparent);
+}
+
+[data-design="kontakt"] .station-choice > a {
+	border-top-color: var(--stage-line);
+	color: var(--film-fg);
+}
+
+[data-design="kontakt"] .station-choice--selected {
+	outline: 4px solid var(--st);
+	outline-offset: 4px;
+	border-radius: 2px;
+}
+
+[data-design="kontakt"] .station-choice--selected .station-choice__name::after {
+	color: var(--st);
+}
+
+[data-design="kontakt"] .station-choice :focus-visible {
+	outline-color: var(--film-fg);
+}
+
+/* ---------------------------------------------------------- pages */
+
+[data-design="kontakt"] .masthead--station {
+	position: relative;
+	background: var(--film);
+	color: var(--film-fg);
+	--on-st-text: var(--film-fg);
+	border-top: 6px solid var(--st);
+	border-radius: 0;
+}
+
+[data-design="kontakt"] .masthead--station .back-key,
+[data-design="kontakt"] .masthead--station .masthead__sub,
+[data-design="kontakt"] .masthead--station .masthead__round {
+	color: var(--film-fg);
+}
+
+[data-design="kontakt"] .masthead--station .masthead__round {
+	border-top-color: var(--stage-line);
+}
+
+[data-design="kontakt"] .masthead--station .masthead__round span {
+	color: var(--film-fg-2);
+}
+
+[data-design="kontakt"] .masthead--station .masthead__round span:first-of-type {
+	color: var(--edge);
+	font-family: var(--font-num);
+	font-size: 0.8rem;
+}
+
+[data-design="kontakt"] .masthead--station .meter-code {
+	color: var(--film-fg-2);
+}
+
+[data-design="kontakt"] .masthead--station .key--stage {
+	background: var(--film-fg);
+	color: var(--film);
+	border-color: var(--film-fg);
+}
+
+[data-design="kontakt"] .masthead--station .key--stage-quiet {
+	color: var(--film-fg);
+	border-color: color-mix(in srgb, var(--film-fg) 55%, transparent);
+}
+
+[data-design="kontakt"] .masthead--station :focus-visible {
+	outline-color: var(--film-fg);
+}
+
+[data-design="kontakt"] .masthead__title {
+	font-size: clamp(2.1rem, 9vw, 3.6rem);
+}
+
+[data-design="kontakt"] .terminal__legend {
+	font-weight: 720;
+}
+
+[data-design="kontakt"] .segmented__row,
+[data-design="kontakt"] .segmented--mix {
+	background: transparent;
+	border: var(--bw) solid var(--fg);
+	padding: 0;
+	gap: 0;
+	border-radius: var(--r);
+}
+
+[data-design="kontakt"] .segmented__opt {
+	border-radius: 0;
+}
+
+[data-design="kontakt"] .segmented__opt + .segmented__opt {
+	border-left: 1px solid var(--hair);
+}
+
+[data-design="kontakt"] .welcome__figure {
+	color: var(--film-fg);
+	--bg: var(--film);
+}
+
+[data-design="kontakt"] .stage--welcome h1 {
+	font-size: clamp(2.4rem, 11vw, 4.8rem);
+}
+
+[data-design="kontakt"] .stage--welcome .key--stage {
+	background: var(--film-fg);
+	color: var(--film);
+	border-color: var(--film-fg);
+}
+
+[data-design="kontakt"] .stage--welcome .welcome__lede {
+	color: var(--film-fg-2);
+}
+
+[data-design="kontakt"] .stage--scan h1 {
+	color: var(--film-fg);
+}
+
+[data-design="kontakt"] .stage--scan p {
+	font-family: var(--font-num);
+	font-size: 0.8rem;
+	color: var(--edge);
+}
+
+@media (max-width: 559px) {
+	.filmstrip__frame:nth-child(4) {
+		display: none;
+	}
+}
+
+@media (min-width: 560px) {
+	[data-design="kontakt"] .now-shelf {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			"art"
+			"copy";
+		gap: 6px;
+	}
+}
+
+@media (min-width: 1100px) {
+	[data-design="kontakt"] .station-choice button {
+		grid-template-columns: 72px minmax(0, 1fr);
+	}
+
+	[data-design="kontakt"] .station-choice__art {
+		width: 72px;
+		height: 72px;
+	}
+}

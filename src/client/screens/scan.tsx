@@ -151,12 +151,12 @@ export function Scan({ state }: { state: AppState }) {
 		</div>
 	);
 
-	// Once onboarded this is a page like the others; on first run a poster announces the search.
+	// Once onboarded this is a page like the others; on first run a stage announces the search.
 	if (state.onboarded) return sheet;
 	return (
 		<>
 			<section
-				class="poster poster--scan ink-ultra"
+				class="stage stage--scan ink-ultra"
 				aria-labelledby="scan-title"
 				aria-busy={lists ? undefined : "true"}
 			>

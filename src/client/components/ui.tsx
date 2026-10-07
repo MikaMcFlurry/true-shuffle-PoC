@@ -1,6 +1,6 @@
 /**
- * The poster system's printed parts: covers, page heads, sections, choice
- * scales, the station's ink and the round figure. Presentation only.
+ * Shared presentation parts: covers, page heads, sections, choice scales and
+ * the station colour. Each design styles them; none of them holds state.
  */
 
 import { ArrowLeft, Music2 } from "lucide-preact";
@@ -13,7 +13,7 @@ import { back } from "../router";
 
 // ---------------------------------------------------------------- inks
 
-/** One flat printing ink per station; "Alles" prints in the page's own ink. */
+/** One colour slot per station; "Alles" takes the page's own colour. Each design fills the slots. */
 const INKS = ["ultra", "verm", "green", "violet", "petrol", "yellow"] as const;
 export type Ink = (typeof INKS)[number] | "all";
 
@@ -21,42 +21,6 @@ export function inkOf(s: Pick<StationSummary, "id" | "kind"> | null | undefined)
 	if (!s) return "all";
 	if (s.kind === "all") return "all";
 	return INKS[Math.abs(s.id) % INKS.length] ?? "ultra";
-}
-
-// -------------------------------------------------------- round figure
-
-/**
- * The round, printed as concentric rings: the outer ring's solid arc is the
- * real heard share of this round. Decorative; the numbers sit beside it in text.
- */
-export function RoundFigure(props: { progress: number | null; size?: number }) {
-	const p = Math.min(1, Math.max(0, props.progress ?? 0));
-	const size = props.size ?? 64;
-	const r = 44;
-	const c = 2 * Math.PI * r;
-	return (
-		<svg
-			class="round-figure"
-			viewBox="0 0 100 100"
-			width={size}
-			height={size}
-			aria-hidden="true"
-			focusable="false"
-		>
-			<circle class="round-figure__track" cx="50" cy="50" r={r} />
-			<circle
-				class="round-figure__arc"
-				cx="50"
-				cy="50"
-				r={r}
-				stroke-dasharray={`${(c * p).toFixed(2)} ${c.toFixed(2)}`}
-				transform="rotate(-90 50 50)"
-			/>
-			<circle class="round-figure__ring" cx="50" cy="50" r="30" />
-			<circle class="round-figure__ring" cx="50" cy="50" r="18" />
-			<circle class="round-figure__dot" cx="50" cy="50" r="7" />
-		</svg>
-	);
 }
 
 /** "Runde 2 · 212 von 400 gehört", or that the round counts from its first song. */
@@ -106,12 +70,12 @@ export function PageBar(props: {
 	backTo?: string;
 	action?: ComponentChildren;
 	noBack?: boolean;
-	/** Print the head as a poster band in this station's ink. */
+	/** Print the head as a band in this station's colour. */
 	ink?: Ink;
 	children?: ComponentChildren;
 }) {
 	return (
-		<header class={props.ink ? `masthead masthead--poster ink-${props.ink}` : "masthead"}>
+		<header class={props.ink ? `masthead masthead--station ink-${props.ink}` : "masthead"}>
 			{props.noBack ? null : (
 				<button type="button" class="back-key" onClick={() => back(props.backTo ?? "/")}>
 					<ArrowLeft aria-hidden="true" size={18} />

@@ -10,6 +10,7 @@ import {
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import type { SpotifyUsageReport } from "../../shared/spotify-usage";
 import { api, type SpotifyDiagnostics } from "../api";
+import { BrandMark } from "../components/brand";
 import { RateHit, ThumbMark } from "../components/rate";
 import { SpotifyFunctionStatus, SpotifyUsageTracker } from "../components/spotify-availability";
 import { Detents, PageBar, Section } from "../components/ui";
@@ -34,6 +35,7 @@ function deviceType(t: string): string {
 	return DEVICE_TYPES[t] ?? t;
 }
 
+import { DESIGNS, setDesign, useDesign } from "../design";
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store } from "../store";
 import { roundLabel } from "./home";
@@ -71,6 +73,7 @@ function Terminal(props: {
 
 export function MenuScreen({ state }: { state: AppState }) {
 	const [illum, setIllum] = useState<Illumination>(getIllumination());
+	const design = useDesign();
 	const [hours, setHours] = useState(6);
 	const [confirm, setConfirm] = useState(false);
 	const guest = state.guest;
@@ -93,6 +96,54 @@ export function MenuScreen({ state }: { state: AppState }) {
 	return (
 		<div class="page">
 			<PageBar title="Menü" sub={state.profile.name} backTo="/" />
+
+			<Section
+				title="Gestaltung"
+				id="design"
+				lead="Nur das Aussehen auf diesem Gerät. Sender, Warteschlange und Verlauf bleiben gleich."
+			>
+				<fieldset class="design-picker">
+					<legend class="sr-only">Gestaltung von true-shuffle</legend>
+					{DESIGNS.map((d) => (
+						<label key={d.id} class={`design-card design-card--${d.id}`} data-preview={d.id}>
+							<input
+								type="radio"
+								name="design"
+								value={d.id}
+								checked={design === d.id}
+								onChange={() => setDesign(d.id)}
+							/>
+							<span class="design-card__swatch" aria-hidden="true">
+								<BrandMark design={d.id} />
+							</span>
+							<span class="design-card__text">
+								<span class="design-card__name">{d.name}</span>
+								<span class="design-card__line">{d.line}</span>
+							</span>
+						</label>
+					))}
+				</fieldset>
+			</Section>
+			<Section title="Hell & dunkel" id="illum">
+				<fieldset class="segmented" aria-labelledby="illum">
+					<div class="segmented__row">
+						{ILLUMINATIONS.map(([v, label]) => (
+							<button
+								key={v}
+								type="button"
+								aria-pressed={illum === v}
+								class="segmented__opt segmented__opt--button"
+								onClick={() => {
+									setIllumination(v);
+									setIllum(v);
+								}}
+							>
+								{label}
+							</button>
+						))}
+					</div>
+				</fieldset>
+			</Section>
 
 			<Section title="Gäste" id="guest">
 				<div class="keyunit">
@@ -178,27 +229,6 @@ export function MenuScreen({ state }: { state: AppState }) {
 					/>
 				</ul>
 			</Section>
-			<Section title="Darstellung" id="illum">
-				<fieldset class="segmented" aria-labelledby="illum">
-					<div class="segmented__row">
-						{ILLUMINATIONS.map(([v, label]) => (
-							<button
-								key={v}
-								type="button"
-								aria-pressed={illum === v}
-								class="segmented__opt segmented__opt--button"
-								onClick={() => {
-									setIllumination(v);
-									setIllum(v);
-								}}
-							>
-								{label}
-							</button>
-						))}
-					</div>
-				</fieldset>
-			</Section>
-
 			<Section title="Konto" id="account">
 				<ul class="strip-list">
 					<Terminal href="/info" legend="Info" sub="Wie true-shuffle arbeitet" />

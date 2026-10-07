@@ -1,0 +1,6 @@
+{
+	"origin": "Authored src/client/public/brand/strich/icon.svg",
+	"licence": "Project application asset",
+	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square 512x512",
+	"description": "Strichliste mark: four graphite tallies crossed by a red fifth stroke on squared paper; 2026-10-07"
+}

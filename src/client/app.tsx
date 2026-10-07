@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "preact/hooks";
+import { BrandMark } from "./components/brand";
 import { RateSheet } from "./components/rate";
 import { useRoute } from "./router";
 import { Home } from "./screens/home";
@@ -100,12 +101,8 @@ export function App() {
 			</a>
 			<header class="app-header">
 				<a class="brand" href="/">
-					<svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-						<circle cx="12" cy="12" r="10.5" />
-						<circle cx="12" cy="12" r="6" />
-						<circle cx="12" cy="12" r="2" />
-					</svg>
-					true-shuffle
+					<BrandMark />
+					<span class="brand__word">true-shuffle</span>
 				</a>
 				{s.load.kind === "signed-out" ? null : (
 					<nav aria-label="Hauptnavigation">

@@ -1,0 +1,550 @@
+/*
+ * Klassisch — the familiar music player, played straight.
+ *
+ * Night first like the players it sits beside, with a full day theme: the
+ * platform's own face, rounded controls, the cover large and centred, a
+ * round play key in the middle of the transport row. The Sender colour is
+ * the accent.
+ */
+
+:root[data-design="klassik"] {
+	color-scheme: light;
+	--bg: #f5f5f7;
+	--bar: #f5f5f7;
+	--fg: #1d1d1f;
+	--fg-2: #6e6e73;
+	--hair: #d9d9de;
+	--rule: #d9d9de;
+	--raise: #ffffff;
+	--sunk: rgb(29 29 31 / 0.06);
+	--danger: #d70015;
+	--warn-bg: #fff4ce;
+	--warn-fg: #3d2e00;
+	--focus: #6a4cff;
+	--select: #d8ccff;
+	--select-fg: #1d1d1f;
+	--brand: #6a4cff;
+	--on-brand: #ffffff;
+
+	--font:
+		-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+	--font-display:
+		-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif;
+	--font-num: var(--font);
+	--display-weight: 700;
+	--display-tracking: -0.022em;
+	--display-lh: 1.08;
+	--head-weight: 700;
+	--label-weight: 600;
+
+	--r: 12px;
+	--r-lg: 18px;
+	--r-art: 12px;
+	--r-main: 999px;
+	--bw: 0px;
+	--rule-w: 0px;
+
+	--key-bg: var(--sunk);
+	--key-fg: var(--fg);
+	--key-line: transparent;
+	--key-hover-bg: color-mix(in srgb, var(--fg) 12%, transparent);
+	--key-hover-fg: var(--fg);
+	--lit-bg: var(--fg);
+	--lit-fg: var(--bg);
+
+	--stage-bg: transparent;
+	--stage-pad: 0px;
+	--stage-line: var(--hair);
+	--main-bg: var(--fg);
+	--main-fg: var(--bg);
+	--switch-r: 999px;
+
+	--ink-ultra: #2f6bff;
+	--ink-verm: #ff375f;
+	--ink-green: #1f9d55;
+	--ink-violet: #8e5cff;
+	--ink-petrol: #0a9396;
+	--ink-yellow: #ffb800;
+	--on-ink: #ffffff;
+	--on-ink-yellow: #1d1d1f;
+}
+
+:root[data-design="klassik"][data-illumination="night"] {
+	color-scheme: dark;
+	--bg: #121214;
+	--bar: #121214;
+	--fg: #f5f5f7;
+	--fg-2: #a1a1a6;
+	--hair: #2c2c30;
+	--rule: #2c2c30;
+	--raise: #1c1c1f;
+	--sunk: rgb(245 245 247 / 0.08);
+	--danger: #ff6961;
+	--warn-bg: #3a3000;
+	--warn-fg: #ffe9a3;
+	--focus: #a796ff;
+	--brand: #8f7bff;
+	--select: #4b3f99;
+	--select-fg: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root[data-design="klassik"]:not([data-illumination="day"]) {
+		color-scheme: dark;
+		--bg: #121214;
+		--bar: #121214;
+		--fg: #f5f5f7;
+		--fg-2: #a1a1a6;
+		--hair: #2c2c30;
+		--rule: #2c2c30;
+		--raise: #1c1c1f;
+		--sunk: rgb(245 245 247 / 0.08);
+		--danger: #ff6961;
+		--warn-bg: #3a3000;
+		--warn-fg: #ffe9a3;
+		--focus: #a796ff;
+		--brand: #8f7bff;
+		--select: #4b3f99;
+		--select-fg: #ffffff;
+	}
+}
+
+[data-design="klassik"] .app-header {
+	min-height: 56px;
+}
+
+.brand__mark--klassik .bm-tile {
+	fill: var(--brand);
+}
+
+.brand__mark--klassik .bm-arc,
+.brand__mark--klassik .bm-head {
+	fill: none;
+	stroke: var(--on-brand);
+	stroke-width: 2.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.brand__mark--klassik .bm-play {
+	fill: var(--on-brand);
+}
+
+[data-design="klassik"] .brand {
+	font-weight: 700;
+	font-size: 1.2rem;
+	letter-spacing: -0.02em;
+}
+
+[data-design="klassik"] .app-header :where(nav a)::after {
+	display: none;
+}
+
+[data-design="klassik"] .app-header :where(nav a) {
+	border-radius: 999px;
+	min-height: 36px;
+	margin: 4px 0;
+	padding: 0 12px;
+}
+
+[data-design="klassik"] .app-header :where(nav a)[aria-current] {
+	background: var(--sunk);
+}
+
+/* ------------------------------------------------------------ stage */
+
+[data-design="klassik"] .stage {
+	gap: 16px;
+}
+
+[data-design="klassik"] .stage__head {
+	grid-template-columns: minmax(0, 1fr) auto;
+	padding: 12px 14px;
+	border-radius: var(--r);
+	background: var(--sunk);
+}
+
+[data-design="klassik"] .stage__head > :first-child:not(.line-badge) {
+	grid-column: 1;
+}
+
+[data-design="klassik"] .stage__station h1 {
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+[data-design="klassik"] .stage__station p {
+	font-size: 0.85rem;
+}
+
+[data-design="klassik"] .stage .meter-ring {
+	--ring: var(--st);
+}
+
+[data-design="klassik"] .now-shelf {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas:
+		"art"
+		"title"
+		"artist"
+		"album";
+	row-gap: 4px;
+}
+
+[data-design="klassik"] .cover.player-art {
+	width: min(100%, 420px, 44vh);
+	justify-self: center;
+	margin-bottom: 18px;
+	box-shadow: 0 22px 48px -22px rgb(0 0 0 / 0.55);
+}
+
+[data-design="klassik"] .now-copy h2 {
+	font-size: clamp(1.5rem, 6.2vw, 2.1rem);
+	letter-spacing: -0.02em;
+}
+
+[data-design="klassik"] .now-copy .artist {
+	font-size: 1.1rem;
+	font-weight: 500;
+	color: var(--fg-2);
+}
+
+[data-design="klassik"] .now-copy .album {
+	font-size: 0.9rem;
+}
+
+[data-design="klassik"] :where(.stage--pending, .stage--estimate) .now-copy h2 {
+	-webkit-text-stroke: 0;
+	color: var(--fg-2);
+	font-style: italic;
+}
+
+[data-design="klassik"] :where(.stage--pending, .stage--estimate) .cover.player-art {
+	opacity: 0.55;
+}
+
+[data-design="klassik"] .progress-area {
+	--progress: var(--fg);
+}
+
+[data-design="klassik"] .progress-area progress {
+	height: 5px;
+	border-radius: 999px;
+}
+
+[data-design="klassik"] .progress-area progress::-webkit-progress-value,
+[data-design="klassik"] .progress-area progress::-webkit-progress-bar {
+	border-radius: 999px;
+}
+
+[data-design="klassik"] .progress-labels {
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: var(--fg-2);
+}
+
+[data-design="klassik"] .session-status {
+	font-weight: 600;
+	font-size: 0.88rem;
+	color: var(--fg-2);
+}
+
+[data-design="klassik"] .signal {
+	--signal: var(--st);
+	gap: 4px;
+}
+
+[data-design="klassik"] .signal__step {
+	border-top-width: 3px;
+	border-radius: 0;
+	font-size: 0.72rem;
+	font-weight: 500;
+}
+
+/* Transport: the round play key leads, then next, favourite and never again. */
+[data-design="klassik"] .transport {
+	grid-template-columns: auto repeat(3, var(--key));
+	justify-content: center;
+	align-items: center;
+	gap: 18px;
+}
+
+[data-design="klassik"] .transport-main {
+	width: 76px;
+	height: 76px;
+	min-height: 76px;
+	padding: 0;
+	border-radius: 50%;
+	font-size: 0;
+	gap: 0;
+}
+
+[data-design="klassik"] .transport-main svg {
+	width: 32px;
+	height: 32px;
+}
+
+[data-design="klassik"] .transport-main:disabled {
+	border: 2px dashed var(--fg-2);
+	color: var(--fg-2);
+}
+
+[data-design="klassik"] .icon-button {
+	background: transparent;
+	border-radius: 50%;
+	width: var(--key);
+	height: var(--key);
+	min-height: var(--key);
+}
+
+[data-design="klassik"] .icon-button[aria-pressed="true"] {
+	background: transparent;
+	color: var(--st, var(--brand));
+}
+
+[data-design="klassik"] .icon-button:hover:not(:disabled) {
+	background: var(--sunk);
+}
+
+[data-design="klassik"] .stage__note {
+	text-align: center;
+}
+
+[data-design="klassik"] .saved-note {
+	border-top: 0;
+	padding-top: 0;
+	text-align: center;
+}
+
+/* ------------------------------------------------------- lists */
+
+[data-design="klassik"] .section__head {
+	padding-bottom: 6px;
+}
+
+[data-design="klassik"] .section__head h2 {
+	font-size: clamp(1.35rem, 5vw, 1.75rem);
+}
+
+[data-design="klassik"] .queue-row,
+[data-design="klassik"] .order__row {
+	border-bottom: 0;
+	padding: 8px 0;
+}
+
+[data-design="klassik"] .queue-row .cover,
+[data-design="klassik"] .order__row .cover {
+	border-radius: 8px;
+}
+
+[data-design="klassik"] .queue-number {
+	font-weight: 500;
+	font-size: 0.85rem;
+}
+
+[data-design="klassik"] .track__hit {
+	border-radius: 10px;
+	inset: 0 -8px;
+	width: calc(100% + 16px);
+}
+
+[data-design="klassik"] .station-choice {
+	border: 0;
+	background: var(--raise);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+[data-design="klassik"] .station-choice button {
+	grid-template-columns: 64px minmax(0, 1fr) auto;
+	grid-template-rows: auto 1fr;
+	align-items: center;
+	gap: 4px 14px;
+	min-height: 96px;
+}
+
+[data-design="klassik"] .station-choice__art {
+	display: grid;
+	grid-column: 1;
+	grid-row: 1 / span 2;
+	width: 64px;
+	height: 64px;
+	border-radius: 10px;
+}
+
+[data-design="klassik"] .station-choice__name,
+[data-design="klassik"] .station-choice__meta {
+	grid-column: 2;
+}
+
+[data-design="klassik"] .station-choice__meta {
+	align-self: start;
+}
+
+[data-design="klassik"] .station-choice__name {
+	align-self: end;
+	font-weight: 650;
+	font-size: 1.05rem;
+}
+
+[data-design="klassik"] .station-choice button > svg {
+	grid-column: 3;
+	grid-row: 1 / span 2;
+	align-self: center;
+	--ring: var(--st);
+}
+
+[data-design="klassik"] .station-choice--selected {
+	box-shadow: 0 0 0 2px var(--st);
+}
+
+[data-design="klassik"] .station-choice > a {
+	border-top: 1px solid var(--hair);
+	font-weight: 600;
+	color: var(--brand);
+}
+
+[data-design="klassik"] .masthead {
+	padding-bottom: 8px;
+}
+
+[data-design="klassik"] .masthead--station {
+	padding-bottom: 20px;
+}
+
+[data-design="klassik"] .masthead--station .meter-ring {
+	--ring: var(--on-st);
+}
+
+[data-design="klassik"] .masthead--station .key--stage {
+	border-radius: 999px;
+}
+
+[data-design="klassik"] .masthead--station .key--stage-quiet {
+	border: 1.5px solid var(--on-st);
+	border-radius: 999px;
+}
+
+[data-design="klassik"] .key--quiet {
+	background: transparent;
+	box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+[data-design="klassik"] .key--danger {
+	background: transparent;
+	box-shadow: inset 0 0 0 1.5px var(--danger);
+}
+
+[data-design="klassik"] .new-queue-confirm {
+	border: 1.5px dashed var(--fg-2);
+}
+
+[data-design="klassik"] .notice {
+	border: 0;
+	background: var(--raise);
+	box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+[data-design="klassik"] .notice--warn,
+[data-design="klassik"] .notice--offline {
+	background: var(--warn-bg);
+	box-shadow: none;
+}
+
+[data-design="klassik"] .notice--error {
+	box-shadow: inset 0 0 0 1.5px var(--danger);
+}
+
+[data-design="klassik"] .notice--estimate {
+	box-shadow: none;
+	border: 1.5px dashed var(--fg-2);
+}
+
+[data-design="klassik"] .note {
+	border-top: 1px solid var(--hair);
+}
+
+[data-design="klassik"] .device-select select,
+[data-design="klassik"] .input {
+	border: 0;
+	background-color: var(--raise);
+	box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+[data-design="klassik"] .switch {
+	border: 0;
+	background: color-mix(in srgb, var(--fg) 18%, transparent);
+	--bw: 0px;
+}
+
+[data-design="klassik"] .switch::after {
+	background: #ffffff;
+	box-shadow: 0 2px 4px rgb(0 0 0 / 0.25);
+}
+
+[data-design="klassik"] .switch:checked::after {
+	background: #ffffff;
+}
+
+[data-design="klassik"] .more {
+	border-top: 1px solid var(--hair);
+}
+
+[data-design="klassik"] .stage--welcome .welcome__figure {
+	width: min(24vw, 96px);
+}
+
+[data-design="klassik"] .stage--welcome,
+[data-design="klassik"] .stage--scan {
+	padding: 28px 22px;
+	background: var(--raise);
+	border-radius: var(--r-lg);
+}
+
+[data-design="klassik"] .stage--welcome .key--stage {
+	--on-st: var(--brand);
+	--st: var(--on-brand);
+	border-radius: 999px;
+}
+
+@media (min-width: 560px) {
+	[data-design="klassik"] .now-shelf {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			"art"
+			"copy";
+	}
+
+	[data-design="klassik"] .cover.player-art {
+		width: min(100%, 360px);
+	}
+
+	[data-design="klassik"] .now-copy {
+		text-align: center;
+	}
+}
+
+@media (min-width: 1100px) {
+	[data-design="klassik"] .player {
+		padding: 32px;
+		background: var(--raise);
+		border-radius: 24px;
+	}
+
+	[data-design="klassik"] .queue {
+		padding: 24px;
+		background: var(--raise);
+		border-radius: 24px;
+	}
+
+	[data-design="klassik"] .device-panel {
+		border-bottom: 0;
+	}
+}
+
+@media (max-width: 559px) {
+	[data-design="klassik"] .now-copy h2,
+	[data-design="klassik"] .now-copy .artist,
+	[data-design="klassik"] .now-copy .album {
+		text-align: left;
+	}
+}

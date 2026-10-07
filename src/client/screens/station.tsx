@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { SlotKind, StationRules } from "../../core/types";
 import type { AppState, PlaylistView, StationDetail, StationSource } from "../../shared/api";
 import { api } from "../api";
+import { RoundMeter } from "../components/brand";
 import { RateHit, ThumbMark } from "../components/rate";
-import { Cover, Detents, inkOf, MixScale, PageBar, RoundFigure, Section } from "../components/ui";
+import { Cover, Detents, inkOf, MixScale, PageBar, Section } from "../components/ui";
 import { ago, DECK_PREFIX, num, pct } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
@@ -273,7 +274,7 @@ export function Station({
 				ink={inkOf(summary)}
 			>
 				<div class="masthead__round">
-					<RoundFigure progress={d.progress} size={72} />
+					<RoundMeter progress={d.progress} />
 					<p class="num">
 						<strong>Runde {d.roundNo}</strong>
 						<span>
@@ -287,7 +288,7 @@ export function Station({
 				<div class="acts">
 					<button
 						type="button"
-						class="key key--poster"
+						class="key key--stage"
 						disabled={!summary.ready || !!store.tuning}
 						onClick={() => void playStation(summary)}
 					>
@@ -295,7 +296,7 @@ export function Station({
 					</button>
 					{d.playlistId ? (
 						<a
-							class="key key--poster-quiet"
+							class="key key--stage-quiet"
 							href={`https://open.spotify.com/playlist/${d.playlistId}`}
 							target="_blank"
 							rel="noopener"
@@ -303,7 +304,7 @@ export function Station({
 							In Spotify
 						</a>
 					) : (
-						<span class="key key--poster-quiet" aria-disabled="true">
+						<span class="key key--stage-quiet" aria-disabled="true">
 							wird vorbereitet
 						</span>
 					)}

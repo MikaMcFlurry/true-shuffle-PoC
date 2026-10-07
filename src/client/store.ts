@@ -6,6 +6,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, PlayResult, TrackView } from "../shared/api";
 import { ApiError, api } from "./api";
+import { syncThemeColor } from "./design";
 
 export type Load =
 	| { kind: "loading" }
@@ -426,4 +427,5 @@ export function applyIllumination(v = getIllumination()): void {
 	const root = document.documentElement;
 	if (v === "auto") root.removeAttribute("data-illumination");
 	else root.setAttribute("data-illumination", v);
+	syncThemeColor();
 }
