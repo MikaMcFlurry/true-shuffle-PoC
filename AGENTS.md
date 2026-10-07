@@ -1,6 +1,6 @@
 # true-shuffle — Cloudflare restart
 
-Current design release from branch `claude/impeccable-ux-concepts`: six distinct operating surfaces (Leuchttisch default, Fahrt, Notizblock, Player, Umlauf, Fahrmodus) over unchanged player logic; 6 x 42 browser tests pass. Released 2026-10-07 on owner instruction by fast-forwarding codex/implement-cloudflare-restart (Workers Builds). Evidence: docs/ai-dev/evidence/UX_CONCEPTS.json.
+Current design release from branch `claude/impeccable-ux-concepts`: six distinct operating surfaces (Leuchttisch default, Fahrt, Notizblock, Player, Umlauf, Fahrmodus) over unchanged player logic; 6 x 42 browser tests pass. Released 2026-10-07 on owner instruction by fast-forwarding codex/implement-cloudflare-restart (Workers Builds), hotfix 826c1ec; public assets/API/anonymous browser readback PASS, Cloudflare version id not read (no credentials). Evidence: docs/ai-dev/evidence/UX_CONCEPTS.json.
 
 Previous design release from branch `claude/impeccable-rebrand` (from live source `0cad177`): four switchable client designs (Kontaktbogen default, Linienplan, Strichliste, Klassisch) under Menü > Gestaltung, new brand marks/icons, docs/BRAND.md and rewritten DESIGN.md. Presentation only; worker, storage, history and queue logic untouched. Released 2026-10-07 on owner instruction by fast-forwarding codex/implement-cloudflare-restart (Workers Builds); public assets/API/anonymous browser readback PASS; Cloudflare version id not read (no credentials). Evidence: docs/ai-dev/evidence/REBRAND_DESIGNS.json.
 
