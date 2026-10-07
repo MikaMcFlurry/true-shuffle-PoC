@@ -1,3 +1,5 @@
+> Current review (2026-10-07): six-surface source `c05ae42216fd6d011d955e89de11198fef28b6e5`, external version `93f6d97c-81d0-423a-9abf-c0a6f3d58dd6`, deployment `8cad3af9-0e57-4754-8017-4b3e3246f00a` at100%. UI verdict **NOT_READY**: earlier storage/contrast findings remain; current CI passes. See [current source/deployment/review evidence](docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json). Earlier release identities below are historical. This watch performed no merge/deployment.
+
 # true-shuffle — Cloudflare restart
 
 Current design release from branch `claude/impeccable-ux-concepts`: six distinct operating surfaces (Leuchttisch default, Fahrt, Notizblock, Player, Umlauf, Fahrmodus) over unchanged player logic; 6 x 42 browser tests pass. Released 2026-10-07 on owner instruction by fast-forwarding codex/implement-cloudflare-restart (Workers Builds), hotfix 826c1ec; public assets/API/anonymous browser readback PASS, Cloudflare version id not read (no credentials). Evidence: docs/ai-dev/evidence/UX_CONCEPTS.json.

@@ -1,16 +1,16 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-01T14:33:44.836488+00:00",
+  "generated_at": "2026-10-07T10:07:18.799039+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
-    "revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+    "revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "Cloudflare version 60e34407-fd2a-43b8-8837-d894aec2f5a6; exact public assets/auth/browser readback; source CI/local Worker+browser simulation. Physical iPhone/owner HA/populated restore NOT_RUN.",
+    "environment": "Externally deployed CF93f6d97c-81d0-423a-9abf-c0a6f3d58dd6/deployment8cad3af9-0e57-4754-8017-4b3e3246f00a100%; exactproductionreadback; see SIX_SURFACE_REVIEW.json. Physical provider/HA/restore NOT_RUN.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
   "delivery_target": "PRODUCTION_LIVE",
-  "claim": "PARTIAL",
+  "claim": "BLOCKED",
   "material_release": true,
   "change_profiles": [
     "USER_FACING",
@@ -182,6 +182,18 @@
       "title": "Real owner HA/MA routes not verified",
       "severity": "P1",
       "blocking": true
+    },
+    {
+      "id": "FOUR-DESIGN-STORAGE",
+      "title": "Make Storage.prototype.getItem/setItem throw SecurityError; open ?design=linie. Root data-design=linie, BrandMark/filmstrip/meter stay kontakt. Menu choice and newly mounted components disagree after navigation.",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "FOUR-DESIGN-CONTRAST",
+      "title": "Public klassik dark welcome at390px: sign-in button 16.8px bold700 #fff on #8f7bff, measured contrast3.258:1, below WCAGAA small-text4.5:1.",
+      "severity": "P2",
+      "blocking": true
     }
   ],
   "gates": [
@@ -193,14 +205,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-01",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-02",
@@ -210,14 +222,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-02",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-03",
@@ -227,14 +239,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-03",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-04",
@@ -244,14 +256,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-04",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-05",
@@ -261,14 +273,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-05",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-06",
@@ -278,14 +290,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-06",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-07",
@@ -295,14 +307,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-07",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-08",
@@ -312,14 +324,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-08",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-09",
@@ -329,14 +341,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-09",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-10",
@@ -346,31 +358,31 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-10",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-NN-11",
       "category": "ui_runtime",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-11",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Local implementation and targeted regression evidence; synthetic provider fixtures, not live acceptance."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-BUILD",
@@ -380,38 +392,14 @@
       "evidence": [
         {
           "id": "EV-G-BUILD",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-ARTIST-SCOPE-G-BUILD",
-          "kind": "fresh scoped verification and independent review",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-TRIAL-G-BUILD",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-CONFIRMED-G-BUILD",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-STATIC",
@@ -421,38 +409,14 @@
       "evidence": [
         {
           "id": "EV-G-STATIC",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-ARTIST-SCOPE-G-STATIC",
-          "kind": "fresh scoped verification and independent review",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-TRIAL-G-STATIC",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-CONFIRMED-G-STATIC",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-MIGRATION",
@@ -462,14 +426,14 @@
       "evidence": [
         {
           "id": "EV-G-MIGRATION",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-RECOVERY",
@@ -479,14 +443,14 @@
       "evidence": [
         {
           "id": "EV-G-RECOVERY",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-QUOTA",
@@ -496,194 +460,133 @@
       "evidence": [
         {
           "id": "EV-G-QUOTA",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-FULL-DAY-USAGE",
-          "kind": "local full-day usage and fresh independent replay",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-ARTIST-SCOPE-G-QUOTA",
-          "kind": "fresh scoped verification and independent review",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-TRIAL-G-QUOTA",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-CONFIRMED-G-QUOTA",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-BROWSER",
       "category": "ui_runtime",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-BROWSER",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-QUOTA-COPY-BROWSER",
-          "kind": "local browser and fresh independent render",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-ARTIST-SCOPE-G-BROWSER",
-          "kind": "fresh scoped verification and independent review",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-TRIAL-G-BROWSER",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-CONFIRMED-G-BROWSER",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Final integrated source validated locally; see recorded commands/results and source binding."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-INDEPENDENT",
       "category": "independent_review",
       "required": true,
-      "status": "NOT_RUN",
+      "status": "FAIL",
       "evidence": [
         {
-          "id": "EV-ARTIST-SCOPE-G-INDEPENDENT",
-          "kind": "fresh scoped verification and independent review",
-          "ref": "docs/ai-dev/evidence/ARTIST_ALBUMS_SCOPE_REVIEW.md",
-          "result": "NOT_RUN on current source; historical context: NOT_RUN on current source; historical context: NOT_RUN on current source; historical context: Current regression coverage retains this supporting history from a46bc043717b113dc37d1989ab4323bf166d2da9: Current regression coverage retains this supporting history from eb09bcb5ef5ccedc9be951aa38b7042952f3c246: Artist scope exact boundary, scopedprobe and retainedlegacydeadline checked; 341 complete unit/Worker and18 browser casesPASS. Actual owner recovery not exercised.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-09-30T12:12:46.532146+00:00"
-        },
-        {
-          "id": "EV-TRIAL-G-INDEPENDENT",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/AVAILABILITY_TRIAL_REVIEW.md",
-          "result": "NOT_RUN on current source; historical context: NOT_RUN on current source; historical context: NOT_RUN on current source; historical context: Current regression coverage retains this supporting history from a46bc043717b113dc37d1989ab4323bf166d2da9: Explicit bounded trial READY;62 independent tests/5 renders and356 integrated/20 browser checks PASS; source CI36720476950 PASS. Actual owner trial/provider recovery NOT_RUN.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-09-30T13:22:18.173393+00:00"
-        },
-        {
-          "id": "EV-CONFIRMED-G-INDEPENDENT",
-          "kind": "fresh bounded verification",
-          "ref": "docs/ai-dev/evidence/CONFIRMED_REQUEST_TRACKER_REVIEW.md",
-          "result": "NOT_RUN on current source; historical context: NOT_RUN on current source; historical context: NOT_RUN on current source; historical context: Confirmedoperation/sharedtracker scopedREADY;64independenttests/6renders and358integrated/20browser, sourceCI36760609139PASS. Ownercurrenttracker/control/HA NOT_RUN.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-09-30T18:51:39.901267+00:00"
+          "id": "EV-G-INDEPENDENT",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Fresh backend and narrow Store reviews pass locally; full production acceptance remains blocked only by owner provider and actual populated-storage restore evidence, not absent Cloudflare login/deployment."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LIVE-SPOTIFY",
       "category": "live_provider",
       "required": true,
       "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Laterownerscreenshot establishes successfultransport and artist-albums429 triggering localdeviceblock. Scopedfixdeployed; actualongoingSpotify/HArecovery/account-wideattribution/multiusercapacity NOT_RUN."
+      "evidence": [
+        {
+          "id": "EV-G-LIVE-SPOTIFY",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "NOT_RUN: physical provider/privateHA/populatedrestore unavailable.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+        }
+      ],
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LIVE-HA-MA",
       "category": "live_provider",
       "required": true,
       "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Real native HA/MA and MA Spotify Connect acceptance unavailable."
+      "evidence": [
+        {
+          "id": "EV-G-LIVE-HA-MA",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "NOT_RUN: physical provider/privateHA/populatedrestore unavailable.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+        }
+      ],
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LIVE-PRODUCTION",
       "category": "recovery",
       "required": true,
       "status": "NOT_RUN",
-      "evidence": [],
-      "rationale": "Deployment identity, preserved bindings and public readback now pass. Populated production migration/history invariants and an actual object restore remain NOT_RUN."
+      "evidence": [
+        {
+          "id": "EV-G-LIVE-PRODUCTION",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "NOT_RUN: physical provider/privateHA/populatedrestore unavailable.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+        }
+      ],
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-LOCAL-INDEPENDENT",
       "category": "independent_review",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
-          "id": "EV-LOCAL-INDEPENDENT",
-          "kind": "fresh independent review",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
-        },
-        {
-          "id": "EV-INDEPENDENT-STORE-DELTA",
-          "kind": "fresh source delta review",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "id": "EV-G-LOCAL-INDEPENDENT",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Fresh local review complete; separately recorded live release gate remains NOT_RUN."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-ACCESSIBILITY",
       "category": "accessibility",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
-          "id": "EV-ACCESSIBILITY",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "id": "EV-G-ACCESSIBILITY",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Browser keyboard and labeled-control checks, 44px touch targets and inspected light/dark/mobile captures pass within the tested player scope. No comprehensive assistive-technology certification claimed."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-DATA_INVARIANTS",
@@ -692,15 +595,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "EV-DATA_INVARIANTS",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "id": "EV-G-DATA_INVARIANTS",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Stable occurrence/session IDs, stale revision fences, 10000-entry rolling continuity and additive migration/history preservation pass."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-PERFORMANCE_RELIABILITY",
@@ -709,15 +612,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "EV-PERFORMANCE_RELIABILITY",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "id": "EV-G-PERFORMANCE_RELIABILITY",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Bounded bridge journal and queues, request-pressure reductions and existing typical/maximum row budgets pass locally."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-SECURITY_PRIVACY",
@@ -726,15 +629,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "EV-SECURITY_PRIVACY",
-          "kind": "local verification",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "id": "EV-G-SECURITY_PRIVACY",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Native bearer authentication, per-account server configuration, secret error sanitization, epoch/revision isolation and denied bridge requests tested locally; live configuration remains NOT_RUN."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-CF-IDENTITY",
@@ -743,15 +646,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "EV-CF-IDENTITY",
-          "kind": "production readback",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "id": "EV-G-CF-IDENTITY",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Authenticated existing Worker/version/namespace/secret readback and corrected version promotion100% pass. Does not establish owner-authenticated playback or populated object recovery."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-CF-PUBLIC",
@@ -760,32 +663,32 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "EV-CF-PUBLIC",
-          "kind": "production readback",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "id": "EV-G-CF-PUBLIC",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Public health/configured, exactlocalJS/CSS assets, anonymous401 and CSRF403 pass. Does not establish owner-authenticated playback or populated object recovery."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     },
     {
       "id": "G-CF-BROWSER",
       "category": "ui_runtime",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
-          "id": "EV-CF-BROWSER",
-          "kind": "production readback",
-          "ref": "docs/ai-dev/evidence/UI_RELEASE.json",
-          "result": "Current 444unit/40browser/sourceCI36876091612PASS; exact assets/auth/public-browser readbackPASS; scoped independent READY. Local FakeSpotify correctness, persistence/recovery and browser fixtures are simulations; no live Spotify latency/capacity claim. Full physical Spotify/HA/populatedrestore NOT_RUN. Historical reports retain provenance in git.",
-          "subject_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
-          "observed_at": "2026-10-01T14:33:44.836488+00:00"
+          "id": "EV-G-CF-BROWSER",
+          "kind": "post-release independent watch",
+          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
+          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
+          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+          "observed_at": "2026-10-07T10:07:18.799039+00:00"
         }
       ],
-      "rationale": "Actual mobile production Chromium signin renders without false offline banner, errors or horizontal overflow. Does not establish owner-authenticated playback or populated object recovery."
+      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
     }
   ]
 }

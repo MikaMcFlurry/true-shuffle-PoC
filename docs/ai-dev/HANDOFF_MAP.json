@@ -36,7 +36,7 @@
       "path": "AGENTS.md",
       "treatment": "UPDATE",
       "authority": "CANONICAL",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime. Current six-surface review is docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json (c05ae42, NOT_READY); mapped analysis baseline is historical, not current-source alignment.",
       "evidence_ids": [
         "EV-01",
         "EV-02"

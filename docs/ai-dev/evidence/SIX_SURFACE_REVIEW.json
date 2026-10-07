@@ -1,0 +1,90 @@
+{
+  "schema_version": "true-shuffle.six-surface-review.v1",
+  "observed_at": "2026-10-07T10:07:18.799039+00:00",
+  "source_sha": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+  "baseline_sha": "d2e0d8b0010f7e4675f8b3c8f54753cb22c0e7a4",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "verdict": "NOT_READY",
+  "independence": "FRESH",
+  "provenance": {
+    "git_author": "Claude <noreply@anthropic.com>",
+    "session": "https://claude.ai/code/session_01GfrWhVD3PNTtGAxyXcbJSX",
+    "branch": "claude/impeccable-ux-concepts",
+    "github_commit_metadata_read": true,
+    "completion_comment": "No new completion comment on PR10-14; direct owner-instructed fast-forward reported in UX_CONCEPTS.json; already externally deployed."
+  },
+  "related_prs": {
+    "10": "implementation umbrella, headc05, base restart-plan; not UI merge destination",
+    "11": "historical Claude UI, merged, headd4baa0e unchanged",
+    "12": "historical corrective prerequisite, merged, headf7d95e5 unchanged",
+    "13": "historical restoration documentation, draft54493f5",
+    "14": "current review evidence, documentation only"
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS, two preexisting informational suggestions",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit_full": "443PASS/1robustness20sTimeout with unchanged Worker; no false444PASS claim",
+    "unit_targeted_repeat": "timed-out case PASS19.08s, other116 skipped",
+    "browser": "42/42PASS exacthead, realWorker/FakeSpotify; six choices included",
+    "playback_design_matrix": "PASS5x19:linie,strich,klassik,umlauf,fahrmodus; exacthead137browserchecks total, retained functional assertions",
+    "source_ci": {
+      "run": 37597618300,
+      "result": "PASS444unit/42browser/static/build/dryrun",
+      "tested_commit": "f653798 syntheticPR10merge ofc05 into5ffe99; exacthead separately tested locally"
+    },
+    "independent_browser": "PASS24 exact-artifact long-content cells sixDesignsxlight/darkx390/1440, menu/offline all6; PASS24 real public welcome cells without overflow; classicdarkCTAcontrastFAIL3.26:1; blockedStorageHomeLayoutmismatchFAIL. Docklongtext remains reachable by scroll and keyboard."
+  },
+  "findings": [
+    {
+      "id": "FOUR-DESIGN-STORAGE",
+      "priority": "P2",
+      "files": [
+        "src/client/design.ts:46",
+        "src/client/design.ts:98"
+      ],
+      "reproduction": "On c05: Storage getItem/setItem throwsSecurityError, URLselectnondefault. Root attribute requested design but actual HomeLayout lw--kontakt; selected design is not in-memory authoritative. All5nondefault choices affected.",
+      "expected": "Active in-memory design remains authoritative when persistence fails; protect query/menu/navigation with browser regression."
+    },
+    {
+      "id": "FOUR-DESIGN-CONTRAST",
+      "priority": "P2",
+      "files": [
+        "src/client/styles/klassik.css:85",
+        "src/client/styles/klassik.css:500"
+      ],
+      "reproduction": "On c05 real production: Player(klassik)dark login16.8px700white/#8f7bff, contrast3.26:1 versus4.5:1 requirement.",
+      "expected": "Sign-in text >=4.5:1; verify button tokens across four designs and both themes."
+    }
+  ],
+  "closed_findings": [
+    {
+      "id": "FOUR-DESIGN-CI",
+      "reason": "CurrentCI37597618300 PASS42browsers includingclassikphone; local42PASS. Oldrun remains historicalFAIL."
+    }
+  ],
+  "protected_scope": "Worker/core/shared/store/api/router/playback-view/config/migrations unchanged; pre-layout Home selection, handlers and playback calculations exact equal after removing design import/hook. RidePast adds read-only stored-history API call on mount/savedoccurrence change, cancelled on unmount; account-keyedHome prevents late old-account history publication. No extraSpotifyrequests or durable writes. Original responsiveness simulation provenance retained.",
+  "deployment": {
+    "performed_by_this_watch": false,
+    "version_id": "93f6d97c-81d0-423a-9abf-c0a6f3d58dd6",
+    "deployment_id": "8cad3af9-0e57-4754-8017-4b3e3246f00a",
+    "created_on": "2026-10-07T09:01:04.85537Z",
+    "traffic_percent": 100,
+    "prior_version": "6366323b-b835-4bf4-8d7b-f81fd793c475",
+    "script_runtime_bindings": "Authenticated exact comparison: script, runtime and bindings equal to prior; namespace USER_HUB/REGISTRY, migrationv1, variables and secretbindings preserved",
+    "assets": "75/75 public resources byteidentical, includingroot/JS/CSS/fonts/icons/map; upload-control _headers excluded",
+    "health": 200,
+    "anonymous_auth": 401,
+    "no_csrf": 403,
+    "foreign_origin": 403,
+    "x_ts_without_session": 401
+  },
+  "not_run": [
+    "physical iPhone",
+    "authenticated production Spotify latency/playback/quota",
+    "private HA/MA",
+    "populated Durable Object restore"
+  ],
+  "handoff": "Analysis09d772 and oldrelease records remain historical. Fullmission BLOCKED by priorliveacceptance gaps; thisUIreview NOT_READY. No duplicate merge/deploy; no application edits by reviewer."
+}
