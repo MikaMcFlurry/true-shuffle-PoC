@@ -834,7 +834,14 @@ export function Home({ state }: { state: AppState }) {
 		inkClass: `ink-${inkOf(posterStation)}`,
 		posterStation,
 	};
-	return <HomeLayout design={design} parts={parts} trackId={track?.id ?? null} />;
+	return (
+		<HomeLayout
+			design={design}
+			parts={parts}
+			confirmedEntry={session?.entryId ?? null}
+			confirmedTrackId={savedTrack?.id ?? null}
+		/>
+	);
 }
 
 /** Keep the last word and its ellipsis together on a held key. */

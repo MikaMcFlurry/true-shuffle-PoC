@@ -34,11 +34,18 @@ export interface HomeParts {
 	posterStation: StationSummary | null;
 }
 
-export function HomeLayout(props: { design: Design; parts: HomeParts; trackId: string | null }) {
+export function HomeLayout(props: {
+	design: Design;
+	parts: HomeParts;
+	/** The saved occurrence; a display-only estimate never changes it. */
+	confirmedEntry: string | null;
+	confirmedTrackId: string | null;
+}) {
 	const p = props.parts;
 	const side = (
 		<div class="player-side">
 			{p.notices}
+			{p.devicePanel}
 			{p.lateNotices}
 		</div>
 	);
@@ -67,10 +74,7 @@ export function HomeLayout(props: { design: Design; parts: HomeParts; trackId: s
 						{p.stationActions}
 					</aside>
 					{p.queueSection}
-					<div class="home-tail">
-						{p.devicePanel}
-						{p.libraryLinks}
-					</div>
+					<div class="home-tail">{p.libraryLinks}</div>
 				</div>
 			);
 		case "linie":
@@ -92,7 +96,7 @@ export function HomeLayout(props: { design: Design; parts: HomeParts; trackId: s
 							>
 								Linie wechseln
 							</button>
-							<RidePast trackId={props.trackId} />
+							<RidePast entry={props.confirmedEntry} trackId={props.confirmedTrackId} />
 							<div class="ride-now">
 								<p class="ride-now__label" aria-hidden="true">
 									Jetzt hier
@@ -115,7 +119,6 @@ export function HomeLayout(props: { design: Design; parts: HomeParts; trackId: s
 						{p.stationActions}
 						{p.libraryLinks}
 					</aside>
-					<div class="home-tail">{p.devicePanel}</div>
 				</div>
 			);
 		case "strich":
@@ -146,7 +149,6 @@ export function HomeLayout(props: { design: Design; parts: HomeParts; trackId: s
 					{p.queueSection}
 					<div class="home-tail">
 						{p.stationActions}
-						{p.devicePanel}
 						{p.libraryLinks}
 					</div>
 				</div>
@@ -206,7 +208,6 @@ export function HomeLayout(props: { design: Design; parts: HomeParts; trackId: s
 					{p.queueSection}
 					<div class="home-tail">
 						{p.stationActions}
-						{p.devicePanel}
 						{p.libraryLinks}
 					</div>
 				</div>
@@ -233,10 +234,7 @@ export function HomeLayout(props: { design: Design; parts: HomeParts; trackId: s
 						{p.stationActions}
 					</aside>
 					{p.queueSection}
-					<div class="home-tail">
-						{p.devicePanel}
-						{p.libraryLinks}
-					</div>
+					<div class="home-tail">{p.libraryLinks}</div>
 				</div>
 			);
 	}
@@ -253,9 +251,10 @@ function Dock(props: { ink: string; board?: boolean; children: ComponentChildren
 
 /**
  * Fahrt: the last stops this listener actually heard, read from the stored
- * history (no Spotify request). Refreshed when the song changes.
+ * history (no Spotify request). Refreshed only when the saved occurrence
+ * changes, never for a display-only estimate.
  */
-function RidePast(props: { trackId: string | null }) {
+function RidePast(props: { entry: string | null; trackId: string | null }) {
 	const [items, setItems] = useState<HistoryEntry[] | null>(null);
 	useEffect(() => {
 		let alive = true;
@@ -270,7 +269,7 @@ function RidePast(props: { trackId: string | null }) {
 		return () => {
 			alive = false;
 		};
-	}, [props.trackId]);
+	}, [props.entry]);
 	const past = (items ?? []).filter((t) => t.id !== props.trackId).slice(0, 3);
 	if (!past.length) return null;
 	return (

@@ -581,8 +581,7 @@
 /* The queue as a sheet you scroll up into. */
 [data-design="klassik"] .up-sheet {
 	position: relative;
-	margin: 0 calc(-1 * var(--gutter));
-	padding: 28px var(--gutter) 24px;
+	padding: 28px 16px 24px;
 	border-radius: 28px 28px 0 0;
 	background: var(--raise);
 	box-shadow: 0 -18px 40px -30px rgb(0 0 0 / 0.5);
