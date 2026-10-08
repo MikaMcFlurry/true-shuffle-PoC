@@ -11,12 +11,12 @@
     "Populatedproductionrestore",
     "Fullscreenreader"
   ],
-  "generated_at": "2026-10-08T21:14:59.432984+00:00",
+  "generated_at": "2026-10-08T21:18:56.237579+00:00",
   "reviewed_source": "4b0a2a21f64474416eaeda780e38b3c3585a2004",
   "integrated_source": "e348e838f9526bc83b92070302ba15831a87d7b8",
   "independence": "FRESH",
-  "verdict": "READY_WITH_NON_BLOCKING_FINDINGS",
-  "delivery_state": "PRODUCTION_LIVE_SCOPED_PR18",
+  "verdict": "NOT_READY",
+  "delivery_state": "PARTIAL",
   "full_mission_acceptance": "PARTIAL; live iPhone/Spotify/HA-MA/populated restore NOT_RUN",
   "merged": true,
   "completion_comment": {
@@ -38,6 +38,18 @@
       "blocking": false,
       "title": "Emoji label touches top paper edge by0.715 SVG unit; no clipping or functional impact",
       "ref": "docs/ai-dev/evidence/tag-wording-review/FINAL_UI_REVIEW.md"
+    },
+    {
+      "id": "INTEGRATED-CI-TIMEOUT",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Required integrated CI fails inherited61h simulation at20s ceiling",
+      "file": "test/hub/robustness.test.ts",
+      "line": 719,
+      "expected": "All actual required integrated checks PASS with preserved functional assertions; bounded explicitpertest budget for longsimulation",
+      "actual": "37844932181 FAIL twice: jobs113543321791/113544666152;485PASS/1known61h simulation20stimeout; downstreambrowser/dryskipped. SourceequivalentCI37836787868PASS486/41; localfull486PASS120s andisolatedintegratedweekend15.57sPASS. Required integratedCI remainsFAIL; correctionrequested6069239435.",
+      "repair_direction": "Test-only PR for explicit120000ms timeout on this long it(); preserve listen durations and heard assertions; unchanged global20s budget and application; actual486/41/build/dryCI then finalheadcompletion",
+      "product_runtime_regression": false
     }
   ],
   "previous_review": {
@@ -641,13 +653,13 @@
     "unit": "486/486PASS34files explicit120s timeout158.06s",
     "browser": "41/41realWorker/FakeSpotifyPASS2.1min, functionalassertionsretained",
     "source_ci": "37836787868/job113515733303PASS486/41 syntheticada055826d9cb7a0e28086bdfd8a66c02d6ad0dc byteidenticalapp/test/config",
-    "integrated_ci": "37844932181 firstattempt485PASS/1knownweekend20stimeout; failedjobretryrequested; statuspending finalrefresh",
+    "integrated_ci": "37844932181 FAIL twice: jobs113543321791/113544666152;485PASS/1known61h simulation20stimeout; downstreambrowser/dryskipped. SourceequivalentCI37836787868PASS486/41; localfull486PASS120s andisolatedintegratedweekend15.57sPASS. Required integratedCI remainsFAIL; correctionrequested6069239435.",
     "resume": "11/11originalRESUME/boundaryPASS",
     "backend": "fresh78independentPASS; parent3independentPASS; allSQLite/provider/alarm/session/coldwarmidentitypreserved",
     "ui": "fresh44routes/60Unicode/504contrastmin5.117/14functionalscenarios/21focusedtestsPASS; lightdark390/1440keyboardzoomofflinepending503",
     "integrated": "app/test/configdiff4b→e348EMPTY; builtWorkerbyteequal;21affectedtestsPASS; actual19assets/health/authCSRF/publicbrowser4cellsPASS",
     "preview": "4bpreviewWorkersBuildsFAIL0s; actualbuild/logAPI403, causeunknown; branchesprotected:false/rulesetsempty; actualproductionWorkersBuildssuccess113543661775",
-    "validators": "PASS: canonicalEvidence1.2/handoff",
+    "validators": "PASS: evidence/handoff/checkpoint",
     "integrated_weekend": "Isolated realHub longsimulation1PASS15.57s at120s timeout; firstCI20stimeout not an assertion failure"
   },
   "backend_review": {
@@ -863,5 +875,7 @@
       "sha256": "0167d347a0edcee386620b2f4959132d75fb76b126790e454bef4ca25d4980ef",
       "tail": "────────────\n🌀 Building list of assets...\n✨ Read 21 files from the assets directory /workspace/ts-review-4b0a/dist/client\n🌀 Starting asset upload...\n🌀 Found 4 new or modified static assets to upload. Proceeding with upload...\n+ /index.html\n+ /assets/index-VQ3kyE_6.js.map\n+ /assets/index-Bw6NFXkp.css\n+ /assets/index-VQ3kyE_6.js\nUploaded 1 of 4 assets\nUploaded 2 of 4 assets\nUploaded 4 of 4 assets\n✨ Success! Uploaded 4 files (15 already uploaded) (1.31 sec)\n\nTotal Upload: 916.74 KiB / gzip: 194.56 KiB\nWorker Startup Time: 4 ms\nYour Worker has access to the following bindings:\nBinding                      Resource            \nenv.USER_HUB (UserHub)       Durable Object      \nenv.REGISTRY (Registry)      Durable Object      \nenv.AI                       AI                  \nenv.ASSETS                   Assets              \n\nUploaded true-shuffle (4.70 sec)\nWorker Version ID: bbcaa84c-3d73-4913-8ed4-7e5207788078\n\nTo deploy this version to production traffic use the command wrangler versions deploy\n\nChanges to non-versioned settings (config properties 'logpush' or 'tail_consumers') take effect after your next deployment using the command wrangler versions deploy\n\nChanges to triggers (routes, custom domains, cron schedules, etc) must be applied with the command wrangler triggers deploy\n\n"
     }
-  }
+  },
+  "independent_product_verdict": "READY_WITH_NON_BLOCKING_FINDINGS",
+  "review_comment_id": 6069239435
 }

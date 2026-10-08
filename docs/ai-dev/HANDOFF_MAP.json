@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-08T21:14:59.432984+00:00",
+  "generated_at": "2026-10-08T21:18:56.237579+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -36,7 +36,7 @@
       "path": "AGENTS.md",
       "treatment": "UPDATE",
       "authority": "CANONICAL",
-      "reason": "Current actualreleasee348/dd344/238016100% verified. FinalPR18scopefreshREADY_WITH_NON_BLOCKING_FINDINGS; historykindnull; allP2closed.486/41/11PASS; sourceequivalentCI PASS; integratedCIknown20stimeoutretry pending. Ownstagingbbcaaunactivated. TAG_WORDING_REVIEW canonicalcurrentrelease; historicalpacket09d notcurrentalignmentproof; fullmissionlivegatesNOTRUN.",
+      "reason": "Actualreleasee348/dd344/238016100% runtimeverified; freshproductREADY andpreviousP2closed. OverallPARTIAL/NOTREADY dueintegratedCI37844932181 inheritedlongtest20stimeoutFAILtwice, correction6069239435. Local486/41/11/sourceCI PASS; physicalliveHArestoreNOTRUN. CurrentTAG_WORDING_REVIEW/CLOUDFLARE_DEPLOYMENT/CHECKPOINT; packet09dhistorical.",
       "evidence_ids": [
         "EV-01",
         "EV-02"

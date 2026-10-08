@@ -1,11 +1,11 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-08T21:14:59.432984+00:00",
+  "generated_at": "2026-10-08T21:18:56.237579+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
     "revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "ActualPR18 integratedrelease e348/versiondd344/deployment238016100% verified. ScopedfreshREADY_WITH_NON_BLOCKING_FINDINGS; fullmissionBLOCKED only historicalliveSpotify/HA/populatedrestoreNOTRUN. Ownstagingbbcaaunactivated; automaticWorkersBuildsrelease verified.",
+    "environment": "ActualPR18 integratedrelease e348/versiondd344/deployment238016100% verified. ScopedfreshREADY_WITH_NON_BLOCKING_FINDINGS; fullmissionBLOCKED only historicalliveSpotify/HA/populatedrestoreNOTRUN. Ownstagingbbcaaunactivated; automaticWorkersBuildsrelease verified. IntegratedCI20s simulation timeout remainsred twice; actualruntimehealthy andscopedproductreviewREADY.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -181,6 +181,12 @@
       "id": "LIVE-HA-MA",
       "title": "Real owner HA/MA routes not verified",
       "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "INTEGRATED-CI-TIMEOUT",
+      "title": "Required integrated CI fails inherited61h simulation20s ceiling; actual486local and sourceequivalentCI pass, no runtime defect reproduced",
+      "severity": "P2",
       "blocking": true
     }
   ],
@@ -677,6 +683,23 @@
         }
       ],
       "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-INTEGRATED-CI",
+      "category": "build",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-INTEGRATED-CI",
+          "kind": "actualGitHubActionsintegratedrun/joblogs",
+          "ref": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/37844932181",
+          "result": "37844932181 FAIL twice: jobs113543321791/113544666152;485PASS/1known61h simulation20stimeout; downstreambrowser/dryskipped. SourceequivalentCI37836787868PASS486/41; localfull486PASS120s andisolatedintegratedweekend15.57sPASS. Required integratedCI remainsFAIL; correctionrequested6069239435.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:18:56.237579+00:00"
+        }
+      ],
+      "rationale": "Actual integratedCI job failure cannot be labeled PASS from identical-tree source CI or localtimeoutbudget; concreteboundedharnesscorrection requested."
     }
   ]
 }
