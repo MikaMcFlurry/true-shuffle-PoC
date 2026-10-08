@@ -1526,13 +1526,8 @@ main {
 }
 
 .cassette__name {
-	margin: 0;
 	font-family: var(--marker);
-	font-size: var(--label-size, 25px);
-	line-height: 38px;
-	color: var(--label-ink);
-	white-space: nowrap;
-	transform: rotate(-1deg);
+	fill: var(--label-ink);
 }
 
 .cassette__window {

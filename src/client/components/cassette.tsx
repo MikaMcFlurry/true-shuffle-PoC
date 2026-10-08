@@ -8,6 +8,7 @@
 
 import { useId } from "preact/hooks";
 import type { StationSummary } from "../../shared/api";
+import { type LabelLine, labelLayout } from "./cassette-label";
 
 /** Label stripe colours, one per station; "Alles" gets the classic red stripes too, in black. */
 const SHELLS = ["red", "blue", "green", "orange", "teal", "violet"] as const;
@@ -26,6 +27,22 @@ function reel(share: number): number {
 	return Math.sqrt(R_MIN * R_MIN + (R_MAX * R_MAX - R_MIN * R_MIN) * share);
 }
 
+function LabelText(props: { line: LabelLine | undefined; size: number; y: number | undefined }) {
+	if (!props.line || props.y === undefined) return null;
+	return (
+		<tspan
+			x="160"
+			y={props.y}
+			font-size={props.size}
+			{...(props.line.squeeze
+				? { textLength: props.line.width, lengthAdjust: "spacingAndGlyphs" }
+				: {})}
+		>
+			{props.line.text}
+		</tspan>
+	);
+}
+
 export type ReelState = "still" | "running" | "waiting";
 
 export function Cassette(props: {
@@ -40,6 +57,7 @@ export function Cassette(props: {
 	const left = reel(h);
 	const right = reel(1 - h);
 	const state = props.reels ?? "still";
+	const label = labelLayout(props.name);
 	const clip = `cw${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 	return (
 		<svg
@@ -61,16 +79,10 @@ export function Cassette(props: {
 				<rect x="22" y="103" width="276" height="5" />
 				<rect class="cassette__band" x="22" y="114" width="276" height="14" />
 			</g>
-			<foreignObject x="34" y="20" width="252" height="38">
-				<p
-					class="cassette__name"
-					style={{
-						"--label-size": `${Math.min(25, Math.floor(252 / (0.62 * Math.max(1, props.name.length))))}px`,
-					}}
-				>
-					{props.name}
-				</p>
-			</foreignObject>
+			<text class="cassette__name" transform="rotate(-1 160 40)" text-anchor="middle">
+				<LabelText line={label.lines[0]} size={label.size} y={label.baselines[0]} />
+				<LabelText line={label.lines[1]} size={label.size} y={label.baselines[1]} />
+			</text>
 			<clipPath id={clip}>
 				<rect x="78" y="62" width="164" height="68" rx="10" />
 			</clipPath>

@@ -54,3 +54,17 @@ describe("song tags: where it comes from, then what was recorded", () => {
 		]);
 	});
 });
+
+describe("tags in the Verlauf", () => {
+	it("never says not yet heard or not here for a song just heard", () => {
+		const f = { plays: 0, lastPlayedAt: null, inStation: false, kind: "fresh" as const };
+		expect(songTags("fresh", f, 0, true, true, true).map((t) => t.text)).toEqual([
+			"Aus deiner Playlist",
+		]);
+		const g = { plays: 4, lastPlayedAt: 1, inStation: false, kind: "discovery" as const };
+		expect(songTags(null, g, 0, true, true, true).map((t) => t.text)).toEqual([
+			"Empfehlung",
+			"4× gehört",
+		]);
+	});
+});

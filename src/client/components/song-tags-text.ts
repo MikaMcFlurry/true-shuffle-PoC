@@ -25,6 +25,8 @@ export function songTags(
 	thumb: -1 | 0 | 1 = 0,
 	_known = true,
 	short = false,
+	/** A row in the Verlauf: the song was heard right there, so only the count is news. */
+	history = false,
 ): { text: string; tone: TagTone }[] {
 	const k = facts?.kind ?? kind ?? null;
 	const tags: { text: string; tone: TagTone }[] = [];
@@ -38,10 +40,11 @@ export function songTags(
 	// heard" (an import may be partial) and "not here" within the 180 days the
 	// plays log keeps.
 	if (facts.plays === 0) {
+		if (history) return tags;
 		tags.push({ text: "noch nicht gehört", tone: "fact" });
 		return tags;
 	}
-	if (!facts.inStation)
+	if (!facts.inStation && !history)
 		tags.push({
 			text: short ? "lange nicht hier" : "in den letzten 180 Tagen nicht auf dieser Kassette",
 			tone: "fact",

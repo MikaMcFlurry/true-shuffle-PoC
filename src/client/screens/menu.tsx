@@ -25,6 +25,7 @@ import { DAY_MS } from "../../core/types";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
 import { RateHit, ThumbMark } from "../components/rate";
+import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
@@ -398,7 +399,7 @@ export function HistoryScreen() {
 			<PageBar
 				title="Verlauf"
 				noBack
-				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Tippe auf einen Song, um ihn zu bewerten."
+				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei Songs von deinen Kassetten steht, ob sie aus deiner Playlist kamen oder eine Empfehlung waren. Tippe auf einen Song, um ihn zu bewerten."
 			/>
 			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
 			{items && items.length === 0 ? (
@@ -419,7 +420,18 @@ export function HistoryScreen() {
 								<span class="hist-row__main">
 									<span class="hist-row__title">{t.name}</span>
 									<span class="hist-row__sub">{t.artists}</span>
-									{t.stationName ? <span class="hist-row__station">{t.stationName}</span> : null}
+									<span class="hist-row__station">
+										{t.stationName ? `Kassette ${t.stationName}` : "außerhalb von true-shuffle"}
+									</span>
+									{t.ignored ? null : (
+										<SongTags
+											kind={t.facts?.kind ?? null}
+											facts={factsOf(t)}
+											thumb={store.thumbOf(t)}
+											history
+											class="tags--row"
+										/>
+									)}
 								</span>
 								<span class="hist-row__marks">
 									<ThumbMark t={t} />

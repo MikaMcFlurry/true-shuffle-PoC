@@ -205,3 +205,60 @@ describe("song facts in the queue", () => {
 		);
 	});
 });
+
+describe("song facts in the Verlauf", () => {
+	it("a live play on a station carries its deck reason and the total count; a play outside none", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(30 * MINUTE_MS);
+		const list = h.hub.history(50);
+		const onStation = list.filter((e) => e.stationName !== null && !e.ignored);
+		expect(onStation.length).toBeGreaterThan(0);
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const items = (JSON.parse(row.deck) as { items: { id: string; kind: SlotKind }[] }).items;
+		for (const e of onStation) {
+			expect(e.facts?.kind).toBe(items.find((it) => it.id === e.id)?.kind);
+			expect(e.facts?.plays).toBeGreaterThanOrEqual(1);
+			expect(e.facts?.inStation).toBe(true);
+		}
+		// Heard outside any station: no reason is claimed.
+		const outside = onStation[0]!.id;
+		play(h, h.clock.t + 1, outside, null, 0);
+		expect(h.hub.history(1)[0]).toMatchObject({ stationName: null, facts: { kind: null } });
+	});
+
+	it("an old play whose deck was rewritten keeps a reason only if the station recommended it", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		const t = h.clock.t;
+		play(h, t - 20 * DAY_MS, "recommended", sid, 0);
+		play(h, t - 19 * DAY_MS, "forgotten", sid, 0);
+		h.sql.run(
+			`INSERT INTO discoveries (station_id, id, source, score, status, meta, heard, created_at, updated_at) VALUES (?, 'recommended', 'ai', 1, 'kept', '[]', 1, ?, ?)`,
+			sid,
+			t,
+			t,
+		);
+		const kinds = (
+			h.hub as unknown as {
+				historyKinds(
+					rows: { played_at: number; track_id: string; station_id: number | null }[],
+				): (r: {
+					played_at: number;
+					track_id: string;
+					station_id: number | null;
+				}) => SlotKind | null;
+			}
+		).historyKinds([
+			{ played_at: t - 20 * DAY_MS, track_id: "recommended", station_id: sid },
+			{ played_at: t - 19 * DAY_MS, track_id: "forgotten", station_id: sid },
+		]);
+		expect(kinds({ played_at: t - 20 * DAY_MS, track_id: "recommended", station_id: sid })).toBe(
+			"discovery",
+		);
+		expect(
+			kinds({ played_at: t - 19 * DAY_MS, track_id: "forgotten", station_id: sid }),
+		).toBeNull();
+	});
+});

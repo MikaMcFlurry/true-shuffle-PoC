@@ -21,6 +21,7 @@ import {
 	consumedCount,
 	continueLayout,
 	type Deck,
+	type DeckItem,
 	DIRECT_MS,
 	heldForPlayer,
 	inRanges,
@@ -6136,18 +6137,71 @@ export class HubCore {
 		const names = new Map(this.stations().map((s) => [s.id, s.name]));
 		const bare = rows.filter((r) => !r.meta).map((r) => r.track_id);
 		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
+		const kindOf = this.historyKinds(rows);
+		this.preloadMemory(new Set(rows.map((r) => r.track_id)));
 		return rows
 			.map((r) => {
 				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
 				if (!t) return null;
-				return {
+				const m = this.memory(r.track_id);
+				const entry: HistoryEntry = {
 					...this.view(t),
 					playedAt: r.played_at,
 					stationName: r.station_id !== null ? (names.get(r.station_id) ?? null) : null,
 					ignored: r.ignored === 1,
+					facts: {
+						plays: m.plays,
+						lastPlayedAt: m.lastPlayedAt,
+						inStation: true,
+						kind: kindOf(r),
+					},
 				};
+				return entry;
 			})
 			.filter((x): x is HistoryEntry => x !== null);
+	}
+
+	/**
+	 * Why a past play was on its station, only where that is on record: the
+	 * station's current deck holds this song as played or passed within a few
+	 * hours of the play, or the station recommended it. Plays outside a station,
+	 * or from an older deck that was rewritten since, stay without a reason.
+	 */
+	private historyKinds(
+		rows: readonly { played_at: number; track_id: string; station_id: number | null }[],
+	): (r: { played_at: number; track_id: string; station_id: number | null }) => SlotKind | null {
+		const decks = new Map<number, Map<TrackId, DeckItem[]>>();
+		const recommended = new Set<string>();
+		const stations = [...new Set(rows.map((r) => r.station_id))].filter(
+			(x): x is number => x !== null,
+		);
+		for (const sid of stations) {
+			const st = this.stationRow(sid);
+			const byId = new Map<TrackId, DeckItem[]>();
+			for (const it of (st ? this.deckOf(st) : null)?.items ?? []) {
+				if (it.state !== "played" && it.state !== "passed") continue;
+				byId.set(it.id, [...(byId.get(it.id) ?? []), it]);
+			}
+			decks.set(sid, byId);
+			const ids = rows.filter((r) => r.station_id === sid).map((r) => r.track_id);
+			for (let i = 0; i < ids.length; i += 100) {
+				const part = ids.slice(i, i + 100);
+				for (const d of this.db.all<{ id: string }>(
+					`SELECT id FROM discoveries WHERE station_id = ? AND id IN (${part.map(() => "?").join(",")})`,
+					sid,
+					...part,
+				))
+					recommended.add(`${sid}:${d.id}`);
+			}
+		}
+		const NEAR = 6 * HOUR_MS;
+		return (r) => {
+			if (r.station_id === null) return null;
+			const items = decks.get(r.station_id)?.get(r.track_id) ?? [];
+			const hit = items.find((it) => it.at !== null && Math.abs(it.at - r.played_at) <= NEAR);
+			if (hit) return hit.kind;
+			return recommended.has(`${r.station_id}:${r.track_id}`) ? "discovery" : null;
+		};
 	}
 
 	// =======================================================================
