@@ -138,6 +138,12 @@ export interface HistoryEntry extends TrackView {
 	playedAt: number;
 	stationName: string | null;
 	ignored: boolean;
+	/**
+	 * Same read-only counts as in a queue. `kind` is always null: the lane
+	 * that brought a play is not recorded per play, so no source is claimed.
+	 * `inStation` is always true: the song was heard there.
+	 */
+	facts?: SongFacts;
 }
 
 /** What a personal remote key can do (Siri, CarPlay, a watch, a widget). */

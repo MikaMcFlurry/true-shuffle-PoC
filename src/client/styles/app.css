@@ -24,6 +24,8 @@
 	--tape: #c2412a;
 	--tape-hover: #a5341f;
 	--tape-ink: #ffffff;
+	/* Red as text on paper and ground: 5.2:1 on the ground, 6:1 on paper. */
+	--tape-text: #9e3420;
 	--tape-soft: #f1d3c6;
 	--pen: #24448c;
 	--dymo: #1d1b19;
@@ -59,6 +61,7 @@
 		--tape: #ef6b4a;
 		--tape-hover: #f6896c;
 		--tape-ink: #1c0d07;
+		--tape-text: #ef6b4a;
 		--tape-soft: #3b1f16;
 		--pen: #a9bef2;
 		--dymo: #b8322a;
@@ -87,6 +90,7 @@
 	--tape: #ef6b4a;
 	--tape-hover: #f6896c;
 	--tape-ink: #1c0d07;
+	--tape-text: #ef6b4a;
 	--tape-soft: #3b1f16;
 	--pen: #a9bef2;
 	--dymo: #b8322a;
@@ -1526,13 +1530,8 @@ main {
 }
 
 .cassette__name {
-	margin: 0;
 	font-family: var(--marker);
-	font-size: var(--label-size, 25px);
-	line-height: 38px;
-	color: var(--label-ink);
-	white-space: nowrap;
-	transform: rotate(-1deg);
+	fill: var(--label-ink);
 }
 
 .cassette__window {
@@ -1611,22 +1610,6 @@ main {
 	color: var(--ink-2);
 }
 
-.tag--new {
-	background: var(--tape);
-	border-color: var(--tape);
-	color: var(--tape-ink);
-}
-
-.tag--fav {
-	background: var(--tape-soft);
-	border-color: var(--tape);
-	color: var(--ink);
-}
-
-.tag--first {
-	border-style: dashed;
-}
-
 /* In a list the tags are one quiet line, not a row of pills. */
 .tags--row {
 	display: block;
@@ -1650,11 +1633,6 @@ main {
 .tags--row .tag + .tag::before {
 	content: " · ";
 	font-weight: 400;
-}
-
-.tags--row .tag--new,
-.tags--row .tag--fav {
-	color: var(--tape);
 }
 
 /* ------------------------------------------------------- tape strip */
@@ -2337,16 +2315,28 @@ h1,
 	background: none;
 }
 
-.tag--new {
+/* Where it comes from: one coloured tag. What was recorded: quiet notes. */
+.tag--rec {
 	background: var(--tape);
 	border-color: var(--tape);
 	color: var(--tape-ink);
 	transform: rotate(-1.5deg);
 }
 
+.tag--playlist {
+	color: var(--pen);
+}
+
 .tag--fav {
-	color: var(--tape);
+	color: var(--tape-text);
 	background: none;
+}
+
+.tag--fact {
+	border-color: transparent;
+	padding-left: 2px;
+	padding-right: 2px;
+	color: var(--ink-3);
 }
 
 .tags--row .tag {
@@ -2356,10 +2346,14 @@ h1,
 	transform: none;
 }
 
-.tags--row .tag--new,
+.tags--row .tag--rec,
 .tags--row .tag--fav {
-	color: var(--tape);
+	color: var(--tape-text);
 	background: none;
+}
+
+.tags--row .tag--playlist {
+	color: var(--pen);
 }
 
 /* Liner notes: the promise reads like the back of the inlay. */
@@ -2513,4 +2507,10 @@ h1,
 	border-radius: 4px;
 	background: var(--dymo);
 	color: var(--dymo-ink);
+}
+
+/* In a list the source stands on its own line; the recorded facts follow below it. */
+.tags--row .tag:not(.tag--fact) + .tag--fact::before {
+	content: "\A";
+	white-space: pre;
 }

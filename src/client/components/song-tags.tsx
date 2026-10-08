@@ -14,6 +14,8 @@ export function SongTags(props: {
 	thumb?: -1 | 0 | 1;
 	/** An imported Spotify history exists, so "never heard" is known, not guessed. */
 	known?: boolean;
+	/** In the Verlauf: no "not yet heard" or "not here" for a song just heard. */
+	history?: boolean;
 	class?: string;
 }) {
 	const tags = songTags(
@@ -22,6 +24,7 @@ export function SongTags(props: {
 		props.thumb ?? 0,
 		props.known ?? true,
 		props.class?.includes("tags--row") ?? false,
+		props.history ?? false,
 	);
 	if (!tags.length) return null;
 	return (

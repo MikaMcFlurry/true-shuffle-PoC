@@ -6136,16 +6136,27 @@ export class HubCore {
 		const names = new Map(this.stations().map((s) => [s.id, s.name]));
 		const bare = rows.filter((r) => !r.meta).map((r) => r.track_id);
 		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
+		this.preloadMemory(new Set(rows.map((r) => r.track_id)));
 		return rows
 			.map((r) => {
 				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
 				if (!t) return null;
-				return {
+				const m = this.memory(r.track_id);
+				const entry: HistoryEntry = {
 					...this.view(t),
 					playedAt: r.played_at,
 					stationName: r.station_id !== null ? (names.get(r.station_id) ?? null) : null,
 					ignored: r.ignored === 1,
+					facts: {
+						plays: m.plays,
+						lastPlayedAt: m.lastPlayedAt,
+						inStation: true,
+						// Which lane brought this very play is not recorded per play, and
+						// a deck matched by time can belong to another play of the song.
+						kind: null,
+					},
 				};
+				return entry;
 			})
 			.filter((x): x is HistoryEntry => x !== null);
 	}
