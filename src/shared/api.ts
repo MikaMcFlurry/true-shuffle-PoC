@@ -140,9 +140,8 @@ export interface HistoryEntry extends TrackView {
 	ignored: boolean;
 	/**
 	 * Same read-only labels as in a queue. `kind` is only set when it is on
-	 * record for this very play (the station's deck item for it, or the
-	 * station's own recommendation list), otherwise null. `inStation` is
-	 * always true: the song was heard there.
+	 * record for this very play (the station's current deck item for it),
+	 * otherwise null. `inStation` is always true: the song was heard there.
 	 */
 	facts?: SongFacts;
 }

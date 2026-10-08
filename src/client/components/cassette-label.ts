@@ -4,7 +4,7 @@
  */
 
 /** The writable part of the label, in the cassette's own units. */
-const LABEL_W = 244;
+export const LABEL_W = 244;
 const LABEL_TOP = 17;
 const ONE_LINE_MAX = 34;
 const TWO_LINE_MAX = 24;
@@ -23,6 +23,10 @@ function em(ch: string): number {
 	if (/[A-ZÄÖÜ]/.test(ch)) return 0.76;
 	if (/[iI.,:;'!|]/.test(ch)) return 0.34;
 	if (/[0-9]/.test(ch)) return 0.7;
+	// Outside Latin the marker font has no glyph: a fallback font draws it,
+	// full-width for CJK, wider still for emoji. Counted wide; the rendered
+	// label measures itself as well (see `Cassette`).
+	if ((ch.codePointAt(0) ?? 0) > 0x24f) return 1.2;
 	return 0.6;
 }
 

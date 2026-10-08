@@ -409,6 +409,54 @@ test.describe("a listener's day", () => {
 		}
 	});
 
+	test("every cassette name stays on its label, whatever script or font draws it", async ({
+		page,
+	}) => {
+		await signIn(page);
+		const NAMES = [
+			"東京東京東京東京東",
+			"Sommer 🌞🎸 Roadtrip ☀️ mit Freunden",
+			"Ελληνικά Лето مرحبا",
+			"WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+			"Wohnzimmer Wochenende Mitternachtsmix für lange Abende",
+		];
+		// The app asks for /api/state with a query string, so a plain glob would miss it.
+		const STATE = /\/api\/state(\?|$)/;
+		await page.route(STATE, async (route) => {
+			const response = await route.fetch();
+			const json = (await response.json()) as { stations: { name: string }[] };
+			json.stations.forEach((s, i) => {
+				s.name = NAMES[i % NAMES.length]!;
+			});
+			await route.fulfill({ response, json });
+		});
+		for (const [width, scheme] of [
+			[390, "light"],
+			[390, "dark"],
+			[1440, "light"],
+			[1440, "dark"],
+		] as const) {
+			await page.setViewportSize({ width, height: 900 });
+			await page.emulateMedia({ colorScheme: scheme });
+			for (const path of ["/sender", "/"]) {
+				await page.goto(path);
+				await expect(page.locator(".cassette__name").getByText(NAMES[0]!).first()).toBeAttached();
+				await page.evaluate(() => document.fonts.ready);
+				// The label is the rect x 22..298 in the cassette's own units.
+				const out = await page.locator(".cassette__name tspan").evaluateAll((spans) =>
+					spans
+						.map((el) => {
+							const b = (el as SVGGraphicsElement).getBBox();
+							return { text: el.textContent, left: b.x, right: b.x + b.width };
+						})
+						.filter((b) => b.left < 21.5 || b.right > 298.5),
+				);
+				expect(out, `${path} at ${width} px, ${scheme}`).toEqual([]);
+			}
+		}
+		await page.unroute(STATE);
+	});
+
 	test("a station held paused plays on from its page, never starts over", async ({ page }) => {
 		await signIn(page);
 		const playing = await fake("status");

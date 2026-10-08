@@ -6,9 +6,9 @@
  * heard in this round, the right one what is still to come.
  */
 
-import { useId } from "preact/hooks";
+import { useId, useLayoutEffect, useRef } from "preact/hooks";
 import type { StationSummary } from "../../shared/api";
-import { type LabelLine, labelLayout } from "./cassette-label";
+import { LABEL_W, type LabelLine, labelLayout } from "./cassette-label";
 
 /** Label stripe colours, one per station; "Alles" gets the classic red stripes too, in black. */
 const SHELLS = ["red", "blue", "green", "orange", "teal", "violet"] as const;
@@ -27,18 +27,45 @@ function reel(share: number): number {
 	return Math.sqrt(R_MIN * R_MIN + (R_MAX * R_MAX - R_MIN * R_MIN) * share);
 }
 
+/**
+ * One label line. The estimate in `labelLayout` sizes it; the drawn line then
+ * measures itself, once now and again when the fonts have loaded, and is
+ * pinned to the label width if the font that really drew it (a fallback for
+ * scripts the marker pen lacks) came out wider.
+ */
 function LabelText(props: { line: LabelLine | undefined; size: number; y: number | undefined }) {
-	if (!props.line || props.y === undefined) return null;
+	const ref = useRef<SVGTSpanElement>(null);
+	const line = props.line;
+	useLayoutEffect(() => {
+		const el = ref.current;
+		if (!el || !line) return;
+		let live = true;
+		const measure = () => {
+			if (!live) return;
+			el.removeAttribute("textLength");
+			el.removeAttribute("lengthAdjust");
+			let drawn = line.width;
+			try {
+				drawn = el.getComputedTextLength();
+			} catch {
+				// Not laid out (hidden): keep the estimate.
+			}
+			const pin = line.squeeze ? Math.min(line.width, drawn) : drawn > LABEL_W ? LABEL_W : 0;
+			if (pin > 0 && drawn > pin) {
+				el.setAttribute("textLength", String(pin));
+				el.setAttribute("lengthAdjust", "spacingAndGlyphs");
+			}
+		};
+		measure();
+		void document.fonts?.ready.then(measure);
+		return () => {
+			live = false;
+		};
+	}, [line?.text, line?.width, line?.squeeze, props.size]);
+	if (!line || props.y === undefined) return null;
 	return (
-		<tspan
-			x="160"
-			y={props.y}
-			font-size={props.size}
-			{...(props.line.squeeze
-				? { textLength: props.line.width, lengthAdjust: "spacingAndGlyphs" }
-				: {})}
-		>
-			{props.line.text}
+		<tspan ref={ref} x="160" y={props.y} font-size={props.size}>
+			{line.text}
 		</tspan>
 	);
 }

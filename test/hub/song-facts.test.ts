@@ -228,14 +228,13 @@ describe("song facts in the Verlauf", () => {
 		expect(h.hub.history(1)[0]).toMatchObject({ stationName: null, facts: { kind: null } });
 	});
 
-	it("an old play whose deck was rewritten keeps a reason only if the station recommended it", async () => {
+	it("a recommendation made later never relabels an older play", async () => {
 		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
 		const sid = h.stationIds[0]!;
 		const t = h.clock.t;
-		play(h, t - 20 * DAY_MS, "recommended", sid, 0);
-		play(h, t - 19 * DAY_MS, "forgotten", sid, 0);
+		play(h, t - 20 * DAY_MS, "older", sid, 0);
 		h.sql.run(
-			`INSERT INTO discoveries (station_id, id, source, score, status, meta, heard, created_at, updated_at) VALUES (?, 'recommended', 'ai', 1, 'kept', '[]', 1, ?, ?)`,
+			`INSERT INTO discoveries (station_id, id, source, score, status, meta, heard, created_at, updated_at) VALUES (?, 'older', 'ai', 1, 'candidate', '[]', 0, ?, ?)`,
 			sid,
 			t,
 			t,
@@ -250,15 +249,59 @@ describe("song facts in the Verlauf", () => {
 					station_id: number | null;
 				}) => SlotKind | null;
 			}
-		).historyKinds([
-			{ played_at: t - 20 * DAY_MS, track_id: "recommended", station_id: sid },
-			{ played_at: t - 19 * DAY_MS, track_id: "forgotten", station_id: sid },
-		]);
-		expect(kinds({ played_at: t - 20 * DAY_MS, track_id: "recommended", station_id: sid })).toBe(
-			"discovery",
+		).historyKinds([{ played_at: t - 20 * DAY_MS, track_id: "older", station_id: sid }]);
+		expect(kinds({ played_at: t - 20 * DAY_MS, track_id: "older", station_id: sid })).toBeNull();
+	});
+
+	it("a new mix keeps old plays' reasons or makes them unknown, never a different one", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(20 * MINUTE_MS);
+		const key = (e: { id: string; playedAt: number }) => `${e.id}@${e.playedAt}`;
+		const before = new Map(
+			h.hub
+				.history(200)
+				.filter((e) => e.stationName !== null)
+				.map((e) => [key(e), e.facts?.kind ?? null] as const),
 		);
-		expect(
-			kinds({ played_at: t - 19 * DAY_MS, track_id: "forgotten", station_id: sid }),
-		).toBeNull();
+		expect([...before.values()].some((k) => k !== null)).toBe(true);
+		// Every song heard is also kept as a recommendation of this station now.
+		for (const k of before.keys())
+			h.sql.run(
+				`INSERT OR IGNORE INTO discoveries (station_id, id, source, score, status, meta, heard, created_at, updated_at) VALUES (?, ?, 'ai', 1, 'kept', '[]', 1, ?, ?)`,
+				sid,
+				k.split("@")[0]!,
+				h.clock.t,
+				h.clock.t,
+			);
+		h.clock.t += 25 * 60 * MINUTE_MS;
+		expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
+		const after = h.hub.history(200).filter((e) => before.has(key(e)));
+		expect(after.length).toBe(before.size);
+		for (const e of after) {
+			const was = before.get(key(e));
+			const now = e.facts?.kind ?? null;
+			expect(now === null || now === was).toBe(true);
+		}
+	});
+
+	it("an unknown old deck stays unknown", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		const id = "gone-from-every-deck";
+		play(h, h.clock.t - 3 * DAY_MS, id, sid, 0);
+		const kinds = (
+			h.hub as unknown as {
+				historyKinds(
+					rows: { played_at: number; track_id: string; station_id: number | null }[],
+				): (r: {
+					played_at: number;
+					track_id: string;
+					station_id: number | null;
+				}) => SlotKind | null;
+			}
+		).historyKinds([{ played_at: h.clock.t - 3 * DAY_MS, track_id: id, station_id: sid }]);
+		expect(kinds({ played_at: h.clock.t - 3 * DAY_MS, track_id: id, station_id: sid })).toBeNull();
 	});
 });
