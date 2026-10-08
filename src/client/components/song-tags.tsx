@@ -18,6 +18,7 @@ export function songTags(
 	facts: SongFactsView | null,
 	thumb: -1 | 0 | 1 = 0,
 	known = true,
+	short = false,
 ): { text: string; tone: "new" | "fav" | "first" | "known" }[] {
 	const k = facts?.kind ?? kind ?? null;
 	const tags: { text: string; tone: "new" | "fav" | "first" | "known" }[] = [];
@@ -29,10 +30,12 @@ export function songTags(
 			if (k !== "discovery")
 				tags.push({ text: known ? "Noch nie gehört" : "Bisher nicht gehört", tone: "new" });
 		} else {
-			if (!facts.inStation) tags.push({ text: "Zum ersten Mal hier", tone: "first" });
+			if (!facts.inStation)
+				tags.push({ text: short ? "erstes Mal hier" : "Zum ersten Mal hier", tone: "first" });
 			tags.push({
-				text:
-					facts.plays === 1
+				text: short
+					? `${num(facts.plays)}× gehört`
+					: facts.plays === 1
 						? `Einmal gehört${facts.lastPlayedAt ? `, ${ago(facts.lastPlayedAt)}` : ""}`
 						: `${num(facts.plays)}× gehört${facts.lastPlayedAt ? `, zuletzt ${ago(facts.lastPlayedAt)}` : ""}`,
 				tone: "known",
@@ -50,7 +53,13 @@ export function SongTags(props: {
 	known?: boolean;
 	class?: string;
 }) {
-	const tags = songTags(props.kind, props.facts ?? null, props.thumb ?? 0, props.known ?? true);
+	const tags = songTags(
+		props.kind,
+		props.facts ?? null,
+		props.thumb ?? 0,
+		props.known ?? true,
+		props.class?.includes("tags--row") ?? false,
+	);
 	if (!tags.length) return null;
 	return (
 		<ul class={`tags${props.class ? ` ${props.class}` : ""}`} aria-label="Über diesen Song">

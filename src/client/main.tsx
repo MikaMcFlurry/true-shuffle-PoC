@@ -1,5 +1,6 @@
 import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
 import "@fontsource/permanent-marker/latin-400.css";
+import "@fontsource-variable/bricolage-grotesque/standard.css";
 import "./styles/app.css";
 import "./styles/sender.css";
 import "./styles/mehr.css";

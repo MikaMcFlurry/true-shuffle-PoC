@@ -2,35 +2,40 @@
 
 /*
  * true-shuffle: one system.
- * A station is a tape that never loses its place. Cool paper by day, shell
- * black by night, one accent (tape copper). State is carried by line form:
- * solid = confirmed, dashed = waiting, dotted = estimated.
+ * A station is a mixtape that never loses its place. Inlay-card paper by
+ * day, a dark shelf by night; label-stripe red, blue ballpoint ink and embossed
+ * label tape. State is carried by line form: solid = confirmed, dashed =
+ * waiting, dotted = estimated.
  */
 
 :root {
 	--font:
 		"Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible Next", system-ui, sans-serif;
+	--font-display: "Bricolage Grotesque Variable", "Atkinson Hyperlegible Next Variable", sans-serif;
 
-	--ground: #eceef0;
-	--paper: #f8f9fa;
-	--sunk: #e2e5e8;
-	--ink: #15171a;
-	--ink-2: #454a52;
-	--ink-3: #5d636c;
-	--rule: #c9ced4;
-	--rule-strong: #8e959e;
-	--tape: #c04e17;
-	--tape-hover: #a3410f;
+	--ground: #e7dcc4;
+	--paper: #f4ecda;
+	--sunk: #dccfb2;
+	--ink: #2a2017;
+	--ink-2: #57442f;
+	--ink-3: #6a563f;
+	--rule: #cbb994;
+	--rule-strong: #8f7a57;
+	--tape: #c2412a;
+	--tape-hover: #a5341f;
 	--tape-ink: #ffffff;
-	--tape-soft: #f3e2d6;
+	--tape-soft: #f1d3c6;
+	--pen: #24448c;
+	--dymo: #1d1b19;
+	--dymo-ink: #f3efe6;
 	--ok: #1d6f44;
 	--warn: #7d5200;
-	--warn-soft: #f6ead2;
+	--warn-soft: #f3e3c2;
 	--err: #a8231b;
-	--err-soft: #f8dedb;
+	--err-soft: #f6d7d1;
 	--focus: #1d5bd6;
-	--shadow: 0 1px 2px rgb(20 22 26 / 0.06), 0 8px 24px -12px rgb(20 22 26 / 0.18);
-	--bar: #eceef0;
+	--shadow: 0 1px 2px rgb(42 32 23 / 0.1), 0 8px 22px -12px rgb(42 32 23 / 0.35);
+	--bar: #e7dcc4;
 
 	--r: 6px;
 	--r-lg: 10px;
@@ -43,51 +48,57 @@
 
 @media (prefers-color-scheme: dark) {
 	:root:not([data-illumination="day"]) {
-		--ground: #111214;
-		--paper: #1a1c1f;
-		--sunk: #0b0c0d;
-		--ink: #eceef0;
-		--ink-2: #b8bdc4;
-		--ink-3: #959ba3;
-		--rule: #2e3136;
-		--rule-strong: #5a6068;
-		--tape: #f08a4b;
-		--tape-hover: #f7a674;
-		--tape-ink: #1b0f06;
-		--tape-soft: #3a2517;
+		--ground: #17120d;
+		--paper: #221a12;
+		--sunk: #0f0b07;
+		--ink: #f1e6cf;
+		--ink-2: #cdb994;
+		--ink-3: #a8956f;
+		--rule: #3a2e21;
+		--rule-strong: #6d5a41;
+		--tape: #ef6b4a;
+		--tape-hover: #f6896c;
+		--tape-ink: #1c0d07;
+		--tape-soft: #3b1f16;
+		--pen: #a9bef2;
+		--dymo: #b8322a;
+		--dymo-ink: #fff4ec;
 		--ok: #5fcf8f;
 		--warn: #e9b85c;
 		--warn-soft: #2f2511;
 		--err: #ff8a80;
 		--err-soft: #3a1714;
 		--focus: #8fb4ff;
-		--shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7);
-		--bar: #111214;
+		--shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 10px 30px -14px rgb(0 0 0 / 0.8);
+		--bar: #17120d;
 		color-scheme: dark;
 	}
 }
 
 :root[data-illumination="night"] {
-	--ground: #111214;
-	--paper: #1a1c1f;
-	--sunk: #0b0c0d;
-	--ink: #eceef0;
-	--ink-2: #b8bdc4;
-	--ink-3: #959ba3;
-	--rule: #2e3136;
-	--rule-strong: #5a6068;
-	--tape: #f08a4b;
-	--tape-hover: #f7a674;
-	--tape-ink: #1b0f06;
-	--tape-soft: #3a2517;
+	--ground: #17120d;
+	--paper: #221a12;
+	--sunk: #0f0b07;
+	--ink: #f1e6cf;
+	--ink-2: #cdb994;
+	--ink-3: #a8956f;
+	--rule: #3a2e21;
+	--rule-strong: #6d5a41;
+	--tape: #ef6b4a;
+	--tape-hover: #f6896c;
+	--tape-ink: #1c0d07;
+	--tape-soft: #3b1f16;
+	--pen: #a9bef2;
+	--dymo: #b8322a;
+	--dymo-ink: #fff4ec;
 	--ok: #5fcf8f;
 	--warn: #e9b85c;
 	--warn-soft: #2f2511;
 	--err: #ff8a80;
 	--err-soft: #3a1714;
 	--focus: #8fb4ff;
-	--shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7);
-	--bar: #111214;
+	--shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 10px 30px -14px rgb(0 0 0 / 0.8);
+	--bar: #17120d;
 	color-scheme: dark;
 }
 
@@ -2219,4 +2230,287 @@ dialog.sheet::backdrop {
 	--key-side: #2e2113;
 	--key-ink: #fbefd9;
 	--bay: #17110b;
+}
+
+/* =============================================================== WORLD
+ * Everything around the deck speaks the same mixtape language: headings as
+ * embossed label tape, lists as the cassette's inlay card, buttons and the
+ * navigation as deck keys, the cassette strip as a shelf.
+ */
+
+h1,
+.masthead__title,
+.page > h1 {
+	font-family: var(--font-display);
+	font-variation-settings: "wdth" 88;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+}
+
+.now-copy h2,
+.track__title,
+.station-choice__name {
+	font-family: var(--font-display);
+	font-variation-settings: "wdth" 92;
+}
+
+/* Section headings: a strip of embossed label tape. */
+.section-head h2,
+.section__head h2,
+.section > h2,
+.promise h2 {
+	display: inline-block;
+	padding: 3px 12px 4px;
+	border-radius: 3px;
+	background: var(--dymo);
+	color: var(--dymo-ink);
+	font-family: var(--font-display);
+	font-variation-settings: "wdth" 80;
+	font-size: 1.125rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-shadow:
+		0 1px 0 rgb(0 0 0 / 0.45),
+		0 -1px 0 rgb(255 255 255 / 0.18);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+	transform: rotate(-0.8deg);
+}
+
+/* Lists of songs and settings: the cassette's inlay card, ruled, with the
+ * label's stripes along its top edge. */
+.queue-list,
+.list {
+	position: relative;
+	padding-top: 14px;
+	border: 0;
+	border-radius: 4px;
+	background:
+		linear-gradient(
+			var(--tape) 0 3px,
+			transparent 3px 5px,
+			var(--tape) 5px 7px,
+			transparent 7px 9px,
+			var(--tape) 9px 10px,
+			transparent 10px
+		)
+		top / 100% 10px no-repeat,
+		var(--paper);
+	box-shadow: var(--shadow);
+}
+
+.queue-row,
+.row {
+	border-bottom: 1px solid var(--rule);
+}
+
+.queue-row {
+	padding-left: 8px;
+	padding-right: 12px;
+}
+
+.queue-row:last-child {
+	border-bottom: 0;
+}
+
+/* Track titles in blue ballpoint, like a hand-written tracklist. */
+.queue-row .track__main strong,
+.songrow__title,
+.hist-row__title {
+	color: var(--pen);
+}
+
+.queue-number {
+	font-family: var(--font-display);
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--ink-3);
+}
+
+/* Song tags: margin notes in felt pen. */
+.tag {
+	border-radius: 2px;
+	font-family: var(--marker);
+	font-weight: 400;
+	letter-spacing: 0.02em;
+	border-color: currentColor;
+	color: var(--pen);
+	background: none;
+}
+
+.tag--new {
+	background: var(--tape);
+	border-color: var(--tape);
+	color: var(--tape-ink);
+	transform: rotate(-1.5deg);
+}
+
+.tag--fav {
+	color: var(--tape);
+	background: none;
+}
+
+.tags--row .tag {
+	font-family: var(--marker);
+	font-weight: 400;
+	color: var(--ink-3);
+	transform: none;
+}
+
+.tags--row .tag--new,
+.tags--row .tag--fav {
+	color: var(--tape);
+	background: none;
+}
+
+/* Liner notes: the promise reads like the back of the inlay. */
+.promise {
+	border-radius: 4px;
+	background: var(--paper);
+}
+
+.promise-list li::before {
+	border-top-color: var(--tape);
+}
+
+.panel,
+.notice {
+	border-radius: 4px;
+}
+
+/* Buttons are keys: a face and a drawn side. */
+.key,
+.btn {
+	border: 0;
+	border-bottom: 4px solid var(--key-side);
+	border-radius: 5px;
+	background: var(--key);
+	color: var(--key-ink);
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+.key:hover:not(:disabled),
+.btn:hover:not(:disabled) {
+	background: var(--key-hover);
+}
+
+.key:active:not(:disabled),
+.btn:active:not(:disabled),
+.key[aria-pressed="true"],
+.btn[aria-pressed="true"] {
+	margin-top: 2px;
+	border-bottom-width: 2px;
+	background: var(--key-hover);
+}
+
+.key--lit {
+	background: var(--tape);
+	border-bottom-color: color-mix(in srgb, var(--tape) 55%, black);
+	color: var(--tape-ink);
+}
+
+.key--lit:hover:not(:disabled) {
+	background: var(--tape-hover);
+}
+
+.key--danger,
+.btn--danger {
+	background: var(--key);
+	color: var(--err);
+}
+
+.act {
+	color: var(--pen);
+	text-decoration-color: color-mix(in srgb, var(--pen) 45%, transparent);
+}
+
+/* Navigation: a row of deck keys; the page you are on is the key held down. */
+.tabbar {
+	gap: 6px;
+	padding-top: 8px;
+	padding-bottom: calc(8px + env(safe-area-inset-bottom));
+	background: var(--deck);
+	border-top: 2px solid var(--deck-edge);
+}
+
+.tabbar a {
+	min-height: 56px;
+	border-bottom: 5px solid var(--key-side);
+	border-radius: 6px;
+	background: var(--key);
+	color: var(--key-ink);
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+.tabbar a[aria-current] {
+	margin-top: 3px;
+	border-bottom-width: 2px;
+	background: var(--key-hover);
+	color: var(--key-ink);
+}
+
+.tabbar a[aria-current="page"] svg,
+.tabbar a[aria-current="true"] svg {
+	color: var(--hotline);
+}
+
+@media (min-width: 960px) {
+	.tabbar {
+		gap: 8px;
+		margin: 12px;
+		padding: 10px;
+		border: 2px solid var(--deck-edge);
+		border-radius: 14px;
+	}
+
+	.tabbar a:hover {
+		background: var(--key-hover);
+		color: var(--key-ink);
+	}
+
+	.tabbar a[aria-current] {
+		background: var(--key-hover);
+		box-shadow: none;
+	}
+}
+
+/* The shelf: cassettes stand on a board instead of sitting in cards. */
+.tape-strip {
+	padding: 0 4px 14px;
+	border-bottom: 10px solid var(--deck);
+	box-shadow: 0 8px 0 -4px var(--deck-edge);
+}
+
+.tape-pick > button {
+	border: 0;
+	background: none;
+	padding: 6px 2px 0;
+	transition: transform 200ms var(--ease);
+}
+
+.tape-pick--selected > button {
+	box-shadow: none;
+	transform: translateY(-8px);
+}
+
+.tape-pick--selected .tape-pick__name {
+	text-decoration: underline 3px var(--tape);
+	text-underline-offset: 4px;
+}
+
+.tape-pick__name {
+	font-family: var(--font-display);
+	font-variation-settings: "wdth" 88;
+}
+
+/* The device line reads like a label on the deck's side. */
+.device-select {
+	border-radius: 4px;
+	background: var(--paper);
+	border-color: var(--rule-strong);
+}
+
+.flash {
+	border-radius: 4px;
+	background: var(--dymo);
+	color: var(--dymo-ink);
 }
