@@ -1,6 +1,0 @@
-{
-	"origin": "Authored src/client/public/brand/klassik/icon.svg",
-	"licence": "Project application asset",
-	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square 512x512",
-	"description": "Klassisch mark: white resume arrow around a play triangle on violet; 2026-10-07"
-}

@@ -1,6 +1,0 @@
-{
-	"origin": "Authored src/client/public/brand/kontakt/icon.svg",
-	"licence": "Project application asset",
-	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square 192x192",
-	"description": "Kontaktbogen mark: film frame with sprocket rows, current frame boxed in red grease pencil; 2026-10-07"
-}

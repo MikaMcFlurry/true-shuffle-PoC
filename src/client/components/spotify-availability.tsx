@@ -1,4 +1,11 @@
-import type { SpotifyCooldownView, SpotifyDiagnostics, SpotifyFunction } from "../api";
+import { useEffect, useState } from "preact/hooks";
+import type { SpotifyUsageReport, SpotifyUsageTotals } from "../../shared/spotify-usage";
+import {
+	api,
+	type SpotifyCooldownView,
+	type SpotifyDiagnostics,
+	type SpotifyFunction,
+} from "../api";
 import { num } from "../format";
 
 const functions: Array<[SpotifyFunction, string, string]> = [
@@ -31,7 +38,7 @@ export function ProviderWait({ gate }: { gate: SpotifyCooldownView }) {
 			? Number(gate.retryAfter)
 			: null;
 	return (
-		<dl>
+		<dl class="diag-facts">
 			<dt>Provider-Grund</dt>
 			<dd>{gate.reason ?? "Kein Grund angegeben"}</dd>
 			<dt>Von Spotify gemeldete Wartezeit</dt>
@@ -68,7 +75,7 @@ export function SpotifyFunctionStatus({
 	const now = Date.now();
 	return (
 		<>
-			<h3>Welche Funktionen antworten?</h3>
+			<h3 class="diag__h">Welche Funktionen antworten?</h3>
 			<p class="hint">
 				Der Test fragt Geräte, Wiedergabestatus und Verlauf jeweils einmal ab. Er startet keine
 				Musik. Nur eine von Spotify bestätigte 429 hält dieselbe betroffene Operation zurück; aus
@@ -171,8 +178,6 @@ export function SpotifyFunctionStatus({
 	);
 }
 
-import type { SpotifyUsageReport, SpotifyUsageTotals } from "../../shared/spotify-usage";
-
 function counted(value: number, singular: string, plural: string): string {
 	return `${num(value)} ${value === 1 ? singular : plural}`;
 }
@@ -199,8 +204,10 @@ export function SpotifyUsageTracker({ report }: { report: SpotifyUsageReport }) 
 		for (const key of Object.keys(day) as Array<keyof SpotifyUsageTotals>)
 			day[key] += hour.totals[key];
 	return (
-		<section aria-labelledby="shared-usage-title" class="section">
-			<h3 id="shared-usage-title">Gemeinsame Spotify-Nutzung</h3>
+		<section aria-labelledby="shared-usage-title" class="diag">
+			<h3 class="diag__h" id="shared-usage-title">
+				Gemeinsame Spotify-Nutzung
+			</h3>
 			<p class="hint">
 				Alle App-Konten zusammen. {counted(report.observedListeners, "Konto", "Konten")} mit
 				beobachteten Anfragen im gespeicherten Zeitraum;{" "}
@@ -212,7 +219,7 @@ export function SpotifyUsageTracker({ report }: { report: SpotifyUsageReport }) 
 				Das verbleibende Spotify-Budget ist unbekannt. Andere Apps und deren Anfragen sind hier
 				nicht sichtbar. Diese Anzeige erzeugt keine zusätzlichen Spotify-Anfragen.
 			</p>
-			<dl>
+			<dl class="diag-facts">
 				<dt>Letzte 24 Stundenblöcke</dt>
 				<dd>{totalsText(day)}</dd>
 				<dt>Gespeicherte 30-Tage-Beobachtung</dt>
@@ -230,7 +237,7 @@ export function SpotifyUsageTracker({ report }: { report: SpotifyUsageReport }) 
 			</p>
 			<details class="more">
 				<summary>Operationen und anonyme Konten</summary>
-				<h3>Anfragen nach Operation</h3>
+				<h3 class="diag__h">Anfragen nach Operation</h3>
 				{report.operations.length ? (
 					<ul class="list">
 						{report.operations.map((o) => (
@@ -251,7 +258,7 @@ export function SpotifyUsageTracker({ report }: { report: SpotifyUsageReport }) 
 				) : (
 					<p class="hint">Noch keine Operationen aufgezeichnet.</p>
 				)}
-				<h3>Anfragen je anonymem Konto</h3>
+				<h3 class="diag__h">Anfragen je anonymem Konto</h3>
 				{report.listeners.length ? (
 					<ul class="list">
 						{report.listeners.map((l) => (
@@ -284,7 +291,7 @@ export function SpotifyUsageTracker({ report }: { report: SpotifyUsageReport }) 
 									? "Noch kein anschließender Erfolg"
 									: "Erfolg danach beobachtet"}
 							</summary>
-							<dl>
+							<dl class="diag-facts">
 								<dt>Erste bestätigte 429</dt>
 								<dd>{date(e.firstFailureAt)}</dd>
 								<dt>Letzte bestätigte 429</dt>
@@ -315,5 +322,122 @@ export function SpotifyUsageTracker({ report }: { report: SpotifyUsageReport }) 
 				)}
 			</details>
 		</section>
+	);
+}
+
+/**
+ * Spotify's confirmed answers and the shared request record, folded away.
+ * Nothing is loaded until it is opened; loading it sends nothing to Spotify.
+ */
+export function SpotifyStatus() {
+	const [open, setOpen] = useState(false);
+	return (
+		<details class="more more--status" onToggle={(e) => setOpen(e.currentTarget.open)}>
+			<summary class="more__summary">
+				<span class="row__main">
+					<span class="row__title">Spotify-Freigabe & Anfragestatus</span>
+					<span class="row__sub">
+						Nur nötig, wenn etwas nicht startet: was Spotify zuletzt geantwortet hat.
+					</span>
+				</span>
+			</summary>
+			{open ? <SpotifyStatusBody /> : null}
+		</details>
+	);
+}
+
+function SpotifyStatusBody() {
+	const [testing, setTesting] = useState(false);
+	const [diagnostics, setDiagnostics] = useState<SpotifyDiagnostics | null>(null);
+	const [diagnosticError, setDiagnosticError] = useState("");
+	const [usage, setUsage] = useState<SpotifyUsageReport | null>(null);
+	const [usageError, setUsageError] = useState("");
+	const load = async (): Promise<void> => {
+		setDiagnosticError("");
+		setUsageError("");
+		await Promise.allSettled([
+			api
+				.spotifyUsage()
+				.then(setUsage)
+				.catch((e: Error) => setUsageError(e.message)),
+			api
+				.spotifyDiagnostics()
+				.then(setDiagnostics)
+				.catch((e: Error) => setDiagnosticError(e.message)),
+		]);
+	};
+	// Load once when the panel opens.
+	useEffect(() => {
+		void load();
+	}, []);
+	return (
+		<div class="more__body">
+			<p>
+				Hier siehst du bestätigte Antworten von Spotify. Eine 429 („zu viele Anfragen“) betrifft
+				zunächst nur die Operation, für die Spotify sie tatsächlich gemeldet hat. Gespeicherter
+				Verlauf und Warteschlangen bleiben erhalten.
+			</p>
+			{diagnostics ? (
+				<>
+					<SpotifyFunctionStatus
+						diagnostics={diagnostics}
+						busy={testing}
+						onRetry={(scope) => {
+							setTesting(true);
+							setDiagnosticError("");
+							void api
+								.retrySpotify(scope)
+								.then(load)
+								.catch((e: Error) => setDiagnosticError(e.message))
+								.finally(() => setTesting(false));
+						}}
+					/>
+					<button
+						type="button"
+						class="key"
+						disabled={testing}
+						onClick={() => {
+							setTesting(true);
+							setDiagnosticError("");
+							void api
+								.testSpotifyAvailability()
+								.then(load)
+								.catch((e: Error) => setDiagnosticError(e.message))
+								.finally(() => setTesting(false));
+						}}
+					>
+						{testing ? "Funktionen werden geprüft …" : "Funktionen gezielt testen"}
+					</button>
+					<h3 class="diag__h">Gespeicherte Anfrageversuche pro Stunde</h3>
+					<p class="hint">
+						Einträge mit „blocked“ wurden lokal zurückgehalten und nicht an Spotify gesendet.
+					</p>
+					<pre class="diag-data">{JSON.stringify(diagnostics.requests?.counts ?? {}, null, 2)}</pre>
+					<h3 class="diag__h">Letzter Anfrageversuch</h3>
+					<pre class="diag-data">
+						{JSON.stringify(diagnostics.requests?.latest ?? null, null, 2)}
+					</pre>
+				</>
+			) : null}
+			{usageError ? (
+				<p class="note note--error" role="alert">
+					Gemeinsame Nutzung nicht aktualisiert: {usageError}
+					{usage ? " Der letzte erfolgreiche Stand bleibt sichtbar." : ""}
+				</p>
+			) : null}
+			{usage ? (
+				<SpotifyUsageTracker report={usage} />
+			) : !usageError ? (
+				<p class="hint" aria-busy="true">
+					Gemeinsame Spotify-Nutzung wird geladen …
+				</p>
+			) : null}
+			{diagnosticError ? <p class="note note--error">{diagnosticError}</p> : null}
+			<div class="row-actions">
+				<button type="button" class="key" onClick={() => void load()}>
+					Status aktualisieren
+				</button>
+			</div>
+		</div>
 	);
 }

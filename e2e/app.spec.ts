@@ -112,13 +112,13 @@ test.describe("a listener's day", () => {
 
 	test("signs in with Spotify and saves playlists as stations", async ({ page }) => {
 		await signIn(page);
-		await expect(page.getByText("Wähle, welche Sender werden")).toBeVisible();
+		await expect(page.getByText("Wähle, welche Playlists Kassetten werden")).toBeVisible();
 		await checkPage(page, "Sendersuchlauf");
 		// A playlist of someone else cannot be read (Spotify keeps its songs).
 		await expect(page.getByRole("checkbox", { name: /Today's Top Hits/ })).toBeDisabled();
 		await page.getByRole("checkbox", { name: /Indie & Gitarren/ }).check();
 		await page.getByRole("checkbox", { name: /Lange Autofahrt/ }).check();
-		await page.getByRole("button", { name: "2 Sender speichern" }).click();
+		await page.getByRole("button", { name: "2 Kassetten anlegen" }).click();
 
 		// Home: the automatic "Alles" plus the two stations, ready once imported.
 		for (const name of ["Alles", "Indie & Gitarren", "Lange Autofahrt"]) {
@@ -135,8 +135,9 @@ test.describe("a listener's day", () => {
 		await page.getByRole("button", { name: "Wiedergabe starten" }).click();
 		const display = page.locator(".player");
 		await expect(page.locator(".station-actions")).toContainText("Indie & Gitarren");
-		await expect(display).toContainText("Song und Reihenfolge bleiben gespeichert");
-		await expect(display).toContainText("Mikas iPhone");
+		await expect(page.locator(".promise")).toContainText("Deine Stelle bleibt");
+		await expect(display).toContainText("Läuft auf Mikas iPhone");
+		await expect(page.locator(".session-status")).toHaveText("Spielt");
 
 		const s = await fake("status");
 		expect(s.playing).toBe(true);
@@ -189,12 +190,12 @@ test.describe("a listener's day", () => {
 
 	test("shows the station with its round, mix and next songs", async ({ page }) => {
 		await signIn(page);
-		// Every station is set up from the back panel (Menü).
-		await page.getByRole("link", { name: "Menü" }).click();
+		// Every cassette is set up from the shelf (Kassetten).
+		await page.getByRole("link", { name: "Kassetten" }).click();
 		await page.getByRole("link", { name: "Indie & Gitarren einstellen" }).click();
 		await expect(page.getByRole("heading", { name: "Indie & Gitarren", level: 1 })).toBeVisible();
 		const panel = page.locator(".page");
-		await expect(panel.getByText(/von 400 gehört/)).toBeVisible();
+		await expect(panel.getByText(/von 400 Songs gehört/).first()).toBeVisible();
 		const next = page.getByRole("region", { name: "Als Nächstes" }).getByRole("listitem");
 		await expect(next.first()).toBeVisible();
 		await checkPage(page, "station");
@@ -217,21 +218,21 @@ test.describe("a listener's day", () => {
 
 	test("guest mode keeps someone else's music out of the memory", async ({ page }) => {
 		await signIn(page);
-		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: "Mehr" }).click();
 		await checkPage(page, "menu");
 		await page.getByRole("switch", { name: /Gast-Modus/ }).check();
 		await expect(page.getByText(/Gast-Modus an/)).toBeVisible();
-		await page.getByRole("button", { name: "Zurück" }).click();
+		await page.getByRole("link", { name: "Jetzt" }).click();
 		await expect(page.locator(".player-heading").getByText(/Gast-Modus/)).toBeVisible();
 
-		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: "Mehr" }).click();
 		await page.getByRole("switch", { name: /Gast-Modus/ }).uncheck();
 		await expect(page.getByText(/Gast-Modus aus/)).toBeVisible();
 	});
 
 	test("a personal key likes the playing song from Siri or a widget", async ({ page }) => {
 		await signIn(page);
-		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: "Mehr" }).click();
 		await page.getByRole("link", { name: /Fernbedienung/ }).click();
 		await expect(page.getByRole("heading", { name: "Fernbedienung", level: 1 })).toBeVisible();
 		await page.getByRole("button", { name: "Schlüssel erstellen" }).click();
@@ -298,11 +299,11 @@ test.describe("a listener's day", () => {
 		await page.goto("/");
 		await expect(page.getByRole("button", { name: /^Alles/ })).toBeVisible();
 		await checkPage(page, "/ at 320 px");
-		await page.goto("/menu");
+		await page.goto("/sender");
 		const station = await page
 			.getByRole("link", { name: "Indie & Gitarren einstellen" })
 			.getAttribute("href");
-		await checkPage(page, "/menu at 320 px");
+		await checkPage(page, "/sender at 320 px");
 		await page.goto(station ?? "/");
 		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 		await checkPage(page, `${station} at 320 px`);
@@ -322,7 +323,7 @@ test.describe("a listener's day", () => {
 			});
 		expect((await rename(long)).ok()).toBe(true);
 		try {
-			for (const path of ["/", "/menu", `/sender/${lange?.id}`]) {
+			for (const path of ["/", "/sender", `/sender/${lange?.id}`]) {
 				await page.goto(path);
 				await expect(page.getByText(long).first()).toBeVisible();
 				await checkPage(page, `${path} at 320 px with a 60-character name`);
@@ -455,7 +456,7 @@ test.describe("a listener's day", () => {
 	test("signs out and keeps the memory", async ({ page }) => {
 		await signIn(page);
 		const before = await page.context().cookies();
-		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: "Mehr" }).click();
 		await page.getByRole("button", { name: /Abmelden/ }).click();
 		await expect(page.getByRole("link", { name: "Mit Spotify anmelden" })).toBeVisible();
 
@@ -476,12 +477,12 @@ test.describe("calm player", () => {
 	test("shows current music and ordered queue beside the library", async ({ page }) => {
 		await signIn(page);
 		await expect(page.locator(".player")).toBeVisible();
-		await expect(page.getByRole("complementary", { name: "Deine Sender" })).toBeVisible();
+		await expect(page.getByRole("region", { name: "Andere Kassette einlegen" })).toBeVisible();
 		await expect(page.getByRole("heading", { name: "Als Nächstes" })).toBeVisible();
 		await checkPage(page, "desktop player");
 		await page.screenshot({ path: ".impeccable/review/desktop.png", fullPage: true });
-		await page.getByRole("link", { name: "Menü", exact: true }).click();
-		await expect(page.getByRole("heading", { name: "Menü" })).toBeVisible();
+		await page.getByRole("link", { name: "Mehr", exact: true }).click();
+		await expect(page.getByRole("heading", { name: "Mehr", level: 1 })).toBeVisible();
 		await checkPage(page, "desktop settings");
 	});
 	test("keeps saved song, progress and queue across reload and another browser", async ({
@@ -537,8 +538,8 @@ test.describe("calm player", () => {
 			path: ".impeccable/review/mobile-light.png",
 			fullPage: true,
 		});
-		await page.getByRole("button", { name: "Neue Warteschlange", exact: true }).click();
-		await expect(page.getByRole("button", { name: "Neue Warteschlange beginnen" })).toBeVisible();
+		await page.getByRole("button", { name: /neu mischen …$/ }).click();
+		await expect(page.getByRole("button", { name: "Ja, neu mischen" })).toBeVisible();
 		await page.getByRole("button", { name: "Abbrechen", exact: true }).click();
 		await page.context().setOffline(true);
 		await page.getByRole("button", { name: "Geräte aktualisieren" }).click();
@@ -555,14 +556,14 @@ test.describe("confirmed Spotify operations and shared usage", () => {
 	test.use({ viewport: { width: 390, height: 844 }, timezoneId: "Europe/Berlin" });
 	async function openDiagnostics(page: Page): Promise<void> {
 		await signIn(page);
-		await page.goto("/geraete");
-		const onboarding = page.getByText("Wähle, welche Sender werden", { exact: true });
+		await page.goto("/mehr");
+		const onboarding = page.getByText("Wähle, welche Playlists Kassetten werden", { exact: true });
 		const details = page.getByText("Spotify-Freigabe & Anfragestatus", { exact: true });
 		await expect(onboarding.or(details)).toBeVisible();
 		if (await onboarding.isVisible()) {
 			await page.getByRole("button", { name: "Nur mit „Alles“ starten" }).click();
 			await expect(page.getByRole("button", { name: /^Alles/ })).toBeEnabled({ timeout: 60000 });
-			await page.goto("/geraete");
+			await page.goto("/mehr");
 		}
 		await details.click();
 	}

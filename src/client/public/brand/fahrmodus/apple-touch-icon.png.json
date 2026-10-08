@@ -1,6 +1,0 @@
-{
-	"origin": "Authored src/client/public/brand/fahrmodus/icon.svg",
-	"licence": "Project application asset",
-	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square 180x180",
-	"description": "Fahrmodus mark: a big yellow play triangle on a black sign, on signal yellow; 2026-10-07"
-}

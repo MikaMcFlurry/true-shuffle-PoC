@@ -1,6 +1,0 @@
-{
-	"origin": "Authored src/client/public/brand/linie/icon.svg",
-	"licence": "Project application asset",
-	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square 512x512",
-	"description": "Linienplan mark: red line bending at 45 degrees through a white interchange stop on midnight navy; 2026-10-07"
-}

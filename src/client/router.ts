@@ -2,6 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 
 export type Route =
 	| { name: "home" }
+	| { name: "stations" }
 	| { name: "station"; id: number }
 	| { name: "new-station" }
 	| { name: "menu" }
@@ -18,6 +19,9 @@ export function parse(path: string): Route {
 	const m = /^\/sender\/(\d+)$/.exec(p);
 	if (m) return { name: "station", id: Number(m[1]) };
 	switch (p) {
+		case "/sender":
+			return { name: "stations" };
+		case "/mehr":
 		case "/menu":
 			return { name: "menu" };
 		case "/verlauf":

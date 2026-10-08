@@ -675,10 +675,10 @@ test("very long unbroken song metadata wraps without page overflow on desktop an
 			expect(overflow, `${scheme} ${width}px: horizontal overflow`).toBeLessThanOrEqual(0);
 			const title = await page.locator(".now-copy h2").evaluate((el) => {
 				const box = el.getBoundingClientRect();
-				const parent = el.closest(".stage")!.getBoundingClientRect();
+				const parent = el.closest(".player")!.getBoundingClientRect();
 				return { right: box.right, parentRight: parent.right };
 			});
-			expect(title.right, `${scheme} ${width}px: title inside stage`).toBeLessThanOrEqual(
+			expect(title.right, `${scheme} ${width}px: title inside player`).toBeLessThanOrEqual(
 				title.parentRight + 1,
 			);
 		}
