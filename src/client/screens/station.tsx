@@ -236,6 +236,7 @@ function SongRow(props: {
 					kind={props.kind ?? null}
 					facts={props.facts ?? null}
 					thumb={store.thumbOf(t)}
+					known={store.load.kind === "ready" && store.load.state.history.importedTracks > 0}
 					class="tags--row"
 				/>
 			</span>
@@ -422,9 +423,9 @@ export function Station({
 					</p>
 					<div class="deck-hero__acts">
 						{playingHere && session?.stationId === id ? (
-							<a class="key key--lit" href="/">
-								<Play size={18} aria-hidden="true" />
-								Läuft im Walkman
+							<a class="key deck-hero__live" href="/">
+								<span class="led led--running" aria-hidden="true" />
+								Läuft · zum Walkman
 							</a>
 						) : (
 							<button

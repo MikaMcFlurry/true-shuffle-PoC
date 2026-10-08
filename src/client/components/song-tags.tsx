@@ -17,6 +17,7 @@ export function songTags(
 	kind: SlotKind | null | undefined,
 	facts: SongFactsView | null,
 	thumb: -1 | 0 | 1 = 0,
+	known = true,
 ): { text: string; tone: "new" | "fav" | "first" | "known" }[] {
 	const k = facts?.kind ?? kind ?? null;
 	const tags: { text: string; tone: "new" | "fav" | "first" | "known" }[] = [];
@@ -24,7 +25,9 @@ export function songTags(
 	if (k === "favorite" || thumb === 1) tags.push({ text: "Favorit", tone: "fav" });
 	if (facts) {
 		if (facts.plays === 0) {
-			if (k !== "discovery") tags.push({ text: "Noch nie gehört", tone: "new" });
+			// Without an imported history, true-shuffle only knows what it counted itself.
+			if (k !== "discovery")
+				tags.push({ text: known ? "Noch nie gehört" : "Bisher nicht gehört", tone: "new" });
 		} else {
 			if (!facts.inStation) tags.push({ text: "Zum ersten Mal hier", tone: "first" });
 			tags.push({
@@ -43,9 +46,11 @@ export function SongTags(props: {
 	kind?: SlotKind | null;
 	facts?: SongFactsView | null;
 	thumb?: -1 | 0 | 1;
+	/** An imported Spotify history exists, so "never heard" is known, not guessed. */
+	known?: boolean;
 	class?: string;
 }) {
-	const tags = songTags(props.kind, props.facts ?? null, props.thumb ?? 0);
+	const tags = songTags(props.kind, props.facts ?? null, props.thumb ?? 0, props.known ?? true);
 	if (!tags.length) return null;
 	return (
 		<ul class={`tags${props.class ? ` ${props.class}` : ""}`} aria-label="Über diesen Song">

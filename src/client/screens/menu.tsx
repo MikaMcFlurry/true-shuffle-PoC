@@ -668,12 +668,13 @@ export function AboutScreen() {
 			/>
 			<ul class="promise-list mehr-promise">
 				<li>
-					<strong>Jeder Song kommt dran.</strong> Erst wenn du alle Songs einer Kassette gehört hast,
-					beginnt er von vorn.
+					<strong>Jeder Song kommt dran.</strong> Erst wenn du alle Songs einer Kassette gehört
+					hast, beginnt er von vorn.
 				</li>
 				<li>
 					<strong>Keine schnellen Wiederholungen.</strong> Was du gehört hast, kommt eine Weile
-					nicht wieder. Favoriten öfter, aber höchstens einmal pro Woche.
+					nicht wieder. Favoriten öfter, aber erst nach einer Pause, die du pro Kassette einstellst
+					(zu Beginn eine Woche).
 				</li>
 				<li>
 					<strong>Deine Stelle bleibt.</strong> Fortsetzen spielt genau dort weiter, auch nach
@@ -687,9 +688,9 @@ export function AboutScreen() {
 
 			<Section title="Wie es funktioniert" id="info-how">
 				<p>
-					Jede Kassette ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify, mit
-					fester Reihenfolge. Spotify spielt sie ab, auf jedem Gerät, auch wenn du sie
-					direkt in Spotify startest. Nur „neu mischen“ ändert die Reihenfolge.
+					Jede Kassette ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify, mit fester
+					Reihenfolge. Spotify spielt sie ab, auf jedem Gerät, auch wenn du sie direkt in Spotify
+					startest. Nur „neu mischen“ ändert die Reihenfolge.
 				</p>
 				<p>
 					Alle paar Minuten liest true-shuffle, was du gehört hast. Jeder Song ab 30 Sekunden zählt,
@@ -815,7 +816,7 @@ function EffectList({ e, done }: { e: Effects; done: boolean }) {
 				<li>
 					<strong>Favoriten kommen öfter.</strong> {songs(e.favorites)} hast du mindestens{" "}
 					{FAMILIAR_PLAYS}-mal gehört und selten früh übersprungen. Sie gelten als Favoriten und
-					kommen öfter, aber höchstens einmal pro Woche.
+					kommen öfter, jeweils nach der Pause, die für die Kassette eingestellt ist.
 				</li>
 				<li>
 					<strong>Früh Übersprungenes kommt seltener.</strong> {songs(e.rarer)} hast du ein- oder

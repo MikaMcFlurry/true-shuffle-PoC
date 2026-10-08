@@ -397,14 +397,15 @@ export function Home({ state }: { state: AppState }) {
 						<h1 id="listen-title" class="sr-only">
 							{posterStation?.name ?? "Noch keine Kassette eingelegt"}
 						</h1>
-						<p class="counter" aria-label={counterLabel}>
+						<p class="counter">
+							<span class="sr-only">{counterLabel}</span>
 							<span class="counter__digits" aria-hidden="true">
 								{String(heard ?? 0).padStart(
 									Math.max(3, String(posterStation?.poolSize ?? 0).length),
 									"0",
 								)}
 							</span>
-							<span class="player-heading__span">
+							<span class="player-heading__span" aria-hidden="true">
 								{heard !== null && posterStation?.poolSize
 									? `von ${num(posterStation.poolSize)} Songs gehört`
 									: posterStation
@@ -517,6 +518,7 @@ export function Home({ state }: { state: AppState }) {
 								kind={view.projected ? null : (ownNow?.kind ?? null)}
 								facts={factsOf(session?.queue.find((e) => e.entryId === view.entryId))}
 								thumb={store.thumbOf(track)}
+								known={state.history.importedTracks > 0}
 							/>
 						) : null}
 					</div>
@@ -753,7 +755,13 @@ export function Home({ state }: { state: AppState }) {
 					<>
 						<ol class="queue-list">
 							{successors.slice(0, shown).map((e, i) => (
-								<QueueRow key={e.entryId} track={e.track} index={i + 1} facts={factsOf(e)} />
+								<QueueRow
+									key={e.entryId}
+									track={e.track}
+									index={i + 1}
+									facts={factsOf(e)}
+									known={state.history.importedTracks > 0}
+								/>
 							))}
 						</ol>
 						{successors.length > shown ? (
@@ -782,13 +790,14 @@ export function Home({ state }: { state: AppState }) {
 						<strong>Jeder Song kommt dran.</strong>{" "}
 						{heard !== null && posterStation?.poolSize
 							? heard === 0
-								? `Alle ${num(posterStation.poolSize)} Songs aus ${posterStation.name} kommen dran, keiner doppelt. Erst danach beginnt alles von vorn.`
+								? `Alle ${num(posterStation.poolSize)} Songs aus ${posterStation.name} kommen der Reihe nach je einmal dran. Erst danach beginnt alles von vorn.`
 								: `${num(heard)} von ${num(posterStation.poolSize)} Songs aus ${posterStation.name} hast du schon gehört, ${num(posterStation.poolSize - heard)} kommen noch. Erst danach beginnt alles von vorn.`
 							: "Erst wenn du alle Songs einer Kassette gehört hast, beginnt sie von vorn."}
 					</li>
 					<li>
 						<strong>Keine schnellen Wiederholungen.</strong> Was du gehört hast, kommt eine Weile
-						nicht wieder. Favoriten öfter, aber höchstens einmal pro Woche.
+						nicht wieder. Favoriten kommen öfter, aber erst nach einer Pause von{" "}
+						{pause(posterStation?.rules.favoriteCooldownDays ?? 7)}.
 					</li>
 					<li>
 						<strong>Deine Stelle bleibt.</strong> Auch wenn du zwischendurch etwas anderes in
@@ -924,10 +933,12 @@ function QueueRow({
 	track,
 	index,
 	facts,
+	known,
 }: {
 	track: TrackView;
 	index: number;
 	facts: SongFactsView | null;
+	known: boolean;
 }) {
 	return (
 		<li class="queue-row track--rate">
@@ -938,7 +949,7 @@ function QueueRow({
 			<span class="track__main">
 				<strong>{track.name}</strong>
 				<span class="muted">{track.artists}</span>
-				<SongTags facts={facts} thumb={store.thumbOf(track)} class="tags--row" />
+				<SongTags facts={facts} thumb={store.thumbOf(track)} known={known} class="tags--row" />
 			</span>
 			<ThumbMark t={track} />
 			<span class="queue-duration">{duration(track.durationMs)}</span>
@@ -983,4 +994,12 @@ export async function playStation(station: StationSummary) {
 		store.tuning = null;
 		store.emit();
 	}
+}
+
+/** "einer Woche", "3 Tagen", or no pause at all. */
+function pause(days: number): string {
+	if (days <= 0) return "keiner Pause";
+	if (days === 7) return "einer Woche";
+	if (days === 1) return "einem Tag";
+	return `${days} Tagen`;
 }

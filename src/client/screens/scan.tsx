@@ -103,12 +103,14 @@ export function Scan({ state }: { state: AppState }) {
 
 			<section class="section" aria-labelledby="scan-pick">
 				<div class="section__head">
-					<h2 id="scan-pick">{state.onboarded ? found : "Wähle, welche Playlists Kassetten werden"}</h2>
+					<h2 id="scan-pick">
+						{state.onboarded ? found : "Wähle, welche Playlists Kassetten werden"}
+					</h2>
 				</div>
 				{state.onboarded ? null : (
 					<p class="section__lead">
-						{found}. Hak die an, die du als eigene Kassette hören willst. Dazu kommt
-						automatisch „Alles“: alle Playlists und deine Lieblingssongs zusammen.
+						{found}. Hak die an, die du als eigene Kassette hören willst. Dazu kommt automatisch
+						„Alles“: alle Playlists und deine Lieblingssongs zusammen.
 					</p>
 				)}
 

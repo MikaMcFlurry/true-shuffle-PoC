@@ -1623,13 +1623,34 @@ main {
 	border-style: dashed;
 }
 
+/* In a list the tags are one quiet line, not a row of pills. */
 .tags--row {
-	margin-top: 4px;
+	display: block;
+	margin-top: 2px;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: var(--ink-3);
 }
 
 .tags--row .tag {
-	font-size: 0.75rem;
-	padding: 0 7px;
+	display: inline;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	font-size: inherit;
+	font-weight: 600;
+	color: inherit;
+}
+
+.tags--row .tag + .tag::before {
+	content: " · ";
+	font-weight: 400;
+}
+
+.tags--row .tag--new,
+.tags--row .tag--fav {
+	color: var(--tape);
 }
 
 /* ------------------------------------------------------- tape strip */

@@ -137,6 +137,7 @@ test.describe("a listener's day", () => {
 		await expect(page.locator(".station-actions")).toContainText("Indie & Gitarren");
 		await expect(page.locator(".promise")).toContainText("Deine Stelle bleibt");
 		await expect(display).toContainText("Läuft auf Mikas iPhone");
+		await expect(page.locator(".session-status")).toHaveText("Spielt");
 
 		const s = await fake("status");
 		expect(s.playing).toBe(true);

@@ -125,8 +125,14 @@
 }
 
 .deck-hero__tape {
+	justify-self: center;
 	width: 100%;
 	max-width: 340px;
+}
+
+.deck-hero__live .led {
+	width: 10px;
+	height: 10px;
 }
 
 .deck-hero__text {
