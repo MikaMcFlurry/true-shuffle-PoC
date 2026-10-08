@@ -1,4 +1,4 @@
-/** The true-shuffle mark: two reels joined by a run of tape. Decorative; the name sits beside it. */
+/** The true-shuffle mark: a cassette, two reels and the tape between them. Decorative; the name sits beside it. */
 export function Mark(props: { class?: string }) {
 	return (
 		<svg
@@ -7,11 +7,13 @@ export function Mark(props: { class?: string }) {
 			aria-hidden="true"
 			focusable="false"
 		>
-			<path class="bm-band" d="M6 23.5h20" />
-			<circle class="bm-reel" cx="9" cy="14" r="6.2" />
-			<circle class="bm-reel" cx="23" cy="14" r="6.2" />
-			<circle class="bm-hub" cx="9" cy="14" r="2.3" />
-			<circle class="bm-hub" cx="23" cy="14" r="2.3" />
+			<rect class="bm-shell" x="2.5" y="6.5" width="27" height="19" rx="3" />
+			<path class="bm-band" d="M10.5 15h11" />
+			<circle class="bm-reel" cx="10.5" cy="15" r="3.6" />
+			<circle class="bm-reel" cx="21.5" cy="15" r="3.6" />
+			<circle class="bm-hub" cx="10.5" cy="15" r="1.3" />
+			<circle class="bm-hub" cx="21.5" cy="15" r="1.3" />
+			<path class="bm-shell" d="M8 25.5l2-4h12l2 4" />
 		</svg>
 	);
 }

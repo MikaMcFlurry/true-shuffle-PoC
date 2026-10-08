@@ -68,7 +68,7 @@ export function Home({ state }: { state: AppState }) {
 	const deviceRequest = useRef(0);
 	const [confirm, setConfirm] = useState(false);
 	/** Progressive reveal of the stored plan; presentation only, no extra requests. */
-	const [shown, setShown] = useState(12);
+	const [shown, setShown] = useState(5);
 	const refreshDevices = () => {
 		setDeviceError("");
 		const request = ++deviceRequest.current;
@@ -722,7 +722,9 @@ export function Home({ state }: { state: AppState }) {
 					<li>
 						<strong>Jeder Song kommt dran.</strong>{" "}
 						{heard !== null && posterStation?.poolSize
-							? `${num(heard)} von ${num(posterStation.poolSize)} Songs aus ${posterStation.name} hast du schon gehört, ${num(posterStation.poolSize - heard)} kommen noch. Erst danach beginnt alles von vorn.`
+							? heard === 0
+								? `Alle ${num(posterStation.poolSize)} Songs aus ${posterStation.name} kommen dran, keiner doppelt. Erst danach beginnt alles von vorn.`
+								: `${num(heard)} von ${num(posterStation.poolSize)} Songs aus ${posterStation.name} hast du schon gehört, ${num(posterStation.poolSize - heard)} kommen noch. Erst danach beginnt alles von vorn.`
 							: "Erst wenn du alle Songs eines Senders gehört hast, beginnt er von vorn."}
 					</li>
 					<li>
@@ -730,10 +732,8 @@ export function Home({ state }: { state: AppState }) {
 						nicht wieder. Favoriten öfter, aber höchstens einmal pro Woche.
 					</li>
 					<li>
-						<strong>Deine Stelle bleibt.</strong>{" "}
-						{session
-							? "Auch wenn du zwischendurch etwas anderes in Spotify hörst oder die App schließt."
-							: "Auch wenn du zwischendurch etwas anderes in Spotify hörst oder die App schließt."}
+						<strong>Deine Stelle bleibt.</strong> Auch wenn du zwischendurch etwas anderes in
+						Spotify hörst oder die App schließt.
 					</li>
 					<li>
 						<strong>Es weiß, was du kennst.</strong>{" "}
