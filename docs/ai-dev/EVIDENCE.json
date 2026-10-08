@@ -1,11 +1,11 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-08T19:08:06.471042+00:00",
+  "generated_at": "2026-10-08T21:14:59.432984+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
-    "revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+    "revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "Actualexternallyreleased17\u219216source97e6/version3499/deploymentc409100% verified. FunctionalREADY, UI NOT_READY inheritedlightredtagcontrast. PR18candidate22ed separateunmergedNOT_READY/noCompletion; noCodexmerge/deploy.",
+    "environment": "ActualPR18 integratedrelease e348/versiondd344/deployment238016100% verified. ScopedfreshREADY_WITH_NON_BLOCKING_FINDINGS; fullmissionBLOCKED only historicalliveSpotify/HA/populatedrestoreNOTRUN. Ownstagingbbcaaunactivated; automaticWorkersBuildsrelease verified.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -182,12 +182,6 @@
       "title": "Real owner HA/MA routes not verified",
       "severity": "P1",
       "blocking": true
-    },
-    {
-      "id": "PR18-TAG-CONTRAST",
-      "title": "Inherited light rowFavorit smalltextcontrast4.373098:1<4.5",
-      "severity": "P2",
-      "blocking": true
     }
   ],
   "gates": [
@@ -199,14 +193,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-01",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-02",
@@ -216,14 +210,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-02",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-03",
@@ -233,14 +227,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-03",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-04",
@@ -250,14 +244,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-04",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-05",
@@ -267,14 +261,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-05",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-06",
@@ -284,14 +278,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-06",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-07",
@@ -301,14 +295,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-07",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-08",
@@ -318,14 +312,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-08",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-09",
@@ -335,14 +329,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-09",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-10",
@@ -352,31 +346,31 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-10",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-NN-11",
       "category": "ui_runtime",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-11",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-BUILD",
@@ -386,14 +380,14 @@
       "evidence": [
         {
           "id": "EV-G-BUILD",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-STATIC",
@@ -403,14 +397,14 @@
       "evidence": [
         {
           "id": "EV-G-STATIC",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-MIGRATION",
@@ -420,14 +414,14 @@
       "evidence": [
         {
           "id": "EV-G-MIGRATION",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-RECOVERY",
@@ -437,14 +431,14 @@
       "evidence": [
         {
           "id": "EV-G-RECOVERY",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-QUOTA",
@@ -454,48 +448,48 @@
       "evidence": [
         {
           "id": "EV-G-QUOTA",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-BROWSER",
       "category": "ui_runtime",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-BROWSER",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-INDEPENDENT",
       "category": "independent_review",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-INDEPENDENT",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LIVE-SPOTIFY",
@@ -505,14 +499,14 @@
       "evidence": [
         {
           "id": "EV-G-LIVE-SPOTIFY",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "NOT_RUN live owner/provider/private HA/populated restore; no acceptance inferred from simulations.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LIVE-HA-MA",
@@ -522,14 +516,14 @@
       "evidence": [
         {
           "id": "EV-G-LIVE-HA-MA",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "NOT_RUN live owner/provider/private HA/populated restore; no acceptance inferred from simulations.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LIVE-PRODUCTION",
@@ -539,48 +533,48 @@
       "evidence": [
         {
           "id": "EV-G-LIVE-PRODUCTION",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "NOT_RUN live owner/provider/private HA/populated restore; no acceptance inferred from simulations.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-LOCAL-INDEPENDENT",
       "category": "independent_review",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-LOCAL-INDEPENDENT",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-ACCESSIBILITY",
       "category": "accessibility",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-ACCESSIBILITY",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-DATA_INVARIANTS",
@@ -590,14 +584,14 @@
       "evidence": [
         {
           "id": "EV-G-DATA_INVARIANTS",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-PERFORMANCE_RELIABILITY",
@@ -607,14 +601,14 @@
       "evidence": [
         {
           "id": "EV-G-PERFORMANCE_RELIABILITY",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-SECURITY_PRIVACY",
@@ -624,14 +618,14 @@
       "evidence": [
         {
           "id": "EV-G-SECURITY_PRIVACY",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-CF-IDENTITY",
@@ -641,22 +635,14 @@
       "evidence": [
         {
           "id": "EV-G-CF-IDENTITY",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
-        },
-        {
-          "id": "EV-PR18-WATCH-G-CF-IDENTITY",
-          "kind": "authenticatedidentity/publicreadback",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
           "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
-          "result": "PR18watch: production3499/c409100%unchanged,19assetsbyteidentical97e6,health200/auth401/CSRF403. Separateunmerged2d741candidateNOT_READY; noappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T19:08:06.471042+00:00"
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-CF-PUBLIC",
@@ -666,22 +652,14 @@
       "evidence": [
         {
           "id": "EV-G-CF-PUBLIC",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
-        },
-        {
-          "id": "EV-PR18-WATCH-G-CF-PUBLIC",
-          "kind": "authenticatedidentity/publicreadback",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
           "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
-          "result": "PR18watch: production3499/c409100%unchanged,19assetsbyteidentical97e6,health200/auth401/CSRF403. Separateunmerged2d741candidateNOT_READY; noappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T19:08:06.471042+00:00"
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     },
     {
       "id": "G-CF-BROWSER",
@@ -691,14 +669,14 @@
       "evidence": [
         {
           "id": "EV-G-CF-BROWSER",
-          "kind": "actualintegratedproductionreadback andfreshindependentrepairreview",
-          "ref": "docs/ai-dev/evidence/MIXTAPE_RELEASE_REVIEW.json",
-          "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
-          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
-          "observed_at": "2026-10-08T18:07:11.257363+00:00"
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
         }
       ],
-      "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
     }
   ]
 }
