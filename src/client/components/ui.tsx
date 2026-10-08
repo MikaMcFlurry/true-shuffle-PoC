@@ -1,6 +1,6 @@
 /**
  * Shared presentation parts: covers, page heads, sections, choice scales and
- * the station colour. Each design styles them; none of them holds state.
+ * the station colour. None of them holds state.
  */
 
 import { ArrowLeft, Music2 } from "lucide-preact";
@@ -23,13 +23,13 @@ export function inkOf(s: Pick<StationSummary, "id" | "kind"> | null | undefined)
 	return INKS[Math.abs(s.id) % INKS.length] ?? "ultra";
 }
 
-/** "Runde 2 · 212 von 400 gehört", or that the round counts from its first song. */
+/** "2. Durchgang · 212 von 400 gehört", or that the pass counts from its first song. */
 export function roundText(s: Pick<StationSummary, "roundNo" | "poolSize" | "freshRemaining">) {
 	const heard =
 		s.poolSize !== null && s.freshRemaining !== null ? s.poolSize - s.freshRemaining : null;
 	return heard !== null && s.poolSize !== null
-		? `Runde ${s.roundNo || 1} · ${num(heard)} von ${num(s.poolSize)} gehört`
-		: `Runde ${s.roundNo || 1} · zählt ab dem ersten Song`;
+		? `${s.roundNo || 1}. Durchgang · ${num(heard)} von ${num(s.poolSize)} gehört`
+		: `${s.roundNo || 1}. Durchgang · zählt ab dem ersten Song`;
 }
 
 // ---------------------------------------------------------------- covers
@@ -96,9 +96,10 @@ export function Section(props: {
 	children?: ComponentChildren;
 	id?: string;
 	lead?: ComponentChildren;
+	class?: string;
 }) {
 	return (
-		<section class="section" aria-labelledby={props.id}>
+		<section class={props.class ? `section ${props.class}` : "section"} aria-labelledby={props.id}>
 			<div class="section__head">
 				<h2 id={props.id}>{props.title}</h2>
 				{props.lead ? <span class="section__lead">{props.lead}</span> : null}
@@ -110,10 +111,11 @@ export function Section(props: {
 
 // ---------------------------------------------------------------- scales
 
+/** The three printed positions and what each one means for the listener, in plain words. */
 const MIX_DETENTS = [
-	["Entdecker", PRESETS.entdecker],
-	["Ausgewogen", PRESETS.ausgewogen],
-	["Vertraut", PRESETS.vertraut],
+	["Entdecker", PRESETS.entdecker, "viel Neues"],
+	["Ausgewogen", PRESETS.ausgewogen, "von allem etwas"],
+	["Vertraut", PRESETS.vertraut, "mehr Favoriten"],
 ] as const;
 
 /**
@@ -122,9 +124,9 @@ const MIX_DETENTS = [
  */
 export function MixScale(props: { value: number; station: string; onChange: (v: number) => void }) {
 	return (
-		<fieldset class="segmented segmented--mix">
+		<fieldset class="segmented segmented--mix mixscale">
 			<legend class="sr-only">Mischung für {props.station}: Entdecken oder Vertraut</legend>
-			{MIX_DETENTS.map(([label, v]) => (
+			{MIX_DETENTS.map(([label, v, sub]) => (
 				<label key={label} class="segmented__opt">
 					<input
 						type="radio"
@@ -133,7 +135,10 @@ export function MixScale(props: { value: number; station: string; onChange: (v: 
 						checked={props.value === v}
 						onChange={() => props.onChange(v)}
 					/>
-					<span>{label}</span>
+					<span>
+						<span class="mixscale__name">{label}</span>
+						<span class="mixscale__sub">{sub}</span>
+					</span>
 				</label>
 			))}
 		</fieldset>
