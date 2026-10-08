@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-01T14:33:44.836488+00:00",
+  "generated_at": "2026-10-08T11:31:33.062871+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -36,7 +36,7 @@
       "path": "AGENTS.md",
       "treatment": "UPDATE",
       "authority": "CANONICAL",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime. Current six-surface review is docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json (c05ae42, NOT_READY); mapped analysis baseline is historical, not current-source alignment.",
+      "reason": "Canonical current review: docs/ai-dev/evidence/RESUME_REVIEW.json, target5eaBLOCKED; runtimec05 after authorizedrollback b47b at100%. SIX_SURFACE_REVIEW is historical UI evidence; storage/contrast remain. Analysis baseline remains historical.",
       "evidence_ids": [
         "EV-01",
         "EV-02"

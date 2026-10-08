@@ -189,6 +189,17 @@ const CONTINUE_WITHIN_MS = HOLD_WATCH_MS;
 
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
+/**
+ * A start or skip Spotify never confirmed stops holding the saved place after
+ * this long: an unanswered command must not freeze the queue until the next
+ * start, which then replays from wherever it froze.
+ */
+const PENDING_EXPIRE_MS = 5 * MINUTE_MS;
+/**
+ * How long after a play counted from the looks Spotify's listing of the same
+ * song is still that play, not a second one.
+ */
+const SAME_PLAY_SLACK_MS = 10 * MINUTE_MS;
 /** How old a look may be to say which song was playing as guest mode went off. */
 const GUEST_TAIL_FRESH_MS = 2_000;
 /** How long after a guest time its last play is followed. */
@@ -510,6 +521,11 @@ export interface SavedSession {
 	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
 	sequence?: number;
 	controller?: "native" | "spotify";
+	/**
+	 * Plays in this order count from here (else from the deck's writing): a
+	 * trimmed order may hold songs again that were heard before the trim.
+	 */
+	heardSince?: number;
 	pending: {
 		operationId: string;
 		kind: "resume" | "publish" | "next";
@@ -2434,6 +2450,7 @@ export class HubCore {
 			return { done: false, state: { stationId }, delayMs: MINUTE_MS };
 		if (session && intent.trim > 0 && !session.pending) {
 			session.currentIndex = 0;
+			session.heardSince = this.now();
 			session.entryIds = intent.entryIds;
 			session.pending = { operationId: crypto.randomUUID(), kind: "publish" };
 			this.saveSession(session);
@@ -3728,8 +3745,11 @@ export class HubCore {
 	 */
 	private recordSeenPlay(e: SeenPlay): RecentPlay | null {
 		// It was over by now (paused on the way, later than it would have been).
+		// Spotify may list this very play some minutes after the looks counted it
+		// (a paused end, a slow listing): until then a listing is this play, not a
+		// second one. Before its start, a listing is the play before (RT24-02).
 		const from = e.after ?? e.start - MINUTE_MS;
-		const to = Math.max(e.end, this.now()) + MINUTE_MS;
+		const to = Math.max(e.end, this.now()) + SAME_PLAY_SLACK_MS;
 		if (
 			this.db.first(
 				`SELECT 1 FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ? LIMIT 1`,
@@ -4543,6 +4563,7 @@ export class HubCore {
 			deck.version += 1;
 			session.entryIds = [...session.entryIds.slice(trim), ...entries.map((it) => it.entryId)];
 			session.currentIndex -= trim;
+			if (trim > 0) session.heardSince = this.now();
 			session.orderRevision += 1;
 			this.saveDeck(stationId, deck);
 			this.saveSession(session);
@@ -4774,6 +4795,24 @@ export class HubCore {
 		let session = this.savedSession(st.id);
 		if (!session && (deck.lastTrackId || obs?.contextUri === this.deckUri(st)))
 			session = this.createSession(st, deck);
+		// An unconfirmed command expires instead of freezing the saved place. A
+		// playlist write still being retried keeps its hold: until it lands,
+		// positions in the player mean the order before it.
+		if (
+			session?.pending &&
+			session.controller !== "native" &&
+			this.now() - (session.pending.startedAt ?? 0) > PENDING_EXPIRE_MS &&
+			(session.pending.kind !== "publish" ||
+				(!this.kvGet(`deck_intent:${st.id}`) && !this.kvGet(`extend_intent:${st.id}`)))
+		) {
+			this.log(
+				"info",
+				"session",
+				`„${st.name}“: unbestätigter Befehl (${session.pending.kind}) verworfen — die Stelle wird wieder mitgeschrieben`,
+			);
+			session.pending = null;
+			this.saveSession(session);
+		}
 		if (
 			session?.pending?.kind === "resume" &&
 			session.controller !== "native" &&
@@ -4842,15 +4881,79 @@ export class HubCore {
 						: matches.includes(session.currentIndex)
 							? session.currentIndex
 							: -1;
-			if (index >= 0) {
+			if (index >= 0 && index < session.currentIndex) {
+				// A player in this playlist at an earlier place: another device
+				// resuming what it had loaded days ago, or a tap in Spotify itself.
+				// The saved place is where true-shuffle's order got to, and it
+				// never moves back — the station waits there until it is its turn.
+				session.status = "external";
+			} else if (index >= 0) {
 				session.currentIndex = index;
-				// Latest valid provider observation wins, including a backwards seek.
+				// Within the current song the latest observation wins, including a
+				// backwards seek; across songs only forward (see above).
 				session.progressMs =
 					Number.isFinite(obs.progressMs) && obs.progressMs >= 0 ? obs.progressMs : null;
 				session.observedAt = obs.at;
 				session.status = obs.isPlaying ? "active" : "paused";
 			} else session.status = "ambiguous";
 		}
+		this.saveSession(session);
+	}
+
+	/**
+	 * The furthest place of this order whose song was heard in its playlist
+	 * since the order was written, or -1. Spotify's own listings have the final
+	 * say, whatever device played them and whatever the looks saw.
+	 */
+	private furthestHeard(st: StationRow, deck: Deck, session: SavedSession): number {
+		const since = Math.max(deck.writtenAt, session.heardSince ?? 0);
+		const heard = this.db.all<{ track_id: string }>(
+			`SELECT DISTINCT track_id FROM plays WHERE station_id = ? AND played_at >= ? AND ignored = 0 AND context_uri = ?`,
+			st.id,
+			since,
+			session.contextUri,
+		);
+		if (heard.length === 0) return -1;
+		// A song held twice counts at its first place: never skip what was not heard.
+		const first = new Map<TrackId, number>();
+		deck.items.forEach((it, i) => {
+			if (!first.has(it.id)) first.set(it.id, i);
+		});
+		let furthest = -1;
+		for (const r of heard) {
+			const i = first.get(r.track_id);
+			if (i !== undefined && i > furthest) furthest = i;
+		}
+		return furthest;
+	}
+
+	/**
+	 * A start continues where the order got to, not where a player last was.
+	 * The saved place can lag behind what was heard — a device that resumed an
+	 * old place, a command that never got confirmed, looks that missed the
+	 * listening — and starting there replays songs in the same order. A song
+	 * paused in its middle, heard 30 s already, still resumes where it stopped.
+	 */
+	private resumePastHeard(st: StationRow, deck: Deck, session: SavedSession): void {
+		const furthest = this.furthestHeard(st, deck, session);
+		if (furthest < session.currentIndex || furthest + 1 >= deck.items.length) return;
+		const durationMs = this.lookupTracks([deck.items[furthest]!.id], this.usedSources()).get(
+			deck.items[furthest]!.id,
+		)?.[5];
+		const midSong =
+			furthest === session.currentIndex &&
+			session.progressMs != null &&
+			session.progressMs > 0 &&
+			(durationMs == null || session.progressMs < durationMs - 5_000);
+		if (midSong) return;
+		this.log(
+			"info",
+			"session",
+			`„${st.name}“: Fortsetzen nach dem zuletzt gehörten Song (Platz ${furthest + 1} statt ${session.currentIndex + 1})`,
+		);
+		session.currentIndex = furthest + 1;
+		session.progressMs = 0;
+		session.observedAt = this.now();
 		this.saveSession(session);
 	}
 
@@ -4913,6 +5016,7 @@ export class HubCore {
 			if (!deck?.items.length) return fail("empty", "Diese Warteschlange hat keine Songs.");
 			session = session ? this.savedSession(stationId) : null;
 			session ??= this.createSession(fresh, deck);
+			if (session.controller !== "native") this.resumePastHeard(fresh, deck, session);
 			// Journal the candidate without replacing the visible saved station.
 			// A definitive refusal must leave the previous station available.
 			// Submitted ambiguous commands still become visible for reconciliation.

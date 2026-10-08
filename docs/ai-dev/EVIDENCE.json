@@ -1,11 +1,11 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-07T10:07:18.799039+00:00",
+  "generated_at": "2026-10-08T11:31:33.062871+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
-    "revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+    "revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "Externally deployed CF93f6d97c-81d0-423a-9abf-c0a6f3d58dd6/deployment8cad3af9-0e57-4754-8017-4b3e3246f00a100%; exactproductionreadback; see SIX_SURFACE_REVIEW.json. Physical provider/HA/restore NOT_RUN.",
+    "environment": "Target5ea isBLOCKED and externally merged; production rolled back to sourcec05/version93f6/deploymentb47b100%. Source/runtime differ. RESUME_REVIEW.json records identity/checks/limits.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -194,6 +194,24 @@
       "title": "Public klassik dark welcome at390px: sign-in button 16.8px bold700 #fff on #8f7bff, measured contrast3.258:1, below WCAGAA small-text4.5:1.",
       "severity": "P2",
       "blocking": true
+    },
+    {
+      "id": "RESUME-01",
+      "title": "History membership advances past an unfinished occurrence",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "RESUME-02",
+      "title": "Definitive rejected resume irreversibly overwrites candidate checkpoint",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "RESUME-03",
+      "title": "Ten-minute track-only dedup drops distinct repeated listening history",
+      "severity": "P2",
+      "blocking": true
     }
   ],
   "gates": [
@@ -205,65 +223,65 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-01",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-02",
       "category": "critical_journey",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-02",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-03",
       "category": "critical_journey",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-03",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-04",
       "category": "critical_journey",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-04",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-05",
@@ -273,65 +291,65 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-05",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-06",
       "category": "critical_journey",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-06",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-07",
       "category": "critical_journey",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-07",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-08",
       "category": "critical_journey",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-08",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-09",
@@ -341,14 +359,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-09",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-10",
@@ -358,14 +376,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-10",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-NN-11",
@@ -375,14 +393,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-11",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-BUILD",
@@ -392,14 +410,14 @@
       "evidence": [
         {
           "id": "EV-G-BUILD",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-STATIC",
@@ -409,14 +427,14 @@
       "evidence": [
         {
           "id": "EV-G-STATIC",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-MIGRATION",
@@ -426,14 +444,14 @@
       "evidence": [
         {
           "id": "EV-G-MIGRATION",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-RECOVERY",
@@ -443,14 +461,14 @@
       "evidence": [
         {
           "id": "EV-G-RECOVERY",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-QUOTA",
@@ -460,14 +478,14 @@
       "evidence": [
         {
           "id": "EV-G-QUOTA",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-BROWSER",
@@ -477,14 +495,14 @@
       "evidence": [
         {
           "id": "EV-G-BROWSER",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-INDEPENDENT",
@@ -494,14 +512,14 @@
       "evidence": [
         {
           "id": "EV-G-INDEPENDENT",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LIVE-SPOTIFY",
@@ -511,14 +529,14 @@
       "evidence": [
         {
           "id": "EV-G-LIVE-SPOTIFY",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "NOT_RUN: physical provider/privateHA/populatedrestore unavailable.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LIVE-HA-MA",
@@ -528,14 +546,14 @@
       "evidence": [
         {
           "id": "EV-G-LIVE-HA-MA",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "NOT_RUN: physical provider/privateHA/populatedrestore unavailable.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LIVE-PRODUCTION",
@@ -545,14 +563,14 @@
       "evidence": [
         {
           "id": "EV-G-LIVE-PRODUCTION",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "NOT_RUN: physical provider/privateHA/populatedrestore unavailable.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-LOCAL-INDEPENDENT",
@@ -562,14 +580,14 @@
       "evidence": [
         {
           "id": "EV-G-LOCAL-INDEPENDENT",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-ACCESSIBILITY",
@@ -579,31 +597,31 @@
       "evidence": [
         {
           "id": "EV-G-ACCESSIBILITY",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-DATA_INVARIANTS",
       "category": "data_invariants",
       "required": true,
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": [
         {
           "id": "EV-G-DATA_INVARIANTS",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-PERFORMANCE_RELIABILITY",
@@ -613,14 +631,14 @@
       "evidence": [
         {
           "id": "EV-G-PERFORMANCE_RELIABILITY",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-SECURITY_PRIVACY",
@@ -630,14 +648,14 @@
       "evidence": [
         {
           "id": "EV-G-SECURITY_PRIVACY",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-CF-IDENTITY",
@@ -647,14 +665,14 @@
       "evidence": [
         {
           "id": "EV-G-CF-IDENTITY",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-CF-PUBLIC",
@@ -664,14 +682,14 @@
       "evidence": [
         {
           "id": "EV-G-CF-PUBLIC",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     },
     {
       "id": "G-CF-BROWSER",
@@ -681,14 +699,14 @@
       "evidence": [
         {
           "id": "EV-G-CF-BROWSER",
-          "kind": "post-release independent watch",
-          "ref": "docs/ai-dev/evidence/SIX_SURFACE_REVIEW.json",
-          "result": "Exacthead42browserPASS; type/lint/build/dryrunPASS;443unitPASS/1timeout,targetedrepeatPASS; CImerge444/42PASS. Independent storage/contrast findings remain. Worker/core unchanged; actual production75assets/auth/runtime/bindingsverified. SimulatedSpotify is not physical/live-provider acceptance.",
-          "subject_revision": "c05ae42216fd6d011d955e89de11198fef28b6e5",
-          "observed_at": "2026-10-07T10:07:18.799039+00:00"
+          "kind": "fresh functional review with independently verified rollback",
+          "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
+          "result": "Exact5ea449unit/42realWorker-browser,type/lint/build/dryPASS; independent6requirements FAIL vs6baselinePASS. RESUME-01/02checkpoint/occurrence,RESUME-03history regression. Source rollbackc05 has75exactresources/auth/public4viewport-theme smokePASS; samebindings/runtime. Client unchanged; prior UI matrix remains scoped c05 evidence. Physical/liveSpotify/privateHA/populatedRestoreNOT_RUN.",
+          "subject_revision": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+          "observed_at": "2026-10-08T11:31:33.062871+00:00"
         }
       ],
-      "rationale": "Current-source evidence with scoped simulation and production-readback limits; prior gate details remain in git history."
+      "rationale": "Bounded current delta review and exact checks; source5eaBLOCKED, runtimec05 afterrollback. See gate failure details and historical UI assertions in linked evidence."
     }
   ]
 }
