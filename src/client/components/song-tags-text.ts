@@ -38,10 +38,10 @@ export function songTags(
 					tone: "new",
 				});
 		} else {
-			// The plays log keeps at least half a year: "not here" is only claimed for that span.
+			// The plays log keeps at least 180 days: "not here" is only claimed for that span.
 			if (!facts.inStation)
 				tags.push({
-					text: short ? "lange nicht hier" : "Seit über 6 Monaten nicht auf dieser Kassette",
+					text: short ? "lange nicht hier" : "In den letzten 180 Tagen nicht auf dieser Kassette",
 					tone: "first",
 				});
 			tags.push({

@@ -30,8 +30,13 @@ unverändert.
 - Build-Branch (Cloudflare Workers Builds, Produktion):
   `codex/implement-cloudflare-restart`. Jeder Push dorthin wird live
   deployt.
-- Live seit 2026-10-08: Quelle `5ea6f6d` (fix(session) …), Cloudflare-Version
-  `6b2a79a2`, 100 %. URL: https://true-shuffle.mikahertler-72c.workers.dev/
+- Stand bei Übergabe (historisch): live war Quelle `5ea6f6d` (fix(session) …),
+  Cloudflare-Version `6b2a79a2`. **Aktueller Stand (Nachtrag 2026-10-08):** Nach
+  einer unabhängigen Prüfung (RESUME-01/02/03, PR #15) wurde die Produktion auf
+  Quelle `c05ae42`, Version `93f6d97c`, Deployment `b47b7259` (100 %)
+  zurückgerollt. `5ea6f6d` gilt nicht als repariert; die Korrektur liegt im
+  eigenen PR (`claude/resume-fix`). URL:
+  https://true-shuffle.mikahertler-72c.workers.dev/
 - Arbeite auf einem eigenen Branch, der von `codex/implement-cloudflare-restart`
   abzweigt. Öffne einen PR dorthin. Gemergt bzw. per Fast-Forward
   veröffentlicht wird erst nach grüner CI **und ausdrücklicher Freigabe des
@@ -108,7 +113,9 @@ Lokale Schlüssel im Browser: `ts-device`, `ts-device-name`,
 
 ## 5. Geschützte Verhaltensverträge, die die Oberfläche sichtbar machen muss
 
-- **Die gespeicherte Stelle geht nur vorwärts** (neu seit `5ea6f6d`). Spielt
+- **Die gespeicherte Stelle geht nur vorwärts** (neu seit `5ea6f6d`; Nachtrag:
+  dieser Stand ist nicht live, siehe §2, die Regel bleibt mit der Korrektur in
+  `claude/resume-fix` erhalten). Spielt
   ein anderes Gerät die Sender-Playlist an einer älteren Stelle, bleibt die
   Stelle stehen und die Session meldet `status: "external"`. Die Oberfläche
   muss dann klar sagen: „Deine Warteschlange wartet. Fortsetzen holt sie

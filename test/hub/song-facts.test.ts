@@ -201,7 +201,7 @@ describe("song facts in the queue", () => {
 		const facts = factsOf(h, sid, id)!;
 		expect(facts).toMatchObject({ plays: 1, lastPlayedAt: old, inStation: false });
 		expect(songTags("fresh", facts).map((t) => t.text)).toContain(
-			"Seit über 6 Monaten nicht auf dieser Kassette",
+			"In den letzten 180 Tagen nicht auf dieser Kassette",
 		);
 	});
 });

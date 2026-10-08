@@ -19,7 +19,7 @@ describe("song tags claim only what was recorded", () => {
 
 	it("not on this station is bounded to the half year the plays log keeps", () => {
 		const t = texts("fresh", facts(3, false));
-		expect(t[0]).toBe("Seit über 6 Monaten nicht auf dieser Kassette");
+		expect(t[0]).toBe("In den letzten 180 Tagen nicht auf dieser Kassette");
 		expect(t.join(" ")).not.toMatch(/ersten Mal/);
 	});
 

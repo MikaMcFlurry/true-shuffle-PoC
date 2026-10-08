@@ -370,6 +370,29 @@ interface SeenPlay {
 	end: number;
 	contextUri: string | null;
 	track: PackedTrack;
+	/**
+	 * Still on the player when counted, its rest unplayed (default: by its
+	 * duration). Only such a play may be listed minutes later — after a pause.
+	 */
+	open?: boolean;
+}
+
+/**
+ * A play counted from the looks; Spotify's listing of it is not a second play.
+ * Up to `to` any listing of the song is it (the original window). Up to
+ * `until` only a listing in the same context, before any other song was heard
+ * and before Spotify listed it at all: a pause can delay the end of a play
+ * that was still on, never that of one that was over. Entries written before
+ * `until` existed have the original window only.
+ */
+interface SeenEntry {
+	id: TrackId;
+	from: number;
+	to: number;
+	at?: number;
+	ctx?: string | null;
+	until?: number;
+	listed?: boolean;
 }
 
 interface PlayerSnapshot {
@@ -522,11 +545,6 @@ export interface SavedSession {
 	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
 	sequence?: number;
 	controller?: "native" | "spotify";
-	/**
-	 * Plays in this order count from here (else from the deck's writing): a
-	 * trimmed order may hold songs again that were heard before the trim.
-	 */
-	heardSince?: number;
 	pending: {
 		operationId: string;
 		kind: "resume" | "publish" | "next";
@@ -2452,7 +2470,6 @@ export class HubCore {
 			return { done: false, state: { stationId }, delayMs: MINUTE_MS };
 		if (session && intent.trim > 0 && !session.pending) {
 			session.currentIndex = 0;
-			session.heardSince = this.now();
 			session.entryIds = intent.entryIds;
 			session.pending = { operationId: crypto.randomUUID(), kind: "publish" };
 			this.saveSession(session);
@@ -3717,6 +3734,8 @@ export class HubCore {
 				end: Math.max(at, e.at),
 				contextUri: e.contextUri,
 				track: e.track,
+				// Replaced or left: over, no later end for a pause to delay.
+				open: false,
 			});
 			if (!r) continue;
 			out.push(r);
@@ -3747,19 +3766,24 @@ export class HubCore {
 	 */
 	private recordSeenPlay(e: SeenPlay): RecentPlay | null {
 		// It was over by now (paused on the way, later than it would have been).
-		// Spotify may list this very play some minutes after the looks counted it
-		// (a paused end, a slow listing): until then a listing is this play, not a
-		// second one. Before its start, a listing is the play before (RT24-02).
+		// Before its start, a listing is the play before (RT24-02).
 		const from = e.after ?? e.start - MINUTE_MS;
-		const to = Math.max(e.end, this.now()) + SAME_PLAY_SLACK_MS;
-		if (
-			this.db.first(
-				`SELECT 1 FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ? LIMIT 1`,
-				from,
-				to,
-				e.id,
-			)
-		)
+		const anchor = Math.max(e.end, this.now());
+		const to = anchor + MINUTE_MS;
+		// A play still on when counted may end minutes later after a pause, and
+		// Spotify stamps it then: in its own context that listing is still this
+		// play. A play that was over has no later end to wait for.
+		const durationMs = e.track[5];
+		const open = e.open ?? !(durationMs > 0 && e.start + durationMs - e.end <= 5_000);
+		const until = open ? anchor + SAME_PLAY_SLACK_MS : to;
+		const entry: SeenEntry = { id: e.id, from, to, at: e.at, ctx: e.contextUri, until };
+		const listed = this.db.all<{ played_at: number; context_uri: string | null }>(
+			`SELECT played_at, context_uri FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ?`,
+			from,
+			until,
+			e.id,
+		);
+		if (listed.some((r) => this.isSeenListing(entry, e.id, r.played_at, r.context_uri)))
 			return null;
 		const st = e.contextUri
 			? this.stations().find((x) => this.deckUri(x) === e.contextUri)
@@ -3773,10 +3797,10 @@ export class HubCore {
 			JSON.stringify(e.track),
 		);
 		this.noteHeard(st?.id, e.id);
-		const seen = (
-			this.kvGet<{ id: TrackId; from: number; to: number }[]>("seen_plays") ?? []
-		).filter((x) => x.to > this.now() - LATE_PLAY_WINDOW_MS);
-		seen.push({ id: e.id, from, to });
+		const seen = (this.kvGet<SeenEntry[]>("seen_plays") ?? []).filter(
+			(x) => Math.max(x.to, x.until ?? 0) > this.now() - LATE_PLAY_WINDOW_MS,
+		);
+		seen.push(entry);
 		this.kvSet("seen_plays", seen.slice(-200));
 		const before = this.memory(e.id);
 		this.livePlay(e.id, e.at);
@@ -3784,6 +3808,27 @@ export class HubCore {
 		this.noteDiscoveryHeard(e.id);
 		this.dirtyDecksHolding(e.id, st?.id ?? null);
 		return { trackId: e.id, playedAt: e.at, contextUri: e.contextUri };
+	}
+
+	/**
+	 * Whether Spotify's listing (played at `at` in `ctx`) is the play a seen
+	 * entry counted. Track and time alone do not tell a delayed listing from a
+	 * new play of the same song: past the original window only one listing, in
+	 * the same context, with nothing else heard since, is that play.
+	 */
+	private isSeenListing(e: SeenEntry, id: TrackId, at: number, ctx: string | null): boolean {
+		if (e.id !== id || at < e.from) return false;
+		if (at <= e.to) return true;
+		if (e.until === undefined || at > e.until || e.listed || e.ctx === undefined) return false;
+		// Spotify lists some plays without their context (API starts among them):
+		// a context-less listing may still be this play; another context never is.
+		if (ctx !== null && e.ctx !== ctx) return false;
+		return !this.db.first(
+			`SELECT 1 FROM plays WHERE played_at > ? AND played_at < ? AND track_id != ? LIMIT 1`,
+			e.at ?? e.to,
+			at,
+			id,
+		);
 	}
 
 	/**
@@ -3889,7 +3934,8 @@ export class HubCore {
 		// it still counts, once — the plays table has the final say.
 		const known = new Set(this.kvGet<string[]>("recent_keys") ?? []);
 		// Plays true-shuffle counted itself in a private session: listed late, not again.
-		const seen = this.kvGet<{ id: TrackId; from: number; to: number }[]>("seen_plays") ?? [];
+		const seen = this.kvGet<SeenEntry[]>("seen_plays") ?? [];
+		let seenListed = false;
 		// Never reaching back before the first sign-in: that belongs to the import.
 		const lateFrom = Math.max(
 			s.recentCursor - LATE_PLAY_WINDOW_MS,
@@ -3975,7 +4021,13 @@ export class HubCore {
 			}
 			// Counted already from the looks in a private session: it still tells
 			// the decks it was heard, and memory nothing new.
-			if (seen.some((e) => e.id === id && at >= e.from && at <= e.to)) {
+			const counted = seen.find((e) => this.isSeenListing(e, id, at, ctx));
+			if (counted) {
+				// Listed now: a further listing of the song is a play of its own.
+				if (!counted.listed) {
+					counted.listed = true;
+					seenListed = true;
+				}
 				s.recentCursor = Math.max(s.recentCursor, at);
 				out.push({ trackId: id, playedAt: at, contextUri: ctx });
 				continue;
@@ -4031,6 +4083,7 @@ export class HubCore {
 			// Heard somewhere else: every other deck still holding it is stale.
 			this.dirtyDecksHolding(id, station?.id ?? null);
 		}
+		if (seenListed) this.kvSet("seen_plays", seen);
 		if (notes.length < noted) {
 			if (notes.length > 0) this.kvSet("shown_pending", notes);
 			else this.kvDel("shown_pending");
@@ -4567,7 +4620,6 @@ export class HubCore {
 			deck.version += 1;
 			session.entryIds = [...session.entryIds.slice(trim), ...entries.map((it) => it.entryId)];
 			session.currentIndex -= trim;
-			if (trim > 0) session.heardSince = this.now();
 			session.orderRevision += 1;
 			this.saveDeck(stationId, deck);
 			this.saveSession(session);
@@ -4966,63 +5018,6 @@ export class HubCore {
 		this.saveSession(session);
 	}
 
-	/**
-	 * The furthest place of this order whose song was heard in its playlist
-	 * since the order was written, or -1. Spotify's own listings have the final
-	 * say, whatever device played them and whatever the looks saw.
-	 */
-	private furthestHeard(st: StationRow, deck: Deck, session: SavedSession): number {
-		const since = Math.max(deck.writtenAt, session.heardSince ?? 0);
-		const heard = this.db.all<{ track_id: string }>(
-			`SELECT DISTINCT track_id FROM plays WHERE station_id = ? AND played_at >= ? AND ignored = 0 AND context_uri = ?`,
-			st.id,
-			since,
-			session.contextUri,
-		);
-		if (heard.length === 0) return -1;
-		// A song held twice counts at its first place: never skip what was not heard.
-		const first = new Map<TrackId, number>();
-		deck.items.forEach((it, i) => {
-			if (!first.has(it.id)) first.set(it.id, i);
-		});
-		let furthest = -1;
-		for (const r of heard) {
-			const i = first.get(r.track_id);
-			if (i !== undefined && i > furthest) furthest = i;
-		}
-		return furthest;
-	}
-
-	/**
-	 * A start continues where the order got to, not where a player last was.
-	 * The saved place can lag behind what was heard — a device that resumed an
-	 * old place, a command that never got confirmed, looks that missed the
-	 * listening — and starting there replays songs in the same order. A song
-	 * paused in its middle, heard 30 s already, still resumes where it stopped.
-	 */
-	private resumePastHeard(st: StationRow, deck: Deck, session: SavedSession): void {
-		const furthest = this.furthestHeard(st, deck, session);
-		if (furthest < session.currentIndex || furthest + 1 >= deck.items.length) return;
-		const durationMs = this.lookupTracks([deck.items[furthest]!.id], this.usedSources()).get(
-			deck.items[furthest]!.id,
-		)?.[5];
-		const midSong =
-			furthest === session.currentIndex &&
-			session.progressMs != null &&
-			session.progressMs > 0 &&
-			(durationMs == null || session.progressMs < durationMs - 5_000);
-		if (midSong) return;
-		this.log(
-			"info",
-			"session",
-			`„${st.name}“: Fortsetzen nach dem zuletzt gehörten Song (Platz ${furthest + 1} statt ${session.currentIndex + 1})`,
-		);
-		session.currentIndex = furthest + 1;
-		session.progressMs = 0;
-		session.observedAt = this.now();
-		this.saveSession(session);
-	}
-
 	private async resumeSession(
 		stationId: number,
 		deviceId?: string | null,
@@ -5082,7 +5077,6 @@ export class HubCore {
 			if (!deck?.items.length) return fail("empty", "Diese Warteschlange hat keine Songs.");
 			session = session ? this.savedSession(stationId) : null;
 			session ??= this.createSession(fresh, deck);
-			if (session.controller !== "native") this.resumePastHeard(fresh, deck, session);
 			// Journal the candidate without replacing the visible saved station.
 			// A definitive refusal must leave the previous station available.
 			// Submitted ambiguous commands still become visible for reconciliation.
