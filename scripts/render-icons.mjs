@@ -28,7 +28,10 @@ for (const [size, name] of [
 		.replace("<svg ", `<svg width="${size}" height="${size}" `)
 		.replace(/<rect width="64" height="64" rx="14"/g, '<rect width="64" height="64" rx="0"');
 	await page.setContent(`<html><body style="margin:0">${sized}</body></html>`);
-	await page.screenshot({ path: `${dir}/${name}`, clip: { x: 0, y: 0, width: size, height: size } });
+	await page.screenshot({
+		path: `${dir}/${name}`,
+		clip: { x: 0, y: 0, width: size, height: size },
+	});
 	await ctx.close();
 }
 await browser.close();

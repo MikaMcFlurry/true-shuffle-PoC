@@ -1,0 +1,537 @@
+/*
+ * Mehr and its pages: Geräte, Verlauf, Import, Info, Fernbedienung,
+ * Anmeldung and the Spotify status. Builds on app.css tokens and shared
+ * classes only; light and dark come from the tokens.
+ */
+
+/* ------------------------------------------------------------ list rows */
+
+.mehr-row__icon {
+	flex: none;
+	color: var(--ink-2);
+}
+
+.mehr-row__chev {
+	flex: none;
+	margin-left: auto;
+	color: var(--ink-3);
+}
+
+.mehr-row--danger .row__title,
+.mehr-row--danger .mehr-row__icon {
+	color: var(--err);
+}
+
+button.row:disabled {
+	opacity: 0.5;
+}
+
+label.row {
+	cursor: pointer;
+}
+
+label.row[aria-disabled="true"] {
+	cursor: not-allowed;
+	opacity: 0.55;
+}
+
+.mehr-switch .switch {
+	margin-left: auto;
+}
+
+.mehr-stack {
+	flex-direction: column;
+	align-items: stretch;
+	gap: 8px;
+	padding-block: 14px;
+}
+
+.mehr-choice input[type="radio"] {
+	flex: none;
+	width: 22px;
+	height: 22px;
+	margin: 0;
+}
+
+.cover.mehr-avatar {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+}
+
+.section > .section__lead {
+	max-width: 62ch;
+}
+
+.note {
+	color: var(--ink-2);
+	font-size: 0.9375rem;
+}
+
+/* ---------------------------------------------------------- fold-aways */
+
+.list > li > .more {
+	border-bottom: 1px solid var(--rule);
+}
+
+.list > li:last-child > .more {
+	border-bottom: 0;
+}
+
+.more__summary {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 60px;
+	padding: 10px 16px;
+	cursor: pointer;
+	list-style: none;
+}
+
+.more__summary::-webkit-details-marker {
+	display: none;
+}
+
+.more__summary::after {
+	content: "";
+	flex: none;
+	width: 9px;
+	height: 9px;
+	margin: 0 6px 4px auto;
+	border-right: 2px solid var(--ink-2);
+	border-bottom: 2px solid var(--ink-2);
+	transform: rotate(45deg);
+	transition: transform 160ms var(--ease);
+}
+
+.more[open] > .more__summary::after {
+	margin-bottom: -4px;
+	transform: rotate(-135deg);
+}
+
+.more__summary:hover {
+	background: var(--sunk);
+}
+
+.more__body {
+	display: grid;
+	gap: 12px;
+	padding: 4px 16px 18px;
+	color: var(--ink-2);
+	font-size: 0.9375rem;
+}
+
+/* Inner fold-aways in the status: a ruled line, no box in a box. */
+.more__body details.more {
+	border-top: 1px solid var(--rule);
+	padding-top: 4px;
+}
+
+.more__body details.more > summary {
+	display: flex;
+	align-items: center;
+	min-height: 44px;
+	font-weight: 650;
+	color: var(--ink);
+	cursor: pointer;
+}
+
+.more__body details.more[open] > summary {
+	margin-bottom: 8px;
+}
+
+.more__body .list {
+	border: 0;
+	border-top: 1px solid var(--rule);
+	border-radius: 0;
+	background: none;
+}
+
+.more__body .row {
+	align-items: flex-start;
+	padding-inline: 0;
+}
+
+.more__body > .key {
+	justify-self: start;
+}
+
+.more__body .row .key {
+	margin-top: 8px;
+	justify-self: start;
+}
+
+.diag {
+	display: grid;
+	gap: 10px;
+}
+
+.diag__h {
+	margin-top: 8px;
+	font-size: 1rem;
+	font-weight: 750;
+	color: var(--ink);
+}
+
+.diag-facts {
+	display: grid;
+	gap: 2px;
+	margin: 6px 0 0;
+}
+
+.diag-facts dt {
+	margin-top: 6px;
+	font-weight: 650;
+	color: var(--ink);
+}
+
+.diag-facts dd {
+	margin: 0;
+}
+
+.diag-data {
+	margin: 0;
+	padding: 10px 12px;
+	border-radius: var(--r);
+	background: var(--sunk);
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	font-size: 0.8125rem;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------- Verlauf */
+
+.hist-row {
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(3.2em, max-content) 48px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 12px;
+	min-height: 64px;
+	padding: 8px 14px 8px 12px;
+	border-bottom: 1px solid var(--rule);
+}
+
+.hist > .hist-row:last-child {
+	border-bottom: 0;
+}
+
+/* The time never wraps and never runs into the title. */
+.hist-row__time {
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+	font-size: 0.875rem;
+	color: var(--ink-2);
+	text-align: right;
+}
+
+.hist-row__main {
+	display: grid;
+	min-width: 0;
+}
+
+.hist-row__title,
+.hist-row__sub,
+.hist-row__station {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.hist-row__title {
+	font-weight: 700;
+}
+
+.hist-row__sub {
+	font-size: 0.9375rem;
+	color: var(--ink-2);
+}
+
+.hist-row__station {
+	font-size: 0.8125rem;
+	color: var(--ink-3);
+}
+
+.hist-row__station::before {
+	content: "";
+	display: inline-block;
+	width: 10px;
+	margin-right: 6px;
+	vertical-align: 0.3em;
+	border-top: 2px solid var(--tape);
+}
+
+.hist-row__marks {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.hist-row__marks:empty {
+	display: none;
+}
+
+/* ----------------------------------------------------------------- steps */
+
+.steps {
+	display: grid;
+	gap: 28px;
+	counter-reset: step;
+}
+
+.step {
+	position: relative;
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+	padding-left: 48px;
+	counter-increment: step;
+}
+
+.step::before {
+	content: counter(step);
+	position: absolute;
+	left: 0;
+	top: -2px;
+	display: grid;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	border: 2px solid var(--tape);
+	border-radius: 50%;
+	font-weight: 800;
+	color: var(--tape);
+}
+
+/* Steps hang on a dashed tape line: what is still to come. */
+.step:not(:last-child)::after {
+	content: "";
+	position: absolute;
+	left: 16px;
+	top: 40px;
+	bottom: -22px;
+	border-left: 2px dashed var(--rule-strong);
+}
+
+.step__title {
+	font-size: 1.25rem;
+	font-weight: 750;
+	letter-spacing: -0.01em;
+}
+
+.step > p {
+	color: var(--ink-2);
+}
+
+.howto {
+	display: grid;
+	gap: 8px;
+	padding-left: 1.4em;
+	list-style: decimal;
+	color: var(--ink-2);
+}
+
+.howto b {
+	color: var(--ink);
+}
+
+@media (max-width: 359px) {
+	.step {
+		padding-left: 42px;
+	}
+}
+
+/* ---------------------------------------------------------------- Import */
+
+.file-key {
+	position: relative;
+	justify-self: start;
+	cursor: pointer;
+}
+
+.file-key__input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.file-key:focus-within {
+	outline: 3px solid var(--focus);
+	outline-offset: 2px;
+}
+
+.import-result {
+	display: grid;
+	gap: 10px;
+}
+
+.import-result__lead {
+	font-size: 1.25rem;
+	font-weight: 750;
+	line-height: 1.3;
+}
+
+.import-result .hint {
+	margin-top: 0;
+}
+
+.effects {
+	display: grid;
+	gap: 12px;
+	margin-top: 4px;
+}
+
+.effects li {
+	position: relative;
+	padding-left: 28px;
+	color: var(--ink-2);
+}
+
+.effects li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.75em;
+	width: 16px;
+	border-top: 3px solid var(--tape);
+}
+
+.effects strong {
+	color: var(--ink);
+}
+
+.import-done {
+	padding: 20px;
+	border-radius: var(--r-lg);
+	border: 2px solid var(--ok);
+	background: var(--paper);
+}
+
+.import-done h2 {
+	font-size: 1.375rem;
+	font-weight: 750;
+}
+
+.import-progress {
+	display: grid;
+	gap: 6px;
+}
+
+.import-progress progress {
+	width: 100%;
+	height: 10px;
+	accent-color: var(--tape);
+}
+
+/* ---------------------------------------------------------- Fernbedienung */
+
+.copyline {
+	display: flex;
+	gap: 8px;
+}
+
+.copyline .input {
+	flex: 1;
+	min-width: 0;
+}
+
+.input--code {
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	font-size: 0.875rem;
+}
+
+.copy-key {
+	flex: none;
+	padding: 0 14px;
+}
+
+.remote-cmd {
+	flex-wrap: wrap;
+	align-items: flex-start;
+}
+
+.remote-cmd .row__main {
+	flex: 1 1 14em;
+	gap: 2px;
+}
+
+.remote-cmd .copy-key {
+	margin-left: auto;
+}
+
+.remote-cmd__url {
+	justify-self: start;
+	margin-top: 4px;
+	font-size: 0.8125rem;
+}
+
+/* ------------------------------------------------------------------ Info */
+
+.mehr-promise {
+	padding: 4px 0;
+}
+
+.mehr-info .section p + p {
+	margin-top: 10px;
+}
+
+/* --------------------------------------------------------------- Sign-in */
+
+.signin {
+	display: grid;
+	gap: 24px;
+	max-width: 520px;
+	margin: 8px auto 0;
+}
+
+.signin__deck {
+	padding: 12px;
+	border: 10px solid var(--body);
+	border-radius: 24px;
+	background: var(--sunk);
+	box-shadow: var(--shadow);
+}
+
+.signin__copy {
+	display: grid;
+	gap: 18px;
+	min-width: 0;
+}
+
+.signin__title {
+	font-size: clamp(1.875rem, 8vw, 2.75rem);
+	font-weight: 800;
+	letter-spacing: -0.025em;
+}
+
+.signin__go {
+	min-height: 56px;
+	font-size: 1.125rem;
+}
+
+.signin .hint {
+	margin-top: 0;
+}
+
+@media (min-width: 860px) {
+	.signin {
+		grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
+		align-items: center;
+		gap: 48px;
+		max-width: 1000px;
+		margin-top: 48px;
+	}
+}
+
+/* ------------------------------------------------------------ misc parts */
+
+.meter--sm {
+	height: 4px;
+}
+
+.sheet__cancel {
+	justify-self: center;
+}

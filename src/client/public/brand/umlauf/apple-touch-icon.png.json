@@ -1,6 +1,0 @@
-{
-	"origin": "Authored src/client/public/brand/umlauf/icon.svg",
-	"licence": "Project application asset",
-	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square 180x180",
-	"description": "Umlauf mark: an orbit with the heard arc and a warm moon around a core, on deep indigo; 2026-10-07"
-}
