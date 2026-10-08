@@ -747,7 +747,6 @@ main {
 .progress-area progress::-webkit-progress-value {
 	background: var(--tape);
 	border-radius: 3px;
-	transition: width 900ms linear;
 }
 
 .progress-area progress::-moz-progress-bar {
@@ -2004,4 +2003,8 @@ dialog.sheet::backdrop {
 	overflow-wrap: normal;
 	hyphens: auto;
 	font-size: 0.9375rem;
+}
+
+.player-state .notice {
+	margin-top: 8px;
 }

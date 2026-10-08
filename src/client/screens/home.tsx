@@ -337,7 +337,7 @@ export function Home({ state }: { state: AppState }) {
 				? "Wir warten auf eine aktuelle Meldung vom Gerät."
 				: !session
 					? state.stations.length
-						? "Wähle unten einen Sender und tippe auf Starten."
+						? "Leg unten eine Kassette ein und tippe auf Wiedergabe starten."
 						: "Lege zuerst einen Sender aus deinen Playlists an."
 					: session.status === "active"
 						? where
@@ -439,6 +439,25 @@ export function Home({ state }: { state: AppState }) {
 						{statusText}
 					</p>
 					<p class="player-state__line">{sentence}</p>
+					{state.warnings.map((w) => (
+						<div class="notice notice--warn" key={w.code}>
+							<p>{w.message}</p>
+							{/quota|rate/.test(w.code) ? (
+								<button
+									type="button"
+									class="act"
+									onClick={() =>
+										void api
+											.retrySpotify()
+											.then(() => store.refresh(true))
+											.catch((e: Error) => store.say(e.message, "error"))
+									}
+								>
+									Spotify-Freigabe prüfen
+								</button>
+							) : null}
+						</div>
+					))}
 					{command ? (
 						<ol class={`signal signal--${signal.tone}`} aria-label="Stand des Befehls">
 							{(["Angefordert", "Angenommen", "Bestätigt"] as const).map((label, i) => (
@@ -695,25 +714,6 @@ export function Home({ state }: { state: AppState }) {
 						</button>
 					</div>
 				) : null}
-				{state.warnings.map((w) => (
-					<div class="notice notice--warn" key={w.code}>
-						<p>{w.message}</p>
-						{/quota|rate/.test(w.code) ? (
-							<button
-								type="button"
-								class="act"
-								onClick={() =>
-									void api
-										.retrySpotify()
-										.then(() => store.refresh(true))
-										.catch((e: Error) => store.say(e.message, "error"))
-								}
-							>
-								Spotify-Freigabe prüfen
-							</button>
-						) : null}
-					</div>
-				))}
 			</div>
 
 			<section class="queue" aria-labelledby="queue-title">
