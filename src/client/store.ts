@@ -6,7 +6,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, PlayResult, TrackView } from "../shared/api";
 import { ApiError, api } from "./api";
-import { syncThemeColor } from "./design";
+import { syncThemeColor } from "./theme";
 
 export type Load =
 	| { kind: "loading" }

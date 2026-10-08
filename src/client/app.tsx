@@ -1,5 +1,6 @@
+import { History, House, ListMusic, Menu } from "lucide-preact";
 import { useEffect, useRef } from "preact/hooks";
-import { BrandMark } from "./components/brand";
+import { Mark } from "./components/mark";
 import { RateSheet } from "./components/rate";
 import { useRoute } from "./router";
 import { Home } from "./screens/home";
@@ -101,42 +102,9 @@ export function App() {
 			</a>
 			<header class="app-header">
 				<a class="brand" href="/">
-					<BrandMark />
+					<Mark />
 					<span class="brand__word">true-shuffle</span>
 				</a>
-				{s.load.kind === "signed-out" ? null : (
-					<nav aria-label="Hauptnavigation">
-						<a
-							href="/"
-							aria-current={
-								route.name === "home"
-									? "page"
-									: route.name === "station" ||
-											route.name === "new-station" ||
-											route.name === "scan"
-										? "true"
-										: undefined
-							}
-						>
-							Hören
-						</a>
-						<a href="/verlauf" aria-current={route.name === "history" ? "page" : undefined}>
-							Verlauf
-						</a>
-						<a
-							href="/menu"
-							aria-current={
-								route.name === "menu"
-									? "page"
-									: ["import", "devices", "about", "remote"].includes(route.name)
-										? "true"
-										: undefined
-							}
-						>
-							Menü
-						</a>
-					</nav>
-				)}
 			</header>
 			{s.stale ? (
 				<div class="notice notice--offline" role="status">
@@ -147,6 +115,45 @@ export function App() {
 				</div>
 			) : null}
 			<main id="content">{content}</main>
+			{s.load.kind === "signed-out" ? null : (
+				<nav class="tabbar" aria-label="Hauptnavigation">
+					<a href="/" aria-current={route.name === "home" ? "page" : undefined}>
+						<House aria-hidden="true" />
+						Jetzt
+					</a>
+					<a
+						href="/sender"
+						aria-current={
+							route.name === "stations"
+								? "page"
+								: route.name === "station" || route.name === "new-station" || route.name === "scan"
+									? "true"
+									: undefined
+						}
+					>
+						<ListMusic aria-hidden="true" />
+						Sender
+					</a>
+					<a href="/verlauf" aria-current={route.name === "history" ? "page" : undefined}>
+						<History aria-hidden="true" />
+						Verlauf
+					</a>
+					<a
+						href="/mehr"
+						aria-current={
+							route.name === "menu"
+								? "page"
+								: ["import", "devices", "about", "remote"].includes(route.name)
+									? "true"
+									: undefined
+						}
+					>
+						<Menu aria-hidden="true" />
+						Mehr
+					</a>
+				</nav>
+			)}
+
 			<div class={`flash${s.flash?.tone === "error" ? " flash--error" : ""}`} role="status">
 				{s.flash?.text ?? ""}
 			</div>
