@@ -228,7 +228,7 @@ export function Home({ state }: { state: AppState }) {
 					},
 				);
 
-			if (!result) throw new Error("Wähle einen Sender und versuche es erneut.");
+			if (!result) throw new Error("Leg eine Kassette ein und versuche es erneut.");
 			const accepted = store.acceptCommand(commandId, result);
 			if (accepted && action === "new") setConfirm(false);
 			// Do not reuse a poll that started before this command. This read is not UI busy time.
@@ -338,7 +338,7 @@ export function Home({ state }: { state: AppState }) {
 				: !session
 					? state.stations.length
 						? "Leg unten eine Kassette ein und tippe auf Wiedergabe starten."
-						: "Lege zuerst einen Sender aus deinen Playlists an."
+						: "Mach zuerst aus deinen Playlists eine Kassette."
 					: session.status === "active"
 						? where
 							? `Läuft auf ${where}.`
@@ -370,20 +370,47 @@ export function Home({ state }: { state: AppState }) {
 			: playing
 				? "running"
 				: "still";
-	const stateClass = `now now--${signal.tone}${unsettled ? " now--pending" : ""}${view.projected ? " now--estimate" : ""}`;
+	const counterLabel =
+		heard !== null && posterStation?.poolSize
+			? `${num(heard)} von ${num(posterStation.poolSize)} Songs gehört`
+			: posterStation
+				? "Zählt ab dem ersten Song"
+				: "Noch keine Kassette eingelegt";
+	// The state line's form: solid green only when playback is confirmed.
+	const line =
+		signal.tone !== "ok" || !session
+			? signal.tone
+			: session.status === "active"
+				? "ok"
+				: session.status === "disconnected"
+					? "error"
+					: session.status === "ambiguous"
+						? "wait"
+						: "held";
+	const stateClass = `now now--${line}${unsettled ? " now--pending" : ""}${view.projected ? " now--estimate" : ""}`;
 
 	return (
 		<div class={stateClass}>
 			<section class="player" aria-labelledby="listen-title">
 				<div class="walkman">
 					<header class="player-heading">
-						<h1 id="listen-title">{posterStation?.name ?? "Deine Sender"}</h1>
-						<p class="player-heading__span">
-							{heard !== null && posterStation?.poolSize
-								? `${num(heard)} von ${num(posterStation.poolSize)} Songs gehört`
-								: posterStation
-									? "Zählt ab dem ersten Song"
-									: "Noch keine Kassette eingelegt"}
+						<h1 id="listen-title" class="sr-only">
+							{posterStation?.name ?? "Noch keine Kassette eingelegt"}
+						</h1>
+						<p class="counter" aria-label={counterLabel}>
+							<span class="counter__digits" aria-hidden="true">
+								{String(heard ?? 0).padStart(
+									Math.max(3, String(posterStation?.poolSize ?? 0).length),
+									"0",
+								)}
+							</span>
+							<span class="player-heading__span">
+								{heard !== null && posterStation?.poolSize
+									? `von ${num(posterStation.poolSize)} Songs gehört`
+									: posterStation
+										? "Zählt ab dem ersten Song"
+										: "Noch keine Kassette eingelegt"}
+							</span>
 						</p>
 						<span class={`led led--${reels}`} aria-hidden="true" />
 						{state.guest.active ? (
@@ -396,6 +423,8 @@ export function Home({ state }: { state: AppState }) {
 					<div class="walkman__window">
 						{inserted ? (
 							<Cassette
+								key={inserted.id}
+								class="cassette--inserted"
 								name={inserted.name}
 								shell={shellOf(inserted)}
 								heard={inserted.progress}
@@ -404,6 +433,75 @@ export function Home({ state }: { state: AppState }) {
 						) : (
 							<div class="walkman__empty">Leg eine Kassette ein</div>
 						)}
+					</div>
+					<div class="transport">
+						<button
+							type="button"
+							class="transport-main"
+							disabled={
+								unsettled ||
+								s.stale ||
+								!station?.ready ||
+								session?.pending ||
+								(playing && !!nativeController && !activeNative?.pause)
+							}
+							onClick={() => void act(playing ? "pause" : "play")}
+						>
+							{playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+							{mainLabel}
+						</button>
+						<div class="transport-keys">
+							<button
+								type="button"
+								class="tkey"
+								aria-label="Weiter: Nächster Song"
+								disabled={
+									unsettled ||
+									s.stale ||
+									!session ||
+									view.projected ||
+									view.awaitingObservation ||
+									session.pending ||
+									session.status === "ambiguous" ||
+									(!!nativeController && !activeNative?.queue)
+								}
+								onClick={() => void act("next")}
+							>
+								<SkipForward aria-hidden="true" />
+								<span aria-hidden="true">Weiter</span>
+							</button>
+							<button
+								type="button"
+								class="tkey"
+								aria-label="Daumen hoch: Favorit"
+								aria-pressed={!!track && store.thumbOf(track) === 1}
+								disabled={
+									!track || s.stale || view.projected || view.awaitingObservation || unsettled
+								}
+								onClick={() => void thumb(1)}
+							>
+								<Heart aria-hidden="true" />
+								<span aria-hidden="true">Favorit</span>
+							</button>
+							<button
+								type="button"
+								class="tkey"
+								aria-label="Daumen runter: diesen Song nie wieder"
+								aria-pressed={!!track && store.thumbOf(track) === -1}
+								disabled={
+									!track || s.stale || view.projected || view.awaitingObservation || unsettled
+								}
+								onClick={() => void thumb(-1)}
+							>
+								<ThumbsDown aria-hidden="true" />
+								<span aria-hidden="true">Nie wieder</span>
+							</button>
+						</div>
+						{startsOther && !playing && !unsettled ? (
+							<p class="transport-note">
+								Startet {station.name}. Dein Platz in {posterStation?.name} bleibt gespeichert.
+							</p>
+						) : null}
 					</div>
 				</div>
 
@@ -470,76 +568,6 @@ export function Home({ state }: { state: AppState }) {
 								</li>
 							))}
 						</ol>
-					) : null}
-				</div>
-
-				<div class="transport">
-					<button
-						type="button"
-						class="transport-main"
-						disabled={
-							unsettled ||
-							s.stale ||
-							!station?.ready ||
-							session?.pending ||
-							(playing && !!nativeController && !activeNative?.pause)
-						}
-						onClick={() => void act(playing ? "pause" : "play")}
-					>
-						{playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
-						{mainLabel}
-					</button>
-					<div class="transport-keys">
-						<button
-							type="button"
-							class="tkey"
-							aria-label="Weiter: Nächster Song"
-							disabled={
-								unsettled ||
-								s.stale ||
-								!session ||
-								view.projected ||
-								view.awaitingObservation ||
-								session.pending ||
-								session.status === "ambiguous" ||
-								(!!nativeController && !activeNative?.queue)
-							}
-							onClick={() => void act("next")}
-						>
-							<SkipForward aria-hidden="true" />
-							<span aria-hidden="true">Weiter</span>
-						</button>
-						<button
-							type="button"
-							class="tkey"
-							aria-label="Daumen hoch: Favorit"
-							aria-pressed={!!track && store.thumbOf(track) === 1}
-							disabled={
-								!track || s.stale || view.projected || view.awaitingObservation || unsettled
-							}
-							onClick={() => void thumb(1)}
-						>
-							<Heart aria-hidden="true" />
-							<span aria-hidden="true">Favorit</span>
-						</button>
-						<button
-							type="button"
-							class="tkey"
-							aria-label="Daumen runter: diesen Song nie wieder"
-							aria-pressed={!!track && store.thumbOf(track) === -1}
-							disabled={
-								!track || s.stale || view.projected || view.awaitingObservation || unsettled
-							}
-							onClick={() => void thumb(-1)}
-						>
-							<ThumbsDown aria-hidden="true" />
-							<span aria-hidden="true">Nie wieder</span>
-						</button>
-					</div>
-					{startsOther && !playing && !unsettled ? (
-						<p class="transport-note">
-							Startet {station.name}. Dein Platz in {posterStation?.name} bleibt gespeichert.
-						</p>
 					) : null}
 				</div>
 
@@ -741,7 +769,7 @@ export function Home({ state }: { state: AppState }) {
 					</>
 				) : (
 					<p class="empty-state">
-						Sobald ein Sender läuft, stehen hier die nächsten Songs in ihrer festen Reihenfolge.
+						Sobald eine Kassette läuft, stehen hier die nächsten Songs in ihrer festen Reihenfolge.
 					</p>
 				)}
 				<p class="hint">Was du in Spotify selbst einreihst, steht nicht in dieser Liste.</p>
@@ -756,7 +784,7 @@ export function Home({ state }: { state: AppState }) {
 							? heard === 0
 								? `Alle ${num(posterStation.poolSize)} Songs aus ${posterStation.name} kommen dran, keiner doppelt. Erst danach beginnt alles von vorn.`
 								: `${num(heard)} von ${num(posterStation.poolSize)} Songs aus ${posterStation.name} hast du schon gehört, ${num(posterStation.poolSize - heard)} kommen noch. Erst danach beginnt alles von vorn.`
-							: "Erst wenn du alle Songs eines Senders gehört hast, beginnt er von vorn."}
+							: "Erst wenn du alle Songs einer Kassette gehört hast, beginnt sie von vorn."}
 					</li>
 					<li>
 						<strong>Keine schnellen Wiederholungen.</strong> Was du gehört hast, kommt eine Weile

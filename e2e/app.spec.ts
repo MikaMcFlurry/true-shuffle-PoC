@@ -112,13 +112,13 @@ test.describe("a listener's day", () => {
 
 	test("signs in with Spotify and saves playlists as stations", async ({ page }) => {
 		await signIn(page);
-		await expect(page.getByText("Wähle, welche Sender werden")).toBeVisible();
+		await expect(page.getByText("Wähle, welche Playlists Kassetten werden")).toBeVisible();
 		await checkPage(page, "Sendersuchlauf");
 		// A playlist of someone else cannot be read (Spotify keeps its songs).
 		await expect(page.getByRole("checkbox", { name: /Today's Top Hits/ })).toBeDisabled();
 		await page.getByRole("checkbox", { name: /Indie & Gitarren/ }).check();
 		await page.getByRole("checkbox", { name: /Lange Autofahrt/ }).check();
-		await page.getByRole("button", { name: "2 Sender speichern" }).click();
+		await page.getByRole("button", { name: "2 Kassetten anlegen" }).click();
 
 		// Home: the automatic "Alles" plus the two stations, ready once imported.
 		for (const name of ["Alles", "Indie & Gitarren", "Lange Autofahrt"]) {
@@ -556,7 +556,7 @@ test.describe("confirmed Spotify operations and shared usage", () => {
 	async function openDiagnostics(page: Page): Promise<void> {
 		await signIn(page);
 		await page.goto("/mehr");
-		const onboarding = page.getByText("Wähle, welche Sender werden", { exact: true });
+		const onboarding = page.getByText("Wähle, welche Playlists Kassetten werden", { exact: true });
 		const details = page.getByText("Spotify-Freigabe & Anfragestatus", { exact: true });
 		await expect(onboarding.or(details)).toBeVisible();
 		if (await onboarding.isVisible()) {

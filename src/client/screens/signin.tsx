@@ -49,7 +49,7 @@ export function SignIn() {
 					Mit Spotify anmelden
 				</a>
 				<p class="hint">
-					Braucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Sender eine
+					Braucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine
 					private Playlist „{DECK_PREFIX}…“ in deinem Konto an.
 				</p>
 			</div>

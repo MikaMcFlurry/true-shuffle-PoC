@@ -803,6 +803,7 @@ main {
 }
 
 .now--ok .session-status::before,
+.now--held .session-status::before,
 .now--wait .session-status::before,
 .now--error .session-status::before,
 .now--estimate .session-status::before {
@@ -813,6 +814,10 @@ main {
 	margin-right: 8px;
 	vertical-align: 0.3em;
 	border-top: 3px solid var(--ok);
+}
+
+.now--held .session-status::before {
+	border-top: 3px solid var(--ink-3);
 }
 
 .now--wait .session-status::before {
@@ -1254,29 +1259,39 @@ main {
 /* ============================================================ WALKMAN */
 
 :root {
-	--body: #33558c;
-	--body-edge: #233d68;
-	--plate: #d9dde3;
-	--plate-hi: #f3f5f8;
-	--plate-ink: #1a2230;
-	--plate-ink-2: #3f4a5c;
-	--hotline: #ef6a23;
+	--metal-hi: #e7e0d0;
+	--metal: #c9bfa8;
+	--metal-lo: #a39779;
+	--metal-edge: #7d7258;
+	--metal-ink: #2b261c;
+	--metal-ink-2: #574e3c;
+	--hotline: #e2622a;
 	--marker: "Permanent Marker", "Atkinson Hyperlegible Next Variable", cursive;
 }
 
-/* The Walkman: silver face plate in a blue body, one orange hotline key. */
+/*
+ * The deck: brushed warm metal, a recessed bay for the cassette and a row of
+ * chunky keys under it. It is an object, so it keeps its metal by night.
+ */
 .walkman {
 	position: relative;
 	display: grid;
-	gap: 12px;
-	padding: 14px 14px 16px;
-	border: 10px solid var(--body);
-	border-radius: 24px;
-	background: linear-gradient(180deg, var(--plate-hi), var(--plate) 70%);
-	color: var(--plate-ink);
+	gap: 14px;
+	padding: 16px 14px 14px;
+	border-radius: 18px;
+	background:
+		repeating-linear-gradient(
+			90deg,
+			rgb(255 255 255 / 0.07) 0 1px,
+			transparent 1px 3px,
+			rgb(0 0 0 / 0.035) 3px 4px
+		),
+		linear-gradient(170deg, var(--metal-hi), var(--metal) 45%, var(--metal-lo));
+	color: var(--metal-ink);
 	box-shadow:
-		inset 0 1px 0 rgb(255 255 255 / 0.8),
-		0 0 0 1px var(--body-edge),
+		inset 0 1px 0 rgb(255 255 255 / 0.7),
+		inset 0 -2px 0 rgb(0 0 0 / 0.15),
+		0 0 0 1px var(--metal-edge),
 		var(--shadow);
 }
 
@@ -1289,48 +1304,55 @@ main {
 
 .walkman .player-heading h1 {
 	font-size: clamp(1.375rem, 6vw, 1.75rem);
-	color: var(--plate-ink);
+	color: var(--metal-ink);
 }
 
 .walkman .player-heading__span {
 	grid-column: 1;
 	margin-top: 0;
-	color: var(--plate-ink-2);
+	color: var(--metal-ink-2);
 }
 
 .walkman .player-heading__guest {
 	justify-self: start;
-	background: var(--plate-hi);
-	color: var(--plate-ink);
-	border: 1px solid #aab2bd;
+	background: rgb(255 255 255 / 0.45);
+	color: var(--metal-ink);
+	border: 1px solid var(--metal-edge);
 }
 
-/* The hotline key doubles as the status lamp. */
+/* The status lamp. */
 .led {
 	grid-column: 2;
 	grid-row: 1 / span 2;
-	width: 26px;
-	height: 26px;
-	border-radius: 7px;
-	background: #9aa3ae;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: #8a8170;
 	box-shadow:
-		inset 0 -3px 0 rgb(0 0 0 / 0.2),
-		0 1px 2px rgb(0 0 0 / 0.25);
+		inset 0 1px 2px rgb(0 0 0 / 0.5),
+		0 0 0 3px rgb(0 0 0 / 0.08);
 }
 
 .led--running {
 	background: var(--hotline);
+	box-shadow:
+		0 0 0 3px rgb(226 98 42 / 0.2),
+		0 0 10px rgb(226 98 42 / 0.6);
 }
 
 .led--waiting {
-	background: repeating-linear-gradient(135deg, var(--hotline) 0 4px, #f4b48c 4px 8px);
+	background: #e7b552;
+	box-shadow: 0 0 0 3px rgb(231 181 82 / 0.25);
 }
 
 .walkman__window {
-	padding: 8px;
-	border-radius: 12px;
-	background: #10141c;
-	box-shadow: inset 0 2px 8px rgb(0 0 0 / 0.6);
+	padding: 10px;
+	border-radius: 8px;
+	background: linear-gradient(180deg, #2a251c, #3b3427);
+	box-shadow:
+		inset 0 3px 10px rgb(0 0 0 / 0.65),
+		inset 0 0 0 1px rgb(0 0 0 / 0.4),
+		0 1px 0 rgb(255 255 255 / 0.5);
 }
 
 .walkman__empty {
@@ -1339,8 +1361,100 @@ main {
 	aspect-ratio: 16 / 10;
 	border: 2px dashed rgb(255 255 255 / 0.3);
 	border-radius: 10px;
-	color: #c9d0da;
+	color: #e3dccb;
 	font-weight: 650;
+}
+
+/* Keys on the deck: one wide play key, three square ones. */
+.walkman .transport {
+	grid-template-columns: minmax(0, 1.5fr) minmax(0, 3fr);
+	gap: 8px;
+	padding: 8px;
+	border-radius: 10px;
+	background: linear-gradient(180deg, #3a3326, #4a4130);
+	box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.55);
+}
+
+.walkman .transport-keys {
+	gap: 8px;
+}
+
+.walkman .transport-main,
+.walkman .tkey {
+	min-height: 76px;
+	border: 0;
+	border-radius: 6px;
+	background:
+		repeating-linear-gradient(90deg, rgb(255 255 255 / 0.08) 0 1px, transparent 1px 3px),
+		linear-gradient(180deg, var(--metal-hi), var(--metal) 60%, var(--metal-lo));
+	color: var(--metal-ink);
+	box-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.8),
+		0 4px 0 #2a2418,
+		0 5px 6px rgb(0 0 0 / 0.35);
+	transform: translateY(-2px);
+	transition:
+		transform 90ms var(--ease),
+		box-shadow 90ms var(--ease);
+}
+
+.walkman .transport-main {
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 4px;
+	font-size: 0.9375rem;
+	text-align: center;
+	line-height: 1.15;
+	border-top: 5px solid var(--hotline);
+}
+
+.walkman .transport-main svg {
+	color: var(--hotline);
+	width: 26px;
+	height: 26px;
+}
+
+.walkman .tkey {
+	font-size: 0.8125rem;
+}
+
+.walkman .transport-main:hover:not(:disabled),
+.walkman .tkey:hover:not(:disabled) {
+	background:
+		repeating-linear-gradient(90deg, rgb(255 255 255 / 0.1) 0 1px, transparent 1px 3px),
+		linear-gradient(180deg, #f1ebdf, var(--metal-hi) 60%, var(--metal));
+}
+
+.walkman .transport-main:active:not(:disabled),
+.walkman .tkey:active:not(:disabled),
+.walkman .tkey[aria-pressed="true"] {
+	transform: translateY(2px);
+	box-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.6),
+		0 0 0 #2a2418,
+		0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+.walkman .tkey[aria-pressed="true"] svg {
+	color: var(--hotline);
+	fill: currentColor;
+}
+
+.walkman .transport-main:disabled,
+.walkman .tkey:disabled {
+	opacity: 0.55;
+}
+
+.now--pending .walkman .transport-main {
+	outline: 2px dashed var(--hotline);
+	outline-offset: -6px;
+	transform: translateY(2px);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+.walkman .transport-note {
+	grid-column: 1 / -1;
+	color: #eee5d2;
 }
 
 /* ------------------------------------------------------------ cassette */
@@ -1349,58 +1463,61 @@ main {
 	display: block;
 	width: 100%;
 	height: auto;
-	--shell: #2b2b2e;
-	--shell-ink: rgb(255 255 255 / 0.18);
-	--label: #f4f1ea;
-	--band: #d9622b;
-	--label-ink: #1b1b1d;
-}
-
-.cassette--orange {
-	--shell: #e46c2a;
-	--band: #2b3a5c;
+	--stripe: #d8432a;
+	--band: #e8662c;
+	--label: #efe3c6;
+	--label-ink: #24448c;
 }
 
 .cassette--blue {
-	--shell: #3d6fd1;
-	--band: #f2b134;
-}
-
-.cassette--red {
-	--shell: #c8352e;
-	--band: #1f1f22;
+	--stripe: #2f6fb5;
+	--band: #5aa2d8;
 }
 
 .cassette--green {
-	--shell: #2f8a5b;
-	--band: #f0d34a;
+	--stripe: #3c8a4f;
+	--band: #c9b23a;
 }
 
-.cassette--yellow {
-	--shell: #efc531;
-	--band: #c8352e;
-	--shell-ink: rgb(0 0 0 / 0.18);
+.cassette--orange {
+	--stripe: #e27a1f;
+	--band: #f2b134;
 }
 
-.cassette--white {
-	--shell: #e9e7e2;
-	--band: #3d6fd1;
-	--shell-ink: rgb(0 0 0 / 0.16);
+.cassette--teal {
+	--stripe: #1f8a86;
+	--band: #67c2b6;
+}
+
+.cassette--violet {
+	--stripe: #7a4fa3;
+	--band: #d65a8c;
+}
+
+.cassette--smoke {
+	--stripe: #2c2a27;
+	--band: #d8432a;
 }
 
 .cassette__shell {
-	fill: var(--shell);
+	fill: rgb(46 43 40 / 0.92);
+	stroke: rgb(255 255 255 / 0.18);
+	stroke-width: 2;
 }
 
 .cassette__screw {
-	fill: var(--shell-ink);
+	fill: rgb(255 255 255 / 0.25);
 }
 
 .cassette__label {
 	fill: var(--label);
 }
 
-.cassette__band {
+.cassette__stripes rect {
+	fill: var(--stripe);
+}
+
+.cassette__stripes .cassette__band {
 	fill: var(--band);
 }
 
@@ -1411,25 +1528,27 @@ main {
 	line-height: 38px;
 	color: var(--label-ink);
 	white-space: nowrap;
-	transform: rotate(-1.2deg);
+	transform: rotate(-1deg);
 }
 
 .cassette__window {
-	fill: #15110d;
-	stroke: rgb(0 0 0 / 0.35);
+	fill: #1a1612;
+	stroke: rgb(0 0 0 / 0.5);
 	stroke-width: 2;
 }
 
 .cassette__tape circle {
-	fill: #4a2c19;
+	fill: #3e2a1a;
 }
 
 .cassette__hub circle {
-	fill: #f4f1ea;
+	fill: #d9d4cb;
+	stroke: #8c857a;
+	stroke-width: 1.5;
 }
 
 .cassette__hub path {
-	stroke: #15110d;
+	stroke: #3a352e;
 	stroke-width: 3;
 	stroke-linecap: round;
 }
@@ -1443,13 +1562,13 @@ main {
 }
 
 .cassette__foot {
-	fill: none;
-	stroke: var(--shell-ink);
-	stroke-width: 3;
+	fill: rgb(255 255 255 / 0.06);
+	stroke: rgb(255 255 255 / 0.2);
+	stroke-width: 2;
 }
 
 .cassette__hole {
-	fill: rgb(0 0 0 / 0.35);
+	fill: rgb(0 0 0 / 0.55);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1458,9 +1577,8 @@ main {
 	}
 
 	.cassette--waiting .cassette__hub {
-		animation: reel 2.4s linear infinite;
-		animation-duration: 6s;
-		opacity: 0.75;
+		animation: reel 6s linear infinite;
+		opacity: 0.8;
 	}
 }
 
@@ -2007,4 +2125,78 @@ dialog.sheet::backdrop {
 
 .player-state .notice {
 	margin-top: 8px;
+}
+
+/* Tape counter: what the station has played, on mechanical wheels. */
+.counter {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.counter__digits {
+	display: inline-flex;
+	padding: 3px 4px;
+	border-radius: 4px;
+	background: #16130e;
+	box-shadow:
+		inset 0 2px 4px rgb(0 0 0 / 0.7),
+		0 1px 0 rgb(255 255 255 / 0.5);
+	color: #f3ecdc;
+	font-size: 1.25rem;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	line-height: 1.2;
+	font-variant-numeric: tabular-nums;
+	background-image: linear-gradient(
+		180deg,
+		rgb(255 255 255 / 0.12),
+		transparent 35%,
+		transparent 65%,
+		rgb(255 255 255 / 0.08)
+	);
+}
+
+.walkman .counter .player-heading__span {
+	font-weight: 650;
+}
+
+/* Inserting a cassette: it slides into the bay once. */
+@media (prefers-reduced-motion: no-preference) {
+	.cassette--inserted {
+		animation: insert 520ms var(--ease) both;
+	}
+}
+
+@keyframes insert {
+	from {
+		transform: translateY(-14%);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
+}
+
+/* By night the deck is dark bronze, so it does not glare in a car. */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-illumination="day"]) {
+		--metal-hi: #5d5444;
+		--metal: #463f33;
+		--metal-lo: #332d24;
+		--metal-edge: #1e1a14;
+		--metal-ink: #f0e8d6;
+		--metal-ink-2: #c9bea6;
+	}
+}
+
+:root[data-illumination="night"] {
+	--metal-hi: #5d5444;
+	--metal: #463f33;
+	--metal-lo: #332d24;
+	--metal-edge: #1e1a14;
+	--metal-ink: #f0e8d6;
+	--metal-ink-2: #c9bea6;
 }

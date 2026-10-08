@@ -9,13 +9,13 @@
 import { useId } from "preact/hooks";
 import type { StationSummary } from "../../shared/api";
 
-/** Shell colours, one per station; "Alles" keeps the smoke shell. */
-const SHELLS = ["orange", "blue", "red", "green", "yellow", "white"] as const;
+/** Label stripe colours, one per station; "Alles" gets the classic red stripes too, in black. */
+const SHELLS = ["red", "blue", "green", "orange", "teal", "violet"] as const;
 export type Shell = (typeof SHELLS)[number] | "smoke";
 
 export function shellOf(s: Pick<StationSummary, "id" | "kind"> | null | undefined): Shell {
 	if (!s || s.kind === "all") return "smoke";
-	return SHELLS[Math.abs(s.id) % SHELLS.length] ?? "orange";
+	return SHELLS[Math.abs(s.id) % SHELLS.length] ?? "red";
 }
 
 const R_MIN = 15;
@@ -54,7 +54,13 @@ export function Cassette(props: {
 			<circle class="cassette__screw" cx="16" cy="184" r="4" />
 			<circle class="cassette__screw" cx="304" cy="184" r="4" />
 			<rect class="cassette__label" x="22" y="14" width="276" height="124" rx="6" />
-			<rect class="cassette__band" x="22" y="100" width="276" height="10" />
+			<g class="cassette__stripes">
+				<rect x="22" y="70" width="276" height="5" />
+				<rect x="22" y="81" width="276" height="5" />
+				<rect x="22" y="92" width="276" height="5" />
+				<rect x="22" y="103" width="276" height="5" />
+				<rect class="cassette__band" x="22" y="114" width="276" height="14" />
+			</g>
 			<foreignObject x="34" y="20" width="252" height="38">
 				<p
 					class="cassette__name"

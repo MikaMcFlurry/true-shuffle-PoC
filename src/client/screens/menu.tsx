@@ -668,7 +668,7 @@ export function AboutScreen() {
 			/>
 			<ul class="promise-list mehr-promise">
 				<li>
-					<strong>Jeder Song kommt dran.</strong> Erst wenn du alle Songs eines Senders gehört hast,
+					<strong>Jeder Song kommt dran.</strong> Erst wenn du alle Songs einer Kassette gehört hast,
 					beginnt er von vorn.
 				</li>
 				<li>
@@ -687,8 +687,8 @@ export function AboutScreen() {
 
 			<Section title="Wie es funktioniert" id="info-how">
 				<p>
-					Jeder Sender ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify, wie eine
-					Kassette mit fester Reihenfolge. Spotify spielt sie ab, auf jedem Gerät, auch wenn du sie
+					Jede Kassette ist eine private Playlist „{DECK_PREFIX}…“ in deinem Spotify, mit
+					fester Reihenfolge. Spotify spielt sie ab, auf jedem Gerät, auch wenn du sie
 					direkt in Spotify startest. Nur „neu mischen“ ändert die Reihenfolge.
 				</p>
 				<p>
@@ -740,7 +740,7 @@ export function AboutScreen() {
 				<p>
 					Weitere Songs deiner Künstler und ihre Neuerscheinungen, ähnliche Künstler (Last.fm,
 					Deezer), die Genre-Suche von Spotify und KI-Vorschläge. Jeder Vorschlag wird bei Spotify
-					geprüft, bevor er in einen Sender darf.
+					geprüft, bevor er auf eine Kassette darf.
 				</p>
 			</Section>
 		</div>
@@ -834,7 +834,7 @@ function EffectList({ e, done }: { e: Effects; done: boolean }) {
 			</ul>
 			<p class="hint">
 				Seltener und kaum noch gilt mit der Voreinstellung „Nicht jetzt, später seltener“. Wie oft
-				Favoriten kommen dürfen und was ein früher Skip bewirkt, stellst du pro Sender ein.
+				Favoriten kommen dürfen und was ein früher Skip bewirkt, stellst du pro Kassette ein.
 			</p>
 		</div>
 	);
@@ -929,7 +929,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 					<h2 id="import-done-title">Übernommen. Das ist jetzt anders:</h2>
 					<EffectList e={effects} done />
 					<p>
-						Sender ohne gespeicherte Warteschlange planen ab sofort damit. Eine gespeicherte
+						Kassetten ohne gespeicherte Warteschlange planen ab sofort damit. Eine gespeicherte
 						Warteschlange behält ihre Reihenfolge, bis du sie neu mischst.
 					</p>
 					<a class="key key--lit key--wide" href="/">
