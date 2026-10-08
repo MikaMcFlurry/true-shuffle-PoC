@@ -145,4 +145,35 @@ describe("song facts in the queue", () => {
 			expect(u.facts!.kind).toBe(u.kind);
 		}
 	});
+
+	it("a poll reads only new plays of the station, however long its log is", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		await h.hub.play(sid);
+		const t = h.clock.t;
+		// A long log of old plays on this station (outside the queue).
+		for (let n = 0; n < 3000; n++) play(h, t - 30 * DAY_MS - n * MINUTE_MS, `old${n}`, sid, 0);
+		h.hub.sessionView(sid); // first look reads the station once
+		let rows = 0;
+		const all = h.sql.all.bind(h.sql);
+		h.sql.all = (<T>(q: string, ...p: never[]) => {
+			const out = all<T>(q, ...p);
+			if (/FROM plays WHERE station_id/.test(q)) rows += out.length;
+			return out;
+		}) as typeof h.sql.all;
+		for (let n = 0; n < 5; n++) h.hub.sessionView(sid);
+		expect(rows).toBeLessThan(50);
+		h.sql.all = all;
+		// Plays recorded while listening reach the set without another read of the log.
+		await h.listen(15 * MINUTE_MS);
+		const live = h.sql
+			.all<{ track_id: string }>(
+				`SELECT DISTINCT track_id FROM plays WHERE station_id = ? AND ignored = 0 AND track_id NOT LIKE 'old%'`,
+				sid,
+			)
+			.map((r) => r.track_id);
+		expect(live.length).toBeGreaterThan(0);
+		const heard = (h.hub as unknown as { stationHeard(id: number): Set<string> }).stationHeard(sid);
+		for (const id of live) expect(heard.has(id)).toBe(true);
+	});
 });

@@ -3771,6 +3771,7 @@ export class HubCore {
 			st?.id ?? null,
 			JSON.stringify(e.track),
 		);
+		this.noteHeard(st?.id, e.id);
 		const seen = (
 			this.kvGet<{ id: TrackId; from: number; to: number }[]>("seen_plays") ?? []
 		).filter((x) => x.to > this.now() - LATE_PLAY_WINDOW_MS);
@@ -4001,6 +4002,7 @@ export class HubCore {
 				ignored ? 1 : 0,
 				packed ? JSON.stringify(packed) : null,
 			);
+			if (!ignored) this.noteHeard(station?.id, id);
 			s.recentCursor = Math.max(s.recentCursor, at);
 			out.push({
 				trackId: id,
@@ -4759,29 +4761,48 @@ export class HubCore {
 	}
 
 	/**
+	 * Songs heard on each station (non-guest plays), kept per Durable Object so
+	 * a poll never scans the plays log: a station is read once, then every new
+	 * counted play is added where it is recorded (`noteHeard`). Plays pruned
+	 * after half a year stay counted, which is the truth. A label only: a play
+	 * whose write is later rolled back may stay in the set until the next wake.
+	 */
+	private heardOnStation = new Map<number, Set<TrackId>>();
+
+	private stationHeard(stationId: number): Set<TrackId> {
+		let ids = this.heardOnStation.get(stationId);
+		if (!ids) {
+			ids = new Set(
+				this.db
+					.all<{ track_id: string }>(
+						`SELECT DISTINCT track_id FROM plays WHERE station_id = ? AND ignored = 0`,
+						stationId,
+					)
+					.map((r) => r.track_id),
+			);
+			this.heardOnStation.set(stationId, ids);
+		}
+		return ids;
+	}
+
+	/** A counted play was recorded: keep `stationHeard` current without reading. */
+	private noteHeard(stationId: number | null | undefined, id: TrackId): void {
+		if (stationId != null) this.heardOnStation.get(stationId)?.add(id);
+	}
+
+	/**
 	 * Read-only labels for songs in a queue (see `SongFacts`). `plays` and
 	 * `lastPlayedAt` come from `memory()`: the live memory table — which only
 	 * guest-free counted plays (>= 30 s) ever reach — merged with imported
 	 * history, cut off at `live_since` so nothing is counted twice.
-	 * `inStation` asks the plays log once per hundred songs, counting only
-	 * rows with `ignored = 0` (guest-mode plays are stored with `ignored = 1`).
+	 * `inStation` comes from `stationHeard` (non-guest plays on this station).
 	 */
 	private songFacts(
 		stationId: number,
 		items: readonly { id: TrackId; kind: SlotKind }[],
 	): (it: { id: TrackId; kind: SlotKind }) => SongFacts {
-		const ids = [...new Set(items.map((it) => it.id))];
-		this.preloadMemory(ids);
-		const heardHere = new Set<TrackId>();
-		for (let i = 0; i < ids.length; i += 100) {
-			const chunk = ids.slice(i, i + 100);
-			for (const r of this.db.all<{ track_id: string }>(
-				`SELECT DISTINCT track_id FROM plays WHERE station_id = ? AND ignored = 0 AND track_id IN (${chunk.map(() => "?").join(",")})`,
-				stationId,
-				...chunk,
-			))
-				heardHere.add(r.track_id);
-		}
+		this.preloadMemory(new Set(items.map((it) => it.id)));
+		const heardHere = this.stationHeard(stationId);
 		return (it) => {
 			const m = this.memory(it.id);
 			return {
