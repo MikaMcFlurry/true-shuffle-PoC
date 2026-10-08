@@ -81,13 +81,16 @@ export function Cassette(props: {
 			</g>
 			<g class="cassette__hub cassette__hub--l">
 				<circle cx="122" cy="96" r="11" />
-				<path d="M122 87v5M122 100v5M113 96h5M126 96h5" />
+				<path d="M122.0 91.0L122.0 87.0M126.3 93.5L129.8 91.5M126.3 98.5L129.8 100.5M122.0 101.0L122.0 105.0M117.7 98.5L114.2 100.5M117.7 93.5L114.2 91.5" />
 			</g>
 			<g class="cassette__hub cassette__hub--r">
 				<circle cx="198" cy="96" r="11" />
-				<path d="M198 87v5M198 100v5M189 96h5M202 96h5" />
+				<path d="M198.0 91.0L198.0 87.0M202.3 93.5L205.8 91.5M202.3 98.5L205.8 100.5M198.0 101.0L198.0 105.0M193.7 98.5L190.2 100.5M193.7 93.5L190.2 91.5" />
 			</g>
 			<path class="cassette__foot" d="M66 198l14-40h160l14 40" />
+			<path class="cassette__spine" d="M88 172H232" />
+			<circle class="cassette__roller" cx="88" cy="176" r="4" />
+			<circle class="cassette__roller" cx="232" cy="176" r="4" />
 			<circle class="cassette__hole" cx="104" cy="182" r="5" />
 			<circle class="cassette__hole" cx="216" cy="182" r="5" />
 		</svg>

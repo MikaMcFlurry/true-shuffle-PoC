@@ -337,7 +337,7 @@ export function Home({ state }: { state: AppState }) {
 				? "Wir warten auf eine aktuelle Meldung vom Gerät."
 				: !session
 					? state.stations.length
-						? "Leg unten eine Kassette ein und tippe auf Wiedergabe starten."
+						? `${station?.name ?? "Eine Kassette"} ist eingelegt. Tippe auf „Wiedergabe starten“.`
 						: "Mach zuerst aus deinen Playlists eine Kassette."
 					: session.status === "active"
 						? where
@@ -377,8 +377,9 @@ export function Home({ state }: { state: AppState }) {
 				? "Zählt ab dem ersten Song"
 				: "Noch keine Kassette eingelegt";
 	// The state line's form: solid green only when playback is confirmed.
-	const line =
-		signal.tone !== "ok" || !session
+	const line = !session
+		? "held"
+		: signal.tone !== "ok"
 			? signal.tone
 			: session.status === "active"
 				? "ok"
@@ -509,9 +510,9 @@ export function Home({ state }: { state: AppState }) {
 				<div class="player-song">
 					<Cover src={track?.imageUrl ?? posterStation?.imageUrl} class="player-song__art" eager />
 					<div class="now-copy">
-						<h2>{posterTitle(track?.name ?? "Noch nichts gespielt")}</h2>
+						<h2>{posterTitle(track?.name ?? "Noch kein Song")}</h2>
 						<p class="artist">
-							{track?.artists ?? "Leg unten eine Kassette ein und drück auf Abspielen."}
+							{track?.artists ?? "Hier steht dein Song, sobald die Kassette läuft."}
 						</p>
 						{track ? (
 							<SongTags
