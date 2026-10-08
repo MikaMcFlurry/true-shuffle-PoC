@@ -1,468 +1,386 @@
 ---
 name: true-shuffle
-description: Spotify-Sender mit Gedächtnis. One shared player logic, six operating surfaces (Leuchttisch default, Fahrt, Notizblock, Player, Umlauf, Fahrmodus), each with its own structure, control placement and navigation, drawn for day and night.
+description: Spotify-Sender mit Gedächtnis. One system, a mixtape world - every station is a cassette with a fixed order, Jetzt is the brass tape deck it sits in, everything around it is the cassette's inlay card.
 colors:
-  # Leuchttisch (data-design="kontakt", default). Day = lit table and photo paper, night = darkroom.
-  kontakt-light-table: "#eeedea"
-  kontakt-print-paper: "#f9f8f6"
-  kontakt-film-black: "#141210"
-  kontakt-film-print: "#f2ede6"
-  kontakt-film-print-dim: "#b0a99f"
-  kontakt-edge-amber: "#e6b15c"
-  kontakt-graphite-quiet: "#5c5853"
-  kontakt-paper-hair: "#cfcbc5"
-  kontakt-grease-red: "#e2362a"
-  kontakt-darkroom: "#0d0b0a"
-  kontakt-darkroom-raise: "#161412"
-  kontakt-darkroom-print: "#ece6dd"
-  kontakt-darkroom-red: "#ff5a3c"
-  kontakt-grease-blue: "#4b86f0"
-  kontakt-grease-vermilion: "#ff4b2b"
-  kontakt-grease-green: "#33c06d"
-  kontakt-grease-magenta: "#e05aa8"
-  kontakt-grease-orange: "#ff8a1e"
-  kontakt-grease-yellow: "#f2c230"
-  # Fahrt (data-design="linie"). Day = white signage on station-wall grey, night = midnight enamel.
-  linie-station-wall: "#e9edf1"
-  linie-signage-white: "#ffffff"
-  linie-navy-ink: "#0f1d33"
-  linie-navy-quiet: "#4a586c"
-  linie-panel-hair: "#c7d0da"
-  linie-signal-red: "#e3001b"
-  linie-board-amber: "#ffc93c"
-  linie-board-quiet: "#b9c4d3"
-  linie-enamel-midnight: "#0b1424"
-  linie-enamel-raise: "#132038"
-  linie-enamel-white: "#f2f5f9"
-  linie-night-signal-red: "#ff3349"
-  linie-line-blue: "#0066b3"
-  linie-line-red: "#d6001c"
-  linie-line-green: "#2f8a1f"
-  linie-line-violet: "#7b4fa6"
-  linie-line-turquoise: "#00827e"
-  linie-line-yellow: "#f5c400"
-  # Notizblock (data-design="strich"). Day = Karopapier, night = Schultafel.
-  strich-squared-paper: "#fbfbf9"
-  strich-graphite: "#26292e"
-  strich-graphite-quiet: "#5b6169"
-  strich-paper-hair: "#cdd6e0"
-  strich-grid-blue: "#d9e6f3"
-  strich-margin-pink: "#ec8d86"
-  strich-correction-red: "#d63a2f"
-  strich-highlighter: "#fff17a"
-  strich-page-white: "#ffffff"
-  strich-slate: "#1d2723"
-  strich-slate-raise: "#24302b"
-  strich-chalk: "#eef0e9"
-  strich-chalk-red: "#ff8f80"
-  strich-marker-blue: "#1f5fbf"
-  strich-marker-green: "#1d8048"
-  strich-marker-violet: "#7a3fb0"
-  strich-marker-petrol: "#0e7882"
-  strich-marker-ochre: "#e7a600"
-  # Player (data-design="klassik"). The canon full player, day and night.
-  klassik-ground: "#f5f5f7"
-  klassik-card: "#ffffff"
-  klassik-label: "#1d1d1f"
-  klassik-label-quiet: "#6e6e73"
-  klassik-separator: "#d9d9de"
-  klassik-violet: "#6a4cff"
-  klassik-night: "#121214"
-  klassik-night-card: "#1c1c1f"
-  klassik-night-label: "#f5f5f7"
-  klassik-night-violet: "#8f7bff"
-  klassik-accent-blue: "#2f6bff"
-  klassik-accent-pink-red: "#ff375f"
-  klassik-accent-green: "#1f9d55"
-  klassik-accent-violet: "#8e5cff"
-  klassik-accent-petrol: "#0a9396"
-  klassik-accent-yellow: "#ffb800"
-  # Umlauf (data-design="umlauf"). Day = pale sky with indigo ink, night = deep indigo with a warm sun.
-  umlauf-pale-sky: "#e8eef7"
-  umlauf-cloud-white: "#ffffff"
-  umlauf-indigo-ink: "#18204a"
-  umlauf-indigo-quiet: "#4d5684"
-  umlauf-sky-hair: "#c6cfe2"
-  umlauf-sun-orange: "#ff6a13"
-  umlauf-night-indigo: "#0d1131"
-  umlauf-night-raise: "#161c47"
-  umlauf-night-starlight: "#eef0ff"
-  umlauf-night-sun: "#ff9a4a"
-  umlauf-planet-blue: "#3c6cff"
-  umlauf-planet-green: "#14a874"
-  umlauf-planet-violet: "#8b5cf6"
-  umlauf-planet-petrol: "#0aa0b5"
-  umlauf-planet-yellow: "#f2b705"
-  # Fahrmodus (data-design="fahrmodus"). Day = black on signal yellow, night = signal yellow on black.
-  fahrmodus-signal-yellow: "#ffd100"
-  fahrmodus-yellow-raise: "#ffe259"
-  fahrmodus-road-black: "#0b0b0b"
-  fahrmodus-umber-quiet: "#2f2a10"
-  fahrmodus-warning-red: "#a10a0a"
-  fahrmodus-night-black: "#000000"
-  fahrmodus-night-quiet: "#e6c44a"
-  fahrmodus-bar-blue: "#0047ab"
-  fahrmodus-bar-red: "#c1121f"
-  fahrmodus-bar-green: "#006b3c"
-  fahrmodus-bar-violet: "#5a189a"
-  fahrmodus-bar-petrol: "#00525e"
-  # Shared shell utilities (base.css fallbacks every design can override).
-  shell-focus-blue: "#1f4fd0"
-  shell-danger: "#b3261e"
+  # Inlay card (day)
+  inlay-ground: "#e7dcc4"
+  inlay-paper: "#f4ecda"
+  inlay-sunk: "#dccfb2"
+  ink: "#2a2017"
+  ink-soft: "#57442f"
+  ink-quiet: "#6a563f"
+  rule: "#cbb994"
+  rule-strong: "#8f7a57"
+  label-stripe-red: "#c2412a"
+  label-stripe-red-deep: "#a5341f"
+  label-stripe-red-ink: "#ffffff"
+  label-stripe-red-soft: "#f1d3c6"
+  ballpoint-blue: "#24448c"
+  label-tape: "#1d1b19"
+  label-tape-ink: "#f3efe6"
+  confirmed-green: "#1d6f44"
+  wait-amber: "#7d5200"
+  wait-amber-soft: "#f3e3c2"
+  error-red: "#a8231b"
+  error-red-soft: "#f6d7d1"
+  focus-blue: "#1d5bd6"
+  # Deck (day: flat warm brass)
+  brass: "#d9a75f"
+  brass-edge: "#a5732f"
+  brass-ink: "#2a1c0a"
+  brass-ink-soft: "#573c18"
+  deck-key: "#efd09a"
+  deck-key-hover: "#f6deb2"
+  deck-key-side: "#9a682a"
+  deck-key-ink: "#2a1c0a"
+  bay: "#2a2116"
+  hotline-orange: "#e2622a"
+  counter-wheel: "#16130e"
+  counter-digit: "#f3ecdc"
+  # Night: dark shelf and dark bronze deck
+  shelf-ground-night: "#17120d"
+  shelf-paper-night: "#221a12"
+  shelf-sunk-night: "#0f0b07"
+  ink-night: "#f1e6cf"
+  ink-soft-night: "#cdb994"
+  ink-quiet-night: "#a8956f"
+  rule-night: "#3a2e21"
+  rule-strong-night: "#6d5a41"
+  label-stripe-red-night: "#ef6b4a"
+  label-stripe-red-ink-night: "#1c0d07"
+  label-stripe-red-soft-night: "#3b1f16"
+  ballpoint-blue-night: "#a9bef2"
+  label-tape-night: "#b8322a"
+  label-tape-ink-night: "#fff4ec"
+  confirmed-green-night: "#5fcf8f"
+  wait-amber-night: "#e9b85c"
+  error-red-night: "#ff8a80"
+  focus-blue-night: "#8fb4ff"
+  bronze-night: "#5a4329"
+  bronze-edge-night: "#2e2114"
+  bronze-ink-night: "#f6e7cc"
+  deck-key-night: "#7b5e3e"
+  deck-key-hover-night: "#664c2f"
+  deck-key-side-night: "#2e2113"
+  deck-key-ink-night: "#fbefd9"
+  bay-night: "#17110b"
 typography:
-  kontakt-display:
-    fontFamily: "Hanken Grotesk Variable, Hanken Grotesk, system-ui, sans-serif"
-    fontSize: "clamp(2.2rem, 10.5vw, 3.6rem)"
-    fontWeight: 820
-    lineHeight: 0.96
-    letterSpacing: "-0.035em"
-  kontakt-body:
-    fontFamily: "Hanken Grotesk Variable, Hanken Grotesk, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.5
-  kontakt-edge-print:
-    fontFamily: "Martian Mono Variable, Martian Mono, ui-monospace, monospace"
-    fontSize: "0.66rem"
-    fontWeight: 500
-    letterSpacing: "0.04em"
-  linie-display:
-    fontFamily: "Atkinson Hyperlegible Next Variable, Atkinson Hyperlegible Next, system-ui, sans-serif"
-    fontSize: "clamp(1.5rem, 6.4vw, 2.4rem)"
+  display:
+    fontFamily: "Bricolage Grotesque Variable, Atkinson Hyperlegible Next Variable, sans-serif"
+    fontSize: "clamp(1.75rem, 7.4vw, 2.25rem)"
     fontWeight: 800
-    lineHeight: 1.08
-    letterSpacing: "-0.015em"
-  linie-body:
-    fontFamily: "Atkinson Hyperlegible Next Variable, Atkinson Hyperlegible Next, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.5
-  linie-board-legend:
-    fontFamily: "Atkinson Hyperlegible Next Variable, Atkinson Hyperlegible Next, system-ui, sans-serif"
-    fontSize: "0.74rem"
-    fontWeight: 800
-    letterSpacing: "0.04em"
-  strich-display:
-    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, system-ui, sans-serif"
-    fontSize: "clamp(1.7rem, 7.5vw, 2.8rem)"
-    fontWeight: 800
-    lineHeight: 0.98
-    letterSpacing: "-0.035em"
-  strich-body:
-    fontFamily: "Bricolage Grotesque Variable, Bricolage Grotesque, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.5
-  klassik-display:
-    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, Roboto, system-ui, sans-serif"
-    fontSize: "clamp(1.5rem, 6.2vw, 2.1rem)"
-    fontWeight: 700
-    lineHeight: 1.08
+    lineHeight: 1.15
     letterSpacing: "-0.02em"
-  klassik-body:
-    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, Roboto, system-ui, sans-serif"
-    fontSize: "1rem"
+    fontVariation: "'wdth' 88"
+  headline:
+    fontFamily: "Bricolage Grotesque Variable, Atkinson Hyperlegible Next Variable, sans-serif"
+    fontSize: "clamp(1.375rem, 6vw, 1.875rem)"
+    fontWeight: 800
+    lineHeight: 1.12
+    letterSpacing: "-0.02em"
+    fontVariation: "'wdth' 92"
+  label-tape:
+    fontFamily: "Bricolage Grotesque Variable, Atkinson Hyperlegible Next Variable, sans-serif"
+    fontSize: "1.125rem"
+    fontWeight: 700
+    lineHeight: 1.15
+    letterSpacing: "0.06em"
+    fontVariation: "'wdth' 80"
+  title:
+    fontFamily: "Bricolage Grotesque Variable, Atkinson Hyperlegible Next Variable, sans-serif"
+    fontSize: "1.125rem"
+    fontWeight: 750
+    lineHeight: 1.2
+    fontVariation: "'wdth' 92"
+  body:
+    fontFamily: "Atkinson Hyperlegible Next Variable, Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "1.0625rem"
     fontWeight: 400
     lineHeight: 1.5
-  umlauf-display:
-    fontFamily: "Lexend Variable, Lexend, system-ui, sans-serif"
-    fontSize: "clamp(1.7rem, 7.6vw, 2.8rem)"
-    fontWeight: 640
-    lineHeight: 1.05
-    letterSpacing: "-0.03em"
-  umlauf-body:
-    fontFamily: "Lexend Variable, Lexend, system-ui, sans-serif"
-    fontSize: "1rem"
+    fontFeature: "'tnum'"
+  meta:
+    fontFamily: "Atkinson Hyperlegible Next Variable, Atkinson Hyperlegible Next, system-ui, sans-serif"
+    fontSize: "0.8125rem"
     fontWeight: 400
-    lineHeight: 1.5
-  fahrmodus-display:
-    fontFamily: "Fahrmodus Dot, Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "clamp(2.6rem, 13vw, 5.4rem)"
-    fontWeight: 900
-    lineHeight: 0.98
-    letterSpacing: "-0.03em"
-  fahrmodus-body:
-    fontFamily: "Fahrmodus Dot, Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "1rem"
+    lineHeight: 1.4
+  counter:
+    fontFamily: "Atkinson Hyperlegible Next Variable, system-ui, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: "0.12em"
+    fontFeature: "'tnum'"
+  marker:
+    fontFamily: "Permanent Marker, Atkinson Hyperlegible Next Variable, cursive"
+    fontSize: "0.8125rem"
     fontWeight: 400
-    lineHeight: 1.5
-  fahrmodus-key-label:
-    fontFamily: "Fahrmodus Dot, Overpass Variable, Overpass, system-ui, sans-serif"
-    fontSize: "1.8rem"
-    fontWeight: 900
-  utility-mono:
-    fontFamily: "ui-monospace, SF Mono, Menlo, monospace"
-    fontSize: "0.85rem"
+    letterSpacing: "0.02em"
 rounded:
-  kontakt-key: "2px"
-  kontakt-panel: "3px"
-  kontakt-art: "1px"
-  linie-key: "8px"
-  linie-panel: "14px"
-  linie-art: "6px"
-  linie-main: "999px"
-  strich-key: "10px 4px 12px 5px / 5px 12px 4px 10px"
-  strich-panel: "16px 6px 18px 8px / 8px 18px 6px 16px"
-  strich-main: "14px 6px 16px 7px / 7px 16px 6px 14px"
-  strich-art: "3px"
-  klassik-key: "12px"
-  klassik-panel: "18px"
-  klassik-sheet: "28px"
-  klassik-art: "12px"
-  umlauf-panel: "26px"
-  umlauf-pill: "999px"
-  umlauf-round: "50%"
-  fahrmodus-key: "10px"
-  fahrmodus-panel: "16px"
-  fahrmodus-tile: "18px"
-  fahrmodus-art: "8px"
+  label: "2px"
+  label-tape: "3px"
+  inlay: "4px"
+  key: "5px"
+  r: "6px"
+  r-lg: "10px"
+  tabbar-desktop: "14px"
+  deck: "18px"
+  pill: "999px"
 spacing:
-  gutter-phone: "16px"
-  gutter-compact: "14px"
-  gutter-tablet: "24px"
-  gutter-desktop: "32px"
-  gap: "24px"
-  gap-desktop: "32px"
-  stage-pad: "18px"
-  stage-pad-desktop: "28px"
-  key: "52px"
-  key-compact: "46px"
-  main-key-height: "64px"
-  dock-key-height: "56px"
+  gap-tight: "8px"
+  gap-key: "10px"
+  gap: "16px"
+  page-mobile: "16px"
+  page-desktop: "40px"
+  now-column-gap: "56px"
+  tabbar: "64px"
 components:
   key:
-    padding: "10px 18px"
+    backgroundColor: "{colors.deck-key}"
+    textColor: "{colors.deck-key-ink}"
+    rounded: "{rounded.key}"
+    padding: "0 18px"
     height: "48px"
-  kontakt-dock-main:
-    backgroundColor: "{colors.kontakt-film-print}"
-    textColor: "{colors.kontakt-film-black}"
-    rounded: "{rounded.kontakt-key}"
-    height: "56px"
-  kontakt-dock:
-    backgroundColor: "{colors.kontakt-film-black}"
-    textColor: "{colors.kontakt-film-print}"
-    padding: "10px 16px"
-  linie-board:
-    backgroundColor: "{colors.linie-navy-ink}"
-    textColor: "{colors.linie-signage-white}"
-    padding: "10px 16px"
-  linie-board-main:
-    backgroundColor: "{colors.linie-signage-white}"
-    textColor: "{colors.linie-navy-ink}"
-    rounded: "{rounded.linie-main}"
-    height: "56px"
-  linie-stop-panel:
-    backgroundColor: "{colors.linie-signage-white}"
-    rounded: "{rounded.linie-panel}"
-    padding: "16px 16px 18px"
-  strich-entry:
-    backgroundColor: "{colors.strich-page-white}"
-    textColor: "{colors.strich-graphite}"
-    rounded: "{rounded.strich-panel}"
-    padding: "22px 18px 20px"
-  strich-main:
-    backgroundColor: "{colors.strich-graphite}"
-    textColor: "{colors.strich-squared-paper}"
-    rounded: "{rounded.strich-main}"
+  key-hover:
+    backgroundColor: "{colors.deck-key-hover}"
+  key-lit:
+    backgroundColor: "{colors.label-stripe-red}"
+    textColor: "{colors.label-stripe-red-ink}"
+    rounded: "{rounded.key}"
+    height: "48px"
+  key-lit-hover:
+    backgroundColor: "{colors.label-stripe-red-deep}"
+  deck-play-key:
+    backgroundColor: "{colors.deck-key}"
+    textColor: "{colors.deck-key-ink}"
+    rounded: "{rounded.r}"
+    padding: "6px 4px"
     height: "64px"
-  klassik-play:
-    backgroundColor: "{colors.klassik-label}"
-    textColor: "{colors.klassik-ground}"
-    rounded: "50%"
-    size: "76px"
-  klassik-up-sheet:
-    backgroundColor: "{colors.klassik-card}"
-    rounded: "{rounded.klassik-sheet}"
-    padding: "28px 16px 24px"
-  umlauf-play:
-    backgroundColor: "{colors.umlauf-sun-orange}"
-    textColor: "{colors.umlauf-indigo-ink}"
-    rounded: "{rounded.umlauf-round}"
-    size: "96px"
-  umlauf-key:
-    backgroundColor: "{colors.umlauf-cloud-white}"
-    textColor: "{colors.umlauf-indigo-ink}"
-    rounded: "{rounded.umlauf-round}"
-    size: "52px"
-  fahrmodus-play-tile:
-    backgroundColor: "{colors.fahrmodus-road-black}"
-    textColor: "{colors.fahrmodus-signal-yellow}"
-    typography: "{typography.fahrmodus-key-label}"
-    rounded: "{rounded.fahrmodus-tile}"
-    height: "112px"
-  fahrmodus-key-tile:
-    textColor: "{colors.fahrmodus-road-black}"
-    rounded: "{rounded.fahrmodus-tile}"
-    height: "92px"
-  fahrmodus-sender-card:
-    textColor: "{colors.fahrmodus-road-black}"
-    rounded: "{rounded.fahrmodus-panel}"
-    padding: "16px 18px 12px"
+  deck:
+    backgroundColor: "{colors.brass}"
+    textColor: "{colors.brass-ink}"
+    rounded: "{rounded.deck}"
+    padding: "12px"
+  deck-bay:
+    backgroundColor: "{colors.bay}"
+    rounded: "{rounded.r-lg}"
+    padding: "8px"
+  tape-counter:
+    backgroundColor: "{colors.counter-wheel}"
+    textColor: "{colors.counter-digit}"
+    typography: "{typography.counter}"
+    rounded: "{rounded.inlay}"
+    padding: "3px 4px"
+  label-tape-heading:
+    backgroundColor: "{colors.label-tape}"
+    textColor: "{colors.label-tape-ink}"
+    typography: "{typography.label-tape}"
+    rounded: "{rounded.label-tape}"
+    padding: "3px 12px 4px"
+  inlay-list:
+    backgroundColor: "{colors.inlay-paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.inlay}"
+    padding: "14px 0 0"
+  tag-note:
+    textColor: "{colors.ballpoint-blue}"
+    typography: "{typography.marker}"
+    rounded: "{rounded.label}"
+    padding: "2px 9px"
+  tag-note-new:
+    backgroundColor: "{colors.label-stripe-red}"
+    textColor: "{colors.label-stripe-red-ink}"
+    typography: "{typography.marker}"
+    rounded: "{rounded.label}"
+    padding: "2px 9px"
+  tabbar-key:
+    backgroundColor: "{colors.deck-key}"
+    textColor: "{colors.deck-key-ink}"
+    rounded: "{rounded.r}"
+    height: "56px"
+  notice:
+    backgroundColor: "{colors.inlay-paper}"
+    textColor: "{colors.ink-soft}"
+    rounded: "{rounded.inlay}"
+    padding: "14px 16px"
+  notice-warn:
+    backgroundColor: "{colors.wait-amber-soft}"
+    textColor: "{colors.ink}"
+  notice-error:
+    backgroundColor: "{colors.error-red-soft}"
+    textColor: "{colors.ink}"
+  flash:
+    backgroundColor: "{colors.label-tape}"
+    textColor: "{colors.label-tape-ink}"
+    rounded: "{rounded.inlay}"
+    padding: "12px 18px"
 ---
 
 # Design System: true-shuffle
 
 ## Overview
 
-**Creative North Star: "Six Instruments, One Memory"**
+**Creative North Star: "The Mixtape on the Deck"**
 
-true-shuffle ships one player and six ways to hold it. `src/client/screens/home.tsx` builds every part once (stage head, cover, title copy, progress, the requested/accepted/confirmed signal, the transport keys, device panel, queue, Sender list) with identical labels, handlers and honest states; `src/client/screens/home-layouts.tsx` then arranges those parts into six layouts that each own their structure, control placement and navigation. A design is chosen per device under Menü > Gestaltung (stored as `ts-design` in localStorage, openable by `?design=<id>`, painted as `data-design` on the root together with favicon and browser-bar colour). Day and night follow `prefers-color-scheme` unless `data-illumination` pins one; every design is fully drawn in both. Nothing functional depends on the choice. Name, voice, colour-slot table and icon pipeline live in `docs/BRAND.md`; this file records the visual system as built.
+true-shuffle is one system, not a set of looks. Every station is a mixtape cassette with a fixed order. Jetzt is the tape deck the cassette sits in: a flat, warm brass faceplate (dark bronze by night) with a tape counter, a status lamp, a recessed bay holding a smoked, see-through cassette, and a row of keys with drawn sides and an orange hotline edge on the play key. Everything below and around the deck is the cassette's paper: an inlay-card ground by day, a dark shelf by night, section headings on embossed label tape, lists drawn as the ruled inlay card with the label's stripes along its top, track titles in blue ballpoint, song tags as felt-pen notes, buttons and navigation as deck keys, other cassettes standing on a shelf.
 
-The six are worlds, not skins. **Leuchttisch** (`kontakt`, default) is a lit table: the current song lies large as a slide-mounted frame boxed in grease pencil, the Sender are film tabs, the queue is a contact sheet, and the transport sits in a film-black dock fixed at the bottom. **Fahrt** (`linie`) is one unbroken line: heard stops from stored history struck through above, the current stop as an interchange ring, the device panel beside the line, queue stops below, and a departure-board dock naming "Nächster Halt" in amber. **Notizblock** (`strich`) is Karopapier or Tafel: a big tally of the round, the song as an entry card (title first), a tick-off queue and filled register tabs. **Player** (`klassik`) is the canon full player: big cover, round play key, queue as a sheet with a grabber, cover shelf, bottom tab bar on phones, set in the platform face because that is the canon's native voice. **Umlauf** (`umlauf`) draws the round as an orbit of ticks around a circular cover with a big round play key in the page centre and Sender as small orbits. **Fahrmodus** (`fahrmodus`) is the car and one-hand mode: huge title, full-width play tile, three big square keys, big Sender cards, black on signal yellow.
+The metaphor carries facts, never decoration: the reels show the share of the round already heard (left reel heard, right reel still to come), the counter shows songs heard, the label carries the station name and says it once. Everything drawn is also printed as text nearby. The deck is drawn as a flat illustration, not as imitated metal: no brushed textures, no gradients on the faceplate. The visual source is the owner's reference of a mixtape-soundtrack sleeve with a brass tape deck; the system takes the material, never the film's name or marks.
 
-Density is phone-first and glanceable: in every design the song and the main key are inside the first phone viewport, and the screen is meant to be open for seconds. The rejected direction was one shared layout reskinned in four colourways; the system now refuses any new design that only changes tokens.
+State is carried by line form, everywhere: a solid green rule only when playback is confirmed, solid grey when held, dashed while waiting or on error, dotted for estimates. The interface is German, plain-worded, glanceable from a car mount, and readable at a desk.
 
 **Key Characteristics:**
-- One shared part set, six layouts; each layout owns structure, control placement and navigation.
-- Every design has a full day and night palette and its own brand mark, favicon and app icon.
-- Unconfirmed state is never printed like confirmed state: outlined or dimmed titles, hatched progress, dashed or dotted signal steps, dashed disabled keys.
-- The Sender colour (`--st`) is the one accent per screen, applied in each world's own material (grease pencil, line colour, marker, accent, planet, bar).
-- Round progress is drawn as a world-native meter (barcode, line, tally, ring, orbit) and always floored, never rounded up.
+- Flat brass deck with recessed dark bay; dark bronze at night so it does not glare in a car.
+- Inlay-card paper ground by day, dark shelf by night; light/dark are illumination of the same world (Hell / Dunkel / Automatisch), never a design picker.
+- Three faces with fixed jobs: Bricolage Grotesque for headings, Atkinson Hyperlegible Next for reading, Permanent Marker only for handwritten labels and notes.
+- Keys, not buttons: a face plus a drawn side that sinks when pressed.
+- Line form (solid, dashed, dotted) is the state language.
+- The brand name is always lower-case "true-shuffle".
 
 ## Colors
 
-Each design is a closed palette of ground, raised surface, ink, quiet ink, hairline, one brand colour and six Sender inks, with a dedicated night set; designs never borrow each other's colours.
+A warm paper-and-brass palette with one red label-stripe accent, blue ballpoint ink and a single orange hotline on the deck.
 
 ### Primary
-- **Grease Red** (kontakt-grease-red): Leuchttisch brand: mark stroke, active nav underline, first contact-sheet number, cursor. Night lifts to Darkroom Red.
-- **Signal Red** (linie-signal-red): Fahrt brand: the line in the mark and the nav underline. Night: Night Signal Red.
-- **Correction Red** (strich-correction-red): Notizblock brand and the cross-stroke of every fifth tally mark. Night: Chalk Red.
-- **Player Violet** (klassik-violet): Player brand tile, focus ring and selection. Night: Night Violet.
-- **Sun Orange** (umlauf-sun-orange): Umlauf brand, the main round key, the current-position dot on the orbit. Night: Night Sun.
-- **Road Black on Signal Yellow** (fahrmodus-road-black, fahrmodus-signal-yellow): Fahrmodus brand is the inversion itself; the main tile and selected Sender card are ink-filled, and at night the pair swaps.
+- **Label-Stripe Red** (label-stripe-red; night label-stripe-red-night): the cassette label's stripe. Lit keys, the three-band stripe on inlay lists, the "Neu für dich" note, the played part of the song tape, the waiting and estimate state lines, text selection.
+- **Flat Warm Brass** (brass, brass-edge; night bronze-night, bronze-edge-night): the deck faceplate, the tab bar panel and the shelf board under standing cassettes. Never used for text-bearing paper surfaces.
 
-### Secondary (Sender inks)
-- **Six Sender slots per design** (kontakt-grease-*, linie-line-*, strich-marker-* plus Correction Red, klassik-accent-*, umlauf-planet-* plus Sun Orange, fahrmodus-bar-*): a Sender keeps its slot across all designs; "Alles" takes the page ink. The slot table is maintained in `docs/BRAND.md` and the CSS variables `--ink-ultra … --ink-yellow`; night variants are recorded in the sidecar.
+### Secondary
+- **Blue Ballpoint** (ballpoint-blue; night ballpoint-blue-night): handwritten tracklist ink. Track titles in lists and history, felt-pen tag notes, the station name on cassette labels, text actions.
+- **Hotline Orange** (hotline-orange): the deck's signal edge. Top edge and icon of the play key, the running status lamp, the current tab's icon, the dashed outline of a pending play key. Only on the deck and its keys.
 
-### Tertiary (world materials)
-- **Film Black / Film Print / Edge Amber** (kontakt-film-black, kontakt-film-print, kontakt-edge-amber): the film strip of the stage, Sender tabs, contact sheet and dock; edge-amber prints frame numbers.
-- **Board Navy / Board Amber** (linie-navy-ink, linie-board-amber): the departure-board dock and its next-title line.
-- **Grid Blue / Margin Pink / Highlighter** (strich-grid-blue, strich-margin-pink, strich-highlighter): the 20px Karopapier grid, the red margin rule on wide pages, selection.
+### Tertiary
+- **Confirmed Green** (confirmed-green; night confirmed-green-night): the state line when Spotify confirms playback, and nothing else.
+- **Wait Amber** (wait-amber, wait-amber-soft): warning notices and the offline bar; the waiting lamp uses a lighter amber (#e7b552) on the deck.
+- **Error Red** (error-red, error-red-soft): errors, the dashed error state line, danger key text.
 
 ### Neutral
-- **Grounds**: Light Table, Station Wall, Squared Paper, Player Ground, Pale Sky, Signal Yellow (day); Darkroom, Enamel Midnight, Slate, Player Night, Night Indigo, Night Black (night).
-- **Raised surfaces**: Print Paper, Signage White, Klassik Card, Cloud White, Yellow Raise; each with its night raise.
-- **Ink and quiet ink**: Film Black/Graphite Quiet, Navy Ink/Navy Quiet, Graphite/Graphite Quiet, Label/Label Quiet, Indigo Ink/Indigo Quiet, Road Black/Umber Quiet.
-- **Hairlines**: Paper Hair, Panel Hair, Paper Hair (strich), Separator, Sky Hair; Fahrmodus uses 25% black instead of a hair colour.
+- **Inlay Ground / Inlay Paper / Inlay Sunk** (inlay-ground, inlay-paper, inlay-sunk; night shelf-*): page ground, lists and panels, skeletons and empty covers.
+- **Ink / Ink Soft / Ink Quiet** (ink, ink-soft, ink-quiet): reading text, secondary lines, meta and quiet labels.
+- **Rule / Rule Strong** (rule, rule-strong): row dividers and card borders; the dashed unplayed part of tapes and inactive steps.
+- **Label Tape** (label-tape, label-tape-ink): embossed heading tape and the flash toast; black tape by day, red tape by night.
+- **Deck Keys** (deck-key, deck-key-hover, deck-key-side, deck-key-ink): key faces, hover faces, drawn key sides.
+- **Bay** (bay): the recessed well behind the cassette and the key row.
+
+Cassette shells keep their own seven label palettes (red, blue, green, orange, teal, violet, smoke: stripe + band pairs, cream label #efe3c6, ballpoint label ink). They identify cassettes, they are not UI accents.
 
 ### Named Rules
-**The One Sender Rule.** The only saturated accent on a listening screen besides the brand mark is the current Sender's ink (`--st`); everything else is ground, ink and hairline.
+**The Green Means Spotify Said So Rule.** Confirmed green appears only on the state line for confirmed playback. Every other "good" state uses ink or label-stripe red.
 
-**The Closed Palette Rule.** A design's colours live under its own `:root[data-design="…"]` block with a full night set in both `[data-illumination="night"]` and `prefers-color-scheme: dark`; a new colour is added to all three places or not at all.
+**The Hotline Lives On The Deck Rule.** Hotline orange belongs to the deck, its keys and the tab bar's current icon. Paper surfaces use label-stripe red.
 
-**The Bar Not Background Rule.** In Fahrmodus the Sender colour appears only as a thick bar or line, never behind text.
+**The One Illumination Rule.** Night values are the same tokens re-lit (data-illumination day/night, or the system preference under Automatisch). There is no second palette and no design picker.
 
 ## Typography
 
-**Display/Body Fonts:** one face per design, self-hosted variable fonts imported in `src/client/main.tsx`: Hanken Grotesk (Leuchttisch), Atkinson Hyperlegible Next (Fahrt), Bricolage Grotesque (Notizblock), Lexend (Umlauf), Overpass (Fahrmodus); Player uses the platform face (SF Pro / Segoe UI / Roboto) with no webfont.
-**Label/Mono Font:** Martian Mono, Leuchttisch only, for edge print. System monospace as a utility only.
+**Display Font:** Bricolage Grotesque Variable (with Atkinson Hyperlegible Next Variable)
+**Body Font:** Atkinson Hyperlegible Next Variable (with system-ui)
+**Label Font:** Permanent Marker (with Atkinson Hyperlegible Next Variable, cursive)
 
-**Character:** each world speaks in one voice and does every job in it: headline, body, keys and numbers share the face. Contrast comes from weight and size, not from a second family.
+**Character:** A compressed, punchy grotesque on the label and spine, a hyperlegible reading face for everything a driver or listener must parse at a glance, and one felt-pen hand for what was written on the cassette.
 
 ### Hierarchy
-- **Display (song title)**: the largest type on the screen in every design, set at the design's display weight and tight tracking (frontmatter `*-display`). Fahrmodus is the extreme (up to 5.4rem phone, 6rem desktop); Player is the quietest (up to 2.1rem). Desktop steps: Leuchttisch clamp(2.4rem, 3.2vw, 3.4rem), Notizblock clamp(2.2rem, 3vw, 3.2rem), Fahrt clamp(1.9rem, 2.6vw, 2.8rem).
-- **Headline (section heads, Sender name on the stage)**: design head weight (700 to 850), roughly 1 to 2.4rem; Notizblock sets the Sender name at clamp(1.6rem, 7vw, 2.4rem) as the page heading.
-- **Title (artist)**: 1 to 1.5rem, weight 500 to 800, under or beside the song title.
-- **Body** (400, 1rem, line-height 1.5): notes, device panel, settings. Quiet ink for album and saved-note copy (0.8 to 0.95rem).
-- **Label** (design label weight 560 to 750, 0.72 to 0.95rem, sentence case): signal steps, progress labels, Sender meta. Fahrmodus enlarges labels (1.1 to 1.25rem, 800+).
+- **Display** (800, clamp(1.75rem, 7.4vw, 2.25rem), 1.15, width 88): page titles; on the deck the station title shrinks to clamp(1.375rem, 6vw, 1.75rem).
+- **Headline** (800, clamp(1.375rem, 6vw, 1.875rem), 1.12, width 92): the current song title on Jetzt.
+- **Label Tape** (700, 1.125rem, 0.06em tracking, width 80): section headings on embossed tape, rotated -0.8deg. Sentence case.
+- **Title** (750, 1.125rem, width 92): track and station names in sheets and pickers.
+- **Body** (400, 1.0625rem, 1.5, tabular numerals): all reading text; prose capped at 62ch.
+- **Meta** (0.8125rem, 1.4): progress times, list sub-lines, tab labels, row tags.
+- **Counter** (700, 1.25rem, 0.12em, tabular): the tape counter digits.
+- **Marker** (400, 0.8125rem tags; 25px on cassette labels, rotated -1deg): cassette label names and song-tag notes only.
 
 ### Named Rules
-**The One Voice Rule.** A design uses one family for everything except Leuchttisch's Martian Mono edge print (frame numbers, times, counts, signal steps). No design pairs a display face with a separate text face.
+**The Felt Pen Is For Notes Rule.** Permanent Marker writes cassette labels and song-tag notes. Never body text, buttons, headings or numbers someone must read precisely.
 
-**The Utility Mono Rule.** `ui-monospace, "SF Mono", Menlo, monospace` appears only for code input and diagnostics (`.input--code`, `.code`, `.diagnostic-data`); it is never a design voice.
+**The Lower-Case Name Rule.** The brand is always written "true-shuffle", lower case, in every heading, label and asset. No capitals, no small caps, no uppercase transforms anywhere.
 
-**The Canon Voice Rule.** Player's platform face is a cited choice: the canon is the native music app and SF/Roboto is its voice. It is not a fallback and not a licence to use system faces as display type elsewhere.
-
-**The Dot Fallback Rule.** "Fahrmodus Dot" is an `@font-face` that maps only U+00B7 ("·") to a local system sans because Overpass sets the middle dot hard against the next word. It is a glyph fallback, not a type role; never set text in it on purpose.
+**The Bounded Note Rule.** Song tags say only what was recorded ("Neu für dich", "Favorit", "3× gehört, zuletzt vor 2 Monaten", "Laut deinem Verlauf noch nie gehört"); in lists the short forms ("laut Verlauf neu", "lange nicht hier") keep one quiet line.
 
 ## Layout
 
-The shared shell (`base.css`) owns structure and spacing; the six layouts own arrangement. Gutters are 16px on phones (14px under 380px, where keys shrink to 46px), 24px from 560px and 32px from 900px; the section gap is 24px, 32px from 900px. Breakpoints in use: 360, 380, 420, 560, 900 and 1100px; multi-column listening layouts start at 1100px on a 12-column grid.
+Phone first. Main column max 1240px, 16px side padding, a fixed four-key tab bar (Jetzt, Kassetten, Verlauf, Mehr) at the bottom with 64px height plus safe area. Base rhythm 16px; key rows and lists use 8-10px gaps, section gaps 32px.
 
-- **Leuchttisch**: phone order is stage (frame, title), device, film tabs, contact sheet, with the dock fixed at the bottom (reserved height 172px phone, 96px desktop). Desktop: slide left, Sender tabs and contact sheet (auto-fill 150px frames) right; the dock spreads progress, signal and keys into three columns.
-- **Fahrt**: one 8px line in the Sender colour runs 14px from the left edge through past stops, the current stop, the device panel and the queue, fading out after the last stop; everything hangs beside it at a fixed indent. The board dock is fixed at the bottom (150px reserved). Desktop: line column, device side column, network column.
-- **Notizblock**: Sender tabs across the top on phones, then the tally, entry card and tick-off queue; from 1100px the tabs stand as a sticky side column at the right edge of the page, and a margin rule appears from 900px.
-- **Player**: the stage fills the first phone screen (cover capped at min(100%, 420px, 30vh)); the queue sheet and cover shelf follow; the nav becomes a fixed bottom tab bar under 900px. Desktop: player and queue sheet side by side, cover shelf full width below.
-- **Umlauf**: everything centred on the page axis; the orbit is min(64vw, 268px). Desktop: player column (7 of 12) with Sender orbits and queue to the right.
-- **Fahrmodus**: single column of big rows; the nav becomes a fixed black bottom tab bar under 900px. Desktop: player 8 of 12 with Sender cards 4 of 12.
+At 960px and wider the shell becomes a two-column grid: a 232px left column holding the brand and the tab bar as a vertical deck panel, and the main area with 28px/40px padding. On Jetzt the deck sits in a sticky left column (340-460px) with 56px column gap, and the queue, promise and shelf flow on the right. The shelf of cassette cards on Kassetten runs one column, two from 640px, three from 1280px.
 
-**The First Viewport Rule.** On a phone, the song title and the main play key are visible without scrolling in every design; docked keys (Leuchttisch, Fahrt) and bottom tab bars (Player, Fahrmodus) reserve bottom padding so nothing hides behind them.
+The first phone viewport on Jetzt is: deck (counter, lamp, bay with spinning reels, key row), then the song with tags, progress tape, the state line and the device line.
 
 ## Elevation & Depth
 
-Depth is world-motivated and mostly soft; most designs are flat with hairlines and tonal surfaces. Shadows appear where a physical object sits on a surface (a slide on a lit table, a signage panel, a cover, a sheet) and as the lift of fixed docks and dialogs. There are no hard offset shadows anywhere.
+Hybrid: paper is flat with one soft ambient shadow; the deck has drawn, physical depth. The bay is recessed with an inset shadow, the counter wheels are sunk, the status lamp glows when running, label tape is embossed with a 1px light/dark text-shadow, and keys get depth from a drawn bottom side, not from blur.
 
 ### Shadow Vocabulary
-- **Slide on the table** (`box-shadow: 0 18px 40px -24px rgb(0 0 0 / 0.55)`): Leuchttisch current frame.
-- **Signage panel** (`box-shadow: 0 1px 0 var(--hair), 0 14px 34px -22px rgb(15 29 51 / 0.45)`): Fahrt current stop; other Fahrt panels use the hairline step alone.
-- **Cover lift** (`box-shadow: 0 22px 48px -22px rgb(0 0 0 / 0.55)`): Player cover; Umlauf uses `0 24px 50px -28px rgb(13 17 49 / 0.65)` on its round cover.
-- **Sun glow** (`box-shadow: 0 18px 36px -18px color-mix(in srgb, var(--brand) 70%, transparent)`): Umlauf main key only.
-- **Dock lift** (`box-shadow: 0 -12px 32px -20px rgb(0 0 0 / 0.5)`): fixed transport docks; Player's sheet uses `0 -18px 40px -30px`.
-- **Dialog** (`box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.5)` with a 55% black backdrop): rating sheet.
-- **Ring** (`box-shadow: 0 0 0 Npx …`): selection and outline rings (Fahrmodus cover 3px, Notizblock and Player selection 2px); a stroke, not elevation.
+- **Ambient** (`box-shadow: 0 1px 2px rgb(42 32 23 / 0.1), 0 8px 22px -12px rgb(42 32 23 / 0.35)`; night `0 1px 2px rgb(0 0 0 / 0.5), 0 10px 30px -14px rgb(0 0 0 / 0.8)`): deck, inlay lists, covers, flash.
+- **Bay well** (`box-shadow: inset 0 3px 8px rgb(0 0 0 / 0.55)`): the recess behind the cassette.
+- **Key contact** (`box-shadow: 0 1px 3px rgb(0 0 0 / 0.25)`; deck keys `0 2px 4px rgb(0 0 0 / 0.35)`): keys resting on the plate.
+- **Lamp glow** (`box-shadow: 0 0 0 3px rgb(226 98 42 / 0.2), 0 0 10px rgb(226 98 42 / 0.6)`): running status lamp only.
+- **Shelf board** (`border-bottom: 10px solid brass; box-shadow: 0 8px 0 -4px brass-edge`): the board cassettes stand on.
 
 ### Named Rules
-**The Object Shadow Rule.** A shadow means a physical object resting on the world's surface or a fixed panel above content; flat list rows, keys and labels carry none.
+**The Drawn Side Rule.** A key's depth is its drawn bottom side (4-5px). Pressed or current, the side shrinks to 2px and the face drops 2-3px. No scale, no blur lift.
 
 ## Shapes
 
-Every design declares its corner language as tokens (`--r`, `--r-lg`, `--r-art`, `--r-main`) and line weights (`--bw`, `--rule-w`). Leuchttisch is nearly square (1 to 3px), like film and prints. Fahrt uses signage corners (8px keys, 14px panels) with a pill main key and circles for stops; its lines bend only at 45 and 90 degrees. Notizblock draws boxes by hand: elliptical radii whose corners do not quite agree, and a selection circle drawn as an irregular ellipse. Player is the platform's rounded rectangle (12/18px), a 28px sheet top and a circular play key. Umlauf is round throughout: circular cover, circular keys, pill links, 26px panels. Fahrmodus uses heavy outlined tiles (18px corners, 3 to 4px strokes) and square-ended progress.
+Soft-cornered physical objects: the deck plate 18px, the bay and cassette windows 10px, keys 5-6px, inlay card and notices 4px, label tape 3px, felt-pen notes 2px. Pills (999px) only for small status chips (guest mode, "Eingelegt"). Cassettes are SVG with a 14px shell radius, a trapezoid foot, screws and toothed hubs.
 
-**The Native Mark Rule.** Each design's brand mark, round meter and stage art come from its own material (film frame with perforation, line with a 45 degree bend, four strokes and a red cross, resume arrow on violet, orbit with moon, yellow play on a black sign); they are SVG and never typed glyphs.
+Line form is shape vocabulary: tapes, progress and step rails draw the done part solid and the rest dashed (6px dash, 5px gap); estimates are dotted; waiting and pending elements wear a 2px dashed outline.
 
 ## Components
 
-### Buttons
-- **Shape:** the design's `--r`; main key uses `--r-main`.
-- **Primary (main key, Fortsetzen/Pause):** ink-filled (`--main-bg`/`--main-fg`), at least 64px tall (56px in docks). Leuchttisch: film-print key in the film dock. Fahrt: white pill on the navy board. Notizblock: graphite fill inside the entry card. Player: 76px circle, icon only. Umlauf: 96px sun-orange circle in the page centre. Fahrmodus: full-width 112px tile with 1.8rem label.
-- **Icon keys (Weiter, Favorit, nie wieder):** 52px square or circle with SVG icons; pressed state fills with the lit colour or the Sender ink (Player colours the icon instead of filling). Fahrmodus makes them three 92px square tiles with 4px strokes.
-- **Hover / Focus:** hover tints the background (`--key-hover-bg`); focus is a 3px `--focus` outline at 3px offset in every design; transitions run 180ms on `cubic-bezier(0.16, 1, 0.3, 1)`.
-- **Disabled main key (held, offline, not ready):** transparent with a dashed outline, never the solid key.
+### Buttons (keys)
+Every button is a deck key.
+- **Shape:** 5px corners, 48px minimum height, 0 18px padding, 4px drawn side in deck-key-side.
+- **Default:** deck-key face with deck-key-ink; hover deck-key-hover.
+- **Lit (primary):** label-stripe red face with its ink and a side mixed 55% toward black; hover label-stripe-red-deep.
+- **Pressed / aria-pressed:** face drops 2px, side 2px.
+- **Danger:** key face with error-red text.
+- **Text action:** underlined ballpoint-blue text, 44px tap height.
+- **Focus:** 3px focus-blue outline, 2px offset, everywhere.
 
-### Chips
-- **Line badge:** Fahrt only; the Sender as S1, S2 … ("A" for Alles) on a line-coloured badge.
+### Deck (signature)
+The brass plate with a 2px brass-edge border, 18px radius, 12px padding. Top row: tape counter (dark wheels, cream digits) with "x von y Songs gehört", the status lamp on the right (grey idle, hotline running, amber waiting). The bay holds the cassette and, below it, the key row: one wide play key (hotline top edge 5px, hotline icon, 64px) and three square keys (Weiter, Favorit, Nie wieder) at 64px with 5px drawn sides. A pending play key sinks and wears a dashed hotline outline. Night: dark bronze plate and keys.
 
-### Cards / Containers
-- **Stage:** design-specific: film strip (Leuchttisch), signage panel beside the line (Fahrt), entry card with 2px graphite border (Notizblock), transparent on the page (Player, Umlauf, Fahrmodus).
-- **Sender:** film tabs with a 5px Sender-ink top edge (Leuchttisch), network lines (Fahrt), filled register tabs with the chosen one circled, never struck (Notizblock), cover shelf with a 3px Sender outline when chosen (Player), small orbits with their own progress ring (Umlauf), big outlined cards inverting to black when chosen (Fahrmodus).
-- **Queue:** contact-sheet grid of frames with edge-amber numbers (Leuchttisch), stops on the line (Fahrt), numbered rows with a hand-drawn tick box (Notizblock), sheet with a 40×5px grabber (Player), round thumbnails (Umlauf), big rows (Fahrmodus).
+### Cassette (signature)
+SVG cassette: smoked see-through shell (rgb(70 62 54 / 0.62)) so the bay or page shows through, cream label with the shell palette's stripes and band, station name in Permanent Marker ballpoint ink rotated -1deg, dark window, tape reels sized from the heard share, toothed hubs that spin only while playing (and not under reduced motion). On insertion it slides into the bay once (520ms ease-out).
 
-### Inputs / Fields
-- **Style:** `--raise` fill, design border width and radius; Fahrmodus device select is 64px tall with a 3px stroke. Code inputs use the utility mono.
-- **Focus:** the shared 3px outline.
+### Inlay list
+Queue and settings lists: inlay paper with a three-band label-stripe red edge across the top (3px, 2px, 1px with gaps), 4px radius, ambient shadow, 1px rule between rows. Queue numbers in Bricolage 700 ink-quiet, titles in ballpoint blue, row tags as one quiet felt-pen line.
+
+### Section headings (label tape)
+Embossed label-tape strip: label-tape face, label-tape-ink text, 3px radius, letter-spaced, rotated -0.8deg, emboss text-shadow. Black tape by day, red tape by night.
+
+### Chips (song tags)
+- **Style:** felt-pen notes in Permanent Marker, ballpoint blue, 2px corners, currentColor outline.
+- **State:** "new" is a filled label-stripe-red note tilted -1.5deg; "favourite" is label-stripe-red ink; "first in this round / long not here" is dashed. In lists tags collapse to one inline meta line.
+
+### State line and progress
+The state sentence leads with an 18px rule: solid confirmed green (confirmed playback), solid ink-quiet (held), dashed label-stripe red (waiting), dashed error red (error), dotted label-stripe red (estimate). The song progress is a tape: unplayed part dashed rule-strong; played part solid red while running, solid ink-soft when saved, dashed when held, dotted when estimated. A signal rail of steps uses dashed for not yet, solid red for reached.
+
+### Notices
+4px corners, 1px rule border, 14px 16px padding, inlay paper. Warning and error variants use the soft tint with a 45% tinted border; estimates use a 2px dotted border. The flash toast is a label-tape strip above the tab bar.
 
 ### Navigation
-- **Top nav** (Hören, Verlauf, Menü) with a brand-coloured underline on the active item; Player and Fahrmodus move it to a fixed bottom tab bar under 900px (Player translucent with blur, Fahrmodus solid ink with 60px tabs). Fahrt adds "Linie wechseln", which scrolls to the network.
+The tab bar is a row of deck keys on a brass panel (2px brass-edge top border). Four keys, 56px, 5px drawn sides; the current page is the key held down (side 2px, face dropped 3px, hover face) with a hotline icon. At 960px+ it becomes a vertical deck panel in the left column with 14px radius and 2px edge.
 
-### Honest-state signal (shared doctrine, per-world rendering)
-Shared parts carry the state classes (`stage--pending`, `stage--estimate`, `progress-area--held|estimate`, `signal--wait|estimate|error`); each design renders them in its own material:
-- **Signal requested → accepted → confirmed:** three steps. Default: top bars, dashed while waiting, dotted when estimated, double in danger on error. Fahrt: three stops on a short line with dashed segments while waiting. Notizblock: three hand-drawn tick boxes. Leuchttisch: Martian Mono steps in the dock.
-- **Held or estimated progress:** hatched at 135 degrees, never a solid bar.
-- **Pending or estimated title:** outlined glyphs (transparent fill with a stroke; 2px in Fahrmodus); Leuchttisch also dashes the grease box; Umlauf dims the cover with a dashed outline; Player sets the title in quiet italic and dims the cover to 55%.
-- **Estimates are display-only:** the clock advances locally; Fahrt reads stored history only when the saved occurrence changes, never for an estimate.
+### Shelf
+On Jetzt the other cassettes stand on a brass shelf board (horizontal strip); the selected cassette lifts 8px and its name gets a 3px red underline. The Kassetten page lists stations as paper cards (cassette, name, counter, meter, keys) with the inserted one outlined in label-stripe red.
 
-### Departure board (Fahrt signature)
-A navy dock with a Sender-coloured "Nächster Halt" legend and the next saved title in Board Amber beside the keys; when nothing is planned it reads "Ende der gespeicherten Strecke".
-
-### Orbit (Umlauf signature)
-96 ticks around the round cover (a long tick every eighth), heard ticks lit in the Sender ink and floored, a sun-orange dot at the current position.
+### Inputs / Fields
+The device selector reads like a label on the deck's side: inlay paper, rule-strong border, 4px radius. Segmented choices and sliders use the key and rule tokens.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** build a new screen from the shared parts in `home.tsx` and give each design its own arrangement in `home-layouts.tsx`; labels, handlers and states stay identical.
-- **Do** define every new colour per design for day, `[data-illumination="night"]` and `prefers-color-scheme: dark`.
-- **Do** render requested, accepted and confirmed differently, and keep held or estimated progress hatched (`repeating-linear-gradient(135deg, …)`).
-- **Do** floor round progress in every meter (`Math.floor`), and show the numbers beside it.
-- **Do** keep the song and the main key in the first phone viewport and reserve bottom space for docks and tab bars.
-- **Do** write the name as lowercase "true-shuffle", set in the active design's face with its mark before it.
+- **Do** draw every button as a key: face plus a 4-5px drawn side that shrinks to 2px when pressed.
+- **Do** carry state by line form: solid confirmed green only for confirmed playback, solid grey held, dashed waiting/error, dotted estimate.
+- **Do** print every fact the cassette draws (heard share, counter, station name) as text nearby.
+- **Do** write track titles in ballpoint blue and section headings on label tape.
+- **Do** keep night as the same world re-lit: dark shelf, dark bronze deck, red label tape.
+- **Do** write "true-shuffle" in lower case everywhere.
+- **Do** honour reduced motion: reels stand still, the cassette does not slide.
 
 ### Don't:
-- **Don't** ship a design that only swaps tokens over another design's layout; the owner rejected exactly that.
-- **Don't** print a pending or estimated title as solid confirmed type, or a disabled main key as a filled key.
-- **Don't** let a display-only estimate trigger a request or change the saved occurrence.
-- **Don't** set any design's voice in system monospace; it is for code and diagnostics only.
-- **Don't** treat "Fahrmodus Dot" as a type role or the Player platform face as a general fallback display face.
-- **Don't** put the Sender colour behind text in Fahrmodus.
-- **Don't** mark a chosen Sender in Notizblock with a strike; a strike means done on that page, so chosen is circled.
-- **Don't** use hard offset shadows; depth is soft object shadow, hairline or ring.
+- **Don't** offer a design picker or alternate looks; illumination is Hell, Dunkel or Automatisch only.
+- **Don't** use confirmed green for anything other than confirmed playback.
+- **Don't** set body text, buttons, headings or numbers in Permanent Marker.
+- **Don't** render the deck as photoreal or brushed metal; it is a flat illustration.
+- **Don't** name the reference film or use its title, logo or marks.
+- **Don't** capitalise or uppercase the brand name or any label.
+- **Don't** let song tags claim more than was recorded.
