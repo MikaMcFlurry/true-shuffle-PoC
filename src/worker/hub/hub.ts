@@ -1966,6 +1966,7 @@ export class HubCore {
 		const st = this.stationRow(id);
 		if (!st) return;
 		this.db.run(`DELETE FROM stations WHERE id = ?`, id);
+		this.heardOnStation.delete(id);
 		this.db.run(`DELETE FROM bans WHERE station_id = ?`, id);
 		this.db.run(`DELETE FROM discoveries WHERE station_id = ? AND status != 'kept'`, id);
 		for (const k of [`deck:${id}`, `extend:${id}`, `discover:${id}`, `rename:${id}`]) {
@@ -4763,9 +4764,9 @@ export class HubCore {
 	/**
 	 * Songs heard on each station (non-guest plays), kept per Durable Object so
 	 * a poll never scans the plays log: a station is read once, then every new
-	 * counted play is added where it is recorded (`noteHeard`). Plays pruned
-	 * after half a year stay counted, which is the truth. A label only: a play
-	 * whose write is later rolled back may stay in the set until the next wake.
+	 * counted play is added where it is recorded (`noteHeard`). A label only:
+	 * the set matches the plays table as of the last wake, so plays pruned after
+	 * half a year (or a write rolled back) drop out of it at the next wake.
 	 */
 	private heardOnStation = new Map<number, Set<TrackId>>();
 
