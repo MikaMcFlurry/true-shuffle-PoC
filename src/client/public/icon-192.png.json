@@ -2,5 +2,5 @@
 	"origin": "Rendered from src/client/public/icon.svg (authored SVG, no generated imagery)",
 	"licence": "Project application asset",
 	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square",
-	"description": "Cassette mark on Walkman blue; app icon of the single Walkman/cassette system; 2026-10-08"
+	"description": "Cassette on the brass deck; app icon of the single Walkman/cassette system; 2026-10-08"
 }

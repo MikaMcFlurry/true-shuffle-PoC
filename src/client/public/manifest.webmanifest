@@ -4,8 +4,8 @@
 	"description": "Deine Playlists als Kassetten: feste Reihenfolge, keine schnellen Wiederholungen, jeder Song kommt dran.",
 	"start_url": "/",
 	"display": "standalone",
-	"background_color": "#eceef0",
-	"theme_color": "#26354f",
+	"background_color": "#e7dcc4",
+	"theme_color": "#e7dcc4",
 	"lang": "de",
 	"icons": [
 		{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
