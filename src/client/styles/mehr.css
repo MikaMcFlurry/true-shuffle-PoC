@@ -234,9 +234,7 @@ label.row[aria-disabled="true"] {
 .hist-row__title,
 .hist-row__sub,
 .hist-row__station {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow-wrap: anywhere;
 }
 
 .hist-row__title {

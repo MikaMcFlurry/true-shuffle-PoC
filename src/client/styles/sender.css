@@ -266,6 +266,7 @@
 
 .mixscale .segmented__opt > span {
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	align-content: center;
 	gap: 0;
 	min-height: 56px;
@@ -275,7 +276,9 @@
 .mixscale__name {
 	font-size: clamp(0.8125rem, 3.6vw, 0.9375rem);
 	font-weight: 700;
-	overflow-wrap: normal;
+	min-width: 0;
+	hyphens: auto;
+	overflow-wrap: anywhere;
 }
 
 .mixscale__sub {

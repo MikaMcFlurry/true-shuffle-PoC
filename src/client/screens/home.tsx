@@ -325,9 +325,9 @@ export function Home({ state }: { state: AppState }) {
 	// One plain sentence: what is true now and what the next step is.
 	const sentence = command
 		? command.phase === "sending"
-			? "Wird an Spotify gesendet …"
+			? "Befehl wird gesendet …"
 			: command.phase === "accepted"
-				? "Spotify hat den Befehl angenommen. Wir warten, bis das Gerät ihn bestätigt."
+				? "Befehl angenommen. Wir warten, bis das Gerät ihn bestätigt."
 				: command.phase === "unconfirmed"
 					? "Das Gerät hat noch nicht bestätigt. Dein Song bleibt gespeichert."
 					: "Das hat nicht geklappt. Dein Song bleibt gespeichert."
@@ -386,6 +386,12 @@ export function Home({ state }: { state: AppState }) {
 									: "Noch keine Kassette eingelegt"}
 						</p>
 						<span class={`led led--${reels}`} aria-hidden="true" />
+						{state.guest.active ? (
+							<p class="player-heading__guest">
+								<UserRound size={16} aria-hidden="true" />
+								Gast-Modus: was jetzt läuft, zählt nicht
+							</p>
+						) : null}
 					</header>
 					<div class="walkman__window">
 						{inserted ? (
@@ -399,12 +405,6 @@ export function Home({ state }: { state: AppState }) {
 							<div class="walkman__empty">Leg eine Kassette ein</div>
 						)}
 					</div>
-					{state.guest.active ? (
-						<p class="player-heading__guest">
-							<UserRound size={16} aria-hidden="true" />
-							Gast-Modus: was jetzt läuft, zählt nicht
-						</p>
-					) : null}
 				</div>
 
 				<div class="player-song">
@@ -652,12 +652,6 @@ export function Home({ state }: { state: AppState }) {
 							</button>
 						</div>
 					</div>
-				) : command ? (
-					<p class="sr-only">
-						{command.phase === "sending"
-							? "Befehl wird gesendet. Die Anzeige wartet auf die Bestätigung des Geräts."
-							: "Befehl angenommen. Das Gerät hat die Wiedergabe noch nicht bestätigt."}
-					</p>
 				) : null}
 				{session?.pending && !command ? (
 					<p class="notice">
@@ -791,7 +785,7 @@ export function Home({ state }: { state: AppState }) {
 					<h2 id="stations-title">Andere Kassette einlegen</h2>
 					<a class="act" href="/sender/neu">
 						<Plus size={16} aria-hidden="true" />
-						Neuer Sender
+						Neue Kassette
 					</a>
 				</div>
 				<ul class="tape-strip">
@@ -861,8 +855,7 @@ export function Home({ state }: { state: AppState }) {
 								disabled={unsettled || s.stale || session?.pending}
 								onClick={() => setConfirm(true)}
 							>
-								<Shuffle size={16} aria-hidden="true" />
-								{station.name} neu mischen …
+								<Shuffle size={16} aria-hidden="true" />„{station.name}“ neu mischen …
 							</button>
 						)}
 					</div>

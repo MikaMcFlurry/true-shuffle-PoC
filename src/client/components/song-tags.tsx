@@ -35,7 +35,7 @@ export function songTags(
 				tone: "known",
 			});
 		}
-	} else if (k === "fresh") tags.push({ text: "In dieser Runde noch nicht gehört", tone: "first" });
+	} else if (k === "fresh") tags.push({ text: "In diesem Durchgang neu", tone: "first" });
 	return tags;
 }
 

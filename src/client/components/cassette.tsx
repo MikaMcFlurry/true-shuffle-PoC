@@ -56,7 +56,14 @@ export function Cassette(props: {
 			<rect class="cassette__label" x="22" y="14" width="276" height="124" rx="6" />
 			<rect class="cassette__band" x="22" y="100" width="276" height="10" />
 			<foreignObject x="34" y="20" width="252" height="38">
-				<p class="cassette__name">{props.name}</p>
+				<p
+					class="cassette__name"
+					style={{
+						"--label-size": `${Math.min(25, Math.floor(252 / (0.62 * Math.max(1, props.name.length))))}px`,
+					}}
+				>
+					{props.name}
+				</p>
 			</foreignObject>
 			<clipPath id={clip}>
 				<rect x="78" y="62" width="164" height="68" rx="10" />

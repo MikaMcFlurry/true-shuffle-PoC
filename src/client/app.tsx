@@ -136,7 +136,7 @@ export function App() {
 						}
 					>
 						<ListMusic aria-hidden="true" />
-						Sender
+						Kassetten
 					</a>
 					<a href="/verlauf" aria-current={route.name === "history" ? "page" : undefined}>
 						<History aria-hidden="true" />

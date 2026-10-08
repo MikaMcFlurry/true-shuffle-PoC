@@ -127,8 +127,11 @@ export function MenuScreen({ state }: { state: AppState }) {
 	const guest = state.guest;
 	const hist = state.history;
 
+	/** The switch moves at once; the saved state follows from the server. */
+	const [wanted, setWanted] = useState<boolean | null>(null);
 	const toggleGuest = (on: boolean) => {
 		setBusy(true);
+		setWanted(on);
 		api
 			.guest(on, hours)
 			.then(() => {
@@ -142,7 +145,10 @@ export function MenuScreen({ state }: { state: AppState }) {
 				void store.refresh(false);
 			})
 			.catch((e: Error) => store.say(e.message, "error"))
-			.finally(() => setBusy(false));
+			.finally(() => {
+				setBusy(false);
+				setWanted(null);
+			});
 	};
 
 	const signOut = () =>
@@ -198,9 +204,9 @@ export function MenuScreen({ state }: { state: AppState }) {
 								type="checkbox"
 								role="switch"
 								class="switch"
-								aria-checked={guest.active}
-								checked={guest.active}
-								disabled={busy}
+								aria-checked={wanted ?? guest.active}
+								checked={wanted ?? guest.active}
+								aria-busy={busy}
 								onChange={(e) => toggleGuest(e.currentTarget.checked)}
 							/>
 						</label>
@@ -301,7 +307,9 @@ export function MenuScreen({ state }: { state: AppState }) {
 							<LogOut class="mehr-row__icon" size={22} aria-hidden="true" />
 							<span class="row__main">
 								<span class="row__title">Abmelden</span>
-								<span class="row__sub">Deine Sender und dein Gedächtnis bleiben gespeichert.</span>
+								<span class="row__sub">
+									Deine Kassetten und alles, was du gehört hast, bleiben gespeichert.
+								</span>
 							</span>
 						</button>
 					</li>
@@ -325,7 +333,7 @@ export function MenuScreen({ state }: { state: AppState }) {
 				{confirm ? (
 					<div class="notice notice--error" role="alert">
 						<p>
-							Wirklich alles löschen? Dein Gedächtnis, alle Sender und ihre Spotify-Playlists „
+							Wirklich alles löschen? Deinen Hörverlauf, alle Kassetten und ihre Spotify-Playlists „
 							{DECK_PREFIX}…“ werden entfernt. Das lässt sich nicht rückgängig machen. Deine eigenen
 							Playlists und Lieblingssongs in Spotify bleiben.
 						</p>
@@ -653,7 +661,11 @@ export function DevicesScreen() {
 export function AboutScreen() {
 	return (
 		<div class="page mehr-info">
-			<PageBar title="Über true-shuffle" sub="Shuffle mit Gedächtnis" backTo="/mehr" />
+			<PageBar
+				title="Über true-shuffle"
+				sub="Shuffle, das sich merkt, was du gehört hast"
+				backTo="/mehr"
+			/>
 			<ul class="promise-list mehr-promise">
 				<li>
 					<strong>Jeder Song kommt dran.</strong> Erst wenn du alle Songs eines Senders gehört hast,
@@ -982,7 +994,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 										class="key key--lit key--wide"
 										onClick={() => void upload()}
 									>
-										Ins Gedächtnis übernehmen
+										Übernehmen
 									</button>
 								)}
 							</>
