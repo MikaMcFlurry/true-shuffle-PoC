@@ -1,11 +1,11 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-08T15:52:51.905753+00:00",
+  "generated_at": "2026-10-08T16:42:50.711189+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
-    "revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
+    "revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "Reviewed PR16 candidate ed848 BLOCKED and unmerged; target5ea; productionc05 retained rollback93f6/b47b100%. No release completion/comment or promotion. UX_REBUILD_REVIEW records exact checks and fresh review; deployment PASS entries concern retained production only.",
+    "environment": "PR16bcc repair reviewed/unmergedBLOCKED due inheritedPR15; no completion. Currentproductionc05/93f6/b47b100%unchanged. Exact459unit40browserPASS; no candidate deployment.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -202,16 +202,10 @@
       "blocking": true
     },
     {
-      "id": "PR16-FACTS-01",
-      "title": "First-time station label uses prunable history as proof of never hearing",
-      "severity": "P2",
-      "blocking": true
-    },
-    {
-      "id": "PR16-DARK-NAV-CONTRAST",
-      "title": "Dark selected mainnavigation Jetzt on/; 13px600,#fbefd9 on#8a6c4a =4.2664:1 below4.5",
-      "severity": "P2",
-      "blocking": true
+      "id": "UX_REBUILD_FACTS_CALENDAR_BOUND",
+      "title": "At2026-10-09, play2026-04-10(182days) pruned; next wake claims over6months even though6monthdate2026-04-09",
+      "severity": "P3",
+      "blocking": false
     }
   ],
   "gates": [
@@ -225,9 +219,9 @@
           "id": "EV-G-LOCAL-NN-01",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -242,9 +236,9 @@
           "id": "EV-G-LOCAL-NN-02",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -259,9 +253,9 @@
           "id": "EV-G-LOCAL-NN-03",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -276,9 +270,9 @@
           "id": "EV-G-LOCAL-NN-04",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -293,9 +287,9 @@
           "id": "EV-G-LOCAL-NN-05",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -310,9 +304,9 @@
           "id": "EV-G-LOCAL-NN-06",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -327,9 +321,9 @@
           "id": "EV-G-LOCAL-NN-07",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -344,9 +338,9 @@
           "id": "EV-G-LOCAL-NN-08",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -361,9 +355,9 @@
           "id": "EV-G-LOCAL-NN-09",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -378,9 +372,9 @@
           "id": "EV-G-LOCAL-NN-10",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -389,15 +383,15 @@
       "id": "G-LOCAL-NN-11",
       "category": "ui_runtime",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-LOCAL-NN-11",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -412,9 +406,9 @@
           "id": "EV-G-BUILD",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -429,9 +423,9 @@
           "id": "EV-G-STATIC",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -446,9 +440,9 @@
           "id": "EV-G-MIGRATION",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -463,9 +457,9 @@
           "id": "EV-G-RECOVERY",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -480,9 +474,9 @@
           "id": "EV-G-QUOTA",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -491,15 +485,15 @@
       "id": "G-BROWSER",
       "category": "ui_runtime",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-BROWSER",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -514,9 +508,9 @@
           "id": "EV-G-INDEPENDENT",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -531,9 +525,9 @@
           "id": "EV-G-LIVE-SPOTIFY",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -548,9 +542,9 @@
           "id": "EV-G-LIVE-HA-MA",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -565,9 +559,9 @@
           "id": "EV-G-LIVE-PRODUCTION",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -582,9 +576,9 @@
           "id": "EV-G-LOCAL-INDEPENDENT",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -593,15 +587,15 @@
       "id": "G-ACCESSIBILITY",
       "category": "accessibility",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-ACCESSIBILITY",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -616,9 +610,9 @@
           "id": "EV-G-DATA_INVARIANTS",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -633,9 +627,9 @@
           "id": "EV-G-PERFORMANCE_RELIABILITY",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -650,9 +644,9 @@
           "id": "EV-G-SECURITY_PRIVACY",
           "kind": "fresh combined source independent review",
           "ref": "docs/ai-dev/evidence/UX_REBUILD_REVIEW.json",
-          "result": "Exacted848454unit/40realWorker-FakeSpotify browser/type/lint/build/dryPASS; CImerge955aPASS. Independent6inheritedassertionsFAIL, factsprune/wakefalseclaimFAIL, darkactive13pxcontrast4.2664:1FAIL.44renderlong-contentcases; physical/liveSpotify/privateHA/populatedRestoreNOT_RUN. No merged/deployedcandidate.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "result": "Exactbcc459unit40realWorker-FakeSpotify browser/type/lint/build/dryandCI37806006765PASS. Fresh repairreview closes materialUIlabels/contrast; minorcalendarboundP3. All6 inheritedRESUMEassertionsFAIL; no completion. Livephysical/privateHA/restoreNOT_RUN.",
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -668,8 +662,8 @@
           "kind": "fresh functional review with independently verified rollback",
           "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
           "result": "Candidate deployment NOT_RUN: no completion and material findings open; no upload/activation. Retained productionc05/93f6/b47b100% authenticated identity/health PASS, previous exact75assets/runtime evidence RESUME_REVIEW; production UI defects remain.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -685,8 +679,8 @@
           "kind": "fresh functional review with independently verified rollback",
           "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
           "result": "Candidate deployment NOT_RUN: no completion and material findings open; no upload/activation. Retained productionc05/93f6/b47b100% authenticated identity/health PASS, previous exact75assets/runtime evidence RESUME_REVIEW; production UI defects remain.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."
@@ -702,8 +696,8 @@
           "kind": "fresh functional review with independently verified rollback",
           "ref": "docs/ai-dev/evidence/RESUME_REVIEW.json",
           "result": "Candidate deployment NOT_RUN: no completion and material findings open; no upload/activation. Retained productionc05/93f6/b47b100% authenticated identity/health PASS, previous exact75assets/runtime evidence RESUME_REVIEW; production UI defects remain.",
-          "subject_revision": "ed84894946e28ec5c1c8c6fb6d4fd55edc6368fb",
-          "observed_at": "2026-10-08T15:52:51.905753+00:00"
+          "subject_revision": "bcc1929c658c060966e1a42b902791c7fb2a9b8b",
+          "observed_at": "2026-10-08T16:42:50.711189+00:00"
         }
       ],
       "rationale": "Bounded current PR16 review; source is BLOCKED and unmerged. See scoped checks/findings in UX_REBUILD_REVIEW; deployment gates refer retained production, not candidate."

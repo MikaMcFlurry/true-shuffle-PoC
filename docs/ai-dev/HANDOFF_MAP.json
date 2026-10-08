@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-08T15:52:51.905753+00:00",
+  "generated_at": "2026-10-08T16:42:50.711189+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -36,7 +36,7 @@
       "path": "AGENTS.md",
       "treatment": "UPDATE",
       "authority": "CANONICAL",
-      "reason": "Canonical current combined review: docs/ai-dev/evidence/UX_REBUILD_REVIEW.json; PR16ed848BLOCKED/unmerged/noCompletion, target5ea, runtimec05 retained rollbackb47b100%. RESUME/SIX_SURFACE reviews historical scoped evidence. Analysis baseline remains historical.",
+      "reason": "Canonical UX_REBUILD_REVIEW: PR16bcc fresh repair reviewedBLOCKED due inheritedRESUME; materialUIlabels/contrast closed. Target5ea, prodc05 retainedrollbackb47b100%. No completion/newownerapproval needed. Priorreviewparagraphs historical; analysisbaselinehistorical.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
