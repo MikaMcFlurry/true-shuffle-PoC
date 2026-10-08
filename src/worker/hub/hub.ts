@@ -3817,7 +3817,9 @@ export class HubCore {
 		if (e.id !== id || at < e.from) return false;
 		if (at <= e.to) return true;
 		if (e.until === undefined || at > e.until || e.listed || e.ctx === undefined) return false;
-		if (e.ctx !== ctx) return false;
+		// Spotify lists some plays without their context (API starts among them):
+		// a context-less listing may still be this play; another context never is.
+		if (ctx !== null && e.ctx !== ctx) return false;
 		return !this.db.first(
 			`SELECT 1 FROM plays WHERE played_at > ? AND played_at < ? AND track_id != ? LIMIT 1`,
 			e.at ?? e.to,

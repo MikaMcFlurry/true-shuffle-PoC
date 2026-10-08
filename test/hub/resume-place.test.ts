@@ -463,6 +463,15 @@ describe("a new play of the same song counts again (RESUME-03)", () => {
 		expect(count()).toBe(2);
 	});
 
+	it("the delayed listing of the same occurrence without a context counts once", async () => {
+		const h = await onboarded({ tracks: 200, durationMs: 247_000 });
+		const { song, at, count } = await counted(h, true);
+		h.clock.t = at + 6 * 60_000;
+		listed(h, song, null);
+		await observe(h);
+		expect(count()).toBe(1);
+	});
+
 	it("a distinct repeat in a different context counts (review case)", async () => {
 		const h = await onboarded({ tracks: 200, durationMs: 247_000 });
 		const { song, at, count } = await counted(h, true);
