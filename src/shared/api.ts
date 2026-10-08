@@ -139,9 +139,9 @@ export interface HistoryEntry extends TrackView {
 	stationName: string | null;
 	ignored: boolean;
 	/**
-	 * Same read-only labels as in a queue. `kind` is only set when it is on
-	 * record for this very play (the station's current deck item for it),
-	 * otherwise null. `inStation` is always true: the song was heard there.
+	 * Same read-only counts as in a queue. `kind` is always null: the lane
+	 * that brought a play is not recorded per play, so no source is claimed.
+	 * `inStation` is always true: the song was heard there.
 	 */
 	facts?: SongFacts;
 }

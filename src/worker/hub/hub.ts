@@ -21,7 +21,6 @@ import {
 	consumedCount,
 	continueLayout,
 	type Deck,
-	type DeckItem,
 	DIRECT_MS,
 	heldForPlayer,
 	inRanges,
@@ -6137,7 +6136,6 @@ export class HubCore {
 		const names = new Map(this.stations().map((s) => [s.id, s.name]));
 		const bare = rows.filter((r) => !r.meta).map((r) => r.track_id);
 		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
-		const kindOf = this.historyKinds(rows);
 		this.preloadMemory(new Set(rows.map((r) => r.track_id)));
 		return rows
 			.map((r) => {
@@ -6153,42 +6151,14 @@ export class HubCore {
 						plays: m.plays,
 						lastPlayedAt: m.lastPlayedAt,
 						inStation: true,
-						kind: kindOf(r),
+						// Which lane brought this very play is not recorded per play, and
+						// a deck matched by time can belong to another play of the song.
+						kind: null,
 					},
 				};
 				return entry;
 			})
 			.filter((x): x is HistoryEntry => x !== null);
-	}
-
-	/**
-	 * Why a past play was on its station, only where that very play is on
-	 * record: the station's current deck holds the song as played or passed
-	 * within two hours of it. Anything else stays unknown (null): a play
-	 * outside a station, a deck rewritten since, and never a guess from what
-	 * the station recommends today.
-	 */
-	private historyKinds(
-		rows: readonly { played_at: number; track_id: string; station_id: number | null }[],
-	): (r: { played_at: number; track_id: string; station_id: number | null }) => SlotKind | null {
-		const decks = new Map<number, Map<TrackId, DeckItem[]>>();
-		for (const sid of new Set(rows.map((r) => r.station_id))) {
-			if (sid === null) continue;
-			const st = this.stationRow(sid);
-			const byId = new Map<TrackId, DeckItem[]>();
-			for (const it of (st ? this.deckOf(st) : null)?.items ?? []) {
-				if (it.state !== "played" && it.state !== "passed") continue;
-				byId.set(it.id, [...(byId.get(it.id) ?? []), it]);
-			}
-			decks.set(sid, byId);
-		}
-		const NEAR = 2 * HOUR_MS;
-		return (r) => {
-			if (r.station_id === null) return null;
-			const items = decks.get(r.station_id)?.get(r.track_id) ?? [];
-			const hit = items.find((it) => it.at !== null && Math.abs(it.at - r.played_at) <= NEAR);
-			return hit?.kind ?? null;
-		};
 	}
 
 	// =======================================================================
