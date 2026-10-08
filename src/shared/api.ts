@@ -63,6 +63,27 @@ export interface JobView {
 	error: string | null;
 }
 
+/**
+ * Read-only labels for one song in a queue, so the listener can see whether
+ * it is new to them, new to this station, or how often they have heard it.
+ * Derived from stored memory only — never from a Spotify request.
+ */
+export interface SongFacts {
+	/**
+	 * Counted plays (>= 30 s) known for this song in total: live true-shuffle
+	 * plays (any station or outside a station, guest-mode plays excluded) plus
+	 * plays from an imported Spotify streaming history (which only covers time
+	 * before true-shuffle started counting live, so nothing is counted twice).
+	 */
+	plays: number;
+	/** Last counted play anywhere, live or imported, or null if never heard. */
+	lastPlayedAt: number | null;
+	/** Heard live on this station before (a non-guest play recorded with it). */
+	inStation: boolean;
+	/** Why the planner put it here, when known. */
+	kind: SlotKind | null;
+}
+
 export interface SessionView {
 	controller?: { kind: "spotify" | "home-assistant"; deviceId: string; deviceName?: string };
 	sessionId: string;
@@ -73,7 +94,7 @@ export interface SessionView {
 	observedAt: number | null;
 	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
 	pending: boolean;
-	queue: { entryId: string; track: TrackView }[];
+	queue: { entryId: string; track: TrackView; facts?: SongFacts }[];
 }
 
 export interface AppState {
@@ -104,7 +125,7 @@ export interface PlaylistView {
 }
 
 export interface StationDetail extends StationSummary {
-	upcoming: (TrackView & { kind: SlotKind })[];
+	upcoming: (TrackView & { kind: SlotKind; facts?: SongFacts })[];
 	recent: (TrackView & { playedAt: number })[];
 	counts: Record<SlotKind, number> | null;
 	discoveries: { pending: number; kept: number; rejected: number };
