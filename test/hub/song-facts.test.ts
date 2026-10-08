@@ -154,15 +154,22 @@ describe("song facts in the queue", () => {
 		// A long log of old plays on this station (outside the queue).
 		for (let n = 0; n < 3000; n++) play(h, t - 30 * DAY_MS - n * MINUTE_MS, `old${n}`, sid, 0);
 		h.hub.sessionView(sid); // first look reads the station once
-		let rows = 0;
+		// Count every read of the plays log, not the rows it returns: a filtered
+		// query can return little while it still scans the whole station.
+		let reads = 0;
 		const all = h.sql.all.bind(h.sql);
+		const first = h.sql.first.bind(h.sql);
 		h.sql.all = (<T>(q: string, ...p: never[]) => {
-			const out = all<T>(q, ...p);
-			if (/FROM plays WHERE station_id/.test(q)) rows += out.length;
-			return out;
+			if (/FROM plays\b/.test(q)) reads++;
+			return all<T>(q, ...p);
 		}) as typeof h.sql.all;
+		h.sql.first = (<T>(q: string, ...p: never[]) => {
+			if (/FROM plays\b/.test(q)) reads++;
+			return first<T>(q, ...p);
+		}) as typeof h.sql.first;
 		for (let n = 0; n < 5; n++) h.hub.sessionView(sid);
-		expect(rows).toBeLessThan(50);
+		expect(reads).toBe(0);
+		h.sql.first = first;
 		h.sql.all = all;
 		// Plays recorded while listening reach the set without another read of the log.
 		await h.listen(15 * MINUTE_MS);
