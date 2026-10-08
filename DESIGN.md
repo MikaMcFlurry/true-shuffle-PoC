@@ -1,6 +1,6 @@
 ---
 name: true-shuffle
-description: Spotify-Sender mit Gedächtnis. One system, a mixtape world - every station is a cassette with a fixed order, Jetzt is the brass tape deck it sits in, everything around it is the cassette's inlay card.
+description: Deine Playlists als Kassetten. One system, a mixtape world - every station is a cassette with a fixed order, Jetzt is the brass tape deck it sits in, everything around it is the cassette's inlay card.
 colors:
   # Inlay card (day)
   inlay-ground: "#e7dcc4"
