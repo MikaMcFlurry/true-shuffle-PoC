@@ -6,8 +6,9 @@
  * heard in this round, the right one what is still to come.
  */
 
-import { useId } from "preact/hooks";
+import { useId, useLayoutEffect, useRef } from "preact/hooks";
 import type { StationSummary } from "../../shared/api";
+import { LABEL_W, type LabelLine, labelLayout } from "./cassette-label";
 
 /** Label stripe colours, one per station; "Alles" gets the classic red stripes too, in black. */
 const SHELLS = ["red", "blue", "green", "orange", "teal", "violet"] as const;
@@ -26,6 +27,49 @@ function reel(share: number): number {
 	return Math.sqrt(R_MIN * R_MIN + (R_MAX * R_MAX - R_MIN * R_MIN) * share);
 }
 
+/**
+ * One label line. The estimate in `labelLayout` sizes it; the drawn line then
+ * measures itself, once now and again when the fonts have loaded, and is
+ * pinned to the label width if the font that really drew it (a fallback for
+ * scripts the marker pen lacks) came out wider.
+ */
+function LabelText(props: { line: LabelLine | undefined; size: number; y: number | undefined }) {
+	const ref = useRef<SVGTSpanElement>(null);
+	const line = props.line;
+	useLayoutEffect(() => {
+		const el = ref.current;
+		if (!el || !line) return;
+		let live = true;
+		const measure = () => {
+			if (!live) return;
+			el.removeAttribute("textLength");
+			el.removeAttribute("lengthAdjust");
+			let drawn = line.width;
+			try {
+				drawn = el.getComputedTextLength();
+			} catch {
+				// Not laid out (hidden): keep the estimate.
+			}
+			const pin = line.squeeze ? Math.min(line.width, drawn) : drawn > LABEL_W ? LABEL_W : 0;
+			if (pin > 0 && drawn > pin) {
+				el.setAttribute("textLength", String(pin));
+				el.setAttribute("lengthAdjust", "spacingAndGlyphs");
+			}
+		};
+		measure();
+		void document.fonts?.ready.then(measure);
+		return () => {
+			live = false;
+		};
+	}, [line?.text, line?.width, line?.squeeze, props.size]);
+	if (!line || props.y === undefined) return null;
+	return (
+		<tspan ref={ref} x="160" y={props.y} font-size={props.size}>
+			{line.text}
+		</tspan>
+	);
+}
+
 export type ReelState = "still" | "running" | "waiting";
 
 export function Cassette(props: {
@@ -40,6 +84,7 @@ export function Cassette(props: {
 	const left = reel(h);
 	const right = reel(1 - h);
 	const state = props.reels ?? "still";
+	const label = labelLayout(props.name);
 	const clip = `cw${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 	return (
 		<svg
@@ -61,16 +106,10 @@ export function Cassette(props: {
 				<rect x="22" y="103" width="276" height="5" />
 				<rect class="cassette__band" x="22" y="114" width="276" height="14" />
 			</g>
-			<foreignObject x="34" y="20" width="252" height="38">
-				<p
-					class="cassette__name"
-					style={{
-						"--label-size": `${Math.min(25, Math.floor(252 / (0.62 * Math.max(1, props.name.length))))}px`,
-					}}
-				>
-					{props.name}
-				</p>
-			</foreignObject>
+			<text class="cassette__name" transform="rotate(-1 160 40)" text-anchor="middle">
+				<LabelText line={label.lines[0]} size={label.size} y={label.baselines[0]} />
+				<LabelText line={label.lines[1]} size={label.size} y={label.baselines[1]} />
+			</text>
 			<clipPath id={clip}>
 				<rect x="78" y="62" width="164" height="68" rx="10" />
 			</clipPath>

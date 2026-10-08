@@ -201,7 +201,79 @@ describe("song facts in the queue", () => {
 		const facts = factsOf(h, sid, id)!;
 		expect(facts).toMatchObject({ plays: 1, lastPlayedAt: old, inStation: false });
 		expect(songTags("fresh", facts).map((t) => t.text)).toContain(
-			"In den letzten 180 Tagen nicht auf dieser Kassette",
+			"in den letzten 180 Tagen nicht auf dieser Kassette",
 		);
+	});
+});
+
+describe("song facts in the Verlauf", () => {
+	type Row = ReturnType<H["hub"]["history"]>[number];
+	const key = (e: Row) => `${e.id}@${e.playedAt}`;
+
+	it("live plays carry the total count, and never a source the play did not record", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(30 * MINUTE_MS);
+		const onStation = h.hub.history(50).filter((e) => e.stationName !== null && !e.ignored);
+		expect(onStation.length).toBeGreaterThan(0);
+		for (const e of onStation)
+			expect(e.facts).toMatchObject({ kind: null, inStation: true, plays: expect.any(Number) });
+		expect(onStation.every((e) => (e.facts?.plays ?? 0) >= 1)).toBe(true);
+		play(h, h.clock.t + 1, onStation[0]!.id, null, 0);
+		expect(h.hub.history(1)[0]).toMatchObject({ stationName: null, facts: { kind: null } });
+	});
+
+	it("a later recommendation, a new mix or a guest replay never gives an old play a source", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		const before = new Map(
+			h.hub
+				.history(200)
+				.filter((e) => !e.ignored)
+				.map((e) => [key(e), e] as const),
+		);
+		expect(before.size).toBeGreaterThan(0);
+		// Recommended afterwards, kept, then replayed in guest mode on a fresh mix.
+		for (const e of before.values())
+			h.sql.run(
+				`INSERT OR IGNORE INTO discoveries (station_id, id, source, score, status, meta, heard, created_at, updated_at) VALUES (?, ?, 'ai', 1, 'kept', '[]', 1, ?, ?)`,
+				sid,
+				e.id,
+				h.clock.t,
+				h.clock.t,
+			);
+		await h.hub.setGuest(true, 6);
+		expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
+		await h.listen(20 * MINUTE_MS);
+		await h.hub.setGuest(false);
+		h.clock.t += 25 * 60 * MINUTE_MS;
+		expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		const after = h.hub.history(200);
+		for (const e of after) expect(e.facts?.kind ?? null).toBeNull();
+		for (const [k, was] of before) {
+			const now = after.find((e) => key(e) === k);
+			expect(now?.ignored).toBe(false);
+			expect(now?.playedAt).toBe(was.playedAt);
+		}
+	});
+
+	it("reading the Verlauf writes nothing", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		await h.hub.play(sid);
+		await h.listen(10 * MINUTE_MS);
+		const dump = () =>
+			JSON.stringify(
+				["plays", "memory", "stations", "discoveries", "kv"].map((t) =>
+					h.sql.all(`SELECT * FROM ${t} ORDER BY 1`),
+				),
+			);
+		const was = dump();
+		h.hub.history(200);
+		expect(dump()).toBe(was);
 	});
 });

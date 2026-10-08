@@ -52,6 +52,18 @@
 	min-width: 0;
 }
 
+/* On a phone the cassette takes the card's full width, so its label stays readable. */
+@media (max-width: 559px) {
+	.tapecard {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.tapecard__tape {
+		justify-self: center;
+		width: min(100%, 340px);
+	}
+}
+
 .tapecard__text {
 	display: grid;
 	gap: 4px;

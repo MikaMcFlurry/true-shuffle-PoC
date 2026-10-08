@@ -19,8 +19,9 @@ Stelle geht nie verloren.
    Zählwerk zählt sie, das Etikett trägt den Kassettennamen. Nichts ist nur Dekoration.
 2. **Ehrlich.** Angefordert, angenommen und bestätigt sind drei Dinge und sehen verschieden aus.
    Durchgezogen grün nur bei bestätigter Wiedergabe, gestrichelt heißt warten, gepunktet heißt
-   geschätzt. Kennzeichen behaupten nur, was aufgezeichnet ist („Laut deinem Verlauf noch nie
-   gehört“, „Seit über 6 Monaten nicht auf dieser Kassette“).
+   geschätzt. Kennzeichen beantworten zwei Fragen getrennt: woher der Song kommt („Aus der
+   Kassette“, „Empfehlung“, „Favorit“) und was aufgezeichnet ist („nicht im Verlauf“, „3× gehört“,
+   „lange nicht hier“). Ohne gespeicherte Wiedergabe heißt es nie „noch nie gehört“.
 3. **Kurz hinschauen, tippen, weg.** Deck, Song, ein Satz zum Zustand, die Tasten. Alles andere
    steht darunter.
 4. **Nie gegen den Hörer.** Was jemand sonst in Spotify macht, bleibt unangetastet.
