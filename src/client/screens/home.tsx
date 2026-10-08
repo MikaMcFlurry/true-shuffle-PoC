@@ -782,10 +782,10 @@ export function Home({ state }: { state: AppState }) {
 					</p>
 				)}
 				<p class="hint">
-					<strong>Aus deiner Playlist</strong>: kommt aus dem Lauf dieser Kassette.{" "}
-					<strong>Empfehlung</strong>: steht nicht in deinen Playlists, true-shuffle schlägt den
-					Song vor. <strong>Favorit</strong>: kommt öfter, weil du ihn magst. Was du in Spotify
-					selbst einreihst, steht nicht in dieser Liste.
+					<strong>Aus der Kassette</strong>: gehört zu dieser Kassette und kommt in ihrem Lauf
+					dran. <strong>Empfehlung</strong>: gehört noch nicht zur Kassette, true-shuffle schlägt
+					den Song vor. <strong>Favorit</strong>: kommt öfter, weil du ihn magst. Was du in
+					Spotify selbst einreihst, steht nicht in dieser Liste.
 				</p>
 			</section>
 

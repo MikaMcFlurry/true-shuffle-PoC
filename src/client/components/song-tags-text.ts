@@ -23,7 +23,8 @@ export function songTags(
 	kind: SlotKind | null | undefined,
 	facts: SongFactsView | null,
 	thumb: -1 | 0 | 1 = 0,
-	_known = true,
+	/** An imported Spotify history exists; without one, plays only count from the start of true-shuffle. */
+	known = true,
 	short = false,
 	/** A row in the Verlauf: the song was heard right there, so only the count is news. */
 	history = false,
@@ -33,15 +34,26 @@ export function songTags(
 	// Where it comes from.
 	if (k === "discovery") tags.push({ text: "Empfehlung", tone: "rec" });
 	else if (k === "favorite") tags.push({ text: "Favorit", tone: "fav" });
-	else if (k === "fresh") tags.push({ text: "Aus deiner Playlist", tone: "playlist" });
+	// "fresh" is the cassette's own pool (its playlists, liked songs, kept
+	// recommendations), so it claims the cassette, never a playlist.
+	else if (k === "fresh") tags.push({ text: "Aus der Kassette", tone: "playlist" });
 	if (thumb === 1 && k !== "favorite") tags.push({ text: "Favorit", tone: "fav" });
 	if (!facts) return tags;
-	// What was recorded about it. Only claims the records can carry: "not yet
-	// heard" (an import may be partial) and "not here" within the 180 days the
-	// plays log keeps.
+	// What was recorded about it. Only claims the records can carry: no stored
+	// play is not proof of never hearing it (an import may be missing or
+	// partial), and "not here" holds within the 180 days the plays log keeps.
 	if (facts.plays === 0) {
 		if (history) return tags;
-		tags.push({ text: "noch nicht gehört", tone: "fact" });
+		tags.push({
+			text: known
+				? short
+					? "nicht im Verlauf"
+					: "nicht in deinem Verlauf"
+				: short
+					? "noch nicht gezählt"
+					: "noch nicht gezählt, kein Verlauf importiert",
+			tone: "fact",
+		});
 		return tags;
 	}
 	if (!facts.inStation && !history)

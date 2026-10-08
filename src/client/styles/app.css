@@ -24,6 +24,8 @@
 	--tape: #c2412a;
 	--tape-hover: #a5341f;
 	--tape-ink: #ffffff;
+	/* Red as text on paper and ground: 5.2:1 on the ground, 6:1 on paper. */
+	--tape-text: #9e3420;
 	--tape-soft: #f1d3c6;
 	--pen: #24448c;
 	--dymo: #1d1b19;
@@ -59,6 +61,7 @@
 		--tape: #ef6b4a;
 		--tape-hover: #f6896c;
 		--tape-ink: #1c0d07;
+		--tape-text: #ef6b4a;
 		--tape-soft: #3b1f16;
 		--pen: #a9bef2;
 		--dymo: #b8322a;
@@ -87,6 +90,7 @@
 	--tape: #ef6b4a;
 	--tape-hover: #f6896c;
 	--tape-ink: #1c0d07;
+	--tape-text: #ef6b4a;
 	--tape-soft: #3b1f16;
 	--pen: #a9bef2;
 	--dymo: #b8322a;
@@ -2324,7 +2328,7 @@ h1,
 }
 
 .tag--fav {
-	color: var(--tape);
+	color: var(--tape-text);
 	background: none;
 }
 
@@ -2344,7 +2348,7 @@ h1,
 
 .tags--row .tag--rec,
 .tags--row .tag--fav {
-	color: var(--tape);
+	color: var(--tape-text);
 	background: none;
 }
 

@@ -399,7 +399,7 @@ export function HistoryScreen() {
 			<PageBar
 				title="Verlauf"
 				noBack
-				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei Songs von deinen Kassetten steht, ob sie aus deiner Playlist kamen oder eine Empfehlung waren. Tippe auf einen Song, um ihn zu bewerten."
+				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei Songs von deinen Kassetten steht, ob sie aus der Kassette kamen oder eine Empfehlung waren. Tippe auf einen Song, um ihn zu bewerten."
 			/>
 			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
 			{items && items.length === 0 ? (

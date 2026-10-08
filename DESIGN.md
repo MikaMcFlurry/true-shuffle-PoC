@@ -292,7 +292,7 @@ Cassette shells keep their own seven label palettes (red, blue, green, orange, t
 
 **The Lower-Case Name Rule.** The brand is always written "true-shuffle", lower case, in every heading, label and asset. No capitals, no small caps, no uppercase transforms anywhere.
 
-**The Two Questions Rule.** A song's tags answer two questions in order and never mix them. First where it comes from, one coloured tag: "Aus deiner Playlist" (ballpoint blue), "Empfehlung" (label red, filled on Jetzt), "Favorit" (label red). Then what was recorded, quiet grey notes bounded to the records: "noch nicht gehört", "3× gehört, zuletzt vor 2 Monaten", "lange nicht hier" (180 days of plays log). Lists use the short forms on one line.
+**The Two Questions Rule.** A song's tags answer two questions in order and never mix them. First where it comes from, one coloured tag: "Aus der Kassette" (ballpoint blue; the cassette's own pool, never claimed as a playlist), "Empfehlung" (label red, filled on Jetzt), "Favorit" (label red; text red `--tape-text` #9e3420 light for 4.5:1 on paper and ground). Then what was recorded, quiet grey notes bounded to the records: "nicht im Verlauf" (with an import) or "noch nicht gezählt" (without one), never "never heard", "3× gehört, zuletzt vor 2 Monaten", "lange nicht hier" (180 days of plays log). Lists use the short forms on one line.
 
 ## Layout
 
