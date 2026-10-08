@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { songTags } from "../../src/client/components/song-tags-text";
 import { DAY_MS, MINUTE_MS, type SlotKind } from "../../src/core/types";
 import { onboarded } from "./harness";
 
@@ -182,5 +183,25 @@ describe("song facts in the queue", () => {
 		expect(live.length).toBeGreaterThan(0);
 		const heard = (h.hub as unknown as { stationHeard(id: number): Set<string> }).stationHeard(sid);
 		for (const id of live) expect(heard.has(id)).toBe(true);
+	});
+
+	it("after pruning and a wake, a half-year-old station play reads as not here, which the label bounds", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		await h.hub.play(sid);
+		const id = h.hub.sessionView(sid)!.queue[3]!.track.id;
+		const old = h.clock.t - 200 * DAY_MS;
+		play(h, old, id, sid, 0);
+		remember(h, id, 1, old);
+		h.restart();
+		expect(factsOf(h, sid, id)).toMatchObject({ plays: 1, inStation: true });
+		// The daily prune drops single plays older than half a year; the next wake reads the log.
+		h.sql.run(`DELETE FROM plays WHERE played_at < ?`, h.clock.t - 180 * DAY_MS);
+		h.restart();
+		const facts = factsOf(h, sid, id)!;
+		expect(facts).toMatchObject({ plays: 1, lastPlayedAt: old, inStation: false });
+		expect(songTags("fresh", facts).map((t) => t.text)).toContain(
+			"Seit über 6 Monaten nicht auf dieser Kassette",
+		);
 	});
 });

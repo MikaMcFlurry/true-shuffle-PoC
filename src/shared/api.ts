@@ -78,7 +78,10 @@ export interface SongFacts {
 	plays: number;
 	/** Last counted play anywhere, live or imported, or null if never heard. */
 	lastPlayedAt: number | null;
-	/** Heard live on this station before (a non-guest play recorded with it). */
+	/**
+	 * A non-guest play on this station is in the plays log. The log keeps at
+	 * least the last 180 days, so `false` means "not here in half a year".
+	 */
 	inStation: boolean;
 	/** Why the planner put it here, when known. */
 	kind: SlotKind | null;
