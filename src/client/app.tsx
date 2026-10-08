@@ -15,6 +15,7 @@ import { RemoteScreen } from "./screens/remote";
 import { Scan } from "./screens/scan";
 import { SignIn } from "./screens/signin";
 import { NewStation, Station } from "./screens/station";
+import { StationsScreen } from "./screens/stations";
 import { store, useStore } from "./store";
 
 export function App() {
@@ -66,6 +67,9 @@ export function App() {
 			switch (route.name) {
 				case "station":
 					content = <Station key={route.id} id={route.id} state={state} />;
+					break;
+				case "stations":
+					content = <StationsScreen state={state} />;
 					break;
 				case "new-station":
 					content = <NewStation />;
