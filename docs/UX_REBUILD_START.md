@@ -140,6 +140,9 @@ Diese Beobachtungen stammen aus dem Gespräch vom 2026-10-08:
   Fernbedienung, Diagnose, Gestaltung).
 - Sechs Designs zur Wahl verschieben die Gestaltungsentscheidung auf den
   Nutzer.
+- Verlauf auf dem iPhone (Screenshot 2026-10-08): Die Uhrzeit-Spalte ist zu
+  schmal, „09:1“ überlappt den Songtitel und die Künstlerzeile. Sie braucht
+  eine feste, ausreichend breite Spalte mit nicht umbrechender Zeit.
 - Der Verlauf zeigt doppelte Einträge (bekannter, noch nicht vollständig
   geklärter Backend-Fall, siehe §9). Das ist kein UI-Fehler, aber die
   Oberfläche darf ihn nicht verstärken.
