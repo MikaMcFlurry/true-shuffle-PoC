@@ -13,46 +13,46 @@ export function factsOf(entry: { facts?: SongFacts } | null | undefined): SongFa
 	return entry?.facts ?? null;
 }
 
+export type TagTone = "playlist" | "rec" | "fav" | "fact";
+
+/**
+ * First where the song comes from (one source tag), then what the history
+ * says about it (facts). Two questions, never mixed in one word.
+ */
 export function songTags(
 	kind: SlotKind | null | undefined,
 	facts: SongFactsView | null,
 	thumb: -1 | 0 | 1 = 0,
-	known = true,
+	_known = true,
 	short = false,
-): { text: string; tone: "new" | "fav" | "first" | "known" }[] {
+): { text: string; tone: TagTone }[] {
 	const k = facts?.kind ?? kind ?? null;
-	const tags: { text: string; tone: "new" | "fav" | "first" | "known" }[] = [];
-	if (k === "discovery") tags.push({ text: "Neu für dich", tone: "new" });
-	if (k === "favorite" || thumb === 1) tags.push({ text: "Favorit", tone: "fav" });
-	if (facts) {
-		if (facts.plays === 0) {
-			// Only what was recorded: an import may be partial, and without one
-			// true-shuffle knows only what it counted itself.
-			if (k !== "discovery")
-				tags.push({
-					text: known
-						? short
-							? "laut Verlauf neu"
-							: "Laut deinem Verlauf noch nie gehört"
-						: "Bisher nicht gehört",
-					tone: "new",
-				});
-		} else {
-			// The plays log keeps at least 180 days: "not here" is only claimed for that span.
-			if (!facts.inStation)
-				tags.push({
-					text: short ? "lange nicht hier" : "In den letzten 180 Tagen nicht auf dieser Kassette",
-					tone: "first",
-				});
-			tags.push({
-				text: short
-					? `${num(facts.plays)}× gehört`
-					: facts.plays === 1
-						? `Einmal gehört${facts.lastPlayedAt ? `, ${ago(facts.lastPlayedAt)}` : ""}`
-						: `${num(facts.plays)}× gehört${facts.lastPlayedAt ? `, zuletzt ${ago(facts.lastPlayedAt)}` : ""}`,
-				tone: "known",
-			});
-		}
-	} else if (k === "fresh") tags.push({ text: "In diesem Durchgang neu", tone: "first" });
+	const tags: { text: string; tone: TagTone }[] = [];
+	// Where it comes from.
+	if (k === "discovery") tags.push({ text: "Empfehlung", tone: "rec" });
+	else if (k === "favorite") tags.push({ text: "Favorit", tone: "fav" });
+	else if (k === "fresh") tags.push({ text: "Aus deiner Playlist", tone: "playlist" });
+	if (thumb === 1 && k !== "favorite") tags.push({ text: "Favorit", tone: "fav" });
+	if (!facts) return tags;
+	// What was recorded about it. Only claims the records can carry: "not yet
+	// heard" (an import may be partial) and "not here" within the 180 days the
+	// plays log keeps.
+	if (facts.plays === 0) {
+		tags.push({ text: "noch nicht gehört", tone: "fact" });
+		return tags;
+	}
+	if (!facts.inStation)
+		tags.push({
+			text: short ? "lange nicht hier" : "in den letzten 180 Tagen nicht auf dieser Kassette",
+			tone: "fact",
+		});
+	tags.push({
+		text: short
+			? `${num(facts.plays)}× gehört`
+			: facts.plays === 1
+				? `einmal gehört${facts.lastPlayedAt ? `, ${ago(facts.lastPlayedAt)}` : ""}`
+				: `${num(facts.plays)}× gehört${facts.lastPlayedAt ? `, zuletzt ${ago(facts.lastPlayedAt)}` : ""}`,
+		tone: "fact",
+	});
 	return tags;
 }

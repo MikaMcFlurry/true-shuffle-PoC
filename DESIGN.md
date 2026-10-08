@@ -240,7 +240,7 @@ State is carried by line form, everywhere: a solid green rule only when playback
 A warm paper-and-brass palette with one red label-stripe accent, blue ballpoint ink and a single orange hotline on the deck.
 
 ### Primary
-- **Label-Stripe Red** (label-stripe-red; night label-stripe-red-night): the cassette label's stripe. Lit keys, the three-band stripe on inlay lists, the "Neu für dich" note, the played part of the song tape, the waiting and estimate state lines, text selection.
+- **Label-Stripe Red** (label-stripe-red; night label-stripe-red-night): the cassette label's stripe. Lit keys, the three-band stripe on inlay lists, the "Empfehlung" tag, the played part of the song tape, the waiting and estimate state lines, text selection.
 - **Flat Warm Brass** (brass, brass-edge; night bronze-night, bronze-edge-night): the deck faceplate, the tab bar panel and the shelf board under standing cassettes. Never used for text-bearing paper surfaces.
 
 ### Secondary
@@ -292,7 +292,7 @@ Cassette shells keep their own seven label palettes (red, blue, green, orange, t
 
 **The Lower-Case Name Rule.** The brand is always written "true-shuffle", lower case, in every heading, label and asset. No capitals, no small caps, no uppercase transforms anywhere.
 
-**The Bounded Note Rule.** Song tags say only what was recorded ("Neu für dich", "Favorit", "3× gehört, zuletzt vor 2 Monaten", "Laut deinem Verlauf noch nie gehört"); in lists the short forms ("laut Verlauf neu", "lange nicht hier") keep one quiet line.
+**The Two Questions Rule.** A song's tags answer two questions in order and never mix them. First where it comes from, one coloured tag: "Aus deiner Playlist" (ballpoint blue), "Empfehlung" (label red, filled on Jetzt), "Favorit" (label red). Then what was recorded, quiet grey notes bounded to the records: "noch nicht gehört", "3× gehört, zuletzt vor 2 Monaten", "lange nicht hier" (180 days of plays log). Lists use the short forms on one line.
 
 ## Layout
 

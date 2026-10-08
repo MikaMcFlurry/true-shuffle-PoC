@@ -196,7 +196,11 @@ test.describe("a listener's day", () => {
 		await expect(page.getByRole("heading", { name: "Indie & Gitarren", level: 1 })).toBeVisible();
 		const panel = page.locator(".page");
 		await expect(panel.getByText(/von 400 Songs gehört/).first()).toBeVisible();
-		const next = page.getByRole("region", { name: "Als Nächstes" }).getByRole("listitem");
+		// Song rows only: each row also holds its own list of tags.
+		const next = page
+			.getByRole("region", { name: "Als Nächstes" })
+			.getByRole("listitem")
+			.filter({ has: page.getByRole("button", { name: / bewerten$/ }) });
 		await expect(next.first()).toBeVisible();
 		await checkPage(page, "station");
 
@@ -366,7 +370,10 @@ test.describe("a listener's day", () => {
 		});
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto(`/sender/${lange?.id}`);
-		const rows = page.getByRole("region", { name: "Als Nächstes" }).getByRole("listitem");
+		const rows = page
+			.getByRole("region", { name: "Als Nächstes" })
+			.getByRole("listitem")
+			.filter({ has: page.getByRole("button", { name: / bewerten$/ }) });
 		await expect(rows.first()).toContainText(title);
 		await checkText(page, "a 159-character title in the running order");
 		await rows

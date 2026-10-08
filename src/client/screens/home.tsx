@@ -781,7 +781,12 @@ export function Home({ state }: { state: AppState }) {
 						Sobald eine Kassette läuft, stehen hier die nächsten Songs in ihrer festen Reihenfolge.
 					</p>
 				)}
-				<p class="hint">Was du in Spotify selbst einreihst, steht nicht in dieser Liste.</p>
+				<p class="hint">
+					<strong>Aus deiner Playlist</strong>: kommt aus dem Lauf dieser Kassette.{" "}
+					<strong>Empfehlung</strong>: steht nicht in deinen Playlists, true-shuffle schlägt den
+					Song vor. <strong>Favorit</strong>: kommt öfter, weil du ihn magst. Was du in Spotify
+					selbst einreihst, steht nicht in dieser Liste.
+				</p>
 			</section>
 
 			<section class="promise" aria-labelledby="promise-title">
