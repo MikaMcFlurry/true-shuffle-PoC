@@ -1,11 +1,11 @@
 {
 	"name": "true-shuffle",
 	"short_name": "true-shuffle",
-	"description": "Deine Spotify-Sender mit Gedächtnis.",
+	"description": "Deine Playlists als Kassetten: feste Reihenfolge, keine schnellen Wiederholungen, jeder Song kommt dran.",
 	"start_url": "/",
 	"display": "standalone",
-	"background_color": "#eeedea",
-	"theme_color": "#141210",
+	"background_color": "#eceef0",
+	"theme_color": "#26354f",
 	"lang": "de",
 	"icons": [
 		{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },

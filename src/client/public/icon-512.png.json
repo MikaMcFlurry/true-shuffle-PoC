@@ -1,6 +1,6 @@
 {
-	"origin": "Copy of src/client/public/brand/kontakt (default design)",
+	"origin": "Rendered from src/client/public/icon.svg (authored SVG, no generated imagery)",
 	"licence": "Project application asset",
-	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square 512x512",
-	"description": "Kontaktbogen mark: film frame with sprocket rows, current frame boxed in red grease pencil; default app icon; 2026-10-07"
+	"processing": "scripts/render-icons.mjs via Playwright Chromium; full-bleed square",
+	"description": "Cassette mark on Walkman blue; app icon of the single Walkman/cassette system; 2026-10-08"
 }

@@ -41,13 +41,20 @@ const SESSION_LABELS = {
 export function Home({ state }: { state: AppState }) {
 	const s = useStore();
 	const session = state.session;
-	const [selected, setSelected] = useState<number | null>(null);
+	// A cassette chosen on the shelf arrives as ?sender=<id>: it is inserted, not played.
+	const [selected, setSelected] = useState<number | null>(() => {
+		const asked = Number(new URLSearchParams(location.search).get("sender"));
+		return Number.isInteger(asked) && asked > 0 ? asked : null;
+	});
+	useEffect(() => {
+		if (!location.search.includes("sender=")) return;
+		history.replaceState(history.state, "", location.pathname);
+	}, []);
 	const station =
 		state.stations.find((x) => x.id === (selected ?? session?.stationId)) ??
 		state.stations.find((x) => x.playing) ??
 		state.stations[0];
 	const [nativeDevices, setNativeDevices] = useState<NativeDevice[]>([]);
-	const [nativeConfigured, setNativeConfigured] = useState(false);
 	const [nativeError, setNativeError] = useState("");
 	const [devices, setDevices] = useState<DeviceView[] | null>(null);
 	const [device, setDevice] = useState(() => {
@@ -80,7 +87,6 @@ export function Home({ state }: { state: AppState }) {
 				if (request !== deviceRequest.current) return;
 				for (const d of result.devices) deviceNames.current.set(`native:${d.id}`, d.name);
 				setNativeDevices(result.devices);
-				setNativeConfigured(result.configured);
 				setNativeError("");
 			})
 			.catch((e: Error) => {
