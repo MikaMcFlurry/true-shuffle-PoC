@@ -1,4 +1,5 @@
 import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
+import "@fontsource/permanent-marker/latin-400.css";
 import "./styles/app.css";
 import { render } from "preact";
 import { App } from "./app";

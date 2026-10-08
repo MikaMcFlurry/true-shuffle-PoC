@@ -30,6 +30,7 @@
 		"@fontsource-variable/lexend": "^5.3.0",
 		"@fontsource-variable/martian-mono": "^5.3.0",
 		"@fontsource-variable/overpass": "^5.3.0",
+		"@fontsource/permanent-marker": "^5.3.0",
 		"hono": "^4.13.9",
 		"lucide-preact": "^1.48.0",
 		"preact": "^10.29.8"

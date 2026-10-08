@@ -16,8 +16,10 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { sharesForRules } from "../../core/mix";
 import type { AppState, DeviceView, StationSummary, TrackView } from "../../shared/api";
 import { ApiError, api, type NativeDevice } from "../api";
+import { Cassette, type ReelState, shellOf } from "../components/cassette";
 import { RateHit, ThumbMark } from "../components/rate";
 import { SongProgress } from "../components/song-progress";
+import { factsOf, type SongFactsView, SongTags } from "../components/song-tags";
 import { Cover } from "../components/ui";
 import { duration, num, pct } from "../format";
 import { playbackView } from "../playback-view";
@@ -355,35 +357,64 @@ export function Home({ state }: { state: AppState }) {
 			: session?.stationId === station?.id
 				? "Fortsetzen"
 				: "Wiedergabe starten";
+	const inserted = startsOther ? station : (posterStation ?? station ?? null);
+	const reels: ReelState =
+		unsettled || statusText === "Gerätebestätigung steht aus" || view.projected
+			? "waiting"
+			: playing
+				? "running"
+				: "still";
 	const stateClass = `now now--${signal.tone}${unsettled ? " now--pending" : ""}${view.projected ? " now--estimate" : ""}`;
 
 	return (
 		<div class={stateClass}>
 			<section class="player" aria-labelledby="listen-title">
-				<header class="player-heading">
-					<h1 id="listen-title">{posterStation?.name ?? "Deine Sender"}</h1>
-					<p class="player-heading__span">
-						{heard !== null && posterStation?.poolSize
-							? `${num(heard)} von ${num(posterStation.poolSize)} Songs gehört`
-							: posterStation
-								? "Zählt ab dem ersten Song"
-								: "Deine Playlists, ohne Wiederholungen"}
-					</p>
+				<div class="walkman">
+					<header class="player-heading">
+						<h1 id="listen-title">{posterStation?.name ?? "Deine Sender"}</h1>
+						<p class="player-heading__span">
+							{heard !== null && posterStation?.poolSize
+								? `${num(heard)} von ${num(posterStation.poolSize)} Songs gehört`
+								: posterStation
+									? "Zählt ab dem ersten Song"
+									: "Noch keine Kassette eingelegt"}
+						</p>
+						<span class={`led led--${reels}`} aria-hidden="true" />
+					</header>
+					<div class="walkman__window">
+						{inserted ? (
+							<Cassette
+								name={inserted.name}
+								shell={shellOf(inserted)}
+								heard={inserted.progress}
+								reels={startsOther ? "still" : reels}
+							/>
+						) : (
+							<div class="walkman__empty">Leg eine Kassette ein</div>
+						)}
+					</div>
 					{state.guest.active ? (
 						<p class="player-heading__guest">
 							<UserRound size={16} aria-hidden="true" />
 							Gast-Modus: was jetzt läuft, zählt nicht
 						</p>
 					) : null}
-				</header>
+				</div>
 
 				<div class="player-song">
 					<Cover src={track?.imageUrl ?? posterStation?.imageUrl} class="player-song__art" eager />
 					<div class="now-copy">
 						<h2>{posterTitle(track?.name ?? "Noch nichts gespielt")}</h2>
 						<p class="artist">
-							{track?.artists ?? "Starte einen Sender, dann steht hier dein Song."}
+							{track?.artists ?? "Leg unten eine Kassette ein und drück auf Abspielen."}
 						</p>
+						{track ? (
+							<SongTags
+								kind={view.projected ? null : (ownNow?.kind ?? null)}
+								facts={factsOf(session?.queue.find((e) => e.entryId === view.entryId))}
+								thumb={store.thumbOf(track)}
+							/>
+						) : null}
 					</div>
 				</div>
 
@@ -694,7 +725,7 @@ export function Home({ state }: { state: AppState }) {
 					<>
 						<ol class="queue-list">
 							{successors.slice(0, shown).map((e, i) => (
-								<QueueRow key={e.entryId} track={e.track} index={i + 1} />
+								<QueueRow key={e.entryId} track={e.track} index={i + 1} facts={factsOf(e)} />
 							))}
 						</ol>
 						{successors.length > shown ? (
@@ -751,13 +782,13 @@ export function Home({ state }: { state: AppState }) {
 
 			<section class="switcher" aria-labelledby="stations-title">
 				<div class="section-head">
-					<h2 id="stations-title">Sender wechseln</h2>
+					<h2 id="stations-title">Andere Kassette einlegen</h2>
 					<a class="act" href="/sender/neu">
 						<Plus size={16} aria-hidden="true" />
 						Neuer Sender
 					</a>
 				</div>
-				<ul class="station-list">
+				<ul class="tape-strip">
 					{state.stations.map((x) => {
 						const xHeard =
 							x.poolSize !== null && x.freshRemaining !== null
@@ -765,7 +796,7 @@ export function Home({ state }: { state: AppState }) {
 								: null;
 						return (
 							<li
-								class={`station-choice${station?.id === x.id ? " station-choice--selected" : ""}${session?.stationId === x.id ? " station-choice--saved" : ""}`}
+								class={`tape-pick${station?.id === x.id ? " tape-pick--selected" : ""}${session?.stationId === x.id ? " tape-pick--saved" : ""}`}
 								key={x.id}
 							>
 								<button
@@ -776,20 +807,20 @@ export function Home({ state }: { state: AppState }) {
 										setConfirm(false);
 									}}
 								>
-									<Cover src={x.imageUrl} class="station-choice__art" />
-									<span class="station-choice__name">{x.name}</span>
-									<span class="station-choice__meta">
+									<span class="tape-pick__name">{x.name}</span>
+									<Cassette name={x.name} shell={shellOf(x)} heard={x.progress} />
+									<span class="tape-pick__meta">
 										{x.importing
 											? "Wird eingelesen …"
 											: xHeard !== null && x.poolSize !== null
 												? `${num(xHeard)} von ${num(x.poolSize)} gehört`
 												: `${x.poolSize ?? "–"} Songs`}
-										{session?.stationId === x.id ? " · hier geht es weiter" : ""}
+										{session?.stationId === x.id ? " · eingelegt" : ""}
 									</span>
-									<TapeLine share={x.progress} />
 								</button>
 								<a href={`/sender/${x.id}`} aria-label={`${x.name}: Mix und Regeln`}>
-									<SlidersHorizontal size={18} aria-hidden="true" />
+									<SlidersHorizontal size={16} aria-hidden="true" />
+									Einstellen
 								</a>
 							</li>
 						);
@@ -862,7 +893,15 @@ function posterTitle(name: string): string {
 	return name.replace(/ ([–—-]) /g, "\u00a0$1 ");
 }
 
-function QueueRow({ track, index }: { track: TrackView; index: number }) {
+function QueueRow({
+	track,
+	index,
+	facts,
+}: {
+	track: TrackView;
+	index: number;
+	facts: SongFactsView | null;
+}) {
 	return (
 		<li class="queue-row track--rate">
 			<span class="queue-number" aria-hidden="true">
@@ -872,6 +911,7 @@ function QueueRow({ track, index }: { track: TrackView; index: number }) {
 			<span class="track__main">
 				<strong>{track.name}</strong>
 				<span class="muted">{track.artists}</span>
+				<SongTags facts={facts} thumb={store.thumbOf(track)} class="tags--row" />
 			</span>
 			<ThumbMark t={track} />
 			<span class="queue-duration">{duration(track.durationMs)}</span>
