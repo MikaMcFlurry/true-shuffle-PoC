@@ -71,6 +71,7 @@ import type {
 	PlaylistView,
 	PlayResult,
 	RemoteAction,
+	SongFacts,
 	StationDetail,
 	StationKind,
 	StationSource,
@@ -1983,6 +1984,7 @@ export class HubCore {
 		const st = this.stationRow(id);
 		if (!st) return;
 		this.db.run(`DELETE FROM stations WHERE id = ?`, id);
+		this.heardOnStation.delete(id);
 		this.db.run(`DELETE FROM bans WHERE station_id = ?`, id);
 		this.db.run(`DELETE FROM discoveries WHERE station_id = ? AND status != 'kept'`, id);
 		for (const k of [`deck:${id}`, `extend:${id}`, `discover:${id}`, `rename:${id}`]) {
@@ -3794,6 +3796,7 @@ export class HubCore {
 			st?.id ?? null,
 			JSON.stringify(e.track),
 		);
+		this.noteHeard(st?.id, e.id);
 		const seen = (this.kvGet<SeenEntry[]>("seen_plays") ?? []).filter(
 			(x) => Math.max(x.to, x.until ?? 0) > this.now() - LATE_PLAY_WINDOW_MS,
 		);
@@ -4052,6 +4055,7 @@ export class HubCore {
 				ignored ? 1 : 0,
 				packed ? JSON.stringify(packed) : null,
 			);
+			if (!ignored) this.noteHeard(station?.id, id);
 			s.recentCursor = Math.max(s.recentCursor, at);
 			out.push({
 				trackId: id,
@@ -4809,6 +4813,61 @@ export class HubCore {
 		return true;
 	}
 
+	/**
+	 * Songs heard on each station (non-guest plays), kept per Durable Object so
+	 * a poll never scans the plays log: a station is read once, then every new
+	 * counted play is added where it is recorded (`noteHeard`). A label only:
+	 * the set matches the plays table as of the last wake, so plays pruned after
+	 * half a year (or a write rolled back) drop out of it at the next wake.
+	 */
+	private heardOnStation = new Map<number, Set<TrackId>>();
+
+	private stationHeard(stationId: number): Set<TrackId> {
+		let ids = this.heardOnStation.get(stationId);
+		if (!ids) {
+			ids = new Set(
+				this.db
+					.all<{ track_id: string }>(
+						`SELECT DISTINCT track_id FROM plays WHERE station_id = ? AND ignored = 0`,
+						stationId,
+					)
+					.map((r) => r.track_id),
+			);
+			this.heardOnStation.set(stationId, ids);
+		}
+		return ids;
+	}
+
+	/** A counted play was recorded: keep `stationHeard` current without reading. */
+	private noteHeard(stationId: number | null | undefined, id: TrackId): void {
+		if (stationId != null) this.heardOnStation.get(stationId)?.add(id);
+	}
+
+	/**
+	 * Read-only labels for songs in a queue (see `SongFacts`). `plays` and
+	 * `lastPlayedAt` come from `memory()`: the live memory table — which only
+	 * guest-free counted plays (>= 30 s) ever reach — merged with imported
+	 * history, cut off at `live_since` so nothing is counted twice.
+	 * `inStation` comes from `stationHeard` (non-guest plays on this station).
+	 */
+	private songFacts(
+		stationId: number,
+		items: readonly { id: TrackId; kind: SlotKind }[],
+	): (it: { id: TrackId; kind: SlotKind }) => SongFacts {
+		this.preloadMemory(new Set(items.map((it) => it.id)));
+		const heardHere = this.stationHeard(stationId);
+		return (it) => {
+			const m = this.memory(it.id);
+			return {
+				plays: m.plays,
+				lastPlayedAt: m.lastPlayedAt,
+				inStation: heardHere.has(it.id),
+				// Per deck item: the same song could sit in a deck twice for different reasons.
+				kind: it.kind ?? null,
+			};
+		};
+	}
+
 	public sessionView(stationId?: number, limit = 51) {
 		const session = this.savedSession(stationId);
 		const st = session ? this.stationRow(session.stationId) : null;
@@ -4822,10 +4881,17 @@ export class HubCore {
 			upcoming.map((it) => it.id),
 			this.usedSources(),
 		);
+		const facts = this.songFacts(session.stationId, upcoming);
 		const queue = upcoming.flatMap((it, n) => {
 			const track = tracks.get(it.id);
 			return track
-				? [{ entryId: session.entryIds[session.currentIndex + n]!, track: this.view(track) }]
+				? [
+						{
+							entryId: session.entryIds[session.currentIndex + n]!,
+							track: this.view(track),
+							facts: facts(it),
+						},
+					]
 				: [];
 		});
 		return {
@@ -6017,9 +6083,10 @@ export class HubCore {
 				next.map((it) => it.id),
 				this.liveSources(st).map(sourceKey),
 			);
+			const facts = this.songFacts(st.id, next);
 			for (const it of next) {
 				const t = found.get(it.id);
-				if (t) upcoming.push({ ...this.view(t), kind: it.kind });
+				if (t) upcoming.push({ ...this.view(t), kind: it.kind, facts: facts(it) });
 			}
 		}
 		const recentRows = this.db.all<{ played_at: number; track_id: string; meta: string | null }>(

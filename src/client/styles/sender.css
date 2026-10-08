@@ -1,0 +1,615 @@
+/*
+ * Sender: the shelf of cassettes (/sender), one cassette's page (/sender/:id),
+ * a new cassette (/sender/neu) and "Playlists hinzufügen" (/suchlauf, also the
+ * first run). Tokens and shared classes come from app.css; colours here are
+ * tokens only (the cassette shells keep their own).
+ */
+
+/* ---------------------------------------------------------------- shelf */
+
+.shelf-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.shelf {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 14px;
+}
+
+@media (min-width: 640px) {
+	.shelf {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1280px) {
+	.shelf {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+.tapecard {
+	display: grid;
+	grid-template-columns: minmax(88px, 36%) minmax(0, 1fr);
+	align-items: start;
+	gap: 12px 14px;
+	padding: 14px;
+	border: 1px solid var(--rule);
+	border-radius: var(--r-lg);
+	background: var(--paper);
+}
+
+.tapecard--in {
+	border-color: var(--tape);
+	box-shadow: 0 0 0 1px var(--tape);
+}
+
+.tapecard__tape {
+	min-width: 0;
+}
+
+.tapecard__text {
+	display: grid;
+	gap: 4px;
+	min-width: 0;
+}
+
+.tapecard__name {
+	font-size: 1.1875rem;
+	font-weight: 750;
+	line-height: 1.2;
+	letter-spacing: -0.01em;
+}
+
+.tapecard__in {
+	justify-self: start;
+	padding: 1px 10px;
+	border-radius: 999px;
+	background: var(--tape-soft);
+	color: var(--ink);
+	font-size: 0.8125rem;
+	font-weight: 700;
+}
+
+.tapecard__fact {
+	font-size: 0.9375rem;
+	font-weight: 650;
+	color: var(--ink-2);
+}
+
+.tapecard__text .meter {
+	margin: 4px 0 2px;
+}
+
+.tapecard__when {
+	font-size: 0.875rem;
+	color: var(--ink-3);
+}
+
+.tapecard__actions {
+	grid-column: 1 / -1;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.tapecard__actions .key {
+	padding: 0 10px;
+	text-align: center;
+}
+
+.shelf-empty {
+	display: grid;
+	justify-items: start;
+	gap: 14px;
+	padding: 24px 20px;
+	border: 1px dashed var(--rule-strong);
+	border-radius: var(--r-lg);
+}
+
+/* ------------------------------------------------------- one cassette */
+
+.deck-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	justify-items: stretch;
+	gap: 14px;
+}
+
+.deck-hero > .back-key {
+	justify-self: start;
+}
+
+.deck-hero__tape {
+	justify-self: center;
+	width: 100%;
+	max-width: 340px;
+}
+
+.deck-hero__live .led {
+	width: 10px;
+	height: 10px;
+}
+
+.deck-hero__text {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+
+.deck-hero__acts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+@media (min-width: 720px) {
+	.deck-hero {
+		grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+		align-items: center;
+		column-gap: 32px;
+	}
+
+	.deck-hero > .back-key {
+		grid-column: 1 / -1;
+	}
+}
+
+.pass {
+	display: grid;
+	gap: 8px;
+}
+
+.pass__count {
+	font-size: 1.375rem;
+	font-weight: 750;
+	letter-spacing: -0.01em;
+}
+
+.pass__meter {
+	height: 10px;
+	border-radius: 5px;
+}
+
+.pass__meter > span {
+	border-radius: 5px;
+}
+
+.pass__words {
+	color: var(--ink-2);
+	max-width: 62ch;
+}
+
+.deck-sub {
+	display: grid;
+	gap: 8px;
+	margin-top: 14px;
+}
+
+.deck-sub h3 {
+	font-size: 1.125rem;
+	font-weight: 750;
+}
+
+.deck-sub__lead {
+	margin-top: 0;
+}
+
+/* A song in a list: number or time, cover, title that wraps, thumb. */
+.songlist {
+	border-top: 1px solid var(--rule);
+}
+
+.songrow {
+	position: relative;
+	display: grid;
+	grid-template-columns: 1.75rem 40px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 12px;
+	min-height: 60px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--rule);
+}
+
+.songrow__lead {
+	font-size: 0.8125rem;
+	color: var(--ink-3);
+	text-align: right;
+}
+
+.cover.songrow__cover {
+	width: 40px;
+	height: 40px;
+}
+
+.songrow__main {
+	display: grid;
+	min-width: 0;
+}
+
+.songrow__title {
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.songrow__artist {
+	color: var(--ink-2);
+	font-size: 0.9375rem;
+}
+
+.songlist--recent .songrow {
+	grid-template-columns: 40px minmax(0, 1fr) auto;
+	row-gap: 0;
+}
+
+.songlist--recent .songrow__lead {
+	grid-column: 2;
+	grid-row: 2;
+	text-align: left;
+}
+
+.songlist--recent .songrow__cover {
+	grid-column: 1;
+	grid-row: 1 / span 2;
+}
+
+.songlist--recent .songrow__main {
+	grid-column: 2;
+	grid-row: 1;
+}
+
+.songlist--recent .track__thumb {
+	grid-column: 3;
+	grid-row: 1 / span 2;
+}
+
+/* --------------------------------------------------------------- mix */
+
+.mixscale .segmented__opt > span {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	align-content: center;
+	gap: 0;
+	min-height: 56px;
+	padding: 6px 4px;
+}
+
+.mixscale__name {
+	font-size: clamp(0.8125rem, 3.6vw, 0.9375rem);
+	font-weight: 700;
+	min-width: 0;
+	hyphens: auto;
+	overflow-wrap: anywhere;
+}
+
+.mixscale__sub {
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--ink-3);
+	line-height: 1.3;
+}
+
+.mixscale .segmented__opt input:checked + span .mixscale__sub {
+	color: var(--ink-2);
+}
+
+.mixread {
+	display: grid;
+	gap: 10px;
+}
+
+.mixread__words {
+	color: var(--ink);
+	max-width: 62ch;
+}
+
+.mixbar {
+	display: flex;
+	gap: 2px;
+	height: 12px;
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.mixbar__fresh,
+.mixbar__fav,
+.mixbar__disc {
+	flex-basis: 0;
+	min-width: 4px;
+}
+
+.mixbar__fresh,
+.mixlegend__item--fresh::before {
+	background: var(--ink-2);
+}
+
+.mixbar__fav,
+.mixlegend__item--fav::before {
+	background: var(--tape-soft);
+	box-shadow: inset 0 0 0 2px var(--tape);
+}
+
+.mixbar__disc,
+.mixlegend__item--disc::before {
+	background: var(--tape);
+}
+
+.mixlegend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+	font-size: 0.875rem;
+	color: var(--ink-2);
+}
+
+.mixlegend__item {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.mixlegend__item::before {
+	content: "";
+	width: 12px;
+	height: 12px;
+	border-radius: 3px;
+	flex: none;
+}
+
+/* ------------------------------------------------------ source picker */
+
+.picklist .row {
+	cursor: pointer;
+}
+
+.picklist input[type="checkbox"] {
+	width: 22px;
+	height: 22px;
+	margin: 0;
+	flex: none;
+}
+
+.picklist .row[aria-disabled="true"] {
+	cursor: not-allowed;
+}
+
+.picklist .row[aria-disabled="true"] .row__title {
+	color: var(--ink-3);
+}
+
+.picklist .row:has(input:checked) {
+	background: color-mix(in srgb, var(--tape-soft) 55%, transparent);
+}
+
+/* -------------------------------------------------------- discoveries */
+
+.tally {
+	border-top: 1px solid var(--rule);
+}
+
+.tally li {
+	display: grid;
+	grid-template-columns: 3.5rem minmax(0, 1fr);
+	align-items: baseline;
+	gap: 12px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--rule);
+}
+
+.tally__n {
+	font-size: 1.625rem;
+	font-weight: 800;
+	text-align: right;
+	letter-spacing: -0.02em;
+}
+
+.tally__sub {
+	display: block;
+	color: var(--ink-3);
+	font-size: 0.9375rem;
+}
+
+/* ----------------------------------------------------------- Erweitert */
+
+.fold {
+	border: 1px solid var(--rule);
+	border-radius: var(--r-lg);
+	background: var(--paper);
+}
+
+.fold > summary {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	column-gap: 12px;
+	min-height: 64px;
+	padding: 12px 16px;
+	cursor: pointer;
+	list-style: none;
+	border-radius: var(--r-lg);
+}
+
+.fold > summary::-webkit-details-marker {
+	display: none;
+}
+
+.fold > summary:hover {
+	background: var(--sunk);
+}
+
+.fold__title {
+	grid-column: 1;
+	font-size: 1.25rem;
+	font-weight: 750;
+}
+
+.fold__sub {
+	grid-column: 1;
+	color: var(--ink-3);
+	font-size: 0.9375rem;
+}
+
+.fold__chev {
+	grid-column: 2;
+	grid-row: 1 / span 2;
+	color: var(--ink-2);
+	transition: transform 200ms var(--ease);
+}
+
+.fold[open] .fold__chev {
+	transform: rotate(180deg);
+}
+
+.fold__body {
+	padding: 0 16px 8px;
+}
+
+.rule {
+	margin: 0;
+	padding: 16px 0;
+	border: 0;
+	border-top: 1px solid var(--rule);
+	min-width: 0;
+}
+
+.rule > * + * {
+	margin-top: 10px;
+}
+
+.rule__label {
+	display: block;
+	padding: 0;
+	font-size: 1.0625rem;
+	font-weight: 700;
+}
+
+.rule__then {
+	color: var(--ink-2);
+	font-size: 0.9375rem;
+	max-width: 62ch;
+}
+
+.rule .radio {
+	margin-top: 4px;
+}
+
+.input.rule__select {
+	max-width: 320px;
+}
+
+.rule__switch {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	min-height: 48px;
+	cursor: pointer;
+}
+
+.stepper {
+	display: grid;
+	grid-template-columns: 48px minmax(7.5rem, max-content) 48px;
+	align-items: center;
+	gap: 8px;
+}
+
+.stepper .key {
+	width: 48px;
+	padding: 0;
+}
+
+.stepper__value {
+	font-weight: 700;
+	text-align: center;
+}
+
+/* ----------------------------------------------------- name and delete */
+
+.rename {
+	display: grid;
+	gap: 10px;
+}
+
+@media (min-width: 560px) {
+	.rename {
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: end;
+	}
+}
+
+/* --------------------------------------------- a save key at the thumb */
+
+.savebar {
+	position: sticky;
+	bottom: calc(var(--tabbar) + env(safe-area-inset-bottom));
+	z-index: 5;
+	display: grid;
+	gap: 6px;
+	padding: 16px 0 12px;
+	background: linear-gradient(to bottom, transparent, var(--ground) 16px);
+}
+
+.savebar__why {
+	margin-top: 0;
+	text-align: center;
+}
+
+@media (min-width: 960px) {
+	.savebar {
+		bottom: 0;
+	}
+}
+
+/* ------------------------------------------------------- first run */
+
+.welcome {
+	gap: 12px;
+}
+
+.welcome__tape {
+	width: min(240px, 64%);
+}
+
+.welcome__steps {
+	display: grid;
+	gap: 10px;
+	margin-top: 4px;
+	counter-reset: step;
+	max-width: 56ch;
+}
+
+.welcome__steps li {
+	display: grid;
+	grid-template-columns: 2rem minmax(0, 1fr);
+	align-items: start;
+	gap: 12px;
+	color: var(--ink-2);
+	counter-increment: step;
+}
+
+.welcome__steps li::before {
+	content: counter(step);
+	display: grid;
+	place-items: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	background: var(--tape-soft);
+	color: var(--ink);
+	font-weight: 750;
+}
+
+.scan-all {
+	margin-top: 0;
+}
+
+@media (max-width: 359px) {
+	.tapecard__actions svg {
+		display: none;
+	}
+}

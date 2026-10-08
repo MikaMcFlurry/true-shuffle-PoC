@@ -1,14 +1,15 @@
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, PlaylistView } from "../../shared/api";
 import { api } from "../api";
+import { Cassette } from "../components/cassette";
 import { Cover, PageBar } from "../components/ui";
 import { num } from "../format";
 import { navigate } from "../router";
 import { store } from "../store";
 
 /**
- * "Sendersuchlauf" — the car radio's auto-store: it finds your playlists and
- * you store the ones you want as stations.
+ * "Playlists hinzufügen": the listener ticks playlists, and each one becomes
+ * a cassette (a station). On first run this is the welcome as well.
  */
 export function Scan({ state }: { state: AppState }) {
 	const [lists, setLists] = useState<PlaylistView[] | null>(null);
@@ -26,6 +27,7 @@ export function Scan({ state }: { state: AppState }) {
 				.playlists()
 				.then((l) => {
 					if (!alive) return;
+					// Right after sign-in the list may still be on its way from Spotify.
 					if (l.length === 0 && tries++ < 20) {
 						window.setTimeout(load, 1500);
 						return;
@@ -48,122 +50,143 @@ export function Scan({ state }: { state: AppState }) {
 		setPicked(next);
 	};
 
-	const store_ = () => {
+	const save = () => {
 		setBusy(true);
 		api
 			.onboard([...picked])
 			.then(() => {
 				store.say(
-					`${picked.size} ${picked.size === 1 ? "Sender" : "Sender"} gespeichert — werden jetzt eingelesen`,
+					picked.size > 0
+						? `${picked.size} ${picked.size === 1 ? "Kassette" : "Kassetten"} angelegt. Die Songs werden jetzt eingelesen.`
+						: "„Alles“ ist angelegt. Die Songs werden jetzt eingelesen.",
 					"info",
 					6000,
 				);
 				return store.refresh(false);
 			})
-			.then(() => navigate("/", true))
+			.then(() => navigate(state.onboarded ? "/sender" : "/", true))
 			.catch((e: Error) => store.say(e.message, "error"))
 			.finally(() => setBusy(false));
 	};
 
 	const found = lists
 		? `${num(readable.length)} ${readable.length === 1 ? "Playlist" : "Playlists"} gefunden`
-		: null;
-	const sheet = (
-		<div class="page">
+		: "true-shuffle sucht deine Playlists …";
+
+	return (
+		<div class="page scan-page" aria-busy={lists ? undefined : "true"}>
 			{state.onboarded ? (
 				<PageBar
-					title="Sendersuchlauf"
-					sub={
-						found
-							? `${found} — wähle, welche Sender werden`
-							: "true-shuffle sucht deine Playlists …"
-					}
-					backTo="/menu"
+					title="Playlists hinzufügen"
+					sub="Jede Playlist, die du anhakst, wird eine eigene Kassette mit fester Reihenfolge."
+					backTo="/sender"
 				/>
 			) : (
-				<p class="lede">
-					Jede gewählte Playlist wird ein Sender. Dazu kommt automatisch „Alles“ — alle Sender und
-					deine Lieblingssongs zusammen.
-				</p>
-			)}
-			{lists === null ? <div class="skeleton" style={{ height: "280px" }} /> : null}
-			{lists && readable.length > 1 ? (
-				<div class="row-actions">
-					<button
-						type="button"
-						class="key btn btn--small"
-						onClick={() => setPicked(new Set(readable.map((p) => p.id)))}
-					>
-						Alle wählen
-					</button>
-					<button type="button" class="key btn btn--small" onClick={() => setPicked(new Set())}>
-						Keine
-					</button>
-				</div>
-			) : null}
-			{lists ? (
-				<ul class="list">
-					{fresh.map((p) => (
-						<li key={p.id}>
-							<label class="row" aria-disabled={!p.readable}>
-								<input
-									type="checkbox"
-									class="check"
-									disabled={!p.readable}
-									checked={picked.has(p.id)}
-									onChange={() => toggle(p.id)}
-								/>
-								<Cover src={p.imageUrl} class="row__thumb" />
-								<span class="row__main">
-									<span class="row__title">{p.name}</span>
-									<span class="row__sub">
-										{p.readable
-											? p.total !== null
-												? `${num(p.total)} Songs`
-												: "Playlist"
-											: `von ${p.ownerName ?? "jemand anderem"} — Spotify gibt die Songs nicht heraus`}
-									</span>
-								</span>
-							</label>
+				<header class="masthead welcome">
+					<div class="welcome__tape">
+						<Cassette name="Alles" shell="smoke" heard={0} />
+					</div>
+					<h1 class="masthead__title">Willkommen bei true-shuffle</h1>
+					<ol class="welcome__steps">
+						<li>Jede Playlist wird eine Kassette mit fester Reihenfolge.</li>
+						<li>
+							Jeder Song kommt einmal dran, ohne schnelle Wiederholungen. Erst dann geht es von vorn
+							los.
 						</li>
-					))}
-				</ul>
-			) : null}
-			{lists && fresh.length === 0 ? (
-				<p class="lede">
-					{state.onboarded
-						? "Alle deine Playlists sind schon Sender."
-						: "Keine Playlists gefunden. Lege in Spotify eine Playlist an oder folge einer — dann hier neu suchen."}
-				</p>
-			) : null}
-			<button
-				type="button"
-				class="key key--lit btn btn--wide"
-				disabled={busy || (picked.size === 0 && state.onboarded)}
-				onClick={store_}
-			>
-				{picked.size > 0
-					? `${picked.size} ${picked.size === 1 ? "Sender" : "Sender"} speichern`
-					: state.onboarded
-						? "Playlists wählen"
-						: "Nur mit „Alles“ starten"}
-			</button>
-		</div>
-	);
+						<li>
+							Dazwischen kommen neue Songs, die zu dir passen. Deine Stelle bleibt immer
+							gespeichert.
+						</li>
+					</ol>
+				</header>
+			)}
 
-	// Once onboarded this is a page like the others; on first run a stage announces the search.
-	if (state.onboarded) return sheet;
-	return (
-		<>
-			<section
-				class="stage stage--scan ink-ultra"
-				aria-labelledby="scan-title"
-				aria-busy={lists ? undefined : "true"}
-			>
-				<h1 id="scan-title">{found ?? "Suchlauf …"}</h1>
-				<p>{lists ? "Wähle, welche Sender werden" : "true-shuffle sucht deine Playlists"}</p>
+			<section class="section" aria-labelledby="scan-pick">
+				<div class="section__head">
+					<h2 id="scan-pick">
+						{state.onboarded ? found : "Wähle, welche Playlists Kassetten werden"}
+					</h2>
+				</div>
+				{state.onboarded ? null : (
+					<p class="section__lead">
+						{found}. Hak die an, die du als eigene Kassette hören willst. Dazu kommt automatisch
+						„Alles“: alle Playlists und deine Lieblingssongs zusammen.
+					</p>
+				)}
+
+				{lists === null ? <div class="skeleton" style={{ height: "280px" }} /> : null}
+
+				{lists && readable.length > 1 ? (
+					<div class="row-actions scan-all">
+						<button
+							type="button"
+							class="key"
+							onClick={() => setPicked(new Set(readable.map((p) => p.id)))}
+						>
+							Alle anhaken
+						</button>
+						<button
+							type="button"
+							class="key"
+							disabled={picked.size === 0}
+							onClick={() => setPicked(new Set())}
+						>
+							Keine
+						</button>
+					</div>
+				) : null}
+
+				{lists && fresh.length > 0 ? (
+					<ul class="list picklist">
+						{fresh.map((p) => (
+							<li key={p.id}>
+								<label class="row" aria-disabled={!p.readable}>
+									<input
+										type="checkbox"
+										disabled={!p.readable}
+										checked={picked.has(p.id)}
+										onChange={() => toggle(p.id)}
+									/>
+									<Cover src={p.imageUrl} />
+									<span class="row__main">
+										<span class="row__title">{p.name}</span>
+										<span class="row__sub">
+											{p.readable
+												? p.total !== null
+													? `${num(p.total)} Songs`
+													: "Playlist"
+												: `von ${p.ownerName ?? "jemand anderem"} — Spotify gibt die Songs nicht heraus`}
+										</span>
+									</span>
+								</label>
+							</li>
+						))}
+					</ul>
+				) : null}
+
+				{lists && fresh.length === 0 ? (
+					<p class="empty-state">
+						{state.onboarded
+							? "Alle deine Playlists sind schon Kassetten. Neue Playlists aus Spotify erscheinen hier."
+							: "Keine Playlists gefunden. Leg in Spotify eine Playlist an oder folge einer, dann lade diese Seite neu. Du kannst auch gleich mit „Alles“ starten: deinen Lieblingssongs."}
+					</p>
+				) : null}
 			</section>
-			{sheet}
-		</>
+
+			<div class="savebar">
+				<button
+					type="button"
+					class="key key--lit key--wide"
+					disabled={busy || (picked.size === 0 && state.onboarded)}
+					onClick={save}
+				>
+					{picked.size > 0
+						? `${picked.size} ${picked.size === 1 ? "Kassette" : "Kassetten"} anlegen`
+						: state.onboarded
+							? "Playlists anhaken"
+							: "Nur mit „Alles“ starten"}
+				</button>
+			</div>
+		</div>
 	);
 }

@@ -1,15 +1,15 @@
-import { BrandMark } from "../components/brand";
+import { Cassette } from "../components/cassette";
 import { DECK_PREFIX } from "../format";
 
 const LOGIN_MESSAGES: Record<string, string> = {
-	denied: "Anmeldung abgebrochen — tippe nochmal, wenn du magst.",
+	denied: "Anmeldung abgebrochen. Tippe nochmal, wenn du magst.",
 	expired: "Die Anmeldung hat zu lange gedauert. Bitte nochmal.",
 	failed: "Spotify hat die Anmeldung nicht bestätigt. Bitte nochmal versuchen.",
 	not_allowed:
-		"Dieses Spotify-Konto ist für true-shuffle nicht freigeschaltet. Spotify erlaubt privaten Apps nur fünf Konten — frag den Besitzer der App.",
+		"Dieses Spotify-Konto ist für true-shuffle nicht freigeschaltet. Spotify erlaubt privaten Apps nur fünf Konten. Frag den Besitzer der App.",
 };
 
-/** Signed out: the stage says what this is; one key signs in. */
+/** Signed out: what this is in three lines, then one key that signs in. */
 export function SignIn() {
 	const params = new URLSearchParams(location.search);
 	const login = params.get("login");
@@ -20,30 +20,39 @@ export function SignIn() {
 			? (LOGIN_MESSAGES[login] ?? LOGIN_MESSAGES.failed)
 			: null;
 	return (
-		<div class="welcome">
-			<section class="stage stage--welcome ink-ultra" aria-labelledby="welcome-title">
-				<BrandMark class="welcome__figure" />
-				<h1 id="welcome-title">Deine Sender mit Gedächtnis</h1>
-				<p class="welcome__lede">Keine schnellen Wiederholungen. Alles kommt irgendwann dran.</p>
+		<section class="signin" aria-labelledby="signin-title">
+			<div class="signin__deck">
+				<Cassette name="Deine Playlist" shell="orange" heard={null} />
+			</div>
+			<div class="signin__copy">
+				<h1 id="signin-title" class="signin__title">
+					Shuffle, das sich merkt, was du gehört hast
+				</h1>
+				<ul class="promise-list signin__points">
+					<li>
+						<strong>Jeder Song kommt dran.</strong> Erst wenn alle einmal liefen, geht es von vorn
+						los.
+					</li>
+					<li>
+						<strong>Keine schnellen Wiederholungen.</strong> Favoriten öfter, Neues dazwischen.
+					</li>
+					<li>
+						<strong>Deine Stelle bleibt.</strong> Auch wenn du zwischendurch anderes hörst.
+					</li>
+				</ul>
 				{message ? (
-					<p class="welcome__msg" role="status">
+					<p class="notice notice--warn" role="status">
 						{message}
 					</p>
 				) : null}
-				<a class="key key--stage" href="/auth/login">
+				<a class="key key--lit key--wide signin__go" href="/auth/login">
 					Mit Spotify anmelden
 				</a>
-			</section>
-			<div class="welcome__copy">
-				<p>
-					true-shuffle macht aus deinen Spotify-Playlists Sender, die sich jeden Song merken — auch
-					über Tage, Geräte und alles, was du nebenbei hörst.
-				</p>
 				<p class="hint">
-					Braucht Spotify Premium. true-shuffle legt pro Sender eine private Playlist „{DECK_PREFIX}
-					…“ in deinem Konto an.
+					Braucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette
+					eine private Playlist „{DECK_PREFIX}…“ in deinem Konto an.
 				</p>
 			</div>
-		</div>
+		</section>
 	);
 }

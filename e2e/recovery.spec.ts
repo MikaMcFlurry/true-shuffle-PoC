@@ -17,7 +17,7 @@ test("deliberately recovers an unconfirmed Spotify resume without changing its o
 	if (!state.onboarded) {
 		await page.getByRole("checkbox", { name: /Indie & Gitarren/ }).check();
 		await page.getByRole("checkbox", { name: /Lange Autofahrt/ }).check();
-		await page.getByRole("button", { name: "2 Sender speichern" }).click();
+		await page.getByRole("button", { name: "2 Kassetten anlegen" }).click();
 	}
 	await page.getByRole("button", { name: /^Indie & Gitarren/ }).click();
 	await expect(page.locator(".transport-main")).toBeEnabled({ timeout: 60000 });
