@@ -1,11 +1,11 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-08T18:07:11.257363+00:00",
+  "generated_at": "2026-10-08T19:08:06.471042+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
     "revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "Actualexternallyreleased17→16source97e6/version3499/deploymentc409100% verified. FunctionalREADY, UI NOT_READY inheritedlightredtagcontrast. PR18candidate22ed separateunmergedNOT_READY/noCompletion; noCodexmerge/deploy.",
+    "environment": "Actualexternallyreleased17\u219216source97e6/version3499/deploymentc409100% verified. FunctionalREADY, UI NOT_READY inheritedlightredtagcontrast. PR18candidate22ed separateunmergedNOT_READY/noCompletion; noCodexmerge/deploy.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -646,6 +646,14 @@
           "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
           "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
           "observed_at": "2026-10-08T18:07:11.257363+00:00"
+        },
+        {
+          "id": "EV-PR18-WATCH-G-CF-IDENTITY",
+          "kind": "authenticatedidentity/publicreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "PR18watch: production3499/c409100%unchanged,19assetsbyteidentical97e6,health200/auth401/CSRF403. Separateunmerged2d741candidateNOT_READY; noappmerge/deploy.",
+          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+          "observed_at": "2026-10-08T19:08:06.471042+00:00"
         }
       ],
       "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."
@@ -663,6 +671,14 @@
           "result": "Actual19assets/Workerexact/runtimebindingsidentity100%healthauthpublicbrowserPASS; freshfunctional254assertionsPASS andall6RESUMEclosed.40realWorkerbrowser/type/lint/build/dryPASS. Localdefault474/475known20stimeout, isolatedweekendPASS18.47s60sceiling; equivalentCI475/475PASS. UIredtaglightcontrast4.373FAIL; physical/liveSpotify/privateHA/populatedrestoreNOT_RUN. NoCodexappmerge/deploy.",
           "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
           "observed_at": "2026-10-08T18:07:11.257363+00:00"
+        },
+        {
+          "id": "EV-PR18-WATCH-G-CF-PUBLIC",
+          "kind": "authenticatedidentity/publicreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "PR18watch: production3499/c409100%unchanged,19assetsbyteidentical97e6,health200/auth401/CSRF403. Separateunmerged2d741candidateNOT_READY; noappmerge/deploy.",
+          "subject_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+          "observed_at": "2026-10-08T19:08:06.471042+00:00"
         }
       ],
       "rationale": "Current actualproduction97e6 andscopedfreshreview; functionalrepairsverified, fullUI/liveacceptanceincomplete. PR18separatecandidateinTAG_WORDING_REVIEW."

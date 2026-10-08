@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-08T18:07:11.257363+00:00",
+  "generated_at": "2026-10-08T19:08:06.471042+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -36,7 +36,7 @@
       "path": "AGENTS.md",
       "treatment": "UPDATE",
       "authority": "CANONICAL",
-      "reason": "CurrentMIXTAPE_RELEASE_REVIEW: actualsource97e6/version3499/deploymentc409100%verified; freshfunctionalREADY closesRESUME, UIinheritedcontrastNOT_READY. TAG_WORDING_REVIEWPR18candidate22edseparateunmerged/noCompletion. Historicalbaselinemap09d remainsnotcurrentalignmentproof.",
+      "reason": "Actualproduction97e6/version3499/deploymentc409100%remainsverified. PR18candidate2d741NOT_READY/FRESH: old3tagsclosedoncandidate,newhistoryprovenance/UnicodebboxP2;finalscopecomment6066405296. Review6067090616/evidenceTAG_WORDING_REVIEW. Noappmerge/deploy; historical09dpacketnotcurrentalignmentproof.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
