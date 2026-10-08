@@ -4,19 +4,13 @@
  */
 
 import type { SlotKind } from "../../core/types";
+import type { SongFacts } from "../../shared/api";
 import { ago, num } from "../format";
 
-/** Optional per-song facts from the API (absent on older servers). */
-export interface SongFactsView {
-	plays: number;
-	lastPlayedAt: number | null;
-	inStation: boolean;
-	kind: SlotKind | null;
-}
+export type SongFactsView = SongFacts;
 
-export function factsOf(entry: unknown): SongFactsView | null {
-	const f = (entry as { facts?: SongFactsView } | null)?.facts;
-	return f && typeof f.plays === "number" ? f : null;
+export function factsOf(entry: { facts?: SongFacts } | null | undefined): SongFacts | null {
+	return entry?.facts ?? null;
 }
 
 export function songTags(
