@@ -559,18 +559,31 @@ export class UserHub extends DurableObject<Env> {
 	setImportedProfile(epoch: number, profile: unknown) {
 		return this.session(epoch, async () => this.hub().setImportedProfile(profile));
 	}
-	/** One genre estimate at a time; requests while it runs share its answer. */
-	private genreFlight: Promise<RpcResult<GenreAnswer>> | null = null;
-	estimateGenres(epoch: number) {
-		this.genreFlight ??= requestGenres<{ code: string; message: string; status: number }>(
-			(fn) => this.session(epoch, fn),
-			() => this.hub().prepareGenres(),
-			(artists) => this.hub().runGenreEstimate(artists),
-			(attempt, est) => this.hub().storeGenres(attempt, est),
-		).finally(() => {
-			this.genreFlight = null;
-		});
-		return this.genreFlight;
+	/** One genre estimate at a time; requests of the same session epoch while it runs share its answer. */
+	private genreFlight: { epoch: number; answer: Promise<RpcResult<GenreAnswer>> } | null = null;
+	async estimateGenres(epoch: number): Promise<RpcResult<GenreAnswer>> {
+		// Every caller proves its own session before sharing a running estimate, and again
+		// before it reads the answer: a revoked cookie neither joins nor learns the result.
+		const before = await this.session(epoch, () => null);
+		if (!before.ok) return before;
+		let flight = this.genreFlight;
+		if (flight?.epoch !== epoch) {
+			const started: { epoch: number; answer: Promise<RpcResult<GenreAnswer>> } = {
+				epoch,
+				answer: requestGenres<{ code: string; message: string; status: number }>(
+					(fn) => this.session(epoch, fn),
+					() => this.hub().prepareGenres(),
+					(artists) => this.hub().runGenreEstimate(artists),
+					(attempt, est) => this.hub().storeGenres(attempt, est),
+				).finally(() => {
+					if (this.genreFlight === started) this.genreFlight = null;
+				}),
+			};
+			this.genreFlight = flight = started;
+		}
+		const answer = await flight.answer;
+		const after = await this.session(epoch, () => null);
+		return after.ok ? answer : after;
 	}
 	listeningProfile(epoch: number, timeZone: string) {
 		return this.session(epoch, () => this.hub().listeningProfile(timeZone));
