@@ -188,13 +188,6 @@ const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
 /** The lanes a play may be stamped with (see `laneOf`). */
 /** How long a lane note waits for its play: pauses may stretch a play over hours. */
 const LANE_NOTE_MS = 2 * DAY_MS;
-/**
- * Slack between Spotify's stamp and our clock. Below 30 s, the least a
- * counted play lasts, so a later play of the song never fits a closed note.
- */
-const LANE_STAMP_SLACK_MS = 15_000;
-/** How far two looks at one play may disagree on when it began (clocks, latency). */
-const LANE_SAME_PLAY_SLACK_MS = 2_000;
 const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
 const PLAYS_KEEP_MS = 180 * DAY_MS;
 const PRUNE_PER_DAY = 500;
@@ -421,17 +414,9 @@ interface SeenEntry {
 interface LaneNote {
 	station: number;
 	id: TrackId;
+	/** The deck's one reason for the song; null once a deck gave it another (or several). */
 	kind: SlotKind | null;
 	seenAt: number;
-	/** The first look that no longer showed this play. */
-	goneAt?: number;
-	/** The last look that still showed this very play (not begun again), and what it saw. */
-	lastAt?: number;
-	progress?: number;
-	playing?: boolean;
-	durationMs?: number;
-	/** When this play began, as the last look that proved it saw it (its time less its position). */
-	start?: number;
 }
 
 interface PlayerSnapshot {
@@ -1855,7 +1840,8 @@ export class HubCore {
 
 	private saveDeck(stationId: number, deck: Deck): void {
 		const row = this.stationRow(stationId);
-		if (row && this.deckOf(row)?.writtenAt !== deck.writtenAt) this.closeLaneNotes(stationId);
+		if (row && this.deckOf(row)?.writtenAt !== deck.writtenAt)
+			this.reconcileLaneNotes(stationId, deck);
 		this.db.run(`UPDATE stations SET deck = ? WHERE id = ?`, JSON.stringify(deck), stationId);
 	}
 
@@ -2382,8 +2368,8 @@ export class HubCore {
 				]),
 			];
 		}
-		// A new deck: notes of songs not playing now came from the deck before.
-		this.closeLaneNotes(st.id);
+		// A new deck: a noted song with another reason in it keeps no lane.
+		this.reconcileLaneNotes(st.id, deck);
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
 			JSON.stringify(deck),
@@ -4912,62 +4898,38 @@ export class HubCore {
 
 	/**
 	 * Notes why a song is on its station when a look first sees it as a new
-	 * play in the station's own playlist: the look before showed another song
-	 * (or another context), or this one begun again, and the deck in that
-	 * playlist was written before that look, so this play began from this
-	 * deck. The lane is the deck's one reason for the song (null when it holds
-	 * the song for several). Each later look that still shows this very play
-	 * moves its `lastAt`; the look that no longer does closes it (see `laneFor`).
+	 * song in the station's own playlist: the look before showed another song
+	 * (or another context), and the deck in that playlist was written before
+	 * that look, so this play began from this deck. The lane is the deck's one
+	 * reason for the song (null when it holds the song for several).
+	 *
+	 * The lane is a fact about the deck, not about one play: every play of the
+	 * song in that playlist from this deck has this reason. Which play a later
+	 * listing is cannot be proven (an unseen skip, repeat, pause or seek can
+	 * make any position fit), so no attempt is made — a new deck that gives
+	 * the song another reason makes the note unsure instead (see
+	 * `reconcileLaneNotes`).
 	 */
 	private noteLane(obs: PlayerObservation | null, shown: PlayerSnapshot | null): void {
 		const now = this.now();
 		let notes = this.laneNotes().filter((n) => now - n.seenAt < LANE_NOTE_MS);
 		const before = JSON.stringify(notes);
-		let begunAgain = false;
-		for (const n of notes) {
-			if (n.goneAt !== undefined) continue;
-			const st = this.stationRow(n.station);
-			if (st && obs?.trackId === n.id && obs.contextUri === this.deckUri(st)) {
-				if (this.laneSamePlay(n, obs, now)) {
-					n.lastAt = now;
-					n.progress = obs.progressMs;
-					n.playing = obs.isPlaying;
-					n.durationMs = obs.durationMs;
-					n.start = obs.at - obs.progressMs;
-					continue;
-				}
-				// The song again, but not provably the noted play: maybe a play the
-				// looks never saw begin. Its note ends here.
-				begunAgain = true;
-			}
-			// A look that no longer shows a noted play closes its note: that play
-			// ended by now, and a later play of the song is another one.
-			n.goneAt = now;
-		}
-		// A new play: the look before showed another song. The noted song again
-		// without proof (an unseen pause looks like a later start) gets no note.
 		const isNew =
 			obs?.trackId &&
 			obs.contextUri &&
 			shown &&
-			!begunAgain &&
 			!(shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri);
 		const st = isNew ? this.stations().find((x) => this.deckUri(x) === obs.contextUri) : undefined;
 		const deck = st ? this.deckOf(st) : null;
 		if (st && deck && shown && obs?.trackId && deck.writtenAt <= shown.at) {
 			const kinds = new Set(deck.items.filter((it) => it.id === obs.trackId).map((it) => it.kind));
-			// Any open note of the song is another, earlier play.
-			for (const n of notes) if (n.id === obs.trackId && n.goneAt === undefined) n.goneAt = now;
+			// One note per song and station: the newest look stands for it.
+			notes = notes.filter((n) => !(n.station === st.id && n.id === obs.trackId));
 			notes.push({
 				station: st.id,
 				id: obs.trackId,
 				kind: kinds.size === 1 ? ([...kinds][0] ?? null) : null,
 				seenAt: now,
-				lastAt: now,
-				progress: obs.progressMs,
-				playing: obs.isPlaying,
-				durationMs: obs.durationMs,
-				start: obs.at - obs.progressMs,
 			});
 		}
 		notes = notes.slice(-50);
@@ -4975,72 +4937,45 @@ export class HubCore {
 	}
 
 	/**
-	 * Whether a look at the noted song is provably still the noted play. A
-	 * play that began after the last look that proved it cannot have begun
-	 * earlier than that look: playing at both looks, the same play began at
-	 * the same moment (within the clock's slack); paused at both, it stands
-	 * at the very same position; paused then playing, it was caught right at
-	 * the resume; playing then paused, it is further in than the time since,
-	 * which no later play could be. Anything else proves nothing (an unseen
-	 * pause, seek or repeat look alike), and the note ends.
+	 * A new deck on a station: a noted song it holds for the same one reason
+	 * keeps its lane (any play of it has that reason, from either deck); one
+	 * it holds for another reason, for several or not at all can no longer
+	 * tell which deck a play came from, and keeps no lane.
 	 */
-	private laneSamePlay(n: LaneNote, obs: PlayerObservation, now: number): boolean {
-		if (n.lastAt === undefined || n.progress === undefined) return false;
-		const start = n.start ?? n.lastAt - n.progress;
-		const since = now - n.lastAt;
-		if (n.playing && obs.isPlaying)
-			return Math.abs(obs.at - obs.progressMs - start) <= LANE_SAME_PLAY_SLACK_MS;
-		if (!n.playing && !obs.isPlaying) return obs.progressMs === n.progress;
-		if (!n.playing && obs.isPlaying)
-			return obs.progressMs >= n.progress && obs.progressMs - n.progress <= LANE_SAME_PLAY_SLACK_MS;
-		return (
-			obs.progressMs >= n.progress &&
-			obs.progressMs <= n.progress + since + LANE_SAME_PLAY_SLACK_MS &&
-			obs.progressMs > since + LANE_SAME_PLAY_SLACK_MS
-		);
-	}
-
-	/**
-	 * A new deck on a station: notes of songs not playing right now belong to
-	 * plays from the deck before and are closed; the song playing now keeps its
-	 * note (it began from that deck and may still be listed).
-	 */
-	private closeLaneNotes(stationId: number): void {
-		const playing = this.kvGet<PlayerSnapshot>("player")?.obs?.trackId ?? null;
-		const now = this.now();
+	private reconcileLaneNotes(stationId: number, deck: Deck): void {
 		const notes = this.laneNotes();
 		let changed = false;
-		for (const n of notes)
-			if (n.station === stationId && n.goneAt === undefined && n.id !== playing) {
-				n.goneAt = now;
-				changed = true;
-			}
+		for (const n of notes) {
+			if (n.station !== stationId || n.kind === null) continue;
+			const kinds = new Set(deck.items.filter((it) => it.id === n.id).map((it) => it.kind));
+			if (kinds.size === 1 && kinds.has(n.kind)) continue;
+			n.kind = null;
+			changed = true;
+		}
 		if (changed) this.kvSet("lane_notes", notes);
 	}
 
 	/**
-	 * The lane for a play being recorded: the latest note of this song on this
-	 * station whose very play this provably is, used once. Spotify stamps a
-	 * play when it ends, and lists only plays of 30 s or more: a stamp within
-	 * the slack of the last look that still showed the noted play leaves no
-	 * room for another play of the song. Anything later may be a play the
-	 * looks never saw (a skip, the song again), however well the times fit:
-	 * no lane. No note, no lane.
+	 * The lane for a play being recorded in a station's playlist: the note of
+	 * this song on this station seen before the play's stamp and not too long
+	 * ago, used once, when every deck since gave the song that same one
+	 * reason. No note, no lane.
 	 */
 	private laneFor(stationId: number, id: TrackId, at: number): SlotKind | null {
 		const notes = this.laneNotes();
-		let best = -1;
-		notes.forEach((n, i) => {
-			if (n.station !== stationId || n.id !== id || n.seenAt > at || at - n.seenAt > LANE_NOTE_MS)
-				return;
-			if (n.goneAt !== undefined && at > n.goneAt + LANE_STAMP_SLACK_MS) return;
-			if (at >= (n.lastAt ?? n.seenAt) + LANE_STAMP_SLACK_MS) return;
-			if (best < 0 || n.seenAt > notes[best]!.seenAt) best = i;
-		});
-		if (best < 0) return null;
-		const [note] = notes.splice(best, 1);
+		const i = notes.findIndex(
+			(n) =>
+				n.station === stationId && n.id === id && n.seenAt <= at && at - n.seenAt <= LANE_NOTE_MS,
+		);
+		if (i < 0) return null;
+		const [note] = notes.splice(i, 1);
 		this.kvSet("lane_notes", notes);
-		return note?.kind ?? null;
+		if (!note?.kind) return null;
+		// The deck now must still hold the song for that one reason.
+		const row = this.stationRow(stationId);
+		const deck = row ? this.deckOf(row) : null;
+		const kinds = new Set(deck?.items.filter((it) => it.id === id).map((it) => it.kind) ?? []);
+		return kinds.size === 1 && kinds.has(note.kind) ? note.kind : null;
 	}
 
 	/**
