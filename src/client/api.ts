@@ -202,6 +202,8 @@ export const api = {
 	devices: () => call<DeviceView[]>("GET", "/api/devices"),
 	thumb: (trackId: string, value: -1 | 0 | 1) =>
 		call<{ skipped?: boolean }>("POST", `/api/tracks/${trackId}/thumb`, { value }),
+	retestVerdict: (trackId: string, keep: boolean) =>
+		call<{ skipped?: boolean }>("POST", `/api/tracks/${trackId}/retest`, { keep }),
 	remoteKey: () => call<RemoteKeyView>("GET", "/api/remote"),
 	newRemoteKey: () => call<RemoteKeyView>("POST", "/api/remote"),
 	dropRemoteKey: () => call<unknown>("DELETE", "/api/remote"),

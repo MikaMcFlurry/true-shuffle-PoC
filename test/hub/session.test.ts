@@ -115,6 +115,8 @@ describe("durable listening session NN-02–07", () => {
 		const memory = h.sql.all("SELECT * FROM memory");
 		h.sql.run("DROP TABLE playback_sessions");
 		h.sql.run("ALTER TABLE plays DROP COLUMN lane");
+		h.sql.run("ALTER TABLE memory DROP COLUMN verdict");
+		h.sql.run("ALTER TABLE memory DROP COLUMN verdict_at");
 		h.sql.run("UPDATE kv SET v = '3' WHERE k = 'schema_version'");
 		h.fake.user().player.contextUri = null;
 		h.restart();
@@ -216,6 +218,8 @@ it("preserves large imported history, preferences and bans through additive migr
 	};
 	h.sql.run("DROP TABLE playback_sessions");
 	h.sql.run("ALTER TABLE plays DROP COLUMN lane");
+	h.sql.run("ALTER TABLE memory DROP COLUMN verdict");
+	h.sql.run("ALTER TABLE memory DROP COLUMN verdict_at");
 	h.sql.run("UPDATE kv SET v = '3' WHERE k = 'schema_version'");
 	h.restart();
 	expect(h.sql.all("SELECT * FROM hist_pages")).toEqual(before.history);

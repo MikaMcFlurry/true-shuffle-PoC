@@ -199,7 +199,7 @@ const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
 /** The lanes a play may be stamped with (see `laneOf`). */
 /** How long a lane note waits for its play: pauses may stretch a play over hours. */
 const LANE_NOTE_MS = 2 * DAY_MS;
-const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
+const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery", "probe"]);
 /** Slack between Spotify's stamp and our clock when a listing says a song is over. */
 const LISTED_SLACK_MS = 15_000;
 
@@ -345,6 +345,9 @@ interface MemoryRow {
 	last_skipped_at: number | null;
 	consumed_at: number | null;
 	thumb: number;
+	/** Answer to a retest: 1 "Gern wieder", -1 "Eher nicht" (schema v7). */
+	verdict?: number | null;
+	verdict_at?: number | null;
 }
 
 interface JobRow {
@@ -1742,13 +1745,16 @@ export class HubCore {
 			last_skipped_at: null,
 			consumed_at: null,
 			thumb: 0,
+			verdict: null,
+			verdict_at: null,
 		};
 		const next = fn({ ...cur });
 		this.db.run(
-			`INSERT INTO memory (id, last_played_at, plays, early_skips, last_skipped_at, consumed_at, thumb) VALUES (?, ?, ?, ?, ?, ?, ?)
+			`INSERT INTO memory (id, last_played_at, plays, early_skips, last_skipped_at, consumed_at, thumb, verdict, verdict_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 			 ON CONFLICT(id) DO UPDATE SET last_played_at = excluded.last_played_at, plays = excluded.plays,
 			   early_skips = excluded.early_skips, last_skipped_at = excluded.last_skipped_at,
-			   consumed_at = excluded.consumed_at, thumb = excluded.thumb`,
+			   consumed_at = excluded.consumed_at, thumb = excluded.thumb,
+			   verdict = excluded.verdict, verdict_at = excluded.verdict_at`,
 			id,
 			next.last_played_at,
 			next.plays,
@@ -1756,6 +1762,8 @@ export class HubCore {
 			next.last_skipped_at,
 			next.consumed_at ?? null,
 			next.thumb,
+			next.verdict ?? null,
+			next.verdict_at ?? null,
 		);
 		this.liveLookups.set(id, next);
 	}
@@ -1848,6 +1856,8 @@ export class HubCore {
 					consumedAt: r.consumed_at ?? null,
 					liked: false,
 					thumb: (r.thumb as -1 | 0 | 1) ?? 0,
+					verdict: r.verdict === 1 ? 1 : r.verdict === -1 ? -1 : 0,
+					verdictAt: r.verdict_at ?? null,
 				}
 			: emptyMemory(id);
 		const merged = mergeMemory(live, this.hist().get(id));
@@ -5740,31 +5750,7 @@ export class HubCore {
 				d.formerOff = [...(d.formerOff ?? []), trackId];
 				this.saveDeck(st.id, d);
 			}
-			// Skip it only while it plays. The stored picture of the player can be
-			// a minute old: when it says so, a fresh look confirms it, or a song the
-			// listener already left would take the next one with it.
-			const native = this.savedSession()?.controller === "native";
-			let now = native ? false : playing;
-			if (!native && now === undefined) {
-				const snap = this.kvGet<PlayerSnapshot>("player");
-				if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) {
-					try {
-						const st = await this.client(new RequestBudget(3)).player();
-						now = !!st?.is_playing && st.item?.id === trackId;
-					} catch {
-						now = false;
-					}
-				}
-			}
-			if (now) {
-				const r = await this.playerAction("next");
-				skipped = r.ok;
-				// Our move: a look that still shows the song (Spotify catches up a
-				// moment later) must not skip it a second time. A skip that failed
-				// is left to the station guard to try again.
-				if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
-				else skipError = r.error?.message;
-			}
+			({ skipped, skipError } = await this.skipIfPlaying(trackId, playing));
 		}
 		if (value === 1) {
 			// "Nie wieder auf diesem Sender" ends with a thumb up, on every station.
@@ -5789,6 +5775,60 @@ export class HubCore {
 		);
 		await this.scheduleSoon(2000);
 		return skipError ? { skipped, skipError } : { skipped };
+	}
+
+	/**
+	 * Skip the song only while it plays. The stored picture of the player can
+	 * be a minute old: when it says so, a fresh look confirms it, or a song the
+	 * listener already left would take the next one with it.
+	 */
+	private async skipIfPlaying(
+		trackId: TrackId,
+		playing?: boolean,
+	): Promise<{ skipped: boolean; skipError?: string }> {
+		const native = this.savedSession()?.controller === "native";
+		let now = native ? false : playing;
+		if (!native && now === undefined) {
+			const snap = this.kvGet<PlayerSnapshot>("player");
+			if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) {
+				try {
+					const st = await this.client(new RequestBudget(3)).player();
+					now = !!st?.is_playing && st.item?.id === trackId;
+				} catch {
+					now = false;
+				}
+			}
+		}
+		if (!now) return { skipped: false };
+		const r = await this.playerAction("next");
+		// Our move: a look that still shows the song (Spotify catches up a
+		// moment later) must not skip it a second time. A skip that failed
+		// is left to the station guard to try again.
+		if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
+		return r.ok ? { skipped: true } : { skipped: false, skipError: r.error?.message };
+	}
+
+	/**
+	 * The listener's answer to a retest ("Nachprüfung", see core/memory
+	 * skipsWeigh): "Gern wieder" (keep) ends what the early skips say; "Eher
+	 * nicht" counts as one more skip and moves on to the next song.
+	 */
+	async retestVerdict(
+		trackId: TrackId,
+		keep: boolean,
+		playing?: boolean,
+	): Promise<{ skipped: boolean; skipError?: string }> {
+		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
+		const at = this.now();
+		this.updateLive(trackId, (r) => ({ ...r, verdict: keep ? 1 : -1, verdict_at: at }));
+		this.log(
+			"info",
+			"retest",
+			`Nachprüfung: ${keep ? "gern wieder" : "eher nicht"}: ${this.describe(trackId)}`,
+		);
+		const result = keep ? { skipped: false } : await this.skipIfPlaying(trackId, playing);
+		await this.scheduleSoon(2000);
+		return result;
 	}
 
 	// =======================================================================

@@ -981,6 +981,19 @@ main {
 	font-size: 0.9375rem;
 }
 
+/* A retest ("Nachprüfung"): the question and its two answers. */
+.retest {
+	display: grid;
+	gap: 10px;
+	margin-block: 12px;
+}
+
+.retest__keys {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
 .device-row {
 	display: flex;
 	gap: 10px;

@@ -37,6 +37,8 @@ export function songTags(
 	// "fresh" is the cassette's own pool (its playlists, liked songs, kept
 	// recommendations), so it claims the cassette, never a playlist.
 	else if (k === "fresh") tags.push({ text: "Aus der Kassette", tone: "playlist" });
+	// Played on purpose: early skips keep it rare, and true-shuffle asks again.
+	else if (k === "probe") tags.push({ text: "Nachprüfung", tone: "fact" });
 	if (thumb === 1 && k !== "favorite") tags.push({ text: "Favorit", tone: "fav" });
 	if (!facts) return tags;
 	// What was recorded about it. Only claims the records can carry: no stored
