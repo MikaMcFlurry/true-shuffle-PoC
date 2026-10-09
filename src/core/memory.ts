@@ -18,6 +18,83 @@ import {
 /** Early skips after which a song is "kaum noch" (barely ever) played. */
 export const RARE_AFTER_EARLY_SKIPS = 3;
 
+/**
+ * A skipped song is asked about again: after a month for the first early
+ * skip, twice as long for each further one, at most a year.
+ */
+export const RETEST_FIRST_MS = 30 * DAY_MS;
+export const RETEST_MAX_MS = 365 * DAY_MS;
+
+export function retestAfter(earlySkips: number): number {
+	return Math.min(
+		RETEST_MAX_MS,
+		RETEST_FIRST_MS * 2 ** (Math.min(Math.max(1, earlySkips), 16) - 1),
+	);
+}
+
+/** A play that ended this soon after "Eher nicht" is the play it ended. */
+export const VERDICT_SLACK_MS = 2 * 60_000;
+
+/** The latest word against the song: an early skip, or "Eher nicht". */
+export function lastNo(m: TrackMemory): number | null {
+	const no = m.verdict === -1 ? (m.verdictAt ?? null) : null;
+	if (m.lastSkippedAt === null) return no;
+	return no === null ? m.lastSkippedAt : Math.max(no, m.lastSkippedAt);
+}
+
+/** The latest word for it: a play of 30 s or more, or "Gern wieder". */
+export function lastYes(m: TrackMemory): number | null {
+	let played = m.lastPlayedAt;
+	// "Eher nicht" skips the song: the play that ends then is not a yes.
+	if (
+		played !== null &&
+		m.verdict === -1 &&
+		m.verdictAt != null &&
+		played >= m.verdictAt &&
+		played - m.verdictAt <= VERDICT_SLACK_MS
+	)
+		played = null;
+	const kept = m.verdict === 1 ? (m.verdictAt ?? null) : null;
+	if (played === null) return kept;
+	return kept === null ? played : Math.max(played, kept);
+}
+
+/**
+ * Do early skips still lower the song? Only while the last word on it is
+ * against it (a skip, or "Eher nicht"), and only until its next check is
+ * due: then it plays like any other song once more. Heard to 30 s or more
+ * since, or "Gern wieder", the skips stop counting; skipped again, they
+ * count again, and the next check is twice as far off ("Eher nicht" counts
+ * as one more skip). Skips of unknown date (an import from before this rule)
+ * keep counting until the history is imported again or "Gern wieder".
+ */
+export function skipsWeigh(m: TrackMemory, now: number): boolean {
+	if (m.earlySkips <= 0 || isOverplayed(m)) return false;
+	const no = lastNo(m);
+	const yes = lastYes(m);
+	if (no === null) return m.verdict !== 1;
+	if (yes !== null && yes > no) return false;
+	return now - no < retestAfter(m.earlySkips + (m.verdict === -1 ? 1 : 0));
+}
+
+/**
+ * Between two retests ("Nachprüfung") of one song: at least this long since
+ * the last word against it.
+ */
+export const PROBE_GAP_MS = 30 * DAY_MS;
+
+/**
+ * May the song be played on purpose now to see whether it is still skipped?
+ * Its skips keep it rare (see skipsWeigh), and the last word against it is
+ * at least `PROBE_GAP_MS` old (or of unknown date). Heard then, the skips
+ * stop counting; skipped, the next check moves further off.
+ */
+export function probeDue(m: TrackMemory, now: number): boolean {
+	if (!skipsWeigh(m, now)) return false;
+	const no = lastNo(m);
+	return no === null || now - no >= PROBE_GAP_MS;
+}
+
 /** A song skipped early is "nicht jetzt": kept out of decks for this long. */
 export const NOT_NOW_MS = 24 * HOUR_MS;
 
@@ -30,6 +107,20 @@ export const RECENT_GUARD_MS = 24 * HOUR_MS;
 
 /** Plays after which a rarely-skipped song counts as "known and liked". */
 export const FAMILIAR_PLAYS = 5;
+
+/**
+ * Overplayed ("überhört"): heard to 30 s or more at least `FAMILIAR_PLAYS`
+ * times before it was first skipped early. A song loved first and skipped
+ * later was played too often (Spotify's shuffle likes its favourites); the
+ * skips say "enough for now", not "never". Such a song is not held against:
+ * it rests for `OVERPLAYED_REST_MS` after each early skip, then plays like
+ * any other song.
+ */
+export function isOverplayed(m: TrackMemory): boolean {
+	return m.earlySkips > 0 && (m.playedBeforeSkips ?? 0) >= FAMILIAR_PLAYS;
+}
+
+export const OVERPLAYED_REST_MS = 90 * DAY_MS;
 
 /**
  * Favourite = the listener has told us (thumb up, Spotify heart) or their
@@ -48,14 +139,15 @@ export function isBlocked(m: TrackMemory, banned: ReadonlySet<TrackId>): boolean
 
 /**
  * Taste weight in (0, ~4]. Under the `consume` skip policy a skip says
- * nothing about taste, so skips are ignored there.
+ * nothing about taste, so skips are ignored there; elsewhere only while
+ * they weigh (see `skipsWeigh`).
  */
-export function tasteWeight(m: TrackMemory, policy: SkipPolicy): number {
+export function tasteWeight(m: TrackMemory, policy: SkipPolicy, now: number): number {
 	let w = 1;
 	if (m.thumb === 1) w *= 2;
 	if (m.liked) w *= 1.5;
 	if (m.plays >= FAMILIAR_PLAYS && m.earlySkips <= m.plays * 0.2) w *= 1.3;
-	if (policy !== "consume") {
+	if (policy !== "consume" && skipsWeigh(m, now)) {
 		if (m.earlySkips >= RARE_AFTER_EARLY_SKIPS) w *= 0.03;
 		else if (m.earlySkips > 0) w *= 0.5 ** m.earlySkips;
 	}
@@ -82,7 +174,11 @@ export function heardInRound(m: TrackMemory, roundStartedAt: number, policy: Ski
 /** Temporarily off-limits: heard very recently, or skipped very recently. */
 export function coolingDown(m: TrackMemory, now: number): boolean {
 	if (m.lastPlayedAt !== null && now - m.lastPlayedAt < RECENT_GUARD_MS) return true;
-	if (m.lastSkippedAt !== null && now - m.lastSkippedAt < NOT_NOW_MS) return true;
+	const no = lastNo(m);
+	if (no !== null && now - no < NOT_NOW_MS) return true;
+	// Overplayed: a rest after the last skip, not a lower weight.
+	if (isOverplayed(m) && m.lastSkippedAt !== null && now - m.lastSkippedAt < OVERPLAYED_REST_MS)
+		return true;
 	return false;
 }
 
@@ -124,11 +220,19 @@ export function mergeMemory(live: TrackMemory, imported: ImportedStats | undefin
 			: imported.lastPlayedAt === null
 				? live.lastPlayedAt
 				: Math.max(live.lastPlayedAt, imported.lastPlayedAt);
+	const skipped = [live.lastSkippedAt, imported.lastSkippedAt ?? null].filter(
+		(x): x is number => x !== null,
+	);
 	return {
 		...live,
 		plays: live.plays + imported.plays,
 		earlySkips: live.earlySkips + imported.earlySkips,
 		lastPlayedAt: last,
+		// Imported plays all came before any live skip.
+		playedBeforeSkips: imported.earlySkips > 0 ? (imported.playedBeforeSkips ?? 0) : imported.plays,
+		// The import ends where live counting begins: a live date is the later one.
+		// Imported skips of unknown date and none live leave it unknown (see skipsWeigh).
+		lastSkippedAt: skipped.length > 0 ? Math.max(...skipped) : null,
 	};
 }
 
@@ -137,4 +241,8 @@ export interface ImportedStats {
 	plays: number;
 	earlySkips: number;
 	lastPlayedAt: number | null;
+	/** Absent in an import from before skips were dated. */
+	lastSkippedAt?: number | null;
+	/** Plays before the first early skip (see isOverplayed); absent in older imports. */
+	playedBeforeSkips?: number;
 }

@@ -3,7 +3,8 @@
  * Spotify stand-in (synthetic demo library, see e2e/fake-server.ts).
  */
 
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+import type { SpotifyUsageReport, SpotifyUsageTotals } from "../src/shared/spotify-usage";
 
 const FAKE = "http://127.0.0.1:8788/__control";
 
@@ -99,19 +100,29 @@ test.describe.configure({ mode: "serial" });
 test.describe("a listener's day", () => {
 	test.use({ viewport: { width: 390, height: 844 } });
 
+	test("shows signed-out users as online after a normal authentication response", async ({
+		page,
+	}) => {
+		const response = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/state");
+		await page.goto("/");
+		expect((await response).status()).toBe(401);
+		await expect(page.getByRole("link", { name: "Mit Spotify anmelden" })).toBeVisible();
+		await expect(page.getByText("Offline oder nicht erreichbar.", { exact: false })).toBeHidden();
+	});
+
 	test("signs in with Spotify and saves playlists as stations", async ({ page }) => {
 		await signIn(page);
-		await expect(page.getByText("Wähle, welche Sender werden")).toBeVisible();
+		await expect(page.getByText("Wähle, welche Playlists Kassetten werden")).toBeVisible();
 		await checkPage(page, "Sendersuchlauf");
 		// A playlist of someone else cannot be read (Spotify keeps its songs).
 		await expect(page.getByRole("checkbox", { name: /Today's Top Hits/ })).toBeDisabled();
 		await page.getByRole("checkbox", { name: /Indie & Gitarren/ }).check();
 		await page.getByRole("checkbox", { name: /Lange Autofahrt/ }).check();
-		await page.getByRole("button", { name: "2 Sender speichern" }).click();
+		await page.getByRole("button", { name: "2 Kassetten anlegen" }).click();
 
 		// Home: the automatic "Alles" plus the two stations, ready once imported.
 		for (const name of ["Alles", "Indie & Gitarren", "Lange Autofahrt"]) {
-			await expect(page.getByRole("button", { name: `${name} starten` })).toBeEnabled({
+			await expect(page.getByRole("button", { name: new RegExp(`^${name}`) })).toBeEnabled({
 				timeout: 60_000,
 			});
 		}
@@ -120,18 +131,20 @@ test.describe("a listener's day", () => {
 
 	test("starts a station in Spotify, in true-shuffle's order", async ({ page }) => {
 		await signIn(page);
-		await page.getByRole("button", { name: "Indie & Gitarren starten" }).click();
-		const display = page.getByRole("region", { name: "Anzeige" });
-		await expect(display).toContainText("Indie & Gitarren");
-		await expect(display).toContainText("Noch nicht gehört in Runde 1");
-		await expect(display).toContainText("Mikas iPhone");
+		await page.getByRole("button", { name: /^Indie & Gitarren/ }).click();
+		await page.getByRole("button", { name: "Wiedergabe starten" }).click();
+		const display = page.locator(".player");
+		await expect(page.locator(".station-actions")).toContainText("Indie & Gitarren");
+		await expect(page.locator(".promise")).toContainText("Deine Stelle bleibt");
+		await expect(display).toContainText("Läuft auf Mikas iPhone");
+		await expect(page.locator(".session-status")).toHaveText("Spielt");
 
 		const s = await fake("status");
 		expect(s.playing).toBe(true);
 		expect(s.shuffle).toBe(false);
 		expect(s.context).toMatch(/^spotify:playlist:/);
 		// Playing now: a tap opens the station instead of starting it over.
-		const tile = page.getByRole("button", { name: "Indie & Gitarren öffnen (läuft gerade)" });
+		const tile = page.getByRole("link", { name: "Indie & Gitarren: Mix und Regeln" });
 		await expect(tile).toBeVisible();
 		await tile.click();
 		await expect(page.getByRole("heading", { name: "Indie & Gitarren", level: 1 })).toBeVisible();
@@ -139,14 +152,35 @@ test.describe("a listener's day", () => {
 		expect((await fake("status")).playing).toBe(true);
 	});
 
+	test("counts song time locally without additional API requests", async ({ page }) => {
+		await signIn(page);
+		const progress = page.getByRole("progressbar", { name: "Geschätzte Songposition" });
+		await expect(progress).toBeVisible();
+		const before = await progress.evaluate((el) => (el as HTMLProgressElement).value);
+		let calls = 0;
+		page.on("request", (request) => {
+			if (new URL(request.url()).pathname.startsWith("/api/")) calls++;
+		});
+		await expect
+			.poll(
+				async () => (await progress.evaluate((el) => (el as HTMLProgressElement).value)) - before,
+			)
+			.toBeGreaterThanOrEqual(1000);
+		expect(calls).toBe(0);
+		await expect(page.locator(".progress-labels")).not.toContainText("gespeichert");
+	});
+
 	test("skips and bans a song from the transport keys", async ({ page }) => {
 		await signIn(page);
-		const song = page.getByRole("region", { name: "Anzeige" }).locator(".card__song");
+		const song = page.locator(".now-copy h2");
 		await expect(song).not.toBeEmpty();
-		const first = await song.textContent();
+		const first = (await fake("status")).current;
+		expect(first).not.toBeNull();
 
-		await page.getByRole("button", { name: "Nächster Song" }).click();
-		await expect(song).not.toHaveText(first ?? "", { timeout: 20_000 });
+		await page.getByRole("button", { name: "Weiter: Nächster Song" }).click();
+		await expect(page.getByRole("button", { name: "Weiter: Nächster Song" })).toBeEnabled();
+		// Synthetic tracks reuse titles; Spotify track identity must change.
+		await expect.poll(async () => (await fake("status")).current).not.toBe(first);
 
 		const before = (await fake("status")).current;
 		await page.getByRole("button", { name: "Daumen runter: diesen Song nie wieder" }).click();
@@ -156,21 +190,31 @@ test.describe("a listener's day", () => {
 
 	test("shows the station with its round, mix and next songs", async ({ page }) => {
 		await signIn(page);
-		// Every station is set up from the back panel (Menü).
-		await page.getByRole("link", { name: "Menü" }).click();
+		// Every cassette is set up from the shelf (Kassetten).
+		await page.getByRole("link", { name: "Kassetten" }).click();
 		await page.getByRole("link", { name: "Indie & Gitarren einstellen" }).click();
 		await expect(page.getByRole("heading", { name: "Indie & Gitarren", level: 1 })).toBeVisible();
-		const panel = page.getByRole("complementary");
-		await expect(panel.getByText(/von 400 gehört/)).toBeVisible();
-		const next = page.getByRole("region", { name: "Als Nächstes" }).getByRole("listitem");
+		const panel = page.locator(".page");
+		await expect(panel.getByText(/von 400 Songs gehört/).first()).toBeVisible();
+		// Song rows only: each row also holds its own list of tags.
+		const next = page
+			.getByRole("region", { name: "Als Nächstes" })
+			.getByRole("listitem")
+			.filter({ has: page.getByRole("button", { name: / bewerten$/ }) });
 		await expect(next.first()).toBeVisible();
 		await checkPage(page, "station");
 
 		// On the sheet the mix is printed as the knob's three positions to choose from.
 		await page.getByRole("radio", { name: "Vertraut" }).check();
-		await expect(page.getByText(/≈ 50 % ungehört/)).toBeVisible();
+		await expect(page.getByText(/50 % ungehört/)).toBeVisible();
 		await page.getByRole("radio", { name: "Entdecker" }).check();
-		await expect(page.getByText(/≈ 60 % ungehört/)).toBeVisible();
+		await expect(page.getByText(/60 % ungehört/)).toBeVisible();
+		// Stepless: any value between the presets, with the shares printed below.
+		await page.getByRole("slider", { name: /Genau einstellen/ }).fill("40");
+		await expect(page.getByText(/62 % ungehört/)).toBeVisible();
+		await expect(page.getByText("Eigene Mischung zwischen den Stufen.")).toBeVisible();
+		await page.getByRole("radio", { name: "Entdecker" }).check();
+		await expect(page.getByText(/60 % ungehört/)).toBeVisible();
 
 		// Rated afterwards, not only while it plays: a song further down the list.
 		const third = next.nth(2);
@@ -182,23 +226,110 @@ test.describe("a listener's day", () => {
 		await expect(third.getByRole("img", { name: "Kommt nie wieder" })).toBeVisible();
 	});
 
+	test("the favourite share keeps every step, also past 60 % and when a save fails", async ({
+		page,
+	}) => {
+		await signIn(page);
+		const st = (await (await page.request.get("/api/state")).json()) as {
+			stations: { id: number; name: string }[];
+		};
+		const sid = st.stations.find((x) => x.name === "Indie & Gitarren")!.id;
+		const rulesNow = async () =>
+			(
+				(await (await page.request.get(`/api/stations/${sid}`)).json()) as {
+					rules: { favoriteShare: number | null };
+				}
+			).rules.favoriteShare;
+		const setShare = (v: number | null) =>
+			page.request.patch(`/api/stations/${sid}`, {
+				headers: { "x-ts": "1" },
+				data: { rules: { favoriteShare: v } },
+			});
+
+		// Two quick key steps while each save takes over a second: 37 → 38 → 39.
+		await setShare(0.37);
+		const bodies: unknown[] = [];
+		await page.route(`**/api/stations/${sid}`, async (route) => {
+			if (route.request().method() !== "PATCH") return route.fallback();
+			bodies.push(
+				(route.request().postDataJSON() as { rules: { favoriteShare: number } }).rules
+					.favoriteShare,
+			);
+			await new Promise((r) => setTimeout(r, 1200));
+			await route.fallback();
+		});
+		await page.goto(`/sender/${sid}`);
+		await page.locator("summary", { hasText: "Erweitert" }).click();
+		const slider = page.getByRole("slider", { name: /Fester Anteil/ });
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("37 %");
+		await slider.focus();
+		await page.keyboard.press("ArrowRight");
+		await page.waitForTimeout(30);
+		await page.keyboard.press("ArrowRight");
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("39 %");
+		await expect.poll(rulesNow, { timeout: 15_000 }).toBe(0.39);
+		expect(bodies).toEqual([0.38, 0.39]);
+		await page.waitForTimeout(500);
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("39 %");
+		await page.unroute(`**/api/stations/${sid}`);
+
+		// A share above 60 % from before: shown as it is, one step down is 84.
+		await setShare(0.85);
+		await page.reload();
+		await page.locator("summary", { hasText: "Erweitert" }).click();
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("85 %");
+		await expect(slider).toHaveValue("85");
+		await slider.focus();
+		await page.keyboard.press("ArrowLeft");
+		await expect.poll(rulesNow).toBe(0.84);
+
+		// A refused save: the page goes back to what is stored.
+		await page.route(`**/api/stations/${sid}`, (route) =>
+			route.request().method() === "PATCH"
+				? route.fulfill({ status: 500, json: { error: { code: "x", message: "kaputt" } } })
+				: route.fallback(),
+		);
+		await page.keyboard.press("ArrowLeft");
+		await expect(page.getByText(/Nicht gespeichert/)).toBeVisible();
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("84 %");
+		await page.unroute(`**/api/stations/${sid}`);
+		expect(await rulesNow()).toBe(0.84);
+		await setShare(null);
+	});
+
 	test("guest mode keeps someone else's music out of the memory", async ({ page }) => {
 		await signIn(page);
-		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: "Mehr" }).click();
 		await checkPage(page, "menu");
 		await page.getByRole("switch", { name: /Gast-Modus/ }).check();
 		await expect(page.getByText(/Gast-Modus an/)).toBeVisible();
-		await page.getByRole("button", { name: "Zurück" }).click();
-		await expect(page.locator(".seg.on", { hasText: "GAST" })).toBeVisible();
+		await page.getByRole("link", { name: "Jetzt" }).click();
+		await expect(page.locator(".player-heading").getByText(/Gast-Modus/)).toBeVisible();
 
-		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: "Mehr" }).click();
 		await page.getByRole("switch", { name: /Gast-Modus/ }).uncheck();
 		await expect(page.getByText(/Gast-Modus aus/)).toBeVisible();
 	});
 
+	test("a device can count as guest for good, and back", async ({ page }) => {
+		await signIn(page);
+		await page.goto("/geraete");
+		const section = page.getByRole("region", { name: "Immer im Gast-Modus" });
+		const sw = section.getByRole("switch").first();
+		await expect(sw).toBeVisible();
+		const name = (await section.locator(".row__title").first().textContent())!.trim();
+		await sw.check();
+		await expect(page.getByText(`„${name}“ zählt ab jetzt nie mit.`)).toBeVisible();
+		await expect(sw).toBeChecked();
+		await checkPage(page, "devices with a guest device");
+		await sw.uncheck();
+		await expect(page.getByText(`„${name}“ zählt wieder mit.`)).toBeVisible();
+		await expect(sw).not.toBeChecked();
+	});
+
 	test("a personal key likes the playing song from Siri or a widget", async ({ page }) => {
 		await signIn(page);
-		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: "Mehr" }).click();
 		await page.getByRole("link", { name: /Fernbedienung/ }).click();
 		await expect(page.getByRole("heading", { name: "Fernbedienung", level: 1 })).toBeVisible();
 		await page.getByRole("button", { name: "Schlüssel erstellen" }).click();
@@ -230,9 +361,143 @@ test.describe("a listener's day", () => {
 		expect(old.status()).toBe(401);
 	});
 
+	test("an imported history becomes a Hörprofil for any period, with hours, months and top artists", async ({
+		page,
+	}) => {
+		await signIn(page);
+		await page.goto("/import");
+		const plays = Array.from({ length: 40 }, (_, i) => ({
+			ts: new Date(Date.UTC(2024, i % 12, 1 + (i % 27), 7 + (i % 14))).toISOString(),
+			ms_played: 180_000,
+			spotify_track_uri: `spotify:track:${String(i % 9).padStart(22, "Q")}`,
+			master_metadata_track_name: `Alter Song ${i % 9}`,
+			master_metadata_album_artist_name: i % 3 === 0 ? "Glasfabrik" : "Nachtbus",
+		}));
+		await page.locator('input[type="file"]').setInputFiles({
+			name: "Streaming_History_Audio_2024.json",
+			mimeType: "application/json",
+			buffer: Buffer.from(JSON.stringify(plays)),
+		});
+		await page.getByRole("button", { name: "Übernehmen" }).click();
+		await page.getByRole("link", { name: "Dein Hörprofil ansehen" }).click();
+		await expect(page.getByRole("heading", { name: "Dein Hörprofil", level: 1 })).toBeVisible();
+		// The last 30 days: none of the 2024 plays.
+		await expect(page.getByRole("radio", { name: "30 Tage" })).toBeChecked();
+		await expect(page.locator(".profile__source")).toContainText(
+			"aus deinem importierten Spotify-Verlauf",
+		);
+		await page.getByRole("radio", { name: "Alles" }).check();
+		await expect(page.locator(".figure--hero")).toContainText("2 Stunden");
+		await expect(page.locator(".figure--hero")).toContainText("so lange lief sie wirklich");
+		await expect(page.getByRole("region", { name: "Am meisten gehört" })).toContainText("Nachtbus");
+		await expect(page.getByRole("region", { name: "Im Verlauf" })).toBeVisible();
+		// Every value the charts draw can be read as a table: 24 hours by 7 days, every month.
+		for (const t of await page.getByText("Als Tabelle").all()) await t.click();
+		const week = page.getByRole("table", { name: /Uhrzeit .* Wochentag/ });
+		await expect(week.getByRole("columnheader")).toHaveCount(8);
+		await expect(week.locator("tbody tr")).toHaveCount(24);
+		await expect(week.locator("tbody td")).toHaveCount(168);
+		const perDay = await week.locator("tfoot td").allInnerTexts();
+		expect(perDay.reduce((sum, v) => sum + Number(v), 0)).toBe(40);
+		const months = page.getByRole("table", { name: "Hören pro Monat" });
+		await expect(months.locator("tbody tr")).toHaveCount(12);
+		await expect(months.getByRole("row", { name: /Januar 2024/ })).toHaveText(
+			/Januar 2024\s*0,2\s*4/,
+		);
+		await checkPage(page, "Hörprofil");
+		// The year in review, and a range of one's own.
+		await page.getByRole("radio", { name: "2024" }).check();
+		await expect(page.locator(".figure--hero")).toContainText("im Jahr 2024");
+		await expect(page.getByRole("region", { name: "Am meisten gehört" })).toContainText("Nachtbus");
+		await page.getByRole("radio", { name: "Eigener" }).check();
+		await page.getByLabel("Von").fill("2024-03-01");
+		await page.getByLabel("Bis").fill("2024-03-31");
+		await page.getByRole("button", { name: "Anzeigen" }).click();
+		await expect(page.locator(".figure--hero")).toContainText("vom 1. März 2024 bis 31. März 2024");
+		await expect(page.locator(".figure").nth(1)).toContainText(/^\s*\d+\s*Songs gehört/);
+		await checkPage(page, "Hörprofil, eigener Zeitraum");
+	});
+
+	test("an export from after the first sign-in says there is nothing new to take", async ({
+		page,
+	}) => {
+		await signIn(page);
+		await page.goto("/import");
+		const sent: string[] = [];
+		page.on("request", (r) => {
+			if (/\/api\/history\/(import|listens)/.test(r.url())) sent.push(r.url());
+		});
+		// Every play lies after the first sign-in: true-shuffle counted it itself.
+		const soon = Date.now() + 5 * 60_000;
+		const plays = Array.from({ length: 6 }, (_, i) => ({
+			ts: new Date(soon + i * 200_000).toISOString(),
+			ms_played: 180_000,
+			spotify_track_uri: `spotify:track:${String(i).padStart(22, "R")}`,
+			master_metadata_track_name: `Neuer Song ${i}`,
+			master_metadata_album_artist_name: "Nachtbus",
+		}));
+		await page.locator('input[type="file"]').setInputFiles({
+			name: "Streaming_History_Audio_2026.json",
+			mimeType: "application/json",
+			buffer: Buffer.from(JSON.stringify(plays)),
+		});
+		await expect(page.getByRole("alert")).toContainText(
+			"Alles in diesen Dateien lief nach deiner ersten Anmeldung",
+		);
+		await expect(page.getByRole("button", { name: "Übernehmen" })).toHaveCount(0);
+		expect(sent).toEqual([]);
+	});
+
+	test("a Hörprofil that could not be saved says so and is sent again alone", async ({ page }) => {
+		await signIn(page);
+		await page.goto("/import");
+		const imports: string[] = [];
+		page.on("request", (r) => {
+			if (r.url().includes("/api/history/import")) imports.push(r.url());
+		});
+		let refuse = true;
+		await page.route(/\/api\/history\/listens$/, (route) => {
+			if (!refuse) return route.continue();
+			refuse = false;
+			return route.fulfill({
+				status: 503,
+				contentType: "application/json",
+				body: JSON.stringify({ error: { code: "busy", message: "Gerade nicht erreichbar." } }),
+			});
+		});
+		const plays = Array.from({ length: 12 }, (_, i) => ({
+			ts: new Date(Date.UTC(2023, i, 3, 20)).toISOString(),
+			ms_played: 200_000,
+			spotify_track_uri: `spotify:track:${String(i % 4).padStart(22, "S")}`,
+			master_metadata_track_name: `Alter Song ${i % 4}`,
+			master_metadata_album_artist_name: "Glasfabrik",
+		}));
+		await page.locator('input[type="file"]').setInputFiles({
+			name: "Streaming_History_Audio_2023.json",
+			mimeType: "application/json",
+			buffer: Buffer.from(JSON.stringify(plays)),
+		});
+		await page.getByRole("button", { name: "Übernehmen" }).click();
+		await expect(
+			page.getByRole("heading", { name: "Übernommen. Das ist jetzt anders:" }),
+		).toBeVisible();
+		await expect(page.getByRole("alert")).toContainText(
+			"Das Hörprofil wurde nicht gespeichert: Gerade nicht erreichbar.",
+		);
+		await expect(page.getByRole("link", { name: "Dein Hörprofil ansehen" })).toHaveCount(0);
+		expect(imports).toHaveLength(1);
+		await page.getByRole("button", { name: "Hörprofil erneut speichern" }).click();
+		await page.getByRole("link", { name: "Dein Hörprofil ansehen" }).click();
+		await page.getByRole("radio", { name: "Alles" }).check();
+		await expect(page.getByRole("region", { name: "Am meisten gehört" })).toContainText(
+			"Glasfabrik",
+		);
+		expect(imports).toHaveLength(1);
+	});
+
 	test("every page reads well on a phone", async ({ page }) => {
 		await signIn(page);
-		await expect(page.getByRole("button", { name: /^Alles starten/ })).toBeVisible();
+		await expect(page.getByRole("button", { name: /^Alles/ })).toBeVisible();
 		for (const path of [
 			"/verlauf",
 			"/import",
@@ -263,15 +528,13 @@ test.describe("a listener's day", () => {
 		// The smallest phones reflow too (WCAG 1.4.10): home and a station page at 320 px.
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto("/");
-		await expect(
-			page.getByRole("button", { name: /^Alles (starten|öffnen|weiterspielen)/ }),
-		).toBeVisible();
+		await expect(page.getByRole("button", { name: /^Alles/ })).toBeVisible();
 		await checkPage(page, "/ at 320 px");
-		await page.goto("/menu");
+		await page.goto("/sender");
 		const station = await page
 			.getByRole("link", { name: "Indie & Gitarren einstellen" })
 			.getAttribute("href");
-		await checkPage(page, "/menu at 320 px");
+		await checkPage(page, "/sender at 320 px");
 		await page.goto(station ?? "/");
 		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 		await checkPage(page, `${station} at 320 px`);
@@ -291,7 +554,7 @@ test.describe("a listener's day", () => {
 			});
 		expect((await rename(long)).ok()).toBe(true);
 		try {
-			for (const path of ["/", "/menu", `/sender/${lange?.id}`]) {
+			for (const path of ["/", "/sender", `/sender/${lange?.id}`]) {
 				await page.goto(path);
 				await expect(page.getByText(long).first()).toBeVisible();
 				await checkPage(page, `${path} at 320 px with a 60-character name`);
@@ -334,7 +597,10 @@ test.describe("a listener's day", () => {
 		});
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto(`/sender/${lange?.id}`);
-		const rows = page.getByRole("region", { name: "Als Nächstes" }).getByRole("listitem");
+		const rows = page
+			.getByRole("region", { name: "Als Nächstes" })
+			.getByRole("listitem")
+			.filter({ has: page.getByRole("button", { name: / bewerten$/ }) });
 		await expect(rows.first()).toContainText(title);
 		await checkText(page, "a 159-character title in the running order");
 		await rows
@@ -359,7 +625,7 @@ test.describe("a listener's day", () => {
 				await page.setViewportSize({ width: w, height: 700 });
 				await page.goto("/");
 				await expect(
-					page.getByRole("region", { name: "Anzeige" }).getByText(device, { exact: true }),
+					page.locator(".device-note").getByText(`Zuletzt auf ${device}`, { exact: true }),
 				).toBeVisible({ timeout: 20_000 });
 				await checkPage(page, `/ at ${w} px with a long device name`);
 				await checkContained(page, `/ at ${w} px with a long device name`);
@@ -368,6 +634,54 @@ test.describe("a listener's day", () => {
 			await fake("devices");
 			await page.request.post("/api/sync", { headers: { "x-ts": "1" } });
 		}
+	});
+
+	test("every cassette name stays on its label, whatever script or font draws it", async ({
+		page,
+	}) => {
+		await signIn(page);
+		const NAMES = [
+			"東京東京東京東京東",
+			"Sommer 🌞🎸 Roadtrip ☀️ mit Freunden",
+			"Ελληνικά Лето مرحبا",
+			"WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+			"Wohnzimmer Wochenende Mitternachtsmix für lange Abende",
+		];
+		// The app asks for /api/state with a query string, so a plain glob would miss it.
+		const STATE = /\/api\/state(\?|$)/;
+		await page.route(STATE, async (route) => {
+			const response = await route.fetch();
+			const json = (await response.json()) as { stations: { name: string }[] };
+			json.stations.forEach((s, i) => {
+				s.name = NAMES[i % NAMES.length]!;
+			});
+			await route.fulfill({ response, json });
+		});
+		for (const [width, scheme] of [
+			[390, "light"],
+			[390, "dark"],
+			[1440, "light"],
+			[1440, "dark"],
+		] as const) {
+			await page.setViewportSize({ width, height: 900 });
+			await page.emulateMedia({ colorScheme: scheme });
+			for (const path of ["/sender", "/"]) {
+				await page.goto(path);
+				await expect(page.locator(".cassette__name").getByText(NAMES[0]!).first()).toBeAttached();
+				await page.evaluate(() => document.fonts.ready);
+				// The label is the rect x 22..298 in the cassette's own units.
+				const out = await page.locator(".cassette__name tspan").evaluateAll((spans) =>
+					spans
+						.map((el) => {
+							const b = (el as SVGGraphicsElement).getBBox();
+							return { text: el.textContent, left: b.x, right: b.x + b.width };
+						})
+						.filter((b) => b.left < 21.5 || b.right > 298.5),
+				);
+				expect(out, `${path} at ${width} px, ${scheme}`).toEqual([]);
+			}
+		}
+		await page.unroute(STATE);
 	});
 
 	test("a station held paused plays on from its page, never starts over", async ({ page }) => {
@@ -393,7 +707,7 @@ test.describe("a listener's day", () => {
 		};
 		await page.goto(`/sender/${st.nowPlaying.stationId}`);
 		await expect(page.getByRole("heading", { name: "Pausiert" })).toBeVisible();
-		await page.getByRole("button", { name: "Weiterspielen" }).click();
+		await page.getByRole("button", { name: "Fortsetzen" }).click();
 		await expect.poll(async () => (await fake("status")).playing).toBe(true);
 		expect((await fake("status")).current).toBe(playing.current);
 	});
@@ -403,21 +717,28 @@ test.describe("a listener's day", () => {
 		await fake("pause");
 
 		await fake("premium?on=0");
-		await page.getByRole("button", { name: /^Lange Autofahrt starten/ }).click();
-		await expect(page.getByText(/nur mit Premium/)).toBeVisible();
-		await fake("premium?on=1");
-
+		try {
+			await page.getByRole("button", { name: /^Lange Autofahrt/ }).click();
+			await page.locator(".transport-main").click();
+			await expect(page.getByText(/nur mit Premium/)).toBeVisible();
+		} finally {
+			await fake("premium?on=1");
+		}
 		await fake("devices?none=1");
-		await expect(page.getByRole("button", { name: /^Lange Autofahrt starten/ })).toBeEnabled();
-		await page.getByRole("button", { name: /^Lange Autofahrt starten/ }).click();
-		await expect(page.getByText(/Öffne Spotify|Kein Spotify-Gerät/)).toBeVisible();
-		await fake("devices?none=0");
+		try {
+			await page.getByRole("button", { name: /^Lange Autofahrt/ }).click();
+			await expect(page.locator(".transport-main")).toBeEnabled();
+			await page.locator(".transport-main").click();
+			await expect(page.getByText(/Öffne Spotify|Kein Spotify-Gerät/)).toBeVisible();
+		} finally {
+			await fake("devices?none=0");
+		}
 	});
 
 	test("signs out and keeps the memory", async ({ page }) => {
 		await signIn(page);
 		const before = await page.context().cookies();
-		await page.getByRole("link", { name: "Menü" }).click();
+		await page.getByRole("link", { name: "Mehr" }).click();
 		await page.getByRole("button", { name: /Abmelden/ }).click();
 		await expect(page.getByRole("link", { name: "Mit Spotify anmelden" })).toBeVisible();
 
@@ -429,98 +750,349 @@ test.describe("a listener's day", () => {
 		await page.goto("/");
 
 		await page.getByRole("link", { name: "Mit Spotify anmelden" }).click();
-		await expect(
-			page.getByRole("button", { name: /^Indie & Gitarren (starten|öffnen|weiterspielen)/ }),
-		).toBeVisible();
+		await expect(page.getByRole("button", { name: /^Indie & Gitarren/ })).toBeVisible();
 	});
 });
 
-test.describe("desktop", () => {
+test.describe("calm player", () => {
 	test.use({ viewport: { width: 1440, height: 900 } });
-
-	test("keeps the radio and puts the station beside it", async ({ page }) => {
+	test("shows current music and ordered queue beside the library", async ({ page }) => {
 		await signIn(page);
-		await expect(page.getByRole("button", { name: /^Alles starten/ })).toBeVisible();
-		// The station that played last opens beside the radio.
-		await expect(page.locator(".side").getByRole("heading", { level: 1 })).toBeVisible();
-		await checkPage(page, "desktop home");
-		await page.getByRole("link", { name: "Menü" }).click();
-		await expect(page.locator(".side").getByRole("heading", { name: "Menü" })).toBeVisible();
-		await expect(page.getByRole("region", { name: "Anzeige" })).toBeVisible();
-		await checkPage(page, "desktop menu");
+		await expect(page.locator(".player")).toBeVisible();
+		await expect(page.getByRole("region", { name: "Andere Kassette einlegen" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Als Nächstes" })).toBeVisible();
+		await checkPage(page, "desktop player");
+		await page.screenshot({ path: ".impeccable/review/desktop.png", fullPage: true });
+		await page.getByRole("link", { name: "Mehr", exact: true }).click();
+		await expect(page.getByRole("heading", { name: "Mehr", level: 1 })).toBeVisible();
+		await checkPage(page, "desktop settings");
+	});
+	test("keeps saved song, progress and queue across reload and another browser", async ({
+		page,
+		browser,
+	}) => {
+		await signIn(page);
+		await page.getByRole("button", { name: /^Indie & Gitarren/ }).click();
+		await page.getByRole("button", { name: /Fortsetzen|Wiedergabe starten/ }).click();
+		await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeEnabled();
+		await expect.poll(async () => (await fake("status")).playing).toBe(true);
+		await fake("position?ms=97000&paused=1");
+		await page.request.post("/api/sync", { headers: { "x-ts": "1" } });
+		await page.reload();
+		await expect(page.getByText("1:37 gespeichert")).toBeVisible();
+		const before = await (await page.request.get("/api/state")).json();
+		await page.reload();
+		await expect(page.getByText("1:37 gespeichert")).toBeVisible();
+		const context = await browser.newContext({
+			baseURL: new URL(page.url()).origin,
+			locale: "de-DE",
+			timezoneId: "Europe/Berlin",
+		});
+		try {
+			const other = await context.newPage();
+			await signIn(other);
+			await expect(other.getByText("1:37 gespeichert")).toBeVisible();
+			await other.getByRole("button", { name: "Fortsetzen" }).click();
+			await expect.poll(async () => (await fake("status")).playing).toBe(true);
+			const after = await (await other.request.get("/api/state")).json();
+			expect(after.session.sessionId).toBe(before.session.sessionId);
+			expect(after.session.entryId).toBe(before.session.entryId);
+			expect(after.session.queue.map((e: { entryId: string }) => e.entryId)).toEqual(
+				before.session.queue.map((e: { entryId: string }) => e.entryId),
+			);
+		} finally {
+			await context.close();
+		}
+	});
+	test("handles offline state, light and dark mobile, keyboard and deliberate new queue", async ({
+		page,
+	}) => {
+		await signIn(page);
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+		await checkPage(page, "dark mobile");
+		await page.screenshot({
+			path: ".impeccable/review/mobile.png",
+			fullPage: true,
+		});
+		await page.emulateMedia({ colorScheme: "light" });
+		await page.screenshot({
+			path: ".impeccable/review/mobile-light.png",
+			fullPage: true,
+		});
+		await page.getByRole("button", { name: /neu mischen …$/ }).click();
+		await expect(page.getByRole("button", { name: "Ja, neu mischen" })).toBeVisible();
+		await page.getByRole("button", { name: "Abbrechen", exact: true }).click();
+		await page.context().setOffline(true);
+		await page.getByRole("button", { name: "Geräte aktualisieren" }).click();
+		await expect(page.getByText(/Geräte nicht geladen/)).toBeVisible();
+		await page.screenshot({ path: ".impeccable/review/mobile-offline.png", fullPage: true });
+		await page.context().setOffline(false);
+		await page.keyboard.press("Tab");
+		const focused = await page.evaluate(() => document.activeElement?.tagName);
+		expect(["BUTTON", "A", "SELECT"]).toContain(focused);
 	});
 });
 
-test.describe("on a touch screen", () => {
-	test.use({ viewport: { width: 390, height: 700 }, hasTouch: true });
-
-	test("a swipe across Klang never keeps it in hand", async ({ page }) => {
-		// The dial's selection falls back after 20 s untouched: let the test say when.
-		await page.clock.install();
+test.describe("confirmed Spotify operations and shared usage", () => {
+	test.use({ viewport: { width: 390, height: 844 }, timezoneId: "Europe/Berlin" });
+	async function openDiagnostics(page: Page): Promise<void> {
 		await signIn(page);
-		const tune = page.getByRole("slider", { name: "Senderwahl" });
-		const klang = page.getByRole("slider", { name: /^Klang für / });
-		await expect(tune).toBeVisible();
-		const stationOf = {
-			tune: async () => (await tune.getAttribute("aria-valuetext"))?.replace(/^\d+ von \d+: /, ""),
-			klang: async () =>
-				(await klang.getAttribute("aria-label"))?.replace(
-					/^Klang für (.*): Entdecken oder Vertraut$/,
-					"$1",
-				),
-			dial: () =>
-				page.evaluate(() => {
-					const at = document.querySelector<HTMLElement>(".dial")?.dataset.pointer;
-					return document.querySelector(`[data-at="${at}"] .station__name`)?.textContent?.trim();
-				}),
-		};
-		const agree = async () => {
-			const t = await stationOf.tune();
-			expect(await stationOf.klang(), "Klang turns the station Senderwahl shows").toBe(t);
-			expect(await stationOf.dial(), "the dial points where Senderwahl stands").toBe(t);
-			return t;
-		};
-		const resting = await agree();
-		const cdp = await page.context().newCDPSession(page);
-		// A finger lands on the target and drags the page down: the browser takes
-		// it as a scroll (pointerdown, pointercancel — no pointerup, no focus).
-		const swipeFrom = async (target: Locator) => {
-			await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-			const box = await target.boundingBox();
-			expect(box).not.toBeNull();
-			const x = Math.round(box!.x + box!.width / 2);
-			const y = Math.round(box!.y + box!.height / 2);
-			const before = await page.evaluate(() => window.scrollY);
-			await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
-			for (let i = 1; i <= 8; i++) {
-				await cdp.send("Input.dispatchTouchEvent", {
-					type: "touchMove",
-					touchPoints: [{ x, y: y + i * 20 }],
-				});
-			}
-			await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-			await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(before);
-		};
-		// Senderwahl turned to another station, then let go of.
-		const turnAway = async () => {
-			await tune.focus();
-			await page.keyboard.press("End");
-			if ((await stationOf.tune()) === resting) await page.keyboard.press("Home");
-			await tune.blur();
-			expect(await agree()).not.toBe(resting);
-		};
-		for (const [what, from] of [
-			["a detent", page.getByRole("button", { name: "Vertraut", exact: true })],
-			["the KLANG label", page.locator(".knob-unit--mix > .knob-unit__name")],
-		] as const) {
-			await turnAway();
-			await swipeFrom(from);
-			// Untouched for 20 s, the dial falls back to the station that plays (or played last).
-			await page.clock.fastForward(21_000);
-			await expect.poll(stationOf.tune, { message: `after a swipe from ${what}` }).toBe(resting);
-			await agree();
+		await page.goto("/mehr");
+		const onboarding = page.getByText("Wähle, welche Playlists Kassetten werden", { exact: true });
+		const details = page.getByText("Spotify-Freigabe & Anfragestatus", { exact: true });
+		await expect(onboarding.or(details)).toBeVisible();
+		if (await onboarding.isVisible()) {
+			await page.getByRole("button", { name: "Nur mit „Alles“ starten" }).click();
+			await expect(page.getByRole("button", { name: /^Alles/ })).toBeEnabled({ timeout: 60000 });
+			await page.goto("/mehr");
 		}
-		// And Klang follows Senderwahl again at once.
-		await turnAway();
+		await details.click();
+	}
+	function usage(now: number): SpotifyUsageReport {
+		const day: SpotifyUsageTotals = {
+			sent: 5,
+			read: 3,
+			write: 1,
+			refresh: 1,
+			blocked: 9,
+			quota: 1,
+			rate: 0,
+			network: 0,
+		};
+		const older: SpotifyUsageTotals = {
+			sent: 10,
+			read: 7,
+			write: 2,
+			refresh: 1,
+			blocked: 0,
+			quota: 0,
+			rate: 0,
+			network: 0,
+		};
+		const totals: SpotifyUsageTotals = {
+			sent: 15,
+			read: 10,
+			write: 3,
+			refresh: 2,
+			blocked: 9,
+			quota: 1,
+			rate: 0,
+			network: 0,
+		};
+		return {
+			policy: "confirmed-operation-v1",
+			generatedAt: now,
+			startedAt: now - 40 * 3600_000,
+			retentionHours: 720,
+			listenerCapacity: 5,
+			registeredListeners: 5,
+			observedListeners: 2,
+			overflowObserved: false,
+			totals,
+			listeners: [
+				{ listener: "Nutzer 1", totals: day },
+				{ listener: "Nutzer 2", totals: older },
+			],
+			operations: [
+				{
+					operation: "GET /artists/:id/albums",
+					totals: day,
+					responses: { "429:quota": 1, "200:none": 2 },
+				},
+				{ operation: "PUT /me/player/play", totals: older, responses: { "204:none": 2 } },
+			],
+			hours: [
+				{ hour: Math.floor(now / 3600_000), totals: day },
+				{ hour: Math.floor(now / 3600_000) - 40, totals: older },
+			],
+			episodes: [
+				{
+					id: 1,
+					listener: "Nutzer 1",
+					operation: "GET /artists/:id/albums",
+					firstFailureAt: now - 60_000,
+					lastFailureAt: now - 50_000,
+					reason: "QUOTA_EXCEEDED",
+					retryAfter: "49",
+					earliestRetryAt: now - 1000,
+					attempts: 3,
+					lastAttemptAt: now,
+					lastStatus: 200,
+					firstSuccessAt: now,
+				},
+			],
+		};
+	}
+	test("shows app-wide observations without exposing identities or inventing remaining capacity", async ({
+		page,
+	}) => {
+		const now = Date.now();
+		const report = usage(now);
+		let reads = 0;
+		await page.route("**/api/spotify/usage", (route) => {
+			reads++;
+			return route.fulfill({ json: report });
+		});
+		await page.route("**/api/spotify/diagnostics", (route) =>
+			route.fulfill({
+				json: { policyVersion: 2, cooldown: null, operationCooldowns: [], requests: null },
+			}),
+		);
+		await openDiagnostics(page);
+		const tracker = page.getByRole("region", { name: "Gemeinsame Spotify-Nutzung" });
+		await expect(tracker).toContainText("2 Konten mit beobachteten Anfragen");
+		await expect(tracker).toContainText("5 angemeldete Konten");
+		await expect(tracker).toContainText("Bis zu 5 Konten");
+		await expect(tracker).toContainText(
+			"3 Leseversuche · 1 Schreibversuch · 1 Token-Erneuerung · 9 lokal zurückgehalten · 1 echte 429-Antwort",
+		);
+		await expect(tracker).toContainText(
+			"10 Leseversuche · 3 Schreibversuche · 2 Token-Erneuerungen",
+		);
+		await expect(tracker).toContainText("720 Stundenblöcke");
+		await expect(tracker).toContainText("Andere Apps und deren Anfragen sind hier nicht sichtbar");
+		await tracker.getByText("Operationen und anonyme Konten", { exact: true }).click();
+		await expect(tracker.getByText("Nutzer 1", { exact: true })).toBeVisible();
+		await expect(tracker.getByText("Nutzer 2", { exact: true })).toBeVisible();
+		await tracker.getByText("Bestätigte 429 und beobachtete Erholung", { exact: true }).click();
+		await tracker
+			.getByText(/Nutzer 1 · GET \/artists\/:id\/albums · Erfolg danach beobachtet/)
+			.click();
+		await expect(tracker.getByText("Erster anschließender Erfolg", { exact: true })).toBeVisible();
+		await expect(tracker).toContainText("nicht den genauen Reset-Zeitpunkt");
+		await expect(tracker).toContainText("HTTP 200 · 3 Versuche");
+		expect(await tracker.textContent()).not.toMatch(
+			/spotify:user:|Bearer|access_token|mika@|remainingcapacity|übrige Anfragen/,
+		);
+		expect(reads).toBeGreaterThan(0);
+		await checkPage(page, "shared usage mobile");
+		await checkText(page, "shared usage mobile");
+		for (const theme of ["light", "dark"] as const) {
+			await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+			await page.evaluate(async () => {
+				(document.activeElement as HTMLElement)?.blur();
+				window.scrollTo(0, 0);
+				await new Promise(requestAnimationFrame);
+				await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {})));
+			});
+			await page.screenshot({
+				path: `.impeccable/review/spotify-usage-${theme}.png`,
+				fullPage: true,
+			});
+		}
+	});
+	test("holds only confirmed operations and never revives a legacy inferred global gate", async ({
+		page,
+	}) => {
+		let until: number | null = Date.now() + 30363_000;
+		const legacy = {
+			until: Date.now() + 300_000,
+			kind: "quota",
+			reason: "LEGACY_INFERRED",
+			retryAfter: "300",
+			observedAt: Date.now(),
+		};
+		await page.route("**/api/spotify/usage", (route) => route.fulfill({ json: usage(Date.now()) }));
+		await page.route("**/api/spotify/diagnostics", (route) =>
+			route.fulfill({
+				json: {
+					policyVersion: 2,
+					cooldown: legacy,
+					catalogQuarantine: legacy,
+					operationCooldowns: [
+						{
+							operation: "GET /me/player/devices",
+							until,
+							kind: "quota",
+							reason: "QUOTA_EXCEEDED",
+							retryAfter: until === null ? null : "30363",
+							observedAt: Date.now(),
+						},
+					],
+					availability: {
+						testedAt: Date.now(),
+						outcomes: {
+							devices: { state: "held", status: 429, reason: "QUOTA_EXCEEDED" },
+							player: { state: "available", status: 204 },
+							history: { state: "available", status: 200 },
+						},
+						catalog: "untested",
+						controls: "untested",
+						stopped: false,
+					},
+					requests: null,
+				},
+			}),
+		);
+		await openDiagnostics(page);
+		await expect(page.getByText("Abfrage erfolgreich · 204", { exact: true })).toBeVisible();
+		await expect(page.getByText("Abfrage erfolgreich · 200", { exact: true })).toBeVisible();
+		await expect(page.getByText(/Bestätigte 429 · diese Abfrage wartet/)).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Geräte-Freigabe prüfen", exact: true }),
+		).toBeDisabled();
+		await expect(
+			page.getByText("8 Stunden, 26 Minuten, 3 Sekunden (30.363 Sekunden)", { exact: true }),
+		).toBeVisible();
+		await expect(page.getByText(/Europe\/Berlin/).first()).toBeVisible();
+		expect(await page.locator(".more__body").first().textContent()).not.toContain(
+			"LEGACY_INFERRED",
+		);
+		await expect(
+			page.getByText(/Starten, Pausieren und Übertragen wurden nicht geprüft/),
+		).toBeVisible();
+		until = Date.now() - 1;
+		await page.getByRole("button", { name: "Status aktualisieren", exact: true }).click();
+		await expect(
+			page.getByRole("button", { name: "Geräte-Freigabe prüfen", exact: true }),
+		).toBeEnabled();
+		until = null;
+		await page.getByRole("button", { name: "Status aktualisieren", exact: true }).click();
+		await expect(page.getByText("Nicht von Spotify angegeben", { exact: true })).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Geräte-Freigabe prüfen", exact: true }),
+		).toBeEnabled();
+		await checkPage(page, "confirmed operation gates");
+		await checkText(page, "confirmed operation gates");
+	});
+	test("shows tracking failure with a retry and does not turn it into a Spotify block", async ({
+		page,
+	}) => {
+		let fail = true;
+		await page.route("**/api/spotify/usage", (route) =>
+			route.fulfill(
+				fail
+					? {
+							status: 503,
+							json: {
+								error: { code: "tracking_unavailable", message: "Messdaten nicht erreichbar" },
+							},
+						}
+					: { json: usage(Date.now()) },
+			),
+		);
+		await page.route("**/api/spotify/diagnostics", (route) =>
+			route.fulfill({
+				json: { policyVersion: 2, cooldown: null, operationCooldowns: [], requests: null },
+			}),
+		);
+		await openDiagnostics(page);
+		await expect(page.getByRole("alert")).toContainText("Messdaten nicht erreichbar");
+		await expect(
+			page.getByRole("button", { name: "Funktionen gezielt testen", exact: true }),
+		).toBeEnabled();
+		fail = false;
+		await page.getByRole("button", { name: "Status aktualisieren", exact: true }).click();
+		await expect(page.getByRole("region", { name: "Gemeinsame Spotify-Nutzung" })).toBeVisible();
+	});
+	test("requires authentication and request protection for the availability trial", async ({
+		request,
+	}) => {
+		expect((await request.post("/api/spotify/availability-test")).status()).toBe(403);
+		expect(
+			(await request.post("/api/spotify/availability-test", { headers: { "x-ts": "1" } })).status(),
+		).toBe(401);
+		expect((await request.get("/api/spotify/usage")).status()).toBe(401);
 	});
 });

@@ -76,7 +76,7 @@ describe("listening", () => {
 		h.fake.user().player.shuffle = true;
 		h.fake.user().player.repeat = "context";
 		const res = await h.hub.play(h.stationIds[0]!);
-		expect(res).toEqual({ ok: true, deviceName: "iPhone" });
+		expect(res).toEqual({ ok: true, deviceName: "iPhone", acceptedAt: h.clock.t });
 		const p = h.fake.user().player;
 		expect(p.contextUri).toBe(`spotify:playlist:${deckPlaylist(h, h.stationIds[0]!).id}`);
 		expect(p.shuffle).toBe(false);
@@ -102,7 +102,7 @@ describe("listening", () => {
 		expect(st.stations.find((s) => s.id === sid)!.playing).toBe(true);
 	});
 
-	it("writes a fresh deck without any heard song once the listener stopped", async () => {
+	it("retains the saved order and heard memory after the listener stopped", async () => {
 		const h = await onboarded();
 		const sid = h.stationIds[0]!;
 		await h.hub.play(sid);
@@ -114,12 +114,13 @@ describe("listening", () => {
 		);
 		expect(heard.size).toBeGreaterThan(10);
 		const deck = deckPlaylist(h, sid).items;
-		for (const id of deck) expect(heard.has(id)).toBe(false);
-		// Pressing play in Spotify directly now starts with a song never heard today.
-		expect(heard.has(deck[0]!)).toBe(false);
+		expect(deck.some((id) => heard.has(id))).toBe(true);
+		const saved = h.hub.savedSession(sid)!;
+		expect(saved.entryIds.length).toBe(deck.length);
+		expect(saved.status).toBe("paused");
 	});
 
-	it("starting again never replays the same queue", async () => {
+	it("ordinary Play retains the same queue", async () => {
 		const h = await onboarded();
 		const sid = h.stationIds[0]!;
 		await h.hub.play(sid);
@@ -130,7 +131,7 @@ describe("listening", () => {
 		await h.hub.play(sid);
 		const second = deckPlaylist(h, sid).items.slice(0, 50);
 		const overlap = first.filter((id, i) => second[i] === id).length;
-		expect(overlap).toBeLessThan(3);
+		expect(overlap).toBe(50);
 	});
 
 	it("books early skips (< 30 s) and keeps skipped songs out of the next deck", async () => {
@@ -153,6 +154,7 @@ describe("listening", () => {
 		);
 		const booked = new Set(rows.map((r) => r.id));
 		for (const id of skipped) expect(booked.has(id)).toBe(true);
+		await h.hub.play(sid, null, { newQueue: true });
 		const deck = deckPlaylist(h, sid).items;
 		for (const id of skipped) expect(deck.includes(id)).toBe(false);
 	});
@@ -248,10 +250,10 @@ describe("rounds", () => {
 			`SELECT track_id FROM plays WHERE station_id = ?`,
 			sid,
 		);
-		expect(new Set(heard.map((r) => r.track_id)).size).toBe(heard.length);
+		expect(new Set(heard.slice(0, 40).map((r) => r.track_id)).size).toBe(40);
 		expect(heard.length).toBeGreaterThanOrEqual(38);
 		const st = (await h.hub.state()).stations.find((s) => s.id === sid)!;
-		expect(st.roundNo).toBe(2);
+		expect(st.roundNo).toBeGreaterThanOrEqual(2);
 	});
 });
 
@@ -290,24 +292,30 @@ describe("errors", () => {
 		expect(res.error!.code).toBe("no_device");
 	});
 
-	it("backs off for an hour when the Spotify quota is exhausted", async () => {
+	it("legacy provider-wide quota never blocks untested operations under confirmed-operation policy", async () => {
 		const h = await onboarded();
-		h.fake.failNext = {
-			status: 429,
-			count: 1,
-			body: { error: { status: 429, message: "quota", reason: "QUOTA_EXCEEDED" } },
-		};
-		await h.listen(25 * MINUTE_MS);
-		const st = await h.hub.state();
-		expect(st.warnings.some((w) => w.code === "quota")).toBe(true);
-		const calls = h.fake.calls.length;
-		// The quota was hit within the first minutes: silence for the hour.
-		await h.listen(30 * MINUTE_MS);
-		expect(h.fake.calls.length).toBe(calls);
-		// ...and then true-shuffle carries on by itself.
-		await h.listen(HOUR_MS);
-		expect(h.fake.calls.length).toBeGreaterThan(calls);
+		h.sql.run("DELETE FROM kv WHERE k='spotify_operation_policy'");
+		h.sql.run(
+			"INSERT INTO kv(k,v) VALUES('spotify_cooldown',?) ON CONFLICT(k)DO UPDATE SET v=excluded.v",
+			JSON.stringify({
+				kind: "quota",
+				reason: "QUOTA_EXCEEDED",
+				until: null,
+				retryAfter: null,
+				observedAt: h.clock.t,
+			}),
+		);
+		h.sql.run(
+			"INSERT INTO kv(k,v)VALUES('backoff',?) ON CONFLICT(k)DO UPDATE SET v=excluded.v",
+			JSON.stringify({ kind: "quota", until: Number.MAX_SAFE_INTEGER }),
+		);
+		h.restart();
+		const before = h.fake.calls.length;
+		await h.hub.devices();
+		await h.hub.retryQuota();
+		expect(h.fake.calls.length).toBe(before + 2);
 		expect((await h.hub.state()).warnings.some((w) => w.code === "quota")).toBe(false);
+		expect(h.sql.first("SELECT v FROM kv WHERE k='spotify_operation_policy_backup'")).toBeTruthy();
 	});
 
 	it("recreates the deck playlist if the listener deleted it in Spotify", async () => {
@@ -347,8 +355,9 @@ describe("listener input", () => {
 		expect(h.fake.current()).not.toBe(cur);
 		h.fake.pause();
 		await h.listen(40 * MINUTE_MS);
-		for (const id of [h.stationIds[0]!, h.allId])
-			expect(deckPlaylist(h, id).items.includes(cur)).toBe(false);
+		expect(deckPlaylist(h, h.allId).items.includes(cur)).toBe(false);
+		expect(h.hub.savedSession(sid)!.entryIds.length).toBeGreaterThan(0);
+		expect(h.fake.current()).not.toBe(cur);
 	});
 
 	it("imports streaming history and prefers songs not heard for a long time", async () => {

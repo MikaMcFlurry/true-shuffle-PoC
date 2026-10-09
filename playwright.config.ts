@@ -7,9 +7,25 @@ import { defineConfig } from "@playwright/test";
  * story, so the tests run in order on one worker.
  */
 
-const PREINSTALLED = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-const executablePath =
-	process.env.CHROMIUM_PATH ?? (existsSync(PREINSTALLED) ? PREINSTALLED : undefined);
+const PREINSTALLED = [
+	"/usr/bin/chromium",
+	"/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+].find((path) => existsSync(path));
+const executablePath = process.env.CHROMIUM_PATH ?? PREINSTALLED;
+
+/** TS_DESIGN=<id> runs the whole suite in that design (stored like a listener's own choice). */
+const design = process.env.TS_DESIGN;
+const storageState = design
+	? {
+			cookies: [],
+			origins: [
+				{
+					origin: "http://127.0.0.1:8787",
+					localStorage: [{ name: "ts-design", value: design }],
+				},
+			],
+		}
+	: undefined;
 
 export default defineConfig({
 	testDir: "e2e",
@@ -27,6 +43,7 @@ export default defineConfig({
 		timezoneId: "Europe/Berlin",
 		launchOptions: executablePath ? { executablePath } : {},
 		trace: "retain-on-failure",
+		storageState,
 	},
 	webServer: [
 		{

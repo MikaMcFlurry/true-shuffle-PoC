@@ -1,0 +1,39 @@
+// Isolated preview Worker. Its self-bound Durable Objects have separate namespaces.
+// Supply a dedicated test Spotify client/account and a distinct APP_SECRET as secrets.
+// Never bind these classes to the production script or use production credentials.
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "true-shuffle-preview",
+	"main": "src/worker/index.ts",
+	"compatibility_date": "2026-09-20",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"directory": "dist/client",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/api/*", "/auth/*", "/remote/*"]
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "USER_HUB",
+				"class_name": "UserHub"
+			},
+			{
+				"name": "REGISTRY",
+				"class_name": "Registry"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["UserHub", "Registry"]
+		}
+	],
+	"keep_vars": false,
+	"observability": {
+		"enabled": true
+	},
+	"vars": {}
+}

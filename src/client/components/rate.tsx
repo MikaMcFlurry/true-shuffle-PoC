@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { TrackView } from "../../shared/api";
 import { api } from "../api";
 import { store, useStore } from "../store";
-import { Cover } from "./radio";
+import { Cover } from "./ui";
 
 const SAID = {
 	1: "Als Favorit gemerkt",
@@ -88,7 +88,7 @@ export function RateSheet() {
 						</div>
 					</div>
 					{cur !== 0 ? (
-						<p class="hint">
+						<p class="hint sheet__state">
 							{cur === 1
 								? "Ist Favorit. Noch einmal Daumen hoch nimmt das zurück."
 								: "Kommt nie wieder. Noch einmal Daumen runter lässt ihn wieder zu."}
@@ -97,23 +97,25 @@ export function RateSheet() {
 					<div class="sheet__actions">
 						<button
 							type="button"
-							class="key btn"
+							class="key"
 							aria-pressed={cur === 1}
 							disabled={busy}
 							onClick={() => set(cur === 1 ? 0 : 1)}
 						>
+							<ThumbsUp size={20} aria-hidden="true" />
 							Daumen hoch: Favorit
 						</button>
 						<button
 							type="button"
-							class="key btn"
+							class="key"
 							aria-pressed={cur === -1}
 							disabled={busy}
 							onClick={() => set(cur === -1 ? 0 : -1)}
 						>
+							<ThumbsDown size={20} aria-hidden="true" />
 							Daumen runter: nie wieder
 						</button>
-						<button type="button" class="key btn" onClick={() => store.rate(null)}>
+						<button type="button" class="act sheet__cancel" onClick={() => store.rate(null)}>
 							Abbrechen
 						</button>
 					</div>

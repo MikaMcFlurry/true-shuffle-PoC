@@ -1,0 +1,32 @@
+import {it,expect} from 'vitest';
+import {SpotifyUsageTracker} from '../../src/worker/spotify/usage';
+import {SpotifyOperationGates,safeOperation} from '../../src/worker/spotify/operation-gates';
+import {nodeSql,T0} from '../hub/harness';
+it('stable five slots overflow and prelogin stay aggregate; raw identifiers absent; reads writes refresh blocks network distinct',()=>{
+ const sql=nodeSql(),tracker=new SpotifyUsageTracker(sql,()=>T0);
+ const m={endpoint:'/playlists/PRIVATE_PLAYLIST_ID/tracks',method:'GET',category:'read' as const,status:200,retryCategory:'none' as const,retryAfter:null,at:T0};
+ for(let i=1;i<=7;i++)tracker.record('PRIVATE_LISTENER_'+i,m);
+ tracker.record('@signin',{...m,endpoint:'/api/token',method:'POST',category:'refresh'});
+ tracker.record('PRIVATE_LISTENER_1',{...m,endpoint:'/me/player/play',method:'PUT',category:'write'});
+ tracker.record('PRIVATE_LISTENER_1',{...m,status:429,retryCategory:'blocked'});
+ tracker.record('PRIVATE_LISTENER_1',{...m,status:0,retryCategory:'network'});
+ const report=tracker.report(7);
+ expect(report.totals).toMatchObject({sent:10,read:8,write:1,refresh:1,blocked:1,network:1});
+ expect(report.observedListeners).toBe(5);expect(report.overflowObserved).toBe(true);expect(report.listeners.find(l=>l.listener==='Weitere Nutzer')?.totals.sent).toBe(2);
+ expect(sql.first<{n:number}>('SELECT COUNT(*) n FROM spotify_usage_listeners')?.n).toBe(5);
+ expect(JSON.stringify(report)).not.toMatch(/PRIVATE_LISTENER|PRIVATE_PLAYLIST_ID/);
+});
+it('only720 retained hourly slots and at most200 episode rows',()=>{
+ const sql=nodeSql();let now=T0;const tracker=new SpotifyUsageTracker(sql,()=>now);
+ for(let i=0;i<730;i++){now=T0+i*3600000;tracker.record('private',{endpoint:'/me/player',method:'GET',category:'read',status:200,retryCategory:'none',retryAfter:null,at:now});}
+ expect(tracker.report(1).hours).toHaveLength(720);expect(sql.first<{n:number}>('SELECT COUNT(*) n FROM spotify_usage_hours')?.n).toBe(720);
+ for(let i=0;i<210;i++){tracker.record('private',{endpoint:'/me/player',method:'GET',category:'read',status:429,retryCategory:'quota',retryAfter:null,at:now});tracker.record('private',{endpoint:'/me/player',method:'GET',category:'read',status:200,retryCategory:'none',retryAfter:null,at:now});}
+ expect(tracker.report(1).episodes).toHaveLength(200);expect(sql.first<{n:number}>('SELECT COUNT(*) n FROM spotify_usage_episodes')?.n).toBe(200);
+});
+it('Gate listener+method isolation and stale CAS safety',()=>{
+ const gates=new SpotifyOperationGates(nodeSql());const operation=safeOperation('get','/artists/PRIVATE_ID/albums');
+ expect(operation).toBe('GET /artists/:id/albums');
+ const c={operation,kind:'quota' as const,until:T0+3600000,retryAfter:'3600',observedAt:T0};
+ gates.block('A',c);expect(gates.snapshot('B',operation).cooldown).toBeNull();expect(gates.snapshot('A','POST /artists/:id/albums').cooldown).toBeNull();
+ const before=gates.snapshot('A',operation);gates.block('A',{...c,until:T0+7200000});gates.finish('A',operation,before.revision);expect(gates.snapshot('A',operation).cooldown?.until).toBe(T0+7200000);
+});

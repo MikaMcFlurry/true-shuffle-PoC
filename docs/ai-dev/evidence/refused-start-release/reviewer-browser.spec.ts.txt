@@ -1,0 +1,246 @@
+/** Rendered client races use intercepted API snapshots; no provider or history writes. */
+import { expect, type Page, type Route, test } from "@playwright/test";
+import { DEFAULT_RULES } from "../src/core/types";
+import type { AppState, DeviceView } from "../src/shared/api";
+
+test.use({ viewport: { width: 390, height: 844 } });
+
+const TIME = Date.UTC(2026, 9, 1, 12);
+const tracks = ["Erster Song", "Zweiter Song", "Dritter Song"].map((name, index) => ({
+	id: `track-${index}`,
+	name,
+	artists: "Test Artist",
+	album: "Test Album",
+	imageUrl: null,
+	durationMs: 60_000,
+	thumb: 0 as const,
+}));
+function snapshot(playing = true): AppState {
+	return {
+		profile: { id: "listener-a", name: "Test Listener", imageUrl: null },
+		onboarded: true,
+		stations: [
+			{
+				id: 1,
+				name: "Test Sender",
+				kind: "all",
+				sources: [],
+				rules: DEFAULT_RULES,
+				roundNo: 1,
+				poolSize: 3,
+				freshRemaining: 3,
+				progress: 0,
+				playlistId: null,
+				ready: true,
+				importing: false,
+				lastPlayedAt: TIME,
+				playing,
+				imageUrl: null,
+			},
+		],
+		session: {
+			sessionId: "session-a",
+			stationId: 1,
+			entryId: "entry-0",
+			orderRevision: 1,
+			progressMs: 12_000,
+			observedAt: TIME,
+			status: playing ? "active" : "paused",
+			pending: false,
+			queue: tracks.map((track, index) => ({ entryId: `entry-${index}`, track })),
+		},
+		nowPlaying: {
+			...tracks[0]!,
+			isPlaying: playing,
+			progressMs: 12_000,
+			stationId: 1,
+			kind: "fresh",
+			deviceName: "Test iPhone",
+			orderBroken: false,
+			smartShuffle: false,
+			observedAt: TIME,
+		},
+		guest: { active: false, until: null },
+		warnings: [],
+		jobs: [],
+		history: { importedTracks: 0, importedAt: null, liveSince: TIME },
+		aiSource: "off",
+		serverTime: TIME,
+	};
+}
+function deferred() {
+	let release = () => {};
+	const promise = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	return { promise, release };
+}
+async function setup(page: Page, initial = snapshot()) {
+	const model = {
+		state: initial,
+		stateCalls: 0,
+		stateQueries: [] as string[],
+		requests: [] as string[],
+		devices: [
+			{ id: "iphone", name: "Test iPhone", active: true, restricted: false, type: "Smartphone" },
+		] as DeviceView[],
+		stateHandler: null as ((route: Route) => Promise<void>) | null,
+	};
+	await page.clock.install({ time: TIME });
+	await page.clock.setFixedTime(TIME);
+	await page.route("**/api/**", async (route) => {
+		const path = new URL(route.request().url()).pathname;
+		model.requests.push(path);
+		if (path === "/api/state") {
+			model.stateCalls++;
+			model.stateQueries.push(new URL(route.request().url()).search);
+			if (model.stateHandler) return model.stateHandler(route);
+			return route.fulfill({ json: model.state });
+		}
+		if (path === "/api/devices") return route.fulfill({ json: model.devices });
+		if (path === "/api/native/devices")
+			return route.fulfill({ json: { configured: false, devices: [] } });
+		return route.fulfill({
+			status: 500,
+			json: { error: { code: "unexpected", message: `Unexpected ${path}` } },
+		});
+	});
+	await page.goto("/");
+	await expect(page.locator(".now-copy h2")).toHaveText("Erster Song");
+	await expect(
+		page.locator(".device-select select option", { hasText: "Test iPhone" }),
+	).toHaveCount(1);
+	expect(
+		await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+	).toBeLessThanOrEqual(0);
+	return model;
+}
+async function advance(page: Page, milliseconds: number) {
+	const now = await page.evaluate(() => Date.now());
+	await page.clock.setFixedTime(now + milliseconds);
+	await page.clock.runFor(milliseconds);
+}
+async function refresh(page: Page) {
+	const response = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/state");
+	await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+	await response;
+}
+function observe(
+	model: { state: AppState },
+	patch: Partial<NonNullable<AppState["session"]>>,
+	at: number,
+) {
+	Object.assign(model.state.session!, patch, { observedAt: at });
+	model.state.serverTime = at;
+	if (model.state.nowPlaying)
+		Object.assign(model.state.nowPlaying, {
+			observedAt: at,
+			progressMs: patch.progressMs ?? model.state.nowPlaying.progressMs,
+		});
+}
+
+
+test("independent themes, 320px long content, keyboard and 50 locally revealed successors", async ({page})=>{
+ const state=snapshot(false); const long="Supercalifragilisticexpialidocious";
+ state.stations[0]!.name=long; state.stations[0]!.kind="custom" as any; state.stations[0]!.id=1;
+ state.session!.queue=Array.from({length:51},(_,i)=>({entryId:`entry-${i}`,track:{...tracks[i%3]!,id:`track-${i}`,name:i===0?long:`Successor ${i} ${long}`}}));
+ state.nowPlaying!.name=long;
+ // setup's initial title assertion is tailored to ordinary fixtures, so install long data after initial render.
+ const model=await setup(page); model.state=state; await refresh(page);
+ const calls=model.requests.length;
+ for(const theme of ["light","dark"] as const){
+  await page.emulateMedia({colorScheme:theme});
+  for(const width of [320,390,1440]){
+   await page.setViewportSize({width,height:900});
+   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth); if(overflow){console.log('OVERFLOW',theme,width,await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.getBoundingClientRect().right>innerWidth+2).map(el=>[el.tagName,el.className,el.getBoundingClientRect().width]).slice(-25)));await page.screenshot({path:'/tmp/ui-review-overflow.png',fullPage:true});} expect(overflow,`${theme}/${width}`).toBeLessThanOrEqual(0);
+   await expect(page.locator(".now-copy h2")).toHaveText(long);
+  }
+ }
+ await page.setViewportSize({width:390,height:844});
+ await page.getByRole('button',{name:'Weitere 20 Songs zeigen'}).click();
+ await page.getByRole('button',{name:'Weitere 18 Songs zeigen'}).click();
+ await expect(page.locator('.queue-row')).toHaveCount(50); expect(model.requests.length).toBe(calls);
+ await page.keyboard.press('Tab'); await page.getByRole('button',{name:'Fortsetzen',exact:true}).focus();
+ expect(await page.evaluate(()=>getComputedStyle(document.activeElement!).outlineStyle)).not.toBe('none');
+ await page.getByRole('button',{name:/Successor 1 .*bewerten/}).click();
+ await expect(page.getByRole('dialog')).toBeVisible(); await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toBeHidden();
+ await page.screenshot({path:'/tmp/ui-review-mobile-dark-long.png',fullPage:true});
+});
+
+test("independent requested versus accepted versus observed signal and frozen pause clock",async({page})=>{
+ const model=await setup(page); const gate=deferred();
+ await page.route('**/api/player/pause',async(route)=>{await gate.promise; await route.fulfill({json:{ok:true,acceptedAt:TIME+4000}})});
+ await page.getByRole('button',{name:'Pause',exact:true}).click();
+ await expect(page.locator('.signal__step--on')).toHaveCount(1); await expect(page.locator('.session-status')).toHaveText('Pause angefordert …');
+ await advance(page,4000); await expect(page.getByRole('progressbar')).toHaveAttribute('value','12000');
+ gate.release(); await expect(page.locator('.signal__step--on')).toHaveCount(2); await expect(page.locator('.session-status')).toHaveText('Pause angenommen …');
+ observe(model,{status:'paused',progressMs:12100},TIME+4500); model.state.nowPlaying!.isPlaying=false;
+ await advance(page,1500); await expect(page.locator('.signal__step--on')).toHaveCount(3); await expect(page.locator('.session-status')).toHaveText('Pausiert');
+ await expect(page.getByRole('progressbar')).toHaveAttribute('value','12100');
+});
+
+test("independent display projection never sends rating or skip and does not chain",async({page})=>{
+ const state=snapshot(); state.session!.progressMs=59000;state.nowPlaying!.progressMs=59000;
+ const model=await setup(page,state);const before=model.requests.length;
+ await advance(page,2000);await expect(page.locator('.now-copy h2')).toHaveText('Zweiter Song');
+ await expect(page.locator('.signal')).toHaveClass(/signal--estimate/);await expect(page.getByRole('button',{name:'Weiter: Nächster Song'})).toBeDisabled();
+ await expect(page.getByRole('button',{name:'Daumen hoch: Favorit'})).toBeDisabled();expect(model.requests.length).toBe(before);
+ await advance(page,31000);await expect(page.locator('.now-copy h2')).toHaveText('Erster Song');await expect(page.locator('.session-status')).toHaveText('Gerätebestätigung steht aus');
+});
+
+test("independent offline disables transports while saved queue and rating recovery remain visible",async({page})=>{
+ const model=await setup(page);await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
+ await expect(page.getByText('Offline oder nicht erreichbar.',{exact:false})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeDisabled();await expect(page.getByRole('button',{name:'Daumen hoch: Favorit'})).toBeDisabled();
+ await expect(page.locator('.queue-row')).toHaveCount(2);await expect(page.locator('.now-copy h2')).toHaveText('Erster Song');
+ model.state.nowPlaying!.isPlaying=false;model.state.session!.status='paused';await page.getByRole('button',{name:'Erneut verbinden'}).click();
+ await expect(page.getByRole('button',{name:'Fortsetzen',exact:true})).toBeEnabled();
+});
+
+test("independent accepted play survives route change and settles only on newer actual observation",async({page})=>{
+ const model=await setup(page,snapshot(false));
+ await page.route('**/api/stations/1/play',route=>route.fulfill({json:{ok:true,acceptedAt:TIME+500}}));
+ await page.route('**/api/stations/1',route=>route.fulfill({json:{...model.state.stations[0],upcoming:[],recent:[],counts:null,discoveries:{pending:0,kept:0,rejected:0}}}));
+ await page.getByRole('button',{name:'Fortsetzen',exact:true}).click(); await expect(page.locator('.session-status')).toHaveText('Start angenommen …');
+ await page.getByRole('link',{name:'Test Sender: Mix und Regeln'}).click();
+ observe(model,{status:'active',progressMs:13000},TIME+1000);model.state.nowPlaying!.isPlaying=true;
+ await advance(page,4500); await page.getByRole('link',{name:'Hören',exact:true}).click();
+ await expect(page.locator('.session-status')).toHaveText('Spielt'); await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeEnabled();
+});
+
+test("independent guest and confirmed native pause never borrow cached Spotify active state",async({page})=>{
+ const state=snapshot(false);state.guest={active:true,until:TIME+60000};state.nowPlaying!.isPlaying=true;
+ state.session!.controller={kind:'home-assistant',deviceId:'living',deviceName:'Living Room'} as any;
+ await page.route('**/api/native/devices',route=>route.fulfill({json:{configured:true,devices:[{id:'living',name:'Living Room',queue:false,seek:false,pause:false}]}}));
+ await setup(page,state);await expect(page.locator('.poster__guest')).toHaveText('Gast-Modus · zählt nicht ins Gedächtnis');
+ await expect(page.locator('.session-status')).toHaveText('Pausiert'); await expect(page.getByRole('button',{name:'Weiter: Nächster Song'})).toBeDisabled();
+ await expect(page.getByText('Ohne Seek startet derselbe Song von vorne.',{exact:false})).toBeVisible();
+});
+
+test('independent desktop sender wall materializes when scrolled and can select without replacing saved occurrence',async({page})=>{
+ const model=await setup(page);await page.setViewportSize({width:1440,height:900});
+ await page.locator('.station-list').scrollIntoViewIfNeeded(); await expect(page.getByRole('button',{name:/Test Sender/})).toBeVisible();
+ const saved=structuredClone(model.state.session);await page.getByRole('button',{name:/Test Sender/}).click();
+ await expect(page.getByRole('button',{name:/Test Sender/})).toHaveAttribute('aria-pressed','true');expect(model.state.session).toEqual(saved);
+ await page.screenshot({path:'/tmp/ui-review-desktop-wall.png',fullPage:true});
+});
+
+test('independent definitively refused otherstation keeps prior visible song and persistent error then permits one explicit retry',async({page})=>{
+ const initial=snapshot(false);initial.stations.push({...initial.stations[0]!,id:2,name:'Another Sender'});const model=await setup(page,initial);
+ let writes=0;await page.route('**/api/stations/2/play',async route=>{writes++;await route.fulfill({json:{ok:false,error:{code:'no_device',message:'Spotify device rejected actual request'}}})});
+ await page.getByRole('button',{name:/Another Sender/}).click();await page.getByRole('button',{name:'Wiedergabe starten',exact:true}).click();
+ await expect(page.locator('.session-status')).toHaveText('Befehl fehlgeschlagen');await expect(page.getByRole('alert')).toContainText('Spotify device rejected actual request');
+ await expect(page.locator('.now-copy h2')).toHaveText('Erster Song');await expect(page.getByRole('progressbar')).toHaveAttribute('value','12000');
+ // Sameaccount backgroundupdate withchanged saved occurrence mustnot erase rejectedcommand explanation.
+ model.state.session!.entryId='entry-1'; model.state.session!.progressMs=23000; model.state.session!.observedAt=TIME+1000;model.state.nowPlaying={...model.state.nowPlaying!,...tracks[1]!,progressMs:23000,observedAt:TIME+1000};model.state.serverTime=TIME+1000;
+ await refresh(page);await expect(page.getByRole('alert')).toContainText('Spotify device rejected actual request');await expect(page.locator('.session-status')).toHaveText('Befehl fehlgeschlagen');
+ await page.getByRole('button',{name:'Befehl erneut versuchen',exact:true}).click();await expect.poll(()=>writes).toBe(2);
+ await expect(page.getByRole('alert')).toContainText('Spotify device rejected actual request');
+});
+
+test('independent failed notice accountisolation survives real renderedprofile switch',async({page})=>{
+ const model=await setup(page,snapshot(false));await page.route('**/api/stations/1/play',route=>route.fulfill({json:{ok:false,error:{code:'premium',message:'Private firstaccount failure'}}}));
+ await page.getByRole('button',{name:'Fortsetzen',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Private firstaccount failure');
+ model.state.profile.id='listener-b';model.state.profile.name='Second Listener';await refresh(page);
+ await expect(page.getByText('Private firstaccount failure',{exact:false})).toHaveCount(0);await expect(page.locator('.session-status')).toHaveText('Pausiert');
+});

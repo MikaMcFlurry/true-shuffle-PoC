@@ -63,12 +63,57 @@ export interface JobView {
 	error: string | null;
 }
 
+/**
+ * Read-only labels for one song in a queue, so the listener can see whether
+ * it is new to them, new to this station, or how often they have heard it.
+ * Derived from stored memory only — never from a Spotify request.
+ */
+export interface SongFacts {
+	/**
+	 * Counted plays (>= 30 s) known for this song in total: live true-shuffle
+	 * plays (any station or outside a station, guest-mode plays excluded) plus
+	 * plays from an imported Spotify streaming history (which only covers time
+	 * before true-shuffle started counting live, so nothing is counted twice).
+	 */
+	plays: number;
+	/** Last counted play anywhere, live or imported, or null if never heard. */
+	lastPlayedAt: number | null;
+	/**
+	 * A non-guest play on this station is in the plays log. The log keeps at
+	 * least the last 180 days, so `false` means "not here in half a year".
+	 */
+	inStation: boolean;
+	/** Why the planner put it here, when known. */
+	kind: SlotKind | null;
+}
+
+export interface SessionView {
+	controller?: { kind: "spotify" | "home-assistant"; deviceId: string; deviceName?: string };
+	sessionId: string;
+	stationId: number;
+	entryId: string;
+	orderRevision: number;
+	progressMs: number | null;
+	observedAt: number | null;
+	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
+	pending: boolean;
+	queue: { entryId: string; track: TrackView; facts?: SongFacts }[];
+}
+
 export interface AppState {
+	session?: SessionView | null;
 	profile: { id: string; name: string; imageUrl: string | null };
 	onboarded: boolean;
 	stations: StationSummary[];
 	nowPlaying: NowPlaying | null;
-	guest: { active: boolean; until: number | null };
+	guest: {
+		active: boolean;
+		until: number | null;
+		/** Devices whose music never counts, as if guest mode were on. */
+		devices?: { id: string; name: string }[];
+		/** Name of the guest device that holds guest time open right now, if any. */
+		device?: string | null;
+	};
 	warnings: Warning[];
 	jobs: JobView[];
 	/** `liveSince`: from here on true-shuffle counts live; an import covers what came before. */
@@ -90,7 +135,7 @@ export interface PlaylistView {
 }
 
 export interface StationDetail extends StationSummary {
-	upcoming: (TrackView & { kind: SlotKind })[];
+	upcoming: (TrackView & { kind: SlotKind; facts?: SongFacts })[];
 	recent: (TrackView & { playedAt: number })[];
 	counts: Record<SlotKind, number> | null;
 	discoveries: { pending: number; kept: number; rejected: number };
@@ -100,6 +145,13 @@ export interface HistoryEntry extends TrackView {
 	playedAt: number;
 	stationName: string | null;
 	ignored: boolean;
+	/**
+	 * Same read-only counts as in a queue. `kind` is the lane stamped when this
+	 * very play was recorded (its station's playlist, a deck written before
+	 * the song began, one reason only); null for older plays and anything in
+	 * doubt. `inStation` is always true: the song was heard there.
+	 */
+	facts?: SongFacts;
 }
 
 /** What a personal remote key can do (Siri, CarPlay, a watch, a widget). */
@@ -132,11 +184,160 @@ export type PlayErrorCode =
 	| "unknown";
 
 export interface PlayResult {
+	/** Transport outcome cannot be established from a lost or server-error response. */
+	uncertain?: boolean;
 	ok: boolean;
+	/** Server time of a successful provider acknowledgment, not a playback observation. */
+	acceptedAt?: number;
 	error?: { code: PlayErrorCode; message: string };
 	deviceName?: string;
 }
 
 export interface ApiError {
 	error: { code: string; message: string };
+}
+
+/** A song, artist or album in a listening profile. */
+export interface ProfileItem {
+	/** A song's Spotify id. */
+	id?: string;
+	name: string;
+	/** A song's or album's artist; empty for an artist. */
+	sub: string;
+	plays: number;
+	minutes: number;
+	imageUrl: string | null;
+}
+
+/**
+ * The listener's music in one period (from inclusive, to exclusive; from
+ * null: everything). The timeline is the imported Spotify history up to the
+ * first sign-in and true-shuffle's own count after it (guest time left out),
+ * so nothing counts twice. A play is 30 s or more. Calendar values are in
+ * the time zone asked for. Read-only.
+ */
+export interface ListeningProfile {
+	period: { from: number | null; to: number };
+	/** What the timeline is made of. */
+	coverage: {
+		importedFrom: number | null;
+		importedTo: number | null;
+		importedPlays: number;
+		/** From then on true-shuffle counted itself. */
+		liveSince: number | null;
+		/** Only the older import summary is stored: importing again shows every period. */
+		summaryOnly: boolean;
+	};
+	/** Calendar years with music, over the whole timeline. */
+	years: number[];
+	/** First and last play in the period. */
+	first: number | null;
+	last: number | null;
+	plays: number;
+	minutes: number;
+	/** All of it exact (imported ms_played); else counted plays add their song's length. */
+	minutesExact: boolean;
+	songs: number;
+	artists: number;
+	albums: number;
+	activeDays: number;
+	/** Days the period spans (for an open one: since its first play). */
+	days: number;
+	/** The same length just before, for comparison; null for everything. */
+	previous: { plays: number; minutes: number } | null;
+	/** Plays per weekday (0 = Monday) and hour, 7 × 24, row by row. */
+	hourWeek: number[];
+	/** Plays and minutes per day, week (key: its Monday) or month, oldest first. */
+	series: {
+		unit: "day" | "week" | "month";
+		points: { key: string; plays: number; minutes: number }[];
+	};
+	topArtists: ProfileItem[];
+	topSongs: ProfileItem[];
+	topAlbums: ProfileItem[];
+	/** Left within 30 s, from imported plays only (live counting cannot see them). */
+	/**
+	 * Early skips (under 30 s, by choice) of imported plays. `early`, its share
+	 * and `top` leave out the first song after a start; those are `openers`:
+	 * Spotify's shuffle opens with the same few songs, so they say little.
+	 * Nor do they count songs heard often before they were skipped.
+	 */
+	skips: {
+		early: number;
+		share: number;
+		top: ProfileItem[];
+		openers: number;
+		topOpeners: ProfileItem[];
+		/**
+		 * Early skips of overplayed songs (heard often first, skipped later:
+		 * see core/memory isOverplayed), also left out of `early`.
+		 */
+		overplayed: number;
+		topOverplayed: ProfileItem[];
+	} | null;
+	/** First ever heard in this period. */
+	newSongs: number;
+	newArtists: number;
+	topNewArtists: ProfileItem[];
+	/** Heard again after a year or more. */
+	comebacks: (ProfileItem & { gapDays: number })[];
+	/** Days in a row with music (keys YYYY-MM-DD). */
+	streak: { days: number; from: string; to: string } | null;
+	/** Songs one after another, no gap over ten minutes. */
+	longestSession: { minutes: number; at: number } | null;
+	/** From imported plays only. */
+	platforms: { name: string; plays: number }[];
+	shuffleShare: number | null;
+	offlineShare: number | null;
+	/** The AI's estimate of the listener's genre mix, if one was made. */
+	genres: {
+		at: number;
+		source: "anthropic" | "workers-ai";
+		artists: number;
+		genres: { name: string; share: number }[];
+		summary: string;
+	} | null;
+	/** An AI is set up, so an estimate can be asked for. */
+	canEstimate: boolean;
+	/** The next estimate may be asked for from then (also after a failed one); null: now. */
+	genresRetryAt: number | null;
+	/** What true-shuffle keeps about the listener, from its own records. */
+	learned: {
+		favorites: number;
+		neverAgain: number;
+		recommendationsKept: number;
+		recommendationsDropped: number;
+		earlySkips: number;
+	};
+}
+
+/**
+ * A summary of an imported Spotify streaming history, built in the browser
+ * from the export files (which never reach the server). Counted plays are
+ * >= 30 s; hours are in the zone of the browser that imported it.
+ */
+export interface ImportedProfile {
+	/** When the import was made. */
+	at: number;
+	from: number;
+	to: number;
+	plays: number;
+	/** Real listening time, from Spotify's own ms_played. */
+	minutes: number;
+	songs: number;
+	artists: number;
+	earlySkips: number;
+	hourWeek: number[];
+	months: { month: string; plays: number; minutes: number }[];
+	topArtists: { name: string; plays: number; minutes: number }[];
+	topSongs: { id: string; name: string; artist: string; plays: number }[];
+}
+
+/** The answer to asking for a genre estimate. */
+export interface GenreAnswer {
+	estimate: ListeningProfile["genres"];
+	/** The next attempt is allowed from then (failed attempts count too). */
+	retryAt: number | null;
+	/** This request asked the AI and got nothing usable. */
+	failed: boolean;
 }

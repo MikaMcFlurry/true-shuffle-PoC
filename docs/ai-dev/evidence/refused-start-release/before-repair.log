@@ -1,0 +1,818 @@
+
+ RUN  v5.0.2 /workspace/ts-refusal-fix
+
+ ❯ test/client/store-refusal.test.ts (5 tests | 3 failed) 91ms
+   × retains the definitive failed notice across a same-profile refresh with same station later occurrence 80ms
+   × retains the definitive failed notice across a same-profile refresh with different saved station 2ms
+   × retains the definitive failed notice across a same-profile refresh with removed saved session 3ms
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/PREMIUM_REQUIRED refusal
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/PREMIUM_REQUIRED refusal
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/PREMIUM_REQUIRED refusal
+{"level":"info","kind":"import","message":"„Playlist 1“: 60 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/PREMIUM_REQUIRED refusal
+{"level":"info","kind":"import","message":"„Playlist 2“: 60 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 404/NO_ACTIVE_DEVICE refusal
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 404/NO_ACTIVE_DEVICE refusal
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 404/NO_ACTIVE_DEVICE refusal
+{"level":"info","kind":"import","message":"„Playlist 1“: 60 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 404/NO_ACTIVE_DEVICE refusal
+{"level":"info","kind":"import","message":"„Playlist 2“: 60 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/RESTRICTION_VIOLATED refusal
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/RESTRICTION_VIOLATED refusal
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/RESTRICTION_VIOLATED refusal
+{"level":"info","kind":"import","message":"„Playlist 1“: 60 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/RESTRICTION_VIOLATED refusal
+{"level":"info","kind":"import","message":"„Playlist 2“: 60 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > does not display a never-started initial candidate after local device discovery finds no device
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/refused-start.test.ts > does not display a never-started initial candidate after local device discovery finds no device
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/refused-start.test.ts > does not display a never-started initial candidate after local device discovery finds no device
+{"level":"info","kind":"import","message":"„Playlist 1“: 60 Songs übernommen, 0 übersprungen"}
+
+ ❯ test/hub/refused-start.test.ts (6 tests | 4 failed) 398ms
+   × keeps the prior saved station and both checkpoints after a definitive 403/PREMIUM_REQUIRED refusal 133ms
+   × keeps the prior saved station and both checkpoints after a definitive 404/NO_ACTIVE_DEVICE refusal 71ms
+   × keeps the prior saved station and both checkpoints after a definitive 403/RESTRICTION_VIOLATED refusal 60ms
+   × does not display a never-started initial candidate after local device discovery finds no device 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/client/store-refusal.test.ts > retains the definitive failed notice across a same-profile refresh with same station later occurrence
+ FAIL  test/client/store-refusal.test.ts > retains the definitive failed notice across a same-profile refresh with different saved station
+ FAIL  test/client/store-refusal.test.ts > retains the definitive failed notice across a same-profile refresh with removed saved session
+AssertionError: expected null to match object { id: 1, phase: 'failed', …(2) }
+
+- Expected:
+{
+  "error": "Premium erforderlich",
+  "id": 1,
+  "phase": "failed",
+  "stationId": 2,
+}
+
++ Received:
+null
+
+ ❯ test/client/store-refusal.test.ts:39:24
+     37|  stateRequest.mockResolvedValue({ ...app(next), serverTime: 200 });
+     38|  await store.refresh(false, true);
+     39|  expect(store.command).toMatchObject({ id, phase: "failed", error: "Pr…
+       |                        ^
+     40|  const retry = store.beginCommand("play", 2, frozen)!;
+     41|  expect(retry).not.toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/PREMIUM_REQUIRED refusal
+AssertionError: expected { …(9) } to match object { stationId: 1, …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "entryId": "7e9add25-cecb-4465-8721-3a8a131a11c5:0",
+-   "progressMs": 97000,
+-   "sessionId": "7e9add25-cecb-4465-8721-3a8a131a11c5",
+-   "stationId": 1,
++   "entryId": "cbd0c876-8b2a-4593-bf29-aa4d6b88d321:0",
++   "progressMs": 42000,
++   "sessionId": "cbd0c876-8b2a-4593-bf29-aa4d6b88d321",
++   "stationId": 2,
+  }
+
+ ❯ test/hub/refused-start.test.ts:33:40
+     31|  expect(result).toMatchObject({ ok: false, error: { code } });
+     32|  expect(result.uncertain).toBeUndefined();
+     33|  expect((await h.hub.state()).session).toMatchObject({
+       |                                        ^
+     34|   stationId: a, sessionId: prior.sessionId, entryId: prior.entryIds[pr…
+     35|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 404/NO_ACTIVE_DEVICE refusal
+AssertionError: expected { …(9) } to match object { stationId: 1, …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "entryId": "39fe5317-8ddc-4091-b958-105448f32ce1:0",
+-   "progressMs": 97000,
+-   "sessionId": "39fe5317-8ddc-4091-b958-105448f32ce1",
+-   "stationId": 1,
++   "entryId": "d046e4f2-6059-451f-9229-9d965454f2a3:0",
++   "progressMs": 42000,
++   "sessionId": "d046e4f2-6059-451f-9229-9d965454f2a3",
++   "stationId": 2,
+  }
+
+ ❯ test/hub/refused-start.test.ts:33:40
+     31|  expect(result).toMatchObject({ ok: false, error: { code } });
+     32|  expect(result.uncertain).toBeUndefined();
+     33|  expect((await h.hub.state()).session).toMatchObject({
+       |                                        ^
+     34|   stationId: a, sessionId: prior.sessionId, entryId: prior.entryIds[pr…
+     35|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  test/hub/refused-start.test.ts > keeps the prior saved station and both checkpoints after a definitive 403/RESTRICTION_VIOLATED refusal
+AssertionError: expected { …(9) } to match object { stationId: 1, …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "entryId": "247b2274-1a10-4223-8ce7-5686bbd0b7ca:0",
+-   "progressMs": 97000,
+-   "sessionId": "247b2274-1a10-4223-8ce7-5686bbd0b7ca",
+-   "stationId": 1,
++   "entryId": "5aef43da-2f9a-4120-a213-afca002608d3:0",
++   "progressMs": 42000,
++   "sessionId": "5aef43da-2f9a-4120-a213-afca002608d3",
++   "stationId": 2,
+  }
+
+ ❯ test/hub/refused-start.test.ts:33:40
+     31|  expect(result).toMatchObject({ ok: false, error: { code } });
+     32|  expect(result.uncertain).toBeUndefined();
+     33|  expect((await h.hub.state()).session).toMatchObject({
+       |                                        ^
+     34|   stationId: a, sessionId: prior.sessionId, entryId: prior.entryIds[pr…
+     35|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  test/hub/refused-start.test.ts > does not display a never-started initial candidate after local device discovery finds no device
+AssertionError: expected { …(9) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:0",
+  "observedAt": null,
+  "orderRevision": 1,
+  "pending": false,
+  "progressMs": null,
+  "queue": [
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:0",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 6",
+        "durationMs": 220000,
+        "id": "T00000000000000000000I",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 18",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:1",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 1",
+        "durationMs": 190000,
+        "id": "T000000000000000000001",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 1",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:2",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 8",
+        "durationMs": 220000,
+        "id": "T00000000000000000000W",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 32",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:3",
+      "track": {
+        "album": "Album 4",
+        "artists": "Artist 10",
+        "durationMs": 220000,
+        "id": "T00000000000000000000k",
+        "imageUrl": "https://img.example/L000000000000000000004.jpg",
+        "name": "Song 46",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:4",
+      "track": {
+        "album": "Album 5",
+        "artists": "Artist 5",
+        "durationMs": 220000,
+        "id": "T00000000000000000000r",
+        "imageUrl": "https://img.example/L000000000000000000005.jpg",
+        "name": "Song 53",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:5",
+      "track": {
+        "album": "Album 2",
+        "artists": "Artist 4",
+        "durationMs": 180000,
+        "id": "T00000000000000000000S",
+        "imageUrl": "https://img.example/L000000000000000000002.jpg",
+        "name": "Song 28",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:6",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 11",
+        "durationMs": 180000,
+        "id": "T00000000000000000000Z",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 35",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:7",
+      "track": {
+        "album": "Album 2",
+        "artists": "Artist 8",
+        "durationMs": 240000,
+        "id": "T00000000000000000000K",
+        "imageUrl": "https://img.example/L000000000000000000002.jpg",
+        "name": "Song 20",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:8",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 10",
+        "durationMs": 240000,
+        "id": "T00000000000000000000Y",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 34",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:9",
+      "track": {
+        "album": "Album 4",
+        "artists": "Artist 6",
+        "durationMs": 180000,
+        "id": "T00000000000000000000g",
+        "imageUrl": "https://img.example/L000000000000000000004.jpg",
+        "name": "Song 42",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:10",
+      "track": {
+        "album": "Album 2",
+        "artists": "Artist 2",
+        "durationMs": 230000,
+        "id": "T00000000000000000000Q",
+        "imageUrl": "https://img.example/L000000000000000000002.jpg",
+        "name": "Song 26",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:11",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 11",
+        "durationMs": 220000,
+        "id": "T00000000000000000000B",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 11",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:12",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 8",
+        "durationMs": 190000,
+        "id": "T000000000000000000008",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 8",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:13",
+      "track": {
+        "album": "Album 4",
+        "artists": "Artist 0",
+        "durationMs": 240000,
+        "id": "T00000000000000000000m",
+        "imageUrl": "https://img.example/L000000000000000000004.jpg",
+        "name": "Song 48",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:14",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 7",
+        "durationMs": 210000,
+        "id": "T00000000000000000000V",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 31",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:15",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 2",
+        "durationMs": 200000,
+        "id": "T000000000000000000002",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 2",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:16",
+      "track": {
+        "album": "Album 4",
+        "artists": "Artist 11",
+        "durationMs": 230000,
+        "id": "T00000000000000000000l",
+        "imageUrl": "https://img.example/L000000000000000000004.jpg",
+        "name": "Song 47",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:17",
+      "track": {
+        "album": "Album 5",
+        "artists": "Artist 8",
+        "durationMs": 180000,
+        "id": "T00000000000000000000u",
+        "imageUrl": "https://img.example/L000000000000000000005.jpg",
+        "name": "Song 56",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:18",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 9",
+        "durationMs": 230000,
+        "id": "T00000000000000000000X",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 33",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:19",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 6",
+        "durationMs": 200000,
+        "id": "T00000000000000000000U",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 30",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:20",
+      "track": {
+        "album": "Album 2",
+        "artists": "Artist 5",
+        "durationMs": 190000,
+        "id": "T00000000000000000000T",
+        "imageUrl": "https://img.example/L000000000000000000002.jpg",
+        "name": "Song 29",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:21",
+      "track": {
+        "album": "Album 5",
+        "artists": "Artist 11",
+        "durationMs": 210000,
+        "id": "T00000000000000000000x",
+        "imageUrl": "https://img.example/L000000000000000000005.jpg",
+        "name": "Song 59",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:22",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 7",
+        "durationMs": 180000,
+        "id": "T000000000000000000007",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 7",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:23",
+      "track": {
+        "album": "Album 2",
+        "artists": "Artist 1",
+        "durationMs": 220000,
+        "id": "T00000000000000000000P",
+        "imageUrl": "https://img.example/L000000000000000000002.jpg",
+        "name": "Song 25",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:24",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 4",
+        "durationMs": 200000,
+        "id": "T00000000000000000000G",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 16",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:25",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 3",
+        "durationMs": 210000,
+        "id": "T000000000000000000003",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 3",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:26",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 0",
+        "durationMs": 230000,
+        "id": "T00000000000000000000C",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 12",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:27",
+      "track": {
+        "album": "Album 4",
+        "artists": "Artist 9",
+        "durationMs": 210000,
+        "id": "T00000000000000000000j",
+        "imageUrl": "https://img.example/L000000000000000000004.jpg",
+        "name": "Song 45",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:28",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 5",
+        "durationMs": 230000,
+        "id": "T000000000000000000005",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 5",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:29",
+      "track": {
+        "album": "Album 4",
+        "artists": "Artist 8",
+        "durationMs": 200000,
+        "id": "T00000000000000000000i",
+        "imageUrl": "https://img.example/L000000000000000000004.jpg",
+        "name": "Song 44",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:30",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 3",
+        "durationMs": 220000,
+        "id": "T00000000000000000000d",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 39",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:31",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 4",
+        "durationMs": 220000,
+        "id": "T000000000000000000004",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 4",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:32",
+      "track": {
+        "album": "Album 4",
+        "artists": "Artist 7",
+        "durationMs": 190000,
+        "id": "T00000000000000000000h",
+        "imageUrl": "https://img.example/L000000000000000000004.jpg",
+        "name": "Song 43",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:33",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 2",
+        "durationMs": 180000,
+        "id": "T00000000000000000000E",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 14",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:34",
+      "track": {
+        "album": "Album 5",
+        "artists": "Artist 9",
+        "durationMs": 190000,
+        "id": "T00000000000000000000v",
+        "imageUrl": "https://img.example/L000000000000000000005.jpg",
+        "name": "Song 57",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:35",
+      "track": {
+        "album": "Album 4",
+        "artists": "Artist 1",
+        "durationMs": 180000,
+        "id": "T00000000000000000000n",
+        "imageUrl": "https://img.example/L000000000000000000004.jpg",
+        "name": "Song 49",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:36",
+      "track": {
+        "album": "Album 5",
+        "artists": "Artist 6",
+        "durationMs": 230000,
+        "id": "T00000000000000000000s",
+        "imageUrl": "https://img.example/L000000000000000000005.jpg",
+        "name": "Song 54",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:37",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 5",
+        "durationMs": 210000,
+        "id": "T00000000000000000000H",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 17",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:38",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 2",
+        "durationMs": 210000,
+        "id": "T00000000000000000000c",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 38",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:39",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 3",
+        "durationMs": 190000,
+        "id": "T00000000000000000000F",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 15",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:40",
+      "track": {
+        "album": "Album 2",
+        "artists": "Artist 0",
+        "durationMs": 210000,
+        "id": "T00000000000000000000O",
+        "imageUrl": "https://img.example/L000000000000000000002.jpg",
+        "name": "Song 24",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:41",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 9",
+        "durationMs": 200000,
+        "id": "T000000000000000000009",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 9",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:42",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 7",
+        "durationMs": 230000,
+        "id": "T00000000000000000000J",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 19",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:43",
+      "track": {
+        "album": "Album 5",
+        "artists": "Artist 2",
+        "durationMs": 190000,
+        "id": "T00000000000000000000o",
+        "imageUrl": "https://img.example/L000000000000000000005.jpg",
+        "name": "Song 50",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:44",
+      "track": {
+        "album": "Album 0",
+        "artists": "Artist 6",
+        "durationMs": 240000,
+        "id": "T000000000000000000006",
+        "imageUrl": "https://img.example/L000000000000000000000.jpg",
+        "name": "Song 6",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:45",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 1",
+        "durationMs": 240000,
+        "id": "T00000000000000000000D",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 13",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:46",
+      "track": {
+        "album": "Album 2",
+        "artists": "Artist 9",
+        "durationMs": 180000,
+        "id": "T00000000000000000000L",
+        "imageUrl": "https://img.example/L000000000000000000002.jpg",
+        "name": "Song 21",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:47",
+      "track": {
+        "album": "Album 5",
+        "artists": "Artist 7",
+        "durationMs": 240000,
+        "id": "T00000000000000000000t",
+        "imageUrl": "https://img.example/L000000000000000000005.jpg",
+        "name": "Song 55",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:48",
+      "track": {
+        "album": "Album 1",
+        "artists": "Artist 10",
+        "durationMs": 210000,
+        "id": "T00000000000000000000A",
+        "imageUrl": "https://img.example/L000000000000000000001.jpg",
+        "name": "Song 10",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:49",
+      "track": {
+        "album": "Album 2",
+        "artists": "Artist 11",
+        "durationMs": 200000,
+        "id": "T00000000000000000000N",
+        "imageUrl": "https://img.example/L000000000000000000002.jpg",
+        "name": "Song 23",
+        "thumb": 0,
+      },
+    },
+    {
+      "entryId": "c7a2f11e-6286-46aa-b259-86d758733381:50",
+      "track": {
+        "album": "Album 3",
+        "artists": "Artist 1",
+        "durationMs": 200000,
+        "id": "T00000000000000000000b",
+        "imageUrl": "https://img.example/L000000000000000000003.jpg",
+        "name": "Song 37",
+        "thumb": 0,
+      },
+    },
+  ],
+  "sessionId": "c7a2f11e-6286-46aa-b259-86d758733381",
+  "stationId": 1,
+  "status": "disconnected",
+}
+
+ ❯ test/hub/refused-start.test.ts:53:40
+     51|  h.fake.user().devices = [];
+     52|  expect(await h.hub.play(id)).toMatchObject({ ok: false, error: { code…
+     53|  expect((await h.hub.state()).session).toBeNull();
+       |                                        ^
+     54|  expect(h.hub.savedSession(id)).toMatchObject({ pending: null, status:…
+     55|  h.restart();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 4 passed (11)
+   Start at  14:00:01
+   Duration  1.12s (tests 46%, transform 41%, import 13%, worker 1%)
+

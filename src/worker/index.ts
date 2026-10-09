@@ -7,12 +7,14 @@
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
 import type { RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
 import { type Env, endpoints } from "./env";
 import { Keys, randomToken, sha256b64url } from "./lib/crypto";
 import { readRemoteKey, remoteKeyFor } from "./lib/remote-key";
 import { RequestBudget, SpotifyClient, SpotifyError, type SpotifyTokens } from "./spotify/client";
+import { boundedSpotifyRpc } from "./spotify/rpc";
 import type { RpcResult, UserHub } from "./userhub";
 
 export { Registry } from "./registry";
@@ -106,6 +108,21 @@ app.get("/auth/callback", async (c) => {
 	const code = url.searchParams.get("code");
 	if (!code) return c.redirect("/?login=denied");
 	const e = endpoints(c.env);
+	const registry = c.env.REGISTRY.get(c.env.REGISTRY.idFromName("registry"));
+	const flowKey = `@signin:${await sha256b64url(state)}`;
+	const spotifyPolicy = {
+		getCooldown: () => null,
+		setCooldown: () => {},
+		getOperationSnapshot: (operation: string) =>
+			boundedSpotifyRpc(registry.spotifyOperationSnapshot(flowKey, operation)),
+		setOperationCooldown: async (cooldown: import("./spotify/client").SpotifyCooldown) => {
+			await boundedSpotifyRpc(registry.spotifyOperationBlocked(flowKey, cooldown));
+		},
+		finishOperation: (operation: string, revision: number) =>
+			boundedSpotifyRpc(registry.finishSpotifyOperation(flowKey, operation, revision)),
+		record: (metric: import("./spotify/client").SpotifyRequestMetric) =>
+			boundedSpotifyRpc(registry.recordSpotifyUsage(flowKey, metric)),
+	};
 	let tokens: SpotifyTokens;
 	try {
 		tokens = await SpotifyClient.exchangeCode(
@@ -115,6 +132,7 @@ app.get("/auth/callback", async (c) => {
 			`${origin(c)}/auth/callback`,
 			verifier,
 			Date.now(),
+			spotifyPolicy,
 		);
 	} catch {
 		return c.redirect("/?login=failed");
@@ -131,6 +149,7 @@ app.get("/auth/callback", async (c) => {
 		budget: new RequestBudget(5),
 		fetch: (r) => fetch(r),
 		now: () => Date.now(),
+		policy: spotifyPolicy,
 	});
 	let me: Awaited<ReturnType<SpotifyClient["me"]>>;
 	try {
@@ -249,7 +268,11 @@ async function body<T>(c: { req: { json: () => Promise<unknown> } }): Promise<T>
 }
 
 app.get("/api/state", async (c) => {
-	const r = (await c.var.hub.state(c.var.epoch, c.req.query("live") === "1")) as RpcResult<{
+	const r = (await c.var.hub.state(
+		c.var.epoch,
+		c.req.query("live") === "1",
+		c.req.query("refresh") === "1",
+	)) as RpcResult<{
 		profile: { id: string };
 	}>;
 	if (r.ok && !r.value.profile.id) {
@@ -327,24 +350,122 @@ app.get("/api/stations/:id", (c) =>
 );
 
 app.post("/api/stations/:id/play", async (c) => {
-	const b = await body<{ deviceId?: string }>(c);
+	const b = await body<{ deviceId?: string; newQueue?: boolean; sessionId?: string }>(c);
 	return unwrap(
 		c,
 		c.var.hub.play(
 			c.var.epoch,
 			Number(c.req.param("id")),
 			typeof b.deviceId === "string" ? b.deviceId : null,
+			{
+				newQueue: b.newQueue === true,
+				sessionId: typeof b.sessionId === "string" ? b.sessionId : undefined,
+			},
 		),
 	);
 });
 
-app.post("/api/player/:action", (c) => {
+app.post("/api/player/:action", async (c) => {
+	const expected = await body<{ sessionId?: string; entryId?: string }>(c);
 	const action = c.req.param("action");
 	if (action !== "pause" && action !== "resume" && action !== "next") {
 		return c.json({ error: { code: "bad_action", message: "Unbekannte Aktion" } }, 400);
 	}
-	return unwrap(c, c.var.hub.playerAction(c.var.epoch, action));
+	return unwrap(
+		c,
+		c.var.hub.playerAction(c.var.epoch, action, {
+			sessionId: typeof expected.sessionId === "string" ? expected.sessionId : undefined,
+			entryId: typeof expected.entryId === "string" ? expected.entryId : undefined,
+		}),
+	);
 });
+
+app.get("/api/native/devices", (c) => unwrap(c, c.var.hub.nativeDevices(c.var.epoch, c.var.uid)));
+app.post("/api/native/cancel", async (c) => {
+	const b = await body<{ sessionId?: string; entryId?: string }>(c);
+	return unwrap(
+		c,
+		c.var.hub.nativeCancel(c.var.epoch, {
+			sessionId: typeof b.sessionId === "string" ? b.sessionId : undefined,
+			entryId: typeof b.entryId === "string" ? b.entryId : undefined,
+		}),
+	);
+});
+app.get("/api/native/state", (c) => unwrap(c, c.var.hub.nativeState(c.var.epoch, c.var.uid)));
+app.post("/api/native/play", async (c) => {
+	const b = await body<{
+		stationId?: number;
+		deviceId?: string;
+		sessionId?: string;
+		entryId?: string;
+		orderRevision?: number;
+		newQueue?: boolean;
+	}>(c);
+	if (!Number.isSafeInteger(b.stationId) || typeof b.deviceId !== "string")
+		return c.json(
+			{ error: { code: "bad_native", message: "Gerät und Warteschlange fehlen." } },
+			400,
+		);
+	return unwrap(
+		c,
+		c.var.hub.nativePlay(c.var.epoch, c.var.uid, b.stationId!, b.deviceId, "resume", {
+			sessionId: typeof b.sessionId === "string" ? b.sessionId : undefined,
+			entryId: typeof b.entryId === "string" ? b.entryId : undefined,
+			orderRevision: typeof b.orderRevision === "number" ? b.orderRevision : undefined,
+			newQueue: b.newQueue === true,
+		}),
+	);
+});
+app.post("/api/native/player", async (c) => {
+	const b = await body<{
+		stationId?: number;
+		deviceId?: string;
+		action?: string;
+		sessionId?: string;
+		entryId?: string;
+		orderRevision?: number;
+	}>(c);
+	if (
+		!Number.isSafeInteger(b.stationId) ||
+		typeof b.deviceId !== "string" ||
+		!["resume", "pause", "next"].includes(b.action ?? "")
+	)
+		return c.json({ error: { code: "bad_native", message: "Ungültiger Native Befehl." } }, 400);
+	return unwrap(
+		c,
+		c.var.hub.nativePlay(
+			c.var.epoch,
+			c.var.uid,
+			b.stationId!,
+			b.deviceId,
+			b.action as "resume" | "pause" | "next",
+			{
+				sessionId: typeof b.sessionId === "string" ? b.sessionId : undefined,
+				entryId: typeof b.entryId === "string" ? b.entryId : undefined,
+				orderRevision: typeof b.orderRevision === "number" ? b.orderRevision : undefined,
+			},
+		),
+	);
+});
+app.post("/api/spotify/availability-test", (c) =>
+	unwrap(c, c.var.hub.testSpotifyAvailability(c.var.epoch)),
+);
+app.post("/api/spotify/retry", async (c) => {
+	const b = await body<{ scope?: unknown }>(c);
+	if (
+		!b ||
+		typeof b !== "object" ||
+		Array.isArray(b) ||
+		(b.scope !== undefined &&
+			(typeof b.scope !== "string" ||
+				!["artist-albums", "devices", "player", "history"].includes(b.scope)))
+	)
+		return c.json({ error: { code: "bad_request", message: "Unbekannte Spotify-Funktion." } }, 400);
+	const scope = b.scope as "artist-albums" | "devices" | "player" | "history" | undefined;
+	return unwrap(c, c.var.hub.retryQuota(c.var.epoch, scope));
+});
+app.get("/api/spotify/usage", (c) => unwrap(c, c.var.hub.spotifyUsage(c.var.epoch)));
+app.get("/api/spotify/diagnostics", (c) => unwrap(c, c.var.hub.spotifyDiagnostics(c.var.epoch)));
 
 app.get("/api/devices", (c) => unwrap(c, c.var.hub.devices(c.var.epoch)));
 
@@ -352,6 +473,14 @@ app.post("/api/tracks/:id/thumb", async (c) => {
 	const b = await body<{ value?: number }>(c);
 	const v = b.value === 1 ? 1 : b.value === -1 ? -1 : 0;
 	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v));
+});
+
+// The answer to a retest ("Nachprüfung"): keep true = "Gern wieder".
+app.post("/api/tracks/:id/retest", async (c) => {
+	const b = await body<{ keep?: unknown }>(c);
+	if (typeof b.keep !== "boolean")
+		return c.json({ error: { code: "bad_verdict", message: "Ungültige Antwort" } }, 400);
+	return unwrap(c, c.var.hub.retestVerdict(c.var.epoch, c.req.param("id"), b.keep));
 });
 
 async function remoteView(
@@ -397,9 +526,17 @@ app.post("/api/guest", async (c) => {
 	);
 });
 
+app.put("/api/guest/devices", async (c) => {
+	const b = await body<{ devices?: { id: string; name: string }[] }>(c);
+	return unwrap(
+		c,
+		c.var.hub.setGuestDevices(c.var.epoch, Array.isArray(b.devices) ? b.devices : []),
+	);
+});
+
 app.post("/api/history/import", async (c) => {
 	const b = await body<{ rows?: unknown; part?: number; parts?: number }>(c);
-	const rows = Array.isArray(b.rows) ? (b.rows as [string, number, number, number][]) : [];
+	const rows = Array.isArray(b.rows) ? (b.rows as HistoryRow[]) : [];
 	const part = Number(b.part ?? 0);
 	const parts = Number(b.parts ?? 1);
 	if (
@@ -423,6 +560,46 @@ app.get("/api/history", (c) => {
 			Number(c.req.query("limit") ?? 50),
 			before ? Number(before) : undefined,
 		),
+	);
+});
+
+app.post("/api/history/profile", async (c) => {
+	const b = await body<{ profile?: unknown }>(c);
+	return unwrap(c, c.var.hub.setImportedProfile(c.var.epoch, b.profile ?? null));
+});
+
+// Every play of an imported history for the Hörprofil, block by block (see core/listens).
+app.post("/api/history/listens", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(
+		c,
+		c.var.hub.importListens(c.var.epoch, {
+			upload: b.upload,
+			part: b.part,
+			parts: b.parts,
+			tracks: b.tracks,
+			kind: b.kind,
+			data: b.data,
+		}),
+	);
+});
+
+app.post("/api/profile/genres", (c) => unwrap(c, c.var.hub.estimateGenres(c.var.epoch)));
+
+app.get("/api/profile", (c) => {
+	// A period: from inclusive, to exclusive (ms); from left out = everything.
+	const time = (v: string | undefined) => {
+		const n = v ? Number(v) : Number.NaN;
+		return Number.isFinite(n) && n >= 0 && n <= 8.64e15 ? Math.floor(n) : null;
+	};
+	return unwrap(
+		c,
+		c.var.hub.listeningProfile(c.var.epoch, (c.req.query("tz") ?? "UTC").slice(0, 64), {
+			from: time(c.req.query("from")),
+			to: time(c.req.query("to")),
+			// The period it is compared with starts here (a calendar year: the year before).
+			previousFrom: time(c.req.query("prev")),
+		}),
 	);
 });
 

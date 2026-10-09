@@ -84,6 +84,10 @@ export class SpotifyError extends Error {
 		readonly status = 0,
 		readonly retryAfterMs = 0,
 		readonly reason?: string,
+		readonly retryAfter: string | null = null,
+		readonly scope?: SpotifyCooldownScope,
+		readonly endpoint?: string,
+		readonly operation?: string,
 	) {
 		super(message);
 		this.name = "SpotifyError";
@@ -107,24 +111,237 @@ export class RequestBudget {
 
 export type Fetcher = (input: Request) => Promise<Response>;
 
+/** Account-owned provider gate. A null deadline is unknown, never a guessed reset. */
+export type SpotifyCooldownScope =
+	| "artist-albums"
+	| "devices"
+	| "player"
+	| "history"
+	| "legacy-catalog";
+export const SPOTIFY_COOLDOWN_SCOPES: SpotifyCooldownScope[] = [
+	"artist-albums",
+	"devices",
+	"player",
+	"history",
+	"legacy-catalog",
+];
+export function readScope(endpoint: string): SpotifyCooldownScope | undefined {
+	return (
+		{
+			"/artists/:id/albums": "artist-albums",
+			"/me/player/devices": "devices",
+			"/me/player": "player",
+			"/me/player/recently-played": "history",
+		} as Record<string, SpotifyCooldownScope>
+	)[endpoint];
+}
+export function eligibleLegacy(c: SpotifyCooldown | null): c is SpotifyCooldown {
+	return !!c && !c.scope && !c.endpoint && c.kind === "quota" && c.reason === "QUOTA_EXCEEDED";
+}
+export const ARTIST_ALBUMS_ENDPOINT = "/artists/:id/albums";
+
+export interface SpotifyCooldown {
+	operation?: string;
+	scope?: SpotifyCooldownScope;
+	endpoint?: string;
+	/** Private provider source; never exposed in diagnostics. */
+	probePath?: string;
+	until: number | null;
+	kind: "rate" | "quota";
+	reason?: string;
+	retryAfter: string | null;
+	observedAt: number;
+}
+export interface SpotifyRequestMetric {
+	startedAt?: number;
+	method?: string;
+	operation?: string;
+	endpoint: string;
+	category: "read" | "write" | "refresh";
+	status: number;
+	reason?: string;
+	retryAfter: string | null;
+	retryCategory: "none" | "auth" | "server" | "network" | "rate" | "quota" | "blocked";
+	at: number;
+}
+export interface SpotifyRequestPolicy {
+	getOperationSnapshot?(
+		operation: string,
+	):
+		| { revision: number; cooldown: SpotifyCooldown | null }
+		| Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
+	setOperationCooldown?(value: SpotifyCooldown): void | Promise<void>;
+	finishOperation?(operation: string, revision: number): void | Promise<void>;
+	getCooldown(
+		scope?: SpotifyCooldownScope,
+	): SpotifyCooldown | null | Promise<SpotifyCooldown | null>;
+	setCooldown(value: SpotifyCooldown): void | Promise<void>;
+	record?(metric: SpotifyRequestMetric): void | Promise<void>;
+}
+
 export interface ClientOptions {
 	endpoints: SpotifyEndpoints;
 	tokens: TokenStore;
 	budget: RequestBudget;
 	fetch: Fetcher;
 	now: () => number;
+	policy?: SpotifyRequestPolicy;
+	requestTimeoutMs?: number;
+	singleTransport?: boolean;
+	allowUnknownRetry?: boolean;
+	/** Deterministic timeout injection for the transport harness. */
+	timeoutSignal?: (timeoutMs: number) => AbortSignal;
 }
 
 type Query = Record<string, string | number | boolean | undefined | null>;
 
 export class SpotifyClient {
 	private cached: SpotifyTokens | null = null;
+	private operationCooldowns = new Map<string, SpotifyCooldown>();
+	private operationRevisions = new Map<string, number>();
+	private failedOperations = new Set<string>();
+	private refreshes = 0;
 
 	constructor(private readonly o: ClientOptions) {}
 
 	/** Requests this invocation may still make. */
 	get requestsLeft(): number {
 		return this.o.budget.left;
+	}
+
+	private async fetchBounded(request: Request): Promise<Response> {
+		const timeoutMs = this.o.requestTimeoutMs ?? 15_000;
+		const signal = this.o.timeoutSignal?.(timeoutMs) ?? AbortSignal.timeout(timeoutMs);
+		signal.throwIfAborted();
+		return new Promise<Response>((resolve, reject) => {
+			const abort = () =>
+				reject(new SpotifyError("network", "Spotify hat nicht rechtzeitig geantwortet"));
+			signal.addEventListener("abort", abort, { once: true });
+			this.o
+				.fetch(new Request(request, { signal }))
+				.then(resolve, reject)
+				.finally(() => signal.removeEventListener("abort", abort));
+		});
+	}
+
+	private async guard(
+		endpoint: string,
+		category: SpotifyRequestMetric["category"],
+		method = category === "refresh" ? "POST" : "GET",
+	): Promise<{ revision: number; generation: number; hadCooldown: boolean }> {
+		const operation = `${method} ${endpoint}`;
+		const snapshot = await this.o.policy?.getOperationSnapshot?.(operation);
+		const generation = this.operationRevisions.get(operation) ?? 0;
+		const c = snapshot ? snapshot.cooldown : this.operationCooldowns.get(operation);
+		if (
+			c?.operation === operation &&
+			((c.until !== null && c.until > this.o.now()) ||
+				(c.until === null &&
+					(this.failedOperations.has(operation) || this.o.allowUnknownRetry === false)))
+		) {
+			await this.metric(endpoint, category, 429, "blocked", c.reason, c.retryAfter, method);
+			throw new SpotifyError(
+				c.kind,
+				"Spotify hat diese Anfrage vorübergehend gesperrt",
+				429,
+				c.until === null ? 0 : c.until - this.o.now(),
+				c.reason,
+				c.retryAfter,
+				c.scope,
+				c.endpoint,
+				operation,
+			);
+		}
+		return { revision: snapshot?.revision ?? generation, generation, hadCooldown: !!c };
+	}
+	private async succeeded(
+		endpoint: string,
+		method: string,
+		fence: { revision: number; generation: number; hadCooldown: boolean },
+	): Promise<void> {
+		const operation = `${method} ${endpoint}`;
+		// Ordinary successes have no saved hold to clear. Avoid a shared write
+		// and readback; a newer concurrent hold remains untouched. Real recovery
+		// still uses the exact revision captured immediately before transport.
+		if (fence.hadCooldown) await this.o.policy?.finishOperation?.(operation, fence.revision);
+		if ((this.operationRevisions.get(operation) ?? 0) === fence.generation) {
+			this.operationCooldowns.delete(operation);
+			this.failedOperations.delete(operation);
+		}
+	}
+
+	private async metric(
+		endpoint: string,
+		category: SpotifyRequestMetric["category"],
+		status: number,
+		retryCategory: SpotifyRequestMetric["retryCategory"],
+		reason?: string,
+		retryAfter: string | null = null,
+		method = category === "refresh" ? "POST" : category === "read" ? "GET" : "WRITE",
+		startedAt?: number,
+	): Promise<void> {
+		await this.o.policy?.record?.({
+			operation: `${method} ${endpoint}`,
+			method,
+			startedAt,
+			endpoint,
+			category,
+			status,
+			retryCategory,
+			reason,
+			retryAfter,
+			at: this.o.now(),
+		});
+	}
+
+	private async failure(
+		res: Response,
+		endpoint?: string,
+		method?: string,
+		path?: string,
+	): Promise<SpotifyError> {
+		const parsed = await toError(res, this.o.now());
+		const scope =
+			parsed.kind === "quota" && parsed.reason === "QUOTA_EXCEEDED" && method === "GET"
+				? readScope(endpoint ?? "")
+				: undefined;
+		const error = new SpotifyError(
+			parsed.kind,
+			parsed.message,
+			parsed.status,
+			parsed.retryAfterMs,
+			parsed.reason,
+			parsed.retryAfter,
+			scope,
+			endpoint,
+			`${method} ${endpoint}`,
+		);
+		if (error.kind === "rate" || error.kind === "quota") {
+			const operation = `${method} ${endpoint}`;
+			const previous = this.operationCooldowns.get(operation);
+			const proposed = error.retryAfter === null ? null : this.o.now() + error.retryAfterMs;
+			const until =
+				previous?.until !== null && previous?.until !== undefined && previous.until > this.o.now()
+					? Math.max(previous.until, proposed ?? 0)
+					: proposed;
+			const c: SpotifyCooldown = {
+				operation,
+				scope,
+				endpoint,
+				probePath: scope === "artist-albums" && validArtistAlbumsProbe(path) ? path : undefined,
+				until,
+				kind: error.kind,
+				reason: error.reason,
+				retryAfter: error.retryAfter,
+				observedAt: this.o.now(),
+			};
+			this.operationRevisions.set(operation, (this.operationRevisions.get(operation) ?? 0) + 1);
+			this.operationCooldowns.set(operation, c);
+			this.failedOperations.add(operation);
+			if (this.o.policy?.setOperationCooldown) await this.o.policy.setOperationCooldown(c);
+			else await this.o.policy?.setCooldown(c);
+		}
+		return error;
 	}
 
 	// ---------------------------------------------------------------------
@@ -155,7 +372,18 @@ export class SpotifyClient {
 		redirectUri: string,
 		verifier: string,
 		now: number,
+		policy?: SpotifyRequestPolicy,
 	): Promise<SpotifyTokens> {
+		const transport = new SpotifyClient({
+			endpoints: e,
+			fetch: fetcher,
+			now: () => now,
+			policy,
+			budget: new RequestBudget(1),
+			tokens: { get: async () => null, set: async () => {} },
+		});
+		const fence = await transport.guard("/api/token", "refresh");
+		transport.o.budget.take();
 		const body = new URLSearchParams({
 			grant_type: "authorization_code",
 			code,
@@ -163,14 +391,54 @@ export class SpotifyClient {
 			client_id: e.clientId,
 			code_verifier: verifier,
 		});
-		const res = await fetcher(
-			new Request(`${e.accountsBase}/api/token`, {
-				method: "POST",
-				headers: { "content-type": "application/x-www-form-urlencoded" },
-				body,
-			}),
+		const startedAt = transport.o.now();
+		let res: Response;
+		try {
+			res = await transport.fetchBounded(
+				new Request(`${e.accountsBase}/api/token`, {
+					method: "POST",
+					headers: { "content-type": "application/x-www-form-urlencoded" },
+					body,
+				}),
+			);
+		} catch {
+			await transport.metric(
+				"/api/token",
+				"refresh",
+				0,
+				"network",
+				undefined,
+				null,
+				"POST",
+				startedAt,
+			);
+			throw new SpotifyError("network", "Spotify nicht erreichbar");
+		}
+		if (!res.ok) {
+			const error = await transport.failure(res, "/api/token", "POST");
+			await transport.metric(
+				"/api/token",
+				"refresh",
+				res.status,
+				error.kind === "rate" || error.kind === "quota" ? error.kind : "none",
+				error.reason,
+				error.retryAfter,
+				"POST",
+				startedAt,
+			);
+			throw error;
+		}
+		await transport.metric(
+			"/api/token",
+			"refresh",
+			res.status,
+			"none",
+			undefined,
+			null,
+			"POST",
+			startedAt,
 		);
-		if (!res.ok) throw await toError(res);
+		await transport.succeeded("/api/token", "POST", fence);
 		const t = (await res.json()) as SpTokenResponse;
 		if (!t.refresh_token)
 			throw new SpotifyError("auth", "Spotify hat kein Refresh-Token geliefert");
@@ -193,26 +461,52 @@ export class SpotifyClient {
 	}
 
 	private async refresh(t: SpotifyTokens): Promise<SpotifyTokens> {
+		if (this.o.singleTransport && this.refreshes >= 1)
+			throw new SpotifyError("auth", "Spotify-Anmeldung konnte nicht bestätigt werden", 401);
+		this.refreshes++;
+		const fence = await this.guard("/api/token", "refresh");
 		this.o.budget.take();
 		const body = new URLSearchParams({
 			grant_type: "refresh_token",
 			refresh_token: t.refreshToken,
 			client_id: this.o.endpoints.clientId,
 		});
+		const startedAt = this.o.now();
 		let res: Response;
 		try {
-			res = await this.o.fetch(
+			res = await this.fetchBounded(
 				new Request(`${this.o.endpoints.accountsBase}/api/token`, {
 					method: "POST",
 					headers: { "content-type": "application/x-www-form-urlencoded" },
 					body,
 				}),
 			);
-		} catch (err) {
-			throw new SpotifyError("network", `Spotify nicht erreichbar: ${String(err)}`);
+		} catch {
+			await this.metric("/api/token", "refresh", 0, "network", undefined, null, "POST", startedAt);
+			throw new SpotifyError(
+				"network",
+				"Spotify nicht erreichbar",
+				0,
+				0,
+				undefined,
+				null,
+				undefined,
+				"/api/token",
+				"POST /api/token",
+			);
 		}
 		if (!res.ok) {
-			const e = await toError(res);
+			const e = await this.failure(res, "/api/token", "POST");
+			await this.metric(
+				"/api/token",
+				"refresh",
+				res.status,
+				e.kind === "quota" || e.kind === "rate" ? e.kind : "none",
+				e.reason,
+				e.retryAfter,
+				"POST",
+				startedAt,
+			);
 			// invalid_grant / invalid_client: the grant is gone for good.
 			if (res.status === 400 || res.status === 401) {
 				throw new SpotifyError(
@@ -223,6 +517,17 @@ export class SpotifyClient {
 			}
 			throw e;
 		}
+		await this.metric(
+			"/api/token",
+			"refresh",
+			res.status,
+			"none",
+			undefined,
+			null,
+			"POST",
+			startedAt,
+		);
+		await this.succeeded("/api/token", "POST", fence);
 		const r = (await res.json()) as SpTokenResponse;
 		const next: SpotifyTokens = {
 			accessToken: r.access_token,
@@ -240,22 +545,31 @@ export class SpotifyClient {
 	// ---------------------------------------------------------------------
 
 	async request<T>(
-		method: string,
+		inputMethod: string,
 		path: string,
 		opts: { query?: Query; body?: unknown } = {},
 	): Promise<T | null> {
+		const method = inputMethod.toUpperCase();
 		const url = new URL(path.startsWith("http") ? path : `${this.o.endpoints.apiBase}${path}`);
+		const base = new URL(this.o.endpoints.apiBase);
+		if (url.origin !== base.origin || !url.pathname.startsWith(`${base.pathname}/`))
+			throw new SpotifyError("bad_request", "Unzulässiges Spotify-Ziel");
+		const endpoint = sanitizedEndpoint(url.pathname.slice(base.pathname.length));
+		const category = method === "GET" ? "read" : "write";
 		for (const [k, v] of Object.entries(opts.query ?? {})) {
 			if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
 		}
 		let attempt = 0;
 		let forced = false;
 		for (;;) {
+			await this.guard(endpoint, category, method);
 			const token = await this.token(forced);
+			const fence = await this.guard(endpoint, category, method);
 			this.o.budget.take();
+			const startedAt = this.o.now();
 			let res: Response;
 			try {
-				res = await this.o.fetch(
+				res = await this.fetchBounded(
 					new Request(url.toString(), {
 						method,
 						headers: {
@@ -265,16 +579,69 @@ export class SpotifyClient {
 						body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
 					}),
 				);
-			} catch (err) {
-				if (attempt++ < 1) continue;
-				throw new SpotifyError("network", `Spotify nicht erreichbar: ${String(err)}`);
+			} catch {
+				await this.metric(endpoint, category, 0, "network", undefined, null, method, startedAt);
+				if (!this.o.singleTransport && method === "GET" && attempt++ < 1) continue;
+				throw new SpotifyError(
+					"network",
+					"Spotify nicht erreichbar",
+					0,
+					0,
+					undefined,
+					null,
+					undefined,
+					endpoint,
+					`${method} ${endpoint}`,
+				);
 			}
-			if (res.status === 401 && !forced) {
+			if (!this.o.singleTransport && res.status === 401 && !forced) {
+				await this.metric(
+					endpoint,
+					category,
+					res.status,
+					"auth",
+					undefined,
+					null,
+					method,
+					startedAt,
+				);
 				forced = true;
 				continue;
 			}
-			if (res.status >= 500 && attempt++ < 1) continue;
-			if (!res.ok) throw await toError(res);
+			if (!this.o.singleTransport && method === "GET" && res.status >= 500 && attempt++ < 1) {
+				await this.metric(
+					endpoint,
+					category,
+					res.status,
+					"server",
+					undefined,
+					null,
+					method,
+					startedAt,
+				);
+				continue;
+			}
+			if (!res.ok) {
+				const error = await this.failure(
+					res,
+					endpoint,
+					method,
+					url.pathname.slice(base.pathname.length),
+				);
+				await this.metric(
+					endpoint,
+					category,
+					res.status,
+					error.kind === "rate" || error.kind === "quota" ? error.kind : "none",
+					error.reason,
+					error.retryAfter,
+					method,
+					startedAt,
+				);
+				throw error;
+			}
+			await this.metric(endpoint, category, res.status, "none", undefined, null, method, startedAt);
+			await this.succeeded(endpoint, method, fence);
 			if (res.status === 204) return null;
 			const text = await res.text();
 			if (!text) return null;
@@ -388,6 +755,7 @@ export class SpotifyClient {
 	play(opts: {
 		contextUri: string;
 		position?: number;
+		progressMs?: number;
 		deviceId?: string | null;
 	}): Promise<unknown> {
 		return this.request("PUT", "/me/player/play", {
@@ -395,7 +763,7 @@ export class SpotifyClient {
 			body: {
 				context_uri: opts.contextUri,
 				offset: { position: opts.position ?? 0 },
-				position_ms: 0,
+				position_ms: Math.max(0, Math.floor(opts.progressMs ?? 0)),
 			},
 		});
 	}
@@ -454,7 +822,7 @@ function enc(id: string): string {
 	return encodeURIComponent(id);
 }
 
-async function toError(res: Response): Promise<SpotifyError> {
+async function toError(res: Response, now: number): Promise<SpotifyError> {
 	let body: SpErrorBody = {};
 	try {
 		body = (await res.json()) as SpErrorBody;
@@ -462,7 +830,7 @@ async function toError(res: Response): Promise<SpotifyError> {
 		/* not JSON */
 	}
 	const err = typeof body.error === "object" ? body.error : undefined;
-	const reason = err?.reason;
+	const reason = safeReason(err?.reason);
 	const message =
 		err?.message ??
 		(typeof body.error === "string" ? body.error : undefined) ??
@@ -470,22 +838,18 @@ async function toError(res: Response): Promise<SpotifyError> {
 		res.statusText;
 	const status = res.status;
 	if (status === 429) {
-		const retryAfter = Number(res.headers.get("retry-after") ?? "0");
-		if (reason === "QUOTA_EXCEEDED" || /quota/i.test(message ?? "")) {
-			return new SpotifyError(
-				"quota",
-				"Spotify-Kontingent dieser App ist aufgebraucht",
-				status,
-				3_600_000,
-				reason,
-			);
-		}
+		const raw = res.headers.get("retry-after");
+		const retry = parseRetryAfter(raw, now);
+		const kind = reason === "QUOTA_EXCEEDED" ? "quota" : "rate";
 		return new SpotifyError(
-			"rate",
-			"Spotify bremst gerade (zu viele Anfragen)",
+			kind,
+			kind === "quota"
+				? "Spotify-Kontingent dieser App ist aufgebraucht"
+				: "Spotify bremst gerade (zu viele Anfragen)",
 			status,
-			Math.max(1, retryAfter) * 1000,
+			retry?.ms ?? 0,
 			reason,
+			retry?.raw ?? null,
 		);
 	}
 	if (status === 403) {
@@ -498,7 +862,10 @@ async function toError(res: Response): Promise<SpotifyError> {
 				reason,
 			);
 		}
-		if (reason === "UNKNOWN" && /restricted/i.test(message ?? "")) {
+		if (
+			reason === "RESTRICTION_VIOLATED" ||
+			(reason === "UNKNOWN" && /restricted/i.test(message ?? ""))
+		) {
 			return new SpotifyError(
 				"restricted",
 				"Dieses Gerät nimmt keine Befehle an",
@@ -507,7 +874,7 @@ async function toError(res: Response): Promise<SpotifyError> {
 				reason,
 			);
 		}
-		return new SpotifyError("forbidden", message || "Zugriff verweigert", status, 0, reason);
+		return new SpotifyError("forbidden", "Zugriff verweigert", status, 0, reason);
 	}
 	if (status === 404) {
 		if (reason === "NO_ACTIVE_DEVICE" || /device/i.test(message ?? "")) {
@@ -519,11 +886,85 @@ async function toError(res: Response): Promise<SpotifyError> {
 				reason,
 			);
 		}
-		return new SpotifyError("not_found", message || "Nicht gefunden", status, 0, reason);
+		return new SpotifyError("not_found", "Nicht gefunden", status, 0, reason);
 	}
 	if (status === 401)
 		return new SpotifyError("auth", "Spotify-Anmeldung ungültig", status, 0, reason);
 	if (status >= 500)
 		return new SpotifyError("server", `Spotify-Fehler ${status}`, status, 0, reason);
-	return new SpotifyError("bad_request", message || `HTTP ${status}`, status, 0, reason);
+	return new SpotifyError(
+		"bad_request",
+		`Spotify-Anfrage fehlgeschlagen (HTTP ${status})`,
+		status,
+		0,
+		reason,
+	);
+}
+
+function safeReason(reason: unknown): string | undefined {
+	const allowed = [
+		"QUOTA_EXCEEDED",
+		"PREMIUM_REQUIRED",
+		"NO_ACTIVE_DEVICE",
+		"RESTRICTION_VIOLATED",
+		"UNKNOWN",
+	];
+	return typeof reason === "string" && allowed.includes(reason) ? reason : undefined;
+}
+
+export function parseRetryAfter(
+	raw: string | null,
+	now: number,
+): { raw: string; ms: number } | null {
+	if (raw === null) return null;
+	const value = raw.trim();
+	if (/^\d+(?:\.\d+)?$/.test(value)) {
+		const ms = Number(value) * 1000;
+		return Number.isFinite(ms) ? { raw: value, ms: Math.max(0, ms) } : null;
+	}
+	// Only canonical HTTP dates are retained; arbitrary header text never enters diagnostics.
+	if (
+		!/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(value)
+	)
+		return null;
+	const deadline = Date.parse(value);
+	return Number.isFinite(deadline) ? { raw: value, ms: Math.max(0, deadline - now) } : null;
+}
+
+function sanitizedEndpoint(path: string): string {
+	const known = new Set([
+		"me",
+		"player",
+		"devices",
+		"recently-played",
+		"play",
+		"pause",
+		"next",
+		"shuffle",
+		"repeat",
+		"seek",
+		"playlists",
+		"items",
+		"tracks",
+		"top",
+		"artists",
+		"albums",
+		"search",
+		"library",
+	]);
+	return path
+		.split("/")
+		.map((part) => (!part || known.has(part) ? part : ":id"))
+		.join("/");
+}
+
+export function validArtistAlbumsProbe(path: unknown): path is string {
+	return typeof path === "string" && /^\/artists\/[a-zA-Z0-9]{22}\/albums$/.test(path);
+}
+export function publicCooldown(
+	c: SpotifyCooldown | null,
+): Omit<SpotifyCooldown, "probePath"> | null {
+	if (!c) return null;
+	const { probePath: _privateSource, ...safe } = c;
+	return safe;
 }

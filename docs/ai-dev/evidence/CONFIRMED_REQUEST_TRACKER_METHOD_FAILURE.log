@@ -1,0 +1,36 @@
+
+ RUN  v5.0.2 /tmp/mika-independent-review
+
+ ❯ test/spotify/tracker-race-independent.test.ts (2 tests | 1 failed) 37ms
+   × RT-T04 lowercase transport method must honor confirmed uppercase GET deadline 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/spotify/tracker-race-independent.test.ts > RT-T04 lowercase transport method must honor confirmed uppercase GET deadline
+AssertionError: promise resolved "{ devices: [] }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "devices": [],
+  }
+
+ ❯ test/spotify/tracker-race-independent.test.ts:113:62
+    111|  const f=fixture([quota('3600'),new Response(JSON.stringify({devices:[…
+    112|  await expect(f.create().devices()).rejects.toMatchObject({status:429}…
+    113|  await expect(f.create().request('get','/me/player/devices')).rejects.…
+       |                                                              ^
+    114|  expect(f.calls).toBe(1);
+    115| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  13:59:19
+   Duration  206ms (transform 49%, tests 36%, import 11%, worker 3%)
+

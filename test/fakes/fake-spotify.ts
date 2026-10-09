@@ -51,6 +51,8 @@ export interface FakeUser {
 		type: string;
 		restricted: boolean;
 		privateSession?: boolean;
+		/** Spotify documents device.id as nullable: reported as null. */
+		noId?: boolean;
 	}[];
 	/** …unless Spotify lists them after all. */
 	listPrivatePlays?: boolean;
@@ -602,13 +604,13 @@ export class FakeSpotify {
 				403,
 			);
 		if (m === "GET" && path === "/me/player") {
-			if (!p.deviceId) return new Response(null, { status: 204 });
+			const dev = u.devices.find((d) => d.id === p.deviceId);
+			if (!dev) return new Response(null, { status: 204 });
 			const id = this.current(u.id);
 			const t = id ? this.tracks.get(id) : undefined;
-			const dev = u.devices.find((d) => d.id === p.deviceId)!;
 			return json({
 				device: {
-					id: dev.id,
+					id: dev.noId ? null : dev.id,
 					is_active: true,
 					is_restricted: dev.restricted,
 					is_private_session: dev.privateSession === true,
@@ -653,7 +655,8 @@ export class FakeSpotify {
 		if (m === "PUT" && path === "/me/player/play") {
 			if (!u.premium) return premiumOnly();
 			const deviceId = q.get("device_id") ?? p.deviceId ?? null;
-			if (!deviceId)
+			const device = u.devices.find((d) => d.id === deviceId);
+			if (!device)
 				return json(
 					{
 						error: {
@@ -664,13 +667,25 @@ export class FakeSpotify {
 					},
 					404,
 				);
+			if (device.restricted)
+				return json(
+					{
+						error: {
+							status: 403,
+							message: "Player command failed: Restriction violated",
+							reason: "RESTRICTION_VIOLATED",
+						},
+					},
+					403,
+				);
 			if (data.context_uri) {
 				const cm = /^spotify:playlist:(.+)$/.exec(String(data.context_uri));
 				if (cm && !this.playlists.has(cm[1]!)) {
 					return json({ error: { status: 404, message: "Not found." } }, 404);
 				}
 				const off = data.offset as { position?: number } | undefined;
-				this.startContext(u.id, String(data.context_uri), off?.position ?? 0, deviceId, true);
+				this.startContext(u.id, String(data.context_uri), off?.position ?? 0, device.id, true);
+				p.progressMs = Number(data.position_ms ?? 0);
 			} else if (Array.isArray(data.uris)) {
 				const ids = (data.uris as string[]).map((x) => x.replace("spotify:track:", ""));
 				p.contextUri = null;

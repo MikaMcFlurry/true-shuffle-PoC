@@ -159,6 +159,7 @@ setInterval(() => {
 	last = now;
 }, 1000);
 
+let failPlay = false;
 const server = createServer(async (req, res) => {
 	const url = `http://127.0.0.1:${PORT}${req.url}`;
 	const chunks: Buffer[] = [];
@@ -169,6 +170,9 @@ const server = createServer(async (req, res) => {
 		const u = new URL(url);
 		const user = fake.user("mika");
 		switch (u.pathname) {
+			case "/__control/fail-play":
+				failPlay = u.searchParams.get("on") === "1";
+				break;
 			case "/__control/advance":
 				fake.advance(Number(u.searchParams.get("ms") ?? 60_000), "mika");
 				break;
@@ -178,6 +182,15 @@ const server = createServer(async (req, res) => {
 			case "/__control/pause":
 				fake.pause("mika");
 				break;
+			case "/__control/resume":
+				user.player.isPlaying = true;
+				break;
+			case "/__control/position": {
+				const ms = Number(u.searchParams.get("ms"));
+				if (Number.isFinite(ms) && ms >= 0) user.player.progressMs = ms;
+				if (u.searchParams.get("paused") === "1") fake.pause("mika");
+				break;
+			}
 			case "/__control/smart-shuffle":
 				user.player.smartShuffle = u.searchParams.get("on") === "1";
 				break;
@@ -199,8 +212,17 @@ const server = createServer(async (req, res) => {
 			context: user.player.contextUri,
 			playing: user.player.isPlaying,
 			shuffle: user.player.shuffle,
+			progressMs: user.player.progressMs,
+			index: user.player.index,
+			calls: fake.calls.length,
 			recent: user.recent.length,
 		});
+	} else if (failPlay && req.method === "PUT" && new URL(url).pathname === "/v1/me/player/play") {
+		failPlay = false;
+		response = Response.json(
+			{ error: { status: 503, message: "Synthetic ambiguous play failure" } },
+			{ status: 503 },
+		);
 	} else {
 		response = await fake.handle(
 			new Request(url, {
