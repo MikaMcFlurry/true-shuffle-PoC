@@ -716,6 +716,7 @@ describe("the ninth review's cases", () => {
 		expect(h.sql.first(`SELECT 1 FROM bans WHERE track_id = ?`, g)).toBeNull();
 	});
 
+	// Simulates 61 hours of looks: slower than the suite's 20 s default on a busy runner.
 	it("a turned-down song is skipped after a weekend with the phone out of sight", async () => {
 		const h = await onboarded({ tracks: 600 });
 		const sid = h.stationIds[0]!;
@@ -735,7 +736,7 @@ describe("the ninth review's cases", () => {
 		await h.listen(20 * MINUTE_MS);
 		expect(heard.get(x)?.length).toBe(1);
 		expect(heard.get(x)![0]).toBeLessThan(30_000);
-	});
+	}, 120_000);
 });
 
 describe("the tenth look: older orders and the edges of guest time", () => {
