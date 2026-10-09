@@ -307,6 +307,9 @@ describe("song facts in the Verlauf", () => {
 		expect(began.size).toBe(1);
 		const lane = [...began][0]!;
 		await h.listen(30_000);
+		// The app open: a look sees it playing, and six seconds later paused.
+		await h.hub.state({ live: true, refresh: true });
+		await h.listen(6_000);
 		p.isPlaying = false;
 		await h.hub.state({ live: true, refresh: true });
 		h.clock.t += 30 * MINUTE_MS;
@@ -469,6 +472,81 @@ describe("song facts in the Verlauf", () => {
 		const later = h.hub.history(200).filter((e) => e.id === t);
 		expect(later.length).toBe(1);
 		expect(later[0]!.facts?.kind ?? null).toBeNull();
+	});
+
+	it("a later look at the song proves nothing unless it is the very play (PR24-LANE-05)", async () => {
+		const quiet = (h: Awaited<ReturnType<typeof onboarded>>, ms: number) => {
+			h.clock.t += ms;
+			h.fake.advance(ms, h.fake.user().id);
+		};
+		const cases: [
+			string,
+			(h: Awaited<ReturnType<typeof onboarded>>, t: string, sid: number, seen: number) => void,
+		][] = [
+			[
+				"skipped at 6 s, another song 60 s, new deck, restart, again 40 s",
+				(h, t, sid, seen) => {
+					const p = h.fake.user().player;
+					quiet(h, 6_000 - seen);
+					h.fake.skip();
+					quiet(h, 60_000);
+					const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+					const deck = JSON.parse(row.deck) as {
+						writtenAt: number;
+						items: { id: string; kind: SlotKind }[];
+					};
+					deck.items = deck.items.map((it) => (it.id === t ? { ...it, kind: "favorite" } : it));
+					deck.writtenAt = h.clock.t;
+					(h.hub as unknown as { saveDeck(id: number, d: unknown): void }).saveDeck(sid, deck);
+					h.restart();
+					p.order.splice(p.index + 1, 0, t);
+					h.fake.skip();
+					quiet(h, 40_000);
+				},
+			],
+			[
+				"paused unseen for a minute, then on for 40 s",
+				(h) => {
+					const p = h.fake.user().player;
+					quiet(h, 20_000);
+					p.isPlaying = false;
+					quiet(h, 60_000);
+					p.isPlaying = true;
+					quiet(h, 40_000);
+				},
+			],
+			[
+				"sought forward unseen by a minute",
+				(h) => {
+					const p = h.fake.user().player;
+					quiet(h, 20_000);
+					p.progressMs += 60_000;
+					quiet(h, 20_000);
+				},
+			],
+		];
+		for (const [, run] of cases) {
+			const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+			const sid = h.stationIds[0]!;
+			expect((await h.hub.play(sid)).ok).toBe(true);
+			await h.listen(10 * MINUTE_MS);
+			const x = h.fake.current()!;
+			while (h.fake.current() === x) await h.listen(1_000);
+			await h.hub.state({ live: true, refresh: true });
+			const t = h.fake.current()!;
+			run(h, t, sid, h.fake.user().player.progressMs);
+			// A look sees the song, a second later it is skipped and the history read.
+			await h.hub.state({ live: true, refresh: true });
+			quiet(h, 1_000);
+			h.fake.skip();
+			quiet(h, 6_000);
+			await h.hub.state({ live: true, refresh: true });
+			await h.listen(2 * MINUTE_MS);
+			await h.hub.state({ live: true, refresh: true });
+			const e = h.hub.history(200).filter((r) => r.id === t);
+			expect(e.length).toBe(1);
+			expect(e[0]!.facts?.kind ?? null).toBeNull();
+		}
 	});
 
 	it("a song skipped from the app after 40 s keeps the lane the looks saw it begin with", async () => {

@@ -193,6 +193,8 @@ const LANE_NOTE_MS = 2 * DAY_MS;
  * counted play lasts, so a later play of the song never fits a closed note.
  */
 const LANE_STAMP_SLACK_MS = 15_000;
+/** How far two looks at one play may disagree on when it began (clocks, latency). */
+const LANE_SAME_PLAY_SLACK_MS = 2_000;
 const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
 const PLAYS_KEEP_MS = 180 * DAY_MS;
 const PRUNE_PER_DAY = 500;
@@ -428,6 +430,8 @@ interface LaneNote {
 	progress?: number;
 	playing?: boolean;
 	durationMs?: number;
+	/** When this play began, as the last look that proved it saw it (its time less its position). */
+	start?: number;
 }
 
 interface PlayerSnapshot {
@@ -4924,25 +4928,30 @@ export class HubCore {
 			if (n.goneAt !== undefined) continue;
 			const st = this.stationRow(n.station);
 			if (st && obs?.trackId === n.id && obs.contextUri === this.deckUri(st)) {
-				if (!this.laneBegunAgain(n, obs, now)) {
+				if (this.laneSamePlay(n, obs, now)) {
 					n.lastAt = now;
 					n.progress = obs.progressMs;
 					n.playing = obs.isPlaying;
 					n.durationMs = obs.durationMs;
+					n.start = obs.at - obs.progressMs;
 					continue;
 				}
+				// The song again, but not provably the noted play: maybe a play the
+				// looks never saw begin. Its note ends here.
 				begunAgain = true;
 			}
 			// A look that no longer shows a noted play closes its note: that play
 			// ended by now, and a later play of the song is another one.
 			n.goneAt = now;
 		}
+		// A new play: the look before showed another song. The noted song again
+		// without proof (an unseen pause looks like a later start) gets no note.
 		const isNew =
 			obs?.trackId &&
 			obs.contextUri &&
 			shown &&
-			(begunAgain ||
-				!(shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri));
+			!begunAgain &&
+			!(shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri);
 		const st = isNew ? this.stations().find((x) => this.deckUri(x) === obs.contextUri) : undefined;
 		const deck = st ? this.deckOf(st) : null;
 		if (st && deck && shown && obs?.trackId && deck.writtenAt <= shown.at) {
@@ -4958,6 +4967,7 @@ export class HubCore {
 				progress: obs.progressMs,
 				playing: obs.isPlaying,
 				durationMs: obs.durationMs,
+				start: obs.at - obs.progressMs,
 			});
 		}
 		notes = notes.slice(-50);
@@ -4965,18 +4975,28 @@ export class HubCore {
 	}
 
 	/**
-	 * The song on the player again, but not the noted play: further back than
-	 * it was while playing, or (seen playing) it would have ended since and is
-	 * not as far in as the time since that end.
+	 * Whether a look at the noted song is provably still the noted play. A
+	 * play that began after the last look that proved it cannot have begun
+	 * earlier than that look: playing at both looks, the same play began at
+	 * the same moment (within the clock's slack); paused at both, it stands
+	 * at the very same position; paused then playing, it was caught right at
+	 * the resume; playing then paused, it is further in than the time since,
+	 * which no later play could be. Anything else proves nothing (an unseen
+	 * pause, seek or repeat look alike), and the note ends.
 	 */
-	private laneBegunAgain(n: LaneNote, obs: PlayerObservation, now: number): boolean {
+	private laneSamePlay(n: LaneNote, obs: PlayerObservation, now: number): boolean {
 		if (n.lastAt === undefined || n.progress === undefined) return false;
-		if (obs.isPlaying && obs.progressMs + 5_000 < n.progress) return true;
+		const start = n.start ?? n.lastAt - n.progress;
+		const since = now - n.lastAt;
+		if (n.playing && obs.isPlaying)
+			return Math.abs(obs.at - obs.progressMs - start) <= LANE_SAME_PLAY_SLACK_MS;
+		if (!n.playing && !obs.isPlaying) return obs.progressMs === n.progress;
+		if (!n.playing && obs.isPlaying)
+			return obs.progressMs >= n.progress && obs.progressMs - n.progress <= LANE_SAME_PLAY_SLACK_MS;
 		return (
-			n.playing === true &&
-			obs.isPlaying &&
-			n.durationMs !== undefined &&
-			now - (n.lastAt + n.durationMs - n.progress) > obs.progressMs + 5_000
+			obs.progressMs >= n.progress &&
+			obs.progressMs <= n.progress + since + LANE_SAME_PLAY_SLACK_MS &&
+			obs.progressMs > since + LANE_SAME_PLAY_SLACK_MS
 		);
 	}
 
