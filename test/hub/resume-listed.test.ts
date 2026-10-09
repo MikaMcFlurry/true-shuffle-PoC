@@ -190,4 +190,101 @@ describe("Fortsetzen after a song Spotify listed as played", () => {
 		expect(h.hub.savedSession(sid)!.currentIndex).toBe(after.currentIndex);
 		expect(u.player.progressMs).toBeLessThan(2_000);
 	});
+
+	describe("edges", () => {
+		/** Spotify lists the saved song in the playlist at a chosen moment, then the history is read. */
+		async function listed(h: H, sid: number, at: (observedAt: number) => number) {
+			const u = h.fake.user();
+			const s = h.hub.savedSession(sid)!;
+			const t = s.entryIds.length ? h.fake.current()! : "";
+			gone(h);
+			u.recent.unshift({ trackId: t, playedAt: at(s.observedAt!), contextUri: s.contextUri });
+			h.clock.t = Math.max(h.clock.t, at(s.observedAt!) + 1_000);
+			await h.hub.state({ live: true, refresh: true });
+			await h.listen(5 * MINUTE_MS);
+			return h.hub.savedSession(sid)!;
+		}
+
+		it("moves only for a stamp more than 15 s after the saving look", async () => {
+			for (const [delta, moves] of [
+				[15_000, false],
+				[15_001, true],
+			] as const) {
+				const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+				const { sid, index, progress } = await seenBeginning(h);
+				const after = await listed(h, sid, (o) => o + delta);
+				expect(after.currentIndex).toBe(moves ? index + 1 : index);
+				expect(after.progressMs).toBe(moves ? 0 : progress);
+			}
+		});
+
+		it("unknown saved progress moves too; no saving look at all moves nothing", async () => {
+			for (const known of [true, false]) {
+				const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+				const { sid, index } = await seenBeginning(h);
+				const s = h.hub.savedSession(sid)!;
+				const saved = { ...s, progressMs: null, observedAt: known ? s.observedAt : null };
+				h.sql.run(
+					`UPDATE playback_sessions SET data = ? WHERE station_id = ?`,
+					JSON.stringify(saved),
+					sid,
+				);
+				const after = await listed(h, sid, () => s.observedAt! + 60_000);
+				expect(after.currentIndex).toBe(known ? index + 1 : index);
+			}
+		});
+
+		it("a listing read hours late, after a restart, still moves the place", async () => {
+			const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+			const { sid, index } = await seenBeginning(h);
+			const u = h.fake.user();
+			const s = h.hub.savedSession(sid)!;
+			gone(h);
+			u.recent.unshift({
+				trackId: h.fake.current()!,
+				playedAt: s.observedAt! + 90_000,
+				contextUri: s.contextUri,
+			});
+			h.clock.t += 3 * 60 * MINUTE_MS;
+			h.restart();
+			await h.hub.state({ live: true, refresh: true });
+			await h.listen(5 * MINUTE_MS);
+			expect(h.hub.savedSession(sid)!.currentIndex).toBe(index + 1);
+		});
+
+		it("a pending command or native control keeps the place", async () => {
+			for (const hold of ["pending", "native"] as const) {
+				const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+				const { sid, index, progress } = await seenBeginning(h);
+				const s = h.hub.savedSession(sid)!;
+				const held =
+					hold === "pending"
+						? { ...s, pending: { operationId: "op", kind: "publish", startedAt: h.clock.t } }
+						: { ...s, controller: "native" };
+				h.sql.run(
+					`UPDATE playback_sessions SET data = ? WHERE station_id = ?`,
+					JSON.stringify(held),
+					sid,
+				);
+				const after = await listed(h, sid, (o) => o + 60_000);
+				expect(after.currentIndex).toBe(index);
+				expect(after.progressMs).toBe(progress);
+			}
+		});
+
+		it("guest time moves the place like a look would; a private session lists nothing and keeps it", async () => {
+			for (const mode of ["guest", "private"] as const) {
+				const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+				const { sid, index, progress } = await seenBeginning(h);
+				const u = h.fake.user();
+				if (mode === "guest") await h.hub.setGuest(true, 2);
+				else for (const d of u.devices) d.privateSession = true;
+				quiet(h, 180_000 - progress + 1_000);
+				gone(h);
+				await h.hub.state({ live: true, refresh: true });
+				await h.listen(5 * MINUTE_MS);
+				expect(h.hub.savedSession(sid)!.currentIndex).toBe(mode === "guest" ? index + 1 : index);
+			}
+		});
+	});
 });
