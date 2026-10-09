@@ -4,6 +4,7 @@ import "@fontsource-variable/bricolage-grotesque/standard.css";
 import "./styles/app.css";
 import "./styles/sender.css";
 import "./styles/mehr.css";
+import "./styles/profile.css";
 import { render } from "preact";
 import { App } from "./app";
 import { onLink } from "./router";

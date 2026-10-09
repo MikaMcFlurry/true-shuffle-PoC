@@ -65,7 +65,9 @@ import type {
 	AppState,
 	DeviceView,
 	HistoryEntry,
+	ImportedProfile,
 	JobView,
+	ListeningProfile,
 	NowPlaying,
 	PlayErrorCode,
 	PlaylistView,
@@ -98,6 +100,13 @@ import {
 } from "../spotify/client";
 import type { SpPlaybackState, SpTrack } from "../spotify/types";
 import { type AiRunner, type DiscoveryState, discoverStep } from "./discovery";
+import {
+	estimateGenres,
+	GENRE_EVERY_MS,
+	type GenreAnswer,
+	type GenreEstimate,
+	type GenreRequest,
+} from "./genres";
 import {
 	artistLine,
 	PAGE_SIZE,
@@ -6345,6 +6354,258 @@ export class HubCore {
 				pending: count("candidate") + count("probation"),
 				kept: count("kept"),
 				rejected: count("rejected"),
+			},
+		};
+	}
+
+	/**
+	 * Prepares a genre estimate (see `requestGenres`): at most one attempt every
+	 * six hours, failed ones included, kept across restarts. Returns the stored
+	 * estimate and, when an attempt is due, the artists to send — most-played
+	 * from the import and live plays, weighted by listening time.
+	 */
+	prepareGenres(): { answer: GenreAnswer; request: GenreRequest | null } {
+		const now = this.now();
+		const estimate = this.kvGet<GenreEstimate>("genre_estimate");
+		const last = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		if (last && now - last.at < GENRE_EVERY_MS)
+			return {
+				answer: { estimate, retryAt: last.at + GENRE_EVERY_MS, failed: false },
+				request: null,
+			};
+		const p = this.listeningProfile("UTC");
+		const weight = new Map<string, number>();
+		for (const a of p.imported?.topArtists ?? [])
+			weight.set(a.name, (weight.get(a.name) ?? 0) + a.minutes);
+		// A live play counts as about three and a half minutes.
+		for (const a of p.topArtists) weight.set(a.name, (weight.get(a.name) ?? 0) + a.plays * 3.5);
+		const total = [...weight.values()].reduce((a, b) => a + b, 0);
+		if (total <= 0) throw new HubError("no_artists", "Noch zu wenig gehört für eine Einschätzung");
+		const attempt = { at: now, id: randomToken(8) };
+		this.kvSet("genre_attempt", attempt);
+		return {
+			answer: { estimate, retryAt: now + GENRE_EVERY_MS, failed: false },
+			request: {
+				attempt: attempt.id,
+				artists: [...weight.entries()]
+					.sort((a, b) => b[1] - a[1])
+					.slice(0, 50)
+					.map(([name, w]) => ({ name, share: (w / total) * 100 })),
+			},
+		};
+	}
+
+	/**
+	 * Stores what an attempt brought back, only if it is still the latest one
+	 * (a newer attempt or an import since makes it stale). Nothing usable
+	 * leaves the stored estimate as it was.
+	 */
+	storeGenres(attempt: string, est: GenreEstimate | null): GenreAnswer {
+		const last = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		const current = last?.id === attempt;
+		if (current && est) this.kvSet("genre_estimate", est);
+		return {
+			estimate: this.kvGet<GenreEstimate>("genre_estimate"),
+			retryAt: last ? last.at + GENRE_EVERY_MS : null,
+			failed: !est,
+		};
+	}
+
+	/** The AI call for a prepared request, outside any lock (see `requestGenres`). */
+	runGenreEstimate(artists: GenreRequest["artists"]): Promise<GenreEstimate | null> {
+		return estimateGenres(this.d.env, this.d.fetch, this.d.ai, artists, this.now());
+	}
+
+	/** The stored import summary, with covers from the library where known (no Spotify call). */
+	private importedProfile(): ListeningProfile["imported"] {
+		const p = this.kvGet<ImportedProfile>("history_profile");
+		if (!p) return null;
+		const known = this.lookupTracks(
+			p.topSongs.map((x) => x.id),
+			this.usedSources(),
+		);
+		return {
+			...p,
+			topSongs: p.topSongs.map((x) => ({ ...x, imageUrl: known.get(x.id)?.[4] ?? null })),
+		};
+	}
+
+	/**
+	 * Stores the summary of an imported streaming history (see `ImportedProfile`),
+	 * replacing the one before. It comes from the browser: only well-formed,
+	 * bounded numbers and short names are kept.
+	 */
+	setImportedProfile(input: unknown): void {
+		const bad = () => new HubError("bad_profile", "Ungültiges Hörprofil");
+		const p = input as ImportedProfile;
+		const n = (v: unknown, max = 1e9) =>
+			typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= max;
+		const str = (v: unknown) => typeof v === "string" && v.length <= 200;
+		const latest = this.now() + DAY_MS;
+		if (
+			!p ||
+			typeof p !== "object" ||
+			!n(p.from, latest) ||
+			!n(p.to, latest) ||
+			p.from > p.to ||
+			!n(p.plays) ||
+			!n(p.minutes) ||
+			!n(p.songs) ||
+			!n(p.artists) ||
+			!n(p.earlySkips) ||
+			!Array.isArray(p.hourWeek) ||
+			p.hourWeek.length !== 168 ||
+			!p.hourWeek.every((v) => n(v)) ||
+			!Array.isArray(p.months) ||
+			p.months.length > 240 ||
+			!p.months.every(
+				(m) => /^\d{4}-\d{2}$/.test(String(m?.month)) && n(m.plays) && n(m.minutes),
+			) ||
+			!Array.isArray(p.topArtists) ||
+			p.topArtists.length > 50 ||
+			!p.topArtists.every((a) => str(a?.name) && n(a.plays) && n(a.minutes)) ||
+			!Array.isArray(p.topSongs) ||
+			p.topSongs.length > 50 ||
+			!p.topSongs.every(
+				(x) =>
+					/^[A-Za-z0-9]{22}$/.test(String(x?.id)) && str(x.name) && str(x.artist) && n(x.plays),
+			)
+		)
+			throw bad();
+		const clean: ImportedProfile = {
+			at: this.now(),
+			from: p.from,
+			to: p.to,
+			plays: p.plays,
+			minutes: p.minutes,
+			songs: p.songs,
+			artists: p.artists,
+			earlySkips: p.earlySkips,
+			hourWeek: p.hourWeek.slice(),
+			months: p.months.map((m) => ({ month: m.month, plays: m.plays, minutes: m.minutes })),
+			topArtists: p.topArtists.map((a) => ({ name: a.name, plays: a.plays, minutes: a.minutes })),
+			topSongs: p.topSongs.map((x) => ({
+				id: x.id,
+				name: x.name,
+				artist: x.artist,
+				plays: x.plays,
+			})),
+		};
+		this.kvSet("history_profile", clean);
+		// A pending estimate was asked from the old summary: it must not land.
+		const attempt = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		if (attempt) this.kvSet("genre_attempt", { ...attempt, id: `${attempt.id}-stale` });
+	}
+
+	/**
+	 * The listener's own listening, from the plays log (see `ListeningProfile`).
+	 * One read of the window; nothing is written and Spotify is not asked.
+	 */
+	listeningProfile(timeZone: string): ListeningProfile {
+		let zone = "UTC";
+		try {
+			new Intl.DateTimeFormat("en-US", { timeZone });
+			zone = timeZone;
+		} catch {
+			// An unknown zone: hours in UTC rather than none.
+		}
+		const parts = new Intl.DateTimeFormat("en-US", {
+			timeZone: zone,
+			year: "numeric",
+			month: "2-digit",
+			weekday: "short",
+			hour: "2-digit",
+			hourCycle: "h23",
+		});
+		const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+		const rows = this.db.all<{
+			played_at: number;
+			track_id: string;
+			meta: string | null;
+			station_id: number | null;
+		}>(
+			`SELECT played_at, track_id, meta, station_id FROM plays WHERE ignored = 0 AND played_at >= ? ORDER BY played_at`,
+			this.now() - PLAYS_KEEP_MS,
+		);
+		const bare = [...new Set(rows.filter((r) => !r.meta).map((r) => r.track_id))];
+		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
+		const hourWeek = new Array<number>(7 * 24).fill(0);
+		const months = new Map<string, { plays: number; ms: number }>();
+		const artists = new Map<string, { name: string; plays: number; imageUrl: string | null }>();
+		const songs = new Map<string, { t: PackedTrack; plays: number }>();
+		let ms = 0;
+		let plays = 0;
+		let onCassettes = 0;
+		for (const r of rows) {
+			const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
+			plays++;
+			if (r.station_id !== null) onCassettes++;
+			const p = Object.fromEntries(
+				parts.formatToParts(new Date(r.played_at)).map((x) => [x.type, x.value]),
+			);
+			const day = DAYS.indexOf(p.weekday ?? "");
+			const hour = Number(p.hour);
+			if (day >= 0 && hour >= 0 && hour < 24) hourWeek[day * 24 + hour]!++;
+			const month = `${p.year}-${p.month}`;
+			const m = months.get(month) ?? { plays: 0, ms: 0 };
+			m.plays++;
+			m.ms += t?.[5] ?? 0;
+			months.set(month, m);
+			ms += t?.[5] ?? 0;
+			if (!t) continue;
+			const song = songs.get(t[0]) ?? { t, plays: 0 };
+			song.plays++;
+			songs.set(t[0], song);
+			for (const [id, name] of t[2]) {
+				const a = artists.get(id) ?? { name, plays: 0, imageUrl: null };
+				a.plays++;
+				artists.set(id, a);
+			}
+		}
+		const top = <T extends { plays: number }>(xs: Iterable<T>, n: number) =>
+			[...xs].sort((a, b) => b.plays - a.plays).slice(0, n);
+		const count = (sql: string) => this.db.first<{ n: number }>(sql)?.n ?? 0;
+		return {
+			since: rows[0]?.played_at ?? null,
+			until: rows.at(-1)?.played_at ?? null,
+			plays,
+			minutes: Math.round(ms / 60_000),
+			songs: songs.size,
+			artists: artists.size,
+			hourWeek,
+			months: [...months.entries()]
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([month, m]) => ({ month, plays: m.plays, minutes: Math.round(m.ms / 60_000) })),
+			topArtists: top(artists.values(), 10).map((a) => ({
+				name: a.name,
+				artists: "",
+				plays: a.plays,
+				imageUrl: a.imageUrl,
+			})),
+			topSongs: top(songs.values(), 10).map((x) => ({
+				name: x.t[1],
+				artists: artistLine(x.t),
+				plays: x.plays,
+				imageUrl: x.t[4],
+			})),
+			onCassettes,
+			imported: this.importedProfile(),
+			genres: this.kvGet<GenreEstimate>("genre_estimate"),
+			canEstimate: !!this.d.env.anthropicKey || !!this.d.ai,
+			genresRetryAt: (() => {
+				const a = this.kvGet<{ at: number }>("genre_attempt");
+				return a && this.now() - a.at < GENRE_EVERY_MS ? a.at + GENRE_EVERY_MS : null;
+			})(),
+			learned: {
+				favorites: count(`SELECT COUNT(*) AS n FROM memory WHERE thumb = 1`),
+				neverAgain: count(`SELECT COUNT(DISTINCT track_id) AS n FROM bans`),
+				recommendationsKept: count(
+					`SELECT COUNT(DISTINCT id) AS n FROM discoveries WHERE status = 'kept'`,
+				),
+				recommendationsDropped: count(
+					`SELECT COUNT(DISTINCT id) AS n FROM discoveries WHERE status = 'rejected'`,
+				),
+				earlySkips: count(`SELECT COALESCE(SUM(early_skips), 0) AS n FROM memory`),
 			},
 		};
 	}

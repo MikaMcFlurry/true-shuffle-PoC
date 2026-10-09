@@ -2,7 +2,10 @@ import type { StationRules } from "../core/types";
 import type {
 	AppState,
 	DeviceView,
+	GenreAnswer,
 	HistoryEntry,
+	ImportedProfile,
+	ListeningProfile,
 	PlaylistView,
 	PlayResult,
 	RemoteKeyView,
@@ -209,6 +212,14 @@ export const api = {
 		call<{ stored: number }>("POST", "/api/history/import", { rows, part, parts }),
 	history: (before?: number) =>
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),
+	importedProfile: (profile: ImportedProfile) =>
+		call<unknown>("POST", "/api/history/profile", { profile }),
+	genres: () => call<GenreAnswer>("POST", "/api/profile/genres"),
+	profile: () =>
+		call<ListeningProfile>(
+			"GET",
+			`/api/profile?tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC")}`,
+		),
 	sync: () => call<unknown>("POST", "/api/sync"),
 	logout: () => call<unknown>("POST", "/auth/logout"),
 	deleteAccount: () => call<{ stuck: string[] }>("DELETE", "/api/account"),

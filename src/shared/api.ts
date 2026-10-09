@@ -196,3 +196,93 @@ export interface PlayResult {
 export interface ApiError {
 	error: { code: string; message: string };
 }
+
+/** One artist or song in a listening profile, counted from plays. */
+export interface ProfileTop {
+	name: string;
+	/** Artists of a song; empty for an artist row. */
+	artists: string;
+	plays: number;
+	imageUrl: string | null;
+}
+
+/**
+ * What true-shuffle itself recorded of the listener's music: counted plays
+ * (>= 30 s, guest time left out) of the last 180 days, the span the plays log
+ * keeps. Times are bucketed in the listener's time zone. Read-only.
+ */
+export interface ListeningProfile {
+	/** First counted play in the window, or null when there is none. */
+	since: number | null;
+	until: number | null;
+	plays: number;
+	/** Sum of the songs' lengths: an upper estimate, a play may be cut short. */
+	minutes: number;
+	songs: number;
+	artists: number;
+	/** Plays per weekday (0 = Monday) and hour, 7 × 24, row by row. */
+	hourWeek: number[];
+	/** Plays and minutes per calendar month, oldest first. */
+	months: { month: string; plays: number; minutes: number }[];
+	topArtists: ProfileTop[];
+	topSongs: ProfileTop[];
+	/** Of these plays, how many ran on one of the listener's cassettes. */
+	onCassettes: number;
+	/** The imported Spotify history's summary, with covers where known; null without one. */
+	imported:
+		| (Omit<ImportedProfile, "topSongs"> & {
+				topSongs: (ImportedProfile["topSongs"][number] & { imageUrl: string | null })[];
+		  })
+		| null;
+	/** The AI's estimate of the listener's genre mix, if one was made. */
+	genres: {
+		at: number;
+		source: "anthropic" | "workers-ai";
+		artists: number;
+		genres: { name: string; share: number }[];
+		summary: string;
+	} | null;
+	/** An AI is set up, so an estimate can be asked for. */
+	canEstimate: boolean;
+	/** The next estimate may be asked for from then (also after a failed one); null: now. */
+	genresRetryAt: number | null;
+	/** What true-shuffle keeps about the listener, from its own records. */
+	learned: {
+		favorites: number;
+		neverAgain: number;
+		recommendationsKept: number;
+		recommendationsDropped: number;
+		earlySkips: number;
+	};
+}
+
+/**
+ * A summary of an imported Spotify streaming history, built in the browser
+ * from the export files (which never reach the server). Counted plays are
+ * >= 30 s; hours are in the zone of the browser that imported it.
+ */
+export interface ImportedProfile {
+	/** When the import was made. */
+	at: number;
+	from: number;
+	to: number;
+	plays: number;
+	/** Real listening time, from Spotify's own ms_played. */
+	minutes: number;
+	songs: number;
+	artists: number;
+	earlySkips: number;
+	hourWeek: number[];
+	months: { month: string; plays: number; minutes: number }[];
+	topArtists: { name: string; plays: number; minutes: number }[];
+	topSongs: { id: string; name: string; artist: string; plays: number }[];
+}
+
+/** The answer to asking for a genre estimate. */
+export interface GenreAnswer {
+	estimate: ListeningProfile["genres"];
+	/** The next attempt is allowed from then (failed attempts count too). */
+	retryAt: number | null;
+	/** This request asked the AI and got nothing usable. */
+	failed: boolean;
+}

@@ -7,6 +7,7 @@ export type Route =
 	| { name: "new-station" }
 	| { name: "menu" }
 	| { name: "history" }
+	| { name: "profile" }
 	| { name: "import" }
 	| { name: "devices" }
 	| { name: "about" }
@@ -26,6 +27,8 @@ export function parse(path: string): Route {
 			return { name: "menu" };
 		case "/verlauf":
 			return { name: "history" };
+		case "/profil":
+			return { name: "profile" };
 		case "/import":
 			return { name: "import" };
 		case "/geraete":

@@ -1,4 +1,5 @@
 import {
+	ChartColumn,
 	ChevronRight,
 	FileUp,
 	History,
@@ -22,13 +23,14 @@ import {
 } from "../../core/history";
 import { FAMILIAR_PLAYS, RARE_AFTER_EARLY_SKIPS } from "../../core/memory";
 import { DAY_MS } from "../../core/types";
-import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
+import type { AppState, DeviceView, HistoryEntry, ImportedProfile } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
 import { RateHit, ThumbMark } from "../components/rate";
 import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
+import { addToProfile, finishProfile, newProfile, type ProfileEntry } from "../history-profile";
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store } from "../store";
 
@@ -257,6 +259,9 @@ export function MenuScreen({ state }: { state: AppState }) {
 						Jeder Song ab 30 Sekunden, nach Tagen geordnet.
 						{hist.liveSince ? ` Selbst mitgezählt seit ${date(hist.liveSince)}.` : ""}
 					</LinkRow>
+					<LinkRow href="/profil" icon={ChartColumn} title="Dein Hörprofil">
+						Wann und was du hörst, deine Top-Künstler und was true-shuffle über dich weiß.
+					</LinkRow>
 				</ul>
 			</Section>
 
@@ -400,6 +405,12 @@ export function HistoryScreen() {
 		<div class="page">
 			<PageBar
 				title="Verlauf"
+				action={
+					<a class="key" href="/profil">
+						<ChartColumn size={18} aria-hidden="true" />
+						Dein Hörprofil
+					</a>
+				}
 				noBack
 				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei jedem Song steht, wie oft du ihn insgesamt gehört hast, und bei neuen Wiedergaben von deinen Kassetten auch, ob er aus der Kassette kam oder eine Empfehlung war. Tippe auf einen Song, um ihn zu bewerten."
 			/>
@@ -943,12 +954,51 @@ function EffectList({ e, done }: { e: Effects; done: boolean }) {
 	);
 }
 
+function ProfileSaved({
+	profile,
+	state,
+	retry,
+}: {
+	profile: ImportedProfile | null;
+	state: "saved" | "saving" | { failed: string };
+	retry: () => void;
+}) {
+	if (!profile) return null;
+	if (state === "saved")
+		return (
+			<a class="key key--lit key--wide" href="/profil">
+				Dein Hörprofil ansehen
+			</a>
+		);
+	if (state === "saving")
+		return (
+			<p class="hint" role="status">
+				Hörprofil wird gespeichert …
+			</p>
+		);
+	return (
+		<div class="import-partial">
+			<p class="notice notice--error" role="alert">
+				Das Hörprofil wurde nicht gespeichert: {state.failed} Was oben steht, gilt trotzdem.
+			</p>
+			<button type="button" class="key key--lit key--wide" onClick={retry}>
+				Hörprofil erneut speichern
+			</button>
+		</div>
+	);
+}
+
 export function ImportScreen({ state }: { state: AppState }) {
 	const [phase, setPhase] = useState<"idle" | "reading" | "ready" | "upload" | "done">("idle");
 	const [effects, setEffects] = useState<Effects | null>(null);
 	const [rows, setRows] = useState<HistoryRow[]>([]);
 	const [err, setErr] = useState<string | null>(null);
 	const [sent, setSent] = useState(0);
+	const [profile, setProfile] = useState<ImportedProfile | null>(null);
+	// "saved" | "saving" | the reason the Hörprofil could not be kept (the counts still stand).
+	const [profileState, setProfileState] = useState<"saved" | "saving" | { failed: string }>(
+		"saved",
+	);
 	const hist = state.history;
 
 	const read = async (files: FileList | null) => {
@@ -957,6 +1007,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 		setEffects(null);
 		setPhase("reading");
 		const agg = emptyAggregate();
+		// The whole history for the Hörprofil, not only what came before live counting.
+		const prof = newProfile();
 		let used = 0;
 		let problem: string | null = null;
 		for (const f of Array.from(files)) {
@@ -970,15 +1022,21 @@ export function ImportScreen({ state }: { state: AppState }) {
 				if (kind !== "extended") continue;
 				// What came after the first sign-in, true-shuffle already counted live.
 				aggregateHistory(data as ExtendedEntry[], agg, { before: hist.liveSince });
+				addToProfile(data as ProfileEntry[], prof);
 				used++;
 			} catch {
 				problem = `„${f.name}“ konnte nicht gelesen werden.`;
 			}
 		}
 		const r = toRows(agg);
+		const summary = finishProfile(prof, Date.now());
 		setRows(r);
+		setProfile(summary);
 		if (r.length > 0) {
 			setEffects(effectsOf(r, agg, used));
+			setPhase("ready");
+		} else if (summary) {
+			// Everything here ran after the first sign-in: counted live already, only the Hörprofil is new.
 			setPhase("ready");
 		} else {
 			setErr(
@@ -987,7 +1045,18 @@ export function ImportScreen({ state }: { state: AppState }) {
 			);
 			setPhase("idle");
 		}
-		if (problem && r.length > 0) setErr(problem);
+		if (problem && (r.length > 0 || summary)) setErr(problem);
+	};
+
+	const saveProfile = async () => {
+		if (!profile) return;
+		setProfileState("saving");
+		try {
+			await api.importedProfile(profile);
+			setProfileState("saved");
+		} catch (e) {
+			setProfileState({ failed: (e as Error).message });
+		}
 	};
 
 	const upload = async () => {
@@ -997,16 +1066,22 @@ export function ImportScreen({ state }: { state: AppState }) {
 		const size = 2000;
 		const parts = Math.max(1, Math.ceil(rows.length / size));
 		try {
-			for (let i = 0; i < parts; i++) {
-				await api.importHistory(rows.slice(i * size, (i + 1) * size), i, parts);
-				setSent(Math.min(rows.length, (i + 1) * size));
+			// No rows: nothing before the first sign-in, so an earlier import stays as it is.
+			if (rows.length > 0) {
+				for (let i = 0; i < parts; i++) {
+					await api.importHistory(rows.slice(i * size, (i + 1) * size), i, parts);
+					setSent(Math.min(rows.length, (i + 1) * size));
+				}
 			}
-			setPhase("done");
-			void store.refresh(false);
 		} catch (e) {
 			setErr((e as Error).message);
 			setPhase("ready");
+			return;
 		}
+		// The summary for the Hörprofil; the counts above stand without it, and a retry sends only it.
+		await saveProfile();
+		setPhase("done");
+		void store.refresh(false);
 	};
 
 	const picking = phase === "idle" || phase === "reading" || phase === "ready";
@@ -1027,15 +1102,28 @@ export function ImportScreen({ state }: { state: AppState }) {
 				</p>
 			) : null}
 
-			{phase === "done" && effects ? (
+			{phase === "done" ? (
 				<section class="section import-done" aria-labelledby="import-done-title" role="status">
-					<h2 id="import-done-title">Übernommen. Das ist jetzt anders:</h2>
-					<EffectList e={effects} done />
-					<p>
-						Kassetten ohne gespeicherte Warteschlange planen ab sofort damit. Eine gespeicherte
-						Warteschlange behält ihre Reihenfolge, bis du sie neu mischst.
-					</p>
-					<a class="key key--lit key--wide" href="/">
+					{effects ? (
+						<>
+							<h2 id="import-done-title">Übernommen. Das ist jetzt anders:</h2>
+							<EffectList e={effects} done />
+							<p>
+								Kassetten ohne gespeicherte Warteschlange planen ab sofort damit. Eine gespeicherte
+								Warteschlange behält ihre Reihenfolge, bis du sie neu mischst.
+							</p>
+						</>
+					) : (
+						<>
+							<h2 id="import-done-title">Am Mischen ändert sich nichts.</h2>
+							<p>
+								Alles in diesen Dateien lief nach deiner ersten Anmeldung. Das hat true-shuffle
+								schon selbst mitgezählt.
+							</p>
+						</>
+					)}
+					<ProfileSaved profile={profile} state={profileState} retry={() => void saveProfile()} />
+					<a class="key key--wide" href="/">
 						Zu Jetzt
 					</a>
 				</section>
@@ -1081,9 +1169,23 @@ export function ImportScreen({ state }: { state: AppState }) {
 					</li>
 					<li class="step">
 						<h2 class="step__title">Prüfen und übernehmen</h2>
-						{effects && (phase === "ready" || phase === "upload") ? (
+						{(effects || profile) && (phase === "ready" || phase === "upload") ? (
 							<>
-								<EffectList e={effects} done={false} />
+								{effects ? (
+									<EffectList e={effects} done={false} />
+								) : (
+									<p class="import-result__lead">
+										Alles in diesen Dateien lief nach deiner ersten Anmeldung. Am Mischen ändert
+										sich nichts, das hat true-shuffle schon mitgezählt. Übernommen wird nur dein
+										Hörprofil.
+									</p>
+								)}
+								{profile ? (
+									<p class="hint">
+										Hörprofil: {num(profile.plays)} Mal gehört, {date(profile.from)} bis{" "}
+										{date(profile.to)}
+									</p>
+								) : null}
 								{phase === "upload" ? (
 									<div class="import-progress">
 										<progress max={Math.max(1, rows.length)} value={sent} aria-label="Übernahme" />
@@ -1097,7 +1199,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 										class="key key--lit key--wide"
 										onClick={() => void upload()}
 									>
-										Übernehmen
+										{effects ? "Übernehmen" : "Hörprofil übernehmen"}
 									</button>
 								)}
 							</>
