@@ -78,4 +78,3 @@ AssertionError: expected 200 to be 401 // Object.is equality
       Tests  2 failed | 18 passed | 2 skipped (22)
    Start at  09:22:17
    Duration  2.05s (tests 40%, import 32%, transform 27%, worker 1%)
-
