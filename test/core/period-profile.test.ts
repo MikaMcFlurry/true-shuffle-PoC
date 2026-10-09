@@ -29,6 +29,7 @@ function ev(
 		exact: true,
 		play: true,
 		earlySkip: false,
+		opener: false,
 		platform: 1,
 		shuffle: false,
 		offline: false,
@@ -132,9 +133,27 @@ describe("period profile", () => {
 		];
 		const q = periodProfile(imported, { from: null, to: T0 + DAY_MS }, utc);
 		expect(q.plays).toBe(1);
-		expect(q.skips).toMatchObject({ early: 2, share: 2 / 3 });
+		expect(q.skips).toMatchObject({ early: 2, share: 2 / 3, openers: 0 });
 		expect(q.platforms).toEqual([{ name: "Android", plays: 1 }]);
 		expect(q.shuffleShare).toBe(1);
+	});
+
+	it("an early skip of the first song after a start is told apart, not counted as early", () => {
+		const skip = { play: false, earlySkip: true, ms: 4_000 };
+		const events = [
+			ev(T0, "opener", "A", { ...skip, opener: true }),
+			ev(T0 + MINUTE_MS, "a", "A"),
+			ev(T0 + 2 * MINUTE_MS, "b", "B", skip),
+			ev(T0 + DAY_MS, "opener", "A", { ...skip, opener: true }),
+			ev(T0 + DAY_MS + MINUTE_MS, "a", "A"),
+		];
+		const p = periodProfile(events, { from: null, to: T0 + 2 * DAY_MS }, utc);
+		expect(p.skips).toMatchObject({ early: 1, share: 1 / 3, openers: 2 });
+		expect(p.skips!.top.map((x) => x.name)).toEqual(["b"]);
+		expect(p.skips!.topOpeners).toMatchObject([{ name: "opener", plays: 2 }]);
+		// Only openers: the section still tells them, with no early share.
+		const only = periodProfile([events[0]!], { from: null, to: T0 + DAY_MS }, utc);
+		expect(only.skips).toMatchObject({ early: 0, share: 0, openers: 1 });
 	});
 });
 
@@ -218,7 +237,12 @@ describe("imported plays in the browser", () => {
 				Date.UTC(2024, 0, 1, 12) / 1000,
 				0,
 				123_456,
-				LISTEN_FLAG.skipped | LISTEN_FLAG.forward | LISTEN_FLAG.shuffle,
+				// First in its file: nothing known before it, so the first after a start.
+				LISTEN_FLAG.skipped |
+					LISTEN_FLAG.forward |
+					LISTEN_FLAG.shuffle |
+					LISTEN_FLAG.opener |
+					LISTEN_FLAG.rated,
 				1,
 			],
 		]);
@@ -239,7 +263,8 @@ describe("imported plays in the browser", () => {
 		expect(isListenRow([1_700_000_000, 0, 1000, 0, 0], 1, 1_800_000_000)).toBe(true);
 		expect(isListenRow([1_700_000_000, 1, 1000, 0, 0], 1, 1_800_000_000)).toBe(false);
 		expect(isListenRow([1_900_000_000, 0, 1000, 0, 0], 1, 1_800_000_000)).toBe(false);
-		expect(isListenRow([1_700_000_000, 0, 1000, 64, 0], 1, 1_800_000_000)).toBe(false);
+		expect(isListenRow([1_700_000_000, 0, 1000, 255, 0], 1, 1_800_000_000)).toBe(true);
+		expect(isListenRow([1_700_000_000, 0, 1000, 256, 0], 1, 1_800_000_000)).toBe(false);
 		expect(isListenRow([1_700_000_000, 0, 1000, 0, 99], 1, 1_800_000_000)).toBe(false);
 	});
 });

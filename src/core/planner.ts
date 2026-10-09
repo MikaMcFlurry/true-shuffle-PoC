@@ -133,7 +133,7 @@ export function planQueue(input: PlanInput): PlanResult {
 
 	const freshOrdered = weightedShuffle(
 		fresh,
-		(c) => tasteWeight(mem(c.id), policy) * stalenessBoost(mem(c.id), now),
+		(c) => tasteWeight(mem(c.id), policy, now) * stalenessBoost(mem(c.id), now),
 		rng,
 	);
 	const favoritesOrdered = weightedShuffle(
@@ -141,7 +141,7 @@ export function planQueue(input: PlanInput): PlanResult {
 		(c) => {
 			const m = mem(c.id);
 			const days = m.lastPlayedAt === null ? 60 : (now - m.lastPlayedAt) / DAY_MS;
-			return tasteWeight(m, policy) * (1 + Math.min(1, days / 60));
+			return tasteWeight(m, policy, now) * (1 + Math.min(1, days / 60));
 		},
 		rng,
 	);
@@ -150,11 +150,15 @@ export function planQueue(input: PlanInput): PlanResult {
 		(c) => {
 			const m = mem(c.id);
 			const days = m.lastPlayedAt === null ? 30 : (now - m.lastPlayedAt) / DAY_MS;
-			return tasteWeight(m, policy) * (1 + days / 7);
+			return tasteWeight(m, policy, now) * (1 + days / 7);
 		},
 		rng,
 	);
-	const coolingOrdered = weightedShuffle(freshCooling, (c) => tasteWeight(mem(c.id), policy), rng);
+	const coolingOrdered = weightedShuffle(
+		freshCooling,
+		(c) => tasteWeight(mem(c.id), policy, now),
+		rng,
+	);
 
 	const discoveryCandidates: Candidate[] = [];
 	if (rules.discoveryEnabled) {

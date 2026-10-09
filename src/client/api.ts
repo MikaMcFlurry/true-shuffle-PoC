@@ -1,3 +1,4 @@
+import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
 import type {
 	AppState,
@@ -207,7 +208,7 @@ export const api = {
 	guest: (on: boolean, hours?: number) => call<unknown>("POST", "/api/guest", { on, hours }),
 	guestDevices: (devices: { id: string; name: string }[]) =>
 		call<{ id: string; name: string }[]>("PUT", "/api/guest/devices", { devices }),
-	importHistory: (rows: [string, number, number, number][], part: number, parts: number) =>
+	importHistory: (rows: HistoryRow[], part: number, parts: number) =>
 		call<{ stored: number }>("POST", "/api/history/import", { rows, part, parts }),
 	history: (before?: number) =>
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),

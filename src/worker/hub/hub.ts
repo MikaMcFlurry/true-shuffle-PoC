@@ -6040,14 +6040,12 @@ export class HubCore {
 		for (const r of rows) {
 			if (
 				!Array.isArray(r) ||
-				r.length !== 4 ||
+				(r.length !== 4 && r.length !== 5) ||
 				typeof r[0] !== "string" ||
 				!/^[A-Za-z0-9]{22}$/.test(r[0]) ||
 				!count(r[1]) ||
 				!count(r[2]) ||
-				!Number.isInteger(r[3]) ||
-				r[3] < 0 ||
-				r[3] > latest
+				r.slice(3).some((t) => !Number.isInteger(t) || (t as number) < 0 || (t as number) > latest)
 			) {
 				throw new HubError("bad_import", "Ungültige Zeile im Import");
 			}
@@ -6754,6 +6752,8 @@ export class HubCore {
 						exact: true,
 						play,
 						earlySkip: early,
+						// Told by the import (see core/listens startTracker); older rows: never.
+						opener: early && (row[3] & LISTEN_FLAG.opener) !== 0,
 						platform: row[4],
 						shuffle: (row[3] & LISTEN_FLAG.shuffle) !== 0,
 						offline: (row[3] & LISTEN_FLAG.offline) !== 0,
@@ -6772,6 +6772,7 @@ export class HubCore {
 					exact: false,
 					play: true,
 					earlySkip: false,
+					opener: false,
 					platform: null,
 					shuffle: null,
 					offline: null,

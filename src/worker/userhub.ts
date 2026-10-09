@@ -8,6 +8,7 @@
  */
 
 import { DurableObject } from "cloudflare:workers";
+import type { HistoryRow } from "../core/history";
 import { cryptoRng } from "../core/random";
 import type { StationRules } from "../core/types";
 import type { RemoteAction, StationKind, StationSource } from "../shared/api";
@@ -545,12 +546,7 @@ export class UserHub extends DurableObject<Env> {
 	setGuestDevices(epoch: number, devices: { id: string; name: string }[]) {
 		return this.session(epoch, async () => this.hub().setGuestDevices(devices));
 	}
-	importHistory(
-		epoch: number,
-		rows: [string, number, number, number][],
-		part: number,
-		parts: number,
-	) {
+	importHistory(epoch: number, rows: HistoryRow[], part: number, parts: number) {
 		return this.session(epoch, () => this.hub().importHistory(rows, part, parts));
 	}
 	history(epoch: number, limit: number, before?: number) {

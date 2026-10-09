@@ -30,7 +30,60 @@ export const LISTEN_FLAG = {
 	offline: 16,
 	/** A private session. */
 	incognito: 32,
+	/**
+	 * The first song after a start (see `startTracker`), as the browser told
+	 * from the whole export, podcasts included.
+	 */
+	opener: 64,
+	/**
+	 * The import told openers apart. Rows from before that rule carry neither
+	 * bit, and their early skips all count, in the mix as in the Hörprofil.
+	 */
+	rated: 128,
 } as const;
+
+/** Spotify's `reason_start` for a song that followed on from the one before. */
+const FOLLOWED_ON = new Set(["trackdone", "fwdbtn", "backbtn"]);
+
+/** Began by a start, as far as Spotify's `reason_start` tells (unknown: no). */
+export const startedAfresh = (reason: string | null | undefined) =>
+	!!reason && reason !== "unknown" && !FOLLOWED_ON.has(reason);
+
+/** Silence after which the next song counts as the first of a new start. */
+export const OPENER_GAP_MS = 10 * 60_000;
+
+/**
+ * The first song after a start: Spotify's shuffle likes to open with the
+ * same few songs, and skipping such an opener says little about taste. It
+ * began by a start, or nothing played in the ten minutes before it began
+ * (or nothing is known before it).
+ */
+export function isOpener(started: boolean, beganAt: number, previousEnd: number | null): boolean {
+	return started || previousEnd === null || beganAt - previousEnd >= OPENER_GAP_MS;
+}
+
+/**
+ * Tells, entry by entry through one export file (in time order), whether an
+ * entry was the first after a start. Every entry keeps the listening going,
+ * podcasts too; what came before the file's first entry is not known. The
+ * one rule for the mix (`aggregateHistory`) and the Hörprofil (`addListens`):
+ * both walk the same file through it, so they always agree.
+ */
+export function startTracker(): (e: {
+	ts?: string;
+	ms_played?: number;
+	reason_start?: string | null;
+}) => boolean {
+	let previousEnd: number | null = null;
+	return (e) => {
+		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
+		if (!Number.isFinite(at)) return false;
+		const ms = typeof e.ms_played === "number" && e.ms_played > 0 ? e.ms_played : 0;
+		const opener = isOpener(startedAfresh(e.reason_start), at - ms, previousEnd);
+		previousEnd = at;
+		return opener;
+	};
+}
 
 /** Where it was heard, as far as Spotify's platform text tells. */
 export const PLATFORMS = [
@@ -68,6 +121,7 @@ export interface ListenEntry {
 	master_metadata_album_artist_name?: string | null;
 	master_metadata_album_album_name?: string | null;
 	platform?: string | null;
+	reason_start?: string | null;
 	reason_end?: string | null;
 	skipped?: boolean | null;
 	shuffle?: boolean | null;
@@ -92,7 +146,9 @@ export function newListens(): ListenBuilder {
  */
 export function addListens(entries: readonly ListenEntry[], b: ListenBuilder): ListenBuilder {
 	const text = (v: string | null | undefined) => (v ?? "").trim().slice(0, 200);
+	const opens = startTracker();
 	for (const e of entries) {
+		const opener = opens(e);
 		const m = /^spotify:track:([A-Za-z0-9]{22})$/.exec(e.spotify_track_uri ?? "");
 		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
 		if (!m || !Number.isFinite(at) || at <= 0) continue;
@@ -118,7 +174,9 @@ export function addListens(entries: readonly ListenEntry[], b: ListenBuilder): L
 			(e.reason_end === "trackdone" ? LISTEN_FLAG.done : 0) |
 			(e.shuffle === true ? LISTEN_FLAG.shuffle : 0) |
 			(e.offline === true ? LISTEN_FLAG.offline : 0) |
-			(e.incognito_mode === true ? LISTEN_FLAG.incognito : 0);
+			(e.incognito_mode === true ? LISTEN_FLAG.incognito : 0) |
+			(opener ? LISTEN_FLAG.opener : 0) |
+			LISTEN_FLAG.rated;
 		const sec = Math.floor(at / 1000);
 		b.rows.set(`${sec}:${t}`, [sec, t, ms, flags, platformOf(e.platform)]);
 	}
@@ -180,7 +238,7 @@ export function isListenRow(v: unknown, tracks: number, latestSec: number): v is
 		int(v[0], latestSec) &&
 		int(v[1], tracks - 1) &&
 		int(v[2], 24 * 3_600_000) &&
-		int(v[3], 63) &&
+		int(v[3], 255) &&
 		int(v[4], PLATFORMS.length - 1)
 	);
 }

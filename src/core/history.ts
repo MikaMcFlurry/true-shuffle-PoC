@@ -10,6 +10,7 @@
  * with an explanation instead of being guessed at.
  */
 
+import { startTracker } from "./listens";
 import type { ImportedStats } from "./memory";
 import { PLAY_THRESHOLD_MS, type TrackId } from "./types";
 
@@ -17,6 +18,7 @@ export interface ExtendedEntry {
 	ts?: string;
 	ms_played?: number;
 	spotify_track_uri?: string | null;
+	reason_start?: string | null;
 	reason_end?: string | null;
 	skipped?: boolean | null;
 }
@@ -44,6 +46,8 @@ export interface Aggregate {
 	entries: number;
 	counted: number;
 	skipped: number;
+	/** Early skips of the first song after a start: not held against the song. */
+	openers: number;
 	ignored: number;
 	firstAt: number | null;
 	lastAt: number | null;
@@ -55,6 +59,7 @@ export function emptyAggregate(): Aggregate {
 		entries: 0,
 		counted: 0,
 		skipped: 0,
+		openers: 0,
 		ignored: 0,
 		firstAt: null,
 		lastAt: null,
@@ -64,7 +69,10 @@ export function emptyAggregate(): Aggregate {
 /**
  * Fold one file's entries into the aggregate. A play is >= 30 s (Spotify's
  * own stream rule); an early skip is < 30 s ended by the forward button or
- * flagged `skipped`. Everything else (errors, logouts, podcasts) is ignored.
+ * flagged `skipped`, unless it was the first song after a start (see
+ * `isOpener`): Spotify's shuffle opens with the same few songs again and
+ * again, and skipping those is no verdict on them. Everything else (errors,
+ * logouts, podcasts) is ignored.
  */
 export function aggregateHistory(
 	entries: readonly ExtendedEntry[],
@@ -72,30 +80,38 @@ export function aggregateHistory(
 	/** Only listening before this time counts: after it, true-shuffle counted live. */
 	opts: { before?: number | null } = {},
 ): Aggregate {
+	// The same rule, over the same file, as the Hörprofil's rows (see addListens).
+	const opens = startTracker();
 	for (const e of entries) {
 		agg.entries++;
+		const opener = opens(e);
 		const id = trackIdFromUri(e.spotify_track_uri ?? null);
 		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
+		const ms = typeof e.ms_played === "number" ? e.ms_played : 0;
 		if (!id || !Number.isFinite(at) || (opts.before != null && at >= opts.before)) {
 			agg.ignored++;
 			continue;
 		}
-		const ms = typeof e.ms_played === "number" ? e.ms_played : 0;
 		let s = agg.stats.get(id);
 		if (ms >= PLAY_THRESHOLD_MS) {
 			if (!s) {
-				s = { plays: 0, earlySkips: 0, lastPlayedAt: null };
+				s = { plays: 0, earlySkips: 0, lastPlayedAt: null, lastSkippedAt: null };
 				agg.stats.set(id, s);
 			}
 			s.plays++;
 			s.lastPlayedAt = s.lastPlayedAt === null ? at : Math.max(s.lastPlayedAt, at);
 			agg.counted++;
 		} else if (e.reason_end === "fwdbtn" || e.skipped === true) {
+			if (opener) {
+				agg.openers++;
+				continue;
+			}
 			if (!s) {
-				s = { plays: 0, earlySkips: 0, lastPlayedAt: null };
+				s = { plays: 0, earlySkips: 0, lastPlayedAt: null, lastSkippedAt: null };
 				agg.stats.set(id, s);
 			}
 			s.earlySkips++;
+			s.lastSkippedAt = s.lastSkippedAt == null ? at : Math.max(s.lastSkippedAt, at);
 			agg.skipped++;
 		} else {
 			agg.ignored++;
@@ -107,15 +123,31 @@ export function aggregateHistory(
 	return agg;
 }
 
-/** Compact wire format: [id, plays, earlySkips, lastPlayedAt|0]. */
-export type HistoryRow = [TrackId, number, number, number];
+/**
+ * Compact wire format: [id, plays, earlySkips, lastPlayedAt|0, lastSkippedAt|0].
+ * Rows stored before skips were dated have no fifth field.
+ */
+export type HistoryRow =
+	| [TrackId, number, number, number]
+	| [TrackId, number, number, number, number];
 
 export function toRows(agg: Aggregate): HistoryRow[] {
 	const rows: HistoryRow[] = [];
-	for (const [id, s] of agg.stats) rows.push([id, s.plays, s.earlySkips, s.lastPlayedAt ?? 0]);
+	for (const [id, s] of agg.stats)
+		rows.push([id, s.plays, s.earlySkips, s.lastPlayedAt ?? 0, s.lastSkippedAt ?? 0]);
 	return rows;
 }
 
 export function fromRow(row: HistoryRow): [TrackId, ImportedStats] {
-	return [row[0], { plays: row[1], earlySkips: row[2], lastPlayedAt: row[3] > 0 ? row[3] : null }];
+	const skipped = row.length === 5 ? row[4] : undefined;
+	return [
+		row[0],
+		{
+			plays: row[1],
+			earlySkips: row[2],
+			lastPlayedAt: row[3] > 0 ? row[3] : null,
+			// Dated when the row knows; undefined: an older import.
+			...(skipped === undefined ? {} : { lastSkippedAt: skipped > 0 ? skipped : null }),
+		},
+	];
 }

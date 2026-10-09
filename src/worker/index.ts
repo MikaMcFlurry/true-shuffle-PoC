@@ -7,6 +7,7 @@
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
 import type { RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
 import { type Env, endpoints } from "./env";
@@ -527,7 +528,7 @@ app.put("/api/guest/devices", async (c) => {
 
 app.post("/api/history/import", async (c) => {
 	const b = await body<{ rows?: unknown; part?: number; parts?: number }>(c);
-	const rows = Array.isArray(b.rows) ? (b.rows as [string, number, number, number][]) : [];
+	const rows = Array.isArray(b.rows) ? (b.rows as HistoryRow[]) : [];
 	const part = Number(b.part ?? 0);
 	const parts = Number(b.parts ?? 1);
 	if (

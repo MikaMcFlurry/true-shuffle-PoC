@@ -18,6 +18,35 @@ import {
 /** Early skips after which a song is "kaum noch" (barely ever) played. */
 export const RARE_AFTER_EARLY_SKIPS = 3;
 
+/**
+ * A skipped song is asked about again: after a month for the first early
+ * skip, twice as long for each further one, at most a year.
+ */
+export const RETEST_FIRST_MS = 30 * DAY_MS;
+export const RETEST_MAX_MS = 365 * DAY_MS;
+
+export function retestAfter(earlySkips: number): number {
+	return Math.min(
+		RETEST_MAX_MS,
+		RETEST_FIRST_MS * 2 ** (Math.min(Math.max(1, earlySkips), 16) - 1),
+	);
+}
+
+/**
+ * Do early skips still lower the song? Only while the last word on it is a
+ * skip, and only until its next check is due: then it plays like any other
+ * song once more. Heard to 30 s or more since, the skips stop counting; one
+ * skipped again counts again, and its next check is twice as far off. Skips
+ * of unknown date (an import from before this rule) keep counting until
+ * the history is imported again.
+ */
+export function skipsWeigh(m: TrackMemory, now: number): boolean {
+	if (m.earlySkips <= 0) return false;
+	if (m.lastSkippedAt === null) return true;
+	if (m.lastPlayedAt !== null && m.lastPlayedAt > m.lastSkippedAt) return false;
+	return now - m.lastSkippedAt < retestAfter(m.earlySkips);
+}
+
 /** A song skipped early is "nicht jetzt": kept out of decks for this long. */
 export const NOT_NOW_MS = 24 * HOUR_MS;
 
@@ -48,14 +77,15 @@ export function isBlocked(m: TrackMemory, banned: ReadonlySet<TrackId>): boolean
 
 /**
  * Taste weight in (0, ~4]. Under the `consume` skip policy a skip says
- * nothing about taste, so skips are ignored there.
+ * nothing about taste, so skips are ignored there; elsewhere only while
+ * they weigh (see `skipsWeigh`).
  */
-export function tasteWeight(m: TrackMemory, policy: SkipPolicy): number {
+export function tasteWeight(m: TrackMemory, policy: SkipPolicy, now: number): number {
 	let w = 1;
 	if (m.thumb === 1) w *= 2;
 	if (m.liked) w *= 1.5;
 	if (m.plays >= FAMILIAR_PLAYS && m.earlySkips <= m.plays * 0.2) w *= 1.3;
-	if (policy !== "consume") {
+	if (policy !== "consume" && skipsWeigh(m, now)) {
 		if (m.earlySkips >= RARE_AFTER_EARLY_SKIPS) w *= 0.03;
 		else if (m.earlySkips > 0) w *= 0.5 ** m.earlySkips;
 	}
@@ -124,11 +154,17 @@ export function mergeMemory(live: TrackMemory, imported: ImportedStats | undefin
 			: imported.lastPlayedAt === null
 				? live.lastPlayedAt
 				: Math.max(live.lastPlayedAt, imported.lastPlayedAt);
+	const skipped = [live.lastSkippedAt, imported.lastSkippedAt ?? null].filter(
+		(x): x is number => x !== null,
+	);
 	return {
 		...live,
 		plays: live.plays + imported.plays,
 		earlySkips: live.earlySkips + imported.earlySkips,
 		lastPlayedAt: last,
+		// The import ends where live counting begins: a live date is the later one.
+		// Imported skips of unknown date and none live leave it unknown (see skipsWeigh).
+		lastSkippedAt: skipped.length > 0 ? Math.max(...skipped) : null,
 	};
 }
 
@@ -137,4 +173,6 @@ export interface ImportedStats {
 	plays: number;
 	earlySkips: number;
 	lastPlayedAt: number | null;
+	/** Absent in an import from before skips were dated. */
+	lastSkippedAt?: number | null;
 }
