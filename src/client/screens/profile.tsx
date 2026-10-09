@@ -481,10 +481,22 @@ function Period({ p, choice }: { p: ListeningProfile; choice: Choice }) {
 				<Section title="Früh übersprungen" id="pf-skips">
 					<p class="section__lead">
 						{percent(p.skips.share)} der Songs aus deinem importierten Verlauf hast du in den ersten
-						30 Sekunden weitergeschaltet ({num(p.skips.early)}-mal), den ersten Song nach einem
-						Start nicht mitgezählt. Am häufigsten:
+						30 Sekunden weitergeschaltet ({num(p.skips.early)}-mal), ohne den ersten Song nach einem
+						Start und ohne Überhörtes. Am häufigsten:
 					</p>
 					<Songs rows={p.skips.top} count={(r) => `${num(r.plays)}× weg`} />
+				</Section>
+			) : null}
+
+			{p.skips && p.skips.overplayed > 0 ? (
+				<Section title="Überhört" id="pf-overplayed">
+					<p class="section__lead">
+						Diese Songs hast du erst oft ganz gehört und erst danach früh weggeschaltet (
+						{num(p.skips.overplayed)}-mal): Sie kamen wohl zu oft, nicht ungern. true-shuffle
+						sortiert sie nicht aus, sondern lässt sie nach dem letzten Wegschalten drei Monate
+						ruhen. Danach kommen sie wieder wie jeder andere Song.
+					</p>
+					<Songs rows={p.skips.topOverplayed} count={(r) => `${num(r.plays)}× weg`} />
 				</Section>
 			) : null}
 

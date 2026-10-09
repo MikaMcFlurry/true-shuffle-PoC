@@ -30,6 +30,7 @@ function ev(
 		play: true,
 		earlySkip: false,
 		opener: false,
+		rated: true,
 		platform: 1,
 		shuffle: false,
 		offline: false,
@@ -136,6 +137,36 @@ describe("period profile", () => {
 		expect(q.skips).toMatchObject({ early: 2, share: 2 / 3, openers: 0 });
 		expect(q.platforms).toEqual([{ name: "Android", plays: 1 }]);
 		expect(q.shuffleShare).toBe(1);
+	});
+
+	it("skips of a song heard often first are overplayed, not early; only rows that tell openers apart", () => {
+		const skip = { play: false, earlySkip: true, ms: 4_000 };
+		const loved = Array.from({ length: 5 }, (_, i) => ev(T0 + i * DAY_MS, "loved", "A"));
+		const events = [
+			...loved,
+			ev(T0 + 4 * DAY_MS, "few", "B"),
+			ev(T0 + 10 * DAY_MS, "loved", "A", skip),
+			ev(T0 + 11 * DAY_MS, "loved", "A", skip),
+			// Heard again after its first skip: stays overplayed, as in the mix.
+			ev(T0 + 12 * DAY_MS, "loved", "A"),
+			ev(T0 + 13 * DAY_MS, "loved", "A", skip),
+			ev(T0 + 14 * DAY_MS, "few", "B", skip),
+		];
+		const to = T0 + 20 * DAY_MS;
+		const p = periodProfile(events, { from: null, to }, utc);
+		expect(p.skips).toMatchObject({ early: 1, overplayed: 3, openers: 0 });
+		expect(p.skips!.topOverplayed).toMatchObject([{ name: "loved", plays: 3 }]);
+		expect(p.skips!.top).toMatchObject([{ name: "few", plays: 1 }]);
+		// A window after the plays still knows the song was loved first.
+		const late = periodProfile(events, { from: T0 + 9 * DAY_MS, to }, utc);
+		expect(late.skips).toMatchObject({ early: 1, overplayed: 3 });
+		// Rows of an older import: every early skip counts, as in the mix.
+		const old = periodProfile(
+			events.map((e) => ({ ...e, rated: false })),
+			{ from: null, to },
+			utc,
+		);
+		expect(old.skips).toMatchObject({ early: 4, overplayed: 0 });
 	});
 
 	it("an early skip of the first song after a start is told apart, not counted as early", () => {

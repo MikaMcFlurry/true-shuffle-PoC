@@ -7,6 +7,7 @@
 
 import type { ListeningProfile, ProfileItem } from "../shared/api";
 import { PLATFORMS } from "./listens";
+import { FAMILIAR_PLAYS } from "./memory";
 import { DAY_MS } from "./types";
 
 export interface ListenEvent {
@@ -28,6 +29,11 @@ export interface ListenEvent {
 	 * apart, since Spotify's shuffle opens with the same few songs.
 	 */
 	opener: boolean;
+	/**
+	 * An imported row that tells openers apart (see core/listens): only then
+	 * is a skip judged overplayed, as the mix does from the same import.
+	 */
+	rated: boolean;
 	/** From an import only. */
 	platform: number | null;
 	shuffle: boolean | null;
@@ -135,6 +141,10 @@ export function periodProfile(
 	const albums = new Map<string, ProfileItem & { ms: number }>();
 	const skipped = new Map<string, ProfileItem & { ms: number }>();
 	const opened = new Map<string, ProfileItem & { ms: number }>();
+	const tired = new Map<string, ProfileItem & { ms: number }>();
+	// Per song: plays before its first early skip, and whether that made it overplayed.
+	const playsBefore = new Map<string, number>();
+	const overplayed = new Map<string, boolean>();
 	const firstSong = new Map<string, number>();
 	const firstArtist = new Map<string, number>();
 	const lastSong = new Map<string, number>();
@@ -149,6 +159,7 @@ export function periodProfile(
 	let last: number | null = null;
 	let early = 0;
 	let openers = 0;
+	let overplayedSkips = 0;
 	let importedPlays = 0;
 	let shuffled = 0;
 	let offline = 0;
@@ -172,6 +183,11 @@ export function periodProfile(
 
 	for (const e of each()) {
 		const artistKey = e.artist.toLowerCase();
+		// As core/memory isOverplayed and core/history playedBeforeSkips, over the whole timeline.
+		if (e.play && !overplayed.has(e.song))
+			playsBefore.set(e.song, (playsBefore.get(e.song) ?? 0) + 1);
+		else if (e.earlySkip && e.rated && !e.opener && !overplayed.has(e.song))
+			overplayed.set(e.song, (playsBefore.get(e.song) ?? 0) >= FAMILIAR_PLAYS);
 		if (e.play) {
 			const t = local(e.at);
 			years.add(t.year);
@@ -188,10 +204,12 @@ export function periodProfile(
 		}
 		if (!e.play) {
 			if (e.earlySkip) {
+				const tiredOf = !e.opener && overplayed.get(e.song) === true;
 				if (e.opener) openers++;
+				else if (tiredOf) overplayedSkips++;
 				else early++;
 				bump(
-					e.opener ? opened : skipped,
+					e.opener ? opened : tiredOf ? tired : skipped,
 					e.song,
 					() => ({ id: e.song, name: e.name, sub: e.artist, plays: 0, minutes: 0, imageUrl: null }),
 					e,
@@ -301,13 +319,15 @@ export function periodProfile(
 		topSongs: [...songs.values()].sort(byPlays).slice(0, 20).map(finish),
 		topAlbums: [...albums.values()].sort(byTime).slice(0, 10).map(finish),
 		skips:
-			importedPlays + early + openers > 0
+			importedPlays + early + openers + overplayedSkips > 0
 				? {
 						early,
 						share: early + importedPlays > 0 ? early / (early + importedPlays) : 0,
 						top: [...skipped.values()].sort(byPlays).slice(0, 10).map(finish),
 						openers,
 						topOpeners: [...opened.values()].sort(byPlays).slice(0, 10).map(finish),
+						overplayed: overplayedSkips,
+						topOverplayed: [...tired.values()].sort(byPlays).slice(0, 10).map(finish),
 					}
 				: null,
 		newSongs: [...songs.keys()].filter((k) => {

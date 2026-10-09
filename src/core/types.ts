@@ -40,6 +40,11 @@ export interface TrackMemory {
 	earlySkips: number;
 	lastSkippedAt: number | null;
 	/**
+	 * Counted plays known to have come before the first early skip (from
+	 * the imported history; see isOverplayed).
+	 */
+	playedBeforeSkips?: number;
+	/**
 	 * Used up for the round by an early skip seen under the `consume` rule —
 	 * never by one only inferred between two looks at the player.
 	 */
