@@ -541,7 +541,7 @@ export function Home({ state }: { state: AppState }) {
 				</div>
 
 				{track && !view.projected && ownNow?.kind === "probe" && ownNow.id === track.id ? (
-					<div class="retest" role="group" aria-label="Nachprüfung">
+					<fieldset class="retest" aria-label="Nachprüfung">
 						{answered?.id === track.id ? (
 							<p class="transport-note" role="status">
 								{answered.keep
@@ -574,7 +574,7 @@ export function Home({ state }: { state: AppState }) {
 								</div>
 							</>
 						)}
-					</div>
+					</fieldset>
 				) : null}
 
 				{track ? (

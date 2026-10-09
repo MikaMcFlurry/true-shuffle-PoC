@@ -985,7 +985,10 @@ main {
 .retest {
 	display: grid;
 	gap: 10px;
-	margin-block: 12px;
+	min-width: 0;
+	margin: 12px 0;
+	padding: 0;
+	border: 0;
 }
 
 .retest__keys {
