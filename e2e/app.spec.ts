@@ -234,35 +234,6 @@ test.describe("a listener's day", () => {
 		await expect(page.getByText(/Gast-Modus aus/)).toBeVisible();
 	});
 
-	test("an imported history becomes a Hörprofil with hours, months and top artists", async ({
-		page,
-	}) => {
-		await signIn(page);
-		await page.goto("/import");
-		const plays = Array.from({ length: 40 }, (_, i) => ({
-			ts: new Date(Date.UTC(2024, i % 12, 1 + (i % 27), 7 + (i % 14))).toISOString(),
-			ms_played: 180_000,
-			spotify_track_uri: `spotify:track:${String(i % 9).padStart(22, "Q")}`,
-			master_metadata_track_name: `Alter Song ${i % 9}`,
-			master_metadata_album_artist_name: i % 3 === 0 ? "Glasfabrik" : "Nachtbus",
-		}));
-		await page.locator('input[type="file"]').setInputFiles({
-			name: "Streaming_History_Audio_2024.json",
-			mimeType: "application/json",
-			buffer: Buffer.from(JSON.stringify(plays)),
-		});
-		await page.getByRole("button", { name: "Übernehmen" }).click();
-		await page.getByRole("link", { name: "Dein Hörprofil ansehen" }).click();
-		await expect(page.getByRole("heading", { name: "Dein Hörprofil", level: 1 })).toBeVisible();
-		await expect(page.getByRole("radio", { name: "Ganzer Verlauf" })).toBeChecked();
-		await expect(page.locator(".figure--hero")).toContainText("2 Stunden");
-		await expect(page.locator(".hbars")).toContainText("Nachtbus");
-		await expect(page.getByRole("region", { name: "Pro Monat" })).toBeVisible();
-		await checkPage(page, "Hörprofil");
-		await page.getByRole("radio", { name: "Letzte 180 Tage" }).check();
-		await expect(page.locator(".profile__source")).toContainText("selbst gezählt");
-	});
-
 	test("a personal key likes the playing song from Siri or a widget", async ({ page }) => {
 		await signIn(page);
 		await page.getByRole("link", { name: "Mehr" }).click();
@@ -295,6 +266,35 @@ test.describe("a listener's day", () => {
 			headers: { authorization: `Bearer ${key}` },
 		});
 		expect(old.status()).toBe(401);
+	});
+
+	test("an imported history becomes a Hörprofil with hours, months and top artists", async ({
+		page,
+	}) => {
+		await signIn(page);
+		await page.goto("/import");
+		const plays = Array.from({ length: 40 }, (_, i) => ({
+			ts: new Date(Date.UTC(2024, i % 12, 1 + (i % 27), 7 + (i % 14))).toISOString(),
+			ms_played: 180_000,
+			spotify_track_uri: `spotify:track:${String(i % 9).padStart(22, "Q")}`,
+			master_metadata_track_name: `Alter Song ${i % 9}`,
+			master_metadata_album_artist_name: i % 3 === 0 ? "Glasfabrik" : "Nachtbus",
+		}));
+		await page.locator('input[type="file"]').setInputFiles({
+			name: "Streaming_History_Audio_2024.json",
+			mimeType: "application/json",
+			buffer: Buffer.from(JSON.stringify(plays)),
+		});
+		await page.getByRole("button", { name: "Übernehmen" }).click();
+		await page.getByRole("link", { name: "Dein Hörprofil ansehen" }).click();
+		await expect(page.getByRole("heading", { name: "Dein Hörprofil", level: 1 })).toBeVisible();
+		await expect(page.getByRole("radio", { name: "Ganzer Verlauf" })).toBeChecked();
+		await expect(page.locator(".figure--hero")).toContainText("2 Stunden");
+		await expect(page.locator(".hbars")).toContainText("Nachtbus");
+		await expect(page.getByRole("region", { name: "Pro Monat" })).toBeVisible();
+		await checkPage(page, "Hörprofil");
+		await page.getByRole("radio", { name: "Letzte 180 Tage" }).check();
+		await expect(page.locator(".profile__source")).toContainText("selbst gezählt");
 	});
 
 	test("every page reads well on a phone", async ({ page }) => {
