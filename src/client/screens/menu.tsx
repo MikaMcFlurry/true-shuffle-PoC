@@ -1090,13 +1090,16 @@ export function ImportScreen({ state }: { state: AppState }) {
 		];
 		setProfileState({ saving: 0 });
 		try {
+			let upload: string | undefined;
 			for (const [part, b] of blocks.entries()) {
-				await api.importListens({
+				const r = await api.importListens({
+					upload,
 					part,
 					parts: blocks.length,
 					tracks: listens.tracks.length,
 					...b,
 				});
+				upload = r.upload;
 				setProfileState({ saving: (part + 1) / blocks.length });
 			}
 			setProfileState("saved");

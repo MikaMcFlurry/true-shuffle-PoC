@@ -95,17 +95,30 @@ type Stats = Omit<
 const dayKey = (t: LocalTime) =>
 	`${t.year}-${String(t.month).padStart(2, "0")}-${String(t.date).padStart(2, "0")}`;
 const monthKey = (t: LocalTime) => `${t.year}-${String(t.month).padStart(2, "0")}`;
+/** The key of a local calendar day by its number (days since 1970): no clock hours involved. */
+const dayIndexKey = (day: number) => new Date(day * DAY_MS).toISOString().slice(0, 10);
 
 export function periodProfile(
-	events: readonly ListenEvent[],
-	period: { from: number | null; to: number },
+	/** Oldest first; a function to walk a large timeline without holding it (walked twice). */
+	events: Iterable<ListenEvent> | (() => Iterable<ListenEvent>),
+	period: { from: number | null; to: number; previousFrom?: number | null },
 	local: (at: number) => LocalTime,
 ): Stats {
 	const { from, to } = period;
 	const inWindow = (at: number) => (from === null || at >= from) && at < to;
 	const span = from === null ? null : to - from;
+	// What it is compared with: the given start (a calendar year: the year
+	// before, however long), else the same length right before.
+	const previousFrom =
+		from === null ? null : (period.previousFrom ?? (span === null ? null : from - span));
 	// The unit of the series follows the length of what is shown.
-	const first = events.find((e) => e.play && inWindow(e.at))?.at ?? null;
+	const each = typeof events === "function" ? events : () => events;
+	let first: number | null = null;
+	for (const e of each())
+		if (e.play && inWindow(e.at)) {
+			first = e.at;
+			break;
+		}
 	const shownSpan = to - (from ?? first ?? to);
 	const unit: "day" | "week" | "month" =
 		shownSpan <= 45 * DAY_MS ? "day" : shownSpan <= 190 * DAY_MS ? "week" : "month";
@@ -150,7 +163,7 @@ export function periodProfile(
 		map.set(key, x);
 	};
 
-	for (const e of events) {
+	for (const e of each()) {
 		const artistKey = e.artist.toLowerCase();
 		if (e.play) {
 			const t = local(e.at);
@@ -158,7 +171,7 @@ export function periodProfile(
 			if (!firstSong.has(e.song)) firstSong.set(e.song, e.at);
 			if (artistKey && !firstArtist.has(artistKey)) firstArtist.set(artistKey, e.at);
 		}
-		if (span !== null && from !== null && e.play && e.at >= from - span && e.at < from) {
+		if (previousFrom !== null && from !== null && e.play && e.at >= previousFrom && e.at < from) {
 			prevPlays++;
 			prevMs += e.ms;
 		}
@@ -186,11 +199,7 @@ export function periodProfile(
 		days.set(t.day, dayKey(t));
 		hourWeek[t.weekday * 24 + t.hour]!++;
 		const key =
-			unit === "month"
-				? monthKey(t)
-				: unit === "week"
-					? dayKey(local(e.at - t.weekday * DAY_MS))
-					: dayKey(t);
+			unit === "month" ? monthKey(t) : unit === "week" ? dayIndexKey(t.day - t.weekday) : dayKey(t);
 		const s = series.get(key) ?? { plays: 0, minutes: 0 };
 		s.plays++;
 		s.minutes += e.ms / 60_000;
@@ -271,7 +280,8 @@ export function periodProfile(
 		albums: albums.size,
 		activeDays: days.size,
 		days: Math.max(1, Math.round(shownSpan / DAY_MS)),
-		previous: span === null ? null : { plays: prevPlays, minutes: Math.round(prevMs / 60_000) },
+		previous:
+			previousFrom === null ? null : { plays: prevPlays, minutes: Math.round(prevMs / 60_000) },
 		hourWeek,
 		series: {
 			unit,

@@ -84,12 +84,6 @@ type Choice =
 	| { kind: "year"; year: number }
 	| { kind: "custom"; from: string; to: string };
 
-/** Local midnight of a day. */
-function midnight(at: number): number {
-	const d = new Date(at);
-	return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-}
-
 function dayInput(at: number): string {
 	const d = new Date(at);
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -100,37 +94,50 @@ function fromInput(v: string): number | null {
 	return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime() : null;
 }
 
-/** From inclusive, to exclusive; today counts in full. */
-export function periodOf(c: Choice, now = Date.now()): { from: number | null; to: number | null } {
-	const tomorrow = midnight(now) + DAY + 3_600_000;
-	const end = midnight(tomorrow);
+/** A local date shifted by days, at its midnight (DST-proof: calendar, not hours). */
+function shiftDays(at: number, days: number): number {
+	const d = new Date(at);
+	return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days).getTime();
+}
+
+/**
+ * From inclusive, to exclusive; today counts in full. The period before for
+ * the comparison is a calendar one too: the year before, the same number of
+ * days before.
+ */
+export function periodOf(
+	c: Choice,
+	now = Date.now(),
+): { from: number | null; to: number | null; previousFrom: number | null } {
+	const end = shiftDays(now, 1);
 	switch (c.kind) {
 		case "7":
-			return { from: midnight(end - 7 * DAY + 3_600_000), to: end };
+			return { from: shiftDays(end, -7), to: end, previousFrom: shiftDays(end, -14) };
 		case "30":
-			return { from: midnight(end - 30 * DAY + 3_600_000), to: end };
+			return { from: shiftDays(end, -30), to: end, previousFrom: shiftDays(end, -60) };
 		case "365": {
 			const d = new Date(now);
 			return {
 				from: new Date(d.getFullYear() - 1, d.getMonth(), d.getDate() + 1).getTime(),
 				to: end,
+				previousFrom: new Date(d.getFullYear() - 2, d.getMonth(), d.getDate() + 1).getTime(),
 			};
 		}
 		case "year":
 			return {
 				from: new Date(c.year, 0, 1).getTime(),
 				to: new Date(c.year + 1, 0, 1).getTime(),
+				previousFrom: new Date(c.year - 1, 0, 1).getTime(),
 			};
 		case "custom": {
 			const from = fromInput(c.from);
 			const last = fromInput(c.to);
-			return {
-				from,
-				to: last === null ? end : midnight(last + DAY + 3_600_000),
-			};
+			const to = last === null ? end : shiftDays(last, 1);
+			const days = from === null ? 0 : Math.round((to - from) / DAY);
+			return { from, to, previousFrom: from === null ? null : shiftDays(from, -days) };
 		}
 		default:
-			return { from: null, to: null };
+			return { from: null, to: null, previousFrom: null };
 	}
 }
 
@@ -509,7 +516,7 @@ function Highlights({ p }: { p: ListeningProfile }) {
 	if (p.longestSession && p.longestSession.minutes >= 30)
 		items.push({
 			n: hoursWord(p.longestSession.minutes),
-			text: `ohne Pause: deine längste Session, am ${dateWord(p.longestSession.at)}.`,
+			text: `Musik in deiner längsten Session am ${dateWord(p.longestSession.at)}: Song auf Song, keine Lücke über zehn Minuten.`,
 		});
 	const top = p.topArtists[0];
 	if (top && p.plays > 0)

@@ -28,9 +28,9 @@ const real = runInNewContext(
 ) as Record<string, (this: unknown, ...args: unknown[]) => Promise<Result>>;
 
 /** An imported history: one Glasfabrik song, three plays (see core/listens). */
-function importHistory(h: { hub: { importListens(input: unknown): unknown } }) {
+function importHistory(h: { hub: { importListens(input: unknown): { upload: string } } }) {
 	const at = 1_600_000_000;
-	h.hub.importListens({
+	const { upload } = h.hub.importListens({
 		part: 0,
 		parts: 2,
 		tracks: 1,
@@ -38,6 +38,7 @@ function importHistory(h: { hub: { importListens(input: unknown): unknown } }) {
 		data: [["G".repeat(22), "Lied", "Glasfabrik", ""]],
 	});
 	h.hub.importListens({
+		upload,
 		part: 1,
 		parts: 2,
 		tracks: 1,

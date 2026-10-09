@@ -212,20 +212,29 @@ export const api = {
 	history: (before?: number) =>
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),
 	importListens: (block: {
+		/** From the first block's answer; every later block carries it. */
+		upload?: string;
 		part: number;
 		parts: number;
 		tracks: number;
 		kind: "tracks" | "rows";
 		data: unknown[];
-	}) => call<{ stored: number }>("POST", "/api/history/listens", block),
+	}) => call<{ stored: number; upload: string }>("POST", "/api/history/listens", block),
 	genres: () => call<GenreAnswer>("POST", "/api/profile/genres"),
 	/** A period: from inclusive, to exclusive (ms); from null = everything. */
-	profile: (period: { from: number | null; to: number | null } = { from: null, to: null }) =>
+	profile: (
+		period: { from: number | null; to: number | null; previousFrom?: number | null } = {
+			from: null,
+			to: null,
+		},
+	) =>
 		call<ListeningProfile>(
 			"GET",
 			`/api/profile?tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC")}${
 				period.from !== null ? `&from=${period.from}` : ""
-			}${period.to !== null ? `&to=${period.to}` : ""}`,
+			}${period.to !== null ? `&to=${period.to}` : ""}${
+				period.previousFrom != null ? `&prev=${period.previousFrom}` : ""
+			}`,
 		),
 	sync: () => call<unknown>("POST", "/api/sync"),
 	logout: () => call<unknown>("POST", "/auth/logout"),

@@ -565,6 +565,7 @@ app.post("/api/history/listens", async (c) => {
 	return unwrap(
 		c,
 		c.var.hub.importListens(c.var.epoch, {
+			upload: b.upload,
 			part: b.part,
 			parts: b.parts,
 			tracks: b.tracks,
@@ -587,6 +588,8 @@ app.get("/api/profile", (c) => {
 		c.var.hub.listeningProfile(c.var.epoch, (c.req.query("tz") ?? "UTC").slice(0, 64), {
 			from: time(c.req.query("from")),
 			to: time(c.req.query("to")),
+			// The period it is compared with starts here (a calendar year: the year before).
+			previousFrom: time(c.req.query("prev")),
 		}),
 	);
 });

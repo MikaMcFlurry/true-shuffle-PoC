@@ -587,14 +587,24 @@ export class UserHub extends DurableObject<Env> {
 	}
 	importListens(
 		epoch: number,
-		input: { part: unknown; parts: unknown; tracks: unknown; kind: unknown; data: unknown },
+		input: {
+			upload?: unknown;
+			part: unknown;
+			parts: unknown;
+			tracks: unknown;
+			kind: unknown;
+			data: unknown;
+		},
 	) {
 		return this.session(epoch, () => this.hub().importListens(input));
 	}
 	listeningProfile(
 		epoch: number,
 		timeZone: string,
-		period: { from: number | null; to: number | null } = { from: null, to: null },
+		period: { from: number | null; to: number | null; previousFrom?: number | null } = {
+			from: null,
+			to: null,
+		},
 	) {
 		return this.session(epoch, () => this.hub().listeningProfile(timeZone, period));
 	}

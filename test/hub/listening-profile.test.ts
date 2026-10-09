@@ -46,9 +46,16 @@ function upload(h: H, data: { tracks: ListenTrack[]; rows: ListenRow[] }, stopAf
 		...pages(data.tracks).map((d) => ({ kind: "tracks", data: d })),
 		...pages(data.rows).map((d) => ({ kind: "rows", data: d })),
 	];
+	let upload: string | undefined;
 	blocks.forEach((b, part) => {
 		if (stopAfter !== undefined && part >= stopAfter) return;
-		h.hub.importListens({ part, parts: blocks.length, tracks: data.tracks.length, ...b });
+		upload = h.hub.importListens({
+			upload,
+			part,
+			parts: blocks.length,
+			tracks: data.tracks.length,
+			...b,
+		}).upload;
 	});
 }
 
@@ -172,7 +179,7 @@ describe("imported plays", () => {
 	it("refuse blocks a browser could not have built, out of order or before the song list", async () => {
 		const h = await onboarded({ tracks: 40 });
 		const ok = build([{ at: h.clock.t - DAY_MS, song: "a", artist: "A", ms: 60_000 }]);
-		const block = (over: Record<string, unknown>) => () =>
+		const first = (over: Record<string, unknown>) => () =>
 			h.hub.importListens({
 				part: 0,
 				parts: 2,
@@ -181,36 +188,186 @@ describe("imported plays", () => {
 				data: ok.tracks,
 				...over,
 			});
-		expect(block({ data: [["short", "a", "A", ""]] })).toThrow();
-		expect(block({ kind: "other" })).toThrow();
-		expect(block({ data: new Array(LISTEN_PAGE + 1).fill(ok.tracks[0]) })).toThrow();
-		expect(block({ kind: "rows", data: ok.rows })).toThrow();
-		block({})();
-		// A row pointing past the song list, then out of order.
-		expect(() =>
+		expect(first({ data: [["short", "a", "A", ""]] })).toThrow();
+		expect(first({ kind: "other" })).toThrow();
+		expect(first({ data: new Array(LISTEN_PAGE + 1).fill(ok.tracks[0]) })).toThrow();
+		expect(first({ data: [] })).toThrow();
+		expect(first({ kind: "rows", data: ok.rows })).toThrow();
+		expect(first({ parts: 401 })).toThrow();
+		const { upload } = first({})();
+		const next = (over: Record<string, unknown>) => () =>
 			h.hub.importListens({
+				upload,
 				part: 1,
 				parts: 2,
 				tracks: 1,
 				kind: "rows",
-				data: [[1, 5, 60_000, 0, 0]],
-			}),
+				data: ok.rows,
+				...over,
+			});
+		// A row pointing past the song list, out of order, from the future, without the id.
+		expect(next({ data: [[1, 5, 60_000, 0, 0]] })).toThrow();
+		expect(next({ part: 3 })).toThrow();
+		expect(
+			next({ data: [[Math.floor((h.clock.t + 3 * DAY_MS) / 1000), 0, 60_000, 0, 0]] }),
 		).toThrow();
-		expect(() =>
-			h.hub.importListens({ part: 3, parts: 2, tracks: 1, kind: "rows", data: ok.rows }),
-		).toThrow();
-		expect(() =>
-			h.hub.importListens({
-				part: 1,
-				parts: 2,
-				tracks: 1,
-				kind: "rows",
-				data: [[Math.floor((h.clock.t + 3 * DAY_MS) / 1000), 0, 60_000, 0, 0]],
-			}),
-		).toThrow();
+		expect(next({ upload: undefined })).toThrow();
 		expect(h.hub.listeningProfile("UTC").coverage.importedPlays).toBe(0);
-		h.hub.importListens({ part: 1, parts: 2, tracks: 1, kind: "rows", data: ok.rows });
+		next({})();
 		expect(h.hub.listeningProfile("UTC").coverage.importedPlays).toBe(1);
+	});
+
+	it("bind every block to its upload: a second tab's import makes the first one's blocks stale (PR26-IMPORT-GENERATION-01)", async () => {
+		const h = await onboarded({ tracks: 40 });
+		const day = Math.floor((h.clock.t - DAY_MS) / 1000);
+		upload(h, build([{ at: h.clock.t - 3 * DAY_MS, song: "old", artist: "Old", ms: 60_000 }]));
+		const a = h.hub.importListens({
+			part: 0,
+			parts: 2,
+			tracks: 1,
+			kind: "tracks",
+			data: [[tid("A"), "Song A", "A", ""]],
+		});
+		const b = h.hub.importListens({
+			part: 0,
+			parts: 2,
+			tracks: 1,
+			kind: "tracks",
+			data: [[tid("B"), "Song B", "B", ""]],
+		});
+		expect(b.upload).not.toBe(a.upload);
+		// A's last block, same sizes and order: refused; the history before stays.
+		expect(() =>
+			h.hub.importListens({
+				upload: a.upload,
+				part: 1,
+				parts: 2,
+				tracks: 1,
+				kind: "rows",
+				data: [[day, 0, 120_000, 0, 1]],
+			}),
+		).toThrow();
+		expect(h.hub.listeningProfile("UTC").topSongs.map((x) => x.name)).toEqual(["old"]);
+		h.hub.importListens({
+			upload: b.upload,
+			part: 1,
+			parts: 2,
+			tracks: 1,
+			kind: "rows",
+			data: [[day, 0, 90_000, 0, 0]],
+		});
+		const p = h.hub.listeningProfile("UTC");
+		expect(p.topSongs.map((x) => [x.name, x.minutes])).toEqual([["Song B", 2]]);
+		// A restart between blocks keeps the upload; a new one started after it wins.
+		const c = h.hub.importListens({
+			part: 0,
+			parts: 2,
+			tracks: 1,
+			kind: "tracks",
+			data: [[tid("C"), "Song C", "C", ""]],
+		});
+		h.restart();
+		h.hub.importListens({
+			upload: c.upload,
+			part: 1,
+			parts: 2,
+			tracks: 1,
+			kind: "rows",
+			data: [[day, 0, 60_000, 0, 0]],
+		});
+		expect(h.hub.listeningProfile("UTC").topSongs.map((x) => x.name)).toEqual(["Song C"]);
+	});
+
+	it("publish only a complete song list and plays oldest first (PR26-IMPORT-VALIDATION-02, -ORDER-03)", async () => {
+		const h = await onboarded({ tracks: 40 });
+		const day = Math.floor((h.clock.t - 2 * DAY_MS) / 1000);
+		upload(h, build([{ at: h.clock.t - 3 * DAY_MS, song: "old", artist: "Old", ms: 60_000 }]));
+		// Two songs declared, one sent, then plays: refused.
+		const u = h.hub.importListens({
+			part: 0,
+			parts: 2,
+			tracks: 2,
+			kind: "tracks",
+			data: [[tid("x"), "x", "X", ""]],
+		});
+		expect(() =>
+			h.hub.importListens({
+				upload: u.upload,
+				part: 1,
+				parts: 2,
+				tracks: 2,
+				kind: "rows",
+				data: [[day, 0, 60_000, 0, 0]],
+			}),
+		).toThrow();
+		// Plays out of order, within a block and across blocks: refused.
+		const v = h.hub.importListens({
+			part: 0,
+			parts: 3,
+			tracks: 1,
+			kind: "tracks",
+			data: [[tid("y"), "y", "Y", ""]],
+		});
+		expect(() =>
+			h.hub.importListens({
+				upload: v.upload,
+				part: 1,
+				parts: 3,
+				tracks: 1,
+				kind: "rows",
+				data: [
+					[day + 60, 0, 60_000, 0, 0],
+					[day, 0, 60_000, 0, 0],
+				],
+			}),
+		).toThrow();
+		const w = h.hub.importListens({
+			part: 0,
+			parts: 3,
+			tracks: 1,
+			kind: "tracks",
+			data: [[tid("y"), "y", "Y", ""]],
+		});
+		h.hub.importListens({
+			upload: w.upload,
+			part: 1,
+			parts: 3,
+			tracks: 1,
+			kind: "rows",
+			data: [[day + 60, 0, 60_000, 0, 0]],
+		});
+		expect(() =>
+			h.hub.importListens({
+				upload: w.upload,
+				part: 2,
+				parts: 3,
+				tracks: 1,
+				kind: "rows",
+				data: [[day, 0, 60_000, 0, 0]],
+			}),
+		).toThrow();
+		// A list of songs and no plays at all is no history either.
+		const z = h.hub.importListens({
+			part: 0,
+			parts: 2,
+			tracks: 2,
+			kind: "tracks",
+			data: [[tid("z"), "z", "Z", ""]],
+		});
+		expect(() =>
+			h.hub.importListens({
+				upload: z.upload,
+				part: 1,
+				parts: 2,
+				tracks: 2,
+				kind: "tracks",
+				data: [[tid("q"), "q", "Q", ""]],
+			}),
+		).toThrow();
+		// Through all of it, the history before stands.
+		const p = h.hub.listeningProfile("UTC");
+		expect(p.coverage.importedPlays).toBe(1);
+		expect(p.topSongs.map((x) => x.name)).toEqual(["old"]);
 	});
 
 	it("count up to the first sign-in; from then on true-shuffle's own count, nothing twice", async () => {
@@ -453,4 +610,64 @@ describe("genre estimate", () => {
 		const none = await onboarded({ tracks: 40, ai: null, env: { anthropicKey: null } });
 		expect(none.hub.listeningProfile("UTC").canEstimate).toBe(false);
 	});
+});
+
+describe("size", () => {
+	it("a history at the upper bound (300 000 plays, 100 000 songs) imports and answers in seconds", async () => {
+		const h = await onboarded({ tracks: 40 });
+		const start = Math.floor((h.clock.t - 10 * 365 * DAY_MS) / 1000);
+		let tracks: ListenTrack[] | null = Array.from({ length: 100_000 }, (_, i) => [
+			tid(`t${i}`),
+			`Song ${i}`,
+			`Artist ${i % 5000}`,
+			`Album ${i % 20000}`,
+		]);
+		let rows: ListenRow[] | null = Array.from({ length: 300_000 }, (_, i) => [
+			start + i * 1000,
+			(i * 7919) % 100_000,
+			i % 5 === 0 ? 12_000 : 190_000,
+			i % 5 === 0 ? LISTEN_FLAG.forward : LISTEN_FLAG.done,
+			i % 9,
+		]);
+		const t0 = performance.now();
+		upload(h, { tracks, rows });
+		const imported = performance.now() - t0;
+		tracks = null;
+		rows = null;
+		const gc = (globalThis as { gc?: () => void }).gc;
+		gc?.();
+		const heap0 = process.memoryUsage().heapUsed;
+		h.restart();
+		const t1 = performance.now();
+		const all = h.hub.listeningProfile("Europe/Berlin");
+		const cold = performance.now() - t1;
+		const t2 = performance.now();
+		h.hub.listeningProfile("Europe/Berlin", { from: h.clock.t - 30 * DAY_MS, to: h.clock.t });
+		const warm = performance.now() - t2;
+		gc?.();
+		const withCache = process.memoryUsage().heapUsed;
+		h.restart();
+		gc?.();
+		// What the hub keeps between requests: the compact plays and the song list.
+		const held = withCache - process.memoryUsage().heapUsed;
+		void heap0;
+		expect(all.coverage.importedPlays).toBe(240_000);
+		expect(all.plays).toBe(240_000);
+		expect(all.skips?.early).toBe(60_000);
+		expect(h.sql.first<{ n: number }>(`SELECT COUNT(*) AS n FROM listen_pages`)!.n).toBe(400);
+		process.stdout.write(
+			`SIZE import ${Math.round(imported)} ms, profile cold ${Math.round(cold)} ms, warm ${Math.round(warm)} ms, held after ${Math.round(held / 1e6)} MB${gc ? "" : " (no gc)"}\n`,
+		);
+		expect(cold).toBeLessThan(20_000);
+		// One more song or play than the bounds is refused.
+		expect(() =>
+			h.hub.importListens({
+				part: 0,
+				parts: 1,
+				tracks: 100_001,
+				kind: "tracks",
+				data: [[tid("x"), "x", "X", ""]],
+			}),
+		).toThrow();
+	}, 180_000);
 });

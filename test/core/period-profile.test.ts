@@ -138,6 +138,58 @@ describe("period profile", () => {
 	});
 });
 
+describe("calendar edges (PR26-PROFILE-DST-04, previous year)", () => {
+	it("a week starts on the local Monday also across the end of summer time", () => {
+		const berlin = localTimes("Europe/Berlin");
+		// Monday 19 Oct 2026 noon, and Sunday 25 Oct 23:30 local (after the change back).
+		const events = [
+			ev(Date.UTC(2026, 9, 19, 10), "a", "A"),
+			ev(Date.UTC(2026, 9, 25, 22, 30), "b", "B"),
+		];
+		const p = periodProfile(
+			events,
+			{ from: Date.UTC(2026, 6, 31, 22), to: Date.UTC(2026, 9, 31, 23) },
+			berlin,
+		);
+		expect(p.series.unit).toBe("week");
+		expect(p.series.points).toEqual([{ key: "2026-10-19", plays: 2, minutes: 7 }]);
+		// And at the start of summer time: Sunday 29 March 23:30 belongs to Monday 23 March.
+		const spring = periodProfile(
+			[ev(Date.UTC(2026, 2, 23, 10), "a", "A"), ev(Date.UTC(2026, 2, 29, 21, 30), "b", "B")],
+			{ from: Date.UTC(2026, 0, 1), to: Date.UTC(2026, 4, 1) },
+			berlin,
+		);
+		expect(spring.series.points.map((x) => x.key)).toEqual(["2026-03-23"]);
+	});
+
+	it("a calendar year is compared with the calendar year before, leap years included", () => {
+		const events = [
+			ev(Date.UTC(2022, 11, 31, 12), "a", "A"),
+			ev(Date.UTC(2023, 0, 1, 12), "b", "A"),
+		];
+		const p = periodProfile(
+			events,
+			{ from: Date.UTC(2024, 0, 1), to: Date.UTC(2025, 0, 1), previousFrom: Date.UTC(2023, 0, 1) },
+			utc,
+		);
+		expect(p.previous).toEqual({ plays: 1, minutes: 3 });
+		// Without a start given, the same length right before (here: 366 days).
+		const q = periodProfile(events, { from: Date.UTC(2024, 0, 1), to: Date.UTC(2025, 0, 1) }, utc);
+		expect(q.previous?.plays).toBe(2);
+	});
+
+	it("a session takes songs with gaps under ten minutes; its minutes are only what was heard", () => {
+		const events = [
+			ev(T0 + 30 * MINUTE_MS, "a", "A", { ms: 30 * MINUTE_MS }),
+			ev(T0 + 69 * MINUTE_MS, "b", "A", { ms: 30 * MINUTE_MS }),
+			ev(T0 + 130 * MINUTE_MS, "c", "A", { ms: 30 * MINUTE_MS }),
+		];
+		const p = periodProfile(events, { from: null, to: T0 + DAY_MS }, utc);
+		// 9 minutes between the first two: one session of 60 heard minutes; 31 before the third.
+		expect(p.longestSession).toEqual({ minutes: 60, at: T0 });
+	});
+});
+
 describe("imported plays in the browser", () => {
 	it("keep every music play once, with flags, platform and its song", () => {
 		const b = newListens();
