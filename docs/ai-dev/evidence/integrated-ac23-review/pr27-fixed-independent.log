@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-pr27-fixed-independent
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:16:18
+   Duration  4.19s (transform 48%, tests 31%, import 21%)
+

@@ -1,11 +1,11 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-09T16:25:25.728291+00:00",
-  "project": "true-shuffle externalPR27→28 integrated release review",
+  "generated_at": "2026-10-09T14:31:34.109775+00:00",
+  "project": "true-shuffle externally integrated24–26 production review",
   "subject": {
-    "revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-    "artifact_ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
-    "environment": "Actual externalCloudflaref9364da0/2d3927f7 and isolated156ba/78fc/ac23 RealWorkerFakeSpotify",
+    "revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+    "artifact_ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
+    "environment": "Actual public Cloudflare873eca1e/8bde11bf100% and isolated93241 RealWorker/FakeSpotify",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -183,18 +183,6 @@
       "severity": "P1",
       "blocking": true,
       "title": "Current preserved unfinished-instance/progress requirement conflicts intentionally advancing listed partial plays"
-    },
-    {
-      "id": "PR28-REST-01",
-      "severity": "P2",
-      "blocking": true,
-      "title": "90-day overplayed rest is bypassed by cooling fallback in normal deck planning"
-    },
-    {
-      "id": "PR28-OVERLAP-02",
-      "severity": "P2",
-      "blocking": true,
-      "title": "First-win aggregate deduplication disagrees with last-win profile classification for overlapping exports"
     }
   ],
   "gates": [
@@ -205,15 +193,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-BUILD-AC23",
+          "id": "G-BUILD-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "Integratedac23 type/lint/build/dryPASS. ExactheadUnit560PASS/1parallel-load timeout;117RobustnessrerunPASSdefault20s, no fabricatedsinglefull561PASS."
+      "rationale": "549UnitWorker/type/lint/build/dry PASS exact93241."
     },
     {
       "id": "G-COMBINED",
@@ -222,15 +210,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-COMBINED-AC23",
+          "id": "G-COMBINED-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "46standard+4extra candidatebrowserPASS;67unchangedprotectedPASS, inheritedcontinuity conflict remains."
+      "rationale": "46RealWorkerBrowser and11unchangedResume standardPASS; protectedpartialplay attacksFAIL separately."
     },
     {
       "id": "G-NEW-BEHAVIOR",
@@ -239,15 +227,15 @@
       "status": "FAIL",
       "evidence": [
         {
-          "id": "G-NEW-BEHAVIOR-AC23",
+          "id": "G-NEW-BEHAVIOR-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "OriginalPodcastclosed; new90dayrest bypass andoverlapdedupFAIL; inheritedLANE07/Resumeconflictopen."
+      "rationale": "FreshnewLANE07 falseprovenance; newResumepolicy authorityconflict pending; sixpriorimport/analytics fixesclosed,ranknonblocking."
     },
     {
       "id": "G-UI",
@@ -256,15 +244,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-UI-AC23",
+          "id": "G-UI-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "Actuallocal profile390/1440lightdark longmetadata keyboard/nav4PASS;46standarderror/offline/pendingPASS;actualanonymousproduction4rendersPASS."
+      "rationale": "46RealWorker browser phone/desktop lightdark longcontent/error/offline/pending/navigation; actualanonymous public390/1440themes nooverflow/errors."
     },
     {
       "id": "G-A11Y",
@@ -273,15 +261,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-A11Y-AC23",
+          "id": "G-A11Y-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "Bounded existinglabel/keyboard/focus assertionsPASS; no completeWCAG orphysicalSafari claim."
+      "rationale": "Bounded existingkeyboard/focus/errorsemantics assertionsPASS; not fullWCAG/physicalSafari."
     },
     {
       "id": "G-MIGRATION",
@@ -290,15 +278,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-MIGRATION-AC23",
+          "id": "G-MIGRATION-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "AdditiveJSON6fieldcompatibility andold4/5 validationPASS; noSQLschema orCloudflare migrationchange;actualpopulatedrestoreNOTRUN."
+      "rationale": "Schema5→6 additive/restart freshPASS; actualpopulatedrestoreNOTRUN."
     },
     {
       "id": "G-LOCAL-RECOVERY",
@@ -307,15 +295,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-LOCAL-RECOVERY-AC23",
+          "id": "G-LOCAL-RECOVERY-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "Existinglocalretry/recovery/account/guest/native checksPASS; datedbefore>playsrejected."
+      "rationale": "Fresh uploadtoken prevents staleconcurrentpublish; exactcounts/order andabort/restart atomic standardregressionsPASS."
     },
     {
       "id": "G-SECURITY",
@@ -324,15 +312,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-SECURITY-AC23",
+          "id": "G-SECURITY-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "Publicactual401/CSRF403PASS;existingaccount/private/guest/native regressionsPASS; no authchanges."
+      "rationale": "Session/AI/importfences regressions and currentpublic401/CSRF403PASS; no authbypass asserted."
     },
     {
       "id": "G-REVIEW",
@@ -341,15 +329,15 @@
       "status": "FAIL",
       "evidence": [
         {
-          "id": "G-REVIEW-AC23",
+          "id": "G-REVIEW-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "FreshscopedNOT_READY withtwoP2s;overallBLOCKED alsoinheritsP1Resume productauthorityconflict."
+      "rationale": "Two fresh independent reviews; integrated source hasblockingP2LANE07 and pendingP1Resumeauthorityconflict."
     },
     {
       "id": "G-CI",
@@ -358,15 +346,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-CI-AC23",
+          "id": "G-CI-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:25:07.654438+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "Exactintegratedverify37958130063 success, exacthead37956572049success;27head/integratedCI success."
+      "rationale": "Integratedverify37938795936 success; actualproductionresources/traffic authenticatedreadback."
     },
     {
       "id": "G-LIVE",
@@ -375,22 +363,22 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-LIVE-AC23",
+          "id": "G-LIVE-932",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_932_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+          "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+          "observed_at": "2026-10-09T14:31:34.109775+00:00"
         }
       ],
-      "rationale": "Externallyactivatedf9364da0/2d3927f7100%;compiledWorker/assets/auth/browser/resources actualverified; notfunctionalacceptance."
+      "rationale": "Externalactual873e/8bde100%, compiledWorker/eighteenexactassets andsourcemapcontents/health/auth/publicbrowserverified."
     },
     {
       "id": "G-AI-RELIABILITY",
       "category": "performance_reliability",
       "required": true,
       "status": "NOT_RUN",
-      "rationale": "Physicalprovider/privateHA/filledrestore/liveCloudflarecapacityNOTRUN.",
+      "rationale": "SyntheticNode upperbound performance is not actualCloudflareCPU/memory/quota, physicalSpotify/iPhone,privateHAorpopulatedrestore evidence.",
       "evidence": []
     }
   ]
