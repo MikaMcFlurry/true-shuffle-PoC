@@ -314,6 +314,73 @@ describe("song facts in the Verlauf", () => {
 		expect([lane, null]).toContain(entry!.facts?.kind ?? null);
 	});
 
+	it("a short play nobody listed never lends its lane to a later play of the song", async () => {
+		const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const p = h.fake.user().player;
+		await h.listen(10_000);
+		await h.hub.state({ live: true, refresh: true });
+		h.fake.skip();
+		await h.listen(6_000);
+		await h.hub.state({ live: true, refresh: true });
+		const t = h.fake.current()!;
+		const notes = () =>
+			JSON.parse(
+				h.sql.first<{ v: string }>(`SELECT v FROM kv WHERE k = 'lane_notes'`)?.v ?? "[]",
+			) as { id: string; kind: SlotKind | null }[];
+		const noted = notes().find((n) => n.id === t);
+		expect(noted?.kind).toBeTruthy();
+		// Skipped after 12 s: never listed by Spotify.
+		await h.listen(6_000);
+		h.fake.skip();
+		await h.listen(6_000);
+		await h.hub.state({ live: true, refresh: true });
+		// A minute later a new deck holds it for another reason, and it plays
+		// again in the same playlist for 45 s between the app's looks.
+		await h.listen(60_000);
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const deck = JSON.parse(row.deck) as {
+			writtenAt: number;
+			items: { id: string; kind: SlotKind }[];
+		};
+		const other: SlotKind = noted!.kind === "favorite" ? "fresh" : "favorite";
+		deck.items = deck.items.map((it) => (it.id === t ? { ...it, kind: other } : it));
+		deck.writtenAt = h.clock.t;
+		h.sql.run(`UPDATE stations SET deck = ? WHERE id = ?`, JSON.stringify(deck), sid);
+		h.restart();
+		p.order.splice(p.index + 1, 0, t);
+		h.fake.skip();
+		expect(h.fake.current()).toBe(t);
+		await h.listen(45_000);
+		h.fake.skip();
+		await h.listen(1_000);
+		await h.hub.state({ live: true, refresh: true });
+		await h.listen(2 * MINUTE_MS);
+		await h.hub.state({ live: true, refresh: true });
+		const later = h.hub.history(200).filter((e) => e.id === t);
+		expect(later.length).toBe(1);
+		expect(later[0]!.facts?.kind ?? null).toBeNull();
+	});
+
+	it("a song of the station played outside its playlist gets no lane", async () => {
+		const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const later = (JSON.parse(row.deck) as { items: { id: string }[] }).items.at(-1)!.id;
+		// Started on its own in Spotify, outside any playlist.
+		h.fake.playSong(h.fake.user().id, later);
+		await h.listen(6_000);
+		await h.hub.state({ live: true, refresh: true });
+		await h.listen(4 * MINUTE_MS);
+		await h.hub.state({ live: true, refresh: true });
+		const e = h.hub.history(200).find((x) => x.id === later);
+		expect(e).toBeDefined();
+		expect(e!.facts?.kind ?? null).toBeNull();
+	});
+
 	it("the first song after a start, which no earlier look saw arrive, has no lane", async () => {
 		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
 		const sid = h.stationIds[0]!;

@@ -179,6 +179,11 @@ const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
 /** The lanes a play may be stamped with (see `laneOf`). */
 /** How long a lane note waits for its play: pauses may stretch a play over hours. */
 const LANE_NOTE_MS = 2 * DAY_MS;
+/**
+ * Slack between Spotify's stamp and our clock. Below 30 s, the least a
+ * counted play lasts, so a later play of the song never fits a closed note.
+ */
+const LANE_STAMP_SLACK_MS = 15_000;
 const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
 const PLAYS_KEEP_MS = 180 * DAY_MS;
 const PRUNE_PER_DAY = 500;
@@ -405,6 +410,8 @@ interface LaneNote {
 	id: TrackId;
 	kind: SlotKind | null;
 	seenAt: number;
+	/** The first look that no longer showed this play. */
+	goneAt?: number;
 }
 
 interface PlayerSnapshot {
@@ -1815,6 +1822,8 @@ export class HubCore {
 	}
 
 	private saveDeck(stationId: number, deck: Deck): void {
+		const row = this.stationRow(stationId);
+		if (row && this.deckOf(row)?.writtenAt !== deck.writtenAt) this.closeLaneNotes(stationId);
 		this.db.run(`UPDATE stations SET deck = ? WHERE id = ?`, JSON.stringify(deck), stationId);
 	}
 
@@ -2341,6 +2350,8 @@ export class HubCore {
 				]),
 			];
 		}
+		// A new deck: notes of songs not playing now came from the deck before.
+		this.closeLaneNotes(st.id);
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
 			JSON.stringify(deck),
@@ -4874,26 +4885,58 @@ export class HubCore {
 	 * one reason for the song (null when it holds the song for several).
 	 */
 	private noteLane(obs: PlayerObservation | null, shown: PlayerSnapshot | null): void {
-		if (!obs?.trackId || !obs.contextUri || !shown) return;
-		if (shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri) return;
-		const st = this.stations().find((x) => this.deckUri(x) === obs.contextUri);
-		const deck = st ? this.deckOf(st) : null;
-		if (!st || !deck || deck.writtenAt > shown.at) return;
-		const kinds = new Set(deck.items.filter((it) => it.id === obs.trackId).map((it) => it.kind));
 		const now = this.now();
-		const notes = this.laneNotes().filter((n) => now - n.seenAt < LANE_NOTE_MS);
-		notes.push({
-			station: st.id,
-			id: obs.trackId,
-			kind: kinds.size === 1 ? ([...kinds][0] ?? null) : null,
-			seenAt: now,
-		});
-		this.kvSet("lane_notes", notes.slice(-50));
+		let notes = this.laneNotes().filter((n) => now - n.seenAt < LANE_NOTE_MS);
+		const before = JSON.stringify(notes);
+		// A look that no longer shows a noted song closes its note: that play
+		// ended by now, and a later play of the song is another one.
+		for (const n of notes)
+			if (n.goneAt === undefined && (n.id !== obs?.trackId || this.stationRow(n.station) === null))
+				n.goneAt = now;
+		const isNew =
+			obs?.trackId &&
+			obs.contextUri &&
+			shown &&
+			!(shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri);
+		const st = isNew ? this.stations().find((x) => this.deckUri(x) === obs.contextUri) : undefined;
+		const deck = st ? this.deckOf(st) : null;
+		if (st && deck && shown && obs?.trackId && deck.writtenAt <= shown.at) {
+			const kinds = new Set(deck.items.filter((it) => it.id === obs.trackId).map((it) => it.kind));
+			// Any open note of the song is another, earlier play.
+			for (const n of notes) if (n.id === obs.trackId && n.goneAt === undefined) n.goneAt = now;
+			notes.push({
+				station: st.id,
+				id: obs.trackId,
+				kind: kinds.size === 1 ? ([...kinds][0] ?? null) : null,
+				seenAt: now,
+			});
+		}
+		notes = notes.slice(-50);
+		if (JSON.stringify(notes) !== before) this.kvSet("lane_notes", notes);
+	}
+
+	/**
+	 * A new deck on a station: notes of songs not playing right now belong to
+	 * plays from the deck before and are closed; the song playing now keeps its
+	 * note (it began from that deck and may still be listed).
+	 */
+	private closeLaneNotes(stationId: number): void {
+		const playing = this.kvGet<PlayerSnapshot>("player")?.obs?.trackId ?? null;
+		const now = this.now();
+		const notes = this.laneNotes();
+		let changed = false;
+		for (const n of notes)
+			if (n.station === stationId && n.goneAt === undefined && n.id !== playing) {
+				n.goneAt = now;
+				changed = true;
+			}
+		if (changed) this.kvSet("lane_notes", notes);
 	}
 
 	/**
 	 * The lane for a play being recorded: the latest note of this song on this
-	 * station seen before the play's stamp, used once. No note, no lane.
+	 * station seen before the play's stamp and not closed before it ended,
+	 * used once. No note, no lane.
 	 */
 	private laneFor(stationId: number, id: TrackId, at: number): SlotKind | null {
 		const notes = this.laneNotes();
@@ -4901,6 +4944,8 @@ export class HubCore {
 		notes.forEach((n, i) => {
 			if (n.station !== stationId || n.id !== id || n.seenAt > at || at - n.seenAt > LANE_NOTE_MS)
 				return;
+			// Spotify stamps a play when it ends: by the look that saw it gone.
+			if (n.goneAt !== undefined && at > n.goneAt + LANE_STAMP_SLACK_MS) return;
 			if (best < 0 || n.seenAt > notes[best]!.seenAt) best = i;
 		});
 		if (best < 0) return null;
