@@ -412,7 +412,7 @@ export function HistoryScreen() {
 					</a>
 				}
 				noBack
-				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei jedem Song steht, wie oft du ihn insgesamt gehört hast, und bei neuen Wiedergaben von deinen Kassetten auch, ob er aus der Kassette kam oder eine Empfehlung war. Tippe auf einen Song, um ihn zu bewerten."
+				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei jedem Song steht, wie oft du ihn insgesamt gehört hast, und wenn die App ihn bis kurz vor Schluss laufen sah, auch, ob er aus der Kassette kam oder eine Empfehlung war. Tippe auf einen Song, um ihn zu bewerten."
 			/>
 			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
 			{items && items.length === 0 ? (
