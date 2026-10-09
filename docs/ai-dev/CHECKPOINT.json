@@ -33,15 +33,14 @@
     "PR12 refusal continuity and PR11 final UI merged in dependency order, source CI/444unit/40browser/independent19unit9browser PASS; exact Cloudflare assets/runtime/auth readback PASS.",
     "PR17→16 externally integrated and verified97e6; allRESUME regressionsclosed",
     "PR18 final4b0a independently reviewed; GitHub merge e348, actualautomaticWorkersBuildsdd344/238016100% verified;486unit/41browser/11RESUMEPASS; historicalkindnull andUnicodecontrastfixed; no duplicateactivation",
-    "2026-10-09 sibling19/20/21 separatelyreviewed;localcombined492/42/11/staticPASS;fiveblockingP2scommented;productionunchanged"
+    "2026-10-09 sibling19/20/21 separatelyreviewed;localcombined492/42/11/staticPASS;fiveblockingP2scommented;productionunchanged",
+    "Explicit19–22 completion and corrections independently reviewed on combined4dc3377; previousfiveclosed,newsevenblockingP2s;506/44/11/default/static andall4sourceCI PASS; productionunchanged."
   ],
   "in_progress": [],
   "blocked": [
-    "Owner-authenticated Spotify/HA/MA acceptance",
-    "Actual populated Durable Object migration/history invariants and restore verification",
-    "Required integratedCI37844932181 failedtwice inherited20ssimulationtimeout; Claude askedtestonlyrepair6069239435",
-    "PR19/20/21 fiveblockingP2findings, seeFOLLOWUP_19_21_REVIEW.json",
-    "Noexplicitcomplete-scopefinalcomment forPR19/20/21"
+    "Seven blocking candidate P2s, seeFOLLOWUP_19_22_REVIEW.json",
+    "Physical owner Spotify/iPhone/privateHA acceptance unavailable",
+    "Actual populated DurableObject restore/production migration5 not run"
   ],
   "capability_blockers": [
     "Physical iPhone/liveSpotify latencyquota unavailable",
@@ -54,12 +53,12 @@
     "Runtime/bindings/variables/secretbindings/namespaces/migrationv1 unchanged"
   ],
   "next_actions": [
-    "Read actualClaude correctionheads andresponses to6075724303/6075730293/6075737117; rerunnewrepro/regressions andfreshseparatereview",
-    "Requirecomplete-scopefinalcomment/PRdependencies;fixinheritedCI20stimeout withpreservedassertions before anymerge/deploy",
-    "Revalidateactualtargete348 andreviewedheads immediatelybeforemerge;buildverifyactualintegration thenexistingauthorizedCloudflareworkflow",
-    "Keepcurrentproductione348/dd344/238016 andactuallive/restoreNOTRUN;no duplicateunchangedcomments/releases"
+    "Read actual replies/diffs to6076860367/6076860537/6076875688; rerun concrete regressions and fresh independent review on new heads.",
+    "Require renewed complete final scope after material corrections; no partial release.",
+    "Revalidate current target and all heads before authorized ordered integration, then verify actual integrated source and existing deployment workflow.",
+    "Retain actual productione348/dd344/238016; do not repeat unchanged findings or releases."
   ],
-  "updated_at": "2026-10-09T06:38:13.998122+00:00",
+  "updated_at": "2026-10-09T08:00:14.652755+00:00",
   "deployment": {
     "schema_version": "true-shuffle.deployment.v1",
     "recorded_at": "2026-10-08T21:16:38.606698+00:00",
@@ -127,13 +126,22 @@
   },
   "historical_checkpoint": "docs/ai-dev/evidence/tag-wording-review/CHECKPOINT_HISTORY_BEFORE_PR18.json",
   "candidate_review": {
-    "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
-    "ledger": "docs/ai-dev/evidence/FOLLOWUP_19_21_LEDGER.json",
-    "local_combined_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+    "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+    "ledger": "docs/ai-dev/evidence/FOLLOWUP_19_22_LEDGER.json",
+    "local_combined_revision": "4dc337731c6d998a946c08142f5811821e26e939",
     "heads": {
-      "19": "976f81d70897829094e385987fc64e7fcf0ebb27",
-      "20": "2b3abfd3ec2d0afc693610b5b505dc078fd640f4",
-      "21": "0b14353f6e13fd0c4ba5a8739a0d863df92d81eb"
-    }
+      "19": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
+      "20": "d716055ab27caa18bfc42639278e6b9976f9cdbd",
+      "21": "edc36e944e4cd881c7bdeb80ce443db0a212eede",
+      "22": "f228c76f82e0382184333a1745579651c838f332"
+    },
+    "completion_comment": 6076229569,
+    "closed_prior_findings": [
+      "PR19-UI-01",
+      "PR19-UI-02",
+      "PR20-LANE-01",
+      "PR21-GUEST-01",
+      "PR21-GUEST-02"
+    ]
   }
 }

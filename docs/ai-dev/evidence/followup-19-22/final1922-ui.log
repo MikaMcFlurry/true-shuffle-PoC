@@ -1,0 +1,142 @@
+BODY Zum Inhalt
+true-shuffle
+Zurück
+Dein Hörprofil
+
+Wann und was du hörst, und was true-shuffle daraus über dich weiß. Gezählt wird jeder Song ab 30 Sekunden, Gast-Modus nie.
+
+Was true-shuffle selbst gezählt hat, die letzten 180 Tage, auch was du direkt in Spotify gehört hast.
+
+8,7 Stunden
+Musik seit 11. Juli 2026, höchstens: Songlängen zusammengezählt
+
+174
+Songs gehört
+
+42
+verschiedene Songs
+
+9
+Künstler
+
+Wann du hörst
+
+Am meisten hörst du Dienstags, und über die Woche gesehen um 8 Uhr. Dein dichtester Moment: Dienstag um 8 Uhr.
+
+0
+6
+12
+18
+Mo
+Di
+Mi
+Do
+Fr
+Sa
+So
+
+weniger
+mehr
+
+Als Tabelle
+Pro Monat
+
+Dein stärkster Monat war Sep 2026 mit 5,1 Stunden.
+
+Aug 26
+5
+Sep 26
+Am meisten gehört
+Künstler
+Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug
+174
+Songs
+1
+Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug
+Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug
+100×
+Deine Genres
+
+Welche Genres du hörst, schätzt eine KI aus deinen meistgehörten Künstlern. Daraus wählt true-shuffle auch seine Empfehlungen.
+
+Genres einschätzen lassen
+Was true-shuffle über dich weiß
+
+Daraus mischt true-shuffle deine Kassetten und wählt Empfehlungen aus.
+
+57 %
+deiner Songs der letzten 180 Tage liefen auf deinen Kassetten, der Rest direkt in Spotify.
+10
+Favoriten mit Daumen hoch. Sie kommen öfter.
+2
+Songs kommen nie wieder, weil du sie aussortiert hast.
+3
+Empfehlungen haben dir gefallen und bleiben auf deinen Kassetten.
+4
+Empfehlungen hast du aussortiert. Ähnliches schlägt true-shuffle seltener vor.
+5
+Mal hast du einen Song in den ersten 30 Sekunden übersprungen.
+Jetzt
+Kassetten
+Verlauf
+Mehr []
+CONSOLE error Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+CONSOLE error Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+REQUESTFAIL http://127.0.0.1:8845/profil { errorText: 'net::ERR_INTERNET_DISCONNECTED' }
+CONSOLE error Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+REQUESTFAIL http://127.0.0.1:8845/api/stations/1 { errorText: 'net::ERR_INTERNET_DISCONNECTED' }
+CONSOLE error Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+{
+  "subject": "4dc337731c6d998a946c08142f5811821e26e939",
+  "environment": "Actual combined Preact client via local Vite built preview; all API responses mocked; no backend/live Spotify acceptance",
+  "checks": [
+    "Profile 390/1440 light/dark, long artist/song text, zero page overflow",
+    "Native details keyboard Enter exposes 24 accessible aggregate-hour rows",
+    "Live song-length total explicitly upper estimate",
+    "Genre estimation pending disable,503 visible error, retry success, AI source/estimate visibly honest",
+    "Imported profile switches via keyboard to live; import genuine-time label and annual grouping; live estimate label retained",
+    "Profile503 visible alert",
+    "Offline/reconnect page navigation recovers profile",
+    "FixedPR19 rapid37→38→39 keyboard retains latestpending and serial writes",
+    "FixedPR19 fullrange85→84 persisted, no60 clamp",
+    "FavShare503 rolls back latestpending, displays save error",
+    "FavShare pending save survives immediate navigation",
+    "FavShareoffline preserves confirmed stored share",
+    "Older stationGET delayed900ms after earlier serialPATCH cannot overwrite latest83",
+    "Native Home/End queued0→100 retained and persisted"
+  ],
+  "renders": [
+    {
+      "width": 390,
+      "scheme": "light",
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "overflow": 0
+    }
+  ],
+  "observations": [
+    {
+      "chartA11y": {
+        "heat": "- img \"Songs nach Wochentag und Uhrzeit, Tabelle darunter\"",
+        "months": "- img \"Stunden pro Monat\": Aug 26 5 Sep 26",
+        "tableRows": 24,
+        "tableHeader": "Uhrzeit\tSongs\n",
+        "weekdayValuesInTable": "0–1 Uhr\t0\n1–2 Uhr\t0\n2–3 Uhr\t0\n3–4 Uhr\t0\n4–5 Uhr\t0\n5–6 Uhr\t0\n6–7 Uhr\t0\n7–8 Uhr\t0\n8–9 Uhr\t174\n9–10 Uhr\t0\n10–11 Uhr\t0\n11–12 Uhr\t0\n12–13 Uhr\t0\n13–14 Uhr\t0\n14–15 Uhr\t0\n15–16 Uhr\t0\n16–17 Uhr\t0\n17–18 Uhr\t0\n18–19 Uhr\t0\n19–20 Uhr\t0\n20–21 Uhr\t0\n21–22 Uhr\t0\n22–23 Uhr\t0\n23–24 Uhr\t0"
+      }
+    }
+  ],
+  "errors": []
+}

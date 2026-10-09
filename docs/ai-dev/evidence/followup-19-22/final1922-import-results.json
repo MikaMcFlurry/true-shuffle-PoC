@@ -1,0 +1,12 @@
+[
+  {
+    "case": "Valid120s recent export after liveSince",
+    "body": "Zum Inhalt\ntrue-shuffle\nZurück\nHörverlauf importieren\n\nDamit true-shuffle vom ersten Tag an weiß, was du kennst, liebst und überspringst.\n\nVerlauf bei Spotify anfordern\n\nAuf spotify.com unter Konto → Datenschutz den „erweiterten Streamingverlauf“ anfordern. Spotify schickt dir die Dateien per Mail, das kann bis zu 30 Tage dauern.\n\nDateien auswählen\n\nAlle Dateien „Streaming_History_Audio_…json“ auf einmal. Sie werden hier im Browser gelesen. Zu true-shuffle geht nur, wie oft du welchen Song gehört oder früh übersprungen hast und wann zuletzt.\n\nDateien auswählen\n\nGezählt wird nur, was vor deiner ersten Anmeldung am 1. September 2026 lief. Danach hat true-shuffle selbst mitgezählt, nichts zählt doppelt.\n\nPrüfen und übernehmen\n\nHier steht dann, was sich durch deinen Verlauf ändert, bevor du ihn übernimmst.\n\nIn diesen Dateien steht kein Song, den true-shuffle übernehmen kann. Wähle die Dateien „Streaming_History_Audio_…json“.\n\nJetzt\nKassetten\nVerlauf\nMehr",
+    "uploadButtons": 0
+  },
+  {
+    "case": "History upload200 profile summary503",
+    "body": "Zum Inhalt\ntrue-shuffle\nZurück\nHörverlauf importieren\n\nDamit true-shuffle vom ersten Tag an weiß, was du kennst, liebst und überspringst.\n\nÜbernommen. Das ist jetzt anders:\n\n1 Song kennt true-shuffle jetzt aus deinem Verlauf.\n\n1 Mal gehört, 15. September 2026 bis 15. September 2026 · aus 1 Datei\n\nFavoriten kommen öfter. 0 Songs hast du mindestens 5-mal gehört und selten früh übersprungen. Sie gelten als Favoriten und kommen öfter, jeweils nach der Pause, die für die Kassette eingestellt ist.\nFrüh Übersprungenes kommt seltener. 0 Songs hast du ein- oder zweimal in den ersten 30 Sekunden weitergeschaltet: Sie kommen seltener. 0 Songs hast du dreimal oder öfter früh übersprungen: Sie kommen kaum noch.\nLange nicht Gehörtes kommt eher. 0 Songs hast du seit über einem halben Jahr nicht gehört. Sie kommen eher dran als Songs, die du gerade erst gehört hast.\nNeues bleibt neu. Was nicht in deinem Verlauf steht, gilt weiter als „noch nie gehört“.\n\nSeltener und kaum noch gilt mit der Voreinstellung „Nicht jetzt, später seltener“. Wie oft Favoriten kommen dürfen und was ein früher Skip bewirkt, stellst du pro Kassette ein.\n\nKassetten ohne gespeicherte Warteschlange planen ab sofort damit. Eine gespeicherte Warteschlange behält ihre Reihenfolge, bis du sie neu mischst.\n\nDein Hörprofil ansehen\nZu Jetzt\nJetzt\nKassetten\nVerlauf\nMehr",
+    "alerts": 0
+  }
+]

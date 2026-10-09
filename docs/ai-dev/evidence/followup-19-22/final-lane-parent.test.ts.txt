@@ -1,0 +1,53 @@
+import { it, expect } from '/workspace/ts-review-19-22/node_modules/vitest/dist/index.js';
+import { onboarded } from '/workspace/ts-review-19-22/test/hub/harness.ts';
+import { RequestBudget } from '/workspace/ts-review-19-22/src/worker/spotify/client';
+const sync = (h:any) => h.hub.sync(new RequestBudget(30),{force:true});
+const step = (h:any,ms:number) => {h.clock.t+=ms;h.fake.advance(ms);};
+it('independent: returning to a retained old playlist occurrence must not borrow replacement-deck lane',async()=>{
+ const h=await onboarded({tracks:200,durationMs:180000});const sid=h.stationIds[0]!;
+ await h.hub.play(sid);step(h,10000);await sync(h);
+ const id=h.fake.current()!;const u=h.fake.user();const retained={...u.player,order:[...u.player.order]};
+ const deck=JSON.parse(h.sql.first<{deck:string}>('SELECT deck FROM stations WHERE id=?',sid)!.deck);
+ const oldKind=deck.items.find((x:any)=>x.id===id).kind;const newKind=oldKind==='favorite'?'fresh':'favorite';
+ // Controlled replacement fixture: published deck source differs, Spotify still retains old queue.
+ h.clock.t+=60000;deck.writtenAt=h.clock.t;deck.items=deck.items.map((x:any)=>x.id===id?{...x,kind:newKind}:x);
+ h.sql.run('UPDATE stations SET deck=? WHERE id=?',JSON.stringify(deck),sid);
+ const external=[...h.fake.tracks.keys()].find(x=>x!==id)!;
+ h.fake.playSong('mika',external);step(h,10000);await sync(h);
+ Object.assign(u.player,retained);step(h,10000);await sync(h);
+ step(h,160000);await sync(h);
+ const row=h.hub.history(20).find((x:any)=>x.id===id)!;
+ console.log(JSON.stringify({id,oldKind,newKind,actual:row?.facts?.kind,laneNotes:h.sql.first('SELECT v FROM kv WHERE k=?','lane_notes')}));
+ expect(row).toBeDefined();expect([oldKind,null]).toContain(row.facts?.kind??null);
+});
+it('independent: unlisted short occurrence must not donate its lane to a later unobserved repeat',async()=>{
+ const h=await onboarded({tracks:200,durationMs:180000});const sid=h.stationIds[0]!;
+ await h.hub.play(sid);step(h,10000);await sync(h);h.fake.skip();step(h,1000);await sync(h);
+ const id=h.fake.current()!;const u=h.fake.user();const context=u.player.contextUri;
+ const deck=JSON.parse(h.sql.first<{deck:string}>('SELECT deck FROM stations WHERE id=?',sid)!.deck);
+ const oldKind=deck.items.find((x:any)=>x.id===id).kind;const newKind=oldKind==='favorite'?'fresh':'favorite';
+ step(h,5000);h.fake.skip();step(h,1000);await sync(h); // first noted play is under30s and unlisted.
+ h.clock.t+=60000;deck.writtenAt=h.clock.t;deck.items=deck.items.map((x:any)=>x.id===id?{...x,kind:newKind}:x);
+ h.sql.run('UPDATE stations SET deck=? WHERE id=?',JSON.stringify(deck),sid);
+ // Spotify repeats the same id from the replacement playlist entirely between app looks.
+ Object.assign(u.player,{contextUri:context,order:[id],index:0,progressMs:0,listenedMs:0,isPlaying:true,currentFromQueue:null});
+ step(h,45000);h.fake.skip();await sync(h);
+ const row=h.hub.history(20).find((x:any)=>x.id===id)!;
+ console.log(JSON.stringify({id,oldKind,newKind,actual:row?.facts?.kind}));
+ expect(row).toBeDefined();expect(row.facts?.kind??null).toBeNull();
+});
+it('independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane',async()=>{
+ const h=await onboarded({tracks:200,durationMs:180000});const sid=h.stationIds[0]!;
+ await h.hub.play(sid);step(h,10000);await sync(h);h.fake.skip();step(h,1000);await sync(h);
+ const id=h.fake.current()!;const u=h.fake.user();const oldKind=h.hub.sessionView(sid,1000)!.queue.find(x=>x.track.id===id)!.facts!.kind;
+ step(h,5000);h.fake.skip();step(h,1000);await sync(h);
+ await h.hub.thumb(id,1,false);h.hub.updateStation(sid,{rules:{favoriteShare:1}});
+ step(h,25*60*60000);await h.hub.play(sid,null,{newQueue:true});
+ const q=h.hub.sessionView(sid,1000)!.queue;const pos=q.findIndex(x=>x.track.id===id);
+ expect(pos).toBeGreaterThanOrEqual(0);expect(q[pos]!.facts!.kind).toBe('favorite');
+ const context=u.player.contextUri!;h.fake.startContext('mika',context,pos,u.player.deviceId!,false);
+ step(h,45000);h.fake.skip();await sync(h);
+ const rows=h.hub.history(20).filter(x=>x.id===id);const row=rows[0]!;
+ console.log(JSON.stringify({id,oldKind,pos,newKind:q[pos]!.facts!.kind,actual:row?.facts?.kind,rows}));
+ expect(row).toBeDefined();expect(row.facts?.kind??null).toBeNull();
+});
