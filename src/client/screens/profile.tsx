@@ -4,7 +4,7 @@
  * page only arranges it. Charts carry hover titles and a table view.
  */
 
-import { Fragment } from "preact";
+import { type ComponentChildren, Fragment } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import type { ListeningProfile, ProfileTop } from "../../shared/api";
 import { api } from "../api";
@@ -24,6 +24,14 @@ function hoursWord(minutes: number): string {
 function monthLabel(m: string): string {
 	const [y, mm] = m.split("-");
 	return `${MONTHS[Number(mm) - 1] ?? mm} ${y?.slice(2)}`;
+}
+
+function timeWord(at: number): string {
+	return new Date(at).toLocaleString("de-DE", {
+		weekday: "short",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
 }
 
 function dateWord(at: number): string {
@@ -263,6 +271,7 @@ function Period({ v }: { v: View }) {
 /** The AI's estimate of the genre mix, clearly marked as one; asked for on demand. */
 function Genres({ p }: { p: ListeningProfile }) {
 	const [g, setG] = useState(p.genres);
+	const [retryAt, setRetryAt] = useState(p.genresRetryAt);
 	const [busy, setBusy] = useState(false);
 	const [err, setErr] = useState<string | null>(null);
 	const ask = () => {
@@ -270,11 +279,15 @@ function Genres({ p }: { p: ListeningProfile }) {
 		setErr(null);
 		api
 			.genres()
-			.then(setG)
+			.then((a) => {
+				setG(a.estimate);
+				setRetryAt(a.retryAt);
+				if (a.failed) setErr("Die KI hat diesmal nichts Brauchbares geliefert.");
+			})
 			.catch((e: Error) => setErr(e.message))
 			.finally(() => setBusy(false));
 	};
-	const fresh = g && Date.now() - g.at < 6 * 3_600_000;
+	const waiting = retryAt !== null && retryAt > Date.now();
 	return (
 		<Section title="Deine Genres" id="pf-genres">
 			{g ? (
@@ -302,7 +315,12 @@ function Genres({ p }: { p: ListeningProfile }) {
 				</p>
 			)}
 			{p.canEstimate ? (
-				fresh ? null : (
+				waiting ? (
+					<p class="hint">
+						Eine neue Einschätzung geht wieder ab {timeWord(retryAt!)}: höchstens alle sechs
+						Stunden, auch wenn eine nicht geklappt hat.
+					</p>
+				) : (
 					<button type="button" class="key key--wide" disabled={busy} onClick={ask}>
 						{busy ? "Die KI schätzt …" : g ? "Neu einschätzen" : "Genres einschätzen lassen"}
 					</button>
@@ -370,29 +388,40 @@ function HourWeek({ cells }: { cells: number[] }) {
 				))}
 				mehr
 			</p>
-			<details class="fold profile__table">
-				<summary>
-					<span class="fold__title">Als Tabelle</span>
-				</summary>
-				<div class="fold__body">
-					<table class="table">
-						<thead>
-							<tr>
-								<th scope="col">Uhrzeit</th>
-								<th scope="col">Songs</th>
-							</tr>
-						</thead>
-						<tbody>
-							{byHour.map((v, h) => (
-								<tr key={h}>
-									<th scope="row">{`${h}–${h + 1} Uhr`}</th>
-									<td class="num">{num(v)}</td>
-								</tr>
+			<ChartTable caption="Songs nach Uhrzeit (Zeilen) und Wochentag (Spalten)">
+				<thead>
+					<tr>
+						<th scope="col">Uhr</th>
+						{DAYS_SHORT.map((d, di) => (
+							<th key={d} scope="col">
+								<abbr title={DAYS[di]}>{d}</abbr>
+							</th>
+						))}
+					</tr>
+				</thead>
+				<tbody>
+					{byHour.map((_v, h) => (
+						<tr key={h}>
+							<th scope="row">{`${h}–${h + 1}`}</th>
+							{DAYS.map((d, di) => (
+								<td key={d} class="num">
+									{num(cells[di * 24 + h] ?? 0)}
+								</td>
 							))}
-						</tbody>
-					</table>
-				</div>
-			</details>
+						</tr>
+					))}
+				</tbody>
+				<tfoot>
+					<tr>
+						<th scope="row">Summe</th>
+						{byDay.map((v, di) => (
+							<td key={DAYS[di]} class="num">
+								{num(v)}
+							</td>
+						))}
+					</tr>
+				</tfoot>
+			</ChartTable>
 		</>
 	);
 }
@@ -452,7 +481,47 @@ function Months({ months, unit }: { months: ListeningProfile["months"]; unit: "m
 					</span>
 				))}
 			</div>
+			<ChartTable caption={unit === "year" ? "Hören pro Jahr" : "Hören pro Monat"}>
+				<thead>
+					<tr>
+						<th scope="col">{unit === "year" ? "Jahr" : "Monat"}</th>
+						<th scope="col">Stunden</th>
+						<th scope="col">Songs</th>
+					</tr>
+				</thead>
+				<tbody>
+					{months.map((m) => (
+						<tr key={m.month}>
+							<th scope="row">
+								{unit === "year" ? m.month : monthLabel(m.month).replace(" ", " 20")}
+							</th>
+							<td class="num">
+								{(m.minutes / 60).toLocaleString("de-DE", { maximumFractionDigits: 1 })}
+							</td>
+							<td class="num">{num(m.plays)}</td>
+						</tr>
+					))}
+				</tbody>
+			</ChartTable>
 		</>
+	);
+}
+
+/** Every value a chart draws, as a folded table for screen readers and exact reading. */
+function ChartTable({ caption, children }: { caption: string; children: ComponentChildren }) {
+	return (
+		<details class="fold profile__table">
+			<summary>
+				<span class="fold__title">Als Tabelle</span>
+			</summary>
+			{/* biome-ignore lint/a11y/noNoninteractiveTabindex: a wide table scrolls here and must be reachable by keyboard */}
+			<section class="fold__body table-wrap" tabIndex={0} aria-label={caption}>
+				<table class="table">
+					<caption class="sr-only">{caption}</caption>
+					{children}
+				</table>
+			</section>
+		</details>
 	);
 }
 

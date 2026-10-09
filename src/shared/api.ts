@@ -236,6 +236,8 @@ export interface ListeningProfile {
 	} | null;
 	/** An AI is set up, so an estimate can be asked for. */
 	canEstimate: boolean;
+	/** The next estimate may be asked for from then (also after a failed one); null: now. */
+	genresRetryAt: number | null;
 	/** What true-shuffle keeps about the listener, from its own records. */
 	learned: {
 		favorites: number;
@@ -266,4 +268,13 @@ export interface ImportedProfile {
 	months: { month: string; plays: number; minutes: number }[];
 	topArtists: { name: string; plays: number; minutes: number }[];
 	topSongs: { id: string; name: string; artist: string; plays: number }[];
+}
+
+/** The answer to asking for a genre estimate. */
+export interface GenreAnswer {
+	estimate: ListeningProfile["genres"];
+	/** The next attempt is allowed from then (failed attempts count too). */
+	retryAt: number | null;
+	/** This request asked the AI and got nothing usable. */
+	failed: boolean;
 }

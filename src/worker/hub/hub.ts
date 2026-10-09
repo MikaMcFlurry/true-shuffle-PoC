@@ -100,7 +100,13 @@ import {
 } from "../spotify/client";
 import type { SpPlaybackState, SpTrack } from "../spotify/types";
 import { type AiRunner, type DiscoveryState, discoverStep } from "./discovery";
-import { estimateGenres, type GenreEstimate } from "./genres";
+import {
+	estimateGenres,
+	GENRE_EVERY_MS,
+	type GenreAnswer,
+	type GenreEstimate,
+	type GenreRequest,
+} from "./genres";
 import {
 	artistLine,
 	PAGE_SIZE,
@@ -6125,13 +6131,20 @@ export class HubCore {
 	}
 
 	/**
-	 * Asks the AI for the listener's genre mix from their most-played artists
-	 * (import and live, weighted by listening time). At most every six hours;
-	 * a newer one replaces the stored estimate, a failed one leaves it.
+	 * Prepares a genre estimate (see `requestGenres`): at most one attempt every
+	 * six hours, failed ones included, kept across restarts. Returns the stored
+	 * estimate and, when an attempt is due, the artists to send — most-played
+	 * from the import and live plays, weighted by listening time.
 	 */
-	async estimateGenres(): Promise<GenreEstimate | null> {
-		const last = this.kvGet<GenreEstimate>("genre_estimate");
-		if (last && this.now() - last.at < 6 * HOUR_MS) return last;
+	prepareGenres(): { answer: GenreAnswer; request: GenreRequest | null } {
+		const now = this.now();
+		const estimate = this.kvGet<GenreEstimate>("genre_estimate");
+		const last = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		if (last && now - last.at < GENRE_EVERY_MS)
+			return {
+				answer: { estimate, retryAt: last.at + GENRE_EVERY_MS, failed: false },
+				request: null,
+			};
 		const p = this.listeningProfile("UTC");
 		const weight = new Map<string, number>();
 		for (const a of p.imported?.topArtists ?? [])
@@ -6140,14 +6153,39 @@ export class HubCore {
 		for (const a of p.topArtists) weight.set(a.name, (weight.get(a.name) ?? 0) + a.plays * 3.5);
 		const total = [...weight.values()].reduce((a, b) => a + b, 0);
 		if (total <= 0) throw new HubError("no_artists", "Noch zu wenig gehört für eine Einschätzung");
-		const artists = [...weight.entries()]
-			.sort((a, b) => b[1] - a[1])
-			.slice(0, 50)
-			.map(([name, w]) => ({ name, share: (w / total) * 100 }));
-		const est = await estimateGenres(this.d.env, this.d.fetch, this.d.ai, artists, this.now());
-		if (!est) throw new HubError("no_estimate", "Die KI hat gerade keine Einschätzung geliefert");
-		this.kvSet("genre_estimate", est);
-		return est;
+		const attempt = { at: now, id: randomToken(8) };
+		this.kvSet("genre_attempt", attempt);
+		return {
+			answer: { estimate, retryAt: now + GENRE_EVERY_MS, failed: false },
+			request: {
+				attempt: attempt.id,
+				artists: [...weight.entries()]
+					.sort((a, b) => b[1] - a[1])
+					.slice(0, 50)
+					.map(([name, w]) => ({ name, share: (w / total) * 100 })),
+			},
+		};
+	}
+
+	/**
+	 * Stores what an attempt brought back, only if it is still the latest one
+	 * (a newer attempt or an import since makes it stale). Nothing usable
+	 * leaves the stored estimate as it was.
+	 */
+	storeGenres(attempt: string, est: GenreEstimate | null): GenreAnswer {
+		const last = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		const current = last?.id === attempt;
+		if (current && est) this.kvSet("genre_estimate", est);
+		return {
+			estimate: this.kvGet<GenreEstimate>("genre_estimate"),
+			retryAt: last ? last.at + GENRE_EVERY_MS : null,
+			failed: !est,
+		};
+	}
+
+	/** The AI call for a prepared request, outside any lock (see `requestGenres`). */
+	runGenreEstimate(artists: GenreRequest["artists"]): Promise<GenreEstimate | null> {
+		return estimateGenres(this.d.env, this.d.fetch, this.d.ai, artists, this.now());
 	}
 
 	/** The stored import summary, with covers from the library where known (no Spotify call). */
@@ -6226,6 +6264,9 @@ export class HubCore {
 			})),
 		};
 		this.kvSet("history_profile", clean);
+		// A pending estimate was asked from the old summary: it must not land.
+		const attempt = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		if (attempt) this.kvSet("genre_attempt", { ...attempt, id: `${attempt.id}-stale` });
 	}
 
 	/**
@@ -6323,6 +6364,10 @@ export class HubCore {
 			imported: this.importedProfile(),
 			genres: this.kvGet<GenreEstimate>("genre_estimate"),
 			canEstimate: !!this.d.env.anthropicKey || !!this.d.ai,
+			genresRetryAt: (() => {
+				const a = this.kvGet<{ at: number }>("genre_attempt");
+				return a && this.now() - a.at < GENRE_EVERY_MS ? a.at + GENRE_EVERY_MS : null;
+			})(),
 			learned: {
 				favorites: count(`SELECT COUNT(*) AS n FROM memory WHERE thumb = 1`),
 				neverAgain: count(`SELECT COUNT(DISTINCT track_id) AS n FROM bans`),

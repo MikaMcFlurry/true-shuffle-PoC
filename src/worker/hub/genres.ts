@@ -85,6 +85,68 @@ export function parseGenres(
 	}
 }
 
+/** How long one estimate may take before it counts as failed. */
+export const GENRE_TIMEOUT_MS = 20_000;
+/** Attempts, failed or not, are at least this far apart. */
+export const GENRE_EVERY_MS = 6 * 3_600_000;
+
+function withTimeout<T>(p: Promise<T>): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		const t = setTimeout(() => reject(new Error("genre estimate timed out")), GENRE_TIMEOUT_MS);
+		p.then(
+			(v) => {
+				clearTimeout(t);
+				resolve(v);
+			},
+			(e) => {
+				clearTimeout(t);
+				reject(e);
+			},
+		);
+	});
+}
+
+/** What the page gets back: the estimate kept, and when the next try is allowed. */
+export interface GenreAnswer {
+	estimate: GenreEstimate | null;
+	retryAt: number | null;
+	/** This request asked the AI and got nothing usable. */
+	failed: boolean;
+}
+
+/** A prepared request: the artists to send and the attempt it belongs to. */
+export interface GenreRequest {
+	attempt: string;
+	artists: { name: string; share: number }[];
+}
+
+type Locked<T> = Promise<{ ok: true; value: T } | { ok: false; error: unknown }>;
+
+/**
+ * One estimate, with the account's lock held only to prepare and to store:
+ * the AI call itself runs outside it, so playback commands never wait on it.
+ * `store` publishes only for the same attempt and session (it fences).
+ */
+export async function requestGenres<E>(
+	locked: <T>(fn: () => T | Promise<T>) => Locked<T>,
+	prepare: () => { answer: GenreAnswer; request: GenreRequest | null },
+	run: (artists: GenreRequest["artists"]) => Promise<GenreEstimate | null>,
+	store: (attempt: string, est: GenreEstimate | null) => GenreAnswer,
+): Promise<{ ok: true; value: GenreAnswer } | { ok: false; error: E }> {
+	const prep = await locked(prepare);
+	if (!prep.ok) return prep as { ok: false; error: E };
+	const { request, answer } = prep.value;
+	if (!request) return { ok: true, value: answer };
+	let est: GenreEstimate | null = null;
+	try {
+		est = await run(request.artists);
+	} catch {
+		est = null;
+	}
+	const done = await locked(() => store(request.attempt, est));
+	return done as { ok: true; value: GenreAnswer } | { ok: false; error: E };
+}
+
 export async function estimateGenres(
 	env: HubEnv,
 	fetch: Fetcher,
@@ -94,9 +156,12 @@ export async function estimateGenres(
 ): Promise<GenreEstimate | null> {
 	if (artists.length === 0) return null;
 	if (env.anthropicKey) {
+		// Optional and never waited on for long: one try, bounded.
 		const client = new Anthropic({
 			apiKey: env.anthropicKey,
 			fetch: (input, init) => fetch(new Request(input, init)),
+			timeout: GENRE_TIMEOUT_MS,
+			maxRetries: 0,
 		});
 		const res = await client.messages.create({
 			model: env.anthropicModel,
@@ -113,17 +178,19 @@ export async function estimateGenres(
 		return null;
 	}
 	if (ai) {
-		const out = (await ai.run(WORKERS_AI_MODEL, {
-			messages: [
-				{
-					role: "system",
-					content:
-						'You describe music taste. Reply with JSON only: {"genres":[{"name":"...","share":0}],"summary":"..."}',
-				},
-				{ role: "user", content: prompt(artists) },
-			],
-			max_tokens: 1200,
-		})) as { response?: unknown };
+		const out = (await withTimeout(
+			ai.run(WORKERS_AI_MODEL, {
+				messages: [
+					{
+						role: "system",
+						content:
+							'You describe music taste. Reply with JSON only: {"genres":[{"name":"...","share":0}],"summary":"..."}',
+					},
+					{ role: "user", content: prompt(artists) },
+				],
+				max_tokens: 1200,
+			}),
+		)) as { response?: unknown };
 		const text =
 			typeof out?.response === "string" ? out.response : JSON.stringify(out?.response ?? "");
 		const parsed = parseGenres(text);

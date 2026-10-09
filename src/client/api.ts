@@ -2,6 +2,7 @@ import type { StationRules } from "../core/types";
 import type {
 	AppState,
 	DeviceView,
+	GenreAnswer,
 	HistoryEntry,
 	ImportedProfile,
 	ListeningProfile,
@@ -211,7 +212,7 @@ export const api = {
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),
 	importedProfile: (profile: ImportedProfile) =>
 		call<unknown>("POST", "/api/history/profile", { profile }),
-	genres: () => call<ListeningProfile["genres"]>("POST", "/api/profile/genres"),
+	genres: () => call<GenreAnswer>("POST", "/api/profile/genres"),
 	profile: () =>
 		call<ListeningProfile>(
 			"GET",

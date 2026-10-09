@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DAY_MS, HOUR_MS, MINUTE_MS } from "../../src/core/types";
+import { requestGenres } from "../../src/worker/hub/genres";
 import { onboarded } from "./harness";
 
 describe("listening profile", () => {
@@ -116,49 +117,74 @@ describe("imported profile", () => {
 	});
 });
 
-describe("genre estimate", () => {
-	const reply = (genres: { name: string; share: number }[], summary = "Du hörst Gitarren.") => ({
-		run: async () => ({ response: JSON.stringify({ genres, summary }) }),
-	});
+type H = Awaited<ReturnType<typeof onboarded>>;
 
-	it("weights artists by listening time, scales shares to 100, stores it and asks again only after six hours", async () => {
-		let asked: string | null = null;
-		let calls = 0;
+/** The account's lock, as UserHub keeps it: one operation after another. */
+function lock() {
+	let chain: Promise<unknown> = Promise.resolve();
+	return <T>(fn: () => T | Promise<T>) => {
+		const run = chain.then(async () => {
+			try {
+				return { ok: true as const, value: await fn() };
+			} catch (error) {
+				return { ok: false as const, error };
+			}
+		});
+		chain = run.catch(() => undefined);
+		return run;
+	};
+}
+
+/** Asks for an estimate exactly as UserHub does. */
+const ask = (h: H, locked = lock()) =>
+	requestGenres<unknown>(
+		locked,
+		() => h.hub.prepareGenres(),
+		(artists) => h.hub.runGenreEstimate(artists),
+		(attempt, est) => h.hub.storeGenres(attempt, est),
+	);
+
+const summary = () => ({
+	at: 0,
+	from: 1_600_000_000_000,
+	to: 1_700_000_000_000,
+	plays: 10,
+	minutes: 300,
+	songs: 5,
+	artists: 2,
+	earlySkips: 0,
+	hourWeek: new Array<number>(168).fill(0),
+	months: [],
+	topArtists: [
+		{ name: "Glasfabrik", plays: 8, minutes: 240 },
+		{ name: "Nachtbus", plays: 2, minutes: 60 },
+	],
+	topSongs: [],
+});
+
+const good = JSON.stringify({
+	genres: [
+		{ name: "Indie-Rock", share: 3 },
+		{ name: "Elektro", share: 1 },
+		{ name: "", share: 5 },
+	],
+	summary: "Du hörst vor allem Gitarren.",
+});
+
+describe("genre estimate", () => {
+	it("weights artists by listening time, scales shares to 100 and stores it", async () => {
+		let asked = "";
 		const ai = {
 			run: async (_m: string, input: { messages: { role: string; content: string }[] }) => {
-				calls++;
 				asked = input.messages.at(-1)!.content;
-				return {
-					response: JSON.stringify({
-						genres: [
-							{ name: "Indie-Rock", share: 3 },
-							{ name: "Elektro", share: 1 },
-							{ name: "", share: 5 },
-						],
-						summary: "Du hörst vor allem Gitarren.",
-					}),
-				};
+				return { response: good };
 			},
 		};
 		const h = await onboarded({ tracks: 300, ai, env: { anthropicKey: null } });
-		h.hub.setImportedProfile({
-			at: 0,
-			from: 1_600_000_000_000,
-			to: 1_700_000_000_000,
-			plays: 10,
-			minutes: 300,
-			songs: 5,
-			artists: 2,
-			earlySkips: 0,
-			hourWeek: new Array<number>(168).fill(0),
-			months: [],
-			topArtists: [
-				{ name: "Glasfabrik", plays: 8, minutes: 240 },
-				{ name: "Nachtbus", plays: 2, minutes: 60 },
-			],
-			topSongs: [],
-		});
-		const est = await h.hub.estimateGenres();
+		h.hub.setImportedProfile(summary());
+		const r = await ask(h);
+		expect(r.ok).toBe(true);
+		const est = r.ok ? r.value.estimate : null;
 		expect(asked).toContain("Glasfabrik: 80.0 %");
 		expect(asked).toContain("Nachtbus: 20.0 %");
 		expect(est).toMatchObject({
@@ -171,26 +197,89 @@ describe("genre estimate", () => {
 			{ name: "Elektro", share: 25 },
 		]);
 		expect(h.hub.listeningProfile("UTC").genres).toEqual(est);
-		expect(h.hub.listeningProfile("UTC").canEstimate).toBe(true);
-		await h.hub.estimateGenres();
-		expect(calls).toBe(1);
-		h.clock.t += 7 * HOUR_MS;
-		await h.hub.estimateGenres();
-		expect(calls).toBe(2);
+		expect(h.hub.listeningProfile("UTC").genresRetryAt).toBe(h.clock.t + 6 * HOUR_MS);
 	});
 
-	it("refuses with nothing heard, and keeps the old estimate when the AI says nothing usable", async () => {
-		const h = await onboarded({ tracks: 40, ai: reply([]), env: { anthropicKey: null } });
-		await expect(h.hub.estimateGenres()).rejects.toThrow();
+	it("one attempt in six hours, failed ones too, across restarts; an old result stays", async () => {
+		let calls = 0;
+		let reply = good;
+		const ai = {
+			run: async () => {
+				calls++;
+				return { response: reply };
+			},
+		};
+		const h = await onboarded({ tracks: 300, ai, env: { anthropicKey: null } });
+		h.hub.setImportedProfile(summary());
+		// First an unusable answer, then two more requests with a restart between.
+		reply = "nothing usable";
+		const first = await ask(h);
+		expect(first).toMatchObject({ ok: true, value: { estimate: null, failed: true } });
+		h.restart();
+		await ask(h);
+		h.restart();
+		const third = await ask(h);
+		expect(calls).toBe(1);
+		expect(third).toMatchObject({
+			ok: true,
+			value: { failed: false, retryAt: expect.any(Number) },
+		});
+		// After six hours a good one; six more and a failure keeps it.
+		h.clock.t += 6 * HOUR_MS;
+		reply = good;
+		await ask(h);
+		expect(calls).toBe(2);
+		const kept = h.hub.listeningProfile("UTC").genres;
+		expect(kept).not.toBeNull();
+		h.clock.t += 6 * HOUR_MS;
+		reply = "nothing usable";
+		const after = await ask(h);
+		expect(calls).toBe(3);
+		expect(after).toMatchObject({ ok: true, value: { failed: true, estimate: kept } });
+		expect(h.hub.listeningProfile("UTC").genres).toEqual(kept);
+		// Just under six hours later: still no new attempt.
+		h.clock.t += 6 * HOUR_MS - 1;
+		await ask(h);
+		expect(calls).toBe(3);
+	});
+
+	it("playback never waits for the AI, and a late answer after a new import does not land", async () => {
+		let release: (v: unknown) => void = () => {};
+		const ai = {
+			run: () =>
+				new Promise((r) => {
+					release = r;
+				}),
+		};
+		const h = await onboarded({ tracks: 300, ai, env: { anthropicKey: null } });
 		const sid = h.stationIds[0]!;
-		await h.hub.play(sid);
-		await h.listen(20 * MINUTE_MS);
-		await expect(h.hub.estimateGenres()).rejects.toThrow();
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		h.hub.setImportedProfile(summary());
+		const locked = lock();
+		const pending = ask(h, locked);
+		await new Promise((r) => setTimeout(r, 10));
+		const paused = await Promise.race([
+			locked(() => h.hub.playerAction("pause")),
+			new Promise((r) => setTimeout(() => r("blocked"), 2_000)),
+		]);
+		expect(paused).not.toBe("blocked");
+		expect(h.fake.user().player.isPlaying).toBe(false);
+		// A new import while the AI still thinks: its answer is for the old one.
+		await locked(() => h.hub.setImportedProfile(summary()));
+		release({ response: good });
+		const r = await pending;
+		expect(r.ok).toBe(true);
 		expect(h.hub.listeningProfile("UTC").genres).toBeNull();
 	});
 
-	it("without any AI, the profile says an estimate cannot be asked for", async () => {
-		const h = await onboarded({ tracks: 40, ai: null, env: { anthropicKey: null } });
-		expect(h.hub.listeningProfile("UTC").canEstimate).toBe(false);
+	it("refuses with nothing heard; without any AI it says so", async () => {
+		const h = await onboarded({
+			tracks: 40,
+			ai: { run: async () => ({ response: "{}" }) },
+			env: { anthropicKey: null },
+		});
+		expect(() => h.hub.prepareGenres()).toThrow();
+		const none = await onboarded({ tracks: 40, ai: null, env: { anthropicKey: null } });
+		expect(none.hub.listeningProfile("UTC").canEstimate).toBe(false);
 	});
 });

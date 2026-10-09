@@ -19,6 +19,7 @@ import {
 	nativeIntentCurrent,
 } from "./controllers/native";
 import { type Env, hubEnv } from "./env";
+import { type GenreAnswer, requestGenres } from "./hub/genres";
 import { HubCore, HubError } from "./hub/hub";
 import { Keys } from "./lib/crypto";
 import type { SqlDb, SqlValue } from "./lib/sql";
@@ -555,8 +556,18 @@ export class UserHub extends DurableObject<Env> {
 	setImportedProfile(epoch: number, profile: unknown) {
 		return this.session(epoch, async () => this.hub().setImportedProfile(profile));
 	}
+	/** One genre estimate at a time; requests while it runs share its answer. */
+	private genreFlight: Promise<RpcResult<GenreAnswer>> | null = null;
 	estimateGenres(epoch: number) {
-		return this.session(epoch, () => this.hub().estimateGenres());
+		this.genreFlight ??= requestGenres<{ code: string; message: string; status: number }>(
+			(fn) => this.session(epoch, fn),
+			() => this.hub().prepareGenres(),
+			(artists) => this.hub().runGenreEstimate(artists),
+			(attempt, est) => this.hub().storeGenres(attempt, est),
+		).finally(() => {
+			this.genreFlight = null;
+		});
+		return this.genreFlight;
 	}
 	listeningProfile(epoch: number, timeZone: string) {
 		return this.session(epoch, () => this.hub().listeningProfile(timeZone));
