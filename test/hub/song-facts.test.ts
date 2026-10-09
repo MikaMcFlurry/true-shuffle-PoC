@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { songTags } from "../../src/client/components/song-tags-text";
 import { DAY_MS, MINUTE_MS, type SlotKind } from "../../src/core/types";
+import { migrate } from "../../src/worker/hub/schema";
 import { onboarded } from "./harness";
 
 type H = Awaited<ReturnType<typeof onboarded>>;
@@ -209,22 +210,37 @@ describe("song facts in the queue", () => {
 describe("song facts in the Verlauf", () => {
 	type Row = ReturnType<H["hub"]["history"]>[number];
 	const key = (e: Row) => `${e.id}@${e.playedAt}`;
-
-	it("live plays carry the total count, and never a source the play did not record", async () => {
+	const lanes = (h: H) =>
+		new Map<string, string | null>(
+			h.sql
+				.all<{ played_at: number; track_id: string; lane: string | null }>(
+					`SELECT played_at, track_id, lane FROM plays`,
+				)
+				.map((r) => [`${r.track_id}@${r.played_at}`, r.lane] as const),
+		);
+	it("a play in the station's playlist is stamped with its deck reason once, when recorded", async () => {
 		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
 		await h.listen(30 * MINUTE_MS);
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const items = (JSON.parse(row.deck) as { items: { id: string; kind: SlotKind }[] }).items;
 		const onStation = h.hub.history(50).filter((e) => e.stationName !== null && !e.ignored);
 		expect(onStation.length).toBeGreaterThan(0);
-		for (const e of onStation)
-			expect(e.facts).toMatchObject({ kind: null, inStation: true, plays: expect.any(Number) });
-		expect(onStation.every((e) => (e.facts?.plays ?? 0) >= 1)).toBe(true);
+		const stored = lanes(h);
+		for (const e of onStation) {
+			const reasons = new Set(items.filter((it) => it.id === e.id).map((it) => it.kind));
+			// The deck's one reason, or none when no look saw the song arrive.
+			expect([reasons.size === 1 ? [...reasons][0] : null, null]).toContain(e.facts?.kind ?? null);
+			expect(stored.get(key(e))).toBe(e.facts?.kind);
+		}
+		expect(onStation.some((e) => e.facts?.kind != null)).toBe(true);
+		// Heard outside any station: nothing to stamp.
 		play(h, h.clock.t + 1, onStation[0]!.id, null, 0);
 		expect(h.hub.history(1)[0]).toMatchObject({ stationName: null, facts: { kind: null } });
 	});
 
-	it("a later recommendation, a new mix or a guest replay never gives an old play a source", async () => {
+	it("a later recommendation, a new mix or a guest replay never changes an old play's source", async () => {
 		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
@@ -236,7 +252,6 @@ describe("song facts in the Verlauf", () => {
 				.map((e) => [key(e), e] as const),
 		);
 		expect(before.size).toBeGreaterThan(0);
-		// Recommended afterwards, kept, then replayed in guest mode on a fresh mix.
 		for (const e of before.values())
 			h.sql.run(
 				`INSERT OR IGNORE INTO discoveries (station_id, id, source, score, status, meta, heard, created_at, updated_at) VALUES (?, ?, 'ai', 1, 'kept', '[]', 1, ?, ?)`,
@@ -253,12 +268,144 @@ describe("song facts in the Verlauf", () => {
 		expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
 		await h.listen(10 * MINUTE_MS);
 		const after = h.hub.history(200);
-		for (const e of after) expect(e.facts?.kind ?? null).toBeNull();
 		for (const [k, was] of before) {
 			const now = after.find((e) => key(e) === k);
 			expect(now?.ignored).toBe(false);
-			expect(now?.playedAt).toBe(was.playedAt);
+			expect(now?.facts?.kind ?? null).toBe(was.facts?.kind ?? null);
 		}
+	});
+
+	it("a song paused across a new deck keeps the lane it began with", async () => {
+		const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const p = h.fake.user().player;
+		// Into the run, so the next song is seen arriving after another one.
+		await h.listen(10 * MINUTE_MS);
+		const x = h.fake.current()!;
+		while (h.fake.current() === x) await h.listen(1_000);
+		const y = h.fake.current()!;
+		await h.hub.state({ live: true, refresh: true });
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const deck = JSON.parse(row.deck) as {
+			writtenAt: number;
+			items: { id: string; kind: SlotKind }[];
+		};
+		const began = new Set(deck.items.filter((it) => it.id === y).map((it) => it.kind));
+		expect(began.size).toBe(1);
+		const lane = [...began][0]!;
+		await h.listen(30_000);
+		p.isPlaying = false;
+		await h.hub.state({ live: true, refresh: true });
+		h.clock.t += 30 * MINUTE_MS;
+		// A new deck now holds the same song for another reason.
+		const other: SlotKind = lane === "favorite" ? "fresh" : "favorite";
+		deck.items = deck.items.map((it) => (it.id === y ? { ...it, kind: other } : it));
+		deck.writtenAt = h.clock.t;
+		h.sql.run(`UPDATE stations SET deck = ? WHERE id = ?`, JSON.stringify(deck), sid);
+		h.restart();
+		h.clock.t += 30 * MINUTE_MS;
+		p.isPlaying = true;
+		await h.listen(150_000);
+		await h.hub.state({ live: true, refresh: true });
+		const entry = h.hub.history(200).find((e) => e.id === y);
+		expect(entry).toBeDefined();
+		expect(entry!.facts?.kind ?? null).not.toBe(other);
+		expect([lane, null]).toContain(entry!.facts?.kind ?? null);
+	});
+
+	it("a short play nobody listed never lends its lane to a later play of the song", async () => {
+		const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const p = h.fake.user().player;
+		await h.listen(10_000);
+		await h.hub.state({ live: true, refresh: true });
+		h.fake.skip();
+		await h.listen(6_000);
+		await h.hub.state({ live: true, refresh: true });
+		const t = h.fake.current()!;
+		const notes = () =>
+			JSON.parse(
+				h.sql.first<{ v: string }>(`SELECT v FROM kv WHERE k = 'lane_notes'`)?.v ?? "[]",
+			) as { id: string; kind: SlotKind | null }[];
+		const noted = notes().find((n) => n.id === t);
+		expect(noted?.kind).toBeTruthy();
+		// Skipped after 12 s: never listed by Spotify.
+		await h.listen(6_000);
+		h.fake.skip();
+		await h.listen(6_000);
+		await h.hub.state({ live: true, refresh: true });
+		// A minute later a new deck holds it for another reason, and it plays
+		// again in the same playlist for 45 s between the app's looks.
+		await h.listen(60_000);
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const deck = JSON.parse(row.deck) as {
+			writtenAt: number;
+			items: { id: string; kind: SlotKind }[];
+		};
+		const other: SlotKind = noted!.kind === "favorite" ? "fresh" : "favorite";
+		deck.items = deck.items.map((it) => (it.id === t ? { ...it, kind: other } : it));
+		deck.writtenAt = h.clock.t;
+		h.sql.run(`UPDATE stations SET deck = ? WHERE id = ?`, JSON.stringify(deck), sid);
+		h.restart();
+		p.order.splice(p.index + 1, 0, t);
+		h.fake.skip();
+		expect(h.fake.current()).toBe(t);
+		await h.listen(45_000);
+		h.fake.skip();
+		await h.listen(1_000);
+		await h.hub.state({ live: true, refresh: true });
+		await h.listen(2 * MINUTE_MS);
+		await h.hub.state({ live: true, refresh: true });
+		const later = h.hub.history(200).filter((e) => e.id === t);
+		expect(later.length).toBe(1);
+		expect(later[0]!.facts?.kind ?? null).toBeNull();
+	});
+
+	it("a song of the station played outside its playlist gets no lane", async () => {
+		const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		await h.listen(10 * MINUTE_MS);
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const later = (JSON.parse(row.deck) as { items: { id: string }[] }).items.at(-1)!.id;
+		// Started on its own in Spotify, outside any playlist.
+		h.fake.playSong(h.fake.user().id, later);
+		await h.listen(6_000);
+		await h.hub.state({ live: true, refresh: true });
+		await h.listen(4 * MINUTE_MS);
+		await h.hub.state({ live: true, refresh: true });
+		const e = h.hub.history(200).find((x) => x.id === later);
+		expect(e).toBeDefined();
+		expect(e!.facts?.kind ?? null).toBeNull();
+	});
+
+	it("the first song after a start, which no earlier look saw arrive, has no lane", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const first = h.fake.current()!;
+		await h.listen(10 * MINUTE_MS);
+		const e = h.hub.history(200).find((x) => x.id === first && x.stationName !== null);
+		expect(e).toBeDefined();
+		expect(e!.facts?.kind ?? null).toBeNull();
+	});
+
+	it("the additive migration keeps every play and gives older ones no source", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		await h.hub.play(sid);
+		await h.listen(10 * MINUTE_MS);
+		const plays = h.sql.all(`SELECT played_at, track_id, station_id, ignored FROM plays`);
+		expect(plays.length).toBeGreaterThan(0);
+		h.sql.run(`ALTER TABLE plays DROP COLUMN lane`);
+		h.sql.run(`UPDATE kv SET v = '4' WHERE k = 'schema_version'`);
+		migrate(h.sql);
+		expect(h.sql.first<{ v: string }>(`SELECT v FROM kv WHERE k = 'schema_version'`)!.v).toBe("5");
+		expect(h.sql.all(`SELECT played_at, track_id, station_id, ignored FROM plays`)).toEqual(plays);
+		h.restart();
+		for (const e of h.hub.history(200)) expect(e.facts?.kind ?? null).toBeNull();
 	});
 
 	it("reading the Verlauf writes nothing", async () => {

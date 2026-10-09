@@ -129,6 +129,12 @@ const MIGRATIONS: string[][] = [
 	[
 		`CREATE TABLE IF NOT EXISTS playback_sessions (station_id INTEGER PRIMARY KEY, data TEXT NOT NULL)`,
 	],
+	[
+		// Why a play was on its station ("fresh" | "favorite" | "discovery"),
+		// stamped once when the play is recorded and only when the station's
+		// deck says so without doubt; null for older plays and anything unsure.
+		`ALTER TABLE plays ADD COLUMN lane TEXT`,
+	],
 ];
 
 export function migrate(db: SqlDb): void {
