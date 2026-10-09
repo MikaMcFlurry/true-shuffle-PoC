@@ -1,0 +1,27 @@
+{
+  "valid": true,
+  "errors": [],
+  "summary": {
+    "claim": "BLOCKED",
+    "delivery_target": "PRODUCTION_LIVE",
+    "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
+    "change_profiles": [
+      "USER_FACING",
+      "PERSISTENT_STATE_CHANGE",
+      "AUTHORIZATION_OR_SENSITIVE_DATA",
+      "AI_TOOL_SIDE_EFFECTS",
+      "PERFORMANCE_CRITICAL"
+    ],
+    "independent_review_verdict": "BLOCKED",
+    "gate_count": 12,
+    "required_gate_count": 12,
+    "status_counts": {
+      "FAIL": 2,
+      "NOT_RUN": 1,
+      "PASS": 9
+    },
+    "protected_requirement_count": 11,
+    "open_finding_count": 9,
+    "external_blocker_count": 3
+  }
+}

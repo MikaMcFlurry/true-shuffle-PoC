@@ -1,0 +1,48 @@
+
+> true-shuffle@1.0.0 lint
+> biome check .
+
+test/spotify/usage.test.ts:25:40 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    23 │ 	const sql = nodeSql();
+    24 │ 	const t = new SpotifyUsageTracker(sql, () => T0);
+  > 25 │ 	for (let i = 1; i <= 7; i++) t.record("private-listener-" + i, metric(200));
+       │ 	                                      ^^^^^^^^^^^^^^^^^^^^^^^
+    26 │ 	t.record(
+    27 │ 		"@signin:privateflow",
+  
+  i Unsafe fix: Use a template literal.
+  
+     23  23 │     const sql = nodeSql();
+     24  24 │     const t = new SpotifyUsageTracker(sql, () => T0);
+     25     │ - → for·(let·i·=·1;·i·<=·7;·i++)·t.record("private-listener-"·+·i,·metric(200));
+         25 │ + → for·(let·i·=·1;·i·<=·7;·i++)·t.record(`private-listener-${i}`,·metric(200));
+     26  26 │     t.record(
+     27  27 │       "@signin:privateflow",
+  
+
+test/spotify/usage.test.ts:40:40 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    38 │ it("correlates recovery to same overflow listener and same OAuth flow only", () => {
+    39 │ 	const t = new SpotifyUsageTracker(nodeSql(), () => T0);
+  > 40 │ 	for (let i = 1; i <= 5; i++) t.record("u" + i, metric(200));
+       │ 	                                      ^^^^^^^
+    41 │ 	t.record("overflow-A", metric(429));
+    42 │ 	t.record("overflow-B", metric(200));
+  
+  i Unsafe fix: Use a template literal.
+  
+     38  38 │   it("correlates recovery to same overflow listener and same OAuth flow only", () => {
+     39  39 │     const t = new SpotifyUsageTracker(nodeSql(), () => T0);
+     40     │ - → for·(let·i·=·1;·i·<=·5;·i++)·t.record("u"·+·i,·metric(200));
+         40 │ + → for·(let·i·=·1;·i·<=·5;·i++)·t.record(`u${i}`,·metric(200));
+     41  41 │     t.record("overflow-A", metric(429));
+     42  42 │     t.record("overflow-B", metric(200));
+  
+
+Checked 134 files in 391ms. No fixes applied.
+Found 2 infos.

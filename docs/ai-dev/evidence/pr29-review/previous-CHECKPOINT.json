@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "project": "true-shuffle",
   "subject": {
-    "revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-    "artifact_ref": "docs/ai-dev/evidence/PR29_REVIEW.json"
+    "revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+    "artifact_ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json"
   },
   "branch": "codex/implement-cloudflare-restart",
   "phase": "REVIEW",
@@ -42,8 +42,7 @@
     "New final24c6b/2562aa andnew26e6d combined4c0514f:538/46/11/static PASS; threefreshreviews reproduce new lane/import/analytics failures; comments6080990256/6080977483/6081010497. Production unchanged authenticated readback.",
     "External24/25/26 merged93241 deployed873e/8bde100%, independentlyverifiedWorker/assets/runtime/resources/auth/browser;549/46/11/static/CI PASS; sixprior26defectsclosed andLANE05/06closed.",
     "PR27 exact29d reviewed555/46/4/static/CI PASS; fresh45PASS/1FAIL podcast consistency P2 reported6083736398; production873e/8bde unchanged.",
-    "Externally merged27→28/ac23 verified;originalpodcastclosed;static/browser/resourcesPASS;two newP2scommented6084847874.",
-    "ExternalPR29/8d62138 actualproductionverified;570unit/48browser/staticCI PASS;freshblockedreviewcommented."
+    "Externally merged27→28/ac23 verified;originalpodcastclosed;static/browser/resourcesPASS;two newP2scommented6084847874."
   ],
   "in_progress": [],
   "blocked": [
@@ -55,11 +54,7 @@
     "RealCloudflareCPU/memory/quota atupperimportbound",
     "AuthenticatedrealSpotify import andretainedqueue readback",
     "PR28-REST-01",
-    "PR28-OVERLAP-02",
-    "PR29-REPEAT-NO-01",
-    "PR29-VERDICT-ORDER",
-    "PR29-VERDICT-TRANSPORT",
-    "PR29-VERDICT-OCCURRENCE"
+    "PR28-OVERLAP-02"
   ],
   "capability_blockers": [
     "Physical iPhone/liveSpotify latencyquota unavailable",
@@ -73,23 +68,23 @@
     "Current473f/715100% unchanged thiswatch; no rootmerge/upload/activation/rollback."
   ],
   "next_actions": [
-    "ReadClaude associatedPR29corrections andexplicitcomplete releasecomment; freshreviewactualsuccessor heads andcombinedscope.",
-    "ReverifyPR28rest/overlap originalassertions; preserveinheritedLane/Resumepolicy pendingstate.",
-    "No duplicatemerge/deploy;revalidateactualsource/production beforeconsequentialaction."
+    "ReadClaude correction toLANE07 and independentlyverifyactualsuccessor source.",
+    "ResolvecurrentResumeexception conflict without renewedreleasepermission.",
+    "No duplicate merge/deploy; verifynewcurrentsource/production beforeconsequentialactions."
   ],
-  "updated_at": "2026-10-09T17:57:26.371218+00:00",
+  "updated_at": "2026-10-09T14:31:34.109775+00:00",
   "deployment": {
     "schema_version": "true-shuffle.deployment.v1",
-    "recorded_at": "2026-10-09T17:57:26.371218+00:00",
-    "source_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
+    "recorded_at": "2026-10-09T14:31:34.109775+00:00",
+    "source_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
     "worker": "true-shuffle",
     "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "version_id": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
-    "deployment_id": "7bdaed5d-f3f8-4afc-b424-900f1d67fded",
+    "version_id": "873eca1e-2819-4e9b-9bab-c8a03a9ef441",
+    "deployment_id": "8bde11bf-ac13-43de-b08a-91b6bcf55c81",
     "percentage": 100,
-    "deployed_at": "2026-10-09T17:21:23.09127Z",
-    "previous_version": "f9364da0-b9f6-46f4-b722-73cddd6e2b83",
-    "previous_deployment": "2d3927f7-3e48-4b1c-aefc-6acad4bf38ff",
+    "deployed_at": "2026-10-09T13:43:14.145311Z",
+    "previous_version": "473f96c8-35ad-486b-9592-b7005d0f40b9",
+    "previous_deployment": "7150626c-6af6-45fb-9326-4118d829dd03",
     "migration_tag": "v1",
     "namespaces": {
       "USER_HUB": {
@@ -107,107 +102,15 @@
     "existing_secret_bindings_preserved": true,
     "existing_variable_values_preserved": true,
     "runtime_preserved": true,
-    "deployment_authority": "External PR29 GitHub merge and Workers Builds; actual8d62138/fa234d1c/7bdaed5d100%; no rootmerge/upload/activation",
-    "worker_sha256": "ce56804ec260599bcf4c1e90b19a7d08684835306e7046c0c6cfe5622aea6a29",
+    "deployment_authority": "External24→25→26 merge / automaticWorkersBuilds; actual93241/873e/8bde100%; no root merge/upload/activation",
+    "worker_sha256": "63da043aeff521e9e6f8723df680801e02a5e4eadcd0d1e33ca7740815129adc",
     "worker_etag": null,
     "public_readback": {
-      "subject": "External production8d62138, activefa234d1c/deployment7bdaed5d; read-only verification",
-      "environment": "Actual public production browser anonymous read-only, no Spotify OAuth followed",
-      "cases": [
-        {
-          "width": 390,
-          "colorScheme": "light",
-          "status": 200,
-          "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
-          "links": [
-            {
-              "text": "Zum Inhalt",
-              "href": "#content"
-            },
-            {
-              "text": "true-shuffle",
-              "href": "/"
-            },
-            {
-              "text": "Mit Spotify anmelden",
-              "href": "/auth/login"
-            }
-          ]
-        },
-        {
-          "width": 390,
-          "colorScheme": "dark",
-          "status": 200,
-          "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
-          "links": [
-            {
-              "text": "Zum Inhalt",
-              "href": "#content"
-            },
-            {
-              "text": "true-shuffle",
-              "href": "/"
-            },
-            {
-              "text": "Mit Spotify anmelden",
-              "href": "/auth/login"
-            }
-          ]
-        },
-        {
-          "width": 1440,
-          "colorScheme": "light",
-          "status": 200,
-          "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
-          "links": [
-            {
-              "text": "Zum Inhalt",
-              "href": "#content"
-            },
-            {
-              "text": "true-shuffle",
-              "href": "/"
-            },
-            {
-              "text": "Mit Spotify anmelden",
-              "href": "/auth/login"
-            }
-          ]
-        },
-        {
-          "width": 1440,
-          "colorScheme": "dark",
-          "status": 200,
-          "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
-          "links": [
-            {
-              "text": "Zum Inhalt",
-              "href": "#content"
-            },
-            {
-              "text": "true-shuffle",
-              "href": "/"
-            },
-            {
-              "text": "Mit Spotify anmelden",
-              "href": "/auth/login"
-            }
-          ]
-        },
-        {
-          "path": "/profil",
-          "status": "PASS",
-          "result": "Anonymous protected SPA route renders sign-in without private profile"
-        }
-      ],
-      "errors": []
+      "exact_assets": "18/19;sourcemap sourcesonlydiff",
+      "review_ref": "INTEGRATED_932_REVIEW.json"
     },
     "browser_smoke": {
-      "subject": "External production8d62138, activefa234d1c/deployment7bdaed5d; read-only verification",
+      "subject": "External production93241a7, active873eca1e/deployment8bde11bf; read-only verification",
       "environment": "Actual public production browser anonymous read-only, no Spotify OAuth followed",
       "cases": [
         {
@@ -306,22 +209,14 @@
       "prior_verified_worker_version_retained": true,
       "rollback_this_release": false,
       "actual_populated_restore": "NOT_RUN",
-      "bindings_namespace_identity_preserved": true,
-      "sqlite_schema_change": "Additive6→7 verdict andverdict_at; localmigrationfault/retryPASS, actualprivatepopulatedobjectrestoreNOTRUN",
-      "rollback_decision_ref": "PR29_REVIEW.json"
+      "bindings_namespace_and_schema_unchanged": true
     },
-    "acceptance_claim": "BLOCKED: freshPR29findings, inheritedPR28/Lane/Resume andphysical/liveNOTRUN",
+    "acceptance_claim": "BLOCKED: freshLANE07 and unresolvedcurrentResumeproductrule; physical/live resourcegatesNOT_RUN",
     "github_ci": {
-      "id": 37965603311,
-      "name": "Cloudflare application checks",
-      "status": "completed",
-      "conclusion": "success",
-      "run_number": 124,
-      "jobs_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/37965603311/jobs",
-      "logs_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/37965603311/logs",
-      "workflow_id": 370971963
+      "id": 37938795936,
+      "conclusion": "success"
     },
-    "review_ref": "PR29_REVIEW.json",
+    "review_ref": "INTEGRATED_932_REVIEW.json",
     "historical_records": [
       {
         "prior_index": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json"
@@ -330,63 +225,40 @@
         "ref": "integrated-932-review/previous-CLOUDFLARE_DEPLOYMENT.json",
         "version_id": "473f96c8-35ad-486b-9592-b7005d0f40b9",
         "deployment_id": "7150626c-6af6-45fb-9326-4118d829dd03"
-      },
-      {
-        "ref": "integrated-ac23-review/previous-CLOUDFLARE_DEPLOYMENT.json",
-        "version_id": "873eca1e-2819-4e9b-9bab-c8a03a9ef441",
-        "deployment_id": "8bde11bf-ac13-43de-b08a-91b6bcf55c81"
-      },
-      {
-        "source_revision": "156ba06e232bd8f2f63335a19bea54c87d238f77",
-        "version_id": "5c694e8f-360c-4713-8e74-f91c06f04bbf",
-        "deployment_id": "0671612f-b0cf-4c9b-b0a8-20b180839f2b",
-        "readback_ref": "integrated-ac23-review/watch2827-safe-snapshot.json"
-      },
-      {
-        "ref": "pr29-review/previous-CLOUDFLARE_DEPLOYMENT.json",
-        "source_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-        "version_id": "f9364da0-b9f6-46f4-b722-73cddd6e2b83",
-        "deployment_id": "2d3927f7-3e48-4b1c-aefc-6acad4bf38ff"
       }
     ],
-    "inactive_staged_version": null,
-    "release_comment": 6086388418,
+    "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078",
+    "release_comment": 6083002216,
     "worker_hash_basis": "Actual compiled Worker content; existing worker_etag preserved as server metadata, not asserted equal to content hash",
-    "latest_watch_ref": "PR29_REVIEW.json",
-    "worker_etag_basis": "New ETag not separately captured; actualcontentSHAverified. PreviousETag retained in historicalsnapshot.",
-    "latest_watch_at": "2026-10-09T17:57:26.371218+00:00",
-    "source_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
-    "traffic": 100,
-    "release_authority": "ExternalClaudePR29merge/report; explicitscopecompletionabsent; rootauthorizedreviewandcomments onlyperformed.",
-    "asset_proof": "pr29-review/pr29-public-assets.json",
-    "worker_proof": "pr29-review/pr29-worker-proof.json",
-    "preservation_proof": "pr29-review/pr29-preservation.json"
+    "latest_watch_ref": "INTEGRATED_932_REVIEW.json",
+    "worker_etag_basis": "New ETag not separately captured; actualcontentSHAverified. PreviousETag retained in historicalsnapshot."
   },
   "historical_checkpoint": "docs/ai-dev/evidence/tag-wording-review/CHECKPOINT_HISTORY_BEFORE_PR18.json",
   "candidate_review": {
-    "revision": "8d62138184be9397ea22d55170928a4edbbc0725",
+    "revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
     "heads": {
-      "29": "27197dc5abbfdbb4fbd4d9ee6f874edb3becc6e6"
+      "27": "1da5d55e49d67abd391ce17d0be27081c8a7d50b",
+      "28": "78fcdf90425b5a800c18fb2dca0093a9436cc466"
     },
-    "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
-    "ledger": "docs/ai-dev/evidence/PR29_LEDGER.json",
-    "verdict": "BLOCKED",
+    "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+    "ledger": "docs/ai-dev/evidence/INTEGRATED_AC23_LEDGER.json",
     "external_release": true,
-    "completion_covers_current_heads": false
+    "completion_covers_current_heads": false,
+    "verdict": "BLOCKED"
   },
-  "candidate_review_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
+  "candidate_review_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
   "production": {
     "schema_version": "true-shuffle.deployment.v1",
-    "recorded_at": "2026-10-09T17:57:26.371218+00:00",
-    "source_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
+    "recorded_at": "2026-10-09T16:25:07.654438+00:00",
+    "source_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
     "worker": "true-shuffle",
     "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "version_id": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
-    "deployment_id": "7bdaed5d-f3f8-4afc-b424-900f1d67fded",
+    "version_id": "f9364da0-b9f6-46f4-b722-73cddd6e2b83",
+    "deployment_id": "2d3927f7-3e48-4b1c-aefc-6acad4bf38ff",
     "percentage": 100,
-    "deployed_at": "2026-10-09T17:21:23.09127Z",
-    "previous_version": "f9364da0-b9f6-46f4-b722-73cddd6e2b83",
-    "previous_deployment": "2d3927f7-3e48-4b1c-aefc-6acad4bf38ff",
+    "deployed_at": "2026-10-09T16:19:01.279569Z",
+    "previous_version": "5c694e8f-360c-4713-8e74-f91c06f04bbf",
+    "previous_deployment": "0671612f-b0cf-4c9b-b0a8-20b180839f2b",
     "migration_tag": "v1",
     "namespaces": {
       "USER_HUB": {
@@ -404,107 +276,21 @@
     "existing_secret_bindings_preserved": true,
     "existing_variable_values_preserved": true,
     "runtime_preserved": true,
-    "deployment_authority": "External PR29 GitHub merge and Workers Builds; actual8d62138/fa234d1c/7bdaed5d100%; no rootmerge/upload/activation",
-    "worker_sha256": "ce56804ec260599bcf4c1e90b19a7d08684835306e7046c0c6cfe5622aea6a29",
+    "deployment_authority": "External27→28 GitHub merges andautomaticWorkersBuilds;actualac23/f936/2d392100%;no rootmerge/upload/activation",
+    "worker_sha256": "e59f353a84a1f701cef7b1632cd8264e0de53d2913e7e1d8a6ec3f6fb67786e9",
     "worker_etag": null,
     "public_readback": {
-      "subject": "External production8d62138, activefa234d1c/deployment7bdaed5d; read-only verification",
-      "environment": "Actual public production browser anonymous read-only, no Spotify OAuth followed",
-      "cases": [
-        {
-          "width": 390,
-          "colorScheme": "light",
-          "status": 200,
-          "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
-          "links": [
-            {
-              "text": "Zum Inhalt",
-              "href": "#content"
-            },
-            {
-              "text": "true-shuffle",
-              "href": "/"
-            },
-            {
-              "text": "Mit Spotify anmelden",
-              "href": "/auth/login"
-            }
-          ]
-        },
-        {
-          "width": 390,
-          "colorScheme": "dark",
-          "status": 200,
-          "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
-          "links": [
-            {
-              "text": "Zum Inhalt",
-              "href": "#content"
-            },
-            {
-              "text": "true-shuffle",
-              "href": "/"
-            },
-            {
-              "text": "Mit Spotify anmelden",
-              "href": "/auth/login"
-            }
-          ]
-        },
-        {
-          "width": 1440,
-          "colorScheme": "light",
-          "status": 200,
-          "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
-          "links": [
-            {
-              "text": "Zum Inhalt",
-              "href": "#content"
-            },
-            {
-              "text": "true-shuffle",
-              "href": "/"
-            },
-            {
-              "text": "Mit Spotify anmelden",
-              "href": "/auth/login"
-            }
-          ]
-        },
-        {
-          "width": 1440,
-          "colorScheme": "dark",
-          "status": 200,
-          "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
-          "links": [
-            {
-              "text": "Zum Inhalt",
-              "href": "#content"
-            },
-            {
-              "text": "true-shuffle",
-              "href": "/"
-            },
-            {
-              "text": "Mit Spotify anmelden",
-              "href": "/auth/login"
-            }
-          ]
-        },
-        {
-          "path": "/profil",
-          "status": "PASS",
-          "result": "Anonymous protected SPA route renders sign-in without private profile"
-        }
-      ],
-      "errors": []
+      "assets": "18/19byteexact;sourcespaths-only sourcemapdiff;sourcesContent identical",
+      "assets_ref": "integrated-ac23-review/watchac-public-assets.json",
+      "worker_ref": "integrated-ac23-review/watchac-worker-proof.json",
+      "auth_ref": "integrated-ac23-review/watchac-public-auth.json",
+      "health": 200,
+      "protected_reads": 401,
+      "csrf_foreign_origin": 403,
+      "valid_marker_no_session": 401
     },
     "browser_smoke": {
-      "subject": "External production8d62138, activefa234d1c/deployment7bdaed5d; read-only verification",
+      "subject": "External productionac23aec, activef9364da0/deployment2d3927f7; read-only verification",
       "environment": "Actual public production browser anonymous read-only, no Spotify OAuth followed",
       "cases": [
         {
@@ -603,22 +389,15 @@
       "prior_verified_worker_version_retained": true,
       "rollback_this_release": false,
       "actual_populated_restore": "NOT_RUN",
-      "bindings_namespace_identity_preserved": true,
-      "sqlite_schema_change": "Additive6→7 verdict andverdict_at; localmigrationfault/retryPASS, actualprivatepopulatedobjectrestoreNOTRUN",
-      "rollback_decision_ref": "PR29_REVIEW.json"
+      "bindings_namespace_and_schema_unchanged": true
     },
-    "acceptance_claim": "BLOCKED: freshPR29findings, inheritedPR28/Lane/Resume andphysical/liveNOTRUN",
+    "acceptance_claim": "BLOCKED: PR28rest/overlap and inheritedLane/Resumepolicy; physical/liveNOTRUN",
     "github_ci": {
-      "id": 37965603311,
-      "name": "Cloudflare application checks",
+      "id": 37958130063,
       "status": "completed",
-      "conclusion": "success",
-      "run_number": 124,
-      "jobs_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/37965603311/jobs",
-      "logs_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/37965603311/logs",
-      "workflow_id": 370971963
+      "conclusion": "success"
     },
-    "review_ref": "PR29_REVIEW.json",
+    "review_ref": "INTEGRATED_AC23_REVIEW.json",
     "historical_records": [
       {
         "prior_index": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json"
@@ -638,25 +417,19 @@
         "version_id": "5c694e8f-360c-4713-8e74-f91c06f04bbf",
         "deployment_id": "0671612f-b0cf-4c9b-b0a8-20b180839f2b",
         "readback_ref": "integrated-ac23-review/watch2827-safe-snapshot.json"
-      },
-      {
-        "ref": "pr29-review/previous-CLOUDFLARE_DEPLOYMENT.json",
-        "source_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
-        "version_id": "f9364da0-b9f6-46f4-b722-73cddd6e2b83",
-        "deployment_id": "2d3927f7-3e48-4b1c-aefc-6acad4bf38ff"
       }
     ],
     "inactive_staged_version": null,
-    "release_comment": 6086388418,
+    "release_comment": 6084847874,
     "worker_hash_basis": "Actual compiled Worker content; existing worker_etag preserved as server metadata, not asserted equal to content hash",
-    "latest_watch_ref": "PR29_REVIEW.json",
+    "latest_watch_ref": "INTEGRATED_AC23_REVIEW.json",
     "worker_etag_basis": "New ETag not separately captured; actualcontentSHAverified. PreviousETag retained in historicalsnapshot.",
-    "latest_watch_at": "2026-10-09T17:57:26.371218+00:00",
-    "source_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
+    "latest_watch_at": "2026-10-09T16:24:15.868374+00:00",
+    "source_sha": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
     "traffic": 100,
-    "release_authority": "ExternalClaudePR29merge/report; explicitscopecompletionabsent; rootauthorizedreviewandcomments onlyperformed.",
-    "asset_proof": "pr29-review/pr29-public-assets.json",
-    "worker_proof": "pr29-review/pr29-worker-proof.json",
-    "preservation_proof": "pr29-review/pr29-preservation.json"
+    "release_authority": "External GitHub merges27→28; root permanently authorizedreview/comments, no ownmerge/deploy; #28 noexplicitfullscopecompletion",
+    "asset_proof": "integrated-ac23-review/watchac-public-assets.json",
+    "worker_proof": "integrated-ac23-review/watchac-worker-proof.json",
+    "preservation_proof": "integrated-ac23-review/watchac-preservation.json"
   }
 }

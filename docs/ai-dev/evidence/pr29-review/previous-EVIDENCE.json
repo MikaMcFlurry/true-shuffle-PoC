@@ -1,10 +1,10 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-09T17:57:26.371218+00:00",
+  "generated_at": "2026-10-09T16:25:25.728291+00:00",
   "project": "true-shuffle externalPR27→28 integrated release review",
   "subject": {
-    "revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-    "artifact_ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+    "revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+    "artifact_ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
     "environment": "Actual externalCloudflaref9364da0/2d3927f7 and isolated156ba/78fc/ac23 RealWorkerFakeSpotify",
     "environment_class": "PRODUCTION"
   },
@@ -195,30 +195,6 @@
       "severity": "P2",
       "blocking": true,
       "title": "First-win aggregate deduplication disagrees with last-win profile classification for overlapping exports"
-    },
-    {
-      "id": "PR29-REPEAT-NO-01",
-      "severity": "P2",
-      "blocking": true,
-      "title": "Repeated negative retest answers do not accumulate the stated further skip or doubled recheck interval"
-    },
-    {
-      "id": "PR29-VERDICT-ORDER",
-      "severity": "P2",
-      "blocking": true,
-      "title": "Unfenced concurrent opposite verdicts let late acknowledgement contradict last accepted answer"
-    },
-    {
-      "id": "PR29-VERDICT-TRANSPORT",
-      "severity": "P2",
-      "blocking": true,
-      "title": "Successful verdict response discards failed playback advance result"
-    },
-    {
-      "id": "PR29-VERDICT-OCCURRENCE",
-      "severity": "P2",
-      "blocking": false,
-      "title": "Prior answer hides the next probe of the same song in a continuously open Home"
     }
   ],
   "gates": [
@@ -229,15 +205,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-BUILD-PR29",
+          "id": "G-BUILD-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
-      "rationale": "Current integrated8d62138 type/lint/builddryPASS."
+      "rationale": "Integratedac23 type/lint/build/dryPASS. ExactheadUnit560PASS/1parallel-load timeout;117RobustnessrerunPASSdefault20s, no fabricatedsinglefull561PASS."
     },
     {
       "id": "G-COMBINED",
@@ -246,15 +222,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-COMBINED-PR29",
+          "id": "G-COMBINED-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
-      "rationale": "570/570unitWorker PASSdefault20s,48/48standardbrowserPASS; new probes separatelyattacked."
+      "rationale": "46standard+4extra candidatebrowserPASS;67unchangedprotectedPASS, inheritedcontinuity conflict remains."
     },
     {
       "id": "G-NEW-BEHAVIOR",
@@ -263,15 +239,15 @@
       "status": "FAIL",
       "evidence": [
         {
-          "id": "G-NEW-BEHAVIOR-PR29",
+          "id": "G-NEW-BEHAVIOR-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
-      "rationale": "Fresh newPR29failures plus unchangedPR28rest/overlap reproductions FAIL; inheritedpolicy/laneopen."
+      "rationale": "OriginalPodcastclosed; new90dayrest bypass andoverlapdedupFAIL; inheritedLANE07/Resumeconflictopen."
     },
     {
       "id": "G-UI",
@@ -280,12 +256,12 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-UI-PR29",
+          "id": "G-UI-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
       "rationale": "Actuallocal profile390/1440lightdark longmetadata keyboard/nav4PASS;46standarderror/offline/pendingPASS;actualanonymousproduction4rendersPASS."
@@ -297,12 +273,12 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-A11Y-PR29",
+          "id": "G-A11Y-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
       "rationale": "Bounded existinglabel/keyboard/focus assertionsPASS; no completeWCAG orphysicalSafari claim."
@@ -314,15 +290,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-MIGRATION-PR29",
+          "id": "G-MIGRATION-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
-      "rationale": "Fresh additiveSQLitev6→7 migration/crashrecoveryPASS; CloudflareDO migrationtagv1 namespacespreserved."
+      "rationale": "AdditiveJSON6fieldcompatibility andold4/5 validationPASS; noSQLschema orCloudflare migrationchange;actualpopulatedrestoreNOTRUN."
     },
     {
       "id": "G-LOCAL-RECOVERY",
@@ -331,12 +307,12 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-LOCAL-RECOVERY-PR29",
+          "id": "G-LOCAL-RECOVERY-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
       "rationale": "Existinglocalretry/recovery/account/guest/native checksPASS; datedbefore>playsrejected."
@@ -348,12 +324,12 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-SECURITY-PR29",
+          "id": "G-SECURITY-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
       "rationale": "Publicactual401/CSRF403PASS;existingaccount/private/guest/native regressionsPASS; no authchanges."
@@ -365,15 +341,15 @@
       "status": "FAIL",
       "evidence": [
         {
-          "id": "G-REVIEW-PR29",
+          "id": "G-REVIEW-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
-      "rationale": "Two fresh separate reviewers; scopedNOT_READY, overallBLOCKED; concrete currentfindings inreview."
+      "rationale": "FreshscopedNOT_READY withtwoP2s;overallBLOCKED alsoinheritsP1Resume productauthorityconflict."
     },
     {
       "id": "G-CI",
@@ -382,15 +358,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-CI-PR29",
+          "id": "G-CI-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:25:07.654438+00:00"
         }
       ],
-      "rationale": "Currenthead37964366565 and integrated37965603311success."
+      "rationale": "Exactintegratedverify37958130063 success, exacthead37956572049success;27head/integratedCI success."
     },
     {
       "id": "G-LIVE",
@@ -399,15 +375,15 @@
       "status": "PASS",
       "evidence": [
         {
-          "id": "G-LIVE-PR29",
+          "id": "G-LIVE-AC23",
           "kind": "current-source-runtime-and-review",
-          "ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-          "observed_at": "2026-10-09T17:57:26.371218+00:00"
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
         }
       ],
-      "rationale": "External8d62138 activefa234d1c/7bdaed5d100%;actualWorker/assets/auth/publicbrowserverified, notfunctionalacceptance."
+      "rationale": "Externallyactivatedf9364da0/2d3927f7100%;compiledWorker/assets/auth/browser/resources actualverified; notfunctionalacceptance."
     },
     {
       "id": "G-AI-RELIABILITY",
