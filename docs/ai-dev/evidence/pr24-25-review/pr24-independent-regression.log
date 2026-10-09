@@ -1,0 +1,8 @@
+
+ RUN  v5.0.2 /workspace/ts-pr24-independent
+
+
+ Test Files  5 passed (5)
+      Tests  55 passed (55)
+   Start at  11:53:32
+   Duration  6.82s (tests 84%, transform 9%, import 7%)

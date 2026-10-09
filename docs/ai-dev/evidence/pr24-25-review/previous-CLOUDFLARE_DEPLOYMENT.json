@@ -1,15 +1,15 @@
 {
   "schema_version": "true-shuffle.deployment.v1",
-  "recorded_at": "2026-10-09T11:59:40.148225+00:00",
-  "source_revision": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+  "recorded_at": "2026-10-09T10:25:19.448783+00:00",
+  "source_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
   "worker": "true-shuffle",
   "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
-  "version_id": "473f96c8-35ad-486b-9592-b7005d0f40b9",
-  "deployment_id": "7150626c-6af6-45fb-9326-4118d829dd03",
+  "version_id": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+  "deployment_id": "ff729fef-8700-4362-94c1-787addf3e65c",
   "percentage": 100,
-  "deployed_at": "2026-10-09T11:01:07.375001Z",
-  "previous_version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
-  "previous_deployment": "ff729fef-8700-4362-94c1-787addf3e65c",
+  "deployed_at": "2026-10-09T10:19:16.198822Z",
+  "previous_version": "02a3c025-a9f6-4da5-b6ce-d176d1c9f71c",
+  "previous_deployment": "c9eea1af-fb1c-49ba-9952-cc1aff711630",
   "migration_tag": "v1",
   "namespaces": {
     "USER_HUB": {
@@ -27,16 +27,17 @@
   "existing_secret_bindings_preserved": true,
   "existing_variable_values_preserved": true,
   "runtime_preserved": true,
-  "deployment_authority": "ExternallymergedPR23/automaticWorkersBuilds; no rootmerge/upload/activationinthiswatch",
+  "deployment_authority": "Explicit permanent owner authority to recover brokenrollouts; securityrollback of externallymerged/deployedknownauthleak afterfreshscopeddata compatibilityreview. No PR23merge/upload.",
   "worker_sha256": "e61902724515496b7dcd0035d354d4100823838e13fcd5c24580d73f5ffe6530",
   "worker_etag": "dbf9e0c905f381bffd32be40c0a48235d39e164d1b769157cc5e2c6367ef9a1f",
   "public_readback": {
-    "exact_assets": "18/19; sourcemaponlydependency-prefixdiff",
-    "assets_ref": "pr24-25-review/ts2425-public-assets.json",
-    "auth_csrf_ref": "pr24-25-review/ts2425-public-auth.json",
-    "browser_ref": "pr24-25-review/ts2425-public-results.json",
-    "runtime_ref": "pr24-25-review/ts2425-preservation.json",
-    "worker_ref": "pr24-25-review/ts2425-worker-proof.json",
+    "tested_at": "2026-10-09T10:25:19.448783+00:00",
+    "source_commit": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "exact_assets": "19/19",
+    "assets_ref": "pr23-review/18-public-assets.json",
+    "auth_csrf_ref": "pr23-review/ts97-public-auth.json",
+    "browser_ref": "pr23-review/pr23-rollback-public-results.json",
+    "runtime_ref": "pr23-review/pr23-rollback-preservation.json",
     "authenticated_provider_journeys": "NOT_RUN"
   },
   "browser_smoke": {
@@ -52,13 +53,14 @@
   },
   "recovery": {
     "prior_verified_worker_version_retained": true,
-    "rollback_this_release": false,
     "actual_populated_restore": "NOT_RUN",
-    "bindings_namespace_and_schema_unchanged": true
+    "rollback_this_release": true,
+    "bindings_namespace_and_schema_unchanged": true,
+    "schema5_compatibility_simulated": "2freshindependentPASS; no productiondowngrade/deletion"
   },
-  "acceptance_claim": "PARTIAL: authfixpreviouslyFRESHREADY andactualCEEworker/identity/resources/readbackverified; inheritedLANE03remainslive; candidates24/25BLOCKED.",
+  "acceptance_claim": "PARTIAL: securityrollback/runtimeidentity/assets/auth/browserverified; currentfeaturecandidateNOT_READY andfullmissionliveacceptanceNOT_RUN. Historicale348integratedCI remains red, not rerun green.",
   "github_ci": "37844932181 FAIL twice: jobs113543321791/113544666152;485PASS/1known61h simulation20stimeout; downstreambrowser/dryskipped. SourceequivalentCI37836787868PASS486/41; localfull486PASS120s andisolatedintegratedweekend15.57sPASS. Required integratedCI remainsFAIL; correctionrequested6069239435.",
-  "review_ref": "PR24_25_REVIEW.json",
+  "review_ref": "PR23_REVIEW.json",
   "historical_records": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json",
   "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078",
   "release_comment": 6069239435

@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-09T10:31:26.522070+00:00",
+  "generated_at": "2026-10-09T11:59:40.148225+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -36,7 +36,7 @@
       "path": "AGENTS.md",
       "treatment": "UPDATE",
       "authority": "CANONICAL",
-      "reason": "ActualGitHubbcb2463 differsfromverifiedsecurityrollbacke348/dd344/ff729fef100%. FinalPR23auth-only8921702explicitcompletion6079018689; FRESHauthREADY, inheritedLANE03NOT_READY. CurrentPR23_REVIEW/LEDGER/CHECKPOINT/CLOUDFLARE_DEPLOYMENT. Functionalprovenance/quota decisionpending; no renewedreleasepermissionrequired. Packet09d remains historical.",
+      "reason": "ActualGitHub/livecee/473f/715100%, externallymerged23. Candidates24/25BLOCKEDfreshLANE05P2/RESUME01P1; nofinalscope. CurrentPR24_25_REVIEW/LEDGER/checkpoint/deployment; old09dpacket historical.",
       "evidence_ids": [
         "EV-01",
         "EV-02"

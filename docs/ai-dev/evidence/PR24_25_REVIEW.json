@@ -1,0 +1,159 @@
+{
+  "schema_version": "true-shuffle.pr24-25-review.v1",
+  "generated_at": "2026-10-09T11:59:40.148225+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_source": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+  "combined_review_source": "6b091d64f4ccc879718a113bda89d15d9365035b",
+  "provenance": "ActualauthorMikaMcFlurry, gitClaude/noreply@anthropic.com and sameClaude-session_01LuiFYFqenEVR9agywkDkAX; no inventedClaudeGithubaccount",
+  "github_ref": "pr24-25-review/ts2425-github.json",
+  "heads": {
+    "24": "88de19736312bfbb83764d04fd4099d47da6decb",
+    "25": "8f38063114d6ebe5bc7d71ad3beeed8f76e86cf5"
+  },
+  "dependencies": "Both24and25independentlybasecee; localconflictfree24then25. Theircoherentreleaseincludesearlier19-23; no renewedpartialrelease. #23externallymergedandautodeployed, notrootoperation.",
+  "completion": {
+    "24": false,
+    "25": false,
+    "basis": "AllactualcurrentPRissue/reviewcomments onlyPreview/Securitybots; PRbodychecks/ownerdecisionquotes notreleasecompletioncomments"
+  },
+  "reported_owner_decisions": {
+    "24": "ClaudePRbody reportsownerChat strictwithoutnewrequests; alignswithcurrenthonestprovenance/noextraqueryrequirement",
+    "25": "ClaudePRbody reportsadvanceonlywithproofcompleted; actualtimestampheuristicdoesnotprovideproof. No ownerauthorizationinventedforfalsecompletion."
+  },
+  "independence": "FRESH",
+  "verdict": "BLOCKED",
+  "findings": [
+    {
+      "id": "PR24-LANE-05",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Ambiguous same-track replay refreshes an older occurrence lane",
+      "files": [
+        "src/worker/hub/hub.ts:4926",
+        "src/worker/hub/hub.ts:4972",
+        "src/worker/hub/hub.ts:5017"
+      ],
+      "reproduction": [
+        "Observe new180s track at0s with fresh lane",
+        "Quiet6s then skip (unlisted), another60s",
+        "Publish same IDs/order deck with that track favorite via saveDeck; restart",
+        "Reinsert that track using FakeSpotify playlist order and skip to it",
+        "Quiet40s then observe same track/context",
+        "Quiet1s skip, next look, normal history ingestion"
+      ],
+      "expected": "Single41s listed occurrence has kind null because observation cannot establish its continuity with original0s occurrence",
+      "actual": "Original fresh note survives, lastAt is refreshed to newer occurrence; stored history.kind fresh",
+      "impact": "Persisted provenance falsely attributed across different occurrence/deck; owner strict honest provenance violated",
+      "repair_direction": "Do not treat failure to detect replay as proof of continuity. Invalidate source when observation gap permits unseen skip/replay; never refresh ambiguous note as if same occurrence. Keep null without extra Spotify calls. Add greater-progress, paused, restart, changed-deck and unchanged-deck variants."
+    },
+    {
+      "id": "PR25-RESUME-01",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Recent listing plus elapsed wall time advances an unfinished saved occurrence",
+      "files": [
+        "src/worker/hub/hub.ts:5192",
+        "src/worker/hub/hub.ts:5194",
+        "src/worker/hub/hub.ts:5196"
+      ],
+      "preconditions": "180-second tracks, actual observed beginning of current session occurrence; provider playback continues unseen and then device disappears.",
+      "reproductions": [
+        {
+          "case": "Near-end skip",
+          "steps": "Observe beginning at <=5s. Quietly advance only to166s of180s; perform real FakeSpotify.skip(); next song plays1s; hide device; refresh state then settle5min.",
+          "result": "Saved currentIndex4 becomes5, progress reset0; fourteen seconds of original occurrence remained."
+        },
+        {
+          "case": "Unseen pause",
+          "steps": "Observe beginning; FakeSpotify.pause(); advance wall clock10min while player paused; resume fake player and listen only40s total; real skip(); next song plays1s; hide device; refresh and settle5min.",
+          "result": "Saved currentIndex4 becomes5, progress reset0; approximately140s original song remained."
+        },
+        {
+          "case": "Backward seek",
+          "steps": "Observe actual121s checkpoint; unseen seek to0/listenedMs0; listen65s then real skip; next song plays1s; hide device; refresh and settle5min.",
+          "result": "Saved currentIndex4 becomes5; unfinished instance loses observed121s checkpoint."
+        }
+      ],
+      "expected": "Keep same stable saved entry and last observed progress until actual evidence establishes completion; listed history timestamp alone cannot establish uninterrupted playback or same occurrence.",
+      "actual": "advanceListed infers end from observedAt+duration-progress with15s slack, mutates durable currentIndex/progress/observedAt and logs provider-completed listening without completion evidence.",
+      "impact": "Normal Fortsetzen skips unfinished song, loses checkpoint and misstates observation/completion proof; violates protected stable occurrence and observed progress contracts.",
+      "repair_direction": "Do not advance durable resume checkpoint from this listing/wall-time heuristic. Define independently supportable completion/occurrence proof separately; preserve history counts and provider accepted/observed distinction, without extra provider requests unless separately authorized.",
+      "required_checks": "Add these real HubCore/FakeSpotify adversarial tests as protected regressions; preserve original11 Resume assertions; prove genuine completion, unknown progress, pauses/seeks/repeats/private/guest/context isolation and refusal do not manufacture observation or lose durable checkpoint."
+    }
+  ],
+  "reports": [
+    "pr24-25-review/pr24-independent-review.json",
+    "pr24-25-review/pr25-independent-review.json"
+  ],
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit_worker": 526,
+    "browser": 46,
+    "original_unchanged_resume": 11,
+    "original24regressions": 55,
+    "selected25regressions": 36,
+    "new25attacks": {
+      "base_cee": "3PASS",
+      "exact25": "3FAIL",
+      "combined": "3FAIL",
+      "additionalindependentpause": "FAIL"
+    },
+    "new24attack": {
+      "exact24": "FAIL",
+      "combined": "FAIL"
+    },
+    "exactheadCI": {
+      "24": 37923313865,
+      "25": 37924001579,
+      "status": "PASS"
+    },
+    "ui": "Onlyhistoryexplanatorycopychanged; fresh46realWorkerFakeSpotifybrowserphone/desktoplightdark/offline/pending/error/navigation/longmetadata; fullWCAG/physicalSafariNOT_RUN"
+  },
+  "production": {
+    "source": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+    "source_application_tree_identical_to_reviewed8921702": true,
+    "version": "473f96c8-35ad-486b-9592-b7005d0f40b9",
+    "deployment": "7150626c-6af6-45fb-9326-4118d829dd03",
+    "traffic": [
+      {
+        "version_id": "473f96c8-35ad-486b-9592-b7005d0f40b9",
+        "percentage": 100
+      }
+    ],
+    "created_at": "2026-10-09T11:01:07.375001Z",
+    "external": true,
+    "worker_proof": "pr24-25-review/ts2425-worker-proof.json",
+    "assets": "18/19exact; JS/CSS/HTML/fonts/imagesexact. sourceMaponlydifferentlocaldependency pathprefix; no claimall19assetsexact",
+    "preservation": "pr24-25-review/ts2425-preservation.json",
+    "auth_health_public_browser": "PASS anonymous390/1440lightdark,protectedreads401missingmarker/foreignorigin403",
+    "known_open": "PR20-LANE03 remainslive; auth01fixed; currentproductiondoesnotcontainnewPR25P1",
+    "operations": "No duplicateactivationorrollback. ExistingboundedprovenanceP2 remainsreleaseblocker; no newsecurity/transport/data-lossrolloutfailureinactualcee shown.",
+    "actual_target_ci": {
+      "run": 37921068387,
+      "sha": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+      "status": "PASS"
+    },
+    "asset_difference_proof": "pr24-25-review/ts2425-sourcemap-proof.json"
+  },
+  "comments": {
+    "24": 6080361746,
+    "25": 6080361930,
+    "23_external_release_readback": 6080444575
+  },
+  "application_edits_by_root": false,
+  "merge_by_root": false,
+  "upload_by_root": false,
+  "activation_by_root": false,
+  "rollback_by_root": false,
+  "not_run": [
+    "PhysicaliPhone/liveSpotifylatencyquota",
+    "PrivateHA/MA",
+    "Actualpopulatedproductionrestore",
+    "LiveAIprovider",
+    "AuthenticatedliveSpotifyjourneys"
+  ],
+  "prior_reviews": "Allprevioussourceboundevidencepreserved; oldrollbackff729fefisnowhistorical, externallyreplaced7150626c."
+}
