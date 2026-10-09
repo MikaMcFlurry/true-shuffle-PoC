@@ -31,10 +31,15 @@ export const LISTEN_FLAG = {
 	/** A private session. */
 	incognito: 32,
 	/**
-	 * Began by a start (play button, a tap, another device, the app opening),
-	 * not by the song before ending or a skip: see `isOpener`.
+	 * The first song after a start (see `startTracker`), as the browser told
+	 * from the whole export, podcasts included.
 	 */
-	started: 64,
+	opener: 64,
+	/**
+	 * The import told openers apart. Rows from before that rule carry neither
+	 * bit, and their early skips all count, in the mix as in the Hörprofil.
+	 */
+	rated: 128,
 } as const;
 
 /** Spotify's `reason_start` for a song that followed on from the one before. */
@@ -55,6 +60,29 @@ export const OPENER_GAP_MS = 10 * 60_000;
  */
 export function isOpener(started: boolean, beganAt: number, previousEnd: number | null): boolean {
 	return started || previousEnd === null || beganAt - previousEnd >= OPENER_GAP_MS;
+}
+
+/**
+ * Tells, entry by entry through one export file (in time order), whether an
+ * entry was the first after a start. Every entry keeps the listening going,
+ * podcasts too; what came before the file's first entry is not known. The
+ * one rule for the mix (`aggregateHistory`) and the Hörprofil (`addListens`):
+ * both walk the same file through it, so they always agree.
+ */
+export function startTracker(): (e: {
+	ts?: string;
+	ms_played?: number;
+	reason_start?: string | null;
+}) => boolean {
+	let previousEnd: number | null = null;
+	return (e) => {
+		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
+		if (!Number.isFinite(at)) return false;
+		const ms = typeof e.ms_played === "number" && e.ms_played > 0 ? e.ms_played : 0;
+		const opener = isOpener(startedAfresh(e.reason_start), at - ms, previousEnd);
+		previousEnd = at;
+		return opener;
+	};
 }
 
 /** Where it was heard, as far as Spotify's platform text tells. */
@@ -118,7 +146,9 @@ export function newListens(): ListenBuilder {
  */
 export function addListens(entries: readonly ListenEntry[], b: ListenBuilder): ListenBuilder {
 	const text = (v: string | null | undefined) => (v ?? "").trim().slice(0, 200);
+	const opens = startTracker();
 	for (const e of entries) {
+		const opener = opens(e);
 		const m = /^spotify:track:([A-Za-z0-9]{22})$/.exec(e.spotify_track_uri ?? "");
 		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
 		if (!m || !Number.isFinite(at) || at <= 0) continue;
@@ -145,7 +175,8 @@ export function addListens(entries: readonly ListenEntry[], b: ListenBuilder): L
 			(e.shuffle === true ? LISTEN_FLAG.shuffle : 0) |
 			(e.offline === true ? LISTEN_FLAG.offline : 0) |
 			(e.incognito_mode === true ? LISTEN_FLAG.incognito : 0) |
-			(startedAfresh(e.reason_start) ? LISTEN_FLAG.started : 0);
+			(opener ? LISTEN_FLAG.opener : 0) |
+			LISTEN_FLAG.rated;
 		const sec = Math.floor(at / 1000);
 		b.rows.set(`${sec}:${t}`, [sec, t, ms, flags, platformOf(e.platform)]);
 	}
@@ -207,7 +238,7 @@ export function isListenRow(v: unknown, tracks: number, latestSec: number): v is
 		int(v[0], latestSec) &&
 		int(v[1], tracks - 1) &&
 		int(v[2], 24 * 3_600_000) &&
-		int(v[3], 127) &&
+		int(v[3], 255) &&
 		int(v[4], PLATFORMS.length - 1)
 	);
 }

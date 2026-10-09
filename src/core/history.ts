@@ -10,7 +10,7 @@
  * with an explanation instead of being guessed at.
  */
 
-import { isOpener, startedAfresh } from "./listens";
+import { startTracker } from "./listens";
 import type { ImportedStats } from "./memory";
 import { PLAY_THRESHOLD_MS, type TrackId } from "./types";
 
@@ -80,16 +80,14 @@ export function aggregateHistory(
 	/** Only listening before this time counts: after it, true-shuffle counted live. */
 	opts: { before?: number | null } = {},
 ): Aggregate {
-	// A file is in time order; what came before its first entry is not known here.
-	let previousEnd: number | null = null;
+	// The same rule, over the same file, as the Hörprofil's rows (see addListens).
+	const opens = startTracker();
 	for (const e of entries) {
 		agg.entries++;
+		const opener = opens(e);
 		const id = trackIdFromUri(e.spotify_track_uri ?? null);
 		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
 		const ms = typeof e.ms_played === "number" ? e.ms_played : 0;
-		const before = previousEnd;
-		// Anything heard (podcasts too) keeps the listening going.
-		if (Number.isFinite(at)) previousEnd = at;
 		if (!id || !Number.isFinite(at) || (opts.before != null && at >= opts.before)) {
 			agg.ignored++;
 			continue;
@@ -104,7 +102,7 @@ export function aggregateHistory(
 			s.lastPlayedAt = s.lastPlayedAt === null ? at : Math.max(s.lastPlayedAt, at);
 			agg.counted++;
 		} else if (e.reason_end === "fwdbtn" || e.skipped === true) {
-			if (isOpener(startedAfresh(e.reason_start), at - ms, before)) {
+			if (opener) {
 				agg.openers++;
 				continue;
 			}

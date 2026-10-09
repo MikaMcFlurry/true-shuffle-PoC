@@ -237,7 +237,12 @@ describe("imported plays in the browser", () => {
 				Date.UTC(2024, 0, 1, 12) / 1000,
 				0,
 				123_456,
-				LISTEN_FLAG.skipped | LISTEN_FLAG.forward | LISTEN_FLAG.shuffle,
+				// First in its file: nothing known before it, so the first after a start.
+				LISTEN_FLAG.skipped |
+					LISTEN_FLAG.forward |
+					LISTEN_FLAG.shuffle |
+					LISTEN_FLAG.opener |
+					LISTEN_FLAG.rated,
 				1,
 			],
 		]);
@@ -258,7 +263,8 @@ describe("imported plays in the browser", () => {
 		expect(isListenRow([1_700_000_000, 0, 1000, 0, 0], 1, 1_800_000_000)).toBe(true);
 		expect(isListenRow([1_700_000_000, 1, 1000, 0, 0], 1, 1_800_000_000)).toBe(false);
 		expect(isListenRow([1_900_000_000, 0, 1000, 0, 0], 1, 1_800_000_000)).toBe(false);
-		expect(isListenRow([1_700_000_000, 0, 1000, 128, 0], 1, 1_800_000_000)).toBe(false);
+		expect(isListenRow([1_700_000_000, 0, 1000, 255, 0], 1, 1_800_000_000)).toBe(true);
+		expect(isListenRow([1_700_000_000, 0, 1000, 256, 0], 1, 1_800_000_000)).toBe(false);
 		expect(isListenRow([1_700_000_000, 0, 1000, 0, 99], 1, 1_800_000_000)).toBe(false);
 	});
 });

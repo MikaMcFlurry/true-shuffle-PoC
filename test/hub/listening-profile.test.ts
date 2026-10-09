@@ -415,22 +415,19 @@ describe("imported plays", () => {
 				platform: 1,
 				flags: LISTEN_FLAG.shuffle,
 			})),
-			// Skipped mid-listening, a few minutes after a play ended.
-			...spread(t0 + 4 * MINUTE_MS, 3, () => ({
+			...spread(t0 + DAY_MS, 3, () => ({
 				song: "meh",
 				artist: "B",
 				ms: 5_000,
-				flags: LISTEN_FLAG.forward,
+				flags: LISTEN_FLAG.forward | LISTEN_FLAG.rated,
 			})),
-			// The first song after a start, skipped: by Spotify's reason_start, and after a silence.
-			{
-				at: t0 + 3 * 30 * MINUTE_MS + 2 * MINUTE_MS,
+			// The import told these apart as the first song after a start.
+			...spread(t0 + 5 * DAY_MS, 2, () => ({
 				song: "opener",
 				artist: "E",
 				ms: 3_000,
-				flags: LISTEN_FLAG.forward | LISTEN_FLAG.started,
-			},
-			{ at: t0 + 20 * DAY_MS, song: "opener", artist: "E", ms: 3_000, flags: LISTEN_FLAG.skipped },
+				flags: LISTEN_FLAG.forward | LISTEN_FLAG.opener | LISTEN_FLAG.rated,
+			})),
 			...spread(t0 + 2 * DAY_MS, 2, () => ({
 				song: "car",
 				artist: "C",
@@ -664,8 +661,8 @@ describe("size", () => {
 		void heap0;
 		expect(all.coverage.importedPlays).toBe(240_000);
 		expect(all.plays).toBe(240_000);
-		// Over 16 minutes apart: every skip is the first song after a silence.
-		expect(all.skips).toMatchObject({ early: 0, openers: 60_000 });
+		// Rows from before openers were told apart: every early skip counts.
+		expect(all.skips).toMatchObject({ early: 60_000, openers: 0 });
 		expect(h.sql.first<{ n: number }>(`SELECT COUNT(*) AS n FROM listen_pages`)!.n).toBe(400);
 		process.stdout.write(
 			`SIZE import ${Math.round(imported)} ms, profile cold ${Math.round(cold)} ms, warm ${Math.round(warm)} ms, held after ${Math.round(held / 1e6)} MB${gc ? "" : " (no gc)"}\n`,

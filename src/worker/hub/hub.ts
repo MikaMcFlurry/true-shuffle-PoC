@@ -42,7 +42,6 @@ import {
 	isEarlySkip,
 	isListenRow,
 	isListenTrack,
-	isOpener,
 	LISTEN_FLAG,
 	LISTEN_PAGE,
 	type ListenRow,
@@ -6727,9 +6726,7 @@ export class HubCore {
 		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
 		// Walked lazily: one event at a time, never the whole timeline at once.
 		return function* () {
-			if (imported) {
-				// The end of whatever played before, for telling a start's first song (see isOpener).
-				let previousEnd: number | null = null;
+			if (imported)
 				for (let i = 0; i < imported.rows; i++) {
 					const at = imported.at[i]! * 1000;
 					if (at >= liveSince) continue;
@@ -6740,8 +6737,6 @@ export class HubCore {
 						imported.meta[i * 2]!,
 						imported.meta[i * 2 + 1]!,
 					];
-					const before = previousEnd;
-					previousEnd = at;
 					const play = countsAsPlay(row);
 					const early = !play && isEarlySkip(row);
 					if (!play && !early) continue;
@@ -6757,14 +6752,14 @@ export class HubCore {
 						exact: true,
 						play,
 						earlySkip: early,
-						opener: early && isOpener((row[3] & LISTEN_FLAG.started) !== 0, at - row[2], before),
+						// Told by the import (see core/listens startTracker); older rows: never.
+						opener: early && (row[3] & LISTEN_FLAG.opener) !== 0,
 						platform: row[4],
 						shuffle: (row[3] & LISTEN_FLAG.shuffle) !== 0,
 						offline: (row[3] & LISTEN_FLAG.offline) !== 0,
 						imageUrl: null,
 					};
 				}
-			}
 			for (const r of rows) {
 				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
 				yield {
