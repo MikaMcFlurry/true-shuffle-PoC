@@ -260,6 +260,7 @@ export interface ListeningProfile {
 	 * Early skips (under 30 s, by choice) of imported plays. `early`, its share
 	 * and `top` leave out the first song after a start; those are `openers`:
 	 * Spotify's shuffle opens with the same few songs, so they say little.
+	 * Nor do they count songs heard often before they were skipped.
 	 */
 	skips: {
 		early: number;
@@ -267,6 +268,12 @@ export interface ListeningProfile {
 		top: ProfileItem[];
 		openers: number;
 		topOpeners: ProfileItem[];
+		/**
+		 * Early skips of overplayed songs (heard often first, skipped later:
+		 * see core/memory isOverplayed), also left out of `early`.
+		 */
+		overplayed: number;
+		topOverplayed: ProfileItem[];
 	} | null;
 	/** First ever heard in this period. */
 	newSongs: number;

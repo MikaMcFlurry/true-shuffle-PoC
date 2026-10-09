@@ -31,7 +31,12 @@ import {
 	type ListenTrack,
 	newListens,
 } from "../../core/listens";
-import { FAMILIAR_PLAYS, RARE_AFTER_EARLY_SKIPS, skipsWeigh } from "../../core/memory";
+import {
+	FAMILIAR_PLAYS,
+	isOverplayed,
+	RARE_AFTER_EARLY_SKIPS,
+	skipsWeigh,
+} from "../../core/memory";
 import { DAY_MS, emptyMemory } from "../../core/types";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
@@ -881,6 +886,8 @@ interface Effects {
 	rarer: number;
 	barely: number;
 	longAgo: number;
+	/** Heard often, skipped later (core/memory isOverplayed): rested, not held against. */
+	overplayed: number;
 	/** Early skips of the first song after a start, not held against it. */
 	openers: number;
 	files: number;
@@ -900,19 +907,20 @@ function effectsOf(
 	let rarer = 0;
 	let barely = 0;
 	let longAgo = 0;
-	for (const [id, plays, skips, last, skippedAt = 0] of rows) {
+	let overplayed = 0;
+	for (const [id, plays, skips, last, skippedAt = 0, before = 0] of rows) {
 		// Same rule as the planner's favourite (core/memory isFavorite), from the history alone.
 		if (plays >= FAMILIAR_PLAYS && skips <= plays * 0.2) favorites++;
+		const m = {
+			...emptyMemory(id),
+			earlySkips: skips,
+			lastPlayedAt: last > 0 ? last : null,
+			lastSkippedAt: skippedAt > 0 ? skippedAt : null,
+			playedBeforeSkips: before,
+		};
+		if (isOverplayed(m)) overplayed++;
 		// Only skips that still weigh (core/memory skipsWeigh).
-		const weighs = skipsWeigh(
-			{
-				...emptyMemory(id),
-				earlySkips: skips,
-				lastPlayedAt: last > 0 ? last : null,
-				lastSkippedAt: skippedAt > 0 ? skippedAt : null,
-			},
-			now,
-		);
+		const weighs = skipsWeigh(m, now);
 		if (weighs && skips >= RARE_AFTER_EARLY_SKIPS) barely++;
 		else if (weighs) rarer++;
 		if (plays > 0 && last > 0 && now - last >= LONG_AGO_MS) longAgo++;
@@ -924,6 +932,7 @@ function effectsOf(
 		rarer,
 		barely,
 		longAgo,
+		overplayed,
 		openers: agg.openers,
 		files,
 		from: agg.firstAt,
@@ -966,6 +975,14 @@ function EffectList({ e, done }: { e: Effects; done: boolean }) {
 						? ` Nicht mitgezählt sind ${num(e.openers)} frühe Skips des ersten Songs nach einem Start: Spotifys Shuffle beginnt gern mit denselben Songs, und die wegzuschalten heißt nicht, dass du sie nicht magst.`
 						: ""}
 				</li>
+				{e.overplayed > 0 ? (
+					<li>
+						<strong>Überhörtes macht Pause.</strong> {songs(e.overplayed)} hast du erst mindestens{" "}
+						{FAMILIAR_PLAYS}-mal ganz gehört und erst danach früh weggeschaltet: Die kamen wohl zu
+						oft, nicht ungern. true-shuffle sortiert sie nicht aus. Nach dem letzten Wegschalten
+						ruhen sie drei Monate, dann kommen sie wieder wie jeder andere Song.
+					</li>
+				) : null}
 				<li>
 					<strong>Lange nicht Gehörtes kommt eher.</strong> {songs(e.longAgo)} hast du seit über
 					einem halben Jahr nicht gehört. Sie kommen eher dran als Songs, die du gerade erst gehört

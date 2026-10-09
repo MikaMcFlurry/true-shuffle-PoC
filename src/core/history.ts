@@ -43,6 +43,11 @@ export function trackIdFromUri(uri: string | null | undefined): TrackId | null {
 
 export interface Aggregate {
 	stats: Map<TrackId, ImportedStats>;
+	/** Per song: when each counted play ended, and the first early skip (for isOverplayed). */
+	playTimes: Map<TrackId, number[]>;
+	firstSkip: Map<TrackId, number>;
+	/** Plays already folded in: the same play in two files counts once. */
+	seen: Set<string>;
 	entries: number;
 	counted: number;
 	skipped: number;
@@ -56,6 +61,9 @@ export interface Aggregate {
 export function emptyAggregate(): Aggregate {
 	return {
 		stats: new Map(),
+		playTimes: new Map(),
+		firstSkip: new Map(),
+		seen: new Set(),
 		entries: 0,
 		counted: 0,
 		skipped: 0,
@@ -92,6 +100,12 @@ export function aggregateHistory(
 			agg.ignored++;
 			continue;
 		}
+		const key = `${Math.floor(at / 1000)}:${id}`;
+		if (agg.seen.has(key)) {
+			agg.ignored++;
+			continue;
+		}
+		agg.seen.add(key);
 		let s = agg.stats.get(id);
 		if (ms >= PLAY_THRESHOLD_MS) {
 			if (!s) {
@@ -100,6 +114,9 @@ export function aggregateHistory(
 			}
 			s.plays++;
 			s.lastPlayedAt = s.lastPlayedAt === null ? at : Math.max(s.lastPlayedAt, at);
+			const times = agg.playTimes.get(id);
+			if (times) times.push(at);
+			else agg.playTimes.set(id, [at]);
 			agg.counted++;
 		} else if (e.reason_end === "fwdbtn" || e.skipped === true) {
 			if (opener) {
@@ -112,6 +129,7 @@ export function aggregateHistory(
 			}
 			s.earlySkips++;
 			s.lastSkippedAt = s.lastSkippedAt == null ? at : Math.max(s.lastSkippedAt, at);
+			agg.firstSkip.set(id, Math.min(agg.firstSkip.get(id) ?? at, at));
 			agg.skipped++;
 		} else {
 			agg.ignored++;
@@ -124,22 +142,39 @@ export function aggregateHistory(
 }
 
 /**
- * Compact wire format: [id, plays, earlySkips, lastPlayedAt|0, lastSkippedAt|0].
- * Rows stored before skips were dated have no fifth field.
+ * Compact wire format: [id, plays, earlySkips, lastPlayedAt|0,
+ * lastSkippedAt|0, playedBeforeSkips]. Older rows stop after the fourth or
+ * fifth field.
  */
 export type HistoryRow =
 	| [TrackId, number, number, number]
-	| [TrackId, number, number, number, number];
+	| [TrackId, number, number, number, number]
+	| [TrackId, number, number, number, number, number];
+
+/** Counted plays that ended before the song's first early skip (all of them if never skipped). */
+export function playedBeforeSkips(agg: Aggregate, id: TrackId): number {
+	const first = agg.firstSkip.get(id);
+	const times = agg.playTimes.get(id) ?? [];
+	return first === undefined ? times.length : times.filter((t) => t < first).length;
+}
 
 export function toRows(agg: Aggregate): HistoryRow[] {
 	const rows: HistoryRow[] = [];
 	for (const [id, s] of agg.stats)
-		rows.push([id, s.plays, s.earlySkips, s.lastPlayedAt ?? 0, s.lastSkippedAt ?? 0]);
+		rows.push([
+			id,
+			s.plays,
+			s.earlySkips,
+			s.lastPlayedAt ?? 0,
+			s.lastSkippedAt ?? 0,
+			playedBeforeSkips(agg, id),
+		]);
 	return rows;
 }
 
 export function fromRow(row: HistoryRow): [TrackId, ImportedStats] {
-	const skipped = row.length === 5 ? row[4] : undefined;
+	const skipped = row.length >= 5 ? row[4] : undefined;
+	const before = row.length === 6 ? row[5] : undefined;
 	return [
 		row[0],
 		{
@@ -148,6 +183,7 @@ export function fromRow(row: HistoryRow): [TrackId, ImportedStats] {
 			lastPlayedAt: row[3] > 0 ? row[3] : null,
 			// Dated when the row knows; undefined: an older import.
 			...(skipped === undefined ? {} : { lastSkippedAt: skipped > 0 ? skipped : null }),
+			...(before === undefined ? {} : { playedBeforeSkips: before }),
 		},
 	];
 }

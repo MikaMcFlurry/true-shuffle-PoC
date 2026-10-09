@@ -96,7 +96,7 @@ const SKIP_RULES = [
 	[
 		"later_less",
 		"Später nochmal, dann seltener",
-		"Der Song kommt in diesem Durchgang noch einmal, aber seltener. Nach drei frühen Sprüngen kommt er kaum noch. Nach einer Weile fragt true-shuffle nach: Hörst du ihn dann, zählen die Sprünge nicht mehr.",
+		"Der Song kommt in diesem Durchgang noch einmal, aber seltener. Nach drei frühen Sprüngen kommt er kaum noch. Nach einer Weile fragt true-shuffle nach: Hörst du ihn dann, zählen die Sprünge nicht mehr. Hast du ihn vorher oft ganz gehört, ruht er nur eine Weile: Er kam wohl zu oft, nicht ungern.",
 	],
 	[
 		"consume",

@@ -3,13 +3,18 @@ import { describe, expect, it } from "vitest";
 import {
 	aggregateHistory,
 	detectHistoryFile,
+	emptyAggregate,
 	fromRow,
+	playedBeforeSkips,
 	toRows,
 	trackIdFromUri,
 } from "../../src/core/history";
 import {
+	coolingDown,
 	isFavorite,
+	isOverplayed,
 	mergeMemory,
+	OVERPLAYED_REST_MS,
 	retestAfter,
 	skipsWeigh,
 	tasteWeight,
@@ -72,6 +77,88 @@ describe("memory", () => {
 		for (let i = 0; i < 3; i++) m = withEarlySkip(m, i);
 		expect(tasteWeight(m, "later_less", 3)).toBeLessThan(0.05);
 		expect(tasteWeight(m, "consume", 3)).toBe(1);
+	});
+
+	describe("overplayed: loved first, skipped later", () => {
+		const tiredOf = (before: number, skippedAt: number) =>
+			mergeMemory(emptyMemory("a"), {
+				plays: before + 2,
+				earlySkips: 12,
+				lastPlayedAt: skippedAt - DAY_MS,
+				lastSkippedAt: skippedAt,
+				playedBeforeSkips: before,
+			});
+
+		it("rests after its last skip instead of being held against, then plays like any other", () => {
+			const m = tiredOf(5, 0);
+			expect(isOverplayed(m)).toBe(true);
+			expect(skipsWeigh(m, DAY_MS)).toBe(false);
+			expect(tasteWeight(m, "later_less", DAY_MS)).toBe(1);
+			expect(coolingDown(m, OVERPLAYED_REST_MS - 1)).toBe(true);
+			expect(coolingDown(m, OVERPLAYED_REST_MS)).toBe(false);
+			// Skipped again later: rests again.
+			const again = withEarlySkip(m, 200 * DAY_MS);
+			expect(isOverplayed(again)).toBe(true);
+			expect(coolingDown(again, 201 * DAY_MS)).toBe(true);
+		});
+
+		it("four plays before the first skip are not enough; an older import does not tell", () => {
+			const m = tiredOf(4, 0);
+			expect(isOverplayed(m)).toBe(false);
+			expect(tasteWeight(m, "later_less", DAY_MS)).toBeLessThan(0.05);
+			const old = mergeMemory(emptyMemory("a"), { plays: 50, earlySkips: 12, lastPlayedAt: 1 });
+			expect(isOverplayed(old)).toBe(false);
+			// Never skipped in the import: every imported play came before a live skip.
+			const live = mergeMemory(withEarlySkip(emptyMemory("a"), 9), {
+				plays: 7,
+				earlySkips: 0,
+				lastPlayedAt: 1,
+			});
+			expect(live.playedBeforeSkips).toBe(7);
+			expect(isOverplayed(live)).toBe(true);
+		});
+
+		it("counts the plays before the first early skip, whatever the order of the files, each play once", () => {
+			const uri = `spotify:track:${"o".repeat(22)}`;
+			const play = (ts: string) => ({ ts, ms_played: 200_000, spotify_track_uri: uri });
+			const skip = (ts: string) => ({
+				ts,
+				ms_played: 3_000,
+				spotify_track_uri: uri,
+				reason_start: "trackdone",
+				reason_end: "fwdbtn",
+			});
+			const filler = (ts: string) => ({ ts, ms_played: 200_000, spotify_track_uri: null });
+			const later = [
+				filler("2025-06-01T09:59:00Z"),
+				skip("2025-06-01T10:00:00Z"),
+				play("2025-07-01T10:00:00Z"),
+			];
+			const earlier = [
+				play("2025-01-01T10:00:00Z"),
+				play("2025-01-02T10:00:00Z"),
+				play("2025-01-03T10:00:00Z"),
+				play("2025-01-04T10:00:00Z"),
+				play("2025-01-05T10:00:00Z"),
+			];
+			const agg = emptyAggregate();
+			aggregateHistory(later, agg);
+			aggregateHistory(earlier, agg);
+			// The same file twice: nothing counts twice.
+			aggregateHistory(earlier, agg);
+			const id = "o".repeat(22);
+			expect(agg.stats.get(id)).toMatchObject({ plays: 6, earlySkips: 1 });
+			expect(playedBeforeSkips(agg, id)).toBe(5);
+			expect(toRows(agg)[0]).toEqual([
+				id,
+				6,
+				1,
+				Date.parse("2025-07-01T10:00:00Z"),
+				Date.parse("2025-06-01T10:00:00Z"),
+				5,
+			]);
+			expect(fromRow(toRows(agg)[0]!)[1].playedBeforeSkips).toBe(5);
+		});
 	});
 
 	describe("asking again about a skipped song", () => {
@@ -194,7 +281,7 @@ describe("history import", () => {
 		expect(agg.openers).toBe(0);
 		const [rid, rs] = fromRow(toRows(agg)[0]!);
 		expect(rid).toBe(id);
-		expect(rs).toEqual(s);
+		expect(rs).toEqual({ ...s, playedBeforeSkips: 2 });
 	});
 });
 
