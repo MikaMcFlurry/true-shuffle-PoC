@@ -423,13 +423,6 @@ interface LaneNote {
 	seenAt: number;
 	/** The first look that no longer showed this play. */
 	goneAt?: number;
-	/** The last look that still showed this very play (not begun again), and what it saw. */
-	lastAt?: number;
-	progress?: number;
-	playing?: boolean;
-	durationMs?: number;
-	/** Seen playing, and the next song began right at its end: it ended then. */
-	endAt?: number;
 }
 
 interface PlayerSnapshot {
@@ -4910,55 +4903,25 @@ export class HubCore {
 
 	/**
 	 * Notes why a song is on its station when a look first sees it as a new
-	 * play in the station's own playlist: the look before showed another song
-	 * (or another context), or this one begun again, and the deck in that
-	 * playlist was written before that look, so this play began from this
-	 * deck. The lane is the deck's one reason for the song (null when it holds
-	 * the song for several). Each later look that still shows this very play
-	 * moves its `lastAt`; the look that no longer does closes it, with its end
-	 * when it is seen to have run out (see `laneFor`).
+	 * song in the station's own playlist: the look before showed another song
+	 * (or another context), and the deck in that playlist was written before
+	 * that look, so this play began from this deck. The lane is the deck's
+	 * one reason for the song (null when it holds the song for several).
 	 */
 	private noteLane(obs: PlayerObservation | null, shown: PlayerSnapshot | null): void {
 		const now = this.now();
 		let notes = this.laneNotes().filter((n) => now - n.seenAt < LANE_NOTE_MS);
 		const before = JSON.stringify(notes);
-		let begunAgain = false;
-		for (const n of notes) {
-			if (n.goneAt !== undefined) continue;
-			const st = this.stationRow(n.station);
-			if (st && obs?.trackId === n.id && obs.contextUri === this.deckUri(st)) {
-				if (!this.laneBegunAgain(n, obs, now)) {
-					n.lastAt = now;
-					n.progress = obs.progressMs;
-					n.playing = obs.isPlaying;
-					n.durationMs = obs.durationMs;
-					continue;
-				}
-				begunAgain = true;
-			}
-			// A look that no longer shows a noted play closes its note: that play
-			// ended by now, and a later play of the song is another one.
-			n.goneAt = now;
-			const last = n.lastAt;
-			if (
-				last !== undefined &&
-				n.playing &&
-				n.durationMs &&
-				n.progress !== undefined &&
-				obs?.trackId
-			) {
-				// Ran out (as `noteHeardSong` sees it): what plays now began at its end.
-				const end = last + n.durationMs - n.progress;
-				const next = obs.isPlaying || obs.progressMs <= DIRECT_MS;
-				if (next && Math.abs(obs.at - obs.progressMs - end) <= DIRECT_MS) n.endAt = end;
-			}
-		}
+		// A look that no longer shows a noted song closes its note: that play
+		// ended by now, and a later play of the song is another one.
+		for (const n of notes)
+			if (n.goneAt === undefined && (n.id !== obs?.trackId || this.stationRow(n.station) === null))
+				n.goneAt = now;
 		const isNew =
 			obs?.trackId &&
 			obs.contextUri &&
 			shown &&
-			(begunAgain ||
-				!(shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri));
+			!(shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri);
 		const st = isNew ? this.stations().find((x) => this.deckUri(x) === obs.contextUri) : undefined;
 		const deck = st ? this.deckOf(st) : null;
 		if (st && deck && shown && obs?.trackId && deck.writtenAt <= shown.at) {
@@ -4970,30 +4933,10 @@ export class HubCore {
 				id: obs.trackId,
 				kind: kinds.size === 1 ? ([...kinds][0] ?? null) : null,
 				seenAt: now,
-				lastAt: now,
-				progress: obs.progressMs,
-				playing: obs.isPlaying,
-				durationMs: obs.durationMs,
 			});
 		}
 		notes = notes.slice(-50);
 		if (JSON.stringify(notes) !== before) this.kvSet("lane_notes", notes);
-	}
-
-	/**
-	 * The song on the player again, but not the noted play: further back than
-	 * it was while playing, or (seen playing) it would have ended since and is
-	 * not as far in as the time since that end.
-	 */
-	private laneBegunAgain(n: LaneNote, obs: PlayerObservation, now: number): boolean {
-		if (n.lastAt === undefined || n.progress === undefined) return false;
-		if (obs.isPlaying && obs.progressMs + 5_000 < n.progress) return true;
-		return (
-			n.playing === true &&
-			obs.isPlaying &&
-			n.durationMs !== undefined &&
-			now - (n.lastAt + n.durationMs - n.progress) > obs.progressMs + 5_000
-		);
 	}
 
 	/**
@@ -5016,12 +4959,8 @@ export class HubCore {
 
 	/**
 	 * The lane for a play being recorded: the latest note of this song on this
-	 * station whose very play this provably is, used once. Spotify stamps a
-	 * play when it ends, and lists only plays of 30 s or more: a stamp within
-	 * the slack of the last look that still showed the noted play leaves no
-	 * room for another play of the song, and neither does a stamp at the end
-	 * it was seen to run out at. Anything else may be a later play the looks
-	 * never saw (a pause, a skip, the song again): no lane. No note, no lane.
+	 * station seen before the play's stamp and not closed before it ended,
+	 * used once. No note, no lane.
 	 */
 	private laneFor(stationId: number, id: TrackId, at: number): SlotKind | null {
 		const notes = this.laneNotes();
@@ -5029,10 +4968,8 @@ export class HubCore {
 		notes.forEach((n, i) => {
 			if (n.station !== stationId || n.id !== id || n.seenAt > at || at - n.seenAt > LANE_NOTE_MS)
 				return;
+			// Spotify stamps a play when it ends: by the look that saw it gone.
 			if (n.goneAt !== undefined && at > n.goneAt + LANE_STAMP_SLACK_MS) return;
-			const seen = at < (n.lastAt ?? n.seenAt) + LANE_STAMP_SLACK_MS;
-			const ranOut = n.endAt !== undefined && Math.abs(at - n.endAt) <= LANE_STAMP_SLACK_MS;
-			if (!seen && !ranOut) return;
 			if (best < 0 || n.seenAt > notes[best]!.seenAt) best = i;
 		});
 		if (best < 0) return null;
