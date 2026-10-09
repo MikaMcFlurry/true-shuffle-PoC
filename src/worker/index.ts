@@ -475,6 +475,14 @@ app.post("/api/tracks/:id/thumb", async (c) => {
 	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v));
 });
 
+// The answer to a retest ("Nachprüfung"): keep true = "Gern wieder".
+app.post("/api/tracks/:id/retest", async (c) => {
+	const b = await body<{ keep?: unknown }>(c);
+	if (typeof b.keep !== "boolean")
+		return c.json({ error: { code: "bad_verdict", message: "Ungültige Antwort" } }, 400);
+	return unwrap(c, c.var.hub.retestVerdict(c.var.epoch, c.req.param("id"), b.keep));
+});
+
 async function remoteView(
 	c: { env: Env; var: Vars },
 	k: { kid: string; createdAt: number; usedAt: number | null } | null,

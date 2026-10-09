@@ -32,19 +32,67 @@ export function retestAfter(earlySkips: number): number {
 	);
 }
 
+/** A play that ended this soon after "Eher nicht" is the play it ended. */
+export const VERDICT_SLACK_MS = 2 * 60_000;
+
+/** The latest word against the song: an early skip, or "Eher nicht". */
+export function lastNo(m: TrackMemory): number | null {
+	const no = m.verdict === -1 ? (m.verdictAt ?? null) : null;
+	if (m.lastSkippedAt === null) return no;
+	return no === null ? m.lastSkippedAt : Math.max(no, m.lastSkippedAt);
+}
+
+/** The latest word for it: a play of 30 s or more, or "Gern wieder". */
+export function lastYes(m: TrackMemory): number | null {
+	let played = m.lastPlayedAt;
+	// "Eher nicht" skips the song: the play that ends then is not a yes.
+	if (
+		played !== null &&
+		m.verdict === -1 &&
+		m.verdictAt != null &&
+		played >= m.verdictAt &&
+		played - m.verdictAt <= VERDICT_SLACK_MS
+	)
+		played = null;
+	const kept = m.verdict === 1 ? (m.verdictAt ?? null) : null;
+	if (played === null) return kept;
+	return kept === null ? played : Math.max(played, kept);
+}
+
 /**
- * Do early skips still lower the song? Only while the last word on it is a
- * skip, and only until its next check is due: then it plays like any other
- * song once more. Heard to 30 s or more since, the skips stop counting; one
- * skipped again counts again, and its next check is twice as far off. Skips
- * of unknown date (an import from before this rule) keep counting until
- * the history is imported again.
+ * Do early skips still lower the song? Only while the last word on it is
+ * against it (a skip, or "Eher nicht"), and only until its next check is
+ * due: then it plays like any other song once more. Heard to 30 s or more
+ * since, or "Gern wieder", the skips stop counting; skipped again, they
+ * count again, and the next check is twice as far off ("Eher nicht" counts
+ * as one more skip). Skips of unknown date (an import from before this rule)
+ * keep counting until the history is imported again or "Gern wieder".
  */
 export function skipsWeigh(m: TrackMemory, now: number): boolean {
 	if (m.earlySkips <= 0 || isOverplayed(m)) return false;
-	if (m.lastSkippedAt === null) return true;
-	if (m.lastPlayedAt !== null && m.lastPlayedAt > m.lastSkippedAt) return false;
-	return now - m.lastSkippedAt < retestAfter(m.earlySkips);
+	const no = lastNo(m);
+	const yes = lastYes(m);
+	if (no === null) return m.verdict !== 1;
+	if (yes !== null && yes > no) return false;
+	return now - no < retestAfter(m.earlySkips + (m.verdict === -1 ? 1 : 0));
+}
+
+/**
+ * Between two retests ("Nachprüfung") of one song: at least this long since
+ * the last word against it.
+ */
+export const PROBE_GAP_MS = 30 * DAY_MS;
+
+/**
+ * May the song be played on purpose now to see whether it is still skipped?
+ * Its skips keep it rare (see skipsWeigh), and the last word against it is
+ * at least `PROBE_GAP_MS` old (or of unknown date). Heard then, the skips
+ * stop counting; skipped, the next check moves further off.
+ */
+export function probeDue(m: TrackMemory, now: number): boolean {
+	if (!skipsWeigh(m, now)) return false;
+	const no = lastNo(m);
+	return no === null || now - no >= PROBE_GAP_MS;
 }
 
 /** A song skipped early is "nicht jetzt": kept out of decks for this long. */
@@ -126,7 +174,8 @@ export function heardInRound(m: TrackMemory, roundStartedAt: number, policy: Ski
 /** Temporarily off-limits: heard very recently, or skipped very recently. */
 export function coolingDown(m: TrackMemory, now: number): boolean {
 	if (m.lastPlayedAt !== null && now - m.lastPlayedAt < RECENT_GUARD_MS) return true;
-	if (m.lastSkippedAt !== null && now - m.lastSkippedAt < NOT_NOW_MS) return true;
+	const no = lastNo(m);
+	if (no !== null && now - no < NOT_NOW_MS) return true;
 	// Overplayed: a rest after the last skip, not a lower weight.
 	if (isOverplayed(m) && m.lastSkippedAt !== null && now - m.lastSkippedAt < OVERPLAYED_REST_MS)
 		return true;

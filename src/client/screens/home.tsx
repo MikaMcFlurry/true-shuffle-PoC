@@ -281,6 +281,19 @@ export function Home({ state }: { state: AppState }) {
 			store.say(e instanceof Error ? e.message : String(e), "error");
 		}
 	};
+	// A retest ("Nachprüfung"): the answer for the song now playing.
+	const [answered, setAnswered] = useState<{ id: string; keep: boolean } | null>(null);
+	const retest = async (keep: boolean) => {
+		if (!track || view.projected || view.awaitingObservation || unsettled) return;
+		try {
+			await api.retestVerdict(track.id, keep);
+			setAnswered({ id: track.id, keep });
+			store.say(keep ? "Gemerkt: kommt wieder wie jeder andere" : "Gemerkt: kommt seltener");
+			await store.refresh(true);
+		} catch (e) {
+			store.say(e instanceof Error ? e.message : String(e), "error");
+		}
+	};
 	// Presentation only: which station the screen is about, and how far the command signal has come.
 	const posterStation = state.stations.find((x) => x.id === session?.stationId) ?? station ?? null;
 	const startsOther = !!station && !!session && station.id !== session.stationId;
@@ -526,6 +539,43 @@ export function Home({ state }: { state: AppState }) {
 						) : null}
 					</div>
 				</div>
+
+				{track && !view.projected && ownNow?.kind === "probe" && ownNow.id === track.id ? (
+					<fieldset class="retest" aria-label="Nachprüfung">
+						{answered?.id === track.id ? (
+							<p class="transport-note" role="status">
+								{answered.keep
+									? "Danke. Der Song kommt wieder wie jeder andere."
+									: "Danke. Er kommt seltener, und true-shuffle fragt später noch einmal."}
+							</p>
+						) : (
+							<>
+								<p class="transport-note">
+									Nachprüfung: Diesen Song hast du früher oft früh weggeschaltet. Magst du ihn
+									wieder? Hörst du ihn einfach weiter, zählt das auch als Ja.
+								</p>
+								<div class="retest__keys">
+									<button
+										type="button"
+										class="key key--lit"
+										disabled={s.stale || view.awaitingObservation || unsettled}
+										onClick={() => void retest(true)}
+									>
+										Gern wieder
+									</button>
+									<button
+										type="button"
+										class="key"
+										disabled={s.stale || view.awaitingObservation || unsettled}
+										onClick={() => void retest(false)}
+									>
+										Eher nicht
+									</button>
+								</div>
+							</>
+						)}
+					</fieldset>
+				) : null}
 
 				{track ? (
 					<SongProgress

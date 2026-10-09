@@ -56,6 +56,8 @@ describe("SQLite recovery NN-02–04", () => {
 		h.sql.run("DROP TABLE playback_sessions");
 		// A store at version 3 has none of the later columns either.
 		h.sql.run("ALTER TABLE plays DROP COLUMN lane");
+		h.sql.run("ALTER TABLE memory DROP COLUMN verdict");
+		h.sql.run("ALTER TABLE memory DROP COLUMN verdict_at");
 		h.sql.run("UPDATE kv SET v = '3' WHERE k = 'schema_version'");
 		const before = h.sql.all("SELECT * FROM stations");
 		expect(() =>

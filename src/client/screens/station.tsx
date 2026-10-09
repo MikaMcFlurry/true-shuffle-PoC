@@ -735,7 +735,9 @@ export function Station({
 			<details class="fold">
 				<summary>
 					<span class="fold__title">Erweitert</span>
-					<span class="fold__sub">Favoriten, Überspringen, Künstler-Abstand, Entdeckungen</span>
+					<span class="fold__sub">
+						Favoriten, Überspringen, Künstler-Abstand, Entdeckungen, Nachprüfung
+					</span>
 					<ChevronDown class="fold__chev" size={20} aria-hidden="true" />
 				</summary>
 				<div class="fold__body">
@@ -838,6 +840,27 @@ export function Station({
 									? "An: Ab und zu kommt ein neuer Song, der nicht in deinen Playlists steht."
 									: `An: ungefähr ${discTen} von 10 Songs ${discTen === 1 ? "ist ein neuer Song, der" : "sind neue Songs, die"} nicht in deinen Playlists ${discTen === 1 ? "steht" : "stehen"}.`
 								: "Aus: Es kommen nur Songs aus deinen Playlists."}
+						</p>
+					</div>
+
+					<div class="rule">
+						<label class="rule__switch">
+							<span class="rule__label">Nachprüfung</span>
+							<input
+								type="checkbox"
+								role="switch"
+								class="switch"
+								aria-checked={rules.retestEnabled}
+								checked={rules.retestEnabled}
+								onChange={(e) => setRule({ retestEnabled: e.currentTarget.checked })}
+							/>
+						</label>
+						<p class="rule__then">
+							{rules.skipPolicy === "consume"
+								? "Bei „Zählt als gehört“ machen frühe Sprünge nichts seltener, also gibt es nichts nachzuprüfen."
+								: rules.retestEnabled
+									? "An: Höchstens einer von 30 Songs ist ein Song, den du früher oft weggeschaltet hast. Hörst du ihn oder tippst „Gern wieder“, kommt er wieder wie jeder andere; schaltest du ihn weg, fragt true-shuffle erst viel später wieder."
+									: "Aus: Früh Übersprungenes kommt erst wieder, wenn seine Pause von selbst um ist."}
 						</p>
 					</div>
 				</div>
@@ -967,6 +990,7 @@ export function NewStation() {
 								skipPolicy: "later_less",
 								discoveryEnabled: true,
 								artistSpacing: 4,
+								retestEnabled: true,
 							},
 							v,
 						)
@@ -980,6 +1004,7 @@ export function NewStation() {
 						skipPolicy: "later_less",
 						discoveryEnabled: true,
 						artistSpacing: 4,
+						retestEnabled: true,
 					}}
 					mix={mix}
 				/>

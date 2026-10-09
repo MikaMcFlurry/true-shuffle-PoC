@@ -148,6 +148,12 @@ const MIGRATIONS: string[][] = [
 			PRIMARY KEY (gen, kind, page)
 		) WITHOUT ROWID`,
 	],
+	[
+		// The listener's answer to a retest ("Nachprüfung", see core/memory
+		// skipsWeigh): 1 "Gern wieder", -1 "Eher nicht", and when.
+		`ALTER TABLE memory ADD COLUMN verdict INTEGER`,
+		`ALTER TABLE memory ADD COLUMN verdict_at INTEGER`,
+	],
 ];
 
 export function migrate(db: SqlDb): void {

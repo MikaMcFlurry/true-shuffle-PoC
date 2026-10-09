@@ -482,7 +482,9 @@ function Period({ p, choice }: { p: ListeningProfile; choice: Choice }) {
 					<p class="section__lead">
 						{percent(p.skips.share)} der Songs aus deinem importierten Verlauf hast du in den ersten
 						30 Sekunden weitergeschaltet ({num(p.skips.early)}-mal), ohne den ersten Song nach einem
-						Start und ohne Überhörtes. Am häufigsten:
+						Start und ohne Überhörtes. Aussortiert sind sie damit nicht für immer: Ab und zu spielt
+						true-shuffle einen davon zur Nachprüfung, und hörst du ihn dann, kommt er wieder wie
+						jeder andere. Am häufigsten:
 					</p>
 					<Songs rows={p.skips.top} count={(r) => `${num(r.plays)}× weg`} />
 				</Section>

@@ -47,7 +47,8 @@ function snapshot(playing = true): AppState {
 			observedAt: TIME,
 			status: playing ? "active" : "paused",
 			pending: false,
-			queue: tracks.map((track, index) => ({ entryId: `entry-${index}`, track })),
+			// Copies: a test that changes a song must not change it for the next one.
+			queue: tracks.map((track, index) => ({ entryId: `entry-${index}`, track: { ...track } })),
 		},
 		nowPlaying: {
 			...tracks[0]!,
@@ -683,4 +684,32 @@ test("very long unbroken song metadata wraps without page overflow on desktop an
 			);
 		}
 	}
+});
+
+test("a retest asks once and sends the answer", async ({ page }) => {
+	const state = snapshot();
+	state.nowPlaying!.kind = "probe";
+	const model = await setup(page, state);
+	const answers: unknown[] = [];
+	await page.route("**/api/tracks/*/retest", async (route) => {
+		answers.push([new URL(route.request().url()).pathname, route.request().postDataJSON()]);
+		await route.fulfill({ json: { skipped: false } });
+	});
+	const box = page.getByRole("group", { name: "Nachprüfung" });
+	await expect(box).toContainText("Magst du ihn wieder?");
+	await expect(page.locator(".now-copy")).toContainText("Nachprüfung");
+	await box.getByRole("button", { name: "Gern wieder" }).click();
+	await expect(box.getByRole("status")).toHaveText(
+		"Danke. Der Song kommt wieder wie jeder andere.",
+	);
+	expect(answers).toEqual([["/api/tracks/track-0/retest", { keep: true }]]);
+	expect(model.requests).not.toContain("/api/tracks/track-0/thumb");
+	expect(
+		await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+	).toBeLessThanOrEqual(0);
+});
+
+test("a song from the cassette asks nothing", async ({ page }) => {
+	await setup(page);
+	await expect(page.getByRole("group", { name: "Nachprüfung" })).toHaveCount(0);
 });

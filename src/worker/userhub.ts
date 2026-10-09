@@ -527,6 +527,9 @@ export class UserHub extends DurableObject<Env> {
 	thumb(epoch: number, trackId: string, value: -1 | 0 | 1) {
 		return this.session(epoch, () => this.hub().thumb(trackId, value));
 	}
+	retestVerdict(epoch: number, trackId: string, keep: boolean) {
+		return this.session(epoch, () => this.hub().retestVerdict(trackId, keep));
+	}
 	remoteKey(epoch: number) {
 		return this.session(epoch, () => this.hub().remoteKey());
 	}
