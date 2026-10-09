@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-next1921-independent
+
+
+ Test Files  4 passed (4)
+      Tests  24 passed (24)
+   Start at  09:20:19
+   Duration  2.16s (tests 70%, transform 20%, import 10%)
+

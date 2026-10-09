@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-evidence.v2",
-  "generated_at": "2026-10-09T08:00:14.652755+00:00",
+  "generated_at": "2026-10-09T09:27:34.140708+00:00",
   "analysis_baseline": {
     "repository_id": "R-1",
     "ref": "codex/implement-cloudflare-restart",

@@ -1,13 +1,13 @@
 {
   "schema_version": "true-shuffle.followup-review.v1",
-  "generated_at": "2026-10-09T08:00:14.652755+00:00",
+  "generated_at": "2026-10-09T09:27:34.140708+00:00",
   "target_branch": "codex/implement-cloudflare-restart",
   "target_source": "e348e838f9526bc83b92070302ba15831a87d7b8",
   "reviewed_heads": {
     "19": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
-    "20": "d716055ab27caa18bfc42639278e6b9976f9cdbd",
-    "21": "edc36e944e4cd881c7bdeb80ce443db0a212eede",
-    "22": "f228c76f82e0382184333a1745579651c838f332"
+    "20": "efee7e7c8a2fda0608cdc2f311f2b2fd5a87355e",
+    "21": "728d276a614b4fd46640efb61aa9a0f25a2444b3",
+    "22": "fd267446fddc556bc6254b146d6a224a13571e23"
   },
   "provenance": {
     "github_pr_author": "MikaMcFlurry",
@@ -22,7 +22,7 @@
     "22": "Explicit separate profile API, durable import summary, optional AI genre estimate and client charts; owner request recorded in real PR metadata, external owner chat not independently accessed."
   },
   "release_scope": {
-    "complete": true,
+    "complete": false,
     "reference_comment": 6076229569,
     "pr": 22,
     "order": [
@@ -31,11 +31,18 @@
       21,
       22
     ],
-    "functional_dependencies": "Claude explicitly reports independent sibling PRs; actual common base is e348, local merge in requested order has no conflicts. No partial release."
+    "functional_dependencies": "Claude explicitly reports independent sibling PRs; actual common base is e348, local merge in requested order has no conflicts. No partial release.",
+    "historical_completion_heads": {
+      "19": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
+      "20": "d716055ab27caa18bfc42639278e6b9976f9cdbd",
+      "21": "edc36e944e4cd881c7bdeb80ce443db0a212eede",
+      "22": "f228c76f82e0382184333a1745579651c838f332"
+    },
+    "reason": "Comment6076229569 completes older heads only; new repair comments6077103811/6077105744/6077428773 do not renew complete scope for current heads. Require renewed explicit final scope after repairs."
   },
   "combined_review": {
-    "revision": "4dc337731c6d998a946c08142f5811821e26e939",
-    "tree": "5e69c0a3732ea6cfa1d7bd764e60480434915088",
+    "revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+    "tree": "6a332d16c5e99b2f2ca137c629f6ce6d7b1b8c3e",
     "remote_merge": false,
     "merge_conflicts": false,
     "application_edits_by_codex": false
@@ -43,9 +50,9 @@
   "independence": {
     "level": "FRESH",
     "reports": [
-      "docs/ai-dev/evidence/followup-19-22/final1921-backend-review.json",
-      "docs/ai-dev/evidence/followup-19-22/profile22-backend-review.json",
-      "docs/ai-dev/evidence/followup-19-22/final1922-ui-review.json"
+      "docs/ai-dev/evidence/followup-19-22/next-9550710/next1921-backend-review.json",
+      "docs/ai-dev/evidence/followup-19-22/next-9550710/next22-backend-review.json",
+      "docs/ai-dev/evidence/followup-19-22/next-9550710/next1922-ui-review.json"
     ],
     "verdict": "NOT_READY"
   },
@@ -56,125 +63,96 @@
     "PR19-UI-02",
     "PR20-LANE-01",
     "PR21-GUEST-01",
-    "PR21-GUEST-02"
+    "PR21-GUEST-02",
+    "PR20-LANE-02",
+    "PR21-GUEST-03",
+    "PR22-AI-01",
+    "PR22-AI-02",
+    "PR22-IMPORT-RECENT",
+    "PR22-IMPORT-SILENT",
+    "PR22-CHART-A11Y"
   ],
   "findings": [
     {
-      "id": "PR20-LANE-02",
+      "id": "PR20-LANE-03",
       "severity": "P2",
       "blocking": true,
-      "title": "An unlisted short occurrence donates its lane to a later unobserved same-track occurrence",
+      "title": "Missed departure observation leaves short-play note available to label a later independent play",
       "files": [
-        "src/worker/hub/hub.ts:4894",
-        "src/worker/hub/hub.ts:4916",
-        "src/worker/hub/hub.ts:4089"
+        "src/worker/hub/hub.ts:4917",
+        "src/worker/hub/hub.ts:4948",
+        "src/worker/hub/hub.ts:4965"
       ],
-      "test": "/workspace/ts-final1921-independent/test/hub/final-lane-attacks.test.ts",
-      "test_name": "independent: unlisted short occurrence must not donate its lane to a later unobserved repeat",
-      "repro": [
-        "Onboard200tracks180s; play station; advance10s and force sync. Skip then advance1s and sync: next track id T00000000000000000001k is observed and lane fresh noted.",
-        "Advance5s, skip under30s, advance1s/sync. Provider legitimately has no recently-played entry for that short occurrence; old lane note remains.",
-        "Advance60s; controlled SQLite replacement-deck fixture updates writtenAt and same id kind=favorite. This is an explicit valid replacement fixture, not a claim of live provider publication.",
-        "FakeSpotify plays same id from replacement station context for45s entirely between app observations, then skips; sync.",
-        "Stored later history lane is fresh, borrowed from the old short occurrence; expected null for this unobserved occurrence, never old fresh."
-      ],
-      "cause": "laneFor matches only station,id,seenAt before listing and up to2days; lane notes do not bind start/end/observed occurrence and skipped-unlisted notes are never retired on observed departure.",
-      "impact": "Verlauf falsely claims why this very play occurred; later same-ID play borrows different occurrence provenance. Listening counts/order remain intact in this trace.",
-      "repair_direction": "Bind lane notes to actual observed occurrence boundaries and match listing only within supported occurrence evidence; retire/close short departed notes or return conservative null on ambiguity. Do not infer song completion from wall time.",
-      "regression_required": [
-        "Observed short skip under30s/no provider listing followed by same-ID unobserved replay from changed deck",
-        "Repeated same-ID occurrences across pause/restart and late listings",
-        "Original paused replacement/migration/queue checks preserved"
-      ]
-    },
-    {
-      "id": "PR21-GUEST-03",
-      "severity": "P2",
-      "blocking": true,
-      "title": "A nullable device id is treated as confirmed guest-device exit and guest music contaminates owner memory",
-      "files": [
-        "src/worker/hub/hub.ts:5819",
-        "src/worker/hub/hub.ts:5835",
-        "src/worker/spotify/types.ts:83"
-      ],
-      "test": "/workspace/ts-final1921-independent/test/hub/final-guest-uncertainty.test.ts",
-      "repro": [
-        "ConfigurePartyid as guest; stationplay on Party; advance10s, force sync, guestactive true.",
-        "Wrap FakeSpotify GET /me/player 200 response to set only device.id=null (documented nullable provider field). Preserve device name/type, track, progress, is_playing=true and actual fake player stillParty.",
-        "Advance10s, force sync. Actual logs claim guest device stopped and guestactive false despite no observed stop or identified non-guest device.",
-        "Actual still-Party song plays another35s then is skipped; force sync. Actual SQL ignored=0; expected1 while within prior confirmed15min guest hold."
-      ],
-      "cause": "ID-only matching correctly avoids name collisions, but every nonmatch includes unknown/null identity and unconditionally clears last/tail through endDevicePeriod. Unknown playing identity becomes invented confirmed owner exit.",
-      "impact": "Party-only listening is counted as owner listening; violates protected guest/history/account-taste behavior and truthful observed-state semantics.",
-      "repair_direction": "Distinguish unknown playing device identity from observed different non-guest ID/no-player evidence. Preserve bounded prior confirmed guest uncertainty state without extending indefinitely or selecting by ambiguous name.",
-      "regression_required": [
-        "Nullable deviceid while stillplaying on confirmed guest device, continued song listing ignored",
-        "Known owner ID confirmed exit and same-name/different-ID collision checks stayPASS",
-        "No-player, 429, missingdevice and bounded expiry/manualguest removal cases"
-      ]
-    },
-    {
-      "id": "PR22-AI-01",
-      "severity": "P2",
-      "blocking": true,
-      "title": "Optional genre AI blocks playback and every other listener operation while waiting for external inference",
-      "files": [
-        "src/worker/userhub.ts:558",
-        "src/worker/userhub.ts:97",
-        "src/worker/hub/hub.ts:6151",
-        "src/worker/hub/genres.ts:97",
-        "src/worker/hub/genres.ts:116"
-      ],
-      "preconditions": "Authenticated onboarded listener with nonempty imported artist summary and Workers AI configured; playback active.",
+      "test": "/workspace/ts-next1921-independent/test/hub/next-boundary-attacks.test.ts:6",
       "reproduction": [
-        "Use actual UserHub class, stubbing only cloudflare:workers DurableObject constructor for Node, and inject real HubCore/FakeSpotify harness.",
-        "Start u.estimateGenres(sessionEpoch) with AI run Promise held unresolved.",
-        "After AI is entered call u.playerAction(epoch,pause).",
-        "After100ms pause still unresolved and provider transport untouched. Release AI promise; estimate completes, then pause succeeds."
+        "Real HubCore onboarded 200 tracks of 180 s; app observes initial song, then arrival of T after a skip at progress 1 s, recording fresh lane note.",
+        "T is skipped after 6 s total so FakeSpotify does not list T. Another song plays 60 s without app player look. Cached snapshot remains T.",
+        "Controlled replacement deck fixture changes T reason to favorite and writtenAt, preserving track/order. Invoke actual HubCore.saveDeck so closeLaneNotes executes; restart HubCore over same sqlite.",
+        "Spotify plays T again in same playlist for 45 s entirely between app looks; skip, force real HubCore sync. Spotify listing creates one counted T history row."
       ],
-      "expected": "Optional profile inference must not own the account-wide player/state lock for an unbounded remote wait; owner pause/device actions and observation must remain responsive, with fenced publication of the eventual estimate.",
-      "actual": "estimateGenres uses session→exclusive and awaits the entire provider call. All later operations queue behind it. Workers AI path has no deadline; installed Anthropic SDK constructor here uses defaults timeout10minutes and maxRetries2 (source-read, not a live latency measurement).",
-      "evidence": [
-        "/tmp/profile22-attacks.log",
-        "/tmp/profile22-combined-attacks.log",
-        "/tmp/profile22-backend-check/test/hub/profile22-independent.test.ts"
+      "expected": "The later occurrence has no proven link to the short earlier arrival. Return null for its lane rather than asserting fresh or inferring favorite from current deck. Retain observed paused long-occurrence lane where a matching occurrence is established.",
+      "actual": {
+        "old_note_kind": "fresh",
+        "replacement_kind": "favorite",
+        "history_kind": "fresh",
+        "history_T_rows": 1,
+        "history_ignored": false,
+        "played_at": 1790316182500
+      },
+      "cause": "closeLaneNotes compares only track id to cached player and exempts T even when snapshot is stale. Next closing look sets goneAt to now, so the listing ending before now passes the stamp bound and consumes old note. Missing intermediate look defeats occurrence binding.",
+      "impact": "False reason-of-play label in persisted History; no demonstrated changed queue/count/transport effect.",
+      "repair_direction": "Fence lane note consumption to the actual observed occurrence and provenance; ambiguous unobserved departures/repeats must yield null. Do not use wall time alone to fabricate completion or close genuine paused occurrence.",
+      "required_checks": [
+        "This missed-look/restart controlled replacement regression",
+        "Original PR20-LANE-02 with departure look",
+        "Original paused same-occurrence across long pause/replacement",
+        "Listing dedup/count, read-only history, native/private/guest and stable queue regressions"
       ],
-      "repair_direction": "Move optional inference off critical per-listener lock with bounded attempt/publish lifecycle, retain epoch/account/generation fencing and cache/coalescing; add bounded provider timeout/retry policy.",
-      "required_regressions": [
-        "Held/slow AI while pause/resume/next/state/device/logout operate",
-        "AI timeout/failure and eventual stale completion",
-        "Concurrent requests coalesce; newer import/account state prevents stale publication"
-      ]
+      "evidence": "/tmp/next1921-fullregression.log",
+      "limits": "Controlled deck publication fixture invokes real persistence/closure logic; no claim this exact replacement was reproduced through public rebuild workflow or live Spotify. FakeSpotify is simulation, not live latency/quota evidence."
     },
     {
-      "id": "PR22-AI-02",
+      "id": "PR22-AUTH-01",
       "severity": "P2",
       "blocking": true,
-      "title": "Six-hour genre gate disappears on provider failures/refusals and permits immediate repeated paid requests",
+      "title": "Coalesced genre request bypasses the callers session epoch validation",
       "files": [
-        "src/worker/hub/hub.ts:6133",
-        "src/worker/hub/hub.ts:6151"
+        {
+          "path": "src/worker/userhub.ts",
+          "line": 564
+        },
+        {
+          "path": "src/worker/index.ts",
+          "line": 562
+        }
       ],
+      "preconditions": "A valid current listener session has an active genre estimate; another still correctly signed/unexpired cookie for the same account has a revoked epoch. No cross-account forgery is involved.",
       "reproduction": [
-        "Store valid imported summary with positive artist minutes.",
-        "Use Workers AI returning response refused (unusable JSON).",
-        "Call estimateGenres three times at unchanged clock, restarting HubCore between attempts."
+        "Create actual UserHub around onboarded HubCore with imported profile and hold optional AI promise.",
+        "Start estimateGenres(currentEpoch).",
+        "Call estimateGenres(currentEpoch-1) before provider resolves: it returns same promise without running session(epoch).",
+        "Release usable provider response: stale RPC returns ok:true and private genre result.",
+        "Repeat through actual Worker.fetch POST/api/profile/genres, x-ts:1 and correctly signed test cookie whose epoch is currentEpoch-1: HTTP200 with current profile estimate/summary instead of401."
       ],
-      "expected": "Documented at-most-every-six-hours inference/request policy must cover failed or refused attempts durably, preserve old successful result and provide honest retry timing.",
-      "actual": "Three AI calls occur (test expected1, observed3). Only successful genre_estimate.at is stored. No successful estimate, or an expired previous result, leaves each retry immediately eligible; persists across restart.",
+      "expected": "Every caller validates its own session epoch even when joining an active flight, and revoked-session requests cannot read current private result. Keep optional provider await outside playback lock.",
+      "actual": "RPC ok:true; HTTP200 JSON contains current estimate {source:workers-ai,genres:[{name:Pop,share:100}],summary:Sensitive taste}.",
+      "cause": "genreFlight is checked/returned before session(epoch); only first caller supplies epoch used for prepare/store gates.",
+      "impact": "Account logout/revocation contract is bypassed for a previously revoked session while another current session has an active genre estimate. This is a material auth/privacy regression, not an unauthenticated route or cross-account-ID bypass.",
+      "repair_direction": "Validate each caller independently before joining scoped flight, retain coalescing and result/store fencing, and ensure old epoch cannot reuse a new epoch flight.",
+      "required_tests": [
+        "Current and revoked signed cookie concurrent POSTs must produce200/401 respectively.",
+        "Valid concurrent requests still share exactly1provider call.",
+        "Pause remains unblocked during provider await.",
+        "Logout/new epoch and delayed provider result tests retain authorization/store fencing."
+      ],
       "evidence": [
-        "/tmp/profile22-attacks.log",
-        "/tmp/profile22-combined-attacks.log",
-        "/tmp/profile22-backend-check/test/hub/profile22-independent.test.ts"
-      ],
-      "repair_direction": "Store bounded durable attempt deadline before issuing inference, with concurrency protection; retain previous result, distinguish attempt/retry from successful-estimate age and provider429 if provided.",
-      "required_regressions": [
-        "Initial failure/refusal/malformed/timeout repeated clicks",
-        "Expired successful estimate then repeated failures",
-        "Concurrent requests/restart six-hour boundary",
-        "Provider429 and prior estimate retention"
+        "/tmp/next22-backend-test2.log",
+        "/tmp/next22-backend-check/test/hub/next22-independent.test.ts:93",
+        "/tmp/next22-backend-check/test/hub/next22-independent.test.ts:110"
       ]
-    },
+    }
+  ],
+  "nonblocking_historical_findings": [
     {
       "id": "PR22-INPUT-01",
       "severity": "P3",
@@ -215,329 +193,85 @@
         "/tmp/profile22-attacks.log"
       ],
       "repair_direction": "Validate finite/bounded played milliseconds; show summary failure explicitly while retaining legacy import result."
-    },
-    {
-      "id": "PR22-IMPORT-RECENT",
-      "priority": "P2",
-      "blocking": true,
-      "files": [
-        "src/client/screens/menu.tsx:995-1009"
-      ],
-      "reproduction": "state.history.liveSince=2026-09-01; choose valid extended Streaming_History_Audio export of120s song2026-09-15. Whole-profile contains1play, legacy pre-live rows empty. UI rejects file as no importable song and never offers Übernehmen.",
-      "expected": "Allow valid whole-profile summary independently of pre-live memory import; preserve existing no-doublecount memory fence.",
-      "regressions": [
-        "all-recent export with nonempty profile",
-        "mixed old/recent export",
-        "profileonly save does not alter memory/queue/history"
-      ],
-      "severity": "P2"
-    },
-    {
-      "id": "PR22-IMPORT-SILENT",
-      "priority": "P2",
-      "blocking": true,
-      "files": [
-        "src/client/screens/menu.tsx:1021-1023"
-      ],
-      "reproduction": "Valid older export; history/import responds200; history/profile responds503 profile summary refused. UI presents Übernommen completion, zero alert, Dein Hörprofil ansehen link although no profile persisted.",
-      "expected": "Explicit partial success for memory and failed profile save; allow summary retry without pretending completion or destructive reimport.",
-      "regressions": [
-        "503401413/profile save",
-        "offline between two stages",
-        "retry summary preserves successful memory import"
-      ],
-      "severity": "P2"
-    },
-    {
-      "id": "PR22-CHART-A11Y",
-      "priority": "P2",
-      "blocking": true,
-      "files": [
-        "src/client/screens/profile.tsx:341-395",
-        "src/client/screens/profile.tsx:429-456"
-      ],
-      "reproduction": "Fixture Monday08=73,Tuesday08=101; heat ariaSnapshot only image Songs nach Wochentag und Uhrzeit. Keyboard opens Als Tabelle, but it has24rows Uhrzeit/Songs with08=174; weekday breakdown inaccessible. Months Aug2026=219min/73plays Sep2026=303min/101plays: accessibility snapshot img Stunden pro Monat exposes labels Aug26/Sep26 and strongest5 only, no Aug3.65h/73plays or values table. Cell/bar title attributes are nonfocusable and children roleimg presentational.",
-      "impact": "New central statistics journey denies nonvisual/keyboard users the data that sighted hover supplies; WCAG1.1.1/1.3.1 equivalent chart data missing.",
-      "expected": "Accessible equivalent of all168weekday/hour values and all monthly/annual minutes/plays; summary may remain but must not replace data.",
-      "regressions": [
-        "keyboard-open full heat table with weekdayheaders/cellcounts",
-        "nonvisual per-month/year counts/time",
-        "mobile both themes full table no clipping"
-      ],
-      "severity": "P2"
     }
   ],
-  "checks": {
+  "checks_current": {
+    "unit_worker": {
+      "status": "PASS",
+      "count": 511,
+      "default_timeout": true
+    },
+    "browser": {
+      "status": "PASS",
+      "count": 46,
+      "environment": "Real Worker/FakeSpotify local isolated E2E"
+    },
+    "resume_assertions": {
+      "status": "PASS",
+      "count": 11,
+      "original_assertions_unchanged": true
+    },
     "typecheck": "PASS",
-    "lint": "PASS; two existing informational suggestions",
+    "lint": "PASS",
     "build": "PASS",
     "worker_dry_run": "PASS",
-    "unit_worker": "PASS 506/506 on default configuration; only original61h testcase has explicit120s timeout, functional assertions unchanged",
-    "browser": "PASS 44/44 original realWorker/FakeSpotify tests",
-    "original_resume": "PASS 11/11 unchanged inherited assertions, only local import paths adjusted",
-    "independent_backend_20_21": "184 existing checks PASS; new attacks1PASS/2FAIL",
-    "independent_profile_backend": "11 existing PASS;9 attacks5PASS/4FAIL (two blocking, two nonblocking malformed-input notes)",
-    "independent_ui": "14 targeted actual built-client mock-API checks PASS;3 blocking new profile findings",
-    "root_reproductions": "Independently reran short skipped lane-note, nullable guest-ID and both AI assertions against actual combined source: all4 expected-invariant assertions FAIL",
-    "browser_limits": "Mocked UI API and FakeSpotify are labeled and are not live Spotify acceptance; Chromium accessibility tree directly inspected, physical screen-reader speech NOT_RUN"
+    "independent_backend_20_21": {
+      "pass": 161,
+      "fail": 1,
+      "additional_native_pass": 17
+    },
+    "independent_backend_22": {
+      "pass": 18,
+      "fail": 2,
+      "known_nonblocking_input_skipped": 2
+    },
+    "independent_ui": {
+      "pass": 20,
+      "fail": 0
+    },
+    "parent_reproductions": {
+      "lane_fail": 1,
+      "auth_fail": 2
+    },
+    "github_exact_heads": {
+      "19": 37896493278,
+      "20": 37903181474,
+      "21": 37902477002,
+      "22": 37905877931
+    },
+    "github_all_verify": "PASS",
+    "preview_workers_builds": "FAIL; immediate cause unconfirmed, not a claimed production deployment",
+    "artifact_directory": "docs/ai-dev/evidence/followup-19-22/next-9550710"
   },
-  "github_ci": {
-    "19": {
-      "run": 37896493278,
-      "job": 113708927462,
-      "head": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
-      "result": "PASS486unit/42browser/dry"
-    },
-    "20": {
-      "run": 37897045025,
-      "job": 113710645379,
-      "head": "d716055ab27caa18bfc42639278e6b9976f9cdbd",
-      "result": "PASS489unit/41browser/dry"
-    },
-    "21": {
-      "run": 37895821766,
-      "job": 113706814826,
-      "head": "edc36e944e4cd881c7bdeb80ce443db0a212eede",
-      "result": "PASS492unit/42browser/dry"
-    },
-    "22": {
-      "run": 37897509448,
-      "job": 113712128189,
-      "head": "f228c76f82e0382184333a1745579651c838f332",
-      "result": "PASS497unit/42browser/dry"
-    },
-    "authority": "Actual GitHub connector run metadata, jobs and logs read; no synthetic-head inference. Preview Workers Builds still FAIL, immediate cause not proven; Claude has no preview credentials."
-  },
-  "production": {
+  "read_only_production_current": {
     "source": "e348e838f9526bc83b92070302ba15831a87d7b8",
     "version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
     "deployment": "238016d2-534e-4a34-a49d-93088b03ba17",
     "traffic_percent": 100,
-    "changed": false,
-    "current_readback": "Authenticated Wrangler deployment/version/100% list,19/19 exact assets,health200configured,protected reads401,missingmarker/foreignoriginPOST403 PASS. Detailed runtime/bindings/namespaces/migrationv1/variable/secret preservation evidence retained from prior actual release; not freshly reread this watch.",
-    "prior_integrated_ci": "37844932181 remains historical FAIL; candidate testcase-only timeout fix is verified and green on all four heads but not merged."
+    "observed_at": "2026-10-09T09:27:34.140708+00:00",
+    "authenticated_deployment_listing": "PASS",
+    "exact_public_assets": {
+      "pass": 19,
+      "fail": 0
+    },
+    "health_auth_csrf": "PASS",
+    "anonymous_browser": "390/1440 light/dark PASS; no JS errors; protected profile shows sign-in",
+    "unchanged": true,
+    "full_runtime_bindings_secrets_snapshot": "NOT_RERUN; previous verified release evidence retained, no release mutation this run"
   },
-  "actions": {
-    "application_merge": false,
-    "upload": false,
-    "activate": false,
-    "rollback": false,
-    "comments": {
-      "19": 6076864105,
-      "20": 6076860367,
-      "21": 6076860537,
-      "22": 6076875688
-    },
-    "prior_comments_not_duplicated": true
+  "communication_current": {
+    "20": 6078170512,
+    "21": 6078176836,
+    "22": 6078155613,
+    "19": "No duplicate comment; prior correction remains closed, unchanged head."
   },
-  "limits": [
-    "Physical iPhone NOT_RUN",
-    "Live Spotify latency/quota/real second device NOT_RUN",
-    "Private HA/MA NOT_RUN",
-    "Actual populated DurableObject restore and production migration5 NOT_RUN",
-    "Actual owner export import NOT_RUN",
-    "Live AI inference NOT_RUN"
-  ],
-  "artifacts": [
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-import.log",
-      "sha256": "08aca4735ec26a545d9a809403ff0e65663c31e299066abd3428c66e3ea24713"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-ui.log",
-      "sha256": "bac7eaf34577ed38fbd2067e9f70ae5aebc41a1d655d991495843f831e908885"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-e2e.log",
-      "sha256": "b374e231882a18e70fdf8d4b997a84b97ad9430a272f79524594c344f9b5661c"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-dry.log",
-      "sha256": "a8f7d3d852a98f83f0eb60d0d2266736b16ada2c138257a3504e40c659455cb0"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-build.log",
-      "sha256": "ebade2623f8f9b78046a0eac78c088ffdfee5307cc002d2459314c268c6e1d48"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-lint.log",
-      "sha256": "daf2112c7eb324bed50c638ba71a5daf4b9f769cbdf0b0e98828ea4fd3f49758"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-unit.log",
-      "sha256": "58232b84393f167f1412786e5769b9ad8a24bfd94588e1c22503f9392d40e99f"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-type.log",
-      "sha256": "9426b9d0125eac64d63ec1f4619df0af4298c258ca744576bb9daa6fb55b5cc6"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-ui-review.json",
-      "sha256": "822a1f4fe95a69f0af66f5a6ea7e9ed4052fd9f47f31ed3898b56386efe307ac"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-ui-results.json",
-      "sha256": "1f3894ea2616564fe5bd28b51df1c9ae657aa350c95797dbbab9e8c724ec0330"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-import-results.json",
-      "sha256": "c6f380216af892e8c9e49dd06fa7565b9a33da38fc9e1011a70189576e4b9bc9"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-import.mjs",
-      "sha256": "707e2614214ca8924fd3ce6895f366024788118e9aa24b0c933bf2aebb0cb530"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-ui.mjs",
-      "sha256": "7f51e7b4a5b40beb26e45b50bf89570f6dfc0660f205b0d929322903bc764120"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-import-silent503.png",
-      "sha256": "ce3aed5a1fd8ecfd0a842c9ab78f76bd15df4f7fa1a684e390e5eaed35f0a269"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-import-recent.png",
-      "sha256": "af362821f69ac62e7b2909947d81ecbd048af77828723b20796ac59b0296aaf7"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-profile-1440-dark.png",
-      "sha256": "b90c9f7fb87af3a52a8f88b812cacbf295285fd9ea81bce14a80fa14b80371e1"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-profile-1440-light.png",
-      "sha256": "e0574cedfe769afcc3290a1d99e778dc5737dc4018bc4b5f062befaedc22caab"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-profile-390-dark.png",
-      "sha256": "d66e701813446101d12d0432ed3dd10eb4211557d472d4881392eacaf2727ec6"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-profile-390-light.png",
-      "sha256": "4e9427893181abe06233680b5aa5299666bb5e42efe2bcc99b25ba8a7771b32a"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1922-profile-aria.txt",
-      "sha256": "3d8a24fd5464b478aedbb5342e397c5b6565ae61eff04d458f007650c783351e"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1921-backend-attacks.log",
-      "sha256": "3734d0f7dd74dd53b5c12341e739b589f1f9f377e90fce359cf21d12d91c22e4"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1921-backend-guest-uncertainty.log",
-      "sha256": "2c84e9c62fcc82f9292ff9ff1452c051d073dff6527934d0c14a85f03dfe775d"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1921-backend-preservation.log",
-      "sha256": "9c1b680059cad3318582649931a2629c806079713199921c5042eb20dfd0947f"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1921-backend-lane-attacks.log",
-      "sha256": "af3641be233264f8a1ab29e788c5b84419834ae21008e35073556bf8bc6a45b9"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1921-backend-original.log",
-      "sha256": "063c0e0d6debfe616ac63802fb759af30440d6734fb2e5c93362da74179f9500"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-combined-attacks.log",
-      "sha256": "9838aa9c2590fa8e6807a7be65141f5f301b5ddbd8e95b12628a861948937fa2"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-parent.log",
-      "sha256": "e36c199f32d623715f69a3f505d010cecf7ea365ebe1a07d18a0a70b372d7dbf"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-attacks.log",
-      "sha256": "43de1086a6c21e61dfac26974041fa4fc98c1c75962a03ea95d8383244b4afda"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-existing.log",
-      "sha256": "04970107d8203f2348fbf8c06b5f32b83f859719228fbf974dc4ad4d2f45cf54"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final1921-backend-review.json",
-      "sha256": "6901ef53007b07cc6f803c2cb3b795d6b68d343f7b22e2e768e7e5fb2278c43f"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-backend-review.json",
-      "sha256": "a1759798a1c4cfbdd6229b62a6e25a11600160242bf6eb4f4eae7afc3336e7df"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/18-public-assets.json",
-      "sha256": "7d535f128d7831e3eb9fa955e11c498ea75ee00632eb3018338f5a2365c7028d"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/ts97-public-auth.json",
-      "sha256": "6905b687571c3bf83e7c28b64664589cfc9efbb5df41dda70c19a3a35bffef27"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-workers-stub.ts.txt",
-      "sha256": "2ae5f5865ddc627878d0c822cdfcaaecc5b8293e7c2bea89acb9ac00c12ebebe"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final-lane-attacks.test.ts.txt",
-      "sha256": "0949f8b239aa7aac1f248d6f5e707fd254519aa43a390400e463c656d7475768"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final-guest-uncertainty.test.ts.txt",
-      "sha256": "f60a43d271d4d25c990c8ef4282b46c4c1eaf1aba6a3e10c602f878ff0cebc13"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final20-independent.test.ts.txt",
-      "sha256": "809afb305a7be45f89135c1faad576b9e34288e058bfc113c1be4b89e924144f"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final21-independent.test.ts.txt",
-      "sha256": "06cad0907c74310c84a57e030aec6eea7b7df3c7474a9ceadd6074e5530a9b2e"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-independent.test.ts.txt",
-      "sha256": "457bea0477aa02adcd57e12be31d28bdedeabf890abfa9160dc5abd2466465eb"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-vitest.config.ts.txt",
-      "sha256": "e1e00063b7f378dd3b517a17d172ff12422572f9fb8eeaf7862455c0819ce496"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/checks.log",
-      "sha256": "7dfd5856e916304339c98904285db393cfaef0daaa838a16de4e56fe0d493acf"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/inherited.test.ts.txt",
-      "sha256": "d3c3fc8735c3ab01afdc269e373fd5f41ef93ae59122022196dd19f99fc43eca"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/boundaries.test.ts.txt",
-      "sha256": "77bd8e6fd118a64f68459b26896f9eaa119f0a3381687347a50391124a123428"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/config.mts.txt",
-      "sha256": "fbd7e2a455535095a19262a2e439f5c8415a417147510f8368a3b34342c159dd"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final-lane-parent.test.ts.txt",
-      "sha256": "d43edc05d9cd4150a95176ab8a0cdf64be6a62c7a8924fc3401f660edfa460c9"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final-guest-parent.test.ts.txt",
-      "sha256": "f3e35315b9905b158ba4b15898aa942fc4ec545decd480a033e9e88bf5274410"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/profile22-parent.test.ts.txt",
-      "sha256": "f21c2855abe01c32fabe694fbaa52cf7007850841cec0a665980ff0862e56c1f"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final-lane-parent.log",
-      "sha256": "bc94944d15b3bf2594045c460191a63c9b489ac45dfd4e449396c7720ae2f757"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/final-guest-parent.log",
-      "sha256": "d4312cde5f539edf5f1d4667f8890e27dcc3e3cdb3f2e5cf1658dc51009b000e"
-    },
-    {
-      "file": "docs/ai-dev/evidence/followup-19-22/github-checks.json",
-      "sha256": "50d1d35054c7b29325992ce073af8944d1795c0984dce9198226c8f8b68b9bab"
-    }
+  "historical_review_ref": "docs/ai-dev/evidence/followup-19-22/prior-4dc3377-FOLLOWUP_19_22_REVIEW.json",
+  "not_run": [
+    "Physical iPhone Safari",
+    "Live Spotify latency/quota/real second device",
+    "Private HA/MA",
+    "Actual populated DurableObject restore",
+    "Live owner export",
+    "Live AI provider"
   ]
 }

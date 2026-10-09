@@ -34,11 +34,13 @@
     "PR17→16 externally integrated and verified97e6; allRESUME regressionsclosed",
     "PR18 final4b0a independently reviewed; GitHub merge e348, actualautomaticWorkersBuildsdd344/238016100% verified;486unit/41browser/11RESUMEPASS; historicalkindnull andUnicodecontrastfixed; no duplicateactivation",
     "2026-10-09 sibling19/20/21 separatelyreviewed;localcombined492/42/11/staticPASS;fiveblockingP2scommented;productionunchanged",
-    "Explicit19–22 completion and corrections independently reviewed on combined4dc3377; previousfiveclosed,newsevenblockingP2s;506/44/11/default/static andall4sourceCI PASS; productionunchanged."
+    "Explicit19–22 completion and corrections independently reviewed on combined4dc3377; previousfiveclosed,newsevenblockingP2s;506/44/11/default/static andall4sourceCI PASS; productionunchanged.",
+    "Current9550710 repairs reviewed: seven prior blockers closed;511/46/11/static PASS; three fresh independent reviews identify two new blockers; production unchanged read-only verified."
   ],
   "in_progress": [],
   "blocked": [
-    "Seven blocking candidate P2s, seeFOLLOWUP_19_22_REVIEW.json",
+    "Two blocking candidate P2s PR20-LANE-03/PR22-AUTH-01; see FOLLOWUP_19_22_REVIEW.json",
+    "Renewed explicit complete-scope comment for matching final heads required",
     "Physical owner Spotify/iPhone/privateHA acceptance unavailable",
     "Actual populated DurableObject restore/production migration5 not run"
   ],
@@ -53,12 +55,12 @@
     "Runtime/bindings/variables/secretbindings/namespaces/migrationv1 unchanged"
   ],
   "next_actions": [
-    "Read actual replies/diffs to6076860367/6076860537/6076875688; rerun concrete regressions and fresh independent review on new heads.",
-    "Require renewed complete final scope after material corrections; no partial release.",
-    "Revalidate current target and all heads before authorized ordered integration, then verify actual integrated source and existing deployment workflow.",
-    "Retain actual productione348/dd344/238016; do not repeat unchanged findings or releases."
+    "Read actual replies/diffs to6078170512/6078155613; reproduce lane/auth corrections on new exact heads in fresh independent review.",
+    "Require renewed explicit complete final scope with all final heads; do not release partial siblings.",
+    "Before authorized ordered integration revalidate actual target and all reviewed heads; verify integrated source and full existing deployment identity/bindings/secrets before upload/activation.",
+    "Retain existing e348/dd344/238016100%; no duplicate unchanged comment/merge/deployment."
   ],
-  "updated_at": "2026-10-09T08:00:14.652755+00:00",
+  "updated_at": "2026-10-09T09:27:34.140708+00:00",
   "deployment": {
     "schema_version": "true-shuffle.deployment.v1",
     "recorded_at": "2026-10-08T21:16:38.606698+00:00",
@@ -128,12 +130,12 @@
   "candidate_review": {
     "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
     "ledger": "docs/ai-dev/evidence/FOLLOWUP_19_22_LEDGER.json",
-    "local_combined_revision": "4dc337731c6d998a946c08142f5811821e26e939",
+    "local_combined_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
     "heads": {
       "19": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
-      "20": "d716055ab27caa18bfc42639278e6b9976f9cdbd",
-      "21": "edc36e944e4cd881c7bdeb80ce443db0a212eede",
-      "22": "f228c76f82e0382184333a1745579651c838f332"
+      "20": "efee7e7c8a2fda0608cdc2f311f2b2fd5a87355e",
+      "21": "728d276a614b4fd46640efb61aa9a0f25a2444b3",
+      "22": "fd267446fddc556bc6254b146d6a224a13571e23"
     },
     "completion_comment": 6076229569,
     "closed_prior_findings": [
@@ -141,7 +143,19 @@
       "PR19-UI-02",
       "PR20-LANE-01",
       "PR21-GUEST-01",
-      "PR21-GUEST-02"
+      "PR21-GUEST-02",
+      "PR20-LANE-02",
+      "PR21-GUEST-03",
+      "PR22-AI-01",
+      "PR22-AI-02",
+      "PR22-IMPORT-RECENT",
+      "PR22-IMPORT-SILENT",
+      "PR22-CHART-A11Y"
+    ],
+    "completion_covers_current_heads": false,
+    "open_findings": [
+      "PR20-LANE-03",
+      "PR22-AUTH-01"
     ]
   }
 }

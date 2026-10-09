@@ -1,0 +1,114 @@
+{
+  "schema_version": "true-shuffle.independent-review.v1",
+  "generated_at": "2026-10-09T09:23:42.814870+00:00",
+  "independence": "FRESH",
+  "reviewer": "/root/next22_backend",
+  "verdict": "NOT_READY",
+  "subject": {
+    "repository": "MikaMcFlurry/true-shuffle-PoC",
+    "target_branch": "codex/implement-cloudflare-restart",
+    "pr": 22,
+    "pr_head": "fd267446fddc556bc6254b146d6a224a13571e23",
+    "combined_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+    "tree": "6a332d16c5e99b2f2ca137c629f6ce6d7b1b8c3e",
+    "environment": "isolated Node/Vitest, actual HubCore/FakeSpotify and actual UserHub/Worker; only Cloudflare DurableObject superclass stubbed"
+  },
+  "reviewed_files": [
+    "src/worker/hub/genres.ts",
+    "src/worker/userhub.ts",
+    "src/worker/hub/hub.ts",
+    "src/worker/index.ts",
+    "test/hub/listening-profile.test.ts",
+    "test/worker/genre-userhub.test.ts"
+  ],
+  "checks": [
+    {
+      "command": "npx vitest run --config next22-vitest.config.ts",
+      "status": "FAIL",
+      "passed": 18,
+      "failed": 2,
+      "skipped": 2,
+      "test_files": 3,
+      "log": "/tmp/next22-backend-test2.log",
+      "tests": "/tmp/next22-backend-check/test/hub/next22-independent.test.ts",
+      "config": "/tmp/next22-backend-check/next22-vitest.config.ts",
+      "failed_assertions": "RPC stale epoch expected auth401; signed-cookie route expected HTTP401, received current listener profile HTTP200."
+    }
+  ],
+  "closed_findings": [
+    {
+      "id": "PR22-AI-01",
+      "status": "PASS",
+      "evidence": "Actual UserHub session queue: owner pause completes while AI promise pending. Concurrent valid requests return same result and make1provider call; original regression and independent prior attack pass."
+    },
+    {
+      "id": "PR22-AI-02",
+      "status": "PASS",
+      "evidence": "Independent3failure/restart requests at same synthetic clock make1call. Original6-hour boundary/cache-retention test passes. New20-second fake-timer timeout returnsfailed, suppresses retry across restart; late resolved AI result never persists."
+    }
+  ],
+  "extra_passes": [
+    "Logout while AI runs prevents late publish with auth401; genre_estimate remains null.",
+    "Import while AI runs invalidates attempt; no old estimate publishes.",
+    "Two account imports remain isolated.",
+    "Profile/history/profile/genre routes require signed cookie and CSRF marker when no shared flight; profile GET rejects old cookie after logout.",
+    "DST/local month boundary and owner/native ignored rows: correct read-only counts with unchanged kv.",
+    "Malformed/empty model genres are unusable."
+  ],
+  "open_findings": [
+    {
+      "id": "PR22-AUTH-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Coalesced genre request bypasses the callers session epoch validation",
+      "files": [
+        {
+          "path": "src/worker/userhub.ts",
+          "line": 564
+        },
+        {
+          "path": "src/worker/index.ts",
+          "line": 562
+        }
+      ],
+      "preconditions": "A valid current listener session has an active genre estimate; another still correctly signed/unexpired cookie for the same account has a revoked epoch. No cross-account forgery is involved.",
+      "reproduction": [
+        "Create actual UserHub around onboarded HubCore with imported profile and hold optional AI promise.",
+        "Start estimateGenres(currentEpoch).",
+        "Call estimateGenres(currentEpoch-1) before provider resolves: it returns same promise without running session(epoch).",
+        "Release usable provider response: stale RPC returns ok:true and private genre result.",
+        "Repeat through actual Worker.fetch POST/api/profile/genres, x-ts:1 and correctly signed test cookie whose epoch is currentEpoch-1: HTTP200 with current profile estimate/summary instead of401."
+      ],
+      "expected": "Every caller validates its own session epoch even when joining an active flight, and revoked-session requests cannot read current private result. Keep optional provider await outside playback lock.",
+      "actual": "RPC ok:true; HTTP200 JSON contains current estimate {source:workers-ai,genres:[{name:Pop,share:100}],summary:Sensitive taste}.",
+      "cause": "genreFlight is checked/returned before session(epoch); only first caller supplies epoch used for prepare/store gates.",
+      "impact": "Account logout/revocation contract is bypassed for a previously revoked session while another current session has an active genre estimate. This is a material auth/privacy regression, not an unauthenticated route or cross-account-ID bypass.",
+      "repair_direction": "Validate each caller independently before joining scoped flight, retain coalescing and result/store fencing, and ensure old epoch cannot reuse a new epoch flight.",
+      "required_tests": [
+        "Current and revoked signed cookie concurrent POSTs must produce200/401 respectively.",
+        "Valid concurrent requests still share exactly1provider call.",
+        "Pause remains unblocked during provider await.",
+        "Logout/new epoch and delayed provider result tests retain authorization/store fencing."
+      ],
+      "evidence": [
+        "/tmp/next22-backend-test2.log",
+        "/tmp/next22-backend-check/test/hub/next22-independent.test.ts:93",
+        "/tmp/next22-backend-check/test/hub/next22-independent.test.ts:110"
+      ]
+    }
+  ],
+  "known_unchanged_nonblocking": [
+    "Earlier P3 malformed month-string coercion and Infinity imported-play input attacks skipped intentionally; unchanged old findings are not duplicated as new blockers."
+  ],
+  "not_run": [
+    "Live Cloudflare DurableObject runtime for custom attacks",
+    "Live AI providers and real service latency",
+    "Physical iPhone and live Spotify/HA/private populated restore",
+    "Production deploy/runtime/asset checks (owned by root)"
+  ],
+  "limitations": [
+    "Timeout20seconds proved with simulated timer/provider promise; not live latency or quota acceptance.",
+    "Actual application source unmodified; only isolated review tests/config added.",
+    "Application instruction/deployment headers in source are historically stale; current authoritative target/production evidence read from parent docs worktree, not treated as literal current deployed claim."
+  ]
+}

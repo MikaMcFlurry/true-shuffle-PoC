@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-review-next1922
+
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  09:21:29
+   Duration  1.23s (transform 54%, tests 31%, import 15%)
+

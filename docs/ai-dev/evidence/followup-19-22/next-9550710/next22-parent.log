@@ -1,0 +1,81 @@
+
+ RUN  v5.0.2 /workspace/ts-review-next1922
+
+stdout | ../../tmp/next22-parent.test.ts > a stale signed session cannot piggyback the active valid AI flight
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/next22-parent.test.ts > a stale signed session cannot piggyback the active valid AI flight
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/next22-parent.test.ts > a stale signed session cannot piggyback the active valid AI flight
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/next22-parent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/next22-parent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/next22-parent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/next22-parent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+STALE_SIGNED_COOKIE 200 {"estimate":{"at":1790316061500,"source":"workers-ai","artists":1,"genres":[{"name":"Pop","share":100}],"summary":"Sensitive taste"},"retryAt":1790337661500,"failed":false}
+
+ ❯ ../../tmp/next22-parent.test.ts (2 tests | 2 failed) 153ms
+   × a stale signed session cannot piggyback the active valid AI flight 96ms
+   × Worker genre route rejects a signed stale cookie even during a current session flight 56ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tmp/next22-parent.test.ts > a stale signed session cannot piggyback the active valid AI flight
+AssertionError: expected { ok: true, value: { …(3) } } to match object { ok: false, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": {
+-     "code": "auth",
+-     "status": 401,
+-   },
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ ../../tmp/next22-parent.test.ts:22:17
+     20|  await current;
+     21|  const result=await stale;
+     22|  expect(result).toMatchObject({ok:false,error:{code:'auth',status:401}…
+       |                 ^
+     23| });
+     24|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  ../../tmp/next22-parent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ ../../tmp/next22-parent.test.ts:46:24
+     44|  const body=await result.json();
+     45|  console.log('STALE_SIGNED_COOKIE',result.status,JSON.stringify(body));
+     46|  expect(result.status).toBe(401);
+       |                        ^
+     47| });
+     48|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  09:23:10
+   Duration  720ms (transform 58%, tests 24%, import 17%, worker 1%)
+
