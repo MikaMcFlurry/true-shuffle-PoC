@@ -496,13 +496,18 @@ function GuestDevices({ state, visible }: { state: AppState; visible: DeviceView
 	const rows = [
 		...saved,
 		...visible
-			.filter((d) => !saved.some((g) => g.id === d.id || g.name === d.name))
+			.filter((d) => !saved.some((g) => g.id === d.id))
 			.map((d) => ({ id: d.id, name: d.name })),
 	];
+	// Two devices may share a name: the type tells them apart.
+	const kindOf = (d: { id: string }) => {
+		const v = visible.find((x) => x.id === d.id);
+		return v ? deviceType(v.type) : null;
+	};
 	const isGuest = (d: { id: string; name: string }) =>
-		wanted?.id === d.id ? wanted.on : saved.some((g) => g.id === d.id || g.name === d.name);
+		wanted?.id === d.id ? wanted.on : saved.some((g) => g.id === d.id);
 	const toggle = (d: { id: string; name: string }, on: boolean) => {
-		const next = on ? [...saved, d] : saved.filter((g) => g.id !== d.id && g.name !== d.name);
+		const next = on ? [...saved, d] : saved.filter((g) => g.id !== d.id);
 		setBusy(true);
 		setWanted({ id: d.id, on });
 		api
@@ -542,6 +547,7 @@ function GuestDevices({ state, visible }: { state: AppState; visible: DeviceView
 								<span class="row__main">
 									<span class="row__title">{d.name}</span>
 									<span class="row__sub">
+										{kindOf(d) ? `${kindOf(d)}${SEP}` : ""}
 										{isGuest(d) ? "Was hier spielt, zählt nie." : "Zählt mit, wie jedes Gerät."}
 									</span>
 								</span>
@@ -549,7 +555,7 @@ function GuestDevices({ state, visible }: { state: AppState; visible: DeviceView
 									type="checkbox"
 									role="switch"
 									class="switch"
-									aria-label={`${d.name}: immer im Gast-Modus`}
+									aria-label={`${d.name}${kindOf(d) ? ` (${kindOf(d)})` : ""}: immer im Gast-Modus`}
 									checked={isGuest(d)}
 									aria-checked={isGuest(d)}
 									disabled={busy}

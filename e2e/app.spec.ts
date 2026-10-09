@@ -240,7 +240,7 @@ test.describe("a listener's day", () => {
 		const section = page.getByRole("region", { name: "Immer im Gast-Modus" });
 		const sw = section.getByRole("switch").first();
 		await expect(sw).toBeVisible();
-		const name = (await sw.getAttribute("aria-label"))!.replace(": immer im Gast-Modus", "");
+		const name = (await section.locator(".row__title").first().textContent())!.trim();
 		await sw.check();
 		await expect(page.getByText(`„${name}“ zählt ab jetzt nie mit.`)).toBeVisible();
 		await expect(sw).toBeChecked();

@@ -5707,7 +5707,27 @@ export class HubCore {
 			clean.push({ id: d.id, name: d.name.trim() });
 		}
 		this.kvSet("guest_devices", clean);
+		// A device taken off the list stops counting as guest right away.
+		const now = this.now();
+		const periods = this.guestPeriods();
+		const open = periods.find((p) => now >= p.from && now < p.to);
+		if (open?.device !== undefined && !clean.some((d) => d.id === open.device)) {
+			this.endDevicePeriod(open, now);
+			this.kvSet("guest", periods);
+		}
 		return clean;
+	}
+
+	/**
+	 * Ends guest time a guest device held open, at a look that saw another
+	 * device play or nothing play: what ends after now is the owner's. No tail
+	 * and no play across the end, so the song seen now is not taken as the
+	 * guest's last one.
+	 */
+	private endDevicePeriod(p: GuestPeriod, now: number): void {
+		p.to = now;
+		p.tail = null;
+		p.last = null;
 	}
 
 	/**
@@ -5725,9 +5745,11 @@ export class HubCore {
 		const now = this.now();
 		const periods = this.guestPeriods().filter((p) => p.to > now - 90 * DAY_MS);
 		const open = periods.find((p) => now >= p.from && now < p.to);
+		// By id only: two devices may share a name ("iPhone"), and only the
+		// chosen one counts as a guest.
 		const match =
-			device && obs?.isPlaying && obs.trackId
-				? list.find((d) => (device.id !== null && d.id === device.id) || d.name === device.name)
+			device?.id && obs?.isPlaying && obs.trackId
+				? list.find((d) => d.id === device.id)
 				: undefined;
 		if (match) {
 			const to = now + GUEST_DEVICE_HOLD_MS;
@@ -5742,9 +5764,7 @@ export class HubCore {
 				this.log("info", "guest", `Gast-Modus an — „${match.name}“ spielt`);
 			}
 		} else if (open?.device !== undefined) {
-			open.to = now;
-			// The song seen now plays elsewhere, or nothing plays: not the guest's.
-			open.tail = null;
+			this.endDevicePeriod(open, now);
 			this.log("info", "guest", "Gast-Modus aus — das Gast-Gerät spielt nicht mehr");
 		} else return;
 		this.kvSet("guest", periods.slice(-50));

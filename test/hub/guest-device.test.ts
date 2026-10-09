@@ -56,15 +56,62 @@ describe("a device that always counts as guest", () => {
 		expect(afterBack.every((r) => r.ignored === 0)).toBe(true);
 	});
 
-	it("is matched by name too, when Spotify gives the device a new id", async () => {
+	it("a device of the same name that was not chosen never counts as guest", async () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;
-		addParty(h);
-		h.hub.setGuestDevices([{ id: "old-id-from-last-week", name: "Partyraum" }]);
+		const u = h.fake.user();
+		u.devices[0]!.name = "iPhone";
+		u.devices.push({ id: "party-iphone", name: "iPhone", type: "Smartphone", restricted: false });
+		h.hub.setGuestDevices([{ id: "party-iphone", name: "iPhone" }]);
 		await h.hub.play(sid);
-		h.fake.user().player.deviceId = "party-room";
+		u.player.deviceId = u.devices[0]!.id;
 		await h.listen(20 * MINUTE_MS);
-		expect((await h.hub.state()).guest).toMatchObject({ active: true, device: "Partyraum" });
+		expect((await h.hub.state()).guest.active).toBe(false);
+		u.player.deviceId = "party-iphone";
+		await h.listen(20 * MINUTE_MS);
+		expect((await h.hub.state()).guest).toMatchObject({ active: true, device: "iPhone" });
+	});
+
+	it("after a seen switch to the owner's phone, the song started there counts", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		const party = addParty(h);
+		h.hub.setGuestDevices([{ id: party, name: "Partyraum" }]);
+		const p = h.fake.user().player;
+		const phone = h.fake.user().devices[0]!.id;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		p.deviceId = party;
+		await h.listen(10_000);
+		await h.hub.state({ live: true, refresh: true });
+		expect((await h.hub.state()).guest.active).toBe(true);
+		// Another song, on the owner's own phone, seen after ten seconds.
+		p.deviceId = phone;
+		h.fake.skip();
+		const own = h.fake.current()!;
+		await h.listen(10_000);
+		await h.hub.state({ live: true, refresh: true });
+		expect((await h.hub.state()).guest.active).toBe(false);
+		await h.listen(35_000);
+		h.fake.skip();
+		await h.listen(5 * MINUTE_MS);
+		const row = h.sql.first<{ ignored: number }>(
+			`SELECT ignored FROM plays WHERE track_id = ? ORDER BY played_at DESC`,
+			own,
+		);
+		expect(row?.ignored).toBe(0);
+	});
+
+	it("taking a device off the list ends the guest time it holds at once", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		const party = addParty(h);
+		h.hub.setGuestDevices([{ id: party, name: "Partyraum" }]);
+		await h.hub.play(sid);
+		h.fake.user().player.deviceId = party;
+		await h.listen(10 * MINUTE_MS);
+		expect((await h.hub.state()).guest.active).toBe(true);
+		h.hub.setGuestDevices([]);
+		expect((await h.hub.state()).guest.active).toBe(false);
 	});
 
 	it("leaves guest time switched on by hand alone", async () => {
