@@ -28,16 +28,33 @@ function sharesWords(rules: StationRules, mix: number): string {
 
 /**
  * The favourite share as a slider: "like the mix" or a fixed share from 0 to
- * 60 %. It moves freely and is saved when let go.
+ * 100 %. Every step is saved, one after another so the last one chosen is the
+ * one kept; the page shows the chosen value until the saved one comes back.
  */
 function FavShare(props: {
 	value: number | null;
-	onChange: (v: number | null) => void;
+	/** Saves; resolves true when the server took it. */
+	onChange: (v: number | null) => Promise<boolean>;
 	children?: ComponentChildren;
 }) {
-	const [drag, setDrag] = useState<number | null>(null);
+	const [pending, setPending] = useState<number | null>(null);
+	const queue = useRef<Promise<unknown>>(Promise.resolve());
+	const latest = useRef(0);
+	const saved = props.value === null ? null : Math.round(props.value * 100);
+	useEffect(() => {
+		if (pending !== null && saved === pending) setPending(null);
+	}, [saved, pending]);
 	const auto = props.value === null;
-	const shown = drag ?? Math.round((props.value ?? 0.1) * 100);
+	const shown = pending ?? saved ?? 10;
+	const choose = (v: number | null) => {
+		const n = ++latest.current;
+		if (v !== null) setPending(Math.round(v * 100));
+		queue.current = queue.current.then(async () => {
+			const ok = await props.onChange(v);
+			// Refused: the page goes back to what the station has.
+			if (!ok && n === latest.current) setPending(null);
+		});
+	};
 	return (
 		<div class="rule">
 			<span class="rule__label" id="r-share-l">
@@ -47,9 +64,7 @@ function FavShare(props: {
 				<input
 					type="checkbox"
 					checked={auto}
-					onChange={(e) =>
-						props.onChange(e.currentTarget.checked ? null : Math.round(shown / 5) * 0.05)
-					}
+					onChange={(e) => choose(e.currentTarget.checked ? null : Math.round(shown / 5) * 0.05)}
 				/>
 				Wie die Mischung
 			</label>
@@ -63,15 +78,12 @@ function FavShare(props: {
 						class="fine__range"
 						type="range"
 						min={0}
-						max={60}
+						max={100}
 						step={1}
 						value={shown}
 						aria-valuetext={`${shown} Prozent Favoriten`}
-						onInput={(e) => setDrag(Number(e.currentTarget.value))}
-						onChange={(e) => {
-							setDrag(null);
-							props.onChange(Number(e.currentTarget.value) / 100);
-						}}
+						onInput={(e) => setPending(Number(e.currentTarget.value))}
+						onChange={(e) => choose(Number(e.currentTarget.value) / 100)}
 					/>
 				</div>
 			)}
@@ -331,11 +343,15 @@ export function Station({
 	const saveTimer = useRef<number | null>(null);
 	const flushMix = useRef(() => {});
 
+	// Only the newest answer is shown: an older one may come back last.
+	const loadSeq = useRef(0);
 	const load = () => {
 		const started = Date.now();
+		const seq = ++loadSeq.current;
 		return api
 			.station(id)
 			.then((x) => {
+				if (seq !== loadSeq.current) return;
 				store.settleThumbs([...x.upcoming, ...x.recent], started);
 				setD(x);
 				setName((current) => current || x.name);
@@ -739,7 +755,28 @@ export function Station({
 						</p>
 					</fieldset>
 
-					<FavShare value={rules.favoriteShare} onChange={(v) => setRule({ favoriteShare: v })}>
+					<FavShare
+						value={rules.favoriteShare}
+						onChange={(v) =>
+							api
+								.updateStation(id, { rules: { favoriteShare: v } })
+								.then(() => {
+									store.say(
+										"Gespeichert. Gilt, sobald du die Kassette das nächste Mal startest.",
+										"info",
+										4000,
+									);
+									void load();
+									void store.refresh(false);
+									return true;
+								})
+								.catch((e: Error) => {
+									store.say(`Nicht gespeichert: ${e.message}`, "error");
+									void load();
+									return false;
+								})
+						}
+					>
 						<p class="rule__then">
 							{favTen === 0
 								? "Favoriten kommen nur noch, wenn sie ohnehin dran sind."

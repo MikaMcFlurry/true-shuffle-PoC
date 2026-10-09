@@ -226,6 +226,77 @@ test.describe("a listener's day", () => {
 		await expect(third.getByRole("img", { name: "Kommt nie wieder" })).toBeVisible();
 	});
 
+	test("the favourite share keeps every step, also past 60 % and when a save fails", async ({
+		page,
+	}) => {
+		await signIn(page);
+		const st = (await (await page.request.get("/api/state")).json()) as {
+			stations: { id: number; name: string }[];
+		};
+		const sid = st.stations.find((x) => x.name === "Indie & Gitarren")!.id;
+		const rulesNow = async () =>
+			(
+				(await (await page.request.get(`/api/stations/${sid}`)).json()) as {
+					rules: { favoriteShare: number | null };
+				}
+			).rules.favoriteShare;
+		const setShare = (v: number | null) =>
+			page.request.patch(`/api/stations/${sid}`, {
+				headers: { "x-ts": "1" },
+				data: { rules: { favoriteShare: v } },
+			});
+
+		// Two quick key steps while each save takes over a second: 37 → 38 → 39.
+		await setShare(0.37);
+		const bodies: unknown[] = [];
+		await page.route(`**/api/stations/${sid}`, async (route) => {
+			if (route.request().method() !== "PATCH") return route.fallback();
+			bodies.push(
+				(route.request().postDataJSON() as { rules: { favoriteShare: number } }).rules
+					.favoriteShare,
+			);
+			await new Promise((r) => setTimeout(r, 1200));
+			await route.fallback();
+		});
+		await page.goto(`/sender/${sid}`);
+		await page.locator("summary", { hasText: "Erweitert" }).click();
+		const slider = page.getByRole("slider", { name: /Fester Anteil/ });
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("37 %");
+		await slider.focus();
+		await page.keyboard.press("ArrowRight");
+		await page.waitForTimeout(30);
+		await page.keyboard.press("ArrowRight");
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("39 %");
+		await expect.poll(rulesNow, { timeout: 15_000 }).toBe(0.39);
+		expect(bodies).toEqual([0.38, 0.39]);
+		await page.waitForTimeout(500);
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("39 %");
+		await page.unroute(`**/api/stations/${sid}`);
+
+		// A share above 60 % from before: shown as it is, one step down is 84.
+		await setShare(0.85);
+		await page.reload();
+		await page.locator("summary", { hasText: "Erweitert" }).click();
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("85 %");
+		await expect(slider).toHaveValue("85");
+		await slider.focus();
+		await page.keyboard.press("ArrowLeft");
+		await expect.poll(rulesNow).toBe(0.84);
+
+		// A refused save: the page goes back to what is stored.
+		await page.route(`**/api/stations/${sid}`, (route) =>
+			route.request().method() === "PATCH"
+				? route.fulfill({ status: 500, json: { error: { code: "x", message: "kaputt" } } })
+				: route.fallback(),
+		);
+		await page.keyboard.press("ArrowLeft");
+		await expect(page.getByText(/Nicht gespeichert/)).toBeVisible();
+		await expect(page.locator(".fine__label", { hasText: "Fester Anteil" })).toContainText("84 %");
+		await page.unroute(`**/api/stations/${sid}`);
+		expect(await rulesNow()).toBe(0.84);
+		await setShare(null);
+	});
+
 	test("guest mode keeps someone else's music out of the memory", async ({ page }) => {
 		await signIn(page);
 		await page.getByRole("link", { name: "Mehr" }).click();
