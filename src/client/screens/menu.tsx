@@ -1,4 +1,5 @@
 import {
+	ChartColumn,
 	ChevronRight,
 	FileUp,
 	History,
@@ -22,13 +23,14 @@ import {
 } from "../../core/history";
 import { FAMILIAR_PLAYS, RARE_AFTER_EARLY_SKIPS } from "../../core/memory";
 import { DAY_MS } from "../../core/types";
-import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
+import type { AppState, DeviceView, HistoryEntry, ImportedProfile } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
 import { RateHit, ThumbMark } from "../components/rate";
 import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
+import { addToProfile, finishProfile, newProfile, type ProfileEntry } from "../history-profile";
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store } from "../store";
 
@@ -255,6 +257,9 @@ export function MenuScreen({ state }: { state: AppState }) {
 						Jeder Song ab 30 Sekunden, nach Tagen geordnet.
 						{hist.liveSince ? ` Selbst mitgezählt seit ${date(hist.liveSince)}.` : ""}
 					</LinkRow>
+					<LinkRow href="/profil" icon={ChartColumn} title="Dein Hörprofil">
+						Wann und was du hörst, deine Top-Künstler und was true-shuffle über dich weiß.
+					</LinkRow>
 				</ul>
 			</Section>
 
@@ -398,6 +403,12 @@ export function HistoryScreen() {
 		<div class="page">
 			<PageBar
 				title="Verlauf"
+				action={
+					<a class="key" href="/profil">
+						<ChartColumn size={18} aria-hidden="true" />
+						Dein Hörprofil
+					</a>
+				}
 				noBack
 				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei jedem Song steht, wie oft du ihn insgesamt gehört hast. Tippe auf einen Song, um ihn zu bewerten."
 			/>
@@ -859,6 +870,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 	const [rows, setRows] = useState<HistoryRow[]>([]);
 	const [err, setErr] = useState<string | null>(null);
 	const [sent, setSent] = useState(0);
+	const [profile, setProfile] = useState<ImportedProfile | null>(null);
 	const hist = state.history;
 
 	const read = async (files: FileList | null) => {
@@ -867,6 +879,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 		setEffects(null);
 		setPhase("reading");
 		const agg = emptyAggregate();
+		// The whole history for the Hörprofil, not only what came before live counting.
+		const prof = newProfile();
 		let used = 0;
 		let problem: string | null = null;
 		for (const f of Array.from(files)) {
@@ -880,6 +894,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 				if (kind !== "extended") continue;
 				// What came after the first sign-in, true-shuffle already counted live.
 				aggregateHistory(data as ExtendedEntry[], agg, { before: hist.liveSince });
+				addToProfile(data as ProfileEntry[], prof);
 				used++;
 			} catch {
 				problem = `„${f.name}“ konnte nicht gelesen werden.`;
@@ -887,6 +902,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 		}
 		const r = toRows(agg);
 		setRows(r);
+		setProfile(finishProfile(prof, Date.now()));
 		if (r.length > 0) {
 			setEffects(effectsOf(r, agg, used));
 			setPhase("ready");
@@ -911,6 +927,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 				await api.importHistory(rows.slice(i * size, (i + 1) * size), i, parts);
 				setSent(Math.min(rows.length, (i + 1) * size));
 			}
+			// The summary for the Hörprofil; the counts above stand without it.
+			if (profile) await api.importedProfile(profile).catch(() => undefined);
 			setPhase("done");
 			void store.refresh(false);
 		} catch (e) {
@@ -945,7 +963,10 @@ export function ImportScreen({ state }: { state: AppState }) {
 						Kassetten ohne gespeicherte Warteschlange planen ab sofort damit. Eine gespeicherte
 						Warteschlange behält ihre Reihenfolge, bis du sie neu mischst.
 					</p>
-					<a class="key key--lit key--wide" href="/">
+					<a class="key key--lit key--wide" href="/profil">
+						Dein Hörprofil ansehen
+					</a>
+					<a class="key key--wide" href="/">
 						Zu Jetzt
 					</a>
 				</section>

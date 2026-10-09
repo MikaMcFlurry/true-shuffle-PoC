@@ -552,6 +552,15 @@ export class UserHub extends DurableObject<Env> {
 	history(epoch: number, limit: number, before?: number) {
 		return this.session(epoch, () => this.hub().history(limit, before));
 	}
+	setImportedProfile(epoch: number, profile: unknown) {
+		return this.session(epoch, async () => this.hub().setImportedProfile(profile));
+	}
+	estimateGenres(epoch: number) {
+		return this.session(epoch, () => this.hub().estimateGenres());
+	}
+	listeningProfile(epoch: number, timeZone: string) {
+		return this.session(epoch, () => this.hub().listeningProfile(timeZone));
+	}
 	syncNow(epoch: number) {
 		return this.session(epoch, async () => {
 			await this.hub().requestSync();

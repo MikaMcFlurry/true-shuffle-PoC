@@ -546,6 +546,17 @@ app.get("/api/history", (c) => {
 	);
 });
 
+app.post("/api/history/profile", async (c) => {
+	const b = await body<{ profile?: unknown }>(c);
+	return unwrap(c, c.var.hub.setImportedProfile(c.var.epoch, b.profile ?? null));
+});
+
+app.post("/api/profile/genres", (c) => unwrap(c, c.var.hub.estimateGenres(c.var.epoch)));
+
+app.get("/api/profile", (c) =>
+	unwrap(c, c.var.hub.listeningProfile(c.var.epoch, (c.req.query("tz") ?? "UTC").slice(0, 64))),
+);
+
 app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow(c.var.epoch)));
 
 app.delete("/api/account", async (c) => {

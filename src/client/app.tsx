@@ -11,6 +11,7 @@ import {
 	ImportScreen,
 	MenuScreen,
 } from "./screens/menu";
+import { ProfileScreen } from "./screens/profile";
 import { RemoteScreen } from "./screens/remote";
 import { Scan } from "./screens/scan";
 import { SignIn } from "./screens/signin";
@@ -80,6 +81,9 @@ export function App() {
 				case "history":
 					content = <HistoryScreen />;
 					break;
+				case "profile":
+					content = <ProfileScreen />;
+					break;
 				case "import":
 					content = <ImportScreen state={state} />;
 					break;
@@ -138,7 +142,10 @@ export function App() {
 						<ListMusic aria-hidden="true" />
 						Kassetten
 					</a>
-					<a href="/verlauf" aria-current={route.name === "history" ? "page" : undefined}>
+					<a
+						href="/verlauf"
+						aria-current={route.name === "history" || route.name === "profile" ? "page" : undefined}
+					>
 						<History aria-hidden="true" />
 						Verlauf
 					</a>
