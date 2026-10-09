@@ -1,0 +1,799 @@
+﻿2026-10-09T10:23:54.5536899Z Current runner version: '2.337.0'
+2026-10-09T10:23:54.5560498Z ##[group]Runner Image Provisioner
+2026-10-09T10:23:54.5561467Z Hosted Compute Agent
+2026-10-09T10:23:54.5562235Z Version: 20261002.596
+2026-10-09T10:23:54.5562941Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+2026-10-09T10:23:54.5564225Z Build Date: 2026-10-02T22:28:27Z
+2026-10-09T10:23:54.5565015Z Worker ID: {b2d99916-8084-455f-9467-d1eddff5bb1e}
+2026-10-09T10:23:54.5565832Z Region: westcentralus
+2026-10-09T10:23:54.5566544Z Cloud: Azure
+2026-10-09T10:23:54.5567155Z ##[endgroup]
+2026-10-09T10:23:54.5568708Z ##[group]Operating System
+2026-10-09T10:23:54.5569538Z Ubuntu
+2026-10-09T10:23:54.5570173Z 24.04.5
+2026-10-09T10:23:54.5570795Z LTS
+2026-10-09T10:23:54.5571374Z ##[endgroup]
+2026-10-09T10:23:54.5572014Z ##[group]Runner Image
+2026-10-09T10:23:54.5572771Z Image: ubuntu-24.04
+2026-10-09T10:23:54.5573805Z Version: 20261004.327.1
+2026-10-09T10:23:54.5575229Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-09T10:23:54.5576906Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+2026-10-09T10:23:54.5578033Z ##[endgroup]
+2026-10-09T10:23:54.5579240Z ##[group]GITHUB_TOKEN Permissions
+2026-10-09T10:23:54.5581240Z Contents: read
+2026-10-09T10:23:54.5581993Z Metadata: read
+2026-10-09T10:23:54.5582687Z ##[endgroup]
+2026-10-09T10:23:54.5585164Z Secret source: Actions
+2026-10-09T10:23:54.5586332Z Cache mode: write
+2026-10-09T10:23:54.5587121Z Prepare workflow directory
+2026-10-09T10:23:54.6027278Z Prepare all required actions
+2026-10-09T10:23:54.6074401Z Getting action download info
+2026-10-09T10:23:54.9167038Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-09T10:23:55.0058961Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-09T10:23:55.1040519Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-09T10:23:55.3009319Z Complete job name: verify
+2026-10-09T10:23:55.3796294Z ##[group]Run actions/checkout@v4
+2026-10-09T10:23:55.3797192Z with:
+2026-10-09T10:23:55.3797690Z   repository: MikaMcFlurry/true-shuffle-PoC
+2026-10-09T10:23:55.3801789Z   token: ***
+2026-10-09T10:23:55.3802235Z   ssh-strict: true
+2026-10-09T10:23:55.3802682Z   ssh-user: git
+2026-10-09T10:23:55.3803390Z   persist-credentials: true
+2026-10-09T10:23:55.3803915Z   clean: true
+2026-10-09T10:23:55.3804363Z   sparse-checkout-cone-mode: true
+2026-10-09T10:23:55.3804887Z   fetch-depth: 1
+2026-10-09T10:23:55.3805322Z   fetch-tags: false
+2026-10-09T10:23:55.3805773Z   show-progress: true
+2026-10-09T10:23:55.3806237Z   lfs: false
+2026-10-09T10:23:55.3806657Z   submodules: false
+2026-10-09T10:23:55.3807106Z   set-safe-directory: true
+2026-10-09T10:23:55.3807615Z   allow-unsafe-pr-checkout: false
+2026-10-09T10:23:55.3808411Z env:
+2026-10-09T10:23:55.3808849Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:23:55.3809391Z   GOMAXPROCS: 2
+2026-10-09T10:23:55.3809821Z ##[endgroup]
+2026-10-09T10:23:55.4822220Z Syncing repository: MikaMcFlurry/true-shuffle-PoC
+2026-10-09T10:23:55.4825048Z ##[group]Getting Git version info
+2026-10-09T10:23:55.4826373Z Working directory is '/home/runner/work/true-shuffle-PoC/true-shuffle-PoC'
+2026-10-09T10:23:55.4828126Z [command]/usr/bin/git version
+2026-10-09T10:23:55.4868737Z git version 2.55.0
+2026-10-09T10:23:55.4891969Z ##[endgroup]
+2026-10-09T10:23:55.4906567Z Temporarily overriding HOME='/home/runner/work/_temp/ab4f836a-3abb-4103-84f1-c4fb437d9db3' before making global git config changes
+2026-10-09T10:23:55.4912353Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-09T10:23:55.4914260Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/true-shuffle-PoC/true-shuffle-PoC
+2026-10-09T10:23:55.4964967Z Deleting the contents of '/home/runner/work/true-shuffle-PoC/true-shuffle-PoC'
+2026-10-09T10:23:55.4967542Z ##[group]Initializing the repository
+2026-10-09T10:23:55.4972964Z [command]/usr/bin/git init /home/runner/work/true-shuffle-PoC/true-shuffle-PoC
+2026-10-09T10:23:55.5080171Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-09T10:23:55.5081565Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-09T10:23:55.5082548Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-09T10:23:55.5083662Z hint: call:
+2026-10-09T10:23:55.5084084Z hint:
+2026-10-09T10:23:55.5084613Z hint: 	git config --global init.defaultBranch <name>
+2026-10-09T10:23:55.5085243Z hint:
+2026-10-09T10:23:55.5085851Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-09T10:23:55.5086808Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-09T10:23:55.5087564Z hint:
+2026-10-09T10:23:55.5087990Z hint: 	git branch -m <name>
+2026-10-09T10:23:55.5088482Z hint:
+2026-10-09T10:23:55.5089124Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-09T10:23:55.5095291Z Initialized empty Git repository in /home/runner/work/true-shuffle-PoC/true-shuffle-PoC/.git/
+2026-10-09T10:23:55.5107177Z [command]/usr/bin/git remote add origin https://github.com/MikaMcFlurry/true-shuffle-PoC
+2026-10-09T10:23:55.5167621Z ##[endgroup]
+2026-10-09T10:23:55.5169307Z ##[group]Disabling automatic garbage collection
+2026-10-09T10:23:55.5171135Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-09T10:23:55.5203343Z ##[endgroup]
+2026-10-09T10:23:55.5204544Z ##[group]Setting up auth
+2026-10-09T10:23:55.5210476Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-09T10:23:55.5252889Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-09T10:23:55.5649980Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-09T10:23:55.5689172Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-09T10:23:55.5923626Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T10:23:55.5964222Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-09T10:23:55.6216938Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-09T10:23:55.6265711Z ##[endgroup]
+2026-10-09T10:23:55.6266822Z ##[group]Fetching the repository
+2026-10-09T10:23:55.6279751Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +f65c401d7b3ee55c09d3b1fc22007c798401c155:refs/remotes/pull/23/merge
+2026-10-09T10:23:58.1676784Z From https://github.com/MikaMcFlurry/true-shuffle-PoC
+2026-10-09T10:23:58.1685111Z  * [new ref]         f65c401d7b3ee55c09d3b1fc22007c798401c155 -> pull/23/merge
+2026-10-09T10:23:58.1691700Z ##[endgroup]
+2026-10-09T10:23:58.1694485Z ##[group]Determining the checkout info
+2026-10-09T10:23:58.1697028Z ##[endgroup]
+2026-10-09T10:23:58.1698701Z [command]/usr/bin/git sparse-checkout disable
+2026-10-09T10:23:58.1799885Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-09T10:23:58.1805355Z ##[group]Checking out the ref
+2026-10-09T10:23:58.1807727Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/23/merge
+2026-10-09T10:23:58.4449644Z Note: switching to 'refs/remotes/pull/23/merge'.
+2026-10-09T10:23:58.4451117Z
+2026-10-09T10:23:58.4452371Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-09T10:23:58.4455457Z changes and commit them, and you can discard any commits you make in this
+2026-10-09T10:23:58.4458265Z state without impacting any branches by switching back to a branch.
+2026-10-09T10:23:58.4460911Z
+2026-10-09T10:23:58.4462170Z If you want to create a new branch to retain commits you create, you may
+2026-10-09T10:23:58.4465574Z do so (now or later) by using -c with the switch command. Example:
+2026-10-09T10:23:58.4467157Z
+2026-10-09T10:23:58.4467945Z   git switch -c <new-branch-name>
+2026-10-09T10:23:58.4469191Z
+2026-10-09T10:23:58.4470113Z Or undo this operation with:
+2026-10-09T10:23:58.4471445Z
+2026-10-09T10:23:58.4472310Z   git switch -
+2026-10-09T10:23:58.4473853Z
+2026-10-09T10:23:58.4475663Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-09T10:23:58.4478063Z
+2026-10-09T10:23:58.4480583Z HEAD is now at f65c401 Merge 8921702e666d6da06d941364af5a219691057318 into bcb246371ba47546e16bbc466362fb21f6ff716d
+2026-10-09T10:23:58.4489146Z ##[endgroup]
+2026-10-09T10:23:58.4508857Z [command]/usr/bin/git log -1 --format=%H
+2026-10-09T10:23:58.4543882Z f65c401d7b3ee55c09d3b1fc22007c798401c155
+2026-10-09T10:23:58.4950413Z ##[group]Run actions/setup-node@v4
+2026-10-09T10:23:58.4951539Z with:
+2026-10-09T10:23:58.4952380Z   node-version: 24
+2026-10-09T10:23:58.4953456Z   cache: npm
+2026-10-09T10:23:58.4954364Z   always-auth: false
+2026-10-09T10:23:58.4955318Z   check-latest: false
+2026-10-09T10:23:58.4964730Z   token: ***
+2026-10-09T10:23:58.4965681Z env:
+2026-10-09T10:23:58.4966534Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:23:58.4967561Z   GOMAXPROCS: 2
+2026-10-09T10:23:58.4968437Z ##[endgroup]
+2026-10-09T10:23:58.6596202Z Found in cache @ /opt/hostedtoolcache/node/24.21.0/x64
+2026-10-09T10:23:58.6601784Z (node:2359) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-09T10:23:58.6605209Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-09T10:23:58.6607919Z ##[group]Environment details
+2026-10-09T10:23:59.0998253Z node: v24.21.0
+2026-10-09T10:23:59.0998680Z npm: 11.19.0
+2026-10-09T10:23:59.0999099Z yarn: 1.22.22
+2026-10-09T10:23:59.1000128Z ##[endgroup]
+2026-10-09T10:23:59.1021215Z [command]/opt/hostedtoolcache/node/24.21.0/x64/bin/npm config get cache
+2026-10-09T10:23:59.2899808Z /home/runner/.npm
+2026-10-09T10:23:59.5068185Z Cache hit for: node-cache-Linux-x64-npm-b5782782186f133587884e3482d8a6d094ecf6fcf83f5dcfbc922a37a26caf39
+2026-10-09T10:23:59.5167225Z (node:2359) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-09T10:24:00.7169357Z Received 37748736 of 166141532 (22.7%), 36.0 MBs/sec
+2026-10-09T10:24:01.4452988Z Received 166141532 of 166141532 (100.0%), 91.6 MBs/sec
+2026-10-09T10:24:01.4454682Z Cache Size: ~158 MB (166141532 B)
+2026-10-09T10:24:01.4522857Z [command]/usr/bin/tar -xf /home/runner/work/_temp/543fc288-ace5-4edc-9e90-ca7805efc24e/cache.tzst -P -C /home/runner/work/true-shuffle-PoC/true-shuffle-PoC --use-compress-program unzstd
+2026-10-09T10:24:01.7308542Z Cache restored successfully
+2026-10-09T10:24:01.7387464Z Cache restored from key: node-cache-Linux-x64-npm-b5782782186f133587884e3482d8a6d094ecf6fcf83f5dcfbc922a37a26caf39
+2026-10-09T10:24:01.7580382Z ##[group]Run npm ci
+2026-10-09T10:24:01.7580728Z [36;1mnpm ci[0m
+2026-10-09T10:24:01.7847360Z shell: /usr/bin/bash -e {0}
+2026-10-09T10:24:01.7847649Z env:
+2026-10-09T10:24:01.7847873Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:24:01.7848133Z   GOMAXPROCS: 2
+2026-10-09T10:24:01.7848341Z ##[endgroup]
+2026-10-09T10:24:10.6560020Z
+2026-10-09T10:24:10.6568716Z added 168 packages, and audited 169 packages in 9s
+2026-10-09T10:24:10.6569605Z
+2026-10-09T10:24:10.6570144Z 46 packages are looking for funding
+2026-10-09T10:24:10.6571033Z   run `npm fund` for details
+2026-10-09T10:24:10.7179578Z
+2026-10-09T10:24:10.7188238Z 5 high severity vulnerabilities
+2026-10-09T10:24:10.7195498Z npm warn install-scripts 2 packages have install scripts not yet covered by allowScripts:
+2026-10-09T10:24:10.7197704Z npm warn install-scripts   esbuild@0.28.1 (postinstall: node install.js)
+2026-10-09T10:24:10.7199304Z npm warn install-scripts   workerd@1.20260925.1 (postinstall: node install.js)
+2026-10-09T10:24:10.7200540Z npm warn install-scripts
+2026-10-09T10:24:10.7202361Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+2026-10-09T10:24:10.7214092Z
+2026-10-09T10:24:10.7214498Z To address all issues, run:
+2026-10-09T10:24:10.7215018Z   npm audit fix
+2026-10-09T10:24:10.7215268Z
+2026-10-09T10:24:10.7215505Z Run `npm audit` for details.
+2026-10-09T10:24:10.8352050Z ##[group]Run npm run build
+2026-10-09T10:24:10.8352377Z [36;1mnpm run build[0m
+2026-10-09T10:24:10.8418206Z shell: /usr/bin/bash -e {0}
+2026-10-09T10:24:10.8418529Z env:
+2026-10-09T10:24:10.8418735Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:24:10.8418986Z   GOMAXPROCS: 2
+2026-10-09T10:24:10.8419188Z ##[endgroup]
+2026-10-09T10:24:10.9513736Z
+2026-10-09T10:24:10.9525225Z > true-shuffle@1.0.0 build
+2026-10-09T10:24:10.9526260Z > npm run build:client
+2026-10-09T10:24:10.9526775Z
+2026-10-09T10:24:11.0746700Z
+2026-10-09T10:24:11.0747337Z > true-shuffle@1.0.0 build:client
+2026-10-09T10:24:11.0747871Z > vite build
+2026-10-09T10:24:11.0748085Z
+2026-10-09T10:24:11.5370780Z [36mvite v8.3.1 [32mbuilding client environment for production...[36m[39m
+2026-10-09T10:24:11.5479682Z transforming...
+2026-10-09T10:24:11.9327025Z ✓ 1911 modules transformed.
+2026-10-09T10:24:11.9663907Z rendering chunks...
+2026-10-09T10:24:11.9917778Z computing gzip size...
+2026-10-09T10:24:11.9937580Z dist/client/index.html                                                                0.91 kB │ gzip:  0.45 kB
+2026-10-09T10:24:11.9938435Z dist/client/assets/atkinson-hyperlegible-next-latin-ext-wght-normal-C6vrW8VD.woff2   19.09 kB
+2026-10-09T10:24:11.9939315Z dist/client/assets/bricolage-grotesque-vietnamese-standard-normal-Br4FGdAc.woff2     22.02 kB
+2026-10-09T10:24:11.9940149Z dist/client/assets/permanent-marker-latin-400-normal-BF23djCy.woff2                  29.56 kB
+2026-10-09T10:24:11.9940966Z dist/client/assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2       33.99 kB
+2026-10-09T10:24:11.9941799Z dist/client/assets/permanent-marker-latin-400-normal-BnZj5c41.woff                   36.11 kB
+2026-10-09T10:24:11.9942613Z dist/client/assets/bricolage-grotesque-latin-ext-standard-normal-qp-RdZgh.woff2      53.58 kB
+2026-10-09T10:24:11.9944157Z dist/client/assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2         131.54 kB
+2026-10-09T10:24:11.9946005Z dist/client/assets/index-CGqSjJXE.css                                                53.04 kB │ gzip: 11.57 kB
+2026-10-09T10:24:11.9947824Z dist/client/assets/index-CmzngH_U.js                                                158.67 kB │ gzip: 50.10 kB │ map: 502.27 kB
+2026-10-09T10:24:11.9948587Z
+2026-10-09T10:24:11.9964118Z [32m✓ built in 456ms[39m
+2026-10-09T10:24:12.0636764Z ##[group]Run npm run typecheck
+2026-10-09T10:24:12.0637122Z [36;1mnpm run typecheck[0m
+2026-10-09T10:24:12.0701389Z shell: /usr/bin/bash -e {0}
+2026-10-09T10:24:12.0701660Z env:
+2026-10-09T10:24:12.0701873Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:24:12.0702159Z   GOMAXPROCS: 2
+2026-10-09T10:24:12.0702365Z ##[endgroup]
+2026-10-09T10:24:12.1772694Z
+2026-10-09T10:24:12.1773819Z > true-shuffle@1.0.0 typecheck
+2026-10-09T10:24:12.1774984Z > tsc -p tsconfig.worker.json && tsc -p tsconfig.client.json && tsc -p tsconfig.test.json
+2026-10-09T10:24:12.1775680Z
+2026-10-09T10:24:20.8076822Z ##[group]Run npm run lint
+2026-10-09T10:24:20.8077137Z [36;1mnpm run lint[0m
+2026-10-09T10:24:20.8139302Z shell: /usr/bin/bash -e {0}
+2026-10-09T10:24:20.8139560Z env:
+2026-10-09T10:24:20.8139765Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:24:20.8140012Z   GOMAXPROCS: 2
+2026-10-09T10:24:20.8140212Z ##[endgroup]
+2026-10-09T10:24:20.9239203Z
+2026-10-09T10:24:20.9239820Z > true-shuffle@1.0.0 lint
+2026-10-09T10:24:20.9240350Z > biome check .
+2026-10-09T10:24:20.9240582Z
+2026-10-09T10:24:21.4693999Z test/spotify/usage.test.ts:25:40 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-10-09T10:24:21.4695061Z
+2026-10-09T10:24:21.4715595Z   i Template literals are preferred over string concatenation.
+2026-10-09T10:24:21.4716289Z
+2026-10-09T10:24:21.4716857Z     23 │ 	const sql = nodeSql();
+2026-10-09T10:24:21.4717672Z     24 │ 	const t = new SpotifyUsageTracker(sql, () => T0);
+2026-10-09T10:24:21.4718867Z   > 25 │ 	for (let i = 1; i <= 7; i++) t.record("private-listener-" + i, metric(200));
+2026-10-09T10:24:21.4719927Z        │ 	                                      ^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-09T10:24:21.4720629Z     26 │ 	t.record(
+2026-10-09T10:24:21.4721274Z     27 │ 		"@signin:privateflow",
+2026-10-09T10:24:21.4721769Z
+2026-10-09T10:24:21.4722227Z   i Unsafe fix: Use a template literal.
+2026-10-09T10:24:21.4722736Z
+2026-10-09T10:24:21.4724114Z      23  23 │     const sql = nodeSql();
+2026-10-09T10:24:21.4724855Z Checked 129 files in 501ms. No fixes applied.
+2026-10-09T10:24:21.4726241Z      24  24 │     const t = new SpotifyUsageTracker(sql, () => T0);
+2026-10-09T10:24:21.4726905Z Found 2 infos.
+2026-10-09T10:24:21.4728362Z      25     │ - → for·(let·i·=·1;·i·<=·7;·i++)·t.record("private-listener-"·+·i,·metric(200));
+2026-10-09T10:24:21.4730026Z          25 │ + → for·(let·i·=·1;·i·<=·7;·i++)·t.record(`private-listener-${i}`,·metric(200));
+2026-10-09T10:24:21.4730764Z      26  26 │     t.record(
+2026-10-09T10:24:21.4731527Z      27  27 │       "@signin:privateflow",
+2026-10-09T10:24:21.4732016Z
+2026-10-09T10:24:21.4732177Z
+2026-10-09T10:24:21.4733265Z test/spotify/usage.test.ts:40:40 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-10-09T10:24:21.4733936Z
+2026-10-09T10:24:21.4734301Z   i Template literals are preferred over string concatenation.
+2026-10-09T10:24:21.4734876Z
+2026-10-09T10:24:21.4735707Z     38 │ it("correlates recovery to same overflow listener and same OAuth flow only", () => {
+2026-10-09T10:24:21.4736750Z     39 │ 	const t = new SpotifyUsageTracker(nodeSql(), () => T0);
+2026-10-09T10:24:21.4737622Z   > 40 │ 	for (let i = 1; i <= 5; i++) t.record("u" + i, metric(200));
+2026-10-09T10:24:21.4738367Z        │ 	                                      ^^^^^^^
+2026-10-09T10:24:21.4739015Z     41 │ 	t.record("overflow-A", metric(429));
+2026-10-09T10:24:21.4739702Z     42 │ 	t.record("overflow-B", metric(200));
+2026-10-09T10:24:21.4740140Z
+2026-10-09T10:24:21.4740509Z   i Unsafe fix: Use a template literal.
+2026-10-09T10:24:21.4740936Z
+2026-10-09T10:24:21.4741775Z      38  38 │   it("correlates recovery to same overflow listener and same OAuth flow only", () => {
+2026-10-09T10:24:21.4742817Z      39  39 │     const t = new SpotifyUsageTracker(nodeSql(), () => T0);
+2026-10-09T10:24:21.4744038Z      40     │ - → for·(let·i·=·1;·i·<=·5;·i++)·t.record("u"·+·i,·metric(200));
+2026-10-09T10:24:21.4744970Z          40 │ + → for·(let·i·=·1;·i·<=·5;·i++)·t.record(`u${i}`,·metric(200));
+2026-10-09T10:24:21.4745766Z      41  41 │     t.record("overflow-A", metric(429));
+2026-10-09T10:24:21.4746484Z      42  42 │     t.record("overflow-B", metric(200));
+2026-10-09T10:24:21.4746971Z
+2026-10-09T10:24:21.4747133Z
+2026-10-09T10:24:21.4995234Z ##[group]Run npm test
+2026-10-09T10:24:21.4995523Z [36;1mnpm test[0m
+2026-10-09T10:24:21.5056176Z shell: /usr/bin/bash -e {0}
+2026-10-09T10:24:21.5056436Z env:
+2026-10-09T10:24:21.5056641Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:24:21.5056895Z   GOMAXPROCS: 2
+2026-10-09T10:24:21.5057109Z ##[endgroup]
+2026-10-09T10:24:21.6183287Z
+2026-10-09T10:24:21.6184997Z > true-shuffle@1.0.0 test
+2026-10-09T10:24:21.6185343Z > vitest run
+2026-10-09T10:24:21.6185474Z
+2026-10-09T10:24:21.9054320Z
+2026-10-09T10:24:21.9059092Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90m/home/runner/work/true-shuffle-PoC/true-shuffle-PoC[39m
+2026-10-09T10:24:21.9060262Z
+2026-10-09T10:24:22.3120500Z  [32m✓[39m test/core/deck.test.ts [2m([22m[2m59 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+2026-10-09T10:24:26.4435081Z  [32m✓[39m test/hub/session.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 3854[2mms[22m[39m
+2026-10-09T10:24:26.4436843Z    [32m✓[39m durable listening session NN-02–07 [2m(5)[22m
+2026-10-09T10:24:26.4454239Z      [33m[2m✓[22m[39m does not replace a paused queue on days of alarms or when listening history accounts 30 seconds[33m 1465[2mms[22m[39m
+2026-10-09T10:24:26.4462635Z    [33m[2m✓[22m[39m appends rolling rounds while preserving current occurrence and restart position[33m 501[2mms[22m[39m
+2026-10-09T10:24:26.4494789Z    [33m[2m✓[22m[39m bounds rolling storage after more than 10000 ordered occurrences without changing the unfinished entry[33m 383[2mms[22m[39m
+2026-10-09T10:24:29.6233700Z  [32m✓[39m test/hub/resume-place.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 2906[2mms[22m[39m
+2026-10-09T10:24:31.0315039Z  [32m✓[39m test/hub/transport.test.ts [2m([22m[2m27 tests[22m[2m)[22m[33m 1086[2mms[22m[39m
+2026-10-09T10:24:31.4615988Z  [32m✓[39m test/hub/hub.test.ts [2m([22m[2m34 tests[22m[2m)[22m[33m 8865[2mms[22m[39m
+2026-10-09T10:24:31.4642802Z    [32m✓[39m listening [2m(9)[22m
+2026-10-09T10:24:31.4645209Z      [33m[2m✓[22m[39m remembers everything heard and never rewrites the deck while it plays[33m 418[2mms[22m[39m
+2026-10-09T10:24:31.4704644Z      [33m[2m✓[22m[39m retains the saved order and heard memory after the listener stopped[33m 381[2mms[22m[39m
+2026-10-09T10:24:31.4724530Z      [33m[2m✓[22m[39m appends songs when a deck is about to run out while playing[33m 3499[2mms[22m[39m
+2026-10-09T10:24:31.4756873Z    [32m✓[39m rounds [2m(1)[22m
+2026-10-09T10:24:31.4765502Z      [33m[2m✓[22m[39m plays every song of a small station once before the next round, then starts over[33m 303[2mms[22m[39m
+2026-10-09T10:24:31.4766983Z    [32m✓[39m listener input [2m(2)[22m
+2026-10-09T10:24:31.4768300Z      [33m[2m✓[22m[39m thumb down skips the current song and bans it everywhere[33m 537[2mms[22m[39m
+2026-10-09T10:24:33.7195288Z  [32m✓[39m test/hub/observation-scheduling.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 1972[2mms[22m[39m
+2026-10-09T10:24:33.7302362Z  [32m✓[39m test/hub/song-facts.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 2328[2mms[22m[39m
+2026-10-09T10:24:33.7305138Z    [32m✓[39m song facts in the Verlauf [2m(8)[22m
+2026-10-09T10:24:33.7306750Z      [33m[2m✓[22m[39m a later recommendation, a new mix or a guest replay never changes an old play's source[33m 341[2mms[22m[39m
+2026-10-09T10:24:33.9854490Z  [32m✓[39m test/spotify/client.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+2026-10-09T10:24:34.2219837Z  [32m✓[39m test/core/planner.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 303[2mms[22m[39m
+2026-10-09T10:24:35.1089133Z  [32m✓[39m test/hub/listening-profile.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 849[2mms[22m[39m
+2026-10-09T10:24:35.1090396Z    [32m✓[39m listening profile [2m(2)[22m
+2026-10-09T10:24:35.1091872Z      [33m[2m✓[22m[39m counts owner plays only, buckets them in the listener's zone, and writes nothing[33m 583[2mms[22m[39m
+2026-10-09T10:24:35.9660074Z  [32m✓[39m test/worker/native-bridge.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 668[2mms[22m[39m
+2026-10-09T10:24:37.7760198Z  [32m✓[39m test/hub/guest-device.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1511[2mms[22m[39m
+2026-10-09T10:24:37.7761335Z    [32m✓[39m a device that always counts as guest [2m(7)[22m
+2026-10-09T10:24:37.7762422Z      [33m[2m✓[22m[39m music on it never counts; back on the phone it counts again[33m 536[2mms[22m[39m
+2026-10-09T10:24:59.2971523Z  [32m✓[39m test/hub/budget.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 21302[2mms[22m[39m
+2026-10-09T10:24:59.2973621Z    [32m✓[39m free-plan row budget per listener-day (DO evicted between requests) [2m(2)[22m
+2026-10-09T10:24:59.2985335Z      [33m[2m✓[22m[39m a typical account: 9 stations, 15 000 remembered songs[33m 9122[2mms[22m[39m
+2026-10-09T10:24:59.2987661Z      [33m[2m✓[22m[39m at the station limit: 30 stations, 25 000 songs, 300 followed playlists[33m 12179[2mms[22m[39m
+2026-10-09T10:25:00.0677382Z  [32m✓[39m test/spotify/usage.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 445[2mms[22m[39m
+2026-10-09T10:25:00.0729400Z    [33m[2m✓[22m[39m retains 720 hourly buckets and200 episodes, reports observed success without invented reset[33m 375[2mms[22m[39m
+2026-10-09T10:25:00.7781178Z  [32m✓[39m test/spotify/availability.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 412[2mms[22m[39m
+2026-10-09T10:25:02.1111230Z  [32m✓[39m test/worker/genre-userhub.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 409[2mms[22m[39m
+2026-10-09T10:25:03.8170456Z  [32m✓[39m test/hub/discovery.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 1398[2mms[22m[39m
+2026-10-09T10:25:03.8171678Z    [32m✓[39m discovery [2m(5)[22m
+2026-10-09T10:25:03.8173442Z      [33m[2m✓[22m[39m finds unknown songs by the station's artists and mixes them into the deck[33m 421[2mms[22m[39m
+2026-10-09T10:25:04.7155346Z  [32m✓[39m test/hub/refused-start.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 581[2mms[22m[39m
+2026-10-09T10:25:05.3181002Z  [32m✓[39m test/hub/quota.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 294[2mms[22m[39m
+2026-10-09T10:25:05.5716295Z  [32m✓[39m test/core/memory-mix-history.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+2026-10-09T10:25:05.7745326Z  [32m✓[39m test/hub/observation-policy.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-10-09T10:25:06.8742680Z  [32m✓[39m test/worker/native-orchestrator.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 240[2mms[22m[39m
+2026-10-09T10:25:07.0602841Z  [32m✓[39m test/client/store-refusal.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+2026-10-09T10:25:07.2947590Z  [32m✓[39m test/worker/native.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+2026-10-09T10:25:07.8424829Z  [32m✓[39m test/spotify/artist-scope.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 240[2mms[22m[39m
+2026-10-09T10:25:08.1695899Z  [32m✓[39m test/hub/skips-truth.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 33641[2mms[22m[39m
+2026-10-09T10:25:08.1697216Z    [32m✓[39m early skips against ground truth [2m(4)[22m
+2026-10-09T10:25:08.1698561Z      [33m[2m✓[22m[39m normal listening: finds the real skips and invents none[33m 1377[2mms[22m[39m
+2026-10-09T10:25:08.1700395Z      [33m[2m✓[22m[39m car stop (the player holds the paused playlist while it is rewritten), then skips[33m 2072[2mms[22m[39m
+2026-10-09T10:25:08.1702166Z      [33m[2m✓[22m[39m long stop with no player visible, nobody skips: nothing booked (later_less)[33m 3298[2mms[22m[39m
+2026-10-09T10:25:08.1704110Z      [33m[2m✓[22m[39m long stop with no player visible, nobody skips: nothing booked (ban)[33m 3250[2mms[22m[39m
+2026-10-09T10:25:08.1705610Z    [32m✓[39m early skips after a car stop, whatever Spotify does on resume [2m(3)[22m
+2026-10-09T10:25:08.1707464Z      [33m[2m✓[22m[39m never books a song that was not skipped early (later_less)[33m 8055[2mms[22m[39m
+2026-10-09T10:25:08.1709014Z      [33m[2m✓[22m[39m never books a song that was not skipped early (consume)[33m 7727[2mms[22m[39m
+2026-10-09T10:25:08.1710469Z      [33m[2m✓[22m[39m never books a song that was not skipped early (ban)[33m 7857[2mms[22m[39m
+2026-10-09T10:25:08.2290999Z  [32m✓[39m test/spotify/gate.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 172[2mms[22m[39m
+2026-10-09T10:25:08.3888919Z  [32m✓[39m test/client/song-tags.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+2026-10-09T10:25:08.8348388Z  [32m✓[39m test/hub/recovery.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 194[2mms[22m[39m
+2026-10-09T10:25:09.8817276Z  [32m✓[39m test/worker/native-rolling.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 877[2mms[22m[39m
+2026-10-09T10:25:09.8839699Z    [33m[2m✓[22m[39m actual bridge functions keep 10000 rolling native occurrences and same-epoch journal bounded[33m 875[2mms[22m[39m
+2026-10-09T10:25:12.3095160Z  [32m✓[39m test/hub/request-pressure.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 2130[2mms[22m[39m
+2026-10-09T10:25:12.3096461Z    [32m✓[39m NN-09 finite request-pressure measurements [2m(1)[22m
+2026-10-09T10:25:12.3097837Z      [33m[2m✓[22m[39m records visible, hidden, paused, device, reload and three-tab windows[33m 2128[2mms[22m[39m
+2026-10-09T10:25:12.5069503Z  [32m✓[39m test/client/history-profile.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+2026-10-09T10:25:12.7064073Z  [32m✓[39m test/worker/remote-key.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+2026-10-09T10:25:12.8846578Z  [32m✓[39m test/client/cassette-label.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+2026-10-09T10:25:13.0547134Z  [32m✓[39m test/core/song-progress.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+2026-10-09T10:25:13.2396019Z  [32m✓[39m test/spotify/rpc.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+2026-10-09T10:25:13.4920792Z  [32m✓[39m test/hub/genres.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-10-09T10:25:15.3470054Z  [32m✓[39m test/hub/usage-audit.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 6869[2mms[22m[39m
+2026-10-09T10:25:15.3477342Z    [33m[2m✓[22m[39m audits full-day Spotify pressure and continued history during a device-only quota[33m 6867[2mms[22m[39m
+2026-10-09T10:26:14.6932683Z  [32m✓[39m test/hub/robustness.test.ts [2m([22m[2m117 tests[22m[2m)[22m[33m 112105[2mms[22m[39m
+2026-10-09T10:26:14.6937256Z    [32m✓[39m car stop: the deck is rewritten while the player is paused in it (RT-1) [2m(7)[22m
+2026-10-09T10:26:14.6939357Z      [33m[2m✓[22m[39m books nothing for a song that never played (later_less)[33m 554[2mms[22m[39m
+2026-10-09T10:26:14.6940765Z      [33m[2m✓[22m[39m books nothing for a song that never played (ban)[33m 388[2mms[22m[39m
+2026-10-09T10:26:14.6942193Z      [33m[2m✓[22m[39m books nothing for a song that never played (consume)[33m 343[2mms[22m[39m
+2026-10-09T10:26:14.6944168Z      [33m[2m✓[22m[39m never books a skip when nobody skipped, whatever order Spotify resumes in (650 songs)[33m 408[2mms[22m[39m
+2026-10-09T10:26:14.6945689Z      [33m[2m✓[22m[39m never books a skip when nobody skipped, whatever order Spotify resumes in (700 songs)[33m 406[2mms[22m[39m
+2026-10-09T10:26:14.6947384Z      [33m[2m✓[22m[39m never books a skip when nobody skipped, whatever order Spotify resumes in (750 songs)[33m 472[2mms[22m[39m
+2026-10-09T10:26:14.6948223Z      [33m[2m✓[22m[39m still books a real early skip after a car stop[33m 348[2mms[22m[39m
+2026-10-09T10:26:14.6948845Z    [32m✓[39m a source playlist deleted in Spotify (RT-3) [2m(2)[22m
+2026-10-09T10:26:14.6949530Z      [33m[2m✓[22m[39m plays on without it, says so, and does not keep polling[33m 622[2mms[22m[39m
+2026-10-09T10:26:14.6950675Z      [33m[2m✓[22m[39m takes the playlist back when the listener follows it again[33m 911[2mms[22m[39m
+2026-10-09T10:26:14.6951460Z    [32m✓[39m a big playlist collection read over several invocations (RT-5) [2m(1)[22m
+2026-10-09T10:26:14.6952290Z      [33m[2m✓[22m[39m keeps every playlist read in an earlier invocation[33m 534[2mms[22m[39m
+2026-10-09T10:26:14.6952968Z    [32m✓[39m the station limit [2m(1)[22m
+2026-10-09T10:26:14.6954377Z      [33m[2m✓[22m[39m refuses more stations than the free plan's budget allows, before creating any[33m 375[2mms[22m[39m
+2026-10-09T10:26:14.6955927Z    [32m✓[39m the consume rule with Spotify's list lagging behind (NF-6) [2m(1)[22m
+2026-10-09T10:26:14.6957400Z      [33m[2m✓[22m[39m ends a round only when every song was heard or used up once[33m 1150[2mms[22m[39m
+2026-10-09T10:26:14.6959053Z    [32m✓[39m Spotify showing no player for a moment (NF-9) [2m(1)[22m
+2026-10-09T10:26:14.6960394Z      [33m[2m✓[22m[39m does not rewrite the deck under someone listening[33m 562[2mms[22m[39m
+2026-10-09T10:26:14.6961594Z    [32m✓[39m a small station after a car stop (NN-03/04) [2m(4)[22m
+2026-10-09T10:26:14.6963308Z      [33m[2m✓[22m[39m retains the unfinished entry and every ordered song ahead (300 songs)[33m 309[2mms[22m[39m
+2026-10-09T10:26:14.6964786Z    [32m✓[39m songs a player brings back on its own (red-team 5) [2m(3)[22m
+2026-10-09T10:26:14.6966323Z      [33m[2m✓[22m[39m skips a song turned down while the player held the station (30 min pause)[33m 524[2mms[22m[39m
+2026-10-09T10:26:14.6968114Z      [33m[2m✓[22m[39m skips a song turned down while the player held the station (480 min pause)[33m 5440[2mms[22m[39m
+2026-10-09T10:26:14.6969664Z      [33m[2m✓[22m[39m skips a turned-down song every time it comes up, not only the first[33m 324[2mms[22m[39m
+2026-10-09T10:26:14.6970995Z    [32m✓[39m the listener's own choices and long stops (red-team 6) [2m(5)[22m
+2026-10-09T10:26:14.6972484Z      [33m[2m✓[22m[39m leaves a song the listener queues alone, even one heard today[33m 350[2mms[22m[39m
+2026-10-09T10:26:14.6974380Z      [33m[2m✓[22m[39m leaves a song the listener queues alone, even one heard today (guest mode)[33m 408[2mms[22m[39m
+2026-10-09T10:26:14.6975905Z      [33m[2m✓[22m[39m still skips a turned-down song an old order brings back after 13 h[33m 8021[2mms[22m[39m
+2026-10-09T10:26:14.6977544Z      [33m[2m✓[22m[39m still skips a turned-down song an old order brings back after 20 h[33m 13273[2mms[22m[39m
+2026-10-09T10:26:14.6978745Z    [32m✓[39m the seventh review's cases [2m(1)[22m
+2026-10-09T10:26:14.6980059Z      [33m[2m✓[22m[39m a guest's early skip shortly before guest mode ends stays out of memory[33m 377[2mms[22m[39m
+2026-10-09T10:26:14.6981321Z    [32m✓[39m the eighth review's cases [2m(4)[22m
+2026-10-09T10:26:14.6982508Z      [33m[2m✓[22m[39m a guest's skip 30 s before guest mode ends stays the guest's[33m 363[2mms[22m[39m
+2026-10-09T10:26:14.6984522Z      [33m[2m✓[22m[39m a guest's skip 150 s before guest mode ends stays the guest's[33m 315[2mms[22m[39m
+2026-10-09T10:26:14.6986256Z      [33m[2m✓[22m[39m a song turned down during a 40-h hold is caught after a skip by hand onto it[33m 2498[2mms[22m[39m
+2026-10-09T10:26:14.6987989Z      [33m[2m✓[22m[39m in "Alles", never played before, a song the listener queues plays[33m 963[2mms[22m[39m
+2026-10-09T10:26:14.6989000Z    [32m✓[39m the ninth review's cases [2m(2)[22m
+2026-10-09T10:26:14.6990301Z      [33m[2m✓[22m[39m a turned-down song is skipped after a weekend with the phone out of sight[33m 17983[2mms[22m[39m
+2026-10-09T10:26:14.6991629Z    [32m✓[39m the fifteenth review's cases [2m(1)[22m
+2026-10-09T10:26:14.6992901Z      [33m[2m✓[22m[39m a private session in Spotify books no skip, not even a ban[33m 494[2mms[22m[39m
+2026-10-09T10:26:14.6994409Z    [32m✓[39m the sixteenth review's cases [2m(4)[22m
+2026-10-09T10:26:14.6996368Z      [33m[2m✓[22m[39m a skip never booked (private) takes no earlier skip back when the song plays later[33m 363[2mms[22m[39m
+2026-10-09T10:26:14.6998218Z      [33m[2m✓[22m[39m a private session: what true-shuffle saw heard counts, once[33m 677[2mms[22m[39m
+2026-10-09T10:26:14.6999983Z      [33m[2m✓[22m[39m a private session Spotify lists after all: what true-shuffle saw heard counts, once[33m 692[2mms[22m[39m
+2026-10-09T10:26:14.7001323Z    [32m✓[39m the seventeenth review's cases [2m(5)[22m
+2026-10-09T10:26:14.7002698Z      [33m[2m✓[22m[39m a private session in a playlist of one's own: every song heard is counted[33m 488[2mms[22m[39m
+2026-10-09T10:26:14.7004910Z      [33m[2m✓[22m[39m a private session in a playlist of one's own, paused and resumed: what plays after counts[33m 379[2mms[22m[39m
+2026-10-09T10:26:14.7006309Z    [32m✓[39m the eighteenth review's cases [2m(7)[22m
+2026-10-09T10:26:14.7007851Z      [33m[2m✓[22m[39m a moment without a player does not end a private session[33m 477[2mms[22m[39m
+2026-10-09T10:26:14.7009582Z      [33m[2m✓[22m[39m a private session begun hours after the last one is seen within minutes[33m 1038[2mms[22m[39m
+2026-10-09T10:26:14.7011659Z      [33m[2m✓[22m[39m a song paused after a minute in a private session does not come back when the station starts again[33m 791[2mms[22m[39m
+2026-10-09T10:26:14.7013320Z    [32m✓[39m the nineteenth review's cases [2m(7)[22m
+2026-10-09T10:26:14.7014831Z      [33m[2m✓[22m[39m the guest's paused song stays out of memory when the owner starts a station later[33m 415[2mms[22m[39m
+2026-10-09T10:26:14.7016858Z      [33m[2m✓[22m[39m a song tapped at place 1 in Spotify, then the station started from the app: it does not come back[33m 619[2mms[22m[39m
+2026-10-09T10:26:14.7019034Z      [33m[2m✓[22m[39m a song tapped at place 26 in Spotify, then the station started from the app: it does not come back[33m 572[2mms[22m[39m
+2026-10-09T10:26:14.7021081Z      [33m[2m✓[22m[39m a private song paused for hours and heard to its end is stamped at its end[33m 334[2mms[22m[39m
+2026-10-09T10:26:14.7023411Z      [33m[2m✓[22m[39m a private session whose player vanishes ends after six hours: no warning, no fast looks after a week[33m 8639[2mms[22m[39m
+2026-10-09T10:26:14.7024857Z    [32m✓[39m the twentieth review's cases [2m(7)[22m
+2026-10-09T10:26:14.7026082Z      [33m[2m✓[22m[39m a song a start from the app replaced counts once and stays away[33m 1367[2mms[22m[39m
+2026-10-09T10:26:14.7027824Z      [33m[2m✓[22m[39m a song a start from the app replaced counts once and stays away (Spotify lists it)[33m 1356[2mms[22m[39m
+2026-10-09T10:26:14.7029594Z      [33m[2m✓[22m[39m a private player left paused in sight ends after six hours[33m 9244[2mms[22m[39m
+2026-10-09T10:26:14.7030754Z    [32m✓[39m the twenty-first review's cases [2m(7)[22m
+2026-10-09T10:26:14.7031986Z      [33m[2m✓[22m[39m only the one play across the end of guest time is the guest's (hand)[33m 336[2mms[22m[39m
+2026-10-09T10:26:14.7033764Z      [33m[2m✓[22m[39m only the one play across the end of guest time is the guest's (timer)[33m 522[2mms[22m[39m
+2026-10-09T10:26:14.7035343Z      [33m[2m✓[22m[39m two starts within minutes: both replaced songs count once[33m 420[2mms[22m[39m
+2026-10-09T10:26:14.7036905Z      [33m[2m✓[22m[39m two starts within minutes: both replaced songs count once (Spotify lists them)[33m 409[2mms[22m[39m
+2026-10-09T10:26:14.7038778Z      [33m[2m✓[22m[39m once Spotify is known to list replaced songs, a song sought past 30 s is not counted[33m 393[2mms[22m[39m
+2026-10-09T10:26:14.7040790Z      [33m[2m✓[22m[39m once Spotify is known to list replaced songs, a song sought past 30 s is not counted (paused)[33m 389[2mms[22m[39m
+2026-10-09T10:26:14.7042768Z      [33m[2m✓[22m[39m guest time and the two days after it write the guest record only when it changes[33m 1254[2mms[22m[39m
+2026-10-09T10:26:14.7044621Z    [32m✓[39m the twenty-second review's cases [2m(11)[22m
+2026-10-09T10:26:14.7046122Z      [33m[2m✓[22m[39m a seek after guest time does not hand the guest's play to the owner (timer)[33m 1938[2mms[22m[39m
+2026-10-09T10:26:14.7047755Z      [33m[2m✓[22m[39m a second guest time closes the first one's last play[33m 372[2mms[22m[39m
+2026-10-09T10:26:14.7049931Z      [33m[2m✓[22m[39m a late listing of the song's play before does not make Spotify's word decide[33m 449[2mms[22m[39m
+2026-10-09T10:26:14.7050689Z    [32m✓[39m the twenty-third review's cases [2m(6)[22m
+2026-10-09T10:26:14.7051524Z      [33m[2m✓[22m[39m the guest's song paused out of sight and left by the owner the next day stays the guest's (app)[33m 489[2mms[22m[39m
+2026-10-09T10:26:14.7052586Z      [33m[2m✓[22m[39m the guest's song paused out of sight and left by the owner the next day stays the guest's (spotify)[33m 383[2mms[22m[39m
+2026-10-09T10:26:14.7054343Z      [33m[2m✓[22m[39m a song seen playing a minute, paused, then out of sight counts when a start replaces it (app)[33m 314[2mms[22m[39m
+2026-10-09T10:26:14.7055333Z      [33m[2m✓[22m[39m a guest's song no look saw, paused across the end, stays the guest's (start)[33m 340[2mms[22m[39m
+2026-10-09T10:26:14.7057236Z      [33m[2m✓[22m[39m a guest's song no look saw, paused across the end, stays the guest's (resume-skip)[33m 326[2mms[22m[39m
+2026-10-09T10:26:14.7058267Z    [32m✓[39m hearts set in Spotify [2m(3)[22m
+2026-10-09T10:26:14.7058989Z      [33m[2m✓[22m[39m an old heart Spotify greys out is no new heart, not even after a full import[33m 3669[2mms[22m[39m
+2026-10-09T10:26:14.7059656Z    [32m✓[39m the twenty-fourth review's cases [2m(3)[22m
+2026-10-09T10:26:14.7060457Z      [33m[2m✓[22m[39m RT24-01: the guest's song paused across the end and resumed by the owner stays the guest's[33m 644[2mms[22m[39m
+2026-10-09T10:26:14.7061448Z      [33m[2m✓[22m[39m RT24-01: listings wait for a look that shows a song (a podcast after guest time)[33m 434[2mms[22m[39m
+2026-10-09T10:26:14.7062301Z      [33m[2m✓[22m[39m RT24-02: a song played again after it ran out is a second play[33m 450[2mms[22m[39m
+2026-10-09T10:26:14.7062977Z    [32m✓[39m the twenty-sixth review's cases [2m(3)[22m
+2026-10-09T10:26:14.7064065Z      [33m[2m✓[22m[39m RT26-01: listings held after a guest time are kept, none falls out of Spotify's last 50[33m 786[2mms[22m[39m
+2026-10-09T10:26:14.7065041Z      [33m[2m✓[22m[39m RT28-02: plays lost during a guest hold (more than 50 between two reads) are logged[33m 977[2mms[22m[39m
+2026-10-09T10:26:14.7066008Z      [33m[2m✓[22m[39m RT26-04: the guest's song resumed by the owner and heard to its end counts for the owner[33m 337[2mms[22m[39m
+2026-10-09T10:26:14.7066481Z
+2026-10-09T10:26:14.7066795Z [2m Test Files [22m [1m[32m39 passed[39m[22m[90m (39)[39m
+2026-10-09T10:26:14.7067350Z [2m      Tests [22m [1m[32m515 passed[39m[22m[90m (515)[39m
+2026-10-09T10:26:14.7067781Z [2m   Start at [22m 10:24:21
+2026-10-09T10:26:14.7068290Z [2m   Duration [22m 112.78s[2m (tests 97%, import 2%, transform 1%)[22m
+2026-10-09T10:26:14.7068584Z
+2026-10-09T10:26:14.7690743Z ##[group]Run npx playwright install --with-deps chromium
+2026-10-09T10:26:14.7691211Z [36;1mnpx playwright install --with-deps chromium[0m
+2026-10-09T10:26:14.7752621Z shell: /usr/bin/bash -e {0}
+2026-10-09T10:26:14.7752882Z env:
+2026-10-09T10:26:14.7753421Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:26:14.7753694Z   GOMAXPROCS: 2
+2026-10-09T10:26:14.7753911Z ##[endgroup]
+2026-10-09T10:26:15.5396742Z Installing dependencies...
+2026-10-09T10:26:15.5481813Z Switching to root user to install dependencies...
+2026-10-09T10:26:15.6288249Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-10-09T10:26:15.6586442Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-10-09T10:26:15.6588080Z Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-10-09T10:26:15.6608477Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-10-09T10:26:15.6664281Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-10-09T10:26:15.6684523Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-10-09T10:26:15.7865598Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [531 kB]
+2026-10-09T10:26:15.8004668Z Get:8 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [475 kB]
+2026-10-09T10:26:15.8042655Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main all Packages [640 B]
+2026-10-09T10:26:15.8086184Z Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main armhf Packages [12.3 kB]
+2026-10-09T10:26:15.8340562Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1375 kB]
+2026-10-09T10:26:15.8416361Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [306 kB]
+2026-10-09T10:26:15.8444835Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1702 kB]
+2026-10-09T10:26:15.8544407Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [342 kB]
+2026-10-09T10:26:15.8584291Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1761 kB]
+2026-10-09T10:26:15.8679740Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [401 kB]
+2026-10-09T10:26:15.8705236Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.0 kB]
+2026-10-09T10:26:15.8716954Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse Translation-en [14.3 kB]
+2026-10-09T10:26:15.9417193Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1118 kB]
+2026-10-09T10:26:15.9474818Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [228 kB]
+2026-10-09T10:26:15.9926580Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1220 kB]
+2026-10-09T10:26:15.9986182Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [245 kB]
+2026-10-09T10:26:16.0006374Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1667 kB]
+2026-10-09T10:26:16.0084576Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [383 kB]
+2026-10-09T10:26:16.0114636Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [49.8 kB]
+2026-10-09T10:26:16.0122699Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse Translation-en [12.4 kB]
+2026-10-09T10:26:18.7573377Z Fetched 12.3 MB in 1s (9847 kB/s)
+2026-10-09T10:26:19.5821893Z Reading package lists...
+2026-10-09T10:26:19.6056045Z Reading package lists...
+2026-10-09T10:26:19.7770636Z Building dependency tree...
+2026-10-09T10:26:19.7778445Z Reading state information...
+2026-10-09T10:26:19.9143277Z libasound2t64 is already the newest version (1.2.11-1ubuntu0.3).
+2026-10-09T10:26:19.9144216Z libasound2t64 set to manually installed.
+2026-10-09T10:26:19.9145454Z libatk-bridge2.0-0t64 is already the newest version (2.52.0-1build1).
+2026-10-09T10:26:19.9146090Z libatk-bridge2.0-0t64 set to manually installed.
+2026-10-09T10:26:19.9146698Z libatk1.0-0t64 is already the newest version (2.52.0-1build1).
+2026-10-09T10:26:19.9147557Z libatk1.0-0t64 set to manually installed.
+2026-10-09T10:26:19.9148475Z libatspi2.0-0t64 is already the newest version (2.52.0-1build1).
+2026-10-09T10:26:19.9149197Z libatspi2.0-0t64 set to manually installed.
+2026-10-09T10:26:19.9149753Z libcairo2 is already the newest version (1.18.0-3build1).
+2026-10-09T10:26:19.9150264Z libcairo2 set to manually installed.
+2026-10-09T10:26:19.9150830Z libcups2t64 is already the newest version (2.4.7-1.2ubuntu7.14).
+2026-10-09T10:26:19.9151396Z libcups2t64 set to manually installed.
+2026-10-09T10:26:19.9151951Z libdbus-1-3 is already the newest version (1.14.10-4ubuntu4.1).
+2026-10-09T10:26:19.9152480Z libdbus-1-3 set to manually installed.
+2026-10-09T10:26:19.9153222Z libdrm2 is already the newest version (2.4.125-1ubuntu0.1~24.04.2).
+2026-10-09T10:26:19.9153764Z libdrm2 set to manually installed.
+2026-10-09T10:26:19.9154303Z libgbm1 is already the newest version (25.2.8-0ubuntu0.24.04.4).
+2026-10-09T10:26:19.9154821Z libgbm1 set to manually installed.
+2026-10-09T10:26:19.9155375Z libglib2.0-0t64 is already the newest version (2.80.0-6ubuntu3.9).
+2026-10-09T10:26:19.9155938Z libglib2.0-0t64 set to manually installed.
+2026-10-09T10:26:19.9156492Z libnspr4 is already the newest version (2:4.35-1.1build1).
+2026-10-09T10:26:19.9157011Z libnspr4 set to manually installed.
+2026-10-09T10:26:19.9157531Z libnss3 is already the newest version (2:3.98-1ubuntu0.2).
+2026-10-09T10:26:19.9158027Z libnss3 set to manually installed.
+2026-10-09T10:26:19.9158800Z libpango-1.0-0 is already the newest version (1.52.1+ds-1build1).
+2026-10-09T10:26:19.9159350Z libpango-1.0-0 set to manually installed.
+2026-10-09T10:26:19.9159879Z libx11-6 is already the newest version (2:1.8.7-1build1).
+2026-10-09T10:26:19.9160373Z libx11-6 set to manually installed.
+2026-10-09T10:26:19.9160859Z libxcb1 is already the newest version (1.15-1ubuntu2).
+2026-10-09T10:26:19.9161334Z libxcb1 set to manually installed.
+2026-10-09T10:26:19.9161889Z libxcomposite1 is already the newest version (1:0.4.5-1build3).
+2026-10-09T10:26:19.9162448Z libxcomposite1 set to manually installed.
+2026-10-09T10:26:19.9163129Z libxdamage1 is already the newest version (1:1.1.6-1build1).
+2026-10-09T10:26:19.9163816Z libxdamage1 set to manually installed.
+2026-10-09T10:26:19.9164366Z libxext6 is already the newest version (2:1.3.4-1build2).
+2026-10-09T10:26:19.9164864Z libxext6 set to manually installed.
+2026-10-09T10:26:19.9165387Z libxfixes3 is already the newest version (1:6.0.0-2build1).
+2026-10-09T10:26:19.9165841Z libxfixes3 set to manually installed.
+2026-10-09T10:26:19.9166242Z libxkbcommon0 is already the newest version (1.6.0-1build1).
+2026-10-09T10:26:19.9166640Z libxkbcommon0 set to manually installed.
+2026-10-09T10:26:19.9167058Z libxrandr2 is already the newest version (2:1.5.2-2build1).
+2026-10-09T10:26:19.9167452Z libxrandr2 set to manually installed.
+2026-10-09T10:26:19.9167847Z xvfb is already the newest version (2:21.1.12-1ubuntu1.8).
+2026-10-09T10:26:19.9168393Z fonts-noto-color-emoji is already the newest version (2.047-0ubuntu0.24.04.1).
+2026-10-09T10:26:19.9168970Z libfontconfig1 is already the newest version (2.15.0-1.1ubuntu2).
+2026-10-09T10:26:19.9169395Z libfontconfig1 set to manually installed.
+2026-10-09T10:26:19.9169817Z fonts-liberation is already the newest version (1:2.1.5-3).
+2026-10-09T10:26:19.9170225Z fonts-liberation set to manually installed.
+2026-10-09T10:26:19.9170631Z The following additional packages will be installed:
+2026-10-09T10:26:19.9170999Z   xfonts-encodings xfonts-utils
+2026-10-09T10:26:19.9171280Z Recommended packages:
+2026-10-09T10:26:19.9171556Z   fonts-ipafont-mincho fonts-tlwg-loma
+2026-10-09T10:26:19.9314854Z The following NEW packages will be installed:
+2026-10-09T10:26:19.9315981Z   fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
+2026-10-09T10:26:19.9320251Z   fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
+2026-10-09T10:26:19.9320968Z   xfonts-utils
+2026-10-09T10:26:19.9324311Z The following packages will be upgraded:
+2026-10-09T10:26:19.9328386Z   libfreetype6
+2026-10-09T10:26:19.9487437Z 1 upgraded, 9 newly installed, 0 to remove and 22 not upgraded.
+2026-10-09T10:26:19.9488155Z Need to get 21.5 MB of archives.
+2026-10-09T10:26:19.9488617Z After this operation, 79.5 MB of additional disk space will be used.
+2026-10-09T10:26:19.9489138Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-10-09T10:26:20.0097250Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-ipafont-gothic all 00303-21ubuntu1 [3513 kB]
+2026-10-09T10:26:20.1174038Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 fonts-freefont-ttf all 20211204+svn4273-2 [5641 kB]
+2026-10-09T10:26:20.2715145Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-tlwg-loma-otf all 1:0.7.3-1 [107 kB]
+2026-10-09T10:26:20.3210002Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-unifont all 1:15.1.01-1build1 [2993 kB]
+2026-10-09T10:26:20.4188205Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-wqy-zenhei all 0.9.45-8 [7472 kB]
+2026-10-09T10:26:20.6102103Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libfreetype6 amd64 2.13.2+dfsg-1ubuntu0.2 [403 kB]
+2026-10-09T10:26:20.6657942Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-encodings all 1:1.0.5-0ubuntu2 [578 kB]
+2026-10-09T10:26:20.7241205Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-utils amd64 1:7.7+6build3 [94.4 kB]
+2026-10-09T10:26:20.7725456Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 xfonts-cyrillic all 1:1.0.5+nmu1 [384 kB]
+2026-10-09T10:26:20.8266186Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-scalable all 1:1.0.3-1.3 [304 kB]
+2026-10-09T10:26:21.0684186Z Fetched 21.5 MB in 1s (24.0 MB/s)
+2026-10-09T10:26:21.0901756Z Selecting previously unselected package fonts-ipafont-gothic.
+2026-10-09T10:26:21.1133255Z (Reading database ...
+2026-10-09T10:26:21.1133640Z (Reading database ... 5%
+2026-10-09T10:26:21.1134288Z (Reading database ... 10%
+2026-10-09T10:26:21.1134801Z (Reading database ... 15%
+2026-10-09T10:26:21.1135282Z (Reading database ... 20%
+2026-10-09T10:26:21.1135573Z (Reading database ... 25%
+2026-10-09T10:26:21.1135842Z (Reading database ... 30%
+2026-10-09T10:26:21.1136093Z (Reading database ... 35%
+2026-10-09T10:26:21.1136349Z (Reading database ... 40%
+2026-10-09T10:26:21.1136596Z (Reading database ... 45%
+2026-10-09T10:26:21.1136842Z (Reading database ... 50%
+2026-10-09T10:26:21.1207050Z (Reading database ... 55%
+2026-10-09T10:26:21.2168441Z (Reading database ... 60%
+2026-10-09T10:26:21.4650943Z (Reading database ... 65%
+2026-10-09T10:26:21.6121789Z (Reading database ... 70%
+2026-10-09T10:26:21.8168259Z (Reading database ... 75%
+2026-10-09T10:26:21.9606307Z (Reading database ... 80%
+2026-10-09T10:26:22.1630079Z (Reading database ... 85%
+2026-10-09T10:26:22.3242414Z (Reading database ... 90%
+2026-10-09T10:26:22.5048208Z (Reading database ... 95%
+2026-10-09T10:26:22.5061021Z (Reading database ... 100%
+2026-10-09T10:26:22.5061912Z (Reading database ... 203191 files and directories currently installed.)
+2026-10-09T10:26:22.5091736Z Preparing to unpack .../0-fonts-ipafont-gothic_00303-21ubuntu1_all.deb ...
+2026-10-09T10:26:22.5179079Z Unpacking fonts-ipafont-gothic (00303-21ubuntu1) ...
+2026-10-09T10:26:22.7437011Z Selecting previously unselected package fonts-freefont-ttf.
+2026-10-09T10:26:22.7561128Z Preparing to unpack .../1-fonts-freefont-ttf_20211204+svn4273-2_all.deb ...
+2026-10-09T10:26:22.7568821Z Unpacking fonts-freefont-ttf (20211204+svn4273-2) ...
+2026-10-09T10:26:22.8318979Z Selecting previously unselected package fonts-tlwg-loma-otf.
+2026-10-09T10:26:22.8443436Z Preparing to unpack .../2-fonts-tlwg-loma-otf_1%3a0.7.3-1_all.deb ...
+2026-10-09T10:26:22.8450232Z Unpacking fonts-tlwg-loma-otf (1:0.7.3-1) ...
+2026-10-09T10:26:22.8641643Z Selecting previously unselected package fonts-unifont.
+2026-10-09T10:26:22.8764530Z Preparing to unpack .../3-fonts-unifont_1%3a15.1.01-1build1_all.deb ...
+2026-10-09T10:26:22.8771668Z Unpacking fonts-unifont (1:15.1.01-1build1) ...
+2026-10-09T10:26:22.9771355Z Selecting previously unselected package fonts-wqy-zenhei.
+2026-10-09T10:26:22.9896533Z Preparing to unpack .../4-fonts-wqy-zenhei_0.9.45-8_all.deb ...
+2026-10-09T10:26:22.9989142Z Unpacking fonts-wqy-zenhei (0.9.45-8) ...
+2026-10-09T10:26:23.4726000Z Preparing to unpack .../5-libfreetype6_2.13.2+dfsg-1ubuntu0.2_amd64.deb ...
+2026-10-09T10:26:23.4758655Z Unpacking libfreetype6:amd64 (2.13.2+dfsg-1ubuntu0.2) over (2.13.2+dfsg-1ubuntu0.1) ...
+2026-10-09T10:26:23.4995837Z Selecting previously unselected package xfonts-encodings.
+2026-10-09T10:26:23.5120458Z Preparing to unpack .../6-xfonts-encodings_1%3a1.0.5-0ubuntu2_all.deb ...
+2026-10-09T10:26:23.5127068Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu2) ...
+2026-10-09T10:26:23.5395224Z Selecting previously unselected package xfonts-utils.
+2026-10-09T10:26:23.5517852Z Preparing to unpack .../7-xfonts-utils_1%3a7.7+6build3_amd64.deb ...
+2026-10-09T10:26:23.5524796Z Unpacking xfonts-utils (1:7.7+6build3) ...
+2026-10-09T10:26:23.5851786Z Selecting previously unselected package xfonts-cyrillic.
+2026-10-09T10:26:23.5974367Z Preparing to unpack .../8-xfonts-cyrillic_1%3a1.0.5+nmu1_all.deb ...
+2026-10-09T10:26:23.5985115Z Unpacking xfonts-cyrillic (1:1.0.5+nmu1) ...
+2026-10-09T10:26:23.6320491Z Selecting previously unselected package xfonts-scalable.
+2026-10-09T10:26:23.6442982Z Preparing to unpack .../9-xfonts-scalable_1%3a1.0.3-1.3_all.deb ...
+2026-10-09T10:26:23.6450414Z Unpacking xfonts-scalable (1:1.0.3-1.3) ...
+2026-10-09T10:26:23.6873934Z Setting up fonts-wqy-zenhei (0.9.45-8) ...
+2026-10-09T10:26:23.6985579Z Setting up fonts-freefont-ttf (20211204+svn4273-2) ...
+2026-10-09T10:26:23.7001666Z Setting up fonts-tlwg-loma-otf (1:0.7.3-1) ...
+2026-10-09T10:26:23.7017534Z Setting up libfreetype6:amd64 (2.13.2+dfsg-1ubuntu0.2) ...
+2026-10-09T10:26:23.7034844Z Setting up xfonts-encodings (1:1.0.5-0ubuntu2) ...
+2026-10-09T10:26:23.7049934Z Setting up fonts-ipafont-gothic (00303-21ubuntu1) ...
+2026-10-09T10:26:23.7111306Z update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+2026-10-09T10:26:23.7124740Z Setting up fonts-unifont (1:15.1.01-1build1) ...
+2026-10-09T10:26:23.7139997Z Setting up xfonts-utils (1:7.7+6build3) ...
+2026-10-09T10:26:23.7176483Z Setting up xfonts-cyrillic (1:1.0.5+nmu1) ...
+2026-10-09T10:26:23.7443713Z Setting up xfonts-scalable (1:1.0.3-1.3) ...
+2026-10-09T10:26:23.7702385Z Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+2026-10-09T10:26:23.7989178Z Processing triggers for man-db (2.12.0-4build2) ...
+2026-10-09T10:26:23.8007879Z Not building database; man-db/auto-update is not 'true'.
+2026-10-09T10:26:23.8024618Z Processing triggers for fontconfig (2.15.0-1.1ubuntu2) ...
+2026-10-09T10:26:24.4721231Z
+2026-10-09T10:26:24.4722271Z Running kernel seems to be up-to-date.
+2026-10-09T10:26:24.4722590Z
+2026-10-09T10:26:24.4722737Z Restarting services...
+2026-10-09T10:26:24.4798290Z  systemctl restart php8.3-fpm.service
+2026-10-09T10:26:24.5812035Z
+2026-10-09T10:26:24.5814282Z No containers need to be restarted.
+2026-10-09T10:26:24.5814566Z
+2026-10-09T10:26:24.5814780Z No user sessions are running outdated binaries.
+2026-10-09T10:26:24.5815019Z
+2026-10-09T10:26:24.5815577Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-10-09T10:26:25.4012227Z Downloading Chrome for Testing 153.0.8010.12 (playwright chromium v1243) from https://cdn.playwright.dev/builds/cft/153.0.8010.12/linux64/chrome-linux64.zip
+2026-10-09T10:26:25.8387028Z |                                                                                |   0% of 186.8 MiB
+2026-10-09T10:26:26.0507249Z |■■■■■■■■                                                                        |  10% of 186.8 MiB
+2026-10-09T10:26:26.1386564Z |■■■■■■■■■■■■■■■■                                                                |  20% of 186.8 MiB
+2026-10-09T10:26:26.2415632Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 186.8 MiB
+2026-10-09T10:26:26.3152678Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 186.8 MiB
+2026-10-09T10:26:26.3945992Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 186.8 MiB
+2026-10-09T10:26:26.4519933Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 186.8 MiB
+2026-10-09T10:26:26.5335506Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 186.8 MiB
+2026-10-09T10:26:26.6250113Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 186.8 MiB
+2026-10-09T10:26:26.6847770Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 186.8 MiB
+2026-10-09T10:26:26.7705121Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 186.8 MiB
+2026-10-09T10:26:29.8679017Z Chrome for Testing 153.0.8010.12 (playwright chromium v1243) downloaded to /home/runner/.cache/ms-playwright/chromium-1243
+2026-10-09T10:26:29.8682923Z Downloading FFmpeg (playwright ffmpeg v1011) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-linux.zip
+2026-10-09T10:26:30.2719026Z |                                                                                |   0% of 2.3 MiB
+2026-10-09T10:26:30.3205774Z |■■■■■■■■                                                                        |  10% of 2.3 MiB
+2026-10-09T10:26:30.3403342Z |■■■■■■■■■■■■■■■■                                                                |  20% of 2.3 MiB
+2026-10-09T10:26:30.3555369Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.3 MiB
+2026-10-09T10:26:30.3711385Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.3 MiB
+2026-10-09T10:26:30.3735929Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.3 MiB
+2026-10-09T10:26:30.3889943Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.3 MiB
+2026-10-09T10:26:30.3902489Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.3 MiB
+2026-10-09T10:26:30.3926933Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.3 MiB
+2026-10-09T10:26:30.4055073Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.3 MiB
+2026-10-09T10:26:30.4071011Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.3 MiB
+2026-10-09T10:26:30.4676490Z FFmpeg (playwright ffmpeg v1011) downloaded to /home/runner/.cache/ms-playwright/ffmpeg-1011
+2026-10-09T10:26:30.4679448Z Downloading Chrome Headless Shell 153.0.8010.12 (playwright chromium-headless-shell v1243) from https://cdn.playwright.dev/builds/cft/153.0.8010.12/linux64/chrome-headless-shell-linux64.zip
+2026-10-09T10:26:30.8863268Z |                                                                                |   0% of 114.3 MiB
+2026-10-09T10:26:31.0529181Z |■■■■■■■■                                                                        |  10% of 114.3 MiB
+2026-10-09T10:26:31.1201499Z |■■■■■■■■■■■■■■■■                                                                |  20% of 114.3 MiB
+2026-10-09T10:26:31.1722962Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 114.3 MiB
+2026-10-09T10:26:31.2304649Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 114.3 MiB
+2026-10-09T10:26:31.2911776Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 114.3 MiB
+2026-10-09T10:26:31.3303685Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 114.3 MiB
+2026-10-09T10:26:31.3875212Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 114.3 MiB
+2026-10-09T10:26:31.4283679Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 114.3 MiB
+2026-10-09T10:26:31.4687790Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 114.3 MiB
+2026-10-09T10:26:31.5205129Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 114.3 MiB
+2026-10-09T10:26:33.7849952Z Chrome Headless Shell 153.0.8010.12 (playwright chromium-headless-shell v1243) downloaded to /home/runner/.cache/ms-playwright/chromium_headless_shell-1243
+2026-10-09T10:26:33.8191551Z ##[group]Run npm run test:e2e
+2026-10-09T10:26:33.8191873Z [36;1mnpm run test:e2e[0m
+2026-10-09T10:26:33.8253949Z shell: /usr/bin/bash -e {0}
+2026-10-09T10:26:33.8254209Z env:
+2026-10-09T10:26:33.8254421Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:26:33.8254674Z   GOMAXPROCS: 2
+2026-10-09T10:26:33.8254876Z ##[endgroup]
+2026-10-09T10:26:33.9271433Z
+2026-10-09T10:26:33.9271941Z > true-shuffle@1.0.0 test:e2e
+2026-10-09T10:26:33.9272371Z > playwright test
+2026-10-09T10:26:38.5508146Z
+2026-10-09T10:26:38.5508168Z
+2026-10-09T10:26:38.5509868Z Running 46 tests using 1 worker
+2026-10-09T10:26:38.5510487Z
+2026-10-09T10:27:18.0380304Z   ✓   1 e2e/app.spec.ts:103:2 › a listener's day › shows signed-out users as online after a normal authentication response (8.0s)
+2026-10-09T10:27:21.2110902Z   ✓   2 e2e/app.spec.ts:113:2 › a listener's day › signs in with Spotify and saves playlists as stations (3.2s)
+2026-10-09T10:27:25.0970371Z   ✓   3 e2e/app.spec.ts:132:2 › a listener's day › starts a station in Spotify, in true-shuffle's order (3.9s)
+2026-10-09T10:27:27.2432818Z   ✓   4 e2e/app.spec.ts:155:2 › a listener's day › counts song time locally without additional API requests (2.1s)
+2026-10-09T10:27:30.0573926Z   ✓   5 e2e/app.spec.ts:173:2 › a listener's day › skips and bans a song from the transport keys (2.8s)
+2026-10-09T10:27:31.5592428Z   ✓   6 e2e/app.spec.ts:191:2 › a listener's day › shows the station with its round, mix and next songs (1.5s)
+2026-10-09T10:27:36.4655565Z   ✓   7 e2e/app.spec.ts:229:2 › a listener's day › the favourite share keeps every step, also past 60 % and when a save fails (4.9s)
+2026-10-09T10:27:37.7873010Z   ✓   8 e2e/app.spec.ts:300:2 › a listener's day › guest mode keeps someone else's music out of the memory (1.3s)
+2026-10-09T10:27:38.8994987Z   ✓   9 e2e/app.spec.ts:314:2 › a listener's day › a device can count as guest for good, and back (1.1s)
+2026-10-09T10:27:40.1617211Z   ✓  10 e2e/app.spec.ts:330:2 › a listener's day › a personal key likes the playing song from Siri or a widget (1.2s)
+2026-10-09T10:27:41.7104120Z   ✓  11 e2e/app.spec.ts:364:2 › a listener's day › an imported history becomes a Hörprofil with hours, months and top artists (1.5s)
+2026-10-09T10:27:42.7107030Z   ✓  12 e2e/app.spec.ts:404:2 › a listener's day › an export from after the first sign-in still keeps its Hörprofil (989ms)
+2026-10-09T10:27:43.7999866Z   ✓  13 e2e/app.spec.ts:436:2 › a listener's day › a Hörprofil that could not be saved says so and is sent again alone (1.1s)
+2026-10-09T10:27:49.8459474Z   ✓  14 e2e/app.spec.ts:480:2 › a listener's day › every page reads well on a phone (6.0s)
+2026-10-09T10:27:52.7979615Z   ✓  15 e2e/app.spec.ts:621:2 › a listener's day › every cassette name stays on its label, whatever script or font draws it (2.9s)
+2026-10-09T10:27:53.8675294Z   ✓  16 e2e/app.spec.ts:669:2 › a listener's day › a station held paused plays on from its page, never starts over (1.1s)
+2026-10-09T10:27:55.0301990Z   ✓  17 e2e/app.spec.ts:697:2 › a listener's day › says clearly when Spotify refuses: no Premium, no device (1.1s)
+2026-10-09T10:27:56.2216693Z   ✓  18 e2e/app.spec.ts:720:2 › a listener's day › signs out and keeps the memory (1.2s)
+2026-10-09T10:27:57.4087329Z   ✓  19 e2e/app.spec.ts:741:2 › calm player › shows current music and ordered queue beside the library (1.2s)
+2026-10-09T10:28:01.8152580Z   ✓  20 e2e/app.spec.ts:752:2 › calm player › keeps saved song, progress and queue across reload and another browser (4.4s)
+2026-10-09T10:28:03.5647527Z   ✓  21 e2e/app.spec.ts:789:2 › calm player › handles offline state, light and dark mobile, keyboard and deliberate new queue (1.7s)
+2026-10-09T10:28:03.6356080Z [WebServer] ✘ [ERROR] kj::getCaughtExceptionAsKj() = rust/cxx/kj-rs-io/ffi.rs:164: disconnected: write(): Broken pipe (os error 32)
+2026-10-09T10:28:03.6357277Z [WebServer]
+2026-10-09T10:28:03.6363789Z [WebServer]   stack: /home/runner/work/true-shuffle-PoC/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@57472b3 /home/runner/work/true-shuffle-PoC/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@574aea7 /home/runner/work/true-shuffle-PoC/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@574b1f4 /home/runner/work/true-shuffle-PoC/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@310b960 /home/runner/work/true-shuffle-PoC/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@226b757
+2026-10-09T10:28:03.6367761Z [WebServer]
+2026-10-09T10:28:03.6368108Z [WebServer]
+2026-10-09T10:28:05.4147401Z   ✓  22 e2e/app.spec.ts:909:2 › confirmed Spotify operations and shared usage › shows app-wide observations without exposing identities or inventing remaining capacity (1.8s)
+2026-10-09T10:28:06.5105864Z   ✓  23 e2e/app.spec.ts:967:2 › confirmed Spotify operations and shared usage › holds only confirmed operations and never revives a legacy inferred global gate (1.1s)
+2026-10-09T10:28:07.4835761Z   ✓  24 e2e/app.spec.ts:1041:2 › confirmed Spotify operations and shared usage › shows tracking failure with a retry and does not turn it into a Spotify block (957ms)
+2026-10-09T10:28:07.5282384Z   ✓  25 e2e/app.spec.ts:1071:2 › confirmed Spotify operations and shared usage › requires authentication and request protection for the availability trial (31ms)
+2026-10-09T10:28:10.1385326Z   ✓  26 e2e/capture.spec.ts:3:1 › captures the real Worker player and saved occurrence in both themes (2.6s)
+2026-10-09T10:28:11.0738556Z   ✓  27 e2e/client-playback.spec.ts:142:1 › projects one known successor locally and uses the authoritative occurrence for pause (905ms)
+2026-10-09T10:28:12.3282833Z   ✓  28 e2e/client-playback.spec.ts:171:1 › pause freezes immediately through a slow response, then reconciles a fresh observation (1.2s)
+2026-10-09T10:28:13.0318928Z   ✓  29 e2e/client-playback.spec.ts:197:1 › a poll started before pause cannot win; one fresh serialized follow-up confirms it (690ms)
+2026-10-09T10:28:13.8502489Z   ✓  30 e2e/client-playback.spec.ts:230:1 › resume acceptance stays pending through old observations and exposes bounded retry (804ms)
+2026-10-09T10:28:14.5484153Z   ✓  31 e2e/client-playback.spec.ts:258:1 › a rejected pause restores observed playback and provides an explicit retry (689ms)
+2026-10-09T10:28:15.4906820Z   ✓  32 e2e/client-playback.spec.ts:279:1 › device refresh preserves an absent explicit device and the Spotify sentinel routing (928ms)
+2026-10-09T10:28:16.3825002Z   ✓  33 e2e/client-playback.spec.ts:312:1 › projection expires without advancing further and seeks, offline and private observations correct it (877ms)
+2026-10-09T10:28:17.0806030Z   ✓  34 e2e/client-playback.spec.ts:340:1 › identity change discards a pending command and its late response (683ms)
+2026-10-09T10:28:18.0136482Z   ✓  35 e2e/client-playback.spec.ts:358:1 › accepted next keeps the saved occurrence until the actual successor is observed (922ms)
+2026-10-09T10:28:18.6915309Z   ✓  36 e2e/client-playback.spec.ts:381:1 › an absent saved native selection keeps its native route (663ms)
+2026-10-09T10:28:19.3435699Z   ✓  37 e2e/client-playback.spec.ts:410:1 › a lost transport response remains uncertain and never claims pause (634ms)
+2026-10-09T10:28:20.0257291Z   ✓  38 e2e/client-playback.spec.ts:420:1 › opens and returns with a coalesced fresh read while regular polling stays cached (665ms)
+2026-10-09T10:28:20.7654248Z   ✓  39 e2e/client-playback.spec.ts:444:1 › an ambiguous pause error stays frozen until a fresh paused observation confirms it (725ms)
+2026-10-09T10:28:21.6114488Z   ✓  40 e2e/client-playback.spec.ts:476:1 › a reloaded paused session waits for confirmation when its cached Spotify observation still plays (827ms)
+2026-10-09T10:28:22.2512923Z   ✓  41 e2e/client-playback.spec.ts:501:1 › a confirmed native pause stays authoritative over cached matching Spotify playback (625ms)
+2026-10-09T10:28:23.2502658Z   ✓  42 e2e/client-playback.spec.ts:521:1 › an unconfirmed pause with a vanished device allows deliberate saved-song recovery elsewhere (983ms)
+2026-10-09T10:28:24.0686288Z   ✓  43 e2e/client-playback.spec.ts:586:1 › accepted playback confirms on the station page after navigating before the device observation (807ms)
+2026-10-09T10:28:24.7741811Z   ✓  44 e2e/client-playback.spec.ts:633:1 › bounded command confirmation reads stay silent while the app is hidden (696ms)
+2026-10-09T10:28:26.0100094Z   ✓  45 e2e/client-playback.spec.ts:649:1 › very long unbroken song metadata wraps without page overflow on desktop and phone (1.2s)
+2026-10-09T10:28:31.4368623Z   ✓  46 e2e/recovery.spec.ts:11:1 › deliberately recovers an unconfirmed Spotify resume without changing its occurrence (5.4s)
+2026-10-09T10:28:31.7602207Z
+2026-10-09T10:28:31.7607484Z   46 passed (2.0m)
+2026-10-09T10:28:31.7833630Z ##[group]Run npx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker
+2026-10-09T10:28:31.7834335Z [36;1mnpx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker[0m
+2026-10-09T10:28:31.7894923Z shell: /usr/bin/bash -e {0}
+2026-10-09T10:28:31.7895173Z env:
+2026-10-09T10:28:31.7895371Z   WRANGLER_SEND_METRICS: false
+2026-10-09T10:28:31.7895626Z   GOMAXPROCS: 2
+2026-10-09T10:28:31.7895825Z ##[endgroup]
+2026-10-09T10:28:32.9314838Z
+2026-10-09T10:28:32.9315744Z  ⛅️ wrangler 4.141.0 (update available 4.149.0)
+2026-10-09T10:28:32.9316350Z ───────────────────────────────────────────────
+2026-10-09T10:28:33.1591975Z ✨ Read 21 files from the assets directory /home/runner/work/true-shuffle-PoC/true-shuffle-PoC/dist/client
+2026-10-09T10:28:33.2111255Z Total Upload: 938.70 KiB / gzip: 200.51 KiB
+2026-10-09T10:28:33.2161961Z Your Worker has access to the following bindings:
+2026-10-09T10:28:33.2163525Z Binding                      Resource
+2026-10-09T10:28:33.2164923Z env.USER_HUB (UserHub)       Durable Object
+2026-10-09T10:28:33.2165948Z env.REGISTRY (Registry)      Durable Object
+2026-10-09T10:28:33.2168242Z env.AI                       AI
+2026-10-09T10:28:33.2169398Z env.ASSETS                   Assets
+2026-10-09T10:28:33.2169804Z
+2026-10-09T10:28:33.2170314Z --dry-run: exiting now.
+2026-10-09T10:28:33.2738074Z Post job cleanup.
+2026-10-09T10:28:33.3967574Z (node:5478) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-09T10:28:33.3968581Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-09T10:28:33.3971541Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-b5782782186f133587884e3482d8a6d094ecf6fcf83f5dcfbc922a37a26caf39, not saving cache.
+2026-10-09T10:28:33.4134577Z Post job cleanup.
+2026-10-09T10:28:33.5020535Z [command]/usr/bin/git version
+2026-10-09T10:28:33.5066252Z git version 2.55.0
+2026-10-09T10:28:33.5109184Z Temporarily overriding HOME='/home/runner/work/_temp/a73bc666-7366-4708-88c5-142896650eba' before making global git config changes
+2026-10-09T10:28:33.5110816Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-09T10:28:33.5115431Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/true-shuffle-PoC/true-shuffle-PoC
+2026-10-09T10:28:33.5155292Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-09T10:28:33.5191530Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-09T10:28:33.5444899Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-09T10:28:33.5468604Z http.https://github.com/.extraheader
+2026-10-09T10:28:33.5480892Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-09T10:28:33.5519364Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-09T10:28:33.5778762Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-09T10:28:33.5814874Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-09T10:28:33.6215132Z Cleaning up orphan processes
+2026-10-09T10:28:33.6665478Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "project": "true-shuffle",
   "subject": {
-    "revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
-    "artifact_ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json"
+    "revision": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+    "artifact_ref": "docs/ai-dev/evidence/PR23_REVIEW.json"
   },
   "branch": "codex/implement-cloudflare-restart",
   "phase": "REVIEW",
@@ -35,14 +35,16 @@
     "PR18 final4b0a independently reviewed; GitHub merge e348, actualautomaticWorkersBuildsdd344/238016100% verified;486unit/41browser/11RESUMEPASS; historicalkindnull andUnicodecontrastfixed; no duplicateactivation",
     "2026-10-09 sibling19/20/21 separatelyreviewed;localcombined492/42/11/staticPASS;fiveblockingP2scommented;productionunchanged",
     "Explicit19–22 completion and corrections independently reviewed on combined4dc3377; previousfiveclosed,newsevenblockingP2s;506/44/11/default/static andall4sourceCI PASS; productionunchanged.",
-    "Current9550710 repairs reviewed: seven prior blockers closed;511/46/11/static PASS; three fresh independent reviews identify two new blockers; production unchanged read-only verified."
+    "Current9550710 repairs reviewed: seven prior blockers closed;511/46/11/static PASS; three fresh independent reviews identify two new blockers; production unchanged read-only verified.",
+    "Externalbcbsecurityexposureverified; authorizedrollbackrestoredimmutabledd344/e348at100%newff729fef withallsettingspreserved,19assets/auth/browserPASS,2freshsimulatedcompatibilitychecksPASS. PR23authfixREADY; lane04blocks.",
+    "Finalauth-only8921702explicitcompletion6079018689 read; fresh27authchecksREADY; originalLANE03 againFAILindependently onexactsource."
   ],
   "in_progress": [],
   "blocked": [
-    "Two blocking candidate P2s PR20-LANE-03/PR22-AUTH-01; see FOLLOWUP_19_22_REVIEW.json",
-    "Renewed explicit complete-scope comment for matching final heads required",
-    "Physical owner Spotify/iPhone/privateHA acceptance unavailable",
-    "Actual populated DurableObject restore/production migration5 not run"
+    "PR20-LANE-03 remainsblocking onexactfinalPR23head8921702; authcorrectionFRESH/READY",
+    "Ownerfunctionaltradeoffpending: honestunknownlane withoutnewcalls vsseparatelyreviewedpre-endlooks/quota",
+    "GitHubtargetbcb differsfromactiveverifiedrollbacke348; no automaticuncheckedredeploy",
+    "Physical/liveSpotify/privateHA/actualpopulatedrestoreNOT_RUN"
   ],
   "capability_blockers": [
     "Physical iPhone/liveSpotify latencyquota unavailable",
@@ -55,24 +57,24 @@
     "Runtime/bindings/variables/secretbindings/namespaces/migrationv1 unchanged"
   ],
   "next_actions": [
-    "Read actual replies/diffs to6078170512/6078155613; reproduce lane/auth corrections on new exact heads in fresh independent review.",
-    "Require renewed explicit complete final scope with all final heads; do not release partial siblings.",
-    "Before authorized ordered integration revalidate actual target and all reviewed heads; verify integrated source and full existing deployment identity/bindings/secrets before upload/activation.",
-    "Retain existing e348/dd344/238016100%; no duplicate unchanged comment/merge/deployment."
+    "Read ownerfunctionalchoice andClaude replies/newheads; no need to re-request releasepermission.",
+    "Require coherentlanecorrectionandfinalscope; rerunoriginalLANE03/04andpreserveprotectedassertions; freshexactsourceindependentreview.",
+    "Revalidateactualtarget/head beforeintegration; builds/worker/browser andpreservedCloudflare/fullresource/uploadverification beforeactivation.",
+    "Protectverifiedrollbacke348/dd344/ff729fef100%; no repeatedrollback."
   ],
-  "updated_at": "2026-10-09T09:27:34.140708+00:00",
+  "updated_at": "2026-10-09T10:31:26.522070+00:00",
   "deployment": {
     "schema_version": "true-shuffle.deployment.v1",
-    "recorded_at": "2026-10-08T21:16:38.606698+00:00",
+    "recorded_at": "2026-10-09T10:25:19.448783+00:00",
     "source_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
     "worker": "true-shuffle",
     "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
     "version_id": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
-    "deployment_id": "238016d2-534e-4a34-a49d-93088b03ba17",
+    "deployment_id": "ff729fef-8700-4362-94c1-787addf3e65c",
     "percentage": 100,
-    "deployed_at": "2026-10-08T21:11:39.498533Z",
-    "previous_version": "3499c219-0265-4798-9e7b-4b3c81b5efd5",
-    "previous_deployment": "c4096de7-3e02-443a-9b89-53037835b9a7",
+    "deployed_at": "2026-10-09T10:19:16.198822Z",
+    "previous_version": "02a3c025-a9f6-4da5-b6ce-d176d1c9f71c",
+    "previous_deployment": "c9eea1af-fb1c-49ba-9952-cc1aff711630",
     "migration_tag": "v1",
     "namespaces": {
       "USER_HUB": {
@@ -90,17 +92,17 @@
     "existing_secret_bindings_preserved": true,
     "existing_variable_values_preserved": true,
     "runtime_preserved": true,
-    "deployment_authority": "Permanent explicit owner PR merge/release authority; actual authorized GitHub PR18 merge triggered automatic Workers Builds. Wrangler staging uploaded but unactivated after concurrent automatic release; no duplicate activation.",
+    "deployment_authority": "Explicit permanent owner authority to recover brokenrollouts; securityrollback of externallymerged/deployedknownauthleak afterfreshscopeddata compatibilityreview. No PR23merge/upload.",
     "worker_sha256": "e61902724515496b7dcd0035d354d4100823838e13fcd5c24580d73f5ffe6530",
     "worker_etag": "dbf9e0c905f381bffd32be40c0a48235d39e164d1b769157cc5e2c6367ef9a1f",
     "public_readback": {
-      "tested_at": "2026-10-08T21:16:38.606698+00:00",
+      "tested_at": "2026-10-09T10:25:19.448783+00:00",
       "source_commit": "e348e838f9526bc83b92070302ba15831a87d7b8",
       "exact_assets": "19/19",
-      "assets_ref": "tag-wording-review/FINAL_PUBLIC_ASSETS.json",
-      "auth_csrf_ref": "tag-wording-review/FINAL_PUBLIC_AUTH.json",
-      "browser_ref": "tag-wording-review/FINAL_PUBLIC_BROWSER.json",
-      "runtime_ref": "tag-wording-review/FINAL_DEPLOYMENT_PROOF.json",
+      "assets_ref": "pr23-review/18-public-assets.json",
+      "auth_csrf_ref": "pr23-review/ts97-public-auth.json",
+      "browser_ref": "pr23-review/pr23-rollback-public-results.json",
+      "runtime_ref": "pr23-review/pr23-rollback-preservation.json",
       "authenticated_provider_journeys": "NOT_RUN"
     },
     "browser_smoke": {
@@ -117,45 +119,30 @@
     "recovery": {
       "prior_verified_worker_version_retained": true,
       "actual_populated_restore": "NOT_RUN",
-      "rollback_this_release": false,
-      "bindings_namespace_and_schema_unchanged": true
+      "rollback_this_release": true,
+      "bindings_namespace_and_schema_unchanged": true,
+      "schema5_compatibility_simulated": "2freshindependentPASS; no productiondowngrade/deletion"
     },
-    "acceptance_claim": "PARTIAL; runtimeverified, CIgateFAIL, liveacceptanceNOTRUN",
+    "acceptance_claim": "PARTIAL: securityrollback/runtimeidentity/assets/auth/browserverified; currentfeaturecandidateNOT_READY andfullmissionliveacceptanceNOT_RUN. Historicale348integratedCI remains red, not rerun green.",
     "github_ci": "37844932181 FAIL twice: jobs113543321791/113544666152;485PASS/1known61h simulation20stimeout; downstreambrowser/dryskipped. SourceequivalentCI37836787868PASS486/41; localfull486PASS120s andisolatedintegratedweekend15.57sPASS. Required integratedCI remainsFAIL; correctionrequested6069239435.",
-    "review_ref": "TAG_WORDING_REVIEW.json",
+    "review_ref": "PR23_REVIEW.json",
     "historical_records": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json",
-    "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078"
+    "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078",
+    "release_comment": 6069239435
   },
   "historical_checkpoint": "docs/ai-dev/evidence/tag-wording-review/CHECKPOINT_HISTORY_BEFORE_PR18.json",
   "candidate_review": {
-    "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
-    "ledger": "docs/ai-dev/evidence/FOLLOWUP_19_22_LEDGER.json",
-    "local_combined_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
-    "heads": {
-      "19": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
-      "20": "efee7e7c8a2fda0608cdc2f311f2b2fd5a87355e",
-      "21": "728d276a614b4fd46640efb61aa9a0f25a2444b3",
-      "22": "fd267446fddc556bc6254b146d6a224a13571e23"
-    },
-    "completion_comment": 6076229569,
-    "closed_prior_findings": [
-      "PR19-UI-01",
-      "PR19-UI-02",
-      "PR20-LANE-01",
-      "PR21-GUEST-01",
-      "PR21-GUEST-02",
-      "PR20-LANE-02",
-      "PR21-GUEST-03",
-      "PR22-AI-01",
-      "PR22-AI-02",
-      "PR22-IMPORT-RECENT",
-      "PR22-IMPORT-SILENT",
-      "PR22-CHART-A11Y"
-    ],
-    "completion_covers_current_heads": false,
+    "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+    "ledger": "docs/ai-dev/evidence/PR23_LEDGER.json",
+    "revision": "8921702e666d6da06d941364af5a219691057318",
+    "target_revision": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+    "completion_covers_current_heads": true,
     "open_findings": [
-      "PR20-LANE-03",
-      "PR22-AUTH-01"
+      "PR20-LANE-03"
+    ],
+    "closed_findings": [
+      "PR22-AUTH-01",
+      "PR23-LANE-04 heuristicsremoved"
     ]
   }
 }

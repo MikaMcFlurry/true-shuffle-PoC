@@ -1,0 +1,8 @@
+
+ RUN  v5.0.2 /workspace/ts-pr23-lane-independent
+
+
+ Test Files  6 passed (6)
+      Tests  35 passed (35)
+   Start at  10:14:55
+   Duration  3.33s (tests 56%, import 21%, transform 21%, worker 1%)

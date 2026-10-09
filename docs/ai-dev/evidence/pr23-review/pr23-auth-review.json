@@ -1,0 +1,87 @@
+{
+  "schema": "independent-review-report/1",
+  "time": "2026-10-09T10:16:00.431965+00:00",
+  "reviewer": "/root/pr23_auth_review",
+  "independence": "FRESH",
+  "verdict": "READY",
+  "scope": "PR23 auth correction and AI flight/session lifecycle; separate lane review and complete release gates owned by other reviewers/root",
+  "subject": {
+    "head_sha": "91c94c616e233f82135355c3fd47376276d88ad2",
+    "baseline_sha": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+    "checkout": "/workspace/ts-pr23-auth-independent"
+  },
+  "source_review": {
+    "files": [
+      "src/worker/userhub.ts",
+      "src/worker/hub/genres.ts",
+      "src/worker/hub/hub.ts",
+      "src/worker/index.ts",
+      "test/worker/genre-userhub.test.ts"
+    ],
+    "assessment": "Every genre RPC validates its epoch under the real mutex before coalescing and after awaiting the result. Flight identity and epoch bound coalescing; final cleanup clears only its own flight. Preparation and publication retain session checks. Optional provider work remains outside the lock. Durable attempt ID/clock fences unchanged."
+  },
+  "finding_revalidation": [
+    {
+      "id": "PR22-AI-03",
+      "status": "CLOSED",
+      "evidence": "Identical original direct actual UserHub and actual Worker signed stale-cookie attacks fail on bcb2463, pass on 91c94c6. Baseline Worker status200; corrected401."
+    }
+  ],
+  "checks": [
+    {
+      "name": "independent auth/profile regressions",
+      "status": "PASS",
+      "passed": 27,
+      "skipped": 2,
+      "command": "npx vitest run --config pr23-auth-vitest.config.ts --reporter=json --outputFile=/tmp/pr23-auth-vitest-result.json",
+      "evidence": "/tmp/pr23-auth-vitest-result.json"
+    },
+    {
+      "name": "negative baseline proves attack sensitivity",
+      "status": "PASS",
+      "actual_test_result": "2 FAIL as expected",
+      "evidence": "/tmp/pr23-auth-baseline.log"
+    }
+  ],
+  "attacks": [
+    "Actual UserHub stale epoch cannot join valid held AI flight",
+    "Actual Hono Worker with correctly signed revoked cookie returns401 during held current flight",
+    "Eight actual Worker callers authorized before logout all fail after actual logout/attach and late result cannot store",
+    "Current callers coalesce into one provider call",
+    "Slow provider does not hold mutex or block pause",
+    "AI20s timeout yields failed answer; late callback cannot store",
+    "Logout publication fence rejects original caller",
+    "Durable failed-attempt gate survives HubCore/UserHub restart",
+    "Fresh epoch cannot bypass6h gate;6h minus1ms holds and exact6h allows one new attempt",
+    "Separate actual UserHub instances keep provider flights and results independent",
+    "Existing signed cookie/CSRF/account routing regressions",
+    "Existing profile/native-history/DST/no-mutation tests",
+    "Import invalidates late estimate"
+  ],
+  "test_environment": {
+    "runtime": "Node Vitest actual UserHub class, real HubCore/node:sqlite/FakeSpotify; actual Worker Hono fetch handler and cryptographic cookie signing",
+    "stub": "Only cloudflare:workers DurableObject superclass constructor stub; RPC routing/HubCore SQL state/session/auth handler are real source",
+    "source_unchanged": true
+  },
+  "open_findings": [],
+  "excluded_historical_probes": [
+    {
+      "status": "NOT_RUN",
+      "detail": "Two malformed-input P3 probes already skipped in inherited test fixture (month coercion/Infinity), outside repaired auth scope; not counted PASS."
+    }
+  ],
+  "not_run": [
+    "Real Cloudflare Durable Object scheduling/platform RPC for added independent attacks",
+    "Live Anthropic/Workers AI",
+    "Physical iPhone/live Spotify/private HA/populated restore",
+    "Production deployment validation"
+  ],
+  "artifacts": [
+    "/workspace/ts-pr23-auth-independent/test/hub/pr23-auth-independent.test.ts",
+    "/workspace/ts-pr23-auth-independent/pr23-auth-vitest.config.ts",
+    "/tmp/profile22-workers-stub.ts",
+    "/tmp/pr23-auth-vitest-result.json",
+    "/tmp/pr23-auth-tests-final.log",
+    "/tmp/pr23-auth-baseline.log"
+  ]
+}

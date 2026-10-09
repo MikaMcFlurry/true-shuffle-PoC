@@ -1,0 +1,8 @@
+
+ RUN  v5.0.2 /workspace/ts-review-23-auth-final
+
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  10:31:59
+   Duration  1.08s (transform 41%, tests 41%, import 17%)

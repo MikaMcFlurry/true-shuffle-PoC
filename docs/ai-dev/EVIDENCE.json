@@ -1,11 +1,11 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-08T21:18:56.237579+00:00",
+  "generated_at": "2026-10-09T10:31:26.522070+00:00",
   "project": "true-shuffle Cloudflare implementation",
   "subject": {
     "revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
     "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "ActualPR18 integratedrelease e348/versiondd344/deployment238016100% verified. ScopedfreshREADY_WITH_NON_BLOCKING_FINDINGS; fullmissionBLOCKED only historicalliveSpotify/HA/populatedrestoreNOTRUN. Ownstagingbbcaaunactivated; automaticWorkersBuildsrelease verified. IntegratedCI20s simulation timeout remainsred twice; actualruntimehealthy andscopedproductreviewREADY.",
+    "environment": "Securityrollbackrestoredactuale348/dd344/newdeploymentff729fef100%;GitHubtargetbcb2463containsknownauthleakandmustnotredeployuntilcoherentfixaccepted. PR23candidate8921702auth-onlyfinal6079018689NOT_READY/inheritedLANE03; authfixREADY. Freshrollbackcompat2simulationchecks,19assets/authCSRF/publicbrowserandpreservedruntime/bindings/namespaces/vars/secretsmetadata/schedulesPASS. Fullphysical/liveSpotify/HA/productionrestoreNOT_RUN; historicale348integratedCI remainsFAIL.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -642,13 +642,13 @@
         {
           "id": "EV-G-CF-IDENTITY",
           "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
-          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
-          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved.",
           "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
-          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+          "observed_at": "2026-10-09T10:25:19.448783+00:00"
         }
       ],
-      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+      "rationale": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved."
     },
     {
       "id": "G-CF-PUBLIC",
@@ -659,13 +659,13 @@
         {
           "id": "EV-G-CF-PUBLIC",
           "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
-          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
-          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved.",
           "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
-          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+          "observed_at": "2026-10-09T10:25:19.448783+00:00"
         }
       ],
-      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+      "rationale": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved."
     },
     {
       "id": "G-CF-BROWSER",
@@ -676,13 +676,13 @@
         {
           "id": "EV-G-CF-BROWSER",
           "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
-          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
-          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved.",
           "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
-          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+          "observed_at": "2026-10-09T10:25:19.448783+00:00"
         }
       ],
-      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+      "rationale": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved."
     },
     {
       "id": "G-INTEGRATED-CI",
