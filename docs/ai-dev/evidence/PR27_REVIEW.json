@@ -1,0 +1,243 @@
+{
+  "schema_version": "true-shuffle.pr-review.v1",
+  "generated_at": "2026-10-09T15:15:52.364547+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "base_sha": "93241a7129e18689f5ea664bad5273f6613552a0",
+  "head_sha": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+  "pr": 27,
+  "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27",
+  "branch": "claude/skip-openers",
+  "commits": [
+    "a24fdeaf1fcb4cd18932eeecce6826312a43206d",
+    "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28"
+  ],
+  "provenance": "Actual GitHub author MikaMcFlurry; commits Claude <noreply@anthropic.com>, Claude session_01LuiFYFqenEVR9agywkDkAX; no invented Claude GitHub login.",
+  "dependency": "Based on externally integrated PR24→25→26 at93241; no separate sibling dependency stated. Full inventory and current24/25/26 timelines archived; heads/comments unchanged.",
+  "scope": "Substantive import/listens/memory/planner change, separately reviewed from UI design; PR body reports separate owner chat for functional intent, not substituted for this session protected requirements.",
+  "completion": {
+    "explicit_comment": false,
+    "latest_claude_comment": 6083149819,
+    "meaning": "Preview failure explanation, not release completion"
+  },
+  "independence": "FRESH",
+  "scoped_verdict": "NOT_READY",
+  "overall_release_claim": "BLOCKED",
+  "findings": [
+    {
+      "id": "PR27-OPENER-PODCAST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Hörprofil erklärt echten gewichteten Skip nach Podcast fälschlich als folgenlosen Opener",
+      "files": [
+        "src/core/history.ts:91",
+        "src/core/listens.ts:124",
+        "src/worker/hub/hub.ts:6760",
+        "src/client/screens/profile.tsx:496"
+      ],
+      "preconditions": "One legitimate extended-history file in chronological order. Music play followed by an approximately58min podcast followed immediately by music skipped after3s. All entries before liveSince. reason_start=trackdone (no restart).",
+      "steps": [
+        "onboarded({tracks:40}) real HubCore",
+        "Import music play ended2026-09-25T01:59:54Z(ms180000), podcast ended02:59:54Z(ms3500000, spotify_track_uri:null), skipped song ended02:59:57Z(ms3000, reason_start:trackdone, reason_end:fwdbtn)",
+        "Run aggregateHistory and importHistory(toRows(aggregate),0,1), then addListens/finishListens and actual two-block importListens",
+        "Read hub.memory(skippedId), tasteWeight(...,later_less,clock.t), hub.listeningProfile(UTC)"
+      ],
+      "expected": "One consistent classification. Under explicit podcast-keeps-listening rule this is ordinary early skip; profile early1/openers0 and actual memory weight0.5. UI must not claim skippedId is exempt from downweighting.",
+      "actual": {
+        "aggregate": {
+          "skipped": 1,
+          "openers": 0
+        },
+        "memory_weight": 0.5,
+        "profile": {
+          "early": 0,
+          "share": 0,
+          "openers": 1,
+          "topOpeners": [
+            "ssssssssssssssssssssss"
+          ]
+        }
+      },
+      "cause": "aggregateHistory tracks any finite-timestamp entry including podcast. addListens drops podcasts. Hub.timeline recomputes silence using music-only rows and infers opener from the artificial hour gap.",
+      "impact": "Owner-facing profile reports a false exemption from taste suppression; same imported event drives ordinary skip reduction in planner while UI promises no reduction. This is correctness/honest-state regression introduced by new opener classification.",
+      "repair_direction": "Preserve shared opener classification/activity continuity before dropping nonmusic entries; do not infer genuine silence from lossy music-only rows. Keep old-row compatibility and file-boundary policy explicit.",
+      "required_regressions": [
+        "music->podcast->immediate skip coherence acrossaggregate/memory/profile",
+        "true silence->skip remains exempt",
+        "explicit restart reason remains exempt",
+        "old imported rows and multiple files remain compatible"
+      ],
+      "test": "/workspace/ts-pr27-independent/test/hub/pr27-independent.test.ts",
+      "log": "/tmp/pr27-independent-tests.log"
+    }
+  ],
+  "inherited_open_findings": [
+    "PR24-LANE-07",
+    "PR25-RESUME-OWNER-CONFLICT"
+  ],
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS;2 preexisting informational diagnostics",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit_worker": "555/555 PASS default20s timeout",
+    "real_worker_fake_spotify_browser": "46/46 PASS unchanged assertions",
+    "new_profile_render": "4/4 PASS real local Chromium390/1440 light/dark longmetadata keyboard/navigation; screenshots visually inspected",
+    "fresh_independent": "45PASS/1FAIL;43 existing regressionsPASS,2 fresh memory/boundaryPASS; new podcast consistencyFAIL",
+    "github_verify": {
+      "id": 37945893955,
+      "conclusion": "success"
+    },
+    "preview": "Bot reports failed preview for both commits; actual failure cause not independently established; not evidence of candidate deployment."
+  },
+  "production_readback": {
+    "label": "watch27",
+    "deployment": "8bde11bf-ac13-43de-b08a-91b6bcf55c81",
+    "versions": [
+      {
+        "version_id": "873eca1e-2819-4e9b-9bab-c8a03a9ef441",
+        "percentage": 100
+      }
+    ],
+    "version": "873eca1e-2819-4e9b-9bab-c8a03a9ef441",
+    "created_at": "2026-10-09T13:43:14.145311Z",
+    "migration_tag": "v1",
+    "runtime": {
+      "migration_tag": "v1",
+      "assets": {
+        "not_found_handling": "single-page-application",
+        "headers": {
+          "version": 2,
+          "rules": {
+            "/*": {
+              "set": {
+                "content-security-policy": "default-src 'self'; img-src 'self' https://i.scdn.co https://*.scdn.co https://mosaic.scdn.co https://image-cdn-ak.spotifycdn.com https://image-cdn-fa.spotifycdn.com https://*.spotifycdn.com data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+                "permissions-policy": "camera=(), microphone=(), geolocation=()",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "x-content-type-options": "nosniff"
+              },
+              "unset": []
+            },
+            "/assets/*": {
+              "set": {
+                "cache-control": "public, max-age=31536000, immutable"
+              },
+              "unset": []
+            }
+          }
+        },
+        "raw_headers": "/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Content-Security-Policy: default-src 'self'; img-src 'self' https://i.scdn.co https://*.scdn.co https://mosaic.scdn.co https://image-cdn-ak.spotifycdn.com https://image-cdn-fa.spotifycdn.com https://*.spotifycdn.com data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'\n/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n",
+        "static_routing": {
+          "user_worker": [
+            "/api/*",
+            "/auth/*",
+            "/remote/*"
+          ]
+        },
+        "serve_directly": true,
+        "raw_run_worker_first": [
+          "/api/*",
+          "/auth/*",
+          "/remote/*"
+        ],
+        "base_path": "/"
+      },
+      "compatibility_date": "2026-09-20",
+      "compatibility_flags": [
+        "nodejs_compat"
+      ],
+      "usage_model": "standard"
+    },
+    "binding_shapes": [
+      {
+        "name": "AI",
+        "type": "ai",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "APP_SECRET",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "ASSETS",
+        "type": "assets",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "LASTFM_API_KEY",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "REGISTRY",
+        "type": "durable_object_namespace",
+        "class_name": "Registry",
+        "namespace_id": "2ccba352966f46a3b289eb159ccb3bc4"
+      },
+      {
+        "name": "SPOTIFY_CLIENT_ID",
+        "type": "plain_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "USER_HUB",
+        "type": "durable_object_namespace",
+        "class_name": "UserHub",
+        "namespace_id": "59222ef9f3a642d4b90776fafa0eac84"
+      }
+    ],
+    "namespace_ids": [
+      {
+        "id": "2ccba352966f46a3b289eb159ccb3bc4",
+        "name": "true-shuffle_Registry",
+        "class": "Registry"
+      },
+      {
+        "id": "59222ef9f3a642d4b90776fafa0eac84",
+        "name": "true-shuffle_UserHub",
+        "class": "UserHub"
+      }
+    ],
+    "secrets_names_only": [
+      "ANTHROPIC_API_KEY",
+      "APP_SECRET",
+      "LASTFM_API_KEY"
+    ]
+  },
+  "production_source": "93241a7129e18689f5ea664bad5273f6613552a0",
+  "root_operations": {
+    "app_fixes": false,
+    "merge": false,
+    "upload": false,
+    "deploy": false,
+    "rollback": false
+  },
+  "comment": 6083736398,
+  "comment_readback": true,
+  "evidence_refs": [
+    "pr27-review/pr27-final-github.json",
+    "pr27-review/pr27-independent.json",
+    "pr27-review/pr27-independent-tests.log",
+    "pr27-review/pr27-e2e.log",
+    "pr27-review/pr27-ui-final.log"
+  ],
+  "harness_note": "First additional render attempt aborted because new isolated account had not completed onboarding. Corrected only test harness, then4/4PASS. No app fix or product defect asserted from aborted attempt.",
+  "not_run": [
+    "Physical iPhone/live Spotify latency/quota",
+    "Private HA/MA",
+    "Actual populated restore",
+    "Real Cloudflare resource/capacity test",
+    "Candidate production deployment: absent completion and open blockers"
+  ]
+}

@@ -155,6 +155,7 @@
   "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078",
   "release_comment": 6083002216,
   "worker_hash_basis": "Actual compiled Worker content; existing worker_etag preserved as server metadata, not asserted equal to content hash",
-  "latest_watch_ref": "INTEGRATED_932_REVIEW.json",
-  "worker_etag_basis": "New ETag not separately captured; actualcontentSHAverified. PreviousETag retained in historicalsnapshot."
+  "latest_watch_ref": "PR27_REVIEW.json",
+  "worker_etag_basis": "New ETag not separately captured; actualcontentSHAverified. PreviousETag retained in historicalsnapshot.",
+  "latest_watch_at": "2026-10-09T15:15:52.364547+00:00"
 }

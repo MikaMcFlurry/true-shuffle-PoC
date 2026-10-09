@@ -40,7 +40,8 @@
     "Finalauth-only8921702explicitcompletion6079018689 read; fresh27authchecksREADY; originalLANE03 againFAILindependently onexactsource.",
     "ExternalPR23mergeCEE andactual473f/715100%readbackverified. Combined24/25checks526/46/11PASS; twofreshreviewsreproducedLANE05/RESUME01; concretecommentswritten.",
     "New final24c6b/2562aa andnew26e6d combined4c0514f:538/46/11/static PASS; threefreshreviews reproduce new lane/import/analytics failures; comments6080990256/6080977483/6081010497. Production unchanged authenticated readback.",
-    "External24/25/26 merged93241 deployed873e/8bde100%, independentlyverifiedWorker/assets/runtime/resources/auth/browser;549/46/11/static/CI PASS; sixprior26defectsclosed andLANE05/06closed."
+    "External24/25/26 merged93241 deployed873e/8bde100%, independentlyverifiedWorker/assets/runtime/resources/auth/browser;549/46/11/static/CI PASS; sixprior26defectsclosed andLANE05/06closed.",
+    "PR27 exact29d reviewed555/46/4/static/CI PASS; fresh45PASS/1FAIL podcast consistency P2 reported6083736398; production873e/8bde unchanged."
   ],
   "in_progress": [],
   "blocked": [
@@ -50,7 +51,8 @@
     "PrivateHA/MA",
     "Actualpopulatedproductionrestore",
     "RealCloudflareCPU/memory/quota atupperimportbound",
-    "AuthenticatedrealSpotify import andretainedqueue readback"
+    "AuthenticatedrealSpotify import andretainedqueue readback",
+    "PR27-OPENER-PODCAST-01 and missing explicit PR27 completion"
   ],
   "capability_blockers": [
     "Physical iPhone/liveSpotify latencyquota unavailable",
@@ -231,18 +233,21 @@
   },
   "historical_checkpoint": "docs/ai-dev/evidence/tag-wording-review/CHECKPOINT_HISTORY_BEFORE_PR18.json",
   "candidate_review": {
-    "revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
-    "heads": {
-      "24": "88de19736312bfbb83764d04fd4099d47da6decb",
-      "25": "8f38063114d6ebe5bc7d71ad3beeed8f76e86cf5"
-    },
-    "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
-    "ledger": "docs/ai-dev/evidence/PR24_25_LEDGER.json",
+    "revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+    "base_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+    "pr": 27,
+    "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+    "ledger": "docs/ai-dev/evidence/PR27_LEDGER.json",
     "completion_covers_current_heads": false,
     "open_findings": [
-      "PR24-LANE-05",
-      "PR25-RESUME-01"
-    ]
+      "PR27-OPENER-PODCAST-01"
+    ],
+    "inherited_open_findings": [
+      "PR24-LANE-07",
+      "PR25-RESUME-OWNER-CONFLICT"
+    ],
+    "comment": 6083736398,
+    "verdict": "BLOCKED"
   },
-  "candidate_review_revision": "93241a7129e18689f5ea664bad5273f6613552a0"
+  "candidate_review_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28"
 }

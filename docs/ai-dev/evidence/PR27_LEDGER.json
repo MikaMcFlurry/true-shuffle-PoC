@@ -1,0 +1,380 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-09T15:15:52.364547+00:00",
+  "project": "true-shuffle PR27 candidate review",
+  "subject": {
+    "revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+    "artifact_ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+    "environment": "Isolated PR27 local RealWorker/Chromium/FakeSpotify; production93241 separately unchanged",
+    "environment_class": "LOCAL"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "RELEASE_CANDIDATE",
+  "claim": "BLOCKED",
+  "material_release": true,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "PERFORMANCE_CRITICAL"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "BLOCKED",
+  "required_categories": [
+    "accessibility",
+    "build",
+    "critical_journey",
+    "data_invariants",
+    "independent_review",
+    "migration",
+    "operations",
+    "performance_reliability",
+    "post_deploy",
+    "recovery",
+    "security_privacy",
+    "ui_runtime"
+  ],
+  "external_blockers": [
+    {
+      "id": "B-SPOTIFY",
+      "type": "CREDENTIAL",
+      "description": "Owner reports working queue and playlist resume; agent cannot independently access physical owner Spotify/iPhone for current wake, latency and transport acceptance or actual quota capacity.",
+      "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
+    },
+    {
+      "id": "B-HA",
+      "type": "CREDENTIAL",
+      "description": "Private owner HA/MA installation and real Spotify Connect/native devices unavailable.",
+      "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
+    },
+    {
+      "id": "B-STORAGE",
+      "type": "TOOL_UNAVAILABLE",
+      "description": "Actual populated object bookmark/restore and history/migration-invariant acceptance have not been executed; existing app exposes no isolated authenticated recovery interface. SQLitePITR is documented, not verified by restore.",
+      "evidence_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
+    }
+  ],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR24-LANE-07",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Returning to a retained older Spotify queue can assign replacement-deck reason to the old occurrence"
+    },
+    {
+      "id": "PR26-PROFILE-RANK",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Inexact artist/album display ranks by duration while showing play counts"
+    },
+    {
+      "id": "PR25-RESUME-OWNER-CONFLICT",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Current preserved unfinished-instance/progress requirement conflicts intentionally advancing listed partial plays"
+    },
+    {
+      "id": "PR27-OPENER-PODCAST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Hörprofil erklärt echten gewichteten Skip nach Podcast fälschlich als folgenlosen Opener"
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-BUILD-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Type/lint/build/dry555PASS exact29d."
+    },
+    {
+      "id": "G-COMBINED",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-COMBINED-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "46 unchanged browser assertionsPASS; inherited continuity findings remain separately open."
+    },
+    {
+      "id": "G-NEW-BEHAVIOR",
+      "category": "data_invariants",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "G-NEW-BEHAVIOR-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Fresh podcast classificationFAIL aggregate/memory/profile consistency."
+    },
+    {
+      "id": "G-UI",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-UI-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Four new local rendered profile cases390/1440lightdark longmetadataPASS;46 standard errors/offline/pending/navigationPASS."
+    },
+    {
+      "id": "G-A11Y",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-A11Y-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Bounded keyboard/focus/label checksPASS, not comprehensive WCAG or physicalSafari."
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-MIGRATION-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Existing local migration regressions plus legacy4/new5 import row compatibilityPASS; no newSQL schema."
+    },
+    {
+      "id": "G-LOCAL-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-LOCAL-RECOVERY-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Existing local import retry/recovery regressionsPASS."
+    },
+    {
+      "id": "G-SECURITY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-SECURITY-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Existing local account/auth/CSRF/guest/native regressionsPASS; unchanged security surface."
+    },
+    {
+      "id": "G-REVIEW",
+      "category": "independent_review",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "G-REVIEW-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Fresh scopedNOT_READY on podcastP2; overallBLOCKED also retains inheritedResumeP1."
+    },
+    {
+      "id": "G-CI",
+      "category": "operations",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-CI-27",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/PR27_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+          "observed_at": "2026-10-09T15:15:52.364547+00:00"
+        }
+      ],
+      "rationale": "Exact candidate verify37945893955success."
+    },
+    {
+      "id": "G-LIVE",
+      "category": "post_deploy",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Candidate not deployed: missing explicit completion and blocking findings. Unchanged93241 production read separately archived."
+    },
+    {
+      "id": "G-AI-RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "NOT_RUN",
+      "rationale": "Real provider/physical/resource capacity NOT_RUN; synthetic results do not establish live acceptance.",
+      "evidence": []
+    }
+  ]
+}
