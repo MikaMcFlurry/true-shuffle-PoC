@@ -27,20 +27,24 @@ const real = runInNewContext(
 	{ requestGenres, HubError, NativeError, SpotifyError, console },
 ) as Record<string, (this: unknown, ...args: unknown[]) => Promise<Result>>;
 
-const PROFILE = {
-	at: 0,
-	from: 1_600_000_000_000,
-	to: 1_700_000_000_000,
-	plays: 3,
-	minutes: 9,
-	songs: 1,
-	artists: 1,
-	earlySkips: 0,
-	hourWeek: new Array<number>(168).fill(0),
-	months: [],
-	topArtists: [{ name: "Glasfabrik", plays: 3, minutes: 9 }],
-	topSongs: [],
-};
+/** An imported history: one Glasfabrik song, three plays (see core/listens). */
+function importHistory(h: { hub: { importListens(input: unknown): unknown } }) {
+	const at = 1_600_000_000;
+	h.hub.importListens({
+		part: 0,
+		parts: 2,
+		tracks: 1,
+		kind: "tracks",
+		data: [["G".repeat(22), "Lied", "Glasfabrik", ""]],
+	});
+	h.hub.importListens({
+		part: 1,
+		parts: 2,
+		tracks: 1,
+		kind: "rows",
+		data: [0, 1, 2].map((i) => [at + i * 600, 0, 180_000, 0, 0]),
+	});
+}
 const ANSWER = { response: JSON.stringify({ genres: [{ name: "Indie", share: 1 }], summary: "" }) };
 
 /** A UserHub shell around a real HubCore whose AI answers only when released. */
@@ -49,7 +53,7 @@ async function hubWithSlowAi() {
 	const ai = { run: () => new Promise((r) => releases.push(r)) };
 	const h = await onboarded({ tracks: 300, ai, env: { anthropicKey: null } });
 	expect((await h.hub.play(h.stationIds[0]!)).ok).toBe(true);
-	h.hub.setImportedProfile(PROFILE);
+	importHistory(h);
 	const shell: Record<string, unknown> = {
 		chain: Promise.resolve(),
 		genreFlight: null,
@@ -130,7 +134,7 @@ it("a newer import while the AI thinks keeps the late answer out", async () => {
 	const { h, call, releases, epoch } = await hubWithSlowAi();
 	const pending = call("estimateGenres", epoch);
 	await new Promise((r) => setTimeout(r, 10));
-	h.hub.setImportedProfile({ ...PROFILE, at: 1 });
+	importHistory(h);
 	releases[0]!(ANSWER);
 	expect(await pending).toMatchObject({ ok: true, value: { estimate: null } });
 	expect(h.hub.listeningProfile("UTC").genres).toBeNull();

@@ -559,11 +559,37 @@ app.post("/api/history/profile", async (c) => {
 	return unwrap(c, c.var.hub.setImportedProfile(c.var.epoch, b.profile ?? null));
 });
 
+// Every play of an imported history for the Hörprofil, block by block (see core/listens).
+app.post("/api/history/listens", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(
+		c,
+		c.var.hub.importListens(c.var.epoch, {
+			part: b.part,
+			parts: b.parts,
+			tracks: b.tracks,
+			kind: b.kind,
+			data: b.data,
+		}),
+	);
+});
+
 app.post("/api/profile/genres", (c) => unwrap(c, c.var.hub.estimateGenres(c.var.epoch)));
 
-app.get("/api/profile", (c) =>
-	unwrap(c, c.var.hub.listeningProfile(c.var.epoch, (c.req.query("tz") ?? "UTC").slice(0, 64))),
-);
+app.get("/api/profile", (c) => {
+	// A period: from inclusive, to exclusive (ms); from left out = everything.
+	const time = (v: string | undefined) => {
+		const n = v ? Number(v) : Number.NaN;
+		return Number.isFinite(n) && n >= 0 && n <= 8.64e15 ? Math.floor(n) : null;
+	};
+	return unwrap(
+		c,
+		c.var.hub.listeningProfile(c.var.epoch, (c.req.query("tz") ?? "UTC").slice(0, 64), {
+			from: time(c.req.query("from")),
+			to: time(c.req.query("to")),
+		}),
+	);
+});
 
 app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow(c.var.epoch)));
 

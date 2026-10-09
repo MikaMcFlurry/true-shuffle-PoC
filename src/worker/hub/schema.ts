@@ -135,6 +135,19 @@ const MIGRATIONS: string[][] = [
 		// deck says so without doubt; null for older plays and anything unsure.
 		`ALTER TABLE plays ADD COLUMN lane TEXT`,
 	],
+	[
+		// Every play of an imported streaming history (see core/listens):
+		// kind 'tracks' = pages of the song list, 'rows' = pages of plays.
+		// One generation is current (kv 'listens'); an upload writes the next
+		// and switches over only once complete.
+		`CREATE TABLE IF NOT EXISTS listen_pages (
+			gen INTEGER NOT NULL,
+			kind TEXT NOT NULL,
+			page INTEGER NOT NULL,
+			data TEXT NOT NULL,
+			PRIMARY KEY (gen, kind, page)
+		) WITHOUT ROWID`,
+	],
 ];
 
 export function migrate(db: SqlDb): void {

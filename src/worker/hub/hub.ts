@@ -38,6 +38,16 @@ import {
 } from "../../core/deck";
 import { fromRow, type HistoryRow } from "../../core/history";
 import {
+	countsAsPlay,
+	isEarlySkip,
+	isListenRow,
+	isListenTrack,
+	LISTEN_FLAG,
+	LISTEN_PAGE,
+	type ListenRow,
+	type ListenTrack,
+} from "../../core/listens";
+import {
 	coolingDown,
 	heardInRound,
 	type ImportedStats,
@@ -45,6 +55,7 @@ import {
 	mergeMemory,
 	RECENT_GUARD_MS,
 } from "../../core/memory";
+import { type ListenEvent, localTimes, periodProfile } from "../../core/period-profile";
 import { type DiscoveryEntry, type PoolEntry, planQueue } from "../../core/planner";
 import type { Rng } from "../../core/random";
 import {
@@ -194,8 +205,6 @@ const LANE_NOTE_MS = 2 * DAY_MS;
  */
 const LANE_STAMP_SLACK_MS = 15_000;
 const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
-const PLAYS_KEEP_MS = 180 * DAY_MS;
-const PRUNE_PER_DAY = 500;
 
 /**
  * How long a player that last played a station may still hold (a loaded
@@ -573,6 +582,26 @@ export class HubError extends Error {
 }
 
 // ---------------------------------------------------------------------------
+
+/** The current imported plays (kv 'listens', see `importListens`). */
+interface ListenMeta {
+	gen: number;
+	at: number;
+	from: number | null;
+	to: number | null;
+	rows: number;
+	plays: number;
+	tracks: number;
+}
+
+/** An upload of imported plays under way (kv 'listens_upload'). */
+interface ListenUpload {
+	gen: number;
+	parts: number;
+	tracks: number;
+	next: number;
+	songPages: number;
+}
 
 export interface SavedSession {
 	sessionId: string;
@@ -2909,26 +2938,8 @@ export class HubCore {
 		if (this.kvGet("onboarded") && this.now() - s.lastLikedAt > 3 * DAY_MS) {
 			this.enqueue("import:liked", "import", { source: "liked", offset: 0 }, 6);
 		}
-		this.prune();
 		this.setSyncState(s);
 		return true;
-	}
-
-	/**
-	 * Once a day, drop single plays older than half a year (memory keeps every
-	 * song's totals) so the table — and every read of it — stays small. At most
-	 * a few hundred per day: every deleted row counts against the day's writes.
-	 */
-	private prune(): void {
-		const last = this.kvGet<number>("pruned_at") ?? 0;
-		if (this.now() - last < DAY_MS) return;
-		this.kvSet("pruned_at", this.now());
-		this.db.run(
-			`DELETE FROM plays WHERE (played_at, track_id) IN
-			 (SELECT played_at, track_id FROM plays WHERE played_at < ? ORDER BY played_at LIMIT ?)`,
-			this.now() - PLAYS_KEEP_MS,
-			PRUNE_PER_DAY,
-		);
 	}
 
 	private async readRecent(client: SpotifyClient, s: SyncState): Promise<RecentPlay[]> {
@@ -6373,12 +6384,9 @@ export class HubCore {
 				answer: { estimate, retryAt: last.at + GENRE_EVERY_MS, failed: false },
 				request: null,
 			};
-		const p = this.listeningProfile("UTC");
-		const weight = new Map<string, number>();
-		for (const a of p.imported?.topArtists ?? [])
-			weight.set(a.name, (weight.get(a.name) ?? 0) + a.minutes);
-		// A live play counts as about three and a half minutes.
-		for (const a of p.topArtists) weight.set(a.name, (weight.get(a.name) ?? 0) + a.plays * 3.5);
+		// The whole timeline, by listening time.
+		const p = periodProfile(this.timeline(), { from: null, to: now + 1 }, localTimes("UTC"));
+		const weight = new Map(p.topArtists.map((a) => [a.name, a.minutes || a.plays * 3.5]));
 		const total = [...weight.values()].reduce((a, b) => a + b, 0);
 		if (total <= 0) throw new HubError("no_artists", "Noch zu wenig gehört für eine Einschätzung");
 		const attempt = { at: now, id: randomToken(8) };
@@ -6416,24 +6424,13 @@ export class HubCore {
 		return estimateGenres(this.d.env, this.d.fetch, this.d.ai, artists, this.now());
 	}
 
-	/** The stored import summary, with covers from the library where known (no Spotify call). */
-	private importedProfile(): ListeningProfile["imported"] {
-		const p = this.kvGet<ImportedProfile>("history_profile");
-		if (!p) return null;
-		const known = this.lookupTracks(
-			p.topSongs.map((x) => x.id),
-			this.usedSources(),
-		);
-		return {
-			...p,
-			topSongs: p.topSongs.map((x) => ({ ...x, imageUrl: known.get(x.id)?.[4] ?? null })),
-		};
-	}
-
 	/**
 	 * Stores the summary of an imported streaming history (see `ImportedProfile`),
-	 * replacing the one before. It comes from the browser: only well-formed,
-	 * bounded numbers and short names are kept.
+	 * replacing the one before — what an app from before the period profile
+	 * sends. The Hörprofil reads the imported plays (see `importListens`); the
+	 * summary only tells that importing again would show every period. It
+	 * comes from the browser: only well-formed, bounded numbers and short
+	 * names are kept.
 	 */
 	setImportedProfile(input: unknown): void {
 		const bad = () => new HubError("bad_profile", "Ungültiges Hörprofil");
@@ -6497,11 +6494,194 @@ export class HubCore {
 		if (attempt) this.kvSet("genre_attempt", { ...attempt, id: `${attempt.id}-stale` });
 	}
 
+	/** The current imported plays (see core/listens), read once per generation. */
+	private listenCache: { gen: number; tracks: ListenTrack[]; rows: ListenRow[] } | null = null;
+	private listenData(): { tracks: ListenTrack[]; rows: ListenRow[] } | null {
+		const meta = this.kvGet<ListenMeta>("listens");
+		if (!meta) return null;
+		if (this.listenCache?.gen !== meta.gen) {
+			const read = (kind: string) =>
+				this.db
+					.all<{ data: string }>(
+						`SELECT data FROM listen_pages WHERE gen = ? AND kind = ? ORDER BY page`,
+						meta.gen,
+						kind,
+					)
+					.flatMap((r) => JSON.parse(r.data) as unknown[]);
+			this.listenCache = {
+				gen: meta.gen,
+				tracks: read("tracks") as ListenTrack[],
+				rows: read("rows") as ListenRow[],
+			};
+		}
+		return this.listenCache;
+	}
+
 	/**
-	 * The listener's own listening, from the plays log (see `ListeningProfile`).
-	 * One read of the window; nothing is written and Spotify is not asked.
+	 * Takes one block of an imported history's plays (see core/listens): the
+	 * song list first, then the plays, in order. They are written as the next
+	 * generation; only the last block switches over to it, so a broken upload
+	 * leaves the plays before in place. Everything comes from the browser and
+	 * is checked: shapes, bounds, sizes, order.
 	 */
-	listeningProfile(timeZone: string): ListeningProfile {
+	importListens(input: {
+		part: unknown;
+		parts: unknown;
+		tracks: unknown;
+		kind: unknown;
+		data: unknown;
+	}): { stored: number } {
+		const bad = (why: string) => new HubError("bad_listens", `Ungültiger Hörverlauf: ${why}`);
+		const { part, parts, tracks, kind, data } = input;
+		const int = (v: unknown, max: number) =>
+			typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= max;
+		if (!int(parts, 2000) || (parts as number) < 1 || !int(part, (parts as number) - 1))
+			throw bad("Block");
+		if (!int(tracks, 2_000_000) || (kind !== "tracks" && kind !== "rows")) throw bad("Block");
+		if (!Array.isArray(data) || data.length > LISTEN_PAGE) throw bad("Blockgröße");
+		const current = this.kvGet<ListenMeta>("listens");
+		let upload = this.kvGet<ListenUpload>("listens_upload");
+		if (part === 0) {
+			// A new upload: whatever an unfinished one left behind goes first.
+			this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, current?.gen ?? -1);
+			upload = {
+				gen: Math.max(current?.gen ?? 0, upload?.gen ?? 0) + 1,
+				parts: parts as number,
+				tracks: tracks as number,
+				next: 0,
+				songPages: 0,
+			};
+		}
+		if (!upload || upload.next !== part || upload.parts !== parts || upload.tracks !== tracks)
+			throw bad("Reihenfolge — bitte noch einmal von vorn");
+		const latest = Math.floor((this.now() + DAY_MS) / 1000);
+		if (kind === "tracks") {
+			if (upload.songPages * LISTEN_PAGE + data.length > upload.tracks) throw bad("Songliste");
+			if (part !== upload.songPages) throw bad("Songliste zuerst");
+			if (!data.every(isListenTrack)) throw bad("Song");
+			upload.songPages++;
+		} else {
+			if (upload.songPages * LISTEN_PAGE < upload.tracks) throw bad("Songliste unvollständig");
+			if (!data.every((r) => isListenRow(r, upload!.tracks, latest))) throw bad("Wiedergabe");
+		}
+		this.db.run(
+			`INSERT OR REPLACE INTO listen_pages (gen, kind, page, data) VALUES (?, ?, ?, ?)`,
+			upload.gen,
+			kind,
+			part,
+			JSON.stringify(data),
+		);
+		upload.next++;
+		if (upload.next < upload.parts) {
+			this.kvSet("listens_upload", upload);
+			return { stored: data.length };
+		}
+		// Complete: count what came, switch over, drop the generation before.
+		let from: number | null = null;
+		let to: number | null = null;
+		let rows = 0;
+		let plays = 0;
+		for (const r of this.db.all<{ data: string }>(
+			`SELECT data FROM listen_pages WHERE gen = ? AND kind = 'rows'`,
+			upload.gen,
+		))
+			for (const row of JSON.parse(r.data) as ListenRow[]) {
+				rows++;
+				if (!countsAsPlay(row)) continue;
+				plays++;
+				from = from === null ? row[0] * 1000 : Math.min(from, row[0] * 1000);
+				to = to === null ? row[0] * 1000 : Math.max(to, row[0] * 1000);
+			}
+		this.kvSet("listens", {
+			gen: upload.gen,
+			at: this.now(),
+			from,
+			to,
+			rows,
+			plays,
+			tracks: upload.tracks,
+		} satisfies ListenMeta);
+		this.kvDel("listens_upload");
+		this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, upload.gen);
+		this.listenCache = null;
+		// A new history: a genre estimate on the way belongs to the old one.
+		const pending = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		if (pending) this.kvSet("genre_attempt", { ...pending, id: `${pending.id}-stale` });
+		this.log("info", "history", `Hörverlauf für das Hörprofil übernommen: ${plays} Wiedergaben`);
+		return { stored: data.length };
+	}
+
+	/**
+	 * The listener's timeline, oldest first (see `ListeningProfile`): imported
+	 * plays up to the first sign-in, true-shuffle's own count (guest time left
+	 * out) from then on.
+	 */
+	private timeline(): ListenEvent[] {
+		const liveSince = this.kvGet<number>("live_since") ?? Number.POSITIVE_INFINITY;
+		const events: ListenEvent[] = [];
+		const imported = this.listenData();
+		if (imported) {
+			for (const r of imported.rows) {
+				const at = r[0] * 1000;
+				if (at >= liveSince) break;
+				const play = countsAsPlay(r);
+				const early = !play && isEarlySkip(r);
+				if (!play && !early) continue;
+				const t = imported.tracks[r[1]];
+				if (!t) continue;
+				events.push({
+					at,
+					song: t[0],
+					name: t[1] || "Unbekannter Song",
+					artist: t[2],
+					album: t[3] || null,
+					ms: r[2],
+					exact: true,
+					play,
+					earlySkip: early,
+					platform: r[4],
+					shuffle: (r[3] & LISTEN_FLAG.shuffle) !== 0,
+					offline: (r[3] & LISTEN_FLAG.offline) !== 0,
+					imageUrl: null,
+				});
+			}
+		}
+		const rows = this.db.all<{ played_at: number; track_id: string; meta: string | null }>(
+			`SELECT played_at, track_id, meta FROM plays WHERE ignored = 0 AND played_at >= ? ORDER BY played_at`,
+			Number.isFinite(liveSince) ? liveSince : 0,
+		);
+		const bare = [...new Set(rows.filter((r) => !r.meta).map((r) => r.track_id))];
+		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
+		for (const r of rows) {
+			const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
+			events.push({
+				at: r.played_at,
+				song: r.track_id,
+				name: t?.[1] ?? "Unbekannter Song",
+				artist: t?.[2][0]?.[1] ?? "",
+				album: t?.[3] || null,
+				ms: t?.[5] ?? 0,
+				exact: false,
+				play: true,
+				earlySkip: false,
+				platform: null,
+				shuffle: null,
+				offline: null,
+				imageUrl: t?.[4] ?? null,
+			});
+		}
+		return events;
+	}
+
+	/**
+	 * The Hörprofil of a period (see `ListeningProfile`): from inclusive, to
+	 * exclusive, from null for everything. Covers of imported songs come from
+	 * the library where known; nothing is written and Spotify is not asked.
+	 */
+	listeningProfile(
+		timeZone: string,
+		period: { from?: number | null; to?: number | null } = {},
+	): ListeningProfile {
 		let zone = "UTC";
 		try {
 			new Intl.DateTimeFormat("en-US", { timeZone });
@@ -6509,87 +6689,26 @@ export class HubCore {
 		} catch {
 			// An unknown zone: hours in UTC rather than none.
 		}
-		const parts = new Intl.DateTimeFormat("en-US", {
-			timeZone: zone,
-			year: "numeric",
-			month: "2-digit",
-			weekday: "short",
-			hour: "2-digit",
-			hourCycle: "h23",
-		});
-		const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-		const rows = this.db.all<{
-			played_at: number;
-			track_id: string;
-			meta: string | null;
-			station_id: number | null;
-		}>(
-			`SELECT played_at, track_id, meta, station_id FROM plays WHERE ignored = 0 AND played_at >= ? ORDER BY played_at`,
-			this.now() - PLAYS_KEEP_MS,
-		);
-		const bare = [...new Set(rows.filter((r) => !r.meta).map((r) => r.track_id))];
-		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
-		const hourWeek = new Array<number>(7 * 24).fill(0);
-		const months = new Map<string, { plays: number; ms: number }>();
-		const artists = new Map<string, { name: string; plays: number; imageUrl: string | null }>();
-		const songs = new Map<string, { t: PackedTrack; plays: number }>();
-		let ms = 0;
-		let plays = 0;
-		let onCassettes = 0;
-		for (const r of rows) {
-			const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
-			plays++;
-			if (r.station_id !== null) onCassettes++;
-			const p = Object.fromEntries(
-				parts.formatToParts(new Date(r.played_at)).map((x) => [x.type, x.value]),
-			);
-			const day = DAYS.indexOf(p.weekday ?? "");
-			const hour = Number(p.hour);
-			if (day >= 0 && hour >= 0 && hour < 24) hourWeek[day * 24 + hour]!++;
-			const month = `${p.year}-${p.month}`;
-			const m = months.get(month) ?? { plays: 0, ms: 0 };
-			m.plays++;
-			m.ms += t?.[5] ?? 0;
-			months.set(month, m);
-			ms += t?.[5] ?? 0;
-			if (!t) continue;
-			const song = songs.get(t[0]) ?? { t, plays: 0 };
-			song.plays++;
-			songs.set(t[0], song);
-			for (const [id, name] of t[2]) {
-				const a = artists.get(id) ?? { name, plays: 0, imageUrl: null };
-				a.plays++;
-				artists.set(id, a);
-			}
+		const to = period.to ?? this.now() + 1;
+		const from = period.from ?? null;
+		const stats = periodProfile(this.timeline(), { from, to }, localTimes(zone));
+		const missing = stats.topSongs.filter((x) => !x.imageUrl && x.id).map((x) => x.id!);
+		if (missing.length > 0) {
+			const known = this.lookupTracks(missing, this.usedSources());
+			for (const x of [...stats.topSongs, ...stats.comebacks])
+				if (!x.imageUrl && x.id) x.imageUrl = known.get(x.id)?.[4] ?? null;
 		}
-		const top = <T extends { plays: number }>(xs: Iterable<T>, n: number) =>
-			[...xs].sort((a, b) => b.plays - a.plays).slice(0, n);
+		const meta = this.kvGet<ListenMeta>("listens");
 		const count = (sql: string) => this.db.first<{ n: number }>(sql)?.n ?? 0;
 		return {
-			since: rows[0]?.played_at ?? null,
-			until: rows.at(-1)?.played_at ?? null,
-			plays,
-			minutes: Math.round(ms / 60_000),
-			songs: songs.size,
-			artists: artists.size,
-			hourWeek,
-			months: [...months.entries()]
-				.sort(([a], [b]) => a.localeCompare(b))
-				.map(([month, m]) => ({ month, plays: m.plays, minutes: Math.round(m.ms / 60_000) })),
-			topArtists: top(artists.values(), 10).map((a) => ({
-				name: a.name,
-				artists: "",
-				plays: a.plays,
-				imageUrl: a.imageUrl,
-			})),
-			topSongs: top(songs.values(), 10).map((x) => ({
-				name: x.t[1],
-				artists: artistLine(x.t),
-				plays: x.plays,
-				imageUrl: x.t[4],
-			})),
-			onCassettes,
-			imported: this.importedProfile(),
+			...stats,
+			coverage: {
+				importedFrom: meta?.from ?? null,
+				importedTo: meta?.to ?? null,
+				importedPlays: meta?.plays ?? 0,
+				liveSince: this.kvGet<number>("live_since"),
+				summaryOnly: !meta && !!this.kvGet("history_profile"),
+			},
 			genres: this.kvGet<GenreEstimate>("genre_estimate"),
 			canEstimate: !!this.d.env.anthropicKey || !!this.d.ai,
 			genresRetryAt: (() => {

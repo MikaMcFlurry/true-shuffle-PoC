@@ -361,7 +361,7 @@ test.describe("a listener's day", () => {
 		expect(old.status()).toBe(401);
 	});
 
-	test("an imported history becomes a Hörprofil with hours, months and top artists", async ({
+	test("an imported history becomes a Hörprofil for any period, with hours, months and top artists", async ({
 		page,
 	}) => {
 		await signIn(page);
@@ -381,10 +381,16 @@ test.describe("a listener's day", () => {
 		await page.getByRole("button", { name: "Übernehmen" }).click();
 		await page.getByRole("link", { name: "Dein Hörprofil ansehen" }).click();
 		await expect(page.getByRole("heading", { name: "Dein Hörprofil", level: 1 })).toBeVisible();
-		await expect(page.getByRole("radio", { name: "Ganzer Verlauf" })).toBeChecked();
+		// The last 30 days: none of the 2024 plays.
+		await expect(page.getByRole("radio", { name: "30 Tage" })).toBeChecked();
+		await expect(page.locator(".profile__source")).toContainText(
+			"aus deinem importierten Spotify-Verlauf",
+		);
+		await page.getByRole("radio", { name: "Alles" }).check();
 		await expect(page.locator(".figure--hero")).toContainText("2 Stunden");
-		await expect(page.locator(".hbars")).toContainText("Nachtbus");
-		await expect(page.getByRole("region", { name: "Pro Monat" })).toBeVisible();
+		await expect(page.locator(".figure--hero")).toContainText("so lange lief sie wirklich");
+		await expect(page.getByRole("region", { name: "Am meisten gehört" })).toContainText("Nachtbus");
+		await expect(page.getByRole("region", { name: "Im Verlauf" })).toBeVisible();
 		// Every value the charts draw can be read as a table: 24 hours by 7 days, every month.
 		for (const t of await page.getByText("Als Tabelle").all()) await t.click();
 		const week = page.getByRole("table", { name: /Uhrzeit .* Wochentag/ });
@@ -395,20 +401,33 @@ test.describe("a listener's day", () => {
 		expect(perDay.reduce((sum, v) => sum + Number(v), 0)).toBe(40);
 		const months = page.getByRole("table", { name: "Hören pro Monat" });
 		await expect(months.locator("tbody tr")).toHaveCount(12);
-		await expect(months.getByRole("row", { name: /Jan 2024/ })).toHaveText(/Jan 2024\s*0,2\s*4/);
+		await expect(months.getByRole("row", { name: /Januar 2024/ })).toHaveText(
+			/Januar 2024\s*0,2\s*4/,
+		);
 		await checkPage(page, "Hörprofil");
-		await page.getByRole("radio", { name: "Letzte 180 Tage" }).check();
-		await expect(page.locator(".profile__source")).toContainText("selbst gezählt");
+		// The year in review, and a range of one's own.
+		await page.getByRole("radio", { name: "2024" }).check();
+		await expect(page.locator(".figure--hero")).toContainText("im Jahr 2024");
+		await expect(page.getByRole("region", { name: "Am meisten gehört" })).toContainText("Nachtbus");
+		await page.getByRole("radio", { name: "Eigener" }).check();
+		await page.getByLabel("Von").fill("2024-03-01");
+		await page.getByLabel("Bis").fill("2024-03-31");
+		await page.getByRole("button", { name: "Anzeigen" }).click();
+		await expect(page.locator(".figure--hero")).toContainText("vom 1. März 2024 bis 31. März 2024");
+		await expect(page.locator(".figure").nth(1)).toContainText(/^\s*\d+\s*Songs gehört/);
+		await checkPage(page, "Hörprofil, eigener Zeitraum");
 	});
 
-	test("an export from after the first sign-in still keeps its Hörprofil", async ({ page }) => {
+	test("an export from after the first sign-in says there is nothing new to take", async ({
+		page,
+	}) => {
 		await signIn(page);
 		await page.goto("/import");
-		const imports: string[] = [];
+		const sent: string[] = [];
 		page.on("request", (r) => {
-			if (r.url().includes("/api/history/import")) imports.push(r.url());
+			if (/\/api\/history\/(import|listens)/.test(r.url())) sent.push(r.url());
 		});
-		// Every play lies after the first sign-in: counted live already, only the summary is new.
+		// Every play lies after the first sign-in: true-shuffle counted it itself.
 		const soon = Date.now() + 5 * 60_000;
 		const plays = Array.from({ length: 6 }, (_, i) => ({
 			ts: new Date(soon + i * 200_000).toISOString(),
@@ -422,15 +441,11 @@ test.describe("a listener's day", () => {
 			mimeType: "application/json",
 			buffer: Buffer.from(JSON.stringify(plays)),
 		});
-		await expect(page.getByText(/Übernommen wird nur dein\s+Hörprofil/)).toBeVisible();
-		await page.getByRole("button", { name: "Hörprofil übernehmen" }).click();
-		await expect(
-			page.getByRole("heading", { name: "Am Mischen ändert sich nichts." }),
-		).toBeVisible();
-		expect(imports).toEqual([]);
-		await page.getByRole("link", { name: "Dein Hörprofil ansehen" }).click();
-		await expect(page.getByRole("radio", { name: "Ganzer Verlauf" })).toBeChecked();
-		await expect(page.locator(".hbars")).toContainText("Nachtbus");
+		await expect(page.getByRole("alert")).toContainText(
+			"Alles in diesen Dateien lief nach deiner ersten Anmeldung",
+		);
+		await expect(page.getByRole("button", { name: "Übernehmen" })).toHaveCount(0);
+		expect(sent).toEqual([]);
 	});
 
 	test("a Hörprofil that could not be saved says so and is sent again alone", async ({ page }) => {
@@ -441,7 +456,7 @@ test.describe("a listener's day", () => {
 			if (r.url().includes("/api/history/import")) imports.push(r.url());
 		});
 		let refuse = true;
-		await page.route(/\/api\/history\/profile$/, (route) => {
+		await page.route(/\/api\/history\/listens$/, (route) => {
 			if (!refuse) return route.continue();
 			refuse = false;
 			return route.fulfill({
@@ -473,7 +488,10 @@ test.describe("a listener's day", () => {
 		expect(imports).toHaveLength(1);
 		await page.getByRole("button", { name: "Hörprofil erneut speichern" }).click();
 		await page.getByRole("link", { name: "Dein Hörprofil ansehen" }).click();
-		await expect(page.locator(".hbars")).toContainText("Glasfabrik");
+		await page.getByRole("radio", { name: "Alles" }).check();
+		await expect(page.getByRole("region", { name: "Am meisten gehört" })).toContainText(
+			"Glasfabrik",
+		);
 		expect(imports).toHaveLength(1);
 	});
 

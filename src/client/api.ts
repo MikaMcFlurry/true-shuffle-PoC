@@ -4,7 +4,6 @@ import type {
 	DeviceView,
 	GenreAnswer,
 	HistoryEntry,
-	ImportedProfile,
 	ListeningProfile,
 	PlaylistView,
 	PlayResult,
@@ -212,13 +211,21 @@ export const api = {
 		call<{ stored: number }>("POST", "/api/history/import", { rows, part, parts }),
 	history: (before?: number) =>
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),
-	importedProfile: (profile: ImportedProfile) =>
-		call<unknown>("POST", "/api/history/profile", { profile }),
+	importListens: (block: {
+		part: number;
+		parts: number;
+		tracks: number;
+		kind: "tracks" | "rows";
+		data: unknown[];
+	}) => call<{ stored: number }>("POST", "/api/history/listens", block),
 	genres: () => call<GenreAnswer>("POST", "/api/profile/genres"),
-	profile: () =>
+	/** A period: from inclusive, to exclusive (ms); from null = everything. */
+	profile: (period: { from: number | null; to: number | null } = { from: null, to: null }) =>
 		call<ListeningProfile>(
 			"GET",
-			`/api/profile?tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC")}`,
+			`/api/profile?tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC")}${
+				period.from !== null ? `&from=${period.from}` : ""
+			}${period.to !== null ? `&to=${period.to}` : ""}`,
 		),
 	sync: () => call<unknown>("POST", "/api/sync"),
 	logout: () => call<unknown>("POST", "/auth/logout"),

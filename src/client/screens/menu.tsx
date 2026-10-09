@@ -21,16 +21,25 @@ import {
 	type HistoryRow,
 	toRows,
 } from "../../core/history";
+import {
+	addListens,
+	countsAsPlay,
+	finishListens,
+	LISTEN_PAGE,
+	type ListenEntry,
+	type ListenRow,
+	type ListenTrack,
+	newListens,
+} from "../../core/listens";
 import { FAMILIAR_PLAYS, RARE_AFTER_EARLY_SKIPS } from "../../core/memory";
 import { DAY_MS } from "../../core/types";
-import type { AppState, DeviceView, HistoryEntry, ImportedProfile } from "../../shared/api";
+import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
 import { RateHit, ThumbMark } from "../components/rate";
 import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
-import { addToProfile, finishProfile, newProfile, type ProfileEntry } from "../history-profile";
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store } from "../store";
 
@@ -954,26 +963,37 @@ function EffectList({ e, done }: { e: Effects; done: boolean }) {
 	);
 }
 
+/** Every play of the files, for the Hörprofil (see core/listens). */
+interface Listens {
+	tracks: ListenTrack[];
+	rows: ListenRow[];
+	plays: number;
+	from: number;
+	to: number;
+}
+
+type ProfileState = "saved" | { saving: number } | { failed: string };
+
 function ProfileSaved({
-	profile,
+	listens,
 	state,
 	retry,
 }: {
-	profile: ImportedProfile | null;
-	state: "saved" | "saving" | { failed: string };
+	listens: Listens | null;
+	state: ProfileState;
 	retry: () => void;
 }) {
-	if (!profile) return null;
+	if (!listens) return null;
 	if (state === "saved")
 		return (
 			<a class="key key--lit key--wide" href="/profil">
 				Dein Hörprofil ansehen
 			</a>
 		);
-	if (state === "saving")
+	if ("saving" in state)
 		return (
 			<p class="hint" role="status">
-				Hörprofil wird gespeichert …
+				Hörprofil wird gespeichert … {Math.round(state.saving * 100)} %
 			</p>
 		);
 	return (
@@ -994,11 +1014,9 @@ export function ImportScreen({ state }: { state: AppState }) {
 	const [rows, setRows] = useState<HistoryRow[]>([]);
 	const [err, setErr] = useState<string | null>(null);
 	const [sent, setSent] = useState(0);
-	const [profile, setProfile] = useState<ImportedProfile | null>(null);
-	// "saved" | "saving" | the reason the Hörprofil could not be kept (the counts still stand).
-	const [profileState, setProfileState] = useState<"saved" | "saving" | { failed: string }>(
-		"saved",
-	);
+	const [listens, setListens] = useState<Listens | null>(null);
+	// Saved, how far along, or why the Hörprofil could not be kept (the counts still stand).
+	const [profileState, setProfileState] = useState<ProfileState>("saved");
 	const hist = state.history;
 
 	const read = async (files: FileList | null) => {
@@ -1007,8 +1025,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 		setEffects(null);
 		setPhase("reading");
 		const agg = emptyAggregate();
-		// The whole history for the Hörprofil, not only what came before live counting.
-		const prof = newProfile();
+		// Every play for the Hörprofil, not only what came before live counting.
+		const all = newListens();
 		let used = 0;
 		let problem: string | null = null;
 		for (const f of Array.from(files)) {
@@ -1022,37 +1040,65 @@ export function ImportScreen({ state }: { state: AppState }) {
 				if (kind !== "extended") continue;
 				// What came after the first sign-in, true-shuffle already counted live.
 				aggregateHistory(data as ExtendedEntry[], agg, { before: hist.liveSince });
-				addToProfile(data as ProfileEntry[], prof);
+				addListens(data as ListenEntry[], all);
 				used++;
 			} catch {
 				problem = `„${f.name}“ konnte nicht gelesen werden.`;
 			}
 		}
 		const r = toRows(agg);
-		const summary = finishProfile(prof, Date.now());
+		// After the first sign-in true-shuffle counted itself (guest time left out).
+		const done = finishListens(all, hist.liveSince);
+		const onlyLater = all.rows.size > 0 && done.rows.length === 0;
+		const counted = done.rows.filter(countsAsPlay);
+		const summary: Listens | null =
+			counted.length > 0
+				? {
+						...done,
+						plays: counted.length,
+						from: counted[0]![0] * 1000,
+						to: counted.at(-1)![0] * 1000,
+					}
+				: null;
 		setRows(r);
-		setProfile(summary);
+		setListens(summary);
 		if (r.length > 0) {
 			setEffects(effectsOf(r, agg, used));
-			setPhase("ready");
-		} else if (summary) {
-			// Everything here ran after the first sign-in: counted live already, only the Hörprofil is new.
 			setPhase("ready");
 		} else {
 			setErr(
 				problem ??
-					"In diesen Dateien steht kein Song, den true-shuffle übernehmen kann. Wähle die Dateien „Streaming_History_Audio_…json“.",
+					(onlyLater && hist.liveSince
+						? `Alles in diesen Dateien lief nach deiner ersten Anmeldung am ${date(hist.liveSince)}. Das hat true-shuffle schon selbst gezählt, für die Kassetten wie fürs Hörprofil: Es gibt nichts zu übernehmen.`
+						: "In diesen Dateien steht kein Song, den true-shuffle übernehmen kann. Wähle die Dateien „Streaming_History_Audio_…json“."),
 			);
 			setPhase("idle");
 		}
-		if (problem && (r.length > 0 || summary)) setErr(problem);
+		if (problem && r.length > 0) setErr(problem);
 	};
 
+	// The song list, then the plays, block by block; the server switches over only at the end.
 	const saveProfile = async () => {
-		if (!profile) return;
-		setProfileState("saving");
+		if (!listens) return;
+		const pages = (xs: unknown[]) =>
+			Array.from({ length: Math.ceil(xs.length / LISTEN_PAGE) }, (_, i) =>
+				xs.slice(i * LISTEN_PAGE, (i + 1) * LISTEN_PAGE),
+			);
+		const blocks = [
+			...pages(listens.tracks).map((data) => ({ kind: "tracks" as const, data })),
+			...pages(listens.rows).map((data) => ({ kind: "rows" as const, data })),
+		];
+		setProfileState({ saving: 0 });
 		try {
-			await api.importedProfile(profile);
+			for (const [part, b] of blocks.entries()) {
+				await api.importListens({
+					part,
+					parts: blocks.length,
+					tracks: listens.tracks.length,
+					...b,
+				});
+				setProfileState({ saving: (part + 1) / blocks.length });
+			}
 			setProfileState("saved");
 		} catch (e) {
 			setProfileState({ failed: (e as Error).message });
@@ -1066,19 +1112,16 @@ export function ImportScreen({ state }: { state: AppState }) {
 		const size = 2000;
 		const parts = Math.max(1, Math.ceil(rows.length / size));
 		try {
-			// No rows: nothing before the first sign-in, so an earlier import stays as it is.
-			if (rows.length > 0) {
-				for (let i = 0; i < parts; i++) {
-					await api.importHistory(rows.slice(i * size, (i + 1) * size), i, parts);
-					setSent(Math.min(rows.length, (i + 1) * size));
-				}
+			for (let i = 0; i < parts; i++) {
+				await api.importHistory(rows.slice(i * size, (i + 1) * size), i, parts);
+				setSent(Math.min(rows.length, (i + 1) * size));
 			}
 		} catch (e) {
 			setErr((e as Error).message);
 			setPhase("ready");
 			return;
 		}
-		// The summary for the Hörprofil; the counts above stand without it, and a retry sends only it.
+		// Every play for the Hörprofil; the counts above stand without it, and a retry sends only it.
 		await saveProfile();
 		setPhase("done");
 		void store.refresh(false);
@@ -1104,25 +1147,13 @@ export function ImportScreen({ state }: { state: AppState }) {
 
 			{phase === "done" ? (
 				<section class="section import-done" aria-labelledby="import-done-title" role="status">
-					{effects ? (
-						<>
-							<h2 id="import-done-title">Übernommen. Das ist jetzt anders:</h2>
-							<EffectList e={effects} done />
-							<p>
-								Kassetten ohne gespeicherte Warteschlange planen ab sofort damit. Eine gespeicherte
-								Warteschlange behält ihre Reihenfolge, bis du sie neu mischst.
-							</p>
-						</>
-					) : (
-						<>
-							<h2 id="import-done-title">Am Mischen ändert sich nichts.</h2>
-							<p>
-								Alles in diesen Dateien lief nach deiner ersten Anmeldung. Das hat true-shuffle
-								schon selbst mitgezählt.
-							</p>
-						</>
-					)}
-					<ProfileSaved profile={profile} state={profileState} retry={() => void saveProfile()} />
+					<h2 id="import-done-title">Übernommen. Das ist jetzt anders:</h2>
+					{effects ? <EffectList e={effects} done /> : null}
+					<p>
+						Kassetten ohne gespeicherte Warteschlange planen ab sofort damit. Eine gespeicherte
+						Warteschlange behält ihre Reihenfolge, bis du sie neu mischst.
+					</p>
+					<ProfileSaved listens={listens} state={profileState} retry={() => void saveProfile()} />
 					<a class="key key--wide" href="/">
 						Zu Jetzt
 					</a>
@@ -1169,21 +1200,13 @@ export function ImportScreen({ state }: { state: AppState }) {
 					</li>
 					<li class="step">
 						<h2 class="step__title">Prüfen und übernehmen</h2>
-						{(effects || profile) && (phase === "ready" || phase === "upload") ? (
+						{effects && (phase === "ready" || phase === "upload") ? (
 							<>
-								{effects ? (
-									<EffectList e={effects} done={false} />
-								) : (
-									<p class="import-result__lead">
-										Alles in diesen Dateien lief nach deiner ersten Anmeldung. Am Mischen ändert
-										sich nichts, das hat true-shuffle schon mitgezählt. Übernommen wird nur dein
-										Hörprofil.
-									</p>
-								)}
-								{profile ? (
+								<EffectList e={effects} done={false} />
+								{listens ? (
 									<p class="hint">
-										Hörprofil: {num(profile.plays)} Mal gehört, {date(profile.from)} bis{" "}
-										{date(profile.to)}
+										Hörprofil: {num(listens.plays)} Mal gehört, {date(listens.from)} bis{" "}
+										{date(listens.to)}
 									</p>
 								) : null}
 								{phase === "upload" ? (
@@ -1199,7 +1222,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 										class="key key--lit key--wide"
 										onClick={() => void upload()}
 									>
-										{effects ? "Übernehmen" : "Hörprofil übernehmen"}
+										Übernehmen
 									</button>
 								)}
 							</>

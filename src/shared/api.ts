@@ -197,43 +197,80 @@ export interface ApiError {
 	error: { code: string; message: string };
 }
 
-/** One artist or song in a listening profile, counted from plays. */
-export interface ProfileTop {
+/** A song, artist or album in a listening profile. */
+export interface ProfileItem {
+	/** A song's Spotify id. */
+	id?: string;
 	name: string;
-	/** Artists of a song; empty for an artist row. */
-	artists: string;
+	/** A song's or album's artist; empty for an artist. */
+	sub: string;
 	plays: number;
+	minutes: number;
 	imageUrl: string | null;
 }
 
 /**
- * What true-shuffle itself recorded of the listener's music: counted plays
- * (>= 30 s, guest time left out) of the last 180 days, the span the plays log
- * keeps. Times are bucketed in the listener's time zone. Read-only.
+ * The listener's music in one period (from inclusive, to exclusive; from
+ * null: everything). The timeline is the imported Spotify history up to the
+ * first sign-in and true-shuffle's own count after it (guest time left out),
+ * so nothing counts twice. A play is 30 s or more. Calendar values are in
+ * the time zone asked for. Read-only.
  */
 export interface ListeningProfile {
-	/** First counted play in the window, or null when there is none. */
-	since: number | null;
-	until: number | null;
+	period: { from: number | null; to: number };
+	/** What the timeline is made of. */
+	coverage: {
+		importedFrom: number | null;
+		importedTo: number | null;
+		importedPlays: number;
+		/** From then on true-shuffle counted itself. */
+		liveSince: number | null;
+		/** Only the older import summary is stored: importing again shows every period. */
+		summaryOnly: boolean;
+	};
+	/** Calendar years with music, over the whole timeline. */
+	years: number[];
+	/** First and last play in the period. */
+	first: number | null;
+	last: number | null;
 	plays: number;
-	/** Sum of the songs' lengths: an upper estimate, a play may be cut short. */
 	minutes: number;
+	/** All of it exact (imported ms_played); else counted plays add their song's length. */
+	minutesExact: boolean;
 	songs: number;
 	artists: number;
+	albums: number;
+	activeDays: number;
+	/** Days the period spans (for an open one: since its first play). */
+	days: number;
+	/** The same length just before, for comparison; null for everything. */
+	previous: { plays: number; minutes: number } | null;
 	/** Plays per weekday (0 = Monday) and hour, 7 × 24, row by row. */
 	hourWeek: number[];
-	/** Plays and minutes per calendar month, oldest first. */
-	months: { month: string; plays: number; minutes: number }[];
-	topArtists: ProfileTop[];
-	topSongs: ProfileTop[];
-	/** Of these plays, how many ran on one of the listener's cassettes. */
-	onCassettes: number;
-	/** The imported Spotify history's summary, with covers where known; null without one. */
-	imported:
-		| (Omit<ImportedProfile, "topSongs"> & {
-				topSongs: (ImportedProfile["topSongs"][number] & { imageUrl: string | null })[];
-		  })
-		| null;
+	/** Plays and minutes per day, week (key: its Monday) or month, oldest first. */
+	series: {
+		unit: "day" | "week" | "month";
+		points: { key: string; plays: number; minutes: number }[];
+	};
+	topArtists: ProfileItem[];
+	topSongs: ProfileItem[];
+	topAlbums: ProfileItem[];
+	/** Left within 30 s, from imported plays only (live counting cannot see them). */
+	skips: { early: number; share: number; top: ProfileItem[] } | null;
+	/** First ever heard in this period. */
+	newSongs: number;
+	newArtists: number;
+	topNewArtists: ProfileItem[];
+	/** Heard again after a year or more. */
+	comebacks: (ProfileItem & { gapDays: number })[];
+	/** Days in a row with music (keys YYYY-MM-DD). */
+	streak: { days: number; from: string; to: string } | null;
+	/** Songs one after another, no gap over ten minutes. */
+	longestSession: { minutes: number; at: number } | null;
+	/** From imported plays only. */
+	platforms: { name: string; plays: number }[];
+	shuffleShare: number | null;
+	offlineShare: number | null;
 	/** The AI's estimate of the listener's genre mix, if one was made. */
 	genres: {
 		at: number;
