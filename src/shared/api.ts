@@ -106,7 +106,14 @@ export interface AppState {
 	onboarded: boolean;
 	stations: StationSummary[];
 	nowPlaying: NowPlaying | null;
-	guest: { active: boolean; until: number | null };
+	guest: {
+		active: boolean;
+		until: number | null;
+		/** Devices whose music never counts, as if guest mode were on. */
+		devices?: { id: string; name: string }[];
+		/** Name of the guest device that holds guest time open right now, if any. */
+		device?: string | null;
+	};
 	warnings: Warning[];
 	jobs: JobView[];
 	/** `liveSince`: from here on true-shuffle counts live; an import covers what came before. */

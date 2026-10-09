@@ -51,6 +51,8 @@ export interface FakeUser {
 		type: string;
 		restricted: boolean;
 		privateSession?: boolean;
+		/** Spotify documents device.id as nullable: reported as null. */
+		noId?: boolean;
 	}[];
 	/** …unless Spotify lists them after all. */
 	listPrivatePlays?: boolean;
@@ -608,7 +610,7 @@ export class FakeSpotify {
 			const t = id ? this.tracks.get(id) : undefined;
 			return json({
 				device: {
-					id: dev.id,
+					id: dev.noId ? null : dev.id,
 					is_active: true,
 					is_restricted: dev.restricted,
 					is_private_session: dev.privateSession === true,

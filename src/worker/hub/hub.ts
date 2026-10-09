@@ -211,6 +211,8 @@ const PENDING_EXPIRE_MS = 5 * MINUTE_MS;
  */
 const SAME_PLAY_SLACK_MS = 10 * MINUTE_MS;
 /** How old a look may be to say which song was playing as guest mode went off. */
+/** How long one look at a guest device keeps its guest time open (looks come every ≤ 10 min). */
+const GUEST_DEVICE_HOLD_MS = 15 * MINUTE_MS;
 const GUEST_TAIL_FRESH_MS = 2_000;
 /** How long after a guest time its last play is followed. */
 const GUEST_FOLLOW_MS = 2 * DAY_MS;
@@ -492,8 +494,20 @@ interface GuestPeriod {
 	 * the first one listed after the end has been taken as the guest's.
 	 */
 	firstTaken?: true;
+	/**
+	 * Opened because a guest device (`guest_devices`) was seen playing: held
+	 * open while looks keep seeing it, ended when they see another device or
+	 * nothing playing. A period opened by hand has none.
+	 */
+	device?: string;
 	from: number;
 	to: number;
+}
+
+/** A Spotify device whose music never counts, as if guest mode were on. */
+export interface GuestDevice {
+	id: string;
+	name: string;
 }
 
 /**
@@ -2667,6 +2681,7 @@ export class HubCore {
 			s.lastPlayerAt,
 			state?.item ? packTrack(state.item) : null,
 		);
+		this.followGuestDevice(state?.device ?? null, obs);
 		this.noteGuestLast(
 			heard,
 			!!obs?.trackId && !this.inPrivateNow(),
@@ -5777,6 +5792,98 @@ export class HubCore {
 			: `${song} kommt nie wieder. Weiterspringen ging nicht: ${r.skipError ?? "Spotify hat abgelehnt."}`;
 	}
 
+	private guestDevices(): GuestDevice[] {
+		return this.kvGet<GuestDevice[]>("guest_devices") ?? [];
+	}
+
+	/** The listener's guest devices; at most 20, ids and names as Spotify gives them. */
+	setGuestDevices(list: GuestDevice[]): GuestDevice[] {
+		if (!Array.isArray(list) || list.length > 20)
+			throw new HubError("bad_devices", "Ungültige Geräteliste");
+		const seen = new Set<string>();
+		const clean: GuestDevice[] = [];
+		for (const d of list) {
+			if (
+				!d ||
+				typeof d.id !== "string" ||
+				typeof d.name !== "string" ||
+				d.id.length < 1 ||
+				d.id.length > 200 ||
+				d.name.trim().length < 1 ||
+				d.name.length > 200
+			)
+				throw new HubError("bad_devices", "Ungültige Geräteliste");
+			if (seen.has(d.id)) continue;
+			seen.add(d.id);
+			clean.push({ id: d.id, name: d.name.trim() });
+		}
+		this.kvSet("guest_devices", clean);
+		// A device taken off the list stops counting as guest right away.
+		const now = this.now();
+		const periods = this.guestPeriods();
+		const open = periods.find((p) => now >= p.from && now < p.to);
+		if (open?.device !== undefined && !clean.some((d) => d.id === open.device)) {
+			this.endDevicePeriod(open, now);
+			this.kvSet("guest", periods);
+		}
+		return clean;
+	}
+
+	/**
+	 * Ends guest time a guest device held open, at a look that saw another
+	 * device play or nothing play: what ends after now is the owner's. No tail
+	 * and no play across the end, so the song seen now is not taken as the
+	 * guest's last one.
+	 */
+	private endDevicePeriod(p: GuestPeriod, now: number): void {
+		p.to = now;
+		p.tail = null;
+		p.last = null;
+	}
+
+	/**
+	 * A guest device seen playing opens guest time from the start of its song,
+	 * or holds it open; the next look that shows another device or nothing
+	 * playing ends it, and the song then playing is not the guest's. Guest time
+	 * switched on by hand is left alone. Only what looks see: a song that came
+	 * and went on the device between two looks is not known to be its.
+	 */
+	private followGuestDevice(
+		device: { id: string | null; name: string } | null,
+		obs: PlayerObservation | null,
+	): void {
+		const list = this.guestDevices();
+		const now = this.now();
+		const periods = this.guestPeriods().filter((p) => p.to > now - 90 * DAY_MS);
+		const open = periods.find((p) => now >= p.from && now < p.to);
+		// By id only: two devices may share a name ("iPhone"), and only the
+		// chosen one counts as a guest.
+		const match =
+			device?.id && obs?.isPlaying && obs.trackId
+				? list.find((d) => d.id === device.id)
+				: undefined;
+		if (match) {
+			const to = now + GUEST_DEVICE_HOLD_MS;
+			if (open) {
+				if (open.device === undefined) return;
+				open.to = Math.max(open.to, to);
+			} else {
+				const prev = periods.at(-1)?.last;
+				if (prev && prev.over === null) prev.over = now;
+				const started = obs ? now - obs.progressMs - 1_000 : now;
+				periods.push({ from: Math.min(now, started), to, device: match.id });
+				this.log("info", "guest", `Gast-Modus an — „${match.name}“ spielt`);
+			}
+		} else if (open?.device !== undefined) {
+			// Music plays on a device Spotify did not name (no id): not proof of a
+			// switch. The guest time runs to its own end and is not held longer.
+			if (obs?.isPlaying && obs.trackId && !device?.id) return;
+			this.endDevicePeriod(open, now);
+			this.log("info", "guest", "Gast-Modus aus — das Gast-Gerät spielt nicht mehr");
+		} else return;
+		this.kvSet("guest", periods.slice(-50));
+	}
+
 	async setGuest(on: boolean, hours = GUEST_DEFAULT_HOURS): Promise<void> {
 		// Off by hand: the song playing right now is still the guest's. Know it
 		// from a look just now, not from one minutes old.
@@ -5795,8 +5902,11 @@ export class HubCore {
 		const open = periods.find((p) => now >= p.from && now < p.to);
 		if (on) {
 			const to = now + Math.min(48, Math.max(1, hours)) * HOUR_MS;
-			if (open) open.to = to;
-			else {
+			if (open) {
+				open.to = to;
+				// Switched on by hand: it now ends by hand or by time, not with the device.
+				delete open.device;
+			} else {
 				// An earlier guest time's last play still followed: the new one takes over.
 				const prev = periods.at(-1)?.last;
 				if (prev && prev.over === null) prev.over = now;
@@ -6008,7 +6118,14 @@ export class HubCore {
 			stations,
 			nowPlaying: np,
 			session: this.sessionView(),
-			guest: { active: !!guestNow, until: guestNow?.to ?? null },
+			guest: {
+				active: !!guestNow,
+				until: guestNow?.to ?? null,
+				devices: this.guestDevices(),
+				device: guestNow?.device
+					? (this.guestDevices().find((d) => d.id === guestNow.device)?.name ?? null)
+					: null,
+			},
 			warnings,
 			jobs: this.jobViews(),
 			history: {

@@ -194,11 +194,13 @@ export function MenuScreen({ state }: { state: AppState }) {
 							<span class="row__main">
 								<span class="row__title">Gast-Modus</span>
 								<span class="row__sub">
-									{guest.active && guest.until
-										? `Läuft bis ${until(guest.until)}. Bis dahin zählt nichts, was du hörst. Danach schaltet er sich selbst aus.`
-										: guest.active
-											? "Läuft. Bis du ihn ausschaltest, zählt nichts, was du hörst."
-											: `Hört jemand anderes über dein Konto? Dann zählt nichts davon. Schaltet sich nach ${hours} Stunden selbst aus.`}
+									{guest.active && guest.device
+										? `An, weil „${guest.device}“ spielt. Solange zählt nichts; spielt ein anderes Gerät, zählt es wieder.`
+										: guest.active && guest.until
+											? `Läuft bis ${until(guest.until)}. Bis dahin zählt nichts, was du hörst. Danach schaltet er sich selbst aus.`
+											: guest.active
+												? "Läuft. Bis du ihn ausschaltest, zählt nichts, was du hörst."
+												: `Hört jemand anderes über dein Konto? Dann zählt nichts davon. Schaltet sich nach ${hours} Stunden selbst aus.`}
 								</span>
 							</span>
 							<input
@@ -482,7 +484,93 @@ function deviceType(t: string): string {
 	return DEVICE_TYPES[t] ?? t;
 }
 
-export function DevicesScreen() {
+/**
+ * Devices whose music never counts: true-shuffle switches guest mode on while
+ * it sees one of them playing, and off when it sees another device or none.
+ */
+function GuestDevices({ state, visible }: { state: AppState; visible: DeviceView[] }) {
+	const saved = state.guest.devices ?? [];
+	const [busy, setBusy] = useState(false);
+	// Shown at once on tap; the saved list takes over when the state comes back.
+	const [wanted, setWanted] = useState<{ id: string; on: boolean } | null>(null);
+	const rows = [
+		...saved,
+		...visible
+			.filter((d) => !saved.some((g) => g.id === d.id))
+			.map((d) => ({ id: d.id, name: d.name })),
+	];
+	// Two devices may share a name: the type tells them apart.
+	const kindOf = (d: { id: string }) => {
+		const v = visible.find((x) => x.id === d.id);
+		return v ? deviceType(v.type) : null;
+	};
+	const isGuest = (d: { id: string; name: string }) =>
+		wanted?.id === d.id ? wanted.on : saved.some((g) => g.id === d.id);
+	const toggle = (d: { id: string; name: string }, on: boolean) => {
+		const next = on ? [...saved, d] : saved.filter((g) => g.id !== d.id);
+		setBusy(true);
+		setWanted({ id: d.id, on });
+		api
+			.guestDevices(next)
+			.then(() => store.refresh(false))
+			.then(() =>
+				store.say(on ? `„${d.name}“ zählt ab jetzt nie mit.` : `„${d.name}“ zählt wieder mit.`),
+			)
+			.catch((e: Error) => store.say(`Nicht gespeichert: ${e.message}`, "error"))
+			.finally(() => {
+				setWanted(null);
+				setBusy(false);
+			});
+	};
+	return (
+		<Section title="Immer im Gast-Modus" id="dev-guest">
+			<p class="section__lead">
+				Für Geräte, auf denen andere hören, etwa im Partyraum. Spielt eines davon, schaltet
+				true-shuffle den Gast-Modus von selbst an, und nichts davon zählt. Sieht es danach ein
+				anderes Gerät spielen, zählt wieder alles.
+			</p>
+			<p class="hint">
+				true-shuffle sieht nur, was gerade spielt, wenn es nachschaut: bei offener App etwa jede
+				Minute, sonst etwa alle zehn Minuten. Ein Song, der dazwischen kurz auf dem Gerät lief, kann
+				noch zählen.
+			</p>
+			{rows.length === 0 ? (
+				<p class="empty-state">
+					Gerade ist kein Spotify-Gerät sichtbar. Öffne Spotify auf dem Gerät und tippe oben auf
+					„Geräte aktualisieren“.
+				</p>
+			) : (
+				<ul class="list">
+					{rows.map((d) => (
+						<li key={d.id}>
+							<label class="row mehr-switch">
+								<span class="row__main">
+									<span class="row__title">{d.name}</span>
+									<span class="row__sub">
+										{kindOf(d) ? `${kindOf(d)}${SEP}` : ""}
+										{isGuest(d) ? "Was hier spielt, zählt nie." : "Zählt mit, wie jedes Gerät."}
+									</span>
+								</span>
+								<input
+									type="checkbox"
+									role="switch"
+									class="switch"
+									aria-label={`${d.name}${kindOf(d) ? ` (${kindOf(d)})` : ""}: immer im Gast-Modus`}
+									checked={isGuest(d)}
+									aria-checked={isGuest(d)}
+									disabled={busy}
+									onChange={(e) => toggle(d, e.currentTarget.checked)}
+								/>
+							</label>
+						</li>
+					))}
+				</ul>
+			)}
+		</Section>
+	);
+}
+
+export function DevicesScreen({ state }: { state: AppState }) {
 	const [devices, setDevices] = useState<DeviceView[] | null>(null);
 	const [err, setErr] = useState<string | null>(null);
 	const [native, setNative] = useState<{ configured: boolean; devices: NativeDevice[] } | null>(
@@ -615,6 +703,8 @@ export function DevicesScreen() {
 					))}
 				</ul>
 			</Section>
+
+			<GuestDevices state={state} visible={devices ?? []} />
 
 			<Section title="Home Assistant" id="dev-home">
 				<p class="section__lead">

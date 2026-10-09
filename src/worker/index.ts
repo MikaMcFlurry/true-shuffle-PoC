@@ -517,6 +517,14 @@ app.post("/api/guest", async (c) => {
 	);
 });
 
+app.put("/api/guest/devices", async (c) => {
+	const b = await body<{ devices?: { id: string; name: string }[] }>(c);
+	return unwrap(
+		c,
+		c.var.hub.setGuestDevices(c.var.epoch, Array.isArray(b.devices) ? b.devices : []),
+	);
+});
+
 app.post("/api/history/import", async (c) => {
 	const b = await body<{ rows?: unknown; part?: number; parts?: number }>(c);
 	const rows = Array.isArray(b.rows) ? (b.rows as [string, number, number, number][]) : [];

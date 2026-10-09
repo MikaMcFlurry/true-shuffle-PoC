@@ -203,6 +203,8 @@ export const api = {
 	newRemoteKey: () => call<RemoteKeyView>("POST", "/api/remote"),
 	dropRemoteKey: () => call<unknown>("DELETE", "/api/remote"),
 	guest: (on: boolean, hours?: number) => call<unknown>("POST", "/api/guest", { on, hours }),
+	guestDevices: (devices: { id: string; name: string }[]) =>
+		call<{ id: string; name: string }[]>("PUT", "/api/guest/devices", { devices }),
 	importHistory: (rows: [string, number, number, number][], part: number, parts: number) =>
 		call<{ stored: number }>("POST", "/api/history/import", { rows, part, parts }),
 	history: (before?: number) =>

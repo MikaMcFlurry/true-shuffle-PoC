@@ -84,7 +84,7 @@ export function App() {
 					content = <ImportScreen state={state} />;
 					break;
 				case "devices":
-					content = <DevicesScreen />;
+					content = <DevicesScreen state={state} />;
 					break;
 				case "about":
 					content = <AboutScreen />;
