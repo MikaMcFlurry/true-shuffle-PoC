@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-09T12:37:47.213728+00:00",
+  "generated_at": "2026-10-09T14:31:34.109775+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -36,7 +36,7 @@
       "path": "AGENTS.md",
       "treatment": "UPDATE",
       "authority": "CANONICAL",
-      "reason": "Unchanged actualCEE/473f/715100%; combined24c6b/2562aa/26e6d local4c0514f BLOCKED fresh lane/import/analytics errors, owner25rule clarification pending,26 completion absent. CurrentPR24_26_REVIEW/LEDGER; old intelligence09d historical.",
+      "reason": "Actualexternalintegrated93241/873e/8bde100%; FRESHacceptanceBLOCKED LANE07,currentResumeexceptionpending;549/46/11/static/currentCI PASS; priorfixesclosed; currentINTEGRATED_932_REVIEW/LEDGER. Old09dpacket historical.",
       "evidence_ids": [
         "EV-01",
         "EV-02"

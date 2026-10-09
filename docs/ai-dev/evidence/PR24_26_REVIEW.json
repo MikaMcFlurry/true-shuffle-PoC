@@ -273,5 +273,7 @@
     "CloudflareCPU/memory/quota scaling for unbounded retention and whole timeline scans",
     "PR26 postdeployment because unmerged and blocked"
   ],
-  "prior_review": "PR24_25_REVIEW.json source6b historical; findings and checks not relabelled as current"
+  "prior_review": "PR24_25_REVIEW.json source6b historical; findings and checks not relabelled as current",
+  "historical_snapshot": true,
+  "superseded_current_review": "INTEGRATED_932_REVIEW.json"
 }

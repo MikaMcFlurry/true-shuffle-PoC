@@ -1,0 +1,712 @@
+
+ RUN  v5.0.2 /workspace/ts-integrated932-backend
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: returning to a retained old playlist occurrence must not borrow replacement-deck lane
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: returning to a retained old playlist occurrence must not borrow replacement-deck lane
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: returning to a retained old playlist occurrence must not borrow replacement-deck lane
+{"level":"info","kind":"import","message":"„Playlist 1“: 200 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: returning to a retained old playlist occurrence must not borrow replacement-deck lane
+{"id":"T00000000000000000001c","oldKind":"fresh","newKind":"favorite","actual":"favorite","laneNotes":{"v":"[{\"station\":1,\"id\":\"T00000000000000000001k\",\"kind\":\"fresh\",\"seenAt\":1790316311500}]"}}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"import","message":"„Playlist 1“: 200 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"thumb","message":"Daumen hoch: Song 108 — Artist 28"}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"warn","kind":"gap","message":"Mehr als 50 Songs seit dem letzten Abgleich — ältere konnten nicht gelesen werden"}
+
+stdout | ../../tmp/integrated932-parent-lane.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"skip","message":"Früh übersprungen auf „Playlist 1“: Song 100 — Artist 20"}
+{"level":"info","kind":"skip","message":"Früh übersprungen auf „Playlist 1“: Song 108 — Artist 28"}
+
+ ❯ ../../tmp/integrated932-parent-lane.test.ts (3 tests | 2 failed) 2266ms
+   × independent: returning to a retained old playlist occurrence must not borrow replacement-deck lane 966ms
+   × independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane 793ms
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > near-end unseen skip at 166s does not complete a 180s occurrence
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > near-end unseen skip at 166s does not complete a 180s occurrence
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > near-end unseen skip at 166s does not complete a 180s occurrence
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > near-end unseen skip at 166s does not complete a 180s occurrence
+{"level":"info","kind":"session","message":"„Playlist 1“: Spotify meldet den Song als gespielt — es geht mit dem nächsten weiter"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > near-end unseen skip at 166s does not complete a 180s occurrence
+near-end {
+  index: 4,
+  after: {
+    sessionId: 'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed',
+    stationId: 1,
+    orderRevision: 1,
+    entryIds: [
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:0',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:1',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:2',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:3',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:4',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:5',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:6',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:7',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:8',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:9',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:10',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:11',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:12',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:13',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:14',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:15',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:16',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:17',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:18',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:19',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:20',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:21',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:22',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:23',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:24',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:25',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:26',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:27',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:28',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:29',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:30',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:31',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:32',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:33',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:34',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:35',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:36',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:37',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:38',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:39',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:40',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:41',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:42',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:43',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:44',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:45',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:46',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:47',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:48',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:49',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:50',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:51',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:52',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:53',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:54',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:55',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:56',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:57',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:58',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:59',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:60',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:61',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:62',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:63',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:64',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:65',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:66',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:67',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:68',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:69',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:70',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:71',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:72',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:73',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:74',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:75',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:76',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:77',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:78',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:79',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:80',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:81',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:82',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:83',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:84',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:85',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:86',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:87',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:88',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:89',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:90',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:91',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:92',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:93',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:94',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:95',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:96',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:97',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:98',
+      'aa6e0650-2db0-4d5f-b6ca-31c0ad6454ed:99',
+      ... 200 more items
+    ],
+    currentIndex: 5,
+    progressMs: 0,
+    observedAt: 1790316947500,
+    playbackEpoch: 1,
+    contextUri: 'spotify:playlist:P000000000000000000002',
+    status: 'disconnected',
+    pending: null,
+    controller: 'spotify'
+  },
+  history: [
+    {
+      id: 'T00000000000000000001e',
+      name: 'Song 102',
+      artists: 'Artist 42',
+      album: 'Album 10',
+      imageUrl: 'https://img.example/L00000000000000000000A.jpg',
+      durationMs: 180000,
+      thumb: 0,
+      playedAt: 1790316947500,
+      stationName: 'Playlist 1',
+      ignored: false,
+      facts: [Object]
+    }
+  ]
+}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > unseen pause followed by 40s partial skip retains the unfinished occurrence
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > unseen pause followed by 40s partial skip retains the unfinished occurrence
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > unseen pause followed by 40s partial skip retains the unfinished occurrence
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > unseen pause followed by 40s partial skip retains the unfinished occurrence
+{"level":"info","kind":"session","message":"„Playlist 1“: Spotify meldet den Song als gespielt — es geht mit dem nächsten weiter"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > unseen pause followed by 40s partial skip retains the unfinished occurrence
+paused-partial {
+  index: 4,
+  after: {
+    sessionId: '259c65d8-5eba-4d88-ad9e-40bab2b72e4e',
+    stationId: 1,
+    orderRevision: 1,
+    entryIds: [
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:0',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:1',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:2',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:3',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:4',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:5',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:6',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:7',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:8',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:9',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:10',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:11',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:12',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:13',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:14',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:15',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:16',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:17',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:18',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:19',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:20',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:21',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:22',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:23',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:24',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:25',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:26',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:27',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:28',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:29',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:30',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:31',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:32',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:33',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:34',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:35',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:36',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:37',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:38',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:39',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:40',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:41',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:42',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:43',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:44',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:45',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:46',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:47',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:48',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:49',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:50',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:51',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:52',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:53',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:54',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:55',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:56',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:57',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:58',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:59',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:60',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:61',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:62',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:63',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:64',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:65',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:66',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:67',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:68',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:69',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:70',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:71',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:72',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:73',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:74',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:75',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:76',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:77',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:78',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:79',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:80',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:81',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:82',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:83',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:84',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:85',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:86',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:87',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:88',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:89',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:90',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:91',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:92',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:93',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:94',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:95',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:96',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:97',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:98',
+      '259c65d8-5eba-4d88-ad9e-40bab2b72e4e:99',
+      ... 200 more items
+    ],
+    currentIndex: 5,
+    progressMs: 0,
+    observedAt: 1790317421500,
+    playbackEpoch: 1,
+    contextUri: 'spotify:playlist:P000000000000000000002',
+    status: 'disconnected',
+    pending: null,
+    controller: 'spotify'
+  },
+  history: [
+    {
+      id: 'T00000000000000000001e',
+      name: 'Song 102',
+      artists: 'Artist 42',
+      album: 'Album 10',
+      imageUrl: 'https://img.example/L00000000000000000000A.jpg',
+      durationMs: 180000,
+      thumb: 0,
+      playedAt: 1790317421500,
+      stationName: 'Playlist 1',
+      ignored: false,
+      facts: [Object]
+    }
+  ]
+}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > saved checkpoint near end plus later restart/partial skip does not prove old completion
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > saved checkpoint near end plus later restart/partial skip does not prove old completion
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > saved checkpoint near end plus later restart/partial skip does not prove old completion
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > saved checkpoint near end plus later restart/partial skip does not prove old completion
+{"level":"info","kind":"session","message":"„Playlist 1“: Spotify meldet den Song als gespielt — es geht mit dem nächsten weiter"}
+
+stdout | ../../tmp/integrated932-pr25-three-attacks.test.ts > saved checkpoint near end plus later restart/partial skip does not prove old completion
+seek-partial {
+  index: 4,
+  before: {
+    sessionId: '11905c7f-919f-4b6d-8fcd-c4828e580a91',
+    stationId: 1,
+    orderRevision: 1,
+    entryIds: [
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:0',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:1',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:2',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:3',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:4',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:5',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:6',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:7',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:8',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:9',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:10',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:11',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:12',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:13',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:14',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:15',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:16',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:17',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:18',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:19',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:20',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:21',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:22',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:23',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:24',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:25',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:26',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:27',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:28',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:29',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:30',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:31',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:32',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:33',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:34',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:35',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:36',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:37',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:38',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:39',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:40',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:41',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:42',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:43',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:44',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:45',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:46',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:47',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:48',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:49',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:50',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:51',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:52',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:53',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:54',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:55',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:56',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:57',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:58',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:59',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:60',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:61',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:62',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:63',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:64',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:65',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:66',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:67',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:68',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:69',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:70',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:71',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:72',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:73',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:74',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:75',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:76',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:77',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:78',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:79',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:80',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:81',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:82',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:83',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:84',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:85',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:86',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:87',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:88',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:89',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:90',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:91',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:92',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:93',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:94',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:95',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:96',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:97',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:98',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:99',
+      ... 200 more items
+    ],
+    currentIndex: 4,
+    progressMs: 120000,
+    observedAt: 1790316901500,
+    playbackEpoch: 1,
+    contextUri: 'spotify:playlist:P000000000000000000002',
+    status: 'active',
+    pending: null,
+    controller: 'spotify'
+  },
+  after: {
+    sessionId: '11905c7f-919f-4b6d-8fcd-c4828e580a91',
+    stationId: 1,
+    orderRevision: 1,
+    entryIds: [
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:0',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:1',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:2',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:3',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:4',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:5',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:6',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:7',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:8',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:9',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:10',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:11',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:12',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:13',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:14',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:15',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:16',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:17',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:18',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:19',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:20',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:21',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:22',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:23',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:24',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:25',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:26',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:27',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:28',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:29',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:30',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:31',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:32',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:33',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:34',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:35',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:36',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:37',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:38',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:39',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:40',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:41',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:42',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:43',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:44',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:45',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:46',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:47',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:48',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:49',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:50',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:51',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:52',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:53',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:54',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:55',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:56',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:57',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:58',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:59',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:60',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:61',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:62',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:63',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:64',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:65',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:66',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:67',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:68',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:69',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:70',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:71',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:72',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:73',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:74',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:75',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:76',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:77',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:78',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:79',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:80',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:81',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:82',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:83',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:84',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:85',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:86',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:87',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:88',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:89',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:90',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:91',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:92',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:93',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:94',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:95',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:96',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:97',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:98',
+      '11905c7f-919f-4b6d-8fcd-c4828e580a91:99',
+      ... 200 more items
+    ],
+    currentIndex: 5,
+    progressMs: 0,
+    observedAt: 1790316966500,
+    playbackEpoch: 1,
+    contextUri: 'spotify:playlist:P000000000000000000002',
+    status: 'disconnected',
+    pending: null,
+    controller: 'spotify'
+  },
+  history: [
+    {
+      id: 'T00000000000000000001e',
+      name: 'Song 102',
+      artists: 'Artist 42',
+      album: 'Album 10',
+      imageUrl: 'https://img.example/L00000000000000000000A.jpg',
+      durationMs: 180000,
+      thumb: 0,
+      playedAt: 1790316966500,
+      stationName: 'Playlist 1',
+      ignored: false,
+      facts: [Object]
+    }
+  ]
+}
+
+ ❯ ../../tmp/integrated932-pr25-three-attacks.test.ts (3 tests | 3 failed) 4873ms
+   × near-end unseen skip at 166s does not complete a 180s occurrence 2452ms
+   × unseen pause followed by 40s partial skip retains the unfinished occurrence 1276ms
+   × saved checkpoint near end plus later restart/partial skip does not prove old completion 1144ms
+ ❯ ../../tmp/integrated932-ui-attacks.test.ts (3 tests | 1 failed) 209ms
+   × inexact live artist ranking shown as plays must rank by plays 33ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tmp/integrated932-parent-lane.test.ts > independent: returning to a retained old playlist occurrence must not borrow replacement-deck lane
+AssertionError: expected [ 'fresh', null ] to include 'favorite'
+ ❯ ../../tmp/integrated932-parent-lane.test.ts:21:51
+     19|  const row=h.hub.history(20).find((x:any)=>x.id===id)!;
+     20|  console.log(JSON.stringify({id,oldKind,newKind,actual:row?.facts?.kin…
+     21|  expect(row).toBeDefined();expect([oldKind,null]).toContain(row.facts?…
+       |                                                   ^
+     22| });
+     23| it('independent: unlisted short occurrence must not donate its lane to…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  ../../tmp/integrated932-parent-lane.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+AssertionError: expected 'fresh' to be 'favorite' // Object.is equality
+
+Expected: "favorite"
+Received: "fresh"
+
+ ❯ ../../tmp/integrated932-parent-lane.test.ts:47:68
+     45|  step(h,25*60*60000);await h.hub.play(sid,null,{newQueue:true});
+     46|  const q=h.hub.sessionView(sid,1000)!.queue;const pos=q.findIndex(x=>x…
+     47|  expect(pos).toBeGreaterThanOrEqual(0);expect(q[pos]!.facts!.kind).toB…
+       |                                                                    ^
+     48|  const context=u.player.contextUri!;h.fake.startContext('mika',context…
+     49|  step(h,45000);h.fake.skip();await sync(h);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  ../../tmp/integrated932-pr25-three-attacks.test.ts > near-end unseen skip at 166s does not complete a 180s occurrence
+AssertionError: expected 5 to be 4 // Object.is equality
+
+- Expected
++ Received
+
+- 4
++ 5
+
+ ❯ ../../tmp/integrated932-pr25-three-attacks.test.ts:41:48
+     39|  await h.hub.state({live:true,refresh:true}); await h.listen(5*MINUTE_…
+     40|  console.log("near-end",{index,after:h.hub.savedSession(sid),history:h…
+     41|  expect(h.hub.savedSession(sid)!.currentIndex).toBe(index);
+       |                                                ^
+     42|  expect(h.hub.savedSession(sid)!.progressMs).toBe(progress);
+     43| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  ../../tmp/integrated932-pr25-three-attacks.test.ts > unseen pause followed by 40s partial skip retains the unfinished occurrence
+AssertionError: expected 5 to be 4 // Object.is equality
+
+- Expected
++ Received
+
+- 4
++ 5
+
+ ❯ ../../tmp/integrated932-pr25-three-attacks.test.ts:52:48
+     50|  await h.hub.state({live:true,refresh:true}); await h.listen(5*MINUTE_…
+     51|  console.log("paused-partial",{index,after:h.hub.savedSession(sid),his…
+     52|  expect(h.hub.savedSession(sid)!.currentIndex).toBe(index);
+       |                                                ^
+     53|  expect(h.hub.savedSession(sid)!.progressMs).toBe(progress);
+     54| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  ../../tmp/integrated932-pr25-three-attacks.test.ts > saved checkpoint near end plus later restart/partial skip does not prove old completion
+AssertionError: expected 5 to be 4 // Object.is equality
+
+- Expected
++ Received
+
+- 4
++ 5
+
+ ❯ ../../tmp/integrated932-pr25-three-attacks.test.ts:65:48
+     63|  await h.hub.state({live:true,refresh:true}); await h.listen(5*MINUTE_…
+     64|  console.log("seek-partial",{index,before,after:h.hub.savedSession(sid…
+     65|  expect(h.hub.savedSession(sid)!.currentIndex).toBe(before.currentInde…
+       |                                                ^
+     66|  expect(h.hub.savedSession(sid)!.progressMs).toBe(before.progressMs);
+     67| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  ../../tmp/integrated932-ui-attacks.test.ts > inexact live artist ranking shown as plays must rank by plays
+AssertionError: expected 'Long' to be 'Frequent' // Object.is equality
+
+Expected: "Frequent"
+Received: "Long"
+
+ ❯ ../../tmp/integrated932-ui-attacks.test.ts:5:315
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed | 3 passed (6)
+      Tests  6 failed | 12 passed (18)
+   Start at  14:26:37
+   Duration  11.78s (tests 49%, transform 34%, import 17%)
+
+  Transform  transforming modules took 9.64s · 34% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

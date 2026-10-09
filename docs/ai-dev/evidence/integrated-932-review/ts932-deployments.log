@@ -1,0 +1,95 @@
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mProxy environment variables detected. We'll use your proxy for fetch requests.[0m
+
+
+
+ ⛅️ wrangler 4.141.0
+────────────────────
+Created:     2026-10-08T16:58:47.363Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 3499c219-0265-4798-9e7b-4b3c81b5efd5
+                 Created:  2026-10-08T16:58:46.673Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-08T21:11:39.498Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) dd344c82-6ac5-4d1f-97ed-f81d6b79a891
+                 Created:  2026-10-08T21:11:38.029Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T09:29:34.418Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) cfaa5917-990f-48b6-ad07-e3064150501d
+                 Created:  2026-10-09T09:29:33.711Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T09:30:25.572Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 9f781567-213d-44a3-bf3a-5c3596e8232c
+                 Created:  2026-10-09T09:30:24.886Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T09:30:59.058Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 02a3c025-a9f6-4da5-b6ce-d176d1c9f71c
+                 Created:  2026-10-09T09:30:58.391Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T10:19:16.198Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     Rollback external PR19-22 rollout: known revoked-session genre disclosure on bcb2463; coherent PR23 remains blocked by independently reproduced lane occurrence provenance defect.
+Version(s):  (100%) dd344c82-6ac5-4d1f-97ed-f81d6b79a891
+                 Created:  2026-10-08T21:11:38.029Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T11:01:07.375Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 473f96c8-35ad-486b-9592-b7005d0f40b9
+                 Created:  2026-10-09T11:01:06.613Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T13:29:52.542Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 26b13576-1bff-498f-a04a-c3bc958c19c1
+                 Created:  2026-10-09T13:29:51.787Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T13:30:34.977Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) ff727947-1dae-4815-adab-943b7fc5417b
+                 Created:  2026-10-09T13:30:32.421Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T13:43:14.145Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 873eca1e-2819-4e9b-9bab-c8a03a9ef441
+                 Created:  2026-10-09T13:43:13.548Z
+                     Tag:  -
+                 Message:  -
