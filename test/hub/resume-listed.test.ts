@@ -30,7 +30,7 @@ function gone(h: H) {
 	p.deviceId = "gone";
 }
 
-describe("Fortsetzen after a song Spotify listed as heard to its end", () => {
+describe("Fortsetzen after a song Spotify listed as played", () => {
 	it("a song seen at 0:01 and then played out unseen: Fortsetzen goes on with the next song", async () => {
 		const h = await onboarded({ tracks: 300, durationMs: 180_000 });
 		const { sid, t, index, progress } = await seenBeginning(h);
@@ -63,17 +63,83 @@ describe("Fortsetzen after a song Spotify listed as heard to its end", () => {
 		expect(after.progressMs).toBe(0);
 	});
 
-	it("a song skipped after 40 s, unseen, stays the place: the listing does not prove its end", async () => {
+	// Owner decision (2026-10-09): an occurrence Spotify lists as played is over,
+	// whether heard to its end or left after 30 s or more; Spotify cannot tell.
+	it("a song left unseen after 30 s or more, or after a pause or a seek back, is over too", async () => {
+		const cases: [string, (h: H, progress: number) => void][] = [
+			[
+				"skipped at 166 s",
+				(h, progress) => {
+					quiet(h, 166_000 - progress);
+					h.fake.skip();
+				},
+			],
+			[
+				"paused ten minutes, 40 s more, skipped",
+				(h, progress) => {
+					quiet(h, 20_000 - progress);
+					h.fake.user().player.isPlaying = false;
+					quiet(h, 10 * MINUTE_MS);
+					h.fake.user().player.isPlaying = true;
+					quiet(h, 40_000);
+					h.fake.skip();
+				},
+			],
+			[
+				"sought back to the start, 65 s, skipped",
+				(h, progress) => {
+					quiet(h, 121_000 - progress);
+					h.fake.user().player.progressMs = 0;
+					quiet(h, 65_000);
+					h.fake.skip();
+				},
+			],
+		];
+		for (const [, run] of cases) {
+			const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+			const { sid, t, index, progress } = await seenBeginning(h);
+			run(h, progress);
+			quiet(h, 5_000);
+			gone(h);
+			await h.hub.state({ live: true, refresh: true });
+			await h.listen(5 * MINUTE_MS);
+			expect(h.hub.history(20).filter((e) => e.id === t).length).toBe(1);
+			const after = h.hub.savedSession(sid)!;
+			expect(after.currentIndex).toBe(index + 1);
+			expect(after.progressMs).toBe(0);
+		}
+	});
+
+	it("a song not listed (paused, or under 30 s) keeps the place and its progress", async () => {
+		for (const leave of ["paused", "short"] as const) {
+			const h = await onboarded({ tracks: 300, durationMs: 180_000 });
+			const { sid, index, progress } = await seenBeginning(h);
+			if (leave === "paused") {
+				quiet(h, 90_000);
+				h.fake.user().player.isPlaying = false;
+			} else {
+				quiet(h, 20_000 - progress);
+				h.fake.skip();
+				quiet(h, 5_000);
+			}
+			gone(h);
+			await h.hub.state({ live: true, refresh: true });
+			await h.listen(5 * MINUTE_MS);
+			const after = h.hub.savedSession(sid)!;
+			expect(after.currentIndex).toBe(index);
+			expect(after.progressMs).toBe(progress);
+		}
+	});
+
+	it("a listing of an earlier play of the song, from before the saved look, moves nothing", async () => {
 		const h = await onboarded({ tracks: 300, durationMs: 180_000 });
 		const { sid, t, index, progress } = await seenBeginning(h);
-		quiet(h, 40_000 - progress);
-		h.fake.skip();
-		quiet(h, 5_000);
+		const u = h.fake.user();
+		// Spotify lists a play of the same song in the playlist, ended before that look.
+		u.recent.unshift({ trackId: t, playedAt: h.clock.t - 60_000, contextUri: u.player.contextUri });
 		gone(h);
 		await h.hub.state({ live: true, refresh: true });
 		await h.listen(5 * MINUTE_MS);
-		// Listed (40 s heard), but before its end: unknown progress keeps the same song.
-		expect(h.hub.history(20).filter((e) => e.id === t).length).toBe(1);
 		const after = h.hub.savedSession(sid)!;
 		expect(after.currentIndex).toBe(index);
 		expect(after.progressMs).toBe(progress);
