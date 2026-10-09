@@ -101,6 +101,37 @@ describe("a device that always counts as guest", () => {
 		expect(row?.ignored).toBe(0);
 	});
 
+	it("a look without a device id while music plays on is no switch: guest time runs to its own end", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const sid = h.stationIds[0]!;
+		const party = addParty(h);
+		h.hub.setGuestDevices([{ id: party, name: "Partyraum" }]);
+		const p = h.fake.user().player;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		p.deviceId = party;
+		await h.listen(10_000);
+		await h.hub.state({ live: true, refresh: true });
+		expect((await h.hub.state()).guest.active).toBe(true);
+		// Spotify now reports the same device without its id; it plays on there.
+		h.fake.user().devices.find((d) => d.id === party)!.noId = true;
+		const song = h.fake.current()!;
+		await h.listen(10_000);
+		await h.hub.state({ live: true, refresh: true });
+		expect((await h.hub.state()).guest.active).toBe(true);
+		await h.listen(35_000);
+		h.fake.skip();
+		await h.listen(2 * MINUTE_MS);
+		await h.hub.state({ live: true, refresh: true });
+		const row = h.sql.first<{ ignored: number }>(
+			`SELECT ignored FROM plays WHERE track_id = ? ORDER BY played_at DESC`,
+			song,
+		);
+		expect(row?.ignored).toBe(1);
+		// Not held open past its own end without a look that names the device.
+		await h.listen(40 * MINUTE_MS);
+		expect((await h.hub.state()).guest.active).toBe(false);
+	});
+
 	it("taking a device off the list ends the guest time it holds at once", async () => {
 		const h = await onboarded({ tracks: 300 });
 		const sid = h.stationIds[0]!;

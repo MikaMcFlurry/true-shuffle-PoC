@@ -5764,6 +5764,9 @@ export class HubCore {
 				this.log("info", "guest", `Gast-Modus an — „${match.name}“ spielt`);
 			}
 		} else if (open?.device !== undefined) {
+			// Music plays on a device Spotify did not name (no id): not proof of a
+			// switch. The guest time runs to its own end and is not held longer.
+			if (obs?.isPlaying && obs.trackId && !device?.id) return;
 			this.endDevicePeriod(open, now);
 			this.log("info", "guest", "Gast-Modus aus — das Gast-Gerät spielt nicht mehr");
 		} else return;
