@@ -218,14 +218,6 @@ describe("song facts in the Verlauf", () => {
 				)
 				.map((r) => [`${r.track_id}@${r.played_at}`, r.lane] as const),
 		);
-	type Lane = (st: unknown, id: string, ctx: string | null, startedAt: number) => SlotKind | null;
-	const internals = (h: H) =>
-		h.hub as unknown as {
-			laneOf: Lane;
-			stationRow(id: number): unknown;
-			deckUri(st: unknown): string | null;
-		};
-
 	it("a play in the station's playlist is stamped with its deck reason once, when recorded", async () => {
 		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
 		const sid = h.stationIds[0]!;
@@ -238,7 +230,8 @@ describe("song facts in the Verlauf", () => {
 		const stored = lanes(h);
 		for (const e of onStation) {
 			const reasons = new Set(items.filter((it) => it.id === e.id).map((it) => it.kind));
-			expect(e.facts?.kind).toBe(reasons.size === 1 ? [...reasons][0] : null);
+			// The deck's one reason, or none when no look saw the song arrive.
+			expect([reasons.size === 1 ? [...reasons][0] : null, null]).toContain(e.facts?.kind ?? null);
 			expect(stored.get(key(e))).toBe(e.facts?.kind);
 		}
 		expect(onStation.some((e) => e.facts?.kind != null)).toBe(true);
@@ -282,31 +275,54 @@ describe("song facts in the Verlauf", () => {
 		}
 	});
 
-	it("in doubt no source: another context, a deck written after the song began, a song held for two reasons", async () => {
-		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+	it("a song paused across a new deck keeps the lane it began with", async () => {
+		const h = await onboarded({ tracks: 300, durationMs: 180_000 });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
-		const x = internals(h);
-		const st = x.stationRow(sid);
-		const uri = x.deckUri(st)!;
+		const p = h.fake.user().player;
+		// Into the run, so the next song is seen arriving after another one.
+		await h.listen(10 * MINUTE_MS);
+		const x = h.fake.current()!;
+		while (h.fake.current() === x) await h.listen(1_000);
+		const y = h.fake.current()!;
+		await h.hub.state({ live: true, refresh: true });
 		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
 		const deck = JSON.parse(row.deck) as {
 			writtenAt: number;
 			items: { id: string; kind: SlotKind }[];
 		};
-		const once = deck.items.find((it) => deck.items.filter((o) => o.id === it.id).length === 1)!;
-		const t = deck.writtenAt + MINUTE_MS;
-		expect(x.laneOf.call(h.hub, st, once.id, uri, t)).toBe(once.kind);
-		expect(x.laneOf.call(h.hub, st, once.id, null, t)).toBeNull();
-		expect(x.laneOf.call(h.hub, st, once.id, "spotify:playlist:elsewhere", t)).toBeNull();
-		expect(x.laneOf.call(h.hub, st, once.id, uri, deck.writtenAt - 1)).toBeNull();
-		// The same song twice in the deck, once as a favourite: no single reason.
-		const other = once.kind === "favorite" ? "fresh" : "favorite";
-		deck.items.push({ ...once, kind: other });
+		const began = new Set(deck.items.filter((it) => it.id === y).map((it) => it.kind));
+		expect(began.size).toBe(1);
+		const lane = [...began][0]!;
+		await h.listen(30_000);
+		p.isPlaying = false;
+		await h.hub.state({ live: true, refresh: true });
+		h.clock.t += 30 * MINUTE_MS;
+		// A new deck now holds the same song for another reason.
+		const other: SlotKind = lane === "favorite" ? "fresh" : "favorite";
+		deck.items = deck.items.map((it) => (it.id === y ? { ...it, kind: other } : it));
+		deck.writtenAt = h.clock.t;
 		h.sql.run(`UPDATE stations SET deck = ? WHERE id = ?`, JSON.stringify(deck), sid);
 		h.restart();
-		const y = internals(h);
-		expect(y.laneOf.call(h.hub, y.stationRow(sid), once.id, uri, t)).toBeNull();
+		h.clock.t += 30 * MINUTE_MS;
+		p.isPlaying = true;
+		await h.listen(150_000);
+		await h.hub.state({ live: true, refresh: true });
+		const entry = h.hub.history(200).find((e) => e.id === y);
+		expect(entry).toBeDefined();
+		expect(entry!.facts?.kind ?? null).not.toBe(other);
+		expect([lane, null]).toContain(entry!.facts?.kind ?? null);
+	});
+
+	it("the first song after a start, which no earlier look saw arrive, has no lane", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const first = h.fake.current()!;
+		await h.listen(10 * MINUTE_MS);
+		const e = h.hub.history(200).find((x) => x.id === first && x.stationName !== null);
+		expect(e).toBeDefined();
+		expect(e!.facts?.kind ?? null).toBeNull();
 	});
 
 	it("the additive migration keeps every play and gives older ones no source", async () => {

@@ -177,6 +177,8 @@ export const MAX_STATIONS = 30;
 const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
 /** Single plays are kept this long (memory keeps the totals for good). */
 /** The lanes a play may be stamped with (see `laneOf`). */
+/** How long a lane note waits for its play: pauses may stretch a play over hours. */
+const LANE_NOTE_MS = 2 * DAY_MS;
 const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
 const PLAYS_KEEP_MS = 180 * DAY_MS;
 const PRUNE_PER_DAY = 500;
@@ -395,6 +397,14 @@ interface SeenEntry {
 	ctx?: string | null;
 	until?: number;
 	listed?: boolean;
+}
+
+/** A song seen starting on a station, with its lane (see `noteLane`). */
+interface LaneNote {
+	station: number;
+	id: TrackId;
+	kind: SlotKind | null;
+	seenAt: number;
 }
 
 interface PlayerSnapshot {
@@ -2640,6 +2650,7 @@ export class HubCore {
 			s.lastPlayerAt,
 		);
 		const shown = this.kvGet<PlayerSnapshot>("player");
+		this.noteLane(obs, shown);
 		const heard = this.noteHeardSong(
 			obs,
 			s.lastPlayerAt,
@@ -3797,7 +3808,7 @@ export class HubCore {
 			e.contextUri,
 			st?.id ?? null,
 			JSON.stringify(e.track),
-			st ? this.laneOf(st, e.id, e.contextUri, e.start) : null,
+			st && e.contextUri === this.deckUri(st) ? this.laneFor(st.id, e.id, e.at) : null,
 		);
 		this.noteHeard(st?.id, e.id);
 		const seen = (this.kvGet<SeenEntry[]>("seen_plays") ?? []).filter(
@@ -4057,7 +4068,7 @@ export class HubCore {
 				station?.id ?? null,
 				ignored ? 1 : 0,
 				packed ? JSON.stringify(packed) : null,
-				station ? this.laneOf(station, id, ctx, at - (i.track.duration_ms ?? 0)) : null,
+				station && ctx === this.deckUri(station) ? this.laneFor(station.id, id, at) : null,
 			);
 			if (!ignored) this.noteHeard(station?.id, id);
 			s.recentCursor = Math.max(s.recentCursor, at);
@@ -4848,22 +4859,54 @@ export class HubCore {
 	}
 
 	/**
-	 * Why a play was on its station, decided once when it is recorded and only
-	 * without doubt: it played in the station's own playlist, the deck now in
-	 * that playlist was written before the song began, and the deck holds the
-	 * song for one reason only. Anything else is null — never a guess.
+	 * A song seen starting on a station (see `noteLane`): its lane, frozen at
+	 * that look, waits for the play to be recorded.
 	 */
-	private laneOf(
-		st: StationRow,
-		id: TrackId,
-		contextUri: string | null,
-		startedAt: number,
-	): SlotKind | null {
-		if (!contextUri || contextUri !== this.deckUri(st)) return null;
-		const deck = this.deckOf(st);
-		if (!deck || deck.writtenAt > startedAt) return null;
-		const kinds = new Set(deck.items.filter((it) => it.id === id).map((it) => it.kind));
-		return kinds.size === 1 ? ([...kinds][0] ?? null) : null;
+	private laneNotes(): LaneNote[] {
+		return this.kvGet<LaneNote[]>("lane_notes") ?? [];
+	}
+
+	/**
+	 * Notes why a song is on its station when a look first sees it as a new
+	 * song in the station's own playlist: the look before showed another song
+	 * (or another context), and the deck in that playlist was written before
+	 * that look, so this play began from this deck. The lane is the deck's
+	 * one reason for the song (null when it holds the song for several).
+	 */
+	private noteLane(obs: PlayerObservation | null, shown: PlayerSnapshot | null): void {
+		if (!obs?.trackId || !obs.contextUri || !shown) return;
+		if (shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri) return;
+		const st = this.stations().find((x) => this.deckUri(x) === obs.contextUri);
+		const deck = st ? this.deckOf(st) : null;
+		if (!st || !deck || deck.writtenAt > shown.at) return;
+		const kinds = new Set(deck.items.filter((it) => it.id === obs.trackId).map((it) => it.kind));
+		const now = this.now();
+		const notes = this.laneNotes().filter((n) => now - n.seenAt < LANE_NOTE_MS);
+		notes.push({
+			station: st.id,
+			id: obs.trackId,
+			kind: kinds.size === 1 ? ([...kinds][0] ?? null) : null,
+			seenAt: now,
+		});
+		this.kvSet("lane_notes", notes.slice(-50));
+	}
+
+	/**
+	 * The lane for a play being recorded: the latest note of this song on this
+	 * station seen before the play's stamp, used once. No note, no lane.
+	 */
+	private laneFor(stationId: number, id: TrackId, at: number): SlotKind | null {
+		const notes = this.laneNotes();
+		let best = -1;
+		notes.forEach((n, i) => {
+			if (n.station !== stationId || n.id !== id || n.seenAt > at || at - n.seenAt > LANE_NOTE_MS)
+				return;
+			if (best < 0 || n.seenAt > notes[best]!.seenAt) best = i;
+		});
+		if (best < 0) return null;
+		const [note] = notes.splice(best, 1);
+		this.kvSet("lane_notes", notes);
+		return note?.kind ?? null;
 	}
 
 	/**
