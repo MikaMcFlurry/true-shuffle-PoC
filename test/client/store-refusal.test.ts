@@ -29,6 +29,7 @@ const app = (s: SessionView | null = session(), profile = "mika"): AppState => (
 	jobs: [],
 	history: { importedTracks: 0, importedAt: null, liveSince: null },
 	aiSource: "off",
+	edition: "private",
 	serverTime: 100,
 });
 const frozen = { entryId: "A:0", position: 97_000, track: null, projected: false };

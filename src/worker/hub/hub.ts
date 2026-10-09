@@ -92,6 +92,7 @@ import type {
 	TrackView,
 	Warning,
 } from "../../shared/api";
+import type { Edition } from "../../shared/edition";
 import { type Keys, randomToken } from "../lib/crypto";
 import type { SqlDb } from "../lib/sql";
 import {
@@ -260,6 +261,8 @@ const DISCOVERIES_DESCRIPTION =
 	"Neuentdeckungen, die dir in true-shuffle gefallen haben. Wird automatisch ergänzt.";
 
 export interface HubEnv {
+	/** Unset is "private" (see shared/edition). */
+	edition?: Edition;
 	endpoints: SpotifyEndpoints;
 	lastfmBase: string;
 	lastfmKey: string | null;
@@ -653,8 +656,25 @@ export class HubCore {
 	private likedCache: Set<TrackId> | null = null;
 	private indexCache: Map<TrackId, PackedTrack> | null = null;
 
-	constructor(private readonly d: HubDeps) {
-		const raw = d.sql;
+	private readonly d: HubDeps;
+
+	private get edition(): Edition {
+		return this.d.env.edition ?? "private";
+	}
+
+	private get community(): boolean {
+		return this.edition === "community";
+	}
+
+	constructor(deps: HubDeps) {
+		// The community edition never hands Spotify Content to an AI model
+		// (Spotify Developer Policy): no AI runner and no Anthropic key reach
+		// any path below, whatever the deployment has configured.
+		this.d =
+			deps.env.edition === "community"
+				? { ...deps, ai: null, env: { ...deps.env, anthropicKey: null } }
+				: deps;
+		const raw = deps.sql;
 		const cache = this.cache;
 		// Every write to the stations table drops the cached list of stations.
 		this.db = {
@@ -6265,6 +6285,7 @@ export class HubCore {
 				liveSince: this.kvGet<number>("live_since"),
 			},
 			aiSource: this.d.env.anthropicKey ? "anthropic" : this.d.ai ? "workers-ai" : "off",
+			edition: this.edition,
 			serverTime: this.now(),
 		};
 	}
@@ -6487,6 +6508,11 @@ export class HubCore {
 	 * from the import and live plays, weighted by listening time.
 	 */
 	prepareGenres(): { answer: GenreAnswer; request: GenreRequest | null } {
+		if (this.community)
+			throw new HubError(
+				"edition",
+				"In dieser Ausgabe schätzt keine KI Genres: Spotify erlaubt nicht, Spotify-Daten an eine KI zu geben.",
+			);
 		const now = this.now();
 		const estimate = this.kvGet<GenreEstimate>("genre_estimate");
 		const last = this.kvGet<{ at: number; id: string }>("genre_attempt");
@@ -6762,10 +6788,15 @@ export class HubCore {
 	private timeline(): () => Iterable<ListenEvent> {
 		const liveSince = this.kvGet<number>("live_since") ?? Number.POSITIVE_INFINITY;
 		const imported = this.listenData();
-		const rows = this.db.all<{ played_at: number; track_id: string; meta: string | null }>(
-			`SELECT played_at, track_id, meta FROM plays WHERE ignored = 0 AND played_at >= ? ORDER BY played_at`,
-			Number.isFinite(liveSince) ? liveSince : 0,
-		);
+		// The community edition builds no listening statistics from data read
+		// through the Spotify API (Spotify Developer Policy): only the
+		// listener's own imported data export counts there.
+		const rows = this.community
+			? []
+			: this.db.all<{ played_at: number; track_id: string; meta: string | null }>(
+					`SELECT played_at, track_id, meta FROM plays WHERE ignored = 0 AND played_at >= ? ORDER BY played_at`,
+					Number.isFinite(liveSince) ? liveSince : 0,
+				);
 		const bare = [...new Set(rows.filter((r) => !r.meta).map((r) => r.track_id))];
 		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
 		// Walked lazily: one event at a time, never the whole timeline at once.
@@ -6871,8 +6902,10 @@ export class HubCore {
 				importedPlays: meta?.plays ?? 0,
 				liveSince: this.kvGet<number>("live_since"),
 				summaryOnly: !meta && !!this.kvGet("history_profile"),
+				importOnly: this.community,
 			},
-			genres: this.kvGet<GenreEstimate>("genre_estimate"),
+			edition: this.edition,
+			genres: this.community ? null : this.kvGet<GenreEstimate>("genre_estimate"),
 			canEstimate: !!this.d.env.anthropicKey || !!this.d.ai,
 			genresRetryAt: (() => {
 				const a = this.kvGet<{ at: number }>("genre_attempt");

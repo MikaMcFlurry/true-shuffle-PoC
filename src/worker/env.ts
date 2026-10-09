@@ -1,3 +1,4 @@
+import { parseEdition } from "../shared/edition";
 import type { Registry } from "./registry";
 import type { UserHub } from "./userhub";
 
@@ -20,6 +21,8 @@ export interface Env {
 	LASTFM_API_KEY?: string;
 	/** Optional comma-separated Spotify user ids allowed to sign in. */
 	ALLOWED_SPOTIFY_IDS?: string;
+	/** Optional: "community" for the free self-hosted edition (see shared/edition). Unset: "private". */
+	EDITION?: string;
 	/** Optional canonical origin, e.g. https://true-shuffle.example.workers.dev */
 	PUBLIC_URL?: string;
 
@@ -40,6 +43,7 @@ export function endpoints(env: Env) {
 
 export function hubEnv(env: Env) {
 	return {
+		edition: parseEdition(env.EDITION),
 		endpoints: endpoints(env),
 		lastfmBase: env.LASTFM_API_BASE || "https://ws.audioscrobbler.com",
 		lastfmKey: env.LASTFM_API_KEY || null,

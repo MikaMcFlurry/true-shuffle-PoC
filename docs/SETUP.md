@@ -37,6 +37,7 @@ Worker → **Settings** → **Variables and Secrets** → **Add**:
 | `ALLOWED_SPOTIFY_IDS` | Text, optional | kommagetrennte Spotify-Benutzer-IDs, die true-shuffle nutzen dürfen (leer: alle, die Spotify zulässt). Wer entfernt wird, ist sofort abgemeldet. |
 | `LASTFM_API_KEY` | Secret, optional | kostenloser Schlüssel von [last.fm/api](https://www.last.fm/api/account/create), bessere Entdeckungen |
 | `ANTHROPIC_API_KEY` | Secret, optional | für KI-Vorschläge mit Claude (siehe unten); ohne Schlüssel nutzt true-shuffle kostenlos Workers AI |
+| `EDITION` | Text, optional | leer oder `private`: alle Funktionen wie bisher. `community`: die kostenlose Ausgabe zum Selbsthosten. Sie schickt keine Spotify-Daten an eine KI (keine KI-Vorschläge, keine Genre-Schätzung, auch wenn ein Schlüssel gesetzt ist), und das Hörprofil zeigt nur den importierten Spotify-Verlauf. So verlangt es Spotifys Developer Policy. |
 | `ANTHROPIC_MODEL` | Text, optional | Standard: `claude-sonnet-5` |
 | `PUBLIC_URL` | Text, optional | nur bei eigener Domain, z. B. `https://radio.example.de` |
 

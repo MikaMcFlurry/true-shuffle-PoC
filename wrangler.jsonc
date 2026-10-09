@@ -43,7 +43,8 @@
 
 	// Configuration lives in the dashboard (Settings → Variables and Secrets),
 	// never in this file: SPOTIFY_CLIENT_ID, APP_SECRET, and optionally
-	// ANTHROPIC_API_KEY, LASTFM_API_KEY, ALLOWED_SPOTIFY_IDS, ANTHROPIC_MODEL.
+	// ANTHROPIC_API_KEY, LASTFM_API_KEY, ALLOWED_SPOTIFY_IDS, ANTHROPIC_MODEL, EDITION
+	// (unset: "private", every feature; "community": see src/shared/edition.ts).
 	// keep_vars stops a deploy from wiping variables set there.
 	"keep_vars": true,
 

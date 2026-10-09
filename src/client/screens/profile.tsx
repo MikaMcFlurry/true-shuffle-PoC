@@ -224,7 +224,7 @@ export function ProfileScreen() {
 					) : (
 						<Period p={p} choice={shown} />
 					)}
-					<Genres p={p} />
+					{p.edition === "community" ? null : <Genres p={p} />}
 					<Learned p={p} />
 				</div>
 			) : null}
@@ -333,6 +333,17 @@ function PeriodPicker({
 /** Where the numbers come from, and what an import would add. */
 function Coverage({ p }: { p: ListeningProfile }) {
 	const c = p.coverage;
+	if (c.importOnly)
+		return (
+			<p class="hint profile__source">
+				{c.importedPlays > 0 && c.importedTo
+					? `Aus deinem importierten Spotify-Verlauf, bis ${dateWord(c.importedTo)}. `
+					: "Noch leer: Das Hörprofil zeigt in dieser Ausgabe nur deinen importierten Spotify-Verlauf. "}
+				Was true-shuffle selbst mitzählt, nutzt es nur für deine Sender, denn Spotify erlaubt keine
+				Auswertungen aus Daten seiner Schnittstelle.{" "}
+				<a href="/import">Spotify-Verlauf importieren</a>
+			</p>
+		);
 	if (c.importedPlays > 0 && c.liveSince)
 		return (
 			<p class="hint profile__source">

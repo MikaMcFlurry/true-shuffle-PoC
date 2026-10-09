@@ -99,7 +99,7 @@ const COMEBACK_MS = 365 * DAY_MS;
 
 type Stats = Omit<
 	ListeningProfile,
-	"genres" | "canEstimate" | "genresRetryAt" | "learned" | "coverage"
+	"genres" | "canEstimate" | "genresRetryAt" | "learned" | "coverage" | "edition"
 >;
 
 /** A key for a calendar day (YYYY-MM-DD) or month (YYYY-MM). */

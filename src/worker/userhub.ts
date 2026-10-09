@@ -12,6 +12,7 @@ import type { HistoryRow } from "../core/history";
 import { cryptoRng } from "../core/random";
 import type { StationRules } from "../core/types";
 import type { RemoteAction, StationKind, StationSource } from "../shared/api";
+import { parseEdition } from "../shared/edition";
 import {
 	type NativeCommand,
 	NativeController,
@@ -82,9 +83,11 @@ export class UserHub extends DurableObject<Env> {
 					set: (at) => storage.setAlarm(at),
 					get: () => storage.getAlarm(),
 				},
-				ai: this.env.AI
-					? { run: (model, input) => this.env.AI!.run(model as never, input as never) }
-					: null,
+				// The community edition never hands Spotify Content to an AI model.
+				ai:
+					this.env.AI && parseEdition(this.env.EDITION) === "private"
+						? { run: (model, input) => this.env.AI!.run(model as never, input as never) }
+						: null,
 				wipe: async () => {
 					await storage.deleteAlarm();
 					await storage.deleteAll();

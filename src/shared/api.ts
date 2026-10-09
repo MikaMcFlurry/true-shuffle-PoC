@@ -3,6 +3,7 @@
  */
 
 import type { SlotKind, StationRules } from "../core/types";
+import type { Edition } from "./edition";
 
 export type StationKind = "playlist" | "all" | "custom";
 
@@ -119,6 +120,8 @@ export interface AppState {
 	/** `liveSince`: from here on true-shuffle counts live; an import covers what came before. */
 	history: { importedTracks: number; importedAt: number | null; liveSince: number | null };
 	aiSource: "anthropic" | "workers-ai" | "off";
+	/** Which edition this deployment is (see shared/edition). */
+	edition: Edition;
 	serverTime: number;
 }
 
@@ -227,7 +230,10 @@ export interface ListeningProfile {
 		liveSince: number | null;
 		/** Only the older import summary is stored: importing again shows every period. */
 		summaryOnly: boolean;
+		/** Community edition: only the imported data export counts, never true-shuffle's own count. */
+		importOnly: boolean;
 	};
+	edition: Edition;
 	/** Calendar years with music, over the whole timeline. */
 	years: number[];
 	/** First and last play in the period. */

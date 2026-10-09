@@ -66,6 +66,7 @@ function snapshot(playing = true): AppState {
 		jobs: [],
 		history: { importedTracks: 0, importedAt: null, liveSince: TIME },
 		aiSource: "off",
+		edition: "private",
 		serverTime: TIME,
 	};
 }
