@@ -256,7 +256,18 @@ export interface ListeningProfile {
 	topSongs: ProfileItem[];
 	topAlbums: ProfileItem[];
 	/** Left within 30 s, from imported plays only (live counting cannot see them). */
-	skips: { early: number; share: number; top: ProfileItem[] } | null;
+	/**
+	 * Early skips (under 30 s, by choice) of imported plays. `early`, its share
+	 * and `top` leave out the first song after a start; those are `openers`:
+	 * Spotify's shuffle opens with the same few songs, so they say little.
+	 */
+	skips: {
+		early: number;
+		share: number;
+		top: ProfileItem[];
+		openers: number;
+		topOpeners: ProfileItem[];
+	} | null;
 	/** First ever heard in this period. */
 	newSongs: number;
 	newArtists: number;

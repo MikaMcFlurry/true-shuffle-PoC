@@ -30,7 +30,32 @@ export const LISTEN_FLAG = {
 	offline: 16,
 	/** A private session. */
 	incognito: 32,
+	/**
+	 * Began by a start (play button, a tap, another device, the app opening),
+	 * not by the song before ending or a skip: see `isOpener`.
+	 */
+	started: 64,
 } as const;
+
+/** Spotify's `reason_start` for a song that followed on from the one before. */
+const FOLLOWED_ON = new Set(["trackdone", "fwdbtn", "backbtn"]);
+
+/** Began by a start, as far as Spotify's `reason_start` tells (unknown: no). */
+export const startedAfresh = (reason: string | null | undefined) =>
+	!!reason && reason !== "unknown" && !FOLLOWED_ON.has(reason);
+
+/** Silence after which the next song counts as the first of a new start. */
+export const OPENER_GAP_MS = 10 * 60_000;
+
+/**
+ * The first song after a start: Spotify's shuffle likes to open with the
+ * same few songs, and skipping such an opener says little about taste. It
+ * began by a start, or nothing played in the ten minutes before it began
+ * (or nothing is known before it).
+ */
+export function isOpener(started: boolean, beganAt: number, previousEnd: number | null): boolean {
+	return started || previousEnd === null || beganAt - previousEnd >= OPENER_GAP_MS;
+}
 
 /** Where it was heard, as far as Spotify's platform text tells. */
 export const PLATFORMS = [
@@ -68,6 +93,7 @@ export interface ListenEntry {
 	master_metadata_album_artist_name?: string | null;
 	master_metadata_album_album_name?: string | null;
 	platform?: string | null;
+	reason_start?: string | null;
 	reason_end?: string | null;
 	skipped?: boolean | null;
 	shuffle?: boolean | null;
@@ -118,7 +144,8 @@ export function addListens(entries: readonly ListenEntry[], b: ListenBuilder): L
 			(e.reason_end === "trackdone" ? LISTEN_FLAG.done : 0) |
 			(e.shuffle === true ? LISTEN_FLAG.shuffle : 0) |
 			(e.offline === true ? LISTEN_FLAG.offline : 0) |
-			(e.incognito_mode === true ? LISTEN_FLAG.incognito : 0);
+			(e.incognito_mode === true ? LISTEN_FLAG.incognito : 0) |
+			(startedAfresh(e.reason_start) ? LISTEN_FLAG.started : 0);
 		const sec = Math.floor(at / 1000);
 		b.rows.set(`${sec}:${t}`, [sec, t, ms, flags, platformOf(e.platform)]);
 	}
@@ -180,7 +207,7 @@ export function isListenRow(v: unknown, tracks: number, latestSec: number): v is
 		int(v[0], latestSec) &&
 		int(v[1], tracks - 1) &&
 		int(v[2], 24 * 3_600_000) &&
-		int(v[3], 63) &&
+		int(v[3], 127) &&
 		int(v[4], PLATFORMS.length - 1)
 	);
 }

@@ -23,6 +23,11 @@ export interface ListenEvent {
 	/** 30 s or more: a play. Otherwise only an early skip is of interest. */
 	play: boolean;
 	earlySkip: boolean;
+	/**
+	 * An early skip of the first song after a start (see `isOpener`): told
+	 * apart, since Spotify's shuffle opens with the same few songs.
+	 */
+	opener: boolean;
 	/** From an import only. */
 	platform: number | null;
 	shuffle: boolean | null;
@@ -129,6 +134,7 @@ export function periodProfile(
 	const artists = new Map<string, ProfileItem & { ms: number }>();
 	const albums = new Map<string, ProfileItem & { ms: number }>();
 	const skipped = new Map<string, ProfileItem & { ms: number }>();
+	const opened = new Map<string, ProfileItem & { ms: number }>();
 	const firstSong = new Map<string, number>();
 	const firstArtist = new Map<string, number>();
 	const lastSong = new Map<string, number>();
@@ -142,6 +148,7 @@ export function periodProfile(
 	let exact = true;
 	let last: number | null = null;
 	let early = 0;
+	let openers = 0;
 	let importedPlays = 0;
 	let shuffled = 0;
 	let offline = 0;
@@ -181,9 +188,10 @@ export function periodProfile(
 		}
 		if (!e.play) {
 			if (e.earlySkip) {
-				early++;
+				if (e.opener) openers++;
+				else early++;
 				bump(
-					skipped,
+					e.opener ? opened : skipped,
 					e.song,
 					() => ({ id: e.song, name: e.name, sub: e.artist, plays: 0, minutes: 0, imageUrl: null }),
 					e,
@@ -293,11 +301,13 @@ export function periodProfile(
 		topSongs: [...songs.values()].sort(byPlays).slice(0, 20).map(finish),
 		topAlbums: [...albums.values()].sort(byTime).slice(0, 10).map(finish),
 		skips:
-			importedPlays + early > 0
+			importedPlays + early + openers > 0
 				? {
 						early,
-						share: early / (early + importedPlays),
+						share: early + importedPlays > 0 ? early / (early + importedPlays) : 0,
 						top: [...skipped.values()].sort(byPlays).slice(0, 10).map(finish),
+						openers,
+						topOpeners: [...opened.values()].sort(byPlays).slice(0, 10).map(finish),
 					}
 				: null,
 		newSongs: [...songs.keys()].filter((k) => {

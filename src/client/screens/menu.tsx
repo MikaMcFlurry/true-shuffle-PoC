@@ -880,6 +880,8 @@ interface Effects {
 	rarer: number;
 	barely: number;
 	longAgo: number;
+	/** Early skips of the first song after a start, not held against it. */
+	openers: number;
 	files: number;
 	from: number | null;
 	to: number | null;
@@ -889,7 +891,7 @@ const LONG_AGO_MS = 180 * DAY_MS;
 
 function effectsOf(
 	rows: readonly HistoryRow[],
-	agg: { counted: number; firstAt: number | null; lastAt: number | null },
+	agg: { counted: number; openers: number; firstAt: number | null; lastAt: number | null },
 	files: number,
 ): Effects {
 	const now = Date.now();
@@ -911,6 +913,7 @@ function effectsOf(
 		rarer,
 		barely,
 		longAgo,
+		openers: agg.openers,
 		files,
 		from: agg.firstAt,
 		to: agg.lastAt,
@@ -944,6 +947,9 @@ function EffectList({ e, done }: { e: Effects; done: boolean }) {
 					<strong>Früh Übersprungenes kommt seltener.</strong> {songs(e.rarer)} hast du ein- oder
 					zweimal in den ersten 30 Sekunden weitergeschaltet: Sie kommen seltener. {songs(e.barely)}{" "}
 					hast du dreimal oder öfter früh übersprungen: Sie kommen kaum noch.
+					{e.openers > 0
+						? ` Nicht mitgezählt sind ${num(e.openers)} frühe Skips des ersten Songs nach einem Start: Spotifys Shuffle beginnt gern mit denselben Songs, und die wegzuschalten heißt nicht, dass du sie nicht magst.`
+						: ""}
 				</li>
 				<li>
 					<strong>Lange nicht Gehörtes kommt eher.</strong> {songs(e.longAgo)} hast du seit über

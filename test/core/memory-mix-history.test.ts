@@ -111,10 +111,13 @@ describe("history import", () => {
 				spotify_track_uri: `spotify:track:${id}`,
 				reason_end: "fwdbtn",
 			},
+			// Skipped right after another song ended (podcasts keep the listening going too).
+			{ ts: "2025-03-01T09:59:50Z", ms_played: 600_000, spotify_track_uri: null },
 			{
 				ts: "2025-03-01T10:00:00Z",
 				ms_played: 4_000,
 				spotify_track_uri: `spotify:track:${id}`,
+				reason_start: "trackdone",
 				reason_end: "fwdbtn",
 			},
 			{
@@ -129,10 +132,46 @@ describe("history import", () => {
 		expect(s.plays).toBe(2);
 		expect(s.earlySkips).toBe(1);
 		expect(s.lastPlayedAt).toBe(Date.parse("2025-02-01T10:00:00Z"));
-		expect(agg.ignored).toBe(2);
+		expect(agg.ignored).toBe(3);
+		expect(agg.openers).toBe(0);
 		const [rid, rs] = fromRow(toRows(agg)[0]!);
 		expect(rid).toBe(id);
 		expect(rs).toEqual(s);
+	});
+});
+
+describe("aggregateHistory and the first song after a start", () => {
+	const uri = `spotify:track:${"o".repeat(22)}`;
+	const play = (ts: string) => ({
+		ts,
+		ms_played: 200_000,
+		spotify_track_uri: `spotify:track:${"p".repeat(22)}`,
+	});
+	const skip = (ts: string, reason_start?: string) => ({
+		ts,
+		ms_played: 3_000,
+		spotify_track_uri: uri,
+		reason_start,
+		reason_end: "fwdbtn",
+	});
+
+	it("does not hold a skipped opener against the song: started afresh, after a silence, or first in the file", () => {
+		const agg = aggregateHistory([
+			skip("2025-01-01T08:00:00Z"),
+			play("2025-01-01T08:04:00Z"),
+			// Shuffle pressed again two minutes later: Spotify's reason_start tells.
+			skip("2025-01-01T08:06:00Z", "clickrow"),
+			play("2025-01-01T08:10:00Z"),
+			// Twenty minutes of nothing, then a skip with no reason_start.
+			skip("2025-01-01T08:30:00Z"),
+			play("2025-01-01T08:34:00Z"),
+			// Mid-listening: counts.
+			skip("2025-01-01T08:34:10Z", "trackdone"),
+			skip("2025-01-01T08:34:20Z"),
+		]);
+		expect(agg.openers).toBe(3);
+		expect(agg.skipped).toBe(2);
+		expect(agg.stats.get("o".repeat(22))?.earlySkips).toBe(2);
 	});
 });
 

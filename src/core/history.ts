@@ -10,6 +10,7 @@
  * with an explanation instead of being guessed at.
  */
 
+import { isOpener, startedAfresh } from "./listens";
 import type { ImportedStats } from "./memory";
 import { PLAY_THRESHOLD_MS, type TrackId } from "./types";
 
@@ -17,6 +18,7 @@ export interface ExtendedEntry {
 	ts?: string;
 	ms_played?: number;
 	spotify_track_uri?: string | null;
+	reason_start?: string | null;
 	reason_end?: string | null;
 	skipped?: boolean | null;
 }
@@ -44,6 +46,8 @@ export interface Aggregate {
 	entries: number;
 	counted: number;
 	skipped: number;
+	/** Early skips of the first song after a start: not held against the song. */
+	openers: number;
 	ignored: number;
 	firstAt: number | null;
 	lastAt: number | null;
@@ -55,6 +59,7 @@ export function emptyAggregate(): Aggregate {
 		entries: 0,
 		counted: 0,
 		skipped: 0,
+		openers: 0,
 		ignored: 0,
 		firstAt: null,
 		lastAt: null,
@@ -64,7 +69,10 @@ export function emptyAggregate(): Aggregate {
 /**
  * Fold one file's entries into the aggregate. A play is >= 30 s (Spotify's
  * own stream rule); an early skip is < 30 s ended by the forward button or
- * flagged `skipped`. Everything else (errors, logouts, podcasts) is ignored.
+ * flagged `skipped`, unless it was the first song after a start (see
+ * `isOpener`): Spotify's shuffle opens with the same few songs again and
+ * again, and skipping those is no verdict on them. Everything else (errors,
+ * logouts, podcasts) is ignored.
  */
 export function aggregateHistory(
 	entries: readonly ExtendedEntry[],
@@ -72,15 +80,20 @@ export function aggregateHistory(
 	/** Only listening before this time counts: after it, true-shuffle counted live. */
 	opts: { before?: number | null } = {},
 ): Aggregate {
+	// A file is in time order; what came before its first entry is not known here.
+	let previousEnd: number | null = null;
 	for (const e of entries) {
 		agg.entries++;
 		const id = trackIdFromUri(e.spotify_track_uri ?? null);
 		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
+		const ms = typeof e.ms_played === "number" ? e.ms_played : 0;
+		const before = previousEnd;
+		// Anything heard (podcasts too) keeps the listening going.
+		if (Number.isFinite(at)) previousEnd = at;
 		if (!id || !Number.isFinite(at) || (opts.before != null && at >= opts.before)) {
 			agg.ignored++;
 			continue;
 		}
-		const ms = typeof e.ms_played === "number" ? e.ms_played : 0;
 		let s = agg.stats.get(id);
 		if (ms >= PLAY_THRESHOLD_MS) {
 			if (!s) {
@@ -91,6 +104,10 @@ export function aggregateHistory(
 			s.lastPlayedAt = s.lastPlayedAt === null ? at : Math.max(s.lastPlayedAt, at);
 			agg.counted++;
 		} else if (e.reason_end === "fwdbtn" || e.skipped === true) {
+			if (isOpener(startedAfresh(e.reason_start), at - ms, before)) {
+				agg.openers++;
+				continue;
+			}
 			if (!s) {
 				s = { plays: 0, earlySkips: 0, lastPlayedAt: null };
 				agg.stats.set(id, s);

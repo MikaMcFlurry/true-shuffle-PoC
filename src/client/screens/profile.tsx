@@ -481,9 +481,22 @@ function Period({ p, choice }: { p: ListeningProfile; choice: Choice }) {
 				<Section title="Früh übersprungen" id="pf-skips">
 					<p class="section__lead">
 						{percent(p.skips.share)} der Songs aus deinem importierten Verlauf hast du in den ersten
-						30 Sekunden weitergeschaltet ({num(p.skips.early)}-mal). Am häufigsten:
+						30 Sekunden weitergeschaltet ({num(p.skips.early)}-mal), den ersten Song nach einem
+						Start nicht mitgezählt. Am häufigsten:
 					</p>
 					<Songs rows={p.skips.top} count={(r) => `${num(r.plays)}× weg`} />
+				</Section>
+			) : null}
+
+			{p.skips && p.skips.openers > 0 ? (
+				<Section title="Gleich zum Start weg" id="pf-openers">
+					<p class="section__lead">
+						{num(p.skips.openers)}-mal hast du den ersten Song nach einem Start gleich
+						weitergeschaltet. Spotifys Shuffle beginnt gern mit denselben Songs. Das heißt nicht,
+						dass du sie nicht magst, deshalb kommen sie bei true-shuffle dadurch nicht seltener. Am
+						häufigsten:
+					</p>
+					<Songs rows={p.skips.topOpeners} count={(r) => `${num(r.plays)}× zum Start`} />
 				</Section>
 			) : null}
 
