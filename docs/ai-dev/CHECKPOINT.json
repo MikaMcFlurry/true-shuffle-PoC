@@ -6,12 +6,12 @@
     "artifact_ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json"
   },
   "branch": "codex/implement-cloudflare-restart",
-  "phase": "POST_DEPLOY",
+  "phase": "REVIEW",
   "status": "PARTIAL",
   "active_plan_ref": "docs/ai-dev/EXECUTION_PLAN.md",
   "owners": [
     "Codex release verification",
-    "Claude UI/UX PR18 source from actual commit/session metadata"
+    "Claude PR19/20/21 from actualauthor/branch/sessionmetadata"
   ],
   "completed": [
     "durable checkpoint/queue implementation",
@@ -32,13 +32,16 @@
     "Responsiveness/Connect target/background scheduling optimization deployed; 428 unit/Worker, 39 browser, fresh independent scoped review READY; exact public readback PASS. Equal-window simulated pressure archived.",
     "PR12 refusal continuity and PR11 final UI merged in dependency order, source CI/444unit/40browser/independent19unit9browser PASS; exact Cloudflare assets/runtime/auth readback PASS.",
     "PR17→16 externally integrated and verified97e6; allRESUME regressionsclosed",
-    "PR18 final4b0a independently reviewed; GitHub merge e348, actualautomaticWorkersBuildsdd344/238016100% verified;486unit/41browser/11RESUMEPASS; historicalkindnull andUnicodecontrastfixed; no duplicateactivation"
+    "PR18 final4b0a independently reviewed; GitHub merge e348, actualautomaticWorkersBuildsdd344/238016100% verified;486unit/41browser/11RESUMEPASS; historicalkindnull andUnicodecontrastfixed; no duplicateactivation",
+    "2026-10-09 sibling19/20/21 separatelyreviewed;localcombined492/42/11/staticPASS;fiveblockingP2scommented;productionunchanged"
   ],
   "in_progress": [],
   "blocked": [
     "Owner-authenticated Spotify/HA/MA acceptance",
     "Actual populated Durable Object migration/history invariants and restore verification",
-    "Required integratedCI37844932181 failedtwice inherited20ssimulationtimeout; Claude askedtestonlyrepair6069239435"
+    "Required integratedCI37844932181 failedtwice inherited20ssimulationtimeout; Claude askedtestonlyrepair6069239435",
+    "PR19/20/21 fiveblockingP2findings, seeFOLLOWUP_19_21_REVIEW.json",
+    "Noexplicitcomplete-scopefinalcomment forPR19/20/21"
   ],
   "capability_blockers": [
     "Physical iPhone/liveSpotify latencyquota unavailable",
@@ -51,11 +54,12 @@
     "Runtime/bindings/variables/secretbindings/namespaces/migrationv1 unchanged"
   ],
   "next_actions": [
-    "Read Claude correction PR/head/completion for inheritedlongtest timeout; fresh test-only review and actualverifyCI, preserving allassertions",
-    "Avoid duplicate applicationdeployment for unchangedharnessonlysource",
-    "Owner live device/provider acceptance and actual populated restore remainNOTRUN; no newapprovalrequest"
+    "Read actualClaude correctionheads andresponses to6075724303/6075730293/6075737117; rerunnewrepro/regressions andfreshseparatereview",
+    "Requirecomplete-scopefinalcomment/PRdependencies;fixinheritedCI20stimeout withpreservedassertions before anymerge/deploy",
+    "Revalidateactualtargete348 andreviewedheads immediatelybeforemerge;buildverifyactualintegration thenexistingauthorizedCloudflareworkflow",
+    "Keepcurrentproductione348/dd344/238016 andactuallive/restoreNOTRUN;no duplicateunchangedcomments/releases"
   ],
-  "updated_at": "2026-10-08T21:18:56.237579+00:00",
+  "updated_at": "2026-10-09T06:38:13.998122+00:00",
   "deployment": {
     "schema_version": "true-shuffle.deployment.v1",
     "recorded_at": "2026-10-08T21:16:38.606698+00:00",
@@ -121,5 +125,15 @@
     "historical_records": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json",
     "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078"
   },
-  "historical_checkpoint": "docs/ai-dev/evidence/tag-wording-review/CHECKPOINT_HISTORY_BEFORE_PR18.json"
+  "historical_checkpoint": "docs/ai-dev/evidence/tag-wording-review/CHECKPOINT_HISTORY_BEFORE_PR18.json",
+  "candidate_review": {
+    "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+    "ledger": "docs/ai-dev/evidence/FOLLOWUP_19_21_LEDGER.json",
+    "local_combined_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+    "heads": {
+      "19": "976f81d70897829094e385987fc64e7fcf0ebb27",
+      "20": "2b3abfd3ec2d0afc693610b5b505dc078fd640f4",
+      "21": "0b14353f6e13fd0c4ba5a8739a0d863df92d81eb"
+    }
+  }
 }

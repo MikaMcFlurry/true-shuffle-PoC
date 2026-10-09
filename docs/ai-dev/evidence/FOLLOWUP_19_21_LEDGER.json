@@ -1,0 +1,358 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-09T06:38:13.998122+00:00",
+  "project": "true-shuffle candidate followup19–21",
+  "subject": {
+    "revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+    "artifact_ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+    "environment": "Local synthetic19→20→21 frome348, separatefreshreviews onexactheads; no remotemerge/deploy",
+    "environment_class": "LOCAL"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "PARTIAL",
+  "material_release": true,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "NOT_READY",
+  "required_categories": [
+    "accessibility",
+    "build",
+    "critical_journey",
+    "data_invariants",
+    "independent_review",
+    "migration",
+    "operations",
+    "post_deploy",
+    "recovery",
+    "security_privacy",
+    "ui_runtime"
+  ],
+  "external_blockers": [],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR19-UI-01",
+      "title": "Favourite slider drops successive keyboard adjustments while a save is pending",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR19-UI-02",
+      "title": "Previously valid favourite percentages above60 are clamped in the native control",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR20-LANE-01",
+      "title": "A paused older occurrence can be permanently stamped with a replacement deck lane",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR21-GUEST-01",
+      "title": "The first owner song after a confirmed switch away from a guest device is still recorded as guest",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR21-GUEST-02",
+      "title": "A concurrently listed owner device with a distinct ID is automatically treated as the selected guest device when names collide",
+      "severity": "P2",
+      "blocking": true
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-BUILD",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "Combinedtype/lint/build/dryPASS",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "Combinedtype/lint/build/dryPASS"
+    },
+    {
+      "id": "G-COMBINED",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-COMBINED",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "492originalunit/42WorkerFakeSpotifyscenarios/11originalRESUMEboundariesPASS",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "492originalunit/42WorkerFakeSpotifyscenarios/11originalRESUMEboundariesPASS"
+    },
+    {
+      "id": "G-NEW-BEHAVIOR",
+      "category": "data_invariants",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-NEW-BEHAVIOR",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "Wrong historysource and ignoredowner45ssong reproduced on individualheads andcombined",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "Wrong historysource and ignoredowner45ssong reproduced on individualheads andcombined"
+    },
+    {
+      "id": "G-UI",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-UI",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "Fourphone/desktoplightdarkcellsPASS;rapidkeyboardandlegacy85%controlsFAIL. GuestbuiltclientmockAPI4cells/Pending503OfflineNavigationPASS.",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "Fourphone/desktoplightdarkcellsPASS;rapidkeyboardandlegacy85%controlsFAIL. GuestbuiltclientmockAPI4cells/Pending503OfflineNavigationPASS."
+    },
+    {
+      "id": "G-A11Y",
+      "category": "accessibility",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-A11Y",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "Nativekeyboardfavouriteincrementslost;DOM60/ARIA85 inconsistent",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "Nativekeyboardfavouriteincrementslost;DOM60/ARIA85 inconsistent"
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-MIGRATION",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "Additivemigration5 plusindependentpopulatedv4faultrollback/retry/idempotence/reopenPASS, sourceidentical20→combined",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "Additivemigration5 plusindependentpopulatedv4faultrollback/retry/idempotence/reopenPASS, sourceidentical20→combined"
+    },
+    {
+      "id": "G-LOCAL-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-RECOVERY",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "Localmigrationfaultrecovery and11originalresume/sessionboundariesPASS;notactualproductionrestore",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "Localmigrationfaultrecovery and11originalresume/sessionboundariesPASS;notactualproductionrestore"
+    },
+    {
+      "id": "G-SECURITY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-SECURITY",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "Original492unit/42Workerbrowser includesprotectedroute/session/account/nativeassertions;newguestsetterusesepochsessionfencing andexistingglobalCSRF",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "Original492unit/42Workerbrowser includesprotectedroute/session/account/nativeassertions;newguestsetterusesepochsessionfencing andexistingglobalCSRF"
+    },
+    {
+      "id": "G-REVIEW",
+      "category": "independent_review",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-REVIEW",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "ThreeFRESHcontextsNOT_READY;fiveblockingP2findings",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "ThreeFRESHcontextsNOT_READY;fiveblockingP2findings"
+    },
+    {
+      "id": "G-CI",
+      "category": "operations",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-CI",
+          "kind": "directchecks/scopedindependentreview",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_21_REVIEW.json",
+          "result": "ActualPR21verify489PASS/1known20stimeout;complete-scopefinalcommentabsent",
+          "subject_revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+          "observed_at": "2026-10-09T06:38:13.998122+00:00"
+        }
+      ],
+      "rationale": "ActualPR21verify489PASS/1known20stimeout;complete-scopefinalcommentabsent"
+    },
+    {
+      "id": "G-LIVE",
+      "category": "post_deploy",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Candidateunmergedundeployed;physicalSpotify/HA/populatedrestore unavailable"
+    }
+  ]
+}

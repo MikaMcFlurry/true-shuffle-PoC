@@ -1,0 +1,12 @@
+
+> true-shuffle@1.0.0 test
+> vitest run test/hub/pr21-independent-boundaries.test.ts test/hub/guest-device.test.ts test/hub/session.test.ts test/worker/native.test.ts test/worker/native-orchestrator.test.ts
+
+
+ RUN  v5.0.2 /workspace/ts-review-21
+
+
+ Test Files  5 passed (5)
+      Tests  39 passed (39)
+   Start at  06:31:35
+   Duration  3.79s (tests 68%, transform 16%, import 15%)
