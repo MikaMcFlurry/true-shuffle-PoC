@@ -195,6 +195,8 @@ const LANE_NOTE_MS = 2 * DAY_MS;
 const LANE_STAMP_SLACK_MS = 15_000;
 const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
 const PLAYS_KEEP_MS = 180 * DAY_MS;
+/** Slack between Spotify's stamp and our clock when a listing proves a song's end. */
+const LISTED_END_SLACK_MS = 15_000;
 const PRUNE_PER_DAY = 500;
 
 /**
@@ -2808,7 +2810,10 @@ export class HubCore {
 			const epoch = currentSession
 				? `${currentSession.sessionId}:${currentSession.playbackEpoch}`
 				: null;
-			if (epochs.get(st.id) === epoch) this.checkpoint(st, deck, obs);
+			if (epochs.get(st.id) === epoch) {
+				this.checkpoint(st, deck, obs);
+				if (plays.length > 0) this.advanceListed(st, deck, plays, obs);
+			}
 			let changed = false;
 			if (plays.length > 0) {
 				const r = applyPlays(deck, plays, uri);
@@ -5150,6 +5155,53 @@ export class HubCore {
 				session.status = obs.isPlaying ? "active" : "paused";
 			} else session.status = "ambiguous";
 		}
+		this.saveSession(session);
+	}
+
+	/**
+	 * Spotify listed the song at the saved place, in this playlist, stamped
+	 * after it would have ended from there: that occurrence was heard to its
+	 * end while no look saw the player, so the place moves on to the next song,
+	 * from its start. Provider evidence, never the clock alone: a listing
+	 * before that end (a skip after 30 s, a pause) leaves the place as it is,
+	 * and a look at this playlist right now decides by itself. Listings are
+	 * taken in order, so unseen songs played one after another move it along.
+	 */
+	private advanceListed(
+		st: StationRow,
+		deck: Deck,
+		plays: readonly RecentPlay[],
+		obs: PlayerObservation | null,
+	): void {
+		const session = this.savedSession(st.id);
+		if (!session || session.pending || session.controller === "native") return;
+		if (obs?.contextUri === session.contextUri) return;
+		let moved = false;
+		for (const p of plays.slice().sort((a, b) => a.playedAt - b.playedAt)) {
+			if (p.contextUri !== session.contextUri) continue;
+			const item = deck.items[session.currentIndex];
+			if (!item || item.id !== p.trackId || session.currentIndex + 1 >= deck.items.length) continue;
+			if (session.observedAt == null || session.progressMs == null) continue;
+			const meta = this.db.first<{ meta: string | null }>(
+				`SELECT meta FROM plays WHERE track_id = ? AND played_at = ?`,
+				p.trackId,
+				p.playedAt,
+			)?.meta;
+			const durationMs = meta ? (JSON.parse(meta) as PackedTrack)[5] : 0;
+			if (!(durationMs > 0)) continue;
+			const end = session.observedAt + Math.max(0, durationMs - session.progressMs);
+			if (p.playedAt <= session.observedAt || p.playedAt < end - LISTED_END_SLACK_MS) continue;
+			session.currentIndex += 1;
+			session.progressMs = 0;
+			session.observedAt = p.playedAt;
+			moved = true;
+		}
+		if (!moved) return;
+		this.log(
+			"info",
+			"session",
+			`„${st.name}“: Spotify meldet den Song zu Ende gehört — es geht mit dem nächsten weiter`,
+		);
 		this.saveSession(session);
 	}
 
