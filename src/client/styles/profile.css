@@ -336,3 +336,72 @@
 	left: 0;
 	background: var(--paper);
 }
+
+/* The period: presets and years as chips that wrap, a custom range below. */
+.periods {
+	display: grid;
+	gap: 12px;
+	margin: 0 0 16px;
+}
+
+.periods__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 4px;
+	border-radius: var(--r-lg);
+	background: var(--sunk);
+}
+
+.periods__row .segmented__opt {
+	flex: 1 1 auto;
+	min-width: 4.5rem;
+}
+
+.periods__legend {
+	margin-bottom: 6px;
+	padding: 0;
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: var(--ink-2);
+}
+
+.periods__custom {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px 12px;
+	align-items: end;
+}
+
+.periods__custom .key {
+	grid-column: 1 / -1;
+}
+
+.periods__custom .input {
+	width: 100%;
+	min-width: 0;
+}
+
+.profile__body--loading {
+	opacity: 0.55;
+	transition: opacity 160ms var(--ease);
+}
+
+.profile__highlights {
+	margin: 8px 0 0;
+}
+
+.hbars__sub {
+	font-weight: 400;
+	color: var(--ink-3);
+}
+
+.profile__more {
+	margin-top: 8px;
+}
+
+/* The period's content keeps the page's rhythm between its sections. */
+.profile__body {
+	display: grid;
+	gap: 28px;
+}

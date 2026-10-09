@@ -1,12 +1,13 @@
 /**
- * "Dein Hörprofil": what true-shuffle recorded of the listener's music, as
- * figures and small charts. Every number comes from `GET /api/profile`; the
- * page only arranges it. Charts carry hover titles and a table view.
+ * "Dein Hörprofil": the listener's music in a chosen period — last week,
+ * 30 days, 12 months, a calendar year, everything, or any range — as figures
+ * and small charts. Every number comes from `GET /api/profile` for that
+ * period; the page only arranges it. Charts carry hover titles and a table.
  */
 
 import { type ComponentChildren, Fragment } from "preact";
-import { useEffect, useState } from "preact/hooks";
-import type { ListeningProfile, ProfileTop } from "../../shared/api";
+import { useEffect, useRef, useState } from "preact/hooks";
+import type { ListeningProfile, ProfileItem } from "../../shared/api";
 import { api } from "../api";
 import { Cover, PageBar, Section } from "../components/ui";
 import { num } from "../format";
@@ -14,16 +15,26 @@ import { num } from "../format";
 const DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const DAYS_SHORT = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const MONTHS = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const MONTHS_LONG = [
+	"Januar",
+	"Februar",
+	"März",
+	"April",
+	"Mai",
+	"Juni",
+	"Juli",
+	"August",
+	"September",
+	"Oktober",
+	"November",
+	"Dezember",
+];
+const DAY = 86_400_000;
 
 function hoursWord(minutes: number): string {
-	if (minutes < 60) return `${num(minutes)} Minuten`;
+	if (minutes < 60) return `${num(minutes)} ${minutes === 1 ? "Minute" : "Minuten"}`;
 	const h = minutes / 60;
 	return `${h < 10 ? h.toLocaleString("de-DE", { maximumFractionDigits: 1 }) : num(Math.round(h))} Stunden`;
-}
-
-function monthLabel(m: string): string {
-	const [y, mm] = m.split("-");
-	return `${MONTHS[Number(mm) - 1] ?? mm} ${y?.slice(2)}`;
 }
 
 function timeWord(at: number): string {
@@ -42,21 +53,152 @@ function dateWord(at: number): string {
 	});
 }
 
+/** A YYYY-MM-DD key as a German date. */
+function keyWord(key: string, withYear = true): string {
+	const [y, m, d] = key.split("-").map(Number);
+	return `${d}. ${MONTHS_LONG[(m ?? 1) - 1]}${withYear ? ` ${y}` : ""}`;
+}
+
+/** Short, for a narrow figure: "22 Min.", "1,5 Std." */
+function hoursShort(minutes: number): string {
+	if (minutes < 60) return `${num(minutes)} Min.`;
+	return `${(minutes / 60).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Std.`;
+}
+
+function percent(share: number): string {
+	return `${Math.round(share * 100)} %`;
+}
+
 /** Five steps of one hue, light to dark; 0 stays the bare paper. */
 function step(v: number, max: number): number {
 	if (v <= 0 || max <= 0) return 0;
 	return Math.min(5, 1 + Math.floor((v / max) * 4.999));
 }
 
+// ---------------------------------------------------------------------------
+// The period
+// ---------------------------------------------------------------------------
+
+type Choice =
+	| { kind: "7" | "30" | "365" | "all" }
+	| { kind: "year"; year: number }
+	| { kind: "custom"; from: string; to: string };
+
+function dayInput(at: number): string {
+	const d = new Date(at);
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function fromInput(v: string): number | null {
+	const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+	return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime() : null;
+}
+
+/** A local date shifted by days, at its midnight (DST-proof: calendar, not hours). */
+function shiftDays(at: number, days: number): number {
+	const d = new Date(at);
+	return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days).getTime();
+}
+
+/**
+ * From inclusive, to exclusive; today counts in full. The period before for
+ * the comparison is a calendar one too: the year before, the same number of
+ * days before.
+ */
+export function periodOf(
+	c: Choice,
+	now = Date.now(),
+): { from: number | null; to: number | null; previousFrom: number | null } {
+	const end = shiftDays(now, 1);
+	switch (c.kind) {
+		case "7":
+			return { from: shiftDays(end, -7), to: end, previousFrom: shiftDays(end, -14) };
+		case "30":
+			return { from: shiftDays(end, -30), to: end, previousFrom: shiftDays(end, -60) };
+		case "365": {
+			const d = new Date(now);
+			return {
+				from: new Date(d.getFullYear() - 1, d.getMonth(), d.getDate() + 1).getTime(),
+				to: end,
+				previousFrom: new Date(d.getFullYear() - 2, d.getMonth(), d.getDate() + 1).getTime(),
+			};
+		}
+		case "year":
+			return {
+				from: new Date(c.year, 0, 1).getTime(),
+				to: new Date(c.year + 1, 0, 1).getTime(),
+				previousFrom: new Date(c.year - 1, 0, 1).getTime(),
+			};
+		case "custom": {
+			const from = fromInput(c.from);
+			const last = fromInput(c.to);
+			const to = last === null ? end : shiftDays(last, 1);
+			const days = from === null ? 0 : Math.round((to - from) / DAY);
+			return { from, to, previousFrom: from === null ? null : shiftDays(from, -days) };
+		}
+		default:
+			return { from: null, to: null, previousFrom: null };
+	}
+}
+
+/** "in den 30 Tagen davor" etc., for the comparison. */
+function beforeWord(c: Choice): string {
+	switch (c.kind) {
+		case "7":
+			return "in den 7 Tagen davor";
+		case "30":
+			return "in den 30 Tagen davor";
+		case "365":
+			return "in den 12 Monaten davor";
+		case "year":
+			return `im Jahr ${c.year - 1}`;
+		default:
+			return "im gleich langen Zeitraum davor";
+	}
+}
+
+function periodWord(c: Choice, p: ListeningProfile): string {
+	switch (c.kind) {
+		case "7":
+			return "in den letzten 7 Tagen";
+		case "30":
+			return "in den letzten 30 Tagen";
+		case "365":
+			return "in den letzten 12 Monaten";
+		case "year":
+			return `im Jahr ${c.year}`;
+		case "custom":
+			return p.period.from !== null
+				? `vom ${dateWord(p.period.from)} bis ${dateWord(p.period.to - 1)}`
+				: "im gewählten Zeitraum";
+		default:
+			return p.first ? `seit ${dateWord(p.first)}` : "insgesamt";
+	}
+}
+
 export function ProfileScreen() {
+	const [choice, setChoice] = useState<Choice>({ kind: "30" });
 	const [p, setP] = useState<ListeningProfile | null>(null);
+	const [shown, setShown] = useState<Choice>(choice);
+	const [years, setYears] = useState<number[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [err, setErr] = useState<string | null>(null);
+	const seq = useRef(0);
 	useEffect(() => {
+		const n = ++seq.current;
+		setLoading(true);
+		setErr(null);
 		api
-			.profile()
-			.then(setP)
-			.catch((e: Error) => setErr(e.message));
-	}, []);
+			.profile(periodOf(choice))
+			.then((r) => {
+				if (n !== seq.current) return;
+				setP(r);
+				setShown(choice);
+				if (r.years.length > 0) setYears(r.years);
+			})
+			.catch((e: Error) => n === seq.current && setErr(e.message))
+			.finally(() => n === seq.current && setLoading(false));
+	}, [choice]);
 	return (
 		<div class="page profile">
 			<PageBar
@@ -64,278 +206,420 @@ export function ProfileScreen() {
 				sub="Wann und was du hörst, und was true-shuffle daraus über dich weiß. Gezählt wird jeder Song ab 30 Sekunden, Gast-Modus nie."
 				backTo="/verlauf"
 			/>
+			<PeriodPicker choice={choice} years={years} onChoose={setChoice} />
 			{err ? (
 				<p class="notice notice--error" role="alert">
 					Hörprofil nicht geladen: {err}
 				</p>
 			) : null}
 			{!p && !err ? <div class="skeleton" style={{ height: "420px" }} /> : null}
-			{p && p.plays === 0 && !p.imported ? (
-				<p class="empty-state">
-					Noch nichts gezählt. Sobald du über Spotify hörst, füllt sich dein Hörprofil, egal ob über
-					true-shuffle oder nicht.
-				</p>
+			{p ? (
+				<div class={`profile__body${loading ? " profile__body--loading" : ""}`} aria-busy={loading}>
+					<Coverage p={p} />
+					{p.plays === 0 ? (
+						<p class="empty-state">
+							{periodWord(shown, p)[0]!.toUpperCase() + periodWord(shown, p).slice(1)} ist nichts
+							gezählt.
+						</p>
+					) : (
+						<Period p={p} choice={shown} />
+					)}
+					<Genres p={p} />
+					<Learned p={p} />
+				</div>
 			) : null}
-			{p && (p.plays > 0 || p.imported) ? <Profile p={p} /> : null}
 		</div>
 	);
 }
 
-/** One period's figures, from the import or from true-shuffle's own plays. */
-interface View {
-	since: number | null;
-	plays: number;
-	minutes: number;
-	/** Real listening time (import) or the songs' lengths added up (live). */
-	exact: boolean;
-	songs: number;
-	artists: number;
-	hourWeek: number[];
-	months: ListeningProfile["months"];
-	topArtists: ProfileTop[];
-	topSongs: ProfileTop[];
-}
-
-function liveView(p: ListeningProfile): View {
-	return { ...p, exact: false };
-}
-
-function importedView(i: NonNullable<ListeningProfile["imported"]>): View {
-	return {
-		since: i.from,
-		plays: i.plays,
-		minutes: i.minutes,
-		exact: true,
-		songs: i.songs,
-		artists: i.artists,
-		hourWeek: i.hourWeek,
-		months: i.months,
-		topArtists: i.topArtists.slice(0, 10).map((a) => ({
-			name: a.name,
-			artists: "",
-			plays: a.plays,
-			imageUrl: null,
-		})),
-		topSongs: i.topSongs.slice(0, 10).map((x) => ({
-			name: x.name,
-			artists: x.artist,
-			plays: x.plays,
-			imageUrl: x.imageUrl,
-		})),
-	};
-}
-
-function Profile({ p }: { p: ListeningProfile }) {
-	const [which, setWhich] = useState<"imported" | "live">(p.imported ? "imported" : "live");
-	const v = which === "imported" && p.imported ? importedView(p.imported) : liveView(p);
+function PeriodPicker({
+	choice,
+	years,
+	onChoose,
+}: {
+	choice: Choice;
+	years: number[];
+	onChoose: (c: Choice) => void;
+}) {
+	const [from, setFrom] = useState(
+		choice.kind === "custom" ? choice.from : dayInput(Date.now() - 90 * DAY),
+	);
+	const [to, setTo] = useState(choice.kind === "custom" ? choice.to : dayInput(Date.now()));
+	const presets: { kind: "7" | "30" | "365" | "all" | "custom"; label: string }[] = [
+		{ kind: "7", label: "7 Tage" },
+		{ kind: "30", label: "30 Tage" },
+		{ kind: "365", label: "12 Monate" },
+		{ kind: "all", label: "Alles" },
+		{ kind: "custom", label: "Eigener" },
+	];
+	const pick = (kind: (typeof presets)[number]["kind"]) =>
+		onChoose(kind === "custom" ? { kind, from, to } : { kind });
 	return (
-		<>
-			{p.imported ? (
-				<fieldset class="segmented segmented--mix profile__which">
-					<legend class="sr-only">Welcher Zeitraum</legend>
-					<label class="segmented__opt">
-						<input
-							type="radio"
-							name="pf-which"
-							checked={which === "imported"}
-							onChange={() => setWhich("imported")}
-						/>
-						<span>Ganzer Verlauf</span>
-					</label>
-					<label class="segmented__opt">
-						<input
-							type="radio"
-							name="pf-which"
-							checked={which === "live"}
-							onChange={() => setWhich("live")}
-						/>
-						<span>Letzte 180 Tage</span>
-					</label>
+		<div class="periods">
+			<fieldset class="segmented periods__set">
+				<legend class="sr-only">Zeitraum</legend>
+				<div class="periods__row">
+					{presets.map((x) => (
+						<label key={x.kind} class="segmented__opt">
+							<input
+								type="radio"
+								name="pf-period"
+								checked={choice.kind === x.kind}
+								onChange={() => pick(x.kind)}
+							/>
+							<span>{x.label}</span>
+						</label>
+					))}
+				</div>
+			</fieldset>
+			{years.length > 0 ? (
+				<fieldset class="segmented periods__set">
+					<legend class="periods__legend">Jahresrückblick</legend>
+					<div class="periods__row periods__row--years">
+						{years
+							.slice()
+							.reverse()
+							.map((y) => (
+								<label key={y} class="segmented__opt">
+									<input
+										type="radio"
+										name="pf-period"
+										checked={choice.kind === "year" && choice.year === y}
+										onChange={() => onChoose({ kind: "year", year: y })}
+									/>
+									<span>{y}</span>
+								</label>
+							))}
+					</div>
 				</fieldset>
 			) : null}
-			<p class="hint profile__source">
-				{which === "imported" && p.imported
-					? `Aus deinem importierten Spotify-Verlauf, ${dateWord(p.imported.from)} bis ${dateWord(p.imported.to)}.`
-					: "Was true-shuffle selbst gezählt hat, die letzten 180 Tage, auch was du direkt in Spotify gehört hast."}
-			</p>
-			{v.plays === 0 ? (
-				<p class="empty-state">In diesem Zeitraum ist noch nichts gezählt.</p>
-			) : (
-				<Period v={v} />
-			)}
-			<Genres p={p} />
-
-			<Section title="Was true-shuffle über dich weiß" id="pf-learned">
-				<p class="section__lead">
-					Daraus mischt true-shuffle deine Kassetten und wählt Empfehlungen aus.
-				</p>
-				<ul class="learned">
-					{p.plays > 0 ? (
-						<li>
-							<span class="learned__n">{num(Math.round((p.onCassettes / p.plays) * 100))} %</span>
-							<span>
-								deiner Songs der letzten 180 Tage liefen auf deinen Kassetten, der Rest direkt in
-								Spotify.
-							</span>
-						</li>
-					) : null}
-					<li>
-						<span class="learned__n">{num(p.learned.favorites)}</span>
-						<span>Favoriten mit Daumen hoch. Sie kommen öfter.</span>
-					</li>
-					<li>
-						<span class="learned__n">{num(p.learned.neverAgain)}</span>
-						<span>Songs kommen nie wieder, weil du sie aussortiert hast.</span>
-					</li>
-					<li>
-						<span class="learned__n">{num(p.learned.recommendationsKept)}</span>
-						<span>Empfehlungen haben dir gefallen und bleiben auf deinen Kassetten.</span>
-					</li>
-					<li>
-						<span class="learned__n">{num(p.learned.recommendationsDropped)}</span>
-						<span>
-							Empfehlungen hast du aussortiert. Ähnliches schlägt true-shuffle seltener vor.
-						</span>
-					</li>
-					<li>
-						<span class="learned__n">{num(p.learned.earlySkips)}</span>
-						<span>Mal hast du einen Song in den ersten 30 Sekunden übersprungen.</span>
-					</li>
-				</ul>
-			</Section>
-		</>
+			{choice.kind === "custom" ? (
+				<form
+					class="periods__custom"
+					onSubmit={(e) => {
+						e.preventDefault();
+						onChoose({ kind: "custom", from, to });
+					}}
+				>
+					<label class="field">
+						<span class="field__label">Von</span>
+						<input
+							type="date"
+							class="input"
+							value={from}
+							max={to}
+							onInput={(e) => setFrom(e.currentTarget.value)}
+						/>
+					</label>
+					<label class="field">
+						<span class="field__label">Bis</span>
+						<input
+							type="date"
+							class="input"
+							value={to}
+							min={from}
+							onInput={(e) => setTo(e.currentTarget.value)}
+						/>
+					</label>
+					<button type="submit" class="key key--lit">
+						Anzeigen
+					</button>
+				</form>
+			) : null}
+		</div>
 	);
 }
 
-function Period({ v }: { v: View }) {
+/** Where the numbers come from, and what an import would add. */
+function Coverage({ p }: { p: ListeningProfile }) {
+	const c = p.coverage;
+	if (c.importedPlays > 0 && c.liveSince)
+		return (
+			<p class="hint profile__source">
+				Bis {dateWord(c.liveSince)} aus deinem importierten Spotify-Verlauf, danach von true-shuffle
+				selbst gezählt, auch was du direkt in Spotify hörst.
+			</p>
+		);
+	return (
+		<p class="hint profile__source">
+			{c.liveSince
+				? `Gezählt seit ${dateWord(c.liveSince)}, auch was du direkt in Spotify hörst. `
+				: "Was true-shuffle selbst gezählt hat. "}
+			{c.summaryOnly
+				? "Dein Import ist von früher: lade die Dateien noch einmal hoch, dann siehst du auch die Zeit davor in jedem Zeitraum. "
+				: "Für die Zeit davor: "}
+			<a href="/import">Spotify-Verlauf importieren</a>
+		</p>
+	);
+}
+
+function Change({ now, before }: { now: number; before: number }) {
+	if (before <= 0) return null;
+	const d = Math.round(((now - before) / before) * 100);
+	if (d === 0) return <>genauso viel wie </>;
+	return <>{d > 0 ? `${d} % mehr als ` : `${-d} % weniger als `}</>;
+}
+
+function Period({ p, choice }: { p: ListeningProfile; choice: Choice }) {
+	const perDay = p.activeDays > 0 ? Math.round(p.minutes / p.activeDays) : 0;
 	return (
 		<>
 			<section class="figures" aria-label="Auf einen Blick">
 				<p class="figure figure--hero">
-					<span class="figure__value">{hoursWord(v.minutes)}</span>
+					<span class="figure__value">{hoursWord(p.minutes)}</span>
 					<span class="figure__label">
-						Musik seit {v.since ? dateWord(v.since) : "dem ersten Song"}
-						{v.exact ? ", so lange lief sie wirklich" : ", höchstens: Songlängen zusammengezählt"}
+						Musik {periodWord(choice, p)}
+						{p.minutesExact
+							? ", so lange lief sie wirklich"
+							: ", höchstens: Songlängen zusammengezählt, wo nur der Song bekannt ist"}
+						{p.previous && p.previous.minutes > 0 ? (
+							<>
+								{". "}
+								<Change now={p.minutes} before={p.previous.minutes} />
+								{beforeWord(choice)}
+							</>
+						) : null}
+						.
 					</span>
 				</p>
 				<p class="figure">
-					<span class="figure__value">{num(v.plays)}</span>
+					<span class="figure__value">{num(p.plays)}</span>
 					<span class="figure__label">Songs gehört</span>
 				</p>
 				<p class="figure">
-					<span class="figure__value">{num(v.songs)}</span>
+					<span class="figure__value">{num(p.songs)}</span>
 					<span class="figure__label">verschiedene Songs</span>
 				</p>
 				<p class="figure">
-					<span class="figure__value">{num(v.artists)}</span>
+					<span class="figure__value">{num(p.artists)}</span>
 					<span class="figure__label">Künstler</span>
 				</p>
+				<p class="figure">
+					<span class="figure__value">{num(p.activeDays)}</span>
+					<span class="figure__label">
+						{choice.kind === "all" ? "Tage mit Musik" : `von ${num(p.days)} Tagen mit Musik`}
+					</span>
+				</p>
+				<p class="figure">
+					<span class="figure__value">{hoursShort(perDay)}</span>
+					<span class="figure__label">an einem Tag mit Musik</span>
+				</p>
+				{p.albums > 0 ? (
+					<p class="figure">
+						<span class="figure__value">{num(p.albums)}</span>
+						<span class="figure__label">Alben</span>
+					</p>
+				) : null}
 			</section>
 
-			<Section title="Wann du hörst" id="pf-when">
-				<HourWeek cells={v.hourWeek} />
-			</Section>
+			<Highlights p={p} />
 
-			{v.months.length > 24 ? (
-				<Section title="Pro Jahr" id="pf-months">
-					<Months months={byYear(v.months)} unit="year" />
-				</Section>
-			) : v.months.length > 1 ? (
-				<Section title="Pro Monat" id="pf-months">
-					<Months months={v.months} unit="month" />
+			{p.series.points.length > 1 ? (
+				<Section title="Im Verlauf" id="pf-series">
+					<Series p={p} />
 				</Section>
 			) : null}
 
+			<Section title="Wann du hörst" id="pf-when">
+				<HourWeek cells={p.hourWeek} />
+				<DayParts cells={p.hourWeek} />
+			</Section>
+
 			<Section title="Am meisten gehört" id="pf-top">
 				<h3 class="profile__sub">Künstler</h3>
-				<Bars rows={v.topArtists} />
+				<Bars
+					rows={p.topArtists.slice(0, 10)}
+					by={p.minutesExact ? "minutes" : "plays"}
+					value={(r) => (p.minutesExact ? hoursWord(r.minutes) : `${num(r.plays)}×`)}
+				/>
 				<h3 class="profile__sub">Songs</h3>
-				<ol class="list profile-songs">
-					{v.topSongs.map((s, i) => (
-						<li key={`${s.name}-${i}`} class="profile-song">
-							<span class="profile-song__n">{i + 1}</span>
-							<Cover src={s.imageUrl} />
-							<span class="profile-song__main">
-								<span class="profile-song__title">{s.name}</span>
-								<span class="profile-song__sub">{s.artists}</span>
-							</span>
-							<span class="profile-song__plays">{num(s.plays)}×</span>
-						</li>
-					))}
-				</ol>
+				<Songs rows={p.topSongs} />
+				{p.topAlbums.length > 0 ? (
+					<>
+						<h3 class="profile__sub">Alben</h3>
+						<Bars
+							rows={p.topAlbums}
+							by={p.minutesExact ? "minutes" : "plays"}
+							value={(r) => (p.minutesExact ? hoursWord(r.minutes) : `${num(r.plays)}×`)}
+							sub
+						/>
+					</>
+				) : null}
 			</Section>
+
+			{choice.kind !== "all" && (p.newSongs > 0 || p.comebacks.length > 0) ? (
+				<Section title="Neu und wiederentdeckt" id="pf-new">
+					<p class="section__lead">
+						{num(p.newSongs)} {p.newSongs === 1 ? "Song" : "Songs"} und {num(p.newArtists)}{" "}
+						{p.newArtists === 1 ? "Künstler" : "Künstler"} hast du {periodWord(choice, p)} zum
+						ersten Mal gehört.
+					</p>
+					{p.topNewArtists.length > 0 ? (
+						<>
+							<h3 class="profile__sub">Neu für dich</h3>
+							<Bars rows={p.topNewArtists} by="plays" value={(r) => `${num(r.plays)}×`} />
+						</>
+					) : null}
+					{p.comebacks.length > 0 ? (
+						<>
+							<h3 class="profile__sub">Nach langer Zeit wieder gehört</h3>
+							<Songs
+								rows={p.comebacks}
+								note={(r) => {
+									const gap = (r as ProfileItem & { gapDays: number }).gapDays;
+									return gap >= 730
+										? `nach ${Math.floor(gap / 365)} Jahren`
+										: `nach ${num(Math.round(gap / 30))} Monaten`;
+								}}
+							/>
+						</>
+					) : null}
+				</Section>
+			) : null}
+
+			{p.skips && p.skips.early > 0 ? (
+				<Section title="Früh übersprungen" id="pf-skips">
+					<p class="section__lead">
+						{percent(p.skips.share)} der Songs aus deinem importierten Verlauf hast du in den ersten
+						30 Sekunden weitergeschaltet ({num(p.skips.early)}-mal). Am häufigsten:
+					</p>
+					<Songs rows={p.skips.top} count={(r) => `${num(r.plays)}× weg`} />
+				</Section>
+			) : null}
+
+			{p.platforms.length > 0 ? (
+				<Section title="Wo du hörst" id="pf-where">
+					<Bars
+						rows={p.platforms.map((x) => ({ ...x, sub: "", minutes: 0, imageUrl: null }))}
+						by="plays"
+						value={(r) => `${num(r.plays)}×`}
+					/>
+					<p class="hint">
+						{p.shuffleShare !== null ? `${percent(p.shuffleShare)} im Zufallsmodus` : ""}
+						{p.offlineShare !== null ? `, ${percent(p.offlineShare)} offline gehört` : ""}. Nur aus
+						deinem importierten Verlauf: was true-shuffle selbst zählt, verrät das Gerät nicht.
+					</p>
+				</Section>
+			) : null}
 		</>
 	);
 }
 
-/** The AI's estimate of the genre mix, clearly marked as one; asked for on demand. */
-function Genres({ p }: { p: ListeningProfile }) {
-	const [g, setG] = useState(p.genres);
-	const [retryAt, setRetryAt] = useState(p.genresRetryAt);
-	const [busy, setBusy] = useState(false);
-	const [err, setErr] = useState<string | null>(null);
-	const ask = () => {
-		setBusy(true);
-		setErr(null);
-		api
-			.genres()
-			.then((a) => {
-				setG(a.estimate);
-				setRetryAt(a.retryAt);
-				if (a.failed) setErr("Die KI hat diesmal nichts Brauchbares geliefert.");
-			})
-			.catch((e: Error) => setErr(e.message))
-			.finally(() => setBusy(false));
-	};
-	const waiting = retryAt !== null && retryAt > Date.now();
+/** The few facts that make a period its own. */
+function Highlights({ p }: { p: ListeningProfile }) {
+	const items: { n: string; text: string }[] = [];
+	if (p.streak && p.streak.days > 1)
+		items.push({
+			n: `${num(p.streak.days)} Tage`,
+			text: `am Stück mit Musik, vom ${keyWord(p.streak.from, false)} bis ${keyWord(p.streak.to)}.`,
+		});
+	if (p.longestSession && p.longestSession.minutes >= 30)
+		items.push({
+			n: hoursWord(p.longestSession.minutes),
+			text: `Musik in deiner längsten Session am ${dateWord(p.longestSession.at)}: Song auf Song, keine Lücke über zehn Minuten.`,
+		});
+	const top = p.topArtists[0];
+	if (top && p.plays > 0)
+		items.push({
+			n: percent(top.plays / p.plays),
+			text: `deiner Songs waren von ${top.name}, deinem meistgehörten Künstler.`,
+		});
+	if (p.plays > 0)
+		items.push({
+			n: percent(p.songs / p.plays),
+			text: "Abwechslung: so viele deiner Wiedergaben waren ein Song, den du in dieser Zeit noch nicht gehört hattest.",
+		});
+	if (items.length === 0) return null;
 	return (
-		<Section title="Deine Genres" id="pf-genres">
-			{g ? (
-				<>
-					{g.summary ? <p class="profile__summary">{g.summary}</p> : null}
-					<Bars
-						rows={g.genres.map((x) => ({
-							name: x.name,
-							artists: "",
-							plays: x.share,
-							imageUrl: null,
-						}))}
-						value={(r) => `${Math.round(r.plays)} %`}
-					/>
-					<p class="hint">
-						Eine Einschätzung der KI ({g.source === "anthropic" ? "Claude" : "Workers AI"}) aus
-						deinen {num(g.artists)} meistgehörten Künstlern, gewichtet nach Hörzeit, vom{" "}
-						{dateWord(g.at)}. Spotify selbst nennt die Genres nicht; sie sind geschätzt.
-					</p>
-				</>
-			) : (
-				<p class="section__lead">
-					Welche Genres du hörst, schätzt eine KI aus deinen meistgehörten Künstlern. Daraus wählt
-					true-shuffle auch seine Empfehlungen.
-				</p>
-			)}
-			{p.canEstimate ? (
-				waiting ? (
-					<p class="hint">
-						Eine neue Einschätzung geht wieder ab {timeWord(retryAt!)}: höchstens alle sechs
-						Stunden, auch wenn eine nicht geklappt hat.
-					</p>
-				) : (
-					<button type="button" class="key key--wide" disabled={busy} onClick={ask}>
-						{busy ? "Die KI schätzt …" : g ? "Neu einschätzen" : "Genres einschätzen lassen"}
-					</button>
-				)
-			) : (
-				<p class="hint">
-					Dafür braucht true-shuffle eine KI. Die richtet der Betreiber auf dem Server ein.
-				</p>
-			)}
-			{err ? (
-				<p class="notice notice--error" role="alert">
-					Keine Einschätzung: {err}
-				</p>
-			) : null}
-		</Section>
+		<ul class="learned profile__highlights" aria-label="Besonderheiten">
+			{items.map((x) => (
+				<li key={x.text}>
+					<span class="learned__n">{x.n}</span>
+					<span>{x.text}</span>
+				</li>
+			))}
+		</ul>
+	);
+}
+
+/** Hours per day, week or month (or year, for a long history) as columns. */
+function Series({ p }: { p: ListeningProfile }) {
+	let unit: "day" | "week" | "month" | "year" = p.series.unit;
+	let points = p.series.points;
+	if (unit === "month" && points.length > 36) {
+		const years = new Map<string, { plays: number; minutes: number }>();
+		for (const x of points) {
+			const y = x.key.slice(0, 4);
+			const v = years.get(y) ?? { plays: 0, minutes: 0 };
+			v.plays += x.plays;
+			v.minutes += x.minutes;
+			years.set(y, v);
+		}
+		points = [...years.entries()].map(([key, v]) => ({ key, ...v }));
+		unit = "year";
+	}
+	const label = (key: string, long: boolean) => {
+		if (unit === "year") return long ? key : `’${key.slice(2)}`;
+		const [y, m, d] = key.split("-").map(Number);
+		if (unit === "month")
+			return long ? `${MONTHS_LONG[m! - 1]} ${y}` : `${MONTHS[m! - 1]} ${String(y).slice(2)}`;
+		if (unit === "week") return long ? `Woche ab ${keyWord(key)}` : `${d}.${m}.`;
+		return long ? keyWord(key) : `${d}.${m}.`;
+	};
+	const unitWord = { day: "Tag", week: "Woche", month: "Monat", year: "Jahr" }[unit];
+	const strongest = {
+		day: "Dein stärkster Tag",
+		week: "Deine stärkste Woche",
+		month: "Dein stärkster Monat",
+		year: "Dein stärkstes Jahr",
+	}[unit];
+	const max = Math.max(1, ...points.map((x) => x.minutes));
+	const top = points.reduce((a, b) => (b.minutes > a.minutes ? b : a), points[0]!);
+	const every = Math.max(1, Math.ceil(points.length / 7));
+	return (
+		<>
+			<p class="section__lead">
+				{strongest}: {label(top.key, true)} mit {hoursWord(top.minutes)}.
+			</p>
+			<div class="cols" role="img" aria-label={`Stunden pro ${unitWord}, Tabelle darunter`}>
+				{points.map((x, i) => (
+					<span
+						key={x.key}
+						class="cols__col"
+						title={`${label(x.key, true)}: ${hoursWord(x.minutes)}, ${num(x.plays)} Songs`}
+					>
+						<span class="cols__bar" style={{ height: `${Math.max(2, (x.minutes / max) * 100)}%` }}>
+							{x === top ? (
+								<span class="cols__value">{num(Math.round(x.minutes / 60))}</span>
+							) : null}
+						</span>
+						<span class="cols__label">
+							{i % every === 0 && i <= points.length - every ? label(x.key, false) : ""}
+						</span>
+					</span>
+				))}
+			</div>
+			<ChartTable caption={`Hören pro ${unitWord}`}>
+				<thead>
+					<tr>
+						<th scope="col">{unitWord}</th>
+						<th scope="col">Stunden</th>
+						<th scope="col">Songs</th>
+					</tr>
+				</thead>
+				<tbody>
+					{points.map((x) => (
+						<tr key={x.key}>
+							<th scope="row">{label(x.key, true)}</th>
+							<td class="num">
+								{(x.minutes / 60).toLocaleString("de-DE", { maximumFractionDigits: 1 })}
+							</td>
+							<td class="num">{num(x.plays)}</td>
+						</tr>
+					))}
+				</tbody>
+			</ChartTable>
+		</>
 	);
 }
 
@@ -426,83 +710,29 @@ function HourWeek({ cells }: { cells: number[] }) {
 	);
 }
 
-/** Months summed per calendar year, for a long history. */
-function byYear(months: ListeningProfile["months"]): ListeningProfile["months"] {
-	const out = new Map<string, { plays: number; minutes: number }>();
-	for (const m of months) {
-		const y = m.month.slice(0, 4);
-		const v = out.get(y) ?? { plays: 0, minutes: 0 };
-		v.plays += m.plays;
-		v.minutes += m.minutes;
-		out.set(y, v);
-	}
-	return [...out.entries()].map(([month, v]) => ({ month, ...v }));
-}
-
-/**
- * Hours per month (or year) as columns, one series; the busiest is labelled.
- * With many columns only every few carry a label, so none overlap.
- */
-function Months({ months, unit }: { months: ListeningProfile["months"]; unit: "month" | "year" }) {
-	const max = Math.max(1, ...months.map((m) => m.minutes));
-	const top = months.reduce((a, b) => (b.minutes > a.minutes ? b : a), months[0]!);
-	const name = (m: string) => (unit === "year" ? m : monthLabel(m));
-	const every = Math.max(1, Math.ceil(months.length / (unit === "year" ? 6 : 8)));
+/** Morning, afternoon, evening and night, as shares of the period's songs. */
+function DayParts({ cells }: { cells: number[] }) {
+	const parts = [
+		{ name: "Morgens", sub: "5–11 Uhr", hours: [5, 6, 7, 8, 9, 10] },
+		{ name: "Mittags", sub: "11–17 Uhr", hours: [11, 12, 13, 14, 15, 16] },
+		{ name: "Abends", sub: "17–23 Uhr", hours: [17, 18, 19, 20, 21, 22] },
+		{ name: "Nachts", sub: "23–5 Uhr", hours: [23, 0, 1, 2, 3, 4] },
+	].map((x) => ({
+		name: x.name,
+		sub: x.sub,
+		plays: x.hours.reduce(
+			(s, h) => s + DAYS.reduce((t, _d, d) => t + (cells[d * 24 + h] ?? 0), 0),
+			0,
+		),
+		minutes: 0,
+		imageUrl: null,
+	}));
+	const total = parts.reduce((s, x) => s + x.plays, 0);
+	if (total === 0) return null;
 	return (
 		<>
-			<p class="section__lead">
-				{unit === "year"
-					? `Dein stärkstes Jahr war ${top.month} mit ${hoursWord(top.minutes)}.`
-					: `Dein stärkster Monat war ${monthLabel(top.month).replace(" ", " 20")} mit ${hoursWord(top.minutes)}.`}
-			</p>
-			<div
-				class="cols"
-				role="img"
-				aria-label={unit === "year" ? "Stunden pro Jahr" : "Stunden pro Monat"}
-			>
-				{months.map((m, i) => (
-					<span
-						key={m.month}
-						class="cols__col"
-						title={`${name(m.month)}: ${hoursWord(m.minutes)}, ${num(m.plays)} Songs`}
-					>
-						<span class="cols__bar" style={{ height: `${Math.max(2, (m.minutes / max) * 100)}%` }}>
-							{m === top ? (
-								<span class="cols__value">{num(Math.round(m.minutes / 60))}</span>
-							) : null}
-						</span>
-						<span class="cols__label">
-							{i % every === 0 && i <= months.length - every
-								? unit === "year"
-									? `’${m.month.slice(2)}`
-									: monthLabel(m.month)
-								: ""}
-						</span>
-					</span>
-				))}
-			</div>
-			<ChartTable caption={unit === "year" ? "Hören pro Jahr" : "Hören pro Monat"}>
-				<thead>
-					<tr>
-						<th scope="col">{unit === "year" ? "Jahr" : "Monat"}</th>
-						<th scope="col">Stunden</th>
-						<th scope="col">Songs</th>
-					</tr>
-				</thead>
-				<tbody>
-					{months.map((m) => (
-						<tr key={m.month}>
-							<th scope="row">
-								{unit === "year" ? m.month : monthLabel(m.month).replace(" ", " 20")}
-							</th>
-							<td class="num">
-								{(m.minutes / 60).toLocaleString("de-DE", { maximumFractionDigits: 1 })}
-							</td>
-							<td class="num">{num(m.plays)}</td>
-						</tr>
-					))}
-				</tbody>
-			</ChartTable>
+			<h3 class="profile__sub">Tageszeit</h3>
+			<Bars rows={parts} by="plays" value={(r) => percent(r.plays / total)} sub />
 		</>
 	);
 }
@@ -525,29 +755,184 @@ function ChartTable({ caption, children }: { caption: string; children: Componen
 	);
 }
 
-/** Top artists as horizontal bars with the count at the tip. */
+/** Songs with cover, numbered; ten shown, the rest one tap away. */
+function Songs({
+	rows,
+	note,
+	count = (r) => `${num(r.plays)}×`,
+}: {
+	rows: ProfileItem[];
+	note?: (r: ProfileItem) => string;
+	count?: (r: ProfileItem) => string;
+}) {
+	const [all, setAll] = useState(false);
+	const shown = all ? rows : rows.slice(0, 10);
+	return (
+		<>
+			<ol class="list profile-songs">
+				{shown.map((s, i) => (
+					<li key={`${s.id ?? s.name}-${i}`} class="profile-song">
+						<span class="profile-song__n">{i + 1}</span>
+						<Cover src={s.imageUrl} />
+						<span class="profile-song__main">
+							<span class="profile-song__title">{s.name}</span>
+							<span class="profile-song__sub">
+								{s.sub}
+								{note ? ` · ${note(s)}` : ""}
+							</span>
+						</span>
+						<span class="profile-song__plays">{count(s)}</span>
+					</li>
+				))}
+			</ol>
+			{rows.length > 10 && !all ? (
+				<button type="button" class="key key--wide profile__more" onClick={() => setAll(true)}>
+					Alle {rows.length} zeigen
+				</button>
+			) : null}
+		</>
+	);
+}
+
+/** Horizontal bars with the value at the tip. */
 function Bars({
 	rows,
-	value = (r) => num(r.plays),
+	by,
+	value,
+	sub = false,
 }: {
-	rows: ProfileTop[];
-	value?: (r: ProfileTop) => string;
+	rows: ProfileItem[];
+	by: "plays" | "minutes";
+	value: (r: ProfileItem) => string;
+	sub?: boolean;
 }) {
-	const max = Math.max(1, ...rows.map((r) => r.plays));
+	const max = Math.max(1, ...rows.map((r) => r[by]));
 	return (
 		<ol class="hbars">
 			{rows.map((r) => (
-				<li key={r.name} class="hbars__row">
-					<span class="hbars__name">{r.name}</span>
+				<li key={`${r.name}\u0000${r.sub}`} class="hbars__row">
+					<span class="hbars__name">
+						{r.name}
+						{sub && r.sub ? <span class="hbars__sub"> · {r.sub}</span> : null}
+					</span>
 					<span class="hbars__track">
 						<span
 							class="hbars__bar"
-							style={{ width: `calc((100% - 3.5rem) * ${(r.plays / max).toFixed(4)})` }}
+							style={{ width: `calc((100% - 4.5rem) * ${(r[by] / max).toFixed(4)})` }}
 						/>
 						<span class="hbars__value">{value(r)}</span>
 					</span>
 				</li>
 			))}
 		</ol>
+	);
+}
+
+/** The AI's estimate of the genre mix, clearly marked as one; asked for on demand. */
+function Genres({ p }: { p: ListeningProfile }) {
+	const [g, setG] = useState(p.genres);
+	const [retryAt, setRetryAt] = useState(p.genresRetryAt);
+	const [busy, setBusy] = useState(false);
+	const [err, setErr] = useState<string | null>(null);
+	const ask = () => {
+		setBusy(true);
+		setErr(null);
+		api
+			.genres()
+			.then((a) => {
+				setG(a.estimate);
+				setRetryAt(a.retryAt);
+				if (a.failed) setErr("Die KI hat diesmal nichts Brauchbares geliefert.");
+			})
+			.catch((e: Error) => setErr(e.message))
+			.finally(() => setBusy(false));
+	};
+	const waiting = retryAt !== null && retryAt > Date.now();
+	return (
+		<Section title="Deine Genres" id="pf-genres">
+			{g ? (
+				<>
+					{g.summary ? <p class="profile__summary">{g.summary}</p> : null}
+					<Bars
+						rows={g.genres.map((x) => ({
+							name: x.name,
+							sub: "",
+							plays: x.share,
+							minutes: 0,
+							imageUrl: null,
+						}))}
+						by="plays"
+						value={(r) => `${Math.round(r.plays)} %`}
+					/>
+					<p class="hint">
+						Eine Einschätzung der KI ({g.source === "anthropic" ? "Claude" : "Workers AI"}) aus
+						deinen {num(g.artists)} meistgehörten Künstlern über deinen ganzen Verlauf, gewichtet
+						nach Hörzeit, vom {dateWord(g.at)}. Spotify selbst nennt die Genres nicht; sie sind
+						geschätzt.
+					</p>
+				</>
+			) : (
+				<p class="section__lead">
+					Welche Genres du hörst, schätzt eine KI aus deinen meistgehörten Künstlern. Daraus wählt
+					true-shuffle auch seine Empfehlungen.
+				</p>
+			)}
+			{p.canEstimate ? (
+				waiting ? (
+					<p class="hint">
+						Eine neue Einschätzung geht wieder ab {timeWord(retryAt!)}: höchstens alle sechs
+						Stunden, auch wenn eine nicht geklappt hat.
+					</p>
+				) : (
+					<button type="button" class="key key--wide" disabled={busy} onClick={ask}>
+						{busy ? "Die KI schätzt …" : g ? "Neu einschätzen" : "Genres einschätzen lassen"}
+					</button>
+				)
+			) : (
+				<p class="hint">
+					Dafür braucht true-shuffle eine KI. Die richtet der Betreiber auf dem Server ein.
+				</p>
+			)}
+			{err ? (
+				<p class="notice notice--error" role="alert">
+					Keine Einschätzung: {err}
+				</p>
+			) : null}
+		</Section>
+	);
+}
+
+function Learned({ p }: { p: ListeningProfile }) {
+	return (
+		<Section title="Was true-shuffle über dich weiß" id="pf-learned">
+			<p class="section__lead">
+				Daraus mischt true-shuffle deine Kassetten und wählt Empfehlungen aus. Das gilt immer, egal
+				welcher Zeitraum oben gewählt ist.
+			</p>
+			<ul class="learned">
+				<li>
+					<span class="learned__n">{num(p.learned.favorites)}</span>
+					<span>Favoriten mit Daumen hoch. Sie kommen öfter.</span>
+				</li>
+				<li>
+					<span class="learned__n">{num(p.learned.neverAgain)}</span>
+					<span>Songs kommen nie wieder, weil du sie aussortiert hast.</span>
+				</li>
+				<li>
+					<span class="learned__n">{num(p.learned.recommendationsKept)}</span>
+					<span>Empfehlungen haben dir gefallen und bleiben auf deinen Kassetten.</span>
+				</li>
+				<li>
+					<span class="learned__n">{num(p.learned.recommendationsDropped)}</span>
+					<span>
+						Empfehlungen hast du aussortiert. Ähnliches schlägt true-shuffle seltener vor.
+					</span>
+				</li>
+				<li>
+					<span class="learned__n">{num(p.learned.earlySkips)}</span>
+					<span>Mal hast du einen Song in den ersten 30 Sekunden übersprungen.</span>
+				</li>
+			</ul>
+		</Section>
 	);
 }
