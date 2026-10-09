@@ -1,0 +1,34 @@
+import { expect,it } from 'vitest';
+import { onboarded } from './harness';
+import { DAY_MS } from '../../src/core/types';
+import { migrate } from '../../src/worker/hub/schema';
+it('records actual corruption and omissions after accepted upload payloads',async()=>{
+ const h=await onboarded({tracks:40});
+ const t=(s:string)=>[s.padEnd(22,'x'),s,s,''];
+ const at=Math.floor((h.clock.t-DAY_MS)/1000);
+ const chunk=(part:number,tracks:number,kind:string,data:unknown[])=>({part,parts:2,tracks,kind,data});
+ h.hub.importListens(chunk(0,1,'tracks',[t('A')]));
+ h.hub.importListens(chunk(0,1,'tracks',[t('B')]));
+ h.hub.importListens(chunk(1,1,'rows',[[at,0,120000,0,1]]));
+ expect(h.hub.listeningProfile('UTC').topSongs[0]?.name).toBe('B');
+ console.log('CONCURRENT_CORRUPTION',JSON.stringify(h.hub.listeningProfile('UTC').topSongs));
+ h.hub.importListens(chunk(0,2,'tracks',[t('A')]));
+ h.hub.importListens(chunk(1,2,'rows',[[at,1,120000,0,1]]));
+ const missing=h.hub.listeningProfile('UTC');
+ expect(missing.coverage.importedPlays).toBe(1); expect(missing.plays).toBe(0);
+ console.log('MISSING_TRACK',JSON.stringify({coverage:missing.coverage,plays:missing.plays}));
+ h.hub.importListens(chunk(0,1,'tracks',[t('A')]));
+ h.hub.importListens(chunk(1,1,'rows',[[Math.floor(h.clock.t/1000),0,120000,0,1],[at,0,120000,0,1]]));
+ const unordered=h.hub.listeningProfile('UTC');
+ expect(unordered.coverage.importedPlays).toBe(2); expect(unordered.plays).toBe(0);
+ console.log('UNSORTED_LOSS',JSON.stringify({coverage:unordered.coverage,plays:unordered.plays}));
+});
+it('migration 5 to 6 is additive, retains existing tables, and can restart',async()=>{
+ const h=await onboarded({tracks:40});
+ const dump=()=>JSON.stringify(['plays','memory','stations','pages','playback_sessions'].map(t=>h.sql.all(`SELECT * FROM ${t} ORDER BY 1`)));
+ const before=dump();
+ h.sql.run('DROP TABLE listen_pages'); h.sql.run("UPDATE kv SET v='5' WHERE k='schema_version'");
+ migrate(h.sql); expect(dump()).toBe(before);
+ expect(h.sql.first<{v:string}>("SELECT v FROM kv WHERE k='schema_version'")?.v).toBe('6');
+ h.restart(); expect(dump()).toBe(before);
+});

@@ -1,0 +1,146 @@
+[
+  {
+    "width": 320,
+    "colorScheme": "light",
+    "overflow": 0,
+    "errs": [],
+    "pending": 1,
+    "error": "Hörprofil nicht geladen: Test offline",
+    "samePeriodRetried": false,
+    "artistOrder": [
+      "Morgens · 5–11 Uhr",
+      "Mittags · 11–17 Uhr",
+      "Abends · 17–23 Uhr",
+      "Nachts · 23–5 Uhr",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    ],
+    "claim": true,
+    "session": [
+      "ohne Pause: deine längste Session, am 1. Januar 2024."
+    ],
+    "requests": 6
+  },
+  {
+    "width": 320,
+    "colorScheme": "dark",
+    "overflow": 0,
+    "errs": [],
+    "pending": 1,
+    "error": "Hörprofil nicht geladen: Test offline",
+    "samePeriodRetried": false,
+    "artistOrder": [
+      "Morgens · 5–11 Uhr",
+      "Mittags · 11–17 Uhr",
+      "Abends · 17–23 Uhr",
+      "Nachts · 23–5 Uhr",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    ],
+    "claim": true,
+    "session": [
+      "ohne Pause: deine längste Session, am 1. Januar 2024."
+    ],
+    "requests": 6
+  },
+  {
+    "width": 390,
+    "colorScheme": "light",
+    "overflow": 0,
+    "errs": [],
+    "pending": 1,
+    "error": "Hörprofil nicht geladen: Test offline",
+    "samePeriodRetried": false,
+    "artistOrder": [
+      "Morgens · 5–11 Uhr",
+      "Mittags · 11–17 Uhr",
+      "Abends · 17–23 Uhr",
+      "Nachts · 23–5 Uhr",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    ],
+    "claim": true,
+    "session": [
+      "ohne Pause: deine längste Session, am 1. Januar 2024."
+    ],
+    "requests": 6
+  },
+  {
+    "width": 390,
+    "colorScheme": "dark",
+    "overflow": 0,
+    "errs": [],
+    "pending": 1,
+    "error": "Hörprofil nicht geladen: Test offline",
+    "samePeriodRetried": false,
+    "artistOrder": [
+      "Morgens · 5–11 Uhr",
+      "Mittags · 11–17 Uhr",
+      "Abends · 17–23 Uhr",
+      "Nachts · 23–5 Uhr",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    ],
+    "claim": true,
+    "session": [
+      "ohne Pause: deine längste Session, am 1. Januar 2024."
+    ],
+    "requests": 6
+  },
+  {
+    "width": 1440,
+    "colorScheme": "light",
+    "overflow": 0,
+    "errs": [],
+    "pending": 1,
+    "error": "Hörprofil nicht geladen: Test offline",
+    "samePeriodRetried": false,
+    "artistOrder": [
+      "Morgens · 5–11 Uhr",
+      "Mittags · 11–17 Uhr",
+      "Abends · 17–23 Uhr",
+      "Nachts · 23–5 Uhr",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    ],
+    "claim": true,
+    "session": [
+      "ohne Pause: deine längste Session, am 1. Januar 2024."
+    ],
+    "requests": 6
+  },
+  {
+    "width": 1440,
+    "colorScheme": "dark",
+    "overflow": 0,
+    "errs": [],
+    "pending": 1,
+    "error": "Hörprofil nicht geladen: Test offline",
+    "samePeriodRetried": false,
+    "artistOrder": [
+      "Morgens · 5–11 Uhr",
+      "Mittags · 11–17 Uhr",
+      "Abends · 17–23 Uhr",
+      "Nachts · 23–5 Uhr",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "Long",
+      "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+    ],
+    "claim": true,
+    "session": [
+      "ohne Pause: deine längste Session, am 1. Januar 2024."
+    ],
+    "requests": 6
+  }
+]

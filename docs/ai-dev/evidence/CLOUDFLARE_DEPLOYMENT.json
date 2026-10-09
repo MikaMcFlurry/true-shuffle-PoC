@@ -1,6 +1,6 @@
 {
   "schema_version": "true-shuffle.deployment.v1",
-  "recorded_at": "2026-10-09T11:59:40.148225+00:00",
+  "recorded_at": "2026-10-09T12:37:47.213728+00:00",
   "source_revision": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
   "worker": "true-shuffle",
   "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
@@ -28,7 +28,7 @@
   "existing_variable_values_preserved": true,
   "runtime_preserved": true,
   "deployment_authority": "ExternallymergedPR23/automaticWorkersBuilds; no rootmerge/upload/activationinthiswatch",
-  "worker_sha256": "e61902724515496b7dcd0035d354d4100823838e13fcd5c24580d73f5ffe6530",
+  "worker_sha256": "6dfec077804a184622f50e687fe8879d746c8aaad6b1556c0b190535722beb93",
   "worker_etag": "dbf9e0c905f381bffd32be40c0a48235d39e164d1b769157cc5e2c6367ef9a1f",
   "public_readback": {
     "exact_assets": "18/19; sourcemaponlydependency-prefixdiff",
@@ -61,5 +61,7 @@
   "review_ref": "PR24_25_REVIEW.json",
   "historical_records": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json",
   "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078",
-  "release_comment": 6069239435
+  "release_comment": 6069239435,
+  "worker_hash_basis": "Actual compiled Worker content; existing worker_etag preserved as server metadata, not asserted equal to content hash",
+  "latest_watch_ref": "PR24_26_REVIEW.json"
 }

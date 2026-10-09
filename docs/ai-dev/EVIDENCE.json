@@ -563,7 +563,7 @@
           "observed_at": "2026-10-09T11:59:40.148225+00:00"
         }
       ],
-      "rationale": "Liveceeapplicationidentical892previousFRESHreviewwithopenblockingLANE03; no fullpositiveacceptance. Candidate24/25alsofail butareNOTlive."
+      "rationale": "Liveceeapplicationidentical892previousFRESHreviewwithopenblockingLANE03; no fullpositiveacceptance. Candidate24/25alsofail butareNOTlive. Current candidate24–26 review is separately bound to4c0514f in docs/ai-dev/evidence/PR24_26_REVIEW.json and PR24_26_LEDGER.json; BLOCKED. Production subject remainsCEE."
     },
     {
       "id": "G-ACCESSIBILITY",

@@ -3,15 +3,15 @@
   "project": "true-shuffle",
   "subject": {
     "revision": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
-    "artifact_ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json"
+    "artifact_ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json"
   },
   "branch": "codex/implement-cloudflare-restart",
   "phase": "REVIEW",
   "status": "PARTIAL",
   "active_plan_ref": "docs/ai-dev/EXECUTION_PLAN.md",
   "owners": [
-    "Codex release verification",
-    "Claude PR19/20/21 from actualauthor/branch/sessionmetadata"
+    "Codex verification and fresh independent reviewers",
+    "Claude actualauthor/session metadata24–26"
   ],
   "completed": [
     "durable checkpoint/queue implementation",
@@ -38,14 +38,21 @@
     "Current9550710 repairs reviewed: seven prior blockers closed;511/46/11/static PASS; three fresh independent reviews identify two new blockers; production unchanged read-only verified.",
     "Externalbcbsecurityexposureverified; authorizedrollbackrestoredimmutabledd344/e348at100%newff729fef withallsettingspreserved,19assets/auth/browserPASS,2freshsimulatedcompatibilitychecksPASS. PR23authfixREADY; lane04blocks.",
     "Finalauth-only8921702explicitcompletion6079018689 read; fresh27authchecksREADY; originalLANE03 againFAILindependently onexactsource.",
-    "ExternalPR23mergeCEE andactual473f/715100%readbackverified. Combined24/25checks526/46/11PASS; twofreshreviewsreproducedLANE05/RESUME01; concretecommentswritten."
+    "ExternalPR23mergeCEE andactual473f/715100%readbackverified. Combined24/25checks526/46/11PASS; twofreshreviewsreproducedLANE05/RESUME01; concretecommentswritten.",
+    "New final24c6b/2562aa andnew26e6d combined4c0514f:538/46/11/static PASS; threefreshreviews reproduce new lane/import/analytics failures; comments6080990256/6080977483/6081010497. Production unchanged authenticated readback."
   ],
   "in_progress": [],
   "blocked": [
-    "PR24-LANE05P2",
-    "PR25-RESUME01P1",
-    "Explicitcompletion24/25missing",
-    "Physical/liveSpotify/privateHA/actualpopulatedrestoreNOT_RUN"
+    "PR24-LANE-06",
+    "PR26-IMPORT-GENERATION-01",
+    "PR26-IMPORT-VALIDATION-02",
+    "PR26-IMPORT-ORDER-03",
+    "PR26-PROFILE-DST-04",
+    "PR26-PROFILE-YEAR-01",
+    "PR26-PROFILE-SESSION-02",
+    "PR25-RESUME-OWNER-CONFLICT",
+    "Explicitcompletion26missing",
+    "Cloudflare resource scaling andphysical/private/populatedrestoreNOT_RUN"
   ],
   "capability_blockers": [
     "Physical iPhone/liveSpotify latencyquota unavailable",
@@ -55,17 +62,18 @@
   "recovery_state": [
     "Previousverifiedversion3499c219-0265-4798-9e7b-4b3c81b5efd5 retained; noDBrestore/revert",
     "Inactive own stagingbbcaa retained; productiondd344/238016100%",
-    "Runtime/bindings/variables/secretbindings/namespaces/migrationv1 unchanged"
+    "Runtime/bindings/variables/secretbindings/namespaces/migrationv1 unchanged",
+    "Current473f/715100% unchanged thiswatch; no rootmerge/upload/activation/rollback."
   ],
   "next_actions": [
-    "ReadClaude responses6080361746/6080361930 andnewheads; reproducesameattacksandfreshreviewexactcorrections.",
-    "Requireexplicitcoherentcompletion24/25; no partialrelease ordeclaringbotsummarycompletion.",
-    "Revalidateactualtarget/head andrunintegratedchecks beforeauthorizedmerge/deploy; preservefullCloudflareresources."
+    "ReadClaude replies andnewheads; reproduce each distinct newfinding andfreshreview corrections.",
+    "Resolveowner25 exception conflict withcurrent stableunfinishedinstance/progress rule; no new releaseapproval needed.",
+    "Requirehead-bound coherent completion24–26 andallrequiredchecks; no intermediateintegration/deployment."
   ],
-  "updated_at": "2026-10-09T11:59:40.148225+00:00",
+  "updated_at": "2026-10-09T12:37:47.213728+00:00",
   "deployment": {
     "schema_version": "true-shuffle.deployment.v1",
-    "recorded_at": "2026-10-09T11:59:40.148225+00:00",
+    "recorded_at": "2026-10-09T12:37:47.213728+00:00",
     "source_revision": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
     "worker": "true-shuffle",
     "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
@@ -93,7 +101,7 @@
     "existing_variable_values_preserved": true,
     "runtime_preserved": true,
     "deployment_authority": "ExternallymergedPR23/automaticWorkersBuilds; no rootmerge/upload/activationinthiswatch",
-    "worker_sha256": "e61902724515496b7dcd0035d354d4100823838e13fcd5c24580d73f5ffe6530",
+    "worker_sha256": "6dfec077804a184622f50e687fe8879d746c8aaad6b1556c0b190535722beb93",
     "worker_etag": "dbf9e0c905f381bffd32be40c0a48235d39e164d1b769157cc5e2c6367ef9a1f",
     "public_readback": {
       "exact_assets": "18/19; sourcemaponlydependency-prefixdiff",
@@ -126,7 +134,9 @@
     "review_ref": "PR24_25_REVIEW.json",
     "historical_records": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json",
     "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078",
-    "release_comment": 6069239435
+    "release_comment": 6069239435,
+    "worker_hash_basis": "Actual compiled Worker content; existing worker_etag preserved as server metadata, not asserted equal to content hash",
+    "latest_watch_ref": "PR24_26_REVIEW.json"
   },
   "historical_checkpoint": "docs/ai-dev/evidence/tag-wording-review/CHECKPOINT_HISTORY_BEFORE_PR18.json",
   "candidate_review": {
@@ -142,5 +152,6 @@
       "PR24-LANE-05",
       "PR25-RESUME-01"
     ]
-  }
+  },
+  "candidate_review_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656"
 }

@@ -155,5 +155,7 @@
     "LiveAIprovider",
     "AuthenticatedliveSpotifyjourneys"
   ],
-  "prior_reviews": "Allprevioussourceboundevidencepreserved; oldrollbackff729fefisnowhistorical, externallyreplaced7150626c."
+  "prior_reviews": "Allprevioussourceboundevidencepreserved; oldrollbackff729fefisnowhistorical, externallyreplaced7150626c.",
+  "historical_snapshot": true,
+  "superseded_current_review": "PR24_26_REVIEW.json"
 }

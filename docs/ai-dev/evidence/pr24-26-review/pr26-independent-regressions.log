@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-pr26-backend-fresh
+
+
+ Test Files  5 passed (5)
+      Tests  49 passed (49)
+   Start at  12:32:13
+   Duration  5.73s (tests 68%, transform 17%, import 14%, worker 1%)
+

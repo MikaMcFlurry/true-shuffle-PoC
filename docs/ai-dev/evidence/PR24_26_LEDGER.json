@@ -1,0 +1,393 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-09T12:37:47.213728+00:00",
+  "project": "true-shuffle combinedPR24/25/26 review",
+  "subject": {
+    "revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+    "artifact_ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+    "environment": "Isolated local combined24→25→26; no production changes",
+    "environment_class": "LOCAL"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "BLOCKED",
+  "material_release": true,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA",
+    "AI_TOOL_SIDE_EFFECTS",
+    "PERFORMANCE_CRITICAL"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "BLOCKED",
+  "required_categories": [
+    "accessibility",
+    "build",
+    "critical_journey",
+    "data_invariants",
+    "independent_review",
+    "migration",
+    "operations",
+    "performance_reliability",
+    "post_deploy",
+    "recovery",
+    "security_privacy",
+    "ui_runtime"
+  ],
+  "external_blockers": [],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR24-LANE-06",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unseen repeat and forward seek spoof previous occurrence start proof"
+    },
+    {
+      "id": "PR26-IMPORT-GENERATION-01",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Concurrent history uploads publish rows against the wrong song dictionary"
+    },
+    {
+      "id": "PR26-IMPORT-VALIDATION-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Declared track count is trusted instead of the actual dictionary length"
+    },
+    {
+      "id": "PR26-IMPORT-ORDER-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Accepted unsorted rows silently hide older imported history"
+    },
+    {
+      "id": "PR26-PROFILE-DST-04",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Fall DST places a Sunday listen into a Tuesday weekly bucket"
+    },
+    {
+      "id": "PR26-PROFILE-YEAR-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Calendar-year comparison counts the wrong preceding calendar range"
+    },
+    {
+      "id": "PR26-PROFILE-SESSION-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Session highlight claims uninterrupted listening across known pauses"
+    },
+    {
+      "id": "PR26-PROFILE-RANK-03",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Most-heard artist label disagrees with displayed play-count ranking"
+    },
+    {
+      "id": "PR25-RESUME-OWNER-CONFLICT",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Final rule advances listed partial plays contrary to current preserved unfinished occurrence requirement"
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-BUILD-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Typecheck/lint/build/Worker dryrun PASS;538UnitWorker and46RealWorkerBrowser PASS."
+    },
+    {
+      "id": "G-COMBINED",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-COMBINED-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Default criticaljourney and11unchangedResume PASS; new protected invariant attacks FAIL separately."
+    },
+    {
+      "id": "G-NEW-BEHAVIOR",
+      "category": "data_invariants",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "G-NEW-BEHAVIOR-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Fresh lane falseprovenance, importedgeneration corruption/validation/order andprofileaccuracy FAIL; PR25 current owner-rule conflict unresolved."
+    },
+    {
+      "id": "G-UI",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-UI-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Six realChromium mockAPI renders and46RealWorker E2E pass boundedrender/navigation/error checks; actual metric claims fail under data_invariants."
+    },
+    {
+      "id": "G-A11Y",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-A11Y-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Bounded keyboard/customdate/erroralert/pending and inherited functional E2E assertions PASS; fullWCAG/physicalSafari NOT_RUN."
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-MIGRATION-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Fresh additive schema5→6 restart existingdata check and default migrationtests PASS; populated actualproductionrestore NOT_RUN."
+    },
+    {
+      "id": "G-LOCAL-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "G-LOCAL-RECOVERY-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Interrupted normalupload survives, but equal-size parallel upload mixes and replaces committed history; required recovery invariant FAIL."
+    },
+    {
+      "id": "G-SECURITY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-SECURITY-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "49 targeted existing regressions include sessions/AI import/session stale fencing. Malformed authenticated owner payloads are data defects not auth bypass. New route middleware reviewed."
+    },
+    {
+      "id": "G-REVIEW",
+      "category": "independent_review",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "G-REVIEW-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Three fresh independent reviewers; P1 import corruption blocks and material P2 findings remain."
+    },
+    {
+      "id": "G-CI",
+      "category": "operations",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-CI-CURRENT",
+          "kind": "current-review-and-artifacts",
+          "ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+          "observed_at": "2026-10-09T12:37:47.213728+00:00"
+        }
+      ],
+      "rationale": "Allthree exacthead verify runs success; Cloudflare previewbot failure recordedseparately and never called successful deployment."
+    },
+    {
+      "id": "G-LIVE",
+      "category": "post_deploy",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Unmerged/unactivated candidate;26 no explicitcompletion. Production remainsCEE/473f/715100% withauthenticatedpreservation readback."
+    },
+    {
+      "id": "G-AI-RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "NOT_RUN",
+      "rationale": "No liveCloudflareCPU/memory/quota scaling evidence forunlimitedretention/wholetimeline allocations; synthetic test timing is not productioncapacity.",
+      "evidence": []
+    }
+  ]
+}

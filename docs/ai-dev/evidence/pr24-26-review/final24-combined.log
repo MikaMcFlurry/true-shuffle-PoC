@@ -1,0 +1,99 @@
+
+ RUN  v5.0.2 /workspace/ts-final24-combined
+
+stdout | test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-playing
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-playing
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-playing
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-playing
+spoofed old/repeat {
+  station: 1,
+  id: 'T00000000000000000001e',
+  kind: 'fresh',
+  seenAt: 1790316781500,
+  lastAt: 1790316787500,
+  progress: 6000,
+  playing: true,
+  durationMs: 180000,
+  start: 1790316781500
+} {
+  station: 1,
+  id: 'T00000000000000000001e',
+  kind: 'fresh',
+  seenAt: 1790316781500,
+  lastAt: 1790316887500,
+  progress: 106000,
+  playing: true,
+  durationMs: 180000,
+  start: 1790316781500
+}
+
+stdout | test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-paused
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-paused
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-paused
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-paused
+spoofed old/repeat {
+  station: 1,
+  id: 'T00000000000000000001e',
+  kind: 'fresh',
+  seenAt: 1790316781500,
+  lastAt: 1790316787500,
+  progress: 6000,
+  playing: true,
+  durationMs: 180000,
+  start: 1790316781500
+} {
+  station: 1,
+  id: 'T00000000000000000001e',
+  kind: 'fresh',
+  seenAt: 1790316781500,
+  lastAt: 1790316887500,
+  progress: 106000,
+  playing: false,
+  durationMs: 180000,
+  start: 1790316781500
+}
+
+ ❯ test/hub/final24-attacks.test.ts (4 tests | 2 failed) 1976ms
+   × unseen repeat plus seek spoofs lane continuity: playing-playing 841ms
+   × unseen repeat plus seek spoofs lane continuity: playing-paused 357ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-playing
+ FAIL  test/hub/final24-attacks.test.ts > unseen repeat plus seek spoofs lane continuity: playing-paused
+AssertionError: expected 'fresh' to be null
+
+- Expected:
+null
+
++ Received:
+"fresh"
+
+ ❯ test/hub/final24-attacks.test.ts:38:40
+     36|  const later=h.hub.history(200).filter(e=>e.id===t);
+     37|  expect(later.length).toBe(1);
+     38|  expect(later[0]!.facts?.kind ?? null).toBeNull();
+       |                                        ^
+     39| });
+     40|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 30 passed (32)
+   Start at  12:32:05
+   Duration  8.38s (tests 77%, transform 15%, import 8%)
+
