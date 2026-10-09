@@ -190,6 +190,8 @@ const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
 const LANE_NOTE_MS = 2 * DAY_MS;
 const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
 const PLAYS_KEEP_MS = 180 * DAY_MS;
+/** Slack between Spotify's stamp and our clock when a listing says a song is over. */
+const LISTED_SLACK_MS = 15_000;
 const PRUNE_PER_DAY = 500;
 
 /**
@@ -2803,7 +2805,10 @@ export class HubCore {
 			const epoch = currentSession
 				? `${currentSession.sessionId}:${currentSession.playbackEpoch}`
 				: null;
-			if (epochs.get(st.id) === epoch) this.checkpoint(st, deck, obs);
+			if (epochs.get(st.id) === epoch) {
+				this.checkpoint(st, deck, obs);
+				if (plays.length > 0) this.advanceListed(st, deck, plays, obs);
+			}
 			let changed = false;
 			if (plays.length > 0) {
 				const r = applyPlays(deck, plays, uri);
@@ -5150,6 +5155,48 @@ export class HubCore {
 				session.status = obs.isPlaying ? "active" : "paused";
 			} else session.status = "ambiguous";
 		}
+		this.saveSession(session);
+	}
+
+	/**
+	 * Spotify listed the song at the saved place, in this playlist, stamped
+	 * after the look that saved the place: that occurrence is over while no
+	 * look saw the player — heard to its end or left after 30 s or more —
+	 * and the place moves on to the next song, from its start (owner
+	 * decision 2026-10-09: an occurrence Spotify lists as played is never
+	 * started again; Spotify cannot tell a finished play from a late skip).
+	 * The stamp must come more than the clock slack after that look, so a
+	 * listing of an earlier play never moves it; another context moves
+	 * nothing, and a look at this playlist right now decides by itself.
+	 * Listings are taken in order, so unseen songs played one after another
+	 * move it along.
+	 */
+	private advanceListed(
+		st: StationRow,
+		deck: Deck,
+		plays: readonly RecentPlay[],
+		obs: PlayerObservation | null,
+	): void {
+		const session = this.savedSession(st.id);
+		if (!session || session.pending || session.controller === "native") return;
+		if (obs?.contextUri === session.contextUri) return;
+		let moved = false;
+		for (const p of plays.slice().sort((a, b) => a.playedAt - b.playedAt)) {
+			if (p.contextUri !== session.contextUri || session.observedAt == null) continue;
+			const item = deck.items[session.currentIndex];
+			if (!item || item.id !== p.trackId || session.currentIndex + 1 >= deck.items.length) continue;
+			if (p.playedAt <= session.observedAt + LISTED_SLACK_MS) continue;
+			session.currentIndex += 1;
+			session.progressMs = 0;
+			session.observedAt = p.playedAt;
+			moved = true;
+		}
+		if (!moved) return;
+		this.log(
+			"info",
+			"session",
+			`„${st.name}“: Spotify meldet den Song als gespielt — es geht mit dem nächsten weiter`,
+		);
 		this.saveSession(session);
 	}
 
