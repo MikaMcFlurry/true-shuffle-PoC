@@ -139,9 +139,10 @@ export interface HistoryEntry extends TrackView {
 	stationName: string | null;
 	ignored: boolean;
 	/**
-	 * Same read-only counts as in a queue. `kind` is always null: the lane
-	 * that brought a play is not recorded per play, so no source is claimed.
-	 * `inStation` is always true: the song was heard there.
+	 * Same read-only counts as in a queue. `kind` is the lane stamped when this
+	 * very play was recorded (its station's playlist, a deck written before
+	 * the song began, one reason only); null for older plays and anything in
+	 * doubt. `inStation` is always true: the song was heard there.
 	 */
 	facts?: SongFacts;
 }

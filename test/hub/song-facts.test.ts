@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { songTags } from "../../src/client/components/song-tags-text";
 import { DAY_MS, MINUTE_MS, type SlotKind } from "../../src/core/types";
+import { migrate } from "../../src/worker/hub/schema";
 import { onboarded } from "./harness";
 
 type H = Awaited<ReturnType<typeof onboarded>>;
@@ -209,22 +210,44 @@ describe("song facts in the queue", () => {
 describe("song facts in the Verlauf", () => {
 	type Row = ReturnType<H["hub"]["history"]>[number];
 	const key = (e: Row) => `${e.id}@${e.playedAt}`;
+	const lanes = (h: H) =>
+		new Map<string, string | null>(
+			h.sql
+				.all<{ played_at: number; track_id: string; lane: string | null }>(
+					`SELECT played_at, track_id, lane FROM plays`,
+				)
+				.map((r) => [`${r.track_id}@${r.played_at}`, r.lane] as const),
+		);
+	type Lane = (st: unknown, id: string, ctx: string | null, startedAt: number) => SlotKind | null;
+	const internals = (h: H) =>
+		h.hub as unknown as {
+			laneOf: Lane;
+			stationRow(id: number): unknown;
+			deckUri(st: unknown): string | null;
+		};
 
-	it("live plays carry the total count, and never a source the play did not record", async () => {
+	it("a play in the station's playlist is stamped with its deck reason once, when recorded", async () => {
 		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
 		await h.listen(30 * MINUTE_MS);
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const items = (JSON.parse(row.deck) as { items: { id: string; kind: SlotKind }[] }).items;
 		const onStation = h.hub.history(50).filter((e) => e.stationName !== null && !e.ignored);
 		expect(onStation.length).toBeGreaterThan(0);
-		for (const e of onStation)
-			expect(e.facts).toMatchObject({ kind: null, inStation: true, plays: expect.any(Number) });
-		expect(onStation.every((e) => (e.facts?.plays ?? 0) >= 1)).toBe(true);
+		const stored = lanes(h);
+		for (const e of onStation) {
+			const reasons = new Set(items.filter((it) => it.id === e.id).map((it) => it.kind));
+			expect(e.facts?.kind).toBe(reasons.size === 1 ? [...reasons][0] : null);
+			expect(stored.get(key(e))).toBe(e.facts?.kind);
+		}
+		expect(onStation.some((e) => e.facts?.kind != null)).toBe(true);
+		// Heard outside any station: nothing to stamp.
 		play(h, h.clock.t + 1, onStation[0]!.id, null, 0);
 		expect(h.hub.history(1)[0]).toMatchObject({ stationName: null, facts: { kind: null } });
 	});
 
-	it("a later recommendation, a new mix or a guest replay never gives an old play a source", async () => {
+	it("a later recommendation, a new mix or a guest replay never changes an old play's source", async () => {
 		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
 		const sid = h.stationIds[0]!;
 		expect((await h.hub.play(sid)).ok).toBe(true);
@@ -236,7 +259,6 @@ describe("song facts in the Verlauf", () => {
 				.map((e) => [key(e), e] as const),
 		);
 		expect(before.size).toBeGreaterThan(0);
-		// Recommended afterwards, kept, then replayed in guest mode on a fresh mix.
 		for (const e of before.values())
 			h.sql.run(
 				`INSERT OR IGNORE INTO discoveries (station_id, id, source, score, status, meta, heard, created_at, updated_at) VALUES (?, ?, 'ai', 1, 'kept', '[]', 1, ?, ?)`,
@@ -253,12 +275,54 @@ describe("song facts in the Verlauf", () => {
 		expect((await h.hub.play(sid, null, { newQueue: true })).ok).toBe(true);
 		await h.listen(10 * MINUTE_MS);
 		const after = h.hub.history(200);
-		for (const e of after) expect(e.facts?.kind ?? null).toBeNull();
 		for (const [k, was] of before) {
 			const now = after.find((e) => key(e) === k);
 			expect(now?.ignored).toBe(false);
-			expect(now?.playedAt).toBe(was.playedAt);
+			expect(now?.facts?.kind ?? null).toBe(was.facts?.kind ?? null);
 		}
+	});
+
+	it("in doubt no source: another context, a deck written after the song began, a song held for two reasons", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		expect((await h.hub.play(sid)).ok).toBe(true);
+		const x = internals(h);
+		const st = x.stationRow(sid);
+		const uri = x.deckUri(st)!;
+		const row = h.sql.first<{ deck: string }>(`SELECT deck FROM stations WHERE id = ?`, sid)!;
+		const deck = JSON.parse(row.deck) as {
+			writtenAt: number;
+			items: { id: string; kind: SlotKind }[];
+		};
+		const once = deck.items.find((it) => deck.items.filter((o) => o.id === it.id).length === 1)!;
+		const t = deck.writtenAt + MINUTE_MS;
+		expect(x.laneOf.call(h.hub, st, once.id, uri, t)).toBe(once.kind);
+		expect(x.laneOf.call(h.hub, st, once.id, null, t)).toBeNull();
+		expect(x.laneOf.call(h.hub, st, once.id, "spotify:playlist:elsewhere", t)).toBeNull();
+		expect(x.laneOf.call(h.hub, st, once.id, uri, deck.writtenAt - 1)).toBeNull();
+		// The same song twice in the deck, once as a favourite: no single reason.
+		const other = once.kind === "favorite" ? "fresh" : "favorite";
+		deck.items.push({ ...once, kind: other });
+		h.sql.run(`UPDATE stations SET deck = ? WHERE id = ?`, JSON.stringify(deck), sid);
+		h.restart();
+		const y = internals(h);
+		expect(y.laneOf.call(h.hub, y.stationRow(sid), once.id, uri, t)).toBeNull();
+	});
+
+	it("the additive migration keeps every play and gives older ones no source", async () => {
+		const h = await onboarded({ tracks: 200, playlists: [100, 100] });
+		const sid = h.stationIds[0]!;
+		await h.hub.play(sid);
+		await h.listen(10 * MINUTE_MS);
+		const plays = h.sql.all(`SELECT played_at, track_id, station_id, ignored FROM plays`);
+		expect(plays.length).toBeGreaterThan(0);
+		h.sql.run(`ALTER TABLE plays DROP COLUMN lane`);
+		h.sql.run(`UPDATE kv SET v = '4' WHERE k = 'schema_version'`);
+		migrate(h.sql);
+		expect(h.sql.first<{ v: string }>(`SELECT v FROM kv WHERE k = 'schema_version'`)!.v).toBe("5");
+		expect(h.sql.all(`SELECT played_at, track_id, station_id, ignored FROM plays`)).toEqual(plays);
+		h.restart();
+		for (const e of h.hub.history(200)) expect(e.facts?.kind ?? null).toBeNull();
 	});
 
 	it("reading the Verlauf writes nothing", async () => {

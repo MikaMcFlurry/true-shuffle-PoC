@@ -176,6 +176,8 @@ export const MAX_STATIONS = 30;
 /** How far back a play may arrive late in recently-played and still count. */
 const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
 /** Single plays are kept this long (memory keeps the totals for good). */
+/** The lanes a play may be stamped with (see `laneOf`). */
+const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery"]);
 const PLAYS_KEEP_MS = 180 * DAY_MS;
 const PRUNE_PER_DAY = 500;
 
@@ -3789,12 +3791,13 @@ export class HubCore {
 			? this.stations().find((x) => this.deckUri(x) === e.contextUri)
 			: undefined;
 		this.db.run(
-			`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta) VALUES (?, ?, ?, ?, 0, ?)`,
+			`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta, lane) VALUES (?, ?, ?, ?, 0, ?, ?)`,
 			e.at,
 			e.id,
 			e.contextUri,
 			st?.id ?? null,
 			JSON.stringify(e.track),
+			st ? this.laneOf(st, e.id, e.contextUri, e.start) : null,
 		);
 		this.noteHeard(st?.id, e.id);
 		const seen = (this.kvGet<SeenEntry[]>("seen_plays") ?? []).filter(
@@ -4047,13 +4050,14 @@ export class HubCore {
 			const station = ctx ? deckByUri.get(ctx) : deckHolding(id, at);
 			const packed = packTrack(i.track);
 			this.db.run(
-				`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta) VALUES (?, ?, ?, ?, ?, ?)`,
+				`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta, lane) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 				at,
 				id,
 				ctx,
 				station?.id ?? null,
 				ignored ? 1 : 0,
 				packed ? JSON.stringify(packed) : null,
+				station ? this.laneOf(station, id, ctx, at - (i.track.duration_ms ?? 0)) : null,
 			);
 			if (!ignored) this.noteHeard(station?.id, id);
 			s.recentCursor = Math.max(s.recentCursor, at);
@@ -4841,6 +4845,25 @@ export class HubCore {
 	/** A counted play was recorded: keep `stationHeard` current without reading. */
 	private noteHeard(stationId: number | null | undefined, id: TrackId): void {
 		if (stationId != null) this.heardOnStation.get(stationId)?.add(id);
+	}
+
+	/**
+	 * Why a play was on its station, decided once when it is recorded and only
+	 * without doubt: it played in the station's own playlist, the deck now in
+	 * that playlist was written before the song began, and the deck holds the
+	 * song for one reason only. Anything else is null — never a guess.
+	 */
+	private laneOf(
+		st: StationRow,
+		id: TrackId,
+		contextUri: string | null,
+		startedAt: number,
+	): SlotKind | null {
+		if (!contextUri || contextUri !== this.deckUri(st)) return null;
+		const deck = this.deckOf(st);
+		if (!deck || deck.writtenAt > startedAt) return null;
+		const kinds = new Set(deck.items.filter((it) => it.id === id).map((it) => it.kind));
+		return kinds.size === 1 ? ([...kinds][0] ?? null) : null;
 	}
 
 	/**
@@ -6128,8 +6151,9 @@ export class HubCore {
 			meta: string | null;
 			station_id: number | null;
 			ignored: number;
+			lane: string | null;
 		}>(
-			`SELECT played_at, track_id, meta, station_id, ignored FROM plays WHERE played_at < ? ORDER BY played_at DESC LIMIT ?`,
+			`SELECT played_at, track_id, meta, station_id, ignored, lane FROM plays WHERE played_at < ? ORDER BY played_at DESC LIMIT ?`,
 			before ?? Number.MAX_SAFE_INTEGER,
 			Math.min(200, Math.max(1, limit)),
 		);
@@ -6151,9 +6175,9 @@ export class HubCore {
 						plays: m.plays,
 						lastPlayedAt: m.lastPlayedAt,
 						inStation: true,
-						// Which lane brought this very play is not recorded per play, and
-						// a deck matched by time can belong to another play of the song.
-						kind: null,
+						// Only the lane stamped when this very play was recorded; plays from
+						// before, or recorded in doubt, claim none.
+						kind: LANES.has(r.lane as SlotKind) ? (r.lane as SlotKind) : null,
 					},
 				};
 				return entry;
