@@ -418,7 +418,9 @@ export function Home({ state }: { state: AppState }) {
 						{state.guest.active ? (
 							<p class="player-heading__guest">
 								<UserRound size={16} aria-hidden="true" />
-								Gast-Modus: was jetzt läuft, zählt nicht
+								{state.guest.device
+									? `Gast-Modus: „${state.guest.device}“ spielt, das zählt nicht`
+									: "Gast-Modus: was jetzt läuft, zählt nicht"}
 							</p>
 						) : null}
 					</header>

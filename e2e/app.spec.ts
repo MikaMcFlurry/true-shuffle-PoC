@@ -234,6 +234,22 @@ test.describe("a listener's day", () => {
 		await expect(page.getByText(/Gast-Modus aus/)).toBeVisible();
 	});
 
+	test("a device can count as guest for good, and back", async ({ page }) => {
+		await signIn(page);
+		await page.goto("/geraete");
+		const section = page.getByRole("region", { name: "Immer im Gast-Modus" });
+		const sw = section.getByRole("switch").first();
+		await expect(sw).toBeVisible();
+		const name = (await sw.getAttribute("aria-label"))!.replace(": immer im Gast-Modus", "");
+		await sw.check();
+		await expect(page.getByText(`„${name}“ zählt ab jetzt nie mit.`)).toBeVisible();
+		await expect(sw).toBeChecked();
+		await checkPage(page, "devices with a guest device");
+		await sw.uncheck();
+		await expect(page.getByText(`„${name}“ zählt wieder mit.`)).toBeVisible();
+		await expect(sw).not.toBeChecked();
+	});
+
 	test("a personal key likes the playing song from Siri or a widget", async ({ page }) => {
 		await signIn(page);
 		await page.getByRole("link", { name: "Mehr" }).click();

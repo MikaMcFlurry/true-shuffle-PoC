@@ -541,6 +541,9 @@ export class UserHub extends DurableObject<Env> {
 	setGuest(epoch: number, on: boolean, hours?: number) {
 		return this.session(epoch, () => this.hub().setGuest(on, hours));
 	}
+	setGuestDevices(epoch: number, devices: { id: string; name: string }[]) {
+		return this.session(epoch, async () => this.hub().setGuestDevices(devices));
+	}
 	importHistory(
 		epoch: number,
 		rows: [string, number, number, number][],
