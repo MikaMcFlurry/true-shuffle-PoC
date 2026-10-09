@@ -145,6 +145,42 @@ export function MixScale(props: { value: number; station: string; onChange: (v: 
 	);
 }
 
+/**
+ * The same mix, stepless: 0 is the most discovery, 100 the most favourites.
+ * The page prints what the chosen value means right below it.
+ */
+export function MixFine(props: {
+	value: number;
+	station: string;
+	onChange: (v: number) => void;
+	/** The shares this value gives, for screen readers. */
+	describe: (v: number) => string;
+}) {
+	const id = `mixfine-${props.station.replace(/\W+/g, "-")}`;
+	return (
+		<div class="fine">
+			<label class="fine__label" for={id}>
+				Genau einstellen <span class="fine__value">{props.value}</span>
+			</label>
+			<input
+				id={id}
+				class="fine__range"
+				type="range"
+				min={0}
+				max={100}
+				step={1}
+				value={props.value}
+				aria-valuetext={props.describe(props.value)}
+				onInput={(e) => props.onChange(Number(e.currentTarget.value))}
+			/>
+			<span class="fine__ends" aria-hidden="true">
+				<span>mehr Entdecken</span>
+				<span>mehr Vertrautes</span>
+			</span>
+		</div>
+	);
+}
+
 /** A row of printed positions over native radios, so arrow keys and screen readers work. */
 export function Detents<T extends string>(props: {
 	name: string;

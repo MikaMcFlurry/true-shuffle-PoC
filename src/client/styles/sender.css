@@ -625,3 +625,41 @@
 		display: none;
 	}
 }
+
+/* The mix and the favourite share, stepless: a printed scale with a brass knob. */
+.fine {
+	display: grid;
+	gap: 6px;
+	margin-top: 12px;
+}
+
+.fine__label {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	font-weight: 700;
+}
+
+.fine__value {
+	min-width: 3.5ch;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	color: var(--ink-2);
+}
+
+.fine__range {
+	width: 100%;
+	height: 44px;
+	margin: 0;
+	accent-color: var(--tape);
+	cursor: pointer;
+}
+
+.fine__ends {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	font-size: 0.8125rem;
+	color: var(--ink-3);
+}

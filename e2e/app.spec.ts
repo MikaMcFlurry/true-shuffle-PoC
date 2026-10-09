@@ -209,6 +209,12 @@ test.describe("a listener's day", () => {
 		await expect(page.getByText(/50 % ungehört/)).toBeVisible();
 		await page.getByRole("radio", { name: "Entdecker" }).check();
 		await expect(page.getByText(/60 % ungehört/)).toBeVisible();
+		// Stepless: any value between the presets, with the shares printed below.
+		await page.getByRole("slider", { name: /Genau einstellen/ }).fill("40");
+		await expect(page.getByText(/62 % ungehört/)).toBeVisible();
+		await expect(page.getByText("Eigene Mischung zwischen den Stufen.")).toBeVisible();
+		await page.getByRole("radio", { name: "Entdecker" }).check();
+		await expect(page.getByText(/60 % ungehört/)).toBeVisible();
 
 		// Rated afterwards, not only while it plays: a song further down the list.
 		const third = next.nth(2);

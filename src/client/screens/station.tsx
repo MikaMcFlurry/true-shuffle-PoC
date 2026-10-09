@@ -1,4 +1,5 @@
 import { ArrowLeft, ChevronDown, ExternalLink, Minus, Play, Plus } from "lucide-preact";
+import type { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { type MixShares, PRESETS, sharesForRules } from "../../core/mix";
 import type { StationRules } from "../../core/types";
@@ -13,16 +14,71 @@ import { api } from "../api";
 import { Cassette, shellOf } from "../components/cassette";
 import { RateHit, ThumbMark } from "../components/rate";
 import { factsOf, SongTags } from "../components/song-tags";
-import { Cover, MixScale, PageBar, Section } from "../components/ui";
+import { Cover, MixFine, MixScale, PageBar, Section } from "../components/ui";
 import { ago, DECK_PREFIX, num, pct } from "../format";
 import { back, navigate } from "../router";
 import { store } from "../store";
 import { playStation } from "./home";
 
-const FAV_SHARES: readonly (readonly [string, string])[] = [
-	["auto", "Wie die Mischung"],
-	...[0, 0.05, 0.1, 0.15, 0.25, 0.35, 0.5].map((v) => [String(v), pct(v)] as const),
-];
+/** What a mix value gives, in one line for screen readers. */
+function sharesWords(rules: StationRules, mix: number): string {
+	const s = sharesForRules({ ...rules, mix });
+	return `${pct(s.fresh)} ungehört, ${pct(s.favorite)} Favoriten, ${pct(s.discovery)} Entdeckungen`;
+}
+
+/**
+ * The favourite share as a slider: "like the mix" or a fixed share from 0 to
+ * 60 %. It moves freely and is saved when let go.
+ */
+function FavShare(props: {
+	value: number | null;
+	onChange: (v: number | null) => void;
+	children?: ComponentChildren;
+}) {
+	const [drag, setDrag] = useState<number | null>(null);
+	const auto = props.value === null;
+	const shown = drag ?? Math.round((props.value ?? 0.1) * 100);
+	return (
+		<div class="rule">
+			<span class="rule__label" id="r-share-l">
+				Anteil Favoriten
+			</span>
+			<label class="check">
+				<input
+					type="checkbox"
+					checked={auto}
+					onChange={(e) =>
+						props.onChange(e.currentTarget.checked ? null : Math.round(shown / 5) * 0.05)
+					}
+				/>
+				Wie die Mischung
+			</label>
+			{auto ? null : (
+				<div class="fine">
+					<label class="fine__label" for="r-share">
+						Fester Anteil <span class="fine__value">{shown} %</span>
+					</label>
+					<input
+						id="r-share"
+						class="fine__range"
+						type="range"
+						min={0}
+						max={60}
+						step={1}
+						value={shown}
+						aria-valuetext={`${shown} Prozent Favoriten`}
+						onInput={(e) => setDrag(Number(e.currentTarget.value))}
+						onChange={(e) => {
+							setDrag(null);
+							props.onChange(Number(e.currentTarget.value) / 100);
+						}}
+					/>
+				</div>
+			)}
+			{props.children}
+		</div>
+	);
+}
 
 const SKIP_RULES = [
 	[
@@ -541,9 +597,13 @@ export function Station({
 					startest.
 				</p>
 				<MixScale value={value} station={d.name} onChange={onMix} />
-				{preset ? null : (
-					<p class="hint">Zurzeit ist eine Mischung zwischen den Stufen eingestellt.</p>
-				)}
+				<MixFine
+					value={value}
+					station={d.name}
+					onChange={onMix}
+					describe={(v) => sharesWords(rules, v)}
+				/>
+				{preset ? null : <p class="hint">Eigene Mischung zwischen den Stufen.</p>}
 				<MixExplained rules={rules} mix={value} />
 			</Section>
 
@@ -679,35 +739,13 @@ export function Station({
 						</p>
 					</fieldset>
 
-					<div class="rule">
-						<label class="rule__label" for="r-share">
-							Anteil Favoriten
-						</label>
-						<select
-							id="r-share"
-							class="input rule__select"
-							value={rules.favoriteShare === null ? "auto" : String(rules.favoriteShare)}
-							onChange={(e) => {
-								const v = e.currentTarget.value;
-								setRule({ favoriteShare: v === "auto" ? null : Number(v) });
-							}}
-						>
-							{(rules.favoriteShare === null ||
-							FAV_SHARES.some(([v]) => v === String(rules.favoriteShare))
-								? FAV_SHARES
-								: [...FAV_SHARES, [String(rules.favoriteShare), pct(rules.favoriteShare)] as const]
-							).map(([v, label]) => (
-								<option key={v} value={v}>
-									{label}
-								</option>
-							))}
-						</select>
+					<FavShare value={rules.favoriteShare} onChange={(v) => setRule({ favoriteShare: v })}>
 						<p class="rule__then">
 							{favTen === 0
 								? "Favoriten kommen nur noch, wenn sie ohnehin dran sind."
 								: `Ungefähr ${favTen} von 10 Songs ${favTen === 1 ? "ist ein Favorit" : "sind Favoriten"}${rules.favoriteShare === null ? ", so wie die Mischung es vorgibt" : ""}.`}
 						</p>
-					</div>
+					</FavShare>
 
 					<fieldset class="rule rule--set">
 						<legend class="rule__label">Wenn du einen Song früh überspringst</legend>
@@ -879,6 +917,24 @@ export function NewStation() {
 			</Section>
 			<Section title="Mischung" id="ns-mix">
 				<MixScale value={mix} station="neue Kassette" onChange={setMix} />
+				<MixFine
+					value={mix}
+					station="neue Kassette"
+					onChange={setMix}
+					describe={(v) =>
+						sharesWords(
+							{
+								mix: v,
+								favoriteCooldownDays: 7,
+								favoriteShare: null,
+								skipPolicy: "later_less",
+								discoveryEnabled: true,
+								artistSpacing: 4,
+							},
+							v,
+						)
+					}
+				/>
 				<MixExplained
 					rules={{
 						mix,
