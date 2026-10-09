@@ -31,8 +31,8 @@ import {
 	type ListenTrack,
 	newListens,
 } from "../../core/listens";
-import { FAMILIAR_PLAYS, RARE_AFTER_EARLY_SKIPS } from "../../core/memory";
-import { DAY_MS } from "../../core/types";
+import { FAMILIAR_PLAYS, RARE_AFTER_EARLY_SKIPS, skipsWeigh } from "../../core/memory";
+import { DAY_MS, emptyMemory } from "../../core/types";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
 import { RateHit, ThumbMark } from "../components/rate";
@@ -816,7 +816,8 @@ export function AboutScreen() {
 				</p>
 				<p>
 					Alle paar Minuten liest true-shuffle, was du gehört hast. Jeder Song ab 30 Sekunden zählt,
-					egal wo er lief. Was du früh überspringst, kommt später und seltener wieder.
+					egal wo er lief. Was du früh überspringst, kommt später und seltener wieder. Nach einer
+					Weile fragt true-shuffle nach: Hörst du den Song dann, zählen die Sprünge nicht mehr.
 				</p>
 			</Section>
 
@@ -899,11 +900,21 @@ function effectsOf(
 	let rarer = 0;
 	let barely = 0;
 	let longAgo = 0;
-	for (const [, plays, skips, last] of rows) {
+	for (const [id, plays, skips, last, skippedAt = 0] of rows) {
 		// Same rule as the planner's favourite (core/memory isFavorite), from the history alone.
 		if (plays >= FAMILIAR_PLAYS && skips <= plays * 0.2) favorites++;
-		if (skips >= RARE_AFTER_EARLY_SKIPS) barely++;
-		else if (skips > 0) rarer++;
+		// Only skips that still weigh (core/memory skipsWeigh).
+		const weighs = skipsWeigh(
+			{
+				...emptyMemory(id),
+				earlySkips: skips,
+				lastPlayedAt: last > 0 ? last : null,
+				lastSkippedAt: skippedAt > 0 ? skippedAt : null,
+			},
+			now,
+		);
+		if (weighs && skips >= RARE_AFTER_EARLY_SKIPS) barely++;
+		else if (weighs) rarer++;
 		if (plays > 0 && last > 0 && now - last >= LONG_AGO_MS) longAgo++;
 	}
 	return {
@@ -946,7 +957,11 @@ function EffectList({ e, done }: { e: Effects; done: boolean }) {
 				<li>
 					<strong>Früh Übersprungenes kommt seltener.</strong> {songs(e.rarer)} hast du ein- oder
 					zweimal in den ersten 30 Sekunden weitergeschaltet: Sie kommen seltener. {songs(e.barely)}{" "}
-					hast du dreimal oder öfter früh übersprungen: Sie kommen kaum noch.
+					hast du dreimal oder öfter früh übersprungen: Sie kommen kaum noch. Das gilt nicht für
+					immer: Einen Monat nach dem letzten Sprung, mit jedem weiteren doppelt so lange, höchstens
+					ein Jahr, spielt true-shuffle den Song wieder wie jeden anderen. Hörst du ihn dann, zählen
+					die Sprünge nicht mehr; was du nach dem letzten Sprung schon gehört hast, gilt sofort
+					wieder normal.
 					{e.openers > 0
 						? ` Nicht mitgezählt sind ${num(e.openers)} frühe Skips des ersten Songs nach einem Start: Spotifys Shuffle beginnt gern mit denselben Songs, und die wegzuschalten heißt nicht, dass du sie nicht magst.`
 						: ""}

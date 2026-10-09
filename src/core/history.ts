@@ -97,7 +97,7 @@ export function aggregateHistory(
 		let s = agg.stats.get(id);
 		if (ms >= PLAY_THRESHOLD_MS) {
 			if (!s) {
-				s = { plays: 0, earlySkips: 0, lastPlayedAt: null };
+				s = { plays: 0, earlySkips: 0, lastPlayedAt: null, lastSkippedAt: null };
 				agg.stats.set(id, s);
 			}
 			s.plays++;
@@ -109,10 +109,11 @@ export function aggregateHistory(
 				continue;
 			}
 			if (!s) {
-				s = { plays: 0, earlySkips: 0, lastPlayedAt: null };
+				s = { plays: 0, earlySkips: 0, lastPlayedAt: null, lastSkippedAt: null };
 				agg.stats.set(id, s);
 			}
 			s.earlySkips++;
+			s.lastSkippedAt = s.lastSkippedAt == null ? at : Math.max(s.lastSkippedAt, at);
 			agg.skipped++;
 		} else {
 			agg.ignored++;
@@ -124,15 +125,31 @@ export function aggregateHistory(
 	return agg;
 }
 
-/** Compact wire format: [id, plays, earlySkips, lastPlayedAt|0]. */
-export type HistoryRow = [TrackId, number, number, number];
+/**
+ * Compact wire format: [id, plays, earlySkips, lastPlayedAt|0, lastSkippedAt|0].
+ * Rows stored before skips were dated have no fifth field.
+ */
+export type HistoryRow =
+	| [TrackId, number, number, number]
+	| [TrackId, number, number, number, number];
 
 export function toRows(agg: Aggregate): HistoryRow[] {
 	const rows: HistoryRow[] = [];
-	for (const [id, s] of agg.stats) rows.push([id, s.plays, s.earlySkips, s.lastPlayedAt ?? 0]);
+	for (const [id, s] of agg.stats)
+		rows.push([id, s.plays, s.earlySkips, s.lastPlayedAt ?? 0, s.lastSkippedAt ?? 0]);
 	return rows;
 }
 
 export function fromRow(row: HistoryRow): [TrackId, ImportedStats] {
-	return [row[0], { plays: row[1], earlySkips: row[2], lastPlayedAt: row[3] > 0 ? row[3] : null }];
+	const skipped = row.length === 5 ? row[4] : undefined;
+	return [
+		row[0],
+		{
+			plays: row[1],
+			earlySkips: row[2],
+			lastPlayedAt: row[3] > 0 ? row[3] : null,
+			// Dated when the row knows; undefined: an older import.
+			...(skipped === undefined ? {} : { lastSkippedAt: skipped > 0 ? skipped : null }),
+		},
+	];
 }
