@@ -5,7 +5,7 @@
   "subject": {
     "revision": "8d62138184be9397ea22d55170928a4edbbc0725",
     "artifact_ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
-    "environment": "Actual externalCloudflaref9364da0/2d3927f7 and isolated156ba/78fc/ac23 RealWorkerFakeSpotify",
+    "environment": "Application8d62138; historical verified Cloudflarefa234d1c/7bdaed5d. Current public assets19/19 andhealth200; authenticated currentruntime readback unavailable.",
     "environment_class": "PRODUCTION"
   },
   "mode": "AUTONOMOUS_BUILD",
@@ -53,6 +53,12 @@
       "type": "TOOL_UNAVAILABLE",
       "description": "Actual populated object bookmark/restore and history/migration-invariant acceptance have not been executed; existing app exposes no isolated authenticated recovery interface. SQLitePITR is documented, not verified by restore.",
       "evidence_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
+    },
+    {
+      "id": "B-CLOUDFLARE-ACCESS",
+      "type": "CREDENTIAL",
+      "description": "Execution workspace replaced; prior local OAuth and readback scripts unavailable. No Cloudflare Workers connector callable. Installed-on-demand Wrangler4.141.0 whoami actually reports You are not authenticated. No Cloudflare environment credential or saved Wrangler credential file. Public access works; no renewed authenticated runtime/namespace/bindings/variables/secrets/version/traffic verification possible.",
+      "evidence_ref": "docs/ai-dev/evidence/PR_WATCH_2026_10_10.json"
     }
   ],
   "requirements_snapshot": {

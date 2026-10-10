@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-09T17:57:26.371218+00:00",
+  "generated_at": "2026-10-10T07:26:23.987388+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -284,7 +284,7 @@
       "path": "docs/ai-dev/EVIDENCE.json",
       "treatment": "CREATE",
       "authority": "SUPPORTING",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime. Current access limits: docs/ai-dev/evidence/PR_WATCH_2026_10_10.json; new workspace authenticated Cloudflare readback NOT_RUN (B-CLOUDFLARE-ACCESS).",
       "evidence_ids": [
         "EV-01",
         "EV-02"

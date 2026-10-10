@@ -272,13 +272,14 @@
   "inactive_staged_version": null,
   "release_comment": 6086388418,
   "worker_hash_basis": "Actual compiled Worker content; existing worker_etag preserved as server metadata, not asserted equal to content hash",
-  "latest_watch_ref": "PR29_REVIEW.json",
+  "latest_watch_ref": "docs/ai-dev/evidence/PR_WATCH_2026_10_10.json",
   "worker_etag_basis": "New ETag not separately captured; actualcontentSHAverified. PreviousETag retained in historicalsnapshot.",
-  "latest_watch_at": "2026-10-09T17:57:26.371218+00:00",
+  "latest_watch_at": "2026-10-10T07:26:23.987388+00:00",
   "source_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
   "traffic": 100,
   "release_authority": "ExternalClaudePR29merge/report; explicitscopecompletionabsent; rootauthorizedreviewandcomments onlyperformed.",
   "asset_proof": "pr29-review/pr29-public-assets.json",
   "worker_proof": "pr29-review/pr29-worker-proof.json",
-  "preservation_proof": "pr29-review/pr29-preservation.json"
+  "preservation_proof": "pr29-review/pr29-preservation.json",
+  "current_authenticated_readback": "NOT_RUN: B-CLOUDFLARE-ACCESS; recorded identity/preservation remain last verified historical observations."
 }

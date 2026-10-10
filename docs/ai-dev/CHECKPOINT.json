@@ -64,7 +64,8 @@
   "capability_blockers": [
     "Physical iPhone/liveSpotify latencyquota unavailable",
     "Private HA/MA unavailable",
-    "Populated production restore not run"
+    "Populated production restore not run",
+    "B-CLOUDFLARE-ACCESS: new workspace Wrangler unauthenticated; restore existing access before release/runtime readback"
   ],
   "recovery_state": [
     "Previousverifiedversion3499c219-0265-4798-9e7b-4b3c81b5efd5 retained; noDBrestore/revert",
@@ -73,11 +74,12 @@
     "Current473f/715100% unchanged thiswatch; no rootmerge/upload/activation/rollback."
   ],
   "next_actions": [
+    "Restore existing authorizedCloudflare access; revalidateactualversion/traffic/runtime/bindings beforeanyrelease.",
     "ReadClaude associatedPR29corrections andexplicitcomplete releasecomment; freshreviewactualsuccessor heads andcombinedscope.",
     "ReverifyPR28rest/overlap originalassertions; preserveinheritedLane/Resumepolicy pendingstate.",
     "No duplicatemerge/deploy;revalidateactualsource/production beforeconsequentialaction."
   ],
-  "updated_at": "2026-10-09T17:57:26.371218+00:00",
+  "updated_at": "2026-10-10T07:26:23.987388+00:00",
   "deployment": {
     "schema_version": "true-shuffle.deployment.v1",
     "recorded_at": "2026-10-09T17:57:26.371218+00:00",
@@ -658,5 +660,6 @@
     "asset_proof": "pr29-review/pr29-public-assets.json",
     "worker_proof": "pr29-review/pr29-worker-proof.json",
     "preservation_proof": "pr29-review/pr29-preservation.json"
-  }
+  },
+  "latest_watch_ref": "docs/ai-dev/evidence/PR_WATCH_2026_10_10.json"
 }
