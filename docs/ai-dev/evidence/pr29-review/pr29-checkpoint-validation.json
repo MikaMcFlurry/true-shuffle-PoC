@@ -1,0 +1,11 @@
+{
+  "valid": true,
+  "errors": [],
+  "summary": {
+    "phase": "REVIEW",
+    "status": "PARTIAL",
+    "checkpoint_revision": "8d62138184be9397ea22d55170928a4edbbc0725",
+    "current_revision": null,
+    "stale": false
+  }
+}

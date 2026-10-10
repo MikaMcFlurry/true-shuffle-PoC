@@ -1,0 +1,71 @@
+import { expect, it } from 'vitest';
+import { onboarded } from './harness';
+import { RequestBudget } from '../../src/worker/spotify/client';
+
+const sync = (h: Awaited<ReturnType<typeof onboarded>>) => h.hub.sync(new RequestBudget(20), { force: true });
+const step = (h: Awaited<ReturnType<typeof onboarded>>, ms: number) => { h.clock.t += ms; h.fake.advance(ms); };
+
+it('independent: a different current device id with the same name is not the configured guest device', async () => {
+ const h = await onboarded({tracks: 80});
+ const u = h.fake.user();
+ const phone = u.devices[0]!;
+ u.devices.push({id:'party',name:phone.name,type:'Speaker',restricted:false});
+ h.hub.setGuestDevices([{id:'party',name:phone.name}]);
+ await h.hub.play(h.stationIds[0]!);
+ step(h,10000); await sync(h);
+ expect(u.player.deviceId).toBe(phone.id);
+ expect((await h.hub.state()).guest.active).toBe(false);
+});
+
+it('independent: owner short play after confirmed device transition counts', async () => {
+ const h = await onboarded({tracks:80}); const u = h.fake.user(); const phone = u.devices[0]!.id;
+ u.devices.push({id:'party',name:'Party',type:'Speaker',restricted:false});
+ h.hub.setGuestDevices([{id:'party',name:'Party'}]);
+ await h.hub.play(h.stationIds[0]!); u.player.deviceId='party'; step(h,10000); await sync(h);
+ expect((await h.hub.state()).guest.active).toBe(true);
+ const ids = [...h.fake.tracks.keys()]; const owner = ids.find(x=>x!==h.fake.current())!;
+ h.fake.playSong('mika',owner); u.player.deviceId=phone; step(h,10000); await sync(h);
+ expect((await h.hub.state()).guest.active).toBe(false);
+ step(h,35000); h.fake.skip(); await sync(h);
+ const row=h.sql.first<{ignored:number}>('SELECT ignored FROM plays WHERE track_id=? ORDER BY played_at DESC LIMIT 1',owner);
+ expect(row).not.toBeNull(); expect(row!.ignored).toBe(0);
+});
+
+it('independent: clearing guest devices closes auto guest state without waiting for player refresh', async () => {
+ const h = await onboarded({tracks:80}); const u=h.fake.user(); const phone=u.devices[0]!;
+ h.hub.setGuestDevices([{id:phone.id,name:phone.name}]); await h.hub.play(h.stationIds[0]!); step(h,10000); await sync(h);
+ expect((await h.hub.state()).guest.active).toBe(true);
+ h.hub.setGuestDevices([]);
+ expect((await h.hub.state()).guest.active).toBe(false);
+});
+
+it('independent control: same owner short play without guest device mode counts', async () => {
+ const h = await onboarded({tracks:80}); const u = h.fake.user(); const phone = u.devices[0]!.id;
+ u.devices.push({id:'party',name:'Party',type:'Speaker',restricted:false});
+ await h.hub.play(h.stationIds[0]!); u.player.deviceId='party'; step(h,10000); await sync(h);
+ const ids = [...h.fake.tracks.keys()]; const owner = ids.find(x=>x!==h.fake.current())!;
+ h.fake.playSong('mika',owner); u.player.deviceId=phone; step(h,10000); await sync(h);
+ step(h,35000); h.fake.skip(); await sync(h);
+ const row=h.sql.first<{ignored:number}>('SELECT ignored FROM plays WHERE track_id=? ORDER BY played_at DESC LIMIT 1',owner);
+ expect(row).not.toBeNull(); expect(row!.ignored).toBe(0);
+});
+
+it('independent: successful no-player observation does not mark the next owner history song guest', async () => {
+ const h=await onboarded({tracks:80}); const u=h.fake.user(); const phone=u.devices[0]!.id;
+ u.devices.push({id:'party',name:'Party',type:'Speaker',restricted:false});
+ h.hub.setGuestDevices([{id:'party',name:'Party'}]);
+ await h.hub.play(h.stationIds[0]!); u.player.deviceId='party'; step(h,10000); await sync(h);
+ u.player.isPlaying=false; u.player.deviceId=null; step(h,1000); await sync(h);
+ expect((await h.hub.state()).guest.active).toBe(false);
+ const owner=[...h.fake.tracks.keys()].find(x=>x!==h.fake.current())!;
+ h.fake.playSong('mika',owner); u.player.deviceId=phone; step(h,45000); h.fake.skip();
+ h.fake.failNext={status:429,count:1,headers:{'Retry-After':'60'},body:{error:{status:429,message:'quota',reason:'QUOTA_EXCEEDED'}}};
+ await sync(h);
+ // Successful no-player close sets tail=null, but the generic manual-guest
+ // undecided logic postpones history for 12h and steals its first listing.
+ step(h,13*60*60*1000);
+ h.fake.failNext={status:429,count:1,headers:{'Retry-After':'60'},body:{error:{status:429,message:'quota',reason:'QUOTA_EXCEEDED'}}};
+ await sync(h);
+ const row=h.sql.first<{ignored:number}>('SELECT ignored FROM plays WHERE track_id=? ORDER BY played_at DESC LIMIT 1',owner);
+ expect(row).not.toBeNull(); expect(row!.ignored).toBe(0);
+});

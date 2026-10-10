@@ -1,0 +1,1 @@
+export default {test:{include:['/tmp/integrated932-retained-lane.test.ts'],environment:'node',testTimeout:20000,silent:'passed-only'}}

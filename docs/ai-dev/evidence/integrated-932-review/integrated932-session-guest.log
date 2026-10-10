@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-integrated932-lane
+
+
+ Test Files  2 passed (2)
+      Tests  30 passed (30)
+   Start at  14:27:23
+   Duration  6.56s (tests 84%, transform 13%, import 3%)
+

@@ -1,0 +1,143 @@
+
+> true-shuffle@1.0.0 test
+> vitest run test/hub/pr21-independent.test.ts test/hub/guest-device.test.ts test/hub/robustness.test.ts test/hub/song-facts.test.ts test/hub/native-session.test.ts
+
+
+ RUN  v5.0.2 /workspace/ts-review-21
+
+stdout | test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+{"level":"info","kind":"import","message":"„Playlist 1“: 80 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+{"level":"info","kind":"guest","message":"Gast-Modus an — „iPhone“ spielt"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"import","message":"„Playlist 1“: 80 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"guest","message":"Gast-Modus an — „Party“ spielt"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"guest","message":"Gast-Modus aus — das Gast-Gerät spielt nicht mehr"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+{"level":"info","kind":"import","message":"„Playlist 1“: 80 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+{"level":"info","kind":"guest","message":"Gast-Modus an — „iPhone“ spielt"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: successful no-player observation does not mark the next owner history song guest
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: successful no-player observation does not mark the next owner history song guest
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: successful no-player observation does not mark the next owner history song guest
+{"level":"info","kind":"import","message":"„Playlist 1“: 80 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: successful no-player observation does not mark the next owner history song guest
+{"level":"info","kind":"guest","message":"Gast-Modus an — „Party“ spielt"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: successful no-player observation does not mark the next owner history song guest
+{"level":"info","kind":"guest","message":"Gast-Modus aus — das Gast-Gerät spielt nicht mehr"}
+
+ ❯ test/hub/pr21-independent.test.ts (5 tests | 4 failed) 431ms
+   × independent: a different current device id with the same name is not the configured guest device 195ms
+   × independent: owner short play after confirmed device transition counts 88ms
+   × independent: clearing guest devices closes auto guest state without waiting for player refresh 36ms
+   × independent: successful no-player observation does not mark the next owner history song guest 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/pr21-independent.test.ts:17:45
+     15|  step(h,10000); await sync(h);
+     16|  expect(u.player.deviceId).toBe(phone.id);
+     17|  expect((await h.hub.state()).guest.active).toBe(false);
+       |                                             ^
+     18| });
+     19|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ test/hub/pr21-independent.test.ts:31:51
+     29|  step(h,35000); h.fake.skip(); await sync(h);
+     30|  const row=h.sql.first<{ignored:number}>('SELECT ignored FROM plays WH…
+     31|  expect(row).not.toBeNull(); expect(row!.ignored).toBe(0);
+       |                                                   ^
+     32| });
+     33|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/pr21-independent.test.ts:39:45
+     37|  expect((await h.hub.state()).guest.active).toBe(true);
+     38|  h.hub.setGuestDevices([]);
+     39|  expect((await h.hub.state()).guest.active).toBe(false);
+       |                                             ^
+     40| });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/hub/pr21-independent.test.ts > independent: successful no-player observation does not mark the next owner history song guest
+AssertionError: expected null not to be null
+ ❯ test/hub/pr21-independent.test.ts:65:18
+     63|  await sync(h);
+     64|  // Successful no-player close sets tail=null, but the generic manual-…
+     65|  // undecided logic postpones history for 12h and steals its first lis…
+       |                  ^
+     66|  step(h,13*60*60*1000);
+     67|  h.fake.failNext={status:429,count:1,headers:{'Retry-After':'60'},body…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  4 failed | 131 passed (135)
+   Start at  06:29:58
+   Duration  116.99s (tests 98%, transform 1%, import 1%)

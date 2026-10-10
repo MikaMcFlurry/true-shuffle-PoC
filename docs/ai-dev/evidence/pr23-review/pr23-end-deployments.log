@@ -1,0 +1,95 @@
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mProxy environment variables detected. We'll use your proxy for fetch requests.[0m
+
+
+
+ ⛅️ wrangler 4.141.0
+────────────────────
+Created:     2026-10-07T09:01:04.855Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 93f6d97c-81d0-423a-9abf-c0a6f3d58dd6
+                 Created:  2026-10-07T09:01:03.377Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-08T10:37:43.602Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 6b2a79a2-275f-4607-bc4f-3e67adac7d59
+                 Created:  2026-10-08T10:37:43.025Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-08T11:27:50.499Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     Rollback PR15: independent baseline/head assertions confirm unfinished-song skipping and rejected-resume checkpoint loss (RESUME-01/02).
+Version(s):  (100%) 93f6d97c-81d0-423a-9abf-c0a6f3d58dd6
+                 Created:  2026-10-07T09:01:03.377Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-08T16:57:56.796Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) d432fe99-16fc-45f7-b815-b626f2c5f9cc
+                 Created:  2026-10-08T16:57:55.891Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-08T16:58:47.363Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 3499c219-0265-4798-9e7b-4b3c81b5efd5
+                 Created:  2026-10-08T16:58:46.673Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-08T21:11:39.498Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) dd344c82-6ac5-4d1f-97ed-f81d6b79a891
+                 Created:  2026-10-08T21:11:38.029Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T09:29:34.418Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) cfaa5917-990f-48b6-ad07-e3064150501d
+                 Created:  2026-10-09T09:29:33.711Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T09:30:25.572Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 9f781567-213d-44a3-bf3a-5c3596e8232c
+                 Created:  2026-10-09T09:30:24.886Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T09:30:59.058Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     -
+Version(s):  (100%) 02a3c025-a9f6-4da5-b6ce-d176d1c9f71c
+                 Created:  2026-10-09T09:30:58.391Z
+                     Tag:  -
+                 Message:  -
+
+Created:     2026-10-09T10:19:16.198Z
+Author:      mikahertler@gmail.com
+Source:      Unknown (deployment)
+Message:     Rollback external PR19-22 rollout: known revoked-session genre disclosure on bcb2463; coherent PR23 remains blocked by independently reproduced lane occurrence provenance defect.
+Version(s):  (100%) dd344c82-6ac5-4d1f-97ed-f81d6b79a891
+                 Created:  2026-10-08T21:11:38.029Z
+                     Tag:  -
+                 Message:  -

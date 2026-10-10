@@ -1,0 +1,116 @@
+{
+  "schema_version": "pr-review-report.v1",
+  "generated_at": "2026-10-09T17:56:23.487720+00:00",
+  "subject": {
+    "repository": "MikaMcFlurry/true-shuffle-PoC",
+    "revision": "8d62138184be9397ea22d55170928a4edbbc0725",
+    "baseline": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+    "environment": "isolated Chromium actual production client build, intercepted synthetic API; port8897"
+  },
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "application_changes": false,
+  "remote_actions": false,
+  "skills": [
+    "mika-verification",
+    "mika-red-team",
+    "impeccable audit"
+  ],
+  "checks": {
+    "browser": "9 PASS / 3 expected-contract FAIL; 12 tests total. Final copied per-test station rules eliminate initial shared-fixture mutation.",
+    "ui_runtime": "4 home +4 settings cases PASS;390/1440 light/dark, unbroken longtitle/artist, native HTML fieldset/button/switch labels, focused keyboard Enter/Space, >=44px answerbutton, no horizontal overflow, HTTP503 and offline feedback/retry, station→home navigation",
+    "account_fence": "PASS: late old listener answer does not suppress new listener same-track widget due Home profile-key remount",
+    "detector": "42 inherited token/style findings; no verified material new defect. No stylewish treated as error.",
+    "contrast": "Visual theme review performed; full WCAG color contrast certification NOT_RUN",
+    "live": "Physical iPhone / live Spotify latency or quotas / privateHA / populated restore NOT_RUN"
+  },
+  "evidence": [
+    "/tmp/pr29-ui-browser-verified.log",
+    "/workspace/ts-pr29-ui/e2e/pr29-ui-review.spec.ts",
+    "/workspace/ts-pr29-ui/playwright.pr29-ui.config.ts",
+    "/tmp/pr29-ui-detector.json",
+    "/tmp/pr29-ui-context.log"
+  ],
+  "screenshots": [
+    "/tmp/pr29-ui-home-390-light.png",
+    "/tmp/pr29-ui-home-390-dark.png",
+    "/tmp/pr29-ui-home-1440-light.png",
+    "/tmp/pr29-ui-home-1440-dark.png",
+    "/tmp/pr29-ui-station-390-light.png",
+    "/tmp/pr29-ui-station-390-dark.png",
+    "/tmp/pr29-ui-station-1440-light.png",
+    "/tmp/pr29-ui-station-1440-dark.png"
+  ],
+  "visual_inspection": [
+    "/tmp/pr29-ui-home-390-dark.png",
+    "/tmp/pr29-ui-station-1440-light.png"
+  ],
+  "findings": [
+    {
+      "id": "PR29-VERDICT-ORDER",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unfenced concurrent opposite verdicts let late acknowledgement contradict last accepted answer",
+      "files": [
+        "src/client/screens/home.tsx:285",
+        "src/client/screens/home.tsx:289",
+        "src/client/screens/home.tsx:561",
+        "src/client/screens/home.tsx:569"
+      ],
+      "reproduction": "Observed probe; click Gern wieder while its HTTP acknowledgement is held; Eher nicht remains enabled and second click emits keep:false. Model accepts in request arrival order true then false; false reply arrives first. Release old true acknowledgement.",
+      "expected": "Either single pending answer prevents opposite submissions, or serialized/revision-fenced latest intention and acknowledgement remain coherent; stale reply must not replace latest feedback.",
+      "actual": "Requests [true,false], last accepted synthetic API state false, UI replaced negative thanks by Danke. Der Song kommt wieder wie jeder andere.",
+      "impact": "Honest preference acknowledgement is violated, and slow requests permit duplicate/opposite commands. This is an API-intercept client race proof, not evidence of a real provider/database write.",
+      "repair": "Track pending answer and identity/request revision; serialize or reject opposite pending clicks and discard superseded callbacks.",
+      "required_tests": [
+        "slow first reply with opposite second request and reverse reply order",
+        "double click",
+        "error followed by retry",
+        "account and occurrence changes during pending verdict"
+      ]
+    },
+    {
+      "id": "PR29-VERDICT-TRANSPORT",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Successful verdict response discards failed playback advance result",
+      "files": [
+        "src/client/api.ts:206",
+        "src/client/screens/home.tsx:289",
+        "src/worker/hub/hub.ts:5816"
+      ],
+      "reproduction": "Observed probe in Home with native controller; intercept retest response HTTP200 {skipped:false,skipError:Gerät ist nicht erreichbar.}; click Eher nicht. Same response is a valid Hub result for an unsuccessful Spotify advance.",
+      "expected": "Separate persisted preference acknowledgement from failed or unobserved playback advance, show actual failure and allow recovery; native route must follow actual controller contract (backend reviewer separately reproduces native no advance).",
+      "actual": "Only affirmative preference thanks appears, error omitted. Home neither consumes skipped/skipError nor sends nativePlayer/command handling for this action.",
+      "impact": "A device refusal is hidden while the listener expects rejection to move on. Preference save is valid; transport success cannot be inferred.",
+      "repair": "Preserve backend result shape in API typing and expose skip failure distinctly. Integrate negative verdict with correct native command route and stable occurrence fences as separately verified by backend reviewer; do not gratuitously rewrite transport state machine.",
+      "required_tests": [
+        "real Hub fakeSpotify failed next after negative verdict",
+        "native observed probe negative verdict queue advance",
+        "accepted vs observed result distinction",
+        "offline/error/pending recovery",
+        "old occurrence callbacks do not advance new song"
+      ]
+    },
+    {
+      "id": "PR29-VERDICT-OCCURRENCE",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Prior answer hides the next probe of the same song in a continuously open Home",
+      "files": [
+        "src/client/screens/home.tsx:285",
+        "src/client/screens/home.tsx:545"
+      ],
+      "reproduction": "Answer Eher nicht on probe track0. Observe track1 next. Later synthetic authoritative state observes track0 in a distinct queue occurrence entry-retest-new, kind probe, same listener.",
+      "expected": "A fresh observed probe occurrence asks again.",
+      "actual": "Home retains answered track0 and renders old thanks; both answer buttons absent.",
+      "impact": "Low-frequency long-lived view loses explicit verdict buttons on repeat probe; reloading/navigation clears it. Synthetic occurrence lifecycle verified; actual months-long open physical browser NOT_RUN.",
+      "repair": "Scope answer to profile/session/entry identity and reset or derive display from current authoritative occurrence.",
+      "required_tests": [
+        "same song distinct queue occurrence after intervening song",
+        "new session same song",
+        "pending result after occurrence replacement"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-pr29-backend
+
+
+ Test Files  9 passed (9)
+      Tests  103 passed (103)
+   Start at  17:54:09
+   Duration  4.17s (tests 83%, transform 10%, import 7%)
+

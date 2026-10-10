@@ -1,0 +1,372 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-09T09:27:34.140708+00:00",
+  "project": "true-shuffle repaired-scope candidate19–22",
+  "subject": {
+    "revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+    "artifact_ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+    "environment": "Clean combined19→20→21→22 frome348; three fresh independent contexts; no remote app merge/upload/deploy",
+    "environment_class": "LOCAL"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "PARTIAL",
+  "material_release": true,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA",
+    "AI_TOOL_SIDE_EFFECTS",
+    "PERFORMANCE_CRITICAL"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "NOT_READY",
+  "required_categories": [
+    "accessibility",
+    "build",
+    "critical_journey",
+    "data_invariants",
+    "independent_review",
+    "migration",
+    "operations",
+    "performance_reliability",
+    "post_deploy",
+    "recovery",
+    "security_privacy",
+    "ui_runtime"
+  ],
+  "external_blockers": [],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR20-LANE-03",
+      "title": "Missed departure observation leaves short-play note available to label a later independent play",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR22-AUTH-01",
+      "title": "Coalesced genre request bypasses the callers session epoch validation",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR22-INPUT-01",
+      "severity": "P3",
+      "blocking": false,
+      "title": "Imported month validation coerces non-string JSON values and persists client-incompatible shape"
+    },
+    {
+      "id": "PR22-INPUT-02",
+      "severity": "P3",
+      "blocking": false,
+      "title": "Malformed extended-history infinite ms yields nonfinite summary which server rejects and upload flow silently discards"
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-BUILD",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "Typecheck/lint/build/Worker dry-run PASS, two preexisting lint infos.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "Typecheck/lint/build/Worker dry-run PASS, two preexisting lint infos."
+    },
+    {
+      "id": "G-COMBINED",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-COMBINED",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "511 default Unit/Worker,46 Real-Worker/FakeSpotify Browser,11 original Resume assertions PASS; no functional assertions removed.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "511 default Unit/Worker,46 Real-Worker/FakeSpotify Browser,11 original Resume assertions PASS; no functional assertions removed."
+    },
+    {
+      "id": "G-NEW-BEHAVIOR",
+      "category": "data_invariants",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-NEW-BEHAVIOR",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "Original LANE02/GUEST03 and AI/UI fixes closed; missed-look lane provenance remains false in controlled real saveDeck/restart fixture.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "Original LANE02/GUEST03 and AI/UI fixes closed; missed-look lane provenance remains false in controlled real saveDeck/restart fixture."
+    },
+    {
+      "id": "G-UI",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-UI",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "20 fresh independent browser checks;320/390/1440 light/dark, long content, offline/error/pending/navigation; import summary-only and honest partial failure/retry pass.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "20 fresh independent browser checks;320/390/1440 light/dark, long content, offline/error/pending/navigation; import summary-only and honest partial failure/retry pass."
+    },
+    {
+      "id": "G-A11Y",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-A11Y",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "Complete168 weekday/hour values and seven totals, monthly/annual hours/songs; native caption tables and keyboard horizontal scrolling at320/390 light/dark PASS. Full WCAG/screen-reader-software audit NOT_RUN.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "Complete168 weekday/hour values and seven totals, monthly/annual hours/songs; native caption tables and keyboard horizontal scrolling at320/390 light/dark PASS. Full WCAG/screen-reader-software audit NOT_RUN."
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-MIGRATION",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "Original additive migration5/recovery/session fixture checks rerun with archived original migration attacks; no production populated restore claim.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "Original additive migration5/recovery/session fixture checks rerun with archived original migration attacks; no production populated restore claim."
+    },
+    {
+      "id": "G-LOCAL-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-RECOVERY",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "161 independent backend regressions plus17 native and11 original Resume PASS; new lane provenance attack FAIL; actual populated production restore NOT_RUN.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "161 independent backend regressions plus17 native and11 original Resume PASS; new lane provenance attack FAIL; actual populated production restore NOT_RUN."
+    },
+    {
+      "id": "G-SECURITY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-SECURITY",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "Actual Worker signed revoked session cookie overlapping current AI flight returnsHTTP200 private current result instead401; direct actual UserHub same bypass. Both parent reproductions FAIL. No anonymous/cross-account bypass claimed.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "Actual Worker signed revoked session cookie overlapping current AI flight returnsHTTP200 private current result instead401; direct actual UserHub same bypass. Both parent reproductions FAIL. No anonymous/cross-account bypass claimed."
+    },
+    {
+      "id": "G-REVIEW",
+      "category": "independent_review",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-REVIEW",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "Three FRESH reviewers: backend20/21 NOT_READY, backend22 NOT_READY, UI scopedREADY. Two blockingP2; parent independently reproduces both.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "Three FRESH reviewers: backend20/21 NOT_READY, backend22 NOT_READY, UI scopedREADY. Two blockingP2; parent independently reproduces both."
+    },
+    {
+      "id": "G-CI",
+      "category": "operations",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-CI",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "All four exact heads GitHubverify metadata/jobs/logs PASS. Old completion6076229569 does not cover current heads; explicit renewed final scope required. Preview Workers Builds cause stillunconfirmed.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ],
+      "rationale": "All four exact heads GitHubverify metadata/jobs/logs PASS. Old completion6076229569 does not cover current heads; explicit renewed final scope required. Preview Workers Builds cause stillunconfirmed."
+    },
+    {
+      "id": "G-LIVE",
+      "category": "post_deploy",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Candidate unmerged/undeployed; no partial release. Existing e348/dd344/238016100% read-only actualassets/health/authCSRF/browser PASS; no candidate live acceptance."
+    },
+    {
+      "id": "G-AI-RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "PASS",
+      "rationale": "AI outside playback lock, coalescing valid calls,20s timeout, durable failure/restart6h attempt gate, import/logout/stale provider publish fences PASS. Coalesced revoked-session AUTH01 tracked bysecuritygate; no live provider claim.",
+      "evidence": [
+        {
+          "id": "EV-G-AI-RELIABILITY",
+          "kind": "actual_userhub_mutex_and_stub_ai",
+          "ref": "docs/ai-dev/evidence/FOLLOWUP_19_22_REVIEW.json",
+          "result": "AI outside playback lock, coalescing valid calls,20s timeout, durable failure/restart6h attempt gate, import/logout/stale provider publish fences PASS. Coalesced revoked-session AUTH01 tracked bysecuritygate; no live provider claim.",
+          "subject_revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+          "observed_at": "2026-10-09T09:27:34.140708+00:00"
+        }
+      ]
+    }
+  ]
+}

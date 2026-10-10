@@ -1,0 +1,139 @@
+{
+  "schema": "independent-red-team-review.v1",
+  "generated_at": "2026-10-09T06:33:00.924831+00:00",
+  "subject": {
+    "repository": "MikaMcFlurry/true-shuffle-PoC",
+    "pull_request": 21,
+    "revision": "0b14353f6e13fd0c4ba5a8739a0d863df92d81eb",
+    "baseline": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "environment": "isolated /workspace/ts-review-21; Node SQLite / Real HubCore / FakeSpotify",
+    "environment_class": "LOCAL_SIMULATION"
+  },
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "Independent functional review of the new automatic Spotify guest-device backend and relevant continuity boundaries; no application repairs, external comments, merge, deploy, or production writes.",
+  "authority": [
+    "AGENTS.md",
+    "docs/UI_UX_START.md",
+    "docs/ai-dev/MISSION.md (NN-02, NN-08, NN-09, NN-10)",
+    "PR21 source docs/comment: confirmed other device closes auto guest time and current song is not guest music"
+  ],
+  "open_findings": [
+    {
+      "id": "PR21-GUEST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "The first owner song after a confirmed switch away from a guest device is still recorded as guest",
+      "paths": [
+        "src/worker/hub/hub.ts:5744",
+        "src/worker/hub/hub.ts:2661",
+        "src/worker/hub/hub.ts:3335",
+        "src/worker/hub/hub.ts:3213"
+      ],
+      "preconditions": "One configured party device and a distinct unconfigured owner phone. No manual guest mode.",
+      "reproduction": [
+        "Start station on party device and observe it after 10 seconds; guest.active is true.",
+        "Start a different single song on the owner phone; after 10 seconds force a real HubCore sync. Provider observation reports the owner device and guest.active becomes false.",
+        "Listen another 35 seconds, skip in FakeSpotify, and sync history. Query plays for that owner track."
+      ],
+      "expected": "The 45-second owner song is retained as ignored=0 and participates in owner listening memory; the observation already confirmed a different unconfigured device.",
+      "actual": "The history row exists with ignored=1. Automatic closure writes tail=null, but noteGuestLast treats the observed owner song as the old manual-style guest tail with owner=0. The later listing is ignored before tail=null can exclude it.",
+      "impact": "Observed owner music silently disappears from listening memory/consumption after a core device-return journey. Violates NN-02/NN-08 and UI copy that music counts again after seeing another device.",
+      "evidence": {
+        "test": "test/hub/pr21-independent.test.ts (independent: owner short play after confirmed device transition counts)",
+        "log": "/tmp/pr21-independent-attacks.log",
+        "command": "npm test -- test/hub/pr21-independent.test.ts -t 'owner short play after confirmed device transition'",
+        "control": "Identical trace without configuring guest devices passes on exact head and archived exact baseline; /tmp/pr21-independent-baseline.log."
+      },
+      "repair_direction": "Represent a confirmed automatic-device exit separately from uncertain manual/timed guest tails so noteGuestLast cannot adopt an observed distinct owner song. Preserve actual previous guest history and manual guest semantics.",
+      "required_regressions": [
+        "Distinct owner track starts before first phone observation, is observed at 10s, and is skipped after another 35s: ignored=0 and memory updated.",
+        "Same scenario across HubCore eviction, ordinary/forced history read order, paused/no-player closure, and player 429 with successful history fallback.",
+        "Manual and timed guest-tail, private listening, unfinished queue checkpoint, and native/account isolation tests remain green."
+      ]
+    },
+    {
+      "id": "PR21-GUEST-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "A concurrently listed owner device with a distinct ID is automatically treated as the selected guest device when names collide",
+      "paths": [
+        "src/worker/hub/hub.ts:5730",
+        "src/client/screens/menu.tsx:497"
+      ],
+      "preconditions": "Two concurrently listed devices have different IDs and the same Spotify name (e.g. iPhone). Only the second device is selected as always guest.",
+      "reproduction": [
+        "Keep existing phone ID active. Add second visible device ID party with exactly the existing phone name.",
+        "Configure only party as a guest device. Start station on the phone and observe playback."
+      ],
+      "expected": "The explicitly unselected owner phone remains owner playback; the user can select the two devices independently.",
+      "actual": "Current player still has phone.id, but guest.active=true because matching uses id OR name. UI also hides the unselected same-name device, preventing separate settings.",
+      "impact": "A plausible Spotify name collision suppresses all owner history/memory on the wrong device, even while both stable IDs are simultaneously available.",
+      "qualification": "Name matching for legitimately rotated device IDs is an intended feature. This reproduction instead uses two distinct IDs both still present in the same device list; no ID rotation occurred.",
+      "evidence": {
+        "test": "test/hub/pr21-independent.test.ts (independent: a different current device id with the same name is not the configured guest device)",
+        "log": "/tmp/pr21-independent-attacks.log"
+      },
+      "repair_direction": "Use an identity/ambiguity policy that preserves explicit distinct IDs, and allow independent rows for same-name devices. Only use name recovery when identity rotation can be established without merging concurrently distinct devices.",
+      "required_regressions": [
+        "Concurrent same-name different IDs stay independently configurable and owner ID counts.",
+        "Single unambiguous genuine rotated-ID recovery still follows the explicitly chosen policy."
+      ]
+    }
+  ],
+  "non_blocking_observations": [
+    {
+      "id": "PR21-GUEST-OBS-01",
+      "title": "Removing the final configured guest device leaves an existing automatic period active",
+      "status": "REPRODUCED_POLICY_AMBIGUITY",
+      "blocking": false,
+      "paths": [
+        "src/worker/hub/hub.ts:5688",
+        "src/client/screens/menu.tsx:512"
+      ],
+      "actual": "setGuestDevices([]) changes only guest_devices; state remains guest.active=true until a successful player read or the 15-minute hold expires. UI announces the device counts again immediately.",
+      "evidence": "Third exploratory assertion in test/hub/pr21-independent.test.ts fails. Not promoted to a blocker because intended timing policy is not explicit."
+    }
+  ],
+  "gates": [
+    {
+      "id": "fresh-attacks",
+      "status": "FAIL",
+      "evidence": "/tmp/pr21-independent-attacks.log",
+      "result": "5 independent attacks: 3 expectation failures (2 material findings + 1 timing-policy observation), 2 controls pass."
+    },
+    {
+      "id": "preservation-boundaries",
+      "status": "PASS",
+      "evidence": "/tmp/pr21-independent-preservation.log",
+      "result": "39 tests pass across own pause/expiry/eviction/manual takeover/429 boundaries, existing guest-device suite, durable sessions, native bridge/orchestrator suites."
+    },
+    {
+      "id": "baseline-owner-control",
+      "status": "PASS",
+      "evidence": "/tmp/pr21-independent-baseline.log",
+      "result": "1 same owner trace without guest feature passes on baseline e348e838 archived to /tmp/pr21-baseline."
+    },
+    {
+      "id": "broad-preservation",
+      "status": "PASS",
+      "evidence": "/tmp/pr21-independent-tests.log",
+      "result": "130 existing tests pass across guest-device, robustness and song-facts suites (3 existing files). Combined invocation reports4 old exploratory expectation failures plus131 passes; latest standalone attacks supersede the early no-player missing-row variant. No integrated CI weekend timeout duplicated."
+    }
+  ],
+  "required_checks_before_positive_release": [
+    "Fix and freshly re-review PR21-GUEST-01 and PR21-GUEST-02 on an exact new revision.",
+    "Build, typecheck, lint, complete unit/Worker/browser suite at exact candidate and exact combined candidate.",
+    "Rerun independent failing attacks and scoped manual guest/private/native/account/history/queue preservation checks.",
+    "Verify API session fencing and malformed inputs; no secret/account/history leakage."
+  ],
+  "not_run": [
+    "Physical owner iPhone/device transitions and Safari wake behavior",
+    "Live Spotify transport, quota recovery, actual device-ID rotation and shared developer account capacity",
+    "Private live HA/MA/native playback",
+    "Actual populated Durable Object restore",
+    "Production/deployment/assets/version readback",
+    "Changed guest devices UI real browser rendering/accessibility (separate review role)"
+  ],
+  "release_authority": "No release allowed; explicit Claude completion absent; review is read/test only."
+}

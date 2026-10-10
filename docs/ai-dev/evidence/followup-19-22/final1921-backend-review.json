@@ -1,0 +1,106 @@
+{
+  "schema_version": "true-shuffle.independent-review.v1",
+  "recorded_at": "2026-10-09T07:54:52.230787+00:00",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "subject": {
+    "combined_sha": "4dc337731c6d998a946c08142f5811821e26e939",
+    "pr20_sha": "d716055ab27caa18bfc42639278e6b9976f9cdbd",
+    "pr21_sha": "edc36e944e4cd881c7bdeb80ce443db0a212eede",
+    "worktree": "/workspace/ts-final1921-independent",
+    "scope": "Independent backend final corrections re-review, combined19/20/21/22; no application modifications."
+  },
+  "closed_original_findings": [
+    "PR20-LANE-01: archived paused replacement-deck attack now gives null; populated v4 migration rollback/retry preserved",
+    "PR21-GUEST-01: confirmed device transition owner45s row counts",
+    "PR21-GUEST-02: different IDs with same name remain distinct",
+    "PR21 policy observation: removing configured devices immediately closes auto period",
+    "No-player then 429/deferred history original strengthened case counts owner row"
+  ],
+  "checks": [
+    {
+      "command": "npx vitest run test/hub/final20-independent.test.ts test/hub/final21-independent.test.ts test/hub/song-facts.test.ts test/hub/guest-device.test.ts test/hub/session.test.ts test/hub/recovery.test.ts --testTimeout=120000",
+      "result": "PASS",
+      "tests_passed": 50,
+      "log": "/tmp/final1921-backend-original.log"
+    },
+    {
+      "command": "npx vitest run test/hub/robustness.test.ts test/worker/native.test.ts test/worker/native-orchestrator.test.ts test/worker/native-rolling.test.ts test/worker/native-bridge.test.ts --testTimeout=120000",
+      "result": "PASS",
+      "tests_passed": 134,
+      "log": "/tmp/final1921-backend-preservation.log"
+    },
+    {
+      "command": "npx vitest run test/hub/final-lane-attacks.test.ts test/hub/final-guest-uncertainty.test.ts --testTimeout=120000",
+      "result": "FAIL",
+      "tests_passed": 1,
+      "tests_failed": 2,
+      "log": "/tmp/final1921-backend-attacks.log"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PR20-LANE-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "An unlisted short occurrence donates its lane to a later unobserved same-track occurrence",
+      "files": [
+        "src/worker/hub/hub.ts:4894",
+        "src/worker/hub/hub.ts:4916",
+        "src/worker/hub/hub.ts:4089"
+      ],
+      "test": "/workspace/ts-final1921-independent/test/hub/final-lane-attacks.test.ts",
+      "test_name": "independent: unlisted short occurrence must not donate its lane to a later unobserved repeat",
+      "repro": [
+        "Onboard200tracks180s; play station; advance10s and force sync. Skip then advance1s and sync: next track id T00000000000000000001k is observed and lane fresh noted.",
+        "Advance5s, skip under30s, advance1s/sync. Provider legitimately has no recently-played entry for that short occurrence; old lane note remains.",
+        "Advance60s; controlled SQLite replacement-deck fixture updates writtenAt and same id kind=favorite. This is an explicit valid replacement fixture, not a claim of live provider publication.",
+        "FakeSpotify plays same id from replacement station context for45s entirely between app observations, then skips; sync.",
+        "Stored later history lane is fresh, borrowed from the old short occurrence; expected null for this unobserved occurrence, never old fresh."
+      ],
+      "cause": "laneFor matches only station,id,seenAt before listing and up to2days; lane notes do not bind start/end/observed occurrence and skipped-unlisted notes are never retired on observed departure.",
+      "impact": "Verlauf falsely claims why this very play occurred; later same-ID play borrows different occurrence provenance. Listening counts/order remain intact in this trace.",
+      "repair_direction": "Bind lane notes to actual observed occurrence boundaries and match listing only within supported occurrence evidence; retire/close short departed notes or return conservative null on ambiguity. Do not infer song completion from wall time.",
+      "regression_required": [
+        "Observed short skip under30s/no provider listing followed by same-ID unobserved replay from changed deck",
+        "Repeated same-ID occurrences across pause/restart and late listings",
+        "Original paused replacement/migration/queue checks preserved"
+      ]
+    },
+    {
+      "id": "PR21-GUEST-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "A nullable device id is treated as confirmed guest-device exit and guest music contaminates owner memory",
+      "files": [
+        "src/worker/hub/hub.ts:5819",
+        "src/worker/hub/hub.ts:5835",
+        "src/worker/spotify/types.ts:83"
+      ],
+      "test": "/workspace/ts-final1921-independent/test/hub/final-guest-uncertainty.test.ts",
+      "repro": [
+        "ConfigurePartyid as guest; stationplay on Party; advance10s, force sync, guestactive true.",
+        "Wrap FakeSpotify GET /me/player 200 response to set only device.id=null (documented nullable provider field). Preserve device name/type, track, progress, is_playing=true and actual fake player stillParty.",
+        "Advance10s, force sync. Actual logs claim guest device stopped and guestactive false despite no observed stop or identified non-guest device.",
+        "Actual still-Party song plays another35s then is skipped; force sync. Actual SQL ignored=0; expected1 while within prior confirmed15min guest hold."
+      ],
+      "cause": "ID-only matching correctly avoids name collisions, but every nonmatch includes unknown/null identity and unconditionally clears last/tail through endDevicePeriod. Unknown playing identity becomes invented confirmed owner exit.",
+      "impact": "Party-only listening is counted as owner listening; violates protected guest/history/account-taste behavior and truthful observed-state semantics.",
+      "repair_direction": "Distinguish unknown playing device identity from observed different non-guest ID/no-player evidence. Preserve bounded prior confirmed guest uncertainty state without extending indefinitely or selecting by ambiguous name.",
+      "regression_required": [
+        "Nullable deviceid while stillplaying on confirmed guest device, continued song listing ignored",
+        "Known owner ID confirmed exit and same-name/different-ID collision checks stayPASS",
+        "No-player, 429, missingdevice and bounded expiry/manualguest removal cases"
+      ]
+    }
+  ],
+  "limitations": [
+    "Real HubCore/nodeSQLite/FakeSpotify simulation; not actual Spotify nullable-id frequency/device transitions, iPhone latency/quota or Cloudflare populated restore acceptance.",
+    "Physical iPhone, private HA/MA, actual filled-object restore NOT_RUN.",
+    "PR22 profile functionality and UI are assigned separate reviewers; source inspection here only integration seams.",
+    "Historical candidate AGENTS/HANDOFF deployment documents are stale indexes; actual authoritative runtime identity supplied by parent, no live mutation undertaken."
+  ],
+  "discarded_probes": [
+    "Attempted public-only new-mix reproduction failed precondition because replacementqueue source did not become favorite; excluded as a harness/setup limitation, not an additional productfinding."
+  ]
+}

@@ -1,0 +1,80 @@
+
+ RUN  v5.0.2 /tmp/next22-backend-check
+
+stdout | test/hub/next22-independent.test.ts > a stale signed session cannot piggyback the active valid AI flight
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/next22-independent.test.ts > a stale signed session cannot piggyback the active valid AI flight
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/next22-independent.test.ts > a stale signed session cannot piggyback the active valid AI flight
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/next22-independent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/next22-independent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/next22-independent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/next22-independent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+STALE_SIGNED_COOKIE 200 {"estimate":{"at":1790316061500,"source":"workers-ai","artists":1,"genres":[{"name":"Pop","share":100}],"summary":"Sensitive taste"},"retryAt":1790337661500,"failed":false}
+
+ ❯ test/hub/next22-independent.test.ts (13 tests | 2 failed | 2 skipped) 802ms
+   × a stale signed session cannot piggyback the active valid AI flight 51ms
+   × Worker genre route rejects a signed stale cookie even during a current session flight 81ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/next22-independent.test.ts > a stale signed session cannot piggyback the active valid AI flight
+AssertionError: expected { ok: true, value: { …(3) } } to match object { ok: false, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": {
+-     "code": "auth",
+-     "status": 401,
+-   },
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ test/hub/next22-independent.test.ts:106:17
+    104|  await current;
+    105|  const result=await stale;
+    106|  expect(result).toMatchObject({ok:false,error:{code:'auth',status:401}…
+       |                 ^
+    107| });
+    108|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/hub/next22-independent.test.ts > Worker genre route rejects a signed stale cookie even during a current session flight
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ test/hub/next22-independent.test.ts:130:24
+    128|  const body=await result.json();
+    129|  console.log('STALE_SIGNED_COOKIE',result.status,JSON.stringify(body));
+    130|  expect(result.status).toBe(401);
+       |                        ^
+    131| });
+    132| it('20-second optional AI timeout releases flight and durable attempt …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 18 passed | 2 skipped (22)
+   Start at  09:22:17
+   Duration  2.05s (tests 40%, import 32%, transform 27%, worker 1%)

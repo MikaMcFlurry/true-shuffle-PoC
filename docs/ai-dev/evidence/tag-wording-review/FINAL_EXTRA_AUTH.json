@@ -1,0 +1,1 @@
+[{"case": "marker_without_session", "http": "401", "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"}, {"case": "foreign_marker_without_session", "http": "401", "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"}]

@@ -1,0 +1,297 @@
+{
+  "schema_version": "true-shuffle.integrated-release-review.v1",
+  "generated_at": "2026-10-09T17:57:26.371218+00:00",
+  "source_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "pr": 29,
+  "head_sha": "27197dc5abbfdbb4fbd4d9ee6f874edb3becc6e6",
+  "base_sha": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+  "integration_order": [
+    27,
+    28,
+    29
+  ],
+  "provenance": "ActualGitHub MikaMcFlurry; git authorClaude <noreply@anthropic.com>, session_01LuiFYFqenEVR9agywkDkAX; external GitHub merge8d62138. No invented Claude login.",
+  "scope": "New functional Planner/Memory/verdict API and additive SQLitev7 migration separately inspected; not implicitly UI-only authorization.",
+  "explicit_full_scope_completion": false,
+  "external_release_report": 6085805336,
+  "external_release": true,
+  "independence": "FRESH",
+  "scoped_verdict": "NOT_READY",
+  "verdict": "BLOCKED",
+  "new_findings": [
+    {
+      "id": "PR29-REPEAT-NO-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Repeated negative retest answers do not accumulate the stated further skip or doubled recheck interval",
+      "files": [
+        "src/worker/hub/hub.ts:5823",
+        "src/core/memory.ts:84"
+      ],
+      "preconditions": "Imported nonoverplayed song: plays2, earlySkips3, lastPlay400 days ago, lastSkip40 days ago; counted-before-first-skip absent/0. probeDue true at each answer.",
+      "reproduction": [
+        "onboarded tracks40; importHistory([[id,2,3,now-400*DAY_MS,now-40*DAY_MS]],0,1)",
+        "Assert probeDue(memory,now). retestVerdict(id,false).",
+        "Advance simulated clock31days. Assert probeDue(memory,now) again; retestVerdict(id,false) on second legitimate due retest.",
+        "At second verdict+240 days assert skipsWeigh remains true, because second extra skip should extend retestAfter(5) to365-day cap."
+      ],
+      "expected": "Two distinct eligible negative retests accumulate two extra skips; retain history facts separately if desired, but effective retest count/taste must reflect both, and duplicate delivery must not inflate them.",
+      "actual": "Stored earlySkips still3 and one overwritten verdict=-1; skipsWeigh uses earlySkips+1 forever while verdict staysnegative. Interval remains240 days; assertion expecting suppressed weight atday240 fails.",
+      "impact": "After repeated deliberate rejections, planner restores normal weight125days earlier than the stated doubled/capped retest semantics. Further negatives beyond the first never increase effective count.",
+      "repair_direction": "Track durable accumulated effective verdict count with occurrence/idempotence fences, or equivalent explicit state preserving real play/skip provenance; do not rewrite imported history or count repeated delivery as separate answers.",
+      "required_regressions": [
+        "Distinct due negative retests with3 initial skips yield240 then365days; subsequent capped",
+        "negative duplicate retry countedonce",
+        "positive thenlaternegative/observedplay resolvescorrectly",
+        "migration defaultpreservesexistingmemory/history",
+        "native andSpotify occurrencefences"
+      ],
+      "evidence": [
+        "/workspace/ts-pr29-backend/test/hub/pr29-independent.test.ts",
+        "/tmp/pr29-independent-repro.log"
+      ]
+    },
+    {
+      "id": "PR29-VERDICT-ORDER",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unfenced concurrent opposite verdicts let late acknowledgement contradict last accepted answer",
+      "files": [
+        "src/client/screens/home.tsx:285",
+        "src/client/screens/home.tsx:289",
+        "src/client/screens/home.tsx:561",
+        "src/client/screens/home.tsx:569"
+      ],
+      "reproduction": "Observed probe; click Gern wieder while its HTTP acknowledgement is held; Eher nicht remains enabled and second click emits keep:false. Model accepts in request arrival order true then false; false reply arrives first. Release old true acknowledgement.",
+      "expected": "Either single pending answer prevents opposite submissions, or serialized/revision-fenced latest intention and acknowledgement remain coherent; stale reply must not replace latest feedback.",
+      "actual": "Requests [true,false], last accepted synthetic API state false, UI replaced negative thanks by Danke. Der Song kommt wieder wie jeder andere.",
+      "impact": "Honest preference acknowledgement is violated, and slow requests permit duplicate/opposite commands. This is an API-intercept client race proof, not evidence of a real provider/database write.",
+      "repair": "Track pending answer and identity/request revision; serialize or reject opposite pending clicks and discard superseded callbacks.",
+      "required_tests": [
+        "slow first reply with opposite second request and reverse reply order",
+        "double click",
+        "error followed by retry",
+        "account and occurrence changes during pending verdict"
+      ]
+    },
+    {
+      "id": "PR29-VERDICT-TRANSPORT",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Successful verdict response discards failed playback advance result",
+      "files": [
+        "src/client/api.ts:206",
+        "src/client/screens/home.tsx:289",
+        "src/worker/hub/hub.ts:5816"
+      ],
+      "reproduction": "Observed probe in Home with native controller; intercept retest response HTTP200 {skipped:false,skipError:Gerät ist nicht erreichbar.}; click Eher nicht. Same response is a valid Hub result for an unsuccessful Spotify advance.",
+      "expected": "Separate persisted preference acknowledgement from failed or unobserved playback advance, show actual failure and allow recovery; native route must follow actual controller contract (backend reviewer separately reproduces native no advance).",
+      "actual": "Only affirmative preference thanks appears, error omitted. Home neither consumes skipped/skipError nor sends nativePlayer/command handling for this action.",
+      "impact": "A device refusal is hidden while the listener expects rejection to move on. Preference save is valid; transport success cannot be inferred.",
+      "repair": "Preserve backend result shape in API typing and expose skip failure distinctly. Integrate negative verdict with correct native command route and stable occurrence fences as separately verified by backend reviewer; do not gratuitously rewrite transport state machine.",
+      "required_tests": [
+        "real Hub fakeSpotify failed next after negative verdict",
+        "native observed probe negative verdict queue advance",
+        "accepted vs observed result distinction",
+        "offline/error/pending recovery",
+        "old occurrence callbacks do not advance new song"
+      ]
+    },
+    {
+      "id": "PR29-VERDICT-OCCURRENCE",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Prior answer hides the next probe of the same song in a continuously open Home",
+      "files": [
+        "src/client/screens/home.tsx:285",
+        "src/client/screens/home.tsx:545"
+      ],
+      "reproduction": "Answer Eher nicht on probe track0. Observe track1 next. Later synthetic authoritative state observes track0 in a distinct queue occurrence entry-retest-new, kind probe, same listener.",
+      "expected": "A fresh observed probe occurrence asks again.",
+      "actual": "Home retains answered track0 and renders old thanks; both answer buttons absent.",
+      "impact": "Low-frequency long-lived view loses explicit verdict buttons on repeat probe; reloading/navigation clears it. Synthetic occurrence lifecycle verified; actual months-long open physical browser NOT_RUN.",
+      "repair": "Scope answer to profile/session/entry identity and reset or derive display from current authoritative occurrence.",
+      "required_tests": [
+        "same song distinct queue occurrence after intervening song",
+        "new session same song",
+        "pending result after occurrence replacement"
+      ]
+    }
+  ],
+  "inherited_findings": [
+    "PR28-REST-01",
+    "PR28-OVERLAP-02",
+    "PR24-LANE-07",
+    "PR25-RESUME-OWNER-CONFLICT",
+    "PR26-PROFILE-RANK"
+  ],
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS;2 preexisting infos",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit_worker": "570/570 PASS unchangeddefault20s timeout",
+    "browser": "48/48 PASS standardfunctional assertions",
+    "ui_independent": "See fresh UIreport:actual390/1440 light/dark longmetadata keyboard error/offline and pending/verdictattackresults",
+    "migration_recovery": "See freshbackendreport:actualSQLitev6→7 additivefields andcrash/recovery",
+    "source_tree_equality": "Actual full gitdiff27197dc↔8d62138 empty",
+    "ci": {
+      "id": 37965603311,
+      "name": "Cloudflare application checks",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 124,
+      "jobs_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/37965603311/jobs",
+      "logs_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/37965603311/logs",
+      "workflow_id": 370971963
+    },
+    "root_diff_check": "PASS"
+  },
+  "production": {
+    "label": "watch29",
+    "deployment": "7bdaed5d-f3f8-4afc-b424-900f1d67fded",
+    "versions": [
+      {
+        "version_id": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
+        "percentage": 100
+      }
+    ],
+    "version": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
+    "created_at": "2026-10-09T17:21:23.09127Z",
+    "migration_tag": "v1",
+    "runtime": {
+      "migration_tag": "v1",
+      "assets": {
+        "not_found_handling": "single-page-application",
+        "headers": {
+          "version": 2,
+          "rules": {
+            "/*": {
+              "set": {
+                "content-security-policy": "default-src 'self'; img-src 'self' https://i.scdn.co https://*.scdn.co https://mosaic.scdn.co https://image-cdn-ak.spotifycdn.com https://image-cdn-fa.spotifycdn.com https://*.spotifycdn.com data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+                "permissions-policy": "camera=(), microphone=(), geolocation=()",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "x-content-type-options": "nosniff"
+              },
+              "unset": []
+            },
+            "/assets/*": {
+              "set": {
+                "cache-control": "public, max-age=31536000, immutable"
+              },
+              "unset": []
+            }
+          }
+        },
+        "raw_headers": "/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Content-Security-Policy: default-src 'self'; img-src 'self' https://i.scdn.co https://*.scdn.co https://mosaic.scdn.co https://image-cdn-ak.spotifycdn.com https://image-cdn-fa.spotifycdn.com https://*.spotifycdn.com data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'\n/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n",
+        "static_routing": {
+          "user_worker": [
+            "/api/*",
+            "/auth/*",
+            "/remote/*"
+          ]
+        },
+        "serve_directly": true,
+        "raw_run_worker_first": [
+          "/api/*",
+          "/auth/*",
+          "/remote/*"
+        ],
+        "base_path": "/"
+      },
+      "compatibility_date": "2026-09-20",
+      "compatibility_flags": [
+        "nodejs_compat"
+      ],
+      "usage_model": "standard"
+    },
+    "binding_shapes": [
+      {
+        "name": "AI",
+        "type": "ai",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "APP_SECRET",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "ASSETS",
+        "type": "assets",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "LASTFM_API_KEY",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "REGISTRY",
+        "type": "durable_object_namespace",
+        "class_name": "Registry",
+        "namespace_id": "2ccba352966f46a3b289eb159ccb3bc4"
+      },
+      {
+        "name": "SPOTIFY_CLIENT_ID",
+        "type": "plain_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "USER_HUB",
+        "type": "durable_object_namespace",
+        "class_name": "UserHub",
+        "namespace_id": "59222ef9f3a642d4b90776fafa0eac84"
+      }
+    ],
+    "namespace_ids": [
+      {
+        "id": "2ccba352966f46a3b289eb159ccb3bc4",
+        "name": "true-shuffle_Registry",
+        "class": "Registry"
+      },
+      {
+        "id": "59222ef9f3a642d4b90776fafa0eac84",
+        "name": "true-shuffle_UserHub",
+        "class": "UserHub"
+      }
+    ],
+    "secrets_names_only": [
+      "ANTHROPIC_API_KEY",
+      "APP_SECRET",
+      "LASTFM_API_KEY"
+    ]
+  },
+  "worker_proof": "pr29-review/pr29-worker-proof.json",
+  "asset_proof": "pr29-review/pr29-public-assets.json",
+  "sourcemap_proof": "pr29-review/pr29-sourcemap-proof.json",
+  "preservation": "Authenticated fullruntime/settings/namespaces/fullbindings/variablevalues/secretmetadata equalto previousf936; normalizedcron equal. No secrets exposed.",
+  "public_auth": "Health200/protectedreads401/missingCSRFforeignorigin403;newretestrouteunsigned403/correctx-tsunsigned401",
+  "public_browser": "ActualanonymousChromium390/1440 light/dark and/profil, no overflow/pageerrors",
+  "physical_live_acceptance": "NOT_RUN:physicaliPhone,liveSpotifylatencyquota,privateHA,populatedrestore",
+  "root_actions": {
+    "application_edits": false,
+    "merge": false,
+    "upload": false,
+    "deploy": false,
+    "rollback": false
+  },
+  "rollback_decision": "No confirmedauth/transport/data-loss rolloutfailure; boundednew/inheritedcorrectnessfindings requirefix. ExistingadditiveSQLitev7 and cachednewclientprotocol mean blindrollbacknot assumedcompatible; priorverifiedversionretained.",
+  "comment": 6086388418,
+  "independent_reports": [
+    "pr29-review/pr29-backend-report.json",
+    "pr29-review/pr29-ui-report.json"
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "subject": "4dc337731c6d998a946c08142f5811821e26e939",
+  "reviewed_prs": {
+    "19": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
+    "22": "f228c76f82e0382184333a1745579651c838f332"
+  },
+  "timestamp": "2026-10-09T07:55:14.343129+00:00",
+  "environment": "Local built combined client via Vite preview8845, Chromium /usr/bin/chromium, mocked API. No backend/provider/live acceptance. No application changes.",
+  "closed_findings": [
+    "PR19-UI-01 rapid37\u219238\u219239 keyboard serial pending saves reproduced PASS",
+    "PR19-UI-02 existing85\u219284 full100range reproduced PASS"
+  ],
+  "findings": [
+    {
+      "id": "PR22-IMPORT-RECENT",
+      "priority": "P2",
+      "blocking": true,
+      "files": [
+        "src/client/screens/menu.tsx:995-1009"
+      ],
+      "reproduction": "state.history.liveSince=2026-09-01; choose valid extended Streaming_History_Audio export of120s song2026-09-15. Whole-profile contains1play, legacy pre-live rows empty. UI rejects file as no importable song and never offers \u00dcbernehmen.",
+      "expected": "Allow valid whole-profile summary independently of pre-live memory import; preserve existing no-doublecount memory fence.",
+      "regressions": [
+        "all-recent export with nonempty profile",
+        "mixed old/recent export",
+        "profileonly save does not alter memory/queue/history"
+      ]
+    },
+    {
+      "id": "PR22-IMPORT-SILENT",
+      "priority": "P2",
+      "blocking": true,
+      "files": [
+        "src/client/screens/menu.tsx:1021-1023"
+      ],
+      "reproduction": "Valid older export; history/import responds200; history/profile responds503 profile summary refused. UI presents \u00dcbernommen completion, zero alert, Dein H\u00f6rprofil ansehen link although no profile persisted.",
+      "expected": "Explicit partial success for memory and failed profile save; allow summary retry without pretending completion or destructive reimport.",
+      "regressions": [
+        "503401413/profile save",
+        "offline between two stages",
+        "retry summary preserves successful memory import"
+      ]
+    },
+    {
+      "id": "PR22-CHART-A11Y",
+      "priority": "P2",
+      "blocking": true,
+      "files": [
+        "src/client/screens/profile.tsx:341-395",
+        "src/client/screens/profile.tsx:429-456"
+      ],
+      "reproduction": "Fixture Monday08=73,Tuesday08=101; heat ariaSnapshot only image Songs nach Wochentag und Uhrzeit. Keyboard opens Als Tabelle, but it has24rows Uhrzeit/Songs with08=174; weekday breakdown inaccessible. Months Aug2026=219min/73plays Sep2026=303min/101plays: accessibility snapshot img Stunden pro Monat exposes labels Aug26/Sep26 and strongest5 only, no Aug3.65h/73plays or values table. Cell/bar title attributes are nonfocusable and children roleimg presentational.",
+      "impact": "New central statistics journey denies nonvisual/keyboard users the data that sighted hover supplies; WCAG1.1.1/1.3.1 equivalent chart data missing.",
+      "expected": "Accessible equivalent of all168weekday/hour values and all monthly/annual minutes/plays; summary may remain but must not replace data.",
+      "regressions": [
+        "keyboard-open full heat table with weekdayheaders/cellcounts",
+        "nonvisual per-month/year counts/time",
+        "mobile both themes full table no clipping"
+      ]
+    }
+  ],
+  "artifacts": [
+    "/tmp/final1922-ui-results.json",
+    "/tmp/final1922-ui.mjs",
+    "/tmp/final1922-ui.log",
+    "/tmp/final1922-import-results.json",
+    "/tmp/final1922-import.mjs",
+    "/tmp/final1922-profile-aria.txt",
+    "/tmp/final1922-profile-390-light.png",
+    "/tmp/final1922-profile-390-dark.png",
+    "/tmp/final1922-profile-1440-light.png",
+    "/tmp/final1922-profile-1440-dark.png",
+    "/tmp/final1922-import-recent.png",
+    "/tmp/final1922-import-silent503.png"
+  ],
+  "visual_observation": "Viewed real390dark rendered longmetadata screenshot. Responsive pages zero globaloverflow boththemes390/1440; counts visible. No cosmetic issues promoted to blockers.",
+  "impeccable": {
+    "context": "read PRODUCT/DESIGN via context.mjs audit; audit reference read",
+    "detector": "detect.mjs exit0, no stdout findings"
+  },
+  "limits": [
+    "Physical iPhone Safari NOT_RUN",
+    "Actual Spotify/privateHA/populated restore NOT_RUN",
+    "screenreader device speech NOT_RUN; Chromium accessibility tree directly inspected",
+    "Profile/API/AI responses mocked, not end-to-end backend evidence"
+  ],
+  "targeted_browser_checks": [
+    "Profile 390/1440 light/dark, long artist/song text, zero page overflow",
+    "Native details keyboard Enter exposes 24 accessible aggregate-hour rows",
+    "Live song-length total explicitly upper estimate",
+    "Genre estimation pending disable,503 visible error, retry success, AI source/estimate visibly honest",
+    "Imported profile switches via keyboard to live; import genuine-time label and annual grouping; live estimate label retained",
+    "Profile503 visible alert",
+    "Offline/reconnect page navigation recovers profile",
+    "FixedPR19 rapid37\u219238\u219239 keyboard retains latestpending and serial writes",
+    "FixedPR19 fullrange85\u219284 persisted, no60 clamp",
+    "FavShare503 rolls back latestpending, displays save error",
+    "FavShare pending save survives immediate navigation",
+    "FavShareoffline preserves confirmed stored share",
+    "Older stationGET delayed900ms after earlier serialPATCH cannot overwrite latest83",
+    "Native Home/End queued0\u2192100 retained and persisted"
+  ]
+}

@@ -1,0 +1,522 @@
+{
+  "generated_at": "2026-10-08T18:07:11.257363+00:00",
+  "source_revision": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+  "scope": "Externally merged PR17 thenPR16; independently checked integrated actualsource/deployment; no Codexappmerge/upload/activation",
+  "completion_comment": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6064928704",
+  "result_comment": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6066055100",
+  "provenance": {
+    "pr17_head": "74f3252536d5d353353aaa15130c3faca93ea46c",
+    "pr17_merge": "9b73f07e8aaa61ef7b7f24c3e330b94c7d50033b",
+    "pr16_head": "ff1409c71d57d095a27bede954bb5d18780d73f1",
+    "pr16_merge": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+    "git_authors": "Branchcommits Claude <noreply@anthropic.com>; actualmergecommits Mika Hertler, PRuser MikaMcFlurry",
+    "session": "https://claude.ai/code/session_01LuiFYFqenEVR9agywkDkAX",
+    "order": "17→16 externally integrated; PR18 separate/unmerged/noCompletion"
+  },
+  "production": {
+    "version": "3499c219-0265-4798-9e7b-4b3c81b5efd5",
+    "deployment": "c4096de7-3e02-443a-9b89-53037835b9a7",
+    "traffic_percent": 100,
+    "identity": "AuthenticatedWranglerdeployments/versionreadsPASS; finaltrafficunchanged",
+    "worker_module_sha256": "7fb30bd2fbe2fcb102d838bb191926f5e406b764517a32805cc4435a8a429c4b",
+    "worker_module_exact": "PASS downloadedauthorizedindex.js938316bytes equals drybundle",
+    "public_assets": [
+      {
+        "path": "index.html",
+        "match": true,
+        "sha256": "ead41b5fe7eadc78e91d7495820676644ce4fc8bfe483ca945b95fe7b646d16c"
+      },
+      {
+        "path": "apple-touch-icon.png.json",
+        "match": true,
+        "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+      },
+      {
+        "path": "icon-192.png.json",
+        "match": true,
+        "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+      },
+      {
+        "path": "icon-512.png",
+        "match": true,
+        "sha256": "be005a6b78f252856fae4b61908c697e81d11e43ed4d2a39cf070ee9087bc5d2"
+      },
+      {
+        "path": "manifest.webmanifest",
+        "match": true,
+        "sha256": "1c9028febad670d002c66d3f42a95c561ce6690dc31b6ac9a63d1c27819f73bf"
+      },
+      {
+        "path": "apple-touch-icon.png",
+        "match": true,
+        "sha256": "8231c332bb95ca4cc0fc9128fec4e9be1ed7898bc4a502b39cffb1fef6c566ea"
+      },
+      {
+        "path": "icon.svg",
+        "match": true,
+        "sha256": "a6f2d7214c22802f88380f049973eb5745afbe0fc501b151d83d59b32dcfbcf1"
+      },
+      {
+        "path": "icon-192.png",
+        "match": true,
+        "sha256": "bfa0a92a3752f97acc58ada50bb53b09f36fe83b77f7b39cf7d559b137bf8cec"
+      },
+      {
+        "path": "icon-512.png.json",
+        "match": true,
+        "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+      },
+      {
+        "path": "assets/index-DJ3UCLbU.js",
+        "match": true,
+        "sha256": "89268b4155b1a8fd2bf11009a69720e08e28b49027476c6c6ecc6c0020cf31f0"
+      },
+      {
+        "path": "assets/index-DJ3UCLbU.js.map",
+        "match": true,
+        "sha256": "b75d8e6981eb1dc0bd56758b6481aced986ea3e1d51716586c4c8700b029f0b5"
+      },
+      {
+        "path": "assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2",
+        "match": true,
+        "sha256": "18b2a1a39a2fa298b0ba5390aca68462669826c90925656f1c1f6796e0e1bbaf"
+      },
+      {
+        "path": "assets/permanent-marker-latin-400-normal-BnZj5c41.woff",
+        "match": true,
+        "sha256": "ab8ac2bb72d48e089e37d8eefbacdfe2d74ccd48ae786d952fce9874837d2b2b"
+      },
+      {
+        "path": "assets/atkinson-hyperlegible-next-latin-ext-wght-normal-C6vrW8VD.woff2",
+        "match": true,
+        "sha256": "7dae0c6c66af1aec82e096186aeb1f0e6fa36ab8061ed65422f2b7daf4dd93f3"
+      },
+      {
+        "path": "assets/bricolage-grotesque-latin-ext-standard-normal-qp-RdZgh.woff2",
+        "match": true,
+        "sha256": "e1a04c169c022f63ad24fc1b6fbd932dee1ded62ac08734eeb1d5d51afee38dd"
+      },
+      {
+        "path": "assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2",
+        "match": true,
+        "sha256": "a756882d8a7802ebd4663b4544a62ebedafc7227c1c159ab95eea61393af3f8e"
+      },
+      {
+        "path": "assets/index-Btfb1YB8.css",
+        "match": true,
+        "sha256": "2ab30549740a67e5a5f81d034a9cacde5b3d0e6edfd6ade297b8bdf539d44655"
+      },
+      {
+        "path": "assets/bricolage-grotesque-vietnamese-standard-normal-Br4FGdAc.woff2",
+        "match": true,
+        "sha256": "ee5fe4a5cec44fe749450889c91b3bccdb0254f9a103619ee92fa7be08653639"
+      },
+      {
+        "path": "assets/permanent-marker-latin-400-normal-BF23djCy.woff2",
+        "match": true,
+        "sha256": "4884fec2c73aa52a2461073c1b87d1ceb80f400520391b43f97ca7d3c39eeb24"
+      }
+    ],
+    "resource_comparison": {
+      "old_count": 75,
+      "current_count": 19,
+      "added": [
+        "assets/index-Btfb1YB8.css",
+        "assets/index-DJ3UCLbU.js",
+        "assets/index-DJ3UCLbU.js.map",
+        "assets/permanent-marker-latin-400-normal-BF23djCy.woff2",
+        "assets/permanent-marker-latin-400-normal-BnZj5c41.woff"
+      ],
+      "removed": [
+        "assets/hanken-grotesk-cyrillic-ext-wght-normal-D_UHSL_T.woff2",
+        "assets/hanken-grotesk-latin-ext-wght-normal-Dg-wlmqe.woff2",
+        "assets/hanken-grotesk-latin-wght-normal-CaVRRdDk.woff2",
+        "assets/hanken-grotesk-vietnamese-wght-normal-CHiFlh_0.woff2",
+        "assets/index-Bw4J5KW2.css",
+        "assets/index-CBRWbVnt.js",
+        "assets/index-CBRWbVnt.js.map",
+        "assets/lexend-latin-ext-wght-normal-B6JQhE1e.woff2",
+        "assets/lexend-latin-wght-normal-ci0D1wrL.woff2",
+        "assets/lexend-vietnamese-wght-normal-RvljkFvg.woff2",
+        "assets/martian-mono-cyrillic-ext-standard-normal-BFx_pHPN.woff2",
+        "assets/martian-mono-cyrillic-standard-normal-Dgr-UBxV.woff2",
+        "assets/martian-mono-latin-ext-standard-normal-DeTdBbNh.woff2",
+        "assets/martian-mono-latin-standard-normal-1TqSgyfh.woff2",
+        "assets/overpass-cyrillic-ext-wght-normal-B1PfurAb.woff2",
+        "assets/overpass-cyrillic-wght-normal-Bb0oHPsy.woff2",
+        "assets/overpass-latin-ext-wght-normal-DvafStyF.woff2",
+        "assets/overpass-latin-wght-normal-qAR8M_co.woff2",
+        "assets/overpass-vietnamese-wght-normal-BfgOsjc9.woff2",
+        "brand/fahrmodus/apple-touch-icon.png",
+        "brand/fahrmodus/apple-touch-icon.png.json",
+        "brand/fahrmodus/icon-192.png",
+        "brand/fahrmodus/icon-192.png.json",
+        "brand/fahrmodus/icon-512.png",
+        "brand/fahrmodus/icon-512.png.json",
+        "brand/fahrmodus/icon.svg",
+        "brand/klassik/apple-touch-icon.png",
+        "brand/klassik/apple-touch-icon.png.json",
+        "brand/klassik/icon-192.png",
+        "brand/klassik/icon-192.png.json",
+        "brand/klassik/icon-512.png",
+        "brand/klassik/icon-512.png.json",
+        "brand/klassik/icon.svg",
+        "brand/kontakt/apple-touch-icon.png",
+        "brand/kontakt/apple-touch-icon.png.json",
+        "brand/kontakt/icon-192.png",
+        "brand/kontakt/icon-192.png.json",
+        "brand/kontakt/icon-512.png",
+        "brand/kontakt/icon-512.png.json",
+        "brand/kontakt/icon.svg",
+        "brand/linie/apple-touch-icon.png",
+        "brand/linie/apple-touch-icon.png.json",
+        "brand/linie/icon-192.png",
+        "brand/linie/icon-192.png.json",
+        "brand/linie/icon-512.png",
+        "brand/linie/icon-512.png.json",
+        "brand/linie/icon.svg",
+        "brand/strich/apple-touch-icon.png",
+        "brand/strich/apple-touch-icon.png.json",
+        "brand/strich/icon-192.png",
+        "brand/strich/icon-192.png.json",
+        "brand/strich/icon-512.png",
+        "brand/strich/icon-512.png.json",
+        "brand/strich/icon.svg",
+        "brand/umlauf/apple-touch-icon.png",
+        "brand/umlauf/apple-touch-icon.png.json",
+        "brand/umlauf/icon-192.png",
+        "brand/umlauf/icon-192.png.json",
+        "brand/umlauf/icon-512.png",
+        "brand/umlauf/icon-512.png.json",
+        "brand/umlauf/icon.svg"
+      ],
+      "changed": [
+        "apple-touch-icon.png",
+        "apple-touch-icon.png.json",
+        "icon-192.png",
+        "icon-192.png.json",
+        "icon-512.png",
+        "icon-512.png.json",
+        "icon.svg",
+        "index.html",
+        "manifest.webmanifest"
+      ],
+      "unchanged": [
+        "assets/atkinson-hyperlegible-next-latin-ext-wght-normal-C6vrW8VD.woff2",
+        "assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2",
+        "assets/bricolage-grotesque-latin-ext-standard-normal-qp-RdZgh.woff2",
+        "assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2",
+        "assets/bricolage-grotesque-vietnamese-standard-normal-Br4FGdAc.woff2"
+      ]
+    },
+    "runtime_binding_comparison": "Versionresources.script_runtime andbindings exactlyequal priorverified93f6; no values/secretsprinted",
+    "migration": "v1",
+    "compatibility_date": "2026-09-20",
+    "compatibility_flags": [
+      "nodejs_compat"
+    ],
+    "namespaces": {
+      "USER_HUB": "59222ef9f3a642d4b90776fafa0eac84",
+      "REGISTRY": "2ccba352966f46a3b289eb159ccb3bc4"
+    },
+    "auth_health": [
+      {
+        "case": "health",
+        "http": "200",
+        "body": "{\"ok\":true,\"version\":\"1.0.0\",\"configured\":true}"
+      },
+      {
+        "case": "state",
+        "http": "401",
+        "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+      },
+      {
+        "case": "devices",
+        "http": "401",
+        "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+      },
+      {
+        "case": "history",
+        "http": "401",
+        "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+      },
+      {
+        "case": "protected_command",
+        "http": "403",
+        "body": "{\"error\":{\"code\":\"csrf\",\"message\":\"Ungültige Anfrage\"}}"
+      },
+      {
+        "case": "foreign_origin",
+        "http": "403",
+        "body": "{\"error\":{\"code\":\"csrf\",\"message\":\"Ungültige Anfrage\"}}"
+      },
+      {
+        "case": "native",
+        "http": "401",
+        "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+      }
+    ],
+    "public_browser": [
+      {
+        "theme": "light",
+        "width": 390,
+        "status": 200,
+        "body": "Zum Inhalt\ntrue-shuffle\n\nDeine Playlist\n\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+        "overflow": 0,
+        "errors": [],
+        "auth": {
+          "status": 401,
+          "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+        }
+      },
+      {
+        "theme": "light",
+        "width": 1440,
+        "status": 200,
+        "body": "Zum Inhalt\ntrue-shuffle\n\nDeine Playlist\n\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+        "overflow": 0,
+        "errors": [],
+        "auth": {
+          "status": 401,
+          "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+        }
+      },
+      {
+        "theme": "dark",
+        "width": 390,
+        "status": 200,
+        "body": "Zum Inhalt\ntrue-shuffle\n\nDeine Playlist\n\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+        "overflow": 0,
+        "errors": [],
+        "auth": {
+          "status": 401,
+          "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+        }
+      },
+      {
+        "theme": "dark",
+        "width": 1440,
+        "status": 200,
+        "body": "Zum Inhalt\ntrue-shuffle\n\nDeine Playlist\n\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+        "overflow": 0,
+        "errors": [],
+        "auth": {
+          "status": 401,
+          "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+        }
+      }
+    ],
+    "rollback": {
+      "source": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+      "version": "93f6d97c-81d0-423a-9abf-c0a6f3d58dd6",
+      "reference": "RESUME_REVIEW.json verified priorrollback; no rollback orDBrestore thiswatch"
+    }
+  },
+  "verification": {
+    "typecheck": "PASS",
+    "lint": "PASS2preexistinginfos",
+    "build": "PASS",
+    "dry_run": "PASS",
+    "local_unit_default": "474/475;1known20stimeout, recordedFAIL notdiscarded",
+    "isolated_weekend": "PASS60sceiling18.47s; exactunchangedsource",
+    "browser": "40/40realWorker-FakeSpotifyPASS",
+    "ci": {
+      "run": 37812863397,
+      "result": "475/475and40browserPASS",
+      "checkout": "12318c052763e555c184aacb81d626ca88c71132",
+      "equivalence": "gitdiff src/test/e2e/package/config is empty vs97e6; CIcheckoutsyntheticmergeintoPR10planbase5ffe"
+    },
+    "independent_functional": {
+      "independence": "FRESH",
+      "reviewed_subject": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+      "repair_pr": 17,
+      "repair_head": "74f3252536d5d353353aaa15130c3faca93ea46c",
+      "baseline_target": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+      "comparison_production_before": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+      "timestamp": "2026-10-08T18:02:18.486946+00:00",
+      "scope": "PR17 resume/history repair in integrated PR16 source; preserved functional contracts. No app edits. UI and production readback owned by separate reviewers/root.",
+      "original_attacks": {
+        "status": "PASS",
+        "count": 6,
+        "evidence": "/tmp/pr17-independent/inherited.log"
+      },
+      "additional_attacks": {
+        "status": "PASS",
+        "count": 5,
+        "evidence": "/tmp/pr17-independent/boundaries.log",
+        "cases": [
+          "legacy seen window across restart",
+          "open delayed listing then distinct subsequent repeat across restart",
+          "same context after intervening song",
+          "ten-minute extension expiry",
+          "null checkpoint with legacy heardSince and later history entry"
+        ]
+      },
+      "scoped_existing_checks": {
+        "status": "PASS",
+        "count": 94,
+        "evidence": "/tmp/pr17-independent/scoped.log",
+        "suites": [
+          "resume-place",
+          "session",
+          "refused-start",
+          "quota",
+          "observation-scheduling",
+          "observation-policy"
+        ]
+      },
+      "findings": [],
+      "closed_findings": [
+        "RESUME-01",
+        "RESUME-02",
+        "RESUME-03"
+      ],
+      "not_run": [
+        "physical owner iPhone",
+        "live Spotify latency or quota acceptance",
+        "private HA/MA",
+        "populated production restore"
+      ],
+      "notes": [
+        "History membership no longer mutates saved occurrence/checkpoint before a request.",
+        "Original dedup window restored; only open same/absent-context single delayed listing receives extension, with intervening-song and listed guards. Legacy entries receive no new extension.",
+        "No schema, migration, namespace, auth, endpoint429 or provider call cadence changes in PR17.",
+        "Source canonical production headers/HANDOFF remain historic and require root evidence refresh."
+      ],
+      "verdict": "READY",
+      "verdict_scope": "Fresh functional review of PR17 repair plus combined backend safeguards at exact integrated97e6; does not constitute physical/live provider acceptance or production deployment readback.",
+      "protected_checks": {
+        "status": "PASS",
+        "count": 149,
+        "evidence": "/tmp/pr17-independent/protected.log",
+        "suites": [
+          "robustness",
+          "skips-truth",
+          "recovery",
+          "song-facts",
+          "native",
+          "native-rolling",
+          "native-orchestrator",
+          "native-bridge"
+        ]
+      },
+      "total_reproduced_tests": 254
+    },
+    "independent_ui": {
+      "reviewed_source": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+      "independence": "FRESH",
+      "scope": "Bounded independently rendered production-source favorite-tag contrast only; public anonymous matrix separately passed",
+      "verdict": "NOT_READY",
+      "findings": [
+        {
+          "id": "PROD97-TAG-CONTRAST",
+          "severity": "P2",
+          "blocking_new_release": true,
+          "rollback_recommendation": false,
+          "file": "src/client/styles/app.css:2360",
+          "actual": "Actual built exact97e6 mock API row Favorit at13px #c2412a on #f4ecda contrast4.373098:1 light. Dark5.612133:1 PASS.",
+          "expected": ">=4.5:1 normal-size tag text."
+        }
+      ],
+      "other_pr18_findings": "Not attributed to97e6: PR18 source labels and removed unheard qualification do not exist in this baseline",
+      "artifacts": [
+        "/tmp/prod97-tag.json",
+        "/tmp/prod97-tags-light.png",
+        "/tmp/prod97-tags-dark.png"
+      ],
+      "app_edits": false,
+      "production_mutations": false,
+      "limitations": [
+        "Mocked authenticated state verifies built source rendering, not actual authenticated production API or physical Spotify/iPhone.",
+        "Public runtime signin4renders already checked independently."
+      ]
+    },
+    "functional_verdict": "READY/FRESH",
+    "ui_verdict": "NOT_READY/FRESH inheritedredtagcontrastP2",
+    "overall_claim": "PARTIAL: actualproductionverified; fullUI/liveacceptanceincomplete",
+    "responsiveness": "Protectedstore/playback/progress/api/endpointquota/devicebehavior carriedforward with currenttests; priorRESPONSIVENESS_OPTIMIZATION historic30ae timings simulatednotlivequota",
+    "not_run": [
+      "physicaliPhone",
+      "liveSpotifylatency/quota",
+      "privateHA/MA",
+      "populatedrestore"
+    ]
+  },
+  "closed_findings": [
+    "RESUME-01",
+    "RESUME-02",
+    "RESUME-03",
+    "PR16-FACTS-01",
+    "PR16-DARK-NAV-CONTRAST",
+    "UX_REBUILD_FACTS_CALENDAR_BOUND",
+    "FOUR-DESIGN-STORAGE",
+    "FOUR-DESIGN-CONTRAST"
+  ],
+  "open_findings": [
+    {
+      "id": "PR18-TAG-CONTRAST",
+      "source": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Inherited light rowFavorit smalltextcontrast4.373098:1<4.5",
+      "files": [
+        "src/client/styles/app.css"
+      ],
+      "scope": "Currentproductionrenderedsource; not introduced byPR18; no rollbacksolelythisdefect"
+    }
+  ],
+  "artifacts": {
+    "ts97-type.log": {
+      "sha256": "ae29ac4d533a8b8b369f527a9cc2e24ecac5b6701e3440d78202e875faa2ffcc",
+      "text": "\n> true-shuffle@1.0.0 typecheck\n> tsc -p tsconfig.worker.json && tsc -p tsconfig.client.json && tsc -p tsconfig.test.json\n\n"
+    },
+    "ts97-lint.log": {
+      "sha256": "ed4387a5463301195772fc8b63feacafb2ceb1b89ae7b9219fe5c334aa4252b8",
+      "text": "\n> true-shuffle@1.0.0 lint\n> biome check .\n\ntest/spotify/usage.test.ts:25:40 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n  i Template literals are preferred over string concatenation.\n  \n    23 │ \tconst sql = nodeSql();\n    24 │ \tconst t = new SpotifyUsageTracker(sql, () => T0);\n  > 25 │ \tfor (let i = 1; i <= 7; i++) t.record(\"private-listener-\" + i, metric(200));\n       │ \t                                      ^^^^^^^^^^^^^^^^^^^^^^^\n    26 │ \tt.record(\n    27 │ \t\t\"@signin:privateflow\",\n  \n  i Unsafe fix: Use a template literal.\n  \n     23  23 │     const sql = nodeSql();\n     24  24 │     const t = new SpotifyUsageTracker(sql, () => T0);\n     25     │ - → for·(let·i·=·1;·i·<=·7;·i++)·t.record(\"private-listener-\"·+·i,·metric(200));\n         25 │ + → for·(let·i·=·1;·i·<=·7;·i++)·t.record(`private-listener-${i}`,·metric(200));\n     26  26 │     t.record(\n     27  27 │       \"@signin:privateflow\",\n  \n\ntest/spotify/usage.test.ts:40:40 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n  i Template literals are preferred over string concatenation.\n  \n    38 │ it(\"correlates recovery to same overflow listener and same OAuth flow only\", () => {\n    39 │ \tconst t = new SpotifyUsageTracker(nodeSql(), () => T0);\n  > 40 │ \tfor (let i = 1; i <= 5; i++) t.record(\"u\" + i, metric(200));\n       │ \t                                      ^^^^^^^\n    41 │ \tt.record(\"overflow-A\", metric(429));\n    42 │ \tt.record(\"overflow-B\", metric(200));\n  \n  i Unsafe fix: Use a template literal.\n  \n     38  38 │   it(\"correlates recovery to same overflow listener and same OAuth flow only\", () => {\n     39  39 │     const t = new SpotifyUsageTracker(nodeSql(), () => T0);\n     40     │ - → for·(let·i·=·1;·i·<=·5;·i++)·t.record(\"u\"·+·i,·metric(200));\n         40 │ + → for·(let·i·=·1;·i·<=·5;·i++)·t.record(`u${i}`,·metric(200));\n     41  41 │     t.record(\"overflow-A\", metric(429));\n     42  42 │     t.record(\"overflow-B\", metric(200));\n  \n\nChecked 118 files in 715ms. No fixes applied.\nFound 2 infos.\n"
+    },
+    "ts97-build.log": {
+      "sha256": "ba3562e2e536b27996936d44778d101ab65a7a857f7d405c01c82635d8e80554",
+      "text": "\n> true-shuffle@1.0.0 build\n> npm run build:client\n\n\n> true-shuffle@1.0.0 build:client\n> vite build\n\nvite v8.3.1 building client environment for production...\ntransforming...\n✓ 1907 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/client/index.html                                                                0.91 kB │ gzip:  0.45 kB\ndist/client/assets/atkinson-hyperlegible-next-latin-ext-wght-normal-C6vrW8VD.woff2   19.09 kB\ndist/client/assets/bricolage-grotesque-vietnamese-standard-normal-Br4FGdAc.woff2     22.02 kB\ndist/client/assets/permanent-marker-latin-400-normal-BF23djCy.woff2                  29.56 kB\ndist/client/assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2       33.99 kB\ndist/client/assets/permanent-marker-latin-400-normal-BnZj5c41.woff                   36.11 kB\ndist/client/assets/bricolage-grotesque-latin-ext-standard-normal-qp-RdZgh.woff2      53.58 kB\ndist/client/assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2         131.54 kB\ndist/client/assets/index-Btfb1YB8.css                                                48.17 kB │ gzip: 10.69 kB\ndist/client/assets/index-DJ3UCLbU.js                                                137.04 kB │ gzip: 43.31 kB │ map: 432.48 kB\n\n✓ built in 429ms\n"
+    },
+    "ts97-dry.log": {
+      "sha256": "f1f99029eb889037b70c61ecfdf07eaad6c1940a1c82db61f126cdb54ef2b884",
+      "text": "\u001b[33m▲ \u001b[43;33m[\u001b[43;30mWARNING\u001b[43;33m]\u001b[0m \u001b[1mProxy environment variables detected. We'll use your proxy for fetch requests.\u001b[0m\n\n\n\n ⛅️ wrangler 4.141.0\n────────────────────\n✨ Read 21 files from the assets directory /workspace/ts-review-97e6/dist/client\nTotal Upload: 916.32 KiB / gzip: 194.42 KiB\nYour Worker has access to the following bindings:\nBinding                      Resource            \nenv.USER_HUB (UserHub)       Durable Object      \nenv.REGISTRY (Registry)      Durable Object      \nenv.AI                       AI                  \nenv.ASSETS                   Assets              \n\n--dry-run: exiting now.\n"
+    },
+    "ts97-unit.log": {
+      "sha256": "fe164a8106e4493e22ba580a1f8bf099c7f11f5e401e6e6aef08e9753bed7e32",
+      "text": "\n> true-shuffle@1.0.0 test\n> vitest run\n\n\n RUN  v5.0.2 /workspace/ts-review-97e6\n\nstdout | test/hub/robustness.test.ts > the ninth review's cases > a turned-down song is skipped after a weekend with the phone out of sight\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n\nstdout | test/hub/robustness.test.ts > the ninth review's cases > a turned-down song is skipped after a weekend with the phone out of sight\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n\nstdout | test/hub/robustness.test.ts > the ninth review's cases > a turned-down song is skipped after a weekend with the phone out of sight\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 600 Songs übernommen, 0 übersprungen\"}\n\nstdout | test/hub/robustness.test.ts > the ninth review's cases > a turned-down song is skipped after a weekend with the phone out of sight\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 141 — Artist 21\"}\n\n ❯ test/hub/robustness.test.ts (117 tests | 1 failed) 111457ms\n   ❯ the ninth review's cases (2)\n     × a turned-down song is skipped after a weekend with the phone out of sight 20007ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  test/hub/robustness.test.ts > the ninth review's cases > a turned-down song is skipped after a weekend with the phone out of sight\nError: Test timed out in 20000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n ❯ test/hub/robustness.test.ts:719:2\n    717|  });\n    718|\n    719|  it(\"a turned-down song is skipped after a weekend with the phone out …\n       |  ^\n    720|   const h = await onboarded({ tracks: 600 });\n    721|   const sid = h.stationIds[0]!;\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 32 passed (33)\n      Tests  1 failed | 474 passed (475)\n   Start at  17:59:01\n   Duration  112.04s (tests 97%, import 2%, transform 1%)\n\n"
+    },
+    "ts97-weekend.log": {
+      "sha256": "caaf6581c2238e1f3a03480d04181abecfef91ab4c0be68948014cc5290cb602",
+      "text": "\n RUN  v5.0.2 /workspace/ts-review-97e6\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 116 skipped (117)\n   Start at  18:03:21\n   Duration  18.47s (tests 97%, transform 2%, import 1%)\n\n"
+    },
+    "ts97-e2e.log": {
+      "sha256": "bde4e7014f78546975055a5e6f8856f25234f9900e0caebd420f1b452e540e79",
+      "text": "\n> true-shuffle@1.0.0 test:e2e\n> playwright test\n\n[WebServer] (node:189021) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)\n[WebServer] (node:189031) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)\n[WebServer] (node:189044) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)\n[WebServer] (node:189095) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)\n[WebServer] ▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.\n[WebServer] \n[WebServer] \n\nRunning 40 tests using 1 worker\n\n(node:189370) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓   1 e2e/app.spec.ts:103:2 › a listener's day › shows signed-out users as online after a normal authentication response (1.4s)\n  ✓   2 e2e/app.spec.ts:113:2 › a listener's day › signs in with Spotify and saves playlists as stations (4.1s)\n  ✓   3 e2e/app.spec.ts:132:2 › a listener's day › starts a station in Spotify, in true-shuffle's order (4.7s)\n  ✓   4 e2e/app.spec.ts:155:2 › a listener's day › counts song time locally without additional API requests (2.6s)\n  ✓   5 e2e/app.spec.ts:173:2 › a listener's day › skips and bans a song from the transport keys (4.3s)\n  ✓   6 e2e/app.spec.ts:191:2 › a listener's day › shows the station with its round, mix and next songs (2.6s)\n  ✓   7 e2e/app.spec.ts:219:2 › a listener's day › guest mode keeps someone else's music out of the memory (2.4s)\n  ✓   8 e2e/app.spec.ts:233:2 › a listener's day › a personal key likes the playing song from Siri or a widget (2.4s)\n  ✓   9 e2e/app.spec.ts:267:2 › a listener's day › every page reads well on a phone (12.0s)\n  ✓  10 e2e/app.spec.ts:405:2 › a listener's day › a station held paused plays on from its page, never starts over (1.9s)\n  ✓  11 e2e/app.spec.ts:433:2 › a listener's day › says clearly when Spotify refuses: no Premium, no device (2.9s)\n  ✓  12 e2e/app.spec.ts:456:2 › a listener's day › signs out and keeps the memory (2.7s)\n  ✓  13 e2e/app.spec.ts:477:2 › calm player › shows current music and ordered queue beside the library (2.4s)\n  ✓  14 e2e/app.spec.ts:488:2 › calm player › keeps saved song, progress and queue across reload and another browser (6.8s)\n  ✓  15 e2e/app.spec.ts:525:2 › calm player › handles offline state, light and dark mobile, keyboard and deliberate new queue (2.7s)\n  ✓  16 e2e/app.spec.ts:645:2 › confirmed Spotify operations and shared usage › shows app-wide observations without exposing identities or inventing remaining capacity (2.7s)\n  ✓  17 e2e/app.spec.ts:703:2 › confirmed Spotify operations and shared usage › holds only confirmed operations and never revives a legacy inferred global gate (1.4s)\n  ✓  18 e2e/app.spec.ts:777:2 › confirmed Spotify operations and shared usage › shows tracking failure with a retry and does not turn it into a Spotify block (995ms)\n  ✓  19 e2e/app.spec.ts:807:2 › confirmed Spotify operations and shared usage › requires authentication and request protection for the availability trial (37ms)\n  ✓  20 e2e/capture.spec.ts:3:1 › captures the real Worker player and saved occurrence in both themes (2.5s)\n  ✓  21 e2e/client-playback.spec.ts:142:1 › projects one known successor locally and uses the authoritative occurrence for pause (854ms)\n  ✓  22 e2e/client-playback.spec.ts:171:1 › pause freezes immediately through a slow response, then reconciles a fresh observation (953ms)\n  ✓  23 e2e/client-playback.spec.ts:197:1 › a poll started before pause cannot win; one fresh serialized follow-up confirms it (722ms)\n  ✓  24 e2e/client-playback.spec.ts:230:1 › resume acceptance stays pending through old observations and exposes bounded retry (799ms)\n  ✓  25 e2e/client-playback.spec.ts:258:1 › a rejected pause restores observed playback and provides an explicit retry (661ms)\n  ✓  26 e2e/client-playback.spec.ts:279:1 › device refresh preserves an absent explicit device and the Spotify sentinel routing (1.1s)\n  ✓  27 e2e/client-playback.spec.ts:312:1 › projection expires without advancing further and seeks, offline and private observations correct it (806ms)\n  ✓  28 e2e/client-playback.spec.ts:340:1 › identity change discards a pending command and its late response (721ms)\n  ✓  29 e2e/client-playback.spec.ts:358:1 › accepted next keeps the saved occurrence until the actual successor is observed (1.0s)\n  ✓  30 e2e/client-playback.spec.ts:381:1 › an absent saved native selection keeps its native route (702ms)\n  ✓  31 e2e/client-playback.spec.ts:410:1 › a lost transport response remains uncertain and never claims pause (608ms)\n  ✓  32 e2e/client-playback.spec.ts:420:1 › opens and returns with a coalesced fresh read while regular polling stays cached (625ms)\n  ✓  33 e2e/client-playback.spec.ts:444:1 › an ambiguous pause error stays frozen until a fresh paused observation confirms it (746ms)\n  ✓  34 e2e/client-playback.spec.ts:476:1 › a reloaded paused session waits for confirmation when its cached Spotify observation still plays (849ms)\n  ✓  35 e2e/client-playback.spec.ts:501:1 › a confirmed native pause stays authoritative over cached matching Spotify playback (644ms)\n  ✓  36 e2e/client-playback.spec.ts:521:1 › an unconfirmed pause with a vanished device allows deliberate saved-song recovery elsewhere (1.0s)\n  ✓  37 e2e/client-playback.spec.ts:586:1 › accepted playback confirms on the station page after navigating before the device observation (829ms)\n  ✓  38 e2e/client-playback.spec.ts:633:1 › bounded command confirmation reads stay silent while the app is hidden (678ms)\n  ✓  39 e2e/client-playback.spec.ts:649:1 › very long unbroken song metadata wraps without page overflow on desktop and phone (1.3s)\n  ✓  40 e2e/recovery.spec.ts:11:1 › deliberately recovers an unconfirmed Spotify resume without changing its occurrence (5.7s)\n\n  40 passed (1.6m)\n"
+    },
+    "inherited.log": {
+      "sha256": "a504122b39a8306899a7895c3411bf59f6356996ba8be3530d6ea22d1cef7da4",
+      "text": "\n RUN  v5.0.2 /workspace/ts-review-97e6\n\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  17:59:03\n   Duration  1.09s (transform 49%, tests 38%, import 12%, worker 1%)\n\n"
+    },
+    "boundaries.log": {
+      "sha256": "14dfd2951e125cc4b5229323c9a77c25801f12ee59b82489655ed161014e2b8d",
+      "text": "\n RUN  v5.0.2 /workspace/ts-review-97e6\n\n\n Test Files  2 passed (2)\n      Tests  11 passed (11)\n   Start at  17:59:56\n   Duration  899ms (tests 42%, transform 41%, import 17%, worker 1%)\n\n"
+    },
+    "scoped.log": {
+      "sha256": "f7ae6fdd5c4872eb475c32a28644980994377e3fff7adc851d82fef355fb06ec",
+      "text": "\n RUN  v5.0.2 /workspace/ts-review-97e6\n\n\n Test Files  6 passed (6)\n      Tests  94 passed (94)\n   Start at  17:59:32\n   Duration  7.10s (tests 87%, transform 7%, import 6%)\n\n"
+    },
+    "protected.log": {
+      "sha256": "33076ceef3828d6ce93ff911f7dcf95089b6a535a8cfe0228495f3201d82ae97",
+      "text": "\n RUN  v5.0.2 /workspace/ts-review-97e6\n\n\n Test Files  8 passed (8)\n      Tests  149 passed (149)\n   Start at  18:00:15\n   Duration  127.39s (tests 99%, transform 1%, import 1%)\n\n"
+    },
+    "prod97-tag.json": {
+      "sha256": "5e91c4977bc4b2ce76bdb8ec98c35138c4952250e22cb0cfc31ed5488c6db716",
+      "text": "er Künstler Künstler Künstler Künstler Künstler Künstler Künstler\\nFavorit3× gehört\\n3:00\\n4 weitere Songs zeigen\\n\\nWas du in Spotify selbst einreihst, steht nicht in dieser Liste.\\n\\nWas true-shuffle für dich tut\\nJeder Song kommt dran. 150 von 300 Songs aus Production tags hast du schon gehört, 150 kommen noch. Erst danach beginnt alles von vorn.\\nKeine schnellen Wiederholungen. Was du gehört hast, kommt eine Weile nicht wieder. Favoriten kommen öfter, aber erst nach einer Pause von einer Woche.\\nDeine Stelle bleibt. Auch wenn du zwischendurch etwas anderes in Spotify hörst oder die App schließt.\\nEs weiß, was du kennst. Mit deinem Spotify-Hörverlauf weiß es sofort, was du schon oft gehört hast. Hörverlauf importieren\\nAndere Kassette einlegen\\nNeue Kassette\\nProduction tags\\n\\nProduction tags\\n\\n150 von 300 gehört · eingelegt\\nEinstellen\\nKassette 2 Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname\\n\\nKassette 2 Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname\\n\\n150 von 300 gehört\\nEinstellen\\nKassette 3 Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname\\n\\nKassette 3 Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname\\n\\n150 von 300 gehört\\nEinstellen\\n„Production tags“ neu mischen …\\nJetzt\\nKassetten\\nVerlauf\\nMehr\",\n    \"contrast\": [\n      {\n        \"text\": \"Bisher nicht gehört\",\n        \"color\": \"rgb(255, 255, 255)\",\n        \"bg\": \"rgb(194, 65, 42)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"Neu für dich\",\n        \"color\": \"rgb(194, 65, 42)\",\n        \"bg\": \"rgb(244, 236, 218)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"3× gehört\",\n        \"color\": \"rgb(106, 86, 63)\",\n        \"bg\": \"rgb(244, 236, 218)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"Favorit\",\n        \"color\": \"rgb(194, 65, 42)\",\n        \"bg\": \"rgb(244, 236, 218)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"3× gehört\",\n        \"color\": \"rgb(106, 86, 63)\",\n        \"bg\": \"rgb(244, 236, 218)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"3× gehört\",\n        \"color\": \"rgb(106, 86, 63)\",\n        \"bg\": \"rgb(244, 236, 218)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"Neu für dich\",\n        \"color\": \"rgb(194, 65, 42)\",\n        \"bg\": \"rgb(244, 236, 218)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"Favorit\",\n        \"color\": \"rgb(194, 65, 42)\",\n        \"bg\": \"rgb(244, 236, 218)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"3× gehört\",\n        \"color\": \"rgb(106, 86, 63)\",\n        \"bg\": \"rgb(244, 236, 218)\",\n        \"size\": \"13px\"\n      }\n    ]\n  },\n  {\n    \"theme\": \"dark\",\n    \"scenario\": \"liked-only / no imported history\",\n    \"body\": \"Zum Inhalt\\ntrue-shuffle\\nProduction tags\\n\\n150 von 300 Songs gehört\\n150\\nvon 300 Songs gehört\\n\\nProduction tags\\n\\nFortsetzen\\nWeiter\\nFavorit\\nNie wieder\\nLiked-only track\\n\\nLiked-only artist\\n\\nBisher nicht gehört\\n1:37 gespeichert\\n3:00\\n\\nPausiert\\n\\nFortsetzen spielt genau an dieser Stelle weiter.\\n\\nGerät\\nAktives Spotify-Gerät\\nSpotify · aktives Gerät\\n\\nZuletzt auf iPhone\\n\\nHome-Assistant-Geräte nicht erreichbar: t.devices is not iterable\\n\\nAls Nächstes\\n\\nFeste Reihenfolge. Fortsetzen mischt nichts neu.\\n\\n1\\nSong 1 Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel\\nArtist Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler\\nNeu für dich3× gehört\\n3:00\\n2\\nSong 2 Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel\\nArtist Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler\\nFavorit3× gehört\\n3:00\\n3\\nSong 3 Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel\\nArtist Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler\\n3× gehört\\n3:00\\n4\\nSong 4 Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel\\nArtist Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler\\nNeu für dich\\n3:00\\n5\\nSong 5 Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel Langer Songtitel\\nArtist Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler Künstler\\nFavorit3× gehört\\n3:00\\n4 weitere Songs zeigen\\n\\nWas du in Spotify selbst einreihst, steht nicht in dieser Liste.\\n\\nWas true-shuffle für dich tut\\nJeder Song kommt dran. 150 von 300 Songs aus Production tags hast du schon gehört, 150 kommen noch. Erst danach beginnt alles von vorn.\\nKeine schnellen Wiederholungen. Was du gehört hast, kommt eine Weile nicht wieder. Favoriten kommen öfter, aber erst nach einer Pause von einer Woche.\\nDeine Stelle bleibt. Auch wenn du zwischendurch etwas anderes in Spotify hörst oder die App schließt.\\nEs weiß, was du kennst. Mit deinem Spotify-Hörverlauf weiß es sofort, was du schon oft gehört hast. Hörverlauf importieren\\nAndere Kassette einlegen\\nNeue Kassette\\nProduction tags\\n\\nProduction tags\\n\\n150 von 300 gehört · eingelegt\\nEinstellen\\nKassette 2 Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname\\n\\nKassette 2 Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname\\n\\n150 von 300 gehört\\nEinstellen\\nKassette 3 Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname\\n\\nKassette 3 Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname Langname\\n\\n150 von 300 gehört\\nEinstellen\\n„Production tags“ neu mischen …\\nJetzt\\nKassetten\\nVerlauf\\nMehr\",\n    \"contrast\": [\n      {\n        \"text\": \"Bisher nicht gehört\",\n        \"color\": \"rgb(28, 13, 7)\",\n        \"bg\": \"rgb(239, 107, 74)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"Neu für dich\",\n        \"color\": \"rgb(239, 107, 74)\",\n        \"bg\": \"rgb(34, 26, 18)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"3× gehört\",\n        \"color\": \"rgb(168, 149, 111)\",\n        \"bg\": \"rgb(34, 26, 18)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"Favorit\",\n        \"color\": \"rgb(239, 107, 74)\",\n        \"bg\": \"rgb(34, 26, 18)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"3× gehört\",\n        \"color\": \"rgb(168, 149, 111)\",\n        \"bg\": \"rgb(34, 26, 18)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"3× gehört\",\n        \"color\": \"rgb(168, 149, 111)\",\n        \"bg\": \"rgb(34, 26, 18)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"Neu für dich\",\n        \"color\": \"rgb(239, 107, 74)\",\n        \"bg\": \"rgb(34, 26, 18)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"Favorit\",\n        \"color\": \"rgb(239, 107, 74)\",\n        \"bg\": \"rgb(34, 26, 18)\",\n        \"size\": \"13px\"\n      },\n      {\n        \"text\": \"3× gehört\",\n        \"color\": \"rgb(168, 149, 111)\",\n        \"bg\": \"rgb(34, 26, 18)\",\n        \"size\": \"13px\"\n      }\n    ]\n  }\n]"
+    }
+  },
+  "reproductions": {
+    "inherited.test.ts": "import {expect,it} from '/workspace/ts-review-97e6/node_modules/vitest/dist/index.js';\nimport {onboarded} from '/workspace/ts-review-97e6/test/hub/harness.ts';\nimport {RequestBudget} from '/workspace/ts-review-97e6/src/worker/spotify/client.ts';\nconst observe=(h:any)=>h.hub.sync(new RequestBudget(25),{force:true});\nconst ids=(h:any,id:number)=>JSON.parse(h.sql.first('SELECT deck FROM stations WHERE id = ?',id).deck).items.map((x:any)=>x.id);\nconst save=(h:any,id:number,s:any)=>h.sql.run('UPDATE playback_sessions SET data = ? WHERE station_id = ?',JSON.stringify(s),id);\nconst history=(h:any,id:number,index:number)=>{const s=h.hub.savedSession(id);const t=ids(h,id)[index];h.sql.run('INSERT INTO plays (played_at,track_id,context_uri,station_id,ignored,meta) VALUES (?,?,?,?,0,NULL)',h.clock.t,t,s.contextUri,id);};\nit.each([null,177000])('retains current unfinished occurrence with saved progress %s',async(progress)=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);await h.hub.playerAction('pause');\n const s=h.hub.savedSession(id)!;save(h,id,{...s,progressMs:progress});history(h,id,0);h.fake.user().player.contextUri='spotify:playlist:other';\n expect(await h.hub.play(id)).toMatchObject({ok:true});\n console.log('REPRO progress',progress,'index',h.hub.savedSession(id)!.currentIndex,'actual',h.fake.current(),'expected',ids(h,id)[0]);\n expect(h.hub.savedSession(id)!.currentIndex).toBe(0);expect(h.fake.current()).toBe(ids(h,id)[0]);\n});\nit('refused resume retains candidate checkpoint when history suggests advance',async()=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);await h.hub.playerAction('pause');const s=h.hub.savedSession(id)!;\n save(h,id,{...s,currentIndex:0,progressMs:23000});history(h,id,3);h.fake.user().player.contextUri='spotify:playlist:other';\n const handle=h.fake.handle.bind(h.fake);h.fake.handle=async req=>req.method==='PUT'&&new URL(req.url).pathname==='/v1/me/player/play'?new Response(JSON.stringify({error:{status:403,reason:'PREMIUM_REQUIRED',message:'premium'}}),{status:403}):handle(req);\n expect(await h.hub.play(id,'mika-phone')).toMatchObject({ok:false,error:{code:'premium'}});\n console.log('REPRO refused',h.hub.savedSession(id));expect(h.hub.savedSession(id)).toMatchObject({currentIndex:0,progressMs:23000});\n});\nit('a separate repeat within ten minutes is counted separately after seen first occurrence',async()=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);await h.hub.playerAction('pause');const s=h.hub.savedSession(id)!;const t=ids(h,id)[120];\n // Use actual packed track metadata from source cache via lookupTracks.\n const hub:any=h.hub;const track=hub.lookupTracks([t],hub.usedSources()).get(t);const at=h.clock.t;\n expect(hub.recordSeenPlay({id:t,at,start:at-180000,end:at,contextUri:s.contextUri,track})).not.toBeNull();\n h.clock.t+=4*60000;h.fake.user().recent.unshift({trackId:t,playedAt:h.clock.t,contextUri:'spotify:playlist:different'});await observe(h);\n const n=h.sql.first('SELECT COUNT(*) AS n FROM plays WHERE track_id = ?',t).n;console.log('REPRO repeat',n);expect(n).toBe(2);\n});\n\nit('real paused 177s unfinished song is not skipped by recent partial listing',async()=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);h.fake.user().player.progressMs=177000;await observe(h);await h.hub.playerAction('pause');const before=h.hub.savedSession(id)!;const t=ids(h,id)[before.currentIndex];\n h.fake.user().recent.unshift({trackId:t,playedAt:h.clock.t,contextUri:before.contextUri});await observe(h);\n expect(h.hub.savedSession(id)!.progressMs).toBe(177000);expect(await h.hub.play(id)).toMatchObject({ok:true});\n console.log('REPRO actual paused end',before.currentIndex,h.hub.savedSession(id)!.currentIndex,h.fake.current(),t);expect(h.fake.current()).toBe(t);expect(h.fake.user().player.progressMs).toBe(177000);\n});\nit('partial later track does not prove skipped intervening occurrences completed',async()=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);h.fake.user().player.progressMs=42000;await observe(h);await h.hub.playerAction('pause');const before=h.hub.savedSession(id)!;const t=ids(h,id)[3];\n h.fake.user().recent.unshift({trackId:t,playedAt:h.clock.t,contextUri:before.contextUri});h.fake.user().player.contextUri='spotify:playlist:other';await observe(h);\n expect(await h.hub.play(id)).toMatchObject({ok:true});console.log('REPRO future partial',h.hub.savedSession(id)!.currentIndex);expect(h.hub.savedSession(id)!.currentIndex).toBe(before.currentIndex);\n});\n",
+    "boundaries.test.ts": "import {expect,it} from '/workspace/ts-review-97e6/node_modules/vitest/dist/index.js';\nimport {onboarded} from '/workspace/ts-review-97e6/test/hub/harness.ts';\nimport {RequestBudget} from '/workspace/ts-review-97e6/src/worker/spotify/client.ts';\nconst observe=(h:any)=>h.hub.sync(new RequestBudget(25),{force:true});\nasync function setup(){const h=await onboarded({tracks:200,durationMs:180000}); const id=h.stationIds[0]!;await h.hub.play(id);await h.hub.playerAction('pause');const s=h.hub.savedSession(id)!;const ids=JSON.parse(h.sql.first('SELECT deck FROM stations WHERE id = ?',id).deck).items.map((it:any)=>it.id);const hub:any=h.hub;const song=ids[120];const track=hub.lookupTracks([song],hub.usedSources()).get(song);return{h,hub,id,s,ids,song,track};}\nit('legacy seen entry has no ten-minute extension after restart',async()=>{const{h,hub,s,song}=await setup();const at=h.clock.t;hub.kvSet('seen_plays',[{id:song,from:at-1000,to:at+60000}]);h.restart();h.clock.t+=4*60000;h.fake.user().recent.unshift({trackId:song,playedAt:h.clock.t,contextUri:s.contextUri});await observe(h);expect(h.sql.first('SELECT COUNT(*) AS n FROM plays WHERE track_id = ?',song).n).toBe(1);});\nit('an open delayed first listing dedups once across restart, subsequent one survives',async()=>{const{h,hub,s,song,track}=await setup();const at=h.clock.t;hub.recordSeenPlay({id:song,at,start:at-45000,end:at,contextUri:s.contextUri,track,open:true});h.restart();h.clock.t+=4*60000;h.fake.user().recent.unshift({trackId:song,playedAt:h.clock.t,contextUri:s.contextUri});await observe(h);expect(h.sql.first('SELECT COUNT(*) AS n FROM plays WHERE track_id = ?',song).n).toBe(1);h.restart();h.clock.t+=3*60000;h.fake.user().recent.unshift({trackId:song,playedAt:h.clock.t,contextUri:s.contextUri});await observe(h);expect(h.sql.first('SELECT COUNT(*) AS n FROM plays WHERE track_id = ?',song).n).toBe(2);});\nit('same-context new play after intervening heard song survives',async()=>{const{h,hub,s,ids,song,track}=await setup();const at=h.clock.t;hub.recordSeenPlay({id:song,at,start:at-45000,end:at,contextUri:s.contextUri,track,open:true});h.clock.t+=2*60000;h.fake.user().recent.unshift({trackId:ids[140],playedAt:h.clock.t,contextUri:s.contextUri});await observe(h);h.restart();h.clock.t+=2*60000;h.fake.user().recent.unshift({trackId:song,playedAt:h.clock.t,contextUri:s.contextUri});await observe(h);expect(h.sql.first('SELECT COUNT(*) AS n FROM plays WHERE track_id = ?',song).n).toBe(2);});\nit('after extension deadline same track is a new play',async()=>{const{h,hub,s,song,track}=await setup();const at=h.clock.t;hub.recordSeenPlay({id:song,at,start:at-45000,end:at,contextUri:s.contextUri,track,open:true});h.clock.t+=600001;h.fake.user().recent.unshift({trackId:song,playedAt:h.clock.t,contextUri:s.contextUri});await observe(h);expect(h.sql.first('SELECT COUNT(*) AS n FROM plays WHERE track_id = ?',song).n).toBe(2);});\nit('unknown progress and legacy heardSince never advance queue after restart',async()=>{const{h,id,s,ids}=await setup();h.sql.run('UPDATE playback_sessions SET data = ? WHERE station_id = ?',JSON.stringify({...s,progressMs:null,heardSince:h.clock.t}),id);h.sql.run('INSERT INTO plays (played_at,track_id,context_uri,station_id,ignored,meta) VALUES (?,?,?,?,0,NULL)',h.clock.t,ids[3],s.contextUri,id);h.restart();h.fake.user().player.contextUri='spotify:playlist:unrelated';expect(await h.hub.play(id)).toMatchObject({ok:true});expect(h.fake.current()).toBe(ids[0]);expect(h.fake.user().player.progressMs).toBe(0);expect(h.hub.savedSession(id)).toMatchObject({sessionId:s.sessionId,currentIndex:0});});\n"
+  }
+}

@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-pr26-ui-fresh
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  12:34:12
+   Duration  241ms (transform 57%, import 24%, tests 15%, worker 3%)
+

@@ -1,0 +1,125 @@
+[WebServer] (node:261526) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:261539) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:37] "GET / HTTP/1.1" 200 -
+
+Running 7 tests using 1 worker
+
+(node:261575) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:38] "GET / HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:38] "GET /assets/index-B2UuZ8DW.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:38] "GET /assets/index-qcs0nQkj.css HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:38] "GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:38] "GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:38] "GET /icon.svg HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:38] "GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 HTTP/1.1" 200 -
+  ✓  1 e2e/pr29-ui-review.spec.ts:145:2 › probe render keyboard and settings 390 light (890ms)
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET / HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/index-B2UuZ8DW.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/index-qcs0nQkj.css HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /icon.svg HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 HTTP/1.1" 200 -
+  ✓  2 e2e/pr29-ui-review.spec.ts:145:2 › probe render keyboard and settings 390 dark (723ms)
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET / HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/index-B2UuZ8DW.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/index-qcs0nQkj.css HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /icon.svg HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:39] "GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 HTTP/1.1" 200 -
+  ✓  3 e2e/pr29-ui-review.spec.ts:145:2 › probe render keyboard and settings 1440 light (816ms)
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:40] "GET / HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:40] "GET /assets/index-B2UuZ8DW.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:40] "GET /assets/index-qcs0nQkj.css HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:40] "GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:40] "GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:40] "GET /icon.svg HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:40] "GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 HTTP/1.1" 200 -
+  ✓  4 e2e/pr29-ui-review.spec.ts:145:2 › probe render keyboard and settings 1440 dark (743ms)
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:41] "GET / HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:41] "GET /assets/index-B2UuZ8DW.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:41] "GET /assets/index-qcs0nQkj.css HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:41] "GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:41] "GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:41] "GET /icon.svg HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:41] "GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 HTTP/1.1" 200 -
+  ✘  5 e2e/pr29-ui-review.spec.ts:173:1 › pending answer prevents an opposite concurrent answer (1.5s)
+(node:261869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:43] "GET / HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:43] "GET /assets/index-qcs0nQkj.css HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:43] "GET /assets/index-B2UuZ8DW.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:43] "GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:43] "GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:43] "GET /icon.svg HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:43] "GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 HTTP/1.1" 200 -
+  ✓  6 e2e/pr29-ui-review.spec.ts:180:1 › old account answer does not answer new account same song (608ms)
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:44] "GET / HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:44] "GET /assets/index-B2UuZ8DW.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:44] "GET /assets/index-qcs0nQkj.css HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:44] "GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:44] "GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:44] "GET /icon.svg HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [09/Oct/2026 17:53:44] "GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 HTTP/1.1" 200 -
+  ✘  7 e2e/pr29-ui-review.spec.ts:188:1 › negative native verdict preserves honest transport result (1.5s)
+
+
+  1) e2e/pr29-ui-review.spec.ts:173:1 › pending answer prevents an opposite concurrent answer ──────
+
+    Error: expect(locator).toBeDisabled() failed
+
+    Locator:  getByRole('group', { name: 'Nachprüfung' }).getByRole('button', { name: 'Eher nicht' })
+    Expected: disabled
+    Received: enabled
+    Timeout:  1000ms
+
+    Call log:
+      - Expect "toBeDisabled" getByRole('group', { name: 'Nachprüfung' }).getByRole('button', { name: 'Eher nicht' }) with timeout 1000ms
+      - waiting for getByRole('group', { name: 'Nachprüfung' }).getByRole('button', { name: 'Eher nicht' })
+        11 × locator resolved to <button class="key" type="button">Eher nicht</button>
+           - unexpected value "enabled"
+
+
+      176 |  await page.route("**/api/tracks/*/retest",async route=>{answers.push(route.request().postDataJSON().keep);await gate.promise;await route.fulfill({json:{skipped:false}})});
+      177 |  const box=page.getByRole("group",{name:"Nachprüfung"});await box.getByRole("button",{name:"Gern wieder"}).click();await expect.poll(()=>answers.length).toBe(1);
+    > 178 |  const no=box.getByRole("button",{name:"Eher nicht"});await expect(no).toBeDisabled({timeout:1000});gate.release();
+          |                                                                        ^
+      179 | });
+      180 | test("old account answer does not answer new account same song",async({page})=>{
+      181 |  const initial=snapshot();initial.nowPlaying!.kind="probe";const model=await setup(page,initial);const gate=deferred();let asked=false;
+        at /workspace/ts-pr29-ui/e2e/pr29-ui-review.spec.ts:178:72
+
+    Error Context: e2e/.artifacts/pr29-ui/pr29-ui-review-pending-ans-0eb0c--opposite-concurrent-answer/error-context.md
+
+  2) e2e/pr29-ui-review.spec.ts:188:1 › negative native verdict preserves honest transport result ──
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Gerät ist nicht erreichbar.', { exact: true })
+    Expected: visible
+    Timeout: 1000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Gerät ist nicht erreichbar.', { exact: true }) with timeout 1000ms
+      - waiting for getByText('Gerät ist nicht erreichbar.', { exact: true })
+
+
+      191 |  await page.route("**/api/tracks/*/retest",async route=>{asked=true;await route.fulfill({json:{skipped:false,skipError:"Gerät ist nicht erreichbar."}})});
+      192 |  await page.getByRole("button",{name:"Eher nicht"}).click();await expect.poll(()=>asked).toBe(true);
+    > 193 |  await expect(page.getByText("Gerät ist nicht erreichbar.",{exact:true})).toBeVisible({timeout:1000});
+          |                                                                           ^
+      194 | });
+      195 |
+        at /workspace/ts-pr29-ui/e2e/pr29-ui-review.spec.ts:193:75
+
+    Error Context: e2e/.artifacts/pr29-ui/pr29-ui-review-negative-na-07f91-ves-honest-transport-result/error-context.md
+
+  2 failed
+    e2e/pr29-ui-review.spec.ts:173:1 › pending answer prevents an opposite concurrent answer ───────
+    e2e/pr29-ui-review.spec.ts:188:1 › negative native verdict preserves honest transport result ───
+  5 passed (10.2s)

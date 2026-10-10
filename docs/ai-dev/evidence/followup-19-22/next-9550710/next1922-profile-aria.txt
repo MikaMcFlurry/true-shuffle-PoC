@@ -1,0 +1,300 @@
+- button "Zurück"
+- heading "Dein Hörprofil" [level=1]
+- paragraph: Wann und was du hörst, und was true-shuffle daraus über dich weiß. Gezählt wird jeder Song ab 30 Sekunden, Gast-Modus nie.
+- paragraph: Was true-shuffle selbst gezählt hat, die letzten 180 Tage, auch was du direkt in Spotify gehört hast.
+- region "Auf einen Blick":
+  - paragraph: "8,7 Stunden Musik seit 11. Juli 2026, höchstens: Songlängen zusammengezählt"
+  - paragraph: 174 Songs gehört
+  - paragraph: 42 verschiedene Songs
+  - paragraph: 9 Künstler
+- region "Wann du hörst":
+  - heading "Wann du hörst" [level=2]
+  - paragraph: "Am meisten hörst du Dienstags, und über die Woche gesehen um 8 Uhr. Dein dichtester Moment: Dienstag um 8 Uhr."
+  - img "Songs nach Wochentag und Uhrzeit, Tabelle darunter"
+  - group:
+    - text: Als Tabelle
+    - region "Songs nach Uhrzeit (Zeilen) und Wochentag (Spalten)":
+      - table "Songs nach Uhrzeit (Zeilen) und Wochentag (Spalten)":
+        - caption: Songs nach Uhrzeit (Zeilen) und Wochentag (Spalten)
+        - rowgroup:
+          - row "Uhr Mo Di Mi Do Fr Sa So":
+            - columnheader "Uhr"
+            - columnheader "Mo"
+            - columnheader "Di"
+            - columnheader "Mi"
+            - columnheader "Do"
+            - columnheader "Fr"
+            - columnheader "Sa"
+            - columnheader "So"
+        - rowgroup:
+          - row "0–1 0 0 0 0 0 0 0":
+            - rowheader "0–1"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "1–2 0 0 0 0 0 0 0":
+            - rowheader "1–2"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "2–3 0 0 0 0 0 0 0":
+            - rowheader "2–3"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "3–4 0 0 0 0 0 0 0":
+            - rowheader "3–4"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "4–5 0 0 0 0 0 0 0":
+            - rowheader "4–5"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "5–6 0 0 0 0 0 0 0":
+            - rowheader "5–6"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "6–7 0 0 0 0 0 0 0":
+            - rowheader "6–7"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "7–8 0 0 0 0 0 0 0":
+            - rowheader "7–8"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "8–9 73 101 0 0 0 0 0":
+            - rowheader "8–9"
+            - cell "73"
+            - cell "101"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "9–10 0 0 0 0 0 0 0":
+            - rowheader "9–10"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "10–11 0 0 0 0 0 0 0":
+            - rowheader "10–11"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "11–12 0 0 0 0 0 0 0":
+            - rowheader "11–12"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "12–13 0 0 0 0 0 0 0":
+            - rowheader "12–13"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "13–14 0 0 0 0 0 0 0":
+            - rowheader "13–14"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "14–15 0 0 0 0 0 0 0":
+            - rowheader "14–15"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "15–16 0 0 0 0 0 0 0":
+            - rowheader "15–16"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "16–17 0 0 0 0 0 0 0":
+            - rowheader "16–17"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "17–18 0 0 0 0 0 0 0":
+            - rowheader "17–18"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "18–19 0 0 0 0 0 0 0":
+            - rowheader "18–19"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "19–20 0 0 0 0 0 0 0":
+            - rowheader "19–20"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "20–21 0 0 0 0 0 0 0":
+            - rowheader "20–21"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "21–22 0 0 0 0 0 0 0":
+            - rowheader "21–22"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "22–23 0 0 0 0 0 0 0":
+            - rowheader "22–23"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+          - row "23–24 0 0 0 0 0 0 0":
+            - rowheader "23–24"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+        - rowgroup:
+          - row "Summe 73 101 0 0 0 0 0":
+            - rowheader "Summe"
+            - cell "73"
+            - cell "101"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+            - cell "0"
+- region "Pro Monat":
+  - heading "Pro Monat" [level=2]
+  - paragraph: Dein stärkster Monat war Sep 2026 mit 5,1 Stunden.
+  - img "Stunden pro Monat": Aug 26 5 Sep 26
+  - group:
+    - text: Als Tabelle
+    - region "Hören pro Monat":
+      - table "Hören pro Monat":
+        - caption: Hören pro Monat
+        - rowgroup:
+          - row "Monat Stunden Songs":
+            - columnheader "Monat"
+            - columnheader "Stunden"
+            - columnheader "Songs"
+        - rowgroup:
+          - row "Aug 2026 3,7 73":
+            - rowheader "Aug 2026"
+            - cell "3,7"
+            - cell "73"
+          - row "Sep 2026 5,1 101":
+            - rowheader "Sep 2026"
+            - cell "5,1"
+            - cell "101"
+- region "Am meisten gehört":
+  - heading "Am meisten gehört" [level=2]
+  - heading "Künstler" [level=3]
+  - list:
+    - listitem: Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug 174
+  - heading "Songs" [level=3]
+  - list:
+    - listitem: 1 Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug 100×
+- region "Deine Genres":
+  - heading "Deine Genres" [level=2]
+  - paragraph: Welche Genres du hörst, schätzt eine KI aus deinen meistgehörten Künstlern. Daraus wählt true-shuffle auch seine Empfehlungen.
+  - button "Genres einschätzen lassen"
+- region "Was true-shuffle über dich weiß":
+  - heading "Was true-shuffle über dich weiß" [level=2]
+  - paragraph: Daraus mischt true-shuffle deine Kassetten und wählt Empfehlungen aus.
+  - list:
+    - listitem: 57 % deiner Songs der letzten 180 Tage liefen auf deinen Kassetten, der Rest direkt in Spotify.
+    - listitem: 10 Favoriten mit Daumen hoch. Sie kommen öfter.
+    - listitem: 2 Songs kommen nie wieder, weil du sie aussortiert hast.
+    - listitem: 3 Empfehlungen haben dir gefallen und bleiben auf deinen Kassetten.
+    - listitem: 4 Empfehlungen hast du aussortiert. Ähnliches schlägt true-shuffle seltener vor.
+    - listitem: 5 Mal hast du einen Song in den ersten 30 Sekunden übersprungen.

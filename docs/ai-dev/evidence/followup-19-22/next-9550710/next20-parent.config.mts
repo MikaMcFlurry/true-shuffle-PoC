@@ -1,0 +1,1 @@
+export default {test:{include:['/tmp/next20-parent.test.ts'],environment:'node',testTimeout:20000,silent:'passed-only'}};

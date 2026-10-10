@@ -1,0 +1,10 @@
+{
+  "settings_unchanged": true,
+  "namespaces_unchanged": true,
+  "secrets_unchanged": true,
+  "schedules_unchanged": false,
+  "schedule_crons_unchanged": true,
+  "schedule_metadata_difference": "modified_on changed at externaldeployment11:01; cron*/20 unchanged",
+  "runtime_equal": true,
+  "version_bindings_equal": true
+}

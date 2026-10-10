@@ -1,0 +1,50 @@
+[
+  {
+    "theme": "light",
+    "width": 390,
+    "status": 200,
+    "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+    "overflow": 0,
+    "errors": [],
+    "auth": {
+      "status": 401,
+      "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+    }
+  },
+  {
+    "theme": "light",
+    "width": 1440,
+    "status": 200,
+    "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+    "overflow": 0,
+    "errors": [],
+    "auth": {
+      "status": 401,
+      "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+    }
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "status": 200,
+    "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+    "overflow": 0,
+    "errors": [],
+    "auth": {
+      "status": 401,
+      "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+    }
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "status": 200,
+    "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+    "overflow": 0,
+    "errors": [],
+    "auth": {
+      "status": 401,
+      "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+    }
+  }
+]

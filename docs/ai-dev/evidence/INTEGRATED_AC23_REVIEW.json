@@ -1,0 +1,287 @@
+{
+  "schema_version": "true-shuffle.integrated-release-review.v1",
+  "generated_at": "2026-10-09T16:24:15.868374+00:00",
+  "source_sha": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "external_release": true,
+  "integration_order": [
+    27,
+    28
+  ],
+  "heads": {
+    "27": "1da5d55e49d67abd391ce17d0be27081c8a7d50b",
+    "28": "78fcdf90425b5a800c18fb2dca0093a9436cc466"
+  },
+  "merge_shas": [
+    "156ba06e232bd8f2f63335a19bea54c87d238f77",
+    "ac23aec48717ac22ef5348aeb04f6c042d091be2"
+  ],
+  "provenance": "Actual GitHub userMikaMcFlurry; Claude noreply@anthropic.com and session_01LuiFYFqenEVR9agywkDkAX in git/PR. External GitHub merge Mika Hertler. No invented Claude login.",
+  "scope": "Functional import/memory/planner changes separately inspected from UI design. PR bodies report owner separate-chat goals; latest protected session requirements remain binding.",
+  "completion": {
+    "27": 6083855324,
+    "28_explicit_full_scope_finished": false,
+    "28_merge_intent": 6084634378,
+    "external_release_reports": [
+      6084056950,
+      6084827924
+    ]
+  },
+  "independence": "FRESH",
+  "scoped_verdict": "NOT_READY",
+  "verdict": "BLOCKED",
+  "closed_findings": [
+    "PR27-OPENER-PODCAST-01"
+  ],
+  "new_findings": [
+    {
+      "id": "PR28-REST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "90-day overplayed rest is bypassed by cooling fallback in normal deck planning",
+      "files": [
+        "src/core/memory.ts:127",
+        "src/core/planner.ts:119",
+        "src/core/planner.ts:183",
+        "src/worker/hub/hub.ts:4594",
+        "src/client/screens/menu.tsx:981",
+        "src/client/screens/profile.tsx:497"
+      ],
+      "preconditions": "Unblocked imported song:8 counted plays400daysago,4 early skips last40daysago, playedBeforeSkips8. Station pool40 with39 noncooling alternatives; normal initial station round covers previous365days.",
+      "reproduction": [
+        "onboarded({tracks:40}); choose actual first imported library song and first actual station.",
+        "hub.importHistory([[song,8,4,now-400*DAY_MS,now-40*DAY_MS,8]],0,1); verify coolingDown(hub.memory(song),now) true.",
+        "Call actual public hub.newNativeQueue(station.id), inspect saved deck via read-only SQL."
+      ],
+      "expected": "Song is excluded until90days after last early skip, as the changed UI and feature contract promise. Ordinary noncooling alternatives remain available.",
+      "actual": "Song appears in40-item saved native deck on day40. Independent pure planner reproduces with one normal alternative too.",
+      "cause": "New90-day cooling shares the existing24-hour cooling lane. Default allowCooling includes that lane to fill a deck; 90-day condition does not establish a separate enforced rest.",
+      "repair_direction": "Separate new overplayed rest eligibility from legacy24-hour soft fallback; preserve existing small-station24-hour behavior, stable existing queues and observations. Do not blanket-modify transport or all cooling rules.",
+      "required_checks": [
+        "Actual planner and Hub/native/new Spotify deck paths with alternatives and insufficient pool sizes",
+        "89days23h59m59s versus exact90day boundary",
+        "Station round advance/extension and allowCooling variants",
+        "Existing24h small-pool behavior, bans, likes, consume and current session invariants"
+      ],
+      "evidence": [
+        "/workspace/ts-pr28-independent/test/core/pr28-independent.test.ts",
+        "/tmp/pr28-rest-repro.log",
+        "/workspace/ts-pr28-independent/test/hub/pr28-rest-hub.test.ts",
+        "/tmp/pr28-rest-hub-repro.log"
+      ]
+    },
+    {
+      "id": "PR28-OVERLAP-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "First-win aggregate deduplication disagrees with last-win profile classification for overlapping exports",
+      "files": [
+        "src/core/history.ts:103",
+        "src/core/listens.ts:182",
+        "src/worker/hub/hub.ts:6754"
+      ],
+      "preconditions": "Two legitimate overlapping Spotify export files: shorter file starts with a skip; full file contains same timestamp/song/3second-forward skip after a180second preceding song.",
+      "reproduction": [
+        "Use prior timestamp2026-09-24T06:00:00Z, skip+3seconds, reason_start trackdone and reason_end fwdbtn.",
+        "Fold files [skip], then [prior,skip] through aggregateHistory and addListens respectively.",
+        "Upload toRows(agg) with actual hub.importHistory and finishListens with actual two-part hub.importListens. Read listeningProfile UTC.",
+        "Run identical fixture at156ba and78fc."
+      ],
+      "expected": "Same deduplicated occurrence produces one consistent opener/ordinary-skip verdict in memory/import effects and Hörprofil.",
+      "actual": "78fc aggregate skipped0/openers1/no skipped-song memory row; profile early1/openers0. Exact same fixture passes coherence assertion at156ba.",
+      "cause": "New aggregate seen key prevents later full-context occurrence from replacing first boundary-opener decision; addListens Map.set replaces classification with later full-context decision.",
+      "repair_direction": "Use consistent occurrence conflict/deduplication handling for aggregate and listen rows; preserve first-entry unknown handling but do not make mix and profile contradict each other on a repeated occurrence.",
+      "required_checks": [
+        "Short/full overlapping files in both upload orders",
+        "Identical file twice remains exactly-once",
+        "Boundary opener versus mid-listening ordinary skip",
+        "Five-before-first-skip overplayed classification coherence under overlapping file input",
+        "Existing PR27 podcast/silence/new-start tests unchanged"
+      ],
+      "evidence": [
+        "/workspace/ts-pr28-independent/test/hub/pr28-overlap.test.ts",
+        "/tmp/pr28-overlap-repro.log",
+        "/tmp/pr27-fixed-overlap-baseline.log"
+      ]
+    }
+  ],
+  "inherited_open_findings": [
+    "PR24-LANE-07",
+    "PR25-RESUME-OWNER-CONFLICT"
+  ],
+  "independent_report": "integrated-ac23-review/pr28-independent.json",
+  "checks": {
+    "27_type_lint_build_dry": "PASS",
+    "28_type_lint_build_dry": "PASS",
+    "integrated_ac23_type_lint_build_dry": "PASS",
+    "source_tree_equality": "gitDiff78fc↔ac23 empty entiretree",
+    "27_unit_worker": "555PASS/1 default20s timeout underparallel load; same exact156ba test rerun1PASS withdefaulttimeout in8.88s",
+    "28_unit_worker": "560PASS/1 default20s timeout underparallel load; actual integratedac23 entire117testRobustness file rerunPASS withdefaulttimeout in102.22s",
+    "27_browser": "46/46 PASS unchanged assertions",
+    "28_browser": "46/46 standard +4/4newprofile rendersPASS, Chromium390/1440lightdark,longcontent,keyboard/navigation; source treeidenticalac23",
+    "fresh_independent": "Originalpodcast3PASS156ba and78fc;39affected+67protectedPASS;3new planner/Hub/overlapReprosFAIL;overlapbaseline156baPASS",
+    "ci": {
+      "id": 37958130063,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "upper_import_limits": "SyntheticNode only; 0MB nogc reporting rejected as memory evidence; no CloudflareCPU/livequota acceptance",
+    "isolated_reruns": "PASS default20s: actualac23 complete117testRobustness file;156ba exactformerlytimedouttest1PASS8.88s"
+  },
+  "production": {
+    "label": "watch28live",
+    "deployment": "2d3927f7-3e48-4b1c-aefc-6acad4bf38ff",
+    "versions": [
+      {
+        "version_id": "f9364da0-b9f6-46f4-b722-73cddd6e2b83",
+        "percentage": 100
+      }
+    ],
+    "version": "f9364da0-b9f6-46f4-b722-73cddd6e2b83",
+    "created_at": "2026-10-09T16:19:01.279569Z",
+    "migration_tag": "v1",
+    "runtime": {
+      "migration_tag": "v1",
+      "assets": {
+        "not_found_handling": "single-page-application",
+        "headers": {
+          "version": 2,
+          "rules": {
+            "/*": {
+              "set": {
+                "content-security-policy": "default-src 'self'; img-src 'self' https://i.scdn.co https://*.scdn.co https://mosaic.scdn.co https://image-cdn-ak.spotifycdn.com https://image-cdn-fa.spotifycdn.com https://*.spotifycdn.com data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+                "permissions-policy": "camera=(), microphone=(), geolocation=()",
+                "referrer-policy": "strict-origin-when-cross-origin",
+                "x-content-type-options": "nosniff"
+              },
+              "unset": []
+            },
+            "/assets/*": {
+              "set": {
+                "cache-control": "public, max-age=31536000, immutable"
+              },
+              "unset": []
+            }
+          }
+        },
+        "raw_headers": "/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Content-Security-Policy: default-src 'self'; img-src 'self' https://i.scdn.co https://*.scdn.co https://mosaic.scdn.co https://image-cdn-ak.spotifycdn.com https://image-cdn-fa.spotifycdn.com https://*.spotifycdn.com data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'\n/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n",
+        "static_routing": {
+          "user_worker": [
+            "/api/*",
+            "/auth/*",
+            "/remote/*"
+          ]
+        },
+        "serve_directly": true,
+        "raw_run_worker_first": [
+          "/api/*",
+          "/auth/*",
+          "/remote/*"
+        ],
+        "base_path": "/"
+      },
+      "compatibility_date": "2026-09-20",
+      "compatibility_flags": [
+        "nodejs_compat"
+      ],
+      "usage_model": "standard"
+    },
+    "binding_shapes": [
+      {
+        "name": "AI",
+        "type": "ai",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "APP_SECRET",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "ASSETS",
+        "type": "assets",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "LASTFM_API_KEY",
+        "type": "secret_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "REGISTRY",
+        "type": "durable_object_namespace",
+        "class_name": "Registry",
+        "namespace_id": "2ccba352966f46a3b289eb159ccb3bc4"
+      },
+      {
+        "name": "SPOTIFY_CLIENT_ID",
+        "type": "plain_text",
+        "class_name": null,
+        "namespace_id": null
+      },
+      {
+        "name": "USER_HUB",
+        "type": "durable_object_namespace",
+        "class_name": "UserHub",
+        "namespace_id": "59222ef9f3a642d4b90776fafa0eac84"
+      }
+    ],
+    "namespace_ids": [
+      {
+        "id": "2ccba352966f46a3b289eb159ccb3bc4",
+        "name": "true-shuffle_Registry",
+        "class": "Registry"
+      },
+      {
+        "id": "59222ef9f3a642d4b90776fafa0eac84",
+        "name": "true-shuffle_UserHub",
+        "class": "UserHub"
+      }
+    ],
+    "secrets_names_only": [
+      "ANTHROPIC_API_KEY",
+      "APP_SECRET",
+      "LASTFM_API_KEY"
+    ]
+  },
+  "worker_proof": "integrated-ac23-review/watchac-worker-proof.json",
+  "assets": "18/19byteexact;map sourcespaths only,sourcesContentidentical",
+  "preservation": "settings,namespaces,secretmetadata,fullbindings,runtime,migrationv1,cron same as873e snapshot; full variable/binding comparison private, no values exposed",
+  "public_checks": "Health200;protectedreads401;missingCSRF/foreignorigin403;correctx-ts marker withoutsession401;anonymous390/1440themes nooverflow/pageerrors",
+  "prior_external27": {
+    "source": "156ba06",
+    "version": "5c694e8f-360c-4713-8e74-f91c06f04bbf",
+    "deployment": "0671612f-b0cf-4c9b-b0a8-20b180839f2b",
+    "traffic": 100,
+    "worker_assets_auth_browser_preservation": "PASS, archived exactproofs"
+  },
+  "comments": {
+    "27": 6084873769,
+    "28": 6084847874
+  },
+  "root_operations": {
+    "app_fixes": false,
+    "merge": false,
+    "upload": false,
+    "activation": false,
+    "rollback": false
+  },
+  "rollback_decision": "External release has two bounded correctnessP2s and inherited acceptance blockers. No verified auth/transport/data-loss failure; no root rollout/rollback. Additive6field import protocol makes an unexamined automatic rollback unsafe for already loaded newclients. Require reviewed followup corrections, retain immutable priorversions.",
+  "not_run": [
+    "PhysicaliPhone/liveSpotify latency/quota",
+    "PrivateHA/MA",
+    "Actual populated productionrestore",
+    "Authenticated realhistory reimport and provider queue lifecycle",
+    "RealCloudflareCPU/memory/quota upperbound"
+  ]
+}
