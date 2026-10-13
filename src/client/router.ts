@@ -9,6 +9,7 @@ export type Route =
 	| { name: "history" }
 	| { name: "profile" }
 	| { name: "import" }
+	| { name: "selection" }
 	| { name: "devices" }
 	| { name: "about" }
 	| { name: "remote" }
@@ -31,6 +32,8 @@ export function parse(path: string): Route {
 			return { name: "profile" };
 		case "/import":
 			return { name: "import" };
+		case "/auswahl":
+			return { name: "selection" };
 		case "/geraete":
 			return { name: "devices" };
 		case "/info":

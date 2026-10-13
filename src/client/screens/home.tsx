@@ -534,7 +534,7 @@ export function Home({ state }: { state: AppState }) {
 								kind={view.projected ? null : (ownNow?.kind ?? null)}
 								facts={factsOf(session?.queue.find((e) => e.entryId === view.entryId))}
 								thumb={store.thumbOf(track)}
-								known={state.history.importedTracks > 0}
+								known={(state.history.effectiveTracks ?? state.history.importedTracks) > 0}
 							/>
 						) : null}
 					</div>
@@ -813,7 +813,7 @@ export function Home({ state }: { state: AppState }) {
 									track={e.track}
 									index={i + 1}
 									facts={factsOf(e)}
-									known={state.history.importedTracks > 0}
+									known={(state.history.effectiveTracks ?? state.history.importedTracks) > 0}
 								/>
 							))}
 						</ol>
@@ -863,8 +863,8 @@ export function Home({ state }: { state: AppState }) {
 					</li>
 					<li>
 						<strong>Es weiß, was du kennst.</strong>{" "}
-						{state.history.importedTracks > 0 ? (
-							`Dein Spotify-Hörverlauf mit ${num(state.history.importedTracks)} Songs ist eingerechnet.`
+						{(state.history.effectiveTracks ?? state.history.importedTracks) > 0 ? (
+							`Dein Spotify-Hörverlauf mit ${num(state.history.effectiveTracks ?? state.history.importedTracks)} Songs ist eingerechnet.`
 						) : (
 							<>
 								Mit deinem Spotify-Hörverlauf weiß es sofort, was du schon oft gehört hast.{" "}

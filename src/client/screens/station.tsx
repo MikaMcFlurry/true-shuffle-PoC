@@ -304,7 +304,11 @@ function SongRow(props: {
 					kind={props.kind ?? null}
 					facts={props.facts ?? null}
 					thumb={store.thumbOf(t)}
-					known={store.load.kind === "ready" && store.load.state.history.importedTracks > 0}
+					known={
+						store.load.kind === "ready" &&
+						(store.load.state.history.effectiveTracks ?? store.load.state.history.importedTracks) >
+							0
+					}
 					class="tags--row"
 				/>
 			</span>

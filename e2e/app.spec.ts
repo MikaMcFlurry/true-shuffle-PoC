@@ -3,7 +3,7 @@
  * Spotify stand-in (synthetic demo library, see e2e/fake-server.ts).
  */
 
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, type Route, test } from "@playwright/test";
 import type { SpotifyUsageReport, SpotifyUsageTotals } from "../src/shared/spotify-usage";
 
 const FAKE = "http://127.0.0.1:8788/__control";
@@ -94,6 +94,212 @@ const EXPLAINED: Record<string, RegExp> = {
 	"/sender/neu": /Spotify gibt die Songs nicht heraus/,
 	"/geraete": /Das gerade aktive Gerät, sonst dein Handy/,
 };
+
+/**
+ * The selection page against the local Worker, with requests held or failed
+ * on purpose (never a made-up answer): a synthetic two-song import, and a page
+ * whose reload failed so that "Neu laden" is offered.
+ */
+async function selectionRace(page: Page) {
+	await signIn(page);
+	const ids = ["T000000000000000000000", "T000000000000000000001"];
+	const post = (url: string, data: unknown) =>
+		page.request.post(url, { headers: { "x-ts": "1" }, data });
+	const selection = async () =>
+		(await (await page.request.get("/api/history/selection")).json()) as {
+			revision: number;
+			commit: number;
+			selection: { enabled: boolean; rules: { id?: string }[] };
+			dataset: { hasImport: boolean; key: string };
+		};
+	const at = Date.parse("2024-03-01T12:00:00Z");
+	/** Stores the synthetic import (replacing one stored), as another tab would. */
+	const importSynthetic = async () => {
+		const old = await selection();
+		if (old.dataset.hasImport) await post("/api/history/delete", { dataset: old.dataset.key });
+		const start = ((await (await post("/api/history/begin", {})).json()) as { start: number })
+			.start;
+		const totals = (await (
+			await post("/api/history/import", {
+				start,
+				rows: ids.map((id) => [id, 2, 0, at, 0, 2]),
+				part: 0,
+				parts: 1,
+			})
+		).json()) as { upload: string };
+		const first = (await (
+			await post("/api/history/listens", {
+				importId: totals.upload,
+				part: 0,
+				parts: 2,
+				tracks: 2,
+				kind: "tracks",
+				data: ids.map((id, i) => [
+					id,
+					i ? "Beta" : "Alpha",
+					`Artist ${i ? "Beta" : "Alpha"}`,
+					"Synthetic",
+				]),
+			})
+		).json()) as { upload: string };
+		await post("/api/history/listens", {
+			upload: first.upload,
+			part: 1,
+			parts: 2,
+			tracks: 2,
+			kind: "rows",
+			data: [at / 1000, at / 1000 + 1].flatMap((t) => ids.map((_, i) => [t, i, 200_000, 132, 0])),
+		});
+	};
+	const exclude = (name: string) =>
+		page.getByRole("button", { name: `Ausschließen: ${name}`, exact: true });
+	/** The synthetic import, nothing left out, then the page opened fresh. */
+	const fresh = async () => {
+		await importSynthetic();
+		const now = await selection();
+		await post("/api/history/selection", {
+			baseRevision: now.revision,
+			enabled: true,
+			rules: [],
+			dataset: now.dataset.key,
+		});
+		await page.goto("/auswahl");
+		await expect(exclude("Alpha")).toBeEnabled();
+	};
+	const ui = {
+		takeOver: page.getByRole("button", { name: "Auswahl übernehmen" }),
+		computing: page.getByRole("button", { name: "Wird berechnet …" }),
+		discard: page.getByRole("button", { name: "Entwurf verwerfen" }),
+		rules: page.locator(".selection__rules"),
+		applied: page.getByRole("status").filter({ hasText: /Übernommen \(Stand/ }),
+		switchOff: page.getByRole("button", { name: "Import ausschalten", exact: true }),
+		switchOn: page.getByRole("button", { name: "Import wieder einschalten", exact: true }),
+		inForce: page.locator(".notice", { hasText: "Jetzt in Kraft" }).first(),
+		openDelete: page.getByRole("button", { name: "Import löschen …", exact: true }),
+		confirm: page.getByRole("button", { name: "Endgültig löschen", exact: true }),
+		deleted: page.getByRole("status").filter({ hasText: "Import gelöscht" }),
+		noImport: page.getByText("Kein Import gespeichert.", { exact: false }),
+		loadFailed: page.getByRole("alert").filter({ hasText: "ließ sich nicht laden" }),
+		reload: page.getByRole("button", { name: "Neu laden" }),
+	};
+	const gate = () => {
+		let open = () => {};
+		const shut = new Promise<void>((r) => {
+			open = r;
+		});
+		return { open, shut };
+	};
+	const failure = (message: string) => ({
+		status: 503,
+		contentType: "application/json",
+		body: JSON.stringify({ error: { code: "busy", message } }),
+	});
+	// Loads of the page go to the local Worker unless a step is queued for the next one.
+	const loads: ((route: Route) => Promise<void>)[] = [];
+	await page.route(/\/api\/history\/selection$/, (route) => {
+		if (route.request().method() !== "GET") return route.fallback();
+		const step = loads.shift();
+		return step ? step(route) : route.fallback();
+	});
+	/** The next load fails with `message` once `after` is open. */
+	const failLoad = (message: string, after?: Promise<void>) => {
+		loads.push(async (route) => {
+			if (after) await after;
+			await route.fulfill(failure(message));
+		});
+	};
+	/** The next load is answered by the Worker at once and delivered once `after` is open. */
+	const holdLoad = (after: Promise<void>) => {
+		let answered = () => {};
+		const read = new Promise<void>((r) => {
+			answered = r;
+		});
+		loads.push(async (route) => {
+			const response = await route.fetch();
+			answered();
+			await after;
+			await route.fulfill({ response });
+		});
+		return read;
+	};
+	/**
+	 * A change (POST to `path`) reaches the Worker only once `after` is open
+	 * (`commitFirst`: at once, its answer held until then); its real answer is
+	 * passed on — or, with `outcome`, it never reaches the Worker and fails so.
+	 */
+	const holdChange = async (
+		path: RegExp,
+		after: Promise<void>,
+		opts: { commitFirst?: boolean; outcome?: "503" | "offline" } = {},
+	) => {
+		let reached = () => {};
+		const sent = new Promise<void>((r) => {
+			reached = r;
+		});
+		const handler = async (route: Route) => {
+			if (route.request().method() !== "POST") return route.fallback();
+			if (opts.outcome) {
+				reached();
+				await after;
+				return opts.outcome === "offline"
+					? route.abort("internetdisconnected")
+					: route.fulfill(failure("Gerade nicht erreichbar."));
+			}
+			if (opts.commitFirst) {
+				const response = await route.fetch();
+				reached();
+				await after;
+				return route.fulfill({ response });
+			}
+			reached();
+			await after;
+			await route.fulfill({ response: await route.fetch() });
+		};
+		await page.route(path, handler);
+		return { sent, done: () => page.unroute(path, handler) };
+	};
+	/** A deletion refused, then its reload failed: the page offers "Neu laden". */
+	const failedReload = async () => {
+		const refuse = (route: Route) => route.fulfill(failure("Löschen gerade nicht möglich."));
+		await page.route(/\/api\/history\/delete$/, refuse);
+		failLoad("Laden gerade nicht möglich.");
+		if (await ui.confirm.isHidden()) await ui.openDelete.click();
+		await ui.confirm.click();
+		await expect(page.getByRole("alert").filter({ hasText: "Nicht gelöscht" })).toBeVisible();
+		await expect(ui.loadFailed).toContainText("Laden gerade nicht möglich.");
+		await page.unroute(/\/api\/history\/delete$/, refuse);
+		expect((await selection()).dataset.hasImport).toBe(true);
+	};
+	/**
+	 * While a change is held before the Worker: one reload read by the Worker at
+	 * once but delivered only when the returned gate opens, then one passing —
+	 * both read the state before the change, and the page shows the second.
+	 */
+	const readBeforeChange = async () => {
+		const late = gate();
+		const read = holdLoad(late.shut);
+		await ui.reload.click();
+		await read;
+		await ui.reload.click();
+		await expect(ui.loadFailed).toHaveCount(0);
+		return late;
+	};
+	return {
+		ids,
+		post,
+		selection,
+		importSynthetic,
+		exclude,
+		fresh,
+		ui,
+		gate,
+		failLoad,
+		holdLoad,
+		holdChange,
+		failedReload,
+		readBeforeChange,
+	};
+}
 
 test.describe.configure({ mode: "serial" });
 
@@ -495,12 +701,1051 @@ test.describe("a listener's day", () => {
 		expect(imports).toHaveLength(1);
 	});
 
+	test("the imported history can be looked through, narrowed, switched off and deleted", async ({
+		page,
+	}) => {
+		await signIn(page);
+		await page.goto("/import");
+		// Synthetic plays: one artist's songs in 2022 and 2023, another's in 2022.
+		const at = (y: number, i: number) => new Date(Date.UTC(y, i % 12, 2 + i, 18)).toISOString();
+		const song = (n: string, artist: string, ts: string) => ({
+			ts,
+			ms_played: 200_000,
+			spotify_track_uri: `spotify:track:${n.padStart(22, "W")}`,
+			master_metadata_track_name: `Auswahl ${n}`,
+			master_metadata_album_artist_name: artist,
+		});
+		const plays = [
+			...Array.from({ length: 6 }, (_, i) => song("1", "Probeband Ost", at(2022, i))),
+			...Array.from({ length: 4 }, (_, i) => song("2", "Probeband West", at(2022, i + 6))),
+			...Array.from({ length: 2 }, (_, i) => song("3", "Probeband Ost", at(2023, i))),
+			// Under 30 seconds and not skipped: kept, shown, counted for nothing.
+			{ ...song("4", "Kiesel", at(2023, 5)), ms_played: 4000 },
+		];
+		await page.locator('input[type="file"]').setInputFiles({
+			name: "Streaming_History_Audio_2022.json",
+			mimeType: "application/json",
+			buffer: Buffer.from(JSON.stringify(plays)),
+		});
+		await page.getByRole("button", { name: "Übernehmen" }).click();
+		await expect(page.getByRole("link", { name: "Dein Hörprofil ansehen" })).toBeVisible();
+		const api = async () =>
+			(await (await page.request.get("/api/history/selection")).json()) as {
+				revision: number;
+				selection: { enabled: boolean; rules: unknown[] };
+				counts: { plays: number; includedPlays: number } | null;
+				dataset: { hasImport: boolean; key: string };
+			};
+
+		await page.goto("/mehr");
+		await page.getByRole("link", { name: /Hörverlauf auswählen/ }).click();
+		await expect(
+			page.getByRole("heading", { name: "Hörverlauf auswählen", level: 1 }),
+		).toBeVisible();
+		await expect(page.getByText("12 von 12 Wiedergaben zählen").first()).toBeVisible();
+		await expect(page.getByText(/1 Wiedergabe kürzer als 30 Sekunden/)).toBeVisible();
+		await checkPage(page, "Auswahl");
+
+		// Looking: a search and a grouping change nothing.
+		await page.getByLabel("Song, Künstler oder Album").fill("Probeband Ost");
+		await page.getByLabel("Gruppieren").selectOption("artist");
+		const row = page.locator(".selection__item", { hasText: "Probeband Ost" });
+		await expect(row).toContainText("zählt");
+		await expect(row).toContainText("8 von 8 Wiedergaben");
+		expect((await api()).revision).toBe(0);
+
+		// Drafting: a preview of the new draft that fails leaves nothing to take over.
+		let failPreview = true;
+		await page.route(/\/api\/history\/selection\/preview$/, (route) =>
+			failPreview
+				? route.fulfill({
+						status: 503,
+						contentType: "application/json",
+						body: JSON.stringify({ error: { code: "busy", message: "Gerade nicht erreichbar." } }),
+					})
+				: route.continue(),
+		);
+		await page.getByRole("button", { name: "Ausschließen: Probeband Ost" }).click();
+		await expect(page.getByText("Künstler „Probeband Ost“ ausgeschlossen")).toBeVisible();
+		await expect(
+			page
+				.getByRole("alert")
+				.filter({ hasText: "Vorschau nicht möglich: Gerade nicht erreichbar." }),
+		).toBeVisible();
+		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "Auswahl übernehmen" })).toBeDisabled();
+		// The preview works again (a new look of the same draft): now it can be taken over.
+		failPreview = false;
+		await page.getByLabel("Sortieren").selectOption("name");
+		await expect(page.getByRole("button", { name: "Auswahl übernehmen" })).toBeEnabled();
+
+		// Answers in reverse order: the newest search stays on screen.
+		let release = () => {};
+		const gate = new Promise<void>((r) => {
+			release = r;
+		});
+		let seenFirst = () => {};
+		const seen = new Promise<void>((r) => {
+			seenFirst = r;
+		});
+		await page.route(/\/api\/history\/selection\/preview$/, async (route) => {
+			if ((route.request().postDataJSON() as { query: { q: string } }).query.q === "Probeband W") {
+				seenFirst();
+				await gate;
+			}
+			await route.fallback();
+		});
+		const search = page.getByLabel("Song, Künstler oder Album");
+		await search.fill("Probeband W");
+		await seen;
+		await search.fill("Probeband Ost");
+		await expect(row).toBeVisible();
+		const late = page.waitForResponse(
+			(r) =>
+				r.url().includes("/selection/preview") &&
+				(r.request().postDataJSON() as { query: { q: string } }).query.q === "Probeband W",
+		);
+		release();
+		await late;
+		await expect(page.locator(".selection__items").first()).toContainText("Probeband Ost");
+		await expect(page.locator(".selection__items").first()).not.toContainText("Probeband West");
+
+		// The preview shows the effect before anything is taken over.
+		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toContainText(
+			"4 von 12 Wiedergaben zählen",
+		);
+		await expect(row).toContainText("ausgeschlossen");
+		expect((await api()).revision).toBe(0);
+
+		// A failure does not pretend to have taken it over.
+		let fail = true;
+		await page.route(/\/api\/history\/selection$/, (route) => {
+			if (route.request().method() !== "POST" || !fail) return route.continue();
+			fail = false;
+			return route.fulfill({
+				status: 500,
+				contentType: "application/json",
+				body: JSON.stringify({ error: { code: "selection_failed", message: "Rechenfehler." } }),
+			});
+		});
+		await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
+		await expect(page.getByRole("alert")).toContainText("Nicht übernommen: Rechenfehler.");
+		expect((await api()).revision).toBe(0);
+
+		await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
+		await expect(
+			page.getByRole("status").filter({ hasText: "Übernommen (Stand 1)" }),
+		).toBeVisible();
+		expect(await api()).toMatchObject({ revision: 1, counts: { plays: 12, includedPlays: 4 } });
+
+		// The Hörprofil follows: the excluded artist's imported plays are gone from it.
+		const profile = (await (await page.request.get("/api/profile?tz=Europe%2FBerlin")).json()) as {
+			topArtists: { name: string }[];
+		};
+		expect(profile.topArtists.map((a) => a.name)).toContain("Probeband West");
+		expect(profile.topArtists.map((a) => a.name)).not.toContain("Probeband Ost");
+		await page.goto("/profil");
+		await page.getByRole("radio", { name: "Alles" }).check();
+		await expect(page.locator(".profile__source")).toContainText(
+			"8 importierte Wiedergaben sind ausgeschlossen",
+		);
+
+		// Another tab changes it meanwhile: this one's older state is refused, not taken over.
+		await page.goto("/auswahl");
+		await page.getByLabel("Gruppieren").selectOption("artist");
+		await page.getByRole("button", { name: "Ausschließen: Probeband West" }).click();
+		const other = await page.request.post("/api/history/selection", {
+			headers: { "x-ts": "1", "content-type": "application/json" },
+			data: { baseRevision: 1, enabled: true, rules: [], dataset: (await api()).dataset.key },
+		});
+		expect(other.ok()).toBe(true);
+		await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
+		await expect(page.getByRole("alert")).toContainText("inzwischen geändert");
+		expect(await api()).toMatchObject({ revision: 2, counts: { includedPlays: 12 } });
+
+		// Switched off and on again: data and rules stay.
+		await page.reload();
+		await page.getByRole("button", { name: "Import ausschalten" }).click();
+		await expect(
+			page.getByRole("status").filter({ hasText: "Import ausgeschaltet" }),
+		).toBeVisible();
+		expect(await api()).toMatchObject({
+			selection: { enabled: false },
+			counts: { includedPlays: 0 },
+		});
+		await page.getByRole("button", { name: "Import wieder einschalten" }).click();
+		await expect(page.getByRole("button", { name: "Import ausschalten" })).toBeVisible();
+		expect(await api()).toMatchObject({
+			selection: { enabled: true },
+			counts: { includedPlays: 12 },
+		});
+
+		// On a phone, in the dark: readable, named, nothing sticking out.
+		await page.setViewportSize({ width: 360, height: 760 });
+		await page.emulateMedia({ colorScheme: "dark" });
+		await page.reload();
+		await expect(
+			page.getByRole("heading", { name: "Hörverlauf auswählen", level: 1 }),
+		).toBeVisible();
+		await expect(page.getByText("12 von 12 Wiedergaben zählen").first()).toBeVisible();
+		await checkPage(page, "Auswahl, Handy dunkel");
+		await checkContained(page, "Auswahl, Handy dunkel");
+		await page.emulateMedia({ colorScheme: "light" });
+		await page.setViewportSize({ width: 1280, height: 900 });
+
+		// Deleting: the scope is named first; cancelling changes nothing.
+		const key = (await api()).dataset.key;
+		await page.getByRole("button", { name: "Import löschen …" }).focus();
+		await page.keyboard.press("Enter");
+		const warn = page.getByRole("alert").filter({ hasText: "nicht rückgängig" });
+		await expect(warn).toContainText("13 Wiedergaben einzeln");
+		await expect(warn).toContainText("deine Spotify-Dateien");
+		await page.getByRole("button", { name: "Abbrechen" }).click();
+		expect(await api()).toMatchObject({ dataset: { hasImport: true, key } });
+		await page.getByRole("button", { name: "Import löschen …" }).click();
+		await page.getByRole("button", { name: "Endgültig löschen" }).click();
+		await expect(page.getByRole("status").filter({ hasText: "Import gelöscht" })).toBeVisible();
+		await page.reload();
+		await expect(page.getByText(/Kein Import gespeichert/)).toBeVisible();
+		expect(await api()).toMatchObject({ dataset: { hasImport: false }, counts: null });
+	});
+
+	test("the selection page acts only on what it shows, keeps newer edits and refuses a replaced import", async ({
+		page,
+	}) => {
+		await signIn(page);
+		const ids = ["T000000000000000000000", "T000000000000000000001"];
+		const post = (url: string, data: unknown) =>
+			page.request.post(url, { headers: { "x-ts": "1" }, data });
+		const selection = async () =>
+			(await (await page.request.get("/api/history/selection")).json()) as {
+				revision: number;
+				selection: { enabled: boolean; rules: { id?: string; name?: string; kind: string }[] };
+				counts: { plays: number; includedPlays: number } | null;
+				dataset: { hasImport: boolean; key: string };
+			};
+		const existing = await selection();
+		if (existing.dataset.hasImport)
+			await post("/api/history/delete", { dataset: existing.dataset.key });
+		// A synthetic import: two songs by two artists, two plays each.
+		const at = Date.parse("2024-03-01T12:00:00Z");
+		const begin = async () =>
+			((await (await post("/api/history/begin", {})).json()) as { start: number }).start;
+		const totals = (await (
+			await post("/api/history/import", {
+				start: await begin(),
+				rows: ids.map((id) => [id, 2, 0, at, 0, 2]),
+				part: 0,
+				parts: 1,
+			})
+		).json()) as { upload: string };
+		const first = (await (
+			await post("/api/history/listens", {
+				importId: totals.upload,
+				part: 0,
+				parts: 2,
+				tracks: 2,
+				kind: "tracks",
+				data: ids.map((id, i) => [
+					id,
+					i ? "Beta" : "Alpha",
+					`Artist ${i ? "Beta" : "Alpha"}`,
+					"Synthetic",
+				]),
+			})
+		).json()) as { upload: string };
+		await post("/api/history/listens", {
+			upload: first.upload,
+			part: 1,
+			parts: 2,
+			tracks: 2,
+			kind: "rows",
+			data: [at / 1000, at / 1000 + 1].flatMap((t) => ids.map((_, i) => [t, i, 200_000, 132, 0])),
+		});
+		const rev = (await selection()).revision;
+		await post("/api/history/selection", {
+			baseRevision: rev,
+			enabled: true,
+			rules: [],
+			dataset: (await selection()).dataset.key,
+		});
+		await page.goto("/auswahl");
+		const search = page.getByRole("searchbox", { name: "Song, Künstler oder Album" });
+		const takeOver = page.getByRole("button", { name: "Auswahl übernehmen" });
+		const rules = page.locator(".selection__rules");
+		await expect(
+			page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+		).toBeEnabled();
+
+		// R7: while the list for a new search is on its way, nothing of the old one can be acted on.
+		await search.fill("Alpha");
+		await expect(page.locator(".selection__items").first()).not.toContainText("Beta");
+		let release = () => {};
+		let hold: (q: { q: string; group: string }) => boolean = (q) => q.q === "Beta";
+		let seenHeld = () => {};
+		let held = new Promise<void>((r) => {
+			seenHeld = r;
+		});
+		let gate = new Promise<void>((r) => {
+			release = r;
+		});
+		await page.route(/\/api\/history\/selection\/preview$/, async (route) => {
+			const body = route.request().postDataJSON() as { query: { q: string; group: string } };
+			if (hold(body.query)) {
+				hold = () => false;
+				seenHeld();
+				await gate;
+			}
+			await route.fallback();
+		});
+		await search.fill("Beta");
+		await held;
+		await expect(
+			page.getByText("Die Liste wird für deine Suche und deinen Entwurf aktualisiert"),
+		).toBeVisible();
+		await expect(page.getByRole("button", { name: /^Alle \d+ Treffer ausschließen$/ })).toHaveCount(
+			0,
+		);
+		await expect(
+			page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+		).toBeDisabled();
+		release();
+		const bulk = page.getByRole("button", { name: "Alle 1 Treffer ausschließen" });
+		await expect(bulk).toBeEnabled();
+		await bulk.click();
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		await expect(rules).not.toContainText("Alpha");
+		await page.getByRole("button", { name: "Entwurf verwerfen" }).click();
+
+		// R7: a grouping on its way leaves the old track rows inert; the artist rows then act as artists.
+		await search.fill("Alpha");
+		await expect(
+			page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+		).toBeEnabled();
+		held = new Promise<void>((r) => {
+			seenHeld = r;
+		});
+		gate = new Promise<void>((r) => {
+			release = r;
+		});
+		hold = (q) => q.group === "artist";
+		await page.getByLabel("Gruppieren").selectOption("artist");
+		await held;
+		await expect(
+			page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+		).toBeDisabled();
+		release();
+		await page.getByRole("button", { name: "Ausschließen: Artist Alpha", exact: true }).click();
+		await expect(rules).toContainText("Künstler „Artist Alpha“ ausgeschlossen");
+		await expect(rules).not.toContainText("Song „Alpha“");
+		await page.getByRole("button", { name: "Entwurf verwerfen" }).click();
+		await page.getByLabel("Gruppieren").selectOption("track");
+		await search.fill("");
+
+		// R7: a rule edited under a status filter locks the rows until they are counted again.
+		const alpha = page.getByRole("button", { name: "Ausschließen: Alpha", exact: true });
+		const beta = page.getByRole("button", { name: "Ausschließen: Beta", exact: true });
+		await page.getByLabel("Zeigen").selectOption("included");
+		await expect(alpha).toBeEnabled();
+		held = new Promise<void>((r) => {
+			seenHeld = r;
+		});
+		gate = new Promise<void>((r) => {
+			release = r;
+		});
+		hold = () => true;
+		await alpha.click();
+		await held;
+		await expect(beta).toBeDisabled();
+		release();
+		await expect(beta).toBeEnabled();
+		await expect(page.locator(".selection__items").first()).not.toContainText("Alpha");
+
+		// R7: a new revision (taken over here) locks them too until counted on it.
+		held = new Promise<void>((r) => {
+			seenHeld = r;
+		});
+		gate = new Promise<void>((r) => {
+			release = r;
+		});
+		hold = () => true;
+		await takeOver.click();
+		await expect(page.getByRole("status").filter({ hasText: /Übernommen \(Stand/ })).toBeVisible();
+		await held;
+		await expect(beta).toBeDisabled();
+		release();
+		await expect(beta).toBeEnabled();
+		await page.unroute(/\/api\/history\/selection\/preview$/);
+		// Back to nothing left out, on purpose (another tab), and a fresh page.
+		const now = await selection();
+		await post("/api/history/selection", {
+			baseRevision: now.revision,
+			enabled: true,
+			rules: [],
+			dataset: now.dataset.key,
+		});
+		await page.reload();
+		await expect(alpha).toBeEnabled();
+
+		// R8: an edit made while taking over is on its way stays the draft.
+		await page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }).click();
+		await expect(takeOver).toBeEnabled();
+		let ack = () => {};
+		const ackGate = new Promise<void>((r) => {
+			ack = r;
+		});
+		let posted = () => {};
+		const committed = new Promise<void>((r) => {
+			posted = r;
+		});
+		await page.route(/\/api\/history\/selection$/, async (route) => {
+			if (route.request().method() !== "POST") return route.fallback();
+			const response = await route.fetch();
+			posted();
+			await ackGate;
+			await route.fulfill({ response });
+		});
+		await takeOver.click();
+		await committed;
+		await expect(page.getByText("Wird übernommen …")).toBeVisible();
+		await page.getByRole("button", { name: "Ausschließen: Beta", exact: true }).click();
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		ack();
+		await expect(
+			page.getByRole("status").filter({ hasText: "noch nicht übernommen" }),
+		).toBeVisible();
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		await expect(rules).toContainText("Song „Alpha“ ausgeschlossen");
+		expect((await selection()).selection.rules.map((r) => r.id)).toEqual([ids[0]]);
+		await page.unroute(/\/api\/history\/selection$/);
+
+		// R10: a preview of the import as it was cannot be taken over once another tab replaced it.
+		await expect(takeOver).toBeEnabled();
+		await post("/api/history/import", {
+			start: await begin(),
+			rows: [[ids[1], 20, 0, Date.parse("2025-01-01T00:00:00Z"), 0, 20]],
+			part: 0,
+			parts: 1,
+		});
+		const before = await selection();
+		await takeOver.click();
+		await expect(page.getByRole("alert")).toContainText("seit der Vorschau geändert");
+		expect((await selection()).revision).toBe(before.revision);
+		// Counted again on the new import, the same draft can then be taken over on purpose.
+		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toContainText(
+			"0 von 20 Wiedergaben zählen",
+		);
+		await takeOver.click();
+		await expect(page.getByRole("status").filter({ hasText: /Übernommen \(Stand/ })).toBeVisible();
+		expect(await selection()).toMatchObject({ counts: { plays: 20, includedPlays: 0 } });
+		await post("/api/history/delete", { dataset: (await selection()).dataset.key });
+	});
+
+	test("the selection page never lets an older answer bring back a deleted import or claim a success", async ({
+		page,
+	}) => {
+		await signIn(page);
+		const ids = ["T000000000000000000000", "T000000000000000000001"];
+		const post = (url: string, data: unknown) =>
+			page.request.post(url, { headers: { "x-ts": "1" }, data });
+		const selection = async () =>
+			(await (await page.request.get("/api/history/selection")).json()) as {
+				revision: number;
+				selection: { enabled: boolean; rules: { id?: string }[] };
+				dataset: { hasImport: boolean; key: string };
+			};
+		const at = Date.parse("2024-03-01T12:00:00Z");
+		const begin = async () =>
+			((await (await post("/api/history/begin", {})).json()) as { start: number }).start;
+		/** A synthetic two-song import, nothing left out, then the page opened fresh. */
+		const fresh = async () => {
+			const old = await selection();
+			if (old.dataset.hasImport) await post("/api/history/delete", { dataset: old.dataset.key });
+			const totals = (await (
+				await post("/api/history/import", {
+					start: await begin(),
+					rows: ids.map((id) => [id, 2, 0, at, 0, 2]),
+					part: 0,
+					parts: 1,
+				})
+			).json()) as { upload: string };
+			const first = (await (
+				await post("/api/history/listens", {
+					importId: totals.upload,
+					part: 0,
+					parts: 2,
+					tracks: 2,
+					kind: "tracks",
+					data: ids.map((id, i) => [
+						id,
+						i ? "Beta" : "Alpha",
+						`Artist ${i ? "Beta" : "Alpha"}`,
+						"Synthetic",
+					]),
+				})
+			).json()) as { upload: string };
+			await post("/api/history/listens", {
+				upload: first.upload,
+				part: 1,
+				parts: 2,
+				tracks: 2,
+				kind: "rows",
+				data: [at / 1000, at / 1000 + 1].flatMap((t) => ids.map((_, i) => [t, i, 200_000, 132, 0])),
+			});
+			const now = await selection();
+			await post("/api/history/selection", {
+				baseRevision: now.revision,
+				enabled: true,
+				rules: [],
+				dataset: now.dataset.key,
+			});
+			await page.goto("/auswahl");
+			await expect(
+				page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+			).toBeEnabled();
+		};
+		const takeOver = page.getByRole("button", { name: "Auswahl übernehmen" });
+		const rules = page.locator(".selection__rules");
+		const applied = page.getByRole("status").filter({ hasText: /Übernommen \(Stand/ });
+		const switchOff = page.getByRole("button", { name: "Import ausschalten", exact: true });
+		/** Lets the server take the change, holds its answer until released. */
+		const holdAck = async () => {
+			let release = () => {};
+			const gate = new Promise<void>((r) => {
+				release = r;
+			});
+			let committed = () => {};
+			const seen = new Promise<void>((r) => {
+				committed = r;
+			});
+			let posts = 0;
+			await page.route(/\/api\/history\/selection$/, async (route) => {
+				if (route.request().method() !== "POST") return route.fallback();
+				posts++;
+				const response = await route.fetch();
+				committed();
+				await gate;
+				await route.fulfill({ response });
+			});
+			return { release, seen, posts: () => posts };
+		};
+
+		// While a takeover is on its way, an already open deletion cannot be confirmed;
+		// edits made meanwhile stay the draft; a double tap sends one request.
+		await fresh();
+		await page.getByRole("button", { name: "Import löschen …", exact: true }).click();
+		const confirm = page.getByRole("button", { name: "Endgültig löschen", exact: true });
+		await expect(confirm).toBeEnabled();
+		await page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }).click();
+		await expect(takeOver).toBeEnabled();
+		let held = await holdAck();
+		await takeOver.dblclick();
+		await held.seen;
+		await expect(confirm).toBeDisabled();
+		await expect(
+			page.getByText("Löschen geht, sobald die Übernahme abgeschlossen ist."),
+		).toBeVisible();
+		await confirm.focus();
+		await page.keyboard.press("Enter");
+		expect((await selection()).dataset.hasImport).toBe(true);
+		await page.getByRole("button", { name: "Ausschließen: Beta", exact: true }).click();
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		held.release();
+		await expect(applied).toBeVisible();
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		expect(held.posts()).toBe(1);
+		await expect(confirm).toBeEnabled();
+		await page.unroute(/\/api\/history\/selection$/);
+
+		// The same for switching off.
+		await page.getByRole("button", { name: "Entwurf verwerfen" }).click();
+		held = await holdAck();
+		await switchOff.click();
+		await held.seen;
+		await expect(confirm).toBeDisabled();
+		await expect(
+			page.getByText("Löschen geht, sobald das Umschalten abgeschlossen ist."),
+		).toBeVisible();
+		held.release();
+		await expect(
+			page.getByRole("button", { name: "Import wieder einschalten", exact: true }),
+		).toBeVisible();
+		await expect(confirm).toBeEnabled();
+		await page.unroute(/\/api\/history\/selection$/);
+
+		// Another tab deletes while a takeover's answer is still on its way. The page
+		// learns of it, its re-count then fails, and the late answer arrives: the import
+		// stays deleted on the page, and no success is claimed for it.
+		await fresh();
+		await page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }).click();
+		await expect(takeOver).toBeEnabled();
+		held = await holdAck();
+		await takeOver.click();
+		await held.seen;
+		await post("/api/history/delete", { dataset: (await selection()).dataset.key });
+		// An edit asks for a new count; it is made on the deleted import, so the page loads anew.
+		await page.getByRole("button", { name: "Ausschließen: Beta", exact: true }).click();
+		await expect(page.getByText("Kein Import gespeichert.", { exact: false })).toBeVisible();
+		let offline = false;
+		await page.route(/\/api\/history\/selection\/preview$/, (route) =>
+			offline
+				? route.abort("internetdisconnected")
+				: route.fulfill({
+						status: 503,
+						contentType: "application/json",
+						body: JSON.stringify({ error: { code: "busy", message: "Gerade nicht erreichbar." } }),
+					}),
+		);
+		held.release();
+		await expect(page.getByRole("button", { name: "Wird berechnet …" })).toHaveCount(0);
+		offline = true;
+		await page.waitForTimeout(800);
+		expect((await selection()).dataset.hasImport).toBe(false);
+		await expect(page.getByText("Kein Import gespeichert.", { exact: false })).toBeVisible();
+		await expect(switchOff).toHaveCount(0);
+		await expect(applied).toHaveCount(0);
+		await page.unroute(/\/api\/history\/selection$/);
+		await page.unroute(/\/api\/history\/selection\/preview$/);
+
+		// Leaving the page and coming back while an answer is on its way: the page
+		// shows what is stored, never the late answer's message.
+		await fresh();
+		await page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }).click();
+		await expect(takeOver).toBeEnabled();
+		held = await holdAck();
+		await takeOver.click();
+		await held.seen;
+		// Inside the app (no reload): the page is left and opened anew.
+		await page.getByRole("button", { name: "Zurück" }).click();
+		await page.getByRole("link", { name: /Hörverlauf auswählen/ }).click();
+		await expect(rules).toContainText("Song „Alpha“ ausgeschlossen");
+		held.release();
+		await page.waitForTimeout(500);
+		await expect(applied).toHaveCount(0);
+		expect((await selection()).selection.rules.map((r) => r.id)).toEqual([ids[0]]);
+		await page.unroute(/\/api\/history\/selection$/);
+
+		// A newer load answered by the server before a takeover is committed, but
+		// delivered after the takeover's answer, never takes the page back.
+		await fresh();
+		await page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }).click();
+		await expect(takeOver).toBeEnabled();
+		const before = await selection();
+		let sendApply = () => {};
+		const applyGate = new Promise<void>((r) => {
+			sendApply = r;
+		});
+		await page.route(/\/api\/history\/selection$/, async (route) => {
+			if (route.request().method() !== "POST") return route.fallback();
+			await applyGate;
+			await route.fulfill({ response: await route.fetch() });
+		});
+		await takeOver.click();
+		let deliverLoad = () => {};
+		const loadGate = new Promise<void>((r) => {
+			deliverLoad = r;
+		});
+		let loadAnswered = () => {};
+		const answered = new Promise<void>((r) => {
+			loadAnswered = r;
+		});
+		await page.route(/\/api\/history\/selection$/, async (route) => {
+			if (route.request().method() !== "GET") return route.fallback();
+			const response = await route.fetch();
+			loadAnswered();
+			await loadGate;
+			await route.fulfill({ response });
+		});
+		// One count reports another stored import: the page asks for a new load.
+		let twist = true;
+		await page.route(/\/api\/history\/selection\/preview$/, async (route) => {
+			if (!twist) return route.fallback();
+			twist = false;
+			const response = await route.fetch();
+			const body = (await response.json()) as Record<string, unknown>;
+			await route.fulfill({ response, json: { ...body, dataset: "other|import" } });
+		});
+		await page.getByRole("button", { name: "Ausschließen: Beta", exact: true }).click();
+		await answered;
+		sendApply();
+		await expect(applied).toBeVisible();
+		const appliedText = await applied.innerText();
+		expect(appliedText).toContain(`Stand ${before.revision + 1}`);
+		const inForce = page.locator(".notice", { hasText: "Jetzt in Kraft" }).first();
+		await expect(inForce).toContainText("2 von 4 Wiedergaben zählen");
+		deliverLoad();
+		await page.waitForTimeout(800);
+		await expect(inForce).toContainText("2 von 4 Wiedergaben zählen");
+		await expect(applied).toHaveText(appliedText);
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		await page.unroute(/\/api\/history\/selection$/);
+		await page.unroute(/\/api\/history\/selection\/preview$/);
+
+		// A deletion answered, but the page cannot load what is stored now: nothing of
+		// the deleted import is shown as current or can be acted on, the failure is said.
+		await fresh();
+		await page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }).click();
+		await page.getByRole("button", { name: "Import löschen …", exact: true }).click();
+		let down: "503" | "offline" | null = "503";
+		await page.route(/\/api\/history\/selection$/, (route) => {
+			if (route.request().method() !== "GET" || !down) return route.fallback();
+			return down === "offline"
+				? route.abort("internetdisconnected")
+				: route.fulfill({
+						status: 503,
+						contentType: "application/json",
+						body: JSON.stringify({ error: { code: "busy", message: "Gerade nicht erreichbar." } }),
+					});
+		});
+		await page.getByRole("button", { name: "Endgültig löschen", exact: true }).click();
+		await expect(page.getByRole("status").filter({ hasText: "Import gelöscht" })).toBeVisible();
+		await expect(
+			page.getByRole("alert").filter({ hasText: "ließ sich nicht laden" }),
+		).toBeVisible();
+		await expect(page.getByText("Kein Import gespeichert.", { exact: false })).toBeVisible();
+		await expect(switchOff).toHaveCount(0);
+		await expect(page.getByText("Jetzt in Kraft")).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "Ausschließen: Beta", exact: true })).toHaveCount(
+			0,
+		);
+		await expect(takeOver).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "Endgültig löschen", exact: true })).toHaveCount(
+			0,
+		);
+		down = "offline";
+		await page.getByRole("button", { name: "Neu laden" }).click();
+		await expect(
+			page.getByRole("alert").filter({ hasText: "ließ sich nicht laden" }),
+		).toBeVisible();
+		await expect(switchOff).toHaveCount(0);
+		down = null;
+		await page.getByRole("button", { name: "Neu laden" }).click();
+		await expect(page.getByRole("alert").filter({ hasText: "ließ sich nicht laden" })).toHaveCount(
+			0,
+		);
+		await expect(page.getByText("Kein Import gespeichert.", { exact: false })).toBeVisible();
+		// The rule drafted before the deletion stays for a later import (said on the page).
+		await expect(
+			page.getByText(
+				/gespeicherten Regeln gelten dann für den neuen Import|Spotify-Verlauf importieren/,
+			),
+		).toBeVisible();
+		expect((await selection()).dataset.hasImport).toBe(false);
+		await page.unroute(/\/api\/history\/selection$/);
+
+		// A new import afterwards, begun on purpose, works as before.
+		await fresh();
+		await page.getByRole("button", { name: "Ausschließen: Beta", exact: true }).click();
+		await takeOver.click();
+		await expect(applied).toBeVisible();
+		expect((await selection()).selection.rules.map((r) => r.id)).toEqual([ids[1]]);
+		await post("/api/history/delete", { dataset: (await selection()).dataset.key });
+	});
+
+	test("a takeover answered after a reload read the state before it still shows what is in force", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.exclude("Alpha").click();
+		await expect(ui.takeOver).toBeEnabled();
+		await r.failedReload();
+		const before = await r.selection();
+		const release = r.gate();
+		const change = await r.holdChange(/\/api\/history\/selection$/, release.shut);
+		await ui.takeOver.click();
+		await change.sent;
+		const late = await r.readBeforeChange();
+		expect((await r.selection()).revision).toBe(before.revision);
+		// An edit while the takeover is on its way stays the draft.
+		await r.exclude("Beta").click();
+		release.open();
+		await expect(ui.applied).toContainText(`Stand ${before.revision + 1}`);
+		await expect(ui.applied).toContainText("Deine Änderungen von danach");
+		await expect(ui.inForce).toContainText("2 von 4 Wiedergaben zählen");
+		await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+		expect((await r.selection()).revision).toBe(before.revision + 1);
+		// The read of the older state, delivered after the answer, changes nothing.
+		late.open();
+		await page.waitForTimeout(800);
+		await expect(ui.applied).toContainText(`Stand ${before.revision + 1}`);
+		await expect(ui.inForce).toContainText("2 von 4 Wiedergaben zählen");
+		await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+		await change.done();
+		await r.post("/api/history/delete", { dataset: (await r.selection()).dataset.key });
+	});
+
+	test("switching off answered after a reload read the state before it shows the import off", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.failedReload();
+		const release = r.gate();
+		const change = await r.holdChange(/\/api\/history\/selection$/, release.shut);
+		await ui.switchOff.click();
+		await change.sent;
+		const late = await r.readBeforeChange();
+		expect((await r.selection()).selection.enabled).toBe(true);
+		await r.exclude("Beta").click();
+		release.open();
+		await expect(ui.switchOn).toBeVisible();
+		await expect(
+			page.getByRole("status").filter({ hasText: "Import ausgeschaltet" }),
+		).toBeVisible();
+		await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+		expect((await r.selection()).selection.enabled).toBe(false);
+		late.open();
+		await page.waitForTimeout(800);
+		await expect(ui.switchOn).toBeVisible();
+		await expect(ui.switchOff).toHaveCount(0);
+		await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+		await change.done();
+		await r.post("/api/history/delete", { dataset: (await r.selection()).dataset.key });
+	});
+
+	test("a deletion answered after a reload read the state before it leaves nothing of the import", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.failedReload();
+		const release = r.gate();
+		const change = await r.holdChange(/\/api\/history\/delete$/, release.shut);
+		await ui.confirm.click();
+		await change.sent;
+		const late = await r.readBeforeChange();
+		await expect(ui.switchOff).toBeVisible();
+		expect((await r.selection()).dataset.hasImport).toBe(true);
+		// The load the deletion's answer asks for is held: the answer alone already
+		// leaves nothing of the import shown as current or to act on.
+		const after = r.gate();
+		const afterRead = r.holdLoad(after.shut);
+		release.open();
+		await expect(ui.deleted).toBeVisible();
+		await afterRead;
+		for (const gone of [
+			ui.switchOff,
+			ui.switchOn,
+			ui.takeOver,
+			ui.confirm,
+			ui.openDelete,
+			page.getByText("Jetzt in Kraft"),
+			r.exclude("Alpha"),
+		])
+			await expect(gone).toHaveCount(0);
+		await expect(ui.noImport).toBeVisible();
+		expect((await r.selection()).dataset.hasImport).toBe(false);
+		after.open();
+		late.open();
+		await page.waitForTimeout(800);
+		await expect(ui.noImport).toBeVisible();
+		await expect(ui.switchOff).toHaveCount(0);
+		await expect(page.getByText("Jetzt in Kraft")).toHaveCount(0);
+		await change.done();
+	});
+
+	test("an import replaced meanwhile keeps an older takeover's answer, refusal or loss from claiming anything", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.exclude("Alpha").click();
+		await expect(ui.takeOver).toBeEnabled();
+		await r.failedReload();
+		const first = await r.selection();
+		// Stored, its answer held; another tab replaces the import; the page loads it.
+		let release = r.gate();
+		let change = await r.holdChange(/\/api\/history\/selection$/, release.shut, {
+			commitFirst: true,
+		});
+		await ui.takeOver.click();
+		await change.sent;
+		await r.importSynthetic();
+		await ui.reload.click();
+		await expect(ui.loadFailed).toHaveCount(0);
+		release.open();
+		await expect(ui.computing).toHaveCount(0);
+		await page.waitForTimeout(500);
+		await expect(ui.applied).toHaveCount(0);
+		await change.done();
+		// Refused or lost on its way after such a replacement: nothing claimed either.
+		for (const outcome of ["503", "offline"] as const) {
+			await r.exclude("Beta").click();
+			await expect(ui.takeOver).toBeEnabled();
+			await r.failedReload();
+			release = r.gate();
+			change = await r.holdChange(/\/api\/history\/selection$/, release.shut, { outcome });
+			await ui.takeOver.click();
+			await change.sent;
+			await r.importSynthetic();
+			await ui.reload.click();
+			await expect(ui.loadFailed).toHaveCount(0);
+			release.open();
+			await expect(ui.computing).toHaveCount(0);
+			await page.waitForTimeout(500);
+			await expect(ui.applied).toHaveCount(0);
+			await change.done();
+			await ui.discard.click();
+		}
+		// The page acts on the import stored now: deleting names it, and it goes.
+		expect((await r.selection()).dataset.key).not.toBe(first.dataset.key);
+		if (await ui.confirm.isHidden()) await ui.openDelete.click();
+		await ui.confirm.click();
+		await expect(ui.deleted).toBeVisible();
+		expect((await r.selection()).dataset.hasImport).toBe(false);
+	});
+
+	test("an older reload failure never replaces a newer failure or answer, and a new import works", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.failedReload();
+		// Two reloads failing in reverse order: the newer failure stays.
+		const older = r.gate();
+		r.failLoad("Ältere Antwort: nicht erreichbar.", older.shut);
+		await ui.reload.click();
+		r.failLoad("Neuere Antwort: nicht erreichbar.");
+		await ui.reload.click();
+		await expect(ui.loadFailed).toContainText("Neuere Antwort");
+		older.open();
+		await page.waitForTimeout(500);
+		await expect(ui.loadFailed).toContainText("Neuere Antwort");
+		await expect(ui.loadFailed).not.toContainText("Ältere Antwort");
+		// After a newer answer.
+		const stale = r.gate();
+		r.failLoad("Veraltet: nicht erreichbar.", stale.shut);
+		await ui.reload.click();
+		await ui.reload.click();
+		await expect(ui.loadFailed).toHaveCount(0);
+		stale.open();
+		await page.waitForTimeout(500);
+		await expect(ui.loadFailed).toHaveCount(0);
+		// After a takeover: no failure back, nothing kept busy.
+		await r.failedReload();
+		const beforeTakeover = r.gate();
+		r.failLoad("Veraltet: nicht erreichbar.", beforeTakeover.shut);
+		await ui.reload.click();
+		await r.exclude("Alpha").click();
+		await ui.takeOver.click();
+		await expect(ui.applied).toBeVisible();
+		await expect(ui.loadFailed).toHaveCount(0);
+		beforeTakeover.open();
+		await page.waitForTimeout(500);
+		await expect(ui.loadFailed).toHaveCount(0);
+		await expect(ui.switchOff).toBeEnabled();
+		// After a deletion.
+		await r.failedReload();
+		const beforeDelete = r.gate();
+		r.failLoad("Veraltet: nicht erreichbar.", beforeDelete.shut);
+		await ui.reload.click();
+		await ui.confirm.click();
+		await expect(ui.deleted).toBeVisible();
+		await expect(ui.noImport).toBeVisible();
+		await expect(ui.loadFailed).toHaveCount(0);
+		beforeDelete.open();
+		await page.waitForTimeout(500);
+		await expect(ui.loadFailed).toHaveCount(0);
+		await expect(ui.noImport).toBeVisible();
+		// A new import afterwards, begun on purpose, works as before.
+		await r.fresh();
+		await r.exclude("Beta").click();
+		await ui.takeOver.click();
+		await expect(ui.applied).toBeVisible();
+		expect((await r.selection()).selection.rules.map((x) => x.id)).toEqual([r.ids[1]]);
+		await r.post("/api/history/delete", { dataset: (await r.selection()).dataset.key });
+	});
+
+	for (const kind of ["takeover", "switch", "delete"] as const)
+		test(`a ${kind} refused or lost after a reload of the same stored state says so, and can be sent again`, async ({
+			page,
+		}) => {
+			const r = await selectionRace(page);
+			const { ui } = r;
+			const refused = page
+				.getByRole("alert")
+				.filter({ hasText: kind === "delete" ? "Nicht gelöscht" : "Nicht übernommen" });
+			for (const outcome of ["503", "offline"] as const) {
+				await r.fresh();
+				if (kind === "takeover") {
+					await r.exclude("Alpha").click();
+					await expect(ui.takeOver).toBeEnabled();
+				}
+				await r.failedReload();
+				const before = await r.selection();
+				const release = r.gate();
+				const change = await r.holdChange(
+					kind === "delete" ? /\/api\/history\/delete$/ : /\/api\/history\/selection$/,
+					release.shut,
+					{ outcome },
+				);
+				await (kind === "takeover"
+					? ui.takeOver
+					: kind === "switch"
+						? ui.switchOff
+						: ui.confirm
+				).click();
+				await change.sent;
+				// A reload while the change is on its way: the Worker answers with the same stored state.
+				await ui.reload.click();
+				await expect(ui.loadFailed).toHaveCount(0);
+				expect((await r.selection()).commit).toBe(before.commit);
+				// An edit (by keyboard) while it is on its way stays the draft.
+				if (kind !== "delete") {
+					await r.exclude("Beta").focus();
+					await page.keyboard.press("Enter");
+					await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+				}
+				await expect(refused).toHaveCount(0);
+				release.open();
+				await expect(refused).toBeVisible();
+				await expect(ui.applied).toHaveCount(0);
+				await expect(ui.deleted).toHaveCount(0);
+				const after = await r.selection();
+				expect(after).toEqual(before);
+				if (kind !== "delete") await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+				await change.done();
+				// Sent again on purpose, it goes through.
+				if (kind === "takeover") {
+					await expect(ui.takeOver).toBeEnabled();
+					await ui.takeOver.click();
+					await expect(ui.applied).toBeVisible();
+					expect((await r.selection()).selection.rules.map((x) => x.id)).toEqual([
+						r.ids[0],
+						r.ids[1],
+					]);
+				} else if (kind === "switch") {
+					await expect(ui.switchOff).toBeEnabled();
+					await ui.switchOff.click();
+					await expect(ui.switchOn).toBeVisible();
+					expect((await r.selection()).selection.enabled).toBe(false);
+				} else {
+					await expect(ui.confirm).toBeEnabled();
+					await ui.confirm.click();
+					await expect(ui.deleted).toBeVisible();
+					await expect(ui.noImport).toBeVisible();
+					expect((await r.selection()).dataset.hasImport).toBe(false);
+				}
+				await expect(refused).toHaveCount(0);
+			}
+			const last = await r.selection();
+			if (last.dataset.hasImport)
+				await r.post("/api/history/delete", { dataset: last.dataset.key });
+		});
+
 	test("every page reads well on a phone", async ({ page }) => {
 		await signIn(page);
 		await expect(page.getByRole("button", { name: /^Alles/ })).toBeVisible();
 		for (const path of [
 			"/verlauf",
 			"/import",
+			"/auswahl",
 			"/geraete",
 			"/fernbedienung",
 			"/info",

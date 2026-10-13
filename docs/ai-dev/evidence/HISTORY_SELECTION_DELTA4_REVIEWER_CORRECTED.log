@@ -1,0 +1,777 @@
+[WebServer] fake spotify on 19342
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                                                                     Resource                  Mode
+[WebServer] env.USER_HUB (UserHub)                                                      Durable Object            local
+[WebServer] env.REGISTRY (Registry)                                                     Durable Object            local
+[WebServer] env.ASSETS                                                                  Assets                    local
+[WebServer] env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+[WebServer] env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+[WebServer] env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19342/accounts")               Environment Variable      local
+[WebServer] env.SPOTIFY_API_BASE ("http://127.0.0.1:19342/v1")                          Environment Variable      local
+[WebServer] env.LASTFM_API_BASE ("http://127.0.0.1:19342/lastfm")                       Environment Variable      local
+[WebServer] env.LASTFM_API_KEY ("e2e-lastfm")                                           Environment Variable      local
+[WebServer] env.DEEZER_API_BASE ("http://127.0.0.1:19342/deezer")                       Environment Variable      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] ✨ Parsed 2 valid header rules.
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19341
+[WebServer] [wrangler:info] GET /api/health 200 OK (55ms)
+
+Running 15 tests using 1 worker
+
+(node:23044) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (76ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (87ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (90ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (74ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (134ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (87ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (50ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (106ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (98ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/onboarding 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /api/devices 200 OK (50ms)
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (48ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (5ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (23ms)
+[WebServer] {"level":"info","kind":"import","message":"„Indie & Gitarren“: 400 Songs übernommen, 0 übersprungen"}
+[WebServer] {"level":"info","kind":"import","message":"Lieblingssongs: 160 Songs übernommen, 0 übersprungen"}
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (89ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+serialization-preserve {"kind":"apply","pagePosts":1,"deletes":0,"acceptedNewerDraft":true}
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (31ms)
+  ok  1 races-lifec.spec.ts:27:42 › serialization apply: synchronous double taps and open delete confirmation inert; newer keyboard/date/rule edits survive (4.2s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (40ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (34ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 2, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (17ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+serialization-preserve {"kind":"toggle","pagePosts":1,"deletes":0,"acceptedNewerDraft":true}
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (40ms)
+  ok  2 races-lifec.spec.ts:27:42 › serialization toggle: synchronous double taps and open delete confirmation inert; newer keyboard/date/rule edits survive (1.3s)
+[WebServer] [wrangler:info] GET / 200 OK (25ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (12ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (14ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (14ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (8ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (47ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (20ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (28ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (28ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (7ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 4, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 5, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (50ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+external-delete-old-ACK {"kind":"apply","mode":"503","noImport":true,"oldSuccess":0}
+  ok  3 races-lifec.spec.ts:28:78 › external deleted accepted load fences old apply ACK with 503 preview (2.5s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (3ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (40ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (28ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 6, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (17ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (7ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 7, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (39ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+external-delete-old-ACK {"kind":"apply","mode":"offline","noImport":true,"oldSuccess":0}
+  ok  4 races-lifec.spec.ts:28:78 › external deleted accepted load fences old apply ACK with offline preview (2.4s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (41ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (2ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (32ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (33ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (27ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 8, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+external-delete-old-ACK {"kind":"toggle","mode":"503","noImport":true,"oldSuccess":0}
+  ok  5 races-lifec.spec.ts:28:78 › external deleted accepted load fences old toggle ACK with 503 preview (2.0s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (3ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (9ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (39ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (28ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (26ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (7ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 10, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (17ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (6ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (19ms)
+external-delete-old-ACK {"kind":"toggle","mode":"offline","noImport":true,"oldSuccess":0}
+  ok  6 races-lifec.spec.ts:28:78 › external deleted accepted load fences old toggle ACK with offline preview (2.0s)
+[WebServer] [wrangler:info] GET / 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (13ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (7ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (11ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (49ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (29ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (34ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (33ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (34ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (231ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (20ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (21ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 12, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (26ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (7ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (27ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (24ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (15ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 13, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 20 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 14, 2 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+replacement-old-ACK-retry {"kind":"apply","key":"Qz3kKyuwXNwsMrMV|g1","betaPreserved":true}
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+  ok  7 races-lifec.spec.ts:29:42 › external replacement accepted load fences old apply ACK, preserves draft and current retry (3.5s)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (12ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (7ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (16ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (49ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (26ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 20 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (20ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 15, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (5ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (23ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 20 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (36ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 17, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+replacement-old-ACK-retry {"kind":"toggle","key":"XAAwCLwU68YZ8-M8|g1","betaPreserved":true}
+[WebServer] [wrangler:info] GET /api/state 200 OK (29ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (13ms)
+  ok  8 races-lifec.spec.ts:29:42 › external replacement accepted load fences old toggle ACK, preserves draft and current retry (2.6s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (41ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (31ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (28ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (29ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (27ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 20 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 18, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (7ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (7ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 19, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (19ms)
+delete-immediate-recovery {"mode":"503","invalidatedBeforeGet":true,"draftRecovered":true}
+  ok  9 races-lifec.spec.ts:30:41 › Delete200 immediately invalidates old import before follow-up GET; 503 reload error, preserved draft and new-import recovery (1.7s)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (11ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (42ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (30ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (50ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (48ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (21ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 20, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (17ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (7ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 21, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+delete-immediate-recovery {"mode":"offline","invalidatedBeforeGet":true,"draftRecovered":true}
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+  ok 10 races-lifec.spec.ts:30:41 › Delete200 immediately invalidates old import before follow-up GET; offline reload error, preserved draft and new-import recovery (1.8s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (11ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (39ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (27ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (187ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (185ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (26ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (20ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (7ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 22, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (14ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (7ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 23, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+later-GET-before-write-commit {"kind":"apply","before":{"revision":22,"key":"SXB5MEtO2uxwrxPX|g1"},"server":{"revision":23,"key":"SXB5MEtO2uxwrxPX|g1","enabled":true,"counts":{"enabled":true,"rows":4,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":2,"includedSkips":0,"includedSongs":1,"changedSongs":1,"summarySongs":0,"summaryPlays":0,"partialSongs":0,"partialPlays":0,"includedSummarySongs":0,"from":1709294400000,"to":1709294401000,"rules":[{"key":"track:T000000000000000000000","plays":2,"skips":0,"songs":1}]}},"uiImport":"Dein Import\n\n4 Wiedergaben einzeln gespeichert, 1. März 2024 bis 1. März 2024; 2 Songs mit Summen.\n\nJetzt in Kraft: 2 von 4 Wiedergaben zählen, aus 1 von 2 Songs.\n\nStand 23, übernommen am 13. Oktober 2026.\n\nImport ausschalten\n\nAusschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.","oldToggle":1,"status":["Mit deinem Entwurf: 2 von 4 Wiedergaben zählen, aus 1 von 2 Songs.\n\nJetzt in Kraft: 2 von 4 Wiedergaben zählen, aus 1 von 2 Songs.","Übernommen (Stand 23). Neue Warteschlangen und Empfehlungen planen ab jetzt damit; eine gespeicherte Warteschlange behält ihre Reihenfolge.","1–2 von 2. Status nach deinem Entwurf.","Noch nicht gezählt."]}
+  ok 11 races-lifec.spec.ts:31:51 › later-issued real GET answered before apply commit cannot suppress newer committed state (2.5s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (40ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (25ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 24, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+later-GET-before-write-commit {"kind":"toggle","before":{"revision":24,"key":"oehDL67wMY6nyMvE|g1"},"server":{"revision":25,"key":"oehDL67wMY6nyMvE|g1","enabled":false,"counts":{"enabled":false,"rows":4,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":0,"includedSkips":0,"includedSongs":0,"changedSongs":2,"summarySongs":0,"summaryPlays":0,"partialSongs":0,"partialPlays":0,"includedSummarySongs":0,"from":1709294400000,"to":1709294401000,"rules":[]}},"uiImport":"Dein Import\n\n4 Wiedergaben einzeln gespeichert, 1. März 2024 bis 1. März 2024; 2 Songs mit Summen.\n\nJetzt in Kraft: Der Import ist ausgeschaltet — keine seiner 4 Wiedergaben zählt.\n\nStand 25, übernommen am 13. Oktober 2026.\n\nImport wieder einschalten\n\nAusgeschaltet: der Import zählt nicht. Einschalten verwendet deine gespeicherten Regeln wieder.","oldToggle":0,"status":["Mit deinem Entwurf: Der Import ist ausgeschaltet — keine seiner 4 Wiedergaben zählt.\n\nJetzt in Kraft: Der Import ist ausgeschaltet — keine seiner 4 Wiedergaben zählt.","Import ausgeschaltet. Er bleibt gespeichert und zählt nicht, bis du ihn wieder einschaltest.","1–2 von 2. Status nach deinem Entwurf.","Noch nicht gezählt."]}
+  ok 12 races-lifec.spec.ts:31:51 › later-issued real GET answered before toggle commit cannot suppress newer committed state (2.0s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (8ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (41ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (29ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (28ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 26, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (17ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+later-GET-before-write-commit {"kind":"delete","before":{"revision":26,"key":"TA5SZwNjODrGhLQP|g1"},"server":{"revision":26,"key":"-|-","enabled":true,"counts":null},"uiImport":"Dein Import\n\nKein Import gespeichert. Spotify-Verlauf importieren","oldToggle":0,"status":["Import gelöscht: 2 Songs, 4 Wiedergaben. Deine Live-Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange sind unverändert; deine Spotify-Dateien auch.","Noch nicht gezählt."]}
+  ok 13 races-lifec.spec.ts:31:51 › later-issued real GET answered before delete commit cannot suppress newer committed state (1.9s)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (12ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (46ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (47ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (47ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (52ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (3ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+reversed-failed-GETs Der aktuelle Stand ließ sich nicht laden: NEWER reload failure Dein Entwurf bleibt erhalten.
+
+Neu laden
+  ok 14 races-lifec.spec.ts:32:5 › older failed GET cannot overwrite newer accepted reload error; explicit recovery remains usable (1.8s)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-CK-NvF5n.js 200 OK (3ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (41ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (7ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (31ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (29ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (34ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (34ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (6ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (44ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 27, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+revision-floor {"oldRevision":26,"currentRevision":27,"newerDraft":true,"messagePreserved":true}
+  ok 15 races-lifec.spec.ts:34:5 › request order AND revision floor: later-issued older-revision GET delivered after committed Apply cannot roll back view/message/draft (2.3s)
+
+  15 passed (40.3s)
+
+lifec exit=0

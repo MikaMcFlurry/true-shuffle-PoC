@@ -5,10 +5,15 @@ import type {
 	DeviceView,
 	GenreAnswer,
 	HistoryEntry,
+	HistorySelectionView,
+	ImportSelection,
+	InspectQuery,
 	ListeningProfile,
+	PlaylistCountsView,
 	PlaylistView,
 	PlayResult,
 	RemoteKeyView,
+	SelectionPreview,
 	StationDetail,
 	StationSource,
 } from "../shared/api";
@@ -210,13 +215,51 @@ export const api = {
 	guest: (on: boolean, hours?: number) => call<unknown>("POST", "/api/guest", { on, hours }),
 	guestDevices: (devices: { id: string; name: string }[]) =>
 		call<{ id: string; name: string }[]>("PUT", "/api/guest/devices", { devices }),
-	importHistory: (rows: HistoryRow[], part: number, parts: number) =>
-		call<{ stored: number }>("POST", "/api/history/import", { rows, part, parts }),
+	/** Begins an import on purpose; its first block names the answer's `start`. */
+	startImport: () => call<{ start: number }>("POST", "/api/history/begin"),
+	importHistory: (
+		rows: HistoryRow[],
+		part: number,
+		parts: number,
+		upload?: string,
+		start?: number,
+	) =>
+		call<{ stored: number; upload: string }>("POST", "/api/history/import", {
+			rows,
+			part,
+			parts,
+			upload,
+			start,
+		}),
+	historySelection: () => call<HistorySelectionView>("GET", "/api/history/selection"),
+	/** Read-only: counts and one page of a search under a draft selection. */
+	previewSelection: (draft: ImportSelection, query: Partial<InspectQuery>) =>
+		call<SelectionPreview>("POST", "/api/history/selection/preview", { ...draft, query }),
+	/**
+	 * Takes the draft over, on the revision the page showed and the stored
+	 * import it was made on (its preview's dataset key) — else 409.
+	 */
+	applySelection: (baseRevision: number, draft: ImportSelection, dataset: string) =>
+		call<HistorySelectionView>("POST", "/api/history/selection", {
+			baseRevision,
+			...draft,
+			dataset,
+		}),
+	deleteImport: (dataset: string) =>
+		call<{ deleted: { songs: number; rows: number; summaryProfile: boolean }; commit: number }>(
+			"POST",
+			"/api/history/delete",
+			{ dataset },
+		),
+	playlistCounts: () => call<PlaylistCountsView>("GET", "/api/playlist-counts"),
+	countPlaylists: () => call<PlaylistCountsView>("POST", "/api/playlist-counts"),
 	history: (before?: number) =>
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),
 	importListens: (block: {
 		/** From the first block's answer; every later block carries it. */
 		upload?: string;
+		/** The first block names the upload of song totals the plays belong to. */
+		importId?: string;
 		part: number;
 		parts: number;
 		tracks: number;

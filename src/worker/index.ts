@@ -535,7 +535,13 @@ app.put("/api/guest/devices", async (c) => {
 });
 
 app.post("/api/history/import", async (c) => {
-	const b = await body<{ rows?: unknown; part?: number; parts?: number }>(c);
+	const b = await body<{
+		rows?: unknown;
+		part?: number;
+		parts?: number;
+		upload?: unknown;
+		start?: unknown;
+	}>(c);
 	const rows = Array.isArray(b.rows) ? (b.rows as HistoryRow[]) : [];
 	const part = Number(b.part ?? 0);
 	const parts = Number(b.parts ?? 1);
@@ -548,8 +554,47 @@ app.post("/api/history/import", async (c) => {
 	) {
 		return c.json({ error: { code: "bad_import", message: "Ungültiger Import-Block" } }, 400);
 	}
-	return unwrap(c, c.var.hub.importHistory(c.var.epoch, rows, part, parts));
+	return unwrap(c, c.var.hub.importHistory(c.var.epoch, rows, part, parts, b.upload, b.start));
 });
+
+// Beginning an import on purpose: the first block names the epoch it began in.
+app.post("/api/history/begin", (c) => unwrap(c, c.var.hub.startImport(c.var.epoch)));
+
+// The listener's selection of the imported history (see core/import-selection).
+app.get("/api/history/selection", (c) => unwrap(c, c.var.hub.historySelection(c.var.epoch)));
+
+// A look under a draft selection: read-only.
+app.post("/api/history/selection/preview", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(
+		c,
+		c.var.hub.previewSelection(c.var.epoch, { enabled: b.enabled, rules: b.rules, query: b.query }),
+	);
+});
+
+// Taking a selection over (also switching the import off or on again).
+app.post("/api/history/selection", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(
+		c,
+		c.var.hub.applySelection(c.var.epoch, {
+			baseRevision: b.baseRevision,
+			enabled: b.enabled,
+			rules: b.rules,
+			dataset: b.dataset,
+		}),
+	);
+});
+
+// Deleting the stored import: `dataset` names the one the listener confirmed.
+app.post("/api/history/delete", async (c) => {
+	const b = await body<{ dataset?: unknown }>(c);
+	return unwrap(c, c.var.hub.deleteImport(c.var.epoch, b.dataset));
+});
+
+// Songs across the listener's own playlists: the count so far, and counting again.
+app.get("/api/playlist-counts", (c) => unwrap(c, c.var.hub.playlistCounts(c.var.epoch)));
+app.post("/api/playlist-counts", (c) => unwrap(c, c.var.hub.countPlaylists(c.var.epoch)));
 
 app.get("/api/history", (c) => {
 	const before = c.req.query("before");
@@ -575,6 +620,7 @@ app.post("/api/history/listens", async (c) => {
 		c,
 		c.var.hub.importListens(c.var.epoch, {
 			upload: b.upload,
+			importId: b.importId,
 			part: b.part,
 			parts: b.parts,
 			tracks: b.tracks,

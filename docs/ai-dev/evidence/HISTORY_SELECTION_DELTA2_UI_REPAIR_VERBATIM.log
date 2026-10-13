@@ -1,0 +1,525 @@
+[WebServer] fake spotify on 19262
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                                                                     Resource                  Mode
+[WebServer] env.USER_HUB (UserHub)                                                      Durable Object            local
+[WebServer] env.REGISTRY (Registry)                                                     Durable Object            local
+[WebServer] env.ASSETS                                                                  Assets                    local
+[WebServer] env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+[WebServer] env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+[WebServer] env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19262/accounts")               Environment Variable      local
+[WebServer] env.SPOTIFY_API_BASE ("http://127.0.0.1:19262/v1")                          Environment Variable      local
+[WebServer] env.LASTFM_API_BASE ("http://127.0.0.1:19262/lastfm")                       Environment Variable      local
+[WebServer] env.LASTFM_API_KEY ("e2e-lastfm")                                           Environment Variable      local
+[WebServer] env.DEEZER_API_BASE ("http://127.0.0.1:19262/deezer")                       Environment Variable      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] ✨ Parsed 2 valid header rules.
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19261
+[WebServer] [wrangler:info] GET /api/health 200 OK (51ms)
+
+Running 7 tests using 1 worker
+
+(node:27704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (29ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (23ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (12ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (91ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (110ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (99ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/onboarding 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (22ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (16ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /api/devices 200 OK (61ms)
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (55ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (16ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (6ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (28ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] {"level":"info","kind":"import","message":"Lieblingssongs: 160 Songs übernommen, 0 übersprungen"}
+[WebServer] {"level":"info","kind":"import","message":"„Indie & Gitarren“: 400 Songs übernommen, 0 übersprungen"}
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (409ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (50ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+  x  1 races-fix.spec.ts:8:5 › extra race 1 Alpha match IDs must not apply after Beta query while preview pending (1.5m)
+(node:5284) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (13ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (7ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (6ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (93ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (71ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (71ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (67ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (62ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (50ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (21ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (21ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (22ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (23ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (15ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (7ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (28ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (18ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (21ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (35ms)
+race2-edit-enabled true
+[WebServer] [wrangler:info] GET /api/state 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+race2-after {"rules":"Song „Alpha“ ausgeschlossen\nNimmt: 2 Wiedergaben, 1 Songs\nEntfernen\nSong „Beta“ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen","server":{"enabled":true,"rules":[{"type":"track","kind":"exclude","id":"T000000000000000000000","label":"Alpha"}]}}
+  ok 2 races-fix.spec.ts:9:5 › extra race 2 newer Beta draft survives held Alpha apply ACK (2.3s)
+[WebServer] [wrangler:info] GET / 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (14ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (8ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (12ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (6ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (8ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (70ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (8ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (33ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (39ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (40ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (23ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (24ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (10ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (7ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+  x  3 races-fix.spec.ts:10:5 › pending toggle cannot silently discard newer keyboard draft (16.1s)
+(node:29668) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (60ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (57ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (45ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (34ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (11ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+  x  4 races-fix.spec.ts:11:5 › failed and offline preview disables unpreviewed draft; reverse rule results keep latest (15.9s)
+(node:31832) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (13ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (7ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (8ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (67ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (7ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (89ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (67ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (31ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (47ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (22ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (23ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (10ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (22ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+  x  5 races-fix.spec.ts:12:5 › group changes while pending cannot interpret stale track row as artist result (16.2s)
+(node:25780) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (50ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (48ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (48ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (47ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (29ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (9ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (7ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (7ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+  x  6 races-fix.spec.ts:13:5 › dataset replacement after successful preview requires renewed preview or rejects stale apply (16.0s)
+(node:37304) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (14ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (8ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (8ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (70ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (76ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (58ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (37ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] GET /api/devices 200 OK (91ms)
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (29ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (30ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (15ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (20ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (13ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (7ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (27ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+  x  7 races-fix.spec.ts:14:5 › R4 UI visibly explains partial whole-song semantics and cutoff no-import weighting (16.4s)
+
+
+  1) races-fix.spec.ts:8:5 › extra race 1 Alpha match IDs must not apply after Beta query while preview pending 
+
+    Test timeout of 90000ms exceeded.
+
+    Error: locator.isEnabled: Test timeout of 90000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Alle 1 Treffer ausschließen' })
+
+
+       6 | const apply=(page:any)=>page.getByRole('button',{name:'Auswahl übernehmen'});
+       7 | function deferred(){let release:any;const promise=new Promise<void>(r=>release=r);return {promise,release:()=>release()}}
+    >  8 | test('extra race 1 Alpha match IDs must not apply after Beta query while preview pending',async({page})=>{await setup(page);await search(page).fill('Alpha');await expect(page.locator('.selection__items').first()).not.toContainText('Beta');const gate=deferred(),seen=deferred();let hold=true;await page.route('**/api/history/selection/preview',async r=>{const b=r.request().postDataJSON();if(b.query.q==='Beta'&&hold){hold=false;seen.release();await gate.promise;}await r.continue();});await search(page).fill('Beta');await seen.promise;const bulk=page.getByRole('button',{name:'Alle 1 Treffer ausschließen'});console.log('race1-before',JSON.stringify({query:await search(page).inputValue(),list:await page.locator('.selection__items').first().innerText(),bulkEnabled:await bulk.isEnabled()}));await bulk.click();await expect(apply(page)).toBeEnabled();let payload:any;page.on('request',r=>{if(r.url().endsWith('/api/history/selection')&&r.method()==='POST')payload=r.postDataJSON()});await apply(page).click();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();gate.release();const server=await(await page.request.get('/api/history/selection')).json();console.log('race1-observed',JSON.stringify({payload,server:server.selection,query:await search(page).inputValue()}));expect(payload.rules.some((r:any)=>r.id===ids[0]&&r.kind==='exclude')).toBe(false);});
+         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           ^
+       9 | test('extra race 2 newer Beta draft survives held Alpha apply ACK',async({page})=>{await setup(page);await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(apply(page)).toBeEnabled();const gate=deferred(),seen=deferred();await page.route('**/api/history/selection',async r=>{if(r.request().method()!=='POST')return r.continue();const response=await r.fetch();seen.release();await gate.promise;await r.fulfill({response});});await apply(page).click();await seen.promise;const beta=page.getByRole('button',{name:'Ausschließen: Beta',exact:true});console.log('race2-edit-enabled',await beta.isEnabled());if(await beta.isEnabled()){await beta.click();await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();}gate.release();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();console.log('race2-after',JSON.stringify({rules:await page.locator('.selection__rules').innerText(),server:(await(await page.request.get('/api/history/selection')).json()).selection}));await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();});
+      10 | test('pending toggle cannot silently discard newer keyboard draft',async({page})=>{await setup(page);const gate=deferred(),seen=deferred();await page.route('**/api/history/selection',async r=>{if(r.request().method()!=='POST')return r.continue();const response=await r.fetch();seen.release();await gate.promise;await r.fulfill({response});});await page.getByRole('button',{name:'Import ausschalten'}).click();await seen.promise;const beta=page.getByRole('button',{name:'Ausschließen: Beta',exact:true});const editable=await beta.isEnabled();if(editable){await beta.focus();await page.keyboard.press('Enter');await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();}gate.release();await expect(page.getByRole('button',{name:'Import wieder einschalten'})).toBeVisible();console.log('toggle-after',JSON.stringify({editable,betaPresent:await page.getByText('Song „Beta“ ausgeschlossen',{exact:true}).count()}));if(editable)await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();});
+      11 | test('failed and offline preview disables unpreviewed draft; reverse rule results keep latest',async({page})=>{await setup(page);let mode='503';await page.route('**/api/history/selection/preview',async r=>{if(mode==='503')return r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{message:'Synthetic unavailable'}})});if(mode==='offline')return r.abort('internetdisconnected');return r.continue();});await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(page.getByRole('alert').filter({hasText:'Vorschau nicht möglich'})).toBeVisible();await expect(apply(page)).toBeDisabled();mode='offline';await page.getByLabel('Sortieren').selectOption('name');await page.waitForTimeout(500);await expect(apply(page)).toBeDisabled();mode='ok';await page.getByLabel('Sortieren').selectOption('recent');await expect(apply(page)).toBeEnabled();const gate=deferred(),seen=deferred();await page.route('**/api/history/selection/preview',async r=>{if(r.request().postDataJSON().rules.length===0){seen.release();await gate.promise;}await r.fallback();});await page.getByRole('button',{name:'Eigene Regel entfernen: Alpha',exact:true}).click();await seen.promise;await page.getByRole('button',{name:'Ausschließen: Beta',exact:true}).click();await expect(apply(page)).toBeEnabled();gate.release();await page.waitForTimeout(500);await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('2 von 4 Wiedergaben zählen');});
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:8:779
+
+    Error Context: results-fix\races-fix-extra-race-1-Alp-e9ac7-query-while-preview-pending\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fix\races-fix-extra-race-1-Alp-e9ac7-query-while-preview-pending\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fix\races-fix-extra-race-1-Alp-e9ac7-query-while-preview-pending\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) races-fix.spec.ts:10:5 › pending toggle cannot silently discard newer keyboard draft ──────────
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('button', { name: 'Ausschließen: Alpha', exact: true }) with timeout 15000ms
+      - waiting for getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+
+
+      2 | const ids=['T000000000000000000000','T000000000000000000001'];
+      3 | const post=(page:any,url:string,data:any)=>page.request.post(url,{headers:{'x-ts':'1'},data});
+    > 4 | async function setup(page:any){await page.goto('/');await page.getByRole('link',{name:'Mit Spotify anmelden'}).click();await expect.poll(async()=>Boolean((await(await page.request.get('/api/state')).json()).profile)).toBe(true);if(!(await(await page.request.get('/api/state')).json()).onboarded){await page.getByRole('checkbox',{name:/Indie & Gitarren/}).check();await page.getByRole('button',{name:'1 Kassette anlegen'}).click();}await expect.poll(async()=>(await(await page.request.get('/api/state')).json()).onboarded).toBe(true);const existing=await(await page.request.get('/api/history/selection')).json();if(existing.dataset.hasImport)await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const at=Date.parse('2024-03-01T12:00:00Z');const h=await(await post(page,'/api/history/import',{start,rows:ids.map(id=>[id,2,0,at,0,2]),part:0,parts:1})).json();const u=await(await post(page,'/api/history/listens',{importId:h.upload,part:0,parts:2,tracks:2,kind:'tracks',data:ids.map((id,i)=>[id,i?'Beta':'Alpha',`Artist ${i?'Beta':'Alpha'}`,'Synthetic'])})).json();await post(page,'/api/history/listens',{upload:u.upload,part:1,parts:2,tracks:2,kind:'rows',data:[at/1000,at/1000+1].flatMap(t=>ids.map((_,i)=>[t,i,200000,132,0]))});const sel=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/selection',{baseRevision:sel.revision,enabled:true,rules:[]});await page.goto('/auswahl');await expect(page.getByRole('button',{name:'Ausschließen: Alpha',exact:true})).toBeVisible();}
+        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^
+      5 | const search=(page:any)=>page.getByRole('searchbox',{name:'Song, Künstler oder Album'});
+      6 | const apply=(page:any)=>page.getByRole('button',{name:'Auswahl übernehmen'});
+      7 | function deferred(){let release:any;const promise=new Promise<void>(r=>release=r);return {promise,release:()=>release()}}
+        at setup (C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:4:1592)
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:10:84
+
+    Error Context: results-fix\races-fix-pending-toggle-c-ad100-iscard-newer-keyboard-draft\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fix\races-fix-pending-toggle-c-ad100-iscard-newer-keyboard-draft\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fix\races-fix-pending-toggle-c-ad100-iscard-newer-keyboard-draft\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) races-fix.spec.ts:11:5 › failed and offline preview disables unpreviewed draft; reverse rule results keep latest 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('button', { name: 'Ausschließen: Alpha', exact: true }) with timeout 15000ms
+      - waiting for getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+
+
+      2 | const ids=['T000000000000000000000','T000000000000000000001'];
+      3 | const post=(page:any,url:string,data:any)=>page.request.post(url,{headers:{'x-ts':'1'},data});
+    > 4 | async function setup(page:any){await page.goto('/');await page.getByRole('link',{name:'Mit Spotify anmelden'}).click();await expect.poll(async()=>Boolean((await(await page.request.get('/api/state')).json()).profile)).toBe(true);if(!(await(await page.request.get('/api/state')).json()).onboarded){await page.getByRole('checkbox',{name:/Indie & Gitarren/}).check();await page.getByRole('button',{name:'1 Kassette anlegen'}).click();}await expect.poll(async()=>(await(await page.request.get('/api/state')).json()).onboarded).toBe(true);const existing=await(await page.request.get('/api/history/selection')).json();if(existing.dataset.hasImport)await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const at=Date.parse('2024-03-01T12:00:00Z');const h=await(await post(page,'/api/history/import',{start,rows:ids.map(id=>[id,2,0,at,0,2]),part:0,parts:1})).json();const u=await(await post(page,'/api/history/listens',{importId:h.upload,part:0,parts:2,tracks:2,kind:'tracks',data:ids.map((id,i)=>[id,i?'Beta':'Alpha',`Artist ${i?'Beta':'Alpha'}`,'Synthetic'])})).json();await post(page,'/api/history/listens',{upload:u.upload,part:1,parts:2,tracks:2,kind:'rows',data:[at/1000,at/1000+1].flatMap(t=>ids.map((_,i)=>[t,i,200000,132,0]))});const sel=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/selection',{baseRevision:sel.revision,enabled:true,rules:[]});await page.goto('/auswahl');await expect(page.getByRole('button',{name:'Ausschließen: Alpha',exact:true})).toBeVisible();}
+        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^
+      5 | const search=(page:any)=>page.getByRole('searchbox',{name:'Song, Künstler oder Album'});
+      6 | const apply=(page:any)=>page.getByRole('button',{name:'Auswahl übernehmen'});
+      7 | function deferred(){let release:any;const promise=new Promise<void>(r=>release=r);return {promise,release:()=>release()}}
+        at setup (C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:4:1592)
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:11:112
+
+    Error Context: results-fix\races-fix-failed-and-offli-6a677-se-rule-results-keep-latest\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fix\races-fix-failed-and-offli-6a677-se-rule-results-keep-latest\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fix\races-fix-failed-and-offli-6a677-se-rule-results-keep-latest\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) races-fix.spec.ts:12:5 › group changes while pending cannot interpret stale track row as artist result 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('button', { name: 'Ausschließen: Alpha', exact: true }) with timeout 15000ms
+      - waiting for getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+
+
+      2 | const ids=['T000000000000000000000','T000000000000000000001'];
+      3 | const post=(page:any,url:string,data:any)=>page.request.post(url,{headers:{'x-ts':'1'},data});
+    > 4 | async function setup(page:any){await page.goto('/');await page.getByRole('link',{name:'Mit Spotify anmelden'}).click();await expect.poll(async()=>Boolean((await(await page.request.get('/api/state')).json()).profile)).toBe(true);if(!(await(await page.request.get('/api/state')).json()).onboarded){await page.getByRole('checkbox',{name:/Indie & Gitarren/}).check();await page.getByRole('button',{name:'1 Kassette anlegen'}).click();}await expect.poll(async()=>(await(await page.request.get('/api/state')).json()).onboarded).toBe(true);const existing=await(await page.request.get('/api/history/selection')).json();if(existing.dataset.hasImport)await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const at=Date.parse('2024-03-01T12:00:00Z');const h=await(await post(page,'/api/history/import',{start,rows:ids.map(id=>[id,2,0,at,0,2]),part:0,parts:1})).json();const u=await(await post(page,'/api/history/listens',{importId:h.upload,part:0,parts:2,tracks:2,kind:'tracks',data:ids.map((id,i)=>[id,i?'Beta':'Alpha',`Artist ${i?'Beta':'Alpha'}`,'Synthetic'])})).json();await post(page,'/api/history/listens',{upload:u.upload,part:1,parts:2,tracks:2,kind:'rows',data:[at/1000,at/1000+1].flatMap(t=>ids.map((_,i)=>[t,i,200000,132,0]))});const sel=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/selection',{baseRevision:sel.revision,enabled:true,rules:[]});await page.goto('/auswahl');await expect(page.getByRole('button',{name:'Ausschließen: Alpha',exact:true})).toBeVisible();}
+        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^
+      5 | const search=(page:any)=>page.getByRole('searchbox',{name:'Song, Künstler oder Album'});
+      6 | const apply=(page:any)=>page.getByRole('button',{name:'Auswahl übernehmen'});
+      7 | function deferred(){let release:any;const promise=new Promise<void>(r=>release=r);return {promise,release:()=>release()}}
+        at setup (C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:4:1592)
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:12:102
+
+    Error Context: results-fix\races-fix-group-changes-wh-7f246--track-row-as-artist-result\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fix\races-fix-group-changes-wh-7f246--track-row-as-artist-result\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fix\races-fix-group-changes-wh-7f246--track-row-as-artist-result\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) races-fix.spec.ts:13:5 › dataset replacement after successful preview requires renewed preview or rejects stale apply 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('button', { name: 'Ausschließen: Alpha', exact: true }) with timeout 15000ms
+      - waiting for getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+
+
+      2 | const ids=['T000000000000000000000','T000000000000000000001'];
+      3 | const post=(page:any,url:string,data:any)=>page.request.post(url,{headers:{'x-ts':'1'},data});
+    > 4 | async function setup(page:any){await page.goto('/');await page.getByRole('link',{name:'Mit Spotify anmelden'}).click();await expect.poll(async()=>Boolean((await(await page.request.get('/api/state')).json()).profile)).toBe(true);if(!(await(await page.request.get('/api/state')).json()).onboarded){await page.getByRole('checkbox',{name:/Indie & Gitarren/}).check();await page.getByRole('button',{name:'1 Kassette anlegen'}).click();}await expect.poll(async()=>(await(await page.request.get('/api/state')).json()).onboarded).toBe(true);const existing=await(await page.request.get('/api/history/selection')).json();if(existing.dataset.hasImport)await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const at=Date.parse('2024-03-01T12:00:00Z');const h=await(await post(page,'/api/history/import',{start,rows:ids.map(id=>[id,2,0,at,0,2]),part:0,parts:1})).json();const u=await(await post(page,'/api/history/listens',{importId:h.upload,part:0,parts:2,tracks:2,kind:'tracks',data:ids.map((id,i)=>[id,i?'Beta':'Alpha',`Artist ${i?'Beta':'Alpha'}`,'Synthetic'])})).json();await post(page,'/api/history/listens',{upload:u.upload,part:1,parts:2,tracks:2,kind:'rows',data:[at/1000,at/1000+1].flatMap(t=>ids.map((_,i)=>[t,i,200000,132,0]))});const sel=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/selection',{baseRevision:sel.revision,enabled:true,rules:[]});await page.goto('/auswahl');await expect(page.getByRole('button',{name:'Ausschließen: Alpha',exact:true})).toBeVisible();}
+        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^
+      5 | const search=(page:any)=>page.getByRole('searchbox',{name:'Song, Künstler oder Album'});
+      6 | const apply=(page:any)=>page.getByRole('button',{name:'Auswahl übernehmen'});
+      7 | function deferred(){let release:any;const promise=new Promise<void>(r=>release=r);return {promise,release:()=>release()}}
+        at setup (C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:4:1592)
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:13:117
+
+    Error Context: results-fix\races-fix-dataset-replacem-251b5-view-or-rejects-stale-apply\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fix\races-fix-dataset-replacem-251b5-view-or-rejects-stale-apply\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fix\races-fix-dataset-replacem-251b5-view-or-rejects-stale-apply\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) races-fix.spec.ts:14:5 › R4 UI visibly explains partial whole-song semantics and cutoff no-import weighting 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('button', { name: 'Ausschließen: Alpha', exact: true }) with timeout 15000ms
+      - waiting for getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+
+
+      2 | const ids=['T000000000000000000000','T000000000000000000001'];
+      3 | const post=(page:any,url:string,data:any)=>page.request.post(url,{headers:{'x-ts':'1'},data});
+    > 4 | async function setup(page:any){await page.goto('/');await page.getByRole('link',{name:'Mit Spotify anmelden'}).click();await expect.poll(async()=>Boolean((await(await page.request.get('/api/state')).json()).profile)).toBe(true);if(!(await(await page.request.get('/api/state')).json()).onboarded){await page.getByRole('checkbox',{name:/Indie & Gitarren/}).check();await page.getByRole('button',{name:'1 Kassette anlegen'}).click();}await expect.poll(async()=>(await(await page.request.get('/api/state')).json()).onboarded).toBe(true);const existing=await(await page.request.get('/api/history/selection')).json();if(existing.dataset.hasImport)await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const at=Date.parse('2024-03-01T12:00:00Z');const h=await(await post(page,'/api/history/import',{start,rows:ids.map(id=>[id,2,0,at,0,2]),part:0,parts:1})).json();const u=await(await post(page,'/api/history/listens',{importId:h.upload,part:0,parts:2,tracks:2,kind:'tracks',data:ids.map((id,i)=>[id,i?'Beta':'Alpha',`Artist ${i?'Beta':'Alpha'}`,'Synthetic'])})).json();await post(page,'/api/history/listens',{upload:u.upload,part:1,parts:2,tracks:2,kind:'rows',data:[at/1000,at/1000+1].flatMap(t=>ids.map((_,i)=>[t,i,200000,132,0]))});const sel=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/selection',{baseRevision:sel.revision,enabled:true,rules:[]});await page.goto('/auswahl');await expect(page.getByRole('button',{name:'Ausschließen: Alpha',exact:true})).toBeVisible();}
+        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^
+      5 | const search=(page:any)=>page.getByRole('searchbox',{name:'Song, Künstler oder Album'});
+      6 | const apply=(page:any)=>page.getByRole('button',{name:'Auswahl übernehmen'});
+      7 | function deferred(){let release:any;const promise=new Promise<void>(r=>release=r);return {promise,release:()=>release()}}
+        at setup (C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:4:1592)
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fix.spec.ts:14:107
+
+    Error Context: results-fix\races-fix-R4-UI-visibly-ex-0f7e9--cutoff-no-import-weighting\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fix\races-fix-R4-UI-visibly-ex-0f7e9--cutoff-no-import-weighting\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fix\races-fix-R4-UI-visibly-ex-0f7e9--cutoff-no-import-weighting\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6 failed
+    races-fix.spec.ts:8:5 › extra race 1 Alpha match IDs must not apply after Beta query while preview pending 
+    races-fix.spec.ts:10:5 › pending toggle cannot silently discard newer keyboard draft ───────────
+    races-fix.spec.ts:11:5 › failed and offline preview disables unpreviewed draft; reverse rule results keep latest 
+    races-fix.spec.ts:12:5 › group changes while pending cannot interpret stale track row as artist result 
+    races-fix.spec.ts:13:5 › dataset replacement after successful preview requires renewed preview or rejects stale apply 
+    races-fix.spec.ts:14:5 › R4 UI visibly explains partial whole-song semantics and cutoff no-import weighting 
+  1 passed (3.0m)

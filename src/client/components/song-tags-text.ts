@@ -41,6 +41,20 @@ export function songTags(
 	else if (k === "probe") tags.push({ text: "Nachprüfung", tone: "fact" });
 	if (thumb === 1 && k !== "favorite") tags.push({ text: "Favorit", tone: "fav" });
 	if (!facts) return tags;
+	// In how many own playlists: claimed only as far as they were read (a lower
+	// bound says "mindestens"; nothing read says nothing).
+	const pl = facts.playlists;
+	const inPlaylists =
+		pl && (pl.complete || pl.count > 0)
+			? {
+					text: short
+						? `${pl.complete ? "" : "≥"}${num(pl.count)} Playlist${pl.count === 1 ? "" : "s"}`
+						: pl.count === 0
+							? "in keiner eigenen Playlist"
+							: `in ${pl.complete ? "" : "mindestens "}${num(pl.count)} eigenen Playlist${pl.count === 1 ? "" : "s"}`,
+					tone: "fact" as const,
+				}
+			: null;
 	// What was recorded about it. Only claims the records can carry: no stored
 	// play is not proof of never hearing it (an import may be missing or
 	// partial), and "not here" holds within the 180 days the plays log keeps.
@@ -56,6 +70,7 @@ export function songTags(
 					: "noch nicht gezählt, kein Verlauf importiert",
 			tone: "fact",
 		});
+		if (inPlaylists) tags.push(inPlaylists);
 		return tags;
 	}
 	if (!facts.inStation && !history)
@@ -71,5 +86,6 @@ export function songTags(
 				: `${num(facts.plays)}× gehört${facts.lastPlayedAt ? `, zuletzt ${ago(facts.lastPlayedAt)}` : ""}`,
 		tone: "fact",
 	});
+	if (inPlaylists) tags.push(inPlaylists);
 	return tags;
 }

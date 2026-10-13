@@ -154,6 +154,35 @@ const MIGRATIONS: string[][] = [
 		`ALTER TABLE memory ADD COLUMN verdict INTEGER`,
 		`ALTER TABLE memory ADD COLUMN verdict_at INTEGER`,
 	],
+	[
+		// The song totals of an import on its way in (see importHistory): they
+		// replace hist_pages only once the last block came, in one transaction.
+		`CREATE TABLE IF NOT EXISTS hist_stage (page INTEGER PRIMARY KEY, data TEXT NOT NULL)`,
+		// What the listener's selection of the import (core/import-selection)
+		// changes in hist_pages: one generation (kv 'history_effective') is current.
+		`CREATE TABLE IF NOT EXISTS hist_effective (
+			gen INTEGER NOT NULL,
+			page INTEGER NOT NULL,
+			data TEXT NOT NULL,
+			PRIMARY KEY (gen, page)
+		) WITHOUT ROWID`,
+		// Counting the listener's own playlists per song: how far each playlist
+		// was read, at which snapshot, and the song ids of each page read.
+		`CREATE TABLE IF NOT EXISTS playlist_scan (
+			playlist_id TEXT PRIMARY KEY,
+			snapshot_id TEXT,
+			pages INTEGER NOT NULL DEFAULT 0,
+			complete INTEGER NOT NULL DEFAULT 0,
+			error TEXT,
+			read_at INTEGER
+		) WITHOUT ROWID`,
+		`CREATE TABLE IF NOT EXISTS playlist_member_pages (
+			playlist_id TEXT NOT NULL,
+			page INTEGER NOT NULL,
+			data TEXT NOT NULL,
+			PRIMARY KEY (playlist_id, page)
+		) WITHOUT ROWID`,
+	],
 ];
 
 export function migrate(db: SqlDb): void {

@@ -1,0 +1,51 @@
+[WebServer] (node:45616) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:47320) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:38468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\app.spec.ts:319:2 › a listener's day › signs in with Spotify and saves playlists as stations (2.6s)
+  x  2 e2e\app.spec.ts:1666:3 › a listener's day › a delete refused or lost after a reload of the same stored state says so, and can be sent again (16.9s)
+
+
+  1) e2e\app.spec.ts:1666:3 › a listener's day › a delete refused or lost after a reload of the same stored state says so, and can be sent again 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('alert').filter({ hasText: 'Nicht gelöscht' })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('alert').filter({ hasText: 'Nicht gelöscht' }) with timeout 15000ms
+      - waiting for getByRole('alert').filter({ hasText: 'Nicht gelöscht' })
+
+
+      1705 | 				await expect(refused).toHaveCount(0);
+      1706 | 				release.open();
+    > 1707 | 				await expect(refused).toBeVisible();
+           | 				                      ^
+      1708 | 				await expect(ui.applied).toHaveCount(0);
+      1709 | 				await expect(ui.deleted).toHaveCount(0);
+      1710 | 				const after = await r.selection();
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\c640\e2e\app.spec.ts:1707:27
+
+    Error Context: e2e\.artifacts\results\app-a-listener-s-day-a-del-24552-ys-so-and-can-be-sent-again\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e\.artifacts\results\app-a-listener-s-day-a-del-24552-ys-so-and-can-be-sent-again\trace.zip
+    Usage:
+
+        npx playwright show-trace e2e\.artifacts\results\app-a-listener-s-day-a-del-24552-ys-so-and-can-be-sent-again\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e\app.spec.ts:1666:3 › a listener's day › a delete refused or lost after a reload of the same stored state says so, and can be sent again 
+  1 passed (23.4s)
+
+delete exit=1

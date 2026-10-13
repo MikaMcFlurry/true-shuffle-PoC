@@ -120,6 +120,14 @@ export class FakeSpotify {
 		headers?: Record<string, string>;
 	} | null = null;
 
+	/** Answer one API request (method, path below /v1) with this instead, when it returns one. */
+	failWhen:
+		| ((
+				method: string,
+				path: string,
+		  ) => { status: number; body?: unknown; headers?: Record<string, string> } | null)
+		| null = null;
+
 	constructor(opts: FakeOptions = {}) {
 		this.opts = opts;
 		this.now = opts.now ?? (() => Date.now());
@@ -391,6 +399,13 @@ export class FakeSpotify {
 						f.headers,
 					);
 				}
+				const injected = this.failWhen?.(req.method, path.slice(3)) ?? null;
+				if (injected)
+					return json(
+						injected.body ?? { error: { status: injected.status, message: "fail" } },
+						injected.status,
+						injected.headers,
+					);
 				const auth = req.headers.get("authorization") ?? "";
 				const tok = this.tokens.get(auth.replace(/^Bearer /, ""));
 				if (!tok || tok.expiresAt < this.now()) {

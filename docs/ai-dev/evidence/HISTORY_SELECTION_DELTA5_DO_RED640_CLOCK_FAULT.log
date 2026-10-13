@@ -1,0 +1,156 @@
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                     Resource            Mode
+[WebServer] env.PROBE (ClockProbe)      Durable Object      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19371
+[WebServer] [wrangler:info] GET /health 200 OK (75ms)
+
+Running 2 tests using 1 worker
+
+(node:24648) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /profile 200 OK (36ms)
+[WebServer] [wrangler:info] GET /profile 200 OK (12ms)
+actual-local-DO-clock-fault {"kind":"profile","before":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"FAgE_C_hn8qXyh3J|-","hasImport":true,"importedAt":1791892800000,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":false,"liveSince":null},"after":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"FAgE_C_hn8qXyh3J|-","hasImport":true,"importedAt":1791892800000,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":true,"coverage":"summary"},"uploading":false,"liveSince":null},"mutationThrew":true,"error":"Synthetic history_commit SQL failure","writes":[{"value":"1","fault":false},{"value":"2","fault":true}]}
+[WebServer] [wrangler:info] GET /profile 200 OK (14ms)
+persisted-after-reopen {"kind":"profile","before":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"FAgE_C_hn8qXyh3J|-","hasImport":true,"importedAt":1791892800000,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":true,"coverage":"summary"},"uploading":false,"liveSince":null},"after":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"FAgE_C_hn8qXyh3J|-","hasImport":true,"importedAt":1791892800000,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":true,"coverage":"summary"},"uploading":false,"liveSince":null},"mutationThrew":false,"error":null,"writes":[{"value":"1","fault":false},{"value":"2","fault":true}]}
+  x  1 clock-fault.spec.ts:2:44 › atomic persisted clock coupling for profile under local real DO SQL adapter failure (117ms)
+(node:47068) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /events 200 OK (38ms)
+[WebServer] [wrangler:info] GET /events 200 OK (17ms)
+actual-local-DO-clock-fault {"kind":"events","before":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"H3_YL9yQHd07AhEh|-","hasImport":true,"importedAt":1791892800000,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":true,"liveSince":null},"after":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":1,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":0,"summaryPlays":0,"partialSongs":2,"partialPlays":4,"includedSummarySongs":2,"from":1709294400000,"to":1709294400000,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"H3_YL9yQHd07AhEh|g1","hasImport":true,"importedAt":1791892800000,"songs":2,"rows":1,"rowsFrom":1709294400000,"rowsTo":1709294400000,"summaryProfile":false,"coverage":"mixed"},"uploading":false,"liveSince":null},"mutationThrew":true,"error":"Synthetic history_commit SQL failure","writes":[{"value":"1","fault":false},{"value":"2","fault":true}]}
+[WebServer] [wrangler:info] GET /events 200 OK (13ms)
+persisted-after-reopen {"kind":"events","before":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":1,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":0,"summaryPlays":0,"partialSongs":2,"partialPlays":4,"includedSummarySongs":2,"from":1709294400000,"to":1709294400000,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"H3_YL9yQHd07AhEh|g1","hasImport":true,"importedAt":1791892800000,"songs":2,"rows":1,"rowsFrom":1709294400000,"rowsTo":1709294400000,"summaryProfile":false,"coverage":"mixed"},"uploading":false,"liveSince":null},"after":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":1,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":0,"summaryPlays":0,"partialSongs":2,"partialPlays":4,"includedSummarySongs":2,"from":1709294400000,"to":1709294400000,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"H3_YL9yQHd07AhEh|g1","hasImport":true,"importedAt":1791892800000,"songs":2,"rows":1,"rowsFrom":1709294400000,"rowsTo":1709294400000,"summaryProfile":false,"coverage":"mixed"},"uploading":false,"liveSince":null},"mutationThrew":false,"error":null,"writes":[{"value":"1","fault":false},{"value":"2","fault":true}]}
+  x  2 clock-fault.spec.ts:2:44 › atomic persisted clock coupling for events under local real DO SQL adapter failure (122ms)
+
+
+  1) clock-fault.spec.ts:2:44 › atomic persisted clock coupling for profile under local real DO SQL adapter failure 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+    @@ -29,11 +29,11 @@
+          "key": "FAgE_C_hn8qXyh3J|-",
+          "rows": 0,
+          "rowsFrom": null,
+          "rowsTo": null,
+          "songs": 2,
+    -     "summaryProfile": false,
+    +     "summaryProfile": true,
+        },
+        "effective": Object {
+          "at": null,
+          "error": null,
+          "state": "current",
+
+      1 | import {test,expect} from 'C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/node_modules/@playwright/test/index.mjs';
+    > 2 | for(const kind of ['profile','events'])test('atomic persisted clock coupling for '+kind+' under local real DO SQL adapter failure',async({request})=>{await request.get('/'+kind+'?op=init');const response=await request.get('/'+kind+'?op=fault');const b=await response.json();console.log('actual-local-DO-clock-fault',JSON.stringify({kind,...b}));expect(b.mutationThrew).toBe(true);const reopened=await(await request.get('/'+kind+'?op=restart')).json();console.log('persisted-after-reopen',JSON.stringify({kind,...reopened}));expect(reopened.after).toEqual(b.before);});
+        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^
+      3 |
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r5\do\red640\clock-fault.spec.ts:2:548
+
+    Error Context: results-clock-fault\clock-fault-atomic-persist-f354e-real-DO-SQL-adapter-failure\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-clock-fault\clock-fault-atomic-persist-f354e-real-DO-SQL-adapter-failure\trace.zip
+    Usage:
+
+        npx playwright show-trace results-clock-fault\clock-fault-atomic-persist-f354e-real-DO-SQL-adapter-failure\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) clock-fault.spec.ts:2:44 › atomic persisted clock coupling for events under local real DO SQL adapter failure 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 13
+    + Received  + 13
+
+    @@ -3,35 +3,35 @@
+        "commit": 1,
+        "counts": Object {
+          "afterLiveRows": 0,
+          "changedSongs": 0,
+          "enabled": true,
+    -     "from": null,
+    +     "from": 1709294400000,
+          "includedPlays": 4,
+          "includedSkips": 0,
+          "includedSongs": 2,
+          "includedSummarySongs": 2,
+          "neutralRows": 0,
+    -     "partialPlays": 0,
+    -     "partialSongs": 0,
+    +     "partialPlays": 4,
+    +     "partialSongs": 2,
+          "plays": 4,
+    -     "rows": 0,
+    +     "rows": 1,
+          "rules": Array [],
+          "skips": 0,
+          "songs": 2,
+    -     "summaryPlays": 4,
+    -     "summarySongs": 2,
+    -     "to": null,
+    +     "summaryPlays": 0,
+    +     "summarySongs": 0,
+    +     "to": 1709294400000,
+        },
+        "dataset": Object {
+    -     "coverage": "summary",
+    +     "coverage": "mixed",
+          "hasImport": true,
+          "importedAt": 1791892800000,
+    -     "key": "H3_YL9yQHd07AhEh|-",
+    -     "rows": 0,
+    -     "rowsFrom": null,
+    -     "rowsTo": null,
+    +     "key": "H3_YL9yQHd07AhEh|g1",
+    +     "rows": 1,
+    +     "rowsFrom": 1709294400000,
+    +     "rowsTo": 1709294400000,
+          "songs": 2,
+          "summaryProfile": false,
+        },
+        "effective": Object {
+          "at": null,
+    @@ -42,7 +42,7 @@
+        "revision": 0,
+        "selection": Object {
+          "enabled": true,
+          "rules": Array [],
+        },
+    -   "uploading": true,
+    +   "uploading": false,
+      }
+
+      1 | import {test,expect} from 'C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/node_modules/@playwright/test/index.mjs';
+    > 2 | for(const kind of ['profile','events'])test('atomic persisted clock coupling for '+kind+' under local real DO SQL adapter failure',async({request})=>{await request.get('/'+kind+'?op=init');const response=await request.get('/'+kind+'?op=fault');const b=await response.json();console.log('actual-local-DO-clock-fault',JSON.stringify({kind,...b}));expect(b.mutationThrew).toBe(true);const reopened=await(await request.get('/'+kind+'?op=restart')).json();console.log('persisted-after-reopen',JSON.stringify({kind,...reopened}));expect(reopened.after).toEqual(b.before);});
+        |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^
+      3 |
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r5\do\red640\clock-fault.spec.ts:2:548
+
+    Error Context: results-clock-fault\clock-fault-atomic-persist-3f09b-real-DO-SQL-adapter-failure\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-clock-fault\clock-fault-atomic-persist-3f09b-real-DO-SQL-adapter-failure\trace.zip
+    Usage:
+
+        npx playwright show-trace results-clock-fault\clock-fault-atomic-persist-3f09b-real-DO-SQL-adapter-failure\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    clock-fault.spec.ts:2:44 › atomic persisted clock coupling for profile under local real DO SQL adapter failure 
+    clock-fault.spec.ts:2:44 › atomic persisted clock coupling for events under local real DO SQL adapter failure 
+
+red640 clock-fault exit=1

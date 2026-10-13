@@ -1,0 +1,733 @@
+[WebServer] fake spotify on 19372
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                                                                     Resource                  Mode
+[WebServer] env.USER_HUB (UserHub)                                                      Durable Object            local
+[WebServer] env.REGISTRY (Registry)                                                     Durable Object            local
+[WebServer] env.ASSETS                                                                  Assets                    local
+[WebServer] env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+[WebServer] env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+[WebServer] env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19372/accounts")               Environment Variable      local
+[WebServer] env.SPOTIFY_API_BASE ("http://127.0.0.1:19372/v1")                          Environment Variable      local
+[WebServer] env.LASTFM_API_BASE ("http://127.0.0.1:19372/lastfm")                       Environment Variable      local
+[WebServer] env.LASTFM_API_KEY ("e2e-lastfm")                                           Environment Variable      local
+[WebServer] env.DEEZER_API_BASE ("http://127.0.0.1:19372/deezer")                       Environment Variable      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] ✨ Parsed 2 valid header rules.
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19371
+[WebServer] [wrangler:info] GET /api/health 200 OK (52ms)
+
+Running 12 tests using 1 worker
+
+(node:6020) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (90ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (88ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (77ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/onboarding 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (20ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /api/devices 200 OK (58ms)
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (54ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (6ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (27ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] {"level":"info","kind":"import","message":"Lieblingssongs: 160 Songs übernommen, 0 übersprungen"}
+[WebServer] {"level":"info","kind":"import","message":"„Indie & Gitarren“: 400 Songs übernommen, 0 übersprungen"}
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (411ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (28ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+R7-current-beta-only {"baseRevision":0,"enabled":true,"rules":[{"type":"track","kind":"exclude","id":"T000000000000000000001","label":"Beta"}],"dataset":"LDWGwZ2loVxuWOM1|g1"}
+  ok  1 races-origc.spec.ts:17:5 › R7 stale Alpha query rows/bulk inert by mouse and keyboard; fresh Beta action sends Beta only (5.1s)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (42ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (7ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (38ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (153ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (27ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 2, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 3, 2 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+  ok  2 races-origc.spec.ts:18:5 › R7 grouping/status/sort/rule changes lock stale rows and recover intended interactions (3.7s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (11ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (8ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (13ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (45ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (30ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (31ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (28ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 4, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (5ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 62 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 124 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (12ms)
+[WebServer] [wrangler:info] GET /auswahl 304 Not Modified (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (24ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 5, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (13ms)
+R7-page {"baseRevision":4,"enabled":true,"rules":[{"type":"track","kind":"exclude","id":"T00000000000000000001E","label":"Page 50"}],"dataset":"br8Rngm78WxHa8wu|g1"}
+  ok  3 races-origc.spec.ts:21:5 › R7 page change with 62 rows locks old page and enables current page only (2.5s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (7ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (43ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (27ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 62 Songs, 124 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 6, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 7, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+  ok  4 races-origc.spec.ts:22:5 › R7 reverse fetched answers, 503/offline and draft-bound rows preserve usable current actions (3.0s)
+[WebServer] [wrangler:info] GET / 200 OK (3ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (3ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (42ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (26ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (29ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 8, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (24ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (155ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 9, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (36ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (25ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (19ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 10, 2 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (14ms)
+  ok  5 races-origc.spec.ts:24:5 › R8 apply ACK preserves keyboard/date/rule edits and explicitly marks newer draft unsent (2.5s)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (43ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (31ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 11, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 13, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (14ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 14, 2 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+  ok  6 races-origc.spec.ts:25:5 › R8 toggle ACK preserves keyboard and date edits; enable retry remains explicit (1.8s)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (8ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (8ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (46ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (29ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (28ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (36ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (25ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (18ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 15, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (6ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (14ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (22ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 16, 2 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+  ok  7 races-origc.spec.ts:26:5 › R8 failed apply preserves edits through retry and does not report success (1.9s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (45ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (30ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 17, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (6ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 18, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (38ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 19, 2 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+  x   8 races-origc.spec.ts:27:5 › R8 navigation/reverse old ACK cannot replace newly mounted current decision (2.4s)
+(node:36736) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (13ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (8ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (7ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (60ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (68ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (27ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (26ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (37ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (28ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (14ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 20, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (20ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (6ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (25ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] POST /api/history/selection 409 Conflict (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 21, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (14ms)
+R10-wire-CAS {"stale":"-BXat2X7ze1DYB-j|g1","oldIncluded":2,"oldTotal":4,"status":409,"newTotal":20,"submitted":{"baseRevision":20,"enabled":true,"rules":[{"type":"track","kind":"exclude","id":"T000000000000000000000","label":"Alpha"}],"dataset":"-BXat2X7ze1DYB-j|g1"},"retry":{"baseRevision":20,"enabled":true,"rules":[{"type":"track","kind":"exclude","id":"T000000000000000000000","label":"Alpha"}],"dataset":"zK_VxYu7bbFD_ZqK|-"}}
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (13ms)
+  ok  9 races-origc.spec.ts:28:5 › R10 stale specific 2/4 preview returns 409, unchanged state, preserved draft and fresh explicit 20-play retry (2.6s)
+[WebServer] [wrangler:info] GET / 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (38ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (28ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (46ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (7ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (37ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (38ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (40ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 1 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (21ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 22, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (25ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (5ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+  ok 10 races-origc.spec.ts:29:5 › R10 reverse fetched old preview after replacement never enables stale row actions and fresh preview recovers (2.2s)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (7ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (42ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (30ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (188ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 1 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (3ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (14ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 23, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (27ms)
+reverse-delete-enabled-during-apply false
+  x  11 races-origc.spec.ts:30:5 › R8 R10 reverse apply ACK after accepted deletion/load must not resurrect UI or false successful application (1.7s)
+(node:22916) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-BoRoSzTp.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (46ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (28ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (29ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (17ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 24, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (153ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (7ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (7ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection 400 Bad Request (7ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection 409 Conflict (7ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection 409 Conflict (7ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 25, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (38ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+  x  12 races-origc.spec.ts:32:5 › R10 actual Worker apply/toggle dataset matrix rejects missing/null/empty/wrong/stale/noop before mutation, then accepts fresh explicit retry (45.5s)
+
+
+  1) races-origc.spec.ts:27:5 › R8 navigation/reverse old ACK cannot replace newly mounted current decision 
+
+    Error: route.fulfill: Route is already handled!
+
+      12 | const ackStatus=(page:any)=>page.getByRole('status').filter({hasText:/Übernommen \(Stand/});
+      13 | async function holdPreview(page:any,condition:(body:any)=>boolean,fetchFirst=false){const gate=deferred(),seen=deferred();let used=false;await page.route('**/api/history/selection/preview',async(r:any)=>{if(!used&&condition(r.request().postDataJSON())){used=true;const response=fetchFirst?await r.fetch():null;seen.release();await gate.promise;if(response)return r.fulfill({response});}await r.fallback();});return {gate,seen};}
+    > 14 | async function holdAck(page:any,error=false){const gate=deferred(),seen=deferred();let response:any,payload:any;await page.route('**/api/history/selection',async(r:any)=>{if(r.request().method()!=='POST')return r.fallback();payload=r.request().postDataJSON();if(!error)response=await r.fetch();seen.release();await gate.promise;return error?r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{code:'synthetic',message:'Synthetic apply unavailable'}})}):r.fulfill({response});});return {gate,seen,payload:()=>payload};}
+         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+      15 | async function commit(page:any){await expect(apply(page)).toBeEnabled();let body:any;const listener=(r:any)=>{if(new URL(r.url()).pathname==='/api/history/selection'&&r.method()==='POST')body=r.postDataJSON()};page.on('request',listener);await apply(page).click();await expect(ackStatus(page)).toBeVisible();page.off('request',listener);return body;}
+      16 | async function inert(page:any,button:any){await expect(button).toBeDisabled();await button.evaluate((e:any)=>{e.click();e.focus()});await page.keyboard.press('Enter');}
+      17 | test('R7 stale Alpha query rows/bulk inert by mouse and keyboard; fresh Beta action sends Beta only',async({page})=>{await setup(page);await search(page).fill('Alpha');await expect(row(page,'Alpha')).toBeEnabled();await expect(page.locator('.selection__items').first()).not.toContainText('Beta');const h=await holdPreview(page,b=>b.query.q==='Beta');await search(page).fill('Beta');await h.seen.promise;const before=(await view(page)).selection;await inert(page,row(page,'Alpha'));await expect(page.getByRole('button',{name:/^Alle \d+ Treffer ausschließen$/})).toHaveCount(0);expect((await view(page)).selection).toEqual(before);expect(await rules(page).count()).toBe(0);h.gate.release();await expect(row(page,'Beta')).toBeEnabled();await page.getByRole('button',{name:'Alle 1 Treffer ausschließen'}).click();const body=await commit(page);expect(body.rules.map((r:any)=>r.id)).toEqual([ids[1]]);console.log('R7-current-beta-only',JSON.stringify(body));});
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r3\ui\races-origc.spec.ts:14:485
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    results-origc\races-origc-R8-navigation--f217f-ly-mounted-current-decision\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: results-origc\races-origc-R8-navigation--f217f-ly-mounted-current-decision\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-origc\races-origc-R8-navigation--f217f-ly-mounted-current-decision\trace.zip
+    Usage:
+
+        npx playwright show-trace results-origc\races-origc-R8-navigation--f217f-ly-mounted-current-decision\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) races-origc.spec.ts:30:5 › R8 R10 reverse apply ACK after accepted deletion/load must not resurrect UI or false successful application 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      28 | test('R10 stale specific 2/4 preview returns 409, unchanged state, preserved draft and fresh explicit 20-play retry',async({page})=>{await setup(page);let specific:any;page.on('response',async r=>{if(new URL(r.url()).pathname==='/api/history/selection/preview'&&r.ok()){const b=await r.json();if(b.selection.rules.some((r:any)=>r.id===ids[0]))specific=b;}});await row(page,'Alpha').click();await expect(apply(page)).toBeEnabled();await expect(previewRegion(page)).toContainText('2 von 4 Wiedergaben zählen');expect(specific.dataset).toBeTruthy();const stale=specific.dataset;const start=(await(await post(page,'/api/history/begin',{})).json()).start;expect((await post(page,'/api/history/import',{start,part:0,parts:1,rows:[[ids[1],20,0,Date.parse('2025-01-01T00:00:00Z'),0,20]]})).status()).toBe(200);const before=await view(page);expect(before.dataset.key).not.toBe(stale);let submitted:any;page.on('request',r=>{if(!submitted&&new URL(r.url()).pathname==='/api/history/selection'&&r.method()==='POST')submitted=r.postDataJSON()});const responsePromise=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/history/selection'&&r.request().method()==='POST');await apply(page).click();const response=await responsePromise;expect(response.status()).toBe(409);expect(submitted.dataset).toBe(stale);expect(await view(page)).toEqual(before);await expect(page.getByRole('alert').filter({hasText:'seit der Vorschau geändert'})).toBeVisible();await expect(ackStatus(page)).toHaveCount(0);await expect(rules(page)).toContainText('Alpha');await expect(previewRegion(page)).toContainText('20 von 20 Wiedergaben zählen');const retry=await commit(page);expect(retry.dataset).toBe(before.dataset.key);expect(retry.rules.map((r:any)=>r.id)).toEqual([ids[0]]);console.log('R10-wire-CAS',JSON.stringify({stale,oldIncluded:2,oldTotal:4,status:response.status(),newTotal:20,submitted,retry}));});
+      29 | test('R10 reverse fetched old preview after replacement never enables stale row actions and fresh preview recovers',async({page})=>{await setup(page);const h=await holdPreview(page,b=>b.query.q==='Alpha',true);await search(page).fill('Alpha');await h.seen.promise;const start=(await(await post(page,'/api/history/begin',{})).json()).start;await post(page,'/api/history/import',{start,part:0,parts:1,rows:[[ids[1],20,0,Date.parse('2025-01-01T00:00:00Z'),0,20]]});await search(page).fill('Beta');await expect(previewRegion(page)).toContainText('20 von 20 Wiedergaben zählen');await expect(page.locator('.selection__items').first().getByRole('button')).toHaveCount(0);await search(page).fill('');await expect(page.getByRole('button',{name:/^Ausschließen:/}).first()).toBeEnabled();h.gate.release();await expect(previewRegion(page)).toContainText('20 von 20 Wiedergaben zählen');await expect(row(page,'Alpha')).toHaveCount(0);});
+    > 30 | test('R8 R10 reverse apply ACK after accepted deletion/load must not resurrect UI or false successful application',async({page})=>{await setup(page);await page.getByRole('button',{name:'Import löschen …',exact:true}).click();await row(page,'Alpha').click();await expect(apply(page)).toBeEnabled();const h=await holdAck(page);await apply(page).click();await h.seen.promise;const del=page.getByRole('button',{name:'Endgültig löschen',exact:true});console.log('reverse-delete-enabled-during-apply',await del.isEnabled());expect(await del.isEnabled()).toBe(true);await del.click();await expect(page.getByText('Kein Import gespeichert.',{exact:false})).toBeVisible();expect((await view(page)).dataset.hasImport).toBe(false);await page.route('**/api/history/selection/preview',r=>r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{message:'Synthetic preview unavailable after delete'}})}));h.gate.release();await expect(page.getByRole('button',{name:'Wird berechnet …'})).toHaveCount(0);await page.waitForTimeout(500);const actual=await view(page);console.log('reverse-delete-old-ACK',JSON.stringify({server:actual.dataset,visibleImportToggle:await page.getByRole('button',{name:'Import ausschalten',exact:true}).count(),successMessage:await ackStatus(page).count(),rules:await rules(page).allInnerTexts()}));await page.screenshot({path:'C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r3/ui/shots/reverse-delete-ack-repro.png',fullPage:true});expect(actual.dataset.hasImport).toBe(false);await expect(page.getByText('Kein Import gespeichert.',{exact:false})).toBeVisible();await expect(page.getByRole('button',{name:'Import ausschalten',exact:true})).toHaveCount(0);await expect(ackStatus(page)).toHaveCount(0);});
+         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+      31 |
+      32 | test('R10 actual Worker apply/toggle dataset matrix rejects missing/null/empty/wrong/stale/noop before mutation, then accepts fresh explicit retry',async({page})=>{const matrix:any[]=[];for(const mode of ['apply','toggle','apply-noop','toggle-noop']){await setup(page);let current=await view(page);const change={enabled:mode.startsWith('apply'),rules:mode.startsWith('apply')?[{type:'track',kind:'exclude',id:ids[0]}]:[]};if(mode.endsWith('noop')){expect((await post(page,'/api/history/selection',{baseRevision:current.revision,...change,dataset:current.dataset.key})).status()).toBe(200);current=await view(page);}const preview=await(await post(page,'/api/history/selection/preview',{...change,query:{}})).json();const stale=preview.dataset;const start=(await(await post(page,'/api/history/begin',{})).json()).start;expect((await post(page,'/api/history/import',{start,part:0,parts:1,rows:[[ids[1],20,0,Date.parse('2025-01-01T00:00:00Z'),0,20]]})).status()).toBe(200);const before=await view(page);expect(before.dataset.key).not.toBe(stale);for(const [identity,dataset] of [['missing',undefined],['null',null],['empty',''],['wrong','unknown|dataset'],['stale',stale]]){const response=await post(page,'/api/history/selection',{baseRevision:before.revision,...change,dataset});const expected=['missing','null','empty'].includes(identity as string)?400:409;expect(response.status()).toBe(expected);expect(await view(page)).toEqual(before);matrix.push({mode,identity,status:response.status(),error:(await response.json()).error.code});}const fresh=await(await post(page,'/api/history/selection/preview',{...change,query:{}})).json();expect(fresh.dataset).toBe(before.dataset.key);const retry=await post(page,'/api/history/selection',{baseRevision:before.revision,...change,dataset:fresh.dataset});expect(retry.status()).toBe(200);matrix.push({mode,identity:'fresh-current',status:retry.status()});}console.log('R10-real-Worker-matrix',JSON.stringify(matrix));});
+      33 |
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r3\ui\races-origc.spec.ts:30:549
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    results-origc\races-origc-R8-R10-reverse-6df42-alse-successful-application\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: results-origc\races-origc-R8-R10-reverse-6df42-alse-successful-application\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-origc\races-origc-R8-R10-reverse-6df42-alse-successful-application\trace.zip
+    Usage:
+
+        npx playwright show-trace results-origc\races-origc-R8-R10-reverse-6df42-alse-successful-application\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) races-origc.spec.ts:32:5 › R10 actual Worker apply/toggle dataset matrix rejects missing/null/empty/wrong/stale/noop before mutation, then accepts fresh explicit retry 
+
+    Test timeout of 45000ms exceeded.
+
+    Error: locator.click: Test timeout of 45000ms exceeded.
+    Call log:
+      - waiting for getByRole('link', { name: 'Mit Spotify anmelden' })
+
+
+      2 | const ids=['T000000000000000000000','T000000000000000000001'];
+      3 | const post=(page:any,url:string,data:any)=>page.request.post(url,{headers:{'x-ts':'1'},data});
+    > 4 | async function setup(page:any){await page.goto('/');await page.getByRole('link',{name:'Mit Spotify anmelden'}).click();await expect.poll(async()=>Boolean((await(await page.request.get('/api/state')).json()).profile)).toBe(true);if(!(await(await page.request.get('/api/state')).json()).onboarded){await page.getByRole('checkbox',{name:/Indie & Gitarren/}).check();await page.getByRole('button',{name:'1 Kassette anlegen'}).click();}await expect.poll(async()=>(await(await page.request.get('/api/state')).json()).onboarded).toBe(true);const existing=await(await page.request.get('/api/history/selection')).json();if(existing.dataset.hasImport)await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const at=Date.parse('2024-03-01T12:00:00Z');const h=await(await post(page,'/api/history/import',{start,rows:ids.map(id=>[id,2,0,at,0,2]),part:0,parts:1})).json();const u=await(await post(page,'/api/history/listens',{importId:h.upload,part:0,parts:2,tracks:2,kind:'tracks',data:ids.map((id,i)=>[id,i?'Beta':'Alpha',`Artist ${i?'Beta':'Alpha'}`,'Synthetic'])})).json();await post(page,'/api/history/listens',{upload:u.upload,part:1,parts:2,tracks:2,kind:'rows',data:[at/1000,at/1000+1].flatMap(t=>ids.map((_,i)=>[t,i,200000,132,0]))});const sel=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/selection',{baseRevision:sel.revision,enabled:true,rules:[],dataset:sel.dataset.key});await page.goto('/auswahl');await expect(page.getByRole('button',{name:'Ausschließen: Alpha',exact:true})).toBeEnabled();}
+        |                                                                                                                ^
+      5 | const search=(page:any)=>page.getByRole('searchbox',{name:'Song, Künstler oder Album'});
+      6 | const apply=(page:any)=>page.getByRole('button',{name:'Auswahl übernehmen'});
+      7 | function deferred(){let release:any;const promise=new Promise<void>(r=>release=r);return {promise,release:()=>release()}}
+        at setup (C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r3\ui\races-origc.spec.ts:4:112)
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r3\ui\races-origc.spec.ts:32:252
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    results-origc\races-origc-R10-actual-Wor-cc676-ccepts-fresh-explicit-retry\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: results-origc\races-origc-R10-actual-Wor-cc676-ccepts-fresh-explicit-retry\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-origc\races-origc-R10-actual-Wor-cc676-ccepts-fresh-explicit-retry\trace.zip
+    Usage:
+
+        npx playwright show-trace results-origc\races-origc-R10-actual-Wor-cc676-ccepts-fresh-explicit-retry\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    races-origc.spec.ts:27:5 › R8 navigation/reverse old ACK cannot replace newly mounted current decision 
+    races-origc.spec.ts:30:5 › R8 R10 reverse apply ACK after accepted deletion/load must not resurrect UI or false successful application 
+    races-origc.spec.ts:32:5 › R10 actual Worker apply/toggle dataset matrix rejects missing/null/empty/wrong/stale/noop before mutation, then accepts fresh explicit retry 
+  9 passed (1.4m)
+origc exit=1
