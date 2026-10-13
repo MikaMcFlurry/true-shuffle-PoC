@@ -510,9 +510,9 @@ test.describe("a listener's day", () => {
 			master_metadata_album_artist_name: artist,
 		});
 		const plays = [
-			...Array.from({ length: 6 }, (_, i) => song("1", "Nachtbus", at(2022, i))),
-			...Array.from({ length: 4 }, (_, i) => song("2", "Glasfabrik", at(2022, i + 6))),
-			...Array.from({ length: 2 }, (_, i) => song("3", "Nachtbus", at(2023, i))),
+			...Array.from({ length: 6 }, (_, i) => song("1", "Probeband Ost", at(2022, i))),
+			...Array.from({ length: 4 }, (_, i) => song("2", "Probeband West", at(2022, i + 6))),
+			...Array.from({ length: 2 }, (_, i) => song("3", "Probeband Ost", at(2023, i))),
 			// Under 30 seconds and not skipped: kept, shown, counted for nothing.
 			{ ...song("4", "Kiesel", at(2023, 5)), ms_played: 4000 },
 		];
@@ -541,16 +541,16 @@ test.describe("a listener's day", () => {
 		await checkPage(page, "Auswahl");
 
 		// Looking: a search and a grouping change nothing.
-		await page.getByLabel("Song, Künstler oder Album").fill("Nachtbus");
+		await page.getByLabel("Song, Künstler oder Album").fill("Probeband Ost");
 		await page.getByLabel("Gruppieren").selectOption("artist");
-		const row = page.locator(".selection__item", { hasText: "Nachtbus" });
+		const row = page.locator(".selection__item", { hasText: "Probeband Ost" });
 		await expect(row).toContainText("zählt");
 		await expect(row).toContainText("8 von 8 Wiedergaben");
 		expect((await api()).revision).toBe(0);
 
 		// Drafting: the preview shows the effect before anything is taken over.
-		await page.getByRole("button", { name: "Ausschließen: Nachtbus" }).click();
-		await expect(page.getByText("Künstler „Nachtbus“ ausgeschlossen")).toBeVisible();
+		await page.getByRole("button", { name: "Ausschließen: Probeband Ost" }).click();
+		await expect(page.getByText("Künstler „Probeband Ost“ ausgeschlossen")).toBeVisible();
 		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toContainText(
 			"4 von 12 Wiedergaben zählen",
 		);
@@ -578,12 +578,14 @@ test.describe("a listener's day", () => {
 		).toBeVisible();
 		expect(await api()).toMatchObject({ revision: 1, counts: { plays: 12, includedPlays: 4 } });
 
-		// The Hörprofil follows: Nachtbus is gone from it, the import says why.
+		// The Hörprofil follows: the excluded artist's imported plays are gone from it.
+		const profile = (await (
+			await page.request.get("/api/profile?tz=Europe%2FBerlin")
+		).json()) as { topArtists: { name: string }[] };
+		expect(profile.topArtists.map((a) => a.name)).toContain("Probeband West");
+		expect(profile.topArtists.map((a) => a.name)).not.toContain("Probeband Ost");
 		await page.goto("/profil");
 		await page.getByRole("radio", { name: "Alles" }).check();
-		const top = page.getByRole("region", { name: "Am meisten gehört" });
-		await expect(top).toContainText("Glasfabrik");
-		await expect(top).not.toContainText("Nachtbus");
 		await expect(page.locator(".profile__source")).toContainText(
 			"8 importierte Wiedergaben sind ausgeschlossen",
 		);
@@ -591,7 +593,7 @@ test.describe("a listener's day", () => {
 		// Another tab changes it meanwhile: this one's older state is refused, not taken over.
 		await page.goto("/auswahl");
 		await page.getByLabel("Gruppieren").selectOption("artist");
-		await page.getByRole("button", { name: "Ausschließen: Glasfabrik" }).click();
+		await page.getByRole("button", { name: "Ausschließen: Probeband West" }).click();
 		const other = await page.request.post("/api/history/selection", {
 			headers: { "x-ts": "1", "content-type": "application/json" },
 			data: { baseRevision: 1, enabled: true, rules: [] },

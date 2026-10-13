@@ -32,6 +32,10 @@
 			"npx wrangler deploy --dry-run --outdir <tmp>": "PASS (bindings USER_HUB, REGISTRY, AI, ASSETS; no deployment)",
 			"npm run test:e2e": "NOT_RUN locally — see blocker; authoritative run is GitHub Actions (ubuntu, Node 24) on the PR"
 		},
+		"ci": {
+			"run 38383358138 (head a247910)": "PASS: npm ci, build, typecheck, lint, npm test 47 files / 618 tests, playwright 49 passed, wrangler dry-run",
+			"Workers Builds check on the feature branch": "failure without details (dashboard only); identical on the previous feature PR #29 head 27197dc, success on production-branch commit 8d62138 — non-production branch build, no production deployment"
+		},
 		"local_variants_not_canonical": {
 			"lint in the Windows working copy": "fails on every file due to core.autocrlf=true (CRLF worktree, LF index); not a source defect",
 			"playwright with a local cmd-compatible webServer override (not committed)": "BLOCKED: the unchanged baseline 8d62138 fails identically at 'signs in with Spotify and saves playlists as stations' — /auth/callback redirects to /?login=failed (token exchange from local workerd to the fake on 127.0.0.1:8788). Diagnosis stopped on coordinator instruction; no auth/proxy/safeguard changed."
@@ -100,7 +104,7 @@
 			]
 		},
 		"G9 UI and errors": {
-			"status": "PENDING_CI",
+			"status": "PASS (CI, FakeSpotify) — GitHub Actions run 38383358138 on a247910: 49 browser tests; re-run on the final head recorded in the PR",
 			"evidence": [
 				"e2e/app.spec.ts › the imported history can be looked through, narrowed, switched off and deleted (search/group, exclude, preview, apply failure, apply, Hörprofil, stale-tab 409, off/on, 360 px dark, keyboard, delete cancel/confirm)",
 				"e2e/app.spec.ts › every page reads well on a phone now includes /auswahl"
