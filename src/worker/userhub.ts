@@ -549,8 +549,29 @@ export class UserHub extends DurableObject<Env> {
 	setGuestDevices(epoch: number, devices: { id: string; name: string }[]) {
 		return this.session(epoch, async () => this.hub().setGuestDevices(devices));
 	}
-	importHistory(epoch: number, rows: HistoryRow[], part: number, parts: number) {
-		return this.session(epoch, () => this.hub().importHistory(rows, part, parts));
+	importHistory(epoch: number, rows: HistoryRow[], part: number, parts: number, upload?: unknown) {
+		return this.session(epoch, () => this.hub().importHistory(rows, part, parts, upload));
+	}
+	historySelection(epoch: number) {
+		return this.session(epoch, () => this.hub().selectionView());
+	}
+	previewSelection(epoch: number, input: { enabled?: unknown; rules?: unknown; query?: unknown }) {
+		return this.session(epoch, () => this.hub().previewSelection(input));
+	}
+	applySelection(
+		epoch: number,
+		input: { baseRevision?: unknown; enabled?: unknown; rules?: unknown },
+	) {
+		return this.session(epoch, () => this.hub().applySelection(input));
+	}
+	deleteImport(epoch: number, dataset: unknown) {
+		return this.session(epoch, () => this.hub().deleteImport(dataset));
+	}
+	playlistCounts(epoch: number) {
+		return this.session(epoch, () => this.hub().playlistCountsView());
+	}
+	countPlaylists(epoch: number) {
+		return this.session(epoch, () => this.hub().requestPlaylistCounts());
 	}
 	history(epoch: number, limit: number, before?: number) {
 		return this.session(epoch, () => this.hub().history(limit, before));
@@ -588,6 +609,7 @@ export class UserHub extends DurableObject<Env> {
 		epoch: number,
 		input: {
 			upload?: unknown;
+			importId?: unknown;
 			part: unknown;
 			parts: unknown;
 			tracks: unknown;

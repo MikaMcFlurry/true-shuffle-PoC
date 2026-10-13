@@ -2,7 +2,21 @@
  * Wire types between the Worker API and the Preact client.
  */
 
+import type {
+	ImportSelection,
+	InspectItem,
+	InspectQuery,
+	SelectionCounts,
+} from "../core/import-selection";
 import type { SlotKind, StationRules } from "../core/types";
+
+export type {
+	ImportSelection,
+	InspectItem,
+	InspectQuery,
+	SelectionCounts,
+	SelectionRule,
+} from "../core/import-selection";
 
 export type StationKind = "playlist" | "all" | "custom";
 
@@ -85,6 +99,23 @@ export interface SongFacts {
 	inStation: boolean;
 	/** Why the planner put it here, when known. */
 	kind: SlotKind | null;
+	/**
+	 * In how many of the listener's own playlists the song is (see
+	 * PlaylistCount); null or absent: never counted.
+	 */
+	playlists?: PlaylistCount | null;
+}
+
+/**
+ * The listener's own playlists holding a song, each counted once however
+ * often the song is in it. Playlists true-shuffle made, playlists of others
+ * (followed or collaborative) and playlists of unclear origin do not count.
+ * `complete` false: not every own playlist could be read (yet), so the count
+ * is a lower bound — and a 0 then means "unknown", not "none".
+ */
+export interface PlaylistCount {
+	count: number;
+	complete: boolean;
 }
 
 export interface SessionView {
@@ -116,8 +147,20 @@ export interface AppState {
 	};
 	warnings: Warning[];
 	jobs: JobView[];
-	/** `liveSince`: from here on true-shuffle counts live; an import covers what came before. */
-	history: { importedTracks: number; importedAt: number | null; liveSince: number | null };
+	/**
+	 * `liveSince`: from here on true-shuffle counts live; an import covers what
+	 * came before. `importedTracks` are the songs of the import, `effectiveTracks`
+	 * those that shape the memory under the listener's selection (`enabled`
+	 * false: the import is kept but counts for nothing; `rules`: how many).
+	 */
+	history: {
+		importedTracks: number;
+		importedAt: number | null;
+		liveSince: number | null;
+		effectiveTracks?: number;
+		enabled?: boolean;
+		rules?: number;
+	};
 	aiSource: "anthropic" | "workers-ai" | "off";
 	serverTime: number;
 }
@@ -227,6 +270,11 @@ export interface ListeningProfile {
 		liveSince: number | null;
 		/** Only the older import summary is stored: importing again shows every period. */
 		summaryOnly: boolean;
+		/**
+		 * The listener's selection of the import: imported plays left out
+		 * (all of them when the import is switched off). Absent: everything counts.
+		 */
+		selection?: { enabled: boolean; rules: number; excludedPlays: number };
 	};
 	/** Calendar years with music, over the whole timeline. */
 	years: number[];
@@ -340,4 +388,79 @@ export interface GenreAnswer {
 	retryAt: number | null;
 	/** This request asked the AI and got nothing usable. */
 	failed: boolean;
+}
+
+/** The stored import and what the listener selected of it (see core/import-selection). */
+export interface HistorySelectionView {
+	/** Counts up with every change taken over; 0: never changed (everything counts). */
+	revision: number;
+	appliedAt: number | null;
+	/** The selection in force. */
+	selection: ImportSelection;
+	/** What it makes of the import; null without an import. */
+	counts: SelectionCounts | null;
+	/** The computed history in force: "failed" means the import counts for nothing until fixed. */
+	effective: { state: "current" | "failed"; error: string | null; at: number | null };
+	dataset: {
+		/** Identity of the stored import: a deletion names it, so it removes exactly that. */
+		key: string;
+		hasImport: boolean;
+		importedAt: number | null;
+		/** Songs with stored totals. */
+		songs: number;
+		/** Single plays stored (every row, also those that count for nothing). */
+		rows: number;
+		rowsFrom: number | null;
+		rowsTo: number | null;
+		/** The old summary for the Hörprofil, from before single plays were kept. */
+		summaryProfile: boolean;
+		/** What the import holds: single plays, only totals, both, or nothing. */
+		coverage: "events" | "summary" | "mixed" | "none";
+	};
+	/** An upload of a new import is under way. */
+	uploading: boolean;
+	liveSince: number | null;
+}
+
+/** A look at the import under a draft selection: nothing is changed by it. */
+export interface SelectionPreview {
+	/** The draft, as the server reads it. */
+	selection: ImportSelection;
+	counts: SelectionCounts | null;
+	/** The selection in force, for comparison. */
+	applied: SelectionCounts | null;
+	revision: number;
+	page: {
+		total: number;
+		items: (InspectItem & { playlists?: PlaylistCount | null })[];
+		matchIds: string[];
+		matchArtists: string[];
+	};
+	query: InspectQuery;
+}
+
+/** Counting songs across the listener's own playlists (see PlaylistCount). */
+export interface PlaylistCountsView {
+	/** never: not counted yet; running; done; stopped: given up or paused (see error). */
+	state: "never" | "running" | "done" | "stopped";
+	startedAt: number | null;
+	finishedAt: number | null;
+	/** When the list of playlists it used was read from Spotify. */
+	listAt: number | null;
+	/** Every own playlist was read to its end. */
+	complete: boolean;
+	playlists: {
+		own: number;
+		read: number;
+		failed: { id: string; name: string; reason: string }[];
+		/** Owned, named like a true-shuffle playlist, but none true-shuffle knows: not counted. */
+		unclear: { id: string; name: string }[];
+		trueShuffle: number;
+		foreign: number;
+	};
+	/** Different songs in the playlists read. */
+	songs: number;
+	/** Why it waits or stopped, when Spotify said. */
+	error: string | null;
+	top: (TrackView & { playlists: PlaylistCount })[];
 }

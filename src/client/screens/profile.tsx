@@ -333,6 +333,17 @@ function PeriodPicker({
 /** Where the numbers come from, and what an import would add. */
 function Coverage({ p }: { p: ListeningProfile }) {
 	const c = p.coverage;
+	const sel = c.selection;
+	if (sel && c.importedPlays > 0)
+		return (
+			<p class="hint profile__source">
+				{sel.enabled
+					? `Dein Import zählt mit deiner Auswahl: ${num(sel.excludedPlays)} importierte Wiedergaben sind ausgeschlossen (${num(sel.rules)} Regeln). `
+					: "Dein Import ist ausgeschaltet und zählt hier nicht. "}
+				{c.liveSince ? `Seit ${dateWord(c.liveSince)} von true-shuffle selbst gezählt. ` : ""}
+				<a href="/auswahl">Auswahl ansehen</a>
+			</p>
+		);
 	if (c.importedPlays > 0 && c.liveSince)
 		return (
 			<p class="hint profile__source">

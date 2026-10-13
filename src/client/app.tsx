@@ -14,6 +14,7 @@ import {
 import { ProfileScreen } from "./screens/profile";
 import { RemoteScreen } from "./screens/remote";
 import { Scan } from "./screens/scan";
+import { SelectionScreen } from "./screens/selection";
 import { SignIn } from "./screens/signin";
 import { NewStation, Station } from "./screens/station";
 import { StationsScreen } from "./screens/stations";
@@ -86,6 +87,9 @@ export function App() {
 					break;
 				case "import":
 					content = <ImportScreen state={state} />;
+					break;
+				case "selection":
+					content = <SelectionScreen />;
 					break;
 				case "devices":
 					content = <DevicesScreen state={state} />;

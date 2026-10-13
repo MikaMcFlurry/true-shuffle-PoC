@@ -712,8 +712,9 @@ describe("song facts in the Verlauf", () => {
 		h.sql.run(`ALTER TABLE memory DROP COLUMN verdict_at`);
 		h.sql.run(`UPDATE kv SET v = '4' WHERE k = 'schema_version'`);
 		migrate(h.sql);
-		// The lane column (5), the imported-plays pages (6), the retest answers (7).
-		expect(h.sql.first<{ v: string }>(`SELECT v FROM kv WHERE k = 'schema_version'`)!.v).toBe("7");
+		// The lane column (5), the imported-plays pages (6), the retest answers (7),
+		// the import selection and playlist count tables (8).
+		expect(h.sql.first<{ v: string }>(`SELECT v FROM kv WHERE k = 'schema_version'`)!.v).toBe("8");
 		expect(h.sql.all(`SELECT played_at, track_id, station_id, ignored FROM plays`)).toEqual(plays);
 		h.restart();
 		for (const e of h.hub.history(200)) expect(e.facts?.kind ?? null).toBeNull();

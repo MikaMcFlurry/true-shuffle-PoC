@@ -38,6 +38,25 @@ import {
 } from "../../core/deck";
 import { fromRow, type HistoryRow } from "../../core/history";
 import {
+	applyOverrides,
+	artistKeys,
+	cleanSelection,
+	defaultSelection,
+	type ImportSelection,
+	type InspectGroup,
+	type InspectQuery,
+	type InspectSort,
+	type InspectStatus,
+	inspectImport,
+	matcher,
+	type SelectionCounts,
+	SelectionError,
+	type SelectionResult,
+	type SelectionRule,
+	sameSelection,
+	selectImport,
+} from "../../core/import-selection";
+import {
 	countsAsPlay,
 	isEarlySkip,
 	isListenRow,
@@ -76,14 +95,18 @@ import type {
 	AppState,
 	DeviceView,
 	HistoryEntry,
+	HistorySelectionView,
 	ImportedProfile,
 	JobView,
 	ListeningProfile,
 	NowPlaying,
 	PlayErrorCode,
+	PlaylistCount,
+	PlaylistCountsView,
 	PlaylistView,
 	PlayResult,
 	RemoteAction,
+	SelectionPreview,
 	SongFacts,
 	StationDetail,
 	StationKind,
@@ -624,6 +647,54 @@ interface ListenUpload {
 	lastSec: number;
 }
 
+/** The listener's selection of the import in force (kv 'history_selection'). */
+interface AppliedSelection extends ImportSelection {
+	revision: number;
+	appliedAt: number | null;
+}
+
+/**
+ * What the selection in force changes in the song totals (kv
+ * 'history_effective'): computed for one revision of the selection over one
+ * stored import (`dataset`), kept in hist_effective under `gen`.
+ */
+interface EffectiveMeta {
+	gen: number;
+	revision: number;
+	dataset: string;
+	at: number;
+	counts: SelectionCounts | null;
+	/** Why it could not be computed: then the import counts for nothing. */
+	error?: string;
+}
+
+/** An upload of song totals under way (kv 'hist_upload', see importHistory). */
+interface HistUpload {
+	id: string;
+	parts: number;
+	next: number;
+}
+
+/** A count of songs across the listener's own playlists (kv 'playlist_counts'). */
+interface PlaylistCountsMeta {
+	state: "running" | "done";
+	startedAt: number;
+	finishedAt: number | null;
+	listAt: number | null;
+	/** Own playlists to read, decided once the list was fresh; null until then. */
+	targets: string[] | null;
+	failed: { id: string; name: string; reason: string }[];
+	unclear: { id: string; name: string }[];
+	trueShuffle: number;
+	foreign: number;
+}
+
+interface PlaylistCountsState {
+	phase?: "wait" | "read";
+	i?: number;
+	offset?: number;
+}
+
 export interface SavedSession {
 	sessionId: string;
 	stationId: number;
@@ -650,12 +721,27 @@ export class HubCore {
 	private readonly db: SqlDb;
 	private sourceCache = new Map<string, PackedTrack[]>();
 	private histCache: Map<TrackId, ImportedStats> | null = null;
+	private rawHistCache: Map<TrackId, ImportedStats> | null = null;
+	/** What the selection in force makes of the import, by revision and data (see selectionView). */
+	private countsCache: { key: string; counts: SelectionCounts | null } | null = null;
+	private playlistCountCache: { map: Map<TrackId, number>; complete: boolean } | null = null;
 	private likedCache: Set<TrackId> | null = null;
 	private indexCache: Map<TrackId, PackedTrack> | null = null;
 
 	constructor(private readonly d: HubDeps) {
 		const raw = d.sql;
 		const cache = this.cache;
+		// A transaction within one runs as part of it: the outer one decides.
+		let depth = 0;
+		const transaction = <R>(fn: () => R): R => {
+			if (depth > 0) return fn();
+			depth++;
+			try {
+				return raw.transaction(fn);
+			} finally {
+				depth--;
+			}
+		};
 		// Every write to the stations table drops the cached list of stations.
 		this.db = {
 			all: (q, ...p) => raw.all(q, ...p),
@@ -664,7 +750,7 @@ export class HubCore {
 				if (/\bstations\b/i.test(q)) cache.stations = null;
 				raw.run(q, ...p);
 			},
-			transaction: (fn) => raw.transaction(fn),
+			transaction,
 		};
 		migrate(this.db);
 	}
@@ -1256,6 +1342,8 @@ export class HubCore {
 		switch (job.kind) {
 			case "playlists":
 				return this.stepPlaylists(client, state as { offset?: number; seen?: string[] }, budget);
+			case "playlist-counts":
+				return this.stepPlaylistCounts(client, state as PlaylistCountsState, budget);
 			case "import":
 				return this.stepImport(client, state as unknown as ImportState, budget);
 			case "deck":
@@ -1784,15 +1872,40 @@ export class HubCore {
 		}));
 	}
 
-	private hist(): Map<TrackId, ImportedStats> {
-		if (!this.histCache) {
-			this.histCache = new Map();
+	/** The song totals of the stored import, as uploaded (see importHistory). */
+	private rawHist(): Map<TrackId, ImportedStats> {
+		if (!this.rawHistCache) {
+			this.rawHistCache = new Map();
 			for (const r of this.db.all<{ data: string }>(`SELECT data FROM hist_pages ORDER BY page`)) {
 				for (const row of JSON.parse(r.data) as HistoryRow[]) {
 					const [id, s] = fromRow(row);
-					this.histCache.set(id, s);
+					this.rawHistCache.set(id, s);
 				}
 			}
+		}
+		return this.rawHistCache;
+	}
+
+	/**
+	 * The imported history that shapes the memory: the stored totals under the
+	 * listener's selection (see core/import-selection). Switched off, nothing;
+	 * without rules, the totals as they are; with rules, the totals with the
+	 * songs the rules change counted again (kept in hist_effective). A selection
+	 * that cannot be computed lets the import count for nothing, never for all.
+	 */
+	private hist(): Map<TrackId, ImportedStats> {
+		if (this.histCache) return this.histCache;
+		const sel = this.appliedSelection();
+		if (!sel.enabled) this.histCache = new Map();
+		else if (sel.rules.length === 0) this.histCache = this.rawHist();
+		else {
+			let eff = this.kvGet<EffectiveMeta>("history_effective");
+			if (!eff || eff.revision !== sel.revision || eff.dataset !== this.datasetKey()) {
+				// Not computed for this selection of these data yet (a new import came).
+				eff = this.materializeSelection(sel);
+			}
+			if (!eff || eff.error) this.histCache = new Map();
+			else this.histCache = applyOverrides(this.rawHist(), this.effectiveOverrides(eff.gen));
 		}
 		return this.histCache;
 	}
@@ -5039,6 +5152,8 @@ export class HubCore {
 	): (it: { id: TrackId; kind: SlotKind }) => SongFacts {
 		this.preloadMemory(new Set(items.map((it) => it.id)));
 		const heardHere = this.stationHeard(stationId);
+		const pc = this.playlistCountOf();
+		const counted = this.kvGet("playlist_counts") !== null;
 		return (it) => {
 			const m = this.memory(it.id);
 			return {
@@ -5047,6 +5162,8 @@ export class HubCore {
 				inStation: heardHere.has(it.id),
 				// Per deck item: the same song could sit in a deck twice for different reasons.
 				kind: it.kind ?? null,
+				// Only once the own playlists were ever counted.
+				...(counted ? { playlists: pc(it.id) } : {}),
 			};
 		};
 	}
@@ -6063,7 +6180,19 @@ export class HubCore {
 		if (this.isConnected()) await this.scheduleNext(new RequestBudget(8));
 	}
 
-	importHistory(rows: HistoryRow[], part: number, parts: number): { stored: number } {
+	/**
+	 * Takes one block of an import's song totals. The blocks of one upload go
+	 * to hist_stage and replace the stored totals only with the last block, in
+	 * one transaction; every block after the first must belong to the upload
+	 * under way (its id, its place), so a block of an upload the listener
+	 * deleted or replaced since is refused instead of bringing data back.
+	 */
+	importHistory(
+		rows: HistoryRow[],
+		part: number,
+		parts: number,
+		uploadId?: unknown,
+	): { stored: number; upload: string } {
 		if (
 			!Array.isArray(rows) ||
 			rows.length > 5000 ||
@@ -6094,24 +6223,765 @@ export class HubCore {
 				throw new HubError("bad_import", "Ungültige Zeile im Import");
 			}
 		}
-		if (part === 0) this.db.run(`DELETE FROM hist_pages`);
+		let up = this.kvGet<HistUpload>("hist_upload");
+		if (part === 0) {
+			this.db.run(`DELETE FROM hist_stage`);
+			up = { id: randomToken(12), parts, next: 0 };
+		} else if (
+			!up ||
+			up.parts !== parts ||
+			up.next !== part ||
+			(uploadId !== undefined && uploadId !== up.id)
+		)
+			throw new HubError(
+				"import_superseded",
+				"Dieser Import wurde abgelöst, gelöscht oder unterbrochen — bitte noch einmal von vorn.",
+				409,
+			);
 		const base =
-			(this.db.first<{ m: number | null }>(`SELECT MAX(page) AS m FROM hist_pages`)?.m ?? -1) + 1;
+			(this.db.first<{ m: number | null }>(`SELECT MAX(page) AS m FROM hist_stage`)?.m ?? -1) + 1;
 		for (let i = 0; i < rows.length; i += 500) {
 			this.db.run(
-				`INSERT INTO hist_pages (page, data) VALUES (?, ?)`,
+				`INSERT INTO hist_stage (page, data) VALUES (?, ?)`,
 				base + i / 500,
 				JSON.stringify(rows.slice(i, i + 500)),
 			);
 		}
-		this.histCache = null;
-		if (part === parts - 1) {
-			const total = this.hist().size;
-			this.kvSet("history_import", { at: this.now(), tracks: total });
-			this.db.run(`UPDATE stations SET deck_dirty = 1`);
-			this.log("info", "history", `Hörverlauf übernommen: ${total} Songs mit Vorgeschichte`);
+		up.next++;
+		if (up.next < up.parts) {
+			this.kvSet("hist_upload", up);
+			return { stored: rows.length, upload: up.id };
 		}
-		return { stored: rows.length };
+		const done = up;
+		this.db.transaction(() => {
+			this.db.run(`DELETE FROM hist_pages`);
+			this.db.run(`INSERT INTO hist_pages (page, data) SELECT page, data FROM hist_stage`);
+			this.db.run(`DELETE FROM hist_stage`);
+			this.kvDel("hist_upload");
+			this.rawHistCache = null;
+			this.kvSet("history_import", { at: this.now(), tracks: this.rawHist().size, id: done.id });
+			this.importChanged();
+		});
+		const total = this.rawHist().size;
+		this.log("info", "history", `Hörverlauf übernommen: ${total} Songs mit Vorgeschichte`);
+		return { stored: rows.length, upload: done.id };
+	}
+
+	// =======================================================================
+	// The listener's selection of the import (see core/import-selection)
+	// =======================================================================
+
+	private appliedSelection(): AppliedSelection {
+		return (
+			this.kvGet<AppliedSelection>("history_selection") ?? {
+				revision: 0,
+				appliedAt: null,
+				...defaultSelection(),
+			}
+		);
+	}
+
+	/** The stored import: its totals and its single plays, each by the upload that brought it. */
+	private datasetKey(): string {
+		const h = this.kvGet<{ at: number; id?: string }>("history_import");
+		const l = this.kvGet<ListenMeta>("listens");
+		return `${h ? (h.id ?? `at${h.at}`) : "-"}|${l ? `g${l.gen}` : "-"}`;
+	}
+
+	/** The artist key of each imported song, once per stored generation of plays. */
+	private artistCache: { gen: number; keys: string[] } | null = null;
+	private listenArtists(): string[] | undefined {
+		const data = this.listenData();
+		const meta = this.kvGet<ListenMeta>("listens");
+		if (!data || !meta) return undefined;
+		if (this.artistCache?.gen !== meta.gen)
+			this.artistCache = { gen: meta.gen, keys: artistKeys(data.tracks) };
+		return this.artistCache.keys;
+	}
+
+	/** What a selection makes of the stored import (a pure computation, nothing written). */
+	private computeSelection(sel: ImportSelection): SelectionResult {
+		return selectImport({
+			events: this.listenData(),
+			artists: this.listenArtists(),
+			aggregate: this.rawHist(),
+			selection: sel,
+			liveSince: this.kvGet<number>("live_since"),
+		});
+	}
+
+	private effectiveOverrides(gen: number): Map<TrackId, ImportedStats | null> {
+		const out = new Map<TrackId, ImportedStats | null>();
+		for (const r of this.db.all<{ data: string }>(
+			`SELECT data FROM hist_effective WHERE gen = ? ORDER BY page`,
+			gen,
+		))
+			for (const row of JSON.parse(r.data) as (HistoryRow | [TrackId])[]) {
+				if (row.length === 1) out.set(row[0], null);
+				else {
+					const [id, st] = fromRow(row as HistoryRow);
+					out.set(id, st);
+				}
+			}
+		return out;
+	}
+
+	/**
+	 * Computes the selection over the stored import and keeps what it changes,
+	 * as the next generation, switched over in one transaction. A failure is
+	 * kept too, so the interface can say it — and the import counts for nothing
+	 * meanwhile (see hist). Only for a selection with rules; others need nothing.
+	 */
+	private materializeSelection(sel: AppliedSelection, result?: SelectionResult): EffectiveMeta {
+		const prev = this.kvGet<EffectiveMeta>("history_effective");
+		const gen = (prev?.gen ?? 0) + 1;
+		const dataset = this.datasetKey();
+		let r: SelectionResult;
+		try {
+			r = result ?? this.computeSelection(sel);
+		} catch (err) {
+			const failed: EffectiveMeta = {
+				gen,
+				revision: sel.revision,
+				dataset,
+				at: this.now(),
+				counts: null,
+				error: err instanceof Error ? err.message : String(err),
+			};
+			this.db.transaction(() => {
+				this.db.run(`DELETE FROM hist_effective`);
+				this.kvSet("history_effective", failed);
+			});
+			this.log("error", "history", `Auswahl des Hörverlaufs nicht berechnet: ${failed.error}`);
+			return failed;
+		}
+		const meta: EffectiveMeta = {
+			gen,
+			revision: sel.revision,
+			dataset,
+			at: this.now(),
+			counts: r.counts,
+		};
+		const rows: (HistoryRow | [TrackId])[] = [...r.overrides].map(([id, st]) =>
+			st === null
+				? [id]
+				: [
+						id,
+						st.plays,
+						st.earlySkips,
+						st.lastPlayedAt ?? 0,
+						st.lastSkippedAt ?? 0,
+						st.playedBeforeSkips ?? st.plays,
+					],
+		);
+		this.db.transaction(() => {
+			for (let i = 0; i < rows.length; i += 500)
+				this.db.run(
+					`INSERT INTO hist_effective (gen, page, data) VALUES (?, ?, ?)`,
+					gen,
+					i / 500,
+					JSON.stringify(rows.slice(i, i + 500)),
+				);
+			this.kvSet("history_effective", meta);
+			this.db.run(`DELETE FROM hist_effective WHERE gen <> ?`, gen);
+		});
+		return meta;
+	}
+
+	/**
+	 * The stored import or the selection changed: every cache built from them
+	 * goes, decks are written anew once nobody listens (a saved queue keeps its
+	 * order), a selection with rules is computed again over the new data (unless
+	 * `computed` already is), and a genre estimate made from (or on its way for)
+	 * the old history is dropped.
+	 */
+	private importChanged(computed = false): void {
+		this.histCache = null;
+		this.rawHistCache = null;
+		this.countsCache = null;
+		this.liveLookups.clear();
+		this.db.run(`UPDATE stations SET deck_dirty = 1`);
+		const sel = this.appliedSelection();
+		if (sel.enabled && sel.rules.length > 0) {
+			if (!computed) this.materializeSelection(sel);
+		} else if (this.kvGet("history_effective") !== null) {
+			this.db.run(`DELETE FROM hist_effective`);
+			this.kvDel("history_effective");
+		}
+		this.kvDel("genre_estimate");
+		const pending = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		if (pending && !pending.id.endsWith("-stale"))
+			this.kvSet("genre_attempt", { ...pending, id: `${pending.id}-stale` });
+	}
+
+	/** What the selection in force makes of the import (null without an import). */
+	private appliedCounts(): SelectionCounts | null {
+		const sel = this.appliedSelection();
+		const key = `${sel.revision}:${this.datasetKey()}`;
+		if (this.countsCache?.key === key) return this.countsCache.counts;
+		let counts: SelectionCounts | null = null;
+		if (this.hasImport()) {
+			const eff = this.kvGet<EffectiveMeta>("history_effective");
+			if (
+				sel.enabled &&
+				sel.rules.length > 0 &&
+				eff &&
+				!eff.error &&
+				eff.revision === sel.revision &&
+				eff.dataset === this.datasetKey()
+			)
+				counts = eff.counts;
+			else {
+				try {
+					counts = this.computeSelection(sel).counts;
+				} catch {
+					counts = null;
+				}
+			}
+		}
+		this.countsCache = { key, counts };
+		return counts;
+	}
+
+	private hasImport(): boolean {
+		return this.kvGet("history_import") !== null || this.kvGet("listens") !== null;
+	}
+
+	selectionView(): HistorySelectionView {
+		const sel = this.appliedSelection();
+		const ruled = sel.enabled && sel.rules.length > 0;
+		// The history in force is computed when a selection with rules needs it.
+		if (ruled) this.hist();
+		const hist = this.kvGet<{ at: number; tracks: number }>("history_import");
+		const listens = this.kvGet<ListenMeta>("listens");
+		const eff = this.kvGet<EffectiveMeta>("history_effective");
+		const failed = ruled && !!eff?.error;
+		const counts = failed ? null : this.appliedCounts();
+		const summarySongs = counts?.summarySongs ?? 0;
+		return {
+			revision: sel.revision,
+			appliedAt: sel.appliedAt,
+			selection: { enabled: sel.enabled, rules: sel.rules },
+			counts,
+			effective: {
+				state: failed ? "failed" : "current",
+				error: failed ? (eff?.error ?? null) : null,
+				at: ruled ? (eff?.at ?? null) : sel.appliedAt,
+			},
+			dataset: {
+				key: this.datasetKey(),
+				hasImport: this.hasImport(),
+				importedAt: hist?.at ?? listens?.at ?? null,
+				songs: hist?.tracks ?? 0,
+				rows: listens?.rows ?? 0,
+				rowsFrom: listens?.from ?? null,
+				rowsTo: listens?.to ?? null,
+				summaryProfile: this.kvGet("history_profile") !== null,
+				coverage: !this.hasImport()
+					? "none"
+					: !listens
+						? "summary"
+						: summarySongs > 0
+							? "mixed"
+							: "events",
+			},
+			uploading: this.kvGet("hist_upload") !== null || this.kvGet("listens_upload") !== null,
+			liveSince: this.kvGet<number>("live_since"),
+		};
+	}
+
+	/**
+	 * A look at the import under a draft selection: counts and one page of a
+	 * search. Read-only — searching, sorting and drafting change nothing; only
+	 * applySelection does.
+	 */
+	previewSelection(input: {
+		enabled?: unknown;
+		rules?: unknown;
+		query?: unknown;
+	}): SelectionPreview {
+		let draft: ImportSelection;
+		try {
+			draft = cleanSelection({ enabled: input.enabled, rules: input.rules });
+		} catch (err) {
+			if (err instanceof SelectionError)
+				throw new HubError("bad_selection", `Ungültige Auswahl: ${err.message}`);
+			throw err;
+		}
+		const q = (input.query ?? {}) as Record<string, unknown>;
+		const time = (v: unknown) =>
+			typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 8.64e15 ? Math.floor(v) : null;
+		const pick = <T extends string>(v: unknown, all: readonly T[], fallback: T): T =>
+			all.includes(v as T) ? (v as T) : fallback;
+		const query: InspectQuery = {
+			q: typeof q.q === "string" ? q.q.slice(0, 100) : "",
+			group: pick<InspectGroup>(q.group, ["track", "artist"], "track"),
+			status: pick<InspectStatus>(
+				q.status,
+				["all", "included", "excluded", "partial", "neutral"],
+				"all",
+			),
+			sort: pick<InspectSort>(q.sort, ["plays", "name", "recent"], "plays"),
+			from: time(q.from),
+			to: time(q.to),
+			offset:
+				typeof q.offset === "number" && Number.isInteger(q.offset) && q.offset >= 0
+					? Math.min(q.offset, 1_000_000)
+					: 0,
+			limit:
+				typeof q.limit === "number" && Number.isInteger(q.limit)
+					? Math.min(100, Math.max(1, q.limit))
+					: 50,
+		};
+		const has = this.hasImport();
+		const index = has ? this.trackIndex() : new Map<TrackId, PackedTrack>();
+		const counts = has ? this.computeSelection(draft).counts : null;
+		const page = has
+			? inspectImport({
+					events: this.listenData(),
+					artists: this.listenArtists(),
+					aggregate: this.rawHist(),
+					selection: draft,
+					liveSince: this.kvGet<number>("live_since"),
+					query,
+					names: (id) => {
+						const t = index.get(id);
+						return t ? { name: t[1], artist: artistLine(t), album: t[3] } : null;
+					},
+				})
+			: { total: 0, items: [], matchIds: [], matchArtists: [] };
+		const pc = this.playlistCountOf();
+		return {
+			selection: draft,
+			counts,
+			applied: this.appliedCounts(),
+			revision: this.appliedSelection().revision,
+			page: {
+				...page,
+				items: page.items.map((it) =>
+					query.group === "track" && it.key ? { ...it, playlists: pc(it.key) } : it,
+				),
+			},
+			query,
+		};
+	}
+
+	/**
+	 * Takes a selection over: the explicit step after a preview. It must be
+	 * made on the revision in force (`baseRevision`): a tab that shows an older
+	 * one is refused, so it cannot bring back what was left out since. The same
+	 * selection again changes nothing. It is computed before anything is
+	 * written; a failure leaves the selection before in force.
+	 */
+	applySelection(input: {
+		baseRevision?: unknown;
+		enabled?: unknown;
+		rules?: unknown;
+	}): HistorySelectionView {
+		let next: ImportSelection;
+		try {
+			next = cleanSelection({ enabled: input.enabled, rules: input.rules });
+		} catch (err) {
+			if (err instanceof SelectionError)
+				throw new HubError("bad_selection", `Ungültige Auswahl: ${err.message}`);
+			throw err;
+		}
+		const cur = this.appliedSelection();
+		if (sameSelection({ enabled: cur.enabled, rules: cur.rules }, next)) return this.selectionView();
+		if (input.baseRevision !== cur.revision)
+			throw new HubError(
+				"selection_conflict",
+				"Die Auswahl wurde inzwischen geändert (anderer Tab oder anderes Gerät). Sieh dir den aktuellen Stand an und übernimm deine Änderung dann noch einmal.",
+				409,
+			);
+		const applied: AppliedSelection = {
+			...next,
+			revision: cur.revision + 1,
+			appliedAt: this.now(),
+		};
+		let result: SelectionResult | undefined;
+		if (applied.enabled && applied.rules.length > 0) {
+			try {
+				result = this.computeSelection(applied);
+			} catch (err) {
+				const why = err instanceof Error ? err.message : String(err);
+				this.log("error", "history", `Auswahl nicht übernommen: ${why}`);
+				throw new HubError(
+					"selection_failed",
+					`Die Auswahl konnte nicht berechnet werden (${why}). Es gilt weiter die bisherige.`,
+					500,
+				);
+			}
+		}
+		this.db.transaction(() => {
+			this.kvSet("history_selection", applied);
+			if (result) this.materializeSelection(applied, result);
+			this.importChanged(true);
+		});
+		this.log(
+			"info",
+			"history",
+			!applied.enabled
+				? "Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"
+				: `Auswahl des Hörverlaufs übernommen (Stand ${applied.revision}, ${applied.rules.length} Regeln)`,
+		);
+		return this.selectionView();
+	}
+
+	/** What deleting the stored import would remove (see deleteImport). */
+	private deletableScope(): { songs: number; rows: number; summaryProfile: boolean } {
+		return {
+			songs: this.kvGet<{ tracks: number }>("history_import")?.tracks ?? 0,
+			rows: this.kvGet<ListenMeta>("listens")?.rows ?? 0,
+			summaryProfile: this.kvGet("history_profile") !== null,
+		};
+	}
+
+	/**
+	 * Deletes the stored import — its song totals, single plays, the old
+	 * summary, uploads under way and everything computed from them — and only
+	 * that: live plays, thumbs, hearts, bans, stations and the saved queue
+	 * stay, and so does the selection (it applies to a later import). `dataset`
+	 * must name the import the listener confirmed; a newer one is not deleted.
+	 */
+	deleteImport(dataset: unknown): {
+		deleted: { songs: number; rows: number; summaryProfile: boolean };
+	} {
+		if (!this.hasImport() && this.kvGet("history_profile") === null)
+			throw new HubError("not_found", "Es ist kein Import gespeichert.", 404);
+		if (dataset !== this.datasetKey())
+			throw new HubError(
+				"import_changed",
+				"Der gespeicherte Import hat sich inzwischen geändert. Prüfe den Umfang noch einmal, bevor du löschst.",
+				409,
+			);
+		const deleted = this.deletableScope();
+		this.db.transaction(() => {
+			for (const t of ["hist_pages", "hist_stage", "hist_effective", "listen_pages"])
+				this.db.run(`DELETE FROM ${t}`);
+			for (const k of [
+				"history_import",
+				"listens",
+				"listens_upload",
+				"hist_upload",
+				"history_profile",
+				"history_effective",
+			])
+				this.kvDel(k);
+			this.listenCache = null;
+			this.artistCache = null;
+			this.importChanged();
+		});
+		this.log(
+			"info",
+			"history",
+			`Hörverlauf-Import gelöscht: ${deleted.songs} Songs, ${deleted.rows} einzelne Wiedergaben`,
+		);
+		return { deleted };
+	}
+
+	// =======================================================================
+	// Songs across the listener's own playlists
+	// =======================================================================
+
+	/**
+	 * Which playlists of the stored list count as the listener's own: owned by
+	 * them, not made by true-shuffle (a station's playlist, the discoveries
+	 * playlist), not of unclear origin (named like true-shuffle's, but none it
+	 * knows: not counted, and said so). Playlists of others — followed or
+	 * collaborative — never count; neither does one whose owner is unknown.
+	 * Independent of which playlists feed stations.
+	 */
+	private ownPlaylists(): {
+		own: string[];
+		unclear: { id: string; name: string }[];
+		trueShuffle: number;
+		foreign: number;
+	} {
+		const me = this.kvGet<{ id: string }>("profile")?.id ?? "";
+		const known = new Set(this.stations().flatMap((s) => (s.playlist_id ? [s.playlist_id] : [])));
+		const discoveries = this.kvGet<string>("discoveries_playlist");
+		if (discoveries) known.add(discoveries);
+		const out = {
+			own: [] as string[],
+			unclear: [] as { id: string; name: string }[],
+			trueShuffle: 0,
+			foreign: 0,
+		};
+		for (const r of this.db.all<{
+			id: string;
+			name: string;
+			owner_id: string | null;
+			ours: number;
+		}>(`SELECT id, name, owner_id, ours FROM playlists WHERE gone_at IS NULL ORDER BY sort, id`)) {
+			if (known.has(r.id)) out.trueShuffle++;
+			else if (!me || !r.owner_id) out.unclear.push({ id: r.id, name: r.name });
+			else if (r.owner_id !== me) out.foreign++;
+			else if (
+				r.ours === 1 ||
+				r.name.startsWith(DECK_NAME_PREFIX) ||
+				r.name.startsWith(LEGACY_DECK_NAME_PREFIX)
+			)
+				out.unclear.push({ id: r.id, name: r.name });
+			else out.own.push(r.id);
+		}
+		return out;
+	}
+
+	/**
+	 * Count again: the playlist list is read first (unless that just happened),
+	 * then every own playlist whose snapshot changed since it was last read,
+	 * page by page, through the same job queue, request budget and Spotify
+	 * waits as everything else. Only on request; never by itself.
+	 */
+	async requestPlaylistCounts(): Promise<PlaylistCountsView> {
+		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
+		if (!(meta?.state === "running" && this.jobExists("playlist-counts"))) {
+			this.db.run(`DELETE FROM jobs WHERE key = 'playlist-counts'`);
+			this.kvSet("playlist_counts", {
+				state: "running",
+				startedAt: this.now(),
+				finishedAt: null,
+				listAt: null,
+				targets: null,
+				failed: [],
+				unclear: [],
+				trueShuffle: 0,
+				foreign: 0,
+			} satisfies PlaylistCountsMeta);
+			this.playlistCountCache = null;
+			if (this.now() - this.syncState().lastPlaylistsAt >= 10 * MINUTE_MS)
+				this.enqueue("playlists", "playlists", {}, 1);
+			this.enqueue("playlist-counts", "playlist-counts", { phase: "wait" }, 7);
+			this.log("info", "playlists", "Zählung der eigenen Playlists gestartet");
+			if (this.isConnected()) await this.scheduleSoon(1000);
+		}
+		return this.playlistCountsView();
+	}
+
+	private async stepPlaylistCounts(
+		client: SpotifyClient,
+		state: PlaylistCountsState,
+		budget: RequestBudget,
+	): Promise<StepResult> {
+		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
+		if (meta?.state !== "running") return { done: true };
+		if (state.phase !== "read" || !meta.targets) {
+			// The playlist list first: what it holds decides what is read.
+			if (this.jobExists("playlists")) return { done: false, state, delayMs: 15_000 };
+			const plan = this.ownPlaylists();
+			meta.targets = plan.own;
+			meta.unclear = plan.unclear;
+			meta.trueShuffle = plan.trueShuffle;
+			meta.foreign = plan.foreign;
+			meta.listAt = this.syncState().lastPlaylistsAt || null;
+			const keep = new Set(plan.own);
+			for (const r of this.db.all<{ playlist_id: string }>(`SELECT playlist_id FROM playlist_scan`))
+				if (!keep.has(r.playlist_id)) {
+					this.db.run(`DELETE FROM playlist_scan WHERE playlist_id = ?`, r.playlist_id);
+					this.db.run(`DELETE FROM playlist_member_pages WHERE playlist_id = ?`, r.playlist_id);
+				}
+			this.kvSet("playlist_counts", meta);
+			this.playlistCountCache = null;
+			state = { phase: "read", i: 0, offset: 0 };
+		}
+		let i = state.i ?? 0;
+		let offset = state.offset ?? 0;
+		const failed = (id: string, reason: string) => {
+			const name = this.playlistName(id) ?? id;
+			meta.failed = [...meta.failed.filter((f) => f.id !== id), { id, name, reason }];
+			this.db.run(
+				`UPDATE playlist_scan SET complete = 0, error = ?, read_at = ? WHERE playlist_id = ?`,
+				reason,
+				this.now(),
+				id,
+			);
+			this.kvSet("playlist_counts", meta);
+			this.playlistCountCache = null;
+		};
+		while (budget.left > 4) {
+			const id = meta.targets[i];
+			if (id === undefined) {
+				meta.state = "done";
+				meta.finishedAt = this.now();
+				this.kvSet("playlist_counts", meta);
+				this.playlistCountCache = null;
+				this.log(
+					"info",
+					"playlists",
+					`Eigene Playlists gezählt: ${meta.targets.length - meta.failed.length} von ${meta.targets.length} gelesen`,
+				);
+				return { done: true };
+			}
+			if (offset === 0) {
+				const snap =
+					this.db.first<{ snapshot_id: string | null }>(
+						`SELECT snapshot_id FROM playlists WHERE id = ?`,
+						id,
+					)?.snapshot_id ?? null;
+				const scan = this.db.first<{ snapshot_id: string | null; complete: number }>(
+					`SELECT snapshot_id, complete FROM playlist_scan WHERE playlist_id = ?`,
+					id,
+				);
+				// Unchanged since it was read to its end: what was read stands.
+				if (scan?.complete === 1 && snap !== null && scan.snapshot_id === snap) {
+					i++;
+					continue;
+				}
+				this.db.run(`DELETE FROM playlist_member_pages WHERE playlist_id = ?`, id);
+				this.db.run(
+					`INSERT INTO playlist_scan (playlist_id, snapshot_id, pages, complete, error, read_at)
+					 VALUES (?, ?, 0, 0, NULL, NULL)
+					 ON CONFLICT(playlist_id) DO UPDATE SET snapshot_id = excluded.snapshot_id,
+					   pages = 0, complete = 0, error = NULL`,
+					id,
+					snap,
+				);
+				this.playlistCountCache = null;
+			}
+			let page: Awaited<ReturnType<SpotifyClient["playlistItems"]>>;
+			try {
+				page = await client.playlistItems(id, offset);
+			} catch (err) {
+				if (
+					err instanceof SpotifyError &&
+					(err.kind === "forbidden" || err.kind === "not_found")
+				) {
+					failed(id, err.kind === "forbidden" ? "kein Zugriff" : "nicht gefunden");
+					i++;
+					offset = 0;
+					continue;
+				}
+				throw err;
+			}
+			if (!page) {
+				failed(id, "keine Antwort von Spotify");
+				i++;
+				offset = 0;
+				continue;
+			}
+			// Each song once per page (and once per playlist when counted); local
+			// files and podcast episodes are no songs of the library.
+			const ids = [
+				...new Set(
+					page.items.flatMap((it) =>
+						!it?.is_local && it?.item?.id && (it.item.type ?? "track") === "track"
+							? [it.item.id]
+							: [],
+					),
+				),
+			];
+			const pageNo = Math.floor(offset / PAGE_SIZE);
+			this.db.run(
+				`INSERT INTO playlist_member_pages (playlist_id, page, data) VALUES (?, ?, ?)
+				 ON CONFLICT(playlist_id, page) DO UPDATE SET data = excluded.data`,
+				id,
+				pageNo,
+				JSON.stringify(ids),
+			);
+			offset += page.items.length || PAGE_SIZE;
+			if (!page.next || page.items.length === 0) {
+				this.db.run(
+					`UPDATE playlist_scan SET pages = ?, complete = 1, error = NULL, read_at = ? WHERE playlist_id = ?`,
+					pageNo + 1,
+					this.now(),
+					id,
+				);
+				meta.failed = meta.failed.filter((f) => f.id !== id);
+				this.kvSet("playlist_counts", meta);
+				i++;
+				offset = 0;
+			} else this.db.run(`UPDATE playlist_scan SET pages = ? WHERE playlist_id = ?`, pageNo + 1, id);
+			this.playlistCountCache = null;
+		}
+		return { done: false, state: { phase: "read", i, offset } };
+	}
+
+	/** Per song: in how many own playlists it is, from every own playlist read to its end. */
+	private playlistCountMap(): { map: Map<TrackId, number>; complete: boolean } | null {
+		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
+		if (!meta) return null;
+		if (this.playlistCountCache) return this.playlistCountCache;
+		const targets = meta.targets ?? [];
+		const done = new Set(
+			this.db
+				.all<{ playlist_id: string }>(`SELECT playlist_id FROM playlist_scan WHERE complete = 1`)
+				.map((r) => r.playlist_id),
+		);
+		const map = new Map<TrackId, number>();
+		for (const id of targets) {
+			if (!done.has(id)) continue;
+			const songs = new Set<TrackId>();
+			for (const r of this.db.all<{ data: string }>(
+				`SELECT data FROM playlist_member_pages WHERE playlist_id = ? ORDER BY page`,
+				id,
+			))
+				for (const t of JSON.parse(r.data) as TrackId[]) songs.add(t);
+			for (const t of songs) map.set(t, (map.get(t) ?? 0) + 1);
+		}
+		const complete =
+			meta.state === "done" &&
+			meta.targets !== null &&
+			meta.failed.length === 0 &&
+			targets.every((id) => done.has(id));
+		this.playlistCountCache = { map, complete };
+		return this.playlistCountCache;
+	}
+
+	/** A lookup for SongFacts: null while nothing was ever counted. */
+	private playlistCountOf(): (id: TrackId) => PlaylistCount | null {
+		const c = this.playlistCountMap();
+		if (!c) return () => null;
+		return (id) => ({ count: c.map.get(id) ?? 0, complete: c.complete });
+	}
+
+	playlistCountsView(): PlaylistCountsView {
+		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
+		const job = this.db.first<{ error: string | null }>(
+			`SELECT error FROM jobs WHERE key = 'playlist-counts'`,
+		);
+		const c = this.playlistCountMap();
+		const read =
+			meta?.targets && meta.targets.length > 0
+				? (this.db.first<{ n: number }>(
+						`SELECT COUNT(*) AS n FROM playlist_scan WHERE complete = 1 AND playlist_id IN (${meta.targets.map(() => "?").join(",")})`,
+						...meta.targets,
+					)?.n ?? 0)
+				: 0;
+		const top = c
+			? [...c.map.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 20)
+			: [];
+		const found = this.lookupTracks(
+			top.map(([id]) => id),
+			this.usedSources(),
+		);
+		return {
+			state: !meta
+				? "never"
+				: meta.state === "done"
+					? "done"
+					: job
+						? "running"
+						: "stopped",
+			startedAt: meta?.startedAt ?? null,
+			finishedAt: meta?.finishedAt ?? null,
+			listAt: meta?.listAt ?? null,
+			complete: c?.complete ?? false,
+			playlists: {
+				own: meta?.targets?.length ?? 0,
+				read,
+				failed: meta?.failed ?? [],
+				unclear: meta?.unclear ?? [],
+				trueShuffle: meta?.trueShuffle ?? 0,
+				foreign: meta?.foreign ?? 0,
+			},
+			songs: c?.map.size ?? 0,
+			error: job?.error ?? null,
+			top: top.flatMap(([id, n]) => {
+				const t = found.get(id);
+				return t ? [{ ...this.view(t), playlists: { count: n, complete: c!.complete } }] : [];
+			}),
+		};
 	}
 
 	// =======================================================================
@@ -6263,6 +7133,9 @@ export class HubCore {
 				importedTracks: hist?.tracks ?? 0,
 				importedAt: hist?.at ?? null,
 				liveSince: this.kvGet<number>("live_since"),
+				effectiveTracks: this.hist().size,
+				enabled: this.appliedSelection().enabled,
+				rules: this.appliedSelection().rules.length,
 			},
 			aiSource: this.d.env.anthropicKey ? "anthropic" : this.d.ai ? "workers-ai" : "off",
 			serverTime: this.now(),
@@ -6545,6 +7418,9 @@ export class HubCore {
 	 */
 	setImportedProfile(input: unknown): void {
 		const bad = () => new HubError("bad_profile", "Ungültiges Hörprofil");
+		// A summary belongs to stored song totals: after a deletion it brings nothing back.
+		if (this.kvGet("history_import") === null)
+			throw new HubError("no_import", "Es ist kein Import gespeichert.", 409);
 		const p = input as ImportedProfile;
 		const n = (v: unknown, max = 1e9) =>
 			typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= max;
@@ -6651,6 +7527,8 @@ export class HubCore {
 	 */
 	importListens(input: {
 		upload?: unknown;
+		/** The upload of song totals these plays belong to (see importHistory). */
+		importId?: unknown;
 		part: unknown;
 		parts: unknown;
 		tracks: unknown;
@@ -6670,6 +7548,17 @@ export class HubCore {
 		const current = this.kvGet<ListenMeta>("listens");
 		let upload = this.kvGet<ListenUpload>("listens_upload");
 		if (part === 0) {
+			// The plays belong to the song totals uploaded just before (the import
+			// page names them): once those were deleted or replaced, a late upload
+			// of the old plays must not bring them back. (An app from before sends
+			// no name; its upload of totals is refused after a deletion instead.)
+			const hist = this.kvGet<{ id?: string }>("history_import");
+			if (input.importId !== undefined && (!hist || input.importId !== hist.id))
+				throw new HubError(
+					"import_superseded",
+					"Ungültiger Hörverlauf: der Import, zu dem diese Wiedergaben gehören, wurde gelöscht oder ersetzt — bitte die Dateien noch einmal importieren.",
+					409,
+				);
 			// A new upload: whatever an unfinished one left behind goes first; a
 			// block of that one is refused from now on (another id).
 			this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, current?.gen ?? -1);
@@ -6747,9 +7636,9 @@ export class HubCore {
 		this.kvDel("listens_upload");
 		this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, upload.gen);
 		this.listenCache = null;
-		// A new history: a genre estimate on the way belongs to the old one.
-		const pending = this.kvGet<{ at: number; id: string }>("genre_attempt");
-		if (pending) this.kvSet("genre_attempt", { ...pending, id: `${pending.id}-stale` });
+		this.artistCache = null;
+		// A new history: the selection is computed over it, a genre estimate on the way belongs to the old one.
+		this.importChanged();
 		this.log("info", "history", `Hörverlauf für das Hörprofil übernommen: ${plays} Wiedergaben`);
 		return { stored: data.length, upload: upload.id };
 	}
@@ -6761,7 +7650,11 @@ export class HubCore {
 	 */
 	private timeline(): () => Iterable<ListenEvent> {
 		const liveSince = this.kvGet<number>("live_since") ?? Number.POSITIVE_INFINITY;
-		const imported = this.listenData();
+		// The listener's selection of the import holds here as in the memory.
+		const sel = this.appliedSelection();
+		const imported = sel.enabled ? this.listenData() : null;
+		const pick = imported && sel.rules.length > 0 ? matcher(sel) : null;
+		const artists = pick ? this.listenArtists() : undefined;
 		const rows = this.db.all<{ played_at: number; track_id: string; meta: string | null }>(
 			`SELECT played_at, track_id, meta FROM plays WHERE ignored = 0 AND played_at >= ? ORDER BY played_at`,
 			Number.isFinite(liveSince) ? liveSince : 0,
@@ -6786,6 +7679,7 @@ export class HubCore {
 					if (!play && !early) continue;
 					const t = imported.tracks[row[1]];
 					if (!t) continue;
+					if (pick && !pick.included(pick.event(at, t[0], artists![row[1]]!))) continue;
 					yield {
 						at,
 						song: t[0],
@@ -6871,6 +7765,18 @@ export class HubCore {
 				importedPlays: meta?.plays ?? 0,
 				liveSince: this.kvGet<number>("live_since"),
 				summaryOnly: !meta && !!this.kvGet("history_profile"),
+				...(() => {
+					const sel = this.appliedSelection();
+					if (sel.revision === 0 || (sel.enabled && sel.rules.length === 0)) return {};
+					const c = this.appliedCounts();
+					return {
+						selection: {
+							enabled: sel.enabled,
+							rules: sel.rules.length,
+							excludedPlays: c ? c.plays - c.includedPlays : 0,
+						},
+					};
+				})(),
 			},
 			genres: this.kvGet<GenreEstimate>("genre_estimate"),
 			canEstimate: !!this.d.env.anthropicKey || !!this.d.ai,
@@ -6909,6 +7815,8 @@ export class HubCore {
 		const bare = rows.filter((r) => !r.meta).map((r) => r.track_id);
 		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
 		this.preloadMemory(new Set(rows.map((r) => r.track_id)));
+		const pc = this.playlistCountOf();
+		const counted = this.kvGet("playlist_counts") !== null;
 		return rows
 			.map((r) => {
 				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
@@ -6926,6 +7834,7 @@ export class HubCore {
 						// Only the lane stamped when this very play was recorded; plays from
 						// before, or recorded in doubt, claim none.
 						kind: LANES.has(r.lane as SlotKind) ? (r.lane as SlotKind) : null,
+						...(counted ? { playlists: pc(r.track_id) } : {}),
 					},
 				};
 				return entry;

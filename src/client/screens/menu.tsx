@@ -4,6 +4,7 @@ import {
 	FileUp,
 	History,
 	House,
+	ListFilter,
 	Info,
 	LogOut,
 	type LucideIcon,
@@ -266,8 +267,17 @@ export function MenuScreen({ state }: { state: AppState }) {
 				<ul class="list">
 					<LinkRow href="/import" icon={FileUp} title="Hörverlauf importieren">
 						{hist.importedTracks > 0
-							? `${num(hist.importedTracks)} Songs aus deinem Spotify-Verlauf sind eingerechnet${hist.importedAt ? ` (seit ${date(hist.importedAt)})` : ""}.`
+							? `${num(hist.effectiveTracks ?? hist.importedTracks)} Songs aus deinem Spotify-Verlauf sind eingerechnet${hist.importedAt ? ` (seit ${date(hist.importedAt)})` : ""}.`
 							: "Noch nicht importiert. Mit deinem Spotify-Verlauf weiß true-shuffle sofort, was du schon kennst."}
+					</LinkRow>
+					<LinkRow href="/auswahl" icon={ListFilter} title="Hörverlauf auswählen">
+						{hist.importedTracks > 0
+							? hist.enabled === false
+								? "Import ausgeschaltet: er zählt gerade nicht. Durchsehen, einschalten oder löschen."
+								: hist.rules
+									? `${num(hist.rules)} Regeln aktiv: ${num(hist.effectiveTracks ?? 0)} von ${num(hist.importedTracks)} Songs prägen dein Profil.`
+									: "Durchsehen, was zählt: Zeiträume, Künstler oder Songs ausschließen, ausschalten oder löschen."
+							: "Durchsehen, was dein Import zählt, und in wie vielen eigenen Playlists ein Song steht."}
 					</LinkRow>
 					<LinkRow href="/verlauf" icon={History} title="Verlauf">
 						Jeder Song ab 30 Sekunden, nach Tagen geordnet.
@@ -1055,6 +1065,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 	const [listens, setListens] = useState<Listens | null>(null);
 	// Saved, how far along, or why the Hörprofil could not be kept (the counts still stand).
 	const [profileState, setProfileState] = useState<ProfileState>("saved");
+	// The upload of song totals the plays belong to: the server refuses plays of a deleted one.
+	const importIdRef = useRef<string | null>(null);
 	const hist = state.history;
 
 	const read = async (files: FileList | null) => {
@@ -1116,8 +1128,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 	};
 
 	// The song list, then the plays, block by block; the server switches over only at the end.
-	const saveProfile = async () => {
-		if (!listens) return;
+	const saveProfile = async (importId = importIdRef.current) => {
+		if (!listens || !importId) return;
 		const pages = (xs: unknown[]) =>
 			Array.from({ length: Math.ceil(xs.length / LISTEN_PAGE) }, (_, i) =>
 				xs.slice(i * LISTEN_PAGE, (i + 1) * LISTEN_PAGE),
@@ -1132,6 +1144,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 			for (const [part, b] of blocks.entries()) {
 				const r = await api.importListens({
 					upload,
+					importId: part === 0 ? importId : undefined,
 					part,
 					parts: blocks.length,
 					tracks: listens.tracks.length,
@@ -1152,18 +1165,20 @@ export function ImportScreen({ state }: { state: AppState }) {
 		setSent(0);
 		const size = 2000;
 		const parts = Math.max(1, Math.ceil(rows.length / size));
+		let id: string | undefined;
 		try {
 			for (let i = 0; i < parts; i++) {
-				await api.importHistory(rows.slice(i * size, (i + 1) * size), i, parts);
+				id = (await api.importHistory(rows.slice(i * size, (i + 1) * size), i, parts, id)).upload;
 				setSent(Math.min(rows.length, (i + 1) * size));
 			}
+			importIdRef.current = id ?? null;
 		} catch (e) {
 			setErr((e as Error).message);
 			setPhase("ready");
 			return;
 		}
 		// Every play for the Hörprofil; the counts above stand without it, and a retry sends only it.
-		await saveProfile();
+		await saveProfile(id ?? null);
 		setPhase("done");
 		void store.refresh(false);
 	};
@@ -1180,9 +1195,15 @@ export function ImportScreen({ state }: { state: AppState }) {
 
 			{hist.importedTracks > 0 && phase !== "done" ? (
 				<p class="notice">
-					Eingerechnet sind {songs(hist.importedTracks)} aus deinem Spotify-Verlauf
+					Gespeichert sind {songs(hist.importedTracks)} aus deinem Spotify-Verlauf
 					{hist.importedAt ? `, importiert am ${date(hist.importedAt)}` : ""}. Ein neuer Import
-					ersetzt diesen.
+					ersetzt diesen.{" "}
+					{hist.enabled === false
+						? "Dein Import ist ausgeschaltet; ein neuer bleibt es auch, bis du ihn einschaltest. "
+						: hist.rules
+							? `Deine ${num(hist.rules)} Auswahlregeln gelten auch für den neuen Import. `
+							: ""}
+					<a href="/auswahl">Auswahl ansehen</a>
 				</p>
 			) : null}
 
