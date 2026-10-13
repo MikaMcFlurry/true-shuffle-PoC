@@ -246,7 +246,7 @@ export const api = {
 			dataset,
 		}),
 	deleteImport: (dataset: string) =>
-		call<{ deleted: { songs: number; rows: number; summaryProfile: boolean } }>(
+		call<{ deleted: { songs: number; rows: number; summaryProfile: boolean }; commit: number }>(
 			"POST",
 			"/api/history/delete",
 			{ dataset },

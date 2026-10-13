@@ -253,5 +253,67 @@
 			"raw": "HISTORY_SELECTION_DELTA3_GATES/"
 		},
 		"process": "only own Playwright-managed webServers on own ports; no process killed in this step"
+	},
+	"independent_review_4_delta3": {
+		"reviewer": "fresh Codex lifecycle review of 898c4d8 (FRESH / NOT_READY), parent coordinator; originals C:/Users/mikah/Documents/Codex/2026-10-13/task-5/delta3-evidence-898c4d8 read only",
+		"findings": {
+			"D3-R8-COMMIT-ORDER": "P2 blocking: a reload sent after Apply/Toggle/Delete but read before its commit was accepted first; the real 200 answer was then dropped by send order (apply/toggle showed the older state, a deleted import stayed actionable)",
+			"D3-R8-ERROR-ORDER": "P2 blocking: an older failed reload replaced the newer failure shown"
+		},
+		"status": "AUTHOR-REPAIRED / PENDING-ACCEPTANCE (no own approval)",
+		"cause": "send order is no commit order: the page ordered answers by the number given when a request was sent; a deletion or new import keeps the selection revision, so no client-only rule can order two answers across such a change (two successful reads included). Failures had no ordering of their own.",
+		"repair": {
+			"server (additive metadata, authorized by the coordinator for this lifecycle fix)": [
+				"HistorySelectionView.commit and the delete answer's commit: a per-listener number in the kv table (no schema migration, 0 for stored listeners), raised in the same storage transaction by every stored change of the import or the selection",
+				"raised only at the existing change points: importChanged (change taken over incl. on/off, finished totals import, finished single-play import, deletion) and a first legacy summary (setImportedProfile when none was stored); not by reads, previews, an unchanged selection, refused/stale requests, upload blocks before the last or a repeated summary",
+				"no change to ingest, weighting, preferences, playback, auth, security or routes"
+			],
+			"client (src/client/screens/selection.tsx)": [
+				"a view is shown only if its commit is higher than the one shown (equal: later sent wins; revision floor kept)",
+				"a change's answer with a lower commit than shown claims nothing; equal or higher is reported (message, draft rules as before)",
+				"a deletion's answer with a higher commit replaces the shown import at once by a stand-in with nothing to act on until a load arrives",
+				"own failure fence: a failed load is shown only if sent after every request answered so far and after the failure shown; a newer answer clears older failures",
+				"the earlier send-order bump of accepted on a deletion answer was removed; serialization, draft generations, CAS, preview binding unchanged"
+			]
+		},
+		"tests": {
+			"hub (test/hub/history-selection.test.ts, 4 new)": "monotone over apply/toggle/delete/reimport incl. equal revision with different dataset; kept on reopening the same hub and continued; unchanged for reads, preview, unchanged selection, stale revision, other/missing/null dataset, wrong deletion, refused upload block, partial upload, repeated summary, nothing to delete; per-listener isolation. RED at 898c4d8 4/4 (HISTORY_SELECTION_DELTA4_HUB_RED_898.log), GREEN at fix (HISTORY_SELECTION_DELTA4_HUB_GREEN.log)",
+			"e2e (e2e/app.spec.ts, 5 new tests, shared helper selectionRace)": "real failed-delete + failed-reload recovery ('Neu laden'), change held before the real local Worker, reloads read before the commit (one delivered after the answer), real 200 answers; external replacement + old 200/503/offline; reverse failures and older failure after newer answer/takeover/deletion; new import afterwards. Only requests held, failed (503/abort) or passed; no made-up success bodies, no swapped dataset ids",
+			"red at frozen 898c4d8 (spec copied into a scratch worktree)": {
+				"apply": "FAIL (HISTORY_SELECTION_DELTA4_RED_898_APPLY.log)",
+				"toggle": "FAIL (HISTORY_SELECTION_DELTA4_RED_898_TOGGLE.log)",
+				"delete": "FAIL (HISTORY_SELECTION_DELTA4_RED_898_DELETE.log)",
+				"error order": "FAIL - shows 'Ältere Antwort' (HISTORY_SELECTION_DELTA4_RED_898_ERROR_ORDER.log)",
+				"replacement": "PASS at 898c4d8 too - a preservation regression, not a repro (HISTORY_SELECTION_DELTA4_RED_898_REPLACEMENT.log)"
+			},
+			"green at fix": "8/8 incl. sign-in and both earlier lifecycle tests (HISTORY_SELECTION_DELTA4_GREEN.log)"
+		},
+		"reviewer_originals_at_fix": {
+			"method": "byte-identical copies except line 1 (import path) and line 31 (screenshot dir); own ports/outputDir/short persistence; reviewer limits 45 s / 5 s, trace on (HISTORY_SELECTION_DELTA4_REVIEWER_COPIES.txt)",
+			"lifecycle-independent.spec.ts": "14 pass / 1 fail - the remaining fail is the reviewer's documented fixture defect (toggle serialization looks for 'Import ausschalten' while the pending button reads 'Wird gespeichert …'), red identically at 898c4d8; :31 apply/toggle/delete and :32 now PASS (HISTORY_SELECTION_DELTA4_REVIEWER_INDEPENDENT.log)",
+			"lifecycle-fixture-corrected.spec.ts": "15 / 15 pass (HISTORY_SELECTION_DELTA4_REVIEWER_CORRECTED.log)",
+			"originals": "15 files sha256 before/after equal (HISTORY_SELECTION_DELTA4_ORIGINALS.sha256)"
+		},
+		"retained_negatives": [
+			"lifecycle-independent.spec.ts toggle serialization (reviewer fixture defect, kept as FAIL, not rewritten)",
+			"ui-independent.spec.ts:30 from the earlier round stays FAIL by design (open delete enabled during apply)"
+		],
+		"limits": [
+			"equal commit: two answers then hold the same stored import and selection; fields outside it (upload under way, live start) are ordered by send order",
+			"a change answer superseded by a later stored change is not reported (no success claim, no failure message)",
+			"Workers Builds failure on the feature branch: root cause UNVERIFIED; no production readback"
+		],
+		"local_harness": "two full local runs (kept: HISTORY_SELECTION_DELTA4_LOCAL_HARNESS_FAIL_1.log, _2.log) failed at sign-in because a stale scratch adapter put Durable Object SQLite under the long scratch path (MAX_PATH); diagnosed without touching auth/FakeSpotify/scopes/secrets (HISTORY_SELECTION_DELTA4_LOCAL_HARNESS_DIAGNOSIS.txt); then the proven short-path adapter",
+		"gates_local": {
+			"node": "v24.18.0",
+			"build": "exit 0",
+			"typecheck": "exit 0",
+			"lint": "exit 0 (2 pre-existing infos; local adapter moved out of the tree)",
+			"test": "exit 0 - 640 tests",
+			"e2e (local adapter)": "exit 0 - 56 passed",
+			"wrangler dry-run": "exit 0",
+			"raw": "HISTORY_SELECTION_DELTA4_GATES/"
+		},
+		"process": "only own Playwright-managed webServers on own ports (8787/8788, 19331-19343); no process killed; logs contain only the public e2e test constant from wrangler.e2e.jsonc"
 	}
 }

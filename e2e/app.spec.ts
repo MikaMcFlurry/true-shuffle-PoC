@@ -3,7 +3,7 @@
  * Spotify stand-in (synthetic demo library, see e2e/fake-server.ts).
  */
 
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, type Route, test } from "@playwright/test";
 import type { SpotifyUsageReport, SpotifyUsageTotals } from "../src/shared/spotify-usage";
 
 const FAKE = "http://127.0.0.1:8788/__control";
@@ -94,6 +94,212 @@ const EXPLAINED: Record<string, RegExp> = {
 	"/sender/neu": /Spotify gibt die Songs nicht heraus/,
 	"/geraete": /Das gerade aktive Gerät, sonst dein Handy/,
 };
+
+/**
+ * The selection page against the local Worker, with requests held or failed
+ * on purpose (never a made-up answer): a synthetic two-song import, and a page
+ * whose reload failed so that "Neu laden" is offered.
+ */
+async function selectionRace(page: Page) {
+	await signIn(page);
+	const ids = ["T000000000000000000000", "T000000000000000000001"];
+	const post = (url: string, data: unknown) =>
+		page.request.post(url, { headers: { "x-ts": "1" }, data });
+	const selection = async () =>
+		(await (await page.request.get("/api/history/selection")).json()) as {
+			revision: number;
+			commit: number;
+			selection: { enabled: boolean; rules: { id?: string }[] };
+			dataset: { hasImport: boolean; key: string };
+		};
+	const at = Date.parse("2024-03-01T12:00:00Z");
+	/** Stores the synthetic import (replacing one stored), as another tab would. */
+	const importSynthetic = async () => {
+		const old = await selection();
+		if (old.dataset.hasImport) await post("/api/history/delete", { dataset: old.dataset.key });
+		const start = ((await (await post("/api/history/begin", {})).json()) as { start: number })
+			.start;
+		const totals = (await (
+			await post("/api/history/import", {
+				start,
+				rows: ids.map((id) => [id, 2, 0, at, 0, 2]),
+				part: 0,
+				parts: 1,
+			})
+		).json()) as { upload: string };
+		const first = (await (
+			await post("/api/history/listens", {
+				importId: totals.upload,
+				part: 0,
+				parts: 2,
+				tracks: 2,
+				kind: "tracks",
+				data: ids.map((id, i) => [
+					id,
+					i ? "Beta" : "Alpha",
+					`Artist ${i ? "Beta" : "Alpha"}`,
+					"Synthetic",
+				]),
+			})
+		).json()) as { upload: string };
+		await post("/api/history/listens", {
+			upload: first.upload,
+			part: 1,
+			parts: 2,
+			tracks: 2,
+			kind: "rows",
+			data: [at / 1000, at / 1000 + 1].flatMap((t) => ids.map((_, i) => [t, i, 200_000, 132, 0])),
+		});
+	};
+	const exclude = (name: string) =>
+		page.getByRole("button", { name: `Ausschließen: ${name}`, exact: true });
+	/** The synthetic import, nothing left out, then the page opened fresh. */
+	const fresh = async () => {
+		await importSynthetic();
+		const now = await selection();
+		await post("/api/history/selection", {
+			baseRevision: now.revision,
+			enabled: true,
+			rules: [],
+			dataset: now.dataset.key,
+		});
+		await page.goto("/auswahl");
+		await expect(exclude("Alpha")).toBeEnabled();
+	};
+	const ui = {
+		takeOver: page.getByRole("button", { name: "Auswahl übernehmen" }),
+		computing: page.getByRole("button", { name: "Wird berechnet …" }),
+		discard: page.getByRole("button", { name: "Entwurf verwerfen" }),
+		rules: page.locator(".selection__rules"),
+		applied: page.getByRole("status").filter({ hasText: /Übernommen \(Stand/ }),
+		switchOff: page.getByRole("button", { name: "Import ausschalten", exact: true }),
+		switchOn: page.getByRole("button", { name: "Import wieder einschalten", exact: true }),
+		inForce: page.locator(".notice", { hasText: "Jetzt in Kraft" }).first(),
+		openDelete: page.getByRole("button", { name: "Import löschen …", exact: true }),
+		confirm: page.getByRole("button", { name: "Endgültig löschen", exact: true }),
+		deleted: page.getByRole("status").filter({ hasText: "Import gelöscht" }),
+		noImport: page.getByText("Kein Import gespeichert.", { exact: false }),
+		loadFailed: page.getByRole("alert").filter({ hasText: "ließ sich nicht laden" }),
+		reload: page.getByRole("button", { name: "Neu laden" }),
+	};
+	const gate = () => {
+		let open = () => {};
+		const shut = new Promise<void>((r) => {
+			open = r;
+		});
+		return { open, shut };
+	};
+	const failure = (message: string) => ({
+		status: 503,
+		contentType: "application/json",
+		body: JSON.stringify({ error: { code: "busy", message } }),
+	});
+	// Loads of the page go to the local Worker unless a step is queued for the next one.
+	const loads: ((route: Route) => Promise<void>)[] = [];
+	await page.route(/\/api\/history\/selection$/, (route) => {
+		if (route.request().method() !== "GET") return route.fallback();
+		const step = loads.shift();
+		return step ? step(route) : route.fallback();
+	});
+	/** The next load fails with `message` once `after` is open. */
+	const failLoad = (message: string, after?: Promise<void>) => {
+		loads.push(async (route) => {
+			if (after) await after;
+			await route.fulfill(failure(message));
+		});
+	};
+	/** The next load is answered by the Worker at once and delivered once `after` is open. */
+	const holdLoad = (after: Promise<void>) => {
+		let answered = () => {};
+		const read = new Promise<void>((r) => {
+			answered = r;
+		});
+		loads.push(async (route) => {
+			const response = await route.fetch();
+			answered();
+			await after;
+			await route.fulfill({ response });
+		});
+		return read;
+	};
+	/**
+	 * A change (POST to `path`) reaches the Worker only once `after` is open
+	 * (`commitFirst`: at once, its answer held until then); its real answer is
+	 * passed on — or, with `outcome`, it never reaches the Worker and fails so.
+	 */
+	const holdChange = async (
+		path: RegExp,
+		after: Promise<void>,
+		opts: { commitFirst?: boolean; outcome?: "503" | "offline" } = {},
+	) => {
+		let reached = () => {};
+		const sent = new Promise<void>((r) => {
+			reached = r;
+		});
+		const handler = async (route: Route) => {
+			if (route.request().method() !== "POST") return route.fallback();
+			if (opts.outcome) {
+				reached();
+				await after;
+				return opts.outcome === "offline"
+					? route.abort("internetdisconnected")
+					: route.fulfill(failure("Gerade nicht erreichbar."));
+			}
+			if (opts.commitFirst) {
+				const response = await route.fetch();
+				reached();
+				await after;
+				return route.fulfill({ response });
+			}
+			reached();
+			await after;
+			await route.fulfill({ response: await route.fetch() });
+		};
+		await page.route(path, handler);
+		return { sent, done: () => page.unroute(path, handler) };
+	};
+	/** A deletion refused, then its reload failed: the page offers "Neu laden". */
+	const failedReload = async () => {
+		const refuse = (route: Route) => route.fulfill(failure("Löschen gerade nicht möglich."));
+		await page.route(/\/api\/history\/delete$/, refuse);
+		failLoad("Laden gerade nicht möglich.");
+		if (await ui.confirm.isHidden()) await ui.openDelete.click();
+		await ui.confirm.click();
+		await expect(page.getByRole("alert").filter({ hasText: "Nicht gelöscht" })).toBeVisible();
+		await expect(ui.loadFailed).toContainText("Laden gerade nicht möglich.");
+		await page.unroute(/\/api\/history\/delete$/, refuse);
+		expect((await selection()).dataset.hasImport).toBe(true);
+	};
+	/**
+	 * While a change is held before the Worker: one reload read by the Worker at
+	 * once but delivered only when the returned gate opens, then one passing —
+	 * both read the state before the change, and the page shows the second.
+	 */
+	const readBeforeChange = async () => {
+		const late = gate();
+		const read = holdLoad(late.shut);
+		await ui.reload.click();
+		await read;
+		await ui.reload.click();
+		await expect(ui.loadFailed).toHaveCount(0);
+		return late;
+	};
+	return {
+		ids,
+		post,
+		selection,
+		importSynthetic,
+		exclude,
+		fresh,
+		ui,
+		gate,
+		failLoad,
+		holdLoad,
+		holdChange,
+		failedReload,
+		readBeforeChange,
+	};
+}
 
 test.describe.configure({ mode: "serial" });
 
@@ -1234,6 +1440,226 @@ test.describe("a listener's day", () => {
 		await expect(applied).toBeVisible();
 		expect((await selection()).selection.rules.map((r) => r.id)).toEqual([ids[1]]);
 		await post("/api/history/delete", { dataset: (await selection()).dataset.key });
+	});
+
+	test("a takeover answered after a reload read the state before it still shows what is in force", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.exclude("Alpha").click();
+		await expect(ui.takeOver).toBeEnabled();
+		await r.failedReload();
+		const before = await r.selection();
+		const release = r.gate();
+		const change = await r.holdChange(/\/api\/history\/selection$/, release.shut);
+		await ui.takeOver.click();
+		await change.sent;
+		const late = await r.readBeforeChange();
+		expect((await r.selection()).revision).toBe(before.revision);
+		// An edit while the takeover is on its way stays the draft.
+		await r.exclude("Beta").click();
+		release.open();
+		await expect(ui.applied).toContainText(`Stand ${before.revision + 1}`);
+		await expect(ui.applied).toContainText("Deine Änderungen von danach");
+		await expect(ui.inForce).toContainText("2 von 4 Wiedergaben zählen");
+		await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+		expect((await r.selection()).revision).toBe(before.revision + 1);
+		// The read of the older state, delivered after the answer, changes nothing.
+		late.open();
+		await page.waitForTimeout(800);
+		await expect(ui.applied).toContainText(`Stand ${before.revision + 1}`);
+		await expect(ui.inForce).toContainText("2 von 4 Wiedergaben zählen");
+		await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+		await change.done();
+		await r.post("/api/history/delete", { dataset: (await r.selection()).dataset.key });
+	});
+
+	test("switching off answered after a reload read the state before it shows the import off", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.failedReload();
+		const release = r.gate();
+		const change = await r.holdChange(/\/api\/history\/selection$/, release.shut);
+		await ui.switchOff.click();
+		await change.sent;
+		const late = await r.readBeforeChange();
+		expect((await r.selection()).selection.enabled).toBe(true);
+		await r.exclude("Beta").click();
+		release.open();
+		await expect(ui.switchOn).toBeVisible();
+		await expect(
+			page.getByRole("status").filter({ hasText: "Import ausgeschaltet" }),
+		).toBeVisible();
+		await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+		expect((await r.selection()).selection.enabled).toBe(false);
+		late.open();
+		await page.waitForTimeout(800);
+		await expect(ui.switchOn).toBeVisible();
+		await expect(ui.switchOff).toHaveCount(0);
+		await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+		await change.done();
+		await r.post("/api/history/delete", { dataset: (await r.selection()).dataset.key });
+	});
+
+	test("a deletion answered after a reload read the state before it leaves nothing of the import", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.failedReload();
+		const release = r.gate();
+		const change = await r.holdChange(/\/api\/history\/delete$/, release.shut);
+		await ui.confirm.click();
+		await change.sent;
+		const late = await r.readBeforeChange();
+		await expect(ui.switchOff).toBeVisible();
+		expect((await r.selection()).dataset.hasImport).toBe(true);
+		// The load the deletion's answer asks for is held: the answer alone already
+		// leaves nothing of the import shown as current or to act on.
+		const after = r.gate();
+		const afterRead = r.holdLoad(after.shut);
+		release.open();
+		await expect(ui.deleted).toBeVisible();
+		await afterRead;
+		for (const gone of [
+			ui.switchOff,
+			ui.switchOn,
+			ui.takeOver,
+			ui.confirm,
+			ui.openDelete,
+			page.getByText("Jetzt in Kraft"),
+			r.exclude("Alpha"),
+		])
+			await expect(gone).toHaveCount(0);
+		await expect(ui.noImport).toBeVisible();
+		expect((await r.selection()).dataset.hasImport).toBe(false);
+		after.open();
+		late.open();
+		await page.waitForTimeout(800);
+		await expect(ui.noImport).toBeVisible();
+		await expect(ui.switchOff).toHaveCount(0);
+		await expect(page.getByText("Jetzt in Kraft")).toHaveCount(0);
+		await change.done();
+	});
+
+	test("an import replaced meanwhile keeps an older takeover's answer, refusal or loss from claiming anything", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.exclude("Alpha").click();
+		await expect(ui.takeOver).toBeEnabled();
+		await r.failedReload();
+		const first = await r.selection();
+		// Stored, its answer held; another tab replaces the import; the page loads it.
+		let release = r.gate();
+		let change = await r.holdChange(/\/api\/history\/selection$/, release.shut, {
+			commitFirst: true,
+		});
+		await ui.takeOver.click();
+		await change.sent;
+		await r.importSynthetic();
+		await ui.reload.click();
+		await expect(ui.loadFailed).toHaveCount(0);
+		release.open();
+		await expect(ui.computing).toHaveCount(0);
+		await page.waitForTimeout(500);
+		await expect(ui.applied).toHaveCount(0);
+		await change.done();
+		// Refused or lost on its way after such a replacement: nothing claimed either.
+		for (const outcome of ["503", "offline"] as const) {
+			await r.exclude("Beta").click();
+			await expect(ui.takeOver).toBeEnabled();
+			await r.failedReload();
+			release = r.gate();
+			change = await r.holdChange(/\/api\/history\/selection$/, release.shut, { outcome });
+			await ui.takeOver.click();
+			await change.sent;
+			await r.importSynthetic();
+			await ui.reload.click();
+			await expect(ui.loadFailed).toHaveCount(0);
+			release.open();
+			await expect(ui.computing).toHaveCount(0);
+			await page.waitForTimeout(500);
+			await expect(ui.applied).toHaveCount(0);
+			await change.done();
+			await ui.discard.click();
+		}
+		// The page acts on the import stored now: deleting names it, and it goes.
+		expect((await r.selection()).dataset.key).not.toBe(first.dataset.key);
+		if (await ui.confirm.isHidden()) await ui.openDelete.click();
+		await ui.confirm.click();
+		await expect(ui.deleted).toBeVisible();
+		expect((await r.selection()).dataset.hasImport).toBe(false);
+	});
+
+	test("an older reload failure never replaces a newer failure or answer, and a new import works", async ({
+		page,
+	}) => {
+		const r = await selectionRace(page);
+		const { ui } = r;
+		await r.fresh();
+		await r.failedReload();
+		// Two reloads failing in reverse order: the newer failure stays.
+		const older = r.gate();
+		r.failLoad("Ältere Antwort: nicht erreichbar.", older.shut);
+		await ui.reload.click();
+		r.failLoad("Neuere Antwort: nicht erreichbar.");
+		await ui.reload.click();
+		await expect(ui.loadFailed).toContainText("Neuere Antwort");
+		older.open();
+		await page.waitForTimeout(500);
+		await expect(ui.loadFailed).toContainText("Neuere Antwort");
+		await expect(ui.loadFailed).not.toContainText("Ältere Antwort");
+		// After a newer answer.
+		const stale = r.gate();
+		r.failLoad("Veraltet: nicht erreichbar.", stale.shut);
+		await ui.reload.click();
+		await ui.reload.click();
+		await expect(ui.loadFailed).toHaveCount(0);
+		stale.open();
+		await page.waitForTimeout(500);
+		await expect(ui.loadFailed).toHaveCount(0);
+		// After a takeover: no failure back, nothing kept busy.
+		await r.failedReload();
+		const beforeTakeover = r.gate();
+		r.failLoad("Veraltet: nicht erreichbar.", beforeTakeover.shut);
+		await ui.reload.click();
+		await r.exclude("Alpha").click();
+		await ui.takeOver.click();
+		await expect(ui.applied).toBeVisible();
+		await expect(ui.loadFailed).toHaveCount(0);
+		beforeTakeover.open();
+		await page.waitForTimeout(500);
+		await expect(ui.loadFailed).toHaveCount(0);
+		await expect(ui.switchOff).toBeEnabled();
+		// After a deletion.
+		await r.failedReload();
+		const beforeDelete = r.gate();
+		r.failLoad("Veraltet: nicht erreichbar.", beforeDelete.shut);
+		await ui.reload.click();
+		await ui.confirm.click();
+		await expect(ui.deleted).toBeVisible();
+		await expect(ui.noImport).toBeVisible();
+		await expect(ui.loadFailed).toHaveCount(0);
+		beforeDelete.open();
+		await page.waitForTimeout(500);
+		await expect(ui.loadFailed).toHaveCount(0);
+		await expect(ui.noImport).toBeVisible();
+		// A new import afterwards, begun on purpose, works as before.
+		await r.fresh();
+		await r.exclude("Beta").click();
+		await ui.takeOver.click();
+		await expect(ui.applied).toBeVisible();
+		expect((await r.selection()).selection.rules.map((x) => x.id)).toEqual([r.ids[1]]);
+		await r.post("/api/history/delete", { dataset: (await r.selection()).dataset.key });
 	});
 
 	test("every page reads well on a phone", async ({ page }) => {

@@ -644,3 +644,129 @@ describe("storage and accounts", () => {
 		expect(b.h.hub.selectionView()).toMatchObject({ revision: 0, dataset: { songs: 30 } });
 	});
 });
+
+describe("the commit number of the import and the selection", () => {
+	const commit = (h: H) => h.hub.selectionView().commit;
+	/** A first summary as an app from before sends it (only well-formed numbers). */
+	const summary = {
+		from: 0,
+		to: 0,
+		plays: 0,
+		minutes: 0,
+		songs: 0,
+		artists: 0,
+		earlySkips: 0,
+		hourWeek: Array.from({ length: 168 }, () => 0),
+		months: [],
+		topArtists: [],
+		topSongs: [],
+	};
+
+	it("counts up with taking over, switching off, deleting and importing again — also where the revision stays", async () => {
+		const { h, entries } = await setup();
+		const seen = [commit(h)];
+		expect(seen[0]).toBeGreaterThan(0);
+		apply(h, [Y2024]);
+		seen.push(commit(h));
+		apply(h, [Y2024], false);
+		seen.push(commit(h));
+		const off = h.hub.selectionView();
+		const { commit: afterDelete } = h.hub.deleteImport(off.dataset.key);
+		const gone = h.hub.selectionView();
+		expect(afterDelete).toBe(gone.commit);
+		seen.push(gone.commit);
+		importFiles(h, entries);
+		const again = h.hub.selectionView();
+		seen.push(again.commit);
+		for (let i = 1; i < seen.length; i++) expect(seen[i]).toBeGreaterThan(seen[i - 1]!);
+		// A deletion and a new import keep the revision: only the commit number
+		// tells which of two views holds the later stored state.
+		expect([gone.revision, again.revision]).toEqual([off.revision, off.revision]);
+		expect(new Set([off.dataset.key, gone.dataset.key, again.dataset.key]).size).toBe(3);
+		// Totals alone (single plays still to come) are a stored change too.
+		const before = commit(h);
+		importFiles(h, entries, { stopAfterTotals: true });
+		expect(commit(h)).toBeGreaterThan(before);
+	});
+
+	it("is kept when the same hub is opened again, and goes on from there", async () => {
+		const { h } = await setup();
+		apply(h, [Y2024]);
+		const stored = h.hub.selectionView();
+		h.restart();
+		expect(h.hub.selectionView()).toMatchObject({
+			commit: stored.commit,
+			revision: stored.revision,
+			dataset: { key: stored.dataset.key },
+		});
+		apply(h, []);
+		expect(commit(h)).toBeGreaterThan(stored.commit);
+	});
+
+	it("stays for reads, unchanged selections, refused or stale requests and a repeated summary", async () => {
+		const { h, entries } = await setup();
+		apply(h, [Y2024]);
+		const v = h.hub.selectionView();
+		const at = v.commit;
+		const refused = (f: () => unknown) => {
+			expect(f).toThrow(HubError);
+			expect(commit(h)).toBe(at);
+		};
+		// Reads.
+		h.hub.selectionView();
+		h.hub.previewSelection({ enabled: true, rules: [], query: {} });
+		expect(commit(h)).toBe(at);
+		// The selection in force sent again: nothing stored.
+		apply(h, [Y2024]);
+		expect(h.hub.selectionView()).toMatchObject({ commit: at, revision: v.revision });
+		// Refused: an older revision, another or no import named, a deletion of another import.
+		const change = (o: Record<string, unknown>) => () =>
+			h.hub.applySelection({
+				dataset: v.dataset.key,
+				baseRevision: v.revision,
+				enabled: true,
+				rules: [],
+				...o,
+			});
+		refused(change({ baseRevision: v.revision - 1 }));
+		refused(change({ dataset: "other|import" }));
+		refused(change({ dataset: undefined }));
+		refused(change({ dataset: null }));
+		refused(() => h.hub.deleteImport("other|import"));
+		// An upload under way is not a stored change of the import, and a block of
+		// a replaced upload is refused.
+		const { start } = h.hub.startImport();
+		const rows = toRows(aggregateHistory(entries, emptyAggregate(), { before: liveSince(h) }));
+		const first = h.hub.importHistory(rows.slice(0, 20), 0, 3, undefined, start).upload;
+		expect(commit(h)).toBe(at);
+		refused(() => h.hub.importHistory(rows.slice(20, 40), 1, 3, "not-this-upload"));
+		expect(first).toBeTruthy();
+		// A first summary changes what the page shows; the same one again does not.
+		h.hub.setImportedProfile(summary);
+		const withSummary = commit(h);
+		expect(withSummary).toBeGreaterThan(at);
+		h.hub.setImportedProfile(summary);
+		expect(commit(h)).toBe(withSummary);
+		// Nothing stored to delete.
+		h.hub.deleteImport(h.hub.selectionView().dataset.key);
+		const empty = commit(h);
+		expect(() => h.hub.deleteImport(h.hub.selectionView().dataset.key)).toThrow(HubError);
+		expect(commit(h)).toBe(empty);
+	});
+
+	it("belongs to one listener: another's changes never move it", async () => {
+		const a = await setup();
+		const b = await setup();
+		const bView = b.h.hub.selectionView();
+		apply(a.h, [Y2024]);
+		a.h.hub.deleteImport(a.h.hub.selectionView().dataset.key);
+		importFiles(a.h, a.entries);
+		expect(b.h.hub.selectionView()).toMatchObject({
+			commit: bView.commit,
+			revision: bView.revision,
+			dataset: { key: bView.dataset.key },
+		});
+		apply(b.h, [Y2024]);
+		expect(commit(b.h)).toBe(bView.commit + 1);
+	});
+});

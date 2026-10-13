@@ -105,12 +105,32 @@ A stored or pending genre estimate is dropped (it came from the old history).
   never resets the draft.
 - One change at a time: taking over, switching on/off and deleting are
   serialized (buttons and handlers, also an already open deletion
-  confirmation and quick double taps). Every load or change gets a number
-  when sent; an answer is used only if no later one was used before it and it
-  does not lower a revision already shown. A deletion counts as such a change
-  (it moves the stored import without a new revision). An answer not used
-  changes nothing — view, draft, message, error or busy state — so a late
-  answer can never bring back a deleted import or claim a success for it.
+  confirmation and quick double taps).
+- Order of answers: the order requests are sent in proves nothing about the
+  order the server stored or read things in (a reload sent after a takeover can
+  be read before the takeover is stored). So the view and every change's answer
+  carry `commit`, a number per listener that counts up, in the same storage
+  transaction, with every stored change of the import or the selection: a
+  change taken over (also switching on/off), a finished import of totals or of
+  single plays, a deletion, a first legacy summary (see `importChanged`,
+  `importCommitted` in the hub). Reads, previews, an unchanged selection sent
+  again, refused or stale requests, upload blocks before the last and a
+  repeated summary do not move it; it is stored in the `kv` table (no schema
+  change, starts at 0 for stored listeners) and survives reopening the hub.
+  The deletion answer carries it too. The page shows a view only if its
+  `commit` is higher than the one shown (equal: the same stored import and
+  selection — then the later sent answer wins, they differ at most in an
+  upload under way), and never a lower revision. A change's answer with a lower
+  `commit` than shown (a later change was shown already: another tab, a
+  deletion, a new import) shows and claims nothing; with an equal or higher one
+  it is reported. A deletion's answer with a higher `commit` than shown
+  replaces the shown import at once by a stand-in with nothing to act on, until
+  a load arrives. An answer not used changes nothing — view, draft, message,
+  error or busy state.
+- Failures are ordered by themselves: a failed load is shown only if it was
+  sent after every request answered so far and after the failure shown, so an
+  older failure never replaces a newer one, a newer view, a change's answer or
+  a deletion. Any newer answer clears an older failure; "Neu laden" stays.
 
 ## Uploads, re-import, deactivation and deletion
 

@@ -1,0 +1,21 @@
+[WebServer] (node:31424) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:12388) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 8 tests using 1 worker
+
+(node:22236) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\app.spec.ts:319:2 › a listener's day › signs in with Spotify and saves playlists as stations (2.6s)
+  ok 2 e2e\app.spec.ts:913:2 › a listener's day › the selection page acts only on what it shows, keeps newer edits and refuses a replaced import (5.5s)
+  ok 3 e2e\app.spec.ts:1144:2 › a listener's day › the selection page never lets an older answer bring back a deleted import or claim a success (9.3s)
+  ok 4 e2e\app.spec.ts:1445:2 › a listener's day › a takeover answered after a reload read the state before it still shows what is in force (2.5s)
+  ok 5 e2e\app.spec.ts:1479:2 › a listener's day › switching off answered after a reload read the state before it shows the import off (2.6s)
+  ok 6 e2e\app.spec.ts:1509:2 › a listener's day › a deletion answered after a reload read the state before it leaves nothing of the import (2.0s)
+  ok 7 e2e\app.spec.ts:1551:2 › a listener's day › an import replaced meanwhile keeps an older takeover's answer, refusal or loss from claiming anything (5.0s)
+  ok 8 e2e\app.spec.ts:1603:2 › a listener's day › an older reload failure never replaces a newer failure or answer, and a new import works (5.0s)
+
+  8 passed (38.6s)
+
+exit=0

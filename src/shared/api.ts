@@ -394,6 +394,13 @@ export interface GenreAnswer {
 export interface HistorySelectionView {
 	/** Counts up with every change taken over; 0: never changed (everything counts). */
 	revision: number;
+	/**
+	 * Counts up with every stored change of the import or the selection: a
+	 * change taken over, a new import or summary, a deletion. Of two answers the
+	 * one with the higher number holds the later stored state, whichever came
+	 * first; equal numbers hold the same import and selection.
+	 */
+	commit: number;
 	appliedAt: number | null;
 	/** The selection in force. */
 	selection: ImportSelection;

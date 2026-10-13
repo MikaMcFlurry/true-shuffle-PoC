@@ -6465,6 +6465,7 @@ export class HubCore {
 	 * the old history is dropped.
 	 */
 	private importChanged(computed = false): void {
+		this.importCommitted();
 		this.histCache = null;
 		this.partialCache = null;
 		this.rawHistCache = null;
@@ -6513,6 +6514,21 @@ export class HubCore {
 		return counts;
 	}
 
+	/**
+	 * Counts up with every stored change of the import or of the selection in
+	 * force (see HistorySelectionView.commit). Unlike the selection revision it
+	 * also counts a new import, a deletion and a new summary — those change the
+	 * import while the revision stays — so a page can tell which of two answers
+	 * holds the later stored state, in whatever order they reach it.
+	 */
+	private importCommitted(): void {
+		this.kvSet("history_commit", this.importCommit() + 1);
+	}
+
+	private importCommit(): number {
+		return this.kvGet<number>("history_commit") ?? 0;
+	}
+
 	private hasImport(): boolean {
 		return this.kvGet("history_import") !== null || this.kvGet("listens") !== null;
 	}
@@ -6530,6 +6546,7 @@ export class HubCore {
 		const summarySongs = counts?.summarySongs ?? 0;
 		return {
 			revision: sel.revision,
+			commit: this.importCommit(),
 			appliedAt: sel.appliedAt,
 			selection: { enabled: sel.enabled, rules: sel.rules },
 			counts,
@@ -6739,6 +6756,8 @@ export class HubCore {
 	 */
 	deleteImport(dataset: unknown): {
 		deleted: { songs: number; rows: number; summaryProfile: boolean };
+		/** The stored state after the deletion (see HistorySelectionView.commit). */
+		commit: number;
 	} {
 		if (!this.hasImport() && this.kvGet("history_profile") === null)
 			throw new HubError("not_found", "Es ist kein Import gespeichert.", 404);
@@ -6774,7 +6793,7 @@ export class HubCore {
 			"history",
 			`Hörverlauf-Import gelöscht: ${deleted.songs} Songs, ${deleted.rows} einzelne Wiedergaben`,
 		);
-		return { deleted };
+		return { deleted, commit: this.importCommit() };
 	}
 
 	// =======================================================================
@@ -7589,7 +7608,11 @@ export class HubCore {
 				plays: x.plays,
 			})),
 		};
+		// The page shows whether a summary is stored, not what it says: only a
+		// first one changes what it shows (see HistorySelectionView.commit).
+		const first = this.kvGet("history_profile") === null;
 		this.kvSet("history_profile", clean);
+		if (first) this.importCommitted();
 		// A pending estimate was asked from the old summary: it must not land.
 		const attempt = this.kvGet<{ at: number; id: string }>("genre_attempt");
 		if (attempt) this.kvSet("genre_attempt", { ...attempt, id: `${attempt.id}-stale` });
