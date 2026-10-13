@@ -216,7 +216,7 @@ export const api = {
 	guestDevices: (devices: { id: string; name: string }[]) =>
 		call<{ id: string; name: string }[]>("PUT", "/api/guest/devices", { devices }),
 	/** Begins an import on purpose; its first block names the answer's `start`. */
-	startImport: () => call<{ start: number }>("POST", "/api/history/import/start"),
+	startImport: () => call<{ start: number }>("POST", "/api/history/begin"),
 	importHistory: (
 		rows: HistoryRow[],
 		part: number,

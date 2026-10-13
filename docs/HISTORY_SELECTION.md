@@ -91,7 +91,7 @@ A stored or pending genre estimate is dropped (it came from the old history).
 
 ## Uploads, re-import, deactivation and deletion
 
-- An import is begun on purpose (`POST /api/history/import/start`): the answer
+- An import is begun on purpose (`POST /api/history/begin`): the answer
   names the import epoch, and the first totals block must carry it. A deletion
   moves the epoch on, so a first block sent before it (late, another tab) is
   refused. A first block without an epoch (an app from before) is taken only as

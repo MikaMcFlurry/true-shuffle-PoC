@@ -558,7 +558,7 @@ app.post("/api/history/import", async (c) => {
 });
 
 // Beginning an import on purpose: the first block names the epoch it began in.
-app.post("/api/history/import/start", (c) => unwrap(c, c.var.hub.startImport(c.var.epoch)));
+app.post("/api/history/begin", (c) => unwrap(c, c.var.hub.startImport(c.var.epoch)));
 
 // The listener's selection of the imported history (see core/import-selection).
 app.get("/api/history/selection", (c) => unwrap(c, c.var.hub.historySelection(c.var.epoch)));

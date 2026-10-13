@@ -145,7 +145,7 @@
 		"probes_at_repair": "13 pass / 3 fail (HISTORY_SELECTION_REVIEW_PROBES_REPAIR.log); the 3 remaining negatives are retained, see deviations",
 		"findings": {
 			"R1 import generations": "FIXED: single plays carry and are checked against the totals upload (importId); only plays belonging to the stored totals are read; newer totals abandon plays still uploading. Regressions: test/hub/review-blockers.test.ts (R1), probes 'replacement totals…', 'event upload started for A…' PASS",
-			"R2 deleted history revived": "FIXED: import epoch via POST /api/history/import/start, moved on by deletion; first totals block must carry it; unnamed legacy blocks refused after any deletion. Regressions: review-blockers (R2) incl. restart and deliberate new import; probes 'legacy delayed event upload…', 'late first totals block…' PASS",
+			"R2 deleted history revived": "FIXED: import epoch via POST /api/history/begin, moved on by deletion; first totals block must carry it; unnamed legacy blocks refused after any deletion. Regressions: review-blockers (R2) incl. restart and deliberate new import; probes 'legacy delayed event upload…', 'late first totals block…' PASS",
 			"R3 playlist completeness": "FIXED (list refresh/empty page since a247910; last page short of announced total now too): probes 'failed playlist-list refresh…', 'empty page with a next page…', 'unknown provider owner…' PASS",
 			"R4 partial coverage": "FIXED with a different safe semantics than the probe asserts: partly covered songs are decided only as a whole and reported (partialSongs/partialPlays, item partial, coverage mixed, preview text); memory stays 10, not 1 — see deviations",
 			"R5 stale preview apply": "FIXED: apply requires a successful preview of exactly the current draft and revision; failed preview hides draft counts. Regression in e2e/app.spec.ts selection flow (503 on the draft preview → apply disabled; reverse preview answers keep the newest search). Runs in Linux CI",
@@ -158,7 +158,7 @@
 		],
 		"browser_probe": "selection-final.spec.ts needs the reviewer's isolated runtime launcher (stripped process environment); not run locally to avoid bypassing local environment/proxy settings. Its failing case (R5) and its reverse-preview case are ported into the canonical e2e flow run by GitHub Actions.",
 		"protocol_changes_disclosed": [
-			"POST /api/history/import/start; first totals block carries `start`",
+			"POST /api/history/begin; first totals block carries `start`",
 			"listens part 0 without importId refused when stored totals are named or after a deletion; test/hub/skip-retest.test.ts (PR27) now names importId like the import page does — its opener assertions are unchanged",
 			"core tests that mixed uncut totals with cut single plays now cut both at live_since, as the import page does"
 		]
