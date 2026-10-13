@@ -214,5 +214,44 @@
 			"wrangler deploy --dry-run": "exit 0",
 			"raw_logs": "HISTORY_SELECTION_DELTA2_GATES/*.log and *.exit"
 		}
+	},
+	"independent_review_3_delta2": {
+		"reviewer": "fresh Codex review of 0071c76 (FRESH / NOT_READY, exit 0 2026-10-13T14:14:08Z), parent coordinator",
+		"finding": "D2-R8-LIFECYCLE P2 blocking: an older Apply ACK restored a deleted import in the UI and claimed a successful application (server data stayed deleted; no backend resurrection)",
+		"status": "AUTHOR-REPAIRED / PENDING-ACCEPTANCE (UI only: src/client/screens/selection.tsx; e2e/app.spec.ts adds one test)",
+		"repair": [
+			"monotonic request numbers for load, apply, toggle, delete; an answer is used only if no later one was used and it does not lower a revision already shown (revision floor kept in addition)",
+			"a deletion's answer is an accepted transition; older answers after it are ignored",
+			"ignored answers change nothing: view, draft, message, load error, busy (busy is released only by the request that set it)",
+			"a successful deletion immediately invalidates the shown import (no old counts, rows, toggle or delete action) until an authoritative load arrives; a failed load is said with 'Neu laden', the draft stays",
+			"apply/toggle/delete serialized: buttons disabled while any change is pending, including an already open deletion confirmation; synchronous handler guard against quick double taps"
+		],
+		"originals": "C:/Users/mikah/Documents/Codex/2026-10-13/task-5/delta2-evidence-0071c76 — read only; sha256 before/after in HISTORY_SELECTION_DELTA3_ORIGINALS.sha256",
+		"red_green": {
+			"own lifecycle e2e at frozen 0071c76 (test copied into a scratch worktree)": "FAIL — the open 'Endgültig löschen' stays enabled during a held takeover (HISTORY_SELECTION_DELTA3_RED_0071.log)",
+			"own reverse-ACK section alone at 0071c76 (scratch trim)": "FAIL — after another tab's deletion the page keeps the old import view with 'Import ausschalten' and 'Übernommen (Stand 1)' (HISTORY_SELECTION_DELTA3_RED_0071_REVERSE.log)",
+			"own revision-floor section on a scratch variant of the repair without the floor": "FAIL — 'Jetzt in Kraft' falls back from 2 of 4 to 4 of 4 when the older GET is delivered (HISTORY_SELECTION_DELTA3_RED_NO_FLOOR.log)",
+			"own delete-then-GET-503 section alone at 0071c76 (scratch trim)": "FAIL — 'Import gelöscht' next to the old import view with 'Import ausschalten' and 'Jetzt in Kraft', no load error shown (HISTORY_SELECTION_DELTA3_RED_0071_DELETE_GET.log)",
+			"own lifecycle e2e at the repair": "PASS (HISTORY_SELECTION_DELTA3_GREEN.log)"
+		},
+		"reviewer_ui_originals_at_repair": {
+			"method": "copies retarget only the import path, screenshot output dir, ports and persistence; the reviewer's 45 s / 5 s limits and trace on",
+			"ui-independent.spec.ts": "6 pass / 5 fail — 4 reviewer fixture assumptions as at 0071c76 (lexical pagination 'Page 50', stale-row label, 'Zurück' as link, summary-only first row) + :30 retained negative (expects the open delete button enabled during apply) — HISTORY_SELECTION_DELTA3_REVIEWER_INDEPENDENT.log",
+			"ui-independent-corrected.spec.ts": "9 pass / 3 fail — 2 reviewer harness errors as at 0071c76 ('Route is already handled', repeated synthetic sign-in) + :30 retained negative — HISTORY_SELECTION_DELTA3_REVIEWER_CORRECTED.log",
+			"intermediate": "same counts on the intermediate build before the delete invalidation (…_INTERMEDIATE.log)"
+		},
+		"retained_negative": "ui-independent.spec.ts:30 asserts the open delete button is ENABLED during a pending apply; with serialization it is disabled, so that original stays FAIL by design (not rewritten, not counted as pass)",
+		"local_adapter": "own e2e and full suite run through an uncommitted local Playwright adapter (cmd-compatible start without its own vite build — dist built by npm run build first — and short persistence path, MAX_PATH); canonical config only in Linux CI. The first lint run also saw this untracked adapter file in the tree (1 format error, lint-with-adapter.log); after moving it out lint exit 0.",
+		"gates_local": {
+			"node": "v24.18.0",
+			"build": "exit 0",
+			"typecheck": "exit 0",
+			"lint": "exit 0 (2 pre-existing infos)",
+			"test": "exit 0 — 48 files / 636 tests",
+			"e2e (local adapter)": "exit 0 — 51 passed",
+			"wrangler dry-run": "exit 0",
+			"raw": "HISTORY_SELECTION_DELTA3_GATES/"
+		},
+		"process": "only own Playwright-managed webServers on own ports; no process killed in this step"
 	}
 }

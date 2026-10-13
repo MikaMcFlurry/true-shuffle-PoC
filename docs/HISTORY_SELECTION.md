@@ -103,6 +103,14 @@ A stored or pending genre estimate is dropped (it came from the old history).
   answer replaces the draft only if it was not edited since it was sent, and
   then says that later edits are not taken over yet. A deletion or a conflict
   never resets the draft.
+- One change at a time: taking over, switching on/off and deleting are
+  serialized (buttons and handlers, also an already open deletion
+  confirmation and quick double taps). Every load or change gets a number
+  when sent; an answer is used only if no later one was used before it and it
+  does not lower a revision already shown. A deletion counts as such a change
+  (it moves the stored import without a new revision). An answer not used
+  changes nothing — view, draft, message, error or busy state — so a late
+  answer can never bring back a deleted import or claim a success for it.
 
 ## Uploads, re-import, deactivation and deletion
 

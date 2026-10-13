@@ -167,24 +167,58 @@ export function SelectionScreen() {
 	const [periodTo, setPeriodTo] = useState("");
 	// The newest look wins: an answer to an older one never replaces it.
 	const seq = useRef(0);
-	// The newest revision seen: an older answer never shows an older selection as in force.
+	// Every request that can change what the page holds — a load, taking over,
+	// switching on or off, deleting — gets the next number when it is sent. Its
+	// answer is used only if no later one was used before it: a deletion (or a
+	// newer load) changes the stored import without a new selection revision,
+	// so the revision alone cannot order them. An answer not used changes
+	// nothing at all: not the view, the draft, the message or what is busy.
+	const life = useRef(0);
+	const accepted = useRef(0);
+	// And a view never goes back to an older revision than one already shown: a
+	// load can be answered by the server before a takeover it was sent after.
 	const newest = useRef(-1);
+	const accept = (n: number) => {
+		if (n <= accepted.current) return false;
+		accepted.current = n;
+		return true;
+	};
+	// One change at a time (taking over, switching, deleting), checked at once
+	// — also against quick double taps — and released only by its own request.
+	const inFlight = useRef<number | null>(null);
+	const begin = (what: "apply" | "toggle" | "delete") => {
+		if (inFlight.current !== null) return null;
+		const n = ++life.current;
+		inFlight.current = n;
+		setBusy(what);
+		return n;
+	};
+	const end = (n: number) => {
+		if (inFlight.current !== n) return;
+		inFlight.current = null;
+		setBusy(null);
+	};
 
-	const take = (v: HistorySelectionView, resetDraft: boolean) => {
-		if (v.revision < newest.current) return;
+	const take = (v: HistorySelectionView, resetDraft: boolean, n: number) => {
+		if (n <= accepted.current || v.revision < newest.current) return false;
+		accept(n);
 		newest.current = v.revision;
 		setView(v);
 		if (resetDraft) setDraft(v.selection);
+		return true;
 	};
 
-	const load = (resetDraft: boolean) =>
-		api
+	const load = (resetDraft: boolean) => {
+		const n = ++life.current;
+		return api
 			.historySelection()
 			.then((v) => {
-				setLoadErr(null);
-				take(v, resetDraft);
+				if (take(v, resetDraft, n)) setLoadErr(null);
 			})
-			.catch((e: Error) => setLoadErr(e.message));
+			.catch((e: Error) => {
+				if (n > accepted.current) setLoadErr(e.message);
+			});
+	};
 
 	useEffect(() => {
 		void load(true);
@@ -266,7 +300,8 @@ export function SelectionScreen() {
 	const without = (key: string) => draft.rules.filter((r) => ruleKey(r) !== key);
 
 	const apply = (next: ImportSelection, what: "apply" | "toggle") => {
-		setBusy(what);
+		const n = begin(what);
+		if (n === null) return;
 		setMessage(null);
 		const sentGen = draftGen.current;
 		// Taking over names the import its preview counted; switching on or off the one the page shows.
@@ -274,7 +309,9 @@ export function SelectionScreen() {
 		api
 			.applySelection(view.revision, next, dataset)
 			.then((v) => {
-				take(v, false);
+				// A later load or change was used already (another tab, a deletion):
+				// this answer is out of date and says nothing about the page now.
+				if (!take(v, false, n)) return;
 				// Edits made while this was on its way stay the draft; only an untouched
 				// draft becomes what is now in force.
 				const newer = draftGen.current !== sentGen;
@@ -295,6 +332,7 @@ export function SelectionScreen() {
 				void store.refresh(false);
 			})
 			.catch((e: Error) => {
+				if (n <= accepted.current) return;
 				const conflict = e instanceof ApiError && e.status === 409;
 				setMessage({
 					text: conflict
@@ -308,15 +346,42 @@ export function SelectionScreen() {
 					void load(false);
 				}
 			})
-			.finally(() => setBusy(null));
+			.finally(() => end(n));
 	};
 
 	const remove = () => {
-		setBusy("delete");
+		const n = begin("delete");
+		if (n === null) return;
 		setMessage(null);
 		api
 			.deleteImport(ds.key)
 			.then((r) => {
+				// The deletion is a change of the stored import: anything older is out of date now.
+				if (!accept(n)) return;
+				// The stored import is gone: until the page has loaded what is stored
+				// now, nothing of the old one is shown as current or can be acted on.
+				// (A key no answer has keeps every count and row of it out.)
+				setView((v) =>
+					v
+						? {
+								...v,
+								counts: null,
+								dataset: {
+									...v.dataset,
+									key: `deleted:${n}`,
+									hasImport: false,
+									summaryProfile: false,
+									songs: 0,
+									rows: 0,
+									rowsFrom: null,
+									rowsTo: null,
+									coverage: "none",
+								},
+							}
+						: v,
+				);
+				setPreviewKey(null);
+				setPreviewList(null);
 				setConfirmDelete(false);
 				setMessage({
 					text: `Import gelöscht: ${num(r.deleted.songs)} Songs, ${plays(r.deleted.rows)}. Deine Live-Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange sind unverändert; deine Spotify-Dateien auch.`,
@@ -327,10 +392,11 @@ export function SelectionScreen() {
 				void store.refresh(false);
 			})
 			.catch((e: Error) => {
+				if (n <= accepted.current) return;
 				setMessage({ text: `Nicht gelöscht: ${e.message}`, tone: "error" });
 				void load(false);
 			})
-			.finally(() => setBusy(null));
+			.finally(() => end(n));
 	};
 
 	const addPeriod = (e: Event) => {
@@ -393,6 +459,15 @@ export function SelectionScreen() {
 				sub="Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen."
 				backTo="/mehr"
 			/>
+
+			{loadErr ? (
+				<div class="notice notice--error" role="alert">
+					<p>Der aktuelle Stand ließ sich nicht laden: {loadErr} Dein Entwurf bleibt erhalten.</p>
+					<button type="button" class="key" onClick={() => void load(false)}>
+						Neu laden
+					</button>
+				</div>
+			) : null}
 
 			<Section title="Dein Import" id="sel-import">
 				{!ds.hasImport ? (
@@ -860,13 +935,19 @@ export function SelectionScreen() {
 								<button
 									type="button"
 									class="key key--danger"
-									disabled={busy === "delete"}
+									disabled={busy !== null}
 									aria-busy={busy === "delete"}
 									onClick={remove}
 								>
 									{busy === "delete" ? "Wird gelöscht …" : "Endgültig löschen"}
 								</button>
 							</div>
+							{busy === "apply" || busy === "toggle" ? (
+								<p class="hint" role="status">
+									Löschen geht, sobald {busy === "toggle" ? "das Umschalten" : "die Übernahme"}{" "}
+									abgeschlossen ist.
+								</p>
+							) : null}
 						</div>
 					)}
 				</Section>
