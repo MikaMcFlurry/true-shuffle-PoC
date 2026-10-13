@@ -193,8 +193,10 @@ it("preserves large imported history, preferences and bans through additive migr
 	const h = await onboarded({ tracks: 600 });
 	const id = h.stationIds[0]!;
 	const ids = [...h.fake.tracks.keys()];
+	// Every later block names its upload, as the import page does (see importHistory).
+	let upload: string | undefined;
 	for (let part = 0; part < 2; part++)
-		h.hub.importHistory(
+		upload = h.hub.importHistory(
 			Array.from(
 				{ length: 5000 },
 				(_, i) =>
@@ -207,7 +209,8 @@ it("preserves large imported history, preferences and bans through additive migr
 			),
 			part,
 			2,
-		);
+			upload,
+		).upload;
 	await h.hub.thumb(ids[0]!, 1);
 	await h.hub.thumb(ids[1]!, -1);
 	const before = {

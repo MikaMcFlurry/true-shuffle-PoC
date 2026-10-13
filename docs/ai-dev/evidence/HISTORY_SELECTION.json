@@ -162,5 +162,57 @@
 			"listens part 0 without importId refused when stored totals are named or after a deletion; test/hub/skip-retest.test.ts (PR27) now names importId like the import page does — its opener assertions are unchanged",
 			"core tests that mixed uncut totals with cut single plays now cut both at live_since, as the import page does"
 		]
+	},
+	"independent_review_2_held": {
+		"reviewer": "fresh Codex session 01a13509-9cb3-7751-aefc-1502f5c1bbbe (gpt-6.1-sol, high), parent coordinator",
+		"held_candidate": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+		"outcome": "BLOCKED: R2 P1, R7/R8/R10 P2 open; R1/R3/R4/R6/R9 and cutoff closed; R5 partial",
+		"originals": "C:/Users/mikah/Documents/Codex/2026-10-13/task-5/delta-evidence-9e8d1a0 — read only; sha256 before/after identical (HISTORY_SELECTION_DELTA2_ORIGINALS.sha256)",
+		"status": {
+			"R2": "AUTHOR-REPAIRED / PENDING-ACCEPTANCE: every later totals block must name its upload (always required); review-blockers 'R2 (held)' tests; reviewer probe 'R2 legacy delayed totals continuation' PASS",
+			"R7": "AUTHOR-REPAIRED / PENDING-ACCEPTANCE: row and all-match actions bound to search/group/filter/order/page + draft + revision + import; locked otherwise",
+			"R8": "AUTHOR-REPAIRED / PENDING-ACCEPTANCE: draft edit generations; answers never replace newer edits; reviewer probes 'extra race 2' and 'pending toggle' PASS",
+			"R10": "AUTHOR-REPAIRED / PENDING-ACCEPTANCE: dataset identity required server-side (400 missing/null/empty, 409 other) before any other answer; preview returns it; client sends it and re-previews on conflict",
+			"R5": "PARTIAL per reviewer; remaining parts are R7/R10 above"
+		},
+		"probe_runs": {
+			"backend_at_9e8_verbatim": "15 pass / 4 fail (R2 + 3 adjudicated) — HISTORY_SELECTION_DELTA2_BACKEND_9E8.log",
+			"backend_at_repair_verbatim": "13 pass / 6 fail: the 3 adjudicated negatives + 3 refused with 400 'dataset missing' under the new required contract — HISTORY_SELECTION_DELTA2_BACKEND_REPAIR_VERBATIM.log",
+			"backend_at_repair_contract_copy": "16 pass / 3 fail (exactly the 3 adjudicated negatives) — copies differ only in the dataset field of their applySelection helper (HISTORY_SELECTION_DELTA2_BACKEND_CONTRACT.diff) — HISTORY_SELECTION_DELTA2_BACKEND_REPAIR_CONTRACT.log",
+			"ui_at_9e8_verbatim": "2 pass / 5 fail, matching the reviewer's held-races.log — HISTORY_SELECTION_DELTA2_UI_9E8.log",
+			"ui_at_repair_verbatim": "1 pass / 6 fail: setup resets the selection without dataset (now refused), so later tests start with Alpha excluded — HISTORY_SELECTION_DELTA2_UI_REPAIR_VERBATIM.log",
+			"ui_at_repair_contract_copy": "3 pass / 4 fail — passes: 'extra race 2', 'pending toggle', 'R4 UI'; fails are the disclosed locking/conflict semantics (stale bulk absent, Beta row locked while the new draft is counted, stale track row locked, 409 dataset conflict). Copy differs only in the setup reset sending dataset (HISTORY_SELECTION_DELTA2_UI_CONTRACT.diff); assertions unchanged — HISTORY_SELECTION_DELTA2_UI_REPAIR_CONTRACT.log"
+		},
+		"deviations_for_delta_review": [
+			"UI 'extra race 1' (stale bulk): the stale 'Alle 1 Treffer ausschließen' does not exist while the Beta list is pending, so the probe's click waits until test timeout — locking, no Alpha id is ever sent.",
+			"UI 'group changes while pending': the stale track row is disabled until the artist list arrives; the probe clicks it while held and times out — locking; own e2e then excludes 'Artist Alpha' from the artist row.",
+			"UI 'failed and offline preview … reverse rule results keep latest' (green on 9e8): rows are now also bound to the counted draft (coordinator instruction), so the Beta row is locked while the preview of the new draft is held; the probe's click waits — locking by design, not a lost edit.",
+			"UI 'dataset replacement after successful preview': taking over is refused with 409 (no 'Übernommen'), the page re-previews the new import and needs a new deliberate takeover — conflict by design.",
+			"Backend/UI originals that call applySelection or POST /api/history/selection without dataset are refused with 400 under the required contract; contract copies add only that field.",
+			"Previous adjudicated negatives unchanged: 2x 'expected 9' partial policy, DB-only unknown owner."
+		],
+		"contract_changes": [
+			"importHistory: every block with part > 0 must carry its upload id (undefined/foreign refused 409)",
+			"POST /api/history/selection: dataset required (400 missing/null/empty, 409 other import)",
+			"POST /api/history/selection/preview: answer carries dataset",
+			"protected test test/hub/session.test.ts (large import through additive migration): its second block now names its upload; preservation assertions unchanged",
+			"fixtures: 16 applySelection calls in own hub tests now name a dataset (13 got the current key added; the 3 R10 tests pass preview datasets explicitly); 2 e2e POSTs to /api/history/selection send the page's dataset"
+		],
+		"local_windows": {
+			"cause_of_earlier_local_browser_failures": "Durable Object SQLite persistence under the very long scratchpad path does not get created (Windows MAX_PATH); the Registry RPC then fails and sign-in redirects to login=failed. Network was fine (workerd -> fake on loopback: 200). With a short persistence path in the git-ignored e2e/.artifacts/ the canonical browser suite passes locally (50/50).",
+			"setup_limit_disclosed": "Earlier in this conversation broad cleanups were run (taskkill /F /IM workerd.exe twice; Stop-Process of workerd/node matching wrangler/fake-server once). They may have ended other local workers. Since the coordinator's correction only recorded own PIDs were ended.",
+			"local_playwright_config": "the 50 local browser passes ran through an uncommitted adapter config (cmd-compatible start command without `rm -rf`, short persistence path); the canonical playwright.config.ts is exercised unchanged only by Linux CI",
+			"stopped_final_kill": "a diagnostic shell whose script ended in another broad taskkill was stopped via TaskStop before reaching it (its output ends after the find step); the remaining own processes were then ended by recorded PIDs only (wrangler/workerd/esbuild trees of PIDs 32916, 46996, 32020 and fake servers 44740, 45480, verified by their own ports)"
+		},
+		"gates_local_repair_tree": {
+			"node": "v24.18.0",
+			"npm run build": "exit 0",
+			"npm run typecheck": "exit 0",
+			"npm run lint": "exit 0 (2 pre-existing infos)",
+			"npm test": "exit 0 — 48 files, 636 tests",
+			"npm run test:e2e (local override, short persistence)": "exit 0 — 50 passed",
+			"wrangler deploy --dry-run": "exit 0",
+			"raw_logs": "HISTORY_SELECTION_DELTA2_GATES/*.log and *.exit"
+		}
 	}
 }

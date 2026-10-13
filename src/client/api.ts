@@ -235,9 +235,16 @@ export const api = {
 	/** Read-only: counts and one page of a search under a draft selection. */
 	previewSelection: (draft: ImportSelection, query: Partial<InspectQuery>) =>
 		call<SelectionPreview>("POST", "/api/history/selection/preview", { ...draft, query }),
-	/** Takes the draft over, on the revision the page showed (else 409). */
-	applySelection: (baseRevision: number, draft: ImportSelection) =>
-		call<HistorySelectionView>("POST", "/api/history/selection", { baseRevision, ...draft }),
+	/**
+	 * Takes the draft over, on the revision the page showed and the stored
+	 * import it was made on (its preview's dataset key) — else 409.
+	 */
+	applySelection: (baseRevision: number, draft: ImportSelection, dataset: string) =>
+		call<HistorySelectionView>("POST", "/api/history/selection", {
+			baseRevision,
+			...draft,
+			dataset,
+		}),
 	deleteImport: (dataset: string) =>
 		call<{ deleted: { songs: number; rows: number; summaryProfile: boolean } }>(
 			"POST",

@@ -119,8 +119,13 @@ function CountsLine({ c, label }: { c: SelectionCounts; label: string }) {
 	);
 }
 
-const draftKey = (d: ImportSelection, revision: number) =>
-	`${revision}:${JSON.stringify(normal(d))}`;
+/** A draft as counted on one revision of one stored import. */
+const draftKey = (d: ImportSelection, revision: number, dataset: string) =>
+	`${revision}:${dataset}:${JSON.stringify(normal(d))}`;
+
+/** What the list shows: one search, grouping, filter, order and page of one stored import. */
+const listKey = (q: Partial<InspectQuery>, dataset: string) =>
+	JSON.stringify([q.q ?? "", q.group, q.status, q.sort, q.offset ?? 0, dataset]);
 
 const sameDraft = (a: ImportSelection, b: ImportSelection) =>
 	JSON.stringify(normal(a)) === JSON.stringify(normal(b));
@@ -146,9 +151,15 @@ export function SelectionScreen() {
 	});
 	const [preview, setPreview] = useState<SelectionPreview | null>(null);
 	const [previewErr, setPreviewErr] = useState<string | null>(null);
-	// Which draft (and revision) the shown preview counted: only a successful
-	// preview of exactly the current draft lets it be taken over.
+	// Which draft (on which revision and import) the shown preview counted: only
+	// a successful preview of exactly the current draft lets it be taken over.
 	const [previewKey, setPreviewKey] = useState<string | null>(null);
+	// Which list the shown rows belong to: a row or "all matches" acts only on
+	// the search, grouping and import it was found in.
+	const [previewList, setPreviewList] = useState<string | null>(null);
+	// Counts every edit of the draft: an answer to taking over an older draft
+	// never replaces edits made while it was on its way.
+	const draftGen = useRef(0);
 	const [busy, setBusy] = useState<null | "apply" | "toggle" | "delete">(null);
 	const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
@@ -180,27 +191,40 @@ export function SelectionScreen() {
 	}, []);
 
 	useEffect(() => {
-		if (!draft) return;
+		if (!draft || !view) return;
 		const mine = ++seq.current;
-		const key = draftKey(draft, view?.revision ?? -1);
+		const dataset = view.dataset.key;
+		const key = draftKey(draft, view.revision, dataset);
+		const list = listKey(query, dataset);
 		const t = setTimeout(() => {
 			api
 				.previewSelection(draft, query)
 				.then((p) => {
 					if (mine !== seq.current) return;
 					setPreview(p);
+					// Counted on another import than the page knows (replaced meanwhile):
+					// neither the counts nor the rows are this page's; it learns the new one.
+					if (p.dataset !== dataset) {
+						setPreviewKey(null);
+						setPreviewList(null);
+						void load(false);
+						return;
+					}
 					setPreviewKey(key);
+					setPreviewList(list);
 					setPreviewErr(null);
 				})
 				.catch((e: Error) => {
 					if (mine !== seq.current) return;
-					// The counts shown belong to another draft now: never offered as this one's.
+					// The counts and rows shown belong to another draft or search now:
+					// never offered as this one's.
 					setPreviewKey(null);
+					setPreviewList(null);
 					setPreviewErr(e.message);
 				});
 		}, 200);
 		return () => clearTimeout(t);
-	}, [draft, query, view?.revision]);
+	}, [draft, query, view?.revision, view?.dataset.key]);
 
 	if (loadErr && !view)
 		return (
@@ -224,30 +248,48 @@ export function SelectionScreen() {
 
 	const applied = view.selection;
 	const changed = !sameDraft(draft, applied);
-	// The preview counted exactly this draft on this revision, and nothing failed since.
-	const previewed = previewKey === draftKey(draft, view.revision) && !previewErr;
 	const ds = view.dataset;
-	const setRules = (rules: SelectionRule[]) => {
-		setMessage(null);
-		setDraft({ ...draft, rules });
+	// The preview counted exactly this draft on this revision of this import, and nothing failed since.
+	const previewed = previewKey === draftKey(draft, view.revision, ds.key) && !previewErr;
+	// The rows shown were found by exactly this search, counted under exactly this
+	// draft and revision of this import: only then can they (or all matches) be acted on.
+	// Rows waiting for a new count are locked; edits already made are never lost.
+	const rowsLive = previewList === listKey(query, ds.key) && previewed;
+	const pending = busy === "apply" || busy === "toggle";
+	/** Every edit of the draft goes through here (see draftGen). */
+	const editDraft = (next: ImportSelection) => {
+		draftGen.current++;
+		if (!pending) setMessage(null);
+		setDraft(next);
 	};
+	const setRules = (rules: SelectionRule[]) => editDraft({ ...draft, rules });
 	const without = (key: string) => draft.rules.filter((r) => ruleKey(r) !== key);
 
 	const apply = (next: ImportSelection, what: "apply" | "toggle") => {
 		setBusy(what);
 		setMessage(null);
+		const sentGen = draftGen.current;
+		// Taking over names the import its preview counted; switching on or off the one the page shows.
+		const dataset = what === "apply" ? (preview?.dataset ?? ds.key) : ds.key;
 		api
-			.applySelection(view.revision, next)
+			.applySelection(view.revision, next, dataset)
 			.then((v) => {
 				take(v, false);
-				setDraft(what === "toggle" ? { ...draft, enabled: v.selection.enabled } : v.selection);
+				// Edits made while this was on its way stay the draft; only an untouched
+				// draft becomes what is now in force.
+				const newer = draftGen.current !== sentGen;
+				if (what === "toggle") setDraft((d) => (d ? { ...d, enabled: v.selection.enabled } : d));
+				else if (!newer) setDraft(v.selection);
+				const later = newer
+					? " Deine Änderungen von danach sind noch nicht übernommen — sie stehen als Entwurf bereit."
+					: "";
 				setMessage({
 					text:
 						v.effective.state === "failed"
-							? `Gespeichert, aber nicht berechnet: ${v.effective.error ?? "unbekannter Fehler"}. Bis das klappt, zählt der Import nicht.`
+							? `Gespeichert, aber nicht berechnet: ${v.effective.error ?? "unbekannter Fehler"}. Bis das klappt, zählt der Import nicht.${later}`
 							: !v.selection.enabled
-								? "Import ausgeschaltet. Er bleibt gespeichert und zählt nicht, bis du ihn wieder einschaltest."
-								: `Übernommen (Stand ${v.revision}). Neue Warteschlangen und Empfehlungen planen ab jetzt damit; eine gespeicherte Warteschlange behält ihre Reihenfolge.`,
+								? `Import ausgeschaltet. Er bleibt gespeichert und zählt nicht, bis du ihn wieder einschaltest.${later}`
+								: `Übernommen (Stand ${v.revision}). Neue Warteschlangen und Empfehlungen planen ab jetzt damit; eine gespeicherte Warteschlange behält ihre Reihenfolge.${later}`,
 					tone: v.effective.state === "failed" ? "error" : "ok",
 				});
 				void store.refresh(false);
@@ -260,7 +302,11 @@ export function SelectionScreen() {
 						: `Nicht übernommen: ${e.message}`,
 					tone: "error",
 				});
-				if (conflict) void load(false);
+				// The page learns the current revision and import; the draft is counted again on them.
+				if (conflict) {
+					setPreviewKey(null);
+					void load(false);
+				}
 			})
 			.finally(() => setBusy(null));
 	};
@@ -276,7 +322,8 @@ export function SelectionScreen() {
 					text: `Import gelöscht: ${num(r.deleted.songs)} Songs, ${plays(r.deleted.rows)}. Deine Live-Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange sind unverändert; deine Spotify-Dateien auch.`,
 					tone: "ok",
 				});
-				void load(true);
+				// The draft stays as it is (its rules apply to a later import).
+				void load(false);
 				void store.refresh(false);
 			})
 			.catch((e: Error) => {
@@ -299,7 +346,8 @@ export function SelectionScreen() {
 
 	/** The one switch for an entry: its own rule goes, or one is added against how it counts now. */
 	const flip = (it: InspectItem) => {
-		const group = preview?.query.group ?? "track";
+		if (!rowsLive) return;
+		const group = query.group ?? "track";
 		if (group === "track") {
 			const key = `track:${it.key}`;
 			if (draft.rules.some((r) => ruleKey(r) === key)) return setRules(without(key));
@@ -328,7 +376,7 @@ export function SelectionScreen() {
 		}
 	};
 	const ownRule = (it: InspectItem) => {
-		const group = preview?.query.group ?? "track";
+		const group = query.group ?? "track";
 		const key = group === "track" ? `track:${it.key}` : it.key ? `artist:${it.key}` : "summary";
 		return draft.rules.find((r) => ruleKey(r) === key) ?? null;
 	};
@@ -336,7 +384,7 @@ export function SelectionScreen() {
 	const page = preview?.page;
 	const from = (query.offset ?? 0) + 1;
 	const to = Math.min((query.offset ?? 0) + PAGE, page?.total ?? 0);
-	const allMatches = preview?.page.matchIds ?? [];
+	const allMatches = rowsLive ? (preview?.page.matchIds ?? []) : [];
 
 	return (
 		<div class="page selection">
@@ -556,10 +604,7 @@ export function SelectionScreen() {
 								type="button"
 								class="key"
 								disabled={!changed || busy !== null}
-								onClick={() => {
-									setDraft(applied);
-									setMessage(null);
-								}}
+								onClick={() => editDraft(applied)}
 							>
 								Entwurf verwerfen
 							</button>
@@ -573,7 +618,14 @@ export function SelectionScreen() {
 								{busy === "apply" ? "Wird berechnet …" : "Auswahl übernehmen"}
 							</button>
 						</div>
-						{!changed ? <p class="hint">Der Entwurf entspricht dem, was gilt.</p> : null}
+						{pending ? (
+							<p class="hint" role="status">
+								{busy === "toggle" ? "Wird umgeschaltet …" : "Wird übernommen …"} Was du jetzt
+								änderst, bleibt als Entwurf erhalten.
+							</p>
+						) : !changed ? (
+							<p class="hint">Der Entwurf entspricht dem, was gilt.</p>
+						) : null}
 					</Section>
 				</>
 			) : null}
@@ -655,8 +707,11 @@ export function SelectionScreen() {
 							</select>
 						</label>
 					</div>
-					{page && !previewed ? (
-						<p class="hint">Die Liste zeigt den Stand vor deiner letzten Änderung.</p>
+					{page && !rowsLive ? (
+						<p class="hint" role="status">
+							Die Liste wird für deine Suche und deinen Entwurf aktualisiert — bis dahin lassen sich
+							Einträge nicht ausschließen oder einbeziehen. Deine Änderungen bleiben erhalten.
+						</p>
 					) : null}
 					<p class="hint" role="status">
 						{page
@@ -665,7 +720,7 @@ export function SelectionScreen() {
 								: `${num(from)}–${num(to)} von ${num(page.total)}. Status nach deinem Entwurf.`
 							: "Wird geladen …"}
 					</p>
-					{query.group === "track" && query.q && allMatches.length > 0 ? (
+					{rowsLive && query.group === "track" && query.q && allMatches.length > 0 ? (
 						<button
 							type="button"
 							class="key"
@@ -725,6 +780,7 @@ export function SelectionScreen() {
 									<button
 										type="button"
 										class="key selection__act"
+										disabled={!rowsLive}
 										aria-label={`${own ? "Eigene Regel entfernen" : it.status === "excluded" ? "Wieder einbeziehen" : "Ausschließen"}: ${it.name}`}
 										onClick={() => flip(it)}
 									>

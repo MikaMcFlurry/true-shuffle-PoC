@@ -82,12 +82,27 @@ A stored or pending genre estimate is dropped (it came from the old history).
 - Search, grouping, filters, sorting and drafting are read-only
   (`POST /api/history/selection/preview`).
 - `POST /api/history/selection` must name the revision the page shows
-  (`baseRevision`); otherwise 409 and nothing changes. The selection is computed
-  before anything is written, then saved in one transaction.
+  (`baseRevision`) and the stored import it was made on (`dataset`, the
+  preview's or the page's dataset key — required). Missing, null or empty:
+  400; another revision or another stored import (replaced or deleted since,
+  also at the same revision): 409. Both are checked before anything else, also
+  before an unchanged selection is answered as such; nothing changes. The
+  selection is computed before anything is written, then saved in one
+  transaction.
 - The page drops answers to older previews (sequence) and never shows an older
   revision as in force. "Auswahl übernehmen" is enabled only after a successful
-  preview of exactly the current draft on the current revision; a failed or
-  pending preview shows no counts as the draft's.
+  preview of exactly the current draft on the current revision of the current
+  stored import; a failed or pending preview shows no counts as the draft's.
+  After a 409 the page reloads, counts the unchanged draft again and waits for
+  a new deliberate takeover.
+- Row actions and "all matches" act only when the rows shown were found by
+  exactly the current search, grouping, filter, order and page, counted under
+  the current draft and revision of the current import. Otherwise they are
+  locked (and said so) until that count arrives.
+- Edits made while a takeover or switch is on its way stay the draft: an
+  answer replaces the draft only if it was not edited since it was sent, and
+  then says that later edits are not taken over yet. A deletion or a conflict
+  never resets the draft.
 
 ## Uploads, re-import, deactivation and deletion
 
@@ -97,8 +112,10 @@ A stored or pending genre estimate is dropped (it came from the old history).
   refused. A first block without an epoch (an app from before) is taken only as
   long as nothing was ever deleted.
 - Totals are staged in `hist_stage` and replace `hist_pages` only with the last
-  block. Every later block must belong to the upload under way (`upload` id and
-  position); a deletion clears it, so late blocks are refused.
+  block. Every later block must name the upload under way (`upload` id, always
+  required) and come in its place; position and count alone are no identity. A
+  deletion or a new first block replaces the upload under way, so late blocks
+  of the old one — named or not — are refused, also after a restart.
 - Single plays name the totals upload they belong to (`importId`) and are
   refused for any other, and after a deletion. Plays without `importId` (an app
   from before) are taken only with totals stored before uploads were named, or

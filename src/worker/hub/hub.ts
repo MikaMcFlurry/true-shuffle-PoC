@@ -6262,10 +6262,12 @@ export class HubCore {
 			this.db.run(`DELETE FROM hist_stage`);
 			up = { id: randomToken(12), parts, next: 0 };
 		} else if (
+			// Every later block names its upload: place and count alone are no
+			// identity (a late block of a deleted or replaced upload can match them).
 			!up ||
+			uploadId !== up.id ||
 			up.parts !== parts ||
-			up.next !== part ||
-			(uploadId !== undefined && uploadId !== up.id)
+			up.next !== part
 		)
 			throw new HubError(
 				"import_superseded",
@@ -6625,6 +6627,7 @@ export class HubCore {
 			counts,
 			applied: this.appliedCounts(),
 			revision: this.appliedSelection().revision,
+			dataset: this.datasetKey(),
 			page: {
 				...page,
 				items: page.items.map((it) =>
@@ -6646,6 +6649,11 @@ export class HubCore {
 		baseRevision?: unknown;
 		enabled?: unknown;
 		rules?: unknown;
+		/**
+		 * The stored import the change was made on (a preview's or the page's
+		 * dataset key): required, and it must still be the stored one.
+		 */
+		dataset?: unknown;
 	}): HistorySelectionView {
 		let next: ImportSelection;
 		try {
@@ -6655,6 +6663,21 @@ export class HubCore {
 				throw new HubError("bad_selection", `Ungültige Auswahl: ${err.message}`);
 			throw err;
 		}
+		// A change names the stored import it was made on; without one it is not
+		// known what was looked at, so nothing is taken.
+		if (typeof input.dataset !== "string" || input.dataset.length === 0)
+			throw new HubError(
+				"bad_selection",
+				"Ungültige Auswahl: der Import, auf den sie sich bezieht, fehlt — bitte die Seite neu laden.",
+			);
+		// Made on another stored import (replaced or deleted since, another tab or
+		// a new upload): its preview's numbers do not hold, nothing is taken.
+		if (input.dataset !== this.datasetKey())
+			throw new HubError(
+				"dataset_conflict",
+				"Dein Import hat sich seit der Vorschau geändert (anderer Tab oder neuer Import). Die Vorschau wird neu berechnet — prüfe sie und übernimm dann noch einmal.",
+				409,
+			);
 		const cur = this.appliedSelection();
 		if (sameSelection({ enabled: cur.enabled, rules: cur.rules }, next))
 			return this.selectionView();

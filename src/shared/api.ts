@@ -430,6 +430,8 @@ export interface SelectionPreview {
 	/** The selection in force, for comparison. */
 	applied: SelectionCounts | null;
 	revision: number;
+	/** The stored import counted (see HistorySelectionView.dataset.key): taking over names it. */
+	dataset: string;
 	page: {
 		total: number;
 		items: (InspectItem & { playlists?: PlaylistCount | null })[];

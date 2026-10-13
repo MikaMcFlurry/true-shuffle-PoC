@@ -140,7 +140,12 @@ const imported = (h: H, id: string) => {
 };
 
 const apply = (h: H, rules: unknown[], enabled = true) =>
-	h.hub.applySelection({ baseRevision: h.hub.selectionView().revision, enabled, rules });
+	h.hub.applySelection({
+		dataset: h.hub.selectionView().dataset.key,
+		baseRevision: h.hub.selectionView().revision,
+		enabled,
+		rules,
+	});
 
 const Y2024 = {
 	type: "period",
@@ -270,6 +275,7 @@ describe("selecting the imported history", () => {
 		// Again, in another order and with a duplicate: no new revision, nothing written.
 		const kv = JSON.stringify(h.sql.all(`SELECT * FROM kv WHERE k LIKE 'history%'`));
 		const v2 = h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
 			baseRevision: 0,
 			enabled: true,
 			rules: [{ type: "artist", kind: "exclude", name: songs(h)[22]!.artistName }, Y2024, Y2024],
@@ -291,7 +297,12 @@ describe("selecting the imported history", () => {
 		apply(h, [Y2024]);
 		const ruled = ids.slice(0, 30).map((id) => h.hub.memory(id));
 		const kept = untouchable(h);
-		const off = h.hub.applySelection({ baseRevision: 1, enabled: false, rules: [Y2024] });
+		const off = h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
+			baseRevision: 1,
+			enabled: false,
+			rules: [Y2024],
+		});
 		expect(off.selection.enabled).toBe(false);
 		for (const id of ids.slice(3, 30)) expect(h.hub.memory(id).plays).toBe(0);
 		expect(h.hub.memory(ids[2]!).thumb).toBe(-1);
@@ -306,7 +317,12 @@ describe("selecting the imported history", () => {
 		});
 		expect(h.hub.listeningProfile("UTC").plays).toBe(0);
 		h.restart();
-		const on = h.hub.applySelection({ baseRevision: 2, enabled: true, rules: [Y2024] });
+		const on = h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
+			baseRevision: 2,
+			enabled: true,
+			rules: [Y2024],
+		});
 		expect(on.selection.rules).toHaveLength(1);
 		expect(ids.slice(0, 30).map((id) => h.hub.memory(id))).toEqual(ruled);
 		expect(untouchable(h)).toBe(kept);
@@ -350,11 +366,18 @@ describe("racing changes, uploads and old states", () => {
 		const mem = ids.map((id) => h.hub.memory(id));
 		// Two changes sent quickly from two places on revision 1: only the first lands.
 		h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
 			baseRevision: 1,
 			enabled: true,
 			rules: [Y2024, { type: "summary", kind: "exclude" }],
 		});
-		const stale = () => h.hub.applySelection({ baseRevision: 1, enabled: true, rules: [] });
+		const stale = () =>
+			h.hub.applySelection({
+				dataset: h.hub.selectionView().dataset.key,
+				baseRevision: 1,
+				enabled: true,
+				rules: [],
+			});
 		expect(stale).toThrow(HubError);
 		try {
 			stale();
@@ -480,7 +503,12 @@ describe("a new import, the old kind and edge cases", () => {
 		const mem = ids.map((id) => h.hub.memory(id));
 		importFiles(h, entries);
 		expect(ids.map((id) => h.hub.memory(id))).toEqual(mem);
-		h.hub.applySelection({ baseRevision: 1, enabled: false, rules: [Y2024] });
+		h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
+			baseRevision: 1,
+			enabled: false,
+			rules: [Y2024],
+		});
 		importFiles(h, entries);
 		// A new import does not switch it back on by itself.
 		expect(h.hub.selectionView().selection.enabled).toBe(false);

@@ -19,6 +19,7 @@ import {
 	newListens,
 } from "../../src/core/listens";
 import { DAY_MS, HOUR_MS, MINUTE_MS } from "../../src/core/types";
+import type { HubError } from "../../src/worker/hub/hub";
 import { FakeSpotify } from "../fakes/fake-spotify";
 import { onboarded } from "./harness";
 
@@ -87,7 +88,12 @@ describe("review P1: import generations", () => {
 		plays(h, old, totals(h, old));
 		// A newer import arrives as totals only (its single plays never came).
 		totals(h, [entry(h, 4, "2025-03-01T10:00:00Z")]);
-		h.hub.applySelection({ baseRevision: 0, enabled: true, rules: [Y2024] });
+		h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
+			baseRevision: 0,
+			enabled: true,
+			rules: [Y2024],
+		});
 		// The 2025 play is not touched by a 2024 rule: its one play stays.
 		expect(h.hub.memory(id).plays).toBe(1);
 		// The old import's plays are not shown as this import's either.
@@ -100,7 +106,12 @@ describe("review P1: import generations", () => {
 		const id = songOf(h, 4).id;
 		const e = [entry(h, 4, "2024-03-01T10:00:00Z"), entry(h, 4, "2025-03-01T10:00:00Z")];
 		plays(h, e, totals(h, e));
-		h.hub.applySelection({ baseRevision: 0, enabled: true, rules: [Y2024] });
+		h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
+			baseRevision: 0,
+			enabled: true,
+			rules: [Y2024],
+		});
 		expect(h.hub.memory(id).plays).toBe(1);
 		expect(h.hub.selectionView().dataset).toMatchObject({ coverage: "events", rows: 2 });
 	});
@@ -255,7 +266,12 @@ describe("review R4: songs whose single plays do not cover their totals", () => 
 			changedSongs: 0,
 		});
 		expect(preview.page.items[0]).toMatchObject({ partial: true, rows: 2, plays: 10 });
-		h.hub.applySelection({ baseRevision: 0, enabled: true, rules: [Y2024] });
+		h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
+			baseRevision: 0,
+			enabled: true,
+			rules: [Y2024],
+		});
 		// The 2024 rule cannot reach the eight plays that were never stored one by one:
 		// the song keeps its totals (not 1, and no guessed 9), as the preview said.
 		expect(h.hub.memory(t.id).plays).toBe(10);
@@ -267,6 +283,7 @@ describe("review R4: songs whose single plays do not cover their totals", () => 
 	it("the totals rule takes it out whole, everywhere; a song rule brings it back", async () => {
 		const { h, t } = await partialImport();
 		h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
 			baseRevision: 0,
 			enabled: true,
 			rules: [Y2024, { type: "summary", kind: "exclude" }],
@@ -274,6 +291,7 @@ describe("review R4: songs whose single plays do not cover their totals", () => 
 		expect(h.hub.memory(t.id).plays).toBe(0);
 		expect(h.hub.listeningProfile("UTC").plays).toBe(0);
 		h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
 			baseRevision: 1,
 			enabled: true,
 			rules: [
@@ -284,5 +302,171 @@ describe("review R4: songs whose single plays do not cover their totals", () => 
 		});
 		expect(h.hub.memory(t.id).plays).toBe(10);
 		expect(h.hub.listeningProfile("UTC").plays).toBe(2);
+	});
+});
+
+describe("review R2 (held): every later totals block names its upload", () => {
+	it("an unnamed or foreign continuation never joins a new upload; the new upload completes intact", async () => {
+		const h = await onboarded({ tracks: 100 });
+		const [a, b, c] = [songOf(h, 10).id, songOf(h, 11).id, songOf(h, 12).id];
+		const at = Date.parse("2024-03-01T12:00:00Z");
+		// Import A, deleted; restart; a new two-block import B begun on purpose.
+		h.hub.importHistory([[a, 1, 0, at, 0, 1]], 0, 1, undefined, h.hub.startImport().start);
+		h.hub.deleteImport(h.hub.selectionView().dataset.key);
+		h.restart();
+		const fresh = h.hub.importHistory(
+			[[b, 1, 0, at, 0, 1]],
+			0,
+			2,
+			undefined,
+			h.hub.startImport().start,
+		);
+		// A's late second block, without an id or with another: refused, nothing staged.
+		expect(() => h.hub.importHistory([[a, 99, 0, at, 0, 99]], 1, 2)).toThrow(/abgelöst/);
+		expect(() => h.hub.importHistory([[a, 99, 0, at, 0, 99]], 1, 2, "old-upload")).toThrow(
+			/abgelöst/,
+		);
+		h.restart();
+		expect(() => h.hub.importHistory([[a, 99, 0, at, 0, 99]], 1, 2)).toThrow(/abgelöst/);
+		// B's own second block completes B.
+		h.hub.importHistory([[c, 2, 0, at, 0, 2]], 1, 2, fresh.upload);
+		expect(h.hub.memory(a).plays).toBe(0);
+		expect(h.hub.memory(b).plays).toBe(1);
+		expect(h.hub.memory(c).plays).toBe(2);
+		expect(h.hub.selectionView().dataset).toMatchObject({ songs: 2, hasImport: true });
+		// The completed upload is closed: even its own id cannot append to it again.
+		expect(() => h.hub.importHistory([[a, 99, 0, at, 0, 99]], 1, 2, fresh.upload)).toThrow(
+			/abgelöst/,
+		);
+		expect(h.hub.memory(a).plays).toBe(0);
+	});
+
+	it("a one-block upload replaces an unfinished one, whose late blocks are then refused", async () => {
+		const h = await onboarded({ tracks: 100 });
+		const [a, b] = [songOf(h, 20).id, songOf(h, 21).id];
+		const at = Date.parse("2024-03-01T12:00:00Z");
+		const start = h.hub.startImport().start;
+		const first = h.hub.importHistory([[a, 3, 0, at, 0, 3]], 0, 2, undefined, start);
+		h.hub.importHistory([[b, 1, 0, at, 0, 1]], 0, 1, undefined, start);
+		expect(() => h.hub.importHistory([[a, 3, 0, at, 0, 3]], 1, 2, first.upload)).toThrow(
+			/abgelöst/,
+		);
+		expect(h.hub.memory(a).plays).toBe(0);
+		expect(h.hub.memory(b).plays).toBe(1);
+	});
+});
+
+describe("review R10 (held): taking over names the import its preview counted", () => {
+	async function twoSongs() {
+		const h = await onboarded({ tracks: 100 });
+		const [a, b] = [songOf(h, 30).id, songOf(h, 31).id];
+		const at = Date.parse("2024-03-01T12:00:00Z");
+		h.hub.importHistory(
+			[
+				[a, 2, 0, at, 0, 2],
+				[b, 2, 0, at, 0, 2],
+			],
+			0,
+			1,
+			undefined,
+			h.hub.startImport().start,
+		);
+		return { h, a, b, at };
+	}
+	const exclude = (id: string) => [{ type: "track", kind: "exclude", id }];
+
+	it("a replacement between preview and taking over is refused at the same revision", async () => {
+		const { h, a, b, at } = await twoSongs();
+		const preview = h.hub.previewSelection({ enabled: true, rules: exclude(a), query: {} });
+		expect(preview.counts).toMatchObject({ plays: 4, includedPlays: 2 });
+		// Another tab replaces the import; the selection revision stays 0.
+		h.hub.importHistory([[b, 20, 0, at, 0, 20]], 0, 1, undefined, h.hub.startImport().start);
+		expect(h.hub.selectionView().revision).toBe(0);
+		expect(() =>
+			h.hub.applySelection({
+				baseRevision: 0,
+				enabled: true,
+				rules: exclude(a),
+				dataset: preview.dataset,
+			}),
+		).toThrow(/seit der Vorschau geändert/);
+		expect(h.hub.selectionView()).toMatchObject({ revision: 0, selection: { rules: [] } });
+		expect(h.hub.memory(b).plays).toBe(20);
+		// A fresh preview of the new data can be taken over.
+		const again = h.hub.previewSelection({ enabled: true, rules: exclude(a), query: {} });
+		expect(again.dataset).not.toBe(preview.dataset);
+		expect(again.counts).toMatchObject({ plays: 20, includedPlays: 20 });
+		const v = h.hub.applySelection({
+			baseRevision: 0,
+			enabled: true,
+			rules: exclude(a),
+			dataset: again.dataset,
+		});
+		expect(v.revision).toBe(1);
+	});
+
+	it("a deletion or a new upload between preview and taking over is refused too", async () => {
+		const { h, a } = await twoSongs();
+		const preview = h.hub.previewSelection({ enabled: true, rules: exclude(a), query: {} });
+		h.hub.deleteImport(h.hub.selectionView().dataset.key);
+		h.restart();
+		expect(() =>
+			h.hub.applySelection({
+				baseRevision: 0,
+				enabled: true,
+				rules: exclude(a),
+				dataset: preview.dataset,
+			}),
+		).toThrow(/seit der Vorschau geändert/);
+		expect(h.hub.selectionView().revision).toBe(0);
+	});
+});
+
+describe("review R10 (held): the dataset identity is required", () => {
+	it("missing, null, empty or wrong identity changes nothing, also for an unchanged selection", async () => {
+		const h = await onboarded({ tracks: 100 });
+		const a = songOf(h, 40).id;
+		const at = Date.parse("2024-03-01T12:00:00Z");
+		h.hub.importHistory([[a, 2, 0, at, 0, 2]], 0, 1, undefined, h.hub.startImport().start);
+		const kv = () =>
+			JSON.stringify(h.sql.all(`SELECT k, v FROM kv WHERE k LIKE 'history%' ORDER BY k`));
+		const before = kv();
+		const rules = [{ type: "track", kind: "exclude", id: a }];
+		const status = (fn: () => unknown) => {
+			try {
+				fn();
+				return 200;
+			} catch (e) {
+				return (e as HubError).status;
+			}
+		};
+		for (const dataset of [undefined, null, "", 0, {}])
+			expect(
+				status(() =>
+					h.hub.applySelection({ baseRevision: 0, enabled: true, rules, dataset } as never),
+				),
+			).toBe(400);
+		expect(
+			status(() => h.hub.applySelection({ baseRevision: 0, enabled: true, rules, dataset: "x|y" })),
+		).toBe(409);
+		// Checked before an unchanged selection is answered as such.
+		expect(status(() => h.hub.applySelection({ baseRevision: 0, enabled: true, rules: [] }))).toBe(
+			400,
+		);
+		expect(
+			status(() =>
+				h.hub.applySelection({ baseRevision: 0, enabled: false, rules: [], dataset: "x|y" }),
+			),
+		).toBe(409);
+		expect(kv()).toBe(before);
+		expect(h.hub.memory(a).plays).toBe(2);
+		const ok = h.hub.applySelection({
+			baseRevision: 0,
+			enabled: true,
+			rules,
+			dataset: h.hub.selectionView().dataset.key,
+		});
+		expect(ok.revision).toBe(1);
+		expect(h.hub.memory(a).plays).toBe(0);
 	});
 });

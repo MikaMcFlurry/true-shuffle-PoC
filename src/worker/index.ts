@@ -581,6 +581,7 @@ app.post("/api/history/selection", async (c) => {
 			baseRevision: b.baseRevision,
 			enabled: b.enabled,
 			rules: b.rules,
+			dataset: b.dataset,
 		}),
 	);
 });

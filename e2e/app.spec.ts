@@ -650,7 +650,7 @@ test.describe("a listener's day", () => {
 		await page.getByRole("button", { name: "Ausschließen: Probeband West" }).click();
 		const other = await page.request.post("/api/history/selection", {
 			headers: { "x-ts": "1", "content-type": "application/json" },
-			data: { baseRevision: 1, enabled: true, rules: [] },
+			data: { baseRevision: 1, enabled: true, rules: [], dataset: (await api()).dataset.key },
 		});
 		expect(other.ok()).toBe(true);
 		await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
@@ -702,6 +702,237 @@ test.describe("a listener's day", () => {
 		await page.reload();
 		await expect(page.getByText(/Kein Import gespeichert/)).toBeVisible();
 		expect(await api()).toMatchObject({ dataset: { hasImport: false }, counts: null });
+	});
+
+	test("the selection page acts only on what it shows, keeps newer edits and refuses a replaced import", async ({
+		page,
+	}) => {
+		await signIn(page);
+		const ids = ["T000000000000000000000", "T000000000000000000001"];
+		const post = (url: string, data: unknown) =>
+			page.request.post(url, { headers: { "x-ts": "1" }, data });
+		const selection = async () =>
+			(await (await page.request.get("/api/history/selection")).json()) as {
+				revision: number;
+				selection: { enabled: boolean; rules: { id?: string; name?: string; kind: string }[] };
+				counts: { plays: number; includedPlays: number } | null;
+				dataset: { hasImport: boolean; key: string };
+			};
+		const existing = await selection();
+		if (existing.dataset.hasImport)
+			await post("/api/history/delete", { dataset: existing.dataset.key });
+		// A synthetic import: two songs by two artists, two plays each.
+		const at = Date.parse("2024-03-01T12:00:00Z");
+		const begin = async () =>
+			((await (await post("/api/history/begin", {})).json()) as { start: number }).start;
+		const totals = (await (
+			await post("/api/history/import", {
+				start: await begin(),
+				rows: ids.map((id) => [id, 2, 0, at, 0, 2]),
+				part: 0,
+				parts: 1,
+			})
+		).json()) as { upload: string };
+		const first = (await (
+			await post("/api/history/listens", {
+				importId: totals.upload,
+				part: 0,
+				parts: 2,
+				tracks: 2,
+				kind: "tracks",
+				data: ids.map((id, i) => [
+					id,
+					i ? "Beta" : "Alpha",
+					`Artist ${i ? "Beta" : "Alpha"}`,
+					"Synthetic",
+				]),
+			})
+		).json()) as { upload: string };
+		await post("/api/history/listens", {
+			upload: first.upload,
+			part: 1,
+			parts: 2,
+			tracks: 2,
+			kind: "rows",
+			data: [at / 1000, at / 1000 + 1].flatMap((t) => ids.map((_, i) => [t, i, 200_000, 132, 0])),
+		});
+		const rev = (await selection()).revision;
+		await post("/api/history/selection", {
+			baseRevision: rev,
+			enabled: true,
+			rules: [],
+			dataset: (await selection()).dataset.key,
+		});
+		await page.goto("/auswahl");
+		const search = page.getByRole("searchbox", { name: "Song, Künstler oder Album" });
+		const takeOver = page.getByRole("button", { name: "Auswahl übernehmen" });
+		const rules = page.locator(".selection__rules");
+		await expect(
+			page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+		).toBeEnabled();
+
+		// R7: while the list for a new search is on its way, nothing of the old one can be acted on.
+		await search.fill("Alpha");
+		await expect(page.locator(".selection__items").first()).not.toContainText("Beta");
+		let release = () => {};
+		let hold: (q: { q: string; group: string }) => boolean = (q) => q.q === "Beta";
+		let seenHeld = () => {};
+		let held = new Promise<void>((r) => {
+			seenHeld = r;
+		});
+		let gate = new Promise<void>((r) => {
+			release = r;
+		});
+		await page.route(/\/api\/history\/selection\/preview$/, async (route) => {
+			const body = route.request().postDataJSON() as { query: { q: string; group: string } };
+			if (hold(body.query)) {
+				hold = () => false;
+				seenHeld();
+				await gate;
+			}
+			await route.fallback();
+		});
+		await search.fill("Beta");
+		await held;
+		await expect(
+			page.getByText("Die Liste wird für deine Suche und deinen Entwurf aktualisiert"),
+		).toBeVisible();
+		await expect(page.getByRole("button", { name: /^Alle \d+ Treffer ausschließen$/ })).toHaveCount(
+			0,
+		);
+		await expect(
+			page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+		).toBeDisabled();
+		release();
+		const bulk = page.getByRole("button", { name: "Alle 1 Treffer ausschließen" });
+		await expect(bulk).toBeEnabled();
+		await bulk.click();
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		await expect(rules).not.toContainText("Alpha");
+		await page.getByRole("button", { name: "Entwurf verwerfen" }).click();
+
+		// R7: a grouping on its way leaves the old track rows inert; the artist rows then act as artists.
+		await search.fill("Alpha");
+		await expect(
+			page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+		).toBeEnabled();
+		held = new Promise<void>((r) => {
+			seenHeld = r;
+		});
+		gate = new Promise<void>((r) => {
+			release = r;
+		});
+		hold = (q) => q.group === "artist";
+		await page.getByLabel("Gruppieren").selectOption("artist");
+		await held;
+		await expect(
+			page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }),
+		).toBeDisabled();
+		release();
+		await page.getByRole("button", { name: "Ausschließen: Artist Alpha", exact: true }).click();
+		await expect(rules).toContainText("Künstler „Artist Alpha“ ausgeschlossen");
+		await expect(rules).not.toContainText("Song „Alpha“");
+		await page.getByRole("button", { name: "Entwurf verwerfen" }).click();
+		await page.getByLabel("Gruppieren").selectOption("track");
+		await search.fill("");
+
+		// R7: a rule edited under a status filter locks the rows until they are counted again.
+		const alpha = page.getByRole("button", { name: "Ausschließen: Alpha", exact: true });
+		const beta = page.getByRole("button", { name: "Ausschließen: Beta", exact: true });
+		await page.getByLabel("Zeigen").selectOption("included");
+		await expect(alpha).toBeEnabled();
+		held = new Promise<void>((r) => {
+			seenHeld = r;
+		});
+		gate = new Promise<void>((r) => {
+			release = r;
+		});
+		hold = () => true;
+		await alpha.click();
+		await held;
+		await expect(beta).toBeDisabled();
+		release();
+		await expect(beta).toBeEnabled();
+		await expect(page.locator(".selection__items").first()).not.toContainText("Alpha");
+
+		// R7: a new revision (taken over here) locks them too until counted on it.
+		held = new Promise<void>((r) => {
+			seenHeld = r;
+		});
+		gate = new Promise<void>((r) => {
+			release = r;
+		});
+		hold = () => true;
+		await takeOver.click();
+		await expect(page.getByRole("status").filter({ hasText: /Übernommen \(Stand/ })).toBeVisible();
+		await held;
+		await expect(beta).toBeDisabled();
+		release();
+		await expect(beta).toBeEnabled();
+		await page.unroute(/\/api\/history\/selection\/preview$/);
+		// Back to nothing left out, on purpose (another tab), and a fresh page.
+		const now = await selection();
+		await post("/api/history/selection", {
+			baseRevision: now.revision,
+			enabled: true,
+			rules: [],
+			dataset: now.dataset.key,
+		});
+		await page.reload();
+		await expect(alpha).toBeEnabled();
+
+		// R8: an edit made while taking over is on its way stays the draft.
+		await page.getByRole("button", { name: "Ausschließen: Alpha", exact: true }).click();
+		await expect(takeOver).toBeEnabled();
+		let ack = () => {};
+		const ackGate = new Promise<void>((r) => {
+			ack = r;
+		});
+		let posted = () => {};
+		const committed = new Promise<void>((r) => {
+			posted = r;
+		});
+		await page.route(/\/api\/history\/selection$/, async (route) => {
+			if (route.request().method() !== "POST") return route.fallback();
+			const response = await route.fetch();
+			posted();
+			await ackGate;
+			await route.fulfill({ response });
+		});
+		await takeOver.click();
+		await committed;
+		await expect(page.getByText("Wird übernommen …")).toBeVisible();
+		await page.getByRole("button", { name: "Ausschließen: Beta", exact: true }).click();
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		ack();
+		await expect(
+			page.getByRole("status").filter({ hasText: "noch nicht übernommen" }),
+		).toBeVisible();
+		await expect(rules).toContainText("Song „Beta“ ausgeschlossen");
+		await expect(rules).toContainText("Song „Alpha“ ausgeschlossen");
+		expect((await selection()).selection.rules.map((r) => r.id)).toEqual([ids[0]]);
+		await page.unroute(/\/api\/history\/selection$/);
+
+		// R10: a preview of the import as it was cannot be taken over once another tab replaced it.
+		await expect(takeOver).toBeEnabled();
+		await post("/api/history/import", {
+			start: await begin(),
+			rows: [[ids[1], 20, 0, Date.parse("2025-01-01T00:00:00Z"), 0, 20]],
+			part: 0,
+			parts: 1,
+		});
+		const before = await selection();
+		await takeOver.click();
+		await expect(page.getByRole("alert")).toContainText("seit der Vorschau geändert");
+		expect((await selection()).revision).toBe(before.revision);
+		// Counted again on the new import, the same draft can then be taken over on purpose.
+		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toContainText(
+			"0 von 20 Wiedergaben zählen",
+		);
+		await takeOver.click();
+		await expect(page.getByRole("status").filter({ hasText: /Übernommen \(Stand/ })).toBeVisible();
+		expect(await selection()).toMatchObject({ counts: { plays: 20, includedPlays: 0 } });
+		await post("/api/history/delete", { dataset: (await selection()).dataset.key });
 	});
 
 	test("every page reads well on a phone", async ({ page }) => {

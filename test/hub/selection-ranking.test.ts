@@ -68,6 +68,7 @@ describe("the planner's ranking input follows the selection", () => {
 			data: done.rows,
 		});
 		h.hub.applySelection({
+			dataset: h.hub.selectionView().dataset.key,
 			baseRevision: 0,
 			enabled: true,
 			rules: [{ type: "track", kind: "exclude", id: gone.id }],

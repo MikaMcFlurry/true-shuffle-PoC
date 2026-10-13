@@ -570,7 +570,7 @@ export class UserHub extends DurableObject<Env> {
 	}
 	applySelection(
 		epoch: number,
-		input: { baseRevision?: unknown; enabled?: unknown; rules?: unknown },
+		input: { baseRevision?: unknown; enabled?: unknown; rules?: unknown; dataset?: unknown },
 	) {
 		return this.session(epoch, () => this.hub().applySelection(input));
 	}

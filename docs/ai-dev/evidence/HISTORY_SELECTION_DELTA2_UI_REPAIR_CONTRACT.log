@@ -1,0 +1,523 @@
+[WebServer] fake spotify on 19272
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                                                                     Resource                  Mode
+[WebServer] env.USER_HUB (UserHub)                                                      Durable Object            local
+[WebServer] env.REGISTRY (Registry)                                                     Durable Object            local
+[WebServer] env.ASSETS                                                                  Assets                    local
+[WebServer] env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+[WebServer] env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+[WebServer] env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19272/accounts")               Environment Variable      local
+[WebServer] env.SPOTIFY_API_BASE ("http://127.0.0.1:19272/v1")                          Environment Variable      local
+[WebServer] env.LASTFM_API_BASE ("http://127.0.0.1:19272/lastfm")                       Environment Variable      local
+[WebServer] env.LASTFM_API_KEY ("e2e-lastfm")                                           Environment Variable      local
+[WebServer] env.DEEZER_API_BASE ("http://127.0.0.1:19272/deezer")                       Environment Variable      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] ✨ Parsed 2 valid header rules.
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19271
+[WebServer] [wrangler:info] GET /api/health 200 OK (56ms)
+
+Running 7 tests using 1 worker
+
+(node:10716) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (11ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (19ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (13ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (8ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (11ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (11ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (115ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (45ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (84ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (72ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/onboarding 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /api/devices 200 OK (47ms)
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (47ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (5ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (21ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (24ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (24ms)
+[WebServer] {"level":"info","kind":"import","message":"Lieblingssongs: 160 Songs übernommen, 0 übersprungen"}
+[WebServer] {"level":"info","kind":"import","message":"„Indie & Gitarren“: 400 Songs übernommen, 0 übersprungen"}
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (130ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+  x  1 races-fixc.spec.ts:8:5 › extra race 1 Alpha match IDs must not apply after Beta query while preview pending (1.5m)
+(node:30364) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (8ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (58ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (56ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (43ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (26ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] GET /api/devices 200 OK (67ms)
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (25ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (18ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (13ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (6ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (22ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (40ms)
+race2-edit-enabled true
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+race2-after {"rules":"Song „Alpha“ ausgeschlossen\nNimmt: 2 Wiedergaben, 1 Songs\nEntfernen\nSong „Beta“ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen","server":{"enabled":true,"rules":[{"type":"track","kind":"exclude","id":"T000000000000000000000","label":"Alpha"}]}}
+  ok 2 races-fixc.spec.ts:9:5 › extra race 2 newer Beta draft survives held Alpha apply ACK (1.8s)
+[WebServer] [wrangler:info] GET / 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (10ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (3ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (41ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (26ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (28ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (29ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (16ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 2, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (5ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (18ms)
+toggle-after {"editable":true,"betaPresent":1}
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+  ok 3 races-fixc.spec.ts:10:5 › pending toggle cannot silently discard newer keyboard draft (1.1s)
+[WebServer] [wrangler:info] GET / 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (4ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (24ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (42ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (23ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (27ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (26ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (27ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 4, 0 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (17ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (37ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+  x  4 races-fixc.spec.ts:11:5 › failed and offline preview disables unpreviewed draft; reverse rule results keep latest (1.5m)
+(node:5192) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (6ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (13ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (8ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (6ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (8ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (6ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (60ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (49ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (47ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (47ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (48ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (41ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (18ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (8ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (28ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (22ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+  x  5 races-fixc.spec.ts:12:5 › group changes while pending cannot interpret stale track row as artist result (1.5m)
+(node:17928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (13ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (7ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (11ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (9ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (68ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (3ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (47ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (46ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (44ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (42ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (39ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (7ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (14ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (7ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (18ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (11ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (37ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+dataset-before-apply {"oldKey":"up9XFou6XBun6RXv|g1","newKey":"bLvbE-xx6XjFGnKj|-","revision":4,"enabled":true,"shown":"Vorschau und übernehmen\n\nMit deinem Entwurf: 2 von 4 Wiedergaben zählen, aus 1 von 2 Songs.\n\nJetzt in Kraft: 4 von 4 Wiedergaben zählen, aus 2 von 2 Songs.\n\nÄndert die Zahlen von 1 Songs. Live gezählte Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange bleiben, wie sie sind.\n\nEntwurf verwerfen\nAuswahl übernehmen"}
+[WebServer] [wrangler:info] POST /api/history/selection 409 Conflict (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (16ms)
+  x  6 races-fixc.spec.ts:13:5 › dataset replacement after successful preview requires renewed preview or rejects stale apply (16.9s)
+(node:45072) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-kqSL669T.js 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (5ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (8ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (54ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (5ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (55ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (44ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (9ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/devices 200 OK (33ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 1 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (17ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (18ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (10ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (15ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (26ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (10ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (13ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (6ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (12ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (14ms)
+[WebServer] [wrangler:info] GET /auswahl 304 Not Modified (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (19ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (8ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (11ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (50ms)
+[WebServer] {"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 5, 1 Regeln)"}
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (21ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/profile 200 OK (15ms)
+R4-cutoff-UI Vorschau und übernehmen
+
+Wird gezählt …
+
+Jetzt in Kraft: 10 von 10 Wiedergaben zählen, aus 1 von 1 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+  ok 7 races-fixc.spec.ts:14:5 › R4 UI visibly explains partial whole-song semantics and cutoff no-import weighting (2.2s)
+
+
+  1) races-fixc.spec.ts:8:5 › extra race 1 Alpha match IDs must not apply after Beta query while preview pending 
+
+    Test timeout of 90000ms exceeded.
+
+    Error: locator.isEnabled: Test timeout of 90000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Alle 1 Treffer ausschließen' })
+
+
+       6 | const apply=(page:any)=>page.getByRole('button',{name:'Auswahl übernehmen'});
+       7 | function deferred(){let release:any;const promise=new Promise<void>(r=>release=r);return {promise,release:()=>release()}}
+    >  8 | test('extra race 1 Alpha match IDs must not apply after Beta query while preview pending',async({page})=>{await setup(page);await search(page).fill('Alpha');await expect(page.locator('.selection__items').first()).not.toContainText('Beta');const gate=deferred(),seen=deferred();let hold=true;await page.route('**/api/history/selection/preview',async r=>{const b=r.request().postDataJSON();if(b.query.q==='Beta'&&hold){hold=false;seen.release();await gate.promise;}await r.continue();});await search(page).fill('Beta');await seen.promise;const bulk=page.getByRole('button',{name:'Alle 1 Treffer ausschließen'});console.log('race1-before',JSON.stringify({query:await search(page).inputValue(),list:await page.locator('.selection__items').first().innerText(),bulkEnabled:await bulk.isEnabled()}));await bulk.click();await expect(apply(page)).toBeEnabled();let payload:any;page.on('request',r=>{if(r.url().endsWith('/api/history/selection')&&r.method()==='POST')payload=r.postDataJSON()});await apply(page).click();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();gate.release();const server=await(await page.request.get('/api/history/selection')).json();console.log('race1-observed',JSON.stringify({payload,server:server.selection,query:await search(page).inputValue()}));expect(payload.rules.some((r:any)=>r.id===ids[0]&&r.kind==='exclude')).toBe(false);});
+         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           ^
+       9 | test('extra race 2 newer Beta draft survives held Alpha apply ACK',async({page})=>{await setup(page);await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(apply(page)).toBeEnabled();const gate=deferred(),seen=deferred();await page.route('**/api/history/selection',async r=>{if(r.request().method()!=='POST')return r.continue();const response=await r.fetch();seen.release();await gate.promise;await r.fulfill({response});});await apply(page).click();await seen.promise;const beta=page.getByRole('button',{name:'Ausschließen: Beta',exact:true});console.log('race2-edit-enabled',await beta.isEnabled());if(await beta.isEnabled()){await beta.click();await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();}gate.release();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();console.log('race2-after',JSON.stringify({rules:await page.locator('.selection__rules').innerText(),server:(await(await page.request.get('/api/history/selection')).json()).selection}));await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();});
+      10 | test('pending toggle cannot silently discard newer keyboard draft',async({page})=>{await setup(page);const gate=deferred(),seen=deferred();await page.route('**/api/history/selection',async r=>{if(r.request().method()!=='POST')return r.continue();const response=await r.fetch();seen.release();await gate.promise;await r.fulfill({response});});await page.getByRole('button',{name:'Import ausschalten'}).click();await seen.promise;const beta=page.getByRole('button',{name:'Ausschließen: Beta',exact:true});const editable=await beta.isEnabled();if(editable){await beta.focus();await page.keyboard.press('Enter');await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();}gate.release();await expect(page.getByRole('button',{name:'Import wieder einschalten'})).toBeVisible();console.log('toggle-after',JSON.stringify({editable,betaPresent:await page.getByText('Song „Beta“ ausgeschlossen',{exact:true}).count()}));if(editable)await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();});
+      11 | test('failed and offline preview disables unpreviewed draft; reverse rule results keep latest',async({page})=>{await setup(page);let mode='503';await page.route('**/api/history/selection/preview',async r=>{if(mode==='503')return r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{message:'Synthetic unavailable'}})});if(mode==='offline')return r.abort('internetdisconnected');return r.continue();});await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(page.getByRole('alert').filter({hasText:'Vorschau nicht möglich'})).toBeVisible();await expect(apply(page)).toBeDisabled();mode='offline';await page.getByLabel('Sortieren').selectOption('name');await page.waitForTimeout(500);await expect(apply(page)).toBeDisabled();mode='ok';await page.getByLabel('Sortieren').selectOption('recent');await expect(apply(page)).toBeEnabled();const gate=deferred(),seen=deferred();await page.route('**/api/history/selection/preview',async r=>{if(r.request().postDataJSON().rules.length===0){seen.release();await gate.promise;}await r.fallback();});await page.getByRole('button',{name:'Eigene Regel entfernen: Alpha',exact:true}).click();await seen.promise;await page.getByRole('button',{name:'Ausschließen: Beta',exact:true}).click();await expect(apply(page)).toBeEnabled();gate.release();await page.waitForTimeout(500);await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('2 von 4 Wiedergaben zählen');});
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fixc.spec.ts:8:779
+
+    Error Context: results-fixc\races-fixc-extra-race-1-Al-6c32f-query-while-preview-pending\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fixc\races-fixc-extra-race-1-Al-6c32f-query-while-preview-pending\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fixc\races-fixc-extra-race-1-Al-6c32f-query-while-preview-pending\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) races-fixc.spec.ts:11:5 › failed and offline preview disables unpreviewed draft; reverse rule results keep latest 
+
+    Test timeout of 90000ms exceeded.
+
+    Error: locator.click: Test timeout of 90000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Ausschließen: Beta', exact: true })
+        - locator resolved to <button disabled type="button" class="key selection__act" aria-label="Ausschließen: Beta">Ausschließen</button>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+          - waiting 100ms
+        171 × waiting for element to be visible, enabled and stable
+            - element is not enabled
+          - retrying click action
+            - waiting 500ms
+
+
+       9 | test('extra race 2 newer Beta draft survives held Alpha apply ACK',async({page})=>{await setup(page);await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(apply(page)).toBeEnabled();const gate=deferred(),seen=deferred();await page.route('**/api/history/selection',async r=>{if(r.request().method()!=='POST')return r.continue();const response=await r.fetch();seen.release();await gate.promise;await r.fulfill({response});});await apply(page).click();await seen.promise;const beta=page.getByRole('button',{name:'Ausschließen: Beta',exact:true});console.log('race2-edit-enabled',await beta.isEnabled());if(await beta.isEnabled()){await beta.click();await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();}gate.release();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();console.log('race2-after',JSON.stringify({rules:await page.locator('.selection__rules').innerText(),server:(await(await page.request.get('/api/history/selection')).json()).selection}));await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();});
+      10 | test('pending toggle cannot silently discard newer keyboard draft',async({page})=>{await setup(page);const gate=deferred(),seen=deferred();await page.route('**/api/history/selection',async r=>{if(r.request().method()!=='POST')return r.continue();const response=await r.fetch();seen.release();await gate.promise;await r.fulfill({response});});await page.getByRole('button',{name:'Import ausschalten'}).click();await seen.promise;const beta=page.getByRole('button',{name:'Ausschließen: Beta',exact:true});const editable=await beta.isEnabled();if(editable){await beta.focus();await page.keyboard.press('Enter');await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();}gate.release();await expect(page.getByRole('button',{name:'Import wieder einschalten'})).toBeVisible();console.log('toggle-after',JSON.stringify({editable,betaPresent:await page.getByText('Song „Beta“ ausgeschlossen',{exact:true}).count()}));if(editable)await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();});
+    > 11 | test('failed and offline preview disables unpreviewed draft; reverse rule results keep latest',async({page})=>{await setup(page);let mode='503';await page.route('**/api/history/selection/preview',async r=>{if(mode==='503')return r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{message:'Synthetic unavailable'}})});if(mode==='offline')return r.abort('internetdisconnected');return r.continue();});await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(page.getByRole('alert').filter({hasText:'Vorschau nicht möglich'})).toBeVisible();await expect(apply(page)).toBeDisabled();mode='offline';await page.getByLabel('Sortieren').selectOption('name');await page.waitForTimeout(500);await expect(apply(page)).toBeDisabled();mode='ok';await page.getByLabel('Sortieren').selectOption('recent');await expect(apply(page)).toBeEnabled();const gate=deferred(),seen=deferred();await page.route('**/api/history/selection/preview',async r=>{if(r.request().postDataJSON().rules.length===0){seen.release();await gate.promise;}await r.fallback();});await page.getByRole('button',{name:'Eigene Regel entfernen: Alpha',exact:true}).click();await seen.promise;await page.getByRole('button',{name:'Ausschließen: Beta',exact:true}).click();await expect(apply(page)).toBeEnabled();gate.release();await page.waitForTimeout(500);await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('2 von 4 Wiedergaben zählen');});
+         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ^
+      12 | test('group changes while pending cannot interpret stale track row as artist result',async({page})=>{await setup(page);await search(page).fill('Alpha');await expect(page.locator('.selection__items').first()).not.toContainText('Beta');const gate=deferred(),seen=deferred();let hold=true;await page.route('**/api/history/selection/preview',async r=>{if(r.request().postDataJSON().query.group==='artist'&&hold){hold=false;seen.release();await gate.promise;}await r.continue();});await page.getByLabel('Gruppieren').selectOption('artist');await seen.promise;await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();gate.release();await expect(apply(page)).toBeEnabled();console.log('group-stale-rule',await page.locator('.selection__rules').innerText());await expect(page.getByText('Künstler „Artist Alpha“ ausgeschlossen',{exact:true})).toBeVisible();});
+      13 | test('dataset replacement after successful preview requires renewed preview or rejects stale apply',async({page})=>{await setup(page);await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(apply(page)).toBeEnabled();const before=await(await page.request.get('/api/history/selection')).json();const start=(await(await post(page,'/api/history/begin',{})).json()).start;await post(page,'/api/history/import',{start,rows:[[ids[1],20,0,Date.parse('2025-01-01T00:00:00Z'),0,20]],part:0,parts:1});const changed=await(await page.request.get('/api/history/selection')).json();console.log('dataset-before-apply',JSON.stringify({oldKey:before.dataset.key,newKey:changed.dataset.key,revision:changed.revision,enabled:await apply(page).isEnabled(),shown:await page.getByRole('region',{name:'Vorschau und übernehmen'}).innerText()}));if(await apply(page).isEnabled()){await apply(page).click();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();const after=await(await page.request.get('/api/history/selection')).json();console.log('dataset-unpreviewed',JSON.stringify({before:before.counts,after:after.counts}));expect(after.counts.includedPlays).toBe(before.counts.includedPlays-2);}});
+      14 | test('R4 UI visibly explains partial whole-song semantics and cutoff no-import weighting',async({page})=>{await setup(page);const existing=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const live=(await(await page.request.get('/api/history/selection')).json()).liveSince;const at=Date.parse('2024-03-01T12:00:00Z');const id=(await(await post(page,'/api/history/import',{start,rows:[[ids[0],10,0,at,0,10]],part:0,parts:1})).json()).upload;const u=(await(await post(page,'/api/history/listens',{importId:id,part:0,parts:2,tracks:2,kind:'tracks',data:[[ids[0],'Partial Alpha','Artist Alpha','Synthetic'],[ids[1],'Cutoff Beta','Artist Beta','Synthetic']]})).json()).upload;await post(page,'/api/history/listens',{upload:u,part:1,parts:2,tracks:2,kind:'rows',data:[[at/1000,0,200000,132,0],[at/1000+1,0,200000,132,0],[Math.ceil(live/1000),1,200000,132,0],[Math.ceil(live/1000)+1,1,200000,132,0]]});await page.reload();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('Zeitraum- und Künstlerregeln erreichen sie nicht');await expect(page.locator('.selection__item',{hasText:'Cutoff Beta'})).toContainText('2 ab Beginn der Live-Zählung (zählen nicht aus dem Import)');await expect(page.locator('.selection__item',{hasText:'Cutoff Beta'})).toContainText('ohne Wirkung');await page.getByLabel('Von (einschließlich)').fill('2024-01-01');await page.getByLabel('Bis (einschließlich)').fill('2024-12-31');await page.getByRole('button',{name:'Zeitraum hinzufügen'}).click();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('10 von 10 Wiedergaben zählen');await apply(page).click();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();expect((await(await page.request.get('/api/profile?tz=UTC')).json()).plays).toBe(2);console.log('R4-cutoff-UI',await page.getByRole('region',{name:'Vorschau und übernehmen'}).innerText());});
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fixc.spec.ts:11:1279
+
+    Error Context: results-fixc\races-fixc-failed-and-offl-7c44d-se-rule-results-keep-latest\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fixc\races-fixc-failed-and-offl-7c44d-se-rule-results-keep-latest\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fixc\races-fixc-failed-and-offl-7c44d-se-rule-results-keep-latest\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) races-fixc.spec.ts:12:5 › group changes while pending cannot interpret stale track row as artist result 
+
+    Test timeout of 90000ms exceeded.
+
+    Error: locator.click: Test timeout of 90000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Ausschließen: Alpha', exact: true })
+        - locator resolved to <button disabled type="button" class="key selection__act" aria-label="Ausschließen: Alpha">Ausschließen</button>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+          - waiting 100ms
+        172 × waiting for element to be visible, enabled and stable
+            - element is not enabled
+          - retrying click action
+            - waiting 500ms
+
+
+      10 | test('pending toggle cannot silently discard newer keyboard draft',async({page})=>{await setup(page);const gate=deferred(),seen=deferred();await page.route('**/api/history/selection',async r=>{if(r.request().method()!=='POST')return r.continue();const response=await r.fetch();seen.release();await gate.promise;await r.fulfill({response});});await page.getByRole('button',{name:'Import ausschalten'}).click();await seen.promise;const beta=page.getByRole('button',{name:'Ausschließen: Beta',exact:true});const editable=await beta.isEnabled();if(editable){await beta.focus();await page.keyboard.press('Enter');await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();}gate.release();await expect(page.getByRole('button',{name:'Import wieder einschalten'})).toBeVisible();console.log('toggle-after',JSON.stringify({editable,betaPresent:await page.getByText('Song „Beta“ ausgeschlossen',{exact:true}).count()}));if(editable)await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();});
+      11 | test('failed and offline preview disables unpreviewed draft; reverse rule results keep latest',async({page})=>{await setup(page);let mode='503';await page.route('**/api/history/selection/preview',async r=>{if(mode==='503')return r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{message:'Synthetic unavailable'}})});if(mode==='offline')return r.abort('internetdisconnected');return r.continue();});await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(page.getByRole('alert').filter({hasText:'Vorschau nicht möglich'})).toBeVisible();await expect(apply(page)).toBeDisabled();mode='offline';await page.getByLabel('Sortieren').selectOption('name');await page.waitForTimeout(500);await expect(apply(page)).toBeDisabled();mode='ok';await page.getByLabel('Sortieren').selectOption('recent');await expect(apply(page)).toBeEnabled();const gate=deferred(),seen=deferred();await page.route('**/api/history/selection/preview',async r=>{if(r.request().postDataJSON().rules.length===0){seen.release();await gate.promise;}await r.fallback();});await page.getByRole('button',{name:'Eigene Regel entfernen: Alpha',exact:true}).click();await seen.promise;await page.getByRole('button',{name:'Ausschließen: Beta',exact:true}).click();await expect(apply(page)).toBeEnabled();gate.release();await page.waitForTimeout(500);await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('2 von 4 Wiedergaben zählen');});
+    > 12 | test('group changes while pending cannot interpret stale track row as artist result',async({page})=>{await setup(page);await search(page).fill('Alpha');await expect(page.locator('.selection__items').first()).not.toContainText('Beta');const gate=deferred(),seen=deferred();let hold=true;await page.route('**/api/history/selection/preview',async r=>{if(r.request().postDataJSON().query.group==='artist'&&hold){hold=false;seen.release();await gate.promise;}await r.continue();});await page.getByLabel('Gruppieren').selectOption('artist');await seen.promise;await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();gate.release();await expect(apply(page)).toBeEnabled();console.log('group-stale-rule',await page.locator('.selection__rules').innerText());await expect(page.getByText('Künstler „Artist Alpha“ ausgeschlossen',{exact:true})).toBeVisible();});
+         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^
+      13 | test('dataset replacement after successful preview requires renewed preview or rejects stale apply',async({page})=>{await setup(page);await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(apply(page)).toBeEnabled();const before=await(await page.request.get('/api/history/selection')).json();const start=(await(await post(page,'/api/history/begin',{})).json()).start;await post(page,'/api/history/import',{start,rows:[[ids[1],20,0,Date.parse('2025-01-01T00:00:00Z'),0,20]],part:0,parts:1});const changed=await(await page.request.get('/api/history/selection')).json();console.log('dataset-before-apply',JSON.stringify({oldKey:before.dataset.key,newKey:changed.dataset.key,revision:changed.revision,enabled:await apply(page).isEnabled(),shown:await page.getByRole('region',{name:'Vorschau und übernehmen'}).innerText()}));if(await apply(page).isEnabled()){await apply(page).click();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();const after=await(await page.request.get('/api/history/selection')).json();console.log('dataset-unpreviewed',JSON.stringify({before:before.counts,after:after.counts}));expect(after.counts.includedPlays).toBe(before.counts.includedPlays-2);}});
+      14 | test('R4 UI visibly explains partial whole-song semantics and cutoff no-import weighting',async({page})=>{await setup(page);const existing=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const live=(await(await page.request.get('/api/history/selection')).json()).liveSince;const at=Date.parse('2024-03-01T12:00:00Z');const id=(await(await post(page,'/api/history/import',{start,rows:[[ids[0],10,0,at,0,10]],part:0,parts:1})).json()).upload;const u=(await(await post(page,'/api/history/listens',{importId:id,part:0,parts:2,tracks:2,kind:'tracks',data:[[ids[0],'Partial Alpha','Artist Alpha','Synthetic'],[ids[1],'Cutoff Beta','Artist Beta','Synthetic']]})).json()).upload;await post(page,'/api/history/listens',{upload:u,part:1,parts:2,tracks:2,kind:'rows',data:[[at/1000,0,200000,132,0],[at/1000+1,0,200000,132,0],[Math.ceil(live/1000),1,200000,132,0],[Math.ceil(live/1000)+1,1,200000,132,0]]});await page.reload();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('Zeitraum- und Künstlerregeln erreichen sie nicht');await expect(page.locator('.selection__item',{hasText:'Cutoff Beta'})).toContainText('2 ab Beginn der Live-Zählung (zählen nicht aus dem Import)');await expect(page.locator('.selection__item',{hasText:'Cutoff Beta'})).toContainText('ohne Wirkung');await page.getByLabel('Von (einschließlich)').fill('2024-01-01');await page.getByLabel('Bis (einschließlich)').fill('2024-12-31');await page.getByRole('button',{name:'Zeitraum hinzufügen'}).click();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('10 von 10 Wiedergaben zählen');await apply(page).click();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();expect((await(await page.request.get('/api/profile?tz=UTC')).json()).plays).toBe(2);console.log('R4-cutoff-UI',await page.getByRole('region',{name:'Vorschau und übernehmen'}).innerText());});
+      15 |
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fixc.spec.ts:12:626
+
+    Error Context: results-fixc\races-fixc-group-changes-w-80ee7--track-row-as-artist-result\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fixc\races-fixc-group-changes-w-80ee7--track-row-as-artist-result\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fixc\races-fixc-group-changes-w-80ee7--track-row-as-artist-result\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) races-fixc.spec.ts:13:5 › dataset replacement after successful preview requires renewed preview or rejects stale apply 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('status').filter({ hasText: /Übernommen \(Stand/ })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('status').filter({ hasText: /Übernommen \(Stand/ }) with timeout 15000ms
+      - waiting for getByRole('status').filter({ hasText: /Übernommen \(Stand/ })
+
+
+      11 | test('failed and offline preview disables unpreviewed draft; reverse rule results keep latest',async({page})=>{await setup(page);let mode='503';await page.route('**/api/history/selection/preview',async r=>{if(mode==='503')return r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{message:'Synthetic unavailable'}})});if(mode==='offline')return r.abort('internetdisconnected');return r.continue();});await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(page.getByRole('alert').filter({hasText:'Vorschau nicht möglich'})).toBeVisible();await expect(apply(page)).toBeDisabled();mode='offline';await page.getByLabel('Sortieren').selectOption('name');await page.waitForTimeout(500);await expect(apply(page)).toBeDisabled();mode='ok';await page.getByLabel('Sortieren').selectOption('recent');await expect(apply(page)).toBeEnabled();const gate=deferred(),seen=deferred();await page.route('**/api/history/selection/preview',async r=>{if(r.request().postDataJSON().rules.length===0){seen.release();await gate.promise;}await r.fallback();});await page.getByRole('button',{name:'Eigene Regel entfernen: Alpha',exact:true}).click();await seen.promise;await page.getByRole('button',{name:'Ausschließen: Beta',exact:true}).click();await expect(apply(page)).toBeEnabled();gate.release();await page.waitForTimeout(500);await expect(page.getByText('Song „Beta“ ausgeschlossen',{exact:true})).toBeVisible();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('2 von 4 Wiedergaben zählen');});
+      12 | test('group changes while pending cannot interpret stale track row as artist result',async({page})=>{await setup(page);await search(page).fill('Alpha');await expect(page.locator('.selection__items').first()).not.toContainText('Beta');const gate=deferred(),seen=deferred();let hold=true;await page.route('**/api/history/selection/preview',async r=>{if(r.request().postDataJSON().query.group==='artist'&&hold){hold=false;seen.release();await gate.promise;}await r.continue();});await page.getByLabel('Gruppieren').selectOption('artist');await seen.promise;await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();gate.release();await expect(apply(page)).toBeEnabled();console.log('group-stale-rule',await page.locator('.selection__rules').innerText());await expect(page.getByText('Künstler „Artist Alpha“ ausgeschlossen',{exact:true})).toBeVisible();});
+    > 13 | test('dataset replacement after successful preview requires renewed preview or rejects stale apply',async({page})=>{await setup(page);await page.getByRole('button',{name:'Ausschließen: Alpha',exact:true}).click();await expect(apply(page)).toBeEnabled();const before=await(await page.request.get('/api/history/selection')).json();const start=(await(await post(page,'/api/history/begin',{})).json()).start;await post(page,'/api/history/import',{start,rows:[[ids[1],20,0,Date.parse('2025-01-01T00:00:00Z'),0,20]],part:0,parts:1});const changed=await(await page.request.get('/api/history/selection')).json();console.log('dataset-before-apply',JSON.stringify({oldKey:before.dataset.key,newKey:changed.dataset.key,revision:changed.revision,enabled:await apply(page).isEnabled(),shown:await page.getByRole('region',{name:'Vorschau und übernehmen'}).innerText()}));if(await apply(page).isEnabled()){await apply(page).click();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();const after=await(await page.request.get('/api/history/selection')).json();console.log('dataset-unpreviewed',JSON.stringify({before:before.counts,after:after.counts}));expect(after.counts.includedPlays).toBe(before.counts.includedPlays-2);}});
+         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^
+      14 | test('R4 UI visibly explains partial whole-song semantics and cutoff no-import weighting',async({page})=>{await setup(page);const existing=await(await page.request.get('/api/history/selection')).json();await post(page,'/api/history/delete',{dataset:existing.dataset.key});const start=(await(await post(page,'/api/history/begin',{})).json()).start;const live=(await(await page.request.get('/api/history/selection')).json()).liveSince;const at=Date.parse('2024-03-01T12:00:00Z');const id=(await(await post(page,'/api/history/import',{start,rows:[[ids[0],10,0,at,0,10]],part:0,parts:1})).json()).upload;const u=(await(await post(page,'/api/history/listens',{importId:id,part:0,parts:2,tracks:2,kind:'tracks',data:[[ids[0],'Partial Alpha','Artist Alpha','Synthetic'],[ids[1],'Cutoff Beta','Artist Beta','Synthetic']]})).json()).upload;await post(page,'/api/history/listens',{upload:u,part:1,parts:2,tracks:2,kind:'rows',data:[[at/1000,0,200000,132,0],[at/1000+1,0,200000,132,0],[Math.ceil(live/1000),1,200000,132,0],[Math.ceil(live/1000)+1,1,200000,132,0]]});await page.reload();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('Zeitraum- und Künstlerregeln erreichen sie nicht');await expect(page.locator('.selection__item',{hasText:'Cutoff Beta'})).toContainText('2 ab Beginn der Live-Zählung (zählen nicht aus dem Import)');await expect(page.locator('.selection__item',{hasText:'Cutoff Beta'})).toContainText('ohne Wirkung');await page.getByLabel('Von (einschließlich)').fill('2024-01-01');await page.getByLabel('Bis (einschließlich)').fill('2024-12-31');await page.getByRole('button',{name:'Zeitraum hinzufügen'}).click();await expect(page.getByRole('region',{name:'Vorschau und übernehmen'})).toContainText('10 von 10 Wiedergaben zählen');await apply(page).click();await expect(page.getByRole('status').filter({hasText:/Übernommen \(Stand/})).toBeVisible();expect((await(await page.request.get('/api/profile?tz=UTC')).json()).plays).toBe(2);console.log('R4-cutoff-UI',await page.getByRole('region',{name:'Vorschau und übernehmen'}).innerText());});
+      15 |
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r2\ui\races-fixc.spec.ts:13:996
+
+    Error Context: results-fixc\races-fixc-dataset-replace-57ec0-view-or-rejects-stale-apply\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-fixc\races-fixc-dataset-replace-57ec0-view-or-rejects-stale-apply\trace.zip
+    Usage:
+
+        npx playwright show-trace results-fixc\races-fixc-dataset-replace-57ec0-view-or-rejects-stale-apply\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    races-fixc.spec.ts:8:5 › extra race 1 Alpha match IDs must not apply after Beta query while preview pending 
+    races-fixc.spec.ts:11:5 › failed and offline preview disables unpreviewed draft; reverse rule results keep latest 
+    races-fixc.spec.ts:12:5 › group changes while pending cannot interpret stale track row as artist result 
+    races-fixc.spec.ts:13:5 › dataset replacement after successful preview requires renewed preview or rejects stale apply 
+  3 passed (5.0m)
+exit=1
