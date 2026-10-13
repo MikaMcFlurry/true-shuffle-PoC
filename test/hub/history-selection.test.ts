@@ -9,8 +9,8 @@
 import { describe, expect, it } from "vitest";
 import {
 	aggregateHistory,
-	emptyAggregate,
 	type ExtendedEntry,
+	emptyAggregate,
 	toRows,
 } from "../../src/core/history";
 import {
@@ -60,11 +60,17 @@ function history(h: H): Entry[] {
 	const out: Entry[] = [];
 	for (let k = 0; k < 20; k++)
 		for (let i = 0; i < 6; i++)
-			out.push(entry(h, k, new Date(D("2024-02-01T12:00:00Z") + (k * 6 + i) * DAY_MS).toISOString()));
+			out.push(
+				entry(h, k, new Date(D("2024-02-01T12:00:00Z") + (k * 6 + i) * DAY_MS).toISOString()),
+			);
 	for (let k = 20; k < 30; k++) {
 		for (let i = 0; i < 3; i++)
-			out.push(entry(h, k, new Date(D("2025-03-01T12:00:00Z") + (k * 4 + i) * DAY_MS).toISOString()));
-		out.push(entry(h, k, new Date(D("2025-03-01T12:00:00Z") + (k * 4 + 3) * DAY_MS).toISOString(), 4000));
+			out.push(
+				entry(h, k, new Date(D("2025-03-01T12:00:00Z") + (k * 4 + i) * DAY_MS).toISOString()),
+			);
+		out.push(
+			entry(h, k, new Date(D("2025-03-01T12:00:00Z") + (k * 4 + 3) * DAY_MS).toISOString(), 4000),
+		);
 	}
 	out.push(entry(h, 0, "2025-06-01T08:00:00Z"), entry(h, 0, "2025-06-02T08:00:00Z"));
 	return out.sort((a, b) => Date.parse(a.ts!) - Date.parse(b.ts!));
@@ -128,7 +134,13 @@ const imported = (h: H, id: string) => {
 const apply = (h: H, rules: unknown[], enabled = true) =>
 	h.hub.applySelection({ baseRevision: h.hub.selectionView().revision, enabled, rules });
 
-const Y2024 = { type: "period", kind: "exclude", from: "2024-01-01", to: "2024-12-31", zone: "UTC" };
+const Y2024 = {
+	type: "period",
+	kind: "exclude",
+	from: "2024-01-01",
+	to: "2024-12-31",
+	zone: "UTC",
+};
 
 /** Everything an import or its selection must never touch. */
 function untouchable(h: H) {
@@ -179,9 +191,15 @@ describe("selecting the imported history", () => {
 
 		// A preview changes nothing at all.
 		const raw = JSON.stringify(h.sql.all(`SELECT k, v FROM kv WHERE k LIKE 'history%' ORDER BY k`));
-		const preview = h.hub.previewSelection({ enabled: true, rules: [Y2024], query: { q: "Song 5" } });
+		const preview = h.hub.previewSelection({
+			enabled: true,
+			rules: [Y2024],
+			query: { q: "Song 5" },
+		});
 		expect(preview.counts).toMatchObject({ plays: 152, includedPlays: 32 });
-		expect(JSON.stringify(h.sql.all(`SELECT k, v FROM kv WHERE k LIKE 'history%' ORDER BY k`))).toBe(raw);
+		expect(
+			JSON.stringify(h.sql.all(`SELECT k, v FROM kv WHERE k LIKE 'history%' ORDER BY k`)),
+		).toBe(raw);
 		expect(imported(h, ids[5]!)).toEqual(all.get(ids[5]!));
 
 		const view = apply(h, [Y2024]);
@@ -226,7 +244,9 @@ describe("selecting the imported history", () => {
 		await h.listen(2 * MINUTE_MS);
 		// The queue that is there stays as it is.
 		expect(h.hub.savedSession(sid)!.entryIds).toEqual(session.entryIds);
-		expect(JSON.stringify(deckKinds(h, sid).slice(0, 5))).toBe(JSON.stringify(JSON.parse(deck).slice(0, 5)));
+		expect(JSON.stringify(deckKinds(h, sid).slice(0, 5))).toBe(
+			JSON.stringify(JSON.parse(deck).slice(0, 5)),
+		);
 		expect(await h.hub.play(sid, undefined, { newQueue: true })).toMatchObject({ ok: true });
 		expect(h.hub.savedSession(sid)!.sessionId).not.toBe(session.sessionId);
 	});
@@ -234,7 +254,10 @@ describe("selecting the imported history", () => {
 	it("bringing it back returns exactly the same; the same selection twice changes nothing", async () => {
 		const { h, ids } = await setup();
 		const before = ids.slice(0, 30).map((id) => h.hub.memory(id));
-		const v1 = apply(h, [Y2024, { type: "artist", kind: "exclude", name: songs(h)[22]!.artistName }]);
+		const v1 = apply(h, [
+			Y2024,
+			{ type: "artist", kind: "exclude", name: songs(h)[22]!.artistName },
+		]);
 		const mid = ids.slice(0, 30).map((id) => h.hub.memory(id));
 		// Again, in another order and with a duplicate: no new revision, nothing written.
 		const kv = JSON.stringify(h.sql.all(`SELECT * FROM kv WHERE k LIKE 'history%'`));
@@ -318,7 +341,11 @@ describe("racing changes, uploads and old states", () => {
 		apply(h, [Y2024]);
 		const mem = ids.map((id) => h.hub.memory(id));
 		// Two changes sent quickly from two places on revision 1: only the first lands.
-		h.hub.applySelection({ baseRevision: 1, enabled: true, rules: [Y2024, { type: "summary", kind: "exclude" }] });
+		h.hub.applySelection({
+			baseRevision: 1,
+			enabled: true,
+			rules: [Y2024, { type: "summary", kind: "exclude" }],
+		});
 		const stale = () => h.hub.applySelection({ baseRevision: 1, enabled: true, rules: [] });
 		expect(stale).toThrow(HubError);
 		try {
@@ -353,11 +380,23 @@ describe("racing changes, uploads and old states", () => {
 		expect(() => uploadListens(h, entries, id)).toThrow(/gelöscht oder ersetzt/);
 		// Started for a current import, then deleted before its last block.
 		const again = importFiles(h, entries, { stopAfterTotals: true });
-		const many = [...entries, ...Array.from({ length: 1200 }, (_, i) => entry(h, 40 + (i % 50), new Date(D("2023-01-01T00:00:00Z") + i * 3_600_000).toISOString()))];
+		const many = [
+			...entries,
+			...Array.from({ length: 1200 }, (_, i) =>
+				entry(h, 40 + (i % 50), new Date(D("2023-01-01T00:00:00Z") + i * 3_600_000).toISOString()),
+			),
+		];
 		uploadListens(h, many, again, 1);
 		h.hub.deleteImport(h.hub.selectionView().dataset.key);
 		expect(() =>
-			h.hub.importListens({ upload: "x", part: 1, parts: 3, tracks: 1, kind: "rows", data: [[1, 0, 1, 0, 0]] }),
+			h.hub.importListens({
+				upload: "x",
+				part: 1,
+				parts: 3,
+				tracks: 1,
+				kind: "rows",
+				data: [[1, 0, 1, 0, 0]],
+			}),
 		).toThrow(/abgelöst/);
 		expect(h.hub.listeningProfile("UTC").coverage.importedPlays).toBe(0);
 		expect(h.hub.memory(songs(h)[0]!.id).plays).toBe(0);
@@ -452,7 +491,10 @@ describe("a new import, the old kind and edge cases", () => {
 		expect(h.hub.memory(ids[5]!).plays).toBe(6);
 		apply(h, [Y2024, { type: "summary", kind: "exclude" }]);
 		expect(h.hub.memory(ids[5]!).plays).toBe(0);
-		apply(h, [{ type: "summary", kind: "exclude" }, { type: "track", kind: "include", id: ids[5]! }]);
+		apply(h, [
+			{ type: "summary", kind: "exclude" },
+			{ type: "track", kind: "include", id: ids[5]! },
+		]);
 		expect(h.hub.memory(ids[5]!).plays).toBe(6);
 		h.hub.deleteImport(h.hub.selectionView().dataset.key);
 		expect(h.hub.memory(ids[5]!).plays).toBe(0);
@@ -460,7 +502,9 @@ describe("a new import, the old kind and edge cases", () => {
 
 	it("everything left out, empty imports and unknown fields stay honest", async () => {
 		const { h, ids } = await setup();
-		const v = apply(h, [{ type: "period", kind: "exclude", from: "2000-01-01", to: "2030-12-31", zone: "UTC" }]);
+		const v = apply(h, [
+			{ type: "period", kind: "exclude", from: "2000-01-01", to: "2030-12-31", zone: "UTC" },
+		]);
 		expect(v.counts).toMatchObject({ includedPlays: 0, includedSongs: 0 });
 		for (const id of ids.slice(0, 30)) expect(h.hub.memory(id).plays).toBe(0);
 		// Overlapping periods: one decision per play, nothing counted twice.
@@ -468,12 +512,17 @@ describe("a new import, the old kind and edge cases", () => {
 			Y2024,
 			{ type: "period", kind: "exclude", from: "2024-06-01", to: "2025-12-31", zone: "UTC" },
 		]);
-		expect(o.counts!.rules.reduce((a, r) => a + r.plays, 0)).toBe(o.counts!.plays - o.counts!.includedPlays);
-		expect(() => apply(h, [{ type: "period", kind: "exclude", from: "2024-1-1", to: "x", zone: "UTC" }])).toThrow(
-			/Ungültige Auswahl/,
+		expect(o.counts!.rules.reduce((a, r) => a + r.plays, 0)).toBe(
+			o.counts!.plays - o.counts!.includedPlays,
 		);
+		expect(() =>
+			apply(h, [{ type: "period", kind: "exclude", from: "2024-1-1", to: "x", zone: "UTC" }]),
+		).toThrow(/Ungültige Auswahl/);
 		const empty = await onboarded({ tracks: 50 });
-		expect(empty.hub.selectionView()).toMatchObject({ counts: null, dataset: { coverage: "none" } });
+		expect(empty.hub.selectionView()).toMatchObject({
+			counts: null,
+			dataset: { coverage: "none" },
+		});
 		expect(empty.hub.previewSelection({ enabled: true, rules: [], query: {} }).page.total).toBe(0);
 	});
 });
@@ -492,7 +541,10 @@ describe("storage and accounts", () => {
 		h.restart();
 		// No selection was ever made: everything counts, exactly as before.
 		expect(ids.map((id) => h.hub.memory(id))).toEqual(mem);
-		expect(h.hub.selectionView()).toMatchObject({ revision: 0, selection: { enabled: true, rules: [] } });
+		expect(h.hub.selectionView()).toMatchObject({
+			revision: 0,
+			selection: { enabled: true, rules: [] },
+		});
 	});
 
 	it("two listeners: one's selection or deletion never reaches the other", async () => {

@@ -396,9 +396,15 @@ export function SelectionScreen() {
 					<Section title="Regeln" id="sel-rules">
 						<p class="section__lead">
 							Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor
-							einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren
-							Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben
-							zählen weiter.
+							einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss —
+							der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen
+							weiter.
+						</p>
+						<p class="hint">
+							Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören
+							wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh
+							übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie
+							berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
 						</p>
 						{draft.rules.length === 0 ? (
 							<p class="muted">Keine Regeln: alles aus dem Import zählt.</p>
@@ -421,7 +427,7 @@ export function SelectionScreen() {
 											</span>
 											<button
 												type="button"
-												class="key"
+												class="key selection__act"
 												aria-label={`Regel entfernen: ${ruleText(r)}`}
 												onClick={() => setRules(without(key))}
 											>
@@ -469,7 +475,7 @@ export function SelectionScreen() {
 								</p>
 								<button
 									type="submit"
-									class="key"
+									class="key selection__add"
 									disabled={!periodFrom || !periodTo || periodFrom > periodTo}
 								>
 									Zeitraum hinzufügen
@@ -490,8 +496,8 @@ export function SelectionScreen() {
 									}
 								/>
 								<span>
-									Songs ohne einzelne Wiedergaben ausschließen ({num(view.counts?.summarySongs ?? 0)}{" "}
-									Songs nur als Summe gespeichert)
+									Songs ohne einzelne Wiedergaben ausschließen (
+									{num(view.counts?.summarySongs ?? 0)} Songs nur als Summe gespeichert)
 								</span>
 							</label>
 						) : null}
@@ -557,8 +563,8 @@ export function SelectionScreen() {
 			{ds.hasImport ? (
 				<Section title="Durchsehen" id="sel-browse">
 					<p class="section__lead">
-						Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur
-						den Entwurf oben, bis du ihn übernimmst.
+						Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den
+						Entwurf oben, bis du ihn übernimmst.
 					</p>
 					<div class="selection__filters">
 						<label class="field">
@@ -682,7 +688,7 @@ export function SelectionScreen() {
 									</span>
 									<button
 										type="button"
-										class="key"
+										class="key selection__act"
 										aria-label={`${own ? "Eigene Regel entfernen" : it.status === "excluded" ? "Wieder einbeziehen" : "Ausschließen"}: ${it.name}`}
 										onClick={() => flip(it)}
 									>
@@ -741,8 +747,8 @@ export function SelectionScreen() {
 								Gelöscht werden nur die in true-shuffle gespeicherten Importdaten: {num(ds.songs)}{" "}
 								Songsummen
 								{ds.rows > 0 ? `, ${plays(ds.rows)} einzeln` : ""}
-								{ds.summaryProfile ? ", die ältere Hörprofil-Zusammenfassung" : ""} und alles,
-								was daraus berechnet wurde. Das lässt sich nicht rückgängig machen — nur durch einen
+								{ds.summaryProfile ? ", die ältere Hörprofil-Zusammenfassung" : ""} und alles, was
+								daraus berechnet wurde. Das lässt sich nicht rückgängig machen — nur durch einen
 								neuen Import deiner Dateien.
 							</p>
 							<p>
@@ -809,8 +815,8 @@ function PlaylistCountsSection() {
 		<Section title="In deinen Playlists" id="sel-playlists">
 			<p class="section__lead">
 				Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt
-				einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der
-				Auswahl oben, und es ändert keine Gewichtung.
+				einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl
+				oben, und es ändert keine Gewichtung.
 			</p>
 			{err ? (
 				<p class="notice notice--error" role="alert">
@@ -832,16 +838,21 @@ function PlaylistCountsSection() {
 							: ""}
 					</p>
 					{v.error ? <p>Spotify: {v.error}</p> : null}
+					{v.listIncomplete ? (
+						<p>
+							Deine Playlist-Liste ließ sich dafür nicht neu lesen: eigene Playlists können fehlen.
+						</p>
+					) : null}
 					{v.playlists.failed.length > 0 ? (
 						<p>
-							Nicht lesbar:{" "}
-							{v.playlists.failed.map((f) => `„${f.name}“ (${f.reason})`).join(", ")}.
+							Nicht lesbar: {v.playlists.failed.map((f) => `„${f.name}“ (${f.reason})`).join(", ")}.
 						</p>
 					) : null}
 					{v.playlists.unclear.length > 0 ? (
 						<p>
 							Nicht gezählt, Herkunft unklar (benannt wie true-shuffle, aber keine bekannte
-							Kassette): {v.playlists.unclear.map((f) => `„${f.name}“`).join(", ")}.
+							Kassette): {v.playlists.unclear.map((f) => `„${f.name}“`).join(", ")}. Deshalb gelten
+							die Zahlen nur als „mindestens“.
 						</p>
 					) : null}
 					{v.state !== "never" ? (
@@ -862,8 +873,8 @@ function PlaylistCountsSection() {
 				{v?.state === "running" ? "Zählt …" : v?.state === "never" ? "Jetzt zählen" : "Neu zählen"}
 			</button>
 			<p class="hint">
-				Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den
-				üblichen Wartezeiten, wenn Spotify bremst.
+				Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen
+				Wartezeiten, wenn Spotify bremst.
 			</p>
 			{v && v.top.length > 0 ? (
 				<ul class="list selection__items">

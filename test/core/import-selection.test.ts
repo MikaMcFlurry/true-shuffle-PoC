@@ -4,8 +4,8 @@ import {
 	cleanSelection,
 	dayStart,
 	type ImportSelection,
-	inspectImport,
 	type InspectQuery,
+	inspectImport,
 	type ListenColumns,
 	matcher,
 	periodBounds,
@@ -138,10 +138,36 @@ describe("import selection rules", () => {
 	it("refuses what it cannot read", () => {
 		const bad = [
 			{ enabled: "yes", rules: [] },
-			{ enabled: true, rules: [{ type: "period", kind: "include", from: "2020-01-01", to: "2020-01-02", zone: "UTC" }] },
-			{ enabled: true, rules: [{ type: "period", kind: "exclude", from: "2020-02-30", to: "2020-03-01", zone: "UTC" }] },
-			{ enabled: true, rules: [{ type: "period", kind: "exclude", from: "2020-03-02", to: "2020-03-01", zone: "UTC" }] },
-			{ enabled: true, rules: [{ type: "period", kind: "exclude", from: "2020-03-01", to: "2020-03-01", zone: "Mars/Base" }] },
+			{
+				enabled: true,
+				rules: [
+					{ type: "period", kind: "include", from: "2020-01-01", to: "2020-01-02", zone: "UTC" },
+				],
+			},
+			{
+				enabled: true,
+				rules: [
+					{ type: "period", kind: "exclude", from: "2020-02-30", to: "2020-03-01", zone: "UTC" },
+				],
+			},
+			{
+				enabled: true,
+				rules: [
+					{ type: "period", kind: "exclude", from: "2020-03-02", to: "2020-03-01", zone: "UTC" },
+				],
+			},
+			{
+				enabled: true,
+				rules: [
+					{
+						type: "period",
+						kind: "exclude",
+						from: "2020-03-01",
+						to: "2020-03-01",
+						zone: "Mars/Base",
+					},
+				],
+			},
 			{ enabled: true, rules: [{ type: "track", kind: "exclude", id: "short" }] },
 			{ enabled: true, rules: [{ type: "summary", kind: "include" }] },
 			{ enabled: true, rules: [{ type: "artist", kind: "exclude", name: "   " }] },
@@ -167,7 +193,11 @@ describe("import selection rules", () => {
 
 describe("calendar days in a time zone", () => {
 	it("a period covers whole local days, both ends included", () => {
-		const [from, to] = periodBounds({ from: "2020-01-01", to: "2020-01-01", zone: "Europe/Berlin" });
+		const [from, to] = periodBounds({
+			from: "2020-01-01",
+			to: "2020-01-01",
+			zone: "Europe/Berlin",
+		});
 		expect(from).toBe(D("2019-12-31T23:00:00Z"));
 		expect(to).toBe(D("2020-01-01T23:00:00Z"));
 		// Summer time: the day is 23 hours on the change.
@@ -198,7 +228,13 @@ describe("calendar days in a time zone", () => {
 	});
 
 	it("a play at the very first second of a period is in, at its end out", () => {
-		const r = { type: "period", kind: "exclude", from: "2020-01-01", to: "2020-12-31", zone: "Europe/Berlin" };
+		const r = {
+			type: "period",
+			kind: "exclude",
+			from: "2020-01-01",
+			to: "2020-12-31",
+			zone: "Europe/Berlin",
+		};
 		const m = matcher(sel([r]));
 		const [from, to] = periodBounds(r as never);
 		expect(m.included(m.event(from - 1000, "x", "y"))).toBe(true);
@@ -224,7 +260,13 @@ describe("what a selection makes of the import", () => {
 
 	it("a left-out period matches a reference counted from the kept plays only", () => {
 		const s = sel([
-			{ type: "period", kind: "exclude", from: "2020-01-01", to: "2020-12-31", zone: "Europe/Berlin" },
+			{
+				type: "period",
+				kind: "exclude",
+				from: "2020-01-01",
+				to: "2020-12-31",
+				zone: "Europe/Berlin",
+			},
 		]);
 		const [from, to] = periodBounds(s.rules[0] as never);
 		const eff = applyOverrides(AGG, run(s).overrides);
@@ -270,7 +312,10 @@ describe("what a selection makes of the import", () => {
 	});
 
 	it("plays after live counting began are not the import's", () => {
-		const r = run(sel([{ type: "artist", kind: "exclude", name: "Cleo" }]), D("2021-01-01T00:00:00Z"));
+		const r = run(
+			sel([{ type: "artist", kind: "exclude", name: "Cleo" }]),
+			D("2021-01-01T00:00:00Z"),
+		);
 		expect(r.counts.rules[0]).toMatchObject({ plays: 1 });
 	});
 
@@ -286,7 +331,11 @@ describe("what a selection makes of the import", () => {
 		});
 		// A period cannot reach it: it has no single plays to place in time.
 		expect(applyOverrides(agg, period.overrides).get(tid("Old"))?.plays).toBe(9);
-		expect(period.counts).toMatchObject({ summarySongs: 1, summaryPlays: 9, includedSummarySongs: 1 });
+		expect(period.counts).toMatchObject({
+			summarySongs: 1,
+			summaryPlays: 9,
+			includedSummarySongs: 1,
+		});
 		const out = selectImport({ ...base, selection: sel([{ type: "summary", kind: "exclude" }]) });
 		expect(applyOverrides(agg, out.overrides).has(tid("Old"))).toBe(false);
 		expect(applyOverrides(agg, out.overrides).get(tid("Alpha"))).toBe(agg.get(tid("Alpha")));
@@ -368,5 +417,65 @@ describe("looking through the import", () => {
 		expect(y2021.items.map((x) => x.name)).toEqual(["Beta", "Delta", "Gamma"]);
 		expect(y2021.items.find((x) => x.name === "Gamma")!.plays).toBe(1);
 		expect(look(sel([]), q({ sort: "recent" })).items[0]!.name).toBe("Delta");
+	});
+});
+
+describe("size", () => {
+	it("selects and looks through a history at the upper bound (300 000 plays, 100 000 songs) in seconds", () => {
+		const songs = 100_000;
+		const rows = 300_000;
+		const tracks: ListenTrack[] = Array.from({ length: songs }, (_, i) => [
+			tid(`s${i}`),
+			`Song ${i}`,
+			`Artist ${i % 5000}`,
+			`Album ${i % 20000}`,
+		]);
+		const start = Math.floor(D("2015-01-01T00:00:00Z") / 1000);
+		const events: ListenColumns = {
+			tracks,
+			rows,
+			at: Uint32Array.from({ length: rows }, (_, i) => start + i * 900),
+			track: Uint32Array.from({ length: rows }, (_, i) => (i * 7919) % songs),
+			ms: Uint32Array.from({ length: rows }, (_, i) => (i % 9 === 0 ? 5000 : 200_000)),
+			meta: Uint8Array.from({ length: rows * 2 }, (_, i) => (i % 2 === 0 ? SKIP : 0)),
+		};
+		const aggregate = new Map<string, ImportedStats>();
+		const s = sel([
+			{
+				type: "period",
+				kind: "exclude",
+				from: "2016-01-01",
+				to: "2016-12-31",
+				zone: "Europe/Berlin",
+			},
+			{ type: "artist", kind: "exclude", name: "Artist 7" },
+			{ type: "track", kind: "include", id: tid("s1") },
+		]);
+		const t0 = performance.now();
+		const r = selectImport({ events, aggregate, selection: s, liveSince: null });
+		const t1 = performance.now();
+		const page = inspectImport({
+			events,
+			aggregate,
+			selection: s,
+			liveSince: null,
+			query: {
+				q: "song 12",
+				group: "track",
+				status: "all",
+				sort: "plays",
+				from: null,
+				to: null,
+				offset: 0,
+				limit: 50,
+			},
+		});
+		const t2 = performance.now();
+		expect(r.counts.rows).toBe(rows);
+		expect(r.counts.includedPlays).toBeLessThan(r.counts.plays);
+		expect(page.items.length).toBeGreaterThan(0);
+		console.log(`SIZE select ${Math.round(t1 - t0)} ms, inspect ${Math.round(t2 - t1)} ms`);
+		expect(t1 - t0).toBeLessThan(5000);
+		expect(t2 - t1).toBeLessThan(5000);
 	});
 });

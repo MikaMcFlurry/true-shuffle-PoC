@@ -495,12 +495,166 @@ test.describe("a listener's day", () => {
 		expect(imports).toHaveLength(1);
 	});
 
+	test("the imported history can be looked through, narrowed, switched off and deleted", async ({
+		page,
+	}) => {
+		await signIn(page);
+		await page.goto("/import");
+		// Synthetic plays: one artist's songs in 2022 and 2023, another's in 2022.
+		const at = (y: number, i: number) => new Date(Date.UTC(y, i % 12, 2 + i, 18)).toISOString();
+		const song = (n: string, artist: string, ts: string) => ({
+			ts,
+			ms_played: 200_000,
+			spotify_track_uri: `spotify:track:${n.padStart(22, "W")}`,
+			master_metadata_track_name: `Auswahl ${n}`,
+			master_metadata_album_artist_name: artist,
+		});
+		const plays = [
+			...Array.from({ length: 6 }, (_, i) => song("1", "Nachtbus", at(2022, i))),
+			...Array.from({ length: 4 }, (_, i) => song("2", "Glasfabrik", at(2022, i + 6))),
+			...Array.from({ length: 2 }, (_, i) => song("3", "Nachtbus", at(2023, i))),
+			// Under 30 seconds and not skipped: kept, shown, counted for nothing.
+			{ ...song("4", "Kiesel", at(2023, 5)), ms_played: 4000 },
+		];
+		await page.locator('input[type="file"]').setInputFiles({
+			name: "Streaming_History_Audio_2022.json",
+			mimeType: "application/json",
+			buffer: Buffer.from(JSON.stringify(plays)),
+		});
+		await page.getByRole("button", { name: "Übernehmen" }).click();
+		await expect(page.getByRole("link", { name: "Dein Hörprofil ansehen" })).toBeVisible();
+		const api = async () =>
+			(await (await page.request.get("/api/history/selection")).json()) as {
+				revision: number;
+				selection: { enabled: boolean; rules: unknown[] };
+				counts: { plays: number; includedPlays: number } | null;
+				dataset: { hasImport: boolean; key: string };
+			};
+
+		await page.goto("/mehr");
+		await page.getByRole("link", { name: /Hörverlauf auswählen/ }).click();
+		await expect(
+			page.getByRole("heading", { name: "Hörverlauf auswählen", level: 1 }),
+		).toBeVisible();
+		await expect(page.getByText("12 von 12 Wiedergaben zählen").first()).toBeVisible();
+		await expect(page.getByText(/1 Wiedergabe kürzer als 30 Sekunden/)).toBeVisible();
+		await checkPage(page, "Auswahl");
+
+		// Looking: a search and a grouping change nothing.
+		await page.getByLabel("Song, Künstler oder Album").fill("Nachtbus");
+		await page.getByLabel("Gruppieren").selectOption("artist");
+		const row = page.locator(".selection__item", { hasText: "Nachtbus" });
+		await expect(row).toContainText("zählt");
+		await expect(row).toContainText("8 von 8 Wiedergaben");
+		expect((await api()).revision).toBe(0);
+
+		// Drafting: the preview shows the effect before anything is taken over.
+		await page.getByRole("button", { name: "Ausschließen: Nachtbus" }).click();
+		await expect(page.getByText("Künstler „Nachtbus“ ausgeschlossen")).toBeVisible();
+		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toContainText(
+			"4 von 12 Wiedergaben zählen",
+		);
+		await expect(row).toContainText("ausgeschlossen");
+		expect((await api()).revision).toBe(0);
+
+		// A failure does not pretend to have taken it over.
+		let fail = true;
+		await page.route(/\/api\/history\/selection$/, (route) => {
+			if (route.request().method() !== "POST" || !fail) return route.continue();
+			fail = false;
+			return route.fulfill({
+				status: 500,
+				contentType: "application/json",
+				body: JSON.stringify({ error: { code: "selection_failed", message: "Rechenfehler." } }),
+			});
+		});
+		await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
+		await expect(page.getByRole("alert")).toContainText("Nicht übernommen: Rechenfehler.");
+		expect((await api()).revision).toBe(0);
+
+		await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
+		await expect(
+			page.getByRole("status").filter({ hasText: "Übernommen (Stand 1)" }),
+		).toBeVisible();
+		expect(await api()).toMatchObject({ revision: 1, counts: { plays: 12, includedPlays: 4 } });
+
+		// The Hörprofil follows: Nachtbus is gone from it, the import says why.
+		await page.goto("/profil");
+		await page.getByRole("radio", { name: "Alles" }).check();
+		const top = page.getByRole("region", { name: "Am meisten gehört" });
+		await expect(top).toContainText("Glasfabrik");
+		await expect(top).not.toContainText("Nachtbus");
+		await expect(page.locator(".profile__source")).toContainText(
+			"8 importierte Wiedergaben sind ausgeschlossen",
+		);
+
+		// Another tab changes it meanwhile: this one's older state is refused, not taken over.
+		await page.goto("/auswahl");
+		await page.getByLabel("Gruppieren").selectOption("artist");
+		await page.getByRole("button", { name: "Ausschließen: Glasfabrik" }).click();
+		const other = await page.request.post("/api/history/selection", {
+			headers: { "x-ts": "1", "content-type": "application/json" },
+			data: { baseRevision: 1, enabled: true, rules: [] },
+		});
+		expect(other.ok()).toBe(true);
+		await page.getByRole("button", { name: "Auswahl übernehmen" }).click();
+		await expect(page.getByRole("alert")).toContainText("inzwischen geändert");
+		expect(await api()).toMatchObject({ revision: 2, counts: { includedPlays: 12 } });
+
+		// Switched off and on again: data and rules stay.
+		await page.reload();
+		await page.getByRole("button", { name: "Import ausschalten" }).click();
+		await expect(
+			page.getByRole("status").filter({ hasText: "Import ausgeschaltet" }),
+		).toBeVisible();
+		expect(await api()).toMatchObject({
+			selection: { enabled: false },
+			counts: { includedPlays: 0 },
+		});
+		await page.getByRole("button", { name: "Import wieder einschalten" }).click();
+		await expect(page.getByRole("button", { name: "Import ausschalten" })).toBeVisible();
+		expect(await api()).toMatchObject({
+			selection: { enabled: true },
+			counts: { includedPlays: 12 },
+		});
+
+		// On a phone, in the dark: readable, named, nothing sticking out.
+		await page.setViewportSize({ width: 360, height: 760 });
+		await page.emulateMedia({ colorScheme: "dark" });
+		await page.reload();
+		await expect(
+			page.getByRole("heading", { name: "Hörverlauf auswählen", level: 1 }),
+		).toBeVisible();
+		await expect(page.getByText("12 von 12 Wiedergaben zählen").first()).toBeVisible();
+		await checkPage(page, "Auswahl, Handy dunkel");
+		await checkContained(page, "Auswahl, Handy dunkel");
+		await page.emulateMedia({ colorScheme: "light" });
+		await page.setViewportSize({ width: 1280, height: 900 });
+
+		// Deleting: the scope is named first; cancelling changes nothing.
+		const key = (await api()).dataset.key;
+		await page.getByRole("button", { name: "Import löschen …" }).focus();
+		await page.keyboard.press("Enter");
+		const warn = page.getByRole("alert").filter({ hasText: "nicht rückgängig" });
+		await expect(warn).toContainText("13 Wiedergaben einzeln");
+		await expect(warn).toContainText("deine Spotify-Dateien");
+		await page.getByRole("button", { name: "Abbrechen" }).click();
+		expect(await api()).toMatchObject({ dataset: { hasImport: true, key } });
+		await page.getByRole("button", { name: "Import löschen …" }).click();
+		await page.getByRole("button", { name: "Endgültig löschen" }).click();
+		await expect(page.getByRole("status").filter({ hasText: "Import gelöscht" })).toBeVisible();
+		await page.reload();
+		await expect(page.getByText(/Kein Import gespeichert/)).toBeVisible();
+		expect(await api()).toMatchObject({ dataset: { hasImport: false }, counts: null });
+	});
+
 	test("every page reads well on a phone", async ({ page }) => {
 		await signIn(page);
 		await expect(page.getByRole("button", { name: /^Alles/ })).toBeVisible();
 		for (const path of [
 			"/verlauf",
 			"/import",
+			"/auswahl",
 			"/geraete",
 			"/fernbedienung",
 			"/info",

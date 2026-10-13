@@ -52,7 +52,6 @@ import {
 	type SelectionCounts,
 	SelectionError,
 	type SelectionResult,
-	type SelectionRule,
 	sameSelection,
 	selectImport,
 } from "../../core/import-selection";
@@ -687,6 +686,14 @@ interface PlaylistCountsMeta {
 	unclear: { id: string; name: string }[];
 	trueShuffle: number;
 	foreign: number;
+	/**
+	 * The playlist list this count used was not read in full for it (the walk
+	 * failed or was given up): own playlists may be missing, so no count is
+	 * complete. Absent in counts from before this was kept.
+	 */
+	listIncomplete?: boolean;
+	/** The list was to be read again for this count (it was older than ten minutes). */
+	needList?: boolean;
 }
 
 interface PlaylistCountsState {
@@ -6587,7 +6594,8 @@ export class HubCore {
 			throw err;
 		}
 		const cur = this.appliedSelection();
-		if (sameSelection({ enabled: cur.enabled, rules: cur.rules }, next)) return this.selectionView();
+		if (sameSelection({ enabled: cur.enabled, rules: cur.rules }, next))
+			return this.selectionView();
 		if (input.baseRevision !== cur.revision)
 			throw new HubError(
 				"selection_conflict",
@@ -6738,7 +6746,9 @@ export class HubCore {
 		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
 		if (!(meta?.state === "running" && this.jobExists("playlist-counts"))) {
 			this.db.run(`DELETE FROM jobs WHERE key = 'playlist-counts'`);
+			const needList = this.now() - this.syncState().lastPlaylistsAt >= 10 * MINUTE_MS;
 			this.kvSet("playlist_counts", {
+				needList,
 				state: "running",
 				startedAt: this.now(),
 				finishedAt: null,
@@ -6750,8 +6760,7 @@ export class HubCore {
 				foreign: 0,
 			} satisfies PlaylistCountsMeta);
 			this.playlistCountCache = null;
-			if (this.now() - this.syncState().lastPlaylistsAt >= 10 * MINUTE_MS)
-				this.enqueue("playlists", "playlists", {}, 1);
+			if (needList) this.enqueue("playlists", "playlists", {}, 1);
 			this.enqueue("playlist-counts", "playlist-counts", { phase: "wait" }, 7);
 			this.log("info", "playlists", "Zählung der eigenen Playlists gestartet");
 			if (this.isConnected()) await this.scheduleSoon(1000);
@@ -6775,6 +6784,10 @@ export class HubCore {
 			meta.trueShuffle = plan.trueShuffle;
 			meta.foreign = plan.foreign;
 			meta.listAt = this.syncState().lastPlaylistsAt || null;
+			// The walk this count asked for must have finished since it began; a
+			// walk given up leaves an older list, which may lack own playlists.
+			meta.listIncomplete =
+				meta.listAt === null || (meta.needList === true && meta.listAt < meta.startedAt);
 			const keep = new Set(plan.own);
 			for (const r of this.db.all<{ playlist_id: string }>(`SELECT playlist_id FROM playlist_scan`))
 				if (!keep.has(r.playlist_id)) {
@@ -6843,10 +6856,7 @@ export class HubCore {
 			try {
 				page = await client.playlistItems(id, offset);
 			} catch (err) {
-				if (
-					err instanceof SpotifyError &&
-					(err.kind === "forbidden" || err.kind === "not_found")
-				) {
+				if (err instanceof SpotifyError && (err.kind === "forbidden" || err.kind === "not_found")) {
 					failed(id, err.kind === "forbidden" ? "kein Zugriff" : "nicht gefunden");
 					i++;
 					offset = 0;
@@ -6871,6 +6881,12 @@ export class HubCore {
 					),
 				),
 			];
+			if (page.items.length === 0 && page.next) {
+				failed(id, "eine Seite fehlte");
+				i++;
+				offset = 0;
+				continue;
+			}
 			const pageNo = Math.floor(offset / PAGE_SIZE);
 			this.db.run(
 				`INSERT INTO playlist_member_pages (playlist_id, page, data) VALUES (?, ?, ?)
@@ -6880,7 +6896,7 @@ export class HubCore {
 				JSON.stringify(ids),
 			);
 			offset += page.items.length || PAGE_SIZE;
-			if (!page.next || page.items.length === 0) {
+			if (!page.next) {
 				this.db.run(
 					`UPDATE playlist_scan SET pages = ?, complete = 1, error = NULL, read_at = ? WHERE playlist_id = ?`,
 					pageNo + 1,
@@ -6891,7 +6907,8 @@ export class HubCore {
 				this.kvSet("playlist_counts", meta);
 				i++;
 				offset = 0;
-			} else this.db.run(`UPDATE playlist_scan SET pages = ? WHERE playlist_id = ?`, pageNo + 1, id);
+			} else
+				this.db.run(`UPDATE playlist_scan SET pages = ? WHERE playlist_id = ?`, pageNo + 1, id);
 			this.playlistCountCache = null;
 		}
 		return { done: false, state: { phase: "read", i, offset } };
@@ -6919,10 +6936,14 @@ export class HubCore {
 				for (const t of JSON.parse(r.data) as TrackId[]) songs.add(t);
 			for (const t of songs) map.set(t, (map.get(t) ?? 0) + 1);
 		}
+		// Complete only when every own playlist of a fresh list was read to its
+		// end and none is of unclear origin (it may be the listener's own).
 		const complete =
 			meta.state === "done" &&
 			meta.targets !== null &&
+			meta.listIncomplete !== true &&
 			meta.failed.length === 0 &&
+			meta.unclear.length === 0 &&
 			targets.every((id) => done.has(id));
 		this.playlistCountCache = { map, complete };
 		return this.playlistCountCache;
@@ -6956,17 +6977,12 @@ export class HubCore {
 			this.usedSources(),
 		);
 		return {
-			state: !meta
-				? "never"
-				: meta.state === "done"
-					? "done"
-					: job
-						? "running"
-						: "stopped",
+			state: !meta ? "never" : meta.state === "done" ? "done" : job ? "running" : "stopped",
 			startedAt: meta?.startedAt ?? null,
 			finishedAt: meta?.finishedAt ?? null,
 			listAt: meta?.listAt ?? null,
 			complete: c?.complete ?? false,
+			listIncomplete: meta?.listIncomplete === true,
 			playlists: {
 				own: meta?.targets?.length ?? 0,
 				read,

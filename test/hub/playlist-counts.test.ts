@@ -6,6 +6,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { songTags } from "../../src/client/components/song-tags-text";
 import { HOUR_MS, MINUTE_MS } from "../../src/core/types";
 import { FakeSpotify } from "../fakes/fake-spotify";
 import { onboarded } from "./harness";
@@ -13,7 +14,7 @@ import { onboarded } from "./harness";
 type H = Awaited<ReturnType<typeof onboarded>>;
 
 /** Playlist 1 (the station's source) holds songs 0–99; X is song 200, outside it. */
-async function setup() {
+async function setup(opts: { unclear?: boolean } = {}) {
 	const fake = new FakeSpotify();
 	const h = await onboarded({ fake, tracks: 300, playlists: [100] });
 	const t = [...fake.tracks.values()];
@@ -29,7 +30,9 @@ async function setup() {
 		JSON.stringify(ts.id),
 	);
 	// Named like true-shuffle, but none it knows: unclear, not counted.
-	const unclear = fake.addPlaylist("mika", "true-shuffle · Alter Sender", [X]);
+	const unclear = opts.unclear
+		? fake.addPlaylist("mika", "true-shuffle · Alter Sender", [X])
+		: null;
 	// Someone else's, followed by the listener: not their own.
 	fake.addUser("anna");
 	const foreign = fake.addPlaylist("anna", "Annas Mix", [X, t[0]!.id]);
@@ -49,8 +52,8 @@ const countOf = (h: H, id: string) =>
 	(h.hub as unknown as { playlistCountOf(): (id: string) => unknown }).playlistCountOf()(id);
 
 describe("songs across own playlists", () => {
-	it("counts each own playlist once, without true-shuffle's, others' or unclear ones", async () => {
-		const { h, X, t, unclear } = await setup();
+	it("counts each own playlist once, without true-shuffle's or others' ones", async () => {
+		const { h, X, t } = await setup();
 		expect(h.hub.playlistCountsView().state).toBe("never");
 		const v = await count(h);
 		expect(v).toMatchObject({
@@ -59,9 +62,11 @@ describe("songs across own playlists", () => {
 			playlists: { own: 3, read: 3, failed: [], foreign: 1 },
 		});
 		// The stations' own playlists and the discoveries playlist: all known as true-shuffle's.
-		const stationLists = h.sql.all(`SELECT playlist_id FROM stations WHERE playlist_id IS NOT NULL`);
+		const stationLists = h.sql.all(
+			`SELECT playlist_id FROM stations WHERE playlist_id IS NOT NULL`,
+		);
 		expect(v.playlists.trueShuffle).toBe(stationLists.length + 1);
-		expect(v.playlists.unclear).toEqual([{ id: unclear.id, name: unclear.name }]);
+		expect(v.playlists.unclear).toEqual([]);
 		expect(countOf(h, X)).toEqual({ count: 2, complete: true });
 		// In Playlist 1 only; and one in none of them: a known zero, the count being complete.
 		expect(countOf(h, t[5]!.id)).toEqual({ count: 1, complete: true });
@@ -88,7 +93,8 @@ describe("songs across own playlists", () => {
 	it("unchanged playlists are not read again; a changed one is", async () => {
 		const { h, fake, B, X } = await setup();
 		await count(h);
-		const reads = () => fake.calls.filter((c) => /\/playlists\/[^/]+\/items/.test(c) && c.startsWith("GET")).length;
+		const reads = () =>
+			fake.calls.filter((c) => /\/playlists\/[^/]+\/items/.test(c) && c.startsWith("GET")).length;
 		const first = reads();
 		await count(h);
 		expect(reads()).toBe(first);
@@ -147,5 +153,63 @@ describe("songs across own playlists", () => {
 		const v = h.hub.playlistCountsView();
 		expect(v).toMatchObject({ state: "stopped", complete: false });
 		expect((countOf(h, X) as { complete: boolean }).complete).toBe(false);
+	});
+
+	it("a playlist of unclear origin is not counted, and no count claims to be complete", async () => {
+		const { h, X, t, unclear } = await setup({ unclear: true });
+		const v = await count(h);
+		expect(v.playlists.unclear).toEqual([{ id: unclear!.id, name: unclear!.name }]);
+		expect(v).toMatchObject({ state: "done", complete: false });
+		expect(countOf(h, X)).toEqual({ count: 2, complete: false });
+		// Nowhere in a playlist read, but maybe in the unclear one: unknown, not none.
+		expect(countOf(h, t[190]!.id)).toEqual({ count: 0, complete: false });
+	});
+
+	it("an empty page while Spotify says there is more is a missing page, not the end", async () => {
+		const { h, fake, A, X } = await setup();
+		fake.failWhen = (m, path) =>
+			m === "GET" && path === `/playlists/${A.id}/items`
+				? {
+						status: 200,
+						body: { items: [], next: "https://fake/v1/more", total: 112, offset: 0, limit: 50 },
+					}
+				: null;
+		const v = await count(h);
+		expect(v).toMatchObject({ state: "done", complete: false });
+		expect(v.playlists.failed).toEqual([{ id: A.id, name: "Sommer", reason: "eine Seite fehlte" }]);
+		expect(countOf(h, X)).toEqual({ count: 1, complete: false });
+	});
+
+	it("a playlist list that could not be read again leaves every count incomplete", async () => {
+		const { h, fake, X } = await setup();
+		fake.failWhen = (m, path) => (m === "GET" && path === "/me/playlists" ? { status: 500 } : null);
+		h.clock.t += 11 * MINUTE_MS;
+		await h.hub.requestPlaylistCounts();
+		await h.listen(3 * HOUR_MS);
+		const v = h.hub.playlistCountsView();
+		expect(v).toMatchObject({ state: "done", complete: false, listIncomplete: true });
+		expect((countOf(h, X) as { complete: boolean }).complete).toBe(false);
+	});
+
+	it("the queue's tags claim only what was read", () => {
+		const facts = (count: number, complete: boolean) => ({
+			plays: 2,
+			lastPlayedAt: null,
+			inStation: true,
+			kind: null,
+			playlists: { count, complete },
+		});
+		const texts = (count: number, complete: boolean) =>
+			songTags("fresh", facts(count, complete)).map((x) => x.text);
+		expect(texts(2, true)).toContain("in 2 eigenen Playlists");
+		expect(texts(0, true)).toContain("in keiner eigenen Playlist");
+		expect(texts(2, false)).toContain("in mindestens 2 eigenen Playlists");
+		// Unknown is said nowhere as a number: no tag at all.
+		expect(texts(0, false).some((x) => /Playlist/.test(x))).toBe(false);
+		expect(
+			songTags("fresh", { ...facts(0, false), playlists: undefined }).some((x) =>
+				/Playlist/.test(x.text),
+			),
+		).toBe(false);
 	});
 });

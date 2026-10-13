@@ -1,0 +1,126 @@
+{
+	"schema": "true-shuffle.feature-evidence.v1",
+	"feature": "Imported history selection (B/C/D) and own-playlist counts (E)",
+	"branch": "claude/history-personalization-playlist-counts",
+	"base": {
+		"ref": "codex/implement-cloudflare-restart",
+		"commit": "8d62138184be9397ea22d55170928a4edbbc0725"
+	},
+	"head": "bound in the PR description (this file is part of the reviewed commit)",
+	"implementation": {
+		"model": "claude-opus-5-5",
+		"effort": "high",
+		"surface": "Claude Code CLI on the owner's Windows desktop"
+	},
+	"contract": "docs/HISTORY_SELECTION.md",
+	"persistence": {
+		"migration": "schema step 8 (additive): hist_stage, hist_effective, playlist_scan, playlist_member_pages",
+		"kv_added": ["history_selection", "history_effective", "hist_upload", "playlist_counts"],
+		"unchanged": [
+			"Durable Object classes, bindings and wrangler migration tag v1",
+			"UserHub/Registry names, APP_SECRET, account isolation",
+			"live plays, memory, thumbs, verdicts, bans, stations, discoveries, playback sessions"
+		]
+	},
+	"gates": {
+		"canonical_local": {
+			"environment": "Windows 11, Node v24.18.0, locked npm ci, LF worktree of the commit (core.autocrlf=false) so Biome sees the repository's line endings",
+			"npm run build": "PASS",
+			"npm run typecheck": "PASS",
+			"npm run lint": "PASS (2 pre-existing infos in untouched test/spotify/usage.test.ts)",
+			"npm test": "PASS — 47 files, 618 tests (baseline 8d62138: 43 files, 570 tests)",
+			"npx wrangler deploy --dry-run --outdir <tmp>": "PASS (bindings USER_HUB, REGISTRY, AI, ASSETS; no deployment)",
+			"npm run test:e2e": "NOT_RUN locally — see blocker; authoritative run is GitHub Actions (ubuntu, Node 24) on the PR"
+		},
+		"local_variants_not_canonical": {
+			"lint in the Windows working copy": "fails on every file due to core.autocrlf=true (CRLF worktree, LF index); not a source defect",
+			"playwright with a local cmd-compatible webServer override (not committed)": "BLOCKED: the unchanged baseline 8d62138 fails identically at 'signs in with Spotify and saves playlists as stations' — /auth/callback redirects to /?login=failed (token exchange from local workerd to the fake on 127.0.0.1:8788). Diagnosis stopped on coordinator instruction; no auth/proxy/safeguard changed."
+		}
+	},
+	"acceptance": {
+		"G1 targeted exclusion": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"test/hub/history-selection.test.ts › a left-out period leaves the raw plays findable and takes exactly their influence away (reference = browser aggregation of kept entries)",
+				"test/hub/selection-ranking.test.ts › real planQueue call receives the excluded song as never heard (taste 1, staleness 1.6); untouched song keeps its import",
+				"test/core/import-selection.test.ts › reference recount, song back into a left-out period"
+			]
+		},
+		"G2 re-inclusion and idempotence": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"history-selection › bringing it back returns exactly the same; the same selection twice changes nothing",
+				"history-selection › keeps the decision across reload, restart and a re-read of the storage (recomputed from stored data equals stored result)"
+			]
+		},
+		"G3 origin separation": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"history-selection › live play of the same song, thumbs, bans, stations, playback sessions, discoveries unchanged (table snapshots) across exclude, switch-off and delete",
+				"history-selection › a saved queue keeps its order"
+			]
+		},
+		"G4 persistence": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"history-selection › restart (new HubCore on the same SQLite), switch off/on keeps rules",
+				"e2e/app.spec.ts › reload of /auswahl (CI)"
+			]
+		},
+		"G5 races": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"history-selection › an older tab cannot take over a selection made on an older revision (409, nothing written)",
+				"history-selection › deletion during the totals upload refuses later blocks; late plays for a deleted import refused; deletion mid-plays-upload stops it",
+				"history-selection › a genre estimate asked for under the old selection does not land",
+				"client: preview answers carry a sequence; older answers are dropped; older revisions never shown as in force"
+			]
+		},
+		"G6 delete protection": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"history-selection › names its scope; cancelling or a stale scope changes nothing; deleting removes exactly it; restart keeps it deleted",
+				"e2e › cancel then confirm (CI)"
+			]
+		},
+		"G7 edge cases": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"history-selection › same files again; totals-only import; everything excluded; overlapping periods; invalid dates; empty account",
+				"import-selection › Europe/Berlin DST, America/Santiago skipped/doubled midnight, Pacific/Apia skipped day, period boundaries; neutral rows listed apart",
+				"import-selection › size: 300 000 plays / 100 000 songs"
+			]
+		},
+		"G8 playlist scope": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"test/hub/playlist-counts.test.ts › twice in A, once in B, once in a true-shuffle playlist → 2; A and B are not station sources",
+				"playlist-counts › 403 playlist, empty page with next, list not re-read, given-up job, unclear origin → incomplete; unknown is no zero (also in tags)",
+				"playlist-counts › 429 Retry-After respected for that page; unchanged snapshots not re-read; foreign playlist not counted"
+			]
+		},
+		"G9 UI and errors": {
+			"status": "PENDING_CI",
+			"evidence": [
+				"e2e/app.spec.ts › the imported history can be looked through, narrowed, switched off and deleted (search/group, exclude, preview, apply failure, apply, Hörprofil, stale-tab 409, off/on, 360 px dark, keyboard, delete cancel/confirm)",
+				"e2e/app.spec.ts › every page reads well on a phone now includes /auswahl"
+			]
+		},
+		"G10 migration and isolation": {
+			"status": "PASS (simulated)",
+			"evidence": [
+				"history-selection › the additive migration keeps every stored import and adds its tables (7 → 8, behaviour unchanged without a selection)",
+				"history-selection › two listeners: one's selection or deletion never reaches the other",
+				"existing protected queue/recovery suites unchanged and green (618/618)"
+			]
+		}
+	},
+	"not_run": [
+		"Live Spotify (owner account, real playlists, real Retry-After) — no new OAuth scope requested; playlist reads use the existing playlist-read scopes",
+		"Real Spotify export files of the owner — never used; only synthetic data",
+		"Physical devices, Home Assistant / Music Assistant",
+		"Populated production storage migration/restore",
+		"Local Windows browser suite (environment blocker above)"
+	],
+	"release": "No merge, no deployment. Merging into codex/implement-cloudflare-restart triggers Workers Builds and stays blocked until an explicit release instruction."
+}

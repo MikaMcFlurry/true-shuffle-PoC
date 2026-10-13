@@ -531,7 +531,12 @@ export function selectImport(input: {
 			to,
 			rules: [...effect.entries()]
 				.sort((a, b) => a[0] - b[0])
-				.map(([i, e]) => ({ key: m.keys[i]!, plays: e.plays, skips: e.skips, songs: e.songs.size })),
+				.map(([i, e]) => ({
+					key: m.keys[i]!,
+					plays: e.plays,
+					skips: e.skips,
+					songs: e.songs.size,
+				})),
 		},
 	};
 }
@@ -626,7 +631,13 @@ export function inspectImport(input: {
 		artist.toLocaleLowerCase("de").includes(q) ||
 		album.toLocaleLowerCase("de").includes(q) ||
 		id === query.q.trim();
-	const fresh = (key: string, name: string, artist: string, album: string, summaryOnly: boolean) => ({
+	const fresh = (
+		key: string,
+		name: string,
+		artist: string,
+		album: string,
+		summaryOnly: boolean,
+	) => ({
 		key,
 		name,
 		artist,
@@ -724,7 +735,9 @@ export function inspectImport(input: {
 		all.push({ ...rest, songs: songSet.size, status, rules: [...ruleSet].sort() });
 	}
 	const byName = (a: InspectItem, b: InspectItem) =>
-		a.name.localeCompare(b.name, "de") || a.artist.localeCompare(b.artist, "de") || (a.key < b.key ? -1 : 1);
+		a.name.localeCompare(b.name, "de") ||
+		a.artist.localeCompare(b.artist, "de") ||
+		(a.key < b.key ? -1 : 1);
 	all.sort((a, b) =>
 		query.sort === "name"
 			? byName(a, b)

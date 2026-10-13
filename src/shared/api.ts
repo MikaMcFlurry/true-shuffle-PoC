@@ -447,8 +447,13 @@ export interface PlaylistCountsView {
 	finishedAt: number | null;
 	/** When the list of playlists it used was read from Spotify. */
 	listAt: number | null;
-	/** Every own playlist was read to its end. */
+	/**
+	 * Every own playlist of a freshly read list was read to its end, and no
+	 * playlist is of unclear origin: only then is a count (and a 0) certain.
+	 */
 	complete: boolean;
+	/** The playlist list could not be read again for this count: own playlists may be missing. */
+	listIncomplete: boolean;
 	playlists: {
 		own: number;
 		read: number;

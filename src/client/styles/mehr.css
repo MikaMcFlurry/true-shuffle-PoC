@@ -565,7 +565,7 @@ label.row[aria-disabled="true"] {
 	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
-.selection__period .key {
+.selection__add {
 	justify-self: start;
 }
 
@@ -599,8 +599,7 @@ label.row[aria-disabled="true"] {
 	overflow-wrap: anywhere;
 }
 
-.selection__item .key,
-.selection__rules .key {
+.selection__act {
 	flex: none;
 	min-height: 44px;
 	padding: 0 12px;
@@ -637,8 +636,7 @@ label.row[aria-disabled="true"] {
 		flex-wrap: wrap;
 	}
 
-	.selection__item .key,
-	.selection__rules .key {
+	.selection__act {
 		width: 100%;
 	}
 }
