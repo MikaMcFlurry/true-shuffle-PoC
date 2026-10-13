@@ -1,9 +1,9 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-13T10:36:46.828499+00:00",
+  "generated_at": "2026-10-13T12:30:43.503209+00:00",
   "project": "true-shuffle",
   "subject": {
-    "revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
+    "revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
     "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
     "environment": "isolatedLinuxcheckout realHubSQLite/Worker/FakeSpotify and interceptedUI; not production",
     "environment_class": "LOCAL"
@@ -173,18 +173,6 @@
   ],
   "open_findings": [
     {
-      "id": "PR30-IMPORT-GENERATION",
-      "title": "Replacement totals use previous imported events; superseded event upload remains promotable",
-      "severity": "P2",
-      "blocking": true
-    },
-    {
-      "id": "PR30-DELETE-LATE-LISTENS",
-      "title": "Delayed legacy event upload resurrects explicitly deleted history",
-      "severity": "P2",
-      "blocking": true
-    },
-    {
       "id": "PR30-STALE-PREVIEW",
       "title": "Stale preview bulk excludes previous search match instead of current query",
       "severity": "P2",
@@ -210,8 +198,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
-          "observed_at": "2026-10-13T10:36:46.828499+00:00"
+          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+          "observed_at": "2026-10-13T12:30:43.503209+00:00"
         }
       ]
     },
@@ -227,8 +215,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
-          "observed_at": "2026-10-13T10:36:46.828499+00:00"
+          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+          "observed_at": "2026-10-13T12:30:43.503209+00:00"
         }
       ]
     },
@@ -237,15 +225,15 @@
       "category": "data_invariants",
       "required": true,
       "status": "FAIL",
-      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "rationale": "PR30 scoped backend repair PASS; overall release FAIL because inherited PR24\u201329 protected-contract blockers remain open. See PR29_REVIEW.json.",
       "evidence": [
         {
           "id": "G-DATA_INVARIANTS-PR30",
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
-          "observed_at": "2026-10-13T10:36:46.828499+00:00"
+          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+          "observed_at": "2026-10-13T12:30:43.503209+00:00"
         }
       ]
     },
@@ -261,8 +249,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
-          "observed_at": "2026-10-13T10:36:46.828499+00:00"
+          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+          "observed_at": "2026-10-13T12:30:43.503209+00:00"
         }
       ]
     },
@@ -278,8 +266,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
-          "observed_at": "2026-10-13T10:36:46.828499+00:00"
+          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+          "observed_at": "2026-10-13T12:30:43.503209+00:00"
         }
       ]
     },
@@ -312,15 +300,15 @@
       "category": "security_privacy",
       "required": true,
       "status": "FAIL",
-      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "rationale": "PR30 scoped backend repair PASS; overall release FAIL because inherited PR24\u201329 protected-contract blockers remain open. See PR29_REVIEW.json.",
       "evidence": [
         {
           "id": "G-SECURITY_PRIVACY-PR30",
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
-          "observed_at": "2026-10-13T10:36:46.828499+00:00"
+          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+          "observed_at": "2026-10-13T12:30:43.503209+00:00"
         }
       ]
     },
@@ -342,10 +330,10 @@
         {
           "id": "G-UI_RUNTIME-PR30",
           "kind": "actual-browser-render-and-API-interception",
-          "ref": "docs/ai-dev/evidence/pr30-review/pr30-ui-review.md",
+          "ref": "docs/ai-dev/evidence/pr30-recheck-9e8d/pr30-9e8d-ui.md",
           "result": "FAIL",
-          "subject_revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
-          "observed_at": "2026-10-13T10:36:46.828499+00:00"
+          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+          "observed_at": "2026-10-13T12:30:43.503209+00:00"
         }
       ]
     },
@@ -359,10 +347,10 @@
         {
           "id": "G-ACCESSIBILITY-PR30",
           "kind": "actual-browser-render-and-API-interception",
-          "ref": "docs/ai-dev/evidence/pr30-review/pr30-ui-review.md",
+          "ref": "docs/ai-dev/evidence/pr30-recheck-9e8d/pr30-9e8d-ui.md",
           "result": "PASS",
-          "subject_revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
-          "observed_at": "2026-10-13T10:36:46.828499+00:00"
+          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+          "observed_at": "2026-10-13T12:30:43.503209+00:00"
         }
       ]
     }

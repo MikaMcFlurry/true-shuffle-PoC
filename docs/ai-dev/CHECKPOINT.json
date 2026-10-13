@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "project": "true-shuffle",
   "subject": {
-    "revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
+    "revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
     "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json"
   },
   "branch": "codex/implement-cloudflare-restart",
@@ -44,7 +44,8 @@
     "PR27 exact29d reviewed555/46/4/static/CI PASS; fresh45PASS/1FAIL podcast consistency P2 reported6083736398; production873e/8bde unchanged.",
     "Externally merged27\u219228/ac23 verified;originalpodcastclosed;static/browser/resourcesPASS;two newP2scommented6084847874.",
     "ExternalPR29/8d62138 actualproductionverified;570unit/48browser/staticCI PASS;freshblockedreviewcommented.",
-    "PR30draft freshbackend/UIreview4findingscomment6143664484;618unit/49browser/staticdry bound evidence; production unchanged."
+    "PR30draft freshbackend/UIreview4findingscomment6143664484;618unit/49browser/staticdry bound evidence; production unchanged.",
+    "PR30 9e8d fresh backend64PASS: two findings CLOSED; UI preview partlyfixed, two originalP2s stillopen; static/browser/CI PASS; no release."
   ],
   "in_progress": [],
   "blocked": [
@@ -663,5 +664,5 @@
     "preservation_proof": "pr29-review/pr29-preservation.json"
   },
   "latest_watch_ref": "docs/ai-dev/evidence/PR_WATCH_2026_10_10.json",
-  "next_action": "Await concrete PR30 corrections and explicit finished release-scope comment; re-review exact heads, retain inherited blockers and restore existing CF access. No duplicate comments or intermediate releases."
+  "next_action": "Await remaining two PR30 UI corrections and explicit full release-scope completion comment; review exact heads, retain inherited blockers, restore existing Cloudflare access."
 }

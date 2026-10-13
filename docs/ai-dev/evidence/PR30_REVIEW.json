@@ -1,18 +1,18 @@
 {
   "schema_version": "true-shuffle.pr-review.v1",
-  "generated_at": "2026-10-13T10:36:46.828499+00:00",
+  "generated_at": "2026-10-13T12:30:43.503209+00:00",
   "pr": 30,
-  "source_sha": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
+  "source_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
   "base_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
   "target_branch": "codex/implement-cloudflare-restart",
-  "reviewed_application_sha": "a247910b596266c785c3d30e3f1d18c4465e9064",
-  "application_diff_to_current_head": "byte-identical src; onlye2e/app.spec.ts and HISTORY_SELECTION.json changed",
+  "reviewed_application_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+  "application_diff_to_current_head": "Actual functional repairs ce0dad6\u21929e8d inspected; fresh separate backend and UI reviews.",
   "provenance": "Actual GitHubloginMikaMcFlurry; git authorMikaHertler with Co-Authored-By ClaudeOpus5.5<noreply@anthropic.com>; branchclaude/history-personalization-playlist-counts; no inventedClaude login/session",
   "scope": "Substantial functional selection/import/delete/playlistjob/API/additiveSQLitev8; separately inspected, not UI-only scope. PR30built atop alreadyintegratedPR27\u219228\u219229.",
   "explicit_full_scope_completion": false,
   "draft": true,
   "verdict": "BLOCKED",
-  "scoped_backend_verdict": "NOT_READY",
+  "scoped_backend_verdict": "READY",
   "independence": "FRESH",
   "new_findings": [
     {
@@ -26,7 +26,9 @@
         "src/worker/hub/hub.ts:7566"
       ],
       "repro": "Old totals2/events2024+2025; replacement totals10 with missing new events; exclude2024 -> actual1 instead of totals-only10. Old staged event uploadA finishes after totalsB instead of409.",
-      "evidence": "pr30-review/pr30-independent-race.log"
+      "evidence": "pr30-recheck-9e8d/pr30-9e8d-backend.md",
+      "status": "CLOSED",
+      "verified_at_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5"
     },
     {
       "id": "PR30-DELETE-LATE-LISTENS",
@@ -38,7 +40,9 @@
         "src/worker/hub/hub.ts:7571"
       ],
       "repro": "Delete stored totals; delayed legacy eventpart0 withoutimportId pluspart1 recreateshasImporttrue,rows2,key-|g1.",
-      "evidence": "pr30-review/pr30-independent-race.log"
+      "evidence": "pr30-recheck-9e8d/pr30-9e8d-backend.md",
+      "status": "CLOSED",
+      "verified_at_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5"
     },
     {
       "id": "PR30-STALE-PREVIEW",
@@ -46,10 +50,14 @@
       "blocking": true,
       "title": "Stale preview bulk excludes previous search match instead of current query",
       "files": [
-        "src/client/screens/selection.tsx:175",
-        "src/client/screens/selection.tsx:626"
+        "src/client/screens/selection.tsx:123",
+        "src/client/screens/selection.tsx:227",
+        "src/client/screens/selection.tsx:668"
       ],
-      "evidence": "pr30-review/pr30-ui-harness-results.json"
+      "evidence": "pr30-recheck-9e8d/pr30-9e8d-ui.md",
+      "status": "PARTIALLY_FIXED",
+      "verified_at_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+      "repro": "Alpha search completes; hold Beta search preview; enabled bulk adds old Alpha rule while query Beta. Apply is now correctly disabled after this mutation; 503/current draft apply fence PASS."
     },
     {
       "id": "PR30-PENDING-DRAFT",
@@ -57,9 +65,13 @@
       "blocking": true,
       "title": "Delayed apply acknowledgment silently discards a newer draft edit",
       "files": [
-        "src/client/screens/selection.tsx:223"
+        "src/client/screens/selection.tsx:236",
+        "src/client/screens/selection.tsx:243"
       ],
-      "evidence": "pr30-review/pr30-ui-harness-results.json"
+      "evidence": "pr30-recheck-9e8d/pr30-9e8d-ui.md",
+      "status": "OPEN",
+      "verified_at_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+      "repro": "Hold Alpha apply ACK; edit Beta while pending; release ACK: Beta rule silently lost."
     }
   ],
   "inherited_review_ref": "PR29_REVIEW.json",
@@ -70,21 +82,25 @@
     "backend_independent": "48/48changed-scopePASS;3/3contractassertionsFAIL857ms",
     "physical_iPhone_liveSpotify_privateHA_populatedProductionRestore": "NOT_RUN",
     "ce0dad6": "appbyteidentical;localLintPASS;CI38384157864FAIL e2eapp226 banicon missing;28PASS1FAIL20NOT_RUN,drySKIPPED;CIstatic/unitPASS;causeunresolved",
-    "ui_independent": "4renders390/1440lightdarklongcontent,4keyboarddeletecancelPASS;stale-bulk+pendingdraft2contractFAIL;interceptedAPI notprovider"
+    "ui_independent": "4renders390/1440lightdarklongcontent,4keyboarddeletecancelPASS;stale-bulk+pendingdraft2contractFAIL;interceptedAPI notprovider",
+    "9e8d": "typecheck/lint/build/dry-run PASS; 631/631 clean unit PASS107.39s;49/49 canonical realWorker/FakeSpotify browser PASS2.1m; GitHub CI38390934267success",
+    "9e8d_independent": "Backend64/64PASS incl3originalrepros; 4new390/1440lightdarkrenders+keyboardPASS; original stale-bulk and pendingdraft-loss remainFAIL; newdraft/503applyfencePASS. Physical/providerNOT_RUN.",
+    "review_workspace_interference": "First static/unit run overlapped temporary independent probe discovery/removal: lint temporary unformattedfileFAIL, unit631PASS plus missingtemporarysuiteFAIL. These runs INVALID for clean-source claims; complete clean reruns retained separately."
   },
   "deployment": {
     "own_merge": false,
     "own_upload": false,
     "own_activation": false,
     "current_target_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
-    "public_assets": "19/19unchangedproductionSHA256",
+    "public_assets": "19/19 exact SHA256 unchanged; index.html checked after following redirect",
     "health": 200,
     "unsigned_state": 401,
-    "authenticated_readback": "NOT_RUN: existingB-CLOUDFLARE-ACCESS;Wranglerwhoamiunauthenticated",
+    "authenticated_readback": "NOT_RUN: fresh Wranglerwhoami unauthenticated. CFbot currentbranchbuild7e49665c-a9e5-4ad6-9390-33c7f01af467 FAILED; no details available; no productionfailure inferred.",
     "last_verified_version": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
     "last_verified_deployment": "7bdaed5d-f3f8-4afc-b424-900f1d67fded",
     "identity_freshness": "historical, not refreshed"
   },
   "comment_id": 6143664484,
-  "comment_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30#issuecomment-6143664484"
+  "comment_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30#issuecomment-6143664484",
+  "readback_ref": "pr30-recheck-9e8d/pr30-9e8d-github.json"
 }
