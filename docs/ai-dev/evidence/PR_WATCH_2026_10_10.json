@@ -1,0 +1,59 @@
+{
+  "schema_version": "true-shuffle.pr-watch.v1",
+  "checked_at": "2026-10-10T07:26:23.987388+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
+  "latest_pr": 29,
+  "head_sha": "27197dc5abbfdbb4fbd4d9ee6f874edb3becc6e6",
+  "github": "Current full inventory and actual issue/review/inline discussions read with GitHub connector. No new PR/head or Claude reply. PR24-29 bodies match committed archive including final own PR29 correction comment6086388418; earlier heads/comments unchanged from session readbacks.",
+  "provenance": "Actual login MikaMcFlurry, Claude author/session metadata; no invented login.",
+  "verdict": "BLOCKED",
+  "existing_review_ref": "docs/ai-dev/evidence/PR29_REVIEW.json",
+  "public_assets": "19/19 exact SHA256 match previous downloaded deployment, including sourcemap; not proof of Worker or deployment identity",
+  "public_api": {
+    "/api/health": {
+      "http_status": 200,
+      "body": {
+        "ok": true,
+        "version": "1.0.0",
+        "configured": true
+      }
+    },
+    "/api/state": {
+      "http_status": 401,
+      "body": {
+        "error": {
+          "code": "auth",
+          "message": "Bitte mit Spotify anmelden."
+        }
+      }
+    }
+  },
+  "cloudflare_authenticated_readback": "NOT_RUN",
+  "access_blocker": {
+    "id": "B-CLOUDFLARE-ACCESS",
+    "type": "CREDENTIAL",
+    "description": "Execution workspace replaced; prior local OAuth and readback scripts unavailable. No Cloudflare Workers connector callable. Installed-on-demand Wrangler4.141.0 whoami actually reports You are not authenticated. No Cloudflare environment credential or saved Wrangler credential file. Public access works; no renewed authenticated runtime/namespace/bindings/variables/secrets/version/traffic verification possible.",
+    "required_action": "Restore existing authorized Cloudflare access before authenticated readback or any release. No new release consent needed."
+  },
+  "last_verified_deployment": {
+    "version_id": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
+    "deployment_id": "7bdaed5d-f3f8-4afc-b424-900f1d67fded",
+    "percentage": 100,
+    "scope": "Historical authenticated observation from prior workspace, not freshly verified in this run."
+  },
+  "actions": {
+    "application_changes": false,
+    "pr_comments": false,
+    "merge": false,
+    "upload": false,
+    "deploy": false,
+    "rollback": false
+  },
+  "checks": "Unchanged application: retain exact earlier570unit/48browser/staticCI and fresh failing independent review; no unsupported rerun claims. Physical iPhone/liveSpotify/privateHA/populatedrestore NOT_RUN.",
+  "artifacts": [
+    "watch-2026-10-10/github-readback.json",
+    "watch-2026-10-10/public-assets.json",
+    "watch-2026-10-10/public-api.json"
+  ]
+}

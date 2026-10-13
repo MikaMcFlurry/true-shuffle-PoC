@@ -1,0 +1,79 @@
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mProxy environment variables detected. We'll use your proxy for fetch requests.[0m
+
+
+
+ ⛅️ wrangler 4.141.0
+────────────────────
+Your Worker has access to the following bindings:
+Binding                                                                     Resource                  Mode
+env.PROBE (AtomicProbe)                                                     Durable Object            local
+env.REGISTRY (Registry)                                                     Durable Object            local
+env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19142/accounts")               Environment Variable      local
+env.SPOTIFY_API_BASE ("http://127.0.0.1:19142/v1")                          Environment Variable      local
+env.LASTFM_API_BASE ("http://127.0.0.1:19142/lastfm")                       Environment Variable      local
+env.DEEZER_API_BASE ("http://127.0.0.1:19142/deezer")                       Environment Variable      local
+
+Wrangler detected this dev session is running in an AI agent.
+The Local Explorer API is available at http://127.0.0.1:19590/cdn-cgi/local/explorer/api
+Useful routes:
+  GET http://127.0.0.1:19590/cdn-cgi/local/explorer/api/local/workers - local Workers and bindings
+  POST http://127.0.0.1:19590/cdn-cgi/local/explorer/api/local/scheduled?worker=<name> - invoke a Worker's scheduled handler; cron is required (see the OpenAPI schema for the full request)
+  GET http://127.0.0.1:19590/cdn-cgi/local/explorer/api/storage/kv/namespaces - KV namespaces
+  GET http://127.0.0.1:19590/cdn-cgi/local/explorer/api/d1/database - D1 databases
+  GET http://127.0.0.1:19590/cdn-cgi/local/explorer/api/r2/buckets - R2 buckets
+  GET http://127.0.0.1:19590/cdn-cgi/local/explorer/api/workers/durable_objects/namespaces - Durable Object namespaces
+  GET http://127.0.0.1:19590/cdn-cgi/local/explorer/api/workflows - Workflows
+  POST http://127.0.0.1:19590/cdn-cgi/local/explorer/api/local/observability/query - run a read-only SQL query (SELECT/WITH only) over captured request traces and console logs. Tables: spans, logs (read attributes via json(attributes)). Example:
+    curl -X POST http://127.0.0.1:19590/cdn-cgi/local/explorer/api/local/observability/query -H 'Content-Type: application/json' -d '{"sql":"SELECT service, name, outcome, duration_ms FROM spans WHERE parent_id IS NULL LIMIT 20"}'
+  POST http://127.0.0.1:19590/cdn-cgi/local/explorer/api/local/observability/clear - clear all captured traces and logs
+If the routes above don't cover what you need, fetch the full OpenAPI schema (large - use only as a last resort):
+  GET http://127.0.0.1:19590/cdn-cgi/local/explorer/api - OpenAPI schema
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:19590
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[wrangler:info] GET /apply-after-events 200 OK (42ms)
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mhub error Error: Synthetic storage failure[0m
+
+      at raw.run (file:///tmp/pr30-a858-do/worker.ts:113:12)
+      at Object.run (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:766:9)
+      at HubCore.importChanged (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:6474:11)
+      at null.<anonymous> (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:6751:9)
+      at Object.transaction (file:///workspace/pr30-backend-a858/src/worker/userhub.ts:699:19)
+      at Object.transaction (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:755:16)
+      at HubCore.importTransaction (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:6540:19)
+      at HubCore.applySelection (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:6748:8)
+      at change (file:///tmp/pr30-a858-do/worker.ts:86:44)
+      at null.<anonymous> (file:///workspace/pr30-backend-a858/src/worker/userhub.ts:102:37)
+
+
+{"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[wrangler:info] GET /apply-after-events 500 Internal Server Error (14ms)
+[wrangler:info] GET /apply-after-events 200 OK (7ms)
+[wrangler:info] GET /apply-after-events 200 OK (15ms)
+[wrangler:info] GET /apply-after-events 200 OK (7ms)
+[wrangler:info] GET /apply-after-events 200 OK (6ms)
+[wrangler:info] GET /delete-after-events 200 OK (20ms)
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mhub error Error: Synthetic storage failure[0m
+
+      at raw.run (file:///tmp/pr30-a858-do/worker.ts:113:12)
+      at Object.run (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:766:9)
+      at HubCore.importChanged (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:6474:11)
+      at null.<anonymous> (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:6811:9)
+      at Object.transaction (file:///workspace/pr30-backend-a858/src/worker/userhub.ts:699:19)
+      at Object.transaction (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:755:16)
+      at HubCore.importTransaction (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:6540:19)
+      at HubCore.deleteImport (file:///workspace/pr30-backend-a858/src/worker/hub/hub.ts:6793:8)
+      at change (file:///tmp/pr30-a858-do/worker.ts:87:45)
+      at null.<anonymous> (file:///workspace/pr30-backend-a858/src/worker/userhub.ts:102:37)
+
+
+{"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 0 einzelne Wiedergaben"}
+[wrangler:info] GET /delete-after-events 500 Internal Server Error (9ms)
+[wrangler:info] GET /delete-after-events 200 OK (7ms)
+[wrangler:info] GET /delete-after-events 200 OK (11ms)
+[wrangler:info] GET /delete-after-events 404 Not Found (5ms)
+[wrangler:info] GET /delete-after-events 200 OK (8ms)
+🪵  Logs were written to "/home/agent/.config/.wrangler/logs/wrangler-2026-10-13_18-25-10_478.log"

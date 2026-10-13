@@ -1,0 +1,35 @@
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mProxy environment variables detected. We'll use your proxy for fetch requests.[0m
+
+
+
+ ⛅️ wrangler 4.141.0
+────────────────────
+├ Fetching latest deployment
+│
+├ Your current deployment has 1 version(s):
+│
+│ (100%) 02a3c025-a9f6-4da5-b6ce-d176d1c9f71c
+│       Created:  2026-10-09T09:30:58.391504Z
+│           Tag:  -
+│       Message:  -
+│
+? Please provide an optional message for this rollback (120 characters max)
+🤖 Using default value in non-interactive context: Rollback external PR19-22 rollout: known revoked-session genre disclosure on bcb2463; coherent PR23 remains blocked by independently reproduced lane occurrence provenance defect.
+│
+├  WARNING  You are about to rollback to Worker Version dd344c82-6ac5-4d1f-97ed-f81d6b79a891.
+│ This will immediately replace the current deployment and become the active deployment across all your deployed triggers.
+│ However, your local development environment will not be affected by this rollback.
+│ Rolling back to a previous deployment will not rollback any of the bound resources (Durable Object, D1, R2, KV, etc).
+│
+│ (100%) dd344c82-6ac5-4d1f-97ed-f81d6b79a891
+│       Created:  2026-10-08T21:11:38.029195Z
+│           Tag:  -
+│       Message:  -
+│
+? Are you sure you want to deploy this Worker Version to 100% of traffic?
+🤖 Using fallback value in non-interactive context: yes
+Performing rollback...
+│
+╰  SUCCESS  Worker Version dd344c82-6ac5-4d1f-97ed-f81d6b79a891 has been deployed to 100% of traffic.
+
+Current Version ID: dd344c82-6ac5-4d1f-97ed-f81d6b79a891

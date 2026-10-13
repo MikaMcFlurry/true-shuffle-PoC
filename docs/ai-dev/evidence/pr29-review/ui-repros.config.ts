@@ -1,0 +1,2 @@
+import { defineConfig } from "@playwright/test";
+export default defineConfig({testDir:"e2e",testMatch:"pr29-ui-review.spec.ts",workers:1,retries:0,timeout:30000,expect:{timeout:5000},reporter:[["list"]],outputDir:"e2e/.artifacts/pr29-ui",use:{baseURL:"http://127.0.0.1:8897",locale:"de-DE",launchOptions:{executablePath:"/usr/bin/chromium"}},webServer:{command:"npx vite build && python3 -m http.server 8897 --bind 127.0.0.1 --directory dist/client",url:"http://127.0.0.1:8897",reuseExistingServer:false,stdout:"ignore"}});

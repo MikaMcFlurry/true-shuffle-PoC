@@ -1,0 +1,12 @@
+
+> true-shuffle@1.0.0 test
+> vitest run test/hub/pr21-independent.test.ts -t independent control
+
+
+ RUN  v5.0.2 /tmp/pr21-baseline
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 4 skipped (5)
+   Start at  06:30:09
+   Duration  981ms (transform 62%, import 21%, tests 17%, worker 1%)

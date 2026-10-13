@@ -1,0 +1,12 @@
+
+> true-shuffle@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.2 /workspace/ts-review-19-22
+
+
+ Test Files  38 passed (38)
+      Tests  506 passed (506)
+   Start at  07:50:10
+   Duration  120.41s (tests 97%, import 2%, transform 1%)

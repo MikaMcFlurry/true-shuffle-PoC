@@ -1,0 +1,1 @@
+import {defineConfig} from '/workspace/ts-integrated932-backend/node_modules/vitest/dist/config.js'; export default defineConfig({test:{include:['/tmp/integrated932-attacks.test.ts','/tmp/integrated932-ui-attacks.test.ts','/tmp/integrated932-migration.test.ts','/tmp/integrated932-auth.test.ts'],environment:'node',testTimeout:20000,silent:'passed-only'}});

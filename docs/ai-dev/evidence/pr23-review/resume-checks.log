@@ -1,0 +1,8 @@
+
+ RUN  v5.0.2 /workspace/ts-review-23
+
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  10:19:02
+   Duration  687ms (transform 46%, tests 39%, import 14%, worker 1%)

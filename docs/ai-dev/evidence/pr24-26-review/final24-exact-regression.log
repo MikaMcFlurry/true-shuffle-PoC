@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-final24-new
+
+
+ Test Files  3 passed (3)
+      Tests  50 passed (50)
+   Start at  12:32:20
+   Duration  5.64s (tests 85%, transform 9%, import 6%)
+

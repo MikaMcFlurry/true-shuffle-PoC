@@ -1,0 +1,3 @@
+Initial full run: 639 PASS, 1 FAIL, 48 files. Duration175.06s.
+test/hub/robustness.test.ts:525 the listener's own choices and long stops (red-team 6), still skips a turned-down song an old order brings back after20h: Test timed out in20000ms.
+No assertion/timeout changed. Full unchanged rerun without parallel browser load launched; cause not established, not a proven load/flake diagnosis.

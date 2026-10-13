@@ -1,0 +1,8 @@
+
+ RUN  v5.0.2 /workspace/ts-final1921-independent
+
+
+ Test Files  5 passed (5)
+      Tests  134 passed (134)
+   Start at  07:51:54
+   Duration  103.97s (tests 97%, transform 1%, import 1%)

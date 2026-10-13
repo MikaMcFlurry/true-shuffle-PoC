@@ -1,0 +1,7 @@
+{
+  "source": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+  "actual_sha256": "e59f353a84a1f701cef7b1632cd8264e0de53d2913e7e1d8a6ec3f6fb67786e9",
+  "byte_exact": false,
+  "dependency_prefix_only_equal": true,
+  "normalization": "Only local ../ts-review-4b0a/node_modules/ \u2192 node_modules/ path prefix"
+}

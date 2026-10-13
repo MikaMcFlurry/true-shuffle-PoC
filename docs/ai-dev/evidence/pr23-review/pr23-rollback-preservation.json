@@ -1,0 +1,17 @@
+{
+  "settings_exact_equal": true,
+  "namespaces_exact_equal": true,
+  "secrets_exact_equal": true,
+  "schedules_exact_equal": true,
+  "bindings_exact_equal": true,
+  "runtime_exact_equal": true,
+  "rollback_etag_exact_equal": true,
+  "version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+  "deployment": "ff729fef-8700-4362-94c1-787addf3e65c",
+  "traffic": [
+    {
+      "version_id": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+      "percentage": 100
+    }
+  ]
+}

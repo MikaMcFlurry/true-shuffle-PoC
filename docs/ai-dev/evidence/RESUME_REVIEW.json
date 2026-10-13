@@ -1,0 +1,159 @@
+{
+  "subject": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+  "baseline": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+  "independence": "FRESH",
+  "verdict": "BLOCKED",
+  "scope": "Independent functional HubCore review; no application edits; real HubCore/node SQLite/FakeSpotify simulations only",
+  "findings": [
+    {
+      "id": "RESUME-01",
+      "severity": "P1",
+      "blocking": true,
+      "title": "History membership advances past an unfinished occurrence",
+      "files": [
+        "src/worker/hub/hub.ts:4908",
+        "src/worker/hub/hub.ts:4937"
+      ],
+      "reproduction": "Onboard 200 tracks of180000ms. Play station. Set provider progress177000; force sync; pause. Add provider recent listing of that same track/current station; force sync. Confirm saved progress177000. Normal Play starts next track/index1 at0 instead of same occurrence/index0 at177000. Separate restored null-progress case also skips0\u21921; a later track3 listing advances0\u21924 despite unfinished0/42000.",
+      "expected": "NN-04: resume same unfinished occurrence at latest observed progress, or same occurrence from0 if unavailable. A recent track listing alone is not occurrence completion proof.",
+      "actual": "resumePastHeard treats track-level played_at membership as completed; a5s cutoff discards valid observed near-end progress and null progress cannot satisfy midSong.",
+      "repair": "Require reliable occurrence-bound completion/forward observation evidence; preserve current stable occurrence for null/zero/near-end progress and avoid skipping intervening occurrences based only on furthest track ID. Add partial listing, unknown progress, near-end pause and repeated-occurrence regressions."
+    },
+    {
+      "id": "RESUME-02",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Definitive rejected resume irreversibly overwrites candidate checkpoint",
+      "files": [
+        "src/worker/hub/hub.ts:4954",
+        "src/worker/hub/hub.ts:5019"
+      ],
+      "reproduction": "Saved station at index0/progress23000; history track3/current context; player switched to unrelated context. Intercept PUT/me/player/play with403 PREMIUM_REQUIRED. play(id,mika-phone) returns premium refusal, but durable candidate changes index0/23000\u21924/0, pendingnull. Restart retains overwritten checkpoint.",
+      "expected": "Definitive refusal/preflight failure leaves existing candidate occurrence and progress intact; requested/accepted/observed stay distinct.",
+      "actual": "resumePastHeard saves new index/progress/observedAt before device selection/provider acceptance; existing catch only clears pending/status and cannot restore previous checkpoint.",
+      "repair": "Keep proposed start position separate from authoritative saved checkpoint; commit only after valid acceptance/observation, preserve prior fields after no-device/restricted/premium/quota/auth refusals; extend refused-start tests with history-backed advance."
+    },
+    {
+      "id": "RESUME-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Ten-minute track-only dedup drops distinct repeated listening history",
+      "files": [
+        "src/worker/hub/hub.ts:3752",
+        "src/worker/hub/hub.ts:3975"
+      ],
+      "reproduction": "Record one completed seen play with actual cached metadata via recordSeenPlay. Advance clock4min. Provider recently-played returns same track with new playedAt and DIFFERENT contextUri; full sync. plays count remains1 instead of2.",
+      "expected": "NN-02/NN-08: preserve distinct real listening occurrences, including repeated tracks/private\u2192normal/context switches; delayed listing of same occurrence deduplicates once.",
+      "actual": "seen_plays expanded to10min matches only trackid/time, not context or occurrence; new real listing is discarded and history/memory round accounting is lost.",
+      "repair": "Bind delayed-listing dedup to supported occurrence evidence and context; do not suppress distinct later starts/listings solely because trackid matches within10min. Add private observation\u2192distinct repeat under10min, different context, same context with distinct start and delayed same-occurrence tests."
+    }
+  ],
+  "evidence": {
+    "head_tests": "/tmp/resume-review/results.log",
+    "head_result": "6 intentional requirement assertions fail",
+    "baseline_tests": "/tmp/resume-review/baseline.log",
+    "baseline_result": "same6 assertions PASS",
+    "head_command": "cd /workspace/ts-review-5ea && ./node_modules/.bin/vitest run --config /tmp/resume-review/config.mts /tmp/resume-review/attacks.test.ts",
+    "baseline_command": "cd /workspace/ts-review-c05 && ./node_modules/.bin/vitest run --config /tmp/resume-review/config.mts /tmp/resume-review/baseline.test.ts",
+    "results.log": {
+      "sha256": "aeefc2fd2e06435cbbd94eaf4e8a47594d6315ba310b74bb4bf76822c3052400",
+      "tail": " 'T00000000000000000001c' // Object.is equality\n\nExpected: \"T00000000000000000001c\"\nReceived: \"T00000000000000000001k\"\n\n \u276f ../../tmp/resume-review/attacks.test.ts:35:142\n\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[4/6]\u23af\n\n FAIL  ../../tmp/resume-review/attacks.test.ts > partial later track does not prove skipped intervening occurrences completed\nAssertionError: expected 4 to be +0 // Object.is equality\n\n- Expected\n+ Received\n\n- 0\n+ 4\n\n \u276f ../../tmp/resume-review/attacks.test.ts:40:174\n\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[5/6]\u23af\n\n\n Test Files  1 failed (1)\n      Tests  6 failed (6)\n   Start at  11:25:18\n   Duration  731ms (transform 44%, tests 41%, import 14%, worker 1%)\n\n"
+    },
+    "baseline.log": {
+      "sha256": "7082f70ca58b68f49dd8a3492184b2447a7406eabd947466fa47f34a87111295",
+      "tail": "\n RUN  v5.0.2 /workspace/ts-review-c05\n\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  11:25:43\n   Duration  811ms (transform 43%, tests 42%, import 14%)\n\n"
+    }
+  },
+  "not_run": [
+    "physical iPhone",
+    "live Spotify",
+    "privateHA",
+    "populated production restore"
+  ],
+  "other": "Inspected pending expiry/trim/native fences; no additional confirmed defect. Existing UI storage/contrast findings were outside this new functional delta.",
+  "schema_version": "true-shuffle.resume-review.v1",
+  "observed_at": "2026-10-08T11:31:33.062871+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_sha": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+  "source_sha": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+  "baseline_sha": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+  "provenance": {
+    "pr": 15,
+    "branch": "claude/true-shuffle-queue-persistence-bx18fm",
+    "git_author": "Claude <noreply@anthropic.com>",
+    "session": "https://claude.ai/code/session_0167KrUyF2RG3YTctmguLsSQ",
+    "external_merge_at": "2026-10-08T10:37:18Z",
+    "completion_comment": null,
+    "review_comment_id": 6058883035
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS;two informational suggestions",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit": "449/449PASS",
+    "browser": "42/42PASS realWorker/FakeSpotify; functional assertions retained",
+    "independent_requirement_assertions": "6/6FAIL exacthead;6/6PASS baseline;second head run confirms",
+    "source_ci": {
+      "run": 37764682630,
+      "tested_sha": "b5b827a6064fdbe3421fd65023f605ec2903cc53",
+      "scope": "syntheticPR10merge5ea into5ffe99;449/42PASS"
+    },
+    "public_browser": [
+      {
+        "width": 390,
+        "colorScheme": "light",
+        "status": 200,
+        "errors": [],
+        "overflow": false,
+        "keyboardFocus": "A"
+      },
+      {
+        "width": 390,
+        "colorScheme": "dark",
+        "status": 200,
+        "errors": [],
+        "overflow": false,
+        "keyboardFocus": "A"
+      },
+      {
+        "width": 1440,
+        "colorScheme": "light",
+        "status": 200,
+        "errors": [],
+        "overflow": false,
+        "keyboardFocus": "A"
+      },
+      {
+        "width": 1440,
+        "colorScheme": "dark",
+        "status": 200,
+        "errors": [],
+        "overflow": false,
+        "keyboardFocus": "A"
+      }
+    ]
+  },
+  "deployment": {
+    "external_rejected_version": "6b2a79a2-275f-4607-bc4f-3e67adac7d59",
+    "external_rejected_deployment": "6e95f8c6-19b5-4b83-b353-d8d3de5175f7",
+    "external_created_at": "2026-10-08T10:37:43.602476Z",
+    "action_by_this_watch": "ROLLBACK authorized owner instruction;no merge/source revert/new upload",
+    "active_source_sha": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+    "active_version_id": "93f6d97c-81d0-423a-9abf-c0a6f3d58dd6",
+    "active_deployment_id": "b47b7259-9ae9-4182-801f-5303ef76ba77",
+    "active_created_at": "2026-10-08T11:27:50.499191Z",
+    "traffic_percent": 100,
+    "runtime_and_bindings_equal_before_after": true,
+    "migration_tag": "v1",
+    "USER_HUB": "59222ef9f3a642d4b90776fafa0eac84",
+    "REGISTRY": "2ccba352966f46a3b289eb159ccb3bc4",
+    "variables_secrets": "bindings preserved; no secret values emitted",
+    "assets": "75/75 exactbytes vs c05 build inclmap;_headers is routing config, not served resource",
+    "http": "health200/configured;auth401;POST missingCSRF403;foreignOriginwithoutmarker403;markerwithoutsession401",
+    "limitations": "Code rollback does not restore already overwritten checkpoint or missing history. Populated restore NOT_RUN. No DB/resource reset."
+  },
+  "ui_scope": "Client/artifacts unchanged from c05. SIX_SURFACE_REVIEW retains historical24local+24publicmatrix, long text, navigation/offline/theme/accessibility findings. Storage/contrast remain open. Responsiveness baseline simulation evidence retained without live-provider claim.",
+  "reproduction_test_source": "import {expect,it} from '__CHECKOUT__/node_modules/vitest/dist/index.js';\nimport {onboarded} from '__CHECKOUT__/test/hub/harness.ts';\nimport {RequestBudget} from '__CHECKOUT__/src/worker/spotify/client.ts';\nconst observe=(h:any)=>h.hub.sync(new RequestBudget(25),{force:true});\nconst ids=(h:any,id:number)=>JSON.parse(h.sql.first('SELECT deck FROM stations WHERE id = ?',id).deck).items.map((x:any)=>x.id);\nconst save=(h:any,id:number,s:any)=>h.sql.run('UPDATE playback_sessions SET data = ? WHERE station_id = ?',JSON.stringify(s),id);\nconst history=(h:any,id:number,index:number)=>{const s=h.hub.savedSession(id);const t=ids(h,id)[index];h.sql.run('INSERT INTO plays (played_at,track_id,context_uri,station_id,ignored,meta) VALUES (?,?,?,?,0,NULL)',h.clock.t,t,s.contextUri,id);};\nit.each([null,177000])('retains current unfinished occurrence with saved progress %s',async(progress)=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);await h.hub.playerAction('pause');\n const s=h.hub.savedSession(id)!;save(h,id,{...s,progressMs:progress});history(h,id,0);h.fake.user().player.contextUri='spotify:playlist:other';\n expect(await h.hub.play(id)).toMatchObject({ok:true});\n console.log('REPRO progress',progress,'index',h.hub.savedSession(id)!.currentIndex,'actual',h.fake.current(),'expected',ids(h,id)[0]);\n expect(h.hub.savedSession(id)!.currentIndex).toBe(0);expect(h.fake.current()).toBe(ids(h,id)[0]);\n});\nit('refused resume retains candidate checkpoint when history suggests advance',async()=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);await h.hub.playerAction('pause');const s=h.hub.savedSession(id)!;\n save(h,id,{...s,currentIndex:0,progressMs:23000});history(h,id,3);h.fake.user().player.contextUri='spotify:playlist:other';\n const handle=h.fake.handle.bind(h.fake);h.fake.handle=async req=>req.method==='PUT'&&new URL(req.url).pathname==='/v1/me/player/play'?new Response(JSON.stringify({error:{status:403,reason:'PREMIUM_REQUIRED',message:'premium'}}),{status:403}):handle(req);\n expect(await h.hub.play(id,'mika-phone')).toMatchObject({ok:false,error:{code:'premium'}});\n console.log('REPRO refused',h.hub.savedSession(id));expect(h.hub.savedSession(id)).toMatchObject({currentIndex:0,progressMs:23000});\n});\nit('a separate repeat within ten minutes is counted separately after seen first occurrence',async()=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);await h.hub.playerAction('pause');const s=h.hub.savedSession(id)!;const t=ids(h,id)[120];\n // Use actual packed track metadata from source cache via lookupTracks.\n const hub:any=h.hub;const track=hub.lookupTracks([t],hub.usedSources()).get(t);const at=h.clock.t;\n expect(hub.recordSeenPlay({id:t,at,start:at-180000,end:at,contextUri:s.contextUri,track})).not.toBeNull();\n h.clock.t+=4*60000;h.fake.user().recent.unshift({trackId:t,playedAt:h.clock.t,contextUri:'spotify:playlist:different'});await observe(h);\n const n=h.sql.first('SELECT COUNT(*) AS n FROM plays WHERE track_id = ?',t).n;console.log('REPRO repeat',n);expect(n).toBe(2);\n});\n\nit('real paused 177s unfinished song is not skipped by recent partial listing',async()=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);h.fake.user().player.progressMs=177000;await observe(h);await h.hub.playerAction('pause');const before=h.hub.savedSession(id)!;const t=ids(h,id)[before.currentIndex];\n h.fake.user().recent.unshift({trackId:t,playedAt:h.clock.t,contextUri:before.contextUri});await observe(h);\n expect(h.hub.savedSession(id)!.progressMs).toBe(177000);expect(await h.hub.play(id)).toMatchObject({ok:true});\n console.log('REPRO actual paused end',before.currentIndex,h.hub.savedSession(id)!.currentIndex,h.fake.current(),t);expect(h.fake.current()).toBe(t);expect(h.fake.user().player.progressMs).toBe(177000);\n});\nit('partial later track does not prove skipped intervening occurrences completed',async()=>{\n const h=await onboarded({tracks:200,durationMs:180000});const id=h.stationIds[0]!;await h.hub.play(id);h.fake.user().player.progressMs=42000;await observe(h);await h.hub.playerAction('pause');const before=h.hub.savedSession(id)!;const t=ids(h,id)[3];\n h.fake.user().recent.unshift({trackId:t,playedAt:h.clock.t,contextUri:before.contextUri});h.fake.user().player.contextUri='spotify:playlist:other';await observe(h);\n expect(await h.hub.play(id)).toMatchObject({ok:true});console.log('REPRO future partial',h.hub.savedSession(id)!.currentIndex);expect(h.hub.savedSession(id)!.currentIndex).toBe(before.currentIndex);\n});\n",
+  "reproduction_recipe": "Extract reproduction_test_source replacing __CHECKOUT__ with exact clean checkout path into /tmp/resume-review/attacks.test.ts. Config test.include=[/tmp/resume-review/*.test.ts],environment=node,testTimeout=20000,silent=passed-only. Run node_modules/.bin/vitest run --config /tmp/resume-review/config.mts /tmp/resume-review/attacks.test.ts. Repeat same source/absolute imports with baseline checkout."
+}

@@ -1,0 +1,62 @@
+
+ RUN  v5.0.2 /workspace/ts-pr2425-independent
+
+stdout | test/hub/pr24-independent.test.ts > unseen repeated same song at greater progress cannot inherit previous occurrence lane
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr24-independent.test.ts > unseen repeated same song at greater progress cannot inherit previous occurrence lane
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr24-independent.test.ts > unseen repeated same song at greater progress cannot inherit previous occurrence lane
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr24-independent.test.ts > unseen repeated same song at greater progress cannot inherit previous occurrence lane
+original/repeat notes {
+  station: 1,
+  id: 'T00000000000000000001e',
+  kind: 'fresh',
+  seenAt: 1790316781500,
+  lastAt: 1790316781500,
+  progress: 0,
+  playing: true,
+  durationMs: 180000
+} {
+  station: 1,
+  id: 'T00000000000000000001e',
+  kind: 'fresh',
+  seenAt: 1790316781500,
+  lastAt: 1790316887500,
+  progress: 40000,
+  playing: true,
+  durationMs: 180000
+}
+
+ ❯ test/hub/pr24-independent.test.ts (1 test | 1 failed) 254ms
+   × unseen repeated same song at greater progress cannot inherit previous occurrence lane 253ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr24-independent.test.ts > unseen repeated same song at greater progress cannot inherit previous occurrence lane
+AssertionError: expected 'fresh' to be null
+
+- Expected:
+null
+
++ Received:
+"fresh"
+
+ ❯ test/hub/pr24-independent.test.ts:35:40
+     33|  const later=h.hub.history(200).filter(e=>e.id===t);
+     34|  expect(later.length).toBe(1);
+     35|  expect(later[0]!.facts?.kind ?? null).toBeNull();
+       |                                        ^
+     36| });
+     37|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  11:53:42
+   Duration  822ms (transform 51%, tests 36%, import 12%, worker 1%)

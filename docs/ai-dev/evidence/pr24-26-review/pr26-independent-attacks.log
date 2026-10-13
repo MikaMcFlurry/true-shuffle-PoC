@@ -1,0 +1,109 @@
+
+ RUN  v5.0.2 /workspace/ts-pr26-backend-fresh
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a stale tab chunk instead of pairing it with a replacement dictionary
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a stale tab chunk instead of pairing it with a replacement dictionary
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a stale tab chunk instead of pairing it with a replacement dictionary
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a stale tab chunk instead of pairing it with a replacement dictionary
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 1 Wiedergaben"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a missing dictionary entry rather than silently discarding its play
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a missing dictionary entry rather than silently discarding its play
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a missing dictionary entry rather than silently discarding its play
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a missing dictionary entry rather than silently discarding its play
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 1 Wiedergaben"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects unordered plays whose first live-era row hides later older imports
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects unordered plays whose first live-era row hides later older imports
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects unordered plays whose first live-era row hides later older imports
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects unordered plays whose first live-era row hides later older imports
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 2 Wiedergaben"}
+
+ ❯ test/hub/pr26-independent-attacks.test.ts (4 tests | 4 failed) 667ms
+   ❯ PR26 independent upload attacks (4)
+     × rejects a stale tab chunk instead of pairing it with a replacement dictionary 319ms
+     × rejects a missing dictionary entry rather than silently discarding its play 173ms
+     × rejects unordered plays whose first live-era row hides later older imports 78ms
+     × keeps all events of one local calendar week in the same Monday bucket across fall DST 92ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a stale tab chunk instead of pairing it with a replacement dictionary
+AssertionError: expected [Function result] to throw an error
+ ❯ test/hub/pr26-independent-attacks.test.ts:16:18
+     14|   // Tab A resumes its in-flight rows after tab B started a new genera…
+     15|   const result=()=>h.hub.importListens(part('rows',[[at,0,120000,0,1]]…
+     16|   expect(result).toThrow();
+       |                  ^
+     17|  });
+     18|  it('rejects a missing dictionary entry rather than silently discardin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects a missing dictionary entry rather than silently discarding its play
+AssertionError: expected [Function] to throw an error
+ ❯ test/hub/pr26-independent-attacks.test.ts:21:132
+     19|   const h=await onboarded({tracks:40});
+     20|   h.hub.importListens({part:0,parts:2,tracks:2,kind:'tracks',data:[tra…
+     21|   expect(()=>h.hub.importListens({part:1,parts:2,tracks:2,kind:'rows',…
+       |                                                                                                                                    ^
+     22|  });
+     23|  it('rejects unordered plays whose first live-era row hides later olde…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > rejects unordered plays whose first live-era row hides later older imports
+AssertionError: expected [Function] to throw an error
+ ❯ test/hub/pr26-independent-attacks.test.ts:29:8
+     27|    [Math.floor(h.clock.t/1000),0,120000,0,1],
+     28|    [Math.floor((h.clock.t-DAY_MS)/1000),0,120000,0,1],
+     29|   ]})).toThrow();
+       |        ^
+     30|  });
+     31|  it('keeps all events of one local calendar week in the same Monday bu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/hub/pr26-independent-attacks.test.ts > PR26 independent upload attacks > keeps all events of one local calendar week in the same Monday bucket across fall DST
+AssertionError: expected [ { key: '2026-10-19', …(2) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ test/hub/pr26-independent-attacks.test.ts:35:32
+     33|   const result=periodProfile([e('2026-10-19T10:00:00Z'), e('2026-10-25…
+     34|   expect(result.series.unit).toBe('week');
+     35|   expect(result.series.points).toHaveLength(1);
+       |                                ^
+     36|  });
+     37| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  12:31:43
+   Duration  2.55s (transform 61%, tests 29%, import 10%)
+

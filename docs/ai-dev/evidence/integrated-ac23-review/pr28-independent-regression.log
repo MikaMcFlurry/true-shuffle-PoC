@@ -1,0 +1,13 @@
+
+ RUN  v5.0.2 /workspace/ts-pr28-independent
+
+
+ Test Files  4 passed (4)
+      Tests  39 passed (39)
+   Start at  16:16:20
+   Duration  4.64s (transform 61%, tests 20%, import 18%, worker 1%)
+
+  Transform  transforming modules took 4.89s · 61% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

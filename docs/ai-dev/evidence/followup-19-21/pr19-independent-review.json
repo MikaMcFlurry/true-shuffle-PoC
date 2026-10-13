@@ -1,0 +1,203 @@
+{
+  "reviewed_at": "2026-10-09T06:33:04.912914+00:00",
+  "subject": {
+    "pull_request": 19,
+    "head": "976f81d70897829094e385987fc64e7fcf0ebb27",
+    "base": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "workspace": "/workspace/ts-review-19"
+  },
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "UI-only independent review of mix/favourite sliders; no app changes, external comments, merge or deploy. Source comparison plus actual built client and local Cloudflare Worker/Durable Objects using FakeSpotify.",
+  "findings": [
+    {
+      "id": "PR19-UI-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Favourite slider drops successive keyboard adjustments while a save is pending",
+      "file": "src/client/screens/station.tsx",
+      "line": 71,
+      "preconditions": "Saved favouriteShare0.37, expanded advanced settings, delay outbound PATCH1200ms while allowing real Worker to handle it afterward.",
+      "steps": [
+        "Focus #r-share.",
+        "Press ArrowRight twice30ms apart, before either PATCH returns.",
+        "Inspect range value, outgoing PATCH bodies and saved station rules after both saves."
+      ],
+      "expected": "37→38→39 locally, with final favouriteShare0.39 persisted; pending save must not reset the next keyboard adjustment.",
+      "actual": "The range resets to37 after each key; both PATCH bodies are {rules:{favoriteShare:0.38}} and stored favouriteShare ends0.38.",
+      "evidence": {
+        "scenario": "rapid keyboard increments with 1200ms delayed PATCH",
+        "start": 37,
+        "firstDisplayed": "37",
+        "secondDisplayed": "37",
+        "requests": [
+          {
+            "rules": {
+              "favoriteShare": 0.38
+            }
+          },
+          {
+            "rules": {
+              "favoriteShare": 0.38
+            }
+          }
+        ],
+        "saved": 0.38
+      },
+      "cause": "onInput records the new local drag value, but onChange clears it immediately while props.value still contains the previous saved value. That render resets the native input before the next key.",
+      "impact": "Keyboard users lose repeated keypresses and receive a misleading rollback during normal network latency; violates preserved customization and keyboard-operation requirements NN-08/NN-11.",
+      "repair_direction": "Retain the selected local value through acknowledgement, and fence asynchronous save acknowledgements so an older response cannot replace a newer desired value. Restore confirmed state explicitly on failure.",
+      "required_regression_checks": [
+        "Native keyboard ArrowRight twice and held/repeated arrows with delayed responses produce every increment and persist the latest value.",
+        "Home/End and pointer commit use the chosen value while pending.",
+        "Delayed/out-of-order successful or failed writes cannot overwrite newer user intent; offline failure remains visible and confirmed state recovers.",
+        "Automatic checkbox mode and navigation do not drop the last committed preference."
+      ]
+    },
+    {
+      "id": "PR19-UI-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Previously valid favourite percentages above60 are clamped in the native control",
+      "file": "src/client/screens/station.tsx",
+      "line": 66,
+      "preconditions": "Existing station favouriteShare0.85 accepted and stored by unchanged normaliseRules (0..1). Baseline dropdown includes a dynamic option for existing non-preset values.",
+      "steps": [
+        "Seed favoriteShare0.85 through the actual station API, reload and expand advanced settings.",
+        "Inspect #r-share.value, max, aria-valuetext and visible label.",
+        "Press ArrowLeft once and inspect saved rule."
+      ],
+      "expected": "Existing85% preference is faithfully represented and one decrement produces84%, or a deliberate compatible control preserves its current custom value without silently starting from60.",
+      "actual": "Server and label say85%; native range value is60 with max60 while aria-valuetext says85%. One ArrowLeft saves59%, a26-point reduction.",
+      "evidence": [
+        {
+          "scenario": "pre-existing85% saved value",
+          "server": 0.85,
+          "domValue": "60",
+          "aria": "85 Prozent Favoriten",
+          "max": "60",
+          "label": "Fester Anteil\n85 %"
+        },
+        {
+          "scenario": "one ArrowLeft from saved85",
+          "server": 0.59,
+          "domValue": "59",
+          "aria": "59 Prozent Favoriten"
+        }
+      ],
+      "impact": "Existing customization is misrepresented, and a single ordinary keyboard adjustment changes a preserved rule far more than requested. NN-02/NN-08 require preserving preferences and advanced controls.",
+      "repair_direction": "Support the preserved rule domain or retain an explicit compatible custom-value path; keep native value, bounds, visible label and accessibility value consistent.",
+      "required_regression_checks": [
+        "Existing61%,85%,100% favourite rules render consistent native/visible/ARIA values and remain unchanged on open/reload.",
+        "One decrement from85% saves84%; automatic mode can still store null.",
+        "Retain0/1/60% boundaries and ordinary pointer/keyboard behavior."
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "gate": "npm run build",
+      "status": "PASS"
+    },
+    {
+      "gate": "mix0..100 native input/readout and one debounced real PATCH",
+      "status": "PASS"
+    },
+    {
+      "gate": "mixpartialpatch preserves all other rules",
+      "status": "PASS"
+    },
+    {
+      "gate": "mixkeyboard Home/ArrowRight and immediate navigation flush",
+      "status": "PASS"
+    },
+    {
+      "gate": "favourite intermediate DOM input stays local until change;37% real API save",
+      "status": "PASS"
+    },
+    {
+      "gate": "favourite0/1/60% and automatic null persist",
+      "status": "PASS"
+    },
+    {
+      "gate": "mix503 failure shows error and restores server mix",
+      "status": "PASS"
+    },
+    {
+      "gate": "phone390/desktop1440 light/dark long-label render; no page overflow;44px ranges",
+      "status": "PASS"
+    },
+    {
+      "gate": "offlinefavourite error visible and server preference unchanged",
+      "status": "PASS"
+    },
+    {
+      "gate": "new cassette intermediate mix37 saved via real Worker",
+      "status": "PASS"
+    },
+    {
+      "gate": "favourite rapid native keyboard increments during slow PATCH",
+      "status": "FAIL"
+    },
+    {
+      "gate": "existing favourite85% compatibility",
+      "status": "FAIL"
+    },
+    {
+      "gate": "uncaught browser page errors",
+      "status": "PASS",
+      "detail": []
+    }
+  ],
+  "visual_evidence": {
+    "screenshots": [
+      "/tmp/pr19-390-light.png",
+      "/tmp/pr19-390-dark.png",
+      "/tmp/pr19-1440-light.png",
+      "/tmp/pr19-1440-dark.png"
+    ],
+    "focused_captures": [
+      "/tmp/pr19-mix-390-light.png",
+      "/tmp/pr19-mix-390-dark.png",
+      "/tmp/pr19-mix-1440-light.png",
+      "/tmp/pr19-mix-1440-dark.png",
+      "/tmp/pr19-fav-390-light.png",
+      "/tmp/pr19-fav-390-dark.png",
+      "/tmp/pr19-fav-1440-light.png",
+      "/tmp/pr19-fav-1440-dark.png"
+    ],
+    "inspection": "Actual four viewport/theme captures inspected; German long cassette labels and range/readouts fit. Theme accents update from light rgb194,65,42 to dark rgb239,107,74. No style preference finding.",
+    "detector": "/tmp/pr19-detector.json: eleven advisory pre-existing font-ramp findings, none introduced by slider diff; no blocking detector finding."
+  },
+  "artifacts": [
+    "/tmp/pr19-checks.mjs",
+    "/tmp/pr19-browser-evidence.json",
+    "/tmp/pr19-followup.mjs",
+    "/tmp/pr19-followup-evidence.json",
+    "/tmp/pr19-detector.json"
+  ],
+  "not_run": [
+    {
+      "surface": "Physical iPhone/Safari/device touch behavior",
+      "status": "NOT_RUN"
+    },
+    {
+      "surface": "Live Spotify transport, API latency, listening and rate/quota capacity",
+      "status": "NOT_RUN"
+    },
+    {
+      "surface": "Production deployment/HA/MA/populated restore",
+      "status": "NOT_RUN"
+    },
+    {
+      "surface": "Comprehensive whole-repository gates",
+      "status": "NOT_RUN",
+      "detail": "Parent owns combined build/typecheck/lint/unit/Worker/browser; this independent context ran targeted UI/browser and source checks only."
+    }
+  ],
+  "limitations": [
+    "All provider behavior is FakeSpotify. Actual client/Worker runtime evidence does not establish live Spotify behavior.",
+    "The0..100 exhaustive loop dispatches native DOM input events; keyboard behavior uses actual Playwright keypresses.",
+    "No explicit implementation completion claim was assumed; scoped verdict addresses exact identified PRhead."
+  ]
+}

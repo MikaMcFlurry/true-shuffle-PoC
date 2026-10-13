@@ -1,0 +1,8 @@
+{
+  "version": "473f96c8-35ad-486b-9592-b7005d0f40b9",
+  "source": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+  "byte_exact": false,
+  "byte_exact_normalized_dependency_path_prefix_only": true,
+  "normalization": "ONLY localdependency ../ts-review-4b0a/node_modules/ pathprefix; no appcode transform",
+  "actual_sha256": "6dfec077804a184622f50e687fe8879d746c8aaad6b1556c0b190535722beb93"
+}

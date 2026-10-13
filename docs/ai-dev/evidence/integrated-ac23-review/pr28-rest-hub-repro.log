@@ -1,0 +1,46 @@
+
+ RUN  v5.0.2 /workspace/ts-pr28-independent
+
+stdout | test/hub/pr28-rest-hub.test.ts > real Hub new native queue keeps overplayed imported song out during 90-day rest
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr28-rest-hub.test.ts > real Hub new native queue keeps overplayed imported song out during 90-day rest
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr28-rest-hub.test.ts > real Hub new native queue keeps overplayed imported song out during 90-day rest
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr28-rest-hub.test.ts > real Hub new native queue keeps overplayed imported song out during 90-day rest
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+HUB_REST {"station":1,"song":"T000000000000000000000","currentIndex":0,"entryCount":40}
+
+ ❯ test/hub/pr28-rest-hub.test.ts (1 test | 1 failed) 264ms
+   × real Hub new native queue keeps overplayed imported song out during 90-day rest 262ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr28-rest-hub.test.ts > real Hub new native queue keeps overplayed imported song out during 90-day rest
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/pr28-rest-hub.test.ts:17:48
+     15|  const row=h.sql.first<{deck:string}>('SELECT deck FROM stations WHERE…
+     16|  const deck=JSON.parse(row.deck);
+     17|  expect(deck.items.some((x:any)=>x.id===song)).toBe(false);
+       |                                                ^
+     18| });
+     19|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:18:14
+   Duration  1.10s (transform 53%, tests 29%, import 17%, worker 1%)
+

@@ -1,0 +1,130 @@
+{
+  "reviewer": "integrated932_backend",
+  "independence": "FRESH",
+  "subject_revision": "93241a7129e18689f5ea664bad5273f6613552a0",
+  "verdict": "READY_WITH_NON_BLOCKING_FINDINGS",
+  "scope": "PR26 backend/import/profiling closure review only; excludes PR24/25 functional acceptance and remote release authority",
+  "recorded_at": "2026-10-09T14:30:02.497269+00:00",
+  "app_changes_by_reviewer": false,
+  "remote_operations_by_reviewer": false,
+  "worktree": "/workspace/ts-integrated932-backend",
+  "checks": [
+    {
+      "name": "targeted existing profile, period, session, recovery, genre regressions",
+      "status": "PASS",
+      "tests": 55,
+      "log": "/tmp/integrated932-regressions.log"
+    },
+    {
+      "name": "independent contract attacks/migration/session-isolation checks",
+      "status": "FAIL",
+      "passed": 9,
+      "failed": 1,
+      "log": "/tmp/integrated932-backend-attacks.log",
+      "failure": "unchanged nonblocking inexact artist ranking mismatch"
+    }
+  ],
+  "closures": [
+    {
+      "id": "PR26-IMPORT-GENERATION-01",
+      "status": "CLOSED",
+      "evidence": "Server-issued token reproduced stale Tab A refusal after Tab B superseded it; existing regression covers restart"
+    },
+    {
+      "id": "PR26-IMPORT-VALIDATION-02",
+      "status": "CLOSED",
+      "evidence": "Actual song count required before rows; missing dictionary independently rejected"
+    },
+    {
+      "id": "PR26-IMPORT-ORDER-03",
+      "status": "CLOSED",
+      "evidence": "Descending within-block rows independently rejected; existing suite covers across blocks"
+    },
+    {
+      "id": "PR26-PROFILE-DST-04",
+      "status": "CLOSED",
+      "evidence": "Berlin fall DST same-week events combine into one Monday bucket"
+    },
+    {
+      "id": "PR26-PROFILE-YEAR",
+      "status": "CLOSED",
+      "evidence": "Explicit previousFrom calendar comparison excludes Dec 31 2022 for comparison named 2023; client constructs calendar-year prior start"
+    },
+    {
+      "id": "PR26-PROFILE-SESSION",
+      "status": "CLOSED",
+      "evidence": "Two 30-minute listens with 9-minute gap sum 60 minutes; UI now explicitly says no gap over ten minutes rather than without pause"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PR26-PROFILE-RANK",
+      "severity": "P2",
+      "blocking": false,
+      "unchanged": true,
+      "title": "Inexact artist/album display ranks by duration while showing play counts",
+      "affected_files": [
+        "src/core/period-profile.ts:292",
+        "src/core/period-profile.ts:294",
+        "src/client/screens/profile.tsx:432",
+        "src/client/screens/profile.tsx:442",
+        "src/client/screens/profile.tsx:525"
+      ],
+      "reproduction": [
+        "One inexact live play for Long at 1800000 ms; ten inexact live plays for Frequent at 60000 ms each",
+        "periodProfile(all) returns minutesExact false and topArtists[0].name Long",
+        "UI uses by plays, display 1\u00d7 and calls Long most-heard although Frequent has 10 plays"
+      ],
+      "expected": "Rank consistently with the displayed measure, or show and label duration order honestly when duration is estimated",
+      "actual": "Long ranks above Frequent; exact independent assertion expecting Frequent fails",
+      "evidence": [
+        "/tmp/integrated932-ui-attacks.test.ts",
+        "/tmp/integrated932-backend-attacks.log"
+      ],
+      "required_checks": "Mixed inexact/exact histories with differing plays vs duration ordering; artist and album lists plus highlight",
+      "impact": "Localized analysis-display inconsistency; no durable history mutation, auth or playback effect."
+    }
+  ],
+  "migration_auth_recovery": {
+    "schema5_to6": "PASS independent existing tables plays/memory/stations/pages/playback_sessions byte-identical before/after additive migration and restart",
+    "revoked_epoch_import_and_profile": "PASS actual extracted UserHub exclusive/session/importListens/listeningProfile methods with real HubCore; before and after logout stale epoch 401",
+    "distinct_hubs": "PASS import in account A does not appear in account B",
+    "old_current_survives_interrupted_import": "PASS existing profile regression including restart",
+    "generation_protocol": "PASS fresh independent stale token rejection and actual dictionary count/order guards",
+    "provider_calls": "No added Spotify calls in import/profile path; UserHub routes retain existing auth and CSRF middleware; imported data remains own hub."
+  },
+  "resource_bounds": {
+    "max_rows": 300000,
+    "max_tracks": 100000,
+    "max_parts": 400,
+    "page_rows": 1000,
+    "typed_arrays": "Uint32 at/track/ms and Uint8 flags/platform, 14 bytes per row (source comment about13 is approximate); track dictionary and aggregate maps remain additional memory",
+    "lazy_timeline": "Imported events yielded individually; live rows still fetched as DB array; aggregations/maps and Intl offset cache grow with history",
+    "node_size_case": {
+      "rows": 300000,
+      "tracks": 100000,
+      "import_ms": 789,
+      "cold_profile_ms": 4014,
+      "warm_profile_ms": 2629,
+      "gc_available": false,
+      "capacity_acceptance": false
+    },
+    "limits": "Fixture uses short strings, Node SQLite and no forced GC. No claim of real Cloudflare 128 MB/CPU/SQL capacity for maximum 200-character metadata, physical filled restore or concurrent real traffic."
+  },
+  "scope_limits": [
+    "PR25 preserved-resume owner exception unresolved by this reviewer; cannot self-approve functional change. Parent owns PR24 and combined verdict.",
+    "Physical iPhone, live Spotify latency/quota, private HA and populated Cloudflare restore NOT_RUN.",
+    "Real public deployment and namespace/runtime/secret identities not independently inspected by this agent; parent owns actual readback.",
+    "No app fixes, tests only in /tmp; tracked worktree diff clean.",
+    "Existing docs are historically stale at source; parent owns canonical evidence refresh."
+  ],
+  "artifacts": [
+    "/tmp/integrated932-attacks.test.ts",
+    "/tmp/integrated932-ui-attacks.test.ts",
+    "/tmp/integrated932-migration.test.ts",
+    "/tmp/integrated932-auth.test.ts",
+    "/tmp/integrated932-vitest.mts",
+    "/tmp/integrated932-backend-attacks.log",
+    "/tmp/integrated932-regressions.log"
+  ]
+}

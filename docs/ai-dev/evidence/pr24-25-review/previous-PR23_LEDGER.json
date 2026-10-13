@@ -1,0 +1,354 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-09T10:31:26.522070+00:00",
+  "project": "true-shuffle PR23 security/provenance correction",
+  "subject": {
+    "revision": "8921702e666d6da06d941364af5a219691057318",
+    "artifact_ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+    "environment": "Clean PR23 on actualintegratedbcb; fresh independentauth/lane contexts; candidateunmerged; emergencyrollbackverified",
+    "environment_class": "LOCAL"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "PARTIAL",
+  "material_release": true,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA",
+    "AI_TOOL_SIDE_EFFECTS",
+    "PERFORMANCE_CRITICAL"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "NOT_READY",
+  "required_categories": [
+    "accessibility",
+    "build",
+    "critical_journey",
+    "data_invariants",
+    "independent_review",
+    "migration",
+    "operations",
+    "performance_reliability",
+    "post_deploy",
+    "recovery",
+    "security_privacy",
+    "ui_runtime"
+  ],
+  "external_blockers": [],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR20-LANE-03",
+      "title": "Unobserved repeated song borrows stale occurrence provenance",
+      "severity": "P2",
+      "blocking": true
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-BUILD",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "ExactPR23 Typecheck/Lint/Build/Worker dry-run PASS.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "ExactPR23 Typecheck/Lint/Build/Worker dry-run PASS."
+    },
+    {
+      "id": "G-COMBINED",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-COMBINED",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "515defaultUnit/Worker and46localRealWorker/FakeSpotifybrowser checks plus11unchangedResume on exactfinal8921702.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "515defaultUnit/Worker and46localRealWorker/FakeSpotifybrowser checks plus11unchangedResume on exactfinal8921702."
+    },
+    {
+      "id": "G-NEW-BEHAVIOR",
+      "category": "data_invariants",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-NEW-BEHAVIOR",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "FAIL: final8921702 restoresoriginalLANE03, reproducedexactsource45srepeatfreshinsteadnull. PreviousLANE04patchremoved, notfullrepair.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "FAIL: final8921702 restoresoriginalLANE03, reproducedexactsource45srepeatfreshinsteadnull. PreviousLANE04patchremoved, notfullrepair."
+    },
+    {
+      "id": "G-UI",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-UI",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "46freshRealWorker/FakeSpotifybrowserchecks PASS;20independentUIchecks carriedforward from byte-identical client; no newclientdiff.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "46freshRealWorker/FakeSpotifybrowserchecks PASS;20independentUIchecks carriedforward from byte-identical client; no newclientdiff."
+    },
+    {
+      "id": "G-A11Y",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-A11Y",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Exactclientunchanged from previous20UIchecks of full168table values/keyboardscroll320/390themes; rootfresh46browserincludeslongmetadata/navigation. FullWCAG/screenreader auditNOT_RUN.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "Exactclientunchanged from previous20UIchecks of full168table values/keyboardscroll320/390themes; rootfresh46browserincludeslongmetadata/navigation. FullWCAG/screenreader auditNOT_RUN."
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-MIGRATION",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "81relevantexistingregressionchecks; separate2actualolde348onpopulatedbcbSchema5compatibilitytestsPASS no downgrade/destructivewrites; actualproductionrestoreNOT_RUN.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "81relevantexistingregressionchecks; separate2actualolde348onpopulatedbcbSchema5compatibilitytestsPASS no downgrade/destructivewrites; actualproductionrestoreNOT_RUN."
+    },
+    {
+      "id": "G-LOCAL-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-RECOVERY",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Oldsourceopensschema5andforwardreopens withsameinstance/observedprogress/history/likes/bans/additivefields;2simulationchecksPASS plus11Resume; notactualproductionrestore.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "Oldsourceopensschema5andforwardreopens withsameinstance/observedprogress/history/likes/bans/additivefields;2simulationchecksPASS plus11Resume; notactualproductionrestore."
+    },
+    {
+      "id": "G-SECURITY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-SECURITY",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "27freshauth/sessionflightchecks PASS includingactualUserHub and signedstaleCookieWorker; original2attacks FAILonbcb confirmingsecurityrollbackneed. Oldproductionrestored; no anonymous/crossaccountbypassclaimed.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "27freshauth/sessionflightchecks PASS includingactualUserHub and signedstaleCookieWorker; original2attacks FAILonbcb confirmingsecurityrollbackneed. Oldproductionrestored; no anonymous/crossaccountbypassclaimed."
+    },
+    {
+      "id": "G-REVIEW",
+      "category": "independent_review",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-REVIEW",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "FRESHauthREADY27checks; FRESHlaneNOT_READYoriginalLANE03reproduced on8921702. CombinedreleaseNOT_READY.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "FRESHauthREADY27checks; FRESHlaneNOT_READYoriginalLANE03reproduced on8921702. CombinedreleaseNOT_READY."
+    },
+    {
+      "id": "G-CI",
+      "category": "operations",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-CI",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Exacthead8921702GitHubverify37917338673/job113776634618PASS515unit/46browser/build/type/lint/dry. Explicitauth-onlyfinal6079018689 present; doesnotcloseinheritedLANE03.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ],
+      "rationale": "Exacthead8921702GitHubverify37917338673/job113776634618PASS515unit/46browser/build/type/lint/dry. Explicitauth-onlyfinal6079018689 present; doesnotcloseinheritedLANE03."
+    },
+    {
+      "id": "G-LIVE",
+      "category": "post_deploy",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "NOT_RUN: candidateunmerged/undeployed dueknownLANE03. Authleakingexternalbcbrollout alreadyrolledbacktoverifiede348/dd344/ff729fef100%; currentidentity/resources/publicchecks separatelyverified."
+    },
+    {
+      "id": "G-AI-RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "PASS",
+      "rationale": "Existing20sproviderbound/durable6hgate/import/logoutfence andfreshsignedsession/percallbeforeafter/epoch-scopedflightchecksPASS; no lockduringAI. LiveproviderNOT_RUN.",
+      "evidence": [
+        {
+          "id": "EV-G-AI-RELIABILITY",
+          "kind": "actual_userhub_mutex_and_stub_ai",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Existing20sproviderbound/durable6hgate/import/logoutfence andfreshsignedsession/percallbeforeafter/epoch-scopedflightchecksPASS; no lockduringAI. LiveproviderNOT_RUN.",
+          "subject_revision": "8921702e666d6da06d941364af5a219691057318",
+          "observed_at": "2026-10-09T10:31:26.522070+00:00"
+        }
+      ]
+    }
+  ]
+}

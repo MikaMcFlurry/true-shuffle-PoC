@@ -1,0 +1,147 @@
+
+ RUN  v5.0.2 /workspace/ts-review-19-21
+
+stdout | test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+{"level":"info","kind":"import","message":"„Playlist 1“: 80 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+{"level":"info","kind":"guest","message":"Gast-Modus an — „iPhone“ spielt"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"import","message":"„Playlist 1“: 80 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"guest","message":"Gast-Modus an — „Party“ spielt"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+{"level":"info","kind":"guest","message":"Gast-Modus aus — das Gast-Gerät spielt nicht mehr"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+{"level":"info","kind":"import","message":"„Playlist 1“: 80 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+{"level":"info","kind":"guest","message":"Gast-Modus an — „iPhone“ spielt"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"level":"info","kind":"import","message":"„Playlist 1“: 100 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"level":"info","kind":"import","message":"„Playlist 2“: 100 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"oldKind":"fresh","newKind":"favorite","actual":"favorite","playedAt":1790319841500,"writtenAt":1790317891500}
+
+ ❯ test/hub/pr20-independent.test.ts (2 tests | 1 failed) 270ms
+   × a paused old occurrence must not inherit the replacement deck reason on a delayed listing 138ms
+ ❯ test/hub/pr21-independent.test.ts (5 tests | 3 failed) 319ms
+   × independent: a different current device id with the same name is not the configured guest device 93ms
+   × independent: owner short play after confirmed device transition counts 72ms
+   × independent: clearing guest devices closes auto guest state without waiting for player refresh 33ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+AssertionError: expected 'favorite' to be null
+
+- Expected:
+null
+
++ Received:
+"favorite"
+
+ ❯ test/hub/pr20-independent.test.ts:30:27
+     28|  expect(play).toBeDefined();
+     29|  console.log(JSON.stringify({oldKind,newKind,actual:play.facts?.kind,p…
+     30|  expect(play.facts?.kind).toBeNull();
+       |                           ^
+     31| });
+     32|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/hub/pr21-independent.test.ts > independent: a different current device id with the same name is not the configured guest device
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/pr21-independent.test.ts:17:45
+     15|  step(h,10000); await sync(h);
+     16|  expect(u.player.deviceId).toBe(phone.id);
+     17|  expect((await h.hub.state()).guest.active).toBe(false);
+       |                                             ^
+     18| });
+     19|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/hub/pr21-independent.test.ts > independent: owner short play after confirmed device transition counts
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ test/hub/pr21-independent.test.ts:31:51
+     29|  step(h,35000); h.fake.skip(); await sync(h);
+     30|  const row=h.sql.first<{ignored:number}>('SELECT ignored FROM plays WH…
+     31|  expect(row).not.toBeNull(); expect(row!.ignored).toBe(0);
+       |                                                   ^
+     32| });
+     33|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/hub/pr21-independent.test.ts > independent: clearing guest devices closes auto guest state without waiting for player refresh
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/pr21-independent.test.ts:39:45
+     37|  expect((await h.hub.state()).guest.active).toBe(true);
+     38|  h.hub.setGuestDevices([]);
+     39|  expect((await h.hub.state()).guest.active).toBe(false);
+       |                                             ^
+     40| });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 3 passed (7)
+   Start at  06:30:59
+   Duration  914ms (transform 47%, tests 38%, import 14%, worker 1%)

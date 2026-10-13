@@ -1,0 +1,34 @@
+[
+  {
+    "case": "post-request-precommit-load-after-delete",
+    "deletedBefore": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDein Import\n\nKein Import gespeichert. Spotify-Verlauf importieren\n\nImport gelöscht: 2 Songs, 20 Wiedergaben. Deine Live-Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange sind unverändert; deine Spotify-Dateien auch.\n\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.",
+    "oldLoadAfter": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDein Import\n\nKein Import gespeichert. Spotify-Verlauf importieren\n\nImport gelöscht: 2 Songs, 20 Wiedergaben. Deine Live-Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange sind unverändert; deine Spotify-Dateien auch.\n\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.",
+    "deletes": 2
+  },
+  {
+    "case": "eventual-post-delete-load",
+    "body": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDer aktuelle Stand ließ sich nicht laden: Offline Laden Dein Entwurf bleibt erhalten.\n\nNeu laden\nDein Import\n\nKein Import gespeichert. Spotify-Verlauf importieren\n\nImport gelöscht: 2 Songs, 20 Wiedergaben. Deine Live-Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange sind unverändert; deine Spotify-Dateien auch.\n\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst."
+  },
+  {
+    "case": "delete-success-get-fail",
+    "body": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDer aktuelle Stand ließ sich nicht laden: Offline Laden Dein Entwurf bleibt erhalten.\n\nNeu laden\nDein Import\n\nKein Import gespeichert. Spotify-Verlauf importieren\n\nImport gelöscht: 2 Songs, 20 Wiedergaben. Deine Live-Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange sind unverändert; deine Spotify-Dateien auch.\n\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.",
+    "applyControls": 0,
+    "draftControls": 0
+  },
+  {
+    "case": "delete-retry",
+    "body": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDein Import\n\nKein Import gespeichert. Spotify-Verlauf importieren\n\nImport gelöscht: 2 Songs, 20 Wiedergaben. Deine Live-Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange sind unverändert; deine Spotify-Dateien auch.\n\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.",
+    "draftControls": 0
+  },
+  {
+    "case": "quick-double-toggle",
+    "posts": [
+      {
+        "baseRevision": 0,
+        "enabled": false,
+        "rules": [],
+        "dataset": "dataset-one"
+      }
+    ]
+  }
+]

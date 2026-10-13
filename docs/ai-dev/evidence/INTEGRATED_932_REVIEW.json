@@ -1,0 +1,174 @@
+{
+  "schema_version": "true-shuffle.integrated-release-review.v1",
+  "generated_at": "2026-10-09T14:31:34.109775+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "source_sha": "93241a7129e18689f5ea664bad5273f6613552a0",
+  "heads": {
+    "24": "148b08ba1a3af02683de259ca3d0dd61b36c5d59",
+    "25": "bc645d263f39782e114e4024c280e56c815a1780",
+    "26": "e94d9da9cca5799a546efa982531ca1c38f995cc"
+  },
+  "integration_order": [
+    24,
+    25,
+    26
+  ],
+  "merge_shas": [
+    "d0a597017b29f49928023e8ea8b9507f6217fad8",
+    "d4fda283c59e1faba40f04153a9168cf48215aa7",
+    "93241a7129e18689f5ea664bad5273f6613552a0"
+  ],
+  "external_release": true,
+  "provenance": "Actual GitHub author MikaMcFlurry, git Claude <noreply@anthropic.com>; sameClaude session. Externalmergegit MikaHertler; no invented Claude login.",
+  "github_ref": "integrated-932-review/ts932-github.json",
+  "completion": {
+    "24": 6081410642,
+    "25": 6081065351,
+    "26": 6081413671,
+    "26_reviewed_successor": "e94d9da base-merge conflictresolution of f0106d4",
+    "external_owner_merge_report": 6082145533
+  },
+  "independence": "FRESH",
+  "verdict": "BLOCKED",
+  "reports": [
+    "integrated-932-review/integrated932-lane-review.json",
+    "integrated-932-review/integrated932-backend-review.json"
+  ],
+  "findings": [
+    {
+      "id": "PR24-LANE-07",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Returning to a retained older Spotify queue can assign replacement-deck reason to the old occurrence",
+      "files": [
+        "src/worker/hub/hub.ts:4951",
+        "src/worker/hub/hub.ts:5002"
+      ],
+      "preconditions": "Track T played from station playlist old deck with fresh reason; Spotify retains its order across published replacement deck that gives T favorite reason. Another context is observed before returning to the retained playlist.",
+      "reproduction": [
+        "onboarded 200 tracks / 180000 ms; hub.play station; advance 10000 ms and forced real Hub sync",
+        "Capture Spotify player order/progress/context of old T (fresh). Publish replacement through actual saveDeck with newer writtenAt and T favorite.",
+        "Observe a different Spotify context for 10000 ms. Restore retained old Spotify playlist player/order and observe T for 10000 ms.",
+        "Advance 160000 ms and sync; read actual durable history SongFacts kind."
+      ],
+      "expected": "Old fresh occurrence must retain supported old reason or null; current replacement favorite is not evidence of which loaded deck produced the play.",
+      "actual": "T00000000000000000001c oldKind fresh, newKind favorite, stored actual favorite. New noteLane replaces reconciled-null note after context detour.",
+      "cause": "deck.writtenAt <= shown.at proves only publication before the previous observation, not that Spotify loaded the new deck. The latest observation can return to an older retained queue.",
+      "repair_direction": "Only recreate a positive lane when the loaded deck provenance is established; retain conservative uncertainty across deck disagreement and context detour without inferring refresh from timestamp.",
+      "required_checks": [
+        "retained old queue after changed-reason replacement, external detour and return",
+        "replacement with absent or multiple T reasons must remain null",
+        "positive normal new-deck start and unchanged-reason continuity",
+        "guest/native isolation and no extra Spotify requests"
+      ],
+      "evidence": [
+        "/tmp/integrated932-retained-lane.test.ts",
+        "/tmp/integrated932-retained-lane.log"
+      ]
+    },
+    {
+      "id": "PR26-PROFILE-RANK",
+      "severity": "P2",
+      "blocking": false,
+      "unchanged": true,
+      "title": "Inexact artist/album display ranks by duration while showing play counts",
+      "affected_files": [
+        "src/core/period-profile.ts:292",
+        "src/core/period-profile.ts:294",
+        "src/client/screens/profile.tsx:432",
+        "src/client/screens/profile.tsx:442",
+        "src/client/screens/profile.tsx:525"
+      ],
+      "reproduction": [
+        "One inexact live play for Long at 1800000 ms; ten inexact live plays for Frequent at 60000 ms each",
+        "periodProfile(all) returns minutesExact false and topArtists[0].name Long",
+        "UI uses by plays, display 1× and calls Long most-heard although Frequent has 10 plays"
+      ],
+      "expected": "Rank consistently with the displayed measure, or show and label duration order honestly when duration is estimated",
+      "actual": "Long ranks above Frequent; exact independent assertion expecting Frequent fails",
+      "evidence": [
+        "/tmp/integrated932-ui-attacks.test.ts",
+        "/tmp/integrated932-backend-attacks.log"
+      ],
+      "required_checks": "Mixed inexact/exact histories with differing plays vs duration ordering; artist and album lists plus highlight",
+      "impact": "Localized analysis-display inconsistency; no durable history mutation, auth or playback effect."
+    },
+    {
+      "id": "PR25-RESUME-OWNER-CONFLICT",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Current preserved unfinished-instance/progress requirement conflicts intentionally advancing listed partial plays",
+      "status": "PENDING_OWNER_CLARIFICATION; separate-chat reports and external merge recorded, not substituted for latest user requirement"
+    }
+  ],
+  "prior_closures": "Original LANE05/06 probes PASS. Six prior26 import-generation/count/order/BerlinDST/calendar-year/session defects repaired and targeted fresh tests pass. Rank ambiguity remains nonblocking, not reposted unchanged.",
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit_worker": "549/549 PASS defaulttimeout20s",
+    "real_worker_fake_spotify_browser": "46/46 PASS",
+    "unchanged_resume": "11/11 PASS",
+    "unchanged_partial_play_attacks": "3/3 FAIL; intentionalnewrule vs current user requirement",
+    "integrated_ci": {
+      "id": 37938795936,
+      "conclusion": "success"
+    },
+    "fresh_lane": "LANE05+fourLANE06 PASS;63 regressions PASS;newretainedqueueprobe1FAIL/2PASS",
+    "fresh_backend": [
+      {
+        "name": "targeted existing profile, period, session, recovery, genre regressions",
+        "status": "PASS",
+        "tests": 55,
+        "log": "/tmp/integrated932-regressions.log"
+      },
+      {
+        "name": "independent contract attacks/migration/session-isolation checks",
+        "status": "FAIL",
+        "passed": 9,
+        "failed": 1,
+        "log": "/tmp/integrated932-backend-attacks.log",
+        "failure": "unchanged nonblocking inexact artist ranking mismatch"
+      }
+    ],
+    "public_browser": "390/1440 light/dark anonymous SPA signin andprofile route nooverflow/pageerrors",
+    "resource_scaling": "Bounded300kplays/100ksongs/400blocks syntheticNode tests; no gc rootheldmemory0MB is not acceptedmemorymeasurement; cold4278ms/warm1835ms local elapsed not CloudflareCPU orquota proof"
+  },
+  "production": {
+    "version_id": "873eca1e-2819-4e9b-9bab-c8a03a9ef441",
+    "deployment_id": "8bde11bf-ac13-43de-b08a-91b6bcf55c81",
+    "traffic": 100,
+    "worker_proof": "integrated-932-review/ts932-worker-proof.json",
+    "assets": "18/19byteexact; solemapdiffsourcespathsonly,sourcesContentidentical",
+    "preserved": "settings,namespaces,secretsmetadata,cron,runtime/fullbindings unchanged from previous473f snapshot",
+    "health_auth_csrf": "200health,401protectedreads/profile;403missingcsrf/foreignorigin;correctx-ts listens401",
+    "source_qualifier": "Actual compiled Worker equality only localdependency-prefix normalization; no app transform",
+    "readback_refs": [
+      "integrated-932-review/ts932-preservation.json",
+      "integrated-932-review/ts932-public-assets.json",
+      "integrated-932-review/ts932-public-auth.json",
+      "integrated-932-review/ts932-public-results.json",
+      "integrated-932-review/ts932-sourcemap-proof.json"
+    ]
+  },
+  "comments": {
+    "24": 6082948911,
+    "26": 6083002216
+  },
+  "root_operations": {
+    "app_fixes": false,
+    "merge": false,
+    "upload": false,
+    "activation": false,
+    "rollback": false
+  },
+  "rollback_decision": "No new verified auth/transport/data-loss rollout failure; bounded provenanceP2 and disputed intentionalResumepolicy keepacceptanceblocked; no rootrollback orduplicate deployment. Previouslyverified473f retained.",
+  "not_run": [
+    "PhysicaliPhone/liveSpotify latency/quota",
+    "PrivateHA/MA",
+    "Actualpopulatedproductionrestore",
+    "RealCloudflareCPU/memory/quota atupperimportbound",
+    "AuthenticatedrealSpotify import andretainedqueue readback"
+  ]
+}

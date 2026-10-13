@@ -1,0 +1,50 @@
+import { it, expect } from 'vitest';
+import { onboarded } from './harness';
+import { MINUTE_MS } from '../../src/core/types';
+import { RequestBudget } from '../../src/worker/spotify/client';
+
+it('a paused old occurrence must not inherit the replacement deck reason on a delayed listing', async () => {
+ const h = await onboarded({tracks: 200, playlists: [100,100], durationMs: 180000});
+ const sid = h.stationIds[0]!;
+ await h.hub.play(sid);
+ const id = h.fake.current()!;
+ const row = h.sql.first<{deck:string}>('SELECT deck FROM stations WHERE id = ?',sid)!;
+ const deck = JSON.parse(row.deck);
+ const oldKind = deck.items.find((it:any) => it.id===id).kind;
+ h.clock.t += 30000; h.fake.advance(30000);
+ h.fake.pause();
+ // A replacement is persisted while the Spotify client retains its old occurrence/order.
+ h.clock.t += 30*MINUTE_MS;
+ deck.writtenAt = h.clock.t;
+ const newKind = oldKind === 'favorite' ? 'fresh' : 'favorite';
+ deck.items = deck.items.map((it:any) => it.id === id ? {...it,kind:newKind} : it);
+ h.sql.run('UPDATE stations SET deck = ? WHERE id = ?',JSON.stringify(deck),sid);
+ h.restart();
+ h.clock.t += 30*MINUTE_MS;
+ h.fake.user().player.isPlaying = true;
+ h.clock.t += 150000; h.fake.advance(150000);
+ await h.hub.sync(new RequestBudget(20),{force:true});
+ const play = h.hub.history(10).find(e => e.id === id)!;
+ expect(play).toBeDefined();
+ console.log(JSON.stringify({oldKind,newKind,actual:play.facts?.kind,playedAt:play.playedAt,writtenAt:deck.writtenAt}));
+ expect(play.facts?.kind).toBeNull();
+});
+
+it('migration 5 rolls back after ALTER and preserves a populated v4 store on retry/reopen', async () => {
+ const h = await onboarded({tracks:60});
+ await h.hub.play(h.stationIds[0]!);
+ await h.listen(10*MINUTE_MS);
+ h.sql.run('ALTER TABLE plays DROP COLUMN lane');
+ h.sql.run("UPDATE kv SET v = '4' WHERE k = 'schema_version'");
+ const names = ['kv','plays','memory','stations','playback_sessions'];
+ const before = Object.fromEntries(names.map(name => [name,h.sql.all(`SELECT * FROM ${name}`)]));
+ const {migrate} = await import('../../src/worker/hub/schema');
+ expect(() => migrate({...h.sql,run:(q,...p) => {h.sql.run(q,...p); if(q.includes('ALTER TABLE plays ADD COLUMN lane')) throw Error('migration5-crash');}})).toThrow('migration5-crash');
+ expect(Object.fromEntries(names.map(name => [name,h.sql.all(`SELECT * FROM ${name}`)]))).toEqual(before);
+ expect(h.sql.all<{name:string}>('PRAGMA table_info(plays)').some(r => r.name==='lane')).toBe(false);
+ migrate(h.sql); migrate(h.sql); h.restart();
+ expect(h.sql.first<{v:string}>("SELECT v FROM kv WHERE k = 'schema_version'")?.v).toBe('5');
+ expect(h.sql.all('SELECT played_at,track_id,context_uri,station_id,ignored,meta FROM plays')).toEqual(before.plays);
+ expect(h.sql.all<{lane:string|null}>('SELECT lane FROM plays').every(r=>r.lane===null)).toBe(true);
+ for(const name of ['memory','stations','playback_sessions']) expect(h.sql.all(`SELECT * FROM ${name}`)).toEqual(before[name]);
+});

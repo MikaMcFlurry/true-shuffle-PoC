@@ -1,0 +1,47 @@
+{
+  "time": "2026-10-09T10:19:19.263779+00:00",
+  "reviewer": "/root/pr23_auth_review",
+  "independence": "FRESH",
+  "verdict": "READY",
+  "scope": "Scoped simulated backward/forward data compatibility for emergency security rollback; not an acceptance of the old source as a full current feature release",
+  "old_source": "e348e838f9526bc83b92070302ba15831a87d7b8",
+  "populating_source": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+  "old_checkout": "/workspace/ts-review-4b0a",
+  "test_checkout": "/workspace/ts-pr23-auth-independent",
+  "source_changes": false,
+  "checks": [
+    {
+      "name": "Actual old HubCore instantiated with populated actual bcb schema5 SQLite",
+      "status": "PASS",
+      "passed": 2,
+      "failed": 0,
+      "evidence": "/tmp/pr23-rollback-compat-result.json"
+    }
+  ],
+  "verified": [
+    "No schema_version downgrade:5 retained",
+    "No destructive constructor migration; tables/plays/playback_sessions preserved",
+    "Stored guest_devices/history_profile/genre_attempt/lane_notes retained byte-for-byte through old state/resume/pause and forward reopen",
+    "Additive plays.lane preserved for existing rows; old code writes new rows withNULL lane and new code subsequently reads them",
+    "Stable same session ID,entry IDs,current index,fresh provider-observed paused progress through resume",
+    "Existing history count retained; additional FakeSpotify observed plays record successfully",
+    "Likes and bans preserved",
+    "Reopening new HubCore after old writes restores imported profile and stored sessions"
+  ],
+  "behavior_limits": [
+    "Old e348 has no profile routes/UI and no lane facts UI: additive data survives but features unavailable until forward fix",
+    "Old e348 does not implement configured automatic guest-device following; existing bounded guest periods remain stored/readable, but automatic extension/entry/exit does not operate. Consider owner impact in security rollback decision."
+  ],
+  "open_findings": [],
+  "not_run": [
+    "Actual production populated Durable Object export/restore",
+    "Real Spotify transport or iPhone",
+    "Cloudflare deployment/bindings/namespace identity (root must verify)"
+  ],
+  "artifacts": [
+    "/workspace/ts-pr23-auth-independent/test/hub/pr23-rollback-compat.test.ts",
+    "/workspace/ts-pr23-auth-independent/pr23-rollback-vitest.config.ts",
+    "/tmp/pr23-rollback-compat-result.json",
+    "/tmp/pr23-rollback-compat.log"
+  ]
+}

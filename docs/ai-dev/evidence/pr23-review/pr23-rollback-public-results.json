@@ -1,0 +1,96 @@
+{
+  "subject": "Production source e348e838f9526bc83b92070302ba15831a87d7b8 identity supplied independently by root asset/deployment check; candidate9550710 not deployed",
+  "environment": "Actual public production browser anonymous read-only, no Spotify OAuth followed",
+  "cases": [
+    {
+      "width": 390,
+      "colorScheme": "light",
+      "status": 200,
+      "overflow": 0,
+      "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+      "links": [
+        {
+          "text": "Zum Inhalt",
+          "href": "#content"
+        },
+        {
+          "text": "true-shuffle",
+          "href": "/"
+        },
+        {
+          "text": "Mit Spotify anmelden",
+          "href": "/auth/login"
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "colorScheme": "dark",
+      "status": 200,
+      "overflow": 0,
+      "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+      "links": [
+        {
+          "text": "Zum Inhalt",
+          "href": "#content"
+        },
+        {
+          "text": "true-shuffle",
+          "href": "/"
+        },
+        {
+          "text": "Mit Spotify anmelden",
+          "href": "/auth/login"
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "colorScheme": "light",
+      "status": 200,
+      "overflow": 0,
+      "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+      "links": [
+        {
+          "text": "Zum Inhalt",
+          "href": "#content"
+        },
+        {
+          "text": "true-shuffle",
+          "href": "/"
+        },
+        {
+          "text": "Mit Spotify anmelden",
+          "href": "/auth/login"
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "colorScheme": "dark",
+      "status": 200,
+      "overflow": 0,
+      "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+      "links": [
+        {
+          "text": "Zum Inhalt",
+          "href": "#content"
+        },
+        {
+          "text": "true-shuffle",
+          "href": "/"
+        },
+        {
+          "text": "Mit Spotify anmelden",
+          "href": "/auth/login"
+        }
+      ]
+    },
+    {
+      "path": "/profil",
+      "status": "PASS",
+      "result": "Anonymous protected SPA route renders sign-in without private profile"
+    }
+  ],
+  "errors": []
+}

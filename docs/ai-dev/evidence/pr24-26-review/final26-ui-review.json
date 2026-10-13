@@ -1,0 +1,285 @@
+{
+  "subject": {
+    "pr": 26,
+    "head_short": "e6d08a3",
+    "combined_head": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+    "worktree": "/workspace/ts-pr26-ui-fresh"
+  },
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "Independent read-only UI/core-analytics review; no application fixes or remote writes",
+  "skills": [
+    ".agents/skills/mika-red-team/SKILL.md",
+    ".agents/skills/impeccable/reference/audit.md"
+  ],
+  "open_findings": [
+    {
+      "id": "PR26-PROFILE-YEAR-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Calendar-year comparison counts the wrong preceding calendar range",
+      "files": [
+        "src/core/period-profile.ts:106",
+        "src/core/period-profile.ts:161",
+        "src/client/screens/profile.tsx:147"
+      ],
+      "reproduction": "Select 2024 (Jan 1 2024 through Jan 1 2025) with imported plays at Dec 31 2022 noon and Jan 1 2023 noon. periodProfile previous counts both because it subtracts 366 days; UI labels the result im Jahr 2023.",
+      "expected": "Comparison labelled 2023 counts only Jan 1 2023 through Jan 1 2024, or label explicitly says equal-length preceding window rather than calendar year.",
+      "actual": "previous.plays=2 instead of 1; 2022 event contaminates 2023 comparison. 2025 vs leap-year2024 conversely omits Jan1 2024.",
+      "impact": "False annual listening metrics and changes.",
+      "repair": "Carry an explicit prior calendar interval for year choices or make the current equal-span label accurate; preserve custom/rolling semantics.",
+      "required_checks": [
+        "2024 vs2023 boundary",
+        "2025 vs2024 leap-year boundary",
+        "UTC and Europe/Berlin calendar-year boundaries",
+        "rendered comparison label matches interval"
+      ]
+    },
+    {
+      "id": "PR26-PROFILE-SESSION-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Session highlight claims uninterrupted listening across known pauses",
+      "files": [
+        "src/core/period-profile.ts:86",
+        "src/core/period-profile.ts:231",
+        "src/client/screens/profile.tsx:512"
+      ],
+      "reproduction": "Two exact imported plays of 30 minutes end at Jan1 2024 12:00 and12:39 UTC. Second starts12:09: known9-minute silence. periodProfile returns longestSession60min; actual ProfileScreen displays 1 Stunden ohne Pause.",
+      "expected": "Describe a session allowing gaps of up to10min, or compute genuinely uninterrupted duration; exact listening minutes alone do not prove continuous playback. Live estimates must also be qualified.",
+      "actual": "60-minute session with known9-minute pause labelled ohne Pause.",
+      "impact": "Trust contract: claimed listening evidence exceeds known timeline.",
+      "repair": "Use truthful qualified session label and definition, without changing playback state or inventing continuous listening.",
+      "required_checks": [
+        "known9-minute pause",
+        "10-minute session boundary",
+        "mixed exact/estimated live event",
+        "actual rendered highlight copy"
+      ]
+    },
+    {
+      "id": "PR26-PROFILE-RANK-03",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Most-heard artist label disagrees with displayed play-count ranking",
+      "files": [
+        "src/core/period-profile.ts:282",
+        "src/client/screens/profile.tsx:425",
+        "src/client/screens/profile.tsx:518"
+      ],
+      "reproduction": "Mixed/live period: Long has1 play30 estimated minutes, Frequent10 plays totaling10 estimated minutes. minutesExactfalse. topArtists ranks Long first by estimated time; rendered bars show Long1× first and Frequent10× second, and calls Long most-heard with9% share.",
+      "expected": "State explicitly that ranking uses estimated listening time, or rank consistently by displayed plays; do not imply first has most plays.",
+      "actual": "Confirmed in real browser and core attack.",
+      "repair": "Align ranking, displayed units and most-heard claim.",
+      "required_checks": [
+        "one long vs many short plays",
+        "mixed imported/live durations",
+        "top50 truncation consistent with selected ranking"
+      ]
+    }
+  ],
+  "checks": {
+    "original_core_period_profile": "9/9 PASS",
+    "independent_attacks": "5 tests:3 FAIL (year/rank/session),2 PASS (fixture generation and Lord Howe hour check)",
+    "browser": "6 actual Chromium renders:320,390,1440 ×light,dark; mocked profile API using independently computed actual-core fixture",
+    "browser_results": [
+      {
+        "width": 320,
+        "colorScheme": "light",
+        "overflow": 0,
+        "errs": [],
+        "pending": 1,
+        "error": "Hörprofil nicht geladen: Test offline",
+        "samePeriodRetried": false,
+        "artistOrder": [
+          "Morgens · 5–11 Uhr",
+          "Mittags · 11–17 Uhr",
+          "Abends · 17–23 Uhr",
+          "Nachts · 23–5 Uhr",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+        ],
+        "claim": true,
+        "session": [
+          "ohne Pause: deine längste Session, am 1. Januar 2024."
+        ],
+        "requests": 6
+      },
+      {
+        "width": 320,
+        "colorScheme": "dark",
+        "overflow": 0,
+        "errs": [],
+        "pending": 1,
+        "error": "Hörprofil nicht geladen: Test offline",
+        "samePeriodRetried": false,
+        "artistOrder": [
+          "Morgens · 5–11 Uhr",
+          "Mittags · 11–17 Uhr",
+          "Abends · 17–23 Uhr",
+          "Nachts · 23–5 Uhr",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+        ],
+        "claim": true,
+        "session": [
+          "ohne Pause: deine längste Session, am 1. Januar 2024."
+        ],
+        "requests": 6
+      },
+      {
+        "width": 390,
+        "colorScheme": "light",
+        "overflow": 0,
+        "errs": [],
+        "pending": 1,
+        "error": "Hörprofil nicht geladen: Test offline",
+        "samePeriodRetried": false,
+        "artistOrder": [
+          "Morgens · 5–11 Uhr",
+          "Mittags · 11–17 Uhr",
+          "Abends · 17–23 Uhr",
+          "Nachts · 23–5 Uhr",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+        ],
+        "claim": true,
+        "session": [
+          "ohne Pause: deine längste Session, am 1. Januar 2024."
+        ],
+        "requests": 6
+      },
+      {
+        "width": 390,
+        "colorScheme": "dark",
+        "overflow": 0,
+        "errs": [],
+        "pending": 1,
+        "error": "Hörprofil nicht geladen: Test offline",
+        "samePeriodRetried": false,
+        "artistOrder": [
+          "Morgens · 5–11 Uhr",
+          "Mittags · 11–17 Uhr",
+          "Abends · 17–23 Uhr",
+          "Nachts · 23–5 Uhr",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+        ],
+        "claim": true,
+        "session": [
+          "ohne Pause: deine längste Session, am 1. Januar 2024."
+        ],
+        "requests": 6
+      },
+      {
+        "width": 1440,
+        "colorScheme": "light",
+        "overflow": 0,
+        "errs": [],
+        "pending": 1,
+        "error": "Hörprofil nicht geladen: Test offline",
+        "samePeriodRetried": false,
+        "artistOrder": [
+          "Morgens · 5–11 Uhr",
+          "Mittags · 11–17 Uhr",
+          "Abends · 17–23 Uhr",
+          "Nachts · 23–5 Uhr",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+        ],
+        "claim": true,
+        "session": [
+          "ohne Pause: deine längste Session, am 1. Januar 2024."
+        ],
+        "requests": 6
+      },
+      {
+        "width": 1440,
+        "colorScheme": "dark",
+        "overflow": 0,
+        "errs": [],
+        "pending": 1,
+        "error": "Hörprofil nicht geladen: Test offline",
+        "samePeriodRetried": false,
+        "artistOrder": [
+          "Morgens · 5–11 Uhr",
+          "Mittags · 11–17 Uhr",
+          "Abends · 17–23 Uhr",
+          "Nachts · 23–5 Uhr",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          "Long",
+          "FrequentZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+        ],
+        "claim": true,
+        "session": [
+          "ohne Pause: deine längste Session, am 1. Januar 2024."
+        ],
+        "requests": 6
+      }
+    ],
+    "session_browser": {
+      "text": "1 Stunden\nohne Pause: deine längste Session, am 1. Januar 2024.\n100 %\ndeiner Songs waren von A, deinem meistgehörten Künstler.\n100 %\nAbwechslung: so viele deiner Wiedergaben waren ein Song, den du in dieser Zeit noch nicht gehört hattest.",
+      "knownSilenceMinutes": 9,
+      "reportedMinutes": 60
+    }
+  },
+  "positive_evidence": [
+    "Long artist text wraps without horizontal overflow at320/390/1440",
+    "No pageerrors in6 rendered cases",
+    "Custom dates and keyboard radio interaction work",
+    "Pending uses aria-busy and retains old period explanation",
+    "Simulated503 error is visible with role alert",
+    "Tables expose semantic headings and keyboard scroll focus by code inspection",
+    "Imported/live minutesExact text distinguishes actual from maximum estimated song lengths"
+  ],
+  "limitations": [
+    "Physical iPhone/Safari NOT_RUN",
+    "Live Spotify latency/quota NOT_RUN",
+    "privateHA and populated restore NOT_RUN",
+    "Full WCAG contrast/screenreader audit NOT_RUN",
+    "Actual Worker upload/account isolation handled by separate backend reviewer; this browser harness mocks GET/profile only",
+    "Read-only analytics verified by code inspection; no provider load tests here",
+    "Failed profile retry requires choosing another period and back; same selected period click does not retry (nonblocking recovery limitation)"
+  ],
+  "audit": {
+    "integrity": "FAIL: calendar metric and listening-proof claims are inaccurate",
+    "accessibility_score": 3,
+    "performance_score": 3,
+    "responsive_score": 3,
+    "theming_score": 3,
+    "implementation_integrity_score": 2,
+    "total": 14,
+    "note": "Bounded scoped scores, not WCAG certification or live release acceptance"
+  },
+  "artifacts": [
+    "/tmp/final26-ui-attacks.test.ts",
+    "/tmp/final26-ui-attacks.log",
+    "/tmp/final26-ui-vitest.mts",
+    "/tmp/final26-ui-original.log",
+    "/tmp/final26-ui-fixture.json",
+    "/tmp/final26-ui-browser.mjs",
+    "/tmp/final26-ui-browser.json",
+    "/tmp/final26-ui-session.mjs",
+    "/tmp/final26-ui-session.json",
+    "/tmp/final26-ui-session-browser.json",
+    "/tmp/final26-ui-session.png",
+    "/tmp/final26-ui-320-light.png",
+    "/tmp/final26-ui-320-dark.png",
+    "/tmp/final26-ui-390-light.png",
+    "/tmp/final26-ui-390-dark.png",
+    "/tmp/final26-ui-1440-light.png",
+    "/tmp/final26-ui-1440-dark.png"
+  ],
+  "skill_context_drift": "Impeccable context reports pre-existing DESIGN.md sidecar stale; not repaired as review side effect and not application release blocker."
+}

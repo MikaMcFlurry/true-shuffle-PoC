@@ -1,0 +1,44 @@
+
+ RUN  v5.0.2 /workspace/ts-next1921-independent
+
+stdout | test/hub/next-boundary-attacks.test.ts > unobserved departure closes no occurrence: a short unlisted play must not label later repeated id
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/next-boundary-attacks.test.ts > unobserved departure closes no occurrence: a short unlisted play must not label later repeated id
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/next-boundary-attacks.test.ts > unobserved departure closes no occurrence: a short unlisted play must not label later repeated id
+{"level":"info","kind":"import","message":"„Playlist 1“: 200 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/next-boundary-attacks.test.ts > unobserved departure closes no occurrence: a short unlisted play must not label later repeated id
+{"oldKind":"fresh","newKind":"favorite","rows":[{"id":"T00000000000000000001k","name":"Song 108","artists":"Artist 28","album":"Album 10","imageUrl":"https://img.example/L00000000000000000000A.jpg","durationMs":180000,"thumb":0,"playedAt":1790316182500,"stationName":"Playlist 1","ignored":false,"facts":{"plays":1,"lastPlayedAt":1790316182500,"inStation":true,"kind":"fresh"}}],"notes":{"v":"[]"}}
+
+ ❯ test/hub/next-boundary-attacks.test.ts (3 tests | 1 failed) 430ms
+   × unobserved departure closes no occurrence: a short unlisted play must not label later repeated id 250ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/next-boundary-attacks.test.ts > unobserved departure closes no occurrence: a short unlisted play must not label later repeated id
+AssertionError: expected 'fresh' to be null
+
+- Expected:
+null
+
++ Received:
+"fresh"
+
+ ❯ test/hub/next-boundary-attacks.test.ts:16:65
+     14|  step(h,45000);h.fake.skip();await sync(h);
+     15|  const rows=h.hub.history(100).filter((x:any)=>x.id===id);console.log(…
+     16|  expect(rows).toHaveLength(1);expect(rows[0].facts?.kind??null).toBeNu…
+       |                                                                 ^
+     17| });
+     18| it('null guest hold survives restart but never extends from unidentifi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 161 passed (162)
+   Start at  09:22:23
+   Duration  106.20s (tests 98%, transform 1%, import 1%)

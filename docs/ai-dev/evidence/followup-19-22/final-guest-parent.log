@@ -1,0 +1,53 @@
+
+ RUN  v5.0.2 /workspace/ts-review-19-22
+
+stdout | ../../tmp/final-guest-parent.test.ts > independent: playing snapshot with null device id does not prove exit from known guest device
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/final-guest-parent.test.ts > independent: playing snapshot with null device id does not prove exit from known guest device
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/final-guest-parent.test.ts > independent: playing snapshot with null device id does not prove exit from known guest device
+{"level":"info","kind":"import","message":"„Playlist 1“: 80 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/final-guest-parent.test.ts > independent: playing snapshot with null device id does not prove exit from known guest device
+{"level":"info","kind":"guest","message":"Gast-Modus an — „Party“ spielt"}
+
+stdout | ../../tmp/final-guest-parent.test.ts > independent: playing snapshot with null device id does not prove exit from known guest device
+{"level":"info","kind":"guest","message":"Gast-Modus aus — das Gast-Gerät spielt nicht mehr"}
+
+stdout | ../../tmp/final-guest-parent.test.ts > independent: playing snapshot with null device id does not prove exit from known guest device
+{"guest":{"active":false,"until":null,"devices":[{"id":"party","name":"Party"}],"device":null},"nowPlaying":"T00000000000000000000I"}
+
+stdout | ../../tmp/final-guest-parent.test.ts > independent: playing snapshot with null device id does not prove exit from known guest device
+{"current":"T00000000000000000000I","ignored":0}
+
+ ❯ ../../tmp/final-guest-parent.test.ts (1 test | 1 failed) 99ms
+   × independent: playing snapshot with null device id does not prove exit from known guest device 98ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tmp/final-guest-parent.test.ts > independent: playing snapshot with null device id does not prove exit from known guest device
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ ../../tmp/final-guest-parent.test.ts:13:50
+     11|  const current=h.fake.current()!;step(h,35000);h.fake.skip();await syn…
+     12|  const row=h.sql.first<{ignored:number}>('SELECT ignored FROM plays WH…
+     13|  expect(row).not.toBeNull();expect(row!.ignored).toBe(1);expect(st.gue…
+       |                                                  ^
+     14| });
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  07:53:58
+   Duration  579ms (transform 58%, tests 21%, import 20%, worker 1%)

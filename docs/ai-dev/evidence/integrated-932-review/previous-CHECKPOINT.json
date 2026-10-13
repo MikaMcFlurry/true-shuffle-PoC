@@ -1,0 +1,157 @@
+{
+  "schema_version": "1.0",
+  "project": "true-shuffle",
+  "subject": {
+    "revision": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+    "artifact_ref": "docs/ai-dev/evidence/PR24_26_REVIEW.json"
+  },
+  "branch": "codex/implement-cloudflare-restart",
+  "phase": "REVIEW",
+  "status": "PARTIAL",
+  "active_plan_ref": "docs/ai-dev/EXECUTION_PLAN.md",
+  "owners": [
+    "Codex verification and fresh independent reviewers",
+    "Claude actualauthor/session metadata24–26"
+  ],
+  "completed": [
+    "durable checkpoint/queue implementation",
+    "persistent shared quota gate and measured pressure",
+    "capability-based HA/MA bridge and local recovery",
+    "Impeccable player implementation and scoped fresh finish review",
+    "325 unit/Worker and15 browser checks",
+    "49 fresh independent targeted checks",
+    "Cloudflare authenticated target/namespace/secret identity",
+    "Uploaded and promoted reviewed implementation",
+    "Fixed live401falseoffline and passed16browser plus5independentstore cases",
+    "Exact active deployment and public/API/browser readback",
+    "Quota wait, stored metrics and developer-account sharing clarified;17 browser cases plus4 independent render cases pass.",
+    "Artist-albums quota isolated and retained legacy deadlines independently reviewed; 341 unit/Worker and18 browser checks; promoted100% with preserved bindings/runtime and public readback.",
+    "Explicit bounded availability trial independently reviewed; 356 unit/Worker and20 browser checks; promoted100% with preserved bindings/runtime and public readback.",
+    "Confirmed peroperation429 policy/sharedfiveusertracker integrated,358unit/20browser, fresh64test/6render review READY; CI and100% publicreadbackPASS.",
+    "Local song clock and pause-first ordering deployed:365unit/21browser/163independent+9renderPASS,sourceCI36834917166,exactpublic/auth/browserreadbackPASS.",
+    "Responsiveness/Connect target/background scheduling optimization deployed; 428 unit/Worker, 39 browser, fresh independent scoped review READY; exact public readback PASS. Equal-window simulated pressure archived.",
+    "PR12 refusal continuity and PR11 final UI merged in dependency order, source CI/444unit/40browser/independent19unit9browser PASS; exact Cloudflare assets/runtime/auth readback PASS.",
+    "PR17→16 externally integrated and verified97e6; allRESUME regressionsclosed",
+    "PR18 final4b0a independently reviewed; GitHub merge e348, actualautomaticWorkersBuildsdd344/238016100% verified;486unit/41browser/11RESUMEPASS; historicalkindnull andUnicodecontrastfixed; no duplicateactivation",
+    "2026-10-09 sibling19/20/21 separatelyreviewed;localcombined492/42/11/staticPASS;fiveblockingP2scommented;productionunchanged",
+    "Explicit19–22 completion and corrections independently reviewed on combined4dc3377; previousfiveclosed,newsevenblockingP2s;506/44/11/default/static andall4sourceCI PASS; productionunchanged.",
+    "Current9550710 repairs reviewed: seven prior blockers closed;511/46/11/static PASS; three fresh independent reviews identify two new blockers; production unchanged read-only verified.",
+    "Externalbcbsecurityexposureverified; authorizedrollbackrestoredimmutabledd344/e348at100%newff729fef withallsettingspreserved,19assets/auth/browserPASS,2freshsimulatedcompatibilitychecksPASS. PR23authfixREADY; lane04blocks.",
+    "Finalauth-only8921702explicitcompletion6079018689 read; fresh27authchecksREADY; originalLANE03 againFAILindependently onexactsource.",
+    "ExternalPR23mergeCEE andactual473f/715100%readbackverified. Combined24/25checks526/46/11PASS; twofreshreviewsreproducedLANE05/RESUME01; concretecommentswritten.",
+    "New final24c6b/2562aa andnew26e6d combined4c0514f:538/46/11/static PASS; threefreshreviews reproduce new lane/import/analytics failures; comments6080990256/6080977483/6081010497. Production unchanged authenticated readback."
+  ],
+  "in_progress": [],
+  "blocked": [
+    "PR24-LANE-06",
+    "PR26-IMPORT-GENERATION-01",
+    "PR26-IMPORT-VALIDATION-02",
+    "PR26-IMPORT-ORDER-03",
+    "PR26-PROFILE-DST-04",
+    "PR26-PROFILE-YEAR-01",
+    "PR26-PROFILE-SESSION-02",
+    "PR25-RESUME-OWNER-CONFLICT",
+    "Explicitcompletion26missing",
+    "Cloudflare resource scaling andphysical/private/populatedrestoreNOT_RUN"
+  ],
+  "capability_blockers": [
+    "Physical iPhone/liveSpotify latencyquota unavailable",
+    "Private HA/MA unavailable",
+    "Populated production restore not run"
+  ],
+  "recovery_state": [
+    "Previousverifiedversion3499c219-0265-4798-9e7b-4b3c81b5efd5 retained; noDBrestore/revert",
+    "Inactive own stagingbbcaa retained; productiondd344/238016100%",
+    "Runtime/bindings/variables/secretbindings/namespaces/migrationv1 unchanged",
+    "Current473f/715100% unchanged thiswatch; no rootmerge/upload/activation/rollback."
+  ],
+  "next_actions": [
+    "ReadClaude replies andnewheads; reproduce each distinct newfinding andfreshreview corrections.",
+    "Resolveowner25 exception conflict withcurrent stableunfinishedinstance/progress rule; no new releaseapproval needed.",
+    "Requirehead-bound coherent completion24–26 andallrequiredchecks; no intermediateintegration/deployment."
+  ],
+  "updated_at": "2026-10-09T12:37:47.213728+00:00",
+  "deployment": {
+    "schema_version": "true-shuffle.deployment.v1",
+    "recorded_at": "2026-10-09T12:37:47.213728+00:00",
+    "source_revision": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+    "worker": "true-shuffle",
+    "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
+    "version_id": "473f96c8-35ad-486b-9592-b7005d0f40b9",
+    "deployment_id": "7150626c-6af6-45fb-9326-4118d829dd03",
+    "percentage": 100,
+    "deployed_at": "2026-10-09T11:01:07.375001Z",
+    "previous_version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+    "previous_deployment": "ff729fef-8700-4362-94c1-787addf3e65c",
+    "migration_tag": "v1",
+    "namespaces": {
+      "USER_HUB": {
+        "id": "59222ef9f3a642d4b90776fafa0eac84",
+        "class_name": "UserHub",
+        "sqlite": true
+      },
+      "REGISTRY": {
+        "id": "2ccba352966f46a3b289eb159ccb3bc4",
+        "class_name": "Registry",
+        "sqlite": true
+      }
+    },
+    "existing_bindings_preserved": true,
+    "existing_secret_bindings_preserved": true,
+    "existing_variable_values_preserved": true,
+    "runtime_preserved": true,
+    "deployment_authority": "ExternallymergedPR23/automaticWorkersBuilds; no rootmerge/upload/activationinthiswatch",
+    "worker_sha256": "6dfec077804a184622f50e687fe8879d746c8aaad6b1556c0b190535722beb93",
+    "worker_etag": "dbf9e0c905f381bffd32be40c0a48235d39e164d1b769157cc5e2c6367ef9a1f",
+    "public_readback": {
+      "exact_assets": "18/19; sourcemaponlydependency-prefixdiff",
+      "assets_ref": "pr24-25-review/ts2425-public-assets.json",
+      "auth_csrf_ref": "pr24-25-review/ts2425-public-auth.json",
+      "browser_ref": "pr24-25-review/ts2425-public-results.json",
+      "runtime_ref": "pr24-25-review/ts2425-preservation.json",
+      "worker_ref": "pr24-25-review/ts2425-worker-proof.json",
+      "authenticated_provider_journeys": "NOT_RUN"
+    },
+    "browser_smoke": {
+      "status": 200,
+      "phone": 390,
+      "desktop": 1440,
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "pageErrors": [],
+      "horizontalOverflow": false
+    },
+    "recovery": {
+      "prior_verified_worker_version_retained": true,
+      "rollback_this_release": false,
+      "actual_populated_restore": "NOT_RUN",
+      "bindings_namespace_and_schema_unchanged": true
+    },
+    "acceptance_claim": "PARTIAL: authfixpreviouslyFRESHREADY andactualCEEworker/identity/resources/readbackverified; inheritedLANE03remainslive; candidates24/25BLOCKED.",
+    "github_ci": "37844932181 FAIL twice: jobs113543321791/113544666152;485PASS/1known61h simulation20stimeout; downstreambrowser/dryskipped. SourceequivalentCI37836787868PASS486/41; localfull486PASS120s andisolatedintegratedweekend15.57sPASS. Required integratedCI remainsFAIL; correctionrequested6069239435.",
+    "review_ref": "PR24_25_REVIEW.json",
+    "historical_records": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json",
+    "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078",
+    "release_comment": 6069239435,
+    "worker_hash_basis": "Actual compiled Worker content; existing worker_etag preserved as server metadata, not asserted equal to content hash",
+    "latest_watch_ref": "PR24_26_REVIEW.json"
+  },
+  "historical_checkpoint": "docs/ai-dev/evidence/tag-wording-review/CHECKPOINT_HISTORY_BEFORE_PR18.json",
+  "candidate_review": {
+    "revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+    "heads": {
+      "24": "88de19736312bfbb83764d04fd4099d47da6decb",
+      "25": "8f38063114d6ebe5bc7d71ad3beeed8f76e86cf5"
+    },
+    "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+    "ledger": "docs/ai-dev/evidence/PR24_25_LEDGER.json",
+    "completion_covers_current_heads": false,
+    "open_findings": [
+      "PR24-LANE-05",
+      "PR25-RESUME-01"
+    ]
+  },
+  "candidate_review_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656"
+}

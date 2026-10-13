@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/pr30-review-oct13
+
+
+ Test Files  4 passed (4)
+      Tests  48 passed (48)
+   Start at  10:30:50
+   Duration  3.67s (tests 70%, transform 19%, import 10%)
+

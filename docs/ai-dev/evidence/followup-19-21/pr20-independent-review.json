@@ -1,0 +1,92 @@
+{
+  "review": "PR20 independent provenance and migration review",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "subject": {
+    "head": "2b3abfd3ec2d0afc693610b5b505dc078fd640f4",
+    "base": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "workspace": "/workspace/ts-review-20"
+  },
+  "scope": "Additive plays.lane migration5; recordSeenPlay/recently-played stamping; immutable history and occurrence provenance; session/recovery regressions. Read/test only; no application fixes, remote writes, merges or deploys.",
+  "observed_at": "2026-10-09T06:31:12.334946+00:00",
+  "findings": [
+    {
+      "id": "PR20-LANE-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "A paused older occurrence can be permanently stamped with a replacement deck lane",
+      "file": "src/worker/hub/hub.ts",
+      "line": 4060,
+      "related_lines": [
+        4863,
+        4864,
+        4865,
+        4866
+      ],
+      "preconditions": "A Spotify client retains an old station occurrence/order across a long pause; persisted current deck is replaced during that pause and holds the same track for a different lane; recent listing arrives after resume. Replacement deck/version is a controlled SQL fixture, not a live/provider publication claim.",
+      "reproduction": [
+        "Run npx vitest run test/hub/pr20-independent.test.ts in /workspace/ts-review-20.",
+        "Onboard real HubCore against FakeSpotify with 180000ms tracks; start first station and retain its current fresh occurrence.",
+        "Advance FakeSpotify playback 30000ms and pause. Advance clock30min; persist replacement deck with writtenAt=now and current id lane=favorite; restart HubCore.",
+        "Advance clock another30min, resume the existing FakeSpotify old loaded player order, advance remaining150000ms. FakeSpotify generates actual recent-list entry from that fixture playback.",
+        "Force HubCore.sync and inspect history for original track."
+      ],
+      "expected": "Use immutable provenance captured for the actual old occurrence, if available; otherwise facts.kind must be null. It must not claim the new deck favorite lane.",
+      "actual": {
+        "oldKind": "fresh",
+        "replacementKind": "favorite",
+        "historyKind": "favorite",
+        "playedAt": 1790319841500,
+        "replacementWrittenAt": 1790317891500
+      },
+      "evidence": [
+        "/workspace/ts-review-20/test/hub/pr20-independent.test.ts",
+        "/tmp/pr20-independent.test.ts",
+        "/tmp/pr20-independent-tests.log",
+        "/tmp/pr20-lane-tests.log"
+      ],
+      "cause": "played_at minus full duration is not the actual start time across pauses. laneOf then checks current deck membership and writtenAt against this later estimate, and the wrong lane is stamped permanently.",
+      "impact": "History gives a factual source claim from a different occurrence/deck, violating conservative unknown-source behavior and the change stated trust bar. Counts/checkpoints were not shown to change.",
+      "repair_direction": "Bind source provenance to a captured actual session/deck occurrence at observation/start, or retain null whenever the listing cannot establish that occurrence. Do not infer immutable source from current deck membership and at-duration alone.",
+      "required_regressions": [
+        "Delayed recently-played after long pause crossing deck replacement, lane changes fresh\u2194favorite/discovery.",
+        "Same track repeated across different deck versions/lanes; ambiguity returns null.",
+        "No context/user-inserted queue/external/native playback does not acquire an unproven TS lane.",
+        "Private observation fallback and later list reconciliation preserve the captured occurrence lane and do not double-count.",
+        "Guest ignored rows remain excluded from totals while preserving truthful provenance."
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "Existing changed surface and session/recovery tests",
+      "status": "PASS",
+      "command": "npx vitest run test/hub/song-facts.test.ts test/hub/recovery.test.ts test/hub/session.test.ts",
+      "results": "36 existing tests passed in combined run; independent failing test included separately."
+    },
+    {
+      "name": "Independent populated v4 migration5 crash rollback/retry/idempotence/reopen",
+      "status": "PASS",
+      "results": "Fault injected after ALTER plays ADD COLUMN lane; transaction restores v4 version, exact kv/plays/memory/stations/playback_sessions and absence of lane; retry twice and restart reach v5 with legacy lanes null and preserved data."
+    },
+    {
+      "name": "Independent paused-old-occurrence/current-deck provenance attack",
+      "status": "FAIL",
+      "results": "Expected null; actual favorite for old fresh occurrence."
+    }
+  ],
+  "source_observations": [
+    "Migration5 is additive and transactionally versioned; no destructive migration or identity binding changes found.",
+    "INSERT OR IGNORE and lane readback do make an already-recorded lane immutable; this preserves a wrong initial stamp too.",
+    "LANES whitelist prevents unknown stored strings from becoming history source claims.",
+    "laneOf rejects null/foreign contexts and mixed kinds of same id within current deck, but has no stable occurrence/deck-version binding.",
+    "Prepared/unpublished deck_intent risk inspected but not independently reproduced and is not an additional finding."
+  ],
+  "not_run": [
+    "Live Spotify, physical iPhone and live guest/private/provider timing",
+    "Private HA/MA and native physical output",
+    "Actual populated Cloudflare object restore/production migration",
+    "Full release CI/build/browser gates owned by parent review"
+  ],
+  "limitations": "Isolated node:sqlite/Real HubCore/FakeSpotify evidence with explicit persisted replacement fixture. This proves an unsafe attribution seam, not live provider reproduction. Existing reported weekend CI timeout is excluded to avoid duplicate finding."
+}

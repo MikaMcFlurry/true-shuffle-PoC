@@ -1,0 +1,22 @@
+[WebServer] (node:252147) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:252157) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:252170) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:252197) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.
+[WebServer] 
+[WebServer] 
+
+Running 4 tests using 1 worker
+
+(node:252259) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 e2e/pr27-review.spec.ts:2:81 › PR27 opener profile 390 light (3.7s)
+  ✓  2 e2e/pr27-review.spec.ts:2:81 › PR27 opener profile 390 dark (1.4s)
+  ✓  3 e2e/pr27-review.spec.ts:2:81 › PR27 opener profile 1440 light (1.5s)
+  ✓  4 e2e/pr27-review.spec.ts:2:81 › PR27 opener profile 1440 dark (1.6s)
+
+  4 passed (12.7s)

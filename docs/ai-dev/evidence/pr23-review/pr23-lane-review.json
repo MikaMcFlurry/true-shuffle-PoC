@@ -1,0 +1,81 @@
+{
+  "reviewed_revision": "91c94c616e233f82135355c3fd47376276d88ad2",
+  "target_revision": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+  "at": "2026-10-09T10:16:22.141178+00:00",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "Independent lane provenance correction review; no application source edits",
+  "checkout": "/workspace/ts-pr23-lane-independent",
+  "findings": [
+    {
+      "id": "PR23-LANE-04",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unobserved replay matching the projected original end still consumes original lane",
+      "files": [
+        "src/worker/hub/hub.ts:4949",
+        "src/worker/hub/hub.ts:4953",
+        "src/worker/hub/hub.ts:5034"
+      ],
+      "preconditions": "Real HubCore, SQLite and FakeSpotify; initial play 180 s track, first observed new occurrence at 1 s; valid controlled replacement deck changes target fresh to favorite, stored snapshot still target, restart; no observations during intervening skips.",
+      "steps": [
+        "Start onboarded station, advance10s+sync, skip, advance1s+sync: target begins and receives fresh lane note at progress1000ms.",
+        "Advance5s and skip target under30s (not listed), advance60s without observing.",
+        "Replace persisted deck target lane with favorite via saveDeck and restart.",
+        "Insert target after current song in actual fake playlist order and skip into it (same playlist context).",
+        "Advance114s, skip target, sync while adjacent song starts at0s; total time is exactly original predicted end."
+      ],
+      "expected": "One actual listed target replay, kind null because no observed occurrence identifies its lane.",
+      "actual": "One listed target replay, facts.kind fresh. lane note gets endAt1790316251500 and is consumed for replay listing with that same timestamp, despite target originally skipped after6s.",
+      "cause": "noteLane projects lastAt+duration-progress and interprets coincident adjacent-song start as proof original occurrence completed; intervening unobserved replay remains possible.",
+      "repair_direction": "Do not publish definitive lane from projected end plus neighboring timestamp alone when occurrence continuity is ambiguous; preserve observed honest provenance or null.",
+      "required_regressions": [
+        "Unobserved replay with completion coinciding with old predicted end and +/-slack boundaries",
+        "Original LANE-03 and prior LANE-02 closure",
+        "Long observed pause/resume, application next, restart, same-id replay, immutable past history and queue"
+      ],
+      "evidence": [
+        "/workspace/ts-pr23-lane-independent/test/hub/pr23-independent.test.ts",
+        "/tmp/pr23-lane-repro.log"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "status": "PASS",
+      "name": "Original LANE-03 + two earlier independent replay/deck probes",
+      "count": 3,
+      "ref": "/tmp/pr23-lane-repro.log"
+    },
+    {
+      "status": "FAIL",
+      "name": "New endAt replay coincidence attack",
+      "count": 1,
+      "ref": "/tmp/pr23-lane-repro.log"
+    },
+    {
+      "status": "PASS",
+      "name": "Native bridge/orchestrator/rolling/base + endpoint quota + memory/history",
+      "count": 35,
+      "ref": "/tmp/pr23-lane-regression.log"
+    },
+    {
+      "status": "PASS",
+      "name": "Song facts (including long pause across replacement and app next), guest, recovery and stable resume",
+      "count": 46,
+      "ref": "/tmp/pr23-lane-core-regression.log"
+    }
+  ],
+  "not_run": [
+    "Physical iPhone",
+    "Real Spotify latency/quota",
+    "Private HA/MA",
+    "Actual populated restore",
+    "Production deployment by this reviewer"
+  ],
+  "notes": [
+    "Review addresses application source only; explicit completion and current deployment authority verified by parent.",
+    "No tests or functional assertions removed from tracked source.",
+    "Additional core/robustness regression run is pending; do not claim pending run passes."
+  ]
+}

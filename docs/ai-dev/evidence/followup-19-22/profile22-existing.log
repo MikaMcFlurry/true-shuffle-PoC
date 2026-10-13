@@ -1,0 +1,8 @@
+
+ RUN  v5.0.2 /tmp/profile22-backend-check
+
+
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Start at  07:51:10
+   Duration  2.02s (tests 56%, transform 32%, import 12%, worker 1%)

@@ -1,0 +1,128 @@
+{
+  "pr": {
+    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27",
+    "number": 27,
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "draft": false,
+    "body": "## Anlass\nZwei Hinweise des Eigentümers (Chat, 2026-10-09):\n1. Viele Songs, die im importierten Verlauf als „früh übersprungen“ gelten, mag er. Spotifys Shuffle hat sie nur bei jedem neuen Start als ersten Song gespielt.\n2. true-shuffle soll in Abständen selbst prüfen, ob ein übersprungener Song wirklich nicht gemocht wird.\n\nBisher zählten frühe Skips nur hoch. Ab 3 Skips kam ein Song dauerhaft nur noch mit Gewicht 0,03 vor (`RARE_AFTER_EARLY_SKIPS`), auch wenn er danach oft gehört wurde.\n\n## 1. Startsongs (Commit a24fdea)\nEin früher Skip aus dem Import gilt als **Startsong** (`isOpener`, `src/core/listens.ts`), wenn eine dieser Bedingungen zutrifft:\n- Spotifys `reason_start` sagt, dass der Song neu gestartet wurde, also weder `trackdone`, `fwdbtn`, `backbtn` noch `unknown`. Dafür gibt es das neue Flag `started` (64); der Validator akzeptiert Flags bis 127.\n- In den 10 Minuten vor seinem Beginn lief nichts.\n- Davor ist nichts bekannt, etwa beim ersten Eintrag einer Datei.\n\nAuswirkungen:\n- **Mix:** Startsong-Skips senken das Gewicht nicht. Die Importansicht nennt ihre Anzahl.\n- **Hörprofil:** „Früh übersprungen“ zählt Startsongs nicht mehr mit. Neu ist der Abschnitt „Gleich zum Start weg“. Für schon gespeicherte Importe greift sofort die Lückenregel.\n\n## 2. Nachprüfung (Commit 29d1b2d)\nWann Skips das Gewicht senken, entscheidet `skipsWeigh` in `src/core/memory.ts`:\n- Frühe Skips **wirken nur, solange das Letzte über den Song ein Skip ist**, und nur bis seine Nachprüfung fällig ist.\n- **Fällig** ist sie einen Monat nach dem letzten Skip, mit jedem weiteren Skip doppelt so spät, höchstens nach einem Jahr (`retestAfter`). Danach spielt der Song wieder mit normalem Gewicht, im Durchgang wie jeder andere.\n- **Gehört (ab 30 s)** seit dem letzten Skip: Die Skips zählen nicht mehr.\n- **Wieder übersprungen:** Die Skips zählen wieder, und die nächste Nachprüfung rückt weiter weg.\n- `consume` ignoriert Skips wie bisher. Die Favoritenregel und der 24-Stunden-Schutz „Nicht jetzt“ sind unverändert; ein Live-Skip ist immer das spätere Datum.\n- **Importierte Skips haben jetzt ein Datum:** Die Verlaufszeile bekommt ein fünftes Feld. Alte Zeilen mit vier Feldern werden weiter angenommen. Ihre Skips ohne Datum zählen weiter wie bisher, bis der Verlauf neu importiert wird.\n- `tasteWeight` bekommt `now`; der Planner gibt seine Uhr weiter.\n- Die Texte in der Kassetten-Regel, im Verlauf-Intro und in der Importansicht sind angepasst. Die Importansicht zählt nur Skips, die noch wirken.\n\nKeine Schemaänderung: `hist_pages` speichert die Zeilen weiterhin als JSON.\n\n## Tests\n- `memory-mix-history`:\n  - Startsong nach Klick, nach Stille und als erster Eintrag einer Datei\n  - Intervalle 30/60/120 Tage bis maximal 365 Tage, Fälligkeit auf die Millisekunde\n  - Gehört seit dem letzten Skip, erneut übersprungen\n  - Importe mit und ohne Datum, Live-Datum hat Vorrang, `fromRow` mit vier und fünf Feldern\n- `period-profile`, `listening-profile`: Trennung der Startsongs, Flag und Lücke über HubCore.\n- `skip-retest` (HubCore): Zeilen mit fünf Feldern, Import ohne Datum, Zukunftsdatum wird abgelehnt.\n\nLokal: Typecheck, Lint, 555 Unit-/Worker-Tests, 46 Browsertests und Build sind grün.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nhttps://claude.ai/code/session_01LuiFYFqenEVR9agywkDkAX",
+    "title": "Frühe Skips: Startsongs zählen nicht, Übersprungenes wird in Abständen nachgeprüft",
+    "base": "codex/implement-cloudflare-restart",
+    "base_sha": "93241a7129e18689f5ea664bad5273f6613552a0",
+    "head": "claude/skip-openers",
+    "head_sha": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+    "head_repo_id": 1163688720,
+    "head_repo_full_name": "MikaMcFlurry/true-shuffle-PoC",
+    "merge_commit_sha": "1b8a4d8e5de8c9a56cb685e12fb52b4fe83beda2",
+    "user": {
+      "login": "MikaMcFlurry",
+      "name": "MikaMcFlurry",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/77012401?v=4",
+      "id": 77012401
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-10-09T14:32:42Z",
+    "updated_at": "2026-10-09T14:43:13Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 2,
+    "changed_files": 17,
+    "additions": 368,
+    "deletions": 55,
+    "display_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27",
+    "display_title": "Frühe Skips: Startsongs zählen nicht, Übersprungenes wird in Abständen nachgeprüft"
+  },
+  "comments": {
+    "comments": [
+      {
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6083123121",
+        "body": "## 🚀 Deploying Preview to Cloudflare 🚀\n<!-- Preview URL -->\n\n<!-- Preview Deployments -->\n### Preview Deployments by commit\n\n<table>\n  <thead>\n    <tr>\n      <th align=\"left\">Status</th>\n      <th align=\"left\">Deployment URL</th>\n      <th align=\"left\">Commit</th>\n      <th align=\"left\">Updated (UTC)</th>\n      <th align=\"left\">See this deployment's details</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td><ul><li><b>Build:</b> Failed ❌</li></ul><br/>\n        <a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/5f3d54a7-eedd-4134-86c6-5d677f763ecb\">View logs ↗</a></td>\n      <td></td>\n      <td>29d1b2d</td>\n      <td>2026-10-09T14:40:15.744Z</td>\n      <td><a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/5f3d54a7-eedd-4134-86c6-5d677f763ecb\">View logs ↗</a></td>\n    </tr>\n    <tr>\n      <td><ul><li><b>Build:</b> Failed ❌</li></ul><br/>\n        <a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/b3f2f369-9924-4242-9ff0-d2709ed713e8\">View logs ↗</a></td>\n      <td></td>\n      <td>a24fdea</td>\n      <td>2026-10-09T14:33:26.388Z</td>\n      <td><a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/b3f2f369-9924-4242-9ff0-d2709ed713e8\">View logs ↗</a></td>\n    </tr>\n  </tbody>\n</table>\n",
+        "user": {
+          "login": "cloudflare-workers-and-pages[bot]",
+          "name": "cloudflare-workers-and-pages[bot]",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/in/85455?v=4",
+          "id": 73139402
+        },
+        "id": 6083123121,
+        "pull_request_review_id": null,
+        "in_reply_to_id": null,
+        "created_at": "2026-10-09T14:39:08Z",
+        "updated_at": "2026-10-09T14:43:13Z",
+        "review": null,
+        "side": null,
+        "line": null,
+        "start_line": null,
+        "path": null,
+        "body_html": "<h2 dir=\"auto\">🚀 Deploying Preview to Cloudflare 🚀</h2>\n\n\n<h3 dir=\"auto\">Preview Deployments by commit</h3>\n<markdown-accessiblity-table><table role=\"table\">\n  <thead>\n    <tr>\n      <th align=\"left\">Status</th>\n      <th align=\"left\">Deployment URL</th>\n      <th align=\"left\">Commit</th>\n      <th align=\"left\">Updated (UTC)</th>\n      <th align=\"left\">See this deployment's details</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td><ul dir=\"auto\"><li><b>Build:</b> Failed ❌</li></ul><br>\n        <a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/5f3d54a7-eedd-4134-86c6-5d677f763ecb\" rel=\"nofollow\">View logs ↗</a></td>\n      <td></td>\n      <td><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/commit/29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28/hovercard\" href=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/commit/29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28\"><tt>29d1b2d</tt></a></td>\n      <td>2026-10-09T14:40:15.744Z</td>\n      <td><a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/5f3d54a7-eedd-4134-86c6-5d677f763ecb\" rel=\"nofollow\">View logs ↗</a></td>\n    </tr>\n    <tr>\n      <td><ul dir=\"auto\"><li><b>Build:</b> Failed ❌</li></ul><br>\n        <a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/b3f2f369-9924-4242-9ff0-d2709ed713e8\" rel=\"nofollow\">View logs ↗</a></td>\n      <td></td>\n      <td><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/commit/a24fdeaf1fcb4cd18932eeecce6826312a43206d/hovercard\" href=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/commit/a24fdeaf1fcb4cd18932eeecce6826312a43206d\"><tt>a24fdea</tt></a></td>\n      <td>2026-10-09T14:33:26.388Z</td>\n      <td><a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/b3f2f369-9924-4242-9ff0-d2709ed713e8\" rel=\"nofollow\">View logs ↗</a></td>\n    </tr>\n  </tbody>\n</table></markdown-accessiblity-table>"
+      },
+      {
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6083149819",
+        "body": "Der rote Check „Workers Builds: true-shuffle“ kommt nicht von diesem PR. Es ist der Cloudflare-Preview-Build, der bei jedem Push auf einen Nicht-Produktionszweig fehlschlägt, so auch bei #19–#26. Deployt wird nur der Produktionszweig. Einen Fix im Repo gibt es dafür nicht, und ich kann den Check nicht neu starten. Maßgeblich ist `verify`.\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+        "user": {
+          "login": "MikaMcFlurry",
+          "name": "MikaMcFlurry",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/77012401?v=4",
+          "id": 77012401
+        },
+        "id": 6083149819,
+        "pull_request_review_id": null,
+        "in_reply_to_id": null,
+        "created_at": "2026-10-09T14:40:42Z",
+        "updated_at": "2026-10-09T14:40:42Z",
+        "review": null,
+        "side": null,
+        "line": null,
+        "start_line": null,
+        "path": null,
+        "body_html": "<p dir=\"auto\">Der rote Check „Workers Builds: true-shuffle“ kommt nicht von diesem PR. Es ist der Cloudflare-Preview-Build, der bei jedem Push auf einen Nicht-Produktionszweig fehlschlägt, so auch bei <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5773574491\" data-permission-text=\"Title is private\" data-url=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/issues/19\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/MikaMcFlurry/true-shuffle-PoC/pull/19/hovercard\" href=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19\">#19</a>–<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5777791096\" data-permission-text=\"Title is private\" data-url=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/issues/26\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/MikaMcFlurry/true-shuffle-PoC/pull/26/hovercard\" href=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26\">#26</a>. Deployt wird nur der Produktionszweig. Einen Fix im Repo gibt es dafür nicht, und ich kann den Check nicht neu starten. Maßgeblich ist <code class=\"notranslate\">verify</code>.</p>\n<hr>\n<p dir=\"auto\"><em>Generated by <a href=\"https://claude.ai/code\" rel=\"nofollow\">Claude Code</a></em></p>"
+      },
+      {
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6083736398",
+        "body": "Unabhängige Prüfung von `29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28` gegen Ziel `93241a7129e18689f5ea664bad5273f6613552a0`: **NOT_READY**, frische getrennte Prüfung.\n\n**P2 / PR27-OPENER-PODCAST-01 – Mix und Hörprofil widersprechen sich nach einem Podcast.**\nBetroffen: `src/core/history.ts:91`, `src/core/listens.ts:124`, `src/worker/hub/hub.ts:6760`, `src/client/screens/profile.tsx:496`.\n\nRepro mit gültigem chronologischem erweiterten Verlauf, vollständig vor `live_since=2026-09-25T03:00:00Z`:\n1. Musik endet 01:59:54Z, `ms_played=180000`.\n2. Podcast endet 02:59:54Z, `ms_played=3500000`, `spotify_track_uri=null`.\n3. Nächster Song endet 02:59:57Z nach 3000ms, `reason_start=trackdone`, `reason_end=fwdbtn`.\n4. Tatsächliche `aggregateHistory → importHistory` und `addListens → finishListens → importListens → listeningProfile` ausführen.\n\nIst: Aggregate `skipped=1/openers=0`; tatsächliches Memory/Planner-Gewicht `0.5`. Hörprofil dagegen `early=0/openers=1`, Song unter „Gleich zum Start weg“, mit der ausdrücklichen Aussage, dass er dadurch nicht seltener komme.\nUrsache: Aggregate berücksichtigt Podcast-Aktivität; die gespeicherte Musik-Timeline verliert Podcasts und deutet die künstliche Stunde Abstand als Stille.\n\nErwartet: dieselbe belegbare Klassifikation für Mix und Profil; bei fortlaufendem Podcast-Hören kein erfundener Neustart. Bitte Klassifikation/Aktivitätskontinuität vor dem verlustbehafteten Musikfilter erhalten und Altimporte kompatibel halten. Erforderliche Regressionen: Musik→Podcast→unmittelbarer Skip, echte Stille→Skip, expliziter Neustart, alte Zeilen und mehrere Dateien; Assertion über Aggregate **und** tatsächliches Hub-Memory **und** Profil.\n\nRoot-Checks: Typecheck/Lint/Build/Worker-Dry-Run PASS, **555/555 Unit-/Worker**, **46/46 bestehende Browserchecks**, **4/4 zusätzliche echte Chromium-Renderchecks** des neuen Abschnitts (390/1440, Hell/Dunkel, lange Metadaten, Tastatur, Navigation). GitHub verify **37945893955 success**. Frische unabhängige gezielte Suite **45 PASS/1 FAIL**, einschließlich 43 bestehender Regressionen. Dies sind lokale Hub/FakeSpotify-Nachweise, keine physische iPhone-/Live-Spotify-/Quota-Abnahme.\n\nBisher fehlt außerdem ein Kommentar, der den betreffenden Releaseumfang ausdrücklich fertig meldet. Bitte nach Reparatur den vollständigen Umfang und seine Abhängigkeiten konkret fertig melden. #27 enthält funktionale Import-/Memory-/Planner-Änderungen und wird getrennt vom Designauftrag geprüft. Die unveränderten offenen Befunde aus #24/#25 sind weiterhin im vorhandenen Review erfasst; ich wiederhole sie hier nicht.\n\nKein Merge/Deployment ausgeführt. Authentifizierte Cloudflare-Lesung bestätigt unverändert Version `873eca1e-2819-4e9b-9bab-c8a03a9ef441`, Deployment `8bde11bf-ac13-43de-b08a-91b6bcf55c81`,100% Traffic.",
+        "user": {
+          "login": "MikaMcFlurry",
+          "name": "MikaMcFlurry",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/77012401?v=4",
+          "id": 77012401
+        },
+        "id": 6083736398,
+        "pull_request_review_id": null,
+        "in_reply_to_id": null,
+        "created_at": "2026-10-09T15:14:35Z",
+        "updated_at": "2026-10-09T15:14:35Z",
+        "review": null,
+        "side": null,
+        "line": null,
+        "start_line": null,
+        "path": null,
+        "body_html": "<p dir=\"auto\">Unabhängige Prüfung von <code class=\"notranslate\">29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28</code> gegen Ziel <code class=\"notranslate\">93241a7129e18689f5ea664bad5273f6613552a0</code>: <strong>NOT_READY</strong>, frische getrennte Prüfung.</p>\n<p dir=\"auto\"><strong>P2 / PR27-OPENER-PODCAST-01 – Mix und Hörprofil widersprechen sich nach einem Podcast.</strong><br>\nBetroffen: <code class=\"notranslate\">src/core/history.ts:91</code>, <code class=\"notranslate\">src/core/listens.ts:124</code>, <code class=\"notranslate\">src/worker/hub/hub.ts:6760</code>, <code class=\"notranslate\">src/client/screens/profile.tsx:496</code>.</p>\n<p dir=\"auto\">Repro mit gültigem chronologischem erweiterten Verlauf, vollständig vor <code class=\"notranslate\">live_since=2026-09-25T03:00:00Z</code>:</p>\n<ol dir=\"auto\">\n<li>Musik endet 01:59:54Z, <code class=\"notranslate\">ms_played=180000</code>.</li>\n<li>Podcast endet 02:59:54Z, <code class=\"notranslate\">ms_played=3500000</code>, <code class=\"notranslate\">spotify_track_uri=null</code>.</li>\n<li>Nächster Song endet 02:59:57Z nach 3000ms, <code class=\"notranslate\">reason_start=trackdone</code>, <code class=\"notranslate\">reason_end=fwdbtn</code>.</li>\n<li>Tatsächliche <code class=\"notranslate\">aggregateHistory → importHistory</code> und <code class=\"notranslate\">addListens → finishListens → importListens → listeningProfile</code> ausführen.</li>\n</ol>\n<p dir=\"auto\">Ist: Aggregate <code class=\"notranslate\">skipped=1/openers=0</code>; tatsächliches Memory/Planner-Gewicht <code class=\"notranslate\">0.5</code>. Hörprofil dagegen <code class=\"notranslate\">early=0/openers=1</code>, Song unter „Gleich zum Start weg“, mit der ausdrücklichen Aussage, dass er dadurch nicht seltener komme.<br>\nUrsache: Aggregate berücksichtigt Podcast-Aktivität; die gespeicherte Musik-Timeline verliert Podcasts und deutet die künstliche Stunde Abstand als Stille.</p>\n<p dir=\"auto\">Erwartet: dieselbe belegbare Klassifikation für Mix und Profil; bei fortlaufendem Podcast-Hören kein erfundener Neustart. Bitte Klassifikation/Aktivitätskontinuität vor dem verlustbehafteten Musikfilter erhalten und Altimporte kompatibel halten. Erforderliche Regressionen: Musik→Podcast→unmittelbarer Skip, echte Stille→Skip, expliziter Neustart, alte Zeilen und mehrere Dateien; Assertion über Aggregate <strong>und</strong> tatsächliches Hub-Memory <strong>und</strong> Profil.</p>\n<p dir=\"auto\">Root-Checks: Typecheck/Lint/Build/Worker-Dry-Run PASS, <strong>555/555 Unit-/Worker</strong>, <strong>46/46 bestehende Browserchecks</strong>, <strong>4/4 zusätzliche echte Chromium-Renderchecks</strong> des neuen Abschnitts (390/1440, Hell/Dunkel, lange Metadaten, Tastatur, Navigation). GitHub verify <strong>37945893955 success</strong>. Frische unabhängige gezielte Suite <strong>45 PASS/1 FAIL</strong>, einschließlich 43 bestehender Regressionen. Dies sind lokale Hub/FakeSpotify-Nachweise, keine physische iPhone-/Live-Spotify-/Quota-Abnahme.</p>\n<p dir=\"auto\">Bisher fehlt außerdem ein Kommentar, der den betreffenden Releaseumfang ausdrücklich fertig meldet. Bitte nach Reparatur den vollständigen Umfang und seine Abhängigkeiten konkret fertig melden. <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5779811479\" data-permission-text=\"Title is private\" data-url=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/issues/27\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/MikaMcFlurry/true-shuffle-PoC/pull/27/hovercard\" href=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27\">#27</a> enthält funktionale Import-/Memory-/Planner-Änderungen und wird getrennt vom Designauftrag geprüft. Die unveränderten offenen Befunde aus <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5777277587\" data-permission-text=\"Title is private\" data-url=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/issues/24\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/MikaMcFlurry/true-shuffle-PoC/pull/24/hovercard\" href=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24\">#24</a>/<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5777355476\" data-permission-text=\"Title is private\" data-url=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/issues/25\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/MikaMcFlurry/true-shuffle-PoC/pull/25/hovercard\" href=\"https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25\">#25</a> sind weiterhin im vorhandenen Review erfasst; ich wiederhole sie hier nicht.</p>\n<p dir=\"auto\">Kein Merge/Deployment ausgeführt. Authentifizierte Cloudflare-Lesung bestätigt unverändert Version <code class=\"notranslate\">873eca1e-2819-4e9b-9bab-c8a03a9ef441</code>, Deployment <code class=\"notranslate\">8bde11bf-ac13-43de-b08a-91b6bcf55c81</code>,100% Traffic.</p>"
+      }
+    ],
+    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27",
+    "title": "MikaMcFlurry/true-shuffle-PoC PR #27 comments",
+    "display_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27",
+    "display_title": "MikaMcFlurry/true-shuffle-PoC PR #27 comments"
+  },
+  "ci": {
+    "workflow_runs": [
+      {
+        "id": 37945893955,
+        "name": "Cloudflare application checks",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 115,
+        "jobs_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/37945893955/jobs",
+        "logs_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/37945893955/logs",
+        "workflow_id": 370971963
+      }
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+import { expect,it } from 'vitest';
+import { onboarded } from './harness';
+import { migrate } from '../../src/worker/hub/schema';
+import { DAY_MS, MINUTE_MS } from '../../src/core/types';
+import { skipsWeigh, retestAfter, probeDue } from '../../src/core/memory';
+it('two concurrent answers against the same observed track do not skip its successor',async()=>{
+ const h=await onboarded({tracks:60}), sid=h.stationIds[0]!;
+ await h.hub.play(sid); await h.listen(MINUTE_MS);
+ const song=h.fake.current()!, session=h.hub.savedSession(sid)!;
+ const start=session.currentIndex;
+ const results=await Promise.all([h.hub.retestVerdict(song,false),h.hub.retestVerdict(song,false)]);
+ await h.hub.state({live:true,refresh:true});
+ const after=h.hub.savedSession(sid)!;
+ console.log('DOUBLE_ANSWER',JSON.stringify({song,start,results,after:after.currentIndex,current:h.fake.current()}));
+ expect(after.currentIndex-start).toBe(1);
+});
+it('native answer against observed song advances through native transport',async()=>{
+ const h=await onboarded({tracks:200}), sid=h.stationIds[0]!;
+ const ids=h.sql.all<{data:string}>("SELECT data FROM pages WHERE data <> '[]'").flatMap(x=>JSON.parse(x.data).map((y:any)=>y[0]));
+ h.hub.importHistory(ids.slice(0,20).map(id=>[id,2,3,h.clock.t-400*DAY_MS,h.clock.t-40*DAY_MS]),0,1);
+ h.hub.newNativeQueue(sid);
+ const session=h.hub.nativeSession(sid), probe=h.hub.sessionView(sid,1000)!.queue.find(x=>x.facts?.kind==='probe')!;
+ expect(probe).toBeTruthy();
+ expect(h.hub.acceptSessionObservation(sid,{sessionId:session.sessionId,entryId:probe.entryId,playbackEpoch:session.playbackEpoch,sequence:1,progressMs:10_000,isPlaying:true})).toBe(true);
+ const before=h.hub.savedSession(sid)!.currentIndex, calls=h.fake.calls.length;
+ const result=await h.hub.retestVerdict(probe.track.id,false);
+ console.log('NATIVE_ANSWER',JSON.stringify({song:probe.track.id,kind:probe.facts?.kind,result,before,after:h.hub.savedSession(sid)!.currentIndex,providerCalls:h.fake.calls.length-calls}));
+ expect(result.skipped).toBe(true);
+});
+it('v6 to v7 migration crash rolls back and preserves incumbent memory and observed queue',async()=>{
+ const h=await onboarded({tracks:40}), sid=h.stationIds[0]!;
+ await h.hub.play(sid); await h.listen(MINUTE_MS);
+ h.sql.run('ALTER TABLE memory DROP COLUMN verdict');h.sql.run('ALTER TABLE memory DROP COLUMN verdict_at');
+ h.sql.run("UPDATE kv SET v='6' WHERE k='schema_version'");
+ const memory=h.sql.all('SELECT * FROM memory'), before=h.hub.savedSession(sid);
+ expect(()=>migrate({...h.sql,run:(q,...p)=>{h.sql.run(q,...p);if(q.includes('ADD COLUMN verdict_at'))throw Error('v7_crash');}})).toThrow('v7_crash');
+ expect(h.sql.first<{v:string}>("SELECT v FROM kv WHERE k='schema_version'")!.v).toBe('6');
+ expect(h.sql.all('SELECT * FROM memory')).toEqual(memory);expect(h.hub.savedSession(sid)).toEqual(before);
+ migrate(h.sql); h.restart();expect(h.hub.savedSession(sid)).toEqual(before);
+ expect(h.sql.all<any>('SELECT * FROM memory').map(({verdict,verdict_at,...x})=>x)).toEqual(memory);
+});
+it('successive negative answers each double the next check',async()=>{
+ const h=await onboarded({tracks:40});
+ const song=h.sql.first<{data:string}>("SELECT data FROM pages WHERE data <> '[]' LIMIT 1")!;
+ const id=JSON.parse(song.data)[0][0], now=h.clock.t;
+ h.hub.importHistory([[id,2,3,now-400*DAY_MS,now-40*DAY_MS]],0,1);
+ expect(probeDue(h.hub.memory(id),h.clock.t)).toBe(true);
+ await h.hub.retestVerdict(id,false);h.clock.t+=31*DAY_MS;
+ expect(probeDue(h.hub.memory(id),h.clock.t)).toBe(true);
+ await h.hub.retestVerdict(id,false);
+ const memory=h.hub.memory(id);
+ console.log('REPEATED_NO',JSON.stringify({memory,four:retestAfter(4),five:retestAfter(5)}));
+ expect(skipsWeigh(memory,h.clock.t+retestAfter(4))).toBe(true);
+});

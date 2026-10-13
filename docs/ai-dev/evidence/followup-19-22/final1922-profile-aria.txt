@@ -1,0 +1,119 @@
+- button "Zurück"
+- heading "Dein Hörprofil" [level=1]
+- paragraph: Wann und was du hörst, und was true-shuffle daraus über dich weiß. Gezählt wird jeder Song ab 30 Sekunden, Gast-Modus nie.
+- paragraph: Was true-shuffle selbst gezählt hat, die letzten 180 Tage, auch was du direkt in Spotify gehört hast.
+- region "Auf einen Blick":
+  - paragraph: "8,7 Stunden Musik seit 11. Juli 2026, höchstens: Songlängen zusammengezählt"
+  - paragraph: 174 Songs gehört
+  - paragraph: 42 verschiedene Songs
+  - paragraph: 9 Künstler
+- region "Wann du hörst":
+  - heading "Wann du hörst" [level=2]
+  - paragraph: "Am meisten hörst du Dienstags, und über die Woche gesehen um 8 Uhr. Dein dichtester Moment: Dienstag um 8 Uhr."
+  - img "Songs nach Wochentag und Uhrzeit, Tabelle darunter"
+  - group:
+    - text: Als Tabelle
+    - table:
+      - rowgroup:
+        - row "Uhrzeit Songs":
+          - columnheader "Uhrzeit"
+          - columnheader "Songs"
+      - rowgroup:
+        - row "0–1 Uhr 0":
+          - rowheader "0–1 Uhr"
+          - cell "0"
+        - row "1–2 Uhr 0":
+          - rowheader "1–2 Uhr"
+          - cell "0"
+        - row "2–3 Uhr 0":
+          - rowheader "2–3 Uhr"
+          - cell "0"
+        - row "3–4 Uhr 0":
+          - rowheader "3–4 Uhr"
+          - cell "0"
+        - row "4–5 Uhr 0":
+          - rowheader "4–5 Uhr"
+          - cell "0"
+        - row "5–6 Uhr 0":
+          - rowheader "5–6 Uhr"
+          - cell "0"
+        - row "6–7 Uhr 0":
+          - rowheader "6–7 Uhr"
+          - cell "0"
+        - row "7–8 Uhr 0":
+          - rowheader "7–8 Uhr"
+          - cell "0"
+        - row "8–9 Uhr 174":
+          - rowheader "8–9 Uhr"
+          - cell "174"
+        - row "9–10 Uhr 0":
+          - rowheader "9–10 Uhr"
+          - cell "0"
+        - row "10–11 Uhr 0":
+          - rowheader "10–11 Uhr"
+          - cell "0"
+        - row "11–12 Uhr 0":
+          - rowheader "11–12 Uhr"
+          - cell "0"
+        - row "12–13 Uhr 0":
+          - rowheader "12–13 Uhr"
+          - cell "0"
+        - row "13–14 Uhr 0":
+          - rowheader "13–14 Uhr"
+          - cell "0"
+        - row "14–15 Uhr 0":
+          - rowheader "14–15 Uhr"
+          - cell "0"
+        - row "15–16 Uhr 0":
+          - rowheader "15–16 Uhr"
+          - cell "0"
+        - row "16–17 Uhr 0":
+          - rowheader "16–17 Uhr"
+          - cell "0"
+        - row "17–18 Uhr 0":
+          - rowheader "17–18 Uhr"
+          - cell "0"
+        - row "18–19 Uhr 0":
+          - rowheader "18–19 Uhr"
+          - cell "0"
+        - row "19–20 Uhr 0":
+          - rowheader "19–20 Uhr"
+          - cell "0"
+        - row "20–21 Uhr 0":
+          - rowheader "20–21 Uhr"
+          - cell "0"
+        - row "21–22 Uhr 0":
+          - rowheader "21–22 Uhr"
+          - cell "0"
+        - row "22–23 Uhr 0":
+          - rowheader "22–23 Uhr"
+          - cell "0"
+        - row "23–24 Uhr 0":
+          - rowheader "23–24 Uhr"
+          - cell "0"
+- region "Pro Monat":
+  - heading "Pro Monat" [level=2]
+  - paragraph: Dein stärkster Monat war Sep 2026 mit 5,1 Stunden.
+  - img "Stunden pro Monat": Aug 26 5 Sep 26
+- region "Am meisten gehört":
+  - heading "Am meisten gehört" [level=2]
+  - heading "Künstler" [level=3]
+  - list:
+    - listitem: Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug 174
+  - heading "Songs" [level=3]
+  - list:
+    - listitem: 1 Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug Eine außergewöhnlich lange deutsche Künstler- und Songbezeichnung für den Wochenendausflug 100×
+- region "Deine Genres":
+  - heading "Deine Genres" [level=2]
+  - paragraph: Welche Genres du hörst, schätzt eine KI aus deinen meistgehörten Künstlern. Daraus wählt true-shuffle auch seine Empfehlungen.
+  - button "Genres einschätzen lassen"
+- region "Was true-shuffle über dich weiß":
+  - heading "Was true-shuffle über dich weiß" [level=2]
+  - paragraph: Daraus mischt true-shuffle deine Kassetten und wählt Empfehlungen aus.
+  - list:
+    - listitem: 57 % deiner Songs der letzten 180 Tage liefen auf deinen Kassetten, der Rest direkt in Spotify.
+    - listitem: 10 Favoriten mit Daumen hoch. Sie kommen öfter.
+    - listitem: 2 Songs kommen nie wieder, weil du sie aussortiert hast.
+    - listitem: 3 Empfehlungen haben dir gefallen und bleiben auf deinen Kassetten.
+    - listitem: 4 Empfehlungen hast du aussortiert. Ähnliches schlägt true-shuffle seltener vor.
+    - listitem: 5 Mal hast du einen Song in den ersten 30 Sekunden übersprungen.

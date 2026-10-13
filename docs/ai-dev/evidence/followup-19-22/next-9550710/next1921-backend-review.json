@@ -1,0 +1,98 @@
+{
+  "generated_at": "2026-10-09T09:25:01.022484+00:00",
+  "reviewer": "next1921_review",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "Independent PR20/21 corrections and regression on combined current source; no application edits",
+  "subject": {
+    "revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+    "environment": "isolated Node sqlite real HubCore/FakeSpotify",
+    "environment_class": "TEST",
+    "worktree": "/workspace/ts-next1921-independent",
+    "base": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "pr20_head": "efee7e7c8a2fda0608cdc2f311f2b2fd5a87355e",
+    "pr21_head": "728d276a614b4fd46640efb61aa9a0f25a2444b3"
+  },
+  "closed_findings": [
+    {
+      "id": "PR20-LANE-02",
+      "status": "PASS",
+      "detail": "Original independent exact short-unlisted occurrence with intervening departure observation no longer labels later repeated occurrence. Retained old playlist control also passes. Current original long-paused replacement control passes and does not borrow replacement lane."
+    },
+    {
+      "id": "PR21-GUEST-03",
+      "status": "PASS",
+      "detail": "Original successful player snapshot with null device.id holds prior guest and counts continued guest song ignored=1. Separate restart/three unknown look holds preserve exact until, expire without extension, 429 player failure neither closes nor extends, later known owner phone closes."
+    }
+  ],
+  "checks": [
+    {
+      "command": "npx vitest run test/hub/next-lane-attacks.test.ts test/hub/next-guest-uncertainty.test.ts test/hub/song-facts.test.ts test/hub/guest-device.test.ts",
+      "status": "PASS",
+      "tests": 24,
+      "log": "/tmp/next1921-initial.log"
+    },
+    {
+      "command": "npx vitest run test/hub/next-boundary-attacks.test.ts test/hub/song-facts.test.ts test/hub/guest-device.test.ts test/hub/robustness.test.ts test/hub/resume-place.test.ts test/native",
+      "status": "FAIL",
+      "passed": 161,
+      "failed": 1,
+      "files_passed": 4,
+      "files_failed": 1,
+      "duration_seconds": 106.2,
+      "log": "/tmp/next1921-fullregression.log",
+      "note": "test/native filter matches no files; actual native suite separately run below. Sole failure is new PR20-LANE-03; all incumbent selected regression assertions pass."
+    },
+    {
+      "command": "npx vitest run test/worker/native.test.ts test/worker/native-bridge.test.ts test/worker/native-orchestrator.test.ts test/worker/native-rolling.test.ts",
+      "status": "PASS",
+      "tests": 17,
+      "log": "/tmp/next1921-native.log"
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR20-LANE-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Missed departure observation leaves short-play note available to label a later independent play",
+      "files": [
+        "src/worker/hub/hub.ts:4917",
+        "src/worker/hub/hub.ts:4948",
+        "src/worker/hub/hub.ts:4965"
+      ],
+      "test": "/workspace/ts-next1921-independent/test/hub/next-boundary-attacks.test.ts:6",
+      "reproduction": [
+        "Real HubCore onboarded 200 tracks of 180 s; app observes initial song, then arrival of T after a skip at progress 1 s, recording fresh lane note.",
+        "T is skipped after 6 s total so FakeSpotify does not list T. Another song plays 60 s without app player look. Cached snapshot remains T.",
+        "Controlled replacement deck fixture changes T reason to favorite and writtenAt, preserving track/order. Invoke actual HubCore.saveDeck so closeLaneNotes executes; restart HubCore over same sqlite.",
+        "Spotify plays T again in same playlist for 45 s entirely between app looks; skip, force real HubCore sync. Spotify listing creates one counted T history row."
+      ],
+      "expected": "The later occurrence has no proven link to the short earlier arrival. Return null for its lane rather than asserting fresh or inferring favorite from current deck. Retain observed paused long-occurrence lane where a matching occurrence is established.",
+      "actual": {
+        "old_note_kind": "fresh",
+        "replacement_kind": "favorite",
+        "history_kind": "fresh",
+        "history_T_rows": 1,
+        "history_ignored": false,
+        "played_at": 1790316182500
+      },
+      "cause": "closeLaneNotes compares only track id to cached player and exempts T even when snapshot is stale. Next closing look sets goneAt to now, so the listing ending before now passes the stamp bound and consumes old note. Missing intermediate look defeats occurrence binding.",
+      "impact": "False reason-of-play label in persisted History; no demonstrated changed queue/count/transport effect.",
+      "repair_direction": "Fence lane note consumption to the actual observed occurrence and provenance; ambiguous unobserved departures/repeats must yield null. Do not use wall time alone to fabricate completion or close genuine paused occurrence.",
+      "required_checks": [
+        "This missed-look/restart controlled replacement regression",
+        "Original PR20-LANE-02 with departure look",
+        "Original paused same-occurrence across long pause/replacement",
+        "Listing dedup/count, read-only history, native/private/guest and stable queue regressions"
+      ],
+      "evidence": "/tmp/next1921-fullregression.log",
+      "limits": "Controlled deck publication fixture invokes real persistence/closure logic; no claim this exact replacement was reproduced through public rebuild workflow or live Spotify. FakeSpotify is simulation, not live latency/quota evidence."
+    }
+  ],
+  "not_run": [
+    "Public end-to-end deck publication for new fixture",
+    "Physical iPhone/live Spotify/private HA/populated restore",
+    "Browser UI and production operations; delegated to other review/root"
+  ]
+}

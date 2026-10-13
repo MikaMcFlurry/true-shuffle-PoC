@@ -1,0 +1,47 @@
+
+ RUN  v5.0.2 /workspace/ts-review-20
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"level":"info","kind":"import","message":"„Playlist 1“: 100 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"level":"info","kind":"import","message":"„Playlist 2“: 100 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+{"oldKind":"fresh","newKind":"favorite","actual":"favorite","playedAt":1790319841500,"writtenAt":1790317891500}
+
+ ❯ test/hub/pr20-independent.test.ts (2 tests | 1 failed) 357ms
+   × a paused old occurrence must not inherit the replacement deck reason on a delayed listing 160ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr20-independent.test.ts > a paused old occurrence must not inherit the replacement deck reason on a delayed listing
+AssertionError: expected 'favorite' to be null
+
+- Expected:
+null
+
++ Received:
+"favorite"
+
+ ❯ test/hub/pr20-independent.test.ts:30:27
+     28|  expect(play).toBeDefined();
+     29|  console.log(JSON.stringify({oldKind,newKind,actual:play.facts?.kind,p…
+     30|  expect(play.facts?.kind).toBeNull();
+       |                           ^
+     31| });
+     32|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  06:30:18
+   Duration  1.48s (transform 51%, tests 31%, import 17%, worker 1%)

@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-final24-combined
+
+
+ Test Files  3 passed (3)
+      Tests  50 passed (50)
+   Start at  12:32:51
+   Duration  5.02s (tests 78%, transform 15%, import 7%)
+

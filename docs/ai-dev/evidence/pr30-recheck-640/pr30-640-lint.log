@@ -1,0 +1,6 @@
+
+> true-shuffle@1.0.0 lint
+> biome check .
+
+Checked 141 files in 1859ms. No fixes applied.
+Found 2 infos.

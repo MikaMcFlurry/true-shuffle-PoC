@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-pr28-independent
+
+
+ Test Files  4 passed (4)
+      Tests  67 passed (67)
+   Start at  16:17:43
+   Duration  15.63s (tests 86%, transform 10%, import 4%)
+
