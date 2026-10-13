@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "project": "true-shuffle",
   "subject": {
-    "revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
+    "revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
     "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json"
   },
   "branch": "codex/implement-cloudflare-restart",
@@ -47,7 +47,8 @@
     "PR30draft freshbackend/UIreview4findingscomment6143664484;618unit/49browser/staticdry bound evidence; production unchanged.",
     "PR30 9e8d fresh backend64PASS: two findings CLOSED; UI preview partlyfixed, two originalP2s stillopen; static/browser/CI PASS; no release.",
     "PR30 0071 fresh scopedbackend/UI review: original four findingsCLOSED;636unit/static/dry/CI PASS. Inheritedfindings and no completion/access remain; no release.",
-    "PR30 898 lifecycle delta independently reviewed;636unit/51browser/static/dry/CI PASS; new precommitGET deletion UI P2 blocks. Originalfour remainclosed; no release."
+    "PR30 898 lifecycle delta independently reviewed;636unit/51browser/static/dry/CI PASS; new precommitGET deletion UI P2 blocks. Originalfour remainclosed; no release.",
+    "PR30 640 persistedcommit/UIorder independently READY; all5reviewedPR30findingsclosed.640unitfullretry/56browser/static/dry/CI PASS; firstunit20s timeout retained. Inheritedessential findings/no completion/CFaccess remain; no release."
   ],
   "in_progress": [],
   "blocked": [
@@ -63,8 +64,7 @@
     "PR29-REPEAT-NO-01",
     "PR29-VERDICT-ORDER",
     "PR29-VERDICT-TRANSPORT",
-    "PR29-VERDICT-OCCURRENCE",
-    "PR30-DELETE-PRECOMMIT-LOAD"
+    "PR29-VERDICT-OCCURRENCE"
   ],
   "capability_blockers": [
     "Physical iPhone/liveSpotify latencyquota unavailable",
@@ -667,5 +667,5 @@
     "preservation_proof": "pr29-review/pr29-preservation.json"
   },
   "latest_watch_ref": "docs/ai-dev/evidence/PR_WATCH_2026_10_10.json",
-  "next_action": "Await PR30 precommitGET/deletion UI fence repair and explicit full release-scope completion; re-review exact head, retain inherited essential findings and restore existing authorized Cloudflare access."
+  "next_action": "Await explicit full release-scope completion and resolution of inherited essential findings; retain exacthead checks, restore existing authorized Cloudflare access before release."
 }

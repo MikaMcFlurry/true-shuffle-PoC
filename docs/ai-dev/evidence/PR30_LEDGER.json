@@ -1,9 +1,9 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-13T16:10:37.573065+00:00",
+  "generated_at": "2026-10-13T17:20:16.855210+00:00",
   "project": "true-shuffle",
   "subject": {
-    "revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
+    "revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
     "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
     "environment": "isolatedLinuxcheckout realHubSQLite/Worker/FakeSpotify and interceptedUI; not production",
     "environment_class": "LOCAL"
@@ -225,12 +225,6 @@
       "severity": "P2",
       "blocking": false,
       "title": "Prior answer hides the next probe of the same song in a continuously open Home"
-    },
-    {
-      "id": "PR30-DELETE-PRECOMMIT-LOAD",
-      "title": "Delayed precommit load can restore current import UI after successful deletion",
-      "severity": "P2",
-      "blocking": true
     }
   ],
   "gates": [
@@ -246,8 +240,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-          "observed_at": "2026-10-13T16:10:37.573065+00:00"
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
         }
       ]
     },
@@ -263,8 +257,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-          "observed_at": "2026-10-13T16:10:37.573065+00:00"
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
         }
       ]
     },
@@ -280,8 +274,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-          "observed_at": "2026-10-13T16:10:37.573065+00:00"
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
         }
       ]
     },
@@ -297,8 +291,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-          "observed_at": "2026-10-13T16:10:37.573065+00:00"
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
         }
       ]
     },
@@ -314,8 +308,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-          "observed_at": "2026-10-13T16:10:37.573065+00:00"
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
         }
       ]
     },
@@ -355,8 +349,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-          "observed_at": "2026-10-13T16:10:37.573065+00:00"
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
         }
       ]
     },
@@ -372,16 +366,16 @@
       "id": "G-UI_RUNTIME",
       "category": "ui_runtime",
       "required": true,
-      "status": "FAIL",
-      "rationale": "Confirmed precommitGET after deletion presents old imported counts as current; fresh independent scoped UI NOT_READY.",
+      "status": "PASS",
+      "rationale": "New storedcommit ordering independently repairs exact deletion precommitGET repro; other scoped UI ordering/runtime checksPASS. Inherited essential findings and completion/access remain blocking.",
       "evidence": [
         {
           "id": "G-UI_RUNTIME-PR30",
           "kind": "actual-browser-render-and-API-interception",
-          "ref": "docs/ai-dev/evidence/pr30-recheck-898/pr30-898-ui.md",
-          "result": "FAIL",
-          "subject_revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-          "observed_at": "2026-10-13T16:10:37.573065+00:00"
+          "ref": "docs/ai-dev/evidence/pr30-recheck-640/pr30-640-ui.md",
+          "result": "PASS",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
         }
       ]
     },
@@ -395,10 +389,10 @@
         {
           "id": "G-ACCESSIBILITY-PR30",
           "kind": "actual-browser-render-and-API-interception",
-          "ref": "docs/ai-dev/evidence/pr30-recheck-898/pr30-898-ui.md",
+          "ref": "docs/ai-dev/evidence/pr30-recheck-640/pr30-640-ui.md",
           "result": "PASS",
-          "subject_revision": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-          "observed_at": "2026-10-13T16:10:37.573065+00:00"
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
         }
       ]
     }

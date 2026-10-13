@@ -1,18 +1,18 @@
 {
   "schema_version": "true-shuffle.pr-review.v1",
-  "generated_at": "2026-10-13T16:10:37.573065+00:00",
+  "generated_at": "2026-10-13T17:20:16.855210+00:00",
   "pr": 30,
-  "source_sha": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
+  "source_sha": "6408961aecaf9c4717077a4499b8aa750256bb0e",
   "base_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
   "target_branch": "codex/implement-cloudflare-restart",
-  "reviewed_application_sha": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
-  "application_diff_to_current_head": "0071\u2192898 only applicationdelta src/client/screens/selection.tsx lifecycle ordering/serialization/delete invalidation; backend/core/shared/unit source byte-identical. Actual e2e assertions independently read.",
+  "reviewed_application_sha": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+  "application_diff_to_current_head": "898\u2192640 inspected: per-listener persisted commit metadata in Hub/view/delete API plus UI commit-order and error-order repair; functional backend delta independently reviewed separately.",
   "provenance": "Actual GitHubloginMikaMcFlurry; git authorMikaHertler with Co-Authored-By ClaudeOpus5.5<noreply@anthropic.com>; branchclaude/history-personalization-playlist-counts; no inventedClaude login/session",
   "scope": "Substantial functional selection/import/delete/playlistjob/API/additiveSQLitev8; separately inspected, not UI-only scope. PR30built atop alreadyintegratedPR27\u219228\u219229.",
   "explicit_full_scope_completion": false,
   "draft": true,
   "verdict": "BLOCKED",
-  "scoped_backend_verdict": "READY (retained0071 byte-identical backend source)",
+  "scoped_backend_verdict": "READY",
   "independence": "FRESH",
   "new_findings": [
     {
@@ -77,8 +77,8 @@
       "id": "PR30-DELETE-PRECOMMIT-LOAD",
       "severity": "P2",
       "blocking": true,
-      "status": "OPEN",
-      "verified_at_sha": "898c4d8e27a8d6bbc7fb358f8ab954e81ec087e0",
+      "status": "CLOSED",
+      "verified_at_sha": "6408961aecaf9c4717077a4499b8aa750256bb0e",
       "title": "Delayed precommit load can restore current import UI after successful deletion",
       "files": [
         "src/client/screens/selection.tsx:202",
@@ -86,7 +86,7 @@
         "src/client/screens/selection.tsx:359"
       ],
       "repro": "Create visible loaderror/retry; hold valid DELETE before commit; click Neu laden and hold GET old snapshot; release DELETE success; postdeleteGET503; release older storedsnapshotGET sent after DELETE began. No-import UI becomes old20counts again next to deletion success. Backend deletion not undone.",
-      "evidence": "pr30-recheck-898/pr30-898-ui-confirmed-precommit.json"
+      "evidence": "pr30-recheck-640/pr30-640-ui.md"
     }
   ],
   "inherited_review_ref": "PR29_REVIEW.json",
@@ -106,7 +106,11 @@
     "0071_backend_independent": "FRESH scopedREADY;71/71changed-scope+originalprobesPASS;3/3new CAS/continuation probesPASS;negativecontrolsame3 on9e8dFAIL3/3.",
     "0071_ui_independent": "FRESH scopedREADY; original stalebulk/pendingdraftrepros PASS;503/409/toggle/deleteerror/reversequery/group/dataset probesPASS;4actual390/1440lightdarklongcontent/labels/44px/keyboardPASS. Intercepted synthetic API, notliveprovider.",
     "898": "Typecheck/lint/build/dry-runPASS (2 preexistinglintinfos);636/636unitWorker48filesPASS155.50s;51/51browserPASS2.5m;headCI38417143008success.",
-    "898_ui_independent": "FRESH NOT_READY:21capturedcases;4renders390/1440lightdark+keyboard, originalcontracts, deleteGET503invalidation/retry and doubletogglePASS; newP2precommitGET/deletionfalseUI reproducedtwice. InterceptedsyntheticAPI, physical/providerNOT_RUN."
+    "898_ui_independent": "FRESH NOT_READY:21capturedcases;4renders390/1440lightdark+keyboard, originalcontracts, deleteGET503invalidation/retry and doubletogglePASS; newP2precommitGET/deletionfalseUI reproducedtwice. InterceptedsyntheticAPI, physical/providerNOT_RUN.",
+    "640": "Typecheck/lint/build/dry-runPASS;56/56realWorkerFakeSpotifybrowserPASS2.9m;headCI38432375610success;unit fullretry640/640PASS98.88s.",
+    "640_unit_first": "Initialfull639PASS1FAIL (20s timeout robustness525 oldorderban20h),175.06s; full unchangedretry withoutparallelbrowserload640/640PASS; cause notestablished.",
+    "640_backend_independent": "FRESH scopedREADY62/62regressions+4/4owncommitprobesPASS; same4on898FAIL negativecontrol; staging/no-op/rejected/listener/restart/transactionrollbackPASS; legacy summary/listens crashfaultNOT_RUN.",
+    "640_ui_independent": "FRESH scopedREADY26capturedcases; canonicaldeleteprecommitGETclosed;4responsive/themerenders/keyboard, applytoggleGETcommit/errororder/samecommitties, retainedquerydraftPASS; interceptedAPI notprovider."
   },
   "deployment": {
     "own_merge": false,
@@ -116,14 +120,14 @@
     "public_assets": "19/19 exact SHA256 unchanged; index.html checked after following redirect",
     "health": 200,
     "unsigned_state": 401,
-    "authenticated_readback": "NOT_RUN: freshWranglerwhoami unauthenticated. CFbot featurebuild8c97e448-f6fd-4c05-860f-18b8e2dd04adFAIL without availablelogs; no productionoutage inferred.",
+    "authenticated_readback": "NOT_RUN: freshWranglerwhoami unauthenticated. CFbot featurebuildbedc3bd6-ff5a-4b65-b5d7-430f8ba41fd6FAIL without availablelogs; no productionoutage inferred.",
     "last_verified_version": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
     "last_verified_deployment": "7bdaed5d-f3f8-4afc-b424-900f1d67fded",
     "identity_freshness": "historical, not refreshed"
   },
   "comment_id": 6149917891,
   "comment_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30#issuecomment-6149917891",
-  "readback_ref": "pr30-recheck-898/pr30-898-github.json",
-  "scoped_ui_verdict": "NOT_READY",
+  "readback_ref": "pr30-recheck-640/pr30-640-github.json",
+  "scoped_ui_verdict": "READY",
   "previous_comment_id": 6143664484
 }
