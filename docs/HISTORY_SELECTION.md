@@ -85,16 +85,36 @@ A stored or pending genre estimate is dropped (it came from the old history).
   (`baseRevision`); otherwise 409 and nothing changes. The selection is computed
   before anything is written, then saved in one transaction.
 - The page drops answers to older previews (sequence) and never shows an older
-  revision as in force.
+  revision as in force. "Auswahl übernehmen" is enabled only after a successful
+  preview of exactly the current draft on the current revision; a failed or
+  pending preview shows no counts as the draft's.
 
 ## Uploads, re-import, deactivation and deletion
 
+- An import is begun on purpose (`POST /api/history/import/start`): the answer
+  names the import epoch, and the first totals block must carry it. A deletion
+  moves the epoch on, so a first block sent before it (late, another tab) is
+  refused. A first block without an epoch (an app from before) is taken only as
+  long as nothing was ever deleted.
 - Totals are staged in `hist_stage` and replace `hist_pages` only with the last
   block. Every later block must belong to the upload under way (`upload` id and
   position); a deletion clears it, so late blocks are refused.
-- Single plays name the totals upload they belong to (`importId`); after a
-  deletion or a newer import they are refused. (Apps from before send no
-  `importId`; their totals upload is refused after a deletion instead.)
+- Single plays name the totals upload they belong to (`importId`) and are
+  refused for any other, and after a deletion. Plays without `importId` (an app
+  from before) are taken only with totals stored before uploads were named, or
+  with no totals and never a deletion. When newer totals arrive, single plays
+  still on their way are abandoned (their remaining blocks are refused).
+- Only single plays that belong to the stored totals are read by any consumer
+  (selection, Hörprofil, genre request, inspection). Plays of an older import,
+  left when a newer one came as totals only, belong to nothing current; they go
+  with a deletion or the next upload.
+- A song whose stored single plays do not account for its stored totals (other
+  numbers of plays or early skips) is **partly covered**: periods and artists
+  cannot be applied to plays that were never stored, so it is decided only as a
+  whole — by a song rule or the "Songs ohne vollständige einzelne Wiedergaben"
+  rule — in the memory and the Hörprofil alike, and shown as such
+  (`partialSongs`, `partialPlays`, item `partial`). Nothing is inferred about
+  the missing plays; a deliberate re-import makes the selection exact.
 - A new import (a deliberate, separate action) **replaces** the stored one.
   Duplicates inside one upload are folded (same second + song). The saved rules
   and the on/off switch apply to the new data: importing the same files again

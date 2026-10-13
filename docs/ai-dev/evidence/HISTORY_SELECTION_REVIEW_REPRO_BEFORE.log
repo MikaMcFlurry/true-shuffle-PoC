@@ -1,0 +1,113 @@
+
+ RUN  v5.0.2 C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ❯ test/hub/review-blockers.test.ts (7 tests | 4 failed) 536ms
+   ❯ review P1: import generations (2)
+     × a newer import of totals is not judged by the older import's single plays 90ms
+   ❯ review P1: deleted history stays deleted (2)
+     × late single plays from an app that does not name its import are refused after a deletion 23ms
+     × nor can they attach to a newer import they do not belong to 16ms
+   ❯ review P2: playlist counts never claim more than was read (3)
+     × a last page that ends before the announced total is a missing page too 95ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/review-blockers.test.ts > review P1: import generations > a newer import of totals is not judged by the older import's single plays
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ test/hub/review-blockers.test.ts:86:34
+     84|   h.hub.applySelection({ baseRevision: 0, enabled: true, rules: [Y2024…
+     85|   // The 2025 play is not touched by a 2024 rule: its one play stays.
+     86|   expect(h.hub.memory(id).plays).toBe(1);
+       |                                  ^
+     87|   // The old import's plays are not shown as this import's either.
+     88|   expect(h.hub.selectionView().dataset).toMatchObject({ coverage: "sum…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/hub/review-blockers.test.ts > review P1: deleted history stays deleted > late single plays from an app that does not name its import are refused after a deletion
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ test/hub/review-blockers.test.ts:109:40
+    107|   plays(h, e, totals(h, e));
+    108|   h.hub.deleteImport(h.hub.selectionView().dataset.key);
+    109|   expect(() => plays(h, e, undefined)).toThrow(/gelöscht oder ersetzt/…
+       |                                        ^
+    110|   expect(h.hub.selectionView().dataset).toMatchObject({ hasImport: fal…
+    111|   expect(h.hub.listeningProfile("UTC").plays).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/hub/review-blockers.test.ts > review P1: deleted history stays deleted > nor can they attach to a newer import they do not belong to
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ test/hub/review-blockers.test.ts:118:40
+    116|   const e = [entry(h, 6, "2024-05-01T10:00:00Z")];
+    117|   totals(h, e);
+    118|   expect(() => plays(h, e, undefined)).toThrow(/gelöscht oder ersetzt/…
+       |                                        ^
+    119|   expect(() => plays(h, e, "not-this-import")).toThrow(/gelöscht oder …
+    120|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/hub/review-blockers.test.ts > review P2: playlist counts never claim more than was read > a last page that ends before the announced total is a missing page too
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/review-blockers.test.ts:168:47
+    166|   await h.hub.requestPlaylistCounts();
+    167|   await h.listen(DAY_MS / 24);
+    168|   expect(h.hub.playlistCountsView().complete).toBe(false);
+       |                                               ^
+    169|   expect((countOf(h, X) as { complete: boolean }).complete).toBe(false…
+    170|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  13:01:26
+   Duration  1.09s (tests 55%, transform 31%, import 13%)
+

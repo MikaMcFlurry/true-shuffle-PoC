@@ -535,7 +535,13 @@ app.put("/api/guest/devices", async (c) => {
 });
 
 app.post("/api/history/import", async (c) => {
-	const b = await body<{ rows?: unknown; part?: number; parts?: number; upload?: unknown }>(c);
+	const b = await body<{
+		rows?: unknown;
+		part?: number;
+		parts?: number;
+		upload?: unknown;
+		start?: unknown;
+	}>(c);
 	const rows = Array.isArray(b.rows) ? (b.rows as HistoryRow[]) : [];
 	const part = Number(b.part ?? 0);
 	const parts = Number(b.parts ?? 1);
@@ -548,8 +554,11 @@ app.post("/api/history/import", async (c) => {
 	) {
 		return c.json({ error: { code: "bad_import", message: "Ungültiger Import-Block" } }, 400);
 	}
-	return unwrap(c, c.var.hub.importHistory(c.var.epoch, rows, part, parts, b.upload));
+	return unwrap(c, c.var.hub.importHistory(c.var.epoch, rows, part, parts, b.upload, b.start));
 });
+
+// Beginning an import on purpose: the first block names the epoch it began in.
+app.post("/api/history/import/start", (c) => unwrap(c, c.var.hub.startImport(c.var.epoch)));
 
 // The listener's selection of the imported history (see core/import-selection).
 app.get("/api/history/selection", (c) => unwrap(c, c.var.hub.historySelection(c.var.epoch)));

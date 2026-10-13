@@ -56,7 +56,7 @@ export function ruleText(r: SelectionRule): string {
 				? `Song ${r.label ? `„${r.label}“` : r.id} ausgeschlossen`
 				: `Song ${r.label ? `„${r.label}“` : r.id} wieder einbezogen, auch wo Zeitraum oder Künstler ausgeschlossen sind`;
 		case "summary":
-			return "Songs ohne einzelne Wiedergaben (nur Summen aus einem älteren Import) ausgeschlossen";
+			return "Songs ohne vollständige einzelne Wiedergaben (nur Summen oder teilweise gespeichert) ausgeschlossen";
 	}
 }
 
@@ -119,6 +119,9 @@ function CountsLine({ c, label }: { c: SelectionCounts; label: string }) {
 	);
 }
 
+const draftKey = (d: ImportSelection, revision: number) =>
+	`${revision}:${JSON.stringify(normal(d))}`;
+
 const sameDraft = (a: ImportSelection, b: ImportSelection) =>
 	JSON.stringify(normal(a)) === JSON.stringify(normal(b));
 function normal(s: ImportSelection): ImportSelection {
@@ -143,6 +146,9 @@ export function SelectionScreen() {
 	});
 	const [preview, setPreview] = useState<SelectionPreview | null>(null);
 	const [previewErr, setPreviewErr] = useState<string | null>(null);
+	// Which draft (and revision) the shown preview counted: only a successful
+	// preview of exactly the current draft lets it be taken over.
+	const [previewKey, setPreviewKey] = useState<string | null>(null);
 	const [busy, setBusy] = useState<null | "apply" | "toggle" | "delete">(null);
 	const [message, setMessage] = useState<{ text: string; tone: "ok" | "error" } | null>(null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
@@ -176,20 +182,25 @@ export function SelectionScreen() {
 	useEffect(() => {
 		if (!draft) return;
 		const mine = ++seq.current;
+		const key = draftKey(draft, view?.revision ?? -1);
 		const t = setTimeout(() => {
 			api
 				.previewSelection(draft, query)
 				.then((p) => {
 					if (mine !== seq.current) return;
 					setPreview(p);
+					setPreviewKey(key);
 					setPreviewErr(null);
 				})
 				.catch((e: Error) => {
-					if (mine === seq.current) setPreviewErr(e.message);
+					if (mine !== seq.current) return;
+					// The counts shown belong to another draft now: never offered as this one's.
+					setPreviewKey(null);
+					setPreviewErr(e.message);
 				});
 		}, 200);
 		return () => clearTimeout(t);
-	}, [draft, query]);
+	}, [draft, query, view?.revision]);
 
 	if (loadErr && !view)
 		return (
@@ -213,6 +224,8 @@ export function SelectionScreen() {
 
 	const applied = view.selection;
 	const changed = !sameDraft(draft, applied);
+	// The preview counted exactly this draft on this revision, and nothing failed since.
+	const previewed = previewKey === draftKey(draft, view.revision) && !previewErr;
 	const ds = view.dataset;
 	const setRules = (rules: SelectionRule[]) => {
 		setMessage(null);
@@ -485,7 +498,7 @@ export function SelectionScreen() {
 								</button>
 							</fieldset>
 						</form>
-						{ds.coverage !== "events" ? (
+						{ds.coverage !== "events" || (view.counts?.partialSongs ?? 0) > 0 ? (
 							<label class="row selection__check">
 								<input
 									type="checkbox"
@@ -499,8 +512,9 @@ export function SelectionScreen() {
 									}
 								/>
 								<span>
-									Songs ohne einzelne Wiedergaben ausschließen (
-									{num(view.counts?.summarySongs ?? 0)} Songs nur als Summe gespeichert)
+									Songs ohne vollständige einzelne Wiedergaben ausschließen (
+									{num((view.counts?.summarySongs ?? 0) + (view.counts?.partialSongs ?? 0))} Songs
+									nur als Summe oder teilweise gespeichert)
 								</span>
 							</label>
 						) : null}
@@ -508,13 +522,23 @@ export function SelectionScreen() {
 
 					<Section title="Vorschau und übernehmen" id="sel-apply">
 						<div class="notice" role="status" aria-live="polite">
-							{preview?.counts ? (
+							{previewed && preview?.counts ? (
 								<CountsLine c={preview.counts} label="Mit deinem Entwurf" />
-							) : previewErr ? null : (
+							) : previewErr ? (
+								<p>Für deinen aktuellen Entwurf gibt es noch keine Vorschau.</p>
+							) : (
 								<p>Wird gezählt …</p>
 							)}
 							{view.counts ? <CountsLine c={view.counts} label="Jetzt in Kraft" /> : null}
-							{preview?.counts && changed ? (
+							{previewed && preview?.counts && preview.counts.partialSongs > 0 ? (
+								<p>
+									{num(preview.counts.partialSongs)} Songs sind nur teilweise als einzelne
+									Wiedergaben gespeichert ({plays(preview.counts.partialPlays)} insgesamt):
+									Zeitraum- und Künstlerregeln erreichen sie nicht; sie zählen ganz oder gar nicht.
+									Für eine genaue Auswahl importiere die Dateien noch einmal.
+								</p>
+							) : null}
+							{previewed && preview?.counts && changed ? (
 								<p>
 									Ändert die Zahlen von {num(preview.counts.changedSongs)} Songs. Live gezählte
 									Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange bleiben, wie sie
@@ -542,7 +566,7 @@ export function SelectionScreen() {
 							<button
 								type="button"
 								class="key key--lit"
-								disabled={!changed || busy !== null || !preview?.counts}
+								disabled={!changed || busy !== null || !previewed || !preview?.counts}
 								aria-busy={busy === "apply"}
 								onClick={() => apply(draft, "apply")}
 							>
@@ -631,6 +655,9 @@ export function SelectionScreen() {
 							</select>
 						</label>
 					</div>
+					{page && !previewed ? (
+						<p class="hint">Die Liste zeigt den Stand vor deiner letzten Änderung.</p>
+					) : null}
 					<p class="hint" role="status">
 						{page
 							? page.total === 0
@@ -673,6 +700,9 @@ export function SelectionScreen() {
 												it.artist,
 												query.group === "artist" && it.songs > 1 ? `${num(it.songs)} Songs` : null,
 												it.summaryOnly ? "nur als Summe gespeichert" : null,
+												it.partial
+													? "nur teilweise einzeln gespeichert: zählt ganz oder gar nicht"
+													: null,
 												pl,
 											]
 												.filter(Boolean)

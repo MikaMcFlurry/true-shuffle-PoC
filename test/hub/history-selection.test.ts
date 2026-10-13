@@ -86,8 +86,16 @@ function importFiles(h: H, entries: Entry[], opts: { stopAfterTotals?: boolean }
 	const size = 20;
 	const parts = Math.max(1, Math.ceil(rows.length / size));
 	let upload: string | undefined;
+	// Begun on purpose, as the import page does (see startImport).
+	const { start } = h.hub.startImport();
 	for (let i = 0; i < parts; i++)
-		upload = h.hub.importHistory(rows.slice(i * size, (i + 1) * size), i, parts, upload).upload;
+		upload = h.hub.importHistory(
+			rows.slice(i * size, (i + 1) * size),
+			i,
+			parts,
+			upload,
+			i === 0 ? start : undefined,
+		).upload;
 	if (opts.stopAfterTotals) return upload!;
 	uploadListens(h, entries, upload!);
 	return upload!;

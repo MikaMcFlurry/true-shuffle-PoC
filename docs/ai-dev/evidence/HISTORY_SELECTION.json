@@ -33,7 +33,7 @@
 			"npm run build": "PASS",
 			"npm run typecheck": "PASS",
 			"npm run lint": "PASS (2 pre-existing infos in untouched test/spotify/usage.test.ts)",
-			"npm test": "PASS — 47 files, 618 tests (baseline 8d62138: 43 files, 570 tests)",
+			"npm test": "see PR for the final head",
 			"npx wrangler deploy --dry-run --outdir <tmp>": "PASS (bindings USER_HUB, REGISTRY, AI, ASSETS; no deployment)",
 			"npm run test:e2e": "NOT_RUN locally — see blocker; authoritative run is GitHub Actions (ubuntu, Node 24) on the PR"
 		},
@@ -134,5 +134,33 @@
 		"Populated production storage migration/restore",
 		"Local Windows browser suite (environment blocker above)"
 	],
-	"release": "No merge, no deployment. Merging into codex/implement-cloudflare-restart triggers Workers Builds and stays blocked until an explicit release instruction."
+	"release": "No merge, no deployment. Merging into codex/implement-cloudflare-restart triggers Workers Builds and stays blocked until an explicit release instruction.",
+	"independent_review_1": {
+		"reviewer": "fresh Codex CLI session 01a134d3-44b4-7f63-a1dd-87c895b62bb0 (gpt-6.1-sol, high), organised by the parent coordinator",
+		"frozen_candidate": "ddecae228ed1340fcffcfd5a1be4f1c286080a2f",
+		"outcome": "BLOCKED: R1 P1, R2 P1, R3-R6 P2",
+		"originals": "C:/Users/mikah/Documents/Codex/2026-10-13/task-5/review-evidence (unchanged; sha256 in HISTORY_SELECTION_REVIEW_ORIGINALS.sha256)",
+		"method": "copies of independent.test.ts and independent-refined.test.ts retargeted only in their import paths (../review-candidate -> separately pinned checkout), run once against 7896c57 and once against the repaired tree",
+		"probes_at_7896c57": "5 pass / 11 fail (HISTORY_SELECTION_REVIEW_PROBES_7896.log)",
+		"probes_at_repair": "13 pass / 3 fail (HISTORY_SELECTION_REVIEW_PROBES_REPAIR.log); the 3 remaining negatives are retained, see deviations",
+		"findings": {
+			"R1 import generations": "FIXED: single plays carry and are checked against the totals upload (importId); only plays belonging to the stored totals are read; newer totals abandon plays still uploading. Regressions: test/hub/review-blockers.test.ts (R1), probes 'replacement totals…', 'event upload started for A…' PASS",
+			"R2 deleted history revived": "FIXED: import epoch via POST /api/history/import/start, moved on by deletion; first totals block must carry it; unnamed legacy blocks refused after any deletion. Regressions: review-blockers (R2) incl. restart and deliberate new import; probes 'legacy delayed event upload…', 'late first totals block…' PASS",
+			"R3 playlist completeness": "FIXED (list refresh/empty page since a247910; last page short of announced total now too): probes 'failed playlist-list refresh…', 'empty page with a next page…', 'unknown provider owner…' PASS",
+			"R4 partial coverage": "FIXED with a different safe semantics than the probe asserts: partly covered songs are decided only as a whole and reported (partialSongs/partialPlays, item partial, coverage mixed, preview text); memory stays 10, not 1 — see deviations",
+			"R5 stale preview apply": "FIXED: apply requires a successful preview of exactly the current draft and revision; failed preview hides draft counts. Regression in e2e/app.spec.ts selection flow (503 on the draft preview → apply disabled; reverse preview answers keep the newest search). Runs in Linux CI",
+			"R6 lint": "Confirmed for ddecae2: 10 real formatter errors and 4 warnings (unused import, CSS specificity), not only line endings. Fixed in a247910; canonical npm run lint PASS since (CI 38383358138, 38385548496)",
+			"owner cutoff inspector gap": "FIXED in 7896c57 (afterLive)"
+		},
+		"deviations_for_delta_review": [
+			"R4 probe expects memory 9 (its reference assumes the 8 unstored plays are 2025). The stored data cannot show when those plays happened; 9 would be invented. The repair keeps the song's totals (10) under a period rule, says the song is only partly covered, and lets the listener exclude it as a whole (totals rule) or re-import for an exact selection. Negative retained: 'expected 10 to be 9'.",
+			"Probe 'unknown owner playlist prevents claiming a definitive song count' sets owner_id NULL only in SQLite, then starts a count 2 h later: the count re-reads the stale (>10 min) playlist list from the provider, which reports the owner again, so the playlist is correctly own and the count complete. The provider-level variant ('unknown provider owner cannot create a definitive zero', owner null from Spotify) passes. Negative retained."
+		],
+		"browser_probe": "selection-final.spec.ts needs the reviewer's isolated runtime launcher (stripped process environment); not run locally to avoid bypassing local environment/proxy settings. Its failing case (R5) and its reverse-preview case are ported into the canonical e2e flow run by GitHub Actions.",
+		"protocol_changes_disclosed": [
+			"POST /api/history/import/start; first totals block carries `start`",
+			"listens part 0 without importId refused when stored totals are named or after a deletion; test/hub/skip-retest.test.ts (PR27) now names importId like the import page does — its opener assertions are unchanged",
+			"core tests that mixed uncut totals with cut single plays now cut both at live_since, as the import page does"
+		]
+	}
 }

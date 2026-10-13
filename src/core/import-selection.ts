@@ -305,6 +305,39 @@ export function weightOf(ms: number, flags: number): 0 | 1 | 2 {
 	return 2;
 }
 
+/**
+ * Songs whose stored single plays do not account for their stored totals
+ * (other plays or skips counted than kept): the totals came from more (or
+ * other) plays than were stored. A period or an artist cannot be applied to
+ * plays that are not there, so such a song is decided as a whole, like a song
+ * with totals only — by a song rule or the totals rule — and said so. By index
+ * into `events.tracks`.
+ */
+export function partialTracks(
+	events: ListenColumns | null,
+	aggregate: ReadonlyMap<TrackId, ImportedStats>,
+	liveSince: number | null,
+): Set<number> {
+	const out = new Set<number>();
+	if (!events) return out;
+	const limit = liveSince ?? Number.POSITIVE_INFINITY;
+	const n = events.tracks.length;
+	const plays = new Uint32Array(n);
+	const skips = new Uint32Array(n);
+	for (let i = 0; i < events.rows; i++) {
+		if (events.at[i]! * 1000 >= limit) continue;
+		const w = weightOf(events.ms[i]!, events.meta[i * 2]!);
+		if (w === 1) plays[events.track[i]!]!++;
+		else if (w === 2) skips[events.track[i]!]!++;
+	}
+	for (let t = 0; t < n; t++) {
+		const s = aggregate.get(events.tracks[t]![0]);
+		if (!s) continue;
+		if (s.plays !== plays[t] || s.earlySkips !== skips[t]) out.add(t);
+	}
+	return out;
+}
+
 export interface RuleEffect {
 	key: string;
 	plays: number;
@@ -340,6 +373,13 @@ export interface SelectionCounts {
 	/** Songs known only by their totals, and their plays. */
 	summarySongs: number;
 	summaryPlays: number;
+	/**
+	 * Songs whose single plays do not account for their totals (see
+	 * partialTracks), and their stored plays: decided as a whole, like totals.
+	 */
+	partialSongs: number;
+	partialPlays: number;
+	/** Of the songs known only by their totals or partly: those that count. */
 	includedSummarySongs: number;
 	/** First and last single play (ms), null without single plays. */
 	from: number | null;
@@ -370,6 +410,8 @@ export function artistKeys(tracks: readonly ListenTrack[]): string[] {
 export function selectImport(input: {
 	events: ListenColumns | null;
 	artists?: readonly string[];
+	/** See partialTracks (computed when left out). */
+	partial?: ReadonlySet<number>;
 	aggregate: ReadonlyMap<TrackId, ImportedStats>;
 	selection: ImportSelection;
 	liveSince: number | null;
@@ -379,6 +421,7 @@ export function selectImport(input: {
 	const n = events?.tracks.length ?? 0;
 	const artists = events ? (input.artists ?? artistKeys(events.tracks)) : [];
 	const limit = liveSince ?? Number.POSITIVE_INFINITY;
+	const partial = input.partial ?? partialTracks(events, aggregate, liveSince);
 	const playsIn = new Uint32Array(n);
 	const playsOut = new Uint32Array(n);
 	const skipsIn = new Uint32Array(n);
@@ -418,6 +461,8 @@ export function selectImport(input: {
 			if (!song) continue;
 			from = from === null ? at : Math.min(from, at);
 			to = to === null ? at : Math.max(to, at);
+			// Decided as a whole from its totals (below), never play by play.
+			if (partial.has(t)) continue;
 			const d = selection.enabled ? m.event(at, song[0], artists[t]!) : -1;
 			const keep = selection.enabled && m.included(d);
 			if (w === 1) (keep ? playsIn : playsOut)[t]!++;
@@ -490,15 +535,23 @@ export function selectImport(input: {
 			overrides.set(events.tracks[t]![0], stats);
 		}
 	}
-	// Songs known only by their totals.
+	// Songs known only by their totals, or partly by single plays.
+	const partialIds = new Set([...partial].map((t) => events!.tracks[t]![0]));
 	let summarySongs = 0;
 	let summaryPlays = 0;
+	let partialSongs = 0;
+	let partialPlays = 0;
 	let includedSummarySongs = 0;
 	for (const [id, s] of aggregate) {
 		if (withEvents.has(id)) continue;
 		if (s.plays + s.earlySkips === 0) continue;
-		summarySongs++;
-		summaryPlays += s.plays;
+		if (partialIds.has(id)) {
+			partialSongs++;
+			partialPlays += s.plays;
+		} else {
+			summarySongs++;
+			summaryPlays += s.plays;
+		}
 		songs++;
 		plays += s.plays;
 		skips += s.earlySkips;
@@ -537,6 +590,8 @@ export function selectImport(input: {
 			changedSongs: selection.enabled ? overrides.size : includedSongs === 0 ? songs : 0,
 			summarySongs,
 			summaryPlays,
+			partialSongs,
+			partialPlays,
 			includedSummarySongs,
 			from,
 			to,
@@ -604,6 +659,8 @@ export interface InspectItem {
 	lastAt: number | null;
 	/** Only totals are stored for it: no single plays. */
 	summaryOnly: boolean;
+	/** Its single plays do not account for its totals: decided as a whole (see partialTracks). */
+	partial: boolean;
 	/** "neutral": only plays that count for nothing either way (or lie in live time). */
 	status: "included" | "excluded" | "partial" | "neutral";
 	/** Keys of the rules that decided its plays (sorted), whichever way. */
@@ -622,6 +679,7 @@ export interface InspectPage {
 export function inspectImport(input: {
 	events: ListenColumns | null;
 	artists?: readonly string[];
+	partial?: ReadonlySet<number>;
 	aggregate: ReadonlyMap<TrackId, ImportedStats>;
 	selection: ImportSelection;
 	liveSince: number | null;
@@ -633,6 +691,8 @@ export function inspectImport(input: {
 	const m = matcher(selection);
 	const artists = events ? (input.artists ?? artistKeys(events.tracks)) : [];
 	const limit = liveSince ?? Number.POSITIVE_INFINITY;
+	const partial = input.partial ?? partialTracks(events, aggregate, liveSince);
+	const partialIds = new Set([...partial].map((t) => events!.tracks[t]![0]));
 	const q = query.q.normalize("NFC").trim().toLocaleLowerCase("de");
 	const groups = new Map<
 		string,
@@ -665,6 +725,7 @@ export function inspectImport(input: {
 		afterLive: 0,
 		lastAt: null,
 		summaryOnly,
+		partial: false,
 		status: "included" as const,
 		rules: [],
 		ruleSet: new Set<string>(),
@@ -681,7 +742,7 @@ export function inspectImport(input: {
 			// From live counting on: stored and listed, but no part of the import's influence.
 			const live = at >= limit;
 			const w = live ? 0 : weightOf(events.ms[i]!, events.meta[i * 2]!);
-			if (w !== 0) seenEvents.add(song[0]);
+			if (w !== 0 && !partial.has(t)) seenEvents.add(song[0]);
 			if (!hit[t]) continue;
 			if (query.from !== null && at < query.from) continue;
 			if (query.to !== null && at >= query.to) continue;
@@ -698,6 +759,14 @@ export function inspectImport(input: {
 			if (live) {
 				g.rows++;
 				g.afterLive++;
+				g.lastAt = g.lastAt === null ? at : Math.max(g.lastAt, at);
+				continue;
+			}
+			if (partial.has(t)) {
+				// Listed; what it counts comes from its totals as a whole (below).
+				g.rows++;
+				if (w === 0) g.neutral++;
+				g.partial = true;
 				g.lastAt = g.lastAt === null ? at : Math.max(g.lastAt, at);
 				continue;
 			}
@@ -732,7 +801,8 @@ export function inspectImport(input: {
 				groups.set(key, g);
 			}
 			g.songSet.add(id);
-			g.summaryOnly = true;
+			if (partialIds.has(id)) g.partial = true;
+			else g.summaryOnly = true;
 			const d = selection.enabled ? m.summary(id) : -1;
 			const keep = selection.enabled && m.included(d);
 			if (d >= 0) g.ruleSet.add(m.keys[d]!);

@@ -49,6 +49,7 @@ import {
 	type InspectStatus,
 	inspectImport,
 	matcher,
+	partialTracks,
 	type SelectionCounts,
 	SelectionError,
 	type SelectionResult,
@@ -624,6 +625,11 @@ interface ListenColumns {
 interface ListenMeta {
 	gen: number;
 	at: number;
+	/**
+	 * The upload of song totals these plays belong to (see importHistory);
+	 * absent or null in plays stored by an app from before that did not name it.
+	 */
+	importId?: string | null;
 	from: number | null;
 	to: number | null;
 	rows: number;
@@ -635,6 +641,8 @@ interface ListenMeta {
 interface ListenUpload {
 	/** Every block of an upload carries this id; a block of another upload is refused. */
 	id: string;
+	/** The upload of song totals it belongs to, as its first block named it. */
+	importId?: string | null;
 	gen: number;
 	parts: number;
 	tracks: number;
@@ -6194,11 +6202,21 @@ export class HubCore {
 	 * under way (its id, its place), so a block of an upload the listener
 	 * deleted or replaced since is refused instead of bringing data back.
 	 */
+	/**
+	 * Begins an import on purpose: the answer names the import epoch, which the
+	 * first block must carry. A deletion moves the epoch on, so a first block
+	 * sent before it (late, from another tab) cannot bring the history back.
+	 */
+	startImport(): { start: number } {
+		return { start: this.kvGet<number>("history_epoch") ?? 0 };
+	}
+
 	importHistory(
 		rows: HistoryRow[],
 		part: number,
 		parts: number,
 		uploadId?: unknown,
+		start?: unknown,
 	): { stored: number; upload: string } {
 		if (
 			!Array.isArray(rows) ||
@@ -6232,6 +6250,15 @@ export class HubCore {
 		}
 		let up = this.kvGet<HistUpload>("hist_upload");
 		if (part === 0) {
+			// Begun for the current epoch (see startImport). An app from before
+			// names none: it is taken only as long as nothing was ever deleted.
+			const epoch = this.kvGet<number>("history_epoch") ?? 0;
+			if (start !== undefined ? start !== epoch : this.kvGet("history_deleted_at") !== null)
+				throw new HubError(
+					"import_superseded",
+					"Dieser Import wurde begonnen, bevor der gespeicherte gelöscht wurde — bitte die Seite neu laden und noch einmal importieren.",
+					409,
+				);
 			this.db.run(`DELETE FROM hist_stage`);
 			up = { id: randomToken(12), parts, next: 0 };
 		} else if (
@@ -6261,6 +6288,9 @@ export class HubCore {
 		}
 		const done = up;
 		this.db.transaction(() => {
+			// Single plays still on their way belong to the totals replaced now:
+			// their remaining blocks are refused (another upload, see importListens).
+			this.kvDel("listens_upload");
 			this.db.run(`DELETE FROM hist_pages`);
 			this.db.run(`INSERT INTO hist_pages (page, data) SELECT page, data FROM hist_stage`);
 			this.db.run(`DELETE FROM hist_stage`);
@@ -6288,10 +6318,27 @@ export class HubCore {
 		);
 	}
 
+	/**
+	 * The stored single plays, if they belong to the stored song totals: named
+	 * for them, or (stored by an app from before) uploaded after totals that
+	 * were stored before uploads were named. Plays of an older import, left
+	 * when a newer one came as totals only, belong to nothing current: no
+	 * consumer reads them (they go with a deletion). Plays without any totals
+	 * are an import of their own.
+	 */
+	private currentListens(): ListenMeta | null {
+		const l = this.kvGet<ListenMeta>("listens");
+		if (!l) return null;
+		const h = this.kvGet<{ at: number; id?: string }>("history_import");
+		if (!h) return l;
+		if (l.importId) return l.importId === h.id ? l : null;
+		return h.id === undefined && l.at >= h.at ? l : null;
+	}
+
 	/** The stored import: its totals and its single plays, each by the upload that brought it. */
 	private datasetKey(): string {
 		const h = this.kvGet<{ at: number; id?: string }>("history_import");
-		const l = this.kvGet<ListenMeta>("listens");
+		const l = this.currentListens();
 		return `${h ? (h.id ?? `at${h.at}`) : "-"}|${l ? `g${l.gen}` : "-"}`;
 	}
 
@@ -6299,11 +6346,23 @@ export class HubCore {
 	private artistCache: { gen: number; keys: string[] } | null = null;
 	private listenArtists(): string[] | undefined {
 		const data = this.listenData();
-		const meta = this.kvGet<ListenMeta>("listens");
+		const meta = this.currentListens();
 		if (!data || !meta) return undefined;
 		if (this.artistCache?.gen !== meta.gen)
 			this.artistCache = { gen: meta.gen, keys: artistKeys(data.tracks) };
 		return this.artistCache.keys;
+	}
+
+	/** Songs decided as a whole: their single plays do not account for their totals. */
+	private partialCache: { key: string; set: Set<number> } | null = null;
+	private partialSongs(): Set<number> {
+		const key = `${this.datasetKey()}:${this.kvGet<number>("live_since") ?? ""}`;
+		if (this.partialCache?.key !== key)
+			this.partialCache = {
+				key,
+				set: partialTracks(this.listenData(), this.rawHist(), this.kvGet<number>("live_since")),
+			};
+		return this.partialCache.set;
 	}
 
 	/** What a selection makes of the stored import (a pure computation, nothing written). */
@@ -6311,6 +6370,7 @@ export class HubCore {
 		return selectImport({
 			events: this.listenData(),
 			artists: this.listenArtists(),
+			partial: this.partialSongs(),
 			aggregate: this.rawHist(),
 			selection: sel,
 			liveSince: this.kvGet<number>("live_since"),
@@ -6404,6 +6464,7 @@ export class HubCore {
 	 */
 	private importChanged(computed = false): void {
 		this.histCache = null;
+		this.partialCache = null;
 		this.rawHistCache = null;
 		this.countsCache = null;
 		this.liveLookups.clear();
@@ -6460,7 +6521,7 @@ export class HubCore {
 		// The history in force is computed when a selection with rules needs it.
 		if (ruled) this.hist();
 		const hist = this.kvGet<{ at: number; tracks: number }>("history_import");
-		const listens = this.kvGet<ListenMeta>("listens");
+		const listens = this.currentListens();
 		const eff = this.kvGet<EffectiveMeta>("history_effective");
 		const failed = ruled && !!eff?.error;
 		const counts = failed ? null : this.appliedCounts();
@@ -6488,7 +6549,7 @@ export class HubCore {
 					? "none"
 					: !listens
 						? "summary"
-						: summarySongs > 0
+						: summarySongs + (counts?.partialSongs ?? 0) > 0
 							? "mixed"
 							: "events",
 			},
@@ -6547,6 +6608,7 @@ export class HubCore {
 			? inspectImport({
 					events: this.listenData(),
 					artists: this.listenArtists(),
+					partial: this.partialSongs(),
 					aggregate: this.rawHist(),
 					selection: draft,
 					liveSince: this.kvGet<number>("live_since"),
@@ -6678,6 +6740,10 @@ export class HubCore {
 				this.kvDel(k);
 			this.listenCache = null;
 			this.artistCache = null;
+			// Uploads begun before (and plays that name no import) are refused from
+			// now on (see importHistory, importListens).
+			this.kvSet("history_deleted_at", this.now());
+			this.kvSet("history_epoch", (this.kvGet<number>("history_epoch") ?? 0) + 1);
 			this.importChanged();
 		});
 		this.log(
@@ -6881,7 +6947,9 @@ export class HubCore {
 					),
 				),
 			];
-			if (page.items.length === 0 && page.next) {
+			// Empty while Spotify announces more (a next page, or a total beyond
+			// this offset): a missing page, not the end.
+			if (page.items.length === 0 && (page.next || (page.total ?? 0) > offset)) {
 				failed(id, "eine Seite fehlte");
 				i++;
 				offset = 0;
@@ -6896,6 +6964,13 @@ export class HubCore {
 				JSON.stringify(ids),
 			);
 			offset += page.items.length || PAGE_SIZE;
+			if (!page.next && (page.total ?? 0) > offset) {
+				// The last page ends before the total Spotify announced.
+				failed(id, "Seiten fehlten");
+				i++;
+				offset = 0;
+				continue;
+			}
 			if (!page.next) {
 				this.db.run(
 					`UPDATE playlist_scan SET pages = ?, complete = 1, error = NULL, read_at = ? WHERE playlist_id = ?`,
@@ -7504,7 +7579,7 @@ export class HubCore {
 	 */
 	private listenCache: (ListenColumns & { gen: number }) | null = null;
 	private listenData(): ListenColumns | null {
-		const meta = this.kvGet<ListenMeta>("listens");
+		const meta = this.currentListens();
 		if (!meta) return null;
 		if (this.listenCache?.gen !== meta.gen) {
 			const pages = (kind: string) =>
@@ -7566,10 +7641,19 @@ export class HubCore {
 		if (part === 0) {
 			// The plays belong to the song totals uploaded just before (the import
 			// page names them): once those were deleted or replaced, a late upload
-			// of the old plays must not bring them back. (An app from before sends
-			// no name; its upload of totals is refused after a deletion instead.)
+			// of the old plays must not bring them back. Plays that name no import
+			// (an app from before) are taken only where they cannot cross either:
+			// with totals stored before uploads were named, or with no totals at
+			// all and never a deletion.
 			const hist = this.kvGet<{ id?: string }>("history_import");
-			if (input.importId !== undefined && (!hist || input.importId !== hist.id))
+			const named = input.importId !== undefined && input.importId !== null;
+			if (
+				named
+					? !hist || input.importId !== hist.id
+					: hist
+						? hist.id !== undefined
+						: this.kvGet("history_deleted_at") !== null
+			)
 				throw new HubError(
 					"import_superseded",
 					"Ungültiger Hörverlauf: der Import, zu dem diese Wiedergaben gehören, wurde gelöscht oder ersetzt — bitte die Dateien noch einmal importieren.",
@@ -7580,6 +7664,7 @@ export class HubCore {
 			this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, current?.gen ?? -1);
 			upload = {
 				id: randomToken(12),
+				importId: typeof input.importId === "string" ? input.importId : null,
 				gen: Math.max(current?.gen ?? 0, upload?.gen ?? 0) + 1,
 				parts: parts as number,
 				tracks: tracks as number,
@@ -7643,6 +7728,7 @@ export class HubCore {
 		this.kvSet("listens", {
 			gen: upload.gen,
 			at: this.now(),
+			importId: upload.importId ?? null,
 			from,
 			to,
 			rows,
@@ -7671,6 +7757,8 @@ export class HubCore {
 		const imported = sel.enabled ? this.listenData() : null;
 		const pick = imported && sel.rules.length > 0 ? matcher(sel) : null;
 		const artists = pick ? this.listenArtists() : undefined;
+		// A song decided as a whole is in or out of the Hörprofil as a whole too.
+		const partial = pick ? this.partialSongs() : null;
 		const rows = this.db.all<{ played_at: number; track_id: string; meta: string | null }>(
 			`SELECT played_at, track_id, meta FROM plays WHERE ignored = 0 AND played_at >= ? ORDER BY played_at`,
 			Number.isFinite(liveSince) ? liveSince : 0,
@@ -7695,7 +7783,13 @@ export class HubCore {
 					if (!play && !early) continue;
 					const t = imported.tracks[row[1]];
 					if (!t) continue;
-					if (pick && !pick.included(pick.event(at, t[0], artists![row[1]]!))) continue;
+					if (
+						pick &&
+						!pick.included(
+							partial!.has(row[1]) ? pick.summary(t[0]) : pick.event(at, t[0], artists![row[1]]!),
+						)
+					)
+						continue;
 					yield {
 						at,
 						song: t[0],
@@ -7771,7 +7865,7 @@ export class HubCore {
 			for (const x of [...stats.topSongs, ...stats.comebacks])
 				if (!x.imageUrl && x.id) x.imageUrl = known.get(x.id)?.[4] ?? null;
 		}
-		const meta = this.kvGet<ListenMeta>("listens");
+		const meta = this.currentListens();
 		const count = (sql: string) => this.db.first<{ n: number }>(sql)?.n ?? 0;
 		return {
 			...stats,

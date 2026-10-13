@@ -1167,8 +1167,17 @@ export function ImportScreen({ state }: { state: AppState }) {
 		const parts = Math.max(1, Math.ceil(rows.length / size));
 		let id: string | undefined;
 		try {
+			const { start } = await api.startImport();
 			for (let i = 0; i < parts; i++) {
-				id = (await api.importHistory(rows.slice(i * size, (i + 1) * size), i, parts, id)).upload;
+				id = (
+					await api.importHistory(
+						rows.slice(i * size, (i + 1) * size),
+						i,
+						parts,
+						id,
+						i === 0 ? start : undefined,
+					)
+				).upload;
 				setSent(Math.min(rows.length, (i + 1) * size));
 			}
 			importIdRef.current = id ?? null;

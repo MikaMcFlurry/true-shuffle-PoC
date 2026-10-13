@@ -549,8 +549,18 @@ export class UserHub extends DurableObject<Env> {
 	setGuestDevices(epoch: number, devices: { id: string; name: string }[]) {
 		return this.session(epoch, async () => this.hub().setGuestDevices(devices));
 	}
-	importHistory(epoch: number, rows: HistoryRow[], part: number, parts: number, upload?: unknown) {
-		return this.session(epoch, () => this.hub().importHistory(rows, part, parts, upload));
+	startImport(epoch: number) {
+		return this.session(epoch, () => this.hub().startImport());
+	}
+	importHistory(
+		epoch: number,
+		rows: HistoryRow[],
+		part: number,
+		parts: number,
+		upload?: unknown,
+		start?: unknown,
+	) {
+		return this.session(epoch, () => this.hub().importHistory(rows, part, parts, upload, start));
 	}
 	historySelection(epoch: number) {
 		return this.session(epoch, () => this.hub().selectionView());

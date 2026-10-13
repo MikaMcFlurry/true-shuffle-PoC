@@ -215,12 +215,21 @@ export const api = {
 	guest: (on: boolean, hours?: number) => call<unknown>("POST", "/api/guest", { on, hours }),
 	guestDevices: (devices: { id: string; name: string }[]) =>
 		call<{ id: string; name: string }[]>("PUT", "/api/guest/devices", { devices }),
-	importHistory: (rows: HistoryRow[], part: number, parts: number, upload?: string) =>
+	/** Begins an import on purpose; its first block names the answer's `start`. */
+	startImport: () => call<{ start: number }>("POST", "/api/history/import/start"),
+	importHistory: (
+		rows: HistoryRow[],
+		part: number,
+		parts: number,
+		upload?: string,
+		start?: number,
+	) =>
 		call<{ stored: number; upload: string }>("POST", "/api/history/import", {
 			rows,
 			part,
 			parts,
 			upload,
+			start,
 		}),
 	historySelection: () => call<HistorySelectionView>("GET", "/api/history/selection"),
 	/** Read-only: counts and one page of a search under a draft selection. */

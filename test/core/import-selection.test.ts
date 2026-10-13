@@ -312,10 +312,14 @@ describe("what a selection makes of the import", () => {
 	});
 
 	it("plays after live counting began are not the import's", () => {
-		const r = run(
-			sel([{ type: "artist", kind: "exclude", name: "Cleo" }]),
-			D("2021-01-01T00:00:00Z"),
-		);
+		// Totals and plays are cut at the same moment by the import page.
+		const live = D("2021-01-01T00:00:00Z");
+		const r = selectImport({
+			events,
+			aggregate: reference(PLAYS, (p) => p.at < live),
+			selection: sel([{ type: "artist", kind: "exclude", name: "Cleo" }]),
+			liveSince: live,
+		});
 		expect(r.counts.rules[0]).toMatchObject({ plays: 1 });
 	});
 
@@ -410,7 +414,9 @@ describe("looking through the import", () => {
 	it("lists stored plays from live time, apart and with no import influence", () => {
 		const liveSince = D("2021-01-01T00:00:00Z");
 		const s = sel([{ type: "artist", kind: "exclude", name: "Cleo" }]);
-		const base = { events, aggregate: AGG, selection: s, liveSince };
+		// Totals and plays are cut at the same moment by the import page.
+		const aggregate = reference(PLAYS, (p) => p.at < liveSince);
+		const base = { events, aggregate, selection: s, liveSince };
 		const delta = inspectImport({ ...base, query: q({ q: "delta" }) }).items[0]!;
 		// Both of Delta's plays lie in live time: listed, none counted, none called "neutral" twice.
 		expect(delta).toMatchObject({ rows: 2, afterLive: 2, neutral: 0, plays: 0, status: "neutral" });

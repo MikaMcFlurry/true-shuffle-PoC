@@ -548,9 +548,63 @@ test.describe("a listener's day", () => {
 		await expect(row).toContainText("8 von 8 Wiedergaben");
 		expect((await api()).revision).toBe(0);
 
-		// Drafting: the preview shows the effect before anything is taken over.
+		// Drafting: a preview of the new draft that fails leaves nothing to take over.
+		let failPreview = true;
+		await page.route(/\/api\/history\/selection\/preview$/, (route) =>
+			failPreview
+				? route.fulfill({
+						status: 503,
+						contentType: "application/json",
+						body: JSON.stringify({ error: { code: "busy", message: "Gerade nicht erreichbar." } }),
+					})
+				: route.continue(),
+		);
 		await page.getByRole("button", { name: "Ausschließen: Probeband Ost" }).click();
 		await expect(page.getByText("Künstler „Probeband Ost“ ausgeschlossen")).toBeVisible();
+		await expect(
+			page
+				.getByRole("alert")
+				.filter({ hasText: "Vorschau nicht möglich: Gerade nicht erreichbar." }),
+		).toBeVisible();
+		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toHaveCount(0);
+		await expect(page.getByRole("button", { name: "Auswahl übernehmen" })).toBeDisabled();
+		// The preview works again (a new look of the same draft): now it can be taken over.
+		failPreview = false;
+		await page.getByLabel("Sortieren").selectOption("name");
+		await expect(page.getByRole("button", { name: "Auswahl übernehmen" })).toBeEnabled();
+
+		// Answers in reverse order: the newest search stays on screen.
+		let release = () => {};
+		const gate = new Promise<void>((r) => {
+			release = r;
+		});
+		let seenFirst = () => {};
+		const seen = new Promise<void>((r) => {
+			seenFirst = r;
+		});
+		await page.route(/\/api\/history\/selection\/preview$/, async (route) => {
+			if ((route.request().postDataJSON() as { query: { q: string } }).query.q === "Probeband W") {
+				seenFirst();
+				await gate;
+			}
+			await route.fallback();
+		});
+		const search = page.getByLabel("Song, Künstler oder Album");
+		await search.fill("Probeband W");
+		await seen;
+		await search.fill("Probeband Ost");
+		await expect(row).toBeVisible();
+		const late = page.waitForResponse(
+			(r) =>
+				r.url().includes("/selection/preview") &&
+				(r.request().postDataJSON() as { query: { q: string } }).query.q === "Probeband W",
+		);
+		release();
+		await late;
+		await expect(page.locator(".selection__items").first()).toContainText("Probeband Ost");
+		await expect(page.locator(".selection__items").first()).not.toContainText("Probeband West");
+
+		// The preview shows the effect before anything is taken over.
 		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toContainText(
 			"4 von 12 Wiedergaben zählen",
 		);

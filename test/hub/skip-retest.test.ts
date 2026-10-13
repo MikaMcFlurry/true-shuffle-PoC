@@ -69,14 +69,22 @@ describe("the first song after a start: one verdict for the mix and the Hörprof
 			addListens(f, all);
 		}
 		expect(agg).toMatchObject({ openers: 3, skipped: 2 });
-		h.hub.importHistory(toRows(agg), 0, 1);
+		// The import page names the totals' upload in the plays' first block (see importListens).
+		const importId = h.hub.importHistory(toRows(agg), 0, 1).upload;
 		const { tracks, rows } = finishListens(all);
 		let upload: string | undefined;
 		for (const [part, b] of [
 			{ kind: "tracks", data: tracks },
 			{ kind: "rows", data: rows },
 		].entries())
-			upload = h.hub.importListens({ upload, part, parts: 2, tracks: tracks.length, ...b }).upload;
+			upload = h.hub.importListens({
+				upload,
+				importId: part === 0 ? importId : undefined,
+				part,
+				parts: 2,
+				tracks: tracks.length,
+				...b,
+			}).upload;
 
 		const now = h.clock.t;
 		const weight = (s: string) => tasteWeight(h.hub.memory(id(s)), "later_less", now);
@@ -123,14 +131,21 @@ describe("the first song after a start: one verdict for the mix and the Hörprof
 			now - 40 * DAY_MS + 3_000,
 			8,
 		]);
-		h.hub.importHistory(rows, 0, 1);
+		const importId = h.hub.importHistory(rows, 0, 1).upload;
 		const { tracks, rows: listens } = finishListens(all);
 		let upload: string | undefined;
 		for (const [part, b] of [
 			{ kind: "tracks", data: tracks },
 			{ kind: "rows", data: listens },
 		].entries())
-			upload = h.hub.importListens({ upload, part, parts: 2, tracks: tracks.length, ...b }).upload;
+			upload = h.hub.importListens({
+				upload,
+				importId: part === 0 ? importId : undefined,
+				part,
+				parts: 2,
+				tracks: tracks.length,
+				...b,
+			}).upload;
 
 		const loved = h.hub.memory(id("l"));
 		expect(isOverplayed(loved)).toBe(true);
