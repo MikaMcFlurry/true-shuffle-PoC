@@ -1,12 +1,12 @@
 {
   "schema_version": "true-shuffle.pr-review.v1",
-  "generated_at": "2026-10-13T17:20:16.855210+00:00",
+  "generated_at": "2026-10-13T18:26:45.208319+00:00",
   "pr": 30,
-  "source_sha": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+  "source_sha": "a858098dc278492870ad04699e9d5c33cb1c43a0",
   "base_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
   "target_branch": "codex/implement-cloudflare-restart",
-  "reviewed_application_sha": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-  "application_diff_to_current_head": "898\u2192640 inspected: per-listener persisted commit metadata in Hub/view/delete API plus UI commit-order and error-order repair; functional backend delta independently reviewed separately.",
+  "reviewed_application_sha": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+  "application_diff_to_current_head": "640\u2192a858 independently inspected: mutation failure display vs samecommit reads; importTransaction cache rollback and atomic first summary/final listens publication. Backend functional changes separately audited.",
   "provenance": "Actual GitHubloginMikaMcFlurry; git authorMikaHertler with Co-Authored-By ClaudeOpus5.5<noreply@anthropic.com>; branchclaude/history-personalization-playlist-counts; no inventedClaude login/session",
   "scope": "Substantial functional selection/import/delete/playlistjob/API/additiveSQLitev8; separately inspected, not UI-only scope. PR30built atop alreadyintegratedPR27\u219228\u219229.",
   "explicit_full_scope_completion": false,
@@ -110,7 +110,10 @@
     "640": "Typecheck/lint/build/dry-runPASS;56/56realWorkerFakeSpotifybrowserPASS2.9m;headCI38432375610success;unit fullretry640/640PASS98.88s.",
     "640_unit_first": "Initialfull639PASS1FAIL (20s timeout robustness525 oldorderban20h),175.06s; full unchangedretry withoutparallelbrowserload640/640PASS; cause notestablished.",
     "640_backend_independent": "FRESH scopedREADY62/62regressions+4/4owncommitprobesPASS; same4on898FAIL negativecontrol; staging/no-op/rejected/listener/restart/transactionrollbackPASS; legacy summary/listens crashfaultNOT_RUN.",
-    "640_ui_independent": "FRESH scopedREADY26capturedcases; canonicaldeleteprecommitGETclosed;4responsive/themerenders/keyboard, applytoggleGETcommit/errororder/samecommitties, retainedquerydraftPASS; interceptedAPI notprovider."
+    "640_ui_independent": "FRESH scopedREADY26capturedcases; canonicaldeleteprecommitGETclosed;4responsive/themerenders/keyboard, applytoggleGETcommit/errororder/samecommitties, retainedquerydraftPASS; interceptedAPI notprovider.",
+    "a858": "Typecheck/lint/build/dry-runPASS (2incumbentlintinfos);646/646unitWorker48filesPASS118.59s;headCI38443983874success; 59/59realWorkerFakeSpotifybrowserPASS2.0m.",
+    "a858_ui_independent": "FRESH scopedREADY36capturedcases; samecommitGET followed byfailed/abortedapply/toggle/delete stillreportsownfailure; retries and highercommitsupersessionPASS;4renders/keyboard andcanonicaldelete/query/draftPASS. Synthetic requestabort nonmutated, not ambiguouslossafterservercommit.",
+    "a858_backend_independent": "FRESH scopedREADY73/73PASS5files incl5ownprobes; same5on6402FAIL3PASS;8actuallocalworkerdDOtransactionSyncfaultscenariosPASSpublishedstate,7allstoredrowsunchanged; firstsummary/final-listens/apply/delete atomicrollback+restart+retrycountoncePASS. Totals retains inheritedunpublishedstagingduplicateafterfailedfinalblock; publishedMap/counter/cache/queue intact and retrycorrect; no material datacorruption confirmed."
   },
   "deployment": {
     "own_merge": false,
@@ -120,14 +123,14 @@
     "public_assets": "19/19 exact SHA256 unchanged; index.html checked after following redirect",
     "health": 200,
     "unsigned_state": 401,
-    "authenticated_readback": "NOT_RUN: freshWranglerwhoami unauthenticated. CFbot featurebuildbedc3bd6-ff5a-4b65-b5d7-430f8ba41fd6FAIL without availablelogs; no productionoutage inferred.",
+    "authenticated_readback": "NOT_RUN: freshWranglerwhoami unauthenticated; CFbot featurebuild7c79e2ff-8951-4d32-b10d-e82e332561fcFAIL withoutaccessiblelogs; no productionoutage inferred.",
     "last_verified_version": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
     "last_verified_deployment": "7bdaed5d-f3f8-4afc-b424-900f1d67fded",
     "identity_freshness": "historical, not refreshed"
   },
   "comment_id": 6149917891,
   "comment_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30#issuecomment-6149917891",
-  "readback_ref": "pr30-recheck-640/pr30-640-github.json",
+  "readback_ref": "pr30-recheck-a858/pr30-a858-github.json",
   "scoped_ui_verdict": "READY",
   "previous_comment_id": 6143664484
 }

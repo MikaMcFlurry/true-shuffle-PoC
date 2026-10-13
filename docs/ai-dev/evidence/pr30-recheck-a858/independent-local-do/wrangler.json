@@ -1,0 +1,37 @@
+{
+  "name": "independent-pr30-atomic-probe",
+  "main": "/tmp/pr30-a858-do/worker.ts",
+  "compatibility_date": "2026-09-20",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PROBE",
+        "class_name": "AtomicProbe"
+      },
+      {
+        "name": "REGISTRY",
+        "class_name": "Registry"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "probe-v1",
+      "new_sqlite_classes": [
+        "AtomicProbe",
+        "Registry"
+      ]
+    }
+  ],
+  "vars": {
+    "APP_SECRET": "e2e-secret-e2e-secret-e2e-secret-e2e-secret",
+    "SPOTIFY_CLIENT_ID": "e2e-client",
+    "SPOTIFY_ACCOUNTS_BASE": "http://127.0.0.1:19142/accounts",
+    "SPOTIFY_API_BASE": "http://127.0.0.1:19142/v1",
+    "LASTFM_API_BASE": "http://127.0.0.1:19142/lastfm",
+    "DEEZER_API_BASE": "http://127.0.0.1:19142/deezer"
+  }
+}

@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "project": "true-shuffle",
   "subject": {
-    "revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+    "revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
     "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json"
   },
   "branch": "codex/implement-cloudflare-restart",
@@ -48,7 +48,8 @@
     "PR30 9e8d fresh backend64PASS: two findings CLOSED; UI preview partlyfixed, two originalP2s stillopen; static/browser/CI PASS; no release.",
     "PR30 0071 fresh scopedbackend/UI review: original four findingsCLOSED;636unit/static/dry/CI PASS. Inheritedfindings and no completion/access remain; no release.",
     "PR30 898 lifecycle delta independently reviewed;636unit/51browser/static/dry/CI PASS; new precommitGET deletion UI P2 blocks. Originalfour remainclosed; no release.",
-    "PR30 640 persistedcommit/UIorder independently READY; all5reviewedPR30findingsclosed.640unitfullretry/56browser/static/dry/CI PASS; firstunit20s timeout retained. Inheritedessential findings/no completion/CFaccess remain; no release."
+    "PR30 640 persistedcommit/UIorder independently READY; all5reviewedPR30findingsclosed.640unitfullretry/56browser/static/dry/CI PASS; firstunit20s timeout retained. Inheritedessential findings/no completion/CFaccess remain; no release.",
+    "PR30 a858 separate atomicpublication/mutationerror freshreviewsREADY;646unit/59browser/static/dry/CI PASS;73scopednode/8actuallocalDO/36UIcases verified. Explicit totalsstagingboundary retained; no appedit/merge/deploy."
   ],
   "in_progress": [],
   "blocked": [

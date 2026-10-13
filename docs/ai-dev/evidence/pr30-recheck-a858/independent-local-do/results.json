@@ -1,0 +1,70 @@
+[
+  {
+    "kind": "profile",
+    "fault": "counter",
+    "status": "PASS_published_state",
+    "fault_http": 500,
+    "changed_tables": [],
+    "before_commit": 1,
+    "after_retry_commit": 2,
+    "published_songs": 2,
+    "published_pages": 1
+  },
+  {
+    "kind": "profile",
+    "fault": "after-profile",
+    "status": "PASS_published_state",
+    "fault_http": 500,
+    "changed_tables": [],
+    "before_commit": 1,
+    "after_retry_commit": 2,
+    "published_songs": 2,
+    "published_pages": 1
+  },
+  {
+    "kind": "events",
+    "fault": "mid-events",
+    "status": "PASS_published_state",
+    "fault_http": 500,
+    "changed_tables": [],
+    "before_commit": 1,
+    "after_retry_commit": 2,
+    "published_songs": 2,
+    "published_pages": 1
+  },
+  {
+    "kind": "events",
+    "fault": "counter",
+    "status": "PASS_published_state",
+    "fault_http": 500,
+    "changed_tables": [],
+    "before_commit": 1,
+    "after_retry_commit": 2,
+    "published_songs": 2,
+    "published_pages": 1
+  },
+  {
+    "kind": "events",
+    "fault": "after-events",
+    "status": "PASS_published_state",
+    "fault_http": 500,
+    "changed_tables": [],
+    "before_commit": 1,
+    "after_retry_commit": 2,
+    "published_songs": 2,
+    "published_pages": 1
+  },
+  {
+    "kind": "totals",
+    "fault": "counter",
+    "status": "PASS_published_state",
+    "fault_http": 500,
+    "changed_tables": [
+      "hist_stage"
+    ],
+    "before_commit": 1,
+    "after_retry_commit": 2,
+    "published_songs": 2,
+    "published_pages": 3
+  }
+]

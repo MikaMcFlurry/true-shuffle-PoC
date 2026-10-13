@@ -1,9 +1,9 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-13T17:20:16.855210+00:00",
+  "generated_at": "2026-10-13T18:26:45.208319+00:00",
   "project": "true-shuffle",
   "subject": {
-    "revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+    "revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
     "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
     "environment": "isolatedLinuxcheckout realHubSQLite/Worker/FakeSpotify and interceptedUI; not production",
     "environment_class": "LOCAL"
@@ -240,8 +240,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+          "subject_revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+          "observed_at": "2026-10-13T18:26:45.208319+00:00"
         }
       ]
     },
@@ -257,8 +257,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+          "subject_revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+          "observed_at": "2026-10-13T18:26:45.208319+00:00"
         }
       ]
     },
@@ -274,8 +274,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+          "subject_revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+          "observed_at": "2026-10-13T18:26:45.208319+00:00"
         }
       ]
     },
@@ -291,8 +291,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+          "subject_revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+          "observed_at": "2026-10-13T18:26:45.208319+00:00"
         }
       ]
     },
@@ -308,8 +308,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+          "subject_revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+          "observed_at": "2026-10-13T18:26:45.208319+00:00"
         }
       ]
     },
@@ -349,8 +349,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+          "subject_revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+          "observed_at": "2026-10-13T18:26:45.208319+00:00"
         }
       ]
     },
@@ -372,10 +372,10 @@
         {
           "id": "G-UI_RUNTIME-PR30",
           "kind": "actual-browser-render-and-API-interception",
-          "ref": "docs/ai-dev/evidence/pr30-recheck-640/pr30-640-ui.md",
+          "ref": "docs/ai-dev/evidence/pr30-recheck-a858/pr30-a858-ui.md",
           "result": "PASS",
-          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+          "subject_revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+          "observed_at": "2026-10-13T18:26:45.208319+00:00"
         }
       ]
     },
@@ -389,10 +389,10 @@
         {
           "id": "G-ACCESSIBILITY-PR30",
           "kind": "actual-browser-render-and-API-interception",
-          "ref": "docs/ai-dev/evidence/pr30-recheck-640/pr30-640-ui.md",
+          "ref": "docs/ai-dev/evidence/pr30-recheck-a858/pr30-a858-ui.md",
           "result": "PASS",
-          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
-          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+          "subject_revision": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+          "observed_at": "2026-10-13T18:26:45.208319+00:00"
         }
       ]
     }

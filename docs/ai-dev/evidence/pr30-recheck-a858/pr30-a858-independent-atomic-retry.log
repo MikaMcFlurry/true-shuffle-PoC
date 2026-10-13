@@ -1,0 +1,55 @@
+
+ RUN  v5.0.2 /workspace/pr30-backend-a858
+
+stdout | test/hub/pr30-independent-atomic.test.ts > totals final-block failure leaves staged block unchanged for one exact retry
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-atomic.test.ts > totals final-block failure leaves staged block unchanged for one exact retry
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-atomic.test.ts > totals final-block failure leaves staged block unchanged for one exact retry
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-atomic.test.ts > totals final-block failure leaves staged block unchanged for one exact retry
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+totals-fault-stage-pages [
+  [Object: null prototype] { page: 0 },
+  [Object: null prototype] { page: 1 }
+]
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+totals-retry-pages [
+  [Object: null prototype] { page: 0 },
+  [Object: null prototype] { page: 1 },
+  [Object: null prototype] { page: 2 }
+]
+
+ ❯ test/hub/pr30-independent-atomic.test.ts (5 tests | 1 failed) 191ms
+   × totals final-block failure leaves staged block unchanged for one exact retry 27ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr30-independent-atomic.test.ts > totals final-block failure leaves staged block unchanged for one exact retry
+AssertionError: expected [ { page: +0, …(1) }, …(2) ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ test/hub/pr30-independent-atomic.test.ts:35:48
+     33|  h.restart();expect(h.hub.selectionView()).toEqual(old);
+     34|  change();console.log('totals-retry-pages', h.sql.all('SELECT page FRO…
+     35|  expect(h.sql.all('SELECT * FROM hist_pages')).toHaveLength(2);
+       |                                                ^
+     36|  expect(h.hub.memory(a!.id).plays).toBe(3);expect(h.hub.memory(b!.id).…
+     37| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  18:24:02
+   Duration  836ms (transform 60%, tests 26%, import 13%)
+
