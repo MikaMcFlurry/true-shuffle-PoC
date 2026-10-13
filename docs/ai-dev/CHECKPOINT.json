@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "project": "true-shuffle",
   "subject": {
-    "revision": "8d62138184be9397ea22d55170928a4edbbc0725",
-    "artifact_ref": "docs/ai-dev/evidence/PR29_REVIEW.json"
+    "revision": "ce0dad61daee1534af04f15ab3a8c1215ab79225",
+    "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json"
   },
   "branch": "codex/implement-cloudflare-restart",
   "phase": "REVIEW",
@@ -31,10 +31,10 @@
     "Local song clock and pause-first ordering deployed:365unit/21browser/163independent+9renderPASS,sourceCI36834917166,exactpublic/auth/browserreadbackPASS.",
     "Responsiveness/Connect target/background scheduling optimization deployed; 428 unit/Worker, 39 browser, fresh independent scoped review READY; exact public readback PASS. Equal-window simulated pressure archived.",
     "PR12 refusal continuity and PR11 final UI merged in dependency order, source CI/444unit/40browser/independent19unit9browser PASS; exact Cloudflare assets/runtime/auth readback PASS.",
-    "PR17→16 externally integrated and verified97e6; allRESUME regressionsclosed",
+    "PR17\u219216 externally integrated and verified97e6; allRESUME regressionsclosed",
     "PR18 final4b0a independently reviewed; GitHub merge e348, actualautomaticWorkersBuildsdd344/238016100% verified;486unit/41browser/11RESUMEPASS; historicalkindnull andUnicodecontrastfixed; no duplicateactivation",
     "2026-10-09 sibling19/20/21 separatelyreviewed;localcombined492/42/11/staticPASS;fiveblockingP2scommented;productionunchanged",
-    "Explicit19–22 completion and corrections independently reviewed on combined4dc3377; previousfiveclosed,newsevenblockingP2s;506/44/11/default/static andall4sourceCI PASS; productionunchanged.",
+    "Explicit19\u201322 completion and corrections independently reviewed on combined4dc3377; previousfiveclosed,newsevenblockingP2s;506/44/11/default/static andall4sourceCI PASS; productionunchanged.",
     "Current9550710 repairs reviewed: seven prior blockers closed;511/46/11/static PASS; three fresh independent reviews identify two new blockers; production unchanged read-only verified.",
     "Externalbcbsecurityexposureverified; authorizedrollbackrestoredimmutabledd344/e348at100%newff729fef withallsettingspreserved,19assets/auth/browserPASS,2freshsimulatedcompatibilitychecksPASS. PR23authfixREADY; lane04blocks.",
     "Finalauth-only8921702explicitcompletion6079018689 read; fresh27authchecksREADY; originalLANE03 againFAILindependently onexactsource.",
@@ -42,8 +42,9 @@
     "New final24c6b/2562aa andnew26e6d combined4c0514f:538/46/11/static PASS; threefreshreviews reproduce new lane/import/analytics failures; comments6080990256/6080977483/6081010497. Production unchanged authenticated readback.",
     "External24/25/26 merged93241 deployed873e/8bde100%, independentlyverifiedWorker/assets/runtime/resources/auth/browser;549/46/11/static/CI PASS; sixprior26defectsclosed andLANE05/06closed.",
     "PR27 exact29d reviewed555/46/4/static/CI PASS; fresh45PASS/1FAIL podcast consistency P2 reported6083736398; production873e/8bde unchanged.",
-    "Externally merged27→28/ac23 verified;originalpodcastclosed;static/browser/resourcesPASS;two newP2scommented6084847874.",
-    "ExternalPR29/8d62138 actualproductionverified;570unit/48browser/staticCI PASS;freshblockedreviewcommented."
+    "Externally merged27\u219228/ac23 verified;originalpodcastclosed;static/browser/resourcesPASS;two newP2scommented6084847874.",
+    "ExternalPR29/8d62138 actualproductionverified;570unit/48browser/staticCI PASS;freshblockedreviewcommented.",
+    "PR30draft freshbackend/UIreview4findingscomment6143664484;618unit/49browser/staticdry bound evidence; production unchanged."
   ],
   "in_progress": [],
   "blocked": [
@@ -121,7 +122,7 @@
           "colorScheme": "light",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -142,7 +143,7 @@
           "colorScheme": "dark",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -163,7 +164,7 @@
           "colorScheme": "light",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -184,7 +185,7 @@
           "colorScheme": "dark",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -217,7 +218,7 @@
           "colorScheme": "light",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -238,7 +239,7 @@
           "colorScheme": "dark",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -259,7 +260,7 @@
           "colorScheme": "light",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -280,7 +281,7 @@
           "colorScheme": "dark",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -309,7 +310,7 @@
       "rollback_this_release": false,
       "actual_populated_restore": "NOT_RUN",
       "bindings_namespace_identity_preserved": true,
-      "sqlite_schema_change": "Additive6→7 verdict andverdict_at; localmigrationfault/retryPASS, actualprivatepopulatedobjectrestoreNOTRUN",
+      "sqlite_schema_change": "Additive6\u21927 verdict andverdict_at; localmigrationfault/retryPASS, actualprivatepopulatedobjectrestoreNOTRUN",
       "rollback_decision_ref": "PR29_REVIEW.json"
     },
     "acceptance_claim": "BLOCKED: freshPR29findings, inheritedPR28/Lane/Resume andphysical/liveNOTRUN",
@@ -418,7 +419,7 @@
           "colorScheme": "light",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -439,7 +440,7 @@
           "colorScheme": "dark",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -460,7 +461,7 @@
           "colorScheme": "light",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -481,7 +482,7 @@
           "colorScheme": "dark",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -514,7 +515,7 @@
           "colorScheme": "light",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -535,7 +536,7 @@
           "colorScheme": "dark",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -556,7 +557,7 @@
           "colorScheme": "light",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -577,7 +578,7 @@
           "colorScheme": "dark",
           "status": 200,
           "overflow": 0,
-          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du gehört hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten öfter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes hörst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt dafür pro Kassette eine private Playlist „true-shuffle · …“ in deinem Konto an.",
+          "body": "Zum Inhalt\ntrue-shuffle\nDeine Playlist\nShuffle, das sich merkt, was du geh\u00f6rt hast\nJeder Song kommt dran. Erst wenn alle einmal liefen, geht es von vorn los.\nKeine schnellen Wiederholungen. Favoriten \u00f6fter, Neues dazwischen.\nDeine Stelle bleibt. Auch wenn du zwischendurch anderes h\u00f6rst.\nMit Spotify anmelden\n\nBraucht Spotify Premium. Spotify spielt die Musik; true-shuffle legt daf\u00fcr pro Kassette eine private Playlist \u201etrue-shuffle\u00a0\u00b7\u00a0\u2026\u201c in deinem Konto an.",
           "links": [
             {
               "text": "Zum Inhalt",
@@ -606,7 +607,7 @@
       "rollback_this_release": false,
       "actual_populated_restore": "NOT_RUN",
       "bindings_namespace_identity_preserved": true,
-      "sqlite_schema_change": "Additive6→7 verdict andverdict_at; localmigrationfault/retryPASS, actualprivatepopulatedobjectrestoreNOTRUN",
+      "sqlite_schema_change": "Additive6\u21927 verdict andverdict_at; localmigrationfault/retryPASS, actualprivatepopulatedobjectrestoreNOTRUN",
       "rollback_decision_ref": "PR29_REVIEW.json"
     },
     "acceptance_claim": "BLOCKED: freshPR29findings, inheritedPR28/Lane/Resume andphysical/liveNOTRUN",
@@ -661,5 +662,6 @@
     "worker_proof": "pr29-review/pr29-worker-proof.json",
     "preservation_proof": "pr29-review/pr29-preservation.json"
   },
-  "latest_watch_ref": "docs/ai-dev/evidence/PR_WATCH_2026_10_10.json"
+  "latest_watch_ref": "docs/ai-dev/evidence/PR_WATCH_2026_10_10.json",
+  "next_action": "Await concrete PR30 corrections and explicit finished release-scope comment; re-review exact heads, retain inherited blockers and restore existing CF access. No duplicate comments or intermediate releases."
 }
