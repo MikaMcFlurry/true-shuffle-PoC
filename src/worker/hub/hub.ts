@@ -6289,7 +6289,7 @@ export class HubCore {
 			return { stored: rows.length, upload: up.id };
 		}
 		const done = up;
-		this.db.transaction(() => {
+		this.importTransaction(() => {
 			// Single plays still on their way belong to the totals replaced now:
 			// their remaining blocks are refused (another upload, see importListens).
 			this.kvDel("listens_upload");
@@ -6529,6 +6529,28 @@ export class HubCore {
 		return this.kvGet<number>("history_commit") ?? 0;
 	}
 
+	/**
+	 * One stored change of the import or the selection together with its
+	 * commit number: all of it is stored, or — on any failure — none of it, and
+	 * nothing kept in memory from it survives either (what was cached during
+	 * the change is read anew from what is stored).
+	 */
+	private importTransaction<R>(fn: () => R): R {
+		try {
+			return this.db.transaction(fn);
+		} catch (err) {
+			this.histCache = null;
+			this.partialCache = null;
+			this.rawHistCache = null;
+			this.countsCache = null;
+			this.listenCache = null;
+			this.artistCache = null;
+			this.liveLookups.clear();
+			this.cache.stations = null;
+			throw err;
+		}
+	}
+
 	private hasImport(): boolean {
 		return this.kvGet("history_import") !== null || this.kvGet("listens") !== null;
 	}
@@ -6723,7 +6745,7 @@ export class HubCore {
 				);
 			}
 		}
-		this.db.transaction(() => {
+		this.importTransaction(() => {
 			this.kvSet("history_selection", applied);
 			if (result) this.materializeSelection(applied, result);
 			this.importChanged(true);
@@ -6768,7 +6790,7 @@ export class HubCore {
 				409,
 			);
 		const deleted = this.deletableScope();
-		this.db.transaction(() => {
+		this.importTransaction(() => {
 			for (const t of ["hist_pages", "hist_stage", "hist_effective", "listen_pages"])
 				this.db.run(`DELETE FROM ${t}`);
 			for (const k of [
@@ -7609,13 +7631,16 @@ export class HubCore {
 			})),
 		};
 		// The page shows whether a summary is stored, not what it says: only a
-		// first one changes what it shows (see HistorySelectionView.commit).
-		const first = this.kvGet("history_profile") === null;
-		this.kvSet("history_profile", clean);
-		if (first) this.importCommitted();
-		// A pending estimate was asked from the old summary: it must not land.
-		const attempt = this.kvGet<{ at: number; id: string }>("genre_attempt");
-		if (attempt) this.kvSet("genre_attempt", { ...attempt, id: `${attempt.id}-stale` });
+		// first one changes what it shows (see HistorySelectionView.commit) —
+		// stored together with its commit number, or not at all.
+		this.importTransaction(() => {
+			const first = this.kvGet("history_profile") === null;
+			this.kvSet("history_profile", clean);
+			if (first) this.importCommitted();
+			// A pending estimate was asked from the old summary: it must not land.
+			const attempt = this.kvGet<{ at: number; id: string }>("genre_attempt");
+			if (attempt) this.kvSet("genre_attempt", { ...attempt, id: `${attempt.id}-stale` });
+		});
 	}
 
 	/**
@@ -7743,50 +7768,59 @@ export class HubCore {
 		// The last block: everything declared came, or the plays before stay.
 		if (part === upload.parts - 1 && (upload.songs !== upload.tracks || upload.rows === 0))
 			throw bad("unvollständig — bitte noch einmal von vorn");
-		this.db.run(
-			`INSERT OR REPLACE INTO listen_pages (gen, kind, page, data) VALUES (?, ?, ?, ?)`,
-			upload.gen,
-			kind,
-			part,
-			JSON.stringify(data),
-		);
+		const store = () =>
+			this.db.run(
+				`INSERT OR REPLACE INTO listen_pages (gen, kind, page, data) VALUES (?, ?, ?, ?)`,
+				upload.gen,
+				kind,
+				part,
+				JSON.stringify(data),
+			);
 		upload.next++;
 		if (upload.next < upload.parts) {
+			store();
 			this.kvSet("listens_upload", upload);
 			return { stored: data.length, upload: upload.id };
 		}
-		// Complete: count what came, switch over, drop the generation before.
-		let from: number | null = null;
-		let to: number | null = null;
-		let rows = 0;
-		let plays = 0;
-		for (const r of this.db.all<{ data: string }>(
-			`SELECT data FROM listen_pages WHERE gen = ? AND kind = 'rows'`,
-			upload.gen,
-		))
-			for (const row of JSON.parse(r.data) as ListenRow[]) {
-				rows++;
-				if (!countsAsPlay(row)) continue;
-				plays++;
-				from = from === null ? row[0] * 1000 : Math.min(from, row[0] * 1000);
-				to = to === null ? row[0] * 1000 : Math.max(to, row[0] * 1000);
-			}
-		this.kvSet("listens", {
-			gen: upload.gen,
-			at: this.now(),
-			importId: upload.importId ?? null,
-			from,
-			to,
-			rows,
-			plays,
-			tracks: upload.tracks,
-		} satisfies ListenMeta);
-		this.kvDel("listens_upload");
-		this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, upload.gen);
-		this.listenCache = null;
-		this.artistCache = null;
-		// A new history: the selection is computed over it, a genre estimate on the way belongs to the old one.
-		this.importChanged();
+		// Complete: the last block, the switch-over to its generation, dropping
+		// the one before and the commit number are stored together or not at
+		// all. On a failure the upload stays as it was: the same block can be
+		// sent again.
+		const plays = this.importTransaction(() => {
+			store();
+			let from: number | null = null;
+			let to: number | null = null;
+			let rows = 0;
+			let plays = 0;
+			for (const r of this.db.all<{ data: string }>(
+				`SELECT data FROM listen_pages WHERE gen = ? AND kind = 'rows'`,
+				upload.gen,
+			))
+				for (const row of JSON.parse(r.data) as ListenRow[]) {
+					rows++;
+					if (!countsAsPlay(row)) continue;
+					plays++;
+					from = from === null ? row[0] * 1000 : Math.min(from, row[0] * 1000);
+					to = to === null ? row[0] * 1000 : Math.max(to, row[0] * 1000);
+				}
+			this.kvSet("listens", {
+				gen: upload.gen,
+				at: this.now(),
+				importId: upload.importId ?? null,
+				from,
+				to,
+				rows,
+				plays,
+				tracks: upload.tracks,
+			} satisfies ListenMeta);
+			this.kvDel("listens_upload");
+			this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, upload.gen);
+			this.listenCache = null;
+			this.artistCache = null;
+			// A new history: the selection is computed over it, a genre estimate on the way belongs to the old one.
+			this.importChanged();
+			return plays;
+		});
 		this.log("info", "history", `Hörverlauf für das Hörprofil übernommen: ${plays} Wiedergaben`);
 		return { stored: data.length, upload: upload.id };
 	}

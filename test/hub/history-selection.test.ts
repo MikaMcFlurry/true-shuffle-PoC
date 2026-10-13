@@ -24,7 +24,7 @@ import { isFavorite } from "../../src/core/memory";
 import { DAY_MS, MINUTE_MS, type SlotKind } from "../../src/core/types";
 import { HubError } from "../../src/worker/hub/hub";
 import { migrate } from "../../src/worker/hub/schema";
-import { onboarded } from "./harness";
+import { onboarded, T0 } from "./harness";
 
 type H = Awaited<ReturnType<typeof onboarded>>;
 type Entry = ExtendedEntry & ListenEntry;
@@ -768,5 +768,208 @@ describe("the commit number of the import and the selection", () => {
 		});
 		apply(b.h, [Y2024]);
 		expect(commit(b.h)).toBe(bView.commit + 1);
+	});
+});
+
+describe("a failure while storing a summary or the last block of plays", () => {
+	const summary = {
+		from: 0,
+		to: 0,
+		plays: 0,
+		minutes: 0,
+		songs: 0,
+		artists: 0,
+		earlySkips: 0,
+		hourWeek: Array.from({ length: 168 }, () => 0),
+		months: [],
+		topArtists: [],
+		topSongs: [],
+	};
+	/** Every stored row of every table, in a stable order. */
+	const dump = (h: H) =>
+		JSON.stringify(
+			h.sql
+				.all<{ name: string }>(`SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name`)
+				.map(({ name }) => [
+					name,
+					h.sql
+						.all(`SELECT * FROM ${name}`)
+						.map((r) => JSON.stringify(r))
+						.sort(),
+				]),
+		);
+	/** The storage refuses the first write `when` matches, once (a synthetic storage failure). */
+	const failOnce = (h: H, when: (q: string, p: unknown[]) => boolean) => {
+		const run = h.sql.run;
+		let armed = true;
+		h.sql.run = (q, ...p) => {
+			if (armed && when(q, p)) {
+				armed = false;
+				throw new Error("Synthetic storage failure");
+			}
+			run.call(h.sql, q, ...p);
+		};
+		return {
+			hit: () => !armed,
+			restore: () => {
+				h.sql.run = run;
+			},
+		};
+	};
+	const counter = (_q: string, p: unknown[]) => p[0] === "history_commit";
+	/** Two synthetic songs: totals stored, the song list of their plays staged; the last block to come. */
+	async function staged() {
+		const h = await onboarded({ tracks: 40 });
+		const ids = songs(h)
+			.slice(0, 2)
+			.map((t) => t.id);
+		const at = D("2024-03-01T12:00:00Z");
+		const { start } = h.hub.startImport();
+		const totals = h.hub.importHistory(
+			ids.map((id) => [id, 2, 0, at, 0, 2]),
+			0,
+			1,
+			undefined,
+			start,
+		).upload;
+		const upload = h.hub.importListens({
+			importId: totals,
+			part: 0,
+			parts: 2,
+			tracks: 2,
+			kind: "tracks",
+			data: ids.map((id, i) => [id, i ? "Beta" : "Alpha", "Synthetic", "Synthetic"]),
+		}).upload;
+		const last = () =>
+			h.hub.importListens({
+				upload,
+				part: 1,
+				parts: 2,
+				tracks: 2,
+				kind: "rows",
+				data: [at / 1000, at / 1000 + 1].flatMap((t) => [
+					[t, 0, 200_000, 132, 0],
+					[t, 1, 200_000, 132, 0],
+				]),
+			});
+		return { h, ids, last };
+	}
+	/** Fails `change` at `when`; everything stored, shown and counted stays as before, also after reopening. */
+	function refusedAtomically(
+		h: H,
+		ids: string[],
+		change: () => unknown,
+		when: (q: string, p: unknown[]) => boolean,
+	) {
+		const view = JSON.stringify(h.hub.selectionView());
+		const stored = dump(h);
+		const mem = ids.map((id) => h.hub.memory(id));
+		const fault = failOnce(h, when);
+		expect(change).toThrow("Synthetic storage failure");
+		fault.restore();
+		expect(fault.hit()).toBe(true);
+		expect(dump(h)).toBe(stored);
+		expect(JSON.stringify(h.hub.selectionView())).toBe(view);
+		expect(ids.map((id) => h.hub.memory(id))).toEqual(mem);
+		h.restart();
+		expect(dump(h)).toBe(stored);
+		expect(JSON.stringify(h.hub.selectionView())).toBe(view);
+		expect(ids.map((id) => h.hub.memory(id))).toEqual(mem);
+		return JSON.parse(view) as ReturnType<H["hub"]["selectionView"]>;
+	}
+
+	for (const [where, when] of [
+		["at the commit number (after the summary was written)", counter],
+		[
+			"after the commit number (marking a genre attempt stale)",
+			(_q: string, p: unknown[]) => p[0] === "genre_attempt",
+		],
+	] as const)
+		it(`a first summary failing ${where} changes nothing; sent again it counts once`, async () => {
+			const { h, ids } = await staged();
+			h.sql.run(
+				`INSERT INTO kv (k, v) VALUES ('genre_attempt', ?)`,
+				JSON.stringify({ at: T0, id: "attempt-1" }),
+			);
+			const before = refusedAtomically(h, ids, () => h.hub.setImportedProfile(summary), when);
+			expect(before.dataset.summaryProfile).toBe(false);
+			h.hub.setImportedProfile(summary);
+			expect(h.hub.selectionView()).toMatchObject({
+				commit: before.commit + 1,
+				dataset: { summaryProfile: true },
+			});
+			h.hub.setImportedProfile(summary);
+			expect(h.hub.selectionView().commit).toBe(before.commit + 1);
+		});
+
+	for (const [where, when] of [
+		[
+			"while switching over (ending the upload)",
+			(q: string, p: unknown[]) => q.startsWith("DELETE FROM kv") && p[0] === "listens_upload",
+		],
+		["at the commit number (after the plays were switched over)", counter],
+		[
+			"after the commit number (marking decks for rewriting)",
+			(q: string) => q.startsWith("UPDATE stations SET deck_dirty"),
+		],
+	] as const)
+		it(`the last block of plays failing ${where} changes nothing and can be sent again, counting once`, async () => {
+			const { h, ids, last } = await staged();
+			const other = await staged();
+			const otherStored = dump(other.h);
+			const before = refusedAtomically(h, ids, last, when);
+			expect(before).toMatchObject({ uploading: true, dataset: { rows: 0 } });
+			expect(dump(other.h)).toBe(otherStored);
+			// The same block again: the upload it belongs to is still there.
+			last();
+			const after = h.hub.selectionView();
+			expect(after).toMatchObject({
+				commit: before.commit + 1,
+				uploading: false,
+				dataset: { rows: 4, coverage: "events" },
+			});
+			expect(after.dataset.key).not.toBe(before.dataset.key);
+			// Once taken, the same block (or a stale one) is refused and changes nothing.
+			const taken = dump(h);
+			expect(last).toThrow(HubError);
+			expect(dump(h)).toBe(taken);
+			expect(h.hub.selectionView().commit).toBe(before.commit + 1);
+			h.restart();
+			expect(h.hub.selectionView()).toMatchObject({
+				commit: before.commit + 1,
+				dataset: { rows: 4 },
+			});
+		});
+
+	it("taking over, switching off and deleting failing at the commit number change nothing either", async () => {
+		const { h, ids, last } = await staged();
+		last();
+		const key = () => h.hub.selectionView().dataset.key;
+		const revision = () => h.hub.selectionView().revision;
+		refusedAtomically(
+			h,
+			ids,
+			() =>
+				h.hub.applySelection({
+					dataset: key(),
+					baseRevision: revision(),
+					enabled: true,
+					rules: [Y2024],
+				}),
+			counter,
+		);
+		refusedAtomically(
+			h,
+			ids,
+			() =>
+				h.hub.applySelection({
+					dataset: key(),
+					baseRevision: revision(),
+					enabled: false,
+					rules: [],
+				}),
+			counter,
+		);
+		refusedAtomically(h, ids, () => h.hub.deleteImport(key()), counter);
 	});
 });

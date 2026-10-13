@@ -1,0 +1,68 @@
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                                                                     Resource                  Mode
+[WebServer] env.PROBE (ClockShellProbe)                                                 Durable Object            local
+[WebServer] env.REGISTRY (Registry)                                                     Durable Object            local
+[WebServer] env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+[WebServer] env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+[WebServer] env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19142/accounts")               Environment Variable      local
+[WebServer] env.SPOTIFY_API_BASE ("http://127.0.0.1:19142/v1")                          Environment Variable      local
+[WebServer] env.LASTFM_API_BASE ("http://127.0.0.1:19142/lastfm")                       Environment Variable      local
+[WebServer] env.DEEZER_API_BASE ("http://127.0.0.1:19142/deezer")                       Environment Variable      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19383
+[WebServer] [wrangler:info] GET /health 200 OK (73ms)
+
+Running 2 tests using 1 worker
+
+(node:31496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /profile 200 OK (37ms)
+actual-candidate-UserHub-failure {"kind":"profile","http":500,"before":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"GwORQmD5o1acf5PO|-","hasImport":true,"importedAt":1791914317218,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":false,"liveSince":null},"after":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"GwORQmD5o1acf5PO|-","hasImport":true,"importedAt":1791914317218,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":false,"liveSince":null},"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"mutationThrew":true}
+candidate-persisted-after-reopen {"kind":"profile","before":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"GwORQmD5o1acf5PO|-","hasImport":true,"importedAt":1791914317218,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":false,"liveSince":null},"after":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"GwORQmD5o1acf5PO|-","hasImport":true,"importedAt":1791914317218,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":false,"liveSince":null},"result":null,"mutationThrew":false}
+  ok 1 clock-shell.spec.ts:2:44 › candidate UserHub failure catch retains atomic profile clock boundary (116ms)
+[WebServer] X [ERROR] hub error Error: Synthetic history_commit SQL failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/clock-shell-worker.ts:5:196)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvSet (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:802:11)
+[WebServer]       at HubCore.importCommitted (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6525:8)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7639:20)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:699:19)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:755:16)
+[WebServer]       at HubCore.importTransaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6540:19)
+[WebServer]       at HubCore.setImportedProfile (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7636:8)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/clock-shell-worker.ts:5:355)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /profile 500 Internal Server Error (15ms)
+[WebServer] [wrangler:info] GET /profile 200 OK (13ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /events 200 OK (36ms)
+actual-candidate-UserHub-failure {"kind":"events","http":500,"before":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"iTmlvkux85qyyiIm|-","hasImport":true,"importedAt":1791914317345,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":true,"liveSince":null},"after":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"iTmlvkux85qyyiIm|-","hasImport":true,"importedAt":1791914317345,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":true,"liveSince":null},"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"mutationThrew":true}
+[WebServer] X [ERROR] hub error Error: Synthetic history_commit SQL failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/clock-shell-worker.ts:5:196)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvSet (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:802:11)
+[WebServer]       at HubCore.importCommitted (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6525:8)
+[WebServer]       at HubCore.importChanged (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6468:8)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7821:9)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:699:19)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:755:16)
+[WebServer]       at HubCore.importTransaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6540:19)
+[WebServer]       at HubCore.importListens (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7789:22)
+[WebServer] 
+[WebServer] 
+candidate-persisted-after-reopen {"kind":"events","before":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"iTmlvkux85qyyiIm|-","hasImport":true,"importedAt":1791914317345,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":true,"liveSince":null},"after":{"revision":0,"commit":1,"appliedAt":null,"selection":{"enabled":true,"rules":[]},"counts":{"enabled":true,"rows":0,"neutralRows":0,"afterLiveRows":0,"plays":4,"skips":0,"songs":2,"includedPlays":4,"includedSkips":0,"includedSongs":2,"changedSongs":0,"summarySongs":2,"summaryPlays":4,"partialSongs":0,"partialPlays":0,"includedSummarySongs":2,"from":null,"to":null,"rules":[]},"effective":{"state":"current","error":null,"at":null},"dataset":{"key":"iTmlvkux85qyyiIm|-","hasImport":true,"importedAt":1791914317345,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":false,"coverage":"summary"},"uploading":true,"liveSince":null},"result":null,"mutationThrew":false}
+[WebServer] [wrangler:info] GET /events 500 Internal Server Error (16ms)
+[WebServer] [wrangler:info] GET /events 200 OK (14ms)
+  ok 2 clock-shell.spec.ts:2:44 › candidate UserHub failure catch retains atomic events clock boundary (90ms)
+
+  2 passed (2.9s)
+
+green clock-shell exit=0

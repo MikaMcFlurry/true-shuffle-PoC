@@ -195,6 +195,11 @@ export function SelectionScreen() {
 	// shown (an older failure never replaces a newer one or a newer answer).
 	const answered = useRef(0);
 	const failed = useRef(0);
+	// A change that failed is said as long as the page still shows the stored
+	// state it was made on — also after a read of that same state came back
+	// meanwhile. Only when a later stored change is shown (another tab replaced
+	// or deleted the import) does its failure describe nothing on the page.
+	const outdated = (sentOn: number) => (shown.current?.commit ?? sentOn) > sentOn;
 	const succeeded = (n: number) => {
 		if (n > answered.current) answered.current = n;
 		// A failure of a load sent before this answer no longer describes the page.
@@ -327,6 +332,7 @@ export function SelectionScreen() {
 		if (n === null) return;
 		setMessage(null);
 		const sentGen = draftGen.current;
+		const sentOn = view.commit;
 		// Taking over names the import its preview counted; switching on or off the one the page shows.
 		const dataset = what === "apply" ? (preview?.dataset ?? ds.key) : ds.key;
 		api
@@ -359,7 +365,7 @@ export function SelectionScreen() {
 				void store.refresh(false);
 			})
 			.catch((e: Error) => {
-				if (n <= accepted.current) return;
+				if (outdated(sentOn)) return;
 				const conflict = e instanceof ApiError && e.status === 409;
 				setMessage({
 					text: conflict
@@ -380,6 +386,7 @@ export function SelectionScreen() {
 		const n = begin("delete");
 		if (n === null) return;
 		setMessage(null);
+		const sentOn = view.commit;
 		api
 			.deleteImport(ds.key)
 			.then((r) => {
@@ -426,7 +433,7 @@ export function SelectionScreen() {
 				void store.refresh(false);
 			})
 			.catch((e: Error) => {
-				if (n <= accepted.current) return;
+				if (outdated(sentOn)) return;
 				setMessage({ text: `Nicht gelöscht: ${e.message}`, tone: "error" });
 				void load(false);
 			})

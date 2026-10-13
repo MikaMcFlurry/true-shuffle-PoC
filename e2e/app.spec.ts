@@ -1662,6 +1662,83 @@ test.describe("a listener's day", () => {
 		await r.post("/api/history/delete", { dataset: (await r.selection()).dataset.key });
 	});
 
+	for (const kind of ["takeover", "switch", "delete"] as const)
+		test(`a ${kind} refused or lost after a reload of the same stored state says so, and can be sent again`, async ({
+			page,
+		}) => {
+			const r = await selectionRace(page);
+			const { ui } = r;
+			const refused = page
+				.getByRole("alert")
+				.filter({ hasText: kind === "delete" ? "Nicht gelöscht" : "Nicht übernommen" });
+			for (const outcome of ["503", "offline"] as const) {
+				await r.fresh();
+				if (kind === "takeover") {
+					await r.exclude("Alpha").click();
+					await expect(ui.takeOver).toBeEnabled();
+				}
+				await r.failedReload();
+				const before = await r.selection();
+				const release = r.gate();
+				const change = await r.holdChange(
+					kind === "delete" ? /\/api\/history\/delete$/ : /\/api\/history\/selection$/,
+					release.shut,
+					{ outcome },
+				);
+				await (kind === "takeover"
+					? ui.takeOver
+					: kind === "switch"
+						? ui.switchOff
+						: ui.confirm
+				).click();
+				await change.sent;
+				// A reload while the change is on its way: the Worker answers with the same stored state.
+				await ui.reload.click();
+				await expect(ui.loadFailed).toHaveCount(0);
+				expect((await r.selection()).commit).toBe(before.commit);
+				// An edit (by keyboard) while it is on its way stays the draft.
+				if (kind !== "delete") {
+					await r.exclude("Beta").focus();
+					await page.keyboard.press("Enter");
+					await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+				}
+				await expect(refused).toHaveCount(0);
+				release.open();
+				await expect(refused).toBeVisible();
+				await expect(ui.applied).toHaveCount(0);
+				await expect(ui.deleted).toHaveCount(0);
+				const after = await r.selection();
+				expect(after).toEqual(before);
+				if (kind !== "delete") await expect(ui.rules).toContainText("Song „Beta“ ausgeschlossen");
+				await change.done();
+				// Sent again on purpose, it goes through.
+				if (kind === "takeover") {
+					await expect(ui.takeOver).toBeEnabled();
+					await ui.takeOver.click();
+					await expect(ui.applied).toBeVisible();
+					expect((await r.selection()).selection.rules.map((x) => x.id)).toEqual([
+						r.ids[0],
+						r.ids[1],
+					]);
+				} else if (kind === "switch") {
+					await expect(ui.switchOff).toBeEnabled();
+					await ui.switchOff.click();
+					await expect(ui.switchOn).toBeVisible();
+					expect((await r.selection()).selection.enabled).toBe(false);
+				} else {
+					await expect(ui.confirm).toBeEnabled();
+					await ui.confirm.click();
+					await expect(ui.deleted).toBeVisible();
+					await expect(ui.noImport).toBeVisible();
+					expect((await r.selection()).dataset.hasImport).toBe(false);
+				}
+				await expect(refused).toHaveCount(0);
+			}
+			const last = await r.selection();
+			if (last.dataset.hasImport)
+				await r.post("/api/history/delete", { dataset: last.dataset.key });
+		});
+
 	test("every page reads well on a phone", async ({ page }) => {
 		await signIn(page);
 		await expect(page.getByRole("button", { name: /^Alles/ })).toBeVisible();

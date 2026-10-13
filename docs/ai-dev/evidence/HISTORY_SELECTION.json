@@ -315,5 +315,61 @@
 			"raw": "HISTORY_SELECTION_DELTA4_GATES/"
 		},
 		"process": "only own Playwright-managed webServers on own ports (8787/8788, 19331-19343); no process killed; logs contain only the public e2e test constant from wrangler.e2e.jsonc"
+	},
+	"independent_review_5_delta4": {
+		"reviewer": "fresh Codex review of 6408961 (FRESH / NOT_READY, exit 0 2026-10-13T17:34:52Z); originals C:/Users/mikah/Documents/Codex/2026-10-13/task-5/delta4-evidence-6408961 read only (report sha256 6496a254…, json ddf057e3…; 206 sealed artifacts re-verified unchanged: HISTORY_SELECTION_DELTA5_ORIGINALS.json)",
+		"closed_by_reviewer": [
+			"D3-R8-COMMIT-ORDER",
+			"D3-R8-ERROR-ORDER"
+		],
+		"findings": {
+			"D4-R8-MUTATION-ERROR": "P2: a refused/lost Apply/Toggle/Delete was not said when a reload of the same unchanged stored state was accepted meanwhile (catch returned for n <= accepted)",
+			"D4-CLOCK-ATOMIC": "P2: a first legacy summary and the last block of plays stored their data before the commit number without one transaction; a failure at the number left changed state under the old number"
+		},
+		"status": "AUTHOR-REPAIRED / PENDING-ACCEPTANCE (no own approval)",
+		"repair": {
+			"client (src/client/screens/selection.tsx)": "a change remembers the commit of the view it was made on; its failure is said unless a view with a higher commit (a later stored change: another tab replaced or deleted the import) is shown. Read request numbers no longer hide it. Serialization/busy ownership, draft generations, CAS, revision floor and immediate delete invalidation unchanged",
+			"server (src/worker/hub/hub.ts)": "importTransaction: one db.transaction (transactionSync in the DO) for data + commit number, dropping derived in-memory caches on failure. Used for the first summary (profile write, number, stale genre attempt), the last block of plays (last page, switch-over metadata, end of upload, dropping the old generation, importChanged with the number), and - already transactional - totals, apply/toggle and delete (now also the in-memory rollback). No schema, binding, route, auth, upload identity/epoch, ingest, cutoff or weighting change"
+		},
+		"tests": {
+			"hub (test/hub/history-selection.test.ts, 6 new)": "synthetic storage failure once at: the number after the summary; after the number (genre attempt) for the summary; ending the upload; the number; after the number (deck rewrite) for the last block of plays; plus a control for apply/toggle/delete at the number. Asserts every stored row of every table, the view and imported memory unchanged before and after reopening, the other listener untouched, the same change sent again counts exactly once, a taken or repeated block/summary changes nothing",
+			"hub red at frozen 6408961 (final assertions, scratch worktree)": "5 failed / 1 passed (control) - HISTORY_SELECTION_DELTA5_HUB_RED_640.log; an earlier red run with the first fixture also 5/1 (HISTORY_SELECTION_DELTA5_HUB_RED_640_FIRST_FIXTURE.log); a setup attempt without node_modules kept (HISTORY_SELECTION_DELTA5_HUB_RED_640_SETUP_NO_NODE_MODULES.log)",
+			"hub green": "28/28 in the file (HISTORY_SELECTION_DELTA5_HUB_GREEN.log); the first green attempt failed 3 cases on a fixture error (coverage expected 'events', totals 2 plays/song vs 1 per song in the block -> 'mixed'); its log was overwritten and is kept as exact tool results from the transcript (HISTORY_SELECTION_DELTA5_HUB_GREEN_ATTEMPT1_COVERAGE_FIXTURE.txt); fixture then made complete (4 plays), red re-run at 6408961 with the same final assertions",
+			"e2e (e2e/app.spec.ts, 3 new: takeover/switch/delete x 503/offline)": "real failed-delete + failed-reload recovery; the change held and then refused (503) or lost (abort) without reaching the Worker; meanwhile a real Worker GET 200 of the same commit and a keyboard edit; asserts the visible refusal, no success, unchanged server view, kept draft, explicit retry succeeds. Red at 6408961 for all three at the refusal assertion in the first (503) pass (HISTORY_SELECTION_DELTA5_E2E_RED_640_*.log); green 4/4 incl. sign-in (HISTORY_SELECTION_DELTA5_E2E_GREEN.log)",
+			"real local Durable Object SQLite / transactionSync": {
+				"reviewer clock-fault copy": "6408961: 0/2, fix: 2/2",
+				"reviewer clock-shell copy (unchanged UserHub, exclusive catch, 500)": "6408961: 0/2, fix: 2/2",
+				"own do-atomic probe (unchanged UserHub catch; faults at the number, after the number, mid switch-over; retry +1; duplicate; reopen; every stored row)": "6408961: 0/5, fix: 5/5",
+				"logs": "HISTORY_SELECTION_DELTA5_DO_*.log; sources HISTORY_SELECTION_DELTA5_DO_PROBES/",
+				"failed start (kept)": "first six probe starts failed with SQLITE_CANTOPEN before any test: TEMP under the long scratch path (MAX_PATH); only TEMP/TMP moved to a short dir (HISTORY_SELECTION_DELTA5_DO_FAILED_START/)"
+			}
+		},
+		"reviewer_ui_copies_at_fix": {
+			"adjacent-order.spec.ts": "13/13 (reviewer at 6408961: 10/3, :31 x3 now pass)",
+			"mutation-error-confirm.corrected.spec.ts": "1/1 (:28 passes)",
+			"method": "HISTORY_SELECTION_DELTA5_REVIEWER_COPIES.txt"
+		},
+		"retained_negatives": [
+			"reviewer literal 13 PASS / 2 FAIL and author literal 14/1 (+ corrected 15/15) as recorded",
+			"reviewer clock first run 1/4 (rowid on WITHOUT ROWID) and its corrected 4 PASS / 1 SKIP",
+			"reviewer pending-label repeat FAIL (mutation-error-confirm.spec.ts) and the obsolete enabled-delete negative",
+			"ui-independent.spec.ts:30 and the lifecycle toggle-serialization fixture FAIL from earlier rounds"
+		],
+		"limits": [
+			"faults are injected synthetically at the SQL adapter; no observed production failure, natural failure frequency, physical eviction or PITR is claimed",
+			"a refusal of a change superseded by a later stored change is not said (it no longer describes the page)",
+			"Workers Builds on the feature branch: FAIL in 0 s, cause UNVERIFIED; no version/traffic readback"
+		],
+		"gates_local": {
+			"node": "v24.18.0",
+			"build": "exit 0",
+			"typecheck": "exit 0",
+			"lint": "exit 0 (2 pre-existing infos)",
+			"test": "exit 0 - 48 files / 646 tests",
+			"e2e (local short-path adapter r4/gates)": "exit 0 - 59 passed",
+			"wrangler dry-run": "exit 0",
+			"raw": "HISTORY_SELECTION_DELTA5_GATES/"
+		},
+		"process": "only own Playwright-managed servers on own ports (8787/8788, 19371-19403); no process killed; historical broad cleanup attempts (3 plus the 12:32:05 prefix stopped by TaskStop) stay disclosed with impact partly UNVERIFIED"
 	}
 }

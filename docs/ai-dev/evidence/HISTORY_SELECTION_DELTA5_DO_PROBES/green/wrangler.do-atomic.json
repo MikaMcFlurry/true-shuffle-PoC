@@ -1,0 +1,37 @@
+{
+  "name": "author-do-atomic",
+  "main": "C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts",
+  "compatibility_date": "2026-09-20",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PROBE",
+        "class_name": "AtomicProbe"
+      },
+      {
+        "name": "REGISTRY",
+        "class_name": "Registry"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "probe-v1",
+      "new_sqlite_classes": [
+        "AtomicProbe",
+        "Registry"
+      ]
+    }
+  ],
+  "vars": {
+    "APP_SECRET": "e2e-secret-e2e-secret-e2e-secret-e2e-secret",
+    "SPOTIFY_CLIENT_ID": "e2e-client",
+    "SPOTIFY_ACCOUNTS_BASE": "http://127.0.0.1:19142/accounts",
+    "SPOTIFY_API_BASE": "http://127.0.0.1:19142/v1",
+    "LASTFM_API_BASE": "http://127.0.0.1:19142/lastfm",
+    "DEEZER_API_BASE": "http://127.0.0.1:19142/deezer"
+  }
+}

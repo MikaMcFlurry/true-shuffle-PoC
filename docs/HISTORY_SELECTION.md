@@ -117,6 +117,12 @@ A stored or pending genre estimate is dropped (it came from the old history).
   again, refused or stale requests, upload blocks before the last and a
   repeated summary do not move it; it is stored in the `kv` table (no schema
   change, starts at 0 for stored listeners) and survives reopening the hub.
+  Each of these changes — its data, the end of its upload and the number — is
+  stored in one transaction (`importTransaction`; `transactionSync` in the
+  Durable Object): a failure anywhere in it, before or after the number is
+  written, leaves everything stored as it was, drops whatever was cached in
+  memory during it, and keeps the upload, so the same last block (or the same
+  summary) can be sent again and then counts exactly once.
   The deletion answer carries it too. The page shows a view only if its
   `commit` is higher than the one shown (equal: the same stored import and
   selection — then the later sent answer wins, they differ at most in an
@@ -127,6 +133,13 @@ A stored or pending genre estimate is dropped (it came from the old history).
   replaces the shown import at once by a stand-in with nothing to act on, until
   a load arrives. An answer not used changes nothing — view, draft, message,
   error or busy state.
+- A change that is refused or lost (an error answer, no connection) is said
+  ("Nicht übernommen", "Nicht gelöscht") as long as the page shows the stored
+  state the change was made on — also when a reload of that same state came
+  back meanwhile. Only when a later stored change is shown (another tab
+  replaced or deleted the import: a higher `commit`) does its failure describe
+  nothing on the page and is left out. The draft stays; the change can be sent
+  again on purpose.
 - Failures are ordered by themselves: a failed load is shown only if it was
   sent after every request answered so far and after the failure shown, so an
   older failure never replaces a newer one, a newer view, a change's answer or
