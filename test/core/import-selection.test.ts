@@ -255,7 +255,7 @@ describe("what a selection makes of the import", () => {
 		expect(applyOverrides(AGG, r.overrides)).toEqual(AGG);
 		expect(r.counts).toMatchObject({ plays: 7, skips: 1, songs: 3, includedPlays: 7 });
 		// Stored and shown, but nothing for the memory.
-		expect(r.counts).toMatchObject({ rows: 10, neutralRows: 2 });
+		expect(r.counts).toMatchObject({ rows: 10, neutralRows: 2, afterLiveRows: 0 });
 	});
 
 	it("a left-out period matches a reference counted from the kept plays only", () => {
@@ -405,6 +405,31 @@ describe("looking through the import", () => {
 		// A song with both: every stored play is listed, the neutral ones apart.
 		const alpha = look(sel([]), q({ q: "alpha" })).items[0]!;
 		expect(alpha).toMatchObject({ rows: 3, neutral: 0, plays: 3 });
+	});
+
+	it("lists stored plays from live time, apart and with no import influence", () => {
+		const liveSince = D("2021-01-01T00:00:00Z");
+		const s = sel([{ type: "artist", kind: "exclude", name: "Cleo" }]);
+		const base = { events, aggregate: AGG, selection: s, liveSince };
+		const delta = inspectImport({ ...base, query: q({ q: "delta" }) }).items[0]!;
+		// Both of Delta's plays lie in live time: listed, none counted, none called "neutral" twice.
+		expect(delta).toMatchObject({ rows: 2, afterLive: 2, neutral: 0, plays: 0, status: "neutral" });
+		const gamma = inspectImport({ ...base, query: q({ q: "gamma" }) }).items[0]!;
+		// One play before (left out by the artist rule), one in live time (no rule decides it).
+		expect(gamma).toMatchObject({
+			rows: 2,
+			afterLive: 1,
+			plays: 1,
+			includedPlays: 0,
+			status: "excluded",
+		});
+		const counts = selectImport(base).counts;
+		expect(counts).toMatchObject({ rows: 10, afterLiveRows: 4, neutralRows: 0 });
+		// The selection's effect on the memory is the same as without those rows.
+		const before = { ...events, rows: 6 };
+		expect([...selectImport(base).overrides]).toEqual([
+			...selectImport({ ...base, events: before }).overrides,
+		]);
 	});
 
 	it("groups by artist, filters by time without changing anything, sorts", () => {

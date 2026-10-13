@@ -15,7 +15,12 @@
 	"contract": "docs/HISTORY_SELECTION.md",
 	"persistence": {
 		"migration": "schema step 8 (additive): hist_stage, hist_effective, playlist_scan, playlist_member_pages",
-		"kv_added": ["history_selection", "history_effective", "hist_upload", "playlist_counts"],
+		"kv_added": [
+			"history_selection",
+			"history_effective",
+			"hist_upload",
+			"playlist_counts"
+		],
 		"unchanged": [
 			"Durable Object classes, bindings and wrangler migration tag v1",
 			"UserHub/Registry names, APP_SECRET, account isolation",
@@ -34,7 +39,9 @@
 		},
 		"ci": {
 			"run 38383358138 (head a247910)": "PASS: npm ci, build, typecheck, lint, npm test 47 files / 618 tests, playwright 49 passed, wrangler dry-run",
-			"Workers Builds check on the feature branch": "failure without details (dashboard only); identical on the previous feature PR #29 head 27197dc, success on production-branch commit 8d62138 — non-production branch build, no production deployment"
+			"Workers Builds check on the feature branch": "failure without details (dashboard only); identical on the previous feature PR #29 head 27197dc, success on production-branch commit 8d62138. This is evidence only that the check failed: it is no production readback. No Cloudflare version, deployment or traffic state was read for this branch (no credentials used); nothing was merged or deployed.",
+			"run 38384005828 (head c273014)": "FAIL at npm run lint (unformatted e2e edit); later steps skipped — superseded",
+			"run 38384157864 (head ce0dad6)": "attempt 1: build/typecheck/lint/unit PASS, e2e 1 failed (pre-existing 'shows the station with its round, mix and next songs', runs before the new flow; application code identical to a247910 where it passed) ; attempt 2 (rerun of the failed job): PASS, 49 browser tests — recorded as a flake of that existing test"
 		},
 		"local_variants_not_canonical": {
 			"lint in the Windows working copy": "fails on every file due to core.autocrlf=true (CRLF worktree, LF index); not a source defect",
@@ -92,7 +99,8 @@
 			"evidence": [
 				"history-selection › same files again; totals-only import; everything excluded; overlapping periods; invalid dates; empty account",
 				"import-selection › Europe/Berlin DST, America/Santiago skipped/doubled midnight, Pacific/Apia skipped day, period boundaries; neutral rows listed apart",
-				"import-selection › size: 300 000 plays / 100 000 songs"
+				"import-selection › size: 300 000 plays / 100 000 songs",
+				"import-selection / history-selection › stored plays from live time are listed (afterLive), count nothing from the import, and a live play of the same song is not counted twice"
 			]
 		},
 		"G8 playlist scope": {

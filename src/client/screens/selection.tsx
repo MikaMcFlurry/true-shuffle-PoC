@@ -350,6 +350,9 @@ export function SelectionScreen() {
 							{ds.coverage === "mixed"
 								? ` ${num(view.counts?.summarySongs ?? 0)} Songs nur als Summe, ohne einzelne Wiedergaben.`
 								: ""}
+							{view.counts && view.counts.afterLiveRows > 0
+								? ` ${plays(view.counts.afterLiveRows)} liegen ab dem Beginn der Live-Zählung${view.liveSince ? ` am ${date(view.liveSince)}` : ""}: aus dem Import zählen sie nicht. Für diese Zeit zählt nur, was true-shuffle selbst beobachtet hat — das muss nicht jede Wiedergabe sein.`
+								: ""}
 							{view.counts && view.counts.neutralRows > 0
 								? ` ${plays(view.counts.neutralRows)} kürzer als 30 Sekunden ohne Skip (oder übersprungene erste Songs nach einem Start) sind gespeichert und sichtbar, zählen aber für nichts.`
 								: ""}
@@ -682,6 +685,9 @@ export function SelectionScreen() {
 											{num(it.includedPlays)} von {plays(it.plays)}
 											{it.skips > 0 ? `, ${num(it.includedSkips)} von ${num(it.skips)} Skips` : ""}
 											{it.neutral > 0 ? `, ${num(it.neutral)} ohne Wirkung` : ""}
+											{it.afterLive > 0
+												? `, ${num(it.afterLive)} ab Beginn der Live-Zählung (zählen nicht aus dem Import)`
+												: ""}
 											{it.lastAt ? ` · zuletzt ${date(it.lastAt)}` : ""}
 											{it.rules.length > 0 ? ` · Regel: ${reasonText(it.rules, draft.rules)}` : ""}
 										</span>

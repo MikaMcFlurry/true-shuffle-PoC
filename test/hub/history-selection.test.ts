@@ -527,6 +527,57 @@ describe("a new import, the old kind and edge cases", () => {
 	});
 });
 
+describe("stored plays from live time", () => {
+	it("are listed with no import influence; live plays of the same song are not counted twice", async () => {
+		const h = await onboarded({ tracks: 300 });
+		const live = liveSince(h);
+		const before = [0, 1, 2].map((i) =>
+			entry(h, 9, new Date(D("2025-05-01T10:00:00Z") + i * DAY_MS).toISOString()),
+		);
+		// An export that runs past the first sign-in (as an older app could store it).
+		const after = entry(h, 9, new Date(live + 30 * MINUTE_MS).toISOString());
+		const rows = toRows(aggregateHistory(before, emptyAggregate(), { before: live }));
+		const { upload } = h.hub.importHistory(rows, 0, 1);
+		const done = finishListens(addListens([...before, after], newListens()), null);
+		const first = h.hub.importListens({
+			importId: upload,
+			part: 0,
+			parts: 2,
+			tracks: done.tracks.length,
+			kind: "tracks",
+			data: done.tracks,
+		});
+		h.hub.importListens({
+			upload: first.upload,
+			part: 1,
+			parts: 2,
+			tracks: done.tracks.length,
+			kind: "rows",
+			data: done.rows,
+		});
+		// The same song counted live after the sign-in.
+		const id = songs(h)[9]!.id;
+		h.sql.run(
+			`INSERT INTO memory (id, last_played_at, plays, early_skips, last_skipped_at, thumb) VALUES (?, ?, 1, 0, NULL, 0)`,
+			id,
+			live + 30 * MINUTE_MS,
+		);
+		h.restart();
+		expect(h.hub.memory(id).plays).toBe(4);
+		const look = h.hub.previewSelection({
+			enabled: true,
+			rules: [],
+			query: { q: songs(h)[9]!.name },
+		});
+		expect(look.page.items[0]).toMatchObject({ rows: 4, afterLive: 1, plays: 3, includedPlays: 3 });
+		expect(look.counts).toMatchObject({ rows: 4, afterLiveRows: 1, plays: 3 });
+		// A rule on that song changes only the import's three plays; the live one stays.
+		apply(h, [{ type: "track", kind: "exclude", id }]);
+		expect(h.hub.memory(id).plays).toBe(1);
+		expect(h.hub.listeningProfile("UTC").coverage.selection).toMatchObject({ excludedPlays: 3 });
+	});
+});
+
 describe("storage and accounts", () => {
 	it("the additive migration keeps every stored import and adds its tables", async () => {
 		const { h, ids } = await setup();

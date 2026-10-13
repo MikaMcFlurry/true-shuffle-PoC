@@ -315,12 +315,18 @@ export interface RuleEffect {
 export interface SelectionCounts {
 	enabled: boolean;
 	/**
-	 * Every stored single play before live counting began, and those of them
+	 * Every stored single play; of those before live counting began, the ones
 	 * that say nothing to the memory (under 30 s and not skipped, or the first
 	 * song after a start skipped): kept and shown, but counted for nothing.
 	 */
 	rows: number;
 	neutralRows: number;
+	/**
+	 * Stored plays from the moment live counting began on: the import counts
+	 * them for nothing (that time belongs to true-shuffle's own count, which
+	 * holds only what it observed itself), so nothing is counted twice.
+	 */
+	afterLiveRows: number;
 	/** Plays (>= 30 s) and early skips the import holds, songs among them. */
 	plays: number;
 	skips: number;
@@ -393,11 +399,15 @@ export function selectImport(input: {
 	let to: number | null = null;
 	let rows = 0;
 	let neutralRows = 0;
+	let afterLiveRows = 0;
 	if (events)
 		for (let i = 0; i < events.rows; i++) {
 			const at = events.at[i]! * 1000;
-			if (at >= limit) continue;
 			rows++;
+			if (at >= limit) {
+				afterLiveRows++;
+				continue;
+			}
 			const w = weightOf(events.ms[i]!, events.meta[i * 2]!);
 			if (w === 0) {
 				neutralRows++;
@@ -517,6 +527,7 @@ export function selectImport(input: {
 			enabled: selection.enabled,
 			rows,
 			neutralRows,
+			afterLiveRows,
 			plays,
 			skips,
 			songs,
@@ -588,10 +599,12 @@ export interface InspectItem {
 	rows: number;
 	/** Of those, plays that say nothing to the memory (see SelectionCounts.neutralRows). */
 	neutral: number;
+	/** Of those, plays from when live counting began on: nothing from the import (see SelectionCounts.afterLiveRows). */
+	afterLive: number;
 	lastAt: number | null;
 	/** Only totals are stored for it: no single plays. */
 	summaryOnly: boolean;
-	/** "neutral": only plays that count for nothing either way. */
+	/** "neutral": only plays that count for nothing either way (or lie in live time). */
 	status: "included" | "excluded" | "partial" | "neutral";
 	/** Keys of the rules that decided its plays (sorted), whichever way. */
 	rules: string[];
@@ -649,6 +662,7 @@ export function inspectImport(input: {
 		includedSkips: 0,
 		rows: 0,
 		neutral: 0,
+		afterLive: 0,
 		lastAt: null,
 		summaryOnly,
 		status: "included" as const,
@@ -661,11 +675,12 @@ export function inspectImport(input: {
 		const hit = events.tracks.map((t) => matches(t[1], t[2], t[3], t[0]));
 		for (let i = 0; i < events.rows; i++) {
 			const at = events.at[i]! * 1000;
-			if (at >= limit) continue;
 			const t = events.track[i]!;
 			const song = events.tracks[t];
 			if (!song) continue;
-			const w = weightOf(events.ms[i]!, events.meta[i * 2]!);
+			// From live counting on: stored and listed, but no part of the import's influence.
+			const live = at >= limit;
+			const w = live ? 0 : weightOf(events.ms[i]!, events.meta[i * 2]!);
 			if (w !== 0) seenEvents.add(song[0]);
 			if (!hit[t]) continue;
 			if (query.from !== null && at < query.from) continue;
@@ -680,6 +695,12 @@ export function inspectImport(input: {
 				groups.set(key, g);
 			}
 			g.songSet.add(song[0]);
+			if (live) {
+				g.rows++;
+				g.afterLive++;
+				g.lastAt = g.lastAt === null ? at : Math.max(g.lastAt, at);
+				continue;
+			}
 			const d = selection.enabled ? m.event(at, song[0], artists[t]!) : -1;
 			const keep = selection.enabled && m.included(d);
 			if (d >= 0) g.ruleSet.add(m.keys[d]!);

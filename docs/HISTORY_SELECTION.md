@@ -18,6 +18,13 @@ Rows that say nothing to the memory (under 30 s and not skipped, or a skipped
 first song after a start) are stored, listed and counted as `neutralRows`;
 they never had and never get any influence.
 
+Stored rows from the moment live counting began (`live_since`) on — possible
+when an export runs past the first sign-in and was stored by an older app —
+are listed too (`afterLive`, `afterLiveRows`) and contribute nothing from the
+import: that time belongs to true-shuffle's own count, so nothing is counted
+twice. The page says so without claiming that true-shuffle observed every
+later play: it holds only what it observed itself.
+
 ## Selection rules
 
 `kv history_selection = { revision, appliedAt, enabled, rules[] }` per listener
