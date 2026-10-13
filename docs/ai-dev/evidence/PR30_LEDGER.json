@@ -1,9 +1,9 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-10-13T12:30:43.503209+00:00",
+  "generated_at": "2026-10-13T13:34:22.646946+00:00",
   "project": "true-shuffle",
   "subject": {
-    "revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+    "revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
     "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
     "environment": "isolatedLinuxcheckout realHubSQLite/Worker/FakeSpotify and interceptedUI; not production",
     "environment_class": "LOCAL"
@@ -19,7 +19,7 @@
     "PERFORMANCE_CRITICAL"
   ],
   "independent_review_level": "FRESH",
-  "independent_review_verdict": "NOT_READY",
+  "independent_review_verdict": "BLOCKED",
   "required_categories": [
     "accessibility",
     "build",
@@ -173,16 +173,58 @@
   ],
   "open_findings": [
     {
-      "id": "PR30-STALE-PREVIEW",
-      "title": "Stale preview bulk excludes previous search match instead of current query",
+      "id": "PR24-LANE-07",
       "severity": "P2",
-      "blocking": true
+      "blocking": true,
+      "title": "Returning to a retained older Spotify queue can assign replacement-deck reason to the old occurrence"
     },
     {
-      "id": "PR30-PENDING-DRAFT",
-      "title": "Delayed apply acknowledgment silently discards a newer draft edit",
+      "id": "PR26-PROFILE-RANK",
       "severity": "P2",
-      "blocking": true
+      "blocking": false,
+      "title": "Inexact artist/album display ranks by duration while showing play counts"
+    },
+    {
+      "id": "PR25-RESUME-OWNER-CONFLICT",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Current preserved unfinished-instance/progress requirement conflicts intentionally advancing listed partial plays"
+    },
+    {
+      "id": "PR28-REST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "90-day overplayed rest is bypassed by cooling fallback in normal deck planning"
+    },
+    {
+      "id": "PR28-OVERLAP-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "First-win aggregate deduplication disagrees with last-win profile classification for overlapping exports"
+    },
+    {
+      "id": "PR29-REPEAT-NO-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Repeated negative retest answers do not accumulate the stated further skip or doubled recheck interval"
+    },
+    {
+      "id": "PR29-VERDICT-ORDER",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unfenced concurrent opposite verdicts let late acknowledgement contradict last accepted answer"
+    },
+    {
+      "id": "PR29-VERDICT-TRANSPORT",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Successful verdict response discards failed playback advance result"
+    },
+    {
+      "id": "PR29-VERDICT-OCCURRENCE",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Prior answer hides the next probe of the same song in a continuously open Home"
     }
   ],
   "gates": [
@@ -198,8 +240,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-          "observed_at": "2026-10-13T12:30:43.503209+00:00"
+          "subject_revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+          "observed_at": "2026-10-13T13:34:22.646946+00:00"
         }
       ]
     },
@@ -215,8 +257,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-          "observed_at": "2026-10-13T12:30:43.503209+00:00"
+          "subject_revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+          "observed_at": "2026-10-13T13:34:22.646946+00:00"
         }
       ]
     },
@@ -232,8 +274,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-          "observed_at": "2026-10-13T12:30:43.503209+00:00"
+          "subject_revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+          "observed_at": "2026-10-13T13:34:22.646946+00:00"
         }
       ]
     },
@@ -249,8 +291,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-          "observed_at": "2026-10-13T12:30:43.503209+00:00"
+          "subject_revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+          "observed_at": "2026-10-13T13:34:22.646946+00:00"
         }
       ]
     },
@@ -266,8 +308,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "PASS",
-          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-          "observed_at": "2026-10-13T12:30:43.503209+00:00"
+          "subject_revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+          "observed_at": "2026-10-13T13:34:22.646946+00:00"
         }
       ]
     },
@@ -307,8 +349,8 @@
           "kind": "source-review-and-runtime",
           "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
           "result": "FAIL",
-          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-          "observed_at": "2026-10-13T12:30:43.503209+00:00"
+          "subject_revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+          "observed_at": "2026-10-13T13:34:22.646946+00:00"
         }
       ]
     },
@@ -324,16 +366,16 @@
       "id": "G-UI_RUNTIME",
       "category": "ui_runtime",
       "required": true,
-      "status": "FAIL",
-      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "status": "PASS",
+      "rationale": "PR30 scoped UI original contract repairs independently PASS; full release still blocked by unchanged inherited findings and missing completion/access.",
       "evidence": [
         {
           "id": "G-UI_RUNTIME-PR30",
           "kind": "actual-browser-render-and-API-interception",
-          "ref": "docs/ai-dev/evidence/pr30-recheck-9e8d/pr30-9e8d-ui.md",
-          "result": "FAIL",
-          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-          "observed_at": "2026-10-13T12:30:43.503209+00:00"
+          "ref": "docs/ai-dev/evidence/pr30-recheck-0071/pr30-0071-ui.md",
+          "result": "PASS",
+          "subject_revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+          "observed_at": "2026-10-13T13:34:22.646946+00:00"
         }
       ]
     },
@@ -347,10 +389,10 @@
         {
           "id": "G-ACCESSIBILITY-PR30",
           "kind": "actual-browser-render-and-API-interception",
-          "ref": "docs/ai-dev/evidence/pr30-recheck-9e8d/pr30-9e8d-ui.md",
+          "ref": "docs/ai-dev/evidence/pr30-recheck-0071/pr30-0071-ui.md",
           "result": "PASS",
-          "subject_revision": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-          "observed_at": "2026-10-13T12:30:43.503209+00:00"
+          "subject_revision": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+          "observed_at": "2026-10-13T13:34:22.646946+00:00"
         }
       ]
     }

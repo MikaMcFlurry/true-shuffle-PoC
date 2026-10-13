@@ -1,12 +1,12 @@
 {
   "schema_version": "true-shuffle.pr-review.v1",
-  "generated_at": "2026-10-13T12:30:43.503209+00:00",
+  "generated_at": "2026-10-13T13:34:22.646946+00:00",
   "pr": 30,
-  "source_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+  "source_sha": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
   "base_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
   "target_branch": "codex/implement-cloudflare-restart",
-  "reviewed_application_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
-  "application_diff_to_current_head": "Actual functional repairs ce0dad6\u21929e8d inspected; fresh separate backend and UI reviews.",
+  "reviewed_application_sha": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
+  "application_diff_to_current_head": "Actual 9e8d\u21920071 continuation identity, required dataset CAS, UI row/query fence and edit generations independently inspected.",
   "provenance": "Actual GitHubloginMikaMcFlurry; git authorMikaHertler with Co-Authored-By ClaudeOpus5.5<noreply@anthropic.com>; branchclaude/history-personalization-playlist-counts; no inventedClaude login/session",
   "scope": "Substantial functional selection/import/delete/playlistjob/API/additiveSQLitev8; separately inspected, not UI-only scope. PR30built atop alreadyintegratedPR27\u219228\u219229.",
   "explicit_full_scope_completion": false,
@@ -54,9 +54,9 @@
         "src/client/screens/selection.tsx:227",
         "src/client/screens/selection.tsx:668"
       ],
-      "evidence": "pr30-recheck-9e8d/pr30-9e8d-ui.md",
-      "status": "PARTIALLY_FIXED",
-      "verified_at_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+      "evidence": "pr30-recheck-0071/pr30-0071-ui.md",
+      "status": "CLOSED",
+      "verified_at_sha": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
       "repro": "Alpha search completes; hold Beta search preview; enabled bulk adds old Alpha rule while query Beta. Apply is now correctly disabled after this mutation; 503/current draft apply fence PASS."
     },
     {
@@ -68,9 +68,9 @@
         "src/client/screens/selection.tsx:236",
         "src/client/screens/selection.tsx:243"
       ],
-      "evidence": "pr30-recheck-9e8d/pr30-9e8d-ui.md",
-      "status": "OPEN",
-      "verified_at_sha": "9e8d1a0ebb1ffee96d7bc3f71141e561a0dcf9f5",
+      "evidence": "pr30-recheck-0071/pr30-0071-ui.md",
+      "status": "CLOSED",
+      "verified_at_sha": "0071c76aeac663d670ec39dcc37aedf2a5df80f3",
       "repro": "Hold Alpha apply ACK; edit Beta while pending; release ACK: Beta rule silently lost."
     }
   ],
@@ -85,7 +85,11 @@
     "ui_independent": "4renders390/1440lightdarklongcontent,4keyboarddeletecancelPASS;stale-bulk+pendingdraft2contractFAIL;interceptedAPI notprovider",
     "9e8d": "typecheck/lint/build/dry-run PASS; 631/631 clean unit PASS107.39s;49/49 canonical realWorker/FakeSpotify browser PASS2.1m; GitHub CI38390934267success",
     "9e8d_independent": "Backend64/64PASS incl3originalrepros; 4new390/1440lightdarkrenders+keyboardPASS; original stale-bulk and pendingdraft-loss remainFAIL; newdraft/503applyfencePASS. Physical/providerNOT_RUN.",
-    "review_workspace_interference": "First static/unit run overlapped temporary independent probe discovery/removal: lint temporary unformattedfileFAIL, unit631PASS plus missingtemporarysuiteFAIL. These runs INVALID for clean-source claims; complete clean reruns retained separately."
+    "review_workspace_interference": "First static/unit run overlapped temporary independent probe discovery/removal: lint temporary unformattedfileFAIL, unit631PASS plus missingtemporarysuiteFAIL. These runs INVALID for clean-source claims; complete clean reruns retained separately.",
+    "0071": "Typecheck/lint/build/dry-run PASS (2 incumbent lint infos);636/636unitWorkerPASS143.01s;full browser retry50/50PASS1.8m;GitHubCI38402375384success.",
+    "0071_browser_first": "FirstfullrunFAIL:app132 signIn callback failed, cannot find Indie & Gitarren;25PASS1FAIL24NOT_RUN;default90s timeout, no assertions softened. Full retry without concurrent unit load50/50PASS1.8m; no causal diagnosis or flake claim.",
+    "0071_backend_independent": "FRESH scopedREADY;71/71changed-scope+originalprobesPASS;3/3new CAS/continuation probesPASS;negativecontrolsame3 on9e8dFAIL3/3.",
+    "0071_ui_independent": "FRESH scopedREADY; original stalebulk/pendingdraftrepros PASS;503/409/toggle/deleteerror/reversequery/group/dataset probesPASS;4actual390/1440lightdarklongcontent/labels/44px/keyboardPASS. Intercepted synthetic API, notliveprovider."
   },
   "deployment": {
     "own_merge": false,
@@ -95,12 +99,13 @@
     "public_assets": "19/19 exact SHA256 unchanged; index.html checked after following redirect",
     "health": 200,
     "unsigned_state": 401,
-    "authenticated_readback": "NOT_RUN: fresh Wranglerwhoami unauthenticated. CFbot currentbranchbuild7e49665c-a9e5-4ad6-9390-33c7f01af467 FAILED; no details available; no productionfailure inferred.",
+    "authenticated_readback": "NOT_RUN: fresh Wranglerwhoami unauthenticated. CFbot currentbranchbuild90d62d47-5365-48ab-8ce9-cb751559f228 FAILED without available logs; no productionfailure inferred.",
     "last_verified_version": "fa234d1c-cdec-49d0-a012-1ad11d173b33",
     "last_verified_deployment": "7bdaed5d-f3f8-4afc-b424-900f1d67fded",
     "identity_freshness": "historical, not refreshed"
   },
   "comment_id": 6143664484,
   "comment_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30#issuecomment-6143664484",
-  "readback_ref": "pr30-recheck-9e8d/pr30-9e8d-github.json"
+  "readback_ref": "pr30-recheck-0071/pr30-0071-github.json",
+  "scoped_ui_verdict": "READY"
 }

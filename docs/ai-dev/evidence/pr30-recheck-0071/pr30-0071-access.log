@@ -1,0 +1,6 @@
+
+ ⛅️ wrangler 4.141.0
+────────────────────
+Getting User settings...
+You are not authenticated. Please run `wrangler login`.
+To deploy without logging in, run a command like `wrangler deploy --temporary` to use a temporary preview account.
