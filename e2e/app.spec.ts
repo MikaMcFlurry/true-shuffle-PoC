@@ -579,9 +579,9 @@ test.describe("a listener's day", () => {
 		expect(await api()).toMatchObject({ revision: 1, counts: { plays: 12, includedPlays: 4 } });
 
 		// The Hörprofil follows: the excluded artist's imported plays are gone from it.
-		const profile = (await (
-			await page.request.get("/api/profile?tz=Europe%2FBerlin")
-		).json()) as { topArtists: { name: string }[] };
+		const profile = (await (await page.request.get("/api/profile?tz=Europe%2FBerlin")).json()) as {
+			topArtists: { name: string }[];
+		};
 		expect(profile.topArtists.map((a) => a.name)).toContain("Probeband West");
 		expect(profile.topArtists.map((a) => a.name)).not.toContain("Probeband Ost");
 		await page.goto("/profil");
