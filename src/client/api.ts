@@ -5,6 +5,9 @@ import type {
 	DeviceView,
 	GenreAnswer,
 	HistoryEntry,
+	HistoryRateAnswer,
+	HistoryRatingLookup,
+	HistoryRatingReceipt,
 	HistorySelectionView,
 	ImportSelection,
 	InspectQuery,
@@ -207,6 +210,29 @@ export const api = {
 	devices: () => call<DeviceView[]>("GET", "/api/devices"),
 	thumb: (trackId: string, value: -1 | 0 | 1) =>
 		call<{ skipped?: boolean }>("POST", `/api/tracks/${trackId}/thumb`, { value }),
+	/** A rating from the Verlauf, under the page's own id (see docs/HISTORY_RATINGS.md). */
+	rateFromHistory: (b: { actionId: string; trackId: string; value: -1 | 0 | 1; basis: number }) =>
+		call<HistoryRateAnswer>("POST", "/api/history/ratings", b, 15_000),
+	/** After a lost answer: stored "no" only when provably not stored; "unknown" otherwise. */
+	historyRatingReceipt: (actionId: string, trackId?: string, basis?: number) => {
+		const q = new URLSearchParams();
+		if (trackId !== undefined) q.set("track", trackId);
+		if (basis !== undefined) q.set("basis", String(basis));
+		const query = q.toString();
+		return call<HistoryRatingLookup>(
+			"GET",
+			`/api/history/ratings/${encodeURIComponent(actionId)}${query ? `?${query}` : ""}`,
+			undefined,
+			15_000,
+		);
+	},
+	undoHistoryRating: (actionId: string) =>
+		call<{ receipt: HistoryRatingReceipt | null }>(
+			"POST",
+			`/api/history/ratings/${encodeURIComponent(actionId)}/undo`,
+			undefined,
+			15_000,
+		),
 	retestVerdict: (trackId: string, keep: boolean) =>
 		call<{ skipped?: boolean }>("POST", `/api/tracks/${trackId}/retest`, { keep }),
 	remoteKey: () => call<RemoteKeyView>("GET", "/api/remote"),

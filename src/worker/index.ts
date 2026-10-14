@@ -475,6 +475,28 @@ app.post("/api/tracks/:id/thumb", async (c) => {
 	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v));
 });
 
+// A rating from the Verlauf with its receipt: asked again by the page's own
+// id after a lost answer, and taken back exactly (see docs/HISTORY_RATINGS.md).
+app.post("/api/history/ratings", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(c, c.var.hub.rateFromHistory(c.var.epoch, b));
+});
+app.get("/api/history/ratings/:id", (c) => {
+	const basis = c.req.query("basis");
+	return unwrap(
+		c,
+		c.var.hub.historyRatingReceipt(
+			c.var.epoch,
+			c.req.param("id"),
+			c.req.query("track"),
+			basis === undefined ? undefined : Number(basis),
+		),
+	);
+});
+app.post("/api/history/ratings/:id/undo", (c) =>
+	unwrap(c, c.var.hub.undoHistoryRating(c.var.epoch, c.req.param("id"))),
+);
+
 // The answer to a retest ("Nachprüfung"): keep true = "Gern wieder".
 app.post("/api/tracks/:id/retest", async (c) => {
 	const b = await body<{ keep?: unknown }>(c);

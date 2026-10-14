@@ -9,6 +9,8 @@ import {
 	LogOut,
 	type LucideIcon,
 	Speaker,
+	ThumbsDown,
+	ThumbsUp,
 	Trash2,
 	Watch,
 } from "lucide-preact";
@@ -46,8 +48,25 @@ import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
+import {
+	historyRatingsOn,
+	lastSaid,
+	rate,
+	busy as ratingBusy,
+	shown as ratingShown,
+	ratingsFor,
+	ratingsGeneration,
+	recheck,
+	recheckUndo,
+	setHistoryRatings,
+	startListRead,
+	takeListed,
+	undo as undoRating,
+	useHistoryRatings,
+} from "../history-ratings";
+import { playbackHint, ratingLine } from "../history-ratings-text";
 import { navigate } from "../router";
-import { getIllumination, type Illumination, setIllumination, store } from "../store";
+import { getIllumination, type Illumination, setIllumination, store, useStore } from "../store";
 
 // ------------------------------------------------------------------ shared
 
@@ -139,6 +158,7 @@ function until(at: number): string {
 
 export function MenuScreen({ state }: { state: AppState }) {
 	const [illum, setIllum] = useState<Illumination>(getIllumination());
+	const [ratingsOn, setRatingsOn] = useState(() => historyRatingsOn(state.profile.id));
 	const [hours, setHours] = useState(6);
 	const [confirm, setConfirm] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -317,6 +337,37 @@ export function MenuScreen({ state }: { state: AppState }) {
 						<p class="row__sub">Automatisch folgt deinem Gerät. Gilt nur auf diesem Gerät.</p>
 					</li>
 					<li>
+						<label class="row mehr-switch">
+							<span class="row__main">
+								<span class="row__title">Bewertungen im Verlauf direkt anzeigen</span>
+								<span class="row__sub">
+									{ratingsOn
+										? "An: Jeder Song im Verlauf hat „Favorit“ und „Nie wieder“ zum direkten Antippen, mit Rückgängig. "
+										: "Aus: Im Verlauf öffnet ein Tipp auf einen Song die Bewertung, wie bisher. "}
+									Gilt nur auf diesem Gerät und für dieses Spotify-Konto. Ausschalten ändert keine
+									Bewertung.
+								</span>
+							</span>
+							<input
+								type="checkbox"
+								role="switch"
+								class="switch"
+								aria-checked={ratingsOn}
+								checked={ratingsOn}
+								onChange={(e) => {
+									const on = e.currentTarget.checked;
+									if (!setHistoryRatings(state.profile.id, on))
+										store.say(
+											"Dieser Browser speichert die Einstellung nicht (privates Fenster?). Sie gilt nur bis zum Neuladen.",
+											"warn",
+											6000,
+										);
+									setRatingsOn(on);
+								}}
+							/>
+						</label>
+					</li>
+					<li>
 						<SpotifyStatus />
 					</li>
 					<LinkRow href="/info" icon={Info} title="Über true-shuffle">
@@ -389,34 +440,71 @@ export function MenuScreen({ state }: { state: AppState }) {
 const PAGE = 60;
 
 export function HistoryScreen() {
+	const s = useStore();
+	const ready = s.load.kind === "ready" ? s.load.state : null;
+	const account = ready?.profile.id ?? null;
+	// Another account: nothing of the one before is shown or answered (the
+	// controller also follows signing out and in while this page is closed).
+	if (ready) ratingsFor(ready.profile.id, true);
+	useHistoryRatings();
+	const ratings = historyRatingsOn(account);
+	// The song playing now, as the app last saw it, and whether a Home Assistant
+	// player plays it (never skipped from here: see docs/HISTORY_RATINGS.md).
+	const playing = ready?.nowPlaying?.isPlaying
+		? { id: ready.nowPlaying.id, native: ready.session?.controller?.kind === "home-assistant" }
+		: null;
 	const [items, setItems] = useState<HistoryEntry[] | null>(null);
 	const [more, setMore] = useState(true);
 	const [loading, setLoading] = useState(false);
 	const [err, setErr] = useState<string | null>(null);
+	// A list answers only the page that asked, for the account it asked for:
+	// one arriving after leaving the page, or after signing out and in (even
+	// as the same account), changes nothing.
+	const alive = useRef(true);
+	useEffect(
+		() => () => {
+			alive.current = false;
+		},
+		[],
+	);
+	const current = (gen: number) => alive.current && gen === ratingsGeneration();
 	useEffect(() => {
-		const started = Date.now();
+		// What this app had rated when the list was asked for (see takeListed).
+		const read = startListRead();
+		setItems(null);
+		setErr(null);
+		setLoading(false);
 		api
 			.history()
 			.then((x) => {
-				store.settleThumbs(x, started);
+				if (!alive.current || !takeListed(x, read, true)) return;
 				setItems(x);
 				setMore(x.length >= PAGE);
 			})
-			.catch((e: Error) => setErr(e.message));
-	}, []);
+			.catch((e: Error) => {
+				if (current(read.gen)) setErr(e.message);
+			});
+	}, [account]);
 	const loadMore = () => {
 		const last = items?.[items.length - 1];
 		if (!last || loading) return;
+		const read = startListRead();
+		const gen = read.gen;
 		setLoading(true);
 		setErr(null);
 		api
 			.history(last.playedAt)
 			.then((x) => {
-				setItems([...(items ?? []), ...x]);
+				if (!alive.current || !takeListed(x, read, false)) return;
+				setItems((prev) => [...(prev ?? []), ...x]);
 				setMore(x.length >= PAGE);
 			})
-			.catch((e: Error) => setErr(e.message))
-			.finally(() => setLoading(false));
+			.catch((e: Error) => {
+				if (current(gen)) setErr(e.message);
+			})
+			.finally(() => {
+				if (current(gen)) setLoading(false);
+			});
 	};
 	const groups: [string, HistoryEntry[]][] = [];
 	for (const it of items ?? []) {
@@ -436,8 +524,17 @@ export function HistoryScreen() {
 					</a>
 				}
 				noBack
-				sub="Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei jedem Song steht, wie oft du ihn insgesamt gehört hast, und bei Songs von deinen Kassetten auch, ob er aus der Kassette kam oder eine Empfehlung war, sobald das eindeutig ist. Tippe auf einen Song, um ihn zu bewerten."
+				sub={`Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei jedem Song steht, wie oft du ihn insgesamt gehört hast, und bei Songs von deinen Kassetten auch, ob er aus der Kassette kam oder eine Empfehlung war, sobald das eindeutig ist. ${
+					ratings
+						? "Bewerte jeden Song direkt mit „Favorit“ oder „Nie wieder“. Ausschalten kannst du das unter Mehr → App."
+						: "Tippe auf einen Song, um ihn zu bewerten."
+				}`}
 			/>
+			{ratings ? (
+				<p class="sr-only" role="status" aria-live="polite">
+					{lastSaid()}
+				</p>
+			) : null}
 			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
 			{items && items.length === 0 ? (
 				<p class="empty-state">
@@ -448,39 +545,47 @@ export function HistoryScreen() {
 			{groups.map(([d, list], gi) => (
 				<Section key={d} title={d} id={`verlauf-${gi}`}>
 					<ol class="list hist">
-						{list.map((t) => (
-							<li key={`${t.id}-${t.playedAt}`} class="hist-row track--rate">
-								<time class="hist-row__time" dateTime={new Date(t.playedAt).toISOString()}>
-									{clock(t.playedAt)}
-								</time>
-								<Cover src={t.imageUrl} />
-								<span class="hist-row__main">
-									<span class="hist-row__title">{t.name}</span>
-									<span class="hist-row__sub">{t.artists}</span>
-									<span class="hist-row__station">
-										{t.stationName ? `Kassette ${t.stationName}` : "außerhalb von true-shuffle"}
-									</span>
-									{t.ignored ? null : (
-										<SongTags
-											kind={t.facts?.kind ?? null}
-											facts={factsOf(t)}
-											thumb={store.thumbOf(t)}
-											history
-											class="tags--row"
-										/>
-									)}
-								</span>
-								<span class="hist-row__marks">
-									<ThumbMark t={t} />
-									{t.ignored ? (
-										<span class="tag" title="Lief im Gast-Modus und zählt nicht">
-											Gast
+						{list.map((t) =>
+							ratings ? (
+								<RatedHistoryRow
+									key={`${t.id}-${t.playedAt}`}
+									t={t}
+									playing={playing?.id === t.id ? playing : null}
+								/>
+							) : (
+								<li key={`${t.id}-${t.playedAt}`} class="hist-row track--rate">
+									<time class="hist-row__time" dateTime={new Date(t.playedAt).toISOString()}>
+										{clock(t.playedAt)}
+									</time>
+									<Cover src={t.imageUrl} />
+									<span class="hist-row__main">
+										<span class="hist-row__title">{t.name}</span>
+										<span class="hist-row__sub">{t.artists}</span>
+										<span class="hist-row__station">
+											{t.stationName ? `Kassette ${t.stationName}` : "außerhalb von true-shuffle"}
 										</span>
-									) : null}
-								</span>
-								<RateHit t={t} />
-							</li>
-						))}
+										{t.ignored ? null : (
+											<SongTags
+												kind={t.facts?.kind ?? null}
+												facts={factsOf(t)}
+												thumb={store.thumbOf(t)}
+												history
+												class="tags--row"
+											/>
+										)}
+									</span>
+									<span class="hist-row__marks">
+										<ThumbMark t={t} />
+										{t.ignored ? (
+											<span class="tag" title="Lief im Gast-Modus und zählt nicht">
+												Gast
+											</span>
+										) : null}
+									</span>
+									<RateHit t={t} />
+								</li>
+							),
+						)}
 					</ol>
 				</Section>
 			))}
@@ -495,6 +600,158 @@ export function HistoryScreen() {
 				</button>
 			) : null}
 		</div>
+	);
+}
+
+/**
+ * A Verlauf row with its rating right there (option "Bewertungen im Verlauf
+ * direkt anzeigen"): "Favorit" and "Nie wieder" say whether they are set and
+ * set or clear it; one change at a time per song, in every row of that song.
+ */
+function RatedHistoryRow({ t, playing }: { t: HistoryEntry; playing: { native: boolean } | null }) {
+	const { value, s } = ratingShown(t);
+	const working = ratingBusy(s);
+	const fav = useRef<HTMLButtonElement>(null);
+	const row = useRef<HTMLLIElement>(null);
+	// A button that goes away once it did its work hands the focus to "Favorit".
+	const [refocus, setRefocus] = useState(false);
+	useEffect(() => {
+		if (!refocus || working) return;
+		setRefocus(false);
+		const a = document.activeElement;
+		if (!a || a === document.body || !row.current?.contains(a)) fav.current?.focus();
+	}, [refocus, working]);
+	const canUndo = s?.phase === "saved" && !!s.receipt && !s.receipt.undo && !s.receipt.superseded;
+	const lasting = s?.receipt?.skip === "skipped";
+	const line = ratingLine(value, s);
+	const hint = playbackHint(value, s, playing);
+	const tap = (v: -1 | 0 | 1) => {
+		if (!working) rate(t, v);
+	};
+	return (
+		<li ref={row} class="hist-row hist-row--rated" aria-busy={working}>
+			<time class="hist-row__time" dateTime={new Date(t.playedAt).toISOString()}>
+				{clock(t.playedAt)}
+			</time>
+			<Cover src={t.imageUrl} />
+			<span class="hist-row__main">
+				<span class="hist-row__title">{t.name}</span>
+				<span class="hist-row__sub">{t.artists}</span>
+				<span class="hist-row__station">
+					{t.stationName ? `Kassette ${t.stationName}` : "außerhalb von true-shuffle"}
+				</span>
+				{t.ignored ? null : (
+					<SongTags
+						kind={t.facts?.kind ?? null}
+						facts={factsOf(t)}
+						thumb={value}
+						history
+						class="tags--row"
+					/>
+				)}
+			</span>
+			<span class="hist-row__marks">
+				{t.ignored ? (
+					<span class="tag" title="Lief im Gast-Modus und zählt nicht">
+						Gast
+					</span>
+				) : null}
+			</span>
+			<fieldset class="hist-rate">
+				<legend class="sr-only">Bewertung von „{t.name}“</legend>
+				<button
+					ref={fav}
+					type="button"
+					class="key hist-rate__key"
+					aria-pressed={value === 1}
+					aria-disabled={working}
+					onClick={() => tap(value === 1 ? 0 : 1)}
+				>
+					<ThumbsUp size={18} aria-hidden="true" />
+					Favorit
+				</button>
+				<button
+					type="button"
+					class="key hist-rate__key"
+					aria-pressed={value === -1}
+					aria-disabled={working}
+					onClick={() => tap(value === -1 ? 0 : -1)}
+				>
+					<ThumbsDown size={18} aria-hidden="true" />
+					Nie wieder
+				</button>
+				{canUndo ? (
+					<button
+						type="button"
+						class="key hist-rate__key hist-rate__undo"
+						onClick={() => {
+							setRefocus(true);
+							undoRating(t);
+						}}
+					>
+						{lasting ? "Rückgängig (Überspringen bleibt)" : "Rückgängig"}
+					</button>
+				) : null}
+				{(s?.phase === "failed" || (s?.phase === "unclear" && s.intent?.mayStillArrive)) &&
+				s.intent ? (
+					<button
+						type="button"
+						class="key hist-rate__key"
+						onClick={() => {
+							setRefocus(true);
+							rate(t, s.intent!.value, true);
+						}}
+					>
+						Nochmal speichern
+					</button>
+				) : null}
+				{s?.phase === "unclear" ? (
+					<button
+						type="button"
+						class="key hist-rate__key"
+						onClick={() => {
+							setRefocus(true);
+							recheck(t);
+						}}
+					>
+						Nachsehen
+					</button>
+				) : null}
+				{s?.phase === "undo-unclear" && s.receipt ? (
+					<button
+						type="button"
+						class="key hist-rate__key"
+						onClick={() => {
+							setRefocus(true);
+							recheckUndo(t);
+						}}
+					>
+						Nachsehen
+					</button>
+				) : null}
+				{s?.phase === "undo-failed" && s.receipt ? (
+					<button
+						type="button"
+						class="key hist-rate__key"
+						onClick={() => {
+							setRefocus(true);
+							undoRating(t);
+						}}
+					>
+						Nochmal zurücknehmen
+					</button>
+				) : null}
+				{line || hint ? (
+					<p
+						class={`hist-rate__state${s?.phase === "failed" || s?.phase === "undo-failed" || s?.phase === "unclear" || s?.phase === "undo-unclear" ? " hist-rate__state--error" : ""}`}
+					>
+						{line ? <span class="hist-rate__status">{line}</span> : null}
+						{line && hint ? " " : null}
+						{hint ? <span class="hist-rate__hint">{hint}</span> : null}
+					</p>
+				) : null}
+			</fieldset>
+		</li>
 	);
 }
 

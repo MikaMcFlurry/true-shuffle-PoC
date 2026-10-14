@@ -248,6 +248,11 @@ class Store {
 		this.emit();
 	}
 
+	/** The rating given here last for a song (sheet, player keys, Verlauf), and when. */
+	thumbOverride(id: string): { v: -1 | 0 | 1; at: number } | undefined {
+		return this.thumbs.get(id);
+	}
+
 	thumbOf(t: { id: string; thumb: -1 | 0 | 1 }): -1 | 0 | 1 {
 		return this.thumbs.get(t.id)?.v ?? t.thumb;
 	}
@@ -265,6 +270,26 @@ class Store {
 		for (const s of songs) {
 			const own = this.thumbs.get(s.id);
 			if (own && own.at < loadStartedAt) this.thumbs.delete(s.id);
+		}
+	}
+
+	/** The thumbs given here as they stand now: what a list asked for now knows. */
+	thumbsNow(): ReadonlyMap<string, { v: -1 | 0 | 1; at: number }> {
+		return new Map(this.thumbs);
+	}
+
+	/**
+	 * Like `settleThumbs`, by what the list was asked after rather than by the
+	 * clock (the Verlauf): a thumb still standing exactly as it stood when the
+	 * list was asked for is known to it, and gives way; one given since stays.
+	 */
+	settleKnownThumbs(
+		songs: { id: string }[],
+		known: ReadonlyMap<string, { v: -1 | 0 | 1; at: number }>,
+	): void {
+		for (const s of songs) {
+			const own = this.thumbs.get(s.id);
+			if (own && known.get(s.id) === own) this.thumbs.delete(s.id);
 		}
 	}
 

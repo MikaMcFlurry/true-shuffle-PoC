@@ -195,7 +195,79 @@ export interface HistoryEntry extends TrackView {
 	 * doubt. `inStation` is always true: the song was heard there.
 	 */
 	facts?: SongFacts;
+	/**
+	 * The song's rating write number when this list was read (see
+	 * HistoryRatingReceipt.seq): a rating from the Verlauf names it, and is
+	 * refused when the song was rated again since (another tab, Siri, the
+	 * player's sheet).
+	 */
+	rated?: number;
 }
+
+/**
+ * A rating given in the Verlauf (see docs/HISTORY_RATINGS.md): stored together
+ * with a receipt of everything it changed, so the page can ask again after a
+ * lost answer and take it back without touching anything newer.
+ */
+export interface HistoryRatingReceipt {
+	/** The page's id for this decision: sent again, it is answered from here, never stored twice. */
+	id: string;
+	trackId: string;
+	value: -1 | 0 | 1;
+	/** The rating before it. */
+	prev: -1 | 0 | 1;
+	at: number;
+	/** The song's rating write number after it. */
+	seq: number;
+	/**
+	 * "Nie wieder" skips the song when it plays right now: "none" (it did not
+	 * play, or plays on a Home Assistant player, which is never skipped from
+	 * here), "skipped", "failed" (not skipped; the rating is stored all the
+	 * same — see `skipStage`), "pending" (the result never came back). A skip
+	 * is never repeated nor taken back.
+	 */
+	skip: "none" | "pending" | "skipped" | "failed";
+	skipError: string | null;
+	/**
+	 * Where a failed skip stopped: "read" — whether the song still plays could
+	 * not be read (nothing skipped, nothing tried again); "next" — Spotify
+	 * refused the skip. Absent for receipts without a failed skip.
+	 */
+	skipStage?: "read" | "next";
+	/** The song was rated again since (here or elsewhere): this one can no longer be taken back. */
+	superseded: boolean;
+	/** Taking it back, once asked for. */
+	undo: {
+		at: number;
+		/** "partial": what changed since stays, the rest is back; "conflict": nothing changed. */
+		outcome: "undone" | "partial" | "conflict";
+		/** What stayed, and why. */
+		notes: string[];
+		/** The rating afterwards, and its write number. */
+		value: -1 | 0 | 1;
+		seq: number;
+	} | null;
+	/** What taking it back cannot change by its nature (a skip that happened). */
+	lasting: string[];
+}
+
+/** A receipt read after a lost answer, with the song's rating now (see HistoryRatingReceipt). */
+export interface HistoryRatingLookup {
+	receipt: HistoryRatingReceipt | null;
+	/** Without a receipt: "no" only when provably not stored (yet); see docs/HISTORY_RATINGS.md. */
+	stored: "yes" | "no" | "unknown";
+	/**
+	 * The song's rating and its write number at this read, when the song was
+	 * named: a receipt proves its action happened, this tells what holds now.
+	 */
+	current?: { value: -1 | 0 | 1; seq: number };
+}
+
+export type HistoryRateAnswer =
+	/** Stored (or stored before, under the same id). */
+	| { kind: "done"; receipt: HistoryRatingReceipt }
+	/** Rated again since the page read it: nothing stored; this is the rating now. */
+	| { kind: "changed"; current: { value: -1 | 0 | 1; seq: number } };
 
 /** What a personal remote key can do (Siri, CarPlay, a watch, a widget). */
 export type RemoteAction = "like" | "dislike" | "skip";

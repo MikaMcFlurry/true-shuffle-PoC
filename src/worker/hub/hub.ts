@@ -95,6 +95,9 @@ import type {
 	AppState,
 	DeviceView,
 	HistoryEntry,
+	HistoryRateAnswer,
+	HistoryRatingLookup,
+	HistoryRatingReceipt,
 	HistorySelectionView,
 	ImportedProfile,
 	JobView,
@@ -372,6 +375,60 @@ interface MemoryRow {
 	verdict?: number | null;
 	verdict_at?: number | null;
 }
+
+/**
+ * Everything one rating changed in stored data (see `applyThumb`): enough to
+ * put back exactly that, and to see what changed again since.
+ */
+interface ThumbEffects {
+	trackId: TrackId;
+	value: -1 | 0 | 1;
+	prev: -1 | 0 | 1;
+	at: number;
+	/** The song had no memory row: the rating made it. */
+	created: boolean;
+	/** Its memory row right after, the rating aside. */
+	rowAfter: string;
+	/** Every discovery row of the song it rewrote, before and after. */
+	discoveries: {
+		station: number;
+		before: { status: string; updated_at: number };
+		after: { status: string; updated_at: number };
+		/** The whole row right after: anything changed since (even in the same millisecond) shows. */
+		row: string;
+	}[];
+	/** Station bans it lifted ("Favorit"). */
+	bans: { station: number; at: number }[];
+	/** Decks whose former-version watch list it extended ("Nie wieder"), at their version then. */
+	formerOff: { station: number; writtenAt: number; plan: string }[];
+	/** Stations it asked to plan anew. */
+	dirtied: number[];
+	/** It put the song on the way into the Spotify discoveries playlist (a job none was waiting before). */
+	keepJob: boolean;
+	/** That job's own stamps: a job replaced or touched since is not this one any more. */
+	keepJobAt?: { created: number; updated: number };
+}
+
+/** A rating from the Verlauf with what it changed (see HistoryRatingReceipt). */
+interface RatingReceipt extends Omit<HistoryRatingReceipt, "lasting"> {
+	effects: ThumbEffects;
+	/** A song already handed to the Spotify discoveries playlist when it was taken back. */
+	keptOut?: boolean;
+}
+
+/**
+ * Every rating write counts up `seq`; `touched` holds the latest one of the
+ * 500 songs rated last, `floor` the newest number that fell out of it (an
+ * upper bound for every song not listed).
+ */
+interface RatingClock {
+	seq: number;
+	floor: number;
+	touched: Record<string, number>;
+}
+
+const RATING_TOUCHED_MAX = 500;
+const RATING_RECEIPTS_MAX = 100;
 
 interface JobRow {
 	key: string;
@@ -4405,14 +4462,17 @@ export class HubCore {
 	}
 
 	/** Decks that still plan to play `id` must be rewritten when idle. */
-	private dirtyDecksHolding(id: TrackId, exceptStation: number | null): void {
+	private dirtyDecksHolding(id: TrackId, exceptStation: number | null): number[] {
+		const marked: number[] = [];
 		for (const other of this.stations()) {
 			if (other.id === exceptStation || other.deck_dirty === 1) continue;
 			const d = this.deckOf(other);
 			if (d?.items.some((it) => it.id === id && it.state === "pending")) {
 				this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, other.id);
+				marked.push(other.id);
 			}
 		}
+		return marked;
 	}
 
 	/**
@@ -5865,41 +5925,8 @@ export class HubCore {
 		let skipped = false;
 		let skipError: string | undefined;
 		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
-		this.updateLive(trackId, (r) => ({ ...r, thumb: value }));
-		if (value === -1) {
-			this.db.run(
-				`UPDATE discoveries SET status = 'rejected', updated_at = ? WHERE id = ?`,
-				this.now(),
-				trackId,
-			);
-			// Stations planning to play it leave it out next time.
-			this.dirtyDecksHolding(trackId, null);
-			// Stations whose older versions held it watch for it more closely.
-			for (const st of this.stations()) {
-				const d = this.deckOf(st);
-				if (!d || d.formerOff?.includes(trackId) || !formerNow(d, this.now()).has(trackId))
-					continue;
-				d.formerOff = [...(d.formerOff ?? []), trackId];
-				this.saveDeck(st.id, d);
-			}
-			({ skipped, skipError } = await this.skipIfPlaying(trackId, playing));
-		}
-		if (value === 1) {
-			// "Nie wieder auf diesem Sender" ends with a thumb up, on every station.
-			this.db.run(`DELETE FROM bans WHERE track_id = ?`, trackId);
-			const rows = this.db.all<{ status: string }>(
-				`SELECT status FROM discoveries WHERE id = ?`,
-				trackId,
-			);
-			if (rows.some((r) => r.status !== "kept")) {
-				this.db.run(
-					`UPDATE discoveries SET status = 'kept', updated_at = ? WHERE id = ?`,
-					this.now(),
-					trackId,
-				);
-				this.keepDiscovery(trackId);
-			}
-		}
+		this.applyThumb(trackId, value);
+		if (value === -1) ({ skipped, skipError } = await this.skipIfPlaying(trackId, playing));
 		this.log(
 			"info",
 			"thumb",
@@ -5907,6 +5934,464 @@ export class HubCore {
 		);
 		await this.scheduleSoon(2000);
 		return skipError ? { skipped, skipError } : { skipped };
+	}
+
+	/**
+	 * What a thumb changes in stored data, all at once, and what exactly it
+	 * changed. Down: the song's discoveries are rejected, decks planning it are
+	 * planned anew, decks whose older versions held it watch for it (the skip,
+	 * if it plays, comes after, see `thumb`). Up: every station ban of it goes,
+	 * its discoveries are kept (and it is put into the Spotify discoveries
+	 * playlist). Every rating write counts in the rating clock, and makes any
+	 * earlier rating of the song from the Verlauf one that can no longer be
+	 * taken back.
+	 */
+	private applyThumb(trackId: TrackId, value: -1 | 0 | 1): ThumbEffects {
+		return this.ratingTransaction(() => {
+			const at = this.now();
+			const before = this.liveRow(trackId);
+			this.updateLive(trackId, (r) => ({ ...r, thumb: value }));
+			const eff: ThumbEffects = {
+				trackId,
+				value,
+				prev: (before?.thumb ?? 0) as -1 | 0 | 1,
+				at,
+				created: before === null,
+				rowAfter: this.rowRest(this.liveRow(trackId)),
+				discoveries: [],
+				bans: [],
+				formerOff: [],
+				dirtied: [],
+				keepJob: false,
+			};
+			const discoveries = () =>
+				this.db.all<{ station_id: number; status: string; updated_at: number }>(
+					`SELECT station_id, status, updated_at FROM discoveries WHERE id = ?`,
+					trackId,
+				);
+			if (value === -1) {
+				const rows = discoveries();
+				this.db.run(
+					`UPDATE discoveries SET status = 'rejected', updated_at = ? WHERE id = ?`,
+					at,
+					trackId,
+				);
+				eff.discoveries = rows.map((r) => ({
+					station: r.station_id,
+					before: { status: r.status, updated_at: r.updated_at },
+					after: { status: "rejected", updated_at: at },
+					row: this.discoveryRow(r.station_id, trackId),
+				}));
+				// Stations planning to play it leave it out next time.
+				eff.dirtied = this.dirtyDecksHolding(trackId, null);
+				// Stations whose older versions held it watch for it more closely.
+				for (const st of this.stations()) {
+					const d = this.deckOf(st);
+					if (!d || d.formerOff?.includes(trackId) || !formerNow(d, at).has(trackId)) continue;
+					d.formerOff = [...(d.formerOff ?? []), trackId];
+					this.saveDeck(st.id, d);
+					eff.formerOff.push({ station: st.id, writtenAt: d.writtenAt, plan: planKey(d) });
+				}
+			}
+			if (value === 1) {
+				// "Nie wieder auf diesem Sender" ends with a thumb up, on every station.
+				eff.bans = this.db
+					.all<{ station_id: number; at: number }>(
+						`SELECT station_id, at FROM bans WHERE track_id = ?`,
+						trackId,
+					)
+					.map((b) => ({ station: b.station_id, at: b.at }));
+				this.db.run(`DELETE FROM bans WHERE track_id = ?`, trackId);
+				const rows = discoveries();
+				if (rows.some((r) => r.status !== "kept")) {
+					this.db.run(
+						`UPDATE discoveries SET status = 'kept', updated_at = ? WHERE id = ?`,
+						at,
+						trackId,
+					);
+					eff.discoveries = rows.map((r) => ({
+						station: r.station_id,
+						before: { status: r.status, updated_at: r.updated_at },
+						after: { status: "kept", updated_at: at },
+						row: this.discoveryRow(r.station_id, trackId),
+					}));
+					eff.keepJob = !this.jobExists(`keep:${trackId}`);
+					this.keepDiscovery(trackId);
+					if (eff.keepJob) {
+						const job = this.db.first<{ created_at: number; updated_at: number }>(
+							`SELECT created_at, updated_at FROM jobs WHERE key = ?`,
+							`keep:${trackId}`,
+						);
+						if (job) eff.keepJobAt = { created: job.created_at, updated: job.updated_at };
+					}
+				}
+			}
+			this.ratingWritten(trackId);
+			return eff;
+		});
+	}
+
+	/** A discovery row as stored, whole. */
+	private discoveryRow(stationId: number, id: TrackId): string {
+		return JSON.stringify(
+			this.db.first(`SELECT * FROM discoveries WHERE station_id = ? AND id = ?`, stationId, id),
+		);
+	}
+
+	/** A memory row as stored, the rating aside: to see whether anything else changed since. */
+	private rowRest(r: MemoryRow | null): string {
+		if (!r) return "";
+		const { thumb: _thumb, ...rest } = r;
+		return JSON.stringify([
+			rest.last_played_at,
+			rest.plays,
+			rest.early_skips,
+			rest.last_skipped_at,
+			rest.consumed_at ?? null,
+			rest.verdict ?? null,
+			rest.verdict_at ?? null,
+		]);
+	}
+
+	// =======================================================================
+	// Ratings from the Verlauf: receipts and taking back
+	// =======================================================================
+
+	/**
+	 * A rating change and its bookkeeping: all of it stored, or — on any
+	 * failure — none of it, and nothing read into memory during it survives:
+	 * memory rows and stations are read again, pools counted again.
+	 */
+	private ratingTransaction<R>(fn: () => R): R {
+		try {
+			return this.db.transaction(fn);
+		} catch (err) {
+			this.liveLookups.clear();
+			this.cache.stations = null;
+			this.poolVersion++;
+			throw err;
+		}
+	}
+
+	private ratingClock(): RatingClock {
+		return this.kvGet<RatingClock>("rating_clock") ?? { seq: 0, floor: 0, touched: {} };
+	}
+
+	/** The song's latest rating write number (an upper bound once it fell out of the clock). */
+	private ratedSeq(id: TrackId, clock = this.ratingClock()): number {
+		return clock.touched[id] ?? clock.floor;
+	}
+
+	/** A rating of the song was written (by any path): count it, and end earlier receipts' undo. */
+	private ratingWritten(id: TrackId): number {
+		const c = this.ratingClock();
+		c.seq += 1;
+		c.touched[id] = c.seq;
+		const entries = Object.entries(c.touched);
+		if (entries.length > RATING_TOUCHED_MAX) {
+			entries.sort((a, b) => a[1] - b[1]);
+			for (const [k, v] of entries.slice(0, entries.length - RATING_TOUCHED_MAX)) {
+				c.floor = Math.max(c.floor, v);
+				delete c.touched[k];
+			}
+		}
+		this.kvSet("rating_clock", c);
+		const receipts = this.ratingReceipts();
+		let changed = false;
+		for (const r of receipts)
+			if (r.trackId === id && !r.superseded) {
+				r.superseded = true;
+				changed = true;
+			}
+		if (changed) this.kvSet("rating_receipts", receipts);
+		return c.seq;
+	}
+
+	private ratingReceipts(): RatingReceipt[] {
+		return this.kvGet<RatingReceipt[]>("rating_receipts") ?? [];
+	}
+
+	private saveReceipt(rc: RatingReceipt): void {
+		const rest = this.ratingReceipts().filter((r) => r.id !== rc.id);
+		this.kvSet("rating_receipts", [rc, ...rest].slice(0, RATING_RECEIPTS_MAX));
+	}
+
+	/** Rated since by any path — or its exact number no longer known (the clock forgot the song). */
+	private outdated(rc: RatingReceipt): boolean {
+		return rc.superseded || this.ratedSeq(rc.trackId) !== rc.seq;
+	}
+
+	private receiptView(rc: RatingReceipt): HistoryRatingReceipt {
+		const { effects: _effects, keptOut: _keptOut, ...rest } = rc;
+		const view = { ...rest, superseded: rc.undo ? rc.superseded : this.outdated(rc) };
+		const lasting: string[] = [];
+		if (rc.skip === "skipped")
+			lasting.push(
+				"Der Song wurde dabei übersprungen. Das bleibt so, auch wenn du die Bewertung zurücknimmst.",
+			);
+		if (rc.skip === "pending")
+			lasting.push(
+				"Ob der laufende Song dabei übersprungen wurde, ist unbekannt. Es wird nicht noch einmal versucht.",
+			);
+		return { ...view, lasting };
+	}
+
+	/**
+	 * A rating from the Verlauf. `actionId` is the page's own id for this
+	 * decision: sent again (its answer got lost), it is answered from the
+	 * receipt and nothing is stored or skipped twice. `basis` is the song's
+	 * rating write number the page knows: rated again since (another tab,
+	 * Siri, the sheet), nothing is stored and the rating now is answered.
+	 * "Nie wieder" skips the song when it plays right now, as in the sheet; the
+	 * skip comes after the rating is stored, and its result is kept apart.
+	 */
+	async rateFromHistory(input: {
+		actionId?: unknown;
+		trackId?: unknown;
+		value?: unknown;
+		basis?: unknown;
+	}): Promise<HistoryRateAnswer> {
+		const { actionId, trackId, value, basis } = input;
+		if (typeof actionId !== "string" || !/^[A-Za-z0-9_-]{8,64}$/.test(actionId))
+			throw new HubError("bad_rating", "Ungültige Bewertung: Kennung fehlt.");
+		if (typeof trackId !== "string" || !/^[A-Za-z0-9]{22}$/.test(trackId))
+			throw new HubError("bad_track", "Ungültige Song-ID");
+		if (value !== -1 && value !== 0 && value !== 1)
+			throw new HubError("bad_rating", "Ungültige Bewertung.");
+		if (typeof basis !== "number" || !Number.isInteger(basis) || basis < 0)
+			throw new HubError("bad_rating", "Ungültige Bewertung: Stand fehlt.");
+		const known = this.ratingReceipts().find((r) => r.id === actionId);
+		if (known) {
+			if (known.trackId !== trackId || known.value !== value)
+				throw new HubError(
+					"rating_reused",
+					"Diese Bewertung wurde schon für etwas anderes verwendet. Bitte die Seite neu laden.",
+					409,
+				);
+			return { kind: "done", receipt: this.receiptView(known) };
+		}
+		const clock = this.ratingClock();
+		const seq = this.ratedSeq(trackId, clock);
+		// Only on exactly the song's rating as the page read it: rated since, or
+		// a number the song never had (another account's page, a reset, a
+		// made-up one), nothing is stored.
+		if (seq !== basis)
+			return {
+				kind: "changed",
+				current: { value: (this.liveRow(trackId)?.thumb ?? 0) as -1 | 0 | 1, seq },
+			};
+		const rc = this.ratingTransaction((): RatingReceipt => {
+			const effects = this.applyThumb(trackId, value);
+			const receipt: RatingReceipt = {
+				id: actionId,
+				trackId,
+				value,
+				prev: effects.prev,
+				at: effects.at,
+				seq: this.ratedSeq(trackId),
+				skip: value === -1 ? "pending" : "none",
+				skipError: null,
+				superseded: false,
+				undo: null,
+				effects,
+			};
+			this.saveReceipt(receipt);
+			return receipt;
+		});
+		if (value === -1) {
+			const r = await this.skipForHistory(trackId);
+			rc.skip = r.skip;
+			rc.skipError = r.error;
+			if (r.stage) rc.skipStage = r.stage;
+			// Read again: the receipts may have changed while the player answered.
+			// Only one still kept gets the skip's outcome, in place; one pushed out
+			// meanwhile is not brought back (with an authority it no longer has).
+			const receipts = this.ratingReceipts();
+			const kept = receipts.find((x) => x.id === actionId);
+			if (kept) {
+				kept.skip = rc.skip;
+				kept.skipError = rc.skipError;
+				if (rc.skipStage) kept.skipStage = rc.skipStage;
+				this.kvSet("rating_receipts", receipts);
+			}
+		}
+		this.log(
+			"info",
+			"thumb",
+			`${value === 1 ? "Favorit" : value === -1 ? "Nie wieder" : "Bewertung entfernt"} (Verlauf): ${this.describe(trackId)}`,
+		);
+		await this.scheduleSoon(2000);
+		const done = this.ratingReceipts().find((x) => x.id === actionId) ?? rc;
+		return { kind: "done", receipt: this.receiptView(done) };
+	}
+
+	/**
+	 * The receipt of a rating from the Verlauf (after a lost answer). Receipts
+	 * are kept for the last ones only, so "none" alone proves nothing: it is
+	 * "no" (not stored) only when the song's rating number shows no write since
+	 * the `basis` the page sent with it; otherwise "unknown".
+	 */
+	historyRatingReceipt(actionId: string, trackId?: string, basis?: number): HistoryRatingLookup {
+		const clock = this.ratingClock();
+		const named = typeof trackId === "string" && /^[A-Za-z0-9]{22}$/.test(trackId);
+		// What holds now for the song (a receipt only proves its own action).
+		const current = named
+			? {
+					current: {
+						value: (this.liveRow(trackId)?.thumb ?? 0) as -1 | 0 | 1,
+						seq: this.ratedSeq(trackId, clock),
+					},
+				}
+			: {};
+		const rc = this.ratingReceipts().find((r) => r.id === actionId);
+		if (rc) return { receipt: this.receiptView(rc), stored: "yes", ...current };
+		// A rating stored on `basis` would have moved the song's number past it;
+		// the number still at exactly `basis` proves nothing was stored. Any
+		// other basis (passed, or never the song's) proves nothing.
+		const proof = named && typeof basis === "number" && this.ratedSeq(trackId, clock) === basis;
+		return { receipt: null, stored: proof ? "no" : "unknown", ...current };
+	}
+
+	/**
+	 * Takes back a rating from the Verlauf: exactly what it changed and what
+	 * has not changed again since. The rating before comes back (a memory row
+	 * it made, still untouched, goes again); discoveries it rewrote get their
+	 * state before while they still hold its state; station bans it lifted
+	 * come back unless a newer one stands; decks whose watch list it extended
+	 * lose that entry while they are still the same version; a song not yet
+	 * handed to the Spotify discoveries playlist is not handed over. Stations
+	 * it asked to plan anew are asked again (with the rating back) — a request
+	 * to plan anew is never withdrawn, it may be someone else's too. A skip
+	 * that happened stays, and so does a song already in the Spotify playlist.
+	 * Rated again since (here, another tab, Siri), nothing changes: a conflict.
+	 * Asked again, the same answer.
+	 */
+	async undoHistoryRating(actionId: string): Promise<{ receipt: HistoryRatingReceipt | null }> {
+		const rc = this.ratingReceipts().find((r) => r.id === actionId);
+		if (!rc) return { receipt: null };
+		if (rc.undo) return { receipt: this.receiptView(rc) };
+		const id = rc.trackId;
+		const eff = rc.effects;
+		this.ratingTransaction(() => {
+			const notes: string[] = [];
+			const at = this.now();
+			if (this.outdated(rc)) {
+				const rated = rc.superseded;
+				rc.superseded = true;
+				rc.undo = {
+					at,
+					outcome: "conflict",
+					notes: [
+						rated
+							? "Der Song wurde inzwischen anders bewertet (hier, in einem anderen Tab oder per Kurzbefehl). Es wurde nichts zurückgenommen."
+							: "Ob der Song inzwischen anders bewertet wurde, lässt sich nicht mehr genau sagen (seitdem wurden sehr viele Songs bewertet). Es wurde nichts zurückgenommen.",
+					],
+					value: (this.liveRow(id)?.thumb ?? 0) as -1 | 0 | 1,
+					seq: this.ratedSeq(id),
+				};
+				this.saveReceipt(rc);
+				return;
+			}
+			// The rating.
+			const row = this.liveRow(id);
+			if (eff.created && row && this.rowRest(row) === eff.rowAfter) {
+				this.db.run(`DELETE FROM memory WHERE id = ?`, id);
+				this.liveLookups.set(id, null);
+			} else this.updateLive(id, (r) => ({ ...r, thumb: eff.prev }));
+			// Discoveries: back where they were, unless they moved on since.
+			for (const d of eff.discoveries) {
+				const cur = this.discoveryRow(d.station, id);
+				if (cur === "null") continue;
+				if (cur === d.row)
+					this.db.run(
+						`UPDATE discoveries SET status = ?, updated_at = ? WHERE station_id = ? AND id = ?`,
+						d.before.status,
+						d.before.updated_at,
+						d.station,
+						id,
+					);
+				else
+					notes.push(
+						`Die Neuentdeckung auf der Kassette „${this.stationRow(d.station)?.name ?? d.station}“ hat sich inzwischen weiterentwickelt und bleibt so.`,
+					);
+			}
+			// Station bans it lifted.
+			for (const b of eff.bans) {
+				if (!this.stationRow(b.station)) continue;
+				const cur = this.db.first(
+					`SELECT 1 FROM bans WHERE station_id = ? AND track_id = ?`,
+					b.station,
+					id,
+				);
+				if (!cur)
+					this.db.run(
+						`INSERT INTO bans (station_id, track_id, at) VALUES (?, ?, ?)`,
+						b.station,
+						id,
+						b.at,
+					);
+			}
+			// Watch lists of former deck versions.
+			for (const f of eff.formerOff) {
+				const st = this.stationRow(f.station);
+				const d = st ? this.deckOf(st) : null;
+				if (!st || !d) continue;
+				if (planKey(d) === f.plan && d.formerOff?.includes(id)) {
+					d.formerOff = d.formerOff.filter((x) => x !== id);
+					this.saveDeck(st.id, d);
+				} else if (planKey(d) !== f.plan)
+					notes.push(
+						`Die Kassette „${st.name}“ hat ihre Reihenfolge inzwischen neu geplant; sie plant mit der zurückgenommenen Bewertung erneut.`,
+					);
+			}
+			// Plans: asked again, never withdrawn.
+			for (const sid of eff.dirtied)
+				if (this.stationRow(sid))
+					this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, sid);
+			for (const f of eff.formerOff)
+				if (this.stationRow(f.station))
+					this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, f.station);
+			// The Spotify discoveries playlist: a hand-over never tried is called
+			// off; one tried already may have reached Spotify (an answer can get
+			// lost), one done has — that stays, and is said.
+			if (eff.keepJob) {
+				const job = this.db.first<{ attempts: number; created_at: number; updated_at: number }>(
+					`SELECT attempts, created_at, updated_at FROM jobs WHERE key = ?`,
+					`keep:${id}`,
+				);
+				const own = !!job && job.created_at === eff.keepJobAt?.created;
+				const untouched = own && job.attempts === 0 && job.updated_at === eff.keepJobAt?.updated;
+				if (own) this.db.run(`DELETE FROM jobs WHERE key = ?`, `keep:${id}`);
+				if (!untouched) {
+					rc.keptOut = true;
+					notes.push(
+						own
+							? "Der Song sollte schon in deine Spotify-Playlist mit den Neuentdeckungen; ob er dort angekommen ist, ist unklar. Er wird nicht noch einmal hinzugefügt, aber dort auch nicht entfernt."
+							: job
+								? "Der Song steht schon in deiner Spotify-Playlist mit den Neuentdeckungen und bleibt dort; die spätere Übernahme, die noch wartet, gehört nicht zu dieser Bewertung und bleibt."
+								: "Der Song steht schon in deiner Spotify-Playlist mit den Neuentdeckungen und bleibt dort; true-shuffle entfernt dort nichts.",
+					);
+				}
+			}
+			// Pools are counted anew with the discoveries as they are now.
+			if (eff.discoveries.length > 0) this.poolVersion++;
+			const seq = this.ratingWritten(id);
+			rc.superseded = true;
+			rc.undo = {
+				at,
+				outcome: notes.length > 0 ? "partial" : "undone",
+				notes,
+				value: eff.prev,
+				seq,
+			};
+			this.saveReceipt(rc);
+		});
+		const done = this.ratingReceipts().find((r) => r.id === actionId) ?? rc;
+		if (done.undo && done.undo.outcome !== "conflict") {
+			this.log("info", "thumb", `Bewertung zurückgenommen (Verlauf): ${this.describe(id)}`);
+			await this.scheduleSoon(2000);
+		}
+		return { receipt: this.receiptView(done) };
 	}
 
 	/**
@@ -5938,6 +6423,42 @@ export class HubCore {
 		// is left to the station guard to try again.
 		if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
 		return r.ok ? { skipped: true } : { skipped: false, skipError: r.error?.message };
+	}
+
+	/**
+	 * The skip of "Nie wieder" from the Verlauf: the same rule as `skipIfPlaying`
+	 * (only the song playing now, a fresh look when the stored picture says so,
+	 * never on a Home Assistant player, one attempt), but every outcome is said:
+	 * a fresh look that fails is a failed skip at stage "read" with its reason —
+	 * nothing skipped, nothing tried again — instead of passing for "not
+	 * playing"; a refused skip is stage "next". The sheet, Siri and the remote
+	 * keep `skipIfPlaying` as it is.
+	 */
+	private async skipForHistory(trackId: TrackId): Promise<{
+		skip: "none" | "skipped" | "failed";
+		error: string | null;
+		stage?: "read" | "next";
+	}> {
+		if (this.savedSession()?.controller === "native") return { skip: "none", error: null };
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		if (!snap?.obs?.isPlaying || snap.obs.trackId !== trackId) return { skip: "none", error: null };
+		let now: boolean;
+		try {
+			const st = await this.client(new RequestBudget(3)).player();
+			now = !!st?.is_playing && st.item?.id === trackId;
+		} catch (err) {
+			return {
+				skip: "failed",
+				stage: "read",
+				error: err instanceof Error && err.message ? err.message : "Spotify war nicht erreichbar.",
+			};
+		}
+		if (!now) return { skip: "none", error: null };
+		const r = await this.playerAction("next");
+		if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
+		return r.ok
+			? { skip: "skipped", error: null }
+			: { skip: "failed", stage: "next", error: r.error?.message ?? "Spotify hat abgelehnt." };
 	}
 
 	/**
@@ -8007,6 +8528,7 @@ export class HubCore {
 		this.preloadMemory(new Set(rows.map((r) => r.track_id)));
 		const pc = this.playlistCountOf();
 		const counted = this.kvGet("playlist_counts") !== null;
+		const clock = this.ratingClock();
 		return rows
 			.map((r) => {
 				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
@@ -8026,6 +8548,7 @@ export class HubCore {
 						kind: LANES.has(r.lane as SlotKind) ? (r.lane as SlotKind) : null,
 						...(counted ? { playlists: pc(r.track_id) } : {}),
 					},
+					rated: this.ratedSeq(r.track_id, clock),
 				};
 				return entry;
 			})
@@ -8312,6 +8835,11 @@ interface ImportState {
 }
 
 /** Songs of earlier versions a player may still hold, as of `now`. */
+/** A deck's plan: its version, its songs in order, its former versions' songs (not what was heard of it). */
+function planKey(deck: Deck): string {
+	return JSON.stringify([deck.writtenAt, deck.items.map((i) => i.id), deck.former ?? []]);
+}
+
 function formerNow(deck: Deck, now: number): Set<TrackId> {
 	return new Set((deck.former ?? []).filter(([, until]) => until > now).map(([id]) => id));
 }

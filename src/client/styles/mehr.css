@@ -270,6 +270,43 @@ label.row[aria-disabled="true"] {
 	display: none;
 }
 
+/* Ratings right in the Verlauf (Mehr → App): a line of its own under the
+   song, labelled keys of about 44 px, never laid over the row. */
+.hist-rate {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.hist-rate__key {
+	min-height: 44px;
+	min-width: 44px;
+	padding: 0 14px;
+}
+
+.hist-rate__key[aria-disabled="true"] {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.hist-rate__state {
+	flex: 1 1 100%;
+	margin: 0;
+	font-size: 0.875rem;
+	color: var(--ink-2);
+	overflow-wrap: anywhere;
+}
+
+.hist-rate__state--error {
+	color: var(--err);
+}
+
 /* ----------------------------------------------------------------- steps */
 
 .steps {

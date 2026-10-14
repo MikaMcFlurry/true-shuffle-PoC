@@ -179,6 +179,23 @@ const server = createServer(async (req, res) => {
 			case "/__control/skip":
 				fake.skip("mika");
 				break;
+			case "/__control/finish": {
+				// The song playing ends now: exactly its rest is heard (played_at = now).
+				const id = fake.current("mika");
+				const track = id ? fake.tracks.get(id) : undefined;
+				if (track) fake.advance(track.durationMs - user.player.progressMs, "mika");
+				break;
+			}
+			case "/__control/play-song": {
+				// ?id=…: the listener plays this one song in Spotify, outside any station;
+				// &context=…: from that album or playlist (none: no context).
+				const id = u.searchParams.get("id");
+				if (id && fake.tracks.has(id)) {
+					fake.playSong("mika", id);
+					user.player.contextUri = u.searchParams.get("context");
+				}
+				break;
+			}
 			case "/__control/pause":
 				fake.pause("mika");
 				break;
