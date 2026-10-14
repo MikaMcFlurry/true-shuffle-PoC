@@ -1,0 +1,15 @@
+{
+  "payloadCommit": "47e32be6a72ba03d582e5a944520e2f1ee0c5ea2",
+  "sourceManifestSha256": "e3446e730abfc6a48367b3ddcbd234b1bff164a9229a76615bc81bc1586b971b",
+  "files": {
+    "fixtures/b201-source-manifest.json": "dd38d69a0dfb69d82c1ab49db76c63dce248d3bf046e8f2d58f8dadb916b37aa",
+    "fixtures/old-control-expectations.json": "7d77e176b98f49a4d1c4eb240d0cd9d1360d42c2955b7c10e7726e58f7cd829d",
+    "fixtures/source-manifest.json": "e3446e730abfc6a48367b3ddcbd234b1bff164a9229a76615bc81bc1586b971b",
+    "templates/independent-attacks.test.ts": "fead72a98a87732f1acf2f16260e9539b6e1642aaf5c1c9a64c9cb5481269576",
+    "templates/retargeted/rollback-boundaries.control-8d.test.ts": "2b72f28b04091b8b4cc540fefb5efc2ef1df94022308075da8d3f17dd28b7c28",
+    "templates/retargeted/rollback-boundaries.fallback.test.ts": "26896e7006c9507f76ee232fe852a8fbbbe2d32c8c72e11ce2d5a42beb370e19",
+    "templates/workerd/fallback-ui.test.ts": "4cae57601c265d9f9e5811fce6cb077f7fbc79c226417a4d60c88ba1949ef233",
+    "templates/workerd/wrangler.b201.jsonc": "3993f4975497cb3fdba505de99690d5c38093e48bd85f400db1a3f24d85d26f1",
+    "templates/workerd/wrangler.fallback.jsonc": "05323ee3ad59b9f1d99f031b859c3384ca6268a468ddb96006a7a8f4ffd77f45"
+  }
+}

@@ -1,6 +1,8 @@
 name: Cloudflare application checks
 
 on:
+  push:
+    branches: [codex/verify-history-fallback-linux-check-20261014]
   pull_request:
     branches: [codex/cloudflare-restart-plan, codex/implement-cloudflare-restart]
   workflow_dispatch:
@@ -10,6 +12,7 @@ permissions:
 
 jobs:
   verify:
+    if: github.ref != 'refs/heads/codex/verify-history-fallback-linux-check-20261014'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -35,3 +38,83 @@ jobs:
           name: browser-failure-evidence
           path: e2e/.artifacts/results
           retention-days: 7
+
+  verify-frozen-fallback:
+    if: github.ref == 'refs/heads/codex/verify-history-fallback-linux-check-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      WRANGLER_SEND_METRICS: "false"
+      GOMAXPROCS: "2"
+    defaults:
+      run:
+        working-directory: payload
+    steps:
+      - name: Checkout CI control commit
+        uses: actions/checkout@v4
+        with:
+          path: runner
+      - name: Checkout exact frozen product payload
+        uses: actions/checkout@v4
+        with:
+          ref: 47e32be6a72ba03d582e5a944520e2f1ee0c5ea2
+          path: payload
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: payload/package-lock.json
+      - name: Install locked Linux dependencies
+        run: npm ci
+      - name: Verify frozen identity and prepare isolated synthetic runner
+        run: |
+          echo "FB_ROOT=$RUNNER_TEMP/true-shuffle-fallback-check" >> "$GITHUB_ENV"
+          python3 ../runner/ci/fallback/prepare.py "$PWD" "$RUNNER_TEMP/true-shuffle-fallback-check"
+      - name: Build current client
+        run: npm run build
+      - name: Typecheck both clients and Worker
+        run: npm run typecheck
+      - name: Lint frozen source
+        run: npm run lint
+      - name: Unit and Worker regressions
+        run: npm test
+      - name: Install Chromium for synthetic tests
+        run: npx playwright install --with-deps chromium
+      - name: Current UI browser regression suite
+        run: npm run test:e2e
+      - name: Package Linux current surface without upload
+        run: |
+          npx wrangler deploy --dry-run --outdir "$FB_ROOT/rebuilt-artifacts/b201/worker"
+          python3 ../runner/ci/fallback/run.py "$PWD" "$FB_ROOT" capture b201
+      - name: Build fallback client
+        run: npm run build:fallback
+      - name: Package Linux fallback without upload
+        run: |
+          npx wrangler deploy --dry-run --outdir "$FB_ROOT/rebuilt-artifacts/fallback/worker"
+          python3 ../runner/ci/fallback/run.py "$PWD" "$FB_ROOT" capture fallback
+      - name: Five unchanged fallback boundary probes
+        run: python3 ../runner/ci/fallback/run.py "$PWD" "$FB_ROOT" fallback
+      - name: Preserve original old-backend negative control
+        run: python3 ../runner/ci/fallback/run.py "$PWD" "$FB_ROOT" negative
+      - name: Three independent adversarial probes
+        run: python3 ../runner/ci/fallback/run.py "$PWD" "$FB_ROOT" attacks
+      - name: Linux-built packages in Workerd and Chromium
+        run: python3 ../runner/ci/fallback/run.py "$PWD" "$FB_ROOT" browser-linux
+      - name: Final payload and Linux artifact hashes
+        if: always()
+        run: python3 ../runner/ci/fallback/run.py "$PWD" "$FB_ROOT" integrity
+      - name: Preserve positive and negative raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-fallback-linux-${{ github.sha }}
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/true-shuffle-fallback-check/logs
+            ${{ runner.temp }}/true-shuffle-fallback-check/retarget-diffs
+            ${{ runner.temp }}/true-shuffle-fallback-check/setup.json
+            ${{ runner.temp }}/true-shuffle-fallback-check/FINAL_INTEGRITY.json
+            ${{ runner.temp }}/true-shuffle-fallback-check/tests/workerd/shots-*
+            ${{ runner.temp }}/true-shuffle-fallback-check/rebuilt-artifacts
+            payload/e2e/.artifacts/results

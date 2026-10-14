@@ -1,0 +1,8 @@
+{
+  "passed": 3,
+  "failed": 2,
+  "failedNames": [
+    "ROLLBACK REQUIREMENT: old 8d code must preserve the disabled import influence (expected to expose unsupported semantics)",
+    "ROLLBACK-THEN-FORWARD REQUIREMENT: a later 8d thumb must not be overwritten by an old receipt after returning to current code"
+  ]
+}

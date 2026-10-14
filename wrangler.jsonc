@@ -1,51 +1,5 @@
 {
-	// true-shuffle — one Worker, two Durable Object classes, static client assets.
-	//
-	// Deployed by Workers Builds on push to the production branch
-	// (build command: `npm run build`, deploy command: `npx wrangler deploy`).
-	// See docs/SETUP.md for the one-time dashboard steps and secrets.
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "true-shuffle",
-	"main": "src/worker/index.ts",
-	"compatibility_date": "2026-09-20",
-	"compatibility_flags": ["nodejs_compat"],
-
-	// The Preact client is built into dist/client by `npm run build`. Static
-	// requests never invoke the Worker (free and unmetered); only /api, /auth
-	// and /remote (commands from Siri Shortcuts or a widget) do.
-	"assets": {
-		"directory": "dist/client",
-		"binding": "ASSETS",
-		"not_found_handling": "single-page-application",
-		"run_worker_first": ["/api/*", "/auth/*", "/remote/*"]
-	},
-
-	// UserHub: one instance per Spotify account, holding that listener's whole
-	// state in its own SQLite database. Every operation for a listener runs in
-	// that one single-threaded object, so the background sync and a tap in the
-	// app can never race each other.
-	// Registry: a single instance that remembers which UserHubs exist, so the
-	// cron safety net can re-arm their alarms.
-	"durable_objects": {
-		"bindings": [
-			{ "name": "USER_HUB", "class_name": "UserHub" },
-			{ "name": "REGISTRY", "class_name": "Registry" }
-		]
-	},
-	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["UserHub", "Registry"] }],
-
-	// Safety net only: each UserHub schedules its own sync alarm. This cron
-	// re-arms any hub whose alarm chain was lost.
-	"triggers": { "crons": ["*/20 * * * *"] },
-
-	// Workers AI — free fallback for AI discovery when no Anthropic key is set.
-	"ai": { "binding": "AI" },
-
-	// Configuration lives in the dashboard (Settings → Variables and Secrets),
-	// never in this file: SPOTIFY_CLIENT_ID, APP_SECRET, and optionally
-	// ANTHROPIC_API_KEY, LASTFM_API_KEY, ALLOWED_SPOTIFY_IDS, ANTHROPIC_MODEL.
-	// keep_vars stops a deploy from wiping variables set there.
-	"keep_vars": true,
-
-	"observability": { "enabled": true }
+  "name": "true-shuffle-ci-no-deploy",
+  "main": "ci/NO_DEPLOYMENT_ENTRYPOINT_EXISTS.js",
+  "compatibility_date": "2026-09-20"
 }

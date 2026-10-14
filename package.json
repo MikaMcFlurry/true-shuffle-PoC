@@ -1,50 +1,51 @@
 {
-	"name": "true-shuffle",
-	"version": "1.0.0",
-	"private": true,
-	"description": "true-shuffle — Spotify stations with a memory: no quick repeats, every song eventually, favourites sometimes, discoveries along the way.",
-	"type": "module",
-	"engines": {
-		"node": ">=22"
-	},
-	"scripts": {
-		"dev": "npm run build:client && wrangler dev",
-		"build": "npm run build:client",
-		"build:client": "vite build",
-		"build:fallback": "vite build -c vite.fallback.config.ts",
-		"deploy": "npm run build && wrangler deploy",
-		"typecheck": "tsc -p tsconfig.worker.json && tsc -p tsconfig.client.json && tsc -p tsconfig.fallback-client.json && tsc -p tsconfig.test.json",
-		"lint": "biome check .",
-		"format": "biome format --write .",
-		"test": "vitest run",
-		"test:watch": "vitest",
-		"test:e2e": "playwright test",
-		"check": "npm run typecheck && npm run lint && npm run test",
-		"types": "wrangler types --include-env=false",
-		"icons": "node scripts/render-icons.mjs"
-	},
-	"dependencies": {
-		"@anthropic-ai/sdk": "^0.128.0",
-		"@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
-		"@fontsource-variable/bricolage-grotesque": "^5.3.0",
-		"@fontsource-variable/hanken-grotesk": "^5.3.0",
-		"@fontsource-variable/lexend": "^5.3.0",
-		"@fontsource-variable/martian-mono": "^5.3.0",
-		"@fontsource-variable/overpass": "^5.3.0",
-		"@fontsource/permanent-marker": "^5.3.0",
-		"hono": "^4.13.9",
-		"lucide-preact": "^1.48.0",
-		"preact": "^10.29.8"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.5.14",
-		"@playwright/test": "^1.60.2",
-		"@preact/preset-vite": "^2.10.6",
-		"@types/node": "^22.10.0",
-		"fast-check": "^4.10.2",
-		"typescript": "^5.9.3",
-		"vite": "^8.3.1",
-		"vitest": "^5.0.2",
-		"wrangler": "^4.141.0"
-	}
+  "name": "true-shuffle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "true-shuffle — Spotify stations with a memory: no quick repeats, every song eventually, favourites sometimes, discoveries along the way.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run build:client && wrangler dev",
+    "build": "node ci/fallback/no-deploy.mjs",
+    "build:client": "vite build",
+    "build:fallback": "vite build -c vite.fallback.config.ts",
+    "deploy": "node ci/fallback/no-deploy.mjs",
+    "typecheck": "tsc -p tsconfig.worker.json && tsc -p tsconfig.client.json && tsc -p tsconfig.fallback-client.json && tsc -p tsconfig.test.json",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "types": "wrangler types --include-env=false",
+    "icons": "node scripts/render-icons.mjs",
+    "preinstall": "node ci/fallback/no-deploy.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/hanken-grotesk": "^5.3.0",
+    "@fontsource-variable/lexend": "^5.3.0",
+    "@fontsource-variable/martian-mono": "^5.3.0",
+    "@fontsource-variable/overpass": "^5.3.0",
+    "@fontsource/permanent-marker": "^5.3.0",
+    "hono": "^4.13.9",
+    "lucide-preact": "^1.48.0",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@playwright/test": "^1.60.2",
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^22.10.0",
+    "fast-check": "^4.10.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2",
+    "wrangler": "^4.141.0"
+  }
 }
