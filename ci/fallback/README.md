@@ -18,3 +18,8 @@ The original control is only accepted as3PASS/2FAIL at the original two named
 expectations; raw actual exit1 is retained in the new CI evidence. Assertions
 in copied synthetic probes are preserved; only platform paths and process
 group cleanup are adapted and their diffs recorded.
+
+The existing current-UI suite writes reference PNGs by design. It runs in an
+independent byte-verified execution copy. The pinned1005-file checkout stays
+unchanged; final integrity separately permits only generated reference PNG
+changes in the browser copy and reports their names. No assertion is weakened.

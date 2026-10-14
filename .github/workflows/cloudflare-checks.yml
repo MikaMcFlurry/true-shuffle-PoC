@@ -82,7 +82,9 @@ jobs:
       - name: Install Chromium for synthetic tests
         run: npx playwright install --with-deps chromium
       - name: Current UI browser regression suite
-        run: npm run test:e2e
+        run: |
+          cd "$FB_ROOT/browser-source"
+          npm run test:e2e
       - name: Package Linux current surface without upload
         run: |
           npx wrangler deploy --dry-run --outdir "$FB_ROOT/rebuilt-artifacts/b201/worker"
@@ -117,4 +119,5 @@ jobs:
             ${{ runner.temp }}/true-shuffle-fallback-check/FINAL_INTEGRITY.json
             ${{ runner.temp }}/true-shuffle-fallback-check/tests/workerd/shots-*
             ${{ runner.temp }}/true-shuffle-fallback-check/rebuilt-artifacts
-            payload/e2e/.artifacts/results
+            ${{ runner.temp }}/true-shuffle-fallback-check/browser-source/e2e/.artifacts/results
+            ${{ runner.temp }}/true-shuffle-fallback-check/browser-source/.impeccable/review

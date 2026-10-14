@@ -17,6 +17,12 @@ ROOT.mkdir(parents=True,exist_ok=False)
 for d in ['tests','logs','cache','retarget-diffs','runtime/tmp','frozen-artifacts','rebuilt-artifacts']:(ROOT/d).mkdir(parents=True,exist_ok=True)
 (ROOT/'source').symlink_to(PAYLOAD,target_is_directory=True)
 (ROOT/'node_modules').symlink_to(PAYLOAD/'node_modules',target_is_directory=True)
+# Existing screenshot tests intentionally overwrite tracked reference PNGs.
+# Run that suite in its own exact execution copy; keep the pinned checkout immutable.
+for e in source['files']:
+ dest=ROOT/'browser-source'/e['path'];dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(PAYLOAD/e['path'],dest)
+(ROOT/'browser-source/node_modules').symlink_to(PAYLOAD/'node_modules',target_is_directory=True)
+verify(ROOT/'browser-source',source['files'])
 def archive(ref,dest):
  dest.mkdir()
  data=subprocess.check_output(['git','-C',str(PAYLOAD),'archive',ref])

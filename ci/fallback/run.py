@@ -11,7 +11,13 @@ if mode=='capture':
 if mode=='integrity':
  manifest=json.loads((CONTROL/'fixtures/source-manifest.json').read_text())
  for e in manifest['files']:assert hashlib.sha256((PAYLOAD/e['path']).read_bytes()).hexdigest()==e['sha256'],e['path']
- facts={'platform':sys.platform,'payloadCommit':subprocess.check_output(['git','-C',str(PAYLOAD),'rev-parse','HEAD'],text=True).strip(),'sourceFilesVerified':1005,'artifacts':{}}
+ browser_changes=[]
+ for e in manifest['files']:
+  p=ROOT/'browser-source'/e['path']
+  if hashlib.sha256(p.read_bytes()).hexdigest()!=e['sha256']:
+   assert e['path'].startswith('.impeccable/review/') and e['path'].endswith('.png'),e['path']
+   browser_changes.append(e['path'])
+ facts={'platform':sys.platform,'payloadCommit':subprocess.check_output(['git','-C',str(PAYLOAD),'rev-parse','HEAD'],text=True).strip(),'sourceFilesVerified':1005,'browserGeneratedReferenceImages':browser_changes,'artifacts':{}}
  for profile in ['rebuilt-artifacts']:
   facts['artifacts'][profile]={p.relative_to(ROOT/profile).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/profile).rglob('*')) if p.is_file()}
  (ROOT/'FINAL_INTEGRITY.json').write_text(json.dumps(facts,indent=2)+'\n');print(json.dumps({'sourceFilesVerified':1005,'platform':sys.platform}));sys.exit(0)
@@ -28,7 +34,7 @@ with log.open('w') as f:
 report=json.loads((ROOT/'logs/last-tests.json').read_text());shutil.copyfile(ROOT/'logs/last-tests.json',ROOT/'logs'/f'{mode}.json')
 with (ROOT/'logs/runs.jsonl').open('a') as f:f.write(json.dumps({'mode':mode,'command':cmd,'startedAt':start,'finishedAt':now(),'exitCode':code,'platform':sys.platform,'passed':report['numPassedTests'],'failed':report['numFailedTests']})+'\n')
 if mode=='negative':
- original=json.loads((CONTROL/'fixtures/original-negative-results.json').read_text())
+ original=json.loads((CONTROL/'fixtures/old-control-expectations.json').read_text())
  failed=lambda x:sorted(a['fullName'] for t in x['testResults'] for a in t['assertionResults'] if a['status']=='failed')
  assert code!=0 and report['numPassedTests']==3 and report['numFailedTests']==2 and report['numTotalTests']==5, 'Negative control shape changed'
  assert failed(report)==original['failedNames'],'Negative control failed different expectations'
