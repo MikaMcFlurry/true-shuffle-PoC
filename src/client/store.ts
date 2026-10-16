@@ -64,6 +64,16 @@ class Store {
 	/** The song whose rating sheet is open. */
 	rating: TrackView | null = null;
 	/**
+	 * Reads of stored ratings in the order they were asked for: every snapshot
+	 * read and every Verlauf list takes the next number. Two reads can begin in
+	 * one millisecond, never under one number.
+	 */
+	private readsAsked = 0;
+	/** The newest read the open sheet has heard from (opened: every read asked so far). */
+	private ratingHeard = 0;
+	/** The number a Verlauf list was asked for under, by the `known` map it was given. */
+	private listAsked = new WeakMap<object, number>();
+	/**
 	 * Counts every opening and closing of the rating sheet, and every change of
 	 * account: a late answer acts only on the sheet it was given in.
 	 */
@@ -253,7 +263,28 @@ class Store {
 	rate(t: TrackView | null): void {
 		this.ratingGen++;
 		this.rating = t;
+		// What it was opened with stands until a read asked for after this says otherwise.
+		this.ratingHeard = this.readsAsked;
 		this.emit();
+	}
+
+	/**
+	 * A read asked for as number `asked` has the open sheet's song stored as
+	 * `thumb`: the sheet shows that beneath any thumb given here since, without
+	 * being opened again. A read asked for before the sheet opened, or before the
+	 * newest one it heard from, is older and tells it nothing.
+	 */
+	private retell(id: string, thumb: -1 | 0 | 1, asked: number): void {
+		const open = this.rating;
+		if (!open || open.id !== id || asked <= this.ratingHeard) return;
+		this.ratingHeard = asked;
+		if (open.thumb !== thumb) this.rating = { ...open, thumb };
+	}
+
+	/** A thumb given here gives way to a read that has it: the open sheet keeps showing it. */
+	private keepShown(id: string, own: { v: -1 | 0 | 1 }): void {
+		const open = this.rating;
+		if (open?.id === id && open.thumb !== own.v) this.rating = { ...open, thumb: own.v };
 	}
 
 	/** The rating given here last for a song (sheet, player keys, Verlauf), and when. */
@@ -275,30 +306,51 @@ class Store {
 	 * made elsewhere since (Siri, the display's key): its word wins again.
 	 */
 	settleThumbs(songs: { id: string }[], loadStartedAt: number): void {
+		const shown = this.shownOpen();
 		for (const s of songs) {
 			const own = this.thumbs.get(s.id);
-			if (own && own.at < loadStartedAt) this.thumbs.delete(s.id);
+			if (own && own.at < loadStartedAt) {
+				this.thumbs.delete(s.id);
+				this.keepShown(s.id, own);
+			}
 		}
+		if (this.shownOpen() !== shown) this.emit();
 	}
 
 	/** The thumbs given here as they stand now: what a list asked for now knows. */
 	thumbsNow(): ReadonlyMap<string, { v: -1 | 0 | 1; at: number }> {
-		return new Map(this.thumbs);
+		const known = new Map(this.thumbs);
+		this.listAsked.set(known, ++this.readsAsked);
+		return known;
 	}
 
 	/**
 	 * Like `settleThumbs`, by what the list was asked after rather than by the
 	 * clock (the Verlauf): a thumb still standing exactly as it stood when the
 	 * list was asked for is known to it, and gives way; one given since stays.
+	 * The open sheet's song in a list asked for (`thumbsNow`) after the sheet
+	 * opened, and after any read it heard from, shows what the list has stored.
 	 */
 	settleKnownThumbs(
-		songs: { id: string }[],
+		songs: { id: string; thumb: -1 | 0 | 1 }[],
 		known: ReadonlyMap<string, { v: -1 | 0 | 1; at: number }>,
 	): void {
+		const shown = this.shownOpen();
+		const asked = this.listAsked.get(known);
 		for (const s of songs) {
 			const own = this.thumbs.get(s.id);
-			if (own && known.get(s.id) === own) this.thumbs.delete(s.id);
+			if (own && known.get(s.id) === own) {
+				this.thumbs.delete(s.id);
+				this.keepShown(s.id, own);
+			}
+			if (asked !== undefined) this.retell(s.id, s.thumb, asked);
 		}
+		if (this.shownOpen() !== shown) this.emit();
+	}
+
+	/** What the open sheet shows as stored, and for which song (a new value when either changes). */
+	private shownOpen(): string | null {
+		return this.rating ? `${this.rating.id}:${this.thumbOf(this.rating)}` : null;
 	}
 
 	/** A command can request one serialized read after an older in-flight poll. */
@@ -321,6 +373,7 @@ class Store {
 			return this.followup;
 		}
 		const started = Date.now();
+		const asked = ++this.readsAsked;
 		const epoch = this.epoch;
 		this.inflightFresh = fresh;
 		this.inflight = api
@@ -359,6 +412,14 @@ class Store {
 						state.session.queue.map((entry) => entry.track),
 						started,
 					);
+				// The open sheet's song, as this accepted snapshot has it stored.
+				const open = this.rating;
+				const told = open
+					? [state.nowPlaying, ...(state.session?.queue.map((entry) => entry.track) ?? [])].find(
+							(t) => t?.id === open.id,
+						)
+					: undefined;
+				if (told) this.retell(told.id, told.thumb, asked);
 			})
 			.catch((err: unknown) => {
 				if (epoch !== this.epoch) return;
