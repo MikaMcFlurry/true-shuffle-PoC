@@ -5290,13 +5290,15 @@ export class HubCore {
 			this.usedSources(),
 		);
 		const facts = this.songFacts(session.stationId, upcoming);
+		// Every song's rating and its write number read together, once for the whole queue.
+		const clock = this.ratingClock();
 		const queue = upcoming.flatMap((it, n) => {
 			const track = tracks.get(it.id);
 			return track
 				? [
 						{
 							entryId: session.entryIds[session.currentIndex + n]!,
-							track: this.view(track),
+							track: this.view(track, clock),
 							facts: facts(it),
 						},
 					]
@@ -7950,7 +7952,8 @@ export class HubCore {
 		}
 		const elapsed = snap.obs.isPlaying ? this.now() - snap.at : 0;
 		return {
-			...this.view(t),
+			// The rating and its write number as one pair, from the same read.
+			...this.view(t, this.ratingClock()),
 			isPlaying: snap.obs.isPlaying,
 			progressMs: Math.min(t[5], snap.obs.progressMs + elapsed),
 			stationId,
@@ -7958,12 +7961,16 @@ export class HubCore {
 			deviceName: snap.device?.name ?? null,
 			orderBroken: stationId !== null && (snap.obs.shuffle || snap.obs.smartShuffle),
 			smartShuffle: stationId !== null && snap.obs.smartShuffle,
-			thumb: this.memory(t[0]).thumb,
 			observedAt: snap.at,
 		};
 	}
 
-	private view(t: PackedTrack): TrackView {
+	/**
+	 * A song as the page shows it. With the rating clock (read once by the
+	 * caller), its rating comes with the write number it stands at, read
+	 * together: the page orders what it hears by that number.
+	 */
+	private view(t: PackedTrack, clock?: RatingClock): TrackView {
 		return {
 			id: t[0],
 			name: t[1],
@@ -7972,6 +7979,7 @@ export class HubCore {
 			imageUrl: t[4],
 			durationMs: t[5],
 			thumb: (this.liveRow(t[0])?.thumb ?? 0) as -1 | 0 | 1,
+			...(clock ? { rated: this.ratedSeq(t[0], clock) } : {}),
 		};
 	}
 
@@ -8616,7 +8624,7 @@ export class HubCore {
 				if (!t) return null;
 				const m = this.memory(r.track_id);
 				const entry: HistoryEntry = {
-					...this.view(t),
+					...this.view(t, clock),
 					playedAt: r.played_at,
 					stationName: r.station_id !== null ? (names.get(r.station_id) ?? null) : null,
 					ignored: r.ignored === 1,

@@ -137,6 +137,9 @@ export function startListRead(): ListRead {
 export function takeListed(rows: HistoryEntry[], read: ListRead, settle: boolean): boolean {
 	if (read.gen !== generation) return false;
 	if (settle) store.settleKnownThumbs(rows, read.known);
+	// Every accepted page tells the whole app what it has stored, by write number;
+	// only the first page lets thumbs given here give way.
+	store.noteListedRatings(rows, read.known);
 	noteListed(rows, read.gen, read.known);
 	return true;
 }
@@ -167,9 +170,13 @@ export function noteListed(
 	emit();
 }
 
-/** The newest write number known for a song here (a list read or a confirmation). */
+/** The newest write number known for a song (a list read, a confirmation, or any read in the app). */
 function knownSeq(t: HistoryEntry): number {
-	return Math.max(listed.get(t.id)?.seq ?? t.rated ?? 0, songs.get(t.id)?.seq ?? 0);
+	return Math.max(
+		listed.get(t.id)?.seq ?? t.rated ?? 0,
+		songs.get(t.id)?.seq ?? 0,
+		store.storedOf(t.id)?.seq ?? 0,
+	);
 }
 
 /**
@@ -186,11 +193,17 @@ export function shown(t: HistoryEntry): { value: Value; seq: number; s: SongRati
 	return { value: o && o !== b.seen ? o.v : b.value, seq: b.seq, s };
 }
 
-/** The newer (by write number) of a list read and a confirmation here: value and number of one source. */
+/**
+ * The newest (by write number) of a list read, a confirmation here and the
+ * newest stored rating the app heard (a snapshot, another list): value and
+ * number of one source. On a tie the list or confirmation stays, with its `seen`.
+ */
 function known(t: HistoryEntry): { value: Value; seq: number; seen: Override } {
 	const s = songs.get(t.id);
 	const l = listed.get(t.id) ?? { value: t.thumb, seq: t.rated ?? 0, seen: undefined };
-	return s && s.seq >= l.seq ? { value: s.value, seq: s.seq, seen: s.seen } : l;
+	const here = s && s.seq >= l.seq ? { value: s.value, seq: s.seq, seen: s.seen } : l;
+	const app = store.storedOf(t.id);
+	return app && app.seq > here.seq ? { value: app.v, seq: app.seq, seen: app.seen } : here;
 }
 
 export function busy(s: SongRating | null): boolean {
@@ -280,7 +293,10 @@ function holdsNow(
 ): Partial<SongRating> | null {
 	if (seq < knownSeq(t)) return null;
 	if (store.thumbOverride(t.id) !== askedWith) return null;
-	return { value, seq, seen: tell(t.id, value) };
+	const seen = tell(t.id, value);
+	// The whole app hears it at its number (the sheet, the lists): one newest rating.
+	if (seen) store.noteStored(t.id, value, seq, seen);
+	return { value, seq, seen };
 }
 
 /**

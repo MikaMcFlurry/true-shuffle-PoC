@@ -82,6 +82,17 @@ class Store {
 	accountGen = 0;
 	/** Thumbs given here, shown at once in every list until a later load has them. */
 	private thumbs = new Map<string, { v: -1 | 0 | 1; at: number }>();
+	/**
+	 * The newest stored rating heard per song, by the server's write number
+	 * (`rated`): from snapshots, Verlauf lists and confirmations alike, the one
+	 * rule the sheet, the lists and the Verlauf share. A read without a number
+	 * (older answers) never replaces a known one. `seen`: the thumb given here
+	 * that this rating already accounts for (by identity, never by the clock).
+	 */
+	private stored = new Map<
+		string,
+		{ v: -1 | 0 | 1; seq: number; seen: { v: -1 | 0 | 1; at: number } | undefined }
+	>();
 	/** When the last snapshot arrived (for counting song progress locally). */
 	receivedAt = Date.now();
 	private listeners = new Set<Listener>();
@@ -292,8 +303,57 @@ class Store {
 		return this.thumbs.get(id);
 	}
 
+	/**
+	 * A song's rating as shown everywhere: a thumb given here, unless the newest
+	 * stored rating heard already accounts for it; else that stored rating; else
+	 * what the song came with.
+	 */
 	thumbOf(t: { id: string; thumb: -1 | 0 | 1 }): -1 | 0 | 1 {
-		return this.thumbs.get(t.id)?.v ?? t.thumb;
+		const own = this.thumbs.get(t.id);
+		const st = this.stored.get(t.id);
+		if (st) return own && own !== st.seen ? own.v : st.v;
+		return own?.v ?? t.thumb;
+	}
+
+	/** The newest stored rating heard for a song, with its write number. */
+	storedOf(
+		id: string,
+	): { v: -1 | 0 | 1; seq: number; seen: { v: -1 | 0 | 1; at: number } | undefined } | undefined {
+		return this.stored.get(id);
+	}
+
+	/**
+	 * A stored rating heard at write number `seq`: kept when no newer one is
+	 * known. The same number is the same write: what is known stays (and its
+	 * `seen`). Without a number it tells nothing here. Returns whether it was kept.
+	 */
+	noteStored(
+		id: string,
+		v: -1 | 0 | 1,
+		seq: number | undefined,
+		seen?: { v: -1 | 0 | 1; at: number },
+	): boolean {
+		if (seq === undefined) return false;
+		const cur = this.stored.get(id);
+		if (cur && seq <= cur.seq) return false;
+		this.stored.set(id, { v, seq, seen });
+		this.emit();
+		return true;
+	}
+
+	/**
+	 * The rows of an accepted Verlauf list (any page): their stored ratings and
+	 * numbers count, with the thumbs given here the list was asked after
+	 * (`known`, by identity) as accounted for. No thumb given here gives way for it.
+	 */
+	noteListedRatings(
+		rows: { id: string; thumb: -1 | 0 | 1; rated?: number }[],
+		known: ReadonlyMap<string, { v: -1 | 0 | 1; at: number }>,
+	): void {
+		for (const r of rows) {
+			const own = this.thumbs.get(r.id);
+			this.noteStored(r.id, r.thumb, r.rated, own && known.get(r.id) === own ? own : undefined);
+		}
 	}
 
 	setThumb(id: string, v: -1 | 0 | 1): void {
@@ -332,7 +392,7 @@ class Store {
 	 * opened, and after any read it heard from, shows what the list has stored.
 	 */
 	settleKnownThumbs(
-		songs: { id: string; thumb: -1 | 0 | 1 }[],
+		songs: { id: string; thumb: -1 | 0 | 1; rated?: number }[],
 		known: ReadonlyMap<string, { v: -1 | 0 | 1; at: number }>,
 	): void {
 		const shown = this.shownOpen();
@@ -343,7 +403,8 @@ class Store {
 				this.thumbs.delete(s.id);
 				this.keepShown(s.id, own);
 			}
-			if (asked !== undefined) this.retell(s.id, s.thumb, asked);
+			// Only a row without a write number (an older answer) is ordered by when it was asked.
+			if (asked !== undefined && s.rated === undefined) this.retell(s.id, s.thumb, asked);
 		}
 		if (this.shownOpen() !== shown) this.emit();
 	}
@@ -395,6 +456,7 @@ class Store {
 						return;
 				} else {
 					this.thumbs.clear();
+					this.stored.clear();
 					this.accountGen++;
 					this.ratingGen++;
 					this.rating = null;
@@ -412,14 +474,16 @@ class Store {
 						state.session.queue.map((entry) => entry.track),
 						started,
 					);
-				// The open sheet's song, as this accepted snapshot has it stored.
+				// What this accepted snapshot has stored, by write number where it says one;
+				// the open sheet's song without one (an older answer) by when it was asked.
+				const read = [
+					state.nowPlaying,
+					...(state.session?.queue.map((entry) => entry.track) ?? []),
+				];
+				for (const t of read) if (t) this.noteStored(t.id, t.thumb, t.rated);
 				const open = this.rating;
-				const told = open
-					? [state.nowPlaying, ...(state.session?.queue.map((entry) => entry.track) ?? [])].find(
-							(t) => t?.id === open.id,
-						)
-					: undefined;
-				if (told) this.retell(told.id, told.thumb, asked);
+				const told = open ? read.find((t) => t?.id === open.id) : undefined;
+				if (told && told.rated === undefined) this.retell(told.id, told.thumb, asked);
 			})
 			.catch((err: unknown) => {
 				if (epoch !== this.epoch) return;
@@ -428,6 +492,7 @@ class Store {
 					this.stale = false;
 					this.load = { kind: "signed-out" };
 					this.thumbs.clear();
+					this.stored.clear();
 					this.accountGen++;
 					this.ratingGen++;
 					this.rating = null;

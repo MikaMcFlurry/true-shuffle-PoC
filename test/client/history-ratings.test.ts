@@ -52,6 +52,13 @@ const fakeStore = vi.hoisted(() => {
 		thumbOverride(id: string) {
 			return thumbs.get(id);
 		},
+		// The store's shared newest-rating map (TS-FIX-261016-R5) stays empty here: these
+		// cases see the Verlauf alone; the real store is covered in rate-sheet-shared-revision.
+		storedOf(_id: string): undefined {
+			return undefined;
+		},
+		noteStored: vi.fn(() => false),
+		noteListedRatings() {},
 	};
 });
 vi.mock("../../src/client/store", () => ({ store: fakeStore }));

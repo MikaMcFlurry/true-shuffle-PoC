@@ -20,7 +20,8 @@ import {
 } from "@playwright/test";
 import type { HistoryEntry } from "../src/shared/api";
 
-const FAKE = "http://127.0.0.1:8788/__control";
+// The fake Spotify control port: 8788 as in playwright.config.ts, or an isolated run's own (FAKE_PORT).
+const FAKE = `http://127.0.0.1:${process.env.FAKE_PORT ?? 8788}/__control`;
 
 interface FakeStatus {
 	current: string | null;

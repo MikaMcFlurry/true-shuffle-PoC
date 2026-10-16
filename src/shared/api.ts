@@ -50,6 +50,12 @@ export interface TrackView {
 	durationMs: number;
 	/** Thumb in true-shuffle: -1 never again, 1 favourite, 0 none. */
 	thumb: -1 | 0 | 1;
+	/**
+	 * The song's rating write number `thumb` was read at (see
+	 * HistoryRatingReceipt.seq), where the server sends it: the page keeps the
+	 * newest by this number. Absent in older answers and where not sent.
+	 */
+	rated?: number;
 }
 
 export interface NowPlaying extends TrackView {
