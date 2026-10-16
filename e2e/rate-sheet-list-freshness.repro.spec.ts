@@ -137,7 +137,7 @@ test("RATE-SHEET-FRESHNESS browser: Verlauf list (+1, write 5) answered after an
 	await page.goto("/");
 	await expect(page.locator(".now-copy h2")).toHaveText("Song A");
 	// First visit to the Verlauf: its list agrees with the snapshot (0, write 3).
-	await page.getByRole("link", { name: "Verlauf" }).first().click();
+	await page.getByRole("link", { name: "Verlauf", exact: true }).click();
 	await expect.poll(() => m.lists.length).toBe(1);
 	await m.lists[0]!.answer(listed(0, 3));
 	const verlaufRow = page.locator(".hist-row").filter({ hasText: "Song B" });
