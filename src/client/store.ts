@@ -93,6 +93,13 @@ class Store {
 		string,
 		{ v: -1 | 0 | 1; seq: number; seen: { v: -1 | 0 | 1; at: number } | undefined }
 	>();
+	/**
+	 * Per thumb given here (by identity): the lowest write number known to
+	 * account for it. Every rating stored at that number or later accounts for
+	 * it too — a newer list that never saw it, or an equal one that did. A new
+	 * thumb is a new object: nothing accounts for it until a read says so.
+	 */
+	private covered = new WeakMap<object, number>();
 	/** When the last snapshot arrived (for counting song progress locally). */
 	receivedAt = Date.now();
 	private listeners = new Set<Listener>();
@@ -311,8 +318,14 @@ class Store {
 	thumbOf(t: { id: string; thumb: -1 | 0 | 1 }): -1 | 0 | 1 {
 		const own = this.thumbs.get(t.id);
 		const st = this.stored.get(t.id);
-		if (st) return own && own !== st.seen ? own.v : st.v;
+		if (st) return own && own !== st.seen && !this.covers(own, st.seq) ? own.v : st.v;
 		return own?.v ?? t.thumb;
+	}
+
+	/** Whether a rating stored at write number `seq` accounts for this thumb given here. */
+	covers(own: { v: -1 | 0 | 1; at: number }, seq: number): boolean {
+		const at = this.covered.get(own);
+		return at !== undefined && at <= seq;
 	}
 
 	/** The newest stored rating heard for a song, with its write number. */
@@ -324,8 +337,10 @@ class Store {
 
 	/**
 	 * A stored rating heard at write number `seq`: kept when no newer one is
-	 * known. The same number is the same write: what is known stays (and its
-	 * `seen`). Without a number it tells nothing here. Returns whether it was kept.
+	 * known. The same number is the same write: what is known stays. `seen`, the
+	 * thumb given here this read already had, counts as accounted for from `seq`
+	 * on, whether or not the rating itself is kept. Without a number it tells
+	 * nothing here. Returns whether the rating was kept.
 	 */
 	noteStored(
 		id: string,
@@ -334,8 +349,14 @@ class Store {
 		seen?: { v: -1 | 0 | 1; at: number },
 	): boolean {
 		if (seq === undefined) return false;
+		const was = seen ? this.covered.get(seen) : undefined;
+		const covering = !!seen && (was === undefined || seq < was);
+		if (seen && covering) this.covered.set(seen, seq);
 		const cur = this.stored.get(id);
-		if (cur && seq <= cur.seq) return false;
+		if (cur && seq <= cur.seq) {
+			if (covering) this.emit();
+			return false;
+		}
 		this.stored.set(id, { v, seq, seen });
 		this.emit();
 		return true;

@@ -190,7 +190,9 @@ export function shown(t: HistoryEntry): { value: Value; seq: number; s: SongRati
 	const s = songs.get(t.id) ?? null;
 	const b = known(t);
 	const o = store.thumbOverride(t.id);
-	return { value: o && o !== b.seen ? o.v : b.value, seq: b.seq, s };
+	// A thumb given here shows unless the known rating accounts for it: by identity, or
+	// because a rating at or before its number already did (the store keeps which).
+	return { value: o && o !== b.seen && !store.covers(o, b.seq) ? o.v : b.value, seq: b.seq, s };
 }
 
 /**

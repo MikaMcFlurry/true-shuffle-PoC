@@ -59,6 +59,9 @@ const fakeStore = vi.hoisted(() => {
 		},
 		noteStored: vi.fn(() => false),
 		noteListedRatings() {},
+		covers(_own: unknown, _seq: number) {
+			return false;
+		},
 	};
 });
 vi.mock("../../src/client/store", () => ({ store: fakeStore }));
