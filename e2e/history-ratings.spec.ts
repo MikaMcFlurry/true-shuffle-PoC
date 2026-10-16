@@ -1,8 +1,8 @@
 /**
- * Ratings right in the Verlauf (option "Bewertungen im Verlauf direkt
- * anzeigen", see docs/HISTORY_RATINGS.md): off by default, per device and
- * account, the old Verlauf unchanged when off; with it on, every row rates —
- * honestly through slow, refused and lost answers, and takes back exactly.
+ * Ratings right in the Verlauf (see docs/HISTORY_RATINGS.md): every row has
+ * „Favorit“ and „Nie wieder“, always — no option, whatever a browser has
+ * stored or cannot store — and rates honestly through slow, refused and lost
+ * answers, and takes back exactly.
  * The real Worker against the Spotify stand-in (e2e/fake-server.ts); plays
  * are made by listening in the stand-in, never written into storage. Requests
  * are only held, refused (503), cut (offline) or passed on — no answer is
@@ -107,8 +107,6 @@ const fav = (row: Locator) => row.getByRole("button", { name: "Favorit", exact: 
 const never = (row: Locator) => row.getByRole("button", { name: "Nie wieder", exact: true });
 const undo = (row: Locator) => row.getByRole("button", { name: /^Rückgängig/ });
 const line = (row: Locator) => row.locator(".hist-rate__state");
-const optionSwitch = (page: Page) =>
-	page.getByRole("switch", { name: /Bewertungen im Verlauf direkt anzeigen/ });
 
 /** The songs the tests act on, from the plays made in the first test. */
 const songs = {
@@ -116,13 +114,6 @@ const songs = {
 	guest: { id: "", name: "" },
 	plain: [] as { id: string; name: string }[],
 };
-
-async function setOption(page: Page, on: boolean): Promise<void> {
-	await page.goto("/mehr");
-	const sw = optionSwitch(page);
-	if ((await sw.isChecked()) !== on) await sw.click();
-	await expect(sw).toBeChecked({ checked: on });
-}
 
 /** Plays `id` in the stand-in (from `context`, if given) until the Worker has looked and sees it playing. */
 async function playing(page: Page, id: string, context?: string): Promise<void> {
@@ -222,7 +213,7 @@ test.describe("ratings right in the Verlauf", () => {
 		await fake("pause");
 	});
 
-	test("off unless switched on, per device and account; switching and viewing write nothing", async ({
+	test("always there: by default, whatever the old switch stored, on another device; viewing writes nothing", async ({
 		page,
 		browser,
 	}) => {
@@ -231,59 +222,52 @@ test.describe("ratings right in the Verlauf", () => {
 		const me = await account(page);
 		await page.goto("/verlauf");
 		await expect(rows(page).first()).toBeVisible();
-		// Off: the Verlauf as before — the whole row opens the rating sheet, no keys in the rows.
 		const total = await rows(page).count();
-		await expect(page.getByRole("button", { name: / bewerten$/ })).toHaveCount(total);
-		await expect(rows(page).getByRole("button", { name: "Favorit", exact: true })).toHaveCount(0);
-		// Unreadable or foreign values mean off.
+		const keys = async (p: Page) => {
+			await expect(rows(p).getByRole("button", { name: "Favorit", exact: true })).toHaveCount(
+				await rows(p).count(),
+			);
+			await expect(rows(p).getByRole("button", { name: "Nie wieder", exact: true })).toHaveCount(
+				await rows(p).count(),
+			);
+			// The old whole-row sheet button is gone from the Verlauf: the keys are the way.
+			await expect(p.getByRole("button", { name: / bewerten$/ })).toHaveCount(0);
+		};
+		await keys(page);
+		expect(await rows(page).count()).toBe(total);
+		// What the old switch stored (on, off, unreadable, another account's) changes nothing — and stays as it was.
 		for (const [key, value] of [
+			[`ts-history-ratings:${me}`, "on"],
+			[`ts-history-ratings:${me}`, "off"],
 			[`ts-history-ratings:${me}`, "1"],
-			[`ts-history-ratings:${me}`, "true"],
 			["ts-history-ratings:someone-else", "on"],
 			["ts-history-ratings:", "on"],
 		] as const) {
 			await page.evaluate(([k, v]) => localStorage.setItem(k, v), [key, value] as [string, string]);
 			await page.reload();
 			await expect(rows(page).first()).toBeVisible();
-			await expect(rows(page).getByRole("button", { name: "Favorit", exact: true })).toHaveCount(0);
+			await keys(page);
+			expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBe(value);
 			await page.evaluate((k) => localStorage.removeItem(k), key);
 		}
-		// Switched on under Mehr → App: kept for this account on this device, over a reload.
+		// No switch for it any more.
 		await page.goto("/mehr");
-		await expect(optionSwitch(page)).not.toBeChecked();
-		await optionSwitch(page).click();
-		await expect(optionSwitch(page)).toBeChecked();
-		expect(await page.evaluate((k) => localStorage.getItem(k), `ts-history-ratings:${me}`)).toBe(
-			"on",
-		);
-		await page.reload();
-		await expect(optionSwitch(page)).toBeChecked();
-		await page.goto("/verlauf");
-		await expect(rows(page).first()).toBeVisible();
-		await expect(rows(page).getByRole("button", { name: "Favorit", exact: true })).toHaveCount(
-			total,
-		);
-		await expect(page.getByRole("button", { name: / bewerten$/ })).toHaveCount(0);
-		// Another device (a fresh browser) still has it off.
+		await expect(page.getByRole("heading", { name: "Mehr", level: 1 })).toBeVisible();
+		await expect(page.getByRole("switch", { name: /Bewertungen im Verlauf/ })).toHaveCount(0);
+		await expect(page.getByText(/Bewertungen im Verlauf direkt anzeigen/)).toHaveCount(0);
+		// Another device (a fresh browser): the same keys.
 		const other: BrowserContext = await browser.newContext();
 		const p2 = await other.newPage();
 		await signIn(p2);
 		await p2.goto("/verlauf");
 		await expect(rowsOf(p2, songs.plain[0]!.name).first()).toBeVisible();
-		await expect(rows(p2).getByRole("button", { name: "Favorit", exact: true })).toHaveCount(0);
+		await keys(p2);
 		await other.close();
-		// Off again: the old Verlauf, and still nothing written.
-		await setOption(page, false);
-		expect(
-			await page.evaluate((k) => localStorage.getItem(k), `ts-history-ratings:${me}`),
-		).toBeNull();
-		await page.goto("/verlauf");
-		await expect(page.getByRole("button", { name: / bewerten$/ })).toHaveCount(total);
 		expect(seen.writes).toEqual([]);
 		expect(seen.audio).toEqual([]);
 	});
 
-	test("a browser that keeps no settings shows the old Verlauf and says the switch is not kept", async ({
+	test("a browser that keeps nothing (storage blocked) still rates: keys, save, undo and a conflict — no playback, no audio", async ({
 		browser,
 	}) => {
 		const ctx = await browser.newContext();
@@ -297,21 +281,48 @@ test.describe("ratings right in the Verlauf", () => {
 		});
 		const page = await ctx.newPage();
 		await signIn(page);
+		const seen = watch(page);
+		const transport: string[] = [];
+		page.on("request", (r) => {
+			const u = new URL(r.url());
+			if (r.method() !== "GET" && /^\/api\/(player|stations\/\d+\/play)/.test(u.pathname))
+				transport.push(`${r.method()} ${u.pathname}`);
+		});
+		const before = await fake("status");
 		await page.goto("/verlauf");
 		await expect(rows(page).first()).toBeVisible();
-		await expect(rows(page).getByRole("button", { name: "Favorit", exact: true })).toHaveCount(0);
-		await page.goto("/mehr");
-		await optionSwitch(page).click();
-		await expect(page.getByText(/speichert die Einstellung nicht/)).toBeVisible();
+		await expect(rows(page).getByRole("button", { name: "Favorit", exact: true })).toHaveCount(
+			await rows(page).count(),
+		);
+		const song = songs.plain[7]!;
+		const row = rowsOf(page, song.name).first();
+		await fav(row).click();
+		await expect(line(row)).toHaveText(/^Gespeichert: Favorit\./);
+		await undo(row).click();
+		await expect(line(row)).toHaveText(/^Zurückgenommen: wieder keine Bewertung\./);
+		expect(await thumbOf(page, song.id)).toBe(0);
+		// Rated elsewhere since (the sheet, Siri): taking back is refused, the newer rating stays.
+		await never(row).click();
+		await expect(line(row)).toHaveText(/^Gespeichert: Nie wieder\./);
+		expect((await post(page, `/api/tracks/${song.id}/thumb`, { value: 1 })).ok()).toBe(true);
+		await undo(row).click();
+		await expect(line(row)).toHaveText(
+			/^Nicht zurückgenommen: Der Song wurde inzwischen anders bewertet/,
+		);
+		expect(await thumbOf(page, song.id)).toBe(1);
+		// Ratings only: the song did not play here, so nothing in Spotify moved.
+		expect(transport).toEqual([]);
+		expect(seen.audio).toEqual([]);
+		const after = await fake("status");
+		expect([after.current, after.playing]).toEqual([before.current, before.playing]);
 		await ctx.close();
 	});
 
-	test("every row rates: older pages, outside, guest, every occurrence alike; ratings stay when switched off", async ({
+	test("every row rates: older pages, outside, guest, every occurrence alike; ratings stay over a reload", async ({
 		page,
 	}) => {
 		await signIn(page);
 		const seen = watch(page);
-		await setOption(page, true);
 		await page.goto("/verlauf");
 		await expect(rows(page).first()).toBeVisible();
 		const first = await rows(page).count();
@@ -361,13 +372,13 @@ test.describe("ratings right in the Verlauf", () => {
 		expect(await thumbOf(page, songs.twice.id)).toBe(0);
 		await fav(all.nth(0)).click();
 		await expect(line(all.nth(0))).toHaveText(/^Gespeichert: Favorit\./);
-		// Switched off: the old Verlauf shows the stored ratings; nothing was lost or written by it.
+		// Read again: the stored ratings are shown; nothing was lost or written by it.
 		const writes = seen.writes.length;
-		await setOption(page, false);
-		await page.goto("/verlauf");
-		await expect(
-			rowsOf(page, songs.twice.name).first().getByRole("img", { name: "Favorit" }),
-		).toBeVisible();
+		await page.reload();
+		await expect(fav(rowsOf(page, songs.twice.name).first())).toHaveAttribute(
+			"aria-pressed",
+			"true",
+		);
 		expect(await thumbOf(page, songs.twice.id)).toBe(1);
 		expect(await thumbOf(page, songs.guest.id)).toBe(1);
 		expect(seen.writes.length).toBe(writes);
@@ -379,7 +390,6 @@ test.describe("ratings right in the Verlauf", () => {
 		context,
 	}) => {
 		await signIn(page);
-		await setOption(page, true);
 		await page.goto("/verlauf");
 		const song = songs.plain[0]!;
 		const row = rowsOf(page, song.name).first();
@@ -571,7 +581,6 @@ test.describe("ratings right in the Verlauf", () => {
 		page,
 	}) => {
 		await signIn(page);
-		await setOption(page, true);
 		await page.goto("/verlauf");
 		const song = songs.plain[5]!;
 		const row = rowsOf(page, song.name).first();
@@ -629,7 +638,6 @@ test.describe("ratings right in the Verlauf", () => {
 		page,
 	}) => {
 		await signIn(page);
-		await setOption(page, true);
 		await page.goto("/verlauf");
 		const song = songs.plain[1]!;
 		const row = rowsOf(page, song.name).first();
@@ -664,18 +672,18 @@ test.describe("ratings right in the Verlauf", () => {
 		expect(await thumbOf(page, song.id)).toBe(1);
 	});
 
-	test("Nie wieder on the song playing says the skip first, reports it apart, and never takes it back", async ({
+	// CTO-04 (2026-10-15): the Verlauf rates only. Before, this test asserted one skip (HUI-05).
+	test("Nie wieder on the song playing rates only: said first, never skips, also without Premium", async ({
 		page,
 	}) => {
 		await signIn(page);
-		await setOption(page, true);
 		const song = songs.plain[2]!;
 		await playing(page, song.id);
 		await page.goto("/verlauf");
 		const row = rowsOf(page, song.name).first();
 		const hint = row.locator(".hist-rate__hint");
 		await expect(hint).toHaveText(
-			"Läuft gerade in Spotify: „Nie wieder“ überspringt ihn, wenn er beim Speichern noch läuft.",
+			"Läuft gerade in Spotify: „Nie wieder“ speichert nur die Bewertung, der Song läuft weiter.",
 		);
 		// HUI-RT-005: a refused Favorit leaves "Nie wieder" possible — and its effect still said, apart.
 		const refuse = (route: Route) =>
@@ -691,25 +699,26 @@ test.describe("ratings right in the Verlauf", () => {
 		await expect(row.locator(".hist-rate__status")).toHaveText(
 			"Nicht gespeichert: Synthetic bad request",
 		);
-		await expect(hint).toHaveText(/^Läuft gerade in Spotify: „Nie wieder“ überspringt ihn/);
+		await expect(hint).toHaveText(
+			/^Läuft gerade in Spotify: „Nie wieder“ speichert nur die Bewertung/,
+		);
 		await expect(never(row)).not.toHaveAttribute("aria-disabled", "true");
 		await page.unroute("**/api/history/ratings", refuse);
 		await never(row).click();
-		await expect(line(row)).toHaveText(
-			/^Gespeichert: Nie wieder\. Der laufende Song wurde übersprungen\./,
-		);
-		await expect.poll(async () => (await fake("status")).current).not.toBe(song.id);
+		await expect(line(row)).toHaveText(/^Gespeichert: Nie wieder\.$/);
+		await page.waitForTimeout(1500);
 		const after = await fake("status");
-		await expect(undo(row)).toHaveText("Rückgängig (Überspringen bleibt)");
+		expect(after.current).toBe(song.id);
+		expect(after.playing).toBe(true);
+		await expect(undo(row)).toHaveText("Rückgängig");
 		await undo(row).click();
-		await expect(line(row)).toHaveText(
-			/^Zurückgenommen: wieder keine Bewertung\..*übersprungen.*bleibt so/,
-		);
+		await expect(line(row)).toHaveText(/^Zurückgenommen: wieder keine Bewertung\./);
+		await expect(line(row)).not.toHaveText(/übersprungen/);
 		const later = await fake("status");
-		expect(later.current).toBe(after.current);
-		expect(later.playing).toBe(after.playing);
+		expect(later.current).toBe(song.id);
+		expect(later.playing).toBe(true);
 
-		// Spotify refuses the skip: the rating is stored all the same, and both are said apart.
+		// Without Premium (a skip would be refused): the rating is stored, nothing is tried or said about a skip.
 		const other = songs.plain[3]!;
 		await playing(page, other.id);
 		await fake("premium?on=0");
@@ -717,40 +726,50 @@ test.describe("ratings right in the Verlauf", () => {
 		const r2 = rowsOf(page, other.name).first();
 		await expect(line(r2)).toHaveText(/Läuft gerade/);
 		await never(r2).click();
-		await expect(line(r2)).toHaveText(
-			/^Gespeichert: Nie wieder\. Bewertung gespeichert; Überspringen fehlgeschlagen: /,
-		);
+		await expect(line(r2)).toHaveText(/^Gespeichert: Nie wieder\.$/);
 		expect((await fake("status")).current).toBe(other.id);
 		expect(await thumbOf(page, other.id)).toBe(-1);
 		await fake("premium?on=1");
 		await fake("pause");
 	});
 
-	test("R-HUI-02: rated with the old sheet meanwhile (same app, option off and on again), the Verlauf shows that rating", async ({
+	test("R-HUI-02: rated with the old sheet meanwhile (same app, a deck's page), the Verlauf shows that rating", async ({
 		page,
 	}) => {
 		await signIn(page);
-		await setOption(page, true);
+		// A song a deck's page lists as heard last, and that no other test acts on.
+		type Detail = { recent: { id: string; name: string; artists: string }[] };
+		const used = new Set([songs.twice.id, songs.guest.id, ...songs.plain.map((x) => x.id)]);
+		const decks = (
+			(await (await page.request.get("/api/state")).json()) as { stations: { id: number }[] }
+		).stations;
+		let deck = 0;
+		let song: { id: string; name: string; artists: string } | undefined;
+		for (const d of decks) {
+			const detail = (await (await page.request.get(`/api/stations/${d.id}`)).json()) as Detail;
+			song = detail.recent.slice(0, 8).find((t) => !used.has(t.id));
+			if (song) {
+				deck = d.id;
+				break;
+			}
+		}
+		expect(song).toBeDefined();
 		await page.goto("/verlauf");
-		const song = songs.plain[7]!;
-		let row = rowsOf(page, song.name).first();
+		let row = rowsOf(page, song!.name).first();
 		await fav(row).click();
 		await expect(line(row)).toHaveText(/^Gespeichert: Favorit\./);
 		const nav = page.getByRole("navigation", { name: "Hauptnavigation" });
 		// From here on only inside the app: no reload, no new page.
-		// Option off; the old Verlauf; its row opens the old sheet: "Nie wieder".
-		await nav.getByRole("link", { name: "Mehr" }).click();
-		await optionSwitch(page).click();
-		await expect(optionSwitch(page)).not.toBeChecked();
-		await nav.getByRole("link", { name: "Verlauf" }).click();
-		row = rowsOf(page, song.name).first();
-		await row.getByRole("button", { name: / bewerten$/ }).click();
+		// The deck's page; its song row opens the old sheet: "Nie wieder".
+		await nav.getByRole("link", { name: "Kassetten" }).click();
+		await page.locator(`a[href="/sender/${deck}"]`).first().click();
+		await page
+			.getByRole("button", { name: `${song!.name} — ${song!.artists} bewerten`, exact: true })
+			.first()
+			.click();
 		await page.getByRole("button", { name: /Daumen runter: nie wieder/ }).click();
-		await expect.poll(() => thumbOf(page, song.id)).toBe(-1);
-		// Option on again; the Verlauf opened with its list held: no old rows meanwhile.
-		await nav.getByRole("link", { name: "Mehr" }).click();
-		await optionSwitch(page).click();
-		await expect(optionSwitch(page)).toBeChecked();
+		await expect.poll(() => thumbOf(page, song!.id)).toBe(-1);
+		// The Verlauf opened again with its list held: no old rows meanwhile.
 		let release = () => {};
 		const gate = new Promise<void>((r) => {
 			release = r;
@@ -764,7 +783,7 @@ test.describe("ratings right in the Verlauf", () => {
 		await expect(page.locator(".skeleton")).toBeVisible();
 		await expect(rows(page)).toHaveCount(0);
 		release();
-		row = rowsOf(page, song.name).first();
+		row = rowsOf(page, song!.name).first();
 		await expect(never(row)).toHaveAttribute("aria-pressed", "true");
 		await expect(fav(row)).toHaveAttribute("aria-pressed", "false");
 		await expect(line(row)).not.toHaveText(/Gespeichert: Favorit/);
@@ -772,14 +791,13 @@ test.describe("ratings right in the Verlauf", () => {
 		// Acting on it stores on the rating shown.
 		await fav(row).click();
 		await expect(line(row)).toHaveText(/^Gespeichert: Favorit\./);
-		expect(await thumbOf(page, song.id)).toBe(1);
+		expect(await thumbOf(page, song!.id)).toBe(1);
 	});
 
 	test("R-HUI-03: a lost answer to taking back is unclear (said so, also aloud), never 'nicht zurückgenommen'; looking again finds it", async ({
 		page,
 	}) => {
 		await signIn(page);
-		await setOption(page, true);
 		await page.goto("/verlauf");
 		const song = songs.plain[8]!;
 		const row = rowsOf(page, song.name).first();
@@ -813,7 +831,6 @@ test.describe("ratings right in the Verlauf", () => {
 		page,
 	}) => {
 		await signIn(page);
-		await setOption(page, true);
 		await page.goto("/verlauf");
 		await expect(rows(page).first()).toBeVisible();
 		const first = await rows(page).count();
@@ -867,7 +884,6 @@ test.describe("ratings right in the Verlauf", () => {
 		page,
 	}) => {
 		await signIn(page);
-		await setOption(page, true);
 		for (const [width, height] of [
 			[320, 700],
 			[390, 844],

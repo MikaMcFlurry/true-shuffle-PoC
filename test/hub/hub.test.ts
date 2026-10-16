@@ -351,7 +351,13 @@ describe("listener input", () => {
 		await h.hub.play(sid);
 		await h.listen(MINUTE_MS);
 		const cur = h.fake.current()!;
-		await h.hub.thumb(cur, -1);
+		// Since 2026-10-15 (CTO: no automatic next from a rating not attributed to the
+		// play) "Nie wieder" skips only the occurrence it names, as Home's key sends it.
+		const s = h.hub.savedSession(sid)!;
+		await h.hub.thumb(cur, -1, undefined, {
+			sessionId: s.sessionId,
+			entryId: s.entryIds[s.currentIndex]!,
+		});
 		expect(h.fake.current()).not.toBe(cur);
 		h.fake.pause();
 		await h.listen(40 * MINUTE_MS);
@@ -477,13 +483,23 @@ describe("remote key (Siri, CarPlay, a watch, a widget)", () => {
 			const innocent = p.order[p.index + 1]!;
 			const before = nexts(h);
 			if (via === "remote") expect(await h.hub.remote(kid, "dislike")).toMatch(/Nächster Song\.$/);
+			else if (via === "app key") {
+				// Home's key names the occurrence it was pressed on (CTO, 2026-10-15).
+				const s = h.hub.savedSession()!;
+				await h.hub.thumb(banned, -1, undefined, {
+					sessionId: s.sessionId,
+					entryId: s.entryIds[s.currentIndex]!,
+				});
+			}
+			// The rating sheet names no play: since 2026-10-15 it only rates (CTO: no
+			// automatic next from a rating not attributed to the play); before, it skipped.
 			else await h.hub.thumb(banned, -1);
 			if (via === "rating sheet") {
 				h.clock.t += 800;
 				await h.hub.state({ live: true });
 			}
 			await h.listen(30 * MINUTE_MS);
-			expect(nexts(h) - before).toBe(1);
+			expect(nexts(h) - before).toBe(via === "rating sheet" ? 0 : 1);
 			expect(h.hub.memory(banned).thumb).toBe(-1);
 			expect(h.hub.memory(innocent).earlySkips).toBe(0);
 			expect(h.hub.memory(innocent).plays).toBe(1);

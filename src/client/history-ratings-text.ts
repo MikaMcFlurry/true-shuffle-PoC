@@ -64,9 +64,9 @@ export function ratingLine(value: -1 | 0 | 1, s: SongRating | null): string {
 
 /**
  * What "Nie wieder" would do to the song playing now, said before it is
- * tapped — whenever that tap is possible, whatever the last status said: a
- * song playing in Spotify is skipped if it still plays when the rating is
- * stored; one on a Home Assistant player is never skipped from here.
+ * tapped — whenever that tap is possible, whatever the last status said: the
+ * Verlauf only rates, it never skips the song playing (CTO-04, 2026-10-15),
+ * neither in Spotify nor on a Home Assistant player.
  */
 export function playbackHint(
 	value: -1 | 0 | 1,
@@ -76,5 +76,5 @@ export function playbackHint(
 	if (!playing || value === -1 || ratingBusy(s)) return "";
 	return playing.native
 		? "Läuft gerade über Home Assistant: „Nie wieder“ speichert nur die Bewertung, dort wird nicht übersprungen."
-		: "Läuft gerade in Spotify: „Nie wieder“ überspringt ihn, wenn er beim Speichern noch läuft.";
+		: "Läuft gerade in Spotify: „Nie wieder“ speichert nur die Bewertung, der Song läuft weiter.";
 }

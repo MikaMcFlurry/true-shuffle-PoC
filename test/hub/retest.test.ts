@@ -66,7 +66,18 @@ it("'Gern wieder' is kept across a restart; 'Eher nicht' moves on to the next so
 	expect((await h.hub.play(sid)).ok).toBe(true);
 	await h.listen(MINUTE_MS);
 	const playing = h.fake.current()!;
-	expect(await h.hub.retestVerdict(playing, false)).toMatchObject({ skipped: true });
+	// Home sends the occurrence it asked on (CTO, 2026-10-15); without one: only stored.
+	const s = h.hub.savedSession(sid)!;
+	expect(await h.hub.retestVerdict(playing, false, undefined, null)).toMatchObject({
+		skipped: false,
+	});
+	expect(h.fake.current()).toBe(playing);
+	expect(
+		await h.hub.retestVerdict(playing, false, undefined, {
+			sessionId: s.sessionId,
+			entryId: s.entryIds[s.currentIndex]!,
+		}),
+	).toMatchObject({ skipped: true });
 	expect(h.fake.current()).not.toBe(playing);
 	expect(h.hub.memory(playing)).toMatchObject({ verdict: -1 });
 	await expect(h.hub.retestVerdict("nope", true)).rejects.toThrow();

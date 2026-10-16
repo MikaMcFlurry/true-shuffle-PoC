@@ -15,15 +15,25 @@ import {
 import { useEffect, useRef, useState } from "preact/hooks";
 import { sharesForRules } from "../../core/mix";
 import type { AppState, DeviceView, StationSummary, TrackView } from "../../shared/api";
-import { ApiError, api, type NativeDevice } from "../api";
+import { ApiError, api, type NativeDevice, type PlayingOccurrence } from "../api";
 import { Cassette, type ReelState, shellOf } from "../components/cassette";
 import { RateHit, ThumbMark } from "../components/rate";
 import { SongProgress } from "../components/song-progress";
 import { factsOf, type SongFactsView, SongTags } from "../components/song-tags";
 import { Cover } from "../components/ui";
 import { duration, num, pct } from "../format";
+import { Answers } from "../home-answers";
 import { playbackView } from "../playback-view";
 import { type PlaybackAction, store, useStore } from "../store";
+
+/**
+ * The occurrence an answer was given on, sent along so the server can skip
+ * exactly that one (and nothing else); none known: the server only rates.
+ */
+function bound(occurrence: string): PlayingOccurrence | undefined {
+	const [sessionId, entryId] = JSON.parse(occurrence) as [string | null, string | null];
+	return sessionId && entryId ? { sessionId, entryId } : undefined;
+}
 
 export function roundLabel(s: StationSummary): string {
 	return `${s.roundNo || 1}. Durchgang`;
@@ -119,6 +129,50 @@ export function Home({ state }: { state: AppState }) {
 			: null;
 	const view = playbackView(state, s.receivedAt, now, s.stale, unsettled ? command?.frozen : null);
 	const track = view.track;
+	// Answers about the song playing belong to this occurrence of it in the queue (CTO-03).
+	const occurrence = JSON.stringify([session?.sessionId ?? null, view.entryId ?? null]);
+	const occ = useRef(occurrence);
+	occ.current = occurrence;
+	const [, answered] = useState(0);
+	const [thumbs] = useState(
+		() =>
+			new Answers<-1 | 0 | 1, { skipped?: boolean; skipError?: string }>(
+				(id, v, o) => api.thumb(id, v, bound(o)),
+				() => occ.current,
+				() => answered((n) => n + 1),
+				(a, final) => {
+					// Every stored rating holds until a newer one is stored (CTO-01/02).
+					store.setThumb(a.trackId, a.value);
+					if (final && a.occurrence === occ.current)
+						store.say(
+							a.value === 1
+								? "Als Favorit gemerkt"
+								: a.value === -1
+									? "Kommt nie wieder"
+									: "Bewertung zurückgesetzt",
+						);
+					void store.refresh(true);
+				},
+			),
+	);
+	const [verdicts] = useState(
+		() =>
+			new Answers<boolean, { skipped?: boolean; skipError?: string }>(
+				(id, keep, o) => api.retestVerdict(id, keep, bound(o)),
+				() => occ.current,
+				() => answered((n) => n + 1),
+				() => void store.refresh(true),
+			),
+	);
+	useEffect(
+		() => () => {
+			thumbs.close();
+			verdicts.close();
+		},
+		[],
+	);
+	// A failed skip may be retried once, on the occurrence it was about only.
+	const [skipAsked, setSkipAsked] = useState<string | null>(null);
 	const chooseDevice = (value: string) => {
 		setDevice(value);
 		try {
@@ -263,36 +317,44 @@ export function Home({ state }: { state: AppState }) {
 							? "Songwechsel angefordert …"
 							: "Start angefordert …";
 
-	const thumb = async (value: -1 | 1) => {
+	// One answer per song on its way; a tap repeating it changes nothing; a newer one waits (CTO-01/02).
+	const thumb = (value: -1 | 1) => {
 		if (!track || view.projected || view.awaitingObservation || unsettled) return;
-		try {
-			const next = store.thumbOf(track) === value ? 0 : value;
-			await api.thumb(track.id, next);
-			store.setThumb(track.id, next);
-			store.say(
-				next === 1
-					? "Als Favorit gemerkt"
-					: next === -1
-						? "Kommt nie wieder"
-						: "Bewertung zurückgesetzt",
-			);
-			await store.refresh(true);
-		} catch (e) {
-			store.say(e instanceof Error ? e.message : String(e), "error");
-		}
+		const pending = thumbs.pending(track.id, occurrence);
+		if (pending === value) return;
+		thumbs.give(
+			track.id,
+			occurrence,
+			pending !== undefined ? value : store.thumbOf(track) === value ? 0 : value,
+		);
 	};
-	// A retest ("Nachprüfung"): the answer for the song now playing.
-	const [answered, setAnswered] = useState<{ id: string; keep: boolean } | null>(null);
-	const retest = async (keep: boolean) => {
+	const shownThumb = track ? (thumbs.pending(track.id, occurrence) ?? store.thumbOf(track)) : 0;
+	const thumbAnswer = track ? thumbs.of(track.id) : null;
+	const thumbHere = thumbAnswer?.occurrence === occurrence ? thumbAnswer : null;
+	// A retest ("Nachprüfung"): the answer for this occurrence of the song now playing.
+	const retest = (keep: boolean) => {
 		if (!track || view.projected || view.awaitingObservation || unsettled) return;
-		try {
-			await api.retestVerdict(track.id, keep);
-			setAnswered({ id: track.id, keep });
-			store.say(keep ? "Gemerkt: kommt wieder wie jeder andere" : "Gemerkt: kommt seltener");
-			await store.refresh(true);
-		} catch (e) {
-			store.say(e instanceof Error ? e.message : String(e), "error");
-		}
+		verdicts.give(track.id, occurrence, keep);
+	};
+	const verdict = track ? verdicts.of(track.id) : null;
+	const verdictHere = verdict?.occurrence === occurrence ? verdict : null;
+	const skipError = (a: typeof thumbHere | typeof verdictHere, skipping: boolean) =>
+		a?.phase === "saved" && skipping && !a.result?.skipped ? (a.result?.skipError ?? null) : null;
+	const thumbSkipError = skipError(thumbHere, thumbHere?.value === -1);
+	const verdictSkipError = skipError(verdictHere, verdictHere?.value === false);
+	const canSkip =
+		!unsettled &&
+		!s.stale &&
+		!!session &&
+		!view.projected &&
+		!view.awaitingObservation &&
+		!session.pending &&
+		session.status !== "ambiguous" &&
+		(!nativeController || !!activeNative?.queue) &&
+		skipAsked !== occurrence;
+	const skipNow = () => {
+		setSkipAsked(occurrence);
+		void act("next");
 	};
 	// Presentation only: which station the screen is about, and how far the command signal has come.
 	const posterStation = state.stations.find((x) => x.id === session?.stationId) ?? station ?? null;
@@ -491,7 +553,7 @@ export function Home({ state }: { state: AppState }) {
 								type="button"
 								class="tkey"
 								aria-label="Daumen hoch: Favorit"
-								aria-pressed={!!track && store.thumbOf(track) === 1}
+								aria-pressed={!!track && shownThumb === 1}
 								disabled={
 									!track || s.stale || view.projected || view.awaitingObservation || unsettled
 								}
@@ -504,7 +566,7 @@ export function Home({ state }: { state: AppState }) {
 								type="button"
 								class="tkey"
 								aria-label="Daumen runter: diesen Song nie wieder"
-								aria-pressed={!!track && store.thumbOf(track) === -1}
+								aria-pressed={!!track && shownThumb === -1}
 								disabled={
 									!track || s.stale || view.projected || view.awaitingObservation || unsettled
 								}
@@ -514,6 +576,37 @@ export function Home({ state }: { state: AppState }) {
 								<span aria-hidden="true">Nie wieder</span>
 							</button>
 						</div>
+						{thumbHere && (thumbHere.phase !== "saved" || thumbSkipError) ? (
+							<div
+								class="transport-note answer-note"
+								role={thumbHere.phase === "failed" ? "alert" : "status"}
+							>
+								{thumbHere.phase === "saving" ? (
+									"Wird gespeichert …"
+								) : thumbHere.phase === "failed" ? (
+									<>
+										Nicht gespeichert: {thumbHere.error}{" "}
+										<button
+											type="button"
+											class="act"
+											disabled={s.stale}
+											onClick={() => track && thumbs.retry(track.id)}
+										>
+											Nochmal speichern
+										</button>
+									</>
+								) : (
+									<>
+										Nie wieder gespeichert. Überspringen fehlgeschlagen: {thumbSkipError}{" "}
+										{canSkip ? (
+											<button type="button" class="act" onClick={skipNow}>
+												Jetzt überspringen
+											</button>
+										) : null}
+									</>
+								)}
+							</div>
+						) : null}
 						{startsOther && !playing && !unsettled ? (
 							<p class="transport-note">
 								Startet {station.name}. Dein Platz in {posterStation?.name} bleibt gespeichert.
@@ -542,12 +635,24 @@ export function Home({ state }: { state: AppState }) {
 
 				{track && !view.projected && ownNow?.kind === "probe" && ownNow.id === track.id ? (
 					<fieldset class="retest" aria-label="Nachprüfung">
-						{answered?.id === track.id ? (
-							<p class="transport-note" role="status">
-								{answered.keep
-									? "Danke. Der Song kommt wieder wie jeder andere."
-									: "Danke. Er kommt seltener, und true-shuffle fragt später noch einmal."}
-							</p>
+						{verdictHere?.phase === "saved" ? (
+							<>
+								<p class="transport-note" role="status">
+									{verdictHere.value
+										? "Danke. Der Song kommt wieder wie jeder andere."
+										: "Danke. Er kommt seltener, und true-shuffle fragt später noch einmal."}
+								</p>
+								{verdictSkipError ? (
+									<p class="transport-note retest__note" role="alert">
+										Antwort gespeichert. Überspringen fehlgeschlagen: {verdictSkipError}{" "}
+										{canSkip ? (
+											<button type="button" class="act" onClick={skipNow}>
+												Jetzt überspringen
+											</button>
+										) : null}
+									</p>
+								) : null}
+							</>
 						) : (
 							<>
 								<p class="transport-note">
@@ -558,20 +663,39 @@ export function Home({ state }: { state: AppState }) {
 									<button
 										type="button"
 										class="key key--lit"
+										aria-pressed={verdictHere?.phase === "saving" && verdictHere.value}
 										disabled={s.stale || view.awaitingObservation || unsettled}
-										onClick={() => void retest(true)}
+										onClick={() => retest(true)}
 									>
 										Gern wieder
 									</button>
 									<button
 										type="button"
 										class="key"
+										aria-pressed={verdictHere?.phase === "saving" && !verdictHere.value}
 										disabled={s.stale || view.awaitingObservation || unsettled}
-										onClick={() => void retest(false)}
+										onClick={() => retest(false)}
 									>
 										Eher nicht
 									</button>
 								</div>
+								{verdictHere?.phase === "saving" ? (
+									<p class="transport-note" role="status">
+										Wird gesendet …
+									</p>
+								) : verdictHere?.phase === "failed" ? (
+									<p class="transport-note retest__note" role="alert">
+										Nicht gesendet: {verdictHere.error}{" "}
+										<button
+											type="button"
+											class="act"
+											disabled={s.stale}
+											onClick={() => track && verdicts.retry(track.id)}
+										>
+											Nochmal senden
+										</button>
+									</p>
+								) : null}
 							</>
 						)}
 					</fieldset>

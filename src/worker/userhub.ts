@@ -21,7 +21,7 @@ import {
 } from "./controllers/native";
 import { type Env, hubEnv } from "./env";
 import { type GenreAnswer, requestGenres } from "./hub/genres";
-import { HubCore, HubError } from "./hub/hub";
+import { HubCore, HubError, type Occurrence } from "./hub/hub";
 import { Keys } from "./lib/crypto";
 import type { SqlDb, SqlValue } from "./lib/sql";
 import { type SpotifyCooldownScope, SpotifyError, type SpotifyTokens } from "./spotify/client";
@@ -524,8 +524,9 @@ export class UserHub extends DurableObject<Env> {
 	devices(epoch: number) {
 		return this.session(epoch, () => this.hub().devices());
 	}
-	thumb(epoch: number, trackId: string, value: -1 | 0 | 1) {
-		return this.session(epoch, () => this.hub().thumb(trackId, value));
+	/** From the page: bound to the occurrence it names, or rating only (see HubCore.thumb). */
+	thumb(epoch: number, trackId: string, value: -1 | 0 | 1, bound: Occurrence | null = null) {
+		return this.session(epoch, () => this.hub().thumb(trackId, value, undefined, bound));
 	}
 	rateFromHistory(epoch: number, input: Record<string, unknown>) {
 		return this.session(epoch, () => this.hub().rateFromHistory(input));
@@ -536,8 +537,8 @@ export class UserHub extends DurableObject<Env> {
 	undoHistoryRating(epoch: number, actionId: string) {
 		return this.session(epoch, () => this.hub().undoHistoryRating(actionId));
 	}
-	retestVerdict(epoch: number, trackId: string, keep: boolean) {
-		return this.session(epoch, () => this.hub().retestVerdict(trackId, keep));
+	retestVerdict(epoch: number, trackId: string, keep: boolean, bound: Occurrence | null = null) {
+		return this.session(epoch, () => this.hub().retestVerdict(trackId, keep, undefined, bound));
 	}
 	remoteKey(epoch: number) {
 		return this.session(epoch, () => this.hub().remoteKey());

@@ -63,6 +63,13 @@ class Store {
 	private selectTimer: number | null = null;
 	/** The song whose rating sheet is open. */
 	rating: TrackView | null = null;
+	/**
+	 * Counts every opening and closing of the rating sheet, and every change of
+	 * account: a late answer acts only on the sheet it was given in.
+	 */
+	ratingGen = 0;
+	/** Counts every sign-out and change of account: answers from before count for nothing. */
+	accountGen = 0;
 	/** Thumbs given here, shown at once in every list until a later load has them. */
 	private thumbs = new Map<string, { v: -1 | 0 | 1; at: number }>();
 	/** When the last snapshot arrived (for counting song progress locally). */
@@ -244,6 +251,7 @@ class Store {
 	}
 
 	rate(t: TrackView | null): void {
+		this.ratingGen++;
 		this.rating = t;
 		this.emit();
 	}
@@ -334,6 +342,8 @@ class Store {
 						return;
 				} else {
 					this.thumbs.clear();
+					this.accountGen++;
+					this.ratingGen++;
 					this.rating = null;
 					this.selected = null;
 					this.clearCommand();
@@ -357,6 +367,8 @@ class Store {
 					this.stale = false;
 					this.load = { kind: "signed-out" };
 					this.thumbs.clear();
+					this.accountGen++;
+					this.ratingGen++;
 					this.rating = null;
 					this.selected = null;
 					this.clearCommand();

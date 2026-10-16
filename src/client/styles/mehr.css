@@ -270,8 +270,8 @@ label.row[aria-disabled="true"] {
 	display: none;
 }
 
-/* Ratings right in the Verlauf (Mehr → App): a line of its own under the
-   song, labelled keys of about 44 px, never laid over the row. */
+/* Ratings right in every Verlauf row: a line of its own under the song,
+   labelled keys of at least 44 px, never laid over the row. */
 .hist-rate {
 	grid-column: 1 / -1;
 	display: flex;
@@ -588,6 +588,8 @@ label.row[aria-disabled="true"] {
 }
 
 .selection__period fieldset {
+	/* A fieldset is as wide as its content by default: let it fit the page. */
+	min-width: 0;
 	display: grid;
 	gap: 10px;
 	margin-top: 14px;
@@ -596,10 +598,76 @@ label.row[aria-disabled="true"] {
 	border-radius: var(--r);
 }
 
+/* Explanations on request: a ballpoint text action that opens in place, no box. */
+.help {
+	margin: 4px 0 8px;
+}
+
+.help__summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	font-weight: 650;
+	color: var(--pen);
+	text-decoration: underline;
+	text-decoration-color: var(--rule-strong);
+	text-underline-offset: 0.25em;
+	cursor: pointer;
+	list-style: none;
+}
+
+.help__summary::-webkit-details-marker {
+	display: none;
+}
+
+.help__summary::after {
+	content: "";
+	flex: none;
+	width: 7px;
+	height: 7px;
+	margin-bottom: 3px;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg);
+	transition: transform 160ms var(--ease);
+}
+
+.help[open] > .help__summary::after {
+	margin-bottom: -3px;
+	transform: rotate(-135deg);
+}
+
+.help__summary:hover {
+	text-decoration-color: currentColor;
+}
+
+.help__summary:focus-visible {
+	outline: 3px solid var(--focus);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
+.help__body {
+	display: grid;
+	gap: 10px;
+	max-width: 62ch;
+	padding: 2px 0 6px;
+	color: var(--ink-2);
+	font-size: 0.9375rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.help__summary::after {
+		transition: none;
+	}
+}
+
+/* Side by side only where both date fields fit whole; on phones one under the other. */
 .selection__dates {
 	display: grid;
 	gap: 10px;
-	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
 }
 
 .selection__add {

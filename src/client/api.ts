@@ -22,6 +22,12 @@ import type {
 } from "../shared/api";
 import type { SpotifyUsageReport } from "../shared/spotify-usage";
 
+/** One occurrence of a song in a saved queue: the session and its entry. */
+export interface PlayingOccurrence {
+	sessionId: string;
+	entryId: string;
+}
+
 export class ApiError extends Error {
 	constructor(
 		readonly status: number,
@@ -208,8 +214,17 @@ export const api = {
 	player: (action: "pause" | "resume" | "next", opts?: { sessionId?: string; entryId?: string }) =>
 		call<PlayResult>("POST", `/api/player/${action}`, opts, 30_000),
 	devices: () => call<DeviceView[]>("GET", "/api/devices"),
-	thumb: (trackId: string, value: -1 | 0 | 1) =>
-		call<{ skipped?: boolean }>("POST", `/api/tracks/${trackId}/thumb`, { value }),
+	/**
+	 * A thumb. With `expected` (the queue occurrence shown when it was given),
+	 * "Nie wieder" may skip exactly that occurrence; without it the server only
+	 * rates (see docs/HISTORY_RATINGS.md, CTO playback boundary).
+	 */
+	thumb: (trackId: string, value: -1 | 0 | 1, expected?: PlayingOccurrence) =>
+		call<{ skipped?: boolean; skipError?: string }>(
+			"POST",
+			`/api/tracks/${trackId}/thumb`,
+			expected ? { value, expected } : { value },
+		),
 	/** A rating from the Verlauf, under the page's own id (see docs/HISTORY_RATINGS.md). */
 	rateFromHistory: (b: { actionId: string; trackId: string; value: -1 | 0 | 1; basis: number }) =>
 		call<HistoryRateAnswer>("POST", "/api/history/ratings", b, 15_000),
@@ -233,8 +248,12 @@ export const api = {
 			undefined,
 			15_000,
 		),
-	retestVerdict: (trackId: string, keep: boolean) =>
-		call<{ skipped?: boolean }>("POST", `/api/tracks/${trackId}/retest`, { keep }),
+	retestVerdict: (trackId: string, keep: boolean, expected?: PlayingOccurrence) =>
+		call<{ skipped?: boolean; skipError?: string }>(
+			"POST",
+			`/api/tracks/${trackId}/retest`,
+			expected ? { keep, expected } : { keep },
+		),
 	remoteKey: () => call<RemoteKeyView>("GET", "/api/remote"),
 	newRemoteKey: () => call<RemoteKeyView>("POST", "/api/remote"),
 	dropRemoteKey: () => call<unknown>("DELETE", "/api/remote"),

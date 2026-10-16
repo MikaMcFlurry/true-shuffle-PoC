@@ -46,7 +46,7 @@ const PAGE = 50;
 export function ruleText(r: SelectionRule): string {
 	switch (r.type) {
 		case "period":
-			return `Zeitraum ${dayWord(r.from)} bis ${dayWord(r.to)} ausgeschlossen (ganze Tage, Zeitzone ${r.zone})`;
+			return `Zeitraum ${dayWord(r.from)} bis ${dayWord(r.to)} ausgeschlossen${r.zone === ZONE ? "" : ` (Zeitzone ${r.zone})`}`;
 		case "artist":
 			return r.kind === "exclude"
 				? `Künstler „${r.name}“ ausgeschlossen`
@@ -56,7 +56,7 @@ export function ruleText(r: SelectionRule): string {
 				? `Song ${r.label ? `„${r.label}“` : r.id} ausgeschlossen`
 				: `Song ${r.label ? `„${r.label}“` : r.id} wieder einbezogen, auch wo Zeitraum oder Künstler ausgeschlossen sind`;
 		case "summary":
-			return "Songs ohne vollständige einzelne Wiedergaben (nur Summen oder teilweise gespeichert) ausgeschlossen";
+			return "Songs ohne vollständige Einzelwiedergaben ausgeschlossen";
 	}
 }
 
@@ -497,7 +497,7 @@ export function SelectionScreen() {
 		<div class="page selection">
 			<PageBar
 				title="Hörverlauf auswählen"
-				sub="Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen."
+				sub="Was aus deinem Spotify-Import für dein Profil und neue Empfehlungen zählt."
 				backTo="/mehr"
 			/>
 
@@ -522,16 +522,16 @@ export function SelectionScreen() {
 					<div class="selection__facts">
 						<p>
 							{ds.coverage === "summary"
-								? `${num(ds.songs)} Songs, nur als Summen gespeichert (älterer Import): Zeitraum und Künstler lassen sich darauf nicht anwenden. Für eine genaue Auswahl importiere die Dateien noch einmal.`
-								: `${plays(ds.rows)} einzeln gespeichert${ds.rowsFrom && ds.rowsTo ? `, ${date(ds.rowsFrom)} bis ${date(ds.rowsTo)}` : ""}; ${num(ds.songs)} Songs mit Summen.`}
+								? `${num(ds.songs)} Songs, nur als Summen gespeichert (älterer Import). Zeitraum- und Künstlerregeln greifen darauf nicht — dafür die Dateien neu importieren.`
+								: `${plays(ds.rows)} einzeln gespeichert${ds.rowsFrom && ds.rowsTo ? `, ${date(ds.rowsFrom)} bis ${date(ds.rowsTo)}` : ""}; ${num(ds.songs)} Songs insgesamt.`}
 							{ds.coverage === "mixed"
 								? ` ${num(view.counts?.summarySongs ?? 0)} Songs nur als Summe, ohne einzelne Wiedergaben.`
 								: ""}
 							{view.counts && view.counts.afterLiveRows > 0
-								? ` ${plays(view.counts.afterLiveRows)} liegen ab dem Beginn der Live-Zählung${view.liveSince ? ` am ${date(view.liveSince)}` : ""}: aus dem Import zählen sie nicht. Für diese Zeit zählt nur, was true-shuffle selbst beobachtet hat — das muss nicht jede Wiedergabe sein.`
+								? ` ${plays(view.counts.afterLiveRows)} ab dem Start der Live-Zählung${view.liveSince ? ` am ${date(view.liveSince)}` : ""} ${view.counts.afterLiveRows === 1 ? "zählt" : "zählen"} nicht aus dem Import.`
 								: ""}
 							{view.counts && view.counts.neutralRows > 0
-								? ` ${plays(view.counts.neutralRows)} kürzer als 30 Sekunden ohne Skip (oder übersprungene erste Songs nach einem Start) sind gespeichert und sichtbar, zählen aber für nichts.`
+								? ` ${plays(view.counts.neutralRows)} kürzer als 30 Sekunden oder gleich nach einem Start übersprungen: ${view.counts.neutralRows === 1 ? "zählt" : "zählen"} für nichts.`
 								: ""}
 						</p>
 						{view.counts ? <CountsLine c={view.counts} label="Jetzt in Kraft" /> : null}
@@ -544,7 +544,7 @@ export function SelectionScreen() {
 						{view.effective.state === "failed" ? (
 							<p class="notice notice--error" role="alert">
 								Die Auswahl ließ sich nicht berechnen ({view.effective.error}). Bis das klappt,
-								zählt der Import gar nicht — nicht etwa vollständig.
+								zählt der Import gar nicht.
 							</p>
 						) : null}
 						<div class="row-actions">
@@ -564,8 +564,8 @@ export function SelectionScreen() {
 						</div>
 						<p class="hint">
 							{applied.enabled
-								? "Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter."
-								: "Ausgeschaltet: der Import zählt nicht. Einschalten verwendet deine gespeicherten Regeln wieder."}
+								? "Daten und Regeln bleiben. Live gezählte Songs, Bewertungen und Herzen zählen weiter."
+								: "Der Import zählt gerade nicht. Einschalten nutzt deine gespeicherten Regeln wieder."}
 						</p>
 					</div>
 				)}
@@ -575,17 +575,10 @@ export function SelectionScreen() {
 				<>
 					<Section title="Regeln" id="sel-rules">
 						<p class="section__lead">
-							Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor
-							einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss —
-							der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen
-							weiter.
+							Ausschließen nimmt nur importierte Wiedergaben aus der Rechnung. Der Song bleibt
+							spielbar.
 						</p>
-						<p class="hint">
-							Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören
-							wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh
-							übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie
-							berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
-						</p>
+						<RulesHelp />
 						{draft.rules.length === 0 ? (
 							<p class="muted">Keine Regeln: alles aus dem Import zählt.</p>
 						) : (
@@ -593,15 +586,22 @@ export function SelectionScreen() {
 								{draft.rules.map((r) => {
 									const key = ruleKey(r);
 									const fresh = !applied.rules.some((a) => ruleKey(a) === key);
-									const eff = preview?.counts?.rules.find((x) => x.key === key);
+									// Only a count of exactly the draft shown tells what a rule does (CTO-06).
+									const eff = previewed
+										? preview?.counts?.rules.find((x) => x.key === key)
+										: undefined;
 									return (
 										<li class="row" key={key}>
 											<span class="row__main">
 												<span class="row__title">{ruleText(r)}</span>
 												<span class="row__sub">
-													{eff
-														? `${r.kind === "exclude" ? "Nimmt" : "Bringt zurück"}: ${plays(eff.plays)}${eff.skips ? `, ${num(eff.skips)} frühe Skips` : ""}, ${num(eff.songs)} Songs`
-														: "Betrifft derzeit nichts"}
+													{!previewed
+														? previewErr
+															? "Noch nicht gezählt"
+															: "Wird gezählt …"
+														: eff
+															? `${r.kind === "exclude" ? "Nimmt" : "Bringt zurück"}: ${plays(eff.plays)}${eff.skips ? `, ${num(eff.skips)} frühe Skips` : ""}, ${num(eff.songs)} Songs`
+															: "Betrifft derzeit nichts"}
 													{fresh ? " · neu, noch nicht übernommen" : ""}
 												</span>
 											</span>
@@ -630,7 +630,7 @@ export function SelectionScreen() {
 								<legend class="field__label">Zeitraum ausschließen</legend>
 								<div class="selection__dates">
 									<label class="field">
-										<span>Von (einschließlich)</span>
+										<span>Von</span>
 										<input
 											class="input"
 											type="date"
@@ -639,7 +639,7 @@ export function SelectionScreen() {
 										/>
 									</label>
 									<label class="field">
-										<span>Bis (einschließlich)</span>
+										<span>Bis</span>
 										<input
 											class="input"
 											type="date"
@@ -649,10 +649,7 @@ export function SelectionScreen() {
 										/>
 									</label>
 								</div>
-								<p class="hint">
-									Ganze Kalendertage in deiner Zeitzone ({ZONE}). Maßgeblich ist, wann eine
-									Wiedergabe laut Spotify endete.
-								</p>
+								<p class="hint">Ganze Tage, beide eingeschlossen.</p>
 								<button
 									type="submit"
 									class="key selection__add"
@@ -676,43 +673,39 @@ export function SelectionScreen() {
 									}
 								/>
 								<span>
-									Songs ohne vollständige einzelne Wiedergaben ausschließen (
-									{num((view.counts?.summarySongs ?? 0) + (view.counts?.partialSongs ?? 0))} Songs
-									nur als Summe oder teilweise gespeichert)
+									Songs ohne vollständige Einzelwiedergaben ausschließen (
+									{num((view.counts?.summarySongs ?? 0) + (view.counts?.partialSongs ?? 0))} Songs)
 								</span>
 							</label>
 						) : null}
 					</Section>
 
-					<Section title="Vorschau und übernehmen" id="sel-apply">
+					<Section title="Prüfen und übernehmen" id="sel-apply">
 						<div class="notice" role="status" aria-live="polite">
 							{previewed && preview?.counts ? (
 								<CountsLine c={preview.counts} label="Mit deinem Entwurf" />
 							) : previewErr ? (
-								<p>Für deinen aktuellen Entwurf gibt es noch keine Vorschau.</p>
+								<p>Für deinen Entwurf gibt es noch keine Zahlen.</p>
 							) : (
 								<p>Wird gezählt …</p>
 							)}
 							{view.counts ? <CountsLine c={view.counts} label="Jetzt in Kraft" /> : null}
 							{previewed && preview?.counts && preview.counts.partialSongs > 0 ? (
 								<p>
-									{num(preview.counts.partialSongs)} Songs sind nur teilweise als einzelne
-									Wiedergaben gespeichert ({plays(preview.counts.partialPlays)} insgesamt):
-									Zeitraum- und Künstlerregeln erreichen sie nicht; sie zählen ganz oder gar nicht.
-									Für eine genaue Auswahl importiere die Dateien noch einmal.
+									{num(preview.counts.partialSongs)} Songs ({plays(preview.counts.partialPlays)})
+									sind nur teilweise einzeln gespeichert: sie zählen ganz oder gar nicht.
 								</p>
 							) : null}
 							{previewed && preview?.counts && changed ? (
 								<p>
 									Ändert die Zahlen von {num(preview.counts.changedSongs)} Songs. Live gezählte
-									Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange bleiben, wie sie
-									sind.
+									Songs, Bewertungen, Kassetten und Warteschlange bleiben.
 								</p>
 							) : null}
 						</div>
 						{previewErr ? (
 							<p class="notice notice--error" role="alert">
-								Vorschau nicht möglich: {previewErr}
+								Zählen nicht möglich: {previewErr}
 							</p>
 						) : null}
 						<div class="row-actions">
@@ -740,7 +733,7 @@ export function SelectionScreen() {
 								änderst, bleibt als Entwurf erhalten.
 							</p>
 						) : !changed ? (
-							<p class="hint">Der Entwurf entspricht dem, was gilt.</p>
+							<p class="hint">Keine Änderungen.</p>
 						) : null}
 					</Section>
 				</>
@@ -758,8 +751,7 @@ export function SelectionScreen() {
 			{ds.hasImport ? (
 				<Section title="Durchsehen" id="sel-browse">
 					<p class="section__lead">
-						Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den
-						Entwurf oben, bis du ihn übernimmst.
+						Suchen und Sortieren ändert nichts. Ausschließen gilt erst nach „Auswahl übernehmen“.
 					</p>
 					<div class="selection__filters">
 						<label class="field">
@@ -825,8 +817,8 @@ export function SelectionScreen() {
 					</div>
 					{page && !rowsLive ? (
 						<p class="hint" role="status">
-							Die Liste wird für deine Suche und deinen Entwurf aktualisiert — bis dahin lassen sich
-							Einträge nicht ausschließen oder einbeziehen. Deine Änderungen bleiben erhalten.
+							Die Liste wird für deine Suche und deinen Entwurf aktualisiert. Bis dahin lässt sich
+							nichts ausschließen oder einbeziehen; deine Änderungen bleiben.
 						</p>
 					) : null}
 					<p class="hint" role="status">
@@ -886,9 +878,7 @@ export function SelectionScreen() {
 											{num(it.includedPlays)} von {plays(it.plays)}
 											{it.skips > 0 ? `, ${num(it.includedSkips)} von ${num(it.skips)} Skips` : ""}
 											{it.neutral > 0 ? `, ${num(it.neutral)} ohne Wirkung` : ""}
-											{it.afterLive > 0
-												? `, ${num(it.afterLive)} ab Beginn der Live-Zählung (zählen nicht aus dem Import)`
-												: ""}
+											{it.afterLive > 0 ? `, ${num(it.afterLive)} nach Start der Live-Zählung` : ""}
 											{it.lastAt ? ` · zuletzt ${date(it.lastAt)}` : ""}
 											{it.rules.length > 0 ? ` · Regel: ${reasonText(it.rules, draft.rules)}` : ""}
 										</span>
@@ -997,6 +987,50 @@ export function SelectionScreen() {
 	);
 }
 
+/**
+ * How the rules work together, on request: the full precedence, the scope of
+ * a period and what never changes — the rules the selection applies
+ * (core/import-selection), said once and out of the way.
+ */
+function RulesHelp() {
+	return (
+		<details class="help">
+			<summary class="help__summary">So greifen die Regeln</summary>
+			<div class="help__body">
+				<p>
+					Die genaueste Regel entscheidet: ein Song vor einem Künstler, ein Künstler vor einem
+					Zeitraum. „Wieder einbeziehen“ holt einen Künstler aus einem ausgeschlossenen Zeitraum
+					zurück, einen Song auch aus einem ausgeschlossenen Künstler.
+				</p>
+				<p>
+					Ein Zeitraum umfasst ganze Kalendertage in deiner Zeitzone ({ZONE}), Anfang und Ende
+					eingeschlossen. Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+				</p>
+				<p>
+					Favorit-Bewertungen und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein
+					Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast —
+					importierte Wiedergaben zählen dafür nur, soweit deine Auswahl sie berücksichtigt. Wie oft
+					Favoriten kommen, regelt der Mix jeder Kassette.
+				</p>
+				<p>
+					Ab dem Start der Live-Zählung zählt nur, was true-shuffle selbst beobachtet hat — das muss
+					nicht jede Wiedergabe sein. Wiedergaben unter 30 Sekunden ohne Skip und übersprungene
+					erste Songs nach einem Start sind gespeichert und sichtbar, zählen aber für nichts.
+				</p>
+				<p>
+					Songs, die nur als Summe oder nur teilweise einzeln gespeichert sind, erreichen Zeitraum-
+					und Künstlerregeln nicht: sie zählen ganz oder gar nicht. Für eine genaue Auswahl die
+					Dateien noch einmal importieren.
+				</p>
+				<p>
+					Bewertungen und spätere Live-Wiedergaben zählen immer weiter. Nichts ändert sich, bevor du
+					„Auswahl übernehmen“ tippst.
+				</p>
+			</div>
+		</details>
+	);
+}
+
 function PlaylistCountsSection() {
 	const [v, setV] = useState<PlaylistCountsView | null>(null);
 	const [err, setErr] = useState<string | null>(null);
@@ -1028,9 +1062,7 @@ function PlaylistCountsSection() {
 	return (
 		<Section title="In deinen Playlists" id="sel-playlists">
 			<p class="section__lead">
-				Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt
-				einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl
-				oben, und es ändert keine Gewichtung.
+				In wie vielen deiner eigenen Playlists ein Song steht. Ändert keine Gewichtung.
 			</p>
 			{err ? (
 				<p class="notice notice--error" role="alert">
@@ -1086,10 +1118,20 @@ function PlaylistCountsSection() {
 			>
 				{v?.state === "running" ? "Zählt …" : v?.state === "never" ? "Jetzt zählen" : "Neu zählen"}
 			</button>
-			<p class="hint">
-				Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen
-				Wartezeiten, wenn Spotify bremst.
-			</p>
+			<p class="hint">Liest deine Playlists bei Spotify; das kann dauern.</p>
+			<details class="help">
+				<summary class="help__summary">Was gezählt wird</summary>
+				<div class="help__body">
+					<p>
+						Jede deiner eigenen Playlists zählt einmal. Playlists von true-shuffle und von anderen
+						(gefolgt oder gemeinsam) zählen nicht. Die Zahlen hängen nicht von der Auswahl oben ab.
+					</p>
+					<p>
+						Gelesen werden deine Playlist-Liste und jede geänderte eigene Playlist — mit den
+						üblichen Wartezeiten, wenn Spotify bremst.
+					</p>
+				</div>
+			</details>
 			{v && v.top.length > 0 ? (
 				<ul class="list selection__items">
 					{v.top.map((t) => (

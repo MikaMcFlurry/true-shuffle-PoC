@@ -141,7 +141,8 @@ it("timeout, then the same decision refused twice (429, 400), several looks: unc
 	expect(posts).toHaveLength(3);
 });
 
-it("„Nie wieder“ on the song playing, retry refused, original arrives: exactly one skip", async () => {
+// CTO-04 (2026-10-15): the Verlauf rates only; before, this said "exactly one skip".
+it("„Nie wieder“ on the song playing, retry refused, original arrives: stored once, never a skip", async () => {
 	await h.hub.play(h.stationIds[0]!);
 	await h.listen(MINUTE_MS);
 	await h.hub.state({ live: true });
@@ -156,12 +157,13 @@ it("„Nie wieder“ on the song playing, retry refused, original arrives: exact
 	expect(m.shown(t).s).toMatchObject({ phase: "unclear", intent: { mayStillArrive: true } });
 	expect(nexts()).toBe(skips);
 	const r = await release();
-	expect(r).toMatchObject({ kind: "done", receipt: { value: -1, skip: "skipped" } });
-	expect(nexts()).toBe(skips + 1);
+	expect(r).toMatchObject({ kind: "done", receipt: { value: -1, skip: "none" } });
+	expect(nexts()).toBe(skips);
 	m.recheck(t);
 	await settle();
 	expect(m.shown(t).s?.phase).toBe("saved");
-	expect(nexts()).toBe(skips + 1);
+	expect(nexts()).toBe(skips);
+	expect(h.fake.current()).toBe(t.id);
 	expect(posts).toHaveLength(2);
 });
 

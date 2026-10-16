@@ -702,7 +702,13 @@ test("a retest asks once and sends the answer", async ({ page }) => {
 	await expect(box.getByRole("status")).toHaveText(
 		"Danke. Der Song kommt wieder wie jeder andere.",
 	);
-	expect(answers).toEqual([["/api/tracks/track-0/retest", { keep: true }]]);
+	// Since 2026-10-15 (CTO playback boundary) the answer also names the occurrence it was given on.
+	expect(answers).toEqual([
+		[
+			"/api/tracks/track-0/retest",
+			{ keep: true, expected: { sessionId: "session-a", entryId: "entry-0" } },
+		],
+	]);
 	expect(model.requests).not.toContain("/api/tracks/track-0/thumb");
 	expect(
 		await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),

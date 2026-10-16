@@ -2,26 +2,27 @@
 
 Baseline: `a858098dc278492870ad04699e9d5c33cb1c43a0` (held feature branch
 `claude/history-personalization-playlist-counts`, Draft PR 30). This change
-adds a UI option, an additive rating-with-receipt contract and its guarded
-undo. No migration, schema, binding, Durable Object identity, auth, ingest,
+adds ratings in every Verlauf row, an additive rating-with-receipt contract
+and its guarded undo. No migration, schema, binding, Durable Object identity, auth, ingest,
 cutoff or weighting change. Audio stays BLOCKED: no preview source, audio
 fetch, embed or SDK path exists in this change.
 
-## HUI-01 — the option
+## HUI-01 — always there (owner correction 2026-10-14)
 
-- Mehr → App → „Bewertungen im Verlauf direkt anzeigen“ (a switch).
-- Stored in `localStorage` under `ts-history-ratings:<Spotify account id>` =
-  `"on"`; anything else (missing, another value, another account's key,
-  unreadable storage) means **off**. Per device/browser and per account; Siri,
-  other devices and the server are not touched. If the browser keeps no
-  settings, the switch works until reload and says so.
-- Off: the Verlauf renders exactly as before (whole-row `RateHit` opening the
-  rating sheet, `ThumbMark`). Switching or viewing writes nothing; stored
-  ratings stay and show in either mode.
+- Every Verlauf row shows „Favorit“ (heart, as on the deck) and „Nie wieder“
+  (thumb down), always. There is no option: the former switch under
+  Mehr → App („Bewertungen im Verlauf direkt anzeigen“, default off, kept per
+  device in `localStorage`) is removed, and nothing reads that key any more —
+  whatever a browser stored there (on, off, another value, another account's
+  key) or cannot store (blocked storage) changes nothing; the app neither
+  reads nor deletes the old values.
+- Viewing writes nothing; only a tap on a key writes, as before. The old
+  whole-row button that opened the rating sheet is gone from the Verlauf (the
+  sheet stays on the deck pages and the queue).
 
 ## HUI-02/03 — every row, one change at a time
 
-- On: every Verlauf row (all pages, outside true-shuffle, guest plays, every
+- Every Verlauf row (all pages, outside true-shuffle, guest plays, every
   occurrence of a song) gets a second line with labelled keys „Favorit“ and
   „Nie wieder“ (`aria-pressed`), at least 44 × 44 CSS px, inside a
   `fieldset` with a named legend, no overlay over the row. Tapping the set key
@@ -135,6 +136,76 @@ also in the live region; nothing is sent again by itself.
 
 ## HUI-05 — playback boundary
 
+**Changed by CTO-04 (2026-10-15): the Verlauf rates only, it never skips.**
+`rateFromHistory` no longer calls a skip (`skipForHistory` is gone); every new
+receipt says `skip:"none"`, also for „Nie wieder“ on the song playing, with no
+player read and no `next`. The hint before „Nie wieder“ says so for Spotify
+too: „Läuft gerade in Spotify: „Nie wieder“ speichert nur die Bewertung, der
+Song läuft weiter.“ Receipts stored before keep their skip outcome and are
+still shown as before (storage and API shape unchanged). The rest of this
+section describes the behaviour before 2026-10-15 and is kept as history.
+Home, the rating sheet, Siri and the remote: see the next section (the old
+`skipIfPlaying` is gone since 2026-10-15).
+
+### CTO playback boundary (2026-10-15)
+
+`POST /api/tracks/:id/thumb` and `/retest` accept an optional
+`expected: { sessionId, entryId }` — the queue occurrence shown when the
+answer was given. Old payloads stay accepted, responses keep their shape
+(`{ skipped, skipError? }`), storage is unchanged.
+
+- **With `expected`** (Home's player keys and retest, `src/client/home-answers.ts`):
+  "Nie wieder" / "Eher nicht" skips exactly that occurrence and only while it
+  is the one playing (`HubCore.skipOccurrence`). The decisive check runs inside
+  the serialized command (`playerAction("next", expected)`) after a fresh
+  player read and after any command queued before it: a late answer for an
+  earlier occurrence — also of the same song, also after an explicitly new
+  queue — skips nothing. Refused or unclear at that moment: not skipped, the
+  reason in `skipError`, shown apart from a storage failure.
+- **Without `expected`** (the rating sheet, the fallback client, a page loaded
+  before this change): **legacy behaviour change** — the rating is stored, the
+  song is never skipped from it (`{ skipped: false }`). Authority: the CTO
+  requirement that an unclear or unassignable playback never gets an
+  automatic "next" from an old rating. Before, such a "Nie wieder" skipped the
+  song if a fresh read still showed it playing.
+- **No binding, no automatic skip — on every path.** `HubCore.thumb` /
+  `retestVerdict` called with no binding (left out or `null`) only rate;
+  the former unbound `skipIfPlaying` (song id only) is removed. Siri and the
+  remote bind to the saved queue's entry playing now when that is the very
+  song they just read; otherwise they rate and say „Er läuft noch zu Ende.“
+- **Not at a later look either (station guard).** A stored "Nie wieder" is
+  song-wide and stays so: every play of the song that begins after it is
+  moved on as before. But a "Nie wieder" not attributed to the play running
+  when it is stored — a late answer for an earlier occurrence, one naming no
+  play, the rating sheet, the Verlauf — notes the song, the time and the
+  saved-queue entry then current (kv `guard_spare`, kept with the other kv
+  state, so over a restart). The guard spares a play of that song while that
+  entry is still current, or while the observed play began no later than the
+  note — also a newer play the hub has not observed yet. A note goes only
+  once a later play has begun and its entry is no longer current; never for
+  age (a long pause) or because of other ratings. An answer attributed to
+  the occurrence still current notes nothing: a skip of it that failed stays
+  the guard's to retry. Authority: CTO, 2026-10-15 („Bei nicht sicher
+  zuordenbarer Wiedergabe kein automatisches Next aus alter Bewertung“); this
+  was earlier wrongly listed as a pending owner decision.
+- **Not covered by a local check:** a player moved by someone else between the
+  final check and Spotify's "next" (Spotify's "next" names no entry).
+
+### Rating sheet (`src/client/components/rate.tsx`, 2026-10-15)
+
+A refusal keeps the sheet open on the same song with the reason, the choice
+that was not stored and „Nochmal speichern“ („Nicht gespeichert“); a lost
+answer (no connection, timeout, a broken answer — the rating may be stored
+all the same) says „Speicherung nicht bestätigt“ with the same retry; no success is
+said before the server stored it, and only a stored answer closes the sheet.
+„Abbrechen“ stays possible while it is on its way. An answer belongs to its
+own request, its own opening of the sheet and its own sign-in: one arriving
+after the sheet was closed, reopened (also for the same song) or after a
+sign-out or another account neither closes nor fills the newer sheet; a stored
+rating still shows in the lists, a refusal is said as a message naming the
+song. A key on its way cannot be pressed again for the same song. A stored
+rating whose skip failed is said as such, apart from „Nicht gespeichert“.
+
 - Before „Nie wieder“ on the song playing now the row says what it would do,
   by the controller of the confirmed session (HUI-RT-004): Spotify — „Läuft
   gerade in Spotify: „Nie wieder“ überspringt ihn, wenn er beim Speichern noch
@@ -162,12 +233,11 @@ also in the live region; nothing is sent again by itself.
 
 | Place | Actual access | Visible hint | Touch / keyboard | Evidence | Disposition |
 |---|---|---|---|---|---|
-| Verlauf, option off | whole row is a text-less button opening the sheet (click, not long-press) | page text „Tippe auf einen Song, um ihn zu bewerten.“ | tap; Tab reaches one unlabelled-looking full-row button per song (named „… bewerten“) | `src/client/screens/menu.tsx` (HistoryScreen, `RateHit`), `src/client/components/rate.tsx` `RateHit`, `.track__hit` in `app.css` | KEEP as the off mode |
-| Verlauf, option on | labelled keys per row, undo, status | keys themselves | 44 px keys, Tab/Enter/Space | this change | IMPROVE (implemented) |
-| Home queue | same full-row `RateHit` over each queue row | none in the row | tap; Tab per row | `src/client/screens/home.tsx` queue row (`RateHit t={track}`) | IMPROVE recommended (same option pattern), not implemented here |
+| Verlauf | labelled keys per row, undo, status — always (former off mode with the whole-row sheet button removed 2026-10-14) | keys themselves | 44 px keys, Tab/Enter/Space | `src/client/screens/menu.tsx` (`RatedHistoryRow`) | IMPROVE (implemented) |
+| Home queue | same full-row `RateHit` over each queue row | none in the row | tap; Tab per row | `src/client/screens/home.tsx` queue row (`RateHit t={track}`) | IMPROVE recommended (same keys as the Verlauf), not implemented here |
 | Station song list | same full-row `RateHit` | none in the row | tap; Tab per row | `src/client/screens/station.tsx` song row (`RateHit t={t}`) | IMPROVE recommended, not implemented here |
 | Player (now playing) | visible „Daumen hoch: Favorit“ / „Daumen runter“ keys | labelled keys | tap, keyboard | `src/client/screens/home.tsx` transport keys (`tkey`) | KEEP |
-| Rating sheet | two labelled keys; same vote again resets to 0; closes after the answer, also on error | state line („Ist Favorit …“) | dialog, Esc | `src/client/components/rate.tsx` `RateSheet` | IMPROVE recommended (keep open on error, no undo there); unchanged here |
+| Rating sheet | two labelled keys; same vote again resets to 0; closes only after a stored answer, stays open with the reason and „Nochmal speichern“ on error (2026-10-15) | state line („Ist Favorit …“) | dialog, Esc | `src/client/components/rate.tsx` `RateSheet` | IMPROVED 2026-10-15 (no undo there) |
 | Station fold | visible `summary` | summary text | keyboard via `details` | `src/client/screens/station.tsx` `details.fold` | KEEP |
 | Import hint after first sign-in | „Alles in diesen Dateien lief nach deiner ersten Anmeldung …“ | text | — | `src/client/screens/menu.tsx` ImportScreen | DEFER (wording, separate package) |
 
@@ -208,8 +278,10 @@ hidden function and no user study is claimed.
   unchanged, lookup `current`, storage faults at the clock/receipt (rate and undo)
   with immediate and reopened reads, restart, account isolation, bounds.
 - `e2e/history-ratings.spec.ts` (real Worker, Spotify stand-in; plays made by
-  listening): option off/default/invalid/foreign/unreadable storage/other
-  device/no writes/ratings kept; every row incl. older page, outside, guest,
+  listening): keys always there — by default, whatever the removed switch
+  stored (on/off/invalid/foreign), on another device, with blocked storage
+  (save, undo, conflict, no playback or audio) — no switch left, viewing
+  writes nothing, ratings kept over a reload; every row incl. older page, outside, guest,
   three occurrences; slow/double/keyboard, 503, offline, lost answer, lost
   answer + unreadable receipt, pruned receipt, other tab; undo none/favourite
   and conflict with the old route; timeout looked at twice, „Nochmal

@@ -347,29 +347,31 @@ describe("taking a rating from the Verlauf back", () => {
 		expect(JSON.parse(raw()).formerOff).toContain(id);
 	});
 
-	it("never takes back or repeats a skip, nor touches playback", async () => {
+	// CTO-04 (2026-10-15): the Verlauf rates only. Before, "Nie wieder" on the
+	// song playing skipped it once (HUI-05); now it never moves playback.
+	it("Nie wieder on the song playing rates only: never skips, nor when sent again or taken back", async () => {
 		const h = await onboarded();
 		await h.hub.play(h.stationIds[0]!);
 		await h.listen(MINUTE_MS);
 		await h.hub.state({ live: true });
 		const cur = h.fake.current()!;
-		const before = nexts(h);
+		const moves = transport(h);
+		const reads = h.fake.calls.filter((c) => c === "GET /v1/me/player").length;
 		const actionId = newId();
 		const r = await rate(h, cur, -1, actionId);
-		expect(r.skip).toBe("skipped");
-		expect(r.lasting.join(" ")).toMatch(/übersprungen.*bleibt so/);
-		expect(nexts(h)).toBe(before + 1);
-		const after = h.fake.current();
-		expect(after).not.toBe(cur);
-		// Sent again after a lost answer: no second skip.
+		expect(r).toMatchObject({ value: -1, skip: "none", skipError: null });
+		expect(r.skipStage).toBeUndefined();
+		expect(r.lasting.join(" ")).not.toMatch(/übersprungen/);
+		expect(thumb(h, cur)).toBe(-1);
+		expect(h.fake.current()).toBe(cur);
+		// Sent again after a lost answer: answered from the receipt, still no skip.
 		await h.hub.rateFromHistory({ actionId, trackId: cur, value: -1, basis: 0 });
-		const moves = transport(h);
 		const u = (await h.hub.undoHistoryRating(actionId)).receipt!;
 		expect(u.undo?.outcome).toBe("undone");
-		expect(u.lasting.join(" ")).toMatch(/übersprungen/);
+		expect(u.lasting.join(" ")).not.toMatch(/übersprungen/);
 		expect(transport(h)).toBe(moves);
-		expect(nexts(h)).toBe(before + 1);
-		expect(h.fake.current()).toBe(after);
+		expect(h.fake.calls.filter((c) => c === "GET /v1/me/player").length).toBe(reads);
+		expect(h.fake.current()).toBe(cur);
 	});
 
 	it("Nie wieder for a song not playing, or one the listener already left, skips nothing", async () => {
@@ -386,18 +388,19 @@ describe("taking a rating from the Verlauf back", () => {
 		expect(nexts(h)).toBe(before);
 	});
 
-	it("a refused skip is said apart from the stored rating", async () => {
+	it("without Premium (a skip would be refused) the rating is stored and no skip is tried", async () => {
 		const h = await onboarded();
 		await h.hub.play(h.stationIds[0]!);
 		await h.listen(MINUTE_MS);
 		await h.hub.state({ live: true });
 		const cur = h.fake.current()!;
 		h.fake.user().premium = false;
+		const tried = nexts(h);
 		const r = await rate(h, cur, -1);
-		expect(r.skip).toBe("failed");
-		expect(r.skipStage).toBe("next");
-		expect(r.skipError).toMatch(/Premium/);
+		expect(r).toMatchObject({ skip: "none", skipError: null });
+		expect(r.skipStage).toBeUndefined();
 		expect(thumb(h, cur)).toBe(-1);
+		expect(nexts(h)).toBe(tried);
 		expect(h.fake.current()).toBe(cur);
 	});
 });
@@ -441,15 +444,17 @@ describe("ratings from the Verlauf: whether the song still plays could not be re
 	};
 
 	for (const [why, fail] of Object.entries(unreadable))
-		it(`${why}: the rating is stored, the failed look is said apart, nothing skipped`, async () => {
+		it(`${why}: the rating is stored, nothing is read, nothing skipped (CTO-04)`, async () => {
 			const { h, cur } = await playingNow();
 			fail(h);
 			const before = nexts(h);
+			const reads = h.fake.calls.filter((c) => c === "GET /v1/me/player").length;
 			const actionId = newId();
 			const r = await rate(h, cur, -1, actionId);
 			expect(thumb(h, cur)).toBe(-1);
-			expect(r).toMatchObject({ value: -1, skip: "failed", skipStage: "read" });
-			expect(r.skipError).toBeTruthy();
+			expect(r).toMatchObject({ value: -1, skip: "none", skipError: null });
+			expect(r.skipStage).toBeUndefined();
+			expect(h.fake.calls.filter((c) => c === "GET /v1/me/player").length).toBe(reads);
 			expect(nexts(h)).toBe(before);
 			expect(h.fake.current()).toBe(cur);
 			// Sent again after a lost answer: answered from the receipt, no new look, no skip.
@@ -460,16 +465,22 @@ describe("ratings from the Verlauf: whether the song still plays could not be re
 			expect(h.hub.historyRatingReceipt(actionId).receipt).toEqual(r);
 		});
 
-	it("sent again after a stored skip: exactly one skip", async () => {
+	it("sent again and again on the song playing: stored once, never a skip (CTO-04)", async () => {
 		const { h, cur } = await playingNow();
 		const before = nexts(h);
 		const actionId = newId();
 		const r = await rate(h, cur, -1, actionId);
-		expect(r).toMatchObject({ skip: "skipped" });
+		expect(r).toMatchObject({ skip: "none" });
 		expect(r.skipStage).toBeUndefined();
+		const seq = rated(h, cur);
 		for (let i = 0; i < 3; i++)
-			await h.hub.rateFromHistory({ actionId, trackId: cur, value: -1, basis: 0 });
-		expect(nexts(h)).toBe(before + 1);
+			expect(await h.hub.rateFromHistory({ actionId, trackId: cur, value: -1, basis: 0 })).toEqual({
+				kind: "done",
+				receipt: r,
+			});
+		expect(rated(h, cur)).toBe(seq);
+		expect(nexts(h)).toBe(before);
+		expect(h.fake.current()).toBe(cur);
 	});
 
 	it("another song, or one left already: no look said as failed, nothing skipped — even when Spotify is unreadable", async () => {
@@ -702,26 +713,17 @@ describe("ratings from the Verlauf: what changed since stays", () => {
 	});
 });
 
-describe("ratings from the Verlauf: a skip held while everything else moves on (R-HUI-01)", () => {
-	it("a receipt pushed out while the skip was on its way is not brought back; the newer rating stays; one skip", async () => {
+// R-HUI-01 held the skip of a Verlauf "Nie wieder" while everything else moved
+// on. Since CTO-04 (2026-10-15) there is no skip to hold; what must still hold
+// is that a receipt pushed out is never brought back and the newer rating stays.
+describe("ratings from the Verlauf: everything else moving on (R-HUI-01, CTO-04)", () => {
+	it("a receipt pushed out by later ratings is not brought back; the newer rating stays; no skip", async () => {
 		const h = await onboarded({ tracks: 300 });
 		await h.hub.play(h.stationIds[0]!);
 		await h.listen(MINUTE_MS);
 		await h.hub.state({ live: true });
 		const cur = h.fake.current()!;
 		const others = [...h.fake.tracks.keys()].filter((t) => t !== cur).slice(0, 101);
-		const orig = h.fake.handle.bind(h.fake);
-		let held = false;
-		h.fake.handle = async (req: Request) => {
-			if (!held && req.method === "POST" && new URL(req.url).pathname.endsWith("/me/player/next")) {
-				held = true;
-				// While the provider holds the skip: 101 ratings push the receipt out,
-				// and the song itself is rated again elsewhere (Siri: Favorit).
-				for (const o of others) await rate(h, o, 1);
-				await h.hub.thumb(cur, 1);
-			}
-			return orig(req);
-		};
 		const before = nexts(h);
 		const actionId = newId();
 		const answer = await h.hub.rateFromHistory({
@@ -730,10 +732,12 @@ describe("ratings from the Verlauf: a skip held while everything else moves on (
 			value: -1,
 			basis: rated(h, cur),
 		});
-		h.fake.handle = orig;
-		expect(held).toBe(true);
-		expect(nexts(h)).toBe(before + 1);
-		expect(answer.kind === "done" && answer.receipt.superseded).toBe(true);
+		expect(answer).toMatchObject({ kind: "done", receipt: { skip: "none" } });
+		// Afterwards: 101 ratings push the receipt out, and the song itself is
+		// rated again elsewhere (Siri: Favorit).
+		for (const o of others) await rate(h, o, 1);
+		await h.hub.thumb(cur, 1);
+		expect(nexts(h)).toBe(before);
 		const kept = JSON.parse(
 			h.sql.first<{ v: string }>(`SELECT v FROM kv WHERE k = 'rating_receipts'`)!.v,
 		) as {
@@ -746,7 +750,7 @@ describe("ratings from the Verlauf: a skip held while everything else moves on (
 		expect((await h.hub.undoHistoryRating(actionId)).receipt).toBeNull();
 		expect(thumb(h, cur)).toBe(1);
 		expect(rated(h, cur)).toBe(seq);
-		expect(nexts(h)).toBe(before + 1);
+		expect(nexts(h)).toBe(before);
 	});
 
 	it("a receipt whose song the rating clock forgot can no longer be taken back: a conflict, nothing changes", async () => {

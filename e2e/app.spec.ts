@@ -768,9 +768,7 @@ test.describe("a listener's day", () => {
 		await page.getByRole("button", { name: "Ausschließen: Probeband Ost" }).click();
 		await expect(page.getByText("Künstler „Probeband Ost“ ausgeschlossen")).toBeVisible();
 		await expect(
-			page
-				.getByRole("alert")
-				.filter({ hasText: "Vorschau nicht möglich: Gerade nicht erreichbar." }),
+			page.getByRole("alert").filter({ hasText: "Zählen nicht möglich: Gerade nicht erreichbar." }),
 		).toBeVisible();
 		await expect(page.locator(".notice", { hasText: "Mit deinem Entwurf:" })).toHaveCount(0);
 		await expect(page.getByRole("button", { name: "Auswahl übernehmen" })).toBeDisabled();

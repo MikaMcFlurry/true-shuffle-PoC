@@ -1,9 +1,9 @@
 /**
- * Ratings right in the Verlauf (see docs/HISTORY_RATINGS.md): an option of
- * this device, for one Spotify account, off unless switched on — and, while
- * on, one change at a time per song, said honestly: being stored, stored,
- * not stored (and why), unclear after a lost answer, rated elsewhere since,
- * taken back. Nothing here changes a rating without a deliberate tap.
+ * Ratings right in the Verlauf (see docs/HISTORY_RATINGS.md): every row has
+ * its keys, always — no option, nothing kept on the device. One change at a
+ * time per song, said honestly: being stored, stored, not stored (and why),
+ * unclear after a lost answer, rated elsewhere since, taken back. Nothing here
+ * changes a rating without a deliberate tap.
  *
  * A receipt proves that its own action happened — not that its value holds
  * now. What holds now comes only from what can tell it: a receipt that is
@@ -20,31 +20,6 @@ import { store } from "./store";
 type Value = -1 | 0 | 1;
 /** A rating given elsewhere in this app (sheet, player keys), as the store holds it. */
 type Override = ReturnType<typeof store.thumbOverride>;
-
-// ---------------------------------------------------------------------------
-// The option: this device, this account; missing or unreadable means off.
-
-const KEY = "ts-history-ratings:";
-
-export function historyRatingsOn(account: string | null | undefined): boolean {
-	if (!account) return false;
-	try {
-		return localStorage.getItem(KEY + account) === "on";
-	} catch {
-		return false;
-	}
-}
-
-/** Switched on or off for this account on this device; true when it is kept. */
-export function setHistoryRatings(account: string, on: boolean): boolean {
-	try {
-		if (on) localStorage.setItem(KEY + account, "on");
-		else localStorage.removeItem(KEY + account);
-		return true;
-	} catch {
-		return false;
-	}
-}
 
 // ---------------------------------------------------------------------------
 // Per song: what is known, and the one change on its way.

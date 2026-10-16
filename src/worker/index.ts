@@ -11,6 +11,7 @@ import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
 import type { RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
 import { type Env, endpoints } from "./env";
+import type { Occurrence } from "./hub/hub";
 import { Keys, randomToken, sha256b64url } from "./lib/crypto";
 import { readRemoteKey, remoteKeyFor } from "./lib/remote-key";
 import { RequestBudget, SpotifyClient, SpotifyError, type SpotifyTokens } from "./spotify/client";
@@ -469,10 +470,27 @@ app.get("/api/spotify/diagnostics", (c) => unwrap(c, c.var.hub.spotifyDiagnostic
 
 app.get("/api/devices", (c) => unwrap(c, c.var.hub.devices(c.var.epoch)));
 
+/**
+ * The occurrence an answer from Home was given on (optional, CTO playback
+ * boundary 2026-10-15): with it "Nie wieder" / "Eher nicht" may skip exactly
+ * that one; without it the answer only rates. A malformed one is refused.
+ */
+function occurrence(v: unknown): Occurrence | null | "bad" {
+	if (v === undefined || v === null) return null;
+	const o = v as { sessionId?: unknown; entryId?: unknown };
+	const ok = (s: unknown) => typeof s === "string" && s.length > 0 && s.length <= 200;
+	return typeof v === "object" && ok(o.sessionId) && ok(o.entryId)
+		? { sessionId: o.sessionId as string, entryId: o.entryId as string }
+		: "bad";
+}
+
 app.post("/api/tracks/:id/thumb", async (c) => {
-	const b = await body<{ value?: number }>(c);
+	const b = await body<{ value?: number; expected?: unknown }>(c);
 	const v = b.value === 1 ? 1 : b.value === -1 ? -1 : 0;
-	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v));
+	const bound = occurrence(b.expected);
+	if (bound === "bad")
+		return c.json({ error: { code: "bad_request", message: "Ungültige Wiedergabe-Angabe" } }, 400);
+	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v, bound));
 });
 
 // A rating from the Verlauf with its receipt: asked again by the page's own
@@ -499,10 +517,13 @@ app.post("/api/history/ratings/:id/undo", (c) =>
 
 // The answer to a retest ("Nachprüfung"): keep true = "Gern wieder".
 app.post("/api/tracks/:id/retest", async (c) => {
-	const b = await body<{ keep?: unknown }>(c);
+	const b = await body<{ keep?: unknown; expected?: unknown }>(c);
 	if (typeof b.keep !== "boolean")
 		return c.json({ error: { code: "bad_verdict", message: "Ungültige Antwort" } }, 400);
-	return unwrap(c, c.var.hub.retestVerdict(c.var.epoch, c.req.param("id"), b.keep));
+	const bound = occurrence(b.expected);
+	if (bound === "bad")
+		return c.json({ error: { code: "bad_request", message: "Ungültige Wiedergabe-Angabe" } }, 400);
+	return unwrap(c, c.var.hub.retestVerdict(c.var.epoch, c.req.param("id"), b.keep, bound));
 });
 
 async function remoteView(

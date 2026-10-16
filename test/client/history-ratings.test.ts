@@ -510,10 +510,11 @@ describe("HUI-RT-003/004/005: what a row says, and the playback hint beside it",
 			...over,
 		}) as never;
 
-	it("Spotify: a skip is said; a Home Assistant player: no skip is promised", () => {
-		expect(txt.playbackHint(0, null, { native: false })).toMatch(
-			/Spotify: „Nie wieder“ überspringt ihn/,
-		);
+	// CTO-04 (2026-10-15): the Verlauf rates only, for Spotify too (before: "überspringt ihn").
+	it("Spotify and a Home Assistant player: 'Nie wieder' only rates, no skip is promised", () => {
+		const spotify = txt.playbackHint(0, null, { native: false });
+		expect(spotify).toMatch(/^Läuft gerade in Spotify: „Nie wieder“ speichert nur die Bewertung/);
+		expect(spotify).not.toMatch(/überspring/);
 		const native = txt.playbackHint(0, null, { native: true });
 		expect(native).toMatch(/Home Assistant/);
 		expect(native).toMatch(/nicht übersprungen/);
@@ -526,7 +527,7 @@ describe("HUI-RT-003/004/005: what a row says, and the playback hint beside it",
 		for (const phase of ["failed", "changed", "undo-failed", "unclear", "undo-unclear", "saved"])
 			expect(
 				txt.playbackHint(1, s({ phase, error: "Synthetic bad request" }), { native: false }),
-			).toMatch(/überspringt ihn/);
+			).toMatch(/speichert nur die Bewertung/);
 		for (const phase of ["saving", "checking", "undoing"])
 			expect(txt.playbackHint(1, s({ phase }), { native: false })).toBe("");
 		// The status line itself carries no hint: the two are apart.

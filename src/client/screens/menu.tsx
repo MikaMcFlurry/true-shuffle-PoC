@@ -2,6 +2,7 @@ import {
 	ChartColumn,
 	ChevronRight,
 	FileUp,
+	Heart,
 	History,
 	House,
 	Info,
@@ -10,7 +11,6 @@ import {
 	type LucideIcon,
 	Speaker,
 	ThumbsDown,
-	ThumbsUp,
 	Trash2,
 	Watch,
 } from "lucide-preact";
@@ -43,13 +43,11 @@ import {
 import { DAY_MS, emptyMemory } from "../../core/types";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
-import { RateHit, ThumbMark } from "../components/rate";
 import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 import {
-	historyRatingsOn,
 	lastSaid,
 	rate,
 	busy as ratingBusy,
@@ -58,7 +56,6 @@ import {
 	ratingsGeneration,
 	recheck,
 	recheckUndo,
-	setHistoryRatings,
 	startListRead,
 	takeListed,
 	undo as undoRating,
@@ -158,7 +155,6 @@ function until(at: number): string {
 
 export function MenuScreen({ state }: { state: AppState }) {
 	const [illum, setIllum] = useState<Illumination>(getIllumination());
-	const [ratingsOn, setRatingsOn] = useState(() => historyRatingsOn(state.profile.id));
 	const [hours, setHours] = useState(6);
 	const [confirm, setConfirm] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -337,37 +333,6 @@ export function MenuScreen({ state }: { state: AppState }) {
 						<p class="row__sub">Automatisch folgt deinem Gerät. Gilt nur auf diesem Gerät.</p>
 					</li>
 					<li>
-						<label class="row mehr-switch">
-							<span class="row__main">
-								<span class="row__title">Bewertungen im Verlauf direkt anzeigen</span>
-								<span class="row__sub">
-									{ratingsOn
-										? "An: Jeder Song im Verlauf hat „Favorit“ und „Nie wieder“ zum direkten Antippen, mit Rückgängig. "
-										: "Aus: Im Verlauf öffnet ein Tipp auf einen Song die Bewertung, wie bisher. "}
-									Gilt nur auf diesem Gerät und für dieses Spotify-Konto. Ausschalten ändert keine
-									Bewertung.
-								</span>
-							</span>
-							<input
-								type="checkbox"
-								role="switch"
-								class="switch"
-								aria-checked={ratingsOn}
-								checked={ratingsOn}
-								onChange={(e) => {
-									const on = e.currentTarget.checked;
-									if (!setHistoryRatings(state.profile.id, on))
-										store.say(
-											"Dieser Browser speichert die Einstellung nicht (privates Fenster?). Sie gilt nur bis zum Neuladen.",
-											"warn",
-											6000,
-										);
-									setRatingsOn(on);
-								}}
-							/>
-						</label>
-					</li>
-					<li>
 						<SpotifyStatus />
 					</li>
 					<LinkRow href="/info" icon={Info} title="Über true-shuffle">
@@ -447,7 +412,6 @@ export function HistoryScreen() {
 	// controller also follows signing out and in while this page is closed).
 	if (ready) ratingsFor(ready.profile.id, true);
 	useHistoryRatings();
-	const ratings = historyRatingsOn(account);
 	// The song playing now, as the app last saw it, and whether a Home Assistant
 	// player plays it (never skipped from here: see docs/HISTORY_RATINGS.md).
 	const playing = ready?.nowPlaying?.isPlaying
@@ -524,17 +488,11 @@ export function HistoryScreen() {
 					</a>
 				}
 				noBack
-				sub={`Jeder Song, den du mindestens 30 Sekunden gehört hast, auch außerhalb von true-shuffle. Bei jedem Song steht, wie oft du ihn insgesamt gehört hast, und bei Songs von deinen Kassetten auch, ob er aus der Kassette kam oder eine Empfehlung war, sobald das eindeutig ist. ${
-					ratings
-						? "Bewerte jeden Song direkt mit „Favorit“ oder „Nie wieder“. Ausschalten kannst du das unter Mehr → App."
-						: "Tippe auf einen Song, um ihn zu bewerten."
-				}`}
+				sub="Jeder Song ab 30 Sekunden, auch außerhalb von true-shuffle. Mit „Favorit“ oder „Nie wieder“ bewertest du ihn direkt."
 			/>
-			{ratings ? (
-				<p class="sr-only" role="status" aria-live="polite">
-					{lastSaid()}
-				</p>
-			) : null}
+			<p class="sr-only" role="status" aria-live="polite">
+				{lastSaid()}
+			</p>
 			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
 			{items && items.length === 0 ? (
 				<p class="empty-state">
@@ -545,47 +503,13 @@ export function HistoryScreen() {
 			{groups.map(([d, list], gi) => (
 				<Section key={d} title={d} id={`verlauf-${gi}`}>
 					<ol class="list hist">
-						{list.map((t) =>
-							ratings ? (
-								<RatedHistoryRow
-									key={`${t.id}-${t.playedAt}`}
-									t={t}
-									playing={playing?.id === t.id ? playing : null}
-								/>
-							) : (
-								<li key={`${t.id}-${t.playedAt}`} class="hist-row track--rate">
-									<time class="hist-row__time" dateTime={new Date(t.playedAt).toISOString()}>
-										{clock(t.playedAt)}
-									</time>
-									<Cover src={t.imageUrl} />
-									<span class="hist-row__main">
-										<span class="hist-row__title">{t.name}</span>
-										<span class="hist-row__sub">{t.artists}</span>
-										<span class="hist-row__station">
-											{t.stationName ? `Kassette ${t.stationName}` : "außerhalb von true-shuffle"}
-										</span>
-										{t.ignored ? null : (
-											<SongTags
-												kind={t.facts?.kind ?? null}
-												facts={factsOf(t)}
-												thumb={store.thumbOf(t)}
-												history
-												class="tags--row"
-											/>
-										)}
-									</span>
-									<span class="hist-row__marks">
-										<ThumbMark t={t} />
-										{t.ignored ? (
-											<span class="tag" title="Lief im Gast-Modus und zählt nicht">
-												Gast
-											</span>
-										) : null}
-									</span>
-									<RateHit t={t} />
-								</li>
-							),
-						)}
+						{list.map((t) => (
+							<RatedHistoryRow
+								key={`${t.id}-${t.playedAt}`}
+								t={t}
+								playing={playing?.id === t.id ? playing : null}
+							/>
+						))}
 					</ol>
 				</Section>
 			))}
@@ -604,9 +528,9 @@ export function HistoryScreen() {
 }
 
 /**
- * A Verlauf row with its rating right there (option "Bewertungen im Verlauf
- * direkt anzeigen"): "Favorit" and "Nie wieder" say whether they are set and
- * set or clear it; one change at a time per song, in every row of that song.
+ * A Verlauf row with its rating right there, always: "Favorit" (the heart, as
+ * on the deck) and "Nie wieder" say whether they are set and set or clear it;
+ * one change at a time per song, in every row of that song.
  */
 function RatedHistoryRow({ t, playing }: { t: HistoryEntry; playing: { native: boolean } | null }) {
 	const { value, s } = ratingShown(t);
@@ -667,7 +591,7 @@ function RatedHistoryRow({ t, playing }: { t: HistoryEntry; playing: { native: b
 					aria-disabled={working}
 					onClick={() => tap(value === 1 ? 0 : 1)}
 				>
-					<ThumbsUp size={18} aria-hidden="true" />
+					<Heart size={18} aria-hidden="true" />
 					Favorit
 				</button>
 				<button

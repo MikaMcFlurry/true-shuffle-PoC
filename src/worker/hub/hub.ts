@@ -767,6 +767,23 @@ interface PlaylistCountsState {
 	offset?: number;
 }
 
+/**
+ * One occurrence of a song in a saved queue: what an answer given on Home is
+ * about (CTO playback boundary, 2026-10-15). See `thumb` and `skipOccurrence`.
+ */
+export interface Occurrence {
+	sessionId: string;
+	entryId: string;
+}
+
+/** A note of spareRunningPlay: the song, when, and the saved queue entry then playing it. */
+interface SpareNote {
+	id: TrackId;
+	at: number;
+	sessionId?: string;
+	entryId?: string;
+}
+
 export interface SavedSession {
 	sessionId: string;
 	stationId: number;
@@ -3235,6 +3252,19 @@ export class HubCore {
 	 * within its first 30 s (after that its play counts anyway). A song the
 	 * listener picks inside the current version is left alone.
 	 */
+	/**
+	 * The play of this song running now is the one an unattributed "Nie
+	 * wieder" of it found running (see spareRunningPlay): it runs out. That is
+	 * the saved queue's entry noted then, still current; or, without one, a play
+	 * that began no later than the note. When that play's start is not known,
+	 * it is not moved either ("bei nicht sicher zuordenbarer Wiedergabe kein
+	 * automatisches Next"). A play begun after the note is a future one: the
+	 * note has done its part and goes.
+	 */
+	private spared(trackId: TrackId): boolean {
+		return this.spareNotes().some((n) => n.id === trackId);
+	}
+
 	private async guardStation(
 		client: SpotifyClient,
 		obs: PlayerObservation | null,
@@ -3247,13 +3277,16 @@ export class HubCore {
 		const st = this.stationRow(at.st);
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck) return;
-		if (this.savedSession(st.id) && this.memory(obs.trackId).thumb !== -1) return;
 		const m = this.memory(obs.trackId);
-		if (m.thumb !== -1 && obs.progressMs >= 30_000) return;
+		// Turned down — unless the rating came while this very play already ran
+		// and was not given on it (see spareRunningPlay): that play runs out.
+		const rejected = m.thumb === -1 && !this.spared(obs.trackId);
+		if (this.savedSession(st.id) && !rejected) return;
+		if (!rejected && obs.progressMs >= 30_000) return;
 		const heardToday = m.lastPlayedAt !== null && this.now() - m.lastPlayedAt < RECENT_GUARD_MS;
 		let to: number | null = null;
 		let why: string;
-		if (m.thumb === -1) why = "abgelehnt";
+		if (rejected) why = "abgelehnt";
 		else if (heardToday && at.index === null && formerNow(deck, this.now()).has(obs.trackId))
 			why = "heute schon gehört";
 		else if (
@@ -5914,19 +5947,32 @@ export class HubCore {
 	// =======================================================================
 
 	/**
-	 * `playing` says whether the song plays right now, when the caller just
-	 * read the player; otherwise the last snapshot decides.
+	 * `bound` (CTO playback boundary, 2026-10-15): an occurrence — "Nie wieder"
+	 * skips exactly that one, if it is still the one playing (`skipOccurrence`).
+	 * `null` or left out — an answer that names none (an HTTP call without
+	 * `expected`, the rating sheet, an old direct call): it only rates and never
+	 * skips, since a late one could reach a newer play ("kein automatisches Next
+	 * aus alter Bewertung"). Not attributed to the play running now, a stored
+	 * "Nie wieder" spares that play from the station guard too (`spareRunningPlay`);
+	 * every play that begins after it is moved on as before. `playing` is no
+	 * longer read (kept so old callers compile).
 	 */
 	async thumb(
 		trackId: TrackId,
 		value: -1 | 0 | 1,
 		playing?: boolean,
+		bound?: Occurrence | null,
 	): Promise<{ skipped: boolean; skipError?: string }> {
 		let skipped = false;
 		let skipError: string | undefined;
 		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
-		this.applyThumb(trackId, value);
-		if (value === -1) ({ skipped, skipError } = await this.skipIfPlaying(trackId, playing));
+		// The rating and the note sparing a play it is not attributed to commit
+		// together, before any wait: a failure stores neither (spareRunningPlay).
+		this.ratingTransaction(() => {
+			this.applyThumb(trackId, value);
+			if (value === -1) this.spareRunningPlay(trackId, bound);
+		});
+		if (value === -1) ({ skipped, skipError } = await this.skipAnswered(trackId, playing, bound));
 		this.log(
 			"info",
 			"thumb",
@@ -6142,8 +6188,9 @@ export class HubCore {
 	 * receipt and nothing is stored or skipped twice. `basis` is the song's
 	 * rating write number the page knows: rated again since (another tab,
 	 * Siri, the sheet), nothing is stored and the rating now is answered.
-	 * "Nie wieder" skips the song when it plays right now, as in the sheet; the
-	 * skip comes after the rating is stored, and its result is kept apart.
+	 * The Verlauf rates only: "Nie wieder" never skips the song playing
+	 * (CTO-04, 2026-10-15); the receipt says so ("none"). Receipts stored
+	 * before still carry their skip outcome.
 	 */
 	async rateFromHistory(input: {
 		actionId?: unknown;
@@ -6189,32 +6236,20 @@ export class HubCore {
 				prev: effects.prev,
 				at: effects.at,
 				seq: this.ratedSeq(trackId),
-				skip: value === -1 ? "pending" : "none",
+				skip: "none",
 				skipError: null,
 				superseded: false,
 				undo: null,
 				effects,
 			};
 			this.saveReceipt(receipt);
+			// Rates only (CTO-04): never attributed to a play, so a play of the song
+			// already running is spared from the station guard as well — noted in
+			// the same transaction as the rating and its receipt. A receipt sent
+			// again (above) returns before this and notes nothing anew.
+			if (value === -1) this.spareRunningPlay(trackId, null);
 			return receipt;
 		});
-		if (value === -1) {
-			const r = await this.skipForHistory(trackId);
-			rc.skip = r.skip;
-			rc.skipError = r.error;
-			if (r.stage) rc.skipStage = r.stage;
-			// Read again: the receipts may have changed while the player answered.
-			// Only one still kept gets the skip's outcome, in place; one pushed out
-			// meanwhile is not brought back (with an authority it no longer has).
-			const receipts = this.ratingReceipts();
-			const kept = receipts.find((x) => x.id === actionId);
-			if (kept) {
-				kept.skip = rc.skip;
-				kept.skipError = rc.skipError;
-				if (rc.skipStage) kept.skipStage = rc.skipStage;
-				this.kvSet("rating_receipts", receipts);
-			}
-		}
 		this.log(
 			"info",
 			"thumb",
@@ -6394,82 +6429,118 @@ export class HubCore {
 		return { receipt: this.receiptView(done) };
 	}
 
-	/**
-	 * Skip the song only while it plays. The stored picture of the player can
-	 * be a minute old: when it says so, a fresh look confirms it, or a song the
-	 * listener already left would take the next one with it.
-	 */
-	private async skipIfPlaying(
+	/** The skip an answer may cause, by what it is bound to (see `thumb`). */
+	private skipAnswered(
 		trackId: TrackId,
-		playing?: boolean,
+		playing: boolean | undefined,
+		bound: Occurrence | null | undefined,
 	): Promise<{ skipped: boolean; skipError?: string }> {
-		const native = this.savedSession()?.controller === "native";
-		let now = native ? false : playing;
-		if (!native && now === undefined) {
-			const snap = this.kvGet<PlayerSnapshot>("player");
-			if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) {
-				try {
-					const st = await this.client(new RequestBudget(3)).player();
-					now = !!st?.is_playing && st.item?.id === trackId;
-				} catch {
-					now = false;
-				}
-			}
-		}
-		if (!now) return { skipped: false };
-		const r = await this.playerAction("next");
-		// Our move: a look that still shows the song (Spotify catches up a
-		// moment later) must not skip it a second time. A skip that failed
-		// is left to the station guard to try again.
-		if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
-		return r.ok ? { skipped: true } : { skipped: false, skipError: r.error?.message };
+		void playing;
+		if (!bound) return Promise.resolve({ skipped: false });
+		return this.skipOccurrence(trackId, bound);
 	}
 
 	/**
-	 * The skip of "Nie wieder" from the Verlauf: the same rule as `skipIfPlaying`
-	 * (only the song playing now, a fresh look when the stored picture says so,
-	 * never on a Home Assistant player, one attempt), but every outcome is said:
-	 * a fresh look that fails is a failed skip at stage "read" with its reason —
-	 * nothing skipped, nothing tried again — instead of passing for "not
-	 * playing"; a refused skip is stage "next". The sheet, Siri and the remote
-	 * keep `skipIfPlaying` as it is.
+	 * A "Nie wieder" not attributed to the play running now (an earlier play's
+	 * answer arriving late, or one naming no play) must not move a play of the
+	 * song already running on — not at once and not at a later look of the
+	 * station guard, also when the hub has not observed that play yet. Noted
+	 * is when it was stored (`guard_spare`: song and time, kept with the other
+	 * kv state, so it holds over a restart): the guard spares a play of the song
+	 * that began no later than that (`spared`); a play that begins after it is
+	 * moved on as before, and the note goes. Attributed — the answer named
+	 * exactly the occurrence still current in the saved queue — nothing is
+	 * noted: a skip of that play that failed stays the guard's to retry.
 	 */
-	private async skipForHistory(trackId: TrackId): Promise<{
-		skip: "none" | "skipped" | "failed";
-		error: string | null;
-		stage?: "read" | "next";
-	}> {
-		if (this.savedSession()?.controller === "native") return { skip: "none", error: null };
-		const snap = this.kvGet<PlayerSnapshot>("player");
-		if (!snap?.obs?.isPlaying || snap.obs.trackId !== trackId) return { skip: "none", error: null };
-		let now: boolean;
-		try {
-			const st = await this.client(new RequestBudget(3)).player();
-			now = !!st?.is_playing && st.item?.id === trackId;
-		} catch (err) {
-			return {
-				skip: "failed",
-				stage: "read",
-				error: err instanceof Error && err.message ? err.message : "Spotify war nicht erreichbar.",
-			};
-		}
-		if (!now) return { skip: "none", error: null };
-		const r = await this.playerAction("next");
+	private spareRunningPlay(trackId: TrackId, bound: Occurrence | null | undefined): void {
+		const s = this.savedSession();
+		const attributed =
+			!!bound &&
+			!!s &&
+			s.sessionId === bound.sessionId &&
+			s.entryIds[s.currentIndex] === bound.entryId;
+		if (attributed) return;
+		const now = this.now();
+		// The saved queue's entry playing now, if it is this song: that occurrence is
+		// spared while it stays current, even before the hub has observed it playing.
+		const row = s ? this.stationRow(s.stationId) : null;
+		const deck = row ? this.deckOf(row) : null;
+		const entry =
+			s && deck?.items[s.currentIndex]?.id === trackId
+				? { sessionId: s.sessionId, entryId: s.entryIds[s.currentIndex]! }
+				: {};
+		const notes = this.spareNotes().filter((n) => n.id !== trackId);
+		this.kvSet("guard_spare", [...notes, { id: trackId, at: now, ...entry }]);
+	}
+
+	/**
+	 * The notes of `spareRunningPlay` whose play may still run — never dropped
+	 * for age (a pause, a restart) or for other ratings: a note goes only once a
+	 * play has begun after it and its queue entry is no longer current, which
+	 * proves the play it protects is over. At most the ratings given during one
+	 * play stay noted.
+	 */
+	private spareNotes(): SpareNote[] {
+		const v = this.kvGet<unknown>("guard_spare");
+		if (!Array.isArray(v)) return [];
+		const notes = v.filter(
+			(n): n is SpareNote => !!n && typeof n.id === "string" && typeof n.at === "number",
+		);
+		const s = this.savedSession();
+		const heard = this.kvGet<HeardSong>("heard_song");
+		const live = notes.filter(
+			(n) =>
+				(!!n.entryId &&
+					!!s &&
+					s.sessionId === n.sessionId &&
+					s.entryIds[s.currentIndex] === n.entryId) ||
+				!heard ||
+				heard.start <= n.at,
+		);
+		if (live.length !== v.length) this.kvSet("guard_spare", live);
+		return live;
+	}
+
+	/**
+	 * Skips exactly the occurrence an answer was given on, and only while it is
+	 * the one playing: the same saved session, its current entry, this song,
+	 * not a Home Assistant player. The decisive check runs in the serialized
+	 * command (`playerAction` with `expected`), after a fresh read of the player
+	 * and after any command queued before it; a newer occurrence — even of the
+	 * same song — is never skipped from here. Not playing any more: nothing to
+	 * skip and nothing said. Refused or unclear at the moment of the skip: not
+	 * skipped, and why. A player moved by someone else between that final check
+	 * and Spotify's "next" cannot be excluded: Spotify's "next" names no entry.
+	 */
+	private async skipOccurrence(
+		trackId: TrackId,
+		o: Occurrence,
+	): Promise<{ skipped: boolean; skipError?: string }> {
+		const s = this.savedSession();
+		if (!s || s.controller === "native" || s.sessionId !== o.sessionId) return { skipped: false };
+		const st = this.stationRow(s.stationId);
+		const deck = st ? this.deckOf(st) : null;
+		const at = s.entryIds.indexOf(o.entryId);
+		if (at < 0 || at !== s.currentIndex || deck?.items[at]?.id !== trackId)
+			return { skipped: false };
+		const r = await this.playerAction("next", o);
 		if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
 		return r.ok
-			? { skip: "skipped", error: null }
-			: { skip: "failed", stage: "next", error: r.error?.message ?? "Spotify hat abgelehnt." };
+			? { skipped: true }
+			: { skipped: false, skipError: r.error?.message ?? "Spotify hat abgelehnt." };
 	}
 
 	/**
 	 * The listener's answer to a retest ("Nachprüfung", see core/memory
 	 * skipsWeigh): "Gern wieder" (keep) ends what the early skips say; "Eher
-	 * nicht" counts as one more skip and moves on to the next song.
+	 * nicht" counts as one more skip and moves on to the next song (bound as
+	 * in `thumb`).
 	 */
 	async retestVerdict(
 		trackId: TrackId,
 		keep: boolean,
 		playing?: boolean,
+		bound?: Occurrence | null,
 	): Promise<{ skipped: boolean; skipError?: string }> {
 		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
 		const at = this.now();
@@ -6479,7 +6550,7 @@ export class HubCore {
 			"retest",
 			`Nachprüfung: ${keep ? "gern wieder" : "eher nicht"}: ${this.describe(trackId)}`,
 		);
-		const result = keep ? { skipped: false } : await this.skipIfPlaying(trackId, playing);
+		const result = keep ? { skipped: false } : await this.skipAnswered(trackId, playing, bound);
 		await this.scheduleSoon(2000);
 		return result;
 	}
@@ -6567,8 +6638,18 @@ export class HubCore {
 			await this.thumb(t.id, 1);
 			return `${song} ist jetzt Favorit.`;
 		}
-		const r = await this.thumb(t.id, -1, state.is_playing);
+		// Bound to the saved queue's entry playing now, if that is this very song;
+		// otherwise there is no play to attribute it to: rated, not skipped.
+		const s = this.savedSession();
+		const row = s ? this.stationRow(s.stationId) : null;
+		const deck = row ? this.deckOf(row) : null;
+		const bound: Occurrence | null =
+			state.is_playing && s && s.controller !== "native" && deck?.items[s.currentIndex]?.id === t.id
+				? { sessionId: s.sessionId, entryId: s.entryIds[s.currentIndex]! }
+				: null;
+		const r = await this.thumb(t.id, -1, state.is_playing, bound);
 		if (!state.is_playing) return `${song} kommt nie wieder.`;
+		if (!bound) return `${song} kommt nie wieder. Er läuft noch zu Ende.`;
 		return r.skipped
 			? `${song} kommt nie wieder. Nächster Song.`
 			: `${song} kommt nie wieder. Weiterspringen ging nicht: ${r.skipError ?? "Spotify hat abgelehnt."}`;

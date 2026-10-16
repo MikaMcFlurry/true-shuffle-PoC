@@ -1902,6 +1902,8 @@ button.row {
 .field {
 	display: grid;
 	gap: 6px;
+	/* A field in a grid or row may get narrower than its control's natural width. */
+	min-width: 0;
 }
 
 .field__label {
@@ -1919,6 +1921,19 @@ button.row {
 	border-radius: var(--r);
 	background: var(--paper);
 	color: var(--ink);
+}
+
+/* Native date fields keep their picker, but never their own minimum width:
+   Safari and Chromium size them by their content, wider than a phone column. */
+.input[type="date"] {
+	display: block;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.input[type="date"]::-webkit-date-and-time-value {
+	min-width: 0;
+	text-align: start;
 }
 
 .input:focus-visible,
