@@ -480,3 +480,198 @@ it("the observed target is exactly the discriminated shape", async () => {
 	);
 	vi.restoreAllMocks();
 });
+
+// ---------------------------------------------------------------------------
+// One transport per unconfirmed observed play (TS-NP-OBSERVED-COR1-261017).
+// Spotify accepted the first "next" (or its answer was unclear or lost after
+// it may have acted), yet the following successful looks still show the same
+// play of B on the same device: no further "next" — explicit or from
+// "Nie wieder" — may reach Spotify for it, also after a reload or from a
+// second tab (a hub restarted from its stored state). A new, confirmed play
+// stays operable; a clear provider refusal frees the play again.
+// Fault injection is local to these tests: the shared stand-in is unchanged.
+
+type FirstAnswer = "accepted" | "server error" | "lost answer";
+
+/** Spotify's answer to the next "next": accepted without moving yet, a 5xx, or lost after it arrived. */
+function firstNextAnswers(h: H, mode: FirstAnswer) {
+	const fake = h.fake;
+	const original = fake.handle.bind(fake);
+	let left = 1;
+	fake.failWhen = (m, p) => {
+		if (m !== "POST" || p !== "/me/player/next" || left <= 0) return null;
+		left--;
+		return mode === "server error" ? { status: 503 } : { status: 200, body: {} };
+	};
+	let lose = mode === "lost answer";
+	fake.handle = async (req: Request) => {
+		const isNext = req.method === "POST" && new URL(req.url).pathname === "/v1/me/player/next";
+		const res = await original(req);
+		if (isNext && lose) {
+			lose = false;
+			throw new TypeError("fetch failed: connection reset after the request was sent");
+		}
+		return res;
+	};
+	return () => {
+		fake.failWhen = null;
+		fake.handle = original;
+	};
+}
+
+async function bObserved() {
+	const base = await aPlaying();
+	const [b, c] = base.outside;
+	base.h.fake.playSong("mika", b!);
+	await look(base.h);
+	const target = (await observedOf(base.h)).target!;
+	expect(target.trackId).toBe(b);
+	return { ...base, b: b!, c: c!, target };
+}
+
+/** A later successful look still showing the same play of B on the same device. */
+async function stillB(h: H, b: string, target: ObservedTarget) {
+	h.clock.t += 2_000;
+	h.fake.advance(2_000);
+	await look(h, 0);
+	const o = await observedOf(h);
+	expect(o.track?.id).toBe(b);
+	expect(o.device?.id).toBe(target.deviceId);
+	expect(o.target?.playId).toBe(target.playId);
+	return o.target!;
+}
+
+const sequences: Record<string, (h: H, b: string, t: ObservedTarget) => Promise<unknown[]>> = {
+	"Next -> Next": async (h, b, t) => {
+		const first = await h.hub.observedNext(t);
+		return [first, await h.hub.observedNext(await stillB(h, b, t))];
+	},
+	"Nie wieder -> Next": async (h, b, t) => {
+		const first = await h.hub.thumb(b, -1, undefined, t);
+		return [first, await h.hub.observedNext(await stillB(h, b, t))];
+	},
+	"Next -> Nie wieder": async (h, b, t) => {
+		const first = await h.hub.observedNext(t);
+		return [first, await h.hub.thumb(b, -1, undefined, await stillB(h, b, t))];
+	},
+	"Nie wieder, answer lost -> Nie wieder again -> Next": async (h, b, t) => {
+		const first = await h.hub.thumb(b, -1, undefined, t);
+		const again = await h.hub.thumb(b, -1, undefined, await stillB(h, b, t));
+		return [first, again, await h.hub.observedNext(await stillB(h, b, t))];
+	},
+};
+
+for (const mode of ["accepted", "server error", "lost answer"] as const)
+	for (const [name, run] of Object.entries(sequences))
+		it(`COR1 fence, first next ${mode}, ${name}: at most one transport for B; reload/second tab; new C operable`, async () => {
+			const { h, sid, b, c, target } = await bObserved();
+			const before = tsState(h, sid);
+			const nexts = count(h, NEXT);
+			const restore = firstNextAnswers(h, mode);
+			const results = await run(h, b, target);
+			restore();
+			expect(count(h, NEXT) - nexts).toBe(1);
+			// Spotify never moved: B is still what every look shows.
+			expect(h.fake.current()).toBe(b);
+			// What came after the first transport sent nothing and says so.
+			for (const r of results.slice(1))
+				if (r && typeof r === "object" && "skipped" in r)
+					expect(r).toMatchObject({ skipped: false, observedSkip: "pending" });
+				else expect(r).toMatchObject({ ok: false, observedPending: true });
+			// A second tab / a reload: the hub (restarted from its stored state) still knows.
+			h.restart();
+			const tab2 = await stillB(h, b, target);
+			expect((await observedOf(h)).nextPending).toBe(true);
+			expect(await h.hub.observedNext(tab2)).toMatchObject({ ok: false, observedPending: true });
+			expect(await h.hub.thumb(b, -1, undefined, tab2)).toMatchObject({
+				skipped: false,
+				observedSkip: "pending",
+			});
+			expect(count(h, NEXT) - nexts).toBe(1);
+			// The rating holds song-wide; the saved true-shuffle place is untouched.
+			expect(h.hub.memory(b).thumb).toBe(-1);
+			expect(tsState(h, sid)).toEqual(before);
+			// A new, confirmed play (C): operable at once, exactly one transport.
+			h.fake.playSong("mika", c);
+			await look(h);
+			const oc = await observedOf(h);
+			expect(oc.track?.id).toBe(c);
+			expect(oc.nextPending).toBeUndefined();
+			expect(await h.hub.observedNext(oc.target!)).toMatchObject({ ok: true });
+			expect(count(h, NEXT) - nexts).toBe(2);
+		});
+
+it("COR1 fence: a running first next — a second and a Nie wieder given meanwhile send nothing", async () => {
+	const { h, b, target } = await bObserved();
+	const nexts = count(h, NEXT);
+	const restore = firstNextAnswers(h, "accepted");
+	const [one, two, three] = await Promise.all([
+		h.hub.observedNext(target),
+		h.hub.observedNext(target),
+		h.hub.thumb(b, -1, undefined, target),
+	]);
+	restore();
+	expect(count(h, NEXT) - nexts).toBe(1);
+	expect(h.fake.current()).toBe(b);
+	expect(one).toMatchObject({ ok: true });
+	expect(two).toMatchObject({ ok: false, observedPending: true });
+	expect(three).toMatchObject({ skipped: false, observedSkip: "pending" });
+});
+
+it("COR1 fence: a clear provider refusal acted on nothing — the same play may be tried again", async () => {
+	const { h, b, target } = await bObserved();
+	const nexts = count(h, NEXT);
+	h.fake.failWhen = (m, p) =>
+		m === "POST" && p === "/me/player/next"
+			? {
+					status: 403,
+					body: { error: { status: 403, message: "Player command failed: Restriction violated" } },
+				}
+			: null;
+	const refused = await h.hub.observedNext(target);
+	h.fake.failWhen = null;
+	expect(refused.ok).toBe(false);
+	expect(refused.error?.message).toBeTruthy();
+	expect(refused.uncertain).toBeFalsy();
+	expect(refused.observedPending).toBeUndefined();
+	expect((await observedOf(h)).nextPending).toBeUndefined();
+	const again = await h.hub.observedNext(await stillB(h, b, target));
+	expect(again).toMatchObject({ ok: true });
+	expect(count(h, NEXT) - nexts).toBe(2);
+});
+
+it("COR1 fence: B played again later (a new play of the same song) is operable again", async () => {
+	const { h, b, c, target } = await bObserved();
+	const nexts = count(h, NEXT);
+	const restore = firstNextAnswers(h, "accepted");
+	expect(await h.hub.observedNext(target)).toMatchObject({ ok: true });
+	restore();
+	h.fake.playSong("mika", c);
+	await look(h);
+	h.fake.playSong("mika", b);
+	await look(h);
+	const o = await observedOf(h);
+	expect(o.track?.id).toBe(b);
+	expect(o.target!.playId).not.toBe(target.playId);
+	expect(o.nextPending).toBeUndefined();
+	expect(await h.hub.observedNext(o.target!)).toMatchObject({ ok: true });
+	expect(count(h, NEXT) - nexts).toBe(2);
+});
+
+it("COR1 late B answer: B's held Nie wieder after C was confirmed as Favorit leaves C's rating and play alone", async () => {
+	const { h, b, c, target } = await bObserved();
+	h.fake.playSong("mika", c);
+	await look(h);
+	const oc = await observedOf(h);
+	expect(oc.track?.id).toBe(c);
+	await h.hub.thumb(c, 1, undefined, oc.target!);
+	const nexts = count(h, NEXT);
+	expect(await h.hub.thumb(b, -1, undefined, target)).toMatchObject({
+		skipped: false,
+		observedSkip: "over",
+	});
+	expect(h.hub.memory(b).thumb).toBe(-1);
+	expect(h.hub.memory(c).thumb).toBe(1);
+	expect(count(h, NEXT)).toBe(nexts);
+	expect(h.fake.current()).toBe(c);
+});

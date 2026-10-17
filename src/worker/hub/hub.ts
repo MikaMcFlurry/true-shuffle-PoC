@@ -527,6 +527,20 @@ interface PlayerSnapshot {
 }
 
 /**
+ * A "next" sent for one observed play (NP06), held until a look shows that
+ * play over: accepted, unclear or lost, it is never sent again for the same
+ * play — from "Weiter", "Nie wieder", a reload or another tab alike. A clear
+ * refusal by Spotify frees it (nothing happened).
+ */
+interface ObservedNextSent {
+	account: string;
+	trackId: TrackId;
+	deviceId: string | null;
+	playId: string;
+	at: number;
+}
+
+/**
  * The play the player shows, as looks saw it: how much of it they saw play —
  * how far it moved between looks, never more than the time between.
  */
@@ -2973,6 +2987,9 @@ export class HubCore {
 			repeat: state?.repeat_state,
 			at: this.now(),
 		};
+		// A look showing the play a "next" was sent for over ends that hold.
+		if (this.kvGet("observed_next_sent") !== null && !this.observedNextSent(snap))
+			this.kvDel("observed_next_sent");
 		// The same picture as a few minutes ago (a paused player): not stored again.
 		const before = this.kvGet<PlayerSnapshot>("player");
 		const same =
@@ -6002,12 +6019,29 @@ export class HubCore {
 				Number(target.observationId) > (snap?.at ?? 0)
 			)
 				return changed();
+			// Sent already for this very play and no look has shown it over: never again.
+			if (this.observedNextSent(snap))
+				return {
+					...fail(
+						"unknown",
+						"Weiter ist für diesen Song schon an Spotify gesendet und noch nicht bestätigt. Es wird nicht wiederholt; die nächste Meldung von Spotify zeigt es.",
+					),
+					observedPending: true,
+				};
 			if (!target.deviceId)
 				return fail(
 					"restricted",
 					"Spotify nennt kein Gerät für diesen Song. Es wurde nichts übersprungen.",
 				);
 			const client = this.client(new RequestBudget(6));
+			// Held before Spotify is asked: an answer lost after it acted holds it too.
+			this.kvSet("observed_next_sent", {
+				account: target.account,
+				trackId: target.trackId,
+				deviceId: target.deviceId,
+				playId: seen.playId,
+				at: this.now(),
+			} satisfies ObservedNextSent);
 			transportAttempted = true;
 			await client.next(target.deviceId);
 			this.transportRevision += 1;
@@ -6021,7 +6055,7 @@ export class HubCore {
 				this.transportRevision += 1;
 				this.kvSet("player_stale", 1);
 				await this.deferPlayerObservation();
-			}
+			} else if (transportAttempted) this.kvDel("observed_next_sent");
 			return result;
 		}
 	}
@@ -6032,6 +6066,7 @@ export class HubCore {
 	): Promise<{ skipped: boolean; skipError?: string; observedSkip: ObservedSkip }> {
 		const r = await this.observedNext(t);
 		if (r.ok) return { skipped: true, observedSkip: "skipped" };
+		if (r.observedPending) return { skipped: false, observedSkip: "pending" };
 		if (r.observedChanged) return { skipped: false, observedSkip: "over" };
 		return {
 			skipped: false,
@@ -8137,7 +8172,6 @@ export class HubCore {
 			)
 				attribution = "station";
 		}
-		const heard = this.kvGet<HeardSong>("heard_song");
 		const account = this.kvGet<{ id: string }>("profile")?.id ?? "";
 		const target: ObservedTarget | null =
 			attribution === "station" || !account
@@ -8148,13 +8182,9 @@ export class HubCore {
 						trackId: obs.trackId,
 						deviceId: snap.device?.id ?? null,
 						observationId: String(snap.at),
-						// The play as the looks followed it (see noteHeardSong); without that
-						// record (a private session) every look is its own play.
-						playId:
-							heard && heard.id === obs.trackId
-								? `${obs.trackId}:${heard.start}`
-								: `${obs.trackId}@${snap.at}`,
+						playId: this.observedPlayId(snap) ?? `${obs.trackId}@${snap.at}`,
 					};
+		const pending = target !== null && this.observedNextSent(snap) !== null;
 		return {
 			state: obs.isPlaying ? "playing" : "paused",
 			checkedAt,
@@ -8165,7 +8195,39 @@ export class HubCore {
 			attribution,
 			stationId,
 			target,
+			// A "next" sent for this very play, not yet shown done: not sent again.
+			...(pending ? { nextPending: true } : {}),
 		};
+	}
+
+	/**
+	 * The play a look shows, as the looks followed it (see noteHeardSong);
+	 * without that record (a private session) every look is its own play.
+	 */
+	private observedPlayId(snap: PlayerSnapshot): string | null {
+		const id = snap.obs?.trackId;
+		if (!id) return null;
+		const heard = this.kvGet<HeardSong>("heard_song");
+		return heard && heard.id === id ? `${id}:${heard.start}` : `${id}@${snap.at}`;
+	}
+
+	/**
+	 * The "next" sent for the very play this look shows (ObservedNextSent): the
+	 * same account, song and device, and no sign of another play of the song —
+	 * both plays followed by the looks and begun at different times. A play the
+	 * looks did not follow (a private session) is held as the same one until a
+	 * look shows something else.
+	 */
+	private observedNextSent(snap: PlayerSnapshot | null): ObservedNextSent | null {
+		const sent = this.kvGet<ObservedNextSent>("observed_next_sent");
+		if (!sent || !snap?.obs?.trackId) return null;
+		if (sent.account !== this.kvGet<{ id: string }>("profile")?.id) return null;
+		if (snap.obs.trackId !== sent.trackId || (snap.device?.id ?? null) !== sent.deviceId)
+			return null;
+		const play = this.observedPlayId(snap);
+		if (play && play !== sent.playId && play.includes(":") && sent.playId.includes(":"))
+			return null;
+		return sent;
 	}
 
 	/**

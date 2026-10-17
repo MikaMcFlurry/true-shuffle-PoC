@@ -62,10 +62,12 @@ interface Served {
 	requests: { method: string; path: string; body: unknown }[];
 	/** Hold the next answer to this path until released. */
 	hold: Map<string, Promise<void>>;
+	/** Let the hub act on the next request to this path, then lose its answer (COR1). */
+	lose: Set<string>;
 }
 
 async function serve(page: Page, h: H): Promise<Served> {
-	const served: Served = { requests: [], hold: new Map() };
+	const served: Served = { requests: [], hold: new Map(), lose: new Set() };
 	await page.clock.install({ time: h.clock.t });
 	await page.clock.setFixedTime(h.clock.t);
 	await page.route("**/api/**", async (route: Route) => {
@@ -89,7 +91,9 @@ async function serve(page: Page, h: H): Promise<Served> {
 			if (thumb && req.method() === "POST") {
 				const v = body.value === 1 ? 1 : body.value === -1 ? -1 : 0;
 				const bound = (body.expected ?? null) as Occurrence | ObservedTarget | null;
-				return await route.fulfill({ json: await h.hub.thumb(thumb[1]!, v, undefined, bound) });
+				const answer = await h.hub.thumb(thumb[1]!, v, undefined, bound);
+				if (served.lose.delete(path)) return await route.abort("connectionreset");
+				return await route.fulfill({ json: answer });
 			}
 			if (path === "/api/player/next" && req.method() === "POST")
 				return await route.fulfill({
@@ -383,4 +387,199 @@ test("paused, no device, an episode, a failed look: never A as current, A as the
 	await reread(page);
 	await expect(title(page)).toHaveText("Spotify spielt gerade nichts");
 	await expect(checkpoint(page)).toContainText(name(a));
+});
+
+// ---------------------------------------------------------------------------
+// One transport per unconfirmed observed play, and late answers kept to their
+// own song (TS-NP-OBSERVED-COR1-261017). Spotify's answers are injected here
+// only (failWhen / a lost /api answer); the shared stand-ins are unchanged.
+
+/** Spotify accepts the next "next" without moving yet (it lags). */
+function acceptWithoutMoving(h: H) {
+	let left = 1;
+	h.fake.failWhen = (m, p) =>
+		m === "POST" && p === "/me/player/next" && left-- > 0 ? { status: 200, body: {} } : null;
+}
+
+/** A later successful look that still shows the same play of B. */
+async function stillPlaying(h: H) {
+	h.clock.t += 2_000;
+	h.fake.advance(2_000);
+	await look(h, 0);
+}
+
+const nieWieder = (page: Page) =>
+	page.getByRole("button", { name: "Daumen runter: diesen Song nie wieder" });
+const favorit = (page: Page) => page.getByRole("button", { name: "Daumen hoch: Favorit" });
+
+test("COR1: an accepted next Spotify has not shown yet: the same tab, a reload and a second tab (Weiter, Nie wieder) send no second next; C operable", async ({
+	page,
+	context,
+}, info) => {
+	const { h, outside, name } = await world();
+	const served = await serve(page, h);
+	await page.goto("/");
+	const [b, c] = outside;
+	h.fake.playSong("mika", b!);
+	await look(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b!));
+	const nexts = calls(h, NEXT);
+	acceptWithoutMoving(h);
+	await weiter(page).click();
+	await expect.poll(() => calls(h, NEXT)).toBe(nexts + 1);
+	// Spotify accepted but has not moved: the following successful looks still show B.
+	await stillPlaying(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b!));
+	await expect(weiter(page)).toBeDisabled();
+	// A reload: the hub's status, not the page's memory, holds the key.
+	await page.reload();
+	await expect(title(page)).toHaveText(name(b!));
+	await expect(weiter(page)).toBeDisabled();
+	await expect(
+		page.getByRole("status").filter({ hasText: "schon an Spotify gesendet" }),
+	).toBeVisible();
+	// A second tab: Weiter closed; "Nie wieder" is stored, its skip not sent again.
+	const tab2 = await context.newPage();
+	const served2 = await serve(tab2, h);
+	await tab2.goto("/");
+	await expect(title(tab2)).toHaveText(name(b!));
+	await expect(weiter(tab2)).toBeDisabled();
+	await nieWieder(tab2).click();
+	await expect.poll(() => h.hub.memory(b!).thumb).toBe(-1);
+	await expect(tab2.getByText("Wird gespeichert …")).toHaveCount(0);
+	await expect(
+		tab2.getByRole("status").filter({ hasText: "schon an Spotify gesendet" }),
+	).toBeVisible();
+	expect(calls(h, NEXT)).toBe(nexts + 1);
+	expect(h.fake.current()).toBe(b);
+	// A new, confirmed play: operable at once.
+	h.fake.playSong("mika", c!);
+	await look(h);
+	await reread(tab2);
+	await expect(title(tab2)).toHaveText(name(c!));
+	await expect(weiter(tab2)).toBeEnabled();
+	await weiter(tab2).click();
+	await expect.poll(() => calls(h, NEXT)).toBe(nexts + 2);
+	await record(info, "cor1-provider-requests", {
+		nextTransports: calls(h, NEXT) - nexts,
+		page: served.requests.filter((r) => r.path !== "/api/state"),
+		tab2: served2.requests.filter((r) => r.path !== "/api/state"),
+	});
+});
+
+test("COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload", async ({
+	page,
+}, info) => {
+	const { h, outside, name } = await world();
+	const served = await serve(page, h);
+	await page.goto("/");
+	const b = outside[0]!;
+	h.fake.playSong("mika", b);
+	await look(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b));
+	const nexts = calls(h, NEXT);
+	h.fake.failWhen = (m, p) => (m === "POST" && p === "/me/player/next" ? { status: 503 } : null);
+	await weiter(page).click();
+	await expect(
+		page.getByRole("status").filter({ hasText: "Es wird nicht wiederholt" }),
+	).toBeVisible();
+	h.fake.failWhen = null;
+	await stillPlaying(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b));
+	await expect(weiter(page)).toBeDisabled();
+	await page.reload();
+	await expect(title(page)).toHaveText(name(b));
+	await expect(weiter(page)).toBeDisabled();
+	expect(calls(h, NEXT)).toBe(nexts + 1);
+	await record(info, "cor1-unclear-requests", {
+		nextTransports: calls(h, NEXT) - nexts,
+		requests: served.requests.filter((r) => r.path !== "/api/state"),
+	});
+});
+
+test("COR1: Nie wieder whose answer is lost after Spotify accepted, saved again, then Weiter: one next only", async ({
+	page,
+}, info) => {
+	const { h, outside, name } = await world();
+	const served = await serve(page, h);
+	await page.goto("/");
+	const b = outside[0]!;
+	h.fake.playSong("mika", b);
+	await look(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b));
+	const nexts = calls(h, NEXT);
+	acceptWithoutMoving(h);
+	served.lose.add(`/api/tracks/${b}/thumb`);
+	await nieWieder(page).click();
+	await expect.poll(() => calls(h, NEXT)).toBe(nexts + 1);
+	await expect(page.getByRole("button", { name: "Nochmal speichern" })).toBeVisible();
+	expect(h.hub.memory(b).thumb).toBe(-1);
+	await stillPlaying(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b));
+	// The page saves its answer again (the hub stored it already): the skip is not sent again.
+	await page.getByRole("button", { name: "Nochmal speichern" }).click();
+	await expect(page.getByText("Wird gespeichert …")).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Nochmal speichern" })).toHaveCount(0);
+	expect(calls(h, NEXT)).toBe(nexts + 1);
+	await expect(weiter(page)).toBeDisabled();
+	expect(calls(h, NEXT)).toBe(nexts + 1);
+	expect(h.fake.current()).toBe(b);
+	await record(info, "cor1-lost-answer-requests", {
+		nextTransports: calls(h, NEXT) - nexts,
+		requests: served.requests.filter((r) => r.path !== "/api/state"),
+	});
+});
+
+test("COR1: B's held Nie wieder released after C was confirmed as Favorit: C's message, rating and play stay; B's result named for B", async ({
+	page,
+}, info) => {
+	const { h, outside, name } = await world();
+	const served = await serve(page, h);
+	await page.goto("/");
+	const [b, c] = outside;
+	h.fake.playSong("mika", b!);
+	await look(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b!));
+	let release!: () => void;
+	served.hold.set(
+		`/api/tracks/${b}/thumb`,
+		new Promise<void>((r) => {
+			release = r;
+		}),
+	);
+	await nieWieder(page).click();
+	await expect(page.getByText("Wird gespeichert …")).toBeVisible();
+	h.fake.playSong("mika", c!);
+	await look(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(c!));
+	await favorit(page).click();
+	await expect(favorit(page)).toHaveAttribute("aria-pressed", "true");
+	await expect.poll(() => h.hub.memory(c!).thumb).toBe(1);
+	const flash = page.locator(".flash");
+	await expect(flash).toHaveText("Als Favorit gemerkt");
+	const nexts = calls(h, NEXT);
+	release();
+	await expect.poll(() => h.hub.memory(b!).thumb).toBe(-1);
+	// B's result, said for B, beside C's newer message — never in its place.
+	const note = page.getByRole("status").filter({ hasText: name(b!) });
+	await expect(note).toContainText("Der Song lief da schon nicht mehr");
+	await expect(flash).toHaveText("Als Favorit gemerkt");
+	await expect(favorit(page)).toHaveAttribute("aria-pressed", "true");
+	await expect(nieWieder(page)).toHaveAttribute("aria-pressed", "false");
+	expect(h.hub.memory(c!).thumb).toBe(1);
+	expect(calls(h, NEXT)).toBe(nexts);
+	expect(h.fake.current()).toBe(c);
+	await expect(page.getByRole("button", { name: "Jetzt überspringen" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: /erneut/ })).toHaveCount(0);
+	await record(info, "cor1-late-b-requests", {
+		requests: served.requests.filter((r) => r.path !== "/api/state"),
+	});
 });

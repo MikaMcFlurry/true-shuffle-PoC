@@ -317,3 +317,48 @@ it("a late state answer from before the command never confirms it", async () => 
 	await poll;
 	expect(store.command?.phase).toBe("accepted");
 });
+
+// One shared command status per unconfirmed observed play (TS-NP-OBSERVED-COR1-261017).
+
+it("COR1: while the hub still holds that play's next, an unclear answer keeps the key closed", async () => {
+	const { store } = await import("../../src/client/store");
+	store.load = { kind: "ready", state: app(observed()) };
+	const id = store.beginObserved(target(B), frozenB)!;
+	store.failCommand(id, "Spotify hat den Befehl noch nicht bestätigt.", true);
+	// A later successful look still shows the same play of B, the hub's next unconfirmed.
+	stateRequest.mockResolvedValueOnce(later({ nextPending: true }));
+	await store.refresh(true, false, true);
+	expect(store.command?.phase).toBe("unconfirmed");
+	expect(store.beginObserved(target(B), frozenB)).toBeNull();
+	// Another play seen: done, the key is free.
+	stateRequest.mockResolvedValueOnce(later({ track: C, target: target(C) }, "mika", T + 9_000));
+	await store.refresh(true, false, true);
+	expect(store.command).toBeNull();
+});
+
+it("COR1: an acknowledged next still shown later stays waiting while the hub holds it", async () => {
+	const { store } = await import("../../src/client/store");
+	store.load = { kind: "ready", state: app(observed()) };
+	const id = store.beginObserved(target(B), frozenB)!;
+	store.acceptCommand(id, { ok: true, acceptedAt: T + 1_000 });
+	vi.advanceTimersByTime(21_000);
+	expect(store.command?.phase).toBe("unconfirmed");
+	stateRequest.mockResolvedValueOnce(later({ nextPending: true }, "mika", T + 25_000));
+	await store.refresh(true, false, true);
+	expect(store.command?.phase).toBe("unconfirmed");
+});
+
+it("COR1: the hub's 'already sent' answer is the unconfirmed state, never a failure to retry", async () => {
+	const { store } = await import("../../src/client/store");
+	store.load = { kind: "ready", state: app(observed()) };
+	const id = store.beginObserved(target(B), frozenB)!;
+	store.acceptCommand(id, {
+		ok: false,
+		observedPending: true,
+		error: { code: "unknown", message: "Weiter ist für diesen Song schon an Spotify gesendet." },
+	});
+	expect(store.command).toMatchObject({
+		phase: "unconfirmed",
+		error: "Weiter ist für diesen Song schon an Spotify gesendet.",
+	});
+});

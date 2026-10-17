@@ -203,3 +203,34 @@ it("a missing target rates only, as before", async () => {
 	expect(h.hub.memory(b).thumb).toBe(-1);
 	expect(nexts()).toBe(before);
 });
+
+it("COR1: through UserHub, a next Spotify accepted but has not shown: a second next and a Nie wieder send nothing more", async () => {
+	const { h, call, outside, nexts, look, epoch } = await shell();
+	const b = outside[0]!;
+	h.fake.playSong("mika", b);
+	const target = (await look()).target!;
+	const before = nexts();
+	// Spotify accepts the first "next" without moving yet (local fault injection).
+	let left = 1;
+	h.fake.failWhen = (m, p) =>
+		m === "POST" && p === "/me/player/next" && left-- > 0 ? { status: 200, body: {} } : null;
+	expect(await call("observedNext", epoch, target)).toMatchObject({
+		ok: true,
+		value: { ok: true },
+	});
+	h.fake.failWhen = null;
+	const still = await look();
+	expect(still.track?.id).toBe(b);
+	expect(still.nextPending).toBe(true);
+	expect(await call("observedNext", epoch, still.target)).toMatchObject({
+		ok: true,
+		value: { ok: false, observedPending: true },
+	});
+	expect(await call("thumb", epoch, b, -1, still.target)).toEqual({
+		ok: true,
+		value: { skipped: false, observedSkip: "pending" },
+	});
+	expect(h.hub.memory(b).thumb).toBe(-1);
+	expect(nexts() - before).toBe(1);
+	expect(h.fake.current()).toBe(b);
+});

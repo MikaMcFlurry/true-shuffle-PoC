@@ -117,6 +117,11 @@ export interface ObservedPlayer {
 	stationId: number | null;
 	/** What an answer or an external "next" names; null where nothing may be done from here. */
 	target: ObservedTarget | null;
+	/**
+	 * A "next" was sent for this very play and no look has shown it done yet
+	 * (accepted, unclear or lost): it is not sent again — from any tab.
+	 */
+	nextPending?: boolean;
 }
 
 /**
@@ -124,9 +129,10 @@ export interface ObservedPlayer {
  * (Spotify acknowledged the next; a later look confirms it), "over" (that play
  * was no longer running: stored, nothing skipped, nothing to try again),
  * "failed" (not skipped, see skipError), "uncertain" (Spotify's answer got
- * lost: never repeated; a new look tells).
+ * lost: never repeated; a new look tells), "pending" (a "next" for this play
+ * was sent before and is not confirmed yet: not sent again).
  */
-export type ObservedSkip = "skipped" | "over" | "failed" | "uncertain";
+export type ObservedSkip = "skipped" | "over" | "failed" | "uncertain" | "pending";
 
 export interface Warning {
 	code: string;
@@ -374,6 +380,8 @@ export interface PlayResult {
 	deviceName?: string;
 	/** An observed target no longer matched a fresh look: nothing was sent; look again, never repeat. */
 	observedChanged?: boolean;
+	/** A "next" for this observed play was sent before and is not confirmed yet: nothing sent again. */
+	observedPending?: boolean;
 }
 
 export interface ApiError {

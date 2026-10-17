@@ -158,7 +158,11 @@ class Store {
 			this.load.kind !== "ready" ||
 			this.stale ||
 			this.load.state.profile.id !== target.account ||
-			(this.command && this.command.phase !== "failed" && this.command.phase !== "unconfirmed")
+			(this.command && this.command.phase !== "failed" && this.command.phase !== "unconfirmed") ||
+			// The same play's "next" still unconfirmed: never sent again from here.
+			(this.command?.phase === "unconfirmed" &&
+				this.command.observed?.trackId === target.trackId &&
+				this.command.observed.playId === target.playId)
 		)
 			return null;
 		const state = this.load.state;
@@ -187,10 +191,11 @@ class Store {
 		// Anything already being fetched may predate completion of the transport request.
 		this.epoch++;
 		if (!result.ok) {
+			// An observed "next" already sent for this play (NP06): unconfirmed, never retried.
 			this.failCommand(
 				id,
 				result.error?.message ?? "Wiedergabe nicht möglich.",
-				result.uncertain === true,
+				result.uncertain === true || result.observedPending === true,
 			);
 			return false;
 		}
@@ -246,8 +251,9 @@ class Store {
 		if (command.observed) {
 			// Only a successful look after Spotify's answer (or, unanswered, after the
 			// look it was given on) tells. Another play there: done. The same play:
-			// still waiting after an acknowledgement (Spotify can lag); after an
-			// unclear answer that look is the truth, and the key is free again.
+			// still waiting after an acknowledgement (Spotify can lag), and while the
+			// hub still holds a "next" sent for it (nextPending, shared by every tab);
+			// otherwise, after an unclear answer, that look is the truth and the key is free.
 			const o = state.observed;
 			if (command.phase === "sending" || !o || o.checkedAt === null || o.state === "unknown")
 				return;
@@ -258,7 +264,7 @@ class Store {
 			if (!after) return;
 			const same =
 				o.track?.id === command.observed.trackId && o.target?.playId === command.observed.playId;
-			if (!same || command.phase === "unconfirmed") this.clearCommand();
+			if (!same || (command.phase === "unconfirmed" && !o.nextPending)) this.clearCommand();
 			return;
 		}
 		const session = state.session;

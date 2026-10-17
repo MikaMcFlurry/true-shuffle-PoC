@@ -17,6 +17,7 @@ import { sharesForRules } from "../../core/mix";
 import type {
 	AppState,
 	DeviceView,
+	ObservedSkip,
 	ObservedTarget,
 	StationSummary,
 	TrackView,
@@ -50,6 +51,35 @@ function bound(occurrence: string): PlayingOccurrence | undefined {
  */
 function observedKey(t: ObservedTarget): string {
 	return JSON.stringify(["observed", t.account, t.trackId, t.deviceId, t.playId]);
+}
+
+/**
+ * What a stored answer about an observed play that is over by now says
+ * (TS-NP-OBSERVED-COR1-261017): named for its own song, shown beside what the
+ * newer song said — never in its place, never offering to skip again.
+ */
+function lateAnswer(
+	name: string | undefined,
+	value: -1 | 0 | 1,
+	result: { skipError?: string; observedSkip?: ObservedSkip } | null,
+): string {
+	const song = name ? `„${name}“` : "Der vorige Song";
+	if (value === 1) return `${song}: als Favorit gemerkt.`;
+	if (value === 0) return `${song}: Bewertung zurückgesetzt.`;
+	switch (result?.observedSkip) {
+		case "over":
+			return `${song}: Nie wieder gespeichert. Der Song lief da schon nicht mehr – übersprungen wurde nichts.`;
+		case "skipped":
+			return `${song}: Nie wieder gespeichert und übersprungen.`;
+		case "pending":
+			return `${song}: Nie wieder gespeichert. Weiter war schon an Spotify gesendet – es wird nicht wiederholt.`;
+		case "uncertain":
+			return `${song}: Nie wieder gespeichert. Ob Spotify weitergesprungen ist, ist unklar – es wird nicht wiederholt.`;
+		case "failed":
+			return `${song}: Nie wieder gespeichert, nicht übersprungen${result.skipError ? ` (${result.skipError})` : ""}.`;
+		default:
+			return `${song}: Nie wieder gespeichert.`;
+	}
 }
 
 const OBSERVED_LABELS = {
@@ -182,6 +212,11 @@ export function Home({ state }: { state: AppState }) {
 	// The newest look of each observed play shown: what an answer about it names when sent.
 	const targets = useRef(new Map<string, ObservedTarget>());
 	if (target) targets.current.set(occurrence, target);
+	// Its song's name, for an answer that arrives once another song is shown.
+	const names = useRef(new Map<string, string>());
+	if (target && track) names.current.set(occurrence, track.name);
+	// A late answer about an earlier observed play, said beside the song shown when it came.
+	const [late, setLate] = useState<{ text: string; on: string } | null>(null);
 	const nameFor = (o: string) => targets.current.get(o) ?? bound(o);
 	const [, answered] = useState(0);
 	const [thumbs] = useState(
@@ -191,7 +226,7 @@ export function Home({ state }: { state: AppState }) {
 				{
 					skipped?: boolean;
 					skipError?: string;
-					observedSkip?: "skipped" | "over" | "failed" | "uncertain";
+					observedSkip?: ObservedSkip;
 				}
 			>(
 				(id, v, o) => api.thumb(id, v, nameFor(o)),
@@ -207,7 +242,14 @@ export function Home({ state }: { state: AppState }) {
 						return;
 					// Every stored rating holds until a newer one is stored (CTO-01/02).
 					store.setThumb(a.trackId, a.value);
-					if (final && a.result?.observedSkip === "over")
+					// About an observed play no longer shown: said for its own song, beside
+					// the newer song's message, never replacing it (COR1).
+					if (final && named && a.occurrence !== occ.current)
+						setLate({
+							text: lateAnswer(names.current.get(a.occurrence), a.value, a.result),
+							on: occ.current,
+						});
+					else if (final && a.result?.observedSkip === "over")
 						store.say(
 							"Nie wieder gespeichert. Der Song lief da schon nicht mehr – übersprungen wurde nichts.",
 						);
@@ -454,10 +496,15 @@ export function Home({ state }: { state: AppState }) {
 		a?.phase === "saved" && skipping && !a.result?.skipped ? (a.result?.skipError ?? null) : null;
 	const thumbSkipError = skipError(thumbHere, thumbHere?.value === -1);
 	const verdictSkipError = skipError(verdictHere, verdictHere?.value === false);
+	// A "next" the hub already sent for this very play, not yet shown done: never
+	// sent again, from this tab or any other (shared command status, COR1).
+	const nextPending =
+		!!target && !!state.observed?.nextPending && state.observed.target?.playId === target.playId;
 	// The observed play's own "next" (NP06): only with a target naming a device.
 	const canSkipObserved =
 		view.source === "observed" &&
 		!!target?.deviceId &&
+		!nextPending &&
 		!unsettled &&
 		!s.stale &&
 		!view.awaitingObservation;
@@ -722,16 +769,31 @@ export function Home({ state }: { state: AppState }) {
 								<span aria-hidden="true">Nie wieder</span>
 							</button>
 						</div>
-						{observedSkip === "over" || observedSkip === "uncertain" ? (
+						{observedSkip === "over" ||
+						observedSkip === "uncertain" ||
+						observedSkip === "pending" ? (
 							<p class="transport-note answer-note" role="status">
 								{observedSkip === "over"
 									? "Nie wieder gespeichert. Der Song lief da schon nicht mehr – übersprungen wurde nichts."
-									: "Nie wieder gespeichert. Ob Spotify weitergesprungen ist, ist unklar. Es wird nicht wiederholt; die nächste Meldung von Spotify zeigt es."}
+									: observedSkip === "pending"
+										? "Nie wieder gespeichert. Weiter ist für diesen Song schon an Spotify gesendet – es wird nicht wiederholt."
+										: "Nie wieder gespeichert. Ob Spotify weitergesprungen ist, ist unklar. Es wird nicht wiederholt; die nächste Meldung von Spotify zeigt es."}
+							</p>
+						) : nextPending && !command?.observed ? (
+							<p class="transport-note answer-note" role="status">
+								Weiter ist für diesen Song schon an Spotify gesendet und noch nicht bestätigt. Es
+								wird nicht wiederholt; die nächste Meldung von Spotify zeigt es.
+							</p>
+						) : null}
+						{late && late.on === occurrence ? (
+							<p class="transport-note answer-note" role="status">
+								{late.text}
 							</p>
 						) : null}
 						{thumbHere &&
 						(thumbHere.phase !== "saved" || thumbSkipError) &&
-						observedSkip !== "uncertain" ? (
+						observedSkip !== "uncertain" &&
+						observedSkip !== "pending" ? (
 							<div
 								class="transport-note answer-note"
 								role={thumbHere.phase === "failed" ? "alert" : "status"}
