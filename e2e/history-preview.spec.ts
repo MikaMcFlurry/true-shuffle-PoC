@@ -563,6 +563,9 @@ test.describe("listening samples in the Verlauf", () => {
 		await page.goto("/verlauf");
 		const a = rowAt(page, rows.ready[0]!);
 		await expect(a).toBeVisible();
+		// The ratings keep their one status line; the sample speaks in its own region.
+		await expect(page.locator(".sr-only[role=status]")).toHaveCount(1);
+		await expect(page.locator(".hist-preview__said[aria-live=polite]")).toHaveCount(1);
 		await expect(key(a)).toHaveAccessibleName(
 			`Hörprobe – „${rows.ready[0]!.name}“ von ${rows.ready[0]!.artists}`,
 		);

@@ -501,7 +501,8 @@ export function HistoryScreen() {
 			<p class="sr-only" role="status" aria-live="polite">
 				{lastSaid()}
 			</p>
-			<p class="sr-only" role="status" aria-live="polite">
+			{/* The sample's own announcements, apart from the ratings' status line. */}
+			<p class="sr-only hist-preview__said" aria-live="polite">
 				{historyPreview.said}
 			</p>
 			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
