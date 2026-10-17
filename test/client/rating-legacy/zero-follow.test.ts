@@ -5,10 +5,12 @@
  * in by hand. The sheet is opened before any Verlauf read. Each step records
  * the sheet (`thumbOf`, with the store's write number), the Verlauf row
  * (`shown`, with its write number), the thumb given here (and whether it is
- * still the same object), `covers(o, 0)` and `storedOf`. The characterization
- * cases pin what the code does today; whether sheet and Verlauf then agree is
- * asked separately below. No product change, no new precedence rule. See
- * docs/testing/rating-zero-follow.md.
+ * still the same object), `covers(o, 0)` and `storedOf`. Z1–Z3 were written as
+ * characterization (sheet −1@0, Verlauf +1@0); TS-HISTORY-ZERO-FOLLOW-COR1-261017
+ * turns Z1/Z2 to the released contract — both stay −1@0: a row without a write
+ * number never replaces a confirmed 0 — and leaves Z3 as it was. Z4 asks the
+ * concrete value, number and source; Z5–Z11 add the neighbouring cases and the
+ * unchanged controls. See docs/testing/rating-zero-follow.md.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppState, HistoryEntry } from "../../../src/shared/api";
@@ -149,8 +151,8 @@ const opened: Step = {
 	storedOf: null,
 };
 
-describe("a confirmed `rated: 0`, then a follow page without `rated` (characterization)", () => {
-	it("Z1 with a thumb +1 given here: after the follow pages the sheet shows −1@0, the Verlauf +1@0", ({
+describe("a confirmed `rated: 0`, then a follow page without `rated` (contract)", () => {
+	it("Z1 with a thumb +1 given here: after the follow pages the sheet and the Verlauf both show −1@0", ({
 		task,
 	}) => {
 		const trace = walk(true, 0);
@@ -176,7 +178,7 @@ describe("a confirmed `rated: 0`, then a follow page without `rated` (characteri
 			{
 				step: "separate follow page X +1 without rated",
 				sheet: { value: -1, seq: 0 },
-				verlauf: { value: 1, seq: 0 },
+				verlauf: { value: -1, seq: 0 },
 				override: { v: 1, same: true },
 				covers0: true,
 				storedOf: { v: -1, seq: 0, seenIsO: true },
@@ -184,7 +186,7 @@ describe("a confirmed `rated: 0`, then a follow page without `rated` (characteri
 		]);
 	});
 
-	it("Z2 without a thumb given here: after the follow pages the sheet shows −1@0, the Verlauf +1@0", ({
+	it("Z2 without a thumb given here: after the follow pages the sheet and the Verlauf both show −1@0", ({
 		task,
 	}) => {
 		const trace = walk(false, 0);
@@ -203,7 +205,7 @@ describe("a confirmed `rated: 0`, then a follow page without `rated` (characteri
 			{
 				step: "separate follow page X +1 without rated",
 				sheet: { value: -1, seq: 0 },
-				verlauf: { value: 1, seq: 0 },
+				verlauf: { value: -1, seq: 0 },
 				override: null,
 				covers0: null,
 				storedOf: { v: -1, seq: 0, seenIsO: false },
@@ -235,8 +237,204 @@ describe("a confirmed `rated: 0`, then a follow page without `rated` (consistenc
 	it.each([
 		["with a thumb +1 given here", true],
 		["without a thumb given here", false],
-	] as const)("Z4 %s: the open sheet and the Verlauf row show the same rating", (_, withThumb) => {
-		const last = walk(withThumb, 0).at(-1)!;
-		expect(last.sheet.value, JSON.stringify(last)).toBe(last.verlauf.value);
+	] as const)(
+		"Z4 %s: the open sheet and the Verlauf row show −1@0, from the confirmed write",
+		(_, withThumb) => {
+			const last = walk(withThumb, 0).at(-1)!;
+			const why = JSON.stringify(last);
+			// Value, number and source: the confirmed write 0 — not the row the Verlauf
+			// renders now (+1 without a number), not the thumb given here (+1).
+			expect(rendered.get(X)!.thumb, why).toBe(1);
+			expect(rendered.get(X)!.rated, why).toBeUndefined();
+			expect(last.sheet, why).toEqual({ value: -1, seq: 0 });
+			expect(last.verlauf, why).toEqual({ value: -1, seq: 0 });
+			expect(last.storedOf, why).toEqual({ v: -1, seq: 0, seenIsO: withThumb });
+			expect(last.override, why).toEqual(withThumb ? { v: 1, same: true } : null);
+		},
+	);
+});
+
+/** What the open sheet and a song's Verlauf row show now, with the store's newest stored rating. */
+function view(id: string) {
+	const st = store.storedOf(id);
+	const sh = ratings.shown(rendered.get(id)!);
+	return {
+		sheet: store.rating?.id === id ? store.thumbOf(store.rating) : null,
+		verlauf: { value: sh.value, seq: sh.seq },
+		storedOf: st ? { v: st.v, seq: st.seq } : null,
+	};
+}
+/** A follow page asked now and answered at once. */
+const follow = (rows: HistoryEntry[]) => take(rows, ratings.startListRead(), false);
+/** The confirmed −1@0 of Z1/Z2 (with or without a thumb +1 given here); returns that thumb. */
+function confirmedZero(withThumb: boolean) {
+	if (withThumb) store.setThumb(X, 1);
+	const o = store.thumbOverride(X);
+	expect(follow([row(X, -1, 0)])).toBe(true);
+	vi.advanceTimersByTime(1);
+	return o;
+}
+const minusOneAtZero = { sheet: -1, verlauf: { value: -1, seq: 0 }, storedOf: { v: -1, seq: 0 } };
+
+describe("a confirmed `rated: 0` next to rows without `rated` (contract)", () => {
+	it.for([
+		["without a thumb given here", false],
+		["after a thumb +1 given here that the snapshot settles", true],
+	] as const)(
+		"Z5 the confirmed 0 comes from a snapshot (%s): it shows, and a later follow page X +1 without `rated` leaves sheet and Verlauf on −1@0",
+		async ([, withThumb], { task }) => {
+			if (withThumb) {
+				store.setThumb(X, 1);
+				vi.advanceTimersByTime(1);
+			}
+			await read(snap([track(X, -1, 0), track(Y, 0)]));
+			const trace: unknown[] = [{ step: "snapshot X −1 rated 0", ...view(X) }];
+			task.meta.zeroFollowTrace = trace as never;
+			expect(store.thumbOverride(X)).toBeUndefined();
+			expect(view(X)).toEqual(minusOneAtZero);
+			vi.advanceTimersByTime(1);
+			expect(follow([row(X, 1)])).toBe(true);
+			trace.push({ step: "follow page X +1 without rated", ...view(X) });
+			expect(view(X)).toEqual(minusOneAtZero);
+		},
+	);
+
+	it("Z6 rows without `rated` only are no confirmed 0: a Verlauf rating begun on one and refused does not outrank a later explicit 0", async ({
+		task,
+	}) => {
+		expect(follow([row(X, -1)])).toBe(true);
+		vi.advanceTimersByTime(1);
+		expect(follow([row(X, 1)])).toBe(true);
+		const trace: unknown[] = [{ step: "follow pages X −1, then X +1, without rated", ...view(X) }];
+		task.meta.zeroFollowTrace = trace as never;
+		// Nothing stored; the Verlauf shows the newer row (rows without a number among themselves).
+		expect(view(X)).toMatchObject({ verlauf: { value: 1, seq: 0 }, storedOf: null });
+		// A rating asked in the Verlauf on that row is refused: the song keeps what it began from.
+		const { ApiError } = await import("../../../src/client/api");
+		api.rateFromHistory.mockRejectedValueOnce(
+			Object.assign(new ApiError(409, "refused", "Abgelehnt"), { status: 409 }),
+		);
+		ratings.rate(rendered.get(X)!, -1);
+		await vi.waitFor(() => expect(ratings.shown(rendered.get(X)!).s?.phase).toBe("failed"));
+		expect(api.rateFromHistory.mock.calls[0]![0]).toMatchObject({
+			trackId: X,
+			value: -1,
+			basis: 0,
+		});
+		trace.push({ step: "Verlauf rating −1 refused", ...view(X) });
+		expect(view(X)).toMatchObject({ verlauf: { value: 1, seq: 0 }, storedOf: null });
+		// An explicit 0 (−1@0) then outranks the 0 that only stood for a missing number.
+		vi.advanceTimersByTime(1);
+		expect(follow([row(X, -1, 0)])).toBe(true);
+		trace.push({ step: "follow page X −1 rated 0", ...view(X) });
+		expect(view(X)).toEqual(minusOneAtZero);
 	});
+
+	it("Z9 another song: a page without `rated` listing Y −1 and X +1 updates Y and leaves X on −1@0", ({
+		task,
+	}) => {
+		confirmedZero(false);
+		expect(follow([row(Y, -1), row(X, 1)])).toBe(true);
+		task.meta.zeroFollowTrace = [
+			{ step: "follow page Y −1, X +1 without rated", x: view(X), y: view(Y) },
+		] as never;
+		expect(view(X)).toEqual(minusOneAtZero);
+		expect(view(Y)).toEqual({ sheet: null, verlauf: { value: -1, seq: 0 }, storedOf: null });
+	});
+});
+
+describe("next to the confirmed `rated: 0` (unchanged controls)", () => {
+	it.for([
+		["in the same millisecond", 0],
+		["one millisecond later", 1],
+	] as const)(
+		"Z7 a thumb 0 given here after the follow page was asked (%s): it shows in sheet and Verlauf; the confirmed −1@0 stays stored",
+		([, ms], { task }) => {
+			const o = confirmedZero(true);
+			const asked = ratings.startListRead();
+			vi.advanceTimersByTime(ms);
+			store.setThumb(X, 0);
+			const o2 = store.thumbOverride(X)!;
+			expect(o2).not.toBe(o);
+			expect(take([row(X, 1)], asked, false)).toBe(true);
+			const after = {
+				...view(X),
+				same: store.thumbOverride(X) === o2,
+				covers0: store.covers(o2, 0),
+				seenIsO: store.storedOf(X)!.seen === o,
+			};
+			task.meta.zeroFollowTrace = [
+				{ step: "follow page X +1 without rated, asked before the thumb 0", ...after },
+			] as never;
+			expect(after).toEqual({
+				sheet: 0,
+				verlauf: { value: 0, seq: 0 },
+				storedOf: { v: -1, seq: 0 },
+				same: true,
+				covers0: false,
+				seenIsO: true,
+			});
+		},
+	);
+
+	it.for([
+		["with a thumb +1 given here", true],
+		["without a thumb given here", false],
+	] as const)(
+		"Z8 %s: a higher numbered follow page X +1 rated 1 after the page without `rated` brings both to +1@1",
+		([, withThumb], { task }) => {
+			confirmedZero(withThumb);
+			expect(follow([row(X, 1)])).toBe(true);
+			vi.advanceTimersByTime(1);
+			expect(follow([row(X, 1, 1)])).toBe(true);
+			task.meta.zeroFollowTrace = [{ step: "follow page X +1 rated 1", ...view(X) }] as never;
+			expect(view(X)).toEqual({
+				sheet: 1,
+				verlauf: { value: 1, seq: 1 },
+				storedOf: { v: 1, seq: 1 },
+			});
+		},
+	);
+
+	it("Z10 another account signs in while a page without `rated` is on its way: the late page is not taken, the new account starts from nothing", async ({
+		task,
+	}) => {
+		confirmedZero(true);
+		const asked = ratings.startListRead();
+		const other = snap([track(X, 0), track(Y, 0)]);
+		await read({ ...other, profile: { ...other.profile, id: "listener-b" } });
+		expect(store.rating).toBeNull();
+		expect(store.thumbOverride(X)).toBeUndefined();
+		expect(store.storedOf(X)).toBeUndefined();
+		// The late answer asked for the account before.
+		expect(take([row(X, 1)], asked, false)).toBe(false);
+		// The new account's own first page without `rated`: what it says, nothing of the account before.
+		expect(take([row(X, 1)], ratings.startListRead(), true)).toBe(true);
+		task.meta.zeroFollowTrace = [
+			{ step: "late page not taken; new account's first page X +1 without rated", ...view(X) },
+		] as never;
+		expect(view(X)).toEqual({ sheet: null, verlauf: { value: 1, seq: 0 }, storedOf: null });
+	});
+
+	it.for([
+		["explicit 0", 0],
+		["positive 3", 3],
+	] as const)(
+		"Z11 tie at write %s: the same write read again after a thumb +1 given here accounts for it in sheet and Verlauf",
+		([, seq], { task }) => {
+			expect(follow([row(X, -1, seq)])).toBe(true);
+			vi.advanceTimersByTime(1);
+			store.setThumb(X, 1);
+			const o = store.thumbOverride(X)!;
+			const trace: unknown[] = [{ step: `thumb +1 given here after −1@${seq}`, ...view(X) }];
+			task.meta.zeroFollowTrace = trace as never;
+			expect(view(X)).toEqual({ sheet: 1, verlauf: { value: 1, seq }, storedOf: { v: -1, seq } });
+			vi.advanceTimersByTime(1);
+			expect(follow([row(X, -1, seq)])).toBe(true);
+			trace.push({ step: `the same write −1@${seq} read again`, ...view(X) });
+			expect(store.thumbOverride(X)).toBe(o);
+			expect(store.covers(o, seq)).toBe(true);
+			expect(view(X)).toEqual({ sheet: -1, verlauf: { value: -1, seq }, storedOf: { v: -1, seq } });
+		},
+	);
 });

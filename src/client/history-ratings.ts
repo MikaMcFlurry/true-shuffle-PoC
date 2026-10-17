@@ -49,6 +49,8 @@ export interface SongRating {
 	/** The rating known to hold now, and the write number of the same source. */
 	value: Value;
 	seq: number;
+	/** Whether `seq` is a write number the server gave; a row without one is read as 0. */
+	numbered: boolean;
 	/**
 	 * The change on its way or to send again: same id, never a second decision.
 	 * `mayStillArrive`: it ran out of time — it can still reach the server, so
@@ -72,7 +74,7 @@ let account: string | null = null;
 let generation = 0;
 const songs = new Map<string, SongRating>();
 /** The newest rating each song was listed with (several pages, several occurrences). */
-const listed = new Map<string, { value: Value; seq: number; seen: Override }>();
+const listed = new Map<string, { value: Value; seq: number; numbered: boolean; seen: Override }>();
 const listeners = new Set<() => void>();
 let said = "";
 
@@ -153,7 +155,8 @@ export function takeListed(rows: HistoryEntry[], read: ListRead, settle: boolean
  * (`known`), never by the clock: both can fall in one millisecond. Without
  * `known`, the list counts as asked for now. A row without a write number (an
  * older answer) accounts for no rating given here: the store does not hear it
- * either (`noteStored`), so the thumb keeps showing alike in both.
+ * either (`noteStored`), so the thumb keeps showing alike in both — and it
+ * is older than any write number, 0 included: it never replaces one.
  */
 export function noteListed(
 	rows: HistoryEntry[],
@@ -163,13 +166,25 @@ export function noteListed(
 	if (gen !== generation) return;
 	const asked = known instanceof Map ? known : null;
 	for (const r of rows) {
-		const seq = r.rated ?? 0;
+		const row = { seq: r.rated ?? 0, numbered: r.rated !== undefined };
 		const cur = listed.get(r.id);
 		const o = store.thumbOverride(r.id);
-		const seen = o && r.rated !== undefined && (!asked || asked.get(r.id) === o) ? o : undefined;
-		if (!cur || seq >= cur.seq) listed.set(r.id, { value: r.thumb, seq, seen });
+		const seen = o && row.numbered && (!asked || asked.get(r.id) === o) ? o : undefined;
+		if (!cur || !outranks(cur, row)) listed.set(r.id, { value: r.thumb, ...row, seen });
 	}
 	emit();
+}
+
+/**
+ * Whether a source is newer than another: a higher write number, or an
+ * actual write number against the 0 a row without one is read as. On the
+ * same actual number neither is.
+ */
+function outranks(
+	a: { seq: number; numbered: boolean },
+	b: { seq: number; numbered: boolean },
+): boolean {
+	return a.seq > b.seq || (a.seq === b.seq && a.numbered && !b.numbered);
 }
 
 /** The newest write number known for a song (a list read, a confirmation, or any read in the app). */
@@ -200,14 +215,22 @@ export function shown(t: HistoryEntry): { value: Value; seq: number; s: SongRati
 /**
  * The newest (by write number) of a list read, a confirmation here and the
  * newest stored rating the app heard (a snapshot, another list): value and
- * number of one source. On a tie the list or confirmation stays, with its `seen`.
+ * number of one source. On a tie the list or confirmation stays, with its `seen`
+ * — unless it has no write number and the other has one (`outranks`).
  */
-function known(t: HistoryEntry): { value: Value; seq: number; seen: Override } {
+function known(t: HistoryEntry): { value: Value; seq: number; numbered: boolean; seen: Override } {
 	const s = songs.get(t.id);
-	const l = listed.get(t.id) ?? { value: t.thumb, seq: t.rated ?? 0, seen: undefined };
-	const here = s && s.seq >= l.seq ? { value: s.value, seq: s.seq, seen: s.seen } : l;
+	const l = listed.get(t.id) ?? {
+		value: t.thumb,
+		seq: t.rated ?? 0,
+		numbered: t.rated !== undefined,
+		seen: undefined,
+	};
+	const here =
+		s && !outranks(l, s) ? { value: s.value, seq: s.seq, numbered: s.numbered, seen: s.seen } : l;
 	const app = store.storedOf(t.id);
-	return app && app.seq > here.seq ? { value: app.v, seq: app.seq, seen: app.seen } : here;
+	const stored = app && { value: app.v, seq: app.seq, numbered: true, seen: app.seen };
+	return stored && outranks(stored, here) ? stored : here;
 }
 
 export function busy(s: SongRating | null): boolean {
@@ -261,6 +284,7 @@ function begin(t: HistoryEntry, patch: Partial<SongRating>) {
 		...prev,
 		value: base.value,
 		seq: base.seq,
+		numbered: base.numbered,
 		seen: base.seen,
 		...patch,
 		op,
@@ -300,7 +324,7 @@ function holdsNow(
 	const seen = tell(t.id, value);
 	// The whole app hears it at its number (the sheet, the lists): one newest rating.
 	if (seen) store.noteStored(t.id, value, seq, seen);
-	return { value, seq, seen };
+	return { value, seq, numbered: true, seen };
 }
 
 /**
