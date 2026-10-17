@@ -416,8 +416,9 @@ test.describe("listening samples in the Verlauf", () => {
 			await expect(said(r1!)).toHaveText(/mehrere Aufnahmen/);
 			await page.screenshot({ path: `${SHOTS}/C1-unavailable-ambiguous.png` });
 			// A tap on a row already said changes nothing and asks nobody.
+			// (aria-disabled, so Playwright would wait for it to become enabled: forced.)
 			const n = seen.previews.length;
-			await key(r0!).click();
+			await key(r0!).click({ force: true });
 			await page.waitForTimeout(300);
 			expect(seen.previews).toHaveLength(n);
 			for (const [status, text] of [
