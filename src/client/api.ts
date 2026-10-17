@@ -17,6 +17,7 @@ import type {
 	PlaylistCountsView,
 	PlaylistView,
 	PlayResult,
+	PreviewResult,
 	RemoteKeyView,
 	SelectionPreview,
 	StationDetail,
@@ -330,6 +331,13 @@ export const api = {
 	countPlaylists: () => call<PlaylistCountsView>("POST", "/api/playlist-counts"),
 	history: (before?: number) =>
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),
+	/**
+	 * A listening sample for one Verlauf row (docs/HISTORY_PREVIEW.md). A POST
+	 * only so no other site can trigger it; it changes nothing, so it is not
+	 * counted as a write on its way.
+	 */
+	historyPreview: (trackId: string, playedAt: number) =>
+		send<PreviewResult>("POST", "/api/history/preview", { trackId, playedAt }, 10_000),
 	importListens: (block: {
 		/** From the first block's answer; every later block carries it. */
 		upload?: string;

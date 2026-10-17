@@ -8953,6 +8953,36 @@ export class HubCore {
 			.filter((x): x is HistoryEntry => x !== null);
 	}
 
+	/**
+	 * What a listening sample of one Verlauf row may look up (see
+	 * docs/HISTORY_PREVIEW.md): only a play stored in this listener's Verlauf,
+	 * named by song and time, and only its title, artists, album and length.
+	 * Reads only — nothing is written, cached or asked of Spotify.
+	 */
+	previewSubject(
+		trackId: unknown,
+		playedAt: unknown,
+	): { name: string; artists: string[]; album: string; durationMs: number } {
+		if (
+			typeof trackId !== "string" ||
+			!/^[A-Za-z0-9:_-]{1,64}$/.test(trackId) ||
+			typeof playedAt !== "number" ||
+			!Number.isSafeInteger(playedAt)
+		)
+			throw new HubError("bad_request", "Ungültige Angabe", 400);
+		const row = this.db.first<{ meta: string | null }>(
+			`SELECT meta FROM plays WHERE track_id = ? AND played_at = ? LIMIT 1`,
+			trackId,
+			playedAt,
+		);
+		if (!row) throw new HubError("not_in_history", "Diesen Song gibt es im Verlauf nicht.", 404);
+		const t =
+			(row.meta ? (JSON.parse(row.meta) as PackedTrack) : null) ??
+			this.lookupTracks([trackId], this.usedSources()).get(trackId);
+		if (!t) throw new HubError("not_in_history", "Diesen Song gibt es im Verlauf nicht.", 404);
+		return { name: t[1], artists: t[2].map(([, n]) => n), album: t[3], durationMs: t[5] };
+	}
+
 	// =======================================================================
 	// Alarm — the only thing that runs without the listener
 	// =======================================================================

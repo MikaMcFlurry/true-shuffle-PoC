@@ -724,6 +724,24 @@ app.get("/api/history", (c) => {
 	);
 });
 
+// A listening sample of one Verlauf row, on a tap only: the row's song and
+// time, nothing else; the answer is Deezer's sample address or why there is
+// none (docs/HISTORY_PREVIEW.md). Never sent to Spotify, never stored.
+app.post("/api/history/preview", async (c) => {
+	const b = await body<{ trackId?: unknown; playedAt?: unknown }>(c);
+	const r = (await c.var.hub.historyPreview(
+		c.var.epoch,
+		b.trackId,
+		b.playedAt,
+	)) as RpcResult<unknown>;
+	if (!r.ok)
+		return c.json(
+			{ error: { code: r.error.code, message: r.error.message } },
+			r.error.status as ContentfulStatusCode,
+		);
+	return c.json(r.value, 200, { "cache-control": "no-store" });
+});
+
 app.post("/api/history/profile", async (c) => {
 	const b = await body<{ profile?: unknown }>(c);
 	return unwrap(c, c.var.hub.setImportedProfile(c.var.epoch, b.profile ?? null));

@@ -839,7 +839,53 @@ export class FakeSpotify {
 		return json({ error: 3, message: "Invalid Method" }, 400);
 	}
 
+	/**
+	 * Deezer track search (listening samples, docs/HISTORY_PREVIEW.md): extra
+	 * synthetic results after the ones made from the fake's own songs, or a
+	 * forced answer. Sample addresses are synthetic and never fetched by tests
+	 * that run the hub; the browser tests answer them themselves.
+	 */
+	deezerExtra: Record<string, unknown>[] = [];
+	deezerFail: { status: number; body?: unknown } | null = null;
+	/** Fake songs Deezer has no sample for. */
+	readonly deezerNoPreview = new Set<string>();
+
+	private deezerSearch(url: URL): Response {
+		if (this.deezerFail) return json(this.deezerFail.body ?? {}, this.deezerFail.status);
+		// Loose like a real search: the artist's words and the title's first word.
+		const words = (x: string) =>
+			x
+				.toLowerCase()
+				.split(/[^\p{L}\p{N}]+/u)
+				.filter(Boolean);
+		const q = new Set(words(url.searchParams.get("q") ?? ""));
+		const exp = Math.floor(this.now() / 1000) + 900;
+		const own = [...this.tracks.values()]
+			.filter((t) => words(t.artistName).every((w) => q.has(w)) && q.has(words(t.name)[0] ?? ""))
+			.map((t, i) => ({
+				id: 700_000 + i,
+				readable: true,
+				title: t.name,
+				title_short: t.name,
+				title_version: "",
+				isrc: `FAKE${t.id.slice(-8)}`,
+				link: `https://www.deezer.com/track/${700_000 + i}`,
+				duration: Math.round(t.durationMs / 1000),
+				preview: this.deezerNoPreview.has(t.id)
+					? ""
+					: `https://cdnt-preview.dzcdn.net/api/1/1/f/a/k/e/${t.id}.mp3?hdnea=exp=${exp}~acl=/fake*~hmac=fake`,
+				artist: { name: t.artistName },
+				album: { title: t.albumName },
+			}));
+		const data = [...own, ...this.deezerExtra].slice(
+			0,
+			Number(url.searchParams.get("limit") ?? "25"),
+		);
+		return json({ data, total: data.length });
+	}
+
 	private deezer(path: string, url: URL): Response {
+		if (path === "/search") return this.deezerSearch(url);
 		const artists = new Map<string, FakeTrack>();
 		for (const t of this.tracks.values())
 			if (!artists.has(t.artistName)) artists.set(t.artistName, t);

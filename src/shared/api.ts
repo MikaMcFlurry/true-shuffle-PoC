@@ -626,3 +626,41 @@ export interface PlaylistCountsView {
 	error: string | null;
 	top: (TrackView & { playlists: PlaylistCount })[];
 }
+
+/**
+ * A short listening sample of one Verlauf row, asked for by a tap on that row
+ * only (see docs/HISTORY_PREVIEW.md). Separate from everything Spotify: it
+ * never plays, pauses or queues anything there and changes nothing stored.
+ * The sample comes from Deezer's public catalogue; its address is signed and
+ * runs out (`expiresAt`), so the page asks again rather than keeping it.
+ */
+export type PreviewResult =
+	| {
+			status: "ready";
+			source: "deezer";
+			/** HTTPS address of the provider's short sample, exactly as Deezer sent it. */
+			url: string;
+			/** When the signed address runs out (ms), when Deezer says; null when not. */
+			expiresAt: number | null;
+			/** The recording Deezer named, for the attribution under the player. */
+			title: string;
+			artist: string;
+			album: string;
+			/** Deezer's own page of that recording (linkback), when it sent a valid one. */
+			link: string | null;
+	  }
+	| {
+			status: "unavailable";
+			/**
+			 * no_match: no recording of this song; ambiguous: several different
+			 * ones fit; no_preview: the recording has no sample.
+			 */
+			reason: "no_match" | "ambiguous" | "no_preview";
+			message: string;
+	  }
+	| {
+			status: "error";
+			/** denied: 401/403; rate: 429 or Deezer's quota; timeout; upstream: anything else. */
+			reason: "denied" | "rate" | "timeout" | "upstream";
+			message: string;
+	  };

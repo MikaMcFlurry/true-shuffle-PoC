@@ -214,6 +214,37 @@ const server = createServer(async (req, res) => {
 			case "/__control/premium":
 				user.premium = u.searchParams.get("on") === "1";
 				break;
+			case "/__control/deezer": {
+				// Listening samples (docs/HISTORY_PREVIEW.md): ?fail=<status>, ?none=<song id>,
+				// ?twin=<song id> (a second, different recording that fits equally, album and all), ?reset=1.
+				const fail = u.searchParams.get("fail");
+				const none = u.searchParams.get("none");
+				const twin = u.searchParams.get("twin");
+				if (u.searchParams.get("reset") === "1") {
+					fake.deezerFail = null;
+					fake.deezerNoPreview.clear();
+					fake.deezerExtra = [];
+				}
+				if (fail) fake.deezerFail = { status: Number(fail) };
+				if (none) fake.deezerNoPreview.add(none);
+				const t = twin ? fake.tracks.get(twin) : undefined;
+				if (t)
+					fake.deezerExtra.push({
+						id: 900_000 + fake.deezerExtra.length,
+						readable: true,
+						title: t.name,
+						title_short: t.name,
+						title_version: "",
+						isrc: `TWIN${fake.deezerExtra.length}`,
+						link: "https://www.deezer.com/track/900000",
+						duration: Math.round(t.durationMs / 1000),
+						preview:
+							"https://cdnt-preview.dzcdn.net/api/1/1/t/w/i/n/x.mp3?hdnea=exp=9999999999~acl=/t*~hmac=fake",
+						artist: { name: t.artistName },
+						album: { title: t.albumName }, // e.g. a reissue: same album, new ISRC
+					});
+				break;
+			}
 			case "/__control/devices": {
 				// ?none=1: no devices; ?name=…: the first device carries that name.
 				const name = u.searchParams.get("name");
@@ -233,6 +264,10 @@ const server = createServer(async (req, res) => {
 			index: user.player.index,
 			calls: fake.calls.length,
 			recent: user.recent.length,
+			// ?since=N on /__control/calls: every request to the stand-in from N on.
+			...(u.pathname === "/__control/calls"
+				? { log: fake.calls.slice(Number(u.searchParams.get("since") ?? 0)) }
+				: {}),
 		});
 	} else if (failPlay && req.method === "PUT" && new URL(url).pathname === "/v1/me/player/play") {
 		failPlay = false;

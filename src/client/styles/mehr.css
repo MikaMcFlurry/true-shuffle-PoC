@@ -745,3 +745,39 @@ label.row[aria-disabled="true"] {
 		width: 100%;
 	}
 }
+
+/* The Verlauf's listening sample (docs/HISTORY_PREVIEW.md): its own line
+   under the rating keys, one labelled key of at least 44 px, the source
+   named under it while a sample is found. */
+.hist-preview {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+	min-width: 0;
+}
+
+.hist-preview__key {
+	min-height: 44px;
+	min-width: 44px;
+	padding: 0 14px;
+}
+
+.hist-preview__key[aria-disabled="true"] {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.hist-preview__state,
+.hist-preview__source {
+	flex: 1 1 100%;
+	margin: 0;
+	font-size: 0.875rem;
+	color: var(--ink-2);
+	overflow-wrap: anywhere;
+}
+
+.hist-preview__state--error {
+	color: var(--err);
+}

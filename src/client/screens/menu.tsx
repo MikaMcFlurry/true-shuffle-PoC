@@ -2,6 +2,7 @@ import {
 	ChartColumn,
 	ChevronRight,
 	FileUp,
+	Headphones,
 	Heart,
 	History,
 	House,
@@ -10,6 +11,7 @@ import {
 	LogOut,
 	type LucideIcon,
 	Speaker,
+	Square,
 	ThumbsDown,
 	Trash2,
 	Watch,
@@ -48,6 +50,7 @@ import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
+import { historyPreview, usePreview } from "../history-preview";
 import {
 	lastSaid,
 	rate,
@@ -414,6 +417,9 @@ export function HistoryScreen() {
 	// controller also follows signing out and in while this page is closed).
 	if (ready) ratingsFor(ready.profile.id, true);
 	useHistoryRatings();
+	usePreview(historyPreview);
+	// Leaving the Verlauf stops a listening sample; it never plays on elsewhere.
+	useEffect(() => () => historyPreview.reset(), []);
 	// The song playing now, as the app last saw it, and whether a Home Assistant
 	// player plays it (never skipped from here: see docs/HISTORY_RATINGS.md).
 	const playing = ready?.nowPlaying?.isPlaying
@@ -494,6 +500,9 @@ export function HistoryScreen() {
 			/>
 			<p class="sr-only" role="status" aria-live="polite">
 				{lastSaid()}
+			</p>
+			<p class="sr-only" role="status" aria-live="polite">
+				{historyPreview.said}
 			</p>
 			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
 			{items && items.length === 0 ? (
@@ -677,7 +686,64 @@ function RatedHistoryRow({ t, playing }: { t: HistoryEntry; playing: { native: b
 					</p>
 				) : null}
 			</fieldset>
+			<PreviewKey t={t} />
 		</li>
+	);
+}
+
+const PREVIEW_LABEL = {
+	idle: "Hörprobe",
+	loading: "Sucht … (abbrechen)",
+	ready: "Abspielen",
+	playing: "Stopp",
+	stopped: "Nochmal hören",
+	unavailable: "Keine Hörprobe",
+	error: "Nochmal versuchen",
+} as const;
+
+/**
+ * A short sample of this row's song from Deezer, on this key only (see
+ * docs/HISTORY_PREVIEW.md). Spotify is not asked or controlled; the rating
+ * keys above keep their order.
+ */
+function PreviewKey({ t }: { t: HistoryEntry }) {
+	const v = historyPreview.view(t.id, t.playedAt);
+	const Icon = v.phase === "playing" ? Square : Headphones;
+	const shown = v.found && (v.phase === "ready" || v.phase === "playing" || v.phase === "stopped");
+	return (
+		<div class="hist-preview">
+			<button
+				type="button"
+				class="key hist-preview__key"
+				aria-disabled={v.phase === "unavailable"}
+				aria-busy={v.phase === "loading"}
+				onClick={() => historyPreview.tap(t.id, t.playedAt)}
+			>
+				<Icon size={18} aria-hidden="true" />
+				{PREVIEW_LABEL[v.phase]}
+				<span class="sr-only">
+					{" "}
+					– „{t.name}“ von {t.artists}
+				</span>
+			</button>
+			{v.message ? (
+				<p class={`hist-preview__state${v.phase === "error" ? " hist-preview__state--error" : ""}`}>
+					{v.message}
+				</p>
+			) : null}
+			{shown ? (
+				<p class="hist-preview__source">
+					Kurze Hörprobe von Deezer (höchstens 30 Sekunden)
+					{v.found!.title ? `: ${v.found!.title} – ${v.found!.artist}` : ""}. Nur zum privaten
+					Anhören; Spotify wird dabei nicht gesteuert.{" "}
+					{v.found!.link ? (
+						<a href={v.found!.link} target="_blank" rel="noopener noreferrer">
+							Bei Deezer ansehen
+						</a>
+					) : null}
+				</p>
+			) : null}
+		</div>
 	);
 }
 

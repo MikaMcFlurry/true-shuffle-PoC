@@ -11,7 +11,13 @@ import { DurableObject } from "cloudflare:workers";
 import type { HistoryRow } from "../core/history";
 import { cryptoRng } from "../core/random";
 import type { StationRules } from "../core/types";
-import type { ObservedTarget, RemoteAction, StationKind, StationSource } from "../shared/api";
+import type {
+	ObservedTarget,
+	PreviewResult,
+	RemoteAction,
+	StationKind,
+	StationSource,
+} from "../shared/api";
 import {
 	type NativeCommand,
 	NativeController,
@@ -24,8 +30,12 @@ import { type GenreAnswer, requestGenres } from "./hub/genres";
 import { HubCore, HubError, type Occurrence } from "./hub/hub";
 import { Keys } from "./lib/crypto";
 import type { SqlDb, SqlValue } from "./lib/sql";
+import { resolveDeezerPreview } from "./preview/deezer";
 import { type SpotifyCooldownScope, SpotifyError, type SpotifyTokens } from "./spotify/client";
 import { boundedSpotifyRpc } from "./spotify/rpc";
+
+/** Listening-sample lookups per listener and minute: a tap each, never a sweep. */
+const PREVIEW_PER_MINUTE = 12;
 
 export type RpcResult<T> =
 	| { ok: true; value: T }
@@ -611,6 +621,40 @@ export class UserHub extends DurableObject<Env> {
 	}
 	history(epoch: number, limit: number, before?: number) {
 		return this.session(epoch, () => this.hub().history(limit, before));
+	}
+	/** Lookups of listening samples in the last minute (see historyPreview). */
+	private previewTimes: number[] = [];
+	/**
+	 * A listening sample of one Verlauf row (docs/HISTORY_PREVIEW.md): the row
+	 * is read under the lock, Deezer is asked outside it (a slow answer never
+	 * holds up the listener's other requests), and the session is proven again
+	 * before the answer goes out — a sign-out meanwhile learns nothing.
+	 */
+	async historyPreview(
+		epoch: number,
+		trackId: unknown,
+		playedAt: unknown,
+	): Promise<RpcResult<PreviewResult>> {
+		const subject = await this.session(epoch, () => this.hub().previewSubject(trackId, playedAt));
+		if (!subject.ok) return subject;
+		const now = Date.now();
+		this.previewTimes = this.previewTimes.filter((t) => now - t < 60_000);
+		if (this.previewTimes.length >= PREVIEW_PER_MINUTE)
+			return {
+				ok: true,
+				value: {
+					status: "error",
+					reason: "rate",
+					message: "Gerade viele Hörproben nacheinander. Gleich nochmal.",
+				},
+			};
+		this.previewTimes.push(now);
+		const answer = await resolveDeezerPreview(subject.value, {
+			fetch: (req) => fetch(req),
+			base: hubEnv(this.env).deezerBase,
+		});
+		const after = await this.session(epoch, () => null);
+		return after.ok ? { ok: true, value: answer } : after;
 	}
 	setImportedProfile(epoch: number, profile: unknown) {
 		return this.session(epoch, async () => this.hub().setImportedProfile(profile));
