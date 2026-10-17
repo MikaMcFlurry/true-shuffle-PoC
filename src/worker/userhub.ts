@@ -11,7 +11,7 @@ import { DurableObject } from "cloudflare:workers";
 import type { HistoryRow } from "../core/history";
 import { cryptoRng } from "../core/random";
 import type { StationRules } from "../core/types";
-import type { RemoteAction, StationKind, StationSource } from "../shared/api";
+import type { ObservedTarget, RemoteAction, StationKind, StationSource } from "../shared/api";
 import {
 	type NativeCommand,
 	NativeController,
@@ -227,6 +227,14 @@ export class UserHub extends DurableObject<Env> {
 		expected: { sessionId?: string; entryId?: string } = {},
 	) {
 		return this.session(epoch, () => this.hub().playerAction(action, expected));
+	}
+	/**
+	 * "Next" on the song Spotify was seen playing outside true-shuffle (NP06):
+	 * only for the signed-in session, in the hub's own command line, which looks
+	 * again before anything is sent (see HubCore.observedNext).
+	 */
+	observedNext(epoch: number, target: ObservedTarget) {
+		return this.session(epoch, () => this.hub().observedNext(target));
 	}
 
 	private async nativeController(uid: string): Promise<NativeController | null> {
@@ -524,8 +532,16 @@ export class UserHub extends DurableObject<Env> {
 	devices(epoch: number) {
 		return this.session(epoch, () => this.hub().devices());
 	}
-	/** From the page: bound to the occurrence it names, or rating only (see HubCore.thumb). */
-	thumb(epoch: number, trackId: string, value: -1 | 0 | 1, bound: Occurrence | null = null) {
+	/**
+	 * From the page: bound to the occurrence it names, to the observed play it
+	 * names (NP06), or rating only (see HubCore.thumb).
+	 */
+	thumb(
+		epoch: number,
+		trackId: string,
+		value: -1 | 0 | 1,
+		bound: Occurrence | ObservedTarget | null = null,
+	) {
 		return this.session(epoch, () => this.hub().thumb(trackId, value, undefined, bound));
 	}
 	rateFromHistory(epoch: number, input: Record<string, unknown>) {

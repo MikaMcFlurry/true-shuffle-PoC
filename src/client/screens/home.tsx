@@ -14,7 +14,13 @@ import {
 } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { sharesForRules } from "../../core/mix";
-import type { AppState, DeviceView, StationSummary, TrackView } from "../../shared/api";
+import type {
+	AppState,
+	DeviceView,
+	ObservedTarget,
+	StationSummary,
+	TrackView,
+} from "../../shared/api";
 import { ApiError, api, type NativeDevice, type PlayingOccurrence } from "../api";
 import { Cassette, type ReelState, shellOf } from "../components/cassette";
 import { RateHit, ThumbMark } from "../components/rate";
@@ -32,8 +38,42 @@ import { type PlaybackAction, store, useStore } from "../store";
  */
 function bound(occurrence: string): PlayingOccurrence | undefined {
 	const [sessionId, entryId] = JSON.parse(occurrence) as [string | null, string | null];
+	// An observed play's key never names a queue occurrence.
+	if (sessionId === "observed") return undefined;
 	return sessionId && entryId ? { sessionId, entryId } : undefined;
 }
+
+/**
+ * An observed play's key (NP06): account, song, device and play — the same
+ * across the looks that keep seeing it, another one for a new play of the
+ * same song. Answers about it never reach another play.
+ */
+function observedKey(t: ObservedTarget): string {
+	return JSON.stringify(["observed", t.account, t.trackId, t.deviceId, t.playId]);
+}
+
+const OBSERVED_LABELS = {
+	outside: "Spotify · außerhalb deiner TrueShuffle-Folge",
+	unconfirmed: "Spotify · Zuordnung unbestätigt",
+};
+
+const UNAVAILABLE = {
+	none: {
+		status: "Kein Spotify-Gerät aktiv",
+		title: "Spotify spielt gerade nichts",
+		line: "Kein Gerät meldet gerade einen Song.",
+	},
+	unknown: {
+		status: "Spotify-Stand unbekannt",
+		title: "Spotify-Stand unbekannt",
+		line: "Die letzte Meldung von Spotify ist zu alt oder fehlgeschlagen.",
+	},
+	unsupported: {
+		status: "Spotify · nicht anzeigbar",
+		title: "Kein Song lesbar",
+		line: "Spotify spielt etwas, das true-shuffle nicht als Song zeigen kann (etwa einen Podcast, Werbung oder eine lokale Datei).",
+	},
+};
 
 export function roundLabel(s: StationSummary): string {
 	return `${s.roundNo || 1}. Durchgang`;
@@ -129,21 +169,49 @@ export function Home({ state }: { state: AppState }) {
 			: null;
 	const view = playbackView(state, s.receivedAt, now, s.stale, unsettled ? command?.frozen : null);
 	const track = view.track;
-	// Answers about the song playing belong to this occurrence of it in the queue (CTO-03).
-	const occurrence = JSON.stringify([session?.sessionId ?? null, view.entryId ?? null]);
+	const target = view.source === "observed" ? (view.observed?.target ?? null) : null;
+	// Answers about the song playing belong to this occurrence of it in the queue (CTO-03),
+	// or to this observed play of it (NP06); an observed song without a target: rating only.
+	const occurrence = target
+		? observedKey(target)
+		: view.source === "observed"
+			? JSON.stringify([null, null])
+			: JSON.stringify([session?.sessionId ?? null, view.entryId ?? null]);
 	const occ = useRef(occurrence);
 	occ.current = occurrence;
+	// The newest look of each observed play shown: what an answer about it names when sent.
+	const targets = useRef(new Map<string, ObservedTarget>());
+	if (target) targets.current.set(occurrence, target);
+	const nameFor = (o: string) => targets.current.get(o) ?? bound(o);
 	const [, answered] = useState(0);
 	const [thumbs] = useState(
 		() =>
-			new Answers<-1 | 0 | 1, { skipped?: boolean; skipError?: string }>(
-				(id, v, o) => api.thumb(id, v, bound(o)),
+			new Answers<
+				-1 | 0 | 1,
+				{
+					skipped?: boolean;
+					skipError?: string;
+					observedSkip?: "skipped" | "over" | "failed" | "uncertain";
+				}
+			>(
+				(id, v, o) => api.thumb(id, v, nameFor(o)),
 				() => occ.current,
 				() => answered((n) => n + 1),
 				(a, final) => {
+					// An answer about an observed play of another account changes nothing here.
+					const named = targets.current.get(a.occurrence);
+					if (
+						named &&
+						(store.load.kind !== "ready" || store.load.state.profile.id !== named.account)
+					)
+						return;
 					// Every stored rating holds until a newer one is stored (CTO-01/02).
 					store.setThumb(a.trackId, a.value);
-					if (final && a.occurrence === occ.current)
+					if (final && a.result?.observedSkip === "over")
+						store.say(
+							"Nie wieder gespeichert. Der Song lief da schon nicht mehr – übersprungen wurde nichts.",
+						);
+					else if (final && a.occurrence === occ.current)
 						store.say(
 							a.value === 1
 								? "Als Favorit gemerkt"
@@ -228,12 +296,25 @@ export function Home({ state }: { state: AppState }) {
 			(unsettled && !retry)
 		)
 			return;
-		const commandId = store.beginCommand(action, targetStation.id, {
-			entryId: view.entryId,
-			position: view.position,
-			track: view.track,
-			projected: view.projected,
-		});
+		// A true-shuffle command holds true-shuffle's own song: the saved place
+		// while Spotify plays something else (NP06), never the observed song.
+		const commandId = store.beginCommand(
+			action,
+			targetStation.id,
+			view.source === "station"
+				? {
+						entryId: view.entryId,
+						position: view.position,
+						track: view.track,
+						projected: view.projected,
+					}
+				: {
+						entryId: view.checkpoint?.entryId ?? null,
+						position: view.checkpoint?.position ?? null,
+						track: view.checkpoint?.track ?? null,
+						projected: false,
+					},
+		);
 		if (commandId === null) return;
 		try {
 			let result = null;
@@ -300,6 +381,37 @@ export function Home({ state }: { state: AppState }) {
 		}
 	};
 	const retrySaved = () => act("play", true);
+	/**
+	 * "Weiter" on the song Spotify plays outside true-shuffle (NP06): the observed
+	 * target, in the store's one command slot. The server looks again first; an
+	 * unclear answer is never sent again from here — a new look decides.
+	 */
+	const skipObserved = async () => {
+		if (!target || !track || busy || s.stale || unsettled) return;
+		const commandId = store.beginObserved(target, {
+			entryId: null,
+			position: view.position,
+			track,
+			projected: false,
+			observed: view.observed,
+		});
+		if (commandId === null) return;
+		try {
+			const result = await api.observedNext(target);
+			store.acceptCommand(commandId, result);
+			void store.refresh(true, true);
+		} catch (e) {
+			store.failCommand(
+				commandId,
+				e instanceof Error ? e.message : String(e),
+				!(e instanceof ApiError) ||
+					e.status === 0 ||
+					e.status >= 500 ||
+					e.code === "invalid_response",
+			);
+			void store.refresh(false, true);
+		}
+	};
 	const commandLabel =
 		command?.phase === "failed"
 			? "Befehl fehlgeschlagen"
@@ -342,35 +454,53 @@ export function Home({ state }: { state: AppState }) {
 		a?.phase === "saved" && skipping && !a.result?.skipped ? (a.result?.skipError ?? null) : null;
 	const thumbSkipError = skipError(thumbHere, thumbHere?.value === -1);
 	const verdictSkipError = skipError(verdictHere, verdictHere?.value === false);
-	const canSkip =
+	// The observed play's own "next" (NP06): only with a target naming a device.
+	const canSkipObserved =
+		view.source === "observed" &&
+		!!target?.deviceId &&
 		!unsettled &&
 		!s.stale &&
-		!!session &&
-		!view.projected &&
-		!view.awaitingObservation &&
-		!session.pending &&
-		session.status !== "ambiguous" &&
-		(!nativeController || !!activeNative?.queue) &&
-		skipAsked !== occurrence;
+		!view.awaitingObservation;
+	const canSkip =
+		view.source === "observed"
+			? canSkipObserved && skipAsked !== occurrence
+			: !unsettled &&
+				!s.stale &&
+				!!session &&
+				!view.projected &&
+				!view.awaitingObservation &&
+				!session.pending &&
+				session.status !== "ambiguous" &&
+				(!nativeController || !!activeNative?.queue) &&
+				skipAsked !== occurrence;
 	const skipNow = () => {
 		setSkipAsked(occurrence);
-		void act("next");
+		void (view.source === "observed" ? skipObserved() : act("next"));
 	};
+	// How a "Nie wieder" on an observed play ended, where it did not simply skip it.
+	const observedSkip =
+		thumbHere?.phase === "saved" && thumbHere.value === -1
+			? thumbHere.result?.observedSkip
+			: undefined;
 	// Presentation only: which station the screen is about, and how far the command signal has come.
 	const posterStation = state.stations.find((x) => x.id === session?.stationId) ?? station ?? null;
 	const startsOther = !!station && !!session && station.id !== session.stationId;
 	const statusText = command
 		? commandLabel
-		: view.projected
-			? "Nächster Song · geschätzt"
-			: view.awaitingObservation ||
-					session?.pending ||
-					(session?.status === "active" && !view.playing) ||
-					(session?.status === "paused" && !nativeController && ownNow?.isPlaying)
-				? "Gerätebestätigung steht aus"
-				: session
-					? SESSION_LABELS[session.status]
-					: "Bereit";
+		: view.source === "observed" && view.observed
+			? OBSERVED_LABELS[view.observed.attribution]
+			: view.source === "unavailable" && view.unavailable
+				? UNAVAILABLE[view.unavailable].status
+				: view.projected
+					? "Nächster Song · geschätzt"
+					: view.awaitingObservation ||
+							session?.pending ||
+							(session?.status === "active" && !view.playing) ||
+							(session?.status === "paused" && !nativeController && ownNow?.isPlaying)
+						? "Gerätebestätigung steht aus"
+						: session
+							? SESSION_LABELS[session.status]
+							: "Bereit";
 	// 1 requested, 2 accepted by Spotify/device, 3 confirmed by a fresh observation.
 	const signal: { level: 0 | 1 | 2 | 3; tone: "ok" | "wait" | "estimate" | "error" } = command
 		? command.phase === "sending"
@@ -387,9 +517,11 @@ export function Home({ state }: { state: AppState }) {
 				: statusText === "Gerätebestätigung steht aus"
 					? { level: 2, tone: "wait" }
 					: { level: 3, tone: "ok" };
+	// After true-shuffle's own song, or after its saved place while Spotify plays another.
+	const after = view.entryId ?? view.checkpoint?.entryId ?? null;
 	const successors = session?.queue.length
 		? session.queue
-				.slice(Math.max(0, session.queue.findIndex((e) => e.entryId === view.entryId) + 1))
+				.slice(Math.max(0, session.queue.findIndex((e) => e.entryId === after) + 1))
 				.slice(0, 50)
 		: [];
 	const where =
@@ -406,27 +538,35 @@ export function Home({ state }: { state: AppState }) {
 				: command.phase === "unconfirmed"
 					? "Das Gerät hat noch nicht bestätigt. Dein Song bleibt gespeichert."
 					: "Das hat nicht geklappt. Dein Song bleibt gespeichert."
-		: view.projected
-			? "Der nächste Song ist geschätzt. Spotify hat ihn noch nicht bestätigt."
-			: statusText === "Gerätebestätigung steht aus"
-				? "Wir warten auf eine aktuelle Meldung vom Gerät."
-				: !session
-					? state.stations.length
-						? `${station?.name ?? "Eine Kassette"} ist eingelegt. Tippe auf „Wiedergabe starten“.`
-						: "Mach zuerst aus deinen Playlists eine Kassette."
-					: session.status === "active"
-						? where
-							? `Läuft auf ${where}.`
-							: "Läuft in Spotify."
-						: session.status === "paused"
-							? "Fortsetzen spielt genau an dieser Stelle weiter."
-							: session.status === "external"
-								? "Deine Warteschlange wartet. Fortsetzen holt sie zurück."
-								: session.status === "disconnected"
-									? "Kein Gerät verbunden. Öffne Spotify auf einem Gerät und tippe auf Fortsetzen."
-									: session.status === "ambiguous"
-										? "Unklar, wo Spotify gerade steht. Fortsetzen spielt deinen gespeicherten Song."
-										: "Fortsetzen spielt genau an dieser Stelle weiter.";
+		: view.source === "observed" && view.observed
+			? `${view.playing ? "Läuft" : "Pausiert"} in Spotify${view.observed.deviceName ? ` auf ${view.observed.deviceName}` : ""}${
+					view.observed.attribution === "unconfirmed"
+						? " – in deiner Kassette, aber nicht als ihr nächster Song bestätigt."
+						: " – außerhalb deiner TrueShuffle-Folge."
+				}${session ? " Deine TrueShuffle-Stelle bleibt gespeichert." : ""}`
+			: view.source === "unavailable" && view.unavailable
+				? `${UNAVAILABLE[view.unavailable].line} Deine TrueShuffle-Stelle bleibt gespeichert.`
+				: view.projected
+					? "Der nächste Song ist geschätzt. Spotify hat ihn noch nicht bestätigt."
+					: statusText === "Gerätebestätigung steht aus"
+						? "Wir warten auf eine aktuelle Meldung vom Gerät."
+						: !session
+							? state.stations.length
+								? `${station?.name ?? "Eine Kassette"} ist eingelegt. Tippe auf „Wiedergabe starten“.`
+								: "Mach zuerst aus deinen Playlists eine Kassette."
+							: session.status === "active"
+								? where
+									? `Läuft auf ${where}.`
+									: "Läuft in Spotify."
+								: session.status === "paused"
+									? "Fortsetzen spielt genau an dieser Stelle weiter."
+									: session.status === "external"
+										? "Deine Warteschlange wartet. Fortsetzen holt sie zurück."
+										: session.status === "disconnected"
+											? "Kein Gerät verbunden. Öffne Spotify auf einem Gerät und tippe auf Fortsetzen."
+											: session.status === "ambiguous"
+												? "Unklar, wo Spotify gerade steht. Fortsetzen spielt deinen gespeicherten Song."
+												: "Fortsetzen spielt genau an dieser Stelle weiter.";
 	const heard =
 		posterStation && posterStation.poolSize !== null && posterStation.freshRemaining !== null
 			? posterStation.poolSize - posterStation.freshRemaining
@@ -436,7 +576,10 @@ export function Home({ state }: { state: AppState }) {
 		: playing
 			? "Pause"
 			: session?.stationId === station?.id
-				? "Fortsetzen"
+				? // Says plainly that it is true-shuffle that resumes, not the song shown.
+					view.source !== "station"
+					? "TrueShuffle fortsetzen"
+					: "Fortsetzen"
 				: "Wiedergabe starten";
 	const inserted = startsOther ? station : (posterStation ?? station ?? null);
 	const reels: ReelState =
@@ -535,16 +678,19 @@ export function Home({ state }: { state: AppState }) {
 								class="tkey"
 								aria-label="Weiter: Nächster Song"
 								disabled={
-									unsettled ||
-									s.stale ||
-									!session ||
-									view.projected ||
-									view.awaitingObservation ||
-									session.pending ||
-									session.status === "ambiguous" ||
-									(!!nativeController && !activeNative?.queue)
+									view.source === "observed"
+										? !canSkipObserved
+										: view.source === "unavailable" ||
+											unsettled ||
+											s.stale ||
+											!session ||
+											view.projected ||
+											view.awaitingObservation ||
+											session.pending ||
+											session.status === "ambiguous" ||
+											(!!nativeController && !activeNative?.queue)
 								}
-								onClick={() => void act("next")}
+								onClick={() => void (view.source === "observed" ? skipObserved() : act("next"))}
 							>
 								<SkipForward aria-hidden="true" />
 								<span aria-hidden="true">Weiter</span>
@@ -576,7 +722,16 @@ export function Home({ state }: { state: AppState }) {
 								<span aria-hidden="true">Nie wieder</span>
 							</button>
 						</div>
-						{thumbHere && (thumbHere.phase !== "saved" || thumbSkipError) ? (
+						{observedSkip === "over" || observedSkip === "uncertain" ? (
+							<p class="transport-note answer-note" role="status">
+								{observedSkip === "over"
+									? "Nie wieder gespeichert. Der Song lief da schon nicht mehr – übersprungen wurde nichts."
+									: "Nie wieder gespeichert. Ob Spotify weitergesprungen ist, ist unklar. Es wird nicht wiederholt; die nächste Meldung von Spotify zeigt es."}
+							</p>
+						) : null}
+						{thumbHere &&
+						(thumbHere.phase !== "saved" || thumbSkipError) &&
+						observedSkip !== "uncertain" ? (
 							<div
 								class="transport-note answer-note"
 								role={thumbHere.phase === "failed" ? "alert" : "status"}
@@ -618,9 +773,17 @@ export function Home({ state }: { state: AppState }) {
 				<div class="player-song">
 					<Cover src={track?.imageUrl ?? posterStation?.imageUrl} class="player-song__art" eager />
 					<div class="now-copy">
-						<h2>{posterTitle(track?.name ?? "Noch kein Song")}</h2>
+						<h2>
+							{posterTitle(
+								track?.name ??
+									(view.unavailable ? UNAVAILABLE[view.unavailable].title : "Noch kein Song"),
+							)}
+						</h2>
 						<p class="artist">
-							{track?.artists ?? "Hier steht dein Song, sobald die Kassette läuft."}
+							{track?.artists ??
+								(view.unavailable
+									? UNAVAILABLE[view.unavailable].line
+									: "Hier steht dein Song, sobald die Kassette läuft.")}
 						</p>
 						{track ? (
 							<SongTags
@@ -633,7 +796,28 @@ export function Home({ state }: { state: AppState }) {
 					</div>
 				</div>
 
-				{track && !view.projected && ownNow?.kind === "probe" && ownNow.id === track.id ? (
+				{view.checkpoint ? (
+					// The saved true-shuffle place, apart from what Spotify plays (NP06).
+					<section class="notice" aria-label="Gespeicherte TrueShuffle-Stelle">
+						<p>
+							<strong>Deine TrueShuffle-Stelle:</strong> {view.checkpoint.track.name} ·{" "}
+							{view.checkpoint.track.artists}
+							{view.checkpoint.position === null
+								? " · Position unbekannt, derselbe Song von vorn"
+								: ` · bei ${duration(view.checkpoint.position)}`}
+						</p>
+						<p>
+							„TrueShuffle fortsetzen“ spielt dort weiter. Songs außerhalb deiner TrueShuffle-Folge
+							verschieben sie nicht.
+						</p>
+					</section>
+				) : null}
+
+				{track &&
+				view.source === "station" &&
+				!view.projected &&
+				ownNow?.kind === "probe" &&
+				ownNow.id === track.id ? (
 					<fieldset class="retest" aria-label="Nachprüfung">
 						{verdictHere?.phase === "saved" ? (
 							<>
@@ -835,7 +1019,29 @@ export function Home({ state }: { state: AppState }) {
 						bestätigt.
 					</p>
 				) : null}
-				{command && (command.phase === "failed" || command.phase === "unconfirmed") ? (
+				{command?.observed && (command.phase === "failed" || command.phase === "unconfirmed") ? (
+					// An observed "next" is never sent again from here: a new look decides (NP06).
+					<div
+						class={`notice${command.phase === "failed" ? " notice--error" : " notice--warn"}`}
+						role={command.phase === "failed" ? "alert" : "status"}
+					>
+						<p>
+							{command.phase === "failed"
+								? `${command.error} Deine TrueShuffle-Stelle bleibt gespeichert.`
+								: `${command.error ? `${command.error} ` : ""}Ob Spotify weitergesprungen ist, ist noch unklar. Es wird nicht wiederholt. Deine TrueShuffle-Stelle bleibt gespeichert.`}
+						</p>
+						<div class="row-actions">
+							<button
+								type="button"
+								class="key"
+								disabled={s.stale}
+								onClick={() => void store.refresh(true, false, true)}
+							>
+								Spotify neu ansehen
+							</button>
+						</div>
+					</div>
+				) : command && (command.phase === "failed" || command.phase === "unconfirmed") ? (
 					<div
 						class={`notice${command.phase === "failed" ? " notice--error" : " notice--warn"}`}
 						role={command.phase === "failed" ? "alert" : "status"}

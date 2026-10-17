@@ -12,6 +12,8 @@ import type {
 	ImportSelection,
 	InspectQuery,
 	ListeningProfile,
+	ObservedSkip,
+	ObservedTarget,
 	PlaylistCountsView,
 	PlaylistView,
 	PlayResult,
@@ -213,14 +215,22 @@ export const api = {
 		call<unknown>("POST", "/api/spotify/retry", scope ? { scope } : undefined),
 	player: (action: "pause" | "resume" | "next", opts?: { sessionId?: string; entryId?: string }) =>
 		call<PlayResult>("POST", `/api/player/${action}`, opts, 30_000),
+	/**
+	 * "Next" on the song Spotify was seen playing outside true-shuffle (NP06):
+	 * the target alone. The server looks again first; `observedChanged`: nothing
+	 * was sent — look again, never send it again blindly.
+	 */
+	observedNext: (target: ObservedTarget) =>
+		call<PlayResult>("POST", "/api/player/next", { target }, 30_000),
 	devices: () => call<DeviceView[]>("GET", "/api/devices"),
 	/**
 	 * A thumb. With `expected` (the queue occurrence shown when it was given),
 	 * "Nie wieder" may skip exactly that occurrence; without it the server only
-	 * rates (see docs/HISTORY_RATINGS.md, CTO playback boundary).
+	 * rates (see docs/HISTORY_RATINGS.md, CTO playback boundary). With an observed
+	 * target (NP06) it may skip exactly that observed play; `observedSkip` says how.
 	 */
-	thumb: (trackId: string, value: -1 | 0 | 1, expected?: PlayingOccurrence) =>
-		call<{ skipped?: boolean; skipError?: string }>(
+	thumb: (trackId: string, value: -1 | 0 | 1, expected?: PlayingOccurrence | ObservedTarget) =>
+		call<{ skipped?: boolean; skipError?: string; observedSkip?: ObservedSkip }>(
 			"POST",
 			`/api/tracks/${trackId}/thumb`,
 			expected ? { value, expected } : { value },

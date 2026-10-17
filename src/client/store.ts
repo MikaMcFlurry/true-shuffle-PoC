@@ -4,8 +4,9 @@
  */
 
 import { useEffect, useState } from "preact/hooks";
-import type { AppState, PlayResult, TrackView } from "../shared/api";
+import type { AppState, ObservedTarget, PlayResult, TrackView } from "../shared/api";
 import { ApiError, api } from "./api";
+import type { FrozenView } from "./playback-view";
 import { syncThemeColor } from "./theme";
 
 export type Load =
@@ -33,12 +34,13 @@ export interface PlaybackCommand {
 	observedAt: number | null;
 	acceptedAt: number | null;
 	newSessionExpected: boolean;
-	frozen: {
-		entryId: string | null;
-		position: number | null;
-		track: TrackView | null;
-		projected: boolean;
-	};
+	frozen: FrozenView;
+	/**
+	 * A "next" on a song Spotify was seen playing outside true-shuffle (NP06):
+	 * the play it named. Spotify's acknowledgement is not its confirmation; only
+	 * a later look showing another play is. `observedAt` holds the look it was given on.
+	 */
+	observed?: { trackId: string; playId: string; deviceId: string | null };
 	error?: string;
 }
 
@@ -146,6 +148,40 @@ class Store {
 		return id;
 	}
 
+	/**
+	 * A "next" on an observed play (NP06), for the account it was shown for and
+	 * only while no other command is on its way. Never repeated from here: an
+	 * unclear answer waits for a new look.
+	 */
+	beginObserved(target: ObservedTarget, frozen: FrozenView): number | null {
+		if (
+			this.load.kind !== "ready" ||
+			this.stale ||
+			this.load.state.profile.id !== target.account ||
+			(this.command && this.command.phase !== "failed" && this.command.phase !== "unconfirmed")
+		)
+			return null;
+		const state = this.load.state;
+		const id = ++this.epoch;
+		this.clearCommand();
+		this.command = {
+			id,
+			action: "next",
+			stationId: state.session?.stationId ?? 0,
+			frozen,
+			profileId: state.profile.id,
+			sessionId: state.session?.sessionId ?? null,
+			entryId: null,
+			observedAt: state.observed?.checkedAt ?? null,
+			acceptedAt: null,
+			newSessionExpected: false,
+			phase: "sending",
+			observed: { trackId: target.trackId, playId: target.playId, deviceId: target.deviceId },
+		};
+		this.emit();
+		return id;
+	}
+
 	acceptCommand(id: number, result: PlayResult): boolean {
 		if (this.command?.id !== id) return false;
 		// Anything already being fetched may predate completion of the transport request.
@@ -207,6 +243,24 @@ class Store {
 		// A same-account snapshot is not evidence that a rejected command succeeded.
 		// Keep its explanation until the listener replaces it with another command.
 		if (command.phase === "failed") return;
+		if (command.observed) {
+			// Only a successful look after Spotify's answer (or, unanswered, after the
+			// look it was given on) tells. Another play there: done. The same play:
+			// still waiting after an acknowledgement (Spotify can lag); after an
+			// unclear answer that look is the truth, and the key is free again.
+			const o = state.observed;
+			if (command.phase === "sending" || !o || o.checkedAt === null || o.state === "unknown")
+				return;
+			const after =
+				command.acceptedAt !== null
+					? o.checkedAt >= command.acceptedAt
+					: o.checkedAt > (command.observedAt ?? 0);
+			if (!after) return;
+			const same =
+				o.track?.id === command.observed.trackId && o.target?.playId === command.observed.playId;
+			if (!same || command.phase === "unconfirmed") this.clearCommand();
+			return;
+		}
 		const session = state.session;
 		if (session?.sessionId !== command.sessionId && !command.newSessionExpected) {
 			this.clearCommand();

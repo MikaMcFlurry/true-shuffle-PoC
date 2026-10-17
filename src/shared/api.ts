@@ -70,6 +70,64 @@ export interface NowPlaying extends TrackView {
 	observedAt: number;
 }
 
+/**
+ * Exactly the play Spotify was seen playing, for an answer or an external
+ * "next" given on it (NP06, 2026-10-17) — never a true-shuffle occurrence.
+ * The hub acts on it only while a fresh look still shows this play on this
+ * device for this account; anything else is refused before Spotify is asked.
+ */
+export interface ObservedTarget {
+	kind: "observed";
+	/** The signed-in account the page showed it for. */
+	account: string;
+	trackId: string;
+	/** The device it played on; Spotify reports some without an id (then nothing is skipped). */
+	deviceId: string | null;
+	/** The hub's look the page showed (its time, as a string). */
+	observationId: string;
+	/** This play of the song: begun again, repeated or sought back, it is another one. */
+	playId: string;
+}
+
+/**
+ * What the hub's latest look at Spotify saw (NP06). Read-only: never a
+ * true-shuffle checkpoint, and no Spotify request is made to build it.
+ */
+export interface ObservedPlayer {
+	/**
+	 * "playing"/"paused": a song; "none": no active device; "unsupported": an
+	 * episode, an ad, a local file or nothing readable; "unknown": no fresh
+	 * successful look (failed, or too long ago).
+	 */
+	state: "playing" | "paused" | "none" | "unsupported" | "unknown";
+	/** The last successful look. */
+	checkedAt: number | null;
+	track: TrackView | null;
+	/** Position at `serverTime`: it already holds the time since the look; never add that again. */
+	progressMs: number | null;
+	device: { id: string | null; name: string } | null;
+	/**
+	 * "station": the existing reconciliation confirmed it as the saved queue's
+	 * current entry; "outside": another context than any station's;
+	 * "unconfirmed": a station's context, but not confirmed as its entry (a song
+	 * queued in Spotify, a pending command, an ambiguous place). Never a claim
+	 * of where a song came from beyond that.
+	 */
+	attribution: "station" | "outside" | "unconfirmed" | null;
+	stationId: number | null;
+	/** What an answer or an external "next" names; null where nothing may be done from here. */
+	target: ObservedTarget | null;
+}
+
+/**
+ * Additions to a thumb's answer given with an observed target: "skipped"
+ * (Spotify acknowledged the next; a later look confirms it), "over" (that play
+ * was no longer running: stored, nothing skipped, nothing to try again),
+ * "failed" (not skipped, see skipError), "uncertain" (Spotify's answer got
+ * lost: never repeated; a new look tells).
+ */
+export type ObservedSkip = "skipped" | "over" | "failed" | "uncertain";
+
 export interface Warning {
 	code: string;
 	message: string;
@@ -143,6 +201,8 @@ export interface AppState {
 	onboarded: boolean;
 	stations: StationSummary[];
 	nowPlaying: NowPlaying | null;
+	/** The latest look at Spotify, also outside true-shuffle (absent in older answers). */
+	observed?: ObservedPlayer;
 	guest: {
 		active: boolean;
 		until: number | null;
@@ -312,6 +372,8 @@ export interface PlayResult {
 	acceptedAt?: number;
 	error?: { code: PlayErrorCode; message: string };
 	deviceName?: string;
+	/** An observed target no longer matched a fresh look: nothing was sent; look again, never repeat. */
+	observedChanged?: boolean;
 }
 
 export interface ApiError {

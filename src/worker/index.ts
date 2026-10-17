@@ -9,7 +9,7 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
-import type { RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
+import type { ObservedTarget, RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
 import { type Env, endpoints } from "./env";
 import type { Occurrence } from "./hub/hub";
 import { Keys, randomToken, sha256b64url } from "./lib/crypto";
@@ -367,10 +367,18 @@ app.post("/api/stations/:id/play", async (c) => {
 });
 
 app.post("/api/player/:action", async (c) => {
-	const expected = await body<{ sessionId?: string; entryId?: string }>(c);
+	const expected = await body<{ sessionId?: string; entryId?: string; target?: unknown }>(c);
 	const action = c.req.param("action");
 	if (action !== "pause" && action !== "resume" && action !== "next") {
 		return c.json({ error: { code: "bad_action", message: "Unbekannte Aktion" } }, 400);
+	}
+	// "Next" on an observed play (NP06): the target alone, never with a true-shuffle occurrence.
+	if (expected && typeof expected === "object" && "target" in expected) {
+		if (action !== "next" || Object.keys(expected).length !== 1) return c.json(BAD_TARGET, 400);
+		const target = observedTarget(expected.target, c.var.uid);
+		if (target === "bad") return c.json(BAD_TARGET, 400);
+		if (target === "stale") return c.json(STALE_TARGET, 409);
+		return unwrap(c, c.var.hub.observedNext(c.var.epoch, target));
 	}
 	return unwrap(
 		c,
@@ -479,17 +487,76 @@ function occurrence(v: unknown): Occurrence | null | "bad" {
 	if (v === undefined || v === null) return null;
 	const o = v as { sessionId?: unknown; entryId?: unknown };
 	const ok = (s: unknown) => typeof s === "string" && s.length > 0 && s.length <= 200;
+	// A true-shuffle occurrence never carries an observed target's fields (NP06).
+	if (typeof v === "object" && OBSERVED_KEYS.some((k) => k !== "trackId" && k in o)) return "bad";
 	return typeof v === "object" && ok(o.sessionId) && ok(o.entryId)
 		? { sessionId: o.sessionId as string, entryId: o.entryId as string }
 		: "bad";
 }
 
+const OBSERVED_KEYS = [
+	"kind",
+	"account",
+	"trackId",
+	"deviceId",
+	"observationId",
+	"playId",
+] as const;
+
+/**
+ * The observed play an answer or an external "next" names (NP06): exactly
+ * these fields, nothing of a true-shuffle occurrence mixed in, the song of the
+ * route where there is one. Another account's (a page left open over a change
+ * of account) is stale. The hub checks everything else against a fresh look.
+ */
+function observedTarget(
+	v: unknown,
+	uid: string,
+	trackId?: string,
+): ObservedTarget | "bad" | "stale" {
+	if (!v || typeof v !== "object" || Array.isArray(v)) return "bad";
+	const o = v as Record<string, unknown>;
+	const ok = (s: unknown) => typeof s === "string" && s.length > 0 && s.length <= 200;
+	if (
+		Object.keys(o).length !== OBSERVED_KEYS.length ||
+		!OBSERVED_KEYS.every((k) => k in o) ||
+		o.kind !== "observed" ||
+		!ok(o.account) ||
+		typeof o.trackId !== "string" ||
+		!/^[A-Za-z0-9]{22}$/.test(o.trackId) ||
+		(trackId !== undefined && o.trackId !== trackId) ||
+		(o.deviceId !== null && !ok(o.deviceId)) ||
+		typeof o.observationId !== "string" ||
+		!/^\d{1,16}$/.test(o.observationId) ||
+		!ok(o.playId)
+	)
+		return "bad";
+	if (o.account !== uid) return "stale";
+	return {
+		kind: "observed",
+		account: o.account as string,
+		trackId: o.trackId,
+		deviceId: o.deviceId as string | null,
+		observationId: o.observationId,
+		playId: o.playId as string,
+	};
+}
+
+const BAD_TARGET = { error: { code: "bad_request", message: "Ungültige Wiedergabe-Angabe" } };
+const STALE_TARGET = {
+	error: { code: "stale_target", message: "Die Ansicht ist veraltet. Bitte aktualisieren." },
+};
+
 app.post("/api/tracks/:id/thumb", async (c) => {
-	const b = await body<{ value?: number; expected?: unknown }>(c);
+	const b = (await body<{ value?: number; expected?: unknown }>(c)) ?? {};
 	const v = b.value === 1 ? 1 : b.value === -1 ? -1 : 0;
-	const bound = occurrence(b.expected);
-	if (bound === "bad")
-		return c.json({ error: { code: "bad_request", message: "Ungültige Wiedergabe-Angabe" } }, 400);
+	const observed =
+		!!b.expected && typeof b.expected === "object" && "kind" in (b.expected as object);
+	const bound = observed
+		? observedTarget(b.expected, c.var.uid, c.req.param("id"))
+		: occurrence(b.expected);
+	if (bound === "bad") return c.json(BAD_TARGET, 400);
+	if (bound === "stale") return c.json(STALE_TARGET, 409);
 	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v, bound));
 });
 

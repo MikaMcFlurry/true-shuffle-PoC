@@ -103,6 +103,9 @@ import type {
 	JobView,
 	ListeningProfile,
 	NowPlaying,
+	ObservedPlayer,
+	ObservedSkip,
+	ObservedTarget,
 	PlayErrorCode,
 	PlaylistCount,
 	PlaylistCountsView,
@@ -240,6 +243,8 @@ const CONTINUE_WITHIN_MS = HOLD_WATCH_MS;
 
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
+/** A look older than this (or failed since) says nothing about what plays now (NP06). */
+const OBSERVED_FRESH_MS = 3 * MINUTE_MS;
 /**
  * A start or skip Spotify never confirmed stops holding the saved place after
  * this long: an unanswered command must not freeze the queue until the next
@@ -5899,11 +5904,17 @@ export class HubCore {
 				)
 					return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
 				const obs = this.kvGet<PlayerSnapshot>("player")?.obs;
+				const row = session ? this.stationRow(session.stationId) : null;
+				const deck = row ? this.deckOf(row) : null;
+				// The station's context alone is no proof (NP06): a song queued in
+				// Spotify plays inside it too. Only the saved entry's song is its own.
 				const own =
 					observed &&
 					session &&
 					session.controller !== "native" &&
-					obs?.contextUri === session.contextUri;
+					obs?.contextUri === session.contextUri &&
+					!!obs.trackId &&
+					deck?.items[session.currentIndex]?.id === obs.trackId;
 				if (expected.entryId && (!own || session.status === "ambiguous"))
 					return fail("unknown", "Der angezeigte Song ist nicht bestätigt. Bitte aktualisieren.");
 				if (own) {
@@ -5944,6 +5955,91 @@ export class HubCore {
 		}
 	}
 
+	/**
+	 * "Next" on a song Spotify plays outside true-shuffle's confirmed order
+	 * (NP06), in the same command line as every other player command. A fresh
+	 * look first: only while it still shows exactly the named play on the named
+	 * device for this account is Spotify's device-bound "next" sent — once,
+	 * never repeated; an unclear answer is said, and the next look tells. No
+	 * true-shuffle journal, epoch or saved place is touched, no playlist written,
+	 * no true-shuffle playback started; the existing reconciliation reads what
+	 * follows. Spotify's "next" names no song: a player moved by someone else
+	 * between that look and the request cannot be excluded.
+	 */
+	observedNext(target: ObservedTarget): Promise<PlayResult> {
+		const task = this.commandTail.then(() => this.performObservedNext(target));
+		this.commandTail = task.catch(() => undefined);
+		return task;
+	}
+
+	private async performObservedNext(target: ObservedTarget): Promise<PlayResult> {
+		const changed = (): PlayResult => ({
+			...fail("unknown", "Der angezeigte Song läuft so nicht mehr. Es wurde nichts übersprungen."),
+			observedChanged: true,
+		});
+		if (target.account !== this.kvGet<{ id: string }>("profile")?.id) return changed();
+		let transportAttempted = false;
+		try {
+			this.transportRevision += 1;
+			const observed = await this.sync(new RequestBudget(8), {
+				force: true,
+				observationOnly: true,
+				playerOnly: true,
+			});
+			if (!observed)
+				return fail(
+					"unknown",
+					"Spotify ließ sich gerade nicht lesen. Es wurde nichts übersprungen.",
+				);
+			const snap = this.kvGet<PlayerSnapshot>("player");
+			const seen = this.observedPlayer(snap).target;
+			if (
+				!seen ||
+				seen.trackId !== target.trackId ||
+				seen.deviceId !== target.deviceId ||
+				seen.playId !== target.playId ||
+				!/^\d{1,16}$/.test(target.observationId) ||
+				Number(target.observationId) > (snap?.at ?? 0)
+			)
+				return changed();
+			if (!target.deviceId)
+				return fail(
+					"restricted",
+					"Spotify nennt kein Gerät für diesen Song. Es wurde nichts übersprungen.",
+				);
+			const client = this.client(new RequestBudget(6));
+			transportAttempted = true;
+			await client.next(target.deviceId);
+			this.transportRevision += 1;
+			this.kvSet("player_stale", 1);
+			await this.deferPlayerObservation();
+			// Spotify's acknowledgement only; a later look confirms the change.
+			return { ok: true, acceptedAt: this.now() };
+		} catch (err) {
+			const result = this.playError(err, transportAttempted);
+			if (result.uncertain) {
+				this.transportRevision += 1;
+				this.kvSet("player_stale", 1);
+				await this.deferPlayerObservation();
+			}
+			return result;
+		}
+	}
+
+	/** The skip a "Nie wieder" on an observed play may cause (see `observedNext`). */
+	private async skipObserved(
+		t: ObservedTarget,
+	): Promise<{ skipped: boolean; skipError?: string; observedSkip: ObservedSkip }> {
+		const r = await this.observedNext(t);
+		if (r.ok) return { skipped: true, observedSkip: "skipped" };
+		if (r.observedChanged) return { skipped: false, observedSkip: "over" };
+		return {
+			skipped: false,
+			skipError: r.error?.message ?? "Spotify hat abgelehnt.",
+			observedSkip: r.uncertain ? "uncertain" : "failed",
+		};
+	}
+
 	// =======================================================================
 	// Listener input
 	// =======================================================================
@@ -5958,30 +6054,48 @@ export class HubCore {
 	 * "Nie wieder" spares that play from the station guard too (`spareRunningPlay`);
 	 * every play that begins after it is moved on as before. `playing` is no
 	 * longer read (kept so old callers compile).
+	 *
+	 * An observed target (NP06): the song Spotify was seen playing, also outside
+	 * every station and the library. The rating holds song-wide as any other; it
+	 * is attributed to no true-shuffle play (spared like an answer naming none).
+	 * "Nie wieder" then moves on exactly that observed play while a fresh look
+	 * still shows it (`observedNext`); over by then, it says so ("over") and
+	 * nothing is skipped. A target of another song or account stores nothing.
 	 */
 	async thumb(
 		trackId: TrackId,
 		value: -1 | 0 | 1,
 		playing?: boolean,
-		bound?: Occurrence | null,
-	): Promise<{ skipped: boolean; skipError?: string }> {
+		bound?: Occurrence | ObservedTarget | null,
+	): Promise<{ skipped: boolean; skipError?: string; observedSkip?: ObservedSkip }> {
 		let skipped = false;
 		let skipError: string | undefined;
+		let observedSkip: ObservedSkip | undefined;
 		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
+		const observed = bound && "kind" in bound && bound.kind === "observed" ? bound : null;
+		const occurrence = observed ? null : (bound as Occurrence | null | undefined);
+		if (observed && observed.trackId !== trackId)
+			throw new HubError("bad_target", "Die Wiedergabe-Angabe passt nicht zu diesem Song.", 400);
+		if (observed && observed.account !== this.kvGet<{ id: string }>("profile")?.id)
+			throw new HubError("stale_target", "Die Ansicht ist veraltet. Bitte aktualisieren.", 409);
 		// The rating and the note sparing a play it is not attributed to commit
 		// together, before any wait: a failure stores neither (spareRunningPlay).
 		this.ratingTransaction(() => {
 			this.applyThumb(trackId, value);
-			if (value === -1) this.spareRunningPlay(trackId, bound);
+			if (value === -1) this.spareRunningPlay(trackId, occurrence);
 		});
-		if (value === -1) ({ skipped, skipError } = await this.skipAnswered(trackId, playing, bound));
+		if (value === -1 && observed)
+			({ skipped, skipError, observedSkip } = await this.skipObserved(observed));
+		else if (value === -1)
+			({ skipped, skipError } = await this.skipAnswered(trackId, playing, occurrence));
 		this.log(
 			"info",
 			"thumb",
 			`${value === 1 ? "Daumen hoch" : value === -1 ? "Daumen runter" : "Daumen zurückgesetzt"}: ${this.describe(trackId)}`,
 		);
 		await this.scheduleSoon(2000);
-		return skipError ? { skipped, skipError } : { skipped };
+		const answer = skipError ? { skipped, skipError } : { skipped };
+		return observedSkip ? { ...answer, observedSkip } : answer;
 	}
 
 	/**
@@ -7877,6 +7991,7 @@ export class HubCore {
 			onboarded: this.kvGet<boolean>("onboarded") === true,
 			stations,
 			nowPlaying: np,
+			observed: this.observedPlayer(snap),
 			session: this.sessionView(),
 			guest: {
 				active: !!guestNow,
@@ -7962,6 +8077,94 @@ export class HubCore {
 			orderBroken: stationId !== null && (snap.obs.shuffle || snap.obs.smartShuffle),
 			smartShuffle: stationId !== null && snap.obs.smartShuffle,
 			observedAt: snap.at,
+		};
+	}
+
+	/**
+	 * What the latest look at Spotify saw, also outside true-shuffle (NP06):
+	 * only from the stored snapshot, never a request. "station" only where the
+	 * existing reconciliation (`checkpoint`) confirmed this very look as the
+	 * saved queue's current entry; a station's context alone never makes a
+	 * song the station's. No target there: true-shuffle's own controls act on
+	 * its occurrence. A failed or old look says nothing about now ("unknown").
+	 */
+	private observedPlayer(snap: PlayerSnapshot | null): ObservedPlayer {
+		const now = this.now();
+		const checkedAt = this.playerCheckedAt();
+		const failedAt = this.kvGet<number>("player_failed_at");
+		const nothing = {
+			checkedAt,
+			track: null,
+			progressMs: null,
+			device: null,
+			attribution: null,
+			stationId: null,
+			target: null,
+		};
+		if (
+			!snap ||
+			checkedAt === null ||
+			now - checkedAt > OBSERVED_FRESH_MS ||
+			(failedAt !== null && failedAt >= checkedAt)
+		)
+			return { state: "unknown", ...nothing };
+		const obs = snap.obs;
+		if (!obs) return { state: "none", ...nothing };
+		const device = snap.device ? { id: snap.device.id, name: snap.device.name } : null;
+		// Episodes, ads, local files and unplayable items are not packed as songs.
+		const t = snap.track;
+		if (!obs.trackId || !t || t[0] !== obs.trackId)
+			return { state: "unsupported", ...nothing, device };
+		let attribution: "station" | "outside" | "unconfirmed" = "outside";
+		let stationId: number | null = null;
+		const st = obs.contextUri
+			? this.stations().find((x) => this.deckUri(x) === obs.contextUri)
+			: undefined;
+		if (st) {
+			stationId = st.id;
+			attribution = "unconfirmed";
+			const s = this.savedSession(st.id);
+			const deck = this.deckOf(st);
+			if (
+				s &&
+				s.controller !== "native" &&
+				!s.pending &&
+				s.contextUri === obs.contextUri &&
+				(s.status === "active" || s.status === "paused") &&
+				s.observedAt !== null &&
+				s.observedAt >= obs.at &&
+				deck?.items[s.currentIndex]?.id === obs.trackId
+			)
+				attribution = "station";
+		}
+		const heard = this.kvGet<HeardSong>("heard_song");
+		const account = this.kvGet<{ id: string }>("profile")?.id ?? "";
+		const target: ObservedTarget | null =
+			attribution === "station" || !account
+				? null
+				: {
+						kind: "observed",
+						account,
+						trackId: obs.trackId,
+						deviceId: snap.device?.id ?? null,
+						observationId: String(snap.at),
+						// The play as the looks followed it (see noteHeardSong); without that
+						// record (a private session) every look is its own play.
+						playId:
+							heard && heard.id === obs.trackId
+								? `${obs.trackId}:${heard.start}`
+								: `${obs.trackId}@${snap.at}`,
+					};
+		return {
+			state: obs.isPlaying ? "playing" : "paused",
+			checkedAt,
+			track: this.view(t, this.ratingClock()),
+			// Like nowPlaying: the time since the look is in it already.
+			progressMs: Math.min(t[5], obs.progressMs + (obs.isPlaying ? now - snap.at : 0)),
+			device,
+			attribution,
+			stationId,
+			target,
 		};
 	}
 
