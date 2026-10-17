@@ -633,7 +633,8 @@ test.describe("a listener's day", () => {
 		page.on("request", (r) => {
 			if (/\/api\/history\/(import|listens)/.test(r.url())) sent.push(r.url());
 		});
-		// Every play lies after the first sign-in: true-shuffle counted it itself.
+		// Every play lies after the cutoff fixed at the first sign-in: outside the import's
+		// weighting, whether or not true-shuffle saw it live.
 		const soon = Date.now() + 5 * 60_000;
 		const plays = Array.from({ length: 6 }, (_, i) => ({
 			ts: new Date(soon + i * 200_000).toISOString(),
@@ -648,8 +649,9 @@ test.describe("a listener's day", () => {
 			buffer: Buffer.from(JSON.stringify(plays)),
 		});
 		await expect(page.getByRole("alert")).toContainText(
-			"Alles in diesen Dateien lief nach deiner ersten Anmeldung",
+			"außerhalb der aktuellen Import-Gewichtung und werden deshalb nicht übernommen",
 		);
+		await expect(page.getByRole("alert")).not.toContainText("selbst gezählt");
 		await expect(page.getByRole("button", { name: "Übernehmen" })).toHaveCount(0);
 		expect(sent).toEqual([]);
 	});

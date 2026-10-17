@@ -1131,6 +1131,11 @@ function effectsOf(
 	};
 }
 
+/** The import cutoff as a moment: "17. Oktober 2026 um 01:23 Uhr", not a whole day. */
+function moment(at: number): string {
+	return `${date(at)} um ${clock(at)} Uhr`;
+}
+
 function songs(n: number): string {
 	return n === 1 ? "1 Song" : `${num(n)} Songs`;
 }
@@ -1256,7 +1261,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 		setEffects(null);
 		setPhase("reading");
 		const agg = emptyAggregate();
-		// Every play for the Hörprofil, not only what came before live counting.
+		// Every play of the files; finishListens below cuts the Hörprofil at the cutoff.
 		const all = newListens();
 		let used = 0;
 		let problem: string | null = null;
@@ -1269,7 +1274,8 @@ export function ImportScreen({ state }: { state: AppState }) {
 					continue;
 				}
 				if (kind !== "extended") continue;
-				// What came after the first sign-in, true-shuffle already counted live.
+				// Only plays before the cutoff fixed at the first sign-in shape the import; later
+				// ones stay out, whether or not true-shuffle saw them live.
 				aggregateHistory(data as ExtendedEntry[], agg, { before: hist.liveSince });
 				addListens(data as ListenEntry[], all);
 				used++;
@@ -1278,7 +1284,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 			}
 		}
 		const r = toRows(agg);
-		// After the first sign-in true-shuffle counted itself (guest time left out).
+		// The Hörprofil takes the same cutoff, by the whole second its rows keep.
 		const done = finishListens(all, hist.liveSince);
 		const onlyLater = all.rows.size > 0 && done.rows.length === 0;
 		const counted = done.rows.filter(countsAsPlay);
@@ -1300,7 +1306,7 @@ export function ImportScreen({ state }: { state: AppState }) {
 			setErr(
 				problem ??
 					(onlyLater && hist.liveSince
-						? `Alles in diesen Dateien lief nach deiner ersten Anmeldung am ${date(hist.liveSince)}. Das hat true-shuffle schon selbst gezählt, für die Kassetten wie fürs Hörprofil: Es gibt nichts zu übernehmen.`
+						? `Alle Wiedergaben in diesen Dateien sind vom ${moment(hist.liveSince)} oder später. Sie liegen außerhalb der aktuellen Import-Gewichtung und werden deshalb nicht übernommen, auch nicht ins Hörprofil. true-shuffle hat sie möglicherweise nicht selbst erfasst.`
 						: "In diesen Dateien steht kein Song, den true-shuffle übernehmen kann. Wähle die Dateien „Streaming_History_Audio_…json“."),
 			);
 			setPhase("idle");
@@ -1445,8 +1451,10 @@ export function ImportScreen({ state }: { state: AppState }) {
 						) : null}
 						{hist.liveSince ? (
 							<p class="hint">
-								Gezählt wird nur, was vor deiner ersten Anmeldung am {date(hist.liveSince)} lief.
-								Danach hat true-shuffle selbst mitgezählt, nichts zählt doppelt.
+								Für die Import-Gewichtung zählen nur Wiedergaben vor dem {moment(hist.liveSince)}.
+								Diesen Zeitpunkt hat true-shuffle bei deiner ersten Anmeldung festgelegt. Spätere
+								Wiedergaben aus deinen Dateien bleiben unberücksichtigt; true-shuffle hat sie
+								möglicherweise nicht selbst erfasst.
 							</p>
 						) : null}
 					</li>
