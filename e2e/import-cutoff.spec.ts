@@ -2,7 +2,7 @@
  * The import cutoff (JH06), through the real file picker and parser against the
  * real Worker and the unchanged Spotify stand-in: only plays before the moment
  * fixed at the first sign-in (`history.liveSince`) shape the import. Plays at
- * that moment and later, on the same day as well as days later, and also songs
+ * that moment and later, a millisecond, a second or days later, and also songs
  * true-shuffle never saw live, stay out of the weighting and the Hörprofil,
  * without the page claiming that true-shuffle counted them itself. All data is
  * synthetic; nothing here signs in to the real Spotify.
@@ -24,7 +24,6 @@ const clockFmt = new Intl.DateTimeFormat("de-DE", {
 });
 /** The cutoff as the page names it: a moment, not a day. */
 const moment = (at: number) => `${dateFmt.format(at)} um ${clockFmt.format(at)} Uhr`;
-const sameDay = (a: number, b: number) => dateFmt.format(a) === dateFmt.format(b);
 
 const DAY = 86_400_000;
 /** Claims the import page must never make about plays after the cutoff. */
@@ -141,7 +140,6 @@ test.describe("Import cutoff at the first sign-in", () => {
 	}) => {
 		await signIn(page);
 		const L = await cutoff(page);
-		expect(sameDay(L - 60_000, L) && sameDay(L + 60_000, L), "same-day plays").toBe(true);
 		await page.goto("/import");
 		await expect(hint(page)).toHaveText(
 			`Für die Import-Gewichtung zählen nur Wiedergaben vor dem ${moment(L)}. Diesen Zeitpunkt hat true-shuffle bei deiner ersten Anmeldung festgelegt. Spätere Wiedergaben aus deinen Dateien bleiben unberücksichtigt; true-shuffle hat sie möglicherweise nicht selbst erfasst.`,
@@ -149,13 +147,13 @@ test.describe("Import cutoff at the first sign-in", () => {
 		await noLiveClaim(page);
 		const net = capture(page);
 
-		// Before the cutoff: an old favourite days back and two plays on the cutoff's own day.
+		// Before the cutoff: an old favourite days back and two plays a minute and a second before.
 		const before = [
 			...Array.from({ length: 5 }, (_, i) => play(L - (400 - i) * DAY, "A")),
 			play(L - 60_000, "B"),
 			play(L - 1_000, "B"),
 		];
-		// At the cutoff and after: the same day, a second and days later; the old
+		// At the cutoff and after: a second, minutes and days later; the old
 		// favourite again, and songs true-shuffle never saw live.
 		const later = [
 			play(L, "C"),
@@ -198,17 +196,18 @@ test.describe("Import cutoff at the first sign-in", () => {
 		await takeOver(page);
 		// The weighting: exactly the rows of before, nothing of C, D, E or A's later plays.
 		expect(net.rows()).toEqual(rowsBefore);
-		// The Hörprofil: no play after the cutoff and none of the later songs.
+		// The Hörprofil: exactly the song list and plays of before, nothing from the cutoff on.
 		const listens = net.listens();
-		const songs = listens.tracks.map((t) => t[0]);
-		for (const tag of ["D", "E"]) expect(songs, `${tag} in the Hörprofil`).not.toContain(id(tag));
+		expect(listensBefore.tracks.map((t) => t[0])).toEqual([id("A"), id("B")]);
+		expect(listensBefore.rows).toHaveLength(7);
+		expect(listens).toEqual(listensBefore);
+		for (const tag of ["C", "D", "E"])
+			expect(
+				listens.tracks.map((t) => t[0]),
+				`${tag} in the Hörprofil`,
+			).not.toContain(id(tag));
 		for (const r of listens.rows)
-			expect(Number(r[0]) * 1000, "Hörprofil play time").toBeLessThanOrEqual(L);
-		const notC = (rows: unknown[][], tracks: unknown[][]) =>
-			rows.filter((r) => tracks[Number(r[1])]?.[0] !== id("C"));
-		expect(notC(listens.rows, listens.tracks)).toEqual(
-			notC(listensBefore.rows, listensBefore.tracks),
-		);
+			expect(Number(r[0]) * 1000, "Hörprofil play time").toBeLessThan(L);
 		const h = await history(page);
 		expect(h.importedTracks).toBe(2);
 		expect(h.liveSince).toBe(L);
@@ -330,7 +329,9 @@ test.describe("Import cutoff at the first sign-in", () => {
 			`Alle Wiedergaben in diesen Dateien sind vom ${moment(L)} oder später. Sie liegen außerhalb der aktuellen Import-Gewichtung und werden deshalb nicht übernommen, auch nicht ins Hörprofil. true-shuffle hat sie möglicherweise nicht selbst erfasst.`,
 		);
 		await expect(page.getByRole("button", { name: "Übernehmen" })).toHaveCount(0);
+		await expect(page.locator(".step .hint", { hasText: "Hörprofil:" })).toHaveCount(0);
 		expect(net.sent).toEqual([]);
+		expect((await history(page)).liveSince).toBe(L);
 	});
 
 	test("a play exactly at the cutoff stays out of the Hörprofil as it stays out of the weighting", async ({
@@ -352,7 +353,15 @@ test.describe("Import cutoff at the first sign-in", () => {
 		await takeOver(page);
 		expect(net.rows().map((r) => r[0])).toEqual([id("Q")]);
 		const listens = net.listens();
-		expect(listens.tracks.map((t) => t[0])).toEqual([id("Q")]);
-		expect(listens.rows).toHaveLength(2);
+		expect(listens.tracks).toEqual([
+			[id("Q"), "Synthetisch Q", "Stichtag-Kapelle", "Synthetische Platte"],
+		]);
+		expect(listens.rows.map((r) => [r[0], r[1], r[2]])).toEqual([
+			[Math.floor((L - 10 * DAY) / 1000), 0, 200_000],
+			[Math.floor((L - 1_000) / 1000), 0, 200_000],
+		]);
+		const h = await history(page);
+		expect(h.importedTracks).toBe(1);
+		expect(h.liveSince).toBe(L);
 	});
 });

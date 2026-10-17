@@ -139,13 +139,47 @@ export function newListens(): ListenBuilder {
 	return { tracks: [], index: new Map(), rows: new Map() };
 }
 
+/** One play as read: its full time (ms), its place in the reading order, its row. */
+type Read = [at: number, n: number, row: ListenRow];
+
+/**
+ * What the builder read beyond its rows, kept beside it in the browser only
+ * (never sent, never stored): the full time of every play, so that
+ * `finishListens` cuts by the moment before the rows lose their milliseconds
+ * and before the same song in the same second is kept once.
+ */
+interface Raw {
+	/** Plays read so far. */
+	n: number;
+	/** Every play read, under its row's key, in the order read. */
+	plays: Map<string, Read[]>;
+	/**
+	 * Per song (index into `tracks`), its names as read at its first play and
+	 * again at every play earlier than all read before it: [full time, song].
+	 */
+	songs: Map<number, [number, ListenTrack][]>;
+}
+
+const raws = new WeakMap<ListenBuilder, Raw>();
+
+function rawOf(b: ListenBuilder): Raw {
+	let raw = raws.get(b);
+	if (!raw) {
+		raw = { n: 0, plays: new Map(), songs: new Map() };
+		raws.set(b, raw);
+	}
+	return raw;
+}
+
 /**
  * Folds one file into the builder: music only (podcasts have no track URI).
  * The same play in two files (an export sent twice) is kept once. Plays
- * under 30 s are kept too: a skip is part of the story.
+ * under 30 s are kept too: a skip is part of the story. Every entry of the
+ * file, podcasts and later plays included, tells which play opened a start.
  */
 export function addListens(entries: readonly ListenEntry[], b: ListenBuilder): ListenBuilder {
 	const text = (v: string | null | undefined) => (v ?? "").trim().slice(0, 200);
+	const raw = rawOf(b);
 	const opens = startTracker();
 	for (const e of entries) {
 		const opener = opens(e);
@@ -153,16 +187,22 @@ export function addListens(entries: readonly ListenEntry[], b: ListenBuilder): L
 		const at = e.ts ? Date.parse(e.ts) : Number.NaN;
 		if (!m || !Number.isFinite(at) || at <= 0) continue;
 		const id = m[1]!;
+		const song = (): ListenTrack => [
+			id,
+			text(e.master_metadata_track_name),
+			text(e.master_metadata_album_artist_name),
+			text(e.master_metadata_album_album_name),
+		];
 		let t = b.index.get(id);
 		if (t === undefined) {
 			t = b.tracks.length;
 			b.index.set(id, t);
-			b.tracks.push([
-				id,
-				text(e.master_metadata_track_name),
-				text(e.master_metadata_album_artist_name),
-				text(e.master_metadata_album_album_name),
-			]);
+			const named = song();
+			b.tracks.push(named);
+			raw.songs.set(t, [[at, named]]);
+		} else {
+			const names = raw.songs.get(t);
+			if (names && at < names.at(-1)![0]) names.push([at, song()]);
 		}
 		const ms =
 			typeof e.ms_played === "number" && e.ms_played > 0
@@ -178,34 +218,63 @@ export function addListens(entries: readonly ListenEntry[], b: ListenBuilder): L
 			(opener ? LISTEN_FLAG.opener : 0) |
 			LISTEN_FLAG.rated;
 		const sec = Math.floor(at / 1000);
-		b.rows.set(`${sec}:${t}`, [sec, t, ms, flags, platformOf(e.platform)]);
+		const key = `${sec}:${t}`;
+		const row: ListenRow = [sec, t, ms, flags, platformOf(e.platform)];
+		b.rows.set(key, row);
+		const read: Read = [at, raw.n++, row];
+		const same = raw.plays.get(key);
+		if (same) same.push(read);
+		else raw.plays.set(key, [read]);
 	}
 	return b;
 }
 
 /**
  * The song list and every play, oldest first; with `before`, only the plays
- * before then (and only their songs): what came after the first sign-in,
- * true-shuffle counted itself.
+ * whose full time is before then (and only their songs): what came after the
+ * first sign-in stays out, as it does in the weighting (`aggregateHistory`).
+ * The cut comes first: of the same song in the same second, the last play
+ * read before then is kept, in the place of the first, and a song is named as
+ * at its first play read before then, so a play left out changes nothing.
+ * Without `before`, the last play read of a song in a second is kept, and a
+ * song is named as at its first play read. The builder stays as it was.
  */
 export function finishListens(
 	b: ListenBuilder,
 	before: number | null = null,
 ): { tracks: ListenTrack[]; rows: ListenRow[] } {
-	const rows = [...b.rows.values()]
-		.filter((r) => before === null || r[0] * 1000 < before)
-		.sort((x, y) => x[0] - y[0]);
+	const raw = raws.get(b);
+	const kept = (at: number) => before === null || at < before;
+	// [row, place among the plays read]; rows not read by addListens, by their whole second.
+	const picked: [ListenRow, number][] = [];
+	for (const [key, row] of b.rows) {
+		const same = raw?.plays.get(key);
+		if (!same) {
+			if (kept(row[0] * 1000)) picked.push([row, -1]);
+			continue;
+		}
+		let last: Read | undefined;
+		let first: number | undefined;
+		for (const r of same)
+			if (kept(r[0])) {
+				last = r;
+				first ??= r[1];
+			}
+		if (last) picked.push([last[2], first!]);
+	}
+	picked.sort((x, y) => x[0][0] - y[0][0] || x[1] - y[1]);
 	const remap = new Map<number, number>();
 	const tracks: ListenTrack[] = [];
-	for (const r of rows) {
+	const rows = picked.map(([r]): ListenRow => {
 		let i = remap.get(r[1]);
 		if (i === undefined) {
 			i = tracks.length;
 			remap.set(r[1], i);
-			tracks.push(b.tracks[r[1]]!);
+			const names = raw?.songs.get(r[1]);
+			tracks.push(names?.find(([at]) => kept(at))?.[1] ?? b.tracks[r[1]]!);
 		}
-		r[1] = i;
-	}
+		return [r[0], i, r[2], r[3], r[4]];
+	});
 	return { tracks, rows };
 }
 
