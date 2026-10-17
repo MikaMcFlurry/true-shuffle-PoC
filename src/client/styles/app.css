@@ -2113,6 +2113,46 @@ dialog.sheet::backdrop {
 	}
 }
 
+/* The release notice and its notes (Mehr → Über). */
+dialog.sheet--release {
+	width: min(460px, calc(100vw - 24px));
+}
+
+.release-title {
+	font-size: 1.25rem;
+	font-weight: 750;
+}
+
+.release-notes {
+	display: grid;
+	gap: 8px;
+}
+
+.release-notes li {
+	position: relative;
+	padding-left: 22px;
+}
+
+.release-notes li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.75em;
+	width: 12px;
+	border-top: 3px solid var(--tape);
+}
+
+.release-known {
+	color: var(--ink-2);
+	font-size: 0.9375rem;
+}
+
+.section.release {
+	display: grid;
+	gap: 12px;
+	justify-items: start;
+}
+
 .sheet__body {
 	display: grid;
 	gap: 16px;

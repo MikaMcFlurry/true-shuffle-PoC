@@ -10,6 +10,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
 import type { ObservedTarget, RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
+import { RELEASE } from "../shared/release";
 import { type Env, endpoints } from "./env";
 import type { Occurrence } from "./hub/hub";
 import { Keys, randomToken, sha256b64url } from "./lib/crypto";
@@ -227,7 +228,12 @@ app.all("/remote/*", (c) =>
 // ---------------------------------------------------------------------------
 
 app.get("/api/health", (c) =>
-	c.json({ ok: true, version: "1.0.0", configured: configured(c.env) === null }),
+	c.json({
+		ok: true,
+		version: RELEASE.version,
+		released: RELEASE.date,
+		configured: configured(c.env) === null,
+	}),
 );
 
 app.use("/api/*", async (c, next) => {

@@ -2,6 +2,7 @@ import { History, House, ListMusic, Menu } from "lucide-preact";
 import { useEffect, useRef } from "preact/hooks";
 import { Mark } from "./components/mark";
 import { RateSheet } from "./components/rate";
+import { ReleaseNotice } from "./components/release-notes";
 import { useRoute } from "./router";
 import { Home } from "./screens/home";
 import {
@@ -173,6 +174,7 @@ export function App() {
 				{s.flash?.text ?? ""}
 			</div>
 			<RateSheet />
+			<ReleaseNotice route={route} />
 		</div>
 	);
 }

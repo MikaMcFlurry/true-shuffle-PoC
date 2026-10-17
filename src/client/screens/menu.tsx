@@ -43,6 +43,7 @@ import {
 import { DAY_MS, emptyMemory } from "../../core/types";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
+import { loadedLine, ReleaseNotes } from "../components/release-notes";
 import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
@@ -62,6 +63,7 @@ import {
 	useHistoryRatings,
 } from "../history-ratings";
 import { playbackHint, ratingLine } from "../history-ratings-text";
+import { showReleaseNotes } from "../release-notice";
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store, useStore } from "../store";
 
@@ -1062,6 +1064,14 @@ export function AboutScreen() {
 					Deezer), die Genre-Suche von Spotify und KI-Vorschläge. Jeder Vorschlag wird bei Spotify
 					geprüft, bevor er auf eine Kassette darf.
 				</p>
+			</Section>
+
+			<Section title="Version" id="info-version" class="release">
+				<p>{loadedLine()}</p>
+				<ReleaseNotes />
+				<button type="button" class="act" onClick={() => showReleaseNotes()}>
+					Was ist neu?
+				</button>
 			</Section>
 		</div>
 	);

@@ -9,8 +9,26 @@
  * is FAKE_PORT (8788 by default, like the other specs).
  */
 
-import { expect, type Locator, type Page, type Route, test } from "@playwright/test";
+import {
+	type BrowserContext,
+	expect,
+	type Locator,
+	type Page,
+	type Route,
+	test,
+} from "@playwright/test";
 import type { HistoryEntry } from "../src/shared/api";
+
+/** The release notice (e2e/release-notes.spec.ts) is closed the normal way, by its own key, wherever it opens. */
+function acknowledgeRelease(context: BrowserContext): void {
+	const handle = (p: Page) =>
+		void p.addLocatorHandler(p.getByRole("dialog", { name: /^Neu in Version / }), (d) =>
+			d.getByRole("button", { name: "Verstanden" }).click(),
+		);
+	for (const p of context.pages()) handle(p);
+	context.on("page", handle);
+}
+test.beforeEach(({ context }) => acknowledgeRelease(context));
 
 const FAKE = `http://127.0.0.1:${process.env.FAKE_PORT ?? 8788}/__control`;
 

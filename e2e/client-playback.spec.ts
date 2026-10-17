@@ -1,7 +1,18 @@
 /** Rendered client races use intercepted API snapshots; no provider or history writes. */
-import { expect, type Page, type Route, test } from "@playwright/test";
+import { type BrowserContext, expect, type Page, type Route, test } from "@playwright/test";
 import { DEFAULT_RULES } from "../src/core/types";
 import type { AppState, DeviceView } from "../src/shared/api";
+
+/** The release notice (e2e/release-notes.spec.ts) is closed the normal way, by its own key, wherever it opens. */
+function acknowledgeRelease(context: BrowserContext): void {
+	const handle = (p: Page) =>
+		void p.addLocatorHandler(p.getByRole("dialog", { name: /^Neu in Version / }), (d) =>
+			d.getByRole("button", { name: "Verstanden" }).click(),
+		);
+	for (const p of context.pages()) handle(p);
+	context.on("page", handle);
+}
+test.beforeEach(({ context }) => acknowledgeRelease(context));
 
 test.use({ viewport: { width: 390, height: 844 } });
 

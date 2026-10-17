@@ -3,8 +3,19 @@
  * Spotify stand-in (synthetic demo library, see e2e/fake-server.ts).
  */
 
-import { expect, type Page, type Route, test } from "@playwright/test";
+import { type BrowserContext, expect, type Page, type Route, test } from "@playwright/test";
 import type { SpotifyUsageReport, SpotifyUsageTotals } from "../src/shared/spotify-usage";
+
+/** The release notice (e2e/release-notes.spec.ts) is closed the normal way, by its own key, wherever it opens. */
+function acknowledgeRelease(context: BrowserContext): void {
+	const handle = (p: Page) =>
+		void p.addLocatorHandler(p.getByRole("dialog", { name: /^Neu in Version / }), (d) =>
+			d.getByRole("button", { name: "Verstanden" }).click(),
+		);
+	for (const p of context.pages()) handle(p);
+	context.on("page", handle);
+}
+test.beforeEach(({ context }) => acknowledgeRelease(context));
 
 const FAKE = "http://127.0.0.1:8788/__control";
 
@@ -2033,6 +2044,7 @@ test.describe("calm player", () => {
 			locale: "de-DE",
 			timezoneId: "Europe/Berlin",
 		});
+		acknowledgeRelease(context);
 		try {
 			const other = await context.newPage();
 			await signIn(other);

@@ -20,6 +20,17 @@ import {
 } from "@playwright/test";
 import type { HistoryEntry } from "../src/shared/api";
 
+/** The release notice (e2e/release-notes.spec.ts) is closed the normal way, by its own key, wherever it opens. */
+function acknowledgeRelease(context: BrowserContext): void {
+	const handle = (p: Page) =>
+		void p.addLocatorHandler(p.getByRole("dialog", { name: /^Neu in Version / }), (d) =>
+			d.getByRole("button", { name: "Verstanden" }).click(),
+		);
+	for (const p of context.pages()) handle(p);
+	context.on("page", handle);
+}
+test.beforeEach(({ context }) => acknowledgeRelease(context));
+
 // The fake Spotify control port: 8788 as in playwright.config.ts, or an isolated run's own (FAKE_PORT).
 const FAKE = `http://127.0.0.1:${process.env.FAKE_PORT ?? 8788}/__control`;
 
@@ -258,6 +269,7 @@ test.describe("ratings right in the Verlauf", () => {
 		await expect(page.getByText(/Bewertungen im Verlauf direkt anzeigen/)).toHaveCount(0);
 		// Another device (a fresh browser): the same keys.
 		const other: BrowserContext = await browser.newContext();
+		acknowledgeRelease(other);
 		const p2 = await other.newPage();
 		await signIn(p2);
 		await p2.goto("/verlauf");
@@ -272,6 +284,7 @@ test.describe("ratings right in the Verlauf", () => {
 		browser,
 	}) => {
 		const ctx = await browser.newContext();
+		acknowledgeRelease(ctx);
 		await ctx.addInitScript(() => {
 			const fail = () => {
 				throw new DOMException("blocked", "SecurityError");

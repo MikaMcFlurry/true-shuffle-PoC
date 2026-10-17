@@ -23,6 +23,7 @@ import type {
 	StationSource,
 } from "../shared/api";
 import type { SpotifyUsageReport } from "../shared/spotify-usage";
+import { pendingMutations } from "./pending-mutations";
 
 /** One occurrence of a song in a saved queue: the session and its entry. */
 export interface PlayingOccurrence {
@@ -40,7 +41,26 @@ export class ApiError extends Error {
 	}
 }
 
+/**
+ * Every write is counted as on its way (pending-mutations.ts) from before it
+ * is sent until its answer was read and judged, whatever the outcome; the
+ * request and its result or error are untouched.
+ */
 async function call<T>(
+	method: string,
+	path: string,
+	body?: unknown,
+	timeoutMs?: number,
+): Promise<T> {
+	const end = method !== "GET" ? pendingMutations.begin() : null;
+	try {
+		return await send<T>(method, path, body, timeoutMs);
+	} finally {
+		end?.();
+	}
+}
+
+async function send<T>(
 	method: string,
 	path: string,
 	body?: unknown,
