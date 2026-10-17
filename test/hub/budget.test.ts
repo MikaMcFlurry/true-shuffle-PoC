@@ -8,6 +8,8 @@
  */
 
 import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DAY_MS, HOUR_MS, MINUTE_MS } from "../../src/core/types";
 import { HubCore } from "../../src/worker/hub/hub";
@@ -170,7 +172,7 @@ async function listenerDay(opts: { stations: number; memory: number; followed: n
 		});
 	}
 	writeFileSync(
-		`/tmp/true-shuffle-row-budget-${opts.stations}.json`,
+		join(tmpdir(), `true-shuffle-row-budget-${opts.stations}.json`),
 		JSON.stringify(
 			{
 				read: c.read,

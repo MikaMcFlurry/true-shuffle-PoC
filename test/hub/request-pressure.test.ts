@@ -1,4 +1,6 @@
 import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { onboarded } from "./harness";
 
@@ -54,7 +56,7 @@ describe("NN-09 finite request-pressure measurements", () => {
 		const results: Record<string, Awaited<ReturnType<typeof measure>>> = {};
 		for (const scenario of scenarios) results[scenario] = await measure(scenario);
 		writeFileSync(
-			process.env.PRESSURE_REPORT ?? "/tmp/true-shuffle-pressure-current.json",
+			process.env.PRESSURE_REPORT ?? join(tmpdir(), "true-shuffle-pressure-current.json"),
 			JSON.stringify(
 				{ simulated: true, cadenceSeconds: 15, settlementSeconds: 7200, results },
 				null,

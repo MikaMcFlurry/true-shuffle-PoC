@@ -1,4 +1,6 @@
 import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, it } from "vitest";
 import { RequestBudget } from "../../src/worker/spotify/client";
 import { onboarded } from "./harness";
@@ -76,7 +78,7 @@ it("audits full-day Spotify pressure and continued history during a device-only 
 	await expect(h.hub.devices()).rejects.toMatchObject({ kind: "quota", scope: "devices" });
 	expect(h.fake.calls.length).toBe(afterSync);
 	writeFileSync(
-		"/tmp/ts-full-day-usage-audit.json",
+		join(tmpdir(), "ts-full-day-usage-audit.json"),
 		JSON.stringify(
 			{
 				simulated: true,
