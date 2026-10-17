@@ -151,7 +151,9 @@ export function takeListed(rows: HistoryEntry[], read: ListRead, settle: boolean
  * list was asked for is in it; one given while it was on its way is not —
  * told apart by the very rating object standing when it was asked for
  * (`known`), never by the clock: both can fall in one millisecond. Without
- * `known`, the list counts as asked for now.
+ * `known`, the list counts as asked for now. A row without a write number (an
+ * older answer) accounts for no rating given here: the store does not hear it
+ * either (`noteStored`), so the thumb keeps showing alike in both.
  */
 export function noteListed(
 	rows: HistoryEntry[],
@@ -164,7 +166,7 @@ export function noteListed(
 		const seq = r.rated ?? 0;
 		const cur = listed.get(r.id);
 		const o = store.thumbOverride(r.id);
-		const seen = o && (!asked || asked.get(r.id) === o) ? o : undefined;
+		const seen = o && r.rated !== undefined && (!asked || asked.get(r.id) === o) ? o : undefined;
 		if (!cur || seq >= cur.seq) listed.set(r.id, { value: r.thumb, seq, seen });
 	}
 	emit();

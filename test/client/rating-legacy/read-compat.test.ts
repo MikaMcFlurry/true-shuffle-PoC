@@ -96,8 +96,33 @@ describe("legacy reads without a write number", () => {
 		store.setThumb(X, 1);
 		const asked = ratings.startListRead();
 		expect(asked.known.get(X)?.v).toBe(1);
+		const o = store.thumbOverride(X);
 		expect(take([row(X, -1)], asked, false)).toBe(true);
 		expectAgree(X);
+		// No write number: nothing accounts for the thumb, in the store or the Verlauf.
+		expect(view(X)).toEqual({ sheet: 1, verlauf: 1 });
+		expect(store.thumbOverride(X)).toBe(o);
+		expect(store.storedOf(X)).toBeUndefined();
+	});
+
+	it("L1 (A6) with the sheet opened after the follow page was asked: the list leaves the open sheet as it was, both on +1 (control)", () => {
+		store.setThumb(X, 1);
+		const asked = ratings.startListRead();
+		open(X);
+		const sheet = store.rating;
+		expect(take([row(X, -1)], asked, false)).toBe(true);
+		expect(store.rating).toBe(sheet);
+		expect(view(X)).toEqual({ sheet: 1, verlauf: 1 });
+	});
+
+	it("L1 (A6) with a write number on the follow page: it accounts for the thumb, both on −1 (control)", () => {
+		open(X);
+		store.setThumb(X, 1);
+		const o = store.thumbOverride(X)!;
+		const asked = ratings.startListRead();
+		expect(take([row(X, -1, 3)], asked, false)).toBe(true);
+		expect(store.covers(o, 3)).toBe(true);
+		expect(view(X)).toEqual({ sheet: -1, verlauf: -1 });
 	});
 
 	it.each(["before the list is asked", "between ask and answer", "after the answer"] as const)(
