@@ -583,3 +583,93 @@ test("COR1: B's held Nie wieder released after C was confirmed as Favorit: C's m
 		requests: served.requests.filter((r) => r.path !== "/api/state"),
 	});
 });
+
+// ---------------------------------------------------------------------------
+// The open "next" outlives a look it does not apply to (TS-NP-OBSERVED-COR2-261017).
+
+test("COR2: accepted next on B, then no player, D2 and back to B on D: Weiter stays closed for D, also after a reload and in a second tab; D2 once; C operable", async ({
+	page,
+	context,
+}, info) => {
+	const { h, outside, name } = await world();
+	const served = await serve(page, h);
+	// Every "next" Spotify receives, with the device it names (local to this test).
+	const sentTo: string[] = [];
+	const handle = h.fake.handle.bind(h.fake);
+	h.fake.handle = async (req: Request) => {
+		const url = new URL(req.url);
+		if (req.method === "POST" && url.pathname.endsWith("/v1/me/player/next"))
+			sentTo.push(url.searchParams.get("device_id") ?? "active");
+		return handle(req);
+	};
+	const u = h.fake.user("mika");
+	u.devices.push({ id: "mika-desk", name: "Desk", type: "Computer", restricted: false });
+	await page.goto("/");
+	const [b, c] = outside;
+	h.fake.playSong("mika", b!);
+	await look(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b!));
+	acceptWithoutMoving(h);
+	await weiter(page).click();
+	await expect.poll(() => sentTo).toEqual(["mika-phone"]);
+	// Spotify knows no player for a moment (204), then shows the same play of B on D again.
+	u.player.deviceId = null;
+	await look(h, 2_000);
+	await reread(page);
+	await expect(title(page)).toHaveText("Spotify spielt gerade nichts");
+	u.player.deviceId = "mika-phone";
+	await stillPlaying(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b!));
+	await expect(weiter(page)).toBeDisabled();
+	// The same play on D2: its own target, operable once.
+	u.player.deviceId = "mika-desk";
+	await stillPlaying(h);
+	await reread(page);
+	await expect(title(page)).toHaveText(name(b!));
+	await expect(weiter(page)).toBeEnabled();
+	acceptWithoutMoving(h);
+	await weiter(page).click();
+	await expect.poll(() => sentTo).toEqual(["mika-phone", "mika-desk"]);
+	await stillPlaying(h);
+	await reread(page);
+	await expect(weiter(page)).toBeDisabled();
+	// Back on D, then a reload: D's open next was neither ended nor overwritten.
+	u.player.deviceId = "mika-phone";
+	await stillPlaying(h);
+	await page.reload();
+	await expect(title(page)).toHaveText(name(b!));
+	await expect(weiter(page)).toBeDisabled();
+	await expect(
+		page.getByRole("status").filter({ hasText: "schon an Spotify gesendet" }),
+	).toBeVisible();
+	// A second tab on a restarted hub: Weiter closed; "Nie wieder" stored, its skip not sent.
+	h.restart();
+	const tab2 = await context.newPage();
+	const served2 = await serve(tab2, h);
+	await tab2.goto("/");
+	await expect(title(tab2)).toHaveText(name(b!));
+	await expect(weiter(tab2)).toBeDisabled();
+	await nieWieder(tab2).click();
+	await expect.poll(() => h.hub.memory(b!).thumb).toBe(-1);
+	await expect(tab2.getByText("Wird gespeichert …")).toHaveCount(0);
+	await expect(
+		tab2.getByRole("status").filter({ hasText: "schon an Spotify gesendet" }),
+	).toBeVisible();
+	expect(sentTo).toEqual(["mika-phone", "mika-desk"]);
+	expect(h.fake.current()).toBe(b);
+	// A new play (C): operable at once.
+	h.fake.playSong("mika", c!);
+	await look(h);
+	await reread(tab2);
+	await expect(title(tab2)).toHaveText(name(c!));
+	await expect(weiter(tab2)).toBeEnabled();
+	await weiter(tab2).click();
+	await expect.poll(() => sentTo).toEqual(["mika-phone", "mika-desk", "mika-phone"]);
+	await record(info, "cor2-provider-requests", {
+		nextDevices: sentTo,
+		page: served.requests.filter((r) => r.path !== "/api/state"),
+		tab2: served2.requests.filter((r) => r.path !== "/api/state"),
+	});
+});

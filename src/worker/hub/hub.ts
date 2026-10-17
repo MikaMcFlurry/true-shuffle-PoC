@@ -530,7 +530,10 @@ interface PlayerSnapshot {
  * A "next" sent for one observed play (NP06), held until a look shows that
  * play over: accepted, unclear or lost, it is never sent again for the same
  * play — from "Weiter", "Nie wieder", a reload or another tab alike. A clear
- * refusal by Spotify frees it (nothing happened).
+ * refusal by Spotify frees it (nothing happened). A look showing no player,
+ * or the play on another device, does not show it over: back on that device,
+ * it holds again. One per device (stored as a list): the play on another
+ * device is its own target, and its "next" leaves this one in place.
  */
 interface ObservedNextSent {
 	account: string;
@@ -2987,9 +2990,14 @@ export class HubCore {
 			repeat: state?.repeat_state,
 			at: this.now(),
 		};
-		// A look showing the play a "next" was sent for over ends that hold.
-		if (this.kvGet("observed_next_sent") !== null && !this.observedNextSent(snap))
-			this.kvDel("observed_next_sent");
+		// A look showing the play a "next" was sent for over ends that hold; no
+		// player, or the play on another device, says nothing about it.
+		const held = this.observedNextHeld();
+		if (held.length > 0) {
+			const open = held.filter((sent) => !this.observedPlayOver(sent, snap));
+			if (open.length === 0) this.kvDel("observed_next_sent");
+			else if (open.length !== held.length) this.kvSet("observed_next_sent", open);
+		}
 		// The same picture as a few minutes ago (a paused player): not stored again.
 		const before = this.kvGet<PlayerSnapshot>("player");
 		const same =
@@ -5996,6 +6004,7 @@ export class HubCore {
 		});
 		if (target.account !== this.kvGet<{ id: string }>("profile")?.id) return changed();
 		let transportAttempted = false;
+		let sent: ObservedNextSent | null = null;
 		try {
 			this.transportRevision += 1;
 			const observed = await this.sync(new RequestBudget(8), {
@@ -6035,13 +6044,18 @@ export class HubCore {
 				);
 			const client = this.client(new RequestBudget(6));
 			// Held before Spotify is asked: an answer lost after it acted holds it too.
-			this.kvSet("observed_next_sent", {
+			// Another device's open "next" stays; one left for this device is over.
+			sent = {
 				account: target.account,
 				trackId: target.trackId,
 				deviceId: target.deviceId,
 				playId: seen.playId,
 				at: this.now(),
-			} satisfies ObservedNextSent);
+			};
+			this.kvSet("observed_next_sent", [
+				...this.observedNextHeld().filter((x) => x.deviceId !== target.deviceId),
+				sent,
+			]);
 			transportAttempted = true;
 			await client.next(target.deviceId);
 			this.transportRevision += 1;
@@ -6055,7 +6069,15 @@ export class HubCore {
 				this.transportRevision += 1;
 				this.kvSet("player_stale", 1);
 				await this.deferPlayerObservation();
-			} else if (transportAttempted) this.kvDel("observed_next_sent");
+			} else if (transportAttempted && sent) {
+				// Refused: only this "next" is freed, another device's stays held.
+				const mine = sent;
+				const open = this.observedNextHeld().filter(
+					(x) => !(x.deviceId === mine.deviceId && x.playId === mine.playId && x.at === mine.at),
+				);
+				if (open.length > 0) this.kvSet("observed_next_sent", open);
+				else this.kvDel("observed_next_sent");
+			}
 			return result;
 		}
 	}
@@ -8219,15 +8241,37 @@ export class HubCore {
 	 * look shows something else.
 	 */
 	private observedNextSent(snap: PlayerSnapshot | null): ObservedNextSent | null {
-		const sent = this.kvGet<ObservedNextSent>("observed_next_sent");
-		if (!sent || !snap?.obs?.trackId) return null;
-		if (sent.account !== this.kvGet<{ id: string }>("profile")?.id) return null;
-		if (snap.obs.trackId !== sent.trackId || (snap.device?.id ?? null) !== sent.deviceId)
-			return null;
+		if (!snap?.obs?.trackId) return null;
+		const account = this.kvGet<{ id: string }>("profile")?.id;
+		const device = snap.device?.id ?? null;
+		return (
+			this.observedNextHeld().find(
+				(sent) =>
+					sent.account === account &&
+					sent.deviceId === device &&
+					!this.observedPlayOver(sent, snap),
+			) ?? null
+		);
+	}
+
+	/** Every open "next" (ObservedNextSent), one per device; one stored alone before reads as one. */
+	private observedNextHeld(): ObservedNextSent[] {
+		const held = this.kvGet<ObservedNextSent | ObservedNextSent[]>("observed_next_sent");
+		return held === null ? [] : Array.isArray(held) ? held : [held];
+	}
+
+	/**
+	 * A look showing the play a "next" was sent for over: something else plays,
+	 * or another play of the song — both followed by the looks and begun at
+	 * different times — or the account is another. No player, or the play on
+	 * another device, does not show it over.
+	 */
+	private observedPlayOver(sent: ObservedNextSent, snap: PlayerSnapshot): boolean {
+		if (sent.account !== this.kvGet<{ id: string }>("profile")?.id) return true;
+		if (!snap.obs) return false;
+		if (snap.obs.trackId !== sent.trackId) return true;
 		const play = this.observedPlayId(snap);
-		if (play && play !== sent.playId && play.includes(":") && sent.playId.includes(":"))
-			return null;
-		return sent;
+		return !!play && play !== sent.playId && play.includes(":") && sent.playId.includes(":");
 	}
 
 	/**

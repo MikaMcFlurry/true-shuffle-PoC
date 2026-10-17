@@ -675,3 +675,224 @@ it("COR1 late B answer: B's held Nie wieder after C was confirmed as Favorit lea
 	expect(count(h, NEXT)).toBe(nexts);
 	expect(h.fake.current()).toBe(c);
 });
+
+// ---------------------------------------------------------------------------
+// The open "next" outlives a look it does not apply to (TS-NP-OBSERVED-COR2-261017).
+// A look showing no player (204) or the same play on another device says
+// nothing about whether the "next" sent for B on D acted: back on the same
+// unconfirmed play of B on D, it stays held — after a reload and a restarted
+// hub alike. The same play on D2 is its own target: a "next" sent there is
+// held for D2 and leaves D's open one in place. A clear refusal, and a really
+// new play (C, or B begun again), stay operable. Every "next" request is
+// recorded with the device it names (local to these tests).
+
+const DESK = "mika-desk";
+
+/** The device every "next" request names, in order (device_id or "active"). */
+function nextDevices(h: H) {
+	const fake = h.fake;
+	const original = fake.handle.bind(fake);
+	const seen: string[] = [];
+	fake.handle = async (req: Request) => {
+		const url = new URL(req.url);
+		if (req.method === "POST" && url.pathname.endsWith("/v1/me/player/next"))
+			seen.push(url.searchParams.get("device_id") ?? "active");
+		return original(req);
+	};
+	return seen;
+}
+
+/** A look while Spotify knows no player (204), then the same play on D again. */
+async function viaNoPlayer(h: H) {
+	const p = h.fake.user("mika").player;
+	const device = p.deviceId;
+	p.deviceId = null;
+	await look(h, 2_000);
+	expect((await observedOf(h)).state).toBe("none");
+	p.deviceId = device;
+}
+
+/** A look showing the same play of B on another device (D2), then D again. */
+async function viaDesk(h: H, b: string) {
+	const u = h.fake.user("mika");
+	if (!u.devices.some((d) => d.id === DESK))
+		u.devices.push({ id: DESK, name: "Desk", type: "Computer", restricted: false });
+	const device = u.player.deviceId;
+	u.player.deviceId = DESK;
+	await look(h, 2_000);
+	const o = await observedOf(h);
+	expect(o.track?.id).toBe(b);
+	expect(o.device?.id).toBe(DESK);
+	u.player.deviceId = device;
+	return o;
+}
+
+const excursions = {
+	"B/D -> no player (204) -> B/D": (h: H, _b: string) => viaNoPlayer(h),
+	"B/D -> D2 -> B/D": (h: H, b: string) => viaDesk(h, b),
+} as const;
+
+const firsts = {
+	Next: (h: H, _b: string, t: ObservedTarget) => h.hub.observedNext(t),
+	"Nie wieder": (h: H, b: string, t: ObservedTarget) => h.hub.thumb(b, -1, undefined, t),
+} as const;
+
+for (const mode of ["accepted", "server error", "lost answer"] as const)
+	for (const [path, away] of Object.entries(excursions))
+		for (const [firstName, first] of Object.entries(firsts))
+			it(`COR2 return, first ${firstName} ${mode}, ${path}: still held — Next, Nie wieder, reload, second tab send nothing`, async () => {
+				const { h, sid, b, c, target } = await bObserved();
+				const before = tsState(h, sid);
+				const devices = nextDevices(h);
+				const restore = firstNextAnswers(h, mode);
+				await first(h, b, target);
+				restore();
+				expect(devices).toEqual(["mika-phone"]);
+				expect(h.fake.current()).toBe(b);
+				await away(h, b);
+				// Back on D: the same unconfirmed play of B.
+				const back = await stillB(h, b, target);
+				expect((await observedOf(h)).nextPending).toBe(true);
+				expect(await h.hub.observedNext(back)).toMatchObject({ ok: false, observedPending: true });
+				expect(await h.hub.thumb(b, -1, undefined, back)).toMatchObject({
+					skipped: false,
+					observedSkip: "pending",
+				});
+				// Twice away and back, then a reload / second tab on a restarted hub.
+				await away(h, b);
+				h.restart();
+				const tab2 = await stillB(h, b, target);
+				expect((await observedOf(h)).nextPending).toBe(true);
+				expect(await h.hub.observedNext(tab2)).toMatchObject({ ok: false, observedPending: true });
+				expect(await h.hub.thumb(b, -1, undefined, tab2)).toMatchObject({
+					skipped: false,
+					observedSkip: "pending",
+				});
+				// At most one transport for the original target, ever.
+				expect(devices).toEqual(["mika-phone"]);
+				expect(h.fake.current()).toBe(b);
+				expect(h.hub.memory(b).thumb).toBe(-1);
+				expect(tsState(h, sid)).toEqual(before);
+				// A really new play (C): operable at once.
+				h.fake.playSong("mika", c);
+				await look(h);
+				const oc = await observedOf(h);
+				expect(oc.track?.id).toBe(c);
+				expect(oc.nextPending).toBeUndefined();
+				expect(await h.hub.observedNext(oc.target!)).toMatchObject({ ok: true });
+				expect(devices).toEqual(["mika-phone", "mika-phone"]);
+			});
+
+it("COR2 D2 is its own target: its next is held for D2 and leaves D's open one; back on either sends nothing", async () => {
+	const { h, b, target } = await bObserved();
+	const devices = nextDevices(h);
+	let restore = firstNextAnswers(h, "accepted");
+	expect(await h.hub.observedNext(target)).toMatchObject({ ok: true });
+	restore();
+	// The same play on D2: not held there, operable once, by D2's own target.
+	const onDesk = await viaDesk(h, b);
+	expect(onDesk.nextPending).toBeUndefined();
+	expect(onDesk.target).toMatchObject({ trackId: b, deviceId: DESK, playId: target.playId });
+	h.fake.user("mika").player.deviceId = DESK;
+	restore = firstNextAnswers(h, "lost answer");
+	expect((await h.hub.observedNext(onDesk.target!)).ok).toBe(false);
+	restore();
+	expect(devices).toEqual(["mika-phone", DESK]);
+	await look(h, 2_000);
+	expect((await observedOf(h)).nextPending).toBe(true);
+	expect(await h.hub.observedNext((await observedOf(h)).target!)).toMatchObject({
+		observedPending: true,
+	});
+	// Back on D: D's open next was not overwritten by D2's.
+	h.fake.user("mika").player.deviceId = "mika-phone";
+	const back = await stillB(h, b, target);
+	expect((await observedOf(h)).nextPending).toBe(true);
+	expect(await h.hub.observedNext(back)).toMatchObject({ ok: false, observedPending: true });
+	expect(await h.hub.thumb(b, -1, undefined, back)).toMatchObject({ observedSkip: "pending" });
+	// Via no player, a restarted hub, then D2 and D again: both still held.
+	await viaNoPlayer(h);
+	h.restart();
+	await viaDesk(h, b);
+	h.fake.user("mika").player.deviceId = DESK;
+	await look(h, 2_000);
+	expect((await observedOf(h)).nextPending).toBe(true);
+	expect(await h.hub.thumb(b, -1, undefined, (await observedOf(h)).target!)).toMatchObject({
+		observedSkip: "pending",
+	});
+	h.fake.user("mika").player.deviceId = "mika-phone";
+	expect(await h.hub.observedNext(await stillB(h, b, target))).toMatchObject({
+		observedPending: true,
+	});
+	expect(devices).toEqual(["mika-phone", DESK]);
+	expect(h.fake.current()).toBe(b);
+});
+
+it("COR2 a clear refusal of D2's next frees D2 only; D's open next stays held", async () => {
+	const { h, b, target } = await bObserved();
+	const devices = nextDevices(h);
+	const restore = firstNextAnswers(h, "accepted");
+	expect(await h.hub.observedNext(target)).toMatchObject({ ok: true });
+	restore();
+	const onDesk = await viaDesk(h, b);
+	h.fake.user("mika").player.deviceId = DESK;
+	h.fake.failWhen = (m, p) =>
+		m === "POST" && p === "/me/player/next"
+			? {
+					status: 403,
+					body: { error: { status: 403, message: "Player command failed: Restriction violated" } },
+				}
+			: null;
+	const refused = await h.hub.observedNext(onDesk.target!);
+	h.fake.failWhen = null;
+	expect(refused.ok).toBe(false);
+	expect(refused.uncertain).toBeFalsy();
+	await look(h, 2_000);
+	expect((await observedOf(h)).nextPending).toBeUndefined();
+	h.fake.user("mika").player.deviceId = "mika-phone";
+	const back = await stillB(h, b, target);
+	expect((await observedOf(h)).nextPending).toBe(true);
+	expect(await h.hub.observedNext(back)).toMatchObject({ observedPending: true });
+	expect(devices).toEqual(["mika-phone", DESK]);
+});
+
+it("COR2 a clear refusal on D, then no player and back: the same play may be tried again", async () => {
+	const { h, b, target } = await bObserved();
+	const devices = nextDevices(h);
+	h.fake.failWhen = (m, p) =>
+		m === "POST" && p === "/me/player/next"
+			? {
+					status: 403,
+					body: { error: { status: 403, message: "Player command failed: Restriction violated" } },
+				}
+			: null;
+	const refused = await h.hub.observedNext(target);
+	h.fake.failWhen = null;
+	expect(refused).toMatchObject({ ok: false });
+	expect(refused.uncertain).toBeFalsy();
+	await viaNoPlayer(h);
+	const back = await stillB(h, b, target);
+	expect((await observedOf(h)).nextPending).toBeUndefined();
+	expect(await h.hub.observedNext(back)).toMatchObject({ ok: true });
+	expect(devices).toEqual(["mika-phone", "mika-phone"]);
+});
+
+it("COR2 after no player and D2, B begun again is a new play: operable, D's old hold gone", async () => {
+	const { h, b, c, target } = await bObserved();
+	const devices = nextDevices(h);
+	const restore = firstNextAnswers(h, "accepted");
+	expect(await h.hub.observedNext(target)).toMatchObject({ ok: true });
+	restore();
+	await viaNoPlayer(h);
+	await viaDesk(h, b);
+	h.fake.playSong("mika", c);
+	await look(h);
+	h.fake.playSong("mika", b);
+	await look(h);
+	const o = await observedOf(h);
+	expect(o.track?.id).toBe(b);
+	expect(o.device?.id).toBe("mika-phone");
+	expect(o.target!.playId).not.toBe(target.playId);
+	expect(o.nextPending).toBeUndefined();
+	expect(await h.hub.observedNext(o.target!)).toMatchObject({ ok: true });
+	expect(devices).toEqual(["mika-phone", "mika-phone"]);
+});
