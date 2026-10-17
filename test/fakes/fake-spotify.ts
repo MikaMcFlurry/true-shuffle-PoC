@@ -841,7 +841,7 @@ export class FakeSpotify {
 
 	/**
 	 * Deezer track search (listening samples, docs/HISTORY_PREVIEW.md): extra
-	 * synthetic results after the ones made from the fake's own songs, or a
+	 * synthetic results first (a search may list more than 25), then the fake's own songs, or a
 	 * forced answer. Sample addresses are synthetic and never fetched by tests
 	 * that run the hub; the browser tests answer them themselves.
 	 */
@@ -877,7 +877,7 @@ export class FakeSpotify {
 				artist: { name: t.artistName },
 				album: { title: t.albumName },
 			}));
-		const data = [...own, ...this.deezerExtra].slice(
+		const data = [...this.deezerExtra, ...own].slice(
 			0,
 			Number(url.searchParams.get("limit") ?? "25"),
 		);
