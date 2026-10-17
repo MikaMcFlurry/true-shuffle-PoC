@@ -472,25 +472,25 @@ test.describe("listening samples in the Verlauf", () => {
 		await budget(page);
 		await key(a).click();
 		await expect(key(a)).toHaveText(/^Stopp/);
-		await page.getByRole("link", { name: "Mehr" }).first().click();
+		await page.getByRole("link", { name: "Mehr", exact: true }).first().click();
 		await expect(page).toHaveURL(/\/mehr$/);
 		await expect.poll(() => silent(page)).toBe(true);
 		// Loading, then away: the late answer plays nothing.
-		await page.getByRole("link", { name: "Verlauf" }).first().click();
+		await page.getByRole("link", { name: "Verlauf", exact: true }).first().click();
 		const held: Route[] = [];
 		await page.route("**/api/history/preview", (r) => void held.push(r));
 		await budget(page);
 		const mediaBefore = seen.media.length;
 		await key(a).click();
 		await expect.poll(() => held.length).toBe(1);
-		await page.getByRole("link", { name: "Mehr" }).first().click();
+		await page.getByRole("link", { name: "Mehr", exact: true }).first().click();
 		await held.pop()!.continue();
 		await page.waitForTimeout(1_500);
 		expect(await silent(page)).toBe(true);
 		expect(seen.media).toHaveLength(mediaBefore); // the late answer loaded nothing
 		await page.unroute("**/api/history/preview");
 		// The tab goes to the background while playing: stopped, it stays stopped.
-		await page.getByRole("link", { name: "Verlauf" }).first().click();
+		await page.getByRole("link", { name: "Verlauf", exact: true }).first().click();
 		await budget(page);
 		await key(a).click();
 		await expect(key(a)).toHaveText(/^Stopp/);
