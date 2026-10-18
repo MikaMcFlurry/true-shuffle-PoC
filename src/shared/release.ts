@@ -33,7 +33,7 @@ export const RELEASE: Release = Object.freeze({
 		"Passt bei Deezer keine eindeutige Aufnahme, gibt es keine Hörprobe statt einer falschen; Fehler werden angezeigt.",
 	]),
 	known:
-		"Nicht jeder Song hat eine Hörprobe; sie sind nur zum privaten Anhören gedacht. Ob andere Audio-Apps beim Abspielen pausieren, entscheidet dein Gerät.",
+		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
 });
 
 /** "1.2.3" as numbers; anything else (a pre-release, a word) is no version here. */
