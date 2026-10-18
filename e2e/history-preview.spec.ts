@@ -560,7 +560,9 @@ test.describe("listening samples in the Verlauf", () => {
 		test.setTimeout(180_000);
 		acknowledgeRelease(page.context());
 		await instrument(page, { status: 200, seconds: 20 });
-		// The browser's play() is held open until the test lets it answer — the real one, then.
+		// The browser starts at once (the real play()), but its answer reaches the page only when
+		// the test lets it — and then always as "fulfilled", even if the browser aborted it meanwhile:
+		// the hardest late answer the page can get.
 		await page.addInitScript(() => {
 			const w = window as unknown as { __held: (() => void)[]; __hold: boolean };
 			w.__held = [];
@@ -568,8 +570,11 @@ test.describe("listening samples in the Verlauf", () => {
 			const orig = HTMLMediaElement.prototype.play;
 			HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) {
 				if (!w.__hold) return orig.call(this);
-				return new Promise<void>((resolve, reject) => {
-					w.__held.push(() => orig.call(this).then(resolve, reject));
+				const started = orig.call(this);
+				return new Promise<void>((resolve) => {
+					w.__held.push(() => {
+						started.then(resolve, () => resolve());
+					});
 				});
 			};
 		});
