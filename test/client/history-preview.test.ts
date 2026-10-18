@@ -453,3 +453,87 @@ describe("history preview: run-out addresses, one lookup per tap (P2-03)", () =>
 		}
 	});
 });
+
+/**
+ * Review 2026-10-18 (COR2): the current start's play() refused with
+ * AbortError — no stop, reset or newer tap of the page's own — must not leave
+ * the row "looking up" with nothing on its way: it ends, said, and only a tap
+ * tries again. (No browser cause is claimed; this is the promise's own path.)
+ */
+describe("history preview: the current start aborted (COR2)", () => {
+	async function opening() {
+		const s = setup();
+		s.audio.autoplay = "manual";
+		s.c.tap("A", 1);
+		s.asked[0]!.answer(READY(1));
+		await flush();
+		expect(s.c.view("A", 1).phase).toBe("loading"); // starting
+		return s;
+	}
+
+	it("ends said and silent, nothing by itself, a tap tries again", async () => {
+		const { c, asked, audio } = await opening();
+		audio.plays[0]!.fail("AbortError");
+		await flush();
+		const v = c.view("A", 1);
+		expect(v.phase).not.toBe("loading");
+		expect(v.phase).toBe("error");
+		expect(v.message).toMatch(/unterbrochen/);
+		expect(audio.playing).toBe(false);
+		await flush();
+		await flush();
+		expect(asked).toHaveLength(1); // no lookup by itself
+		expect(audio.plays).toHaveLength(1); // no play by itself
+		audio.autoplay = "ok";
+		c.tap("A", 1); // the listener tries again
+		expect(asked).toHaveLength(2);
+		asked[1]!.answer(READY(1));
+		await flush();
+		expect(c.view("A", 1).phase).toBe("playing");
+	});
+
+	const stops = {
+		"same key": (c: PreviewController) => c.tap("A", 1),
+		background: (c: PreviewController) => c.pause(),
+		leaving: (c: PreviewController) => c.reset(),
+		"another account": (c: PreviewController) => c.forget(),
+	};
+	for (const [what, stop] of Object.entries(stops))
+		it(`${what} first, then the AbortError: nothing said, nothing changes`, async () => {
+			const { c, asked, audio } = await opening();
+			stop(c);
+			const before = c.view("A", 1);
+			audio.plays[0]!.fail("AbortError");
+			await flush();
+			expect(c.view("A", 1)).toEqual(before);
+			expect(c.view("A", 1).phase).not.toBe("error");
+			expect(audio.playing).toBe(false);
+			expect(asked).toHaveLength(1);
+		});
+
+	it("an old start's AbortError leaves a newer start alone", async () => {
+		const { c, audio } = await opening();
+		c.tap("A", 1); // stop while starting
+		c.tap("A", 1); // a new, deliberate start (kept address)
+		expect(audio.plays).toHaveLength(2);
+		audio.plays[0]!.fail("AbortError"); // the old one, refused late
+		await flush();
+		expect(c.view("A", 1).phase).toBe("loading");
+		audio.plays[1]!.ok();
+		await flush();
+		expect(c.view("A", 1).phase).toBe("playing");
+		expect(audio.playing).toBe(true);
+	});
+
+	it("NotAllowedError still offers the listener's own second tap", async () => {
+		const { c, audio, asked } = await opening();
+		audio.plays[0]!.fail("NotAllowedError");
+		await flush();
+		expect(c.view("A", 1).phase).toBe("ready");
+		audio.autoplay = "ok";
+		c.tap("A", 1);
+		await flush();
+		expect(c.view("A", 1).phase).toBe("playing");
+		expect(asked).toHaveLength(1);
+	});
+});

@@ -222,7 +222,10 @@ export class PreviewController {
 				if (name === "NotAllowedError")
 					// The browser wants its own tap for sound: offered, not forced.
 					this.set("ready", "Bereit — zum Abspielen nochmal tippen.");
-				else if (name === "AbortError") return;
+				else if (name === "AbortError")
+					// Aborted though this page stopped nothing (its own stops end above): it ends
+					// here, silent and said; only a tap tries again.
+					this.halt("error", "Die Hörprobe wurde unterbrochen. Nochmal tippen versucht es neu.");
 				else this.set("error", "Die Hörprobe ließ sich nicht abspielen.");
 			},
 		);
