@@ -26,14 +26,14 @@ export const MAX_CHANGE_LENGTH = 140;
 
 export const RELEASE: Release = Object.freeze({
 	version,
-	date: "2026-10-17",
+	date: "2026-10-18",
 	changes: Object.freeze([
-		"„Jetzt“ zeigt Spotifys gemeldeten Song. „Weiter“ schützt gegen mehrfaches Senden für dieselbe erkannte Wiedergabe.",
-		"Der Hörverlauf-Import übernimmt den Zeitraum vor Beginn der eigenen Erfassung und erklärt leere Importe klarer.",
-		"Alte unbewertete Einträge werden gezielter erkannt; laufende Bewertungsanfragen halten den Updatehinweis zurück.",
+		"Im Verlauf spielt „Hörprobe“ auf Tipp eine kurze Vorschau des Songs von Deezer, höchstens 30 Sekunden.",
+		"Spotify wird dabei nicht gesteuert, und nichts im Verlauf, in Bewertungen oder Kassetten ändert sich.",
+		"Passt bei Deezer keine eindeutige Aufnahme, gibt es keine Hörprobe statt einer falschen; Fehler werden angezeigt.",
 	]),
 	known:
-		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen.",
+		"Nicht jeder Song hat eine Hörprobe; sie sind nur zum privaten Anhören gedacht. Ob andere Audio-Apps beim Abspielen pausieren, entscheidet dein Gerät.",
 });
 
 /** "1.2.3" as numbers; anything else (a pre-release, a word) is no version here. */
