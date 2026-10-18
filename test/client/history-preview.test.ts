@@ -173,7 +173,7 @@ describe("history preview: the page's player", () => {
 		c.tap("A", 1);
 		asked[0]!.answer(READY(1));
 		await flush();
-		expect(c.view("A", 1).phase).toBe("ready");
+		expect(c.view("A", 1).phase).toBe("loading"); // starting: play() not answered yet
 		c.reset(); // left the page
 		audio.plays[0]!.ok(); // the browser starts it only now
 		await flush();
@@ -187,8 +187,9 @@ describe("history preview: the page's player", () => {
 		c.tap("A", 1);
 		asked[0]!.answer(READY(1));
 		await flush();
-		c.pause(); // nothing playing yet: stays ready
-		c.tap("A", 1); // second start, play() open
+		c.pause(); // the tab hides while it starts: stopped (review P2-01)
+		expect(c.view("A", 1).phase).toBe("stopped");
+		c.tap("A", 1); // a second, deliberate start, play() open
 		audio.plays[0]!.ok(); // the first one answers late
 		await flush();
 		audio.plays[1]!.ok();
@@ -306,5 +307,149 @@ describe("history preview: the page's player", () => {
 		c.tap("A", 1);
 		expect(c.view("A", 1).phase).toBe("loading");
 		expect(asked).toHaveLength(2);
+	});
+});
+
+/**
+ * Review 2026-10-18 (P2-01): a play() still open when the tab goes to the
+ * background, the same key is tapped, the page is left or the account
+ * changes must never start later — whether it is then fulfilled or refused —
+ * and must never stop a newer start the listener asked for.
+ */
+describe("history preview: a start still on its way (P2-01)", () => {
+	async function opening() {
+		const s = setup();
+		s.audio.autoplay = "manual";
+		s.c.tap("A", 1);
+		s.asked[0]!.answer(READY(1));
+		await flush();
+		expect(s.audio.plays).toHaveLength(1); // play() asked, not answered
+		return s;
+	}
+	const stops = {
+		background: (c: PreviewController) => c.pause(),
+		"same key": (c: PreviewController) => c.tap("A", 1),
+		leaving: (c: PreviewController) => c.reset(),
+		"another account": (c: PreviewController) => c.forget(),
+	};
+	for (const [what, stop] of Object.entries(stops))
+		for (const late of ["fulfilled", "refused"] as const)
+			it(`${what}, then the open play() is ${late}: silent, and it stays silent`, async () => {
+				const { c, audio, asked } = await opening();
+				stop(c);
+				expect(audio.playing).toBe(false);
+				expect(audio.src).toBe("");
+				if (late === "fulfilled") audio.plays[0]!.ok();
+				else audio.plays[0]!.fail("NotAllowedError");
+				await flush();
+				// The browser may have started it: the page must have silenced it again.
+				if (late === "fulfilled") expect(audio.playing).toBe(false);
+				expect(c.view("A", 1).phase).not.toBe("playing");
+				expect(c.view("A", 1).phase).not.toBe("ready");
+				// Visible again: nothing comes back by itself.
+				await flush();
+				expect(audio.playing).toBe(false);
+				expect(audio.plays).toHaveLength(1);
+				expect(asked).toHaveLength(1);
+			});
+
+	it("the same key during the start stops it; the next tap starts anew, and the old answer leaves it alone", async () => {
+		const { c, audio, asked } = await opening();
+		c.tap("A", 1); // stop while starting
+		expect(c.view("A", 1).phase).toBe("stopped");
+		c.tap("A", 1); // a new, deliberate start
+		const fresh = asked.length === 2 ? asked[1]! : null;
+		if (fresh) fresh.answer(READY(1));
+		await flush();
+		expect(audio.plays).toHaveLength(2);
+		audio.plays[0]!.ok(); // the old one answers late
+		await flush();
+		audio.plays[1]!.ok();
+		await flush();
+		expect(c.view("A", 1).phase).toBe("playing");
+		expect(audio.playing).toBe(true);
+	});
+
+	it("after a refused play() the second tap still plays", async () => {
+		const { c, audio } = await opening();
+		audio.plays[0]!.fail("NotAllowedError");
+		await flush();
+		expect(c.view("A", 1).phase).toBe("ready");
+		c.pause(); // background while merely ready: nothing to stop
+		audio.autoplay = "ok";
+		c.tap("A", 1);
+		await flush();
+		expect(c.view("A", 1).phase).toBe("playing");
+	});
+});
+
+/**
+ * Review 2026-10-18 (P2-03): one tap, at most one lookup. An answer whose
+ * signed address is already run out (or about to) ends in a said error; only
+ * another tap asks again.
+ */
+describe("history preview: run-out addresses, one lookup per tap (P2-03)", () => {
+	const cases: [string, (t: number) => number][] = [
+		["already run out", (t) => t - 1_000],
+		["inside the safety margin", (t) => t + 10_000],
+		["clock far ahead of Deezer's", (t) => t - 3_600_000],
+	];
+	for (const [what, exp] of cases)
+		it(`the same unusable address every time (${what}): one lookup per tap, then an error`, async () => {
+			const { c, asked, clock, audio } = setup();
+			c.tap("A", 1);
+			asked[0]!.answer(READY(1, exp(clock.t)));
+			await flush();
+			await flush();
+			expect(asked).toHaveLength(1);
+			expect(c.view("A", 1).phase).toBe("error");
+			expect(c.view("A", 1).message).toMatch(/abgelaufen/);
+			expect(audio.plays).toHaveLength(0);
+			await flush();
+			expect(asked).toHaveLength(1); // nothing by itself
+			c.tap("A", 1); // the listener tries again
+			expect(asked).toHaveLength(2);
+			asked[1]!.answer(READY(1, exp(clock.t)));
+			await flush();
+			await flush();
+			expect(asked).toHaveLength(2);
+			expect(c.view("A", 1).phase).toBe("error");
+		});
+
+	it("a run-out address replaced by a fresh one on the tap plays, with exactly one more lookup", async () => {
+		const { c, asked, clock } = setup();
+		c.tap("A", 1);
+		asked[0]!.answer(READY(1, clock.t + 10 * 60_000));
+		await flush();
+		c.tap("A", 1); // stop
+		clock.t += 10 * 60_000;
+		c.tap("A", 1); // run out: asks once
+		expect(asked).toHaveLength(2);
+		asked[1]!.answer(READY(1, clock.t + 15 * 60_000));
+		await flush();
+		expect(c.view("A", 1).phase).toBe("playing");
+		expect(asked).toHaveLength(2);
+	});
+
+	it("stop or another account while that one lookup runs: its answer does nothing", async () => {
+		for (const stop of [
+			(c: PreviewController) => c.tap("A", 1),
+			(c: PreviewController) => c.forget(),
+		]) {
+			const { c, asked, clock, audio } = setup();
+			c.tap("A", 1);
+			asked[0]!.answer(READY(1, clock.t + 10 * 60_000));
+			await flush();
+			c.tap("A", 1);
+			clock.t += 10 * 60_000;
+			c.tap("A", 1);
+			stop(c);
+			asked[1]!.answer(READY(1, clock.t - 1));
+			await flush();
+			await flush();
+			expect(asked).toHaveLength(2);
+			expect(audio.playing).toBe(false);
+			expect(c.view("A", 1).phase).not.toBe("error");
+		}
 	});
 });

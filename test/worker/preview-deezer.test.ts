@@ -238,3 +238,166 @@ describe("history preview: Deezer resolver", () => {
 		expect(urls.every((u) => u.startsWith(`${BASE}/`))).toBe(true);
 	});
 });
+
+/**
+ * Review 2026-10-18 (P2-02): two named versions of one kind (two remixes, two
+ * remaster years, two live recordings) are different recordings. A lone hit of
+ * the wrong one is no sample; among several, only the named one is.
+ */
+describe("history preview: the named version, not just its kind (P2-02)", () => {
+	const versions: [string, string, string][] = [
+		["Alice Remix", "Song (Alice Remix)", "Song (Bob Remix)"],
+		["remaster year", "Song - Remastered 2011", "Song (Remastered 2014)"],
+		["named live", "Song - Live at Wembley", "Song (Live in Tokyo)"],
+	];
+	const subject = (name: string): PreviewSubject => ({
+		name,
+		artists: ["Artist"],
+		album: "Album",
+		durationMs: 180_000,
+	});
+	const hit = (title: string, isrc: string) => {
+		const m = /^(.*?)\s*(?:\((.*)\)|- (.*))$/.exec(title)!;
+		return dz({
+			title,
+			title_short: m[1],
+			title_version: `(${m[2] ?? m[3]})`,
+			isrc,
+			duration: 180,
+			artist: { name: "Artist" },
+			album: { title: "Album" },
+		});
+	};
+	for (const [what, wanted, other] of versions) {
+		it(`${what}: the wrong one alone is no sample`, async () => {
+			expect((await resolve([hit(other, "WRONG")], subject(wanted))).r).toMatchObject({
+				status: "unavailable",
+			});
+		});
+		it(`${what}: among several, the named one`, async () => {
+			const right = hit(
+				wanted.replace(" - ", " (").replace(/$/, wanted.includes(" - ") ? ")" : ""),
+				"RIGHT",
+			);
+			const { r } = await resolve([hit(other, "WRONG"), right], subject(wanted));
+			expect(r.status === "ready" && r.url).toBe(right.preview);
+		});
+	}
+
+	it("the same version written differently is still the same recording", async () => {
+		const cases: [string, Record<string, unknown>][] = [
+			[
+				"Song - Remastered 2011",
+				{ title: "Song (Remastered 2011)", title_version: "(Remastered 2011)" },
+			],
+			[
+				"Song - 2011 Remaster",
+				{ title: "Song (Remastered 2011)", title_version: "(Remastered 2011)" },
+			],
+			["Song - Radio Edit", { title: "Song (Radio Edit)", title_version: "(Radio Edit)" }],
+			["Song (feat. Guest) - Live", { title: "Song (Live)", title_version: "(Live)" }],
+			[
+				"(I Can't Get No) Satisfaction",
+				{ title: "(I Can't Get No) Satisfaction", title_short: "(I Can't Get No) Satisfaction" },
+			],
+		];
+		for (const [name, over] of cases) {
+			const { r } = await resolve(
+				[
+					dz({
+						title_short: "Song",
+						duration: 180,
+						artist: { name: "Artist" },
+						album: { title: "Album" },
+						...over,
+					}),
+				],
+				subject(name),
+			);
+			expect({ name, status: r.status }).toEqual({ name, status: "ready" });
+		}
+	});
+});
+
+/**
+ * Review 2026-10-18 (P2-04): the deadline covers the whole answer — headers
+ * and body — and gives up cleanly, with the one request aborted.
+ */
+describe("history preview: the deadline covers the body (P2-04)", () => {
+	const hung = (r: Promise<unknown>, ms = 1_000) =>
+		Promise.race([r, new Promise((res) => setTimeout(() => res("still waiting"), ms))]);
+	/** Headers at once, then the body as `chunks` say, aborted with the request's signal. */
+	function streaming(chunks: { at: number; text: string }[], end: number | null) {
+		const seen: Request[] = [];
+		return {
+			seen,
+			fetch: async (req: Request) => {
+				seen.push(req);
+				const enc = new TextEncoder();
+				const body = new ReadableStream<Uint8Array>({
+					start(ctl) {
+						const timers = chunks.map((c) =>
+							setTimeout(() => ctl.enqueue(enc.encode(c.text)), c.at),
+						);
+						if (end !== null) timers.push(setTimeout(() => ctl.close(), end));
+						req.signal.addEventListener("abort", () => {
+							for (const t of timers) clearTimeout(t);
+							ctl.error(new DOMException("aborted", "AbortError"));
+						});
+					},
+				});
+				return new Response(body, { status: 200, headers: { "content-type": "application/json" } });
+			},
+		};
+	}
+	const json = JSON.stringify({ data: [dz()] });
+
+	it("headers at once, a body that never ends: timeout, the request aborted, nothing more", async () => {
+		const s = streaming([{ at: 0, text: json.slice(0, 10) }], null);
+		const r = await hung(
+			resolveDeezerPreview(SUBJECT, { fetch: s.fetch, base: BASE, timeoutMs: 50 }),
+		);
+		expect(r).toMatchObject({ status: "error", reason: "timeout" });
+		expect(s.seen).toHaveLength(1);
+		expect(s.seen[0]!.signal.aborted).toBe(true);
+	});
+
+	it("a body slower than the deadline: timeout", async () => {
+		const s = streaming(
+			[
+				{ at: 0, text: json.slice(0, 10) },
+				{ at: 300, text: json.slice(10) },
+			],
+			310,
+		);
+		const r = await hung(
+			resolveDeezerPreview(SUBJECT, { fetch: s.fetch, base: BASE, timeoutMs: 50 }),
+		);
+		expect(r).toMatchObject({ status: "error", reason: "timeout" });
+		expect(s.seen).toHaveLength(1);
+	});
+
+	it("a body complete just before the deadline: the sample", async () => {
+		const s = streaming(
+			[
+				{ at: 0, text: json.slice(0, 10) },
+				{ at: 20, text: json.slice(10) },
+			],
+			25,
+		);
+		const r = await hung(
+			resolveDeezerPreview(SUBJECT, { fetch: s.fetch, base: BASE, timeoutMs: 200 }),
+		);
+		expect(r).toMatchObject({ status: "ready" });
+		expect(s.seen[0]!.signal.aborted).toBe(false);
+	});
+
+	it("a broken body inside the deadline: upstream, once", async () => {
+		const s = streaming([{ at: 0, text: "{not json" }], 5);
+		const r = await hung(
+			resolveDeezerPreview(SUBJECT, { fetch: s.fetch, base: BASE, timeoutMs: 200 }),
+		);
+		expect(r).toMatchObject({ status: "error", reason: "upstream" });
+		expect(s.seen).toHaveLength(1);
+	});
+});

@@ -84,8 +84,8 @@ export async function resolveDeezerPreview(
 		const res = await withDeadline(deps.fetch, url, deps.timeoutMs ?? PREVIEW_TIMEOUT_MS);
 		if (res.status === 401 || res.status === 403) return failed("denied");
 		if (res.status === 429) return failed("rate");
-		if (!res.ok) return failed("upstream");
-		body = (await res.json()) as typeof body;
+		if (res.status < 200 || res.status > 299) return failed("upstream");
+		body = res.body as typeof body;
 	} catch (err) {
 		return failed(err instanceof DeadlineError ? "timeout" : "upstream");
 	}
@@ -103,7 +103,7 @@ export async function resolveDeezerPreview(
 /** The one recording that is the Verlauf's song, or why there is none. */
 export function pick(
 	subject: PreviewSubject,
-	want: { base: string; tags: Set<string> },
+	want: { base: string; detail: string; tags: Set<string> },
 	data: DzTrack[],
 ): PreviewResult {
 	const artists = new Set(subject.artists.map(fold));
@@ -114,6 +114,8 @@ export function pick(
 		if (!name || !artists.has(name)) return false;
 		const got = split(d.title ?? "", d.title_short, d.title_version);
 		if (got.base !== want.base || !sameSet(got.tags, want.tags)) return false;
+		// The named version too: "Alice Remix" is not "Bob Remix", 2011 not 2014.
+		if (got.detail !== want.detail) return false;
 		if (subject.durationMs > 0)
 			return (
 				typeof d.duration === "number" &&
@@ -194,12 +196,25 @@ const MARKS: [string, RegExp][] = [
 	["cover", /\b(cover)\b/],
 ];
 
-/** Title without its version part, and the version marks it carries. */
+/** Words of a version part that name nothing ("Remastered Version" is "Remastered"). */
+const FILLER = new Set(["version", "the", "a", "an"]);
+/** Spellings of one word ("2011 Remaster" is "Remastered 2011"). */
+const STEM: Record<string, string> = {
+	remastered: "remaster",
+	remastering: "remaster",
+	remixed: "remix",
+};
+
+/**
+ * Title without its version part, the version marks it carries, and the
+ * version part's own words (`detail`, order and spelling aside): the named
+ * version, so two remixes or two remaster years stay apart.
+ */
 export function split(
 	title: string,
 	short?: string,
 	version?: string,
-): { base: string; words: string; tags: Set<string> } {
+): { base: string; words: string; detail: string; tags: Set<string> } {
 	const extra: string[] = [];
 	let base = title.replace(/[([{][^)\]}]*[)\]}]/g, (m) => {
 		extra.push(m);
@@ -222,8 +237,18 @@ export function split(
 		extra.filter((e) => !/^[\s([{\-–—]*(feat|ft|featuring|with)\b/i.test(e)).join(" "),
 	);
 	for (const [tag, re] of MARKS) if (re.test(text)) tags.add(tag);
+	const detail = [
+		...new Set(
+			text
+				.split(" ")
+				.filter((w) => w && !FILLER.has(w))
+				.map((w) => STEM[w] ?? w),
+		),
+	]
+		.sort()
+		.join(" ");
 	const bare = base.replace(/\b(feat|ft|featuring)\.?\s.*$/i, "");
-	return { base: fold(bare), words: bare.replace(/\s+/g, " ").trim(), tags };
+	return { base: fold(bare), words: bare.replace(/\s+/g, " ").trim(), detail, tags };
 }
 
 export function fold(s: string): string {
@@ -252,8 +277,16 @@ function sameSet(a: Set<string>, b: Set<string>): boolean {
 
 class DeadlineError extends Error {}
 
-/** One GET with a hard deadline, also when the fetch ignores its signal. */
-async function withDeadline(fetch: Fetch, url: string, ms: number): Promise<Response> {
+/**
+ * One GET with a hard deadline over the whole answer — headers and the body
+ * read and parsed — also when the fetch ignores its signal. At the deadline
+ * the request is aborted (and with it its body) and the read given up.
+ */
+async function withDeadline(
+	fetch: Fetch,
+	url: string,
+	ms: number,
+): Promise<{ status: number; body: unknown }> {
 	const ctl = new AbortController();
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const deadline = new Promise<never>((_, reject) => {
@@ -262,16 +295,22 @@ async function withDeadline(fetch: Fetch, url: string, ms: number): Promise<Resp
 			reject(new DeadlineError("timeout"));
 		}, ms);
 	});
+	const answer = (async () => {
+		const res = await fetch(
+			new Request(url, {
+				headers: { "user-agent": "true-shuffle/1.0", accept: "application/json" },
+				signal: ctl.signal,
+			}),
+		);
+		if (!res.ok) {
+			void res.body?.cancel().catch(() => {});
+			return { status: res.status, body: null };
+		}
+		return { status: res.status, body: (await res.json()) as unknown };
+	})();
+	answer.catch(() => {}); // given up at the deadline: its late failure is nobody's
 	try {
-		return await Promise.race([
-			fetch(
-				new Request(url, {
-					headers: { "user-agent": "true-shuffle/1.0", accept: "application/json" },
-					signal: ctl.signal,
-				}),
-			),
-			deadline,
-		]);
+		return await Promise.race([answer, deadline]);
 	} finally {
 		clearTimeout(timer);
 	}

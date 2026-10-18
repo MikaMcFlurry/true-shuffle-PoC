@@ -19,8 +19,9 @@ import { store } from "./store";
 export type PreviewPhase =
 	/** Not asked yet ("ungeprüft"). */
 	| "idle"
+	/** Looking it up, or starting it (play() not answered yet). */
 	| "loading"
-	/** Found; the browser wants one more tap to start (or it was stopped before it began). */
+	/** Found; the browser wants one more tap to start. */
 	| "ready"
 	| "playing"
 	| "stopped"
@@ -105,15 +106,18 @@ export class PreviewController {
 			this.key = key;
 			this.row = { trackId, playedAt };
 			this.ask();
-		} else if (this.phase === "loading") this.reset();
-		else if (this.phase === "playing") this.halt("stopped", null);
+		} else if (this.phase === "playing" || this.starting !== null) this.halt("stopped", null);
+		else if (this.phase === "loading") this.reset();
 		else if (this.phase === "ready" || this.phase === "stopped") this.start();
 		else if (this.phase === "error") this.ask();
 	}
 
-	/** Paused from outside (the tab went to the background): it does not come back by itself. */
+	/**
+	 * Paused from outside (the tab went to the background): playing or still
+	 * starting, it stops; it does not come back by itself.
+	 */
 	pause(): void {
-		if (this.phase === "playing") this.halt("stopped", null);
+		if (this.phase === "playing" || this.starting !== null) this.halt("stopped", null);
 		else if (this.phase === "loading") this.reset();
 	}
 
@@ -149,7 +153,7 @@ export class PreviewController {
 				if (gen !== this.gen) return;
 				if (r.status === "ready") {
 					this.found = r;
-					this.start();
+					this.start(true);
 				} else if (r.status === "unavailable") {
 					this.none.set(rowKey(row.trackId, row.playedAt), r.message);
 					this.set("unavailable", r.message);
@@ -162,13 +166,25 @@ export class PreviewController {
 		);
 	}
 
-	private start(): void {
+	/**
+	 * Plays what was found. `fresh`: straight from a lookup — an address
+	 * already run out (or about to) is then said, never asked for again: one
+	 * tap, at most one lookup.
+	 */
+	private start(fresh = false): void {
 		const found = this.found;
-		// None yet, or the signed address ran out: a new one, on this same tap.
-		if (
-			!found ||
-			(found.expiresAt !== null && found.expiresAt - EXPIRY_MARGIN_MS <= this.deps.now())
-		) {
+		const unusable =
+			!found || (found.expiresAt !== null && found.expiresAt - EXPIRY_MARGIN_MS <= this.deps.now());
+		if (unusable && fresh) {
+			this.found = null;
+			this.set(
+				"error",
+				"Deezer hat eine bereits abgelaufene Hörprobe geliefert. Später nochmal tippen.",
+			);
+			return;
+		}
+		if (!found || unusable) {
+			// Kept from before and run out since: a new one, on this tap.
 			this.ask();
 			return;
 		}
@@ -176,7 +192,8 @@ export class PreviewController {
 		const a = this.audio();
 		a.src = found.url;
 		a.currentTime = 0;
-		this.phase = "ready";
+		// Starting, not yet playing: the same key or the background stops it.
+		this.phase = "loading";
 		this.message = null;
 		let p: Promise<void>;
 		try {
@@ -225,7 +242,7 @@ export class PreviewController {
 		a.addEventListener("error", () => {
 			// Only an error of the sample that is meant to play counts.
 			if (
-				(this.phase === "playing" || this.phase === "ready") &&
+				(this.phase === "playing" || this.phase === "ready" || this.starting !== null) &&
 				this.found &&
 				a.src === this.found.url
 			)

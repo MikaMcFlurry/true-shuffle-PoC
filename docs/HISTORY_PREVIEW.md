@@ -32,11 +32,17 @@ binding, auth or scope change. The older fallback client
   (`developers.deezer.com/termsofuse`) were readable: free access, strictly
   non-commercial, content limited to strictly private use within a family
   scope, and only 30-second samples without Deezer Premium+. Users must be
-  told the conditions of use. The trademark guidelines also sit behind the
-  login. **This is no legal clearance.** Whether true-shuffle's private use
-  fits these terms is the owner's decision. The page says „Kurze Hörprobe von
-  Deezer (höchstens 30 Sekunden) … Nur zum privaten Anhören“, names Deezer
-  in text (no logo) and links back to the recording's Deezer page.
+  told the conditions of use. **This is no legal clearance.** Whether
+  true-shuffle's private use fits these terms is the owner's decision. The
+  page says „Kurze Hörprobe von Deezer (höchstens 30 Sekunden) … Nur zum
+  privaten Anhören“, names Deezer in text and links back to the recording's
+  Deezer page.
+- Correction 2026-10-18: `developers.deezer.com/guidelines/logo` is readable
+  and says every application using the Deezer API „must have to include a
+  clearly visible Deezer Logo“ (mandatory). The earlier note that the
+  trademark guidelines sat behind the login no longer holds. The page shows
+  **no logo yet**: an open gate before any release, together with the
+  owner's decision on the terms of use.
 - Raw probe answers (tokens redacted) are in the delivery's evidence.
 
 ## Which recording
@@ -53,6 +59,11 @@ search per tap. A Deezer track counts only when all of these hold:
   part („(Live)“, „- Remastered 2011“, Deezer's `title_version`), never from
   the title itself („Live Forever“ is no live recording); guest artists name
   no version;
+- the version part names the same version: its words, order, spelling of
+  „remaster(ed)“/„remix(ed)“ and filler like „Version“ aside, are the same
+  („Alice Remix“ is not „Bob Remix“, „Remastered 2011“ not „Remastered
+  2014“, „Live at Wembley“ not „Live in Tokyo“ — nor plain „Live“). A version
+  named differently on the two sides gives no sample rather than a guess;
 - the length is within 3 s; when the Verlauf has no length, the album must
   match instead.
 
@@ -67,7 +78,8 @@ hit just because it is first.
 `x-ts` header like every non-GET. The row must exist in this listener's
 `plays` (song and time), else 404; malformed input 400. The row is read
 under the hub's lock (read only); Deezer is asked outside it with a 6 s
-deadline; the session is checked again before the answer leaves, so a
+deadline over the whole answer, body read and parsed included (at the
+deadline the request is aborted and „timeout“ said); the session is checked again before the answer leaves, so a
 sign-out meanwhile learns nothing. At most 12 lookups per listener and
 minute, then a „rate“ answer without asking Deezer. Answer: `PreviewResult`
 (`src/shared/api.ts`): `ready` (address, expiry, Deezer's title, artist,
@@ -79,18 +91,24 @@ album, link) | `unavailable` (`no_match`, `ambiguous`, `no_preview`) |
 
 One player for the whole app (`src/client/history-preview.ts`), made on
 the first tap, `preload="none"`: without a tap there is no request and no
-audio. States: not asked („Hörprobe“), loading („Sucht … (abbrechen)“),
+audio. States: not asked („Hörprobe“), loading or starting („Sucht …
+(abbrechen)“; starting = `play()` not answered yet),
 ready („Abspielen“, when the browser wants its own tap for sound), playing
 („Stopp“), stopped („Nochmal hören“), unavailable („Keine Hörprobe“,
 disabled, said why), error („Nochmal versuchen“, said why). No retries by
-itself: every lookup is a tap. A signed address about to run out is asked
-for again on the tap. The sample stops at its end and never runs past 30 s.
+itself: every lookup is a tap, and one tap makes at most one lookup. A
+kept address run out since is asked for again on the next tap; an address
+that arrives already run out (or within 30 s of it) is said as an error,
+never asked for again by itself. The sample stops at its end and never runs past 30 s.
 
-It stops and forgets the row on: the same key while loading or playing,
+It stops on the same key while starting or playing, and on the tab going
+to the background while starting or playing. It stops and forgets the row
+on: the same key while looking up,
 another row's key, leaving the Verlauf, `pagehide`, signing out, another
-account (then every remembered „no sample“ is forgotten too). The tab going
-to the background stops it; it does not come back by itself. Every answer
-or `play()` of an earlier tap is ignored; a late `play()` is paused again.
+account (then every remembered „no sample“ is forgotten too). Nothing comes
+back by itself. Every answer or `play()` of an earlier tap is ignored; a
+late `play()` is paused again, unless a newer start the listener asked for
+is under way or playing.
 Rows are told apart by song and time, so the same song twice in the Verlauf
 are two rows.
 

@@ -554,6 +554,76 @@ test.describe("listening samples in the Verlauf", () => {
 		expect(transport(await callsSince(since))).toEqual([]);
 	});
 
+	test("D2 (review P2-01): a start still on its way when the tab hides or the same key is tapped never plays later", async ({
+		page,
+	}) => {
+		test.setTimeout(180_000);
+		acknowledgeRelease(page.context());
+		await instrument(page, { status: 200, seconds: 20 });
+		// The browser's play() is held open until the test lets it answer — the real one, then.
+		await page.addInitScript(() => {
+			const w = window as unknown as { __held: (() => void)[]; __hold: boolean };
+			w.__held = [];
+			w.__hold = false;
+			const orig = HTMLMediaElement.prototype.play;
+			HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) {
+				if (!w.__hold) return orig.call(this);
+				return new Promise<void>((resolve, reject) => {
+					w.__held.push(() => orig.call(this).then(resolve, reject));
+				});
+			};
+		});
+		await signIn(page);
+		const since = (await fake("status")).calls;
+		await page.goto("/verlauf");
+		const a = rowAt(page, rows.ready[0]!);
+		await expect(a).toBeVisible();
+		const release = () =>
+			page.evaluate(() => {
+				const w = window as unknown as { __held: (() => void)[] };
+				for (const go of w.__held.splice(0)) go();
+			});
+		const holding = () =>
+			page.evaluate(() => (window as unknown as { __held: unknown[] }).__held.length);
+		await page.evaluate(() => {
+			(window as unknown as { __hold: boolean }).__hold = true;
+		});
+		// Background while starting.
+		await budget(page);
+		await key(a).click();
+		await expect.poll(holding).toBe(1);
+		await page.evaluate(() => {
+			Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+		await expect(key(a)).toHaveText(/^Nochmal hören/);
+		await release(); // the browser answers only now
+		await page.evaluate(() => {
+			Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+		await page.waitForTimeout(1_500);
+		expect(await silent(page)).toBe(true);
+		await expect(key(a)).toHaveText(/^Nochmal hören/);
+		// The same key while starting.
+		await key(a).click(); // starts again (kept address, no lookup)
+		await expect.poll(holding).toBe(1);
+		await key(a).click(); // stop while starting
+		await expect(key(a)).toHaveText(/^Nochmal hören/);
+		await release();
+		await page.waitForTimeout(1_500);
+		expect(await silent(page)).toBe(true);
+		// A deliberate new start still plays.
+		await page.evaluate(() => {
+			(window as unknown as { __hold: boolean }).__hold = false;
+		});
+		await key(a).click();
+		await expect(key(a)).toHaveText(/^Stopp/);
+		await key(a).click();
+		expect(await silent(page)).toBe(true);
+		expect(transport(await callsSince(since))).toEqual([]);
+	});
+
 	test("F: named key, keyboard focus after the rating keys, ≥44 px, small screens and large text", async ({
 		page,
 	}) => {
