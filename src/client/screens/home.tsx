@@ -30,7 +30,7 @@ import { factsOf, type SongFactsView, SongTags } from "../components/song-tags";
 import { Cover } from "../components/ui";
 import { duration, num, pct } from "../format";
 import { Answers } from "../home-answers";
-import { playbackView } from "../playback-view";
+import { playbackView, upcomingEntries } from "../playback-view";
 import { type PlaybackAction, store, useStore } from "../store";
 
 /**
@@ -564,13 +564,8 @@ export function Home({ state }: { state: AppState }) {
 				: statusText === "Gerätebestätigung steht aus"
 					? { level: 2, tone: "wait" }
 					: { level: 3, tone: "ok" };
-	// After true-shuffle's own song, or after its saved place while Spotify plays another.
-	const after = view.entryId ?? view.checkpoint?.entryId ?? null;
-	const successors = session?.queue.length
-		? session.queue
-				.slice(Math.max(0, session.queue.findIndex((e) => e.entryId === after) + 1))
-				.slice(0, 50)
-		: [];
+	// After true-shuffle's own song, or after its saved place; never the song playing now (P10).
+	const successors = session?.queue.length ? upcomingEntries(session.queue, view) : [];
 	const where =
 		ownNow?.deviceName ??
 		nativeController?.deviceName ??
