@@ -48,6 +48,9 @@ export interface PlaybackCommand {
 
 type Listener = () => void;
 
+/** Return signals within this of a fresh read share it (see refresh). */
+const FRESH_BURST_MS = 1000;
+
 class Store {
 	load: Load = { kind: "loading" };
 	flash: Flash | null = null;
@@ -510,7 +513,16 @@ class Store {
 	refresh(live = true, afterInflight = false, fresh = false): Promise<void> {
 		if (this.inflight) {
 			if (!afterInflight && !fresh) return this.followup ?? this.inflight;
-			if (!afterInflight && this.inflightFresh && !this.followup) return this.inflight;
+			// A burst (focus, visibility, online at once) shares one fresh read; a
+			// return later than a fresh read already on its way asks again after it:
+			// that read may predate what changed (1.2.0's fixed 15 s tick hid this).
+			if (
+				!afterInflight &&
+				this.inflightFresh &&
+				!this.followup &&
+				Date.now() - this.inflightAt < FRESH_BURST_MS
+			)
+				return this.inflight;
 			this.followupLive ||= live;
 			this.followupFresh ||= fresh;
 			if (!this.followup) {
@@ -526,6 +538,7 @@ class Store {
 			return this.followup;
 		}
 		const started = Date.now();
+		this.inflightAt = started;
 		const asked = ++this.readsAsked;
 		const epoch = this.epoch;
 		this.inflightFresh = fresh;
@@ -610,6 +623,8 @@ class Store {
 		return this.inflight;
 	}
 
+	/** When the read on its way was asked. */
+	private inflightAt = 0;
 	/** When the listener last touched the app (pace of the poll, see statePollMs). */
 	private interactedAt = Date.now();
 	private readonly touched = () => {
@@ -642,9 +657,7 @@ class Store {
 		const returned = () => {
 			if (document.visibilityState === "visible") {
 				this.interactedAt = Date.now();
-				// After any read already on its way: it may have been asked before the
-				// listener came back (1.2.0's fixed 15 s tick hid this; 1.3.0 polls slower).
-				void this.refresh(true, true, true).finally(() => this.schedulePoll());
+				void this.refresh(true, false, true).finally(() => this.schedulePoll());
 			}
 		};
 		this.tick = returned;
