@@ -10,7 +10,8 @@
 const LIMIT =
 	/rows?[ _-]?(read|written)|SQLITE_FULL|durable objects?.*(limit|exceeded|quota)|storage (operation|limit|quota)|daily (free )?(tier )?(limit|quota)|free tier/i;
 /** Worker runtime limits and provider rate limits are transient, never "the day's limit". */
-const NOT_STORAGE = /call stack|memory limit|subrequest|cpu time|rate limit|spotify/i;
+const NOT_STORAGE =
+	/call stack|memory limit|subrequest|cpu time|rate limit|timeout|timed out|reset|overloaded/i;
 
 export function isStorageLimit(err: unknown): boolean {
 	const text = err instanceof Error ? `${err.name} ${err.message}` : String(err);

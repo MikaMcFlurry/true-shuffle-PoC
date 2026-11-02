@@ -13,10 +13,15 @@ const run = spawnSync(
 	"npx",
 	["vitest", "run", "--reporter=default", "--reporter=json", `--outputFile.json=${out}`],
 	{
-		stdio: "inherit",
+		stdio: ["inherit", "pipe", "pipe"],
 		shell: process.platform === "win32",
+		maxBuffer: 256 * 1024 * 1024,
 	},
 );
+process.stdout.write(run.stdout ?? "");
+process.stderr.write(run.stderr ?? "");
+// Errors outside any test (an unhandled rejection) fail the run but no test (re-check M3).
+const unhandled = /Unhandled (Rejection|Errors?)/.test(`${run.stdout}${run.stderr}`);
 let report;
 try {
 	report = JSON.parse(readFileSync(out, "utf8"));
@@ -50,4 +55,8 @@ const broken = (report.testResults ?? []).filter(
 );
 for (const file of broken) console.error(`TEST FILE FAILED TO RUN: ${file.name}`);
 if (broken.length > 0) process.exit(1);
+if (unhandled) {
+	console.error("known-failures: vitest reported unhandled errors");
+	process.exit(1);
+}
 process.exit(unexpected.length || fixed.length || missing.length ? 1 : 0);

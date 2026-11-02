@@ -94,3 +94,35 @@ it("paused before the end, then no player: nothing is started (red-team H2)", as
 	const st = await h.hub.state();
 	expect(st.continueAfter?.result).toMatchObject({ ok: false });
 });
+
+it("a song the listener picks mid-song is never cut: cancelled instead (re-check)", async () => {
+	const { h, b, s } = await outsidePlaying();
+	await h.hub.continueAfter(b);
+	await h.listen(30_000);
+	const c = [...h.fake.tracks.keys()].find(
+		(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
+	)!;
+	h.fake.playSong("mika", c);
+	h.fake.user("mika").player.progressMs = 5_000;
+	const calls = h.fake.calls.length;
+	// Until C is over: whatever the hub looks at, C is never cut.
+	await h.listen(h.fake.tracks.get(c)!.durationMs - 10_000);
+	expect(h.fake.current()).toBe(c);
+	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
+	expect((await h.hub.state()).continueAfter?.result).toMatchObject({ ok: false });
+});
+
+it("played to its end, then stopped there (no autoplay): true-shuffle goes on (re-check)", async () => {
+	const { h, b, s } = await outsidePlaying();
+	await h.hub.continueAfter(b);
+	const calls = h.fake.calls.length;
+	const d = h.fake.tracks.get(b)!.durationMs;
+	await h.listen(d - 60_000 - 3_000);
+	// Spotify keeps the song loaded, paused at its end.
+	const p = h.fake.user("mika").player;
+	p.isPlaying = false;
+	p.progressMs = d;
+	await h.listen(60_000);
+	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toHaveLength(1);
+	expect(h.fake.user("mika").player.contextUri).toBe(s.contextUri);
+});

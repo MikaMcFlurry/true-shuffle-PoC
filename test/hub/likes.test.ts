@@ -156,6 +156,8 @@ describe("TrueShuffle Likes (P4)", () => {
 		await h.hub.thumb(ids[2]!, 1);
 		await h.listen(60_000);
 		await h.settle();
+		// Not right after making it (Spotify may not show a new playlist yet).
+		await h.listen(11 * 60_000);
 		h.fake.playlists.delete(likesPlaylists()[0]!.id);
 		await h.hub.thumb(ids[4]!, 1);
 		await h.listen(60_000);

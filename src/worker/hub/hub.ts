@@ -313,6 +313,11 @@ const LIKES_DESCRIPTION =
 const CONTINUE_AFTER_MAX_MS = 45 * MINUTE_MS;
 /** A song seen playing to within this of its end, then gone, counts as ended. */
 const CONTINUE_AFTER_END_SLACK_MS = 20_000;
+/** A song seen with at most this much progress right after the end just began on its own. */
+const CONTINUE_AFTER_NEW_SONG_MS = 30_000;
+/** The Likes playlist is made again at most this often, and never this soon after it was made. */
+const LIKES_REMAKE_GAP_MS = 24 * HOUR_MS;
+const LIKES_FRESH_MS = 10 * MINUTE_MS;
 
 interface ContinueAfter {
 	stationId: number;
@@ -4929,6 +4934,12 @@ export class HubCore {
 			trackId,
 			deviceId: snap?.device?.id ?? null,
 			armedAt: this.now(),
+			seen: {
+				playing: obs.isPlaying,
+				progressMs: obs.progressMs,
+				durationMs: obs.durationMs,
+				at: obs.at,
+			},
 		};
 		this.kvSet("continue_after", intent);
 		this.kvDel("continue_after_result");
@@ -4989,7 +5000,18 @@ export class HubCore {
 			});
 			return;
 		}
+		const seen = c.seen;
+		const endReached =
+			!!seen &&
+			seen.playing &&
+			seen.durationMs > 0 &&
+			seen.progressMs + (this.now() - seen.at) >= seen.durationMs - CONTINUE_AFTER_END_SLACK_MS;
 		if (obs?.trackId === c.trackId) {
+			// Played to its end and stopped there (no autoplay): that is its end too.
+			if (!obs.isPlaying && endReached) {
+				this.kvSet("continue_after", { ...c, due: true });
+				return;
+			}
 			this.kvSet("continue_after", {
 				...c,
 				seen: {
@@ -5006,14 +5028,22 @@ export class HubCore {
 			settle({ ok: true, at: this.now(), message: null });
 			return;
 		}
-		const seen = c.seen;
-		const ended =
-			!!seen &&
-			seen.playing &&
-			seen.durationMs > 0 &&
-			seen.progressMs + (this.now() - seen.at) >= seen.durationMs - CONTINUE_AFTER_END_SLACK_MS;
-		if ((obs?.isPlaying && obs.trackId) || ended) {
+		// Another song that just began after this one ran out (autoplay, the
+		// context's next): its end. One the listener picked mid-song, already
+		// well under way, is the listener's choice: never cut it, cancel instead.
+		const justBegan =
+			!!obs?.isPlaying && !!obs.trackId && obs.progressMs <= CONTINUE_AFTER_NEW_SONG_MS;
+		if (endReached && (justBegan || !obs?.isPlaying)) {
 			this.kvSet("continue_after", { ...c, due: true });
+			return;
+		}
+		if (obs?.isPlaying && obs.trackId) {
+			settle({
+				ok: false,
+				at: this.now(),
+				message:
+					"Du hast selbst einen anderen Song gestartet; er läuft weiter, nichts fortgesetzt.",
+			});
 			return;
 		}
 		settle({
@@ -5176,6 +5206,7 @@ export class HubCore {
 				if (!pl?.id) throw new Error("Spotify hat keine Playlist angelegt");
 				pid = pl.id;
 				this.kvSet("likes_playlist", pid);
+				this.kvSet("likes_playlist_made_at", this.now());
 				offset = 0;
 			}
 			try {
@@ -5187,13 +5218,19 @@ export class HubCore {
 				}
 			} catch (err) {
 				if (err instanceof SpotifyError && err.kind === "not_found" && !remade) {
-					// Gone for real, or only not visible yet? Ask once before making another.
+					// Gone for real, or only not visible yet? Ask before making another,
+					// never right after making it, and at most once a day (red-team B1).
+					const madeAt = this.kvGet<number>("likes_playlist_made_at") ?? 0;
+					const remadeAt = this.kvGet<number>("likes_playlist_remade_at") ?? 0;
+					if (this.now() - madeAt < LIKES_FRESH_MS || this.now() - remadeAt < LIKES_REMAKE_GAP_MS)
+						throw err;
 					const still = await client.playlist(pid).catch((e) => {
 						if (e instanceof SpotifyError && e.kind === "not_found") return null;
 						throw e;
 					});
 					if (still) throw err;
 					this.kvDel("likes_playlist");
+					this.kvSet("likes_playlist_remade_at", this.now());
 					return { done: false, state: { rev, offset: 0, remade: true }, delayMs: 1000 };
 				}
 				if (err instanceof SpotifyError && err.kind === "forbidden") {

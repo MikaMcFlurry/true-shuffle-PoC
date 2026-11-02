@@ -21,6 +21,8 @@ describe("P1 storage limit", () => {
 			"Exceeded CPU time limit",
 			"Spotify rate limit reached",
 			"Too many requests: rate limit exceeded",
+			"Durable Object storage operation exceeded timeout which caused object to be reset.",
+			"Durable Object is overloaded. Requests queued for too long.",
 		])
 			expect(isStorageLimit(new Error(text)), text).toBe(false);
 	});
