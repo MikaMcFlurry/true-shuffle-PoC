@@ -2637,3 +2637,12 @@ h1,
 	padding-left: 18px;
 	color: var(--ink-2);
 }
+
+/* P3: the deliberate Spotify ways on, under a missing sample. */
+.spotify-fallback {
+	margin-top: 8px;
+}
+
+.spotify-fallback .row-actions {
+	flex-wrap: wrap;
+}

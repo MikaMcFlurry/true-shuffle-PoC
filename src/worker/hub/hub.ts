@@ -4767,6 +4767,56 @@ export class HubCore {
 	}
 
 	// =======================================================================
+	// Play one Verlauf song in Spotify, on purpose (P3, step 2)
+	// =======================================================================
+
+	/**
+	 * The listener confirmed playing this Verlauf song on the named device —
+	 * it replaces what plays there (the app said so and named the device).
+	 * Only a song in this listener's Verlauf, only on the device seen playing
+	 * last, never automatically; the saved true-shuffle place stays as it is.
+	 */
+	async playFromHistory(input: {
+		trackId: unknown;
+		playedAt: unknown;
+		deviceId: unknown;
+	}): Promise<{ deviceName: string | null }> {
+		const { trackId, playedAt, deviceId } = input;
+		if (
+			typeof trackId !== "string" ||
+			!/^[A-Za-z0-9]{22}$/.test(trackId) ||
+			typeof playedAt !== "number" ||
+			!Number.isSafeInteger(playedAt) ||
+			typeof deviceId !== "string" ||
+			!deviceId
+		)
+			throw new HubError("bad_request", "Ungültige Angabe", 400);
+		if (
+			!this.db.first(`SELECT 1 FROM plays WHERE played_at = ? AND track_id = ?`, playedAt, trackId)
+		)
+			throw new HubError("not_in_history", "Diesen Song gibt es im Verlauf nicht.", 404);
+		const device = this.kvGet<PlayerSnapshot>("player")?.device;
+		if (!device || device.id !== deviceId)
+			throw new HubError(
+				"stale_device",
+				"Das Gerät hat sich geändert. Bitte die Ansicht aktualisieren und neu bestätigen.",
+				409,
+			);
+		if (device.restricted)
+			throw new HubError(
+				"restricted",
+				`„${device.name}“ lässt sich nicht aus der App steuern.`,
+				409,
+			);
+		const client = this.client(new RequestBudget(BUDGET_PER_INVOCATION));
+		this.transportRevision += 1;
+		await client.playUris([`spotify:track:${trackId}`], deviceId);
+		this.kvSet("player_observation_due", this.now() + 2000);
+		await this.scheduleSoon(2000);
+		return { deviceName: device.name ?? null };
+	}
+
+	// =======================================================================
 	// Continue after this song (P5)
 	// =======================================================================
 

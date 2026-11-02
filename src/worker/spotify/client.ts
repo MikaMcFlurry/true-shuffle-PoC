@@ -752,6 +752,14 @@ export class SpotifyClient {
 		});
 	}
 
+	/** P3: play exactly these songs (no context), on purpose, on one device. */
+	playUris(uris: string[], deviceId: string): Promise<unknown> {
+		return this.request("PUT", "/me/player/play", {
+			query: { device_id: deviceId },
+			body: { uris },
+		});
+	}
+
 	play(opts: {
 		contextUri: string;
 		position?: number;

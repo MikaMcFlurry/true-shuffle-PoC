@@ -46,8 +46,11 @@ interface DzTrack {
 
 type Fetch = (req: Request) => Promise<Response>;
 
-const UNAVAILABLE: Record<"no_match" | "ambiguous" | "no_preview", string> = {
-	no_match: "Deezer kennt diese Aufnahme nicht — keine Hörprobe.",
+const UNAVAILABLE: Record<"missing" | "no_match" | "ambiguous" | "no_preview", string> = {
+	// P3: "not there" is not "no clear match".
+	missing: "Deezer hat diesen Song nicht — keine Hörprobe.",
+	no_match:
+		"Bei Deezer gibt es nur andere Fassungen (etwa live, remixt oder anders lang) — keine Hörprobe, um nicht die falsche zu spielen.",
 	ambiguous:
 		"Bei Deezer passen mehrere Aufnahmen — keine Hörprobe, um nicht die falsche zu spielen.",
 	no_preview: "Deezer hat für diese Aufnahme keine Hörprobe.",
@@ -76,7 +79,7 @@ export async function resolveDeezerPreview(
 ): Promise<PreviewResult> {
 	const want = split(subject.name);
 	const artist = subject.artists[0];
-	if (!want.base || !artist) return unavailable("no_match");
+	if (!want.base || !artist) return unavailable("missing");
 	// Asked as written (accents and all); compared folded.
 	const url = `${deps.base}/search?q=${encodeURIComponent(`${artist} ${want.words}`)}&limit=${SEARCH_LIMIT}`;
 	let body: { data?: DzTrack[]; error?: { code?: number } };
@@ -94,7 +97,7 @@ export async function resolveDeezerPreview(
 		const code = body.error.code;
 		if (code === 4) return failed("rate"); // "Quota limit exceeded"
 		if (code === 200 || code === 300) return failed("denied"); // OAuth
-		if (code === 800) return unavailable("no_match"); // "no data"
+		if (code === 800) return unavailable("missing"); // "no data"
 		return failed("upstream");
 	}
 	return pick(subject, want, Array.isArray(body.data) ? body.data : []);
@@ -109,7 +112,14 @@ export function pick(
 	const artists = new Set(subject.artists.map(fold));
 	artists.add(subject.artists.map(fold).join(" and "));
 	const album = foldAlbum(subject.album);
-	const fits = data.filter((d) => {
+	// Nothing by these artists under this title at all: missing, not unclear.
+	const candidates = data.filter(
+		(d) =>
+			artists.has(fold(d.artist?.name ?? "")) &&
+			split(d.title ?? "", d.title_short, d.title_version).base === want.base,
+	);
+	if (candidates.length === 0) return unavailable("missing");
+	const fits = candidates.filter((d) => {
 		const name = fold(d.artist?.name ?? "");
 		if (!name || !artists.has(name)) return false;
 		const got = split(d.title ?? "", d.title_short, d.title_version);

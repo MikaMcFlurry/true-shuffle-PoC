@@ -375,6 +375,12 @@ export const api = {
 	continueAfter: (trackId: string) =>
 		call<ContinueAfterView>("POST", "/api/continue-after", { trackId }),
 	cancelContinueAfter: () => call<null>("DELETE", "/api/continue-after"),
+	playFromHistory: (trackId: string, playedAt: number, deviceId: string) =>
+		call<{ deviceName: string | null }>("POST", "/api/history/play", {
+			trackId,
+			playedAt,
+			deviceId,
+		}),
 	logout: () => call<unknown>("POST", "/auth/logout"),
 	deleteAccount: () => call<{ stuck: string[] }>("DELETE", "/api/account"),
 };

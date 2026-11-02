@@ -718,6 +718,14 @@ export class UserHub extends DurableObject<Env> {
 	) {
 		return this.session(epoch, () => this.hub().listeningProfile(timeZone, period));
 	}
+	/** P3: play one Verlauf song in Spotify after the listener confirmed the device. */
+	playFromHistory(
+		epoch: number,
+		input: { trackId: unknown; playedAt: unknown; deviceId: unknown },
+	) {
+		return this.session(epoch, () => this.hub().playFromHistory(input));
+	}
+
 	/** P5: go on with true-shuffle once this song outside it is over. */
 	continueAfter(epoch: number, trackId: unknown) {
 		return this.session(epoch, () => this.hub().continueAfter(trackId));

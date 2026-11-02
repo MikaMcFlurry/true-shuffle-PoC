@@ -63,7 +63,7 @@ for (const [label, viewport] of [
 		}) => {
 			test.setTimeout(300_000);
 			await signIn(page);
-			const rows = await heard(page, 1);
+			const rows = await heard(page, 0);
 			const song = rows.find((r) => r.thumb === 0 && !r.ignored) ?? rows[0]!;
 			const searches: string[] = [];
 			page.on("request", (r) => {

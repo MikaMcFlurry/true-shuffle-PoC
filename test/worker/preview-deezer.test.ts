@@ -134,10 +134,10 @@ describe("history preview: Deezer resolver", () => {
 		expect(new URL(d.urls[0]!).searchParams.get("q")).toBe("Brausepulver Rücklicht");
 	});
 
-	it("wrong artist or wrong length: no sample", async () => {
+	it("wrong artist or wrong length: no sample (P3: missing is not an unclear match)", async () => {
 		expect((await resolve([dz({ artist: { name: "Daft Punk Tribute Band" } })])).r).toMatchObject({
 			status: "unavailable",
-			reason: "no_match",
+			reason: "missing",
 		});
 		expect((await resolve([dz({ duration: 241 })])).r).toMatchObject({ reason: "no_match" });
 		// Within the rounding slack it is the same recording.
@@ -204,9 +204,9 @@ describe("history preview: Deezer resolver", () => {
 			[
 				ok({ error: { type: "DataException", message: "no data", code: 800 } }),
 				"unavailable",
-				"no_match",
+				"missing",
 			],
-			[ok({ data: [] }), "unavailable", "no_match"],
+			[ok({ data: [] }), "unavailable", "missing"],
 			[
 				() => {
 					throw new TypeError("network down");

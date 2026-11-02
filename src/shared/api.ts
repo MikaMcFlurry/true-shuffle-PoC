@@ -660,10 +660,11 @@ export type PreviewResult =
 	| {
 			status: "unavailable";
 			/**
-			 * no_match: no recording of this song; ambiguous: several different
-			 * ones fit; no_preview: the recording has no sample.
+			 * missing: Deezer has no song of this title by these artists;
+			 * no_match: only other versions (live, remix, another length);
+			 * ambiguous: several different ones fit; no_preview: no sample.
 			 */
-			reason: "no_match" | "ambiguous" | "no_preview";
+			reason: "missing" | "no_match" | "ambiguous" | "no_preview";
 			message: string;
 	  }
 	| {

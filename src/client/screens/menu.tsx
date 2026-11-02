@@ -48,6 +48,7 @@ import { api, type NativeDevice } from "../api";
 import { buildLine, loadedLine, ReleaseNotes } from "../components/release-notes";
 import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
+import { SpotifyFallback } from "../components/spotify-fallback";
 import { Cover, PageBar, Section } from "../components/ui";
 import { clock, DECK_PREFIX, day, num, SEP } from "../format";
 import { historyPreview, usePreview } from "../history-preview";
@@ -862,6 +863,7 @@ function PreviewKey({ t }: { t: HistoryEntry }) {
 					{v.message}
 				</p>
 			) : null}
+			{v.phase === "unavailable" || v.phase === "error" ? <SpotifyFallback t={t} /> : null}
 			{shown ? (
 				<p class="hist-preview__source">
 					Kurze Hörprobe von Deezer (höchstens 30 Sekunden)
