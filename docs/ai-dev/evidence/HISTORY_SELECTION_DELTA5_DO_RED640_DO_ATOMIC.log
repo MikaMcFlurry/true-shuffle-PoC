@@ -1,0 +1,451 @@
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                                                                     Resource                  Mode
+[WebServer] env.PROBE (AtomicProbe)                                                     Durable Object            local
+[WebServer] env.REGISTRY (Registry)                                                     Durable Object            local
+[WebServer] env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+[WebServer] env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+[WebServer] env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19142/accounts")               Environment Variable      local
+[WebServer] env.SPOTIFY_API_BASE ("http://127.0.0.1:19142/v1")                          Environment Variable      local
+[WebServer] env.LASTFM_API_BASE ("http://127.0.0.1:19142/lastfm")                       Environment Variable      local
+[WebServer] env.DEEZER_API_BASE ("http://127.0.0.1:19142/deezer")                       Environment Variable      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19375
+[WebServer] [wrangler:info] GET /health 200 OK (77ms)
+
+Running 5 tests using 1 worker
+
+(node:8504) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /profile-counter 200 OK (44ms)
+do-atomic-fault {"kind":"profile","at":"counter","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":1}
+  x  1 do-atomic.spec.ts:13:6 › profile: a storage failure counter answers 500, leaves every stored row and the commit, and the change sent again counts once (118ms)
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvSet (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:802:11)
+[WebServer]       at HubCore.importCommitted (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:6525:8)
+[WebServer]       at HubCore.setImportedProfile (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:7615:19)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:81:37)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/userhub.ts:102:37)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /profile-counter 500 Internal Server Error (21ms)
+(node:34520) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /profile-after-profile 200 OK (40ms)
+do-atomic-fault {"kind":"profile","at":"after-profile","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":2}
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvSet (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:802:11)
+[WebServer]       at HubCore.setImportedProfile (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:7618:21)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:81:37)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/userhub.ts:102:37)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /profile-after-profile 500 Internal Server Error (21ms)
+  x  2 do-atomic.spec.ts:13:6 › profile: a storage failure after-profile answers 500, leaves every stored row and the commit, and the change sent again counts once (113ms)
+(node:14952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /events-mid-events 200 OK (40ms)
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvDel (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:810:11)
+[WebServer]       at HubCore.importListens (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:7784:8)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:83:13)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/userhub.ts:102:37)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /events-mid-events 500 Internal Server Error (23ms)
+do-atomic-fault {"kind":"events","at":"mid-events","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":1}
+  x  3 do-atomic.spec.ts:13:6 › events: a storage failure mid-events answers 500, leaves every stored row and the commit, and the change sent again counts once (113ms)
+(node:26700) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /events-counter 200 OK (37ms)
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvSet (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:802:11)
+[WebServer]       at HubCore.importCommitted (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:6525:8)
+[WebServer]       at HubCore.importChanged (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:6468:8)
+[WebServer]       at HubCore.importListens (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:7789:8)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:83:13)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/userhub.ts:102:37)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /events-counter 500 Internal Server Error (24ms)
+do-atomic-fault {"kind":"events","at":"counter","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":1}
+  x  4 do-atomic.spec.ts:13:6 › events: a storage failure counter answers 500, leaves every stored row and the commit, and the change sent again counts once (111ms)
+(node:5604) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /events-after-events 200 OK (40ms)
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.importChanged (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:6474:11)
+[WebServer]       at HubCore.importListens (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/hub/hub.ts:7789:8)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/do-atomic-worker.ts:83:13)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c640/src/worker/userhub.ts:102:37)
+[WebServer] 
+[WebServer] 
+do-atomic-fault {"kind":"events","at":"after-events","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":2}
+[WebServer] [wrangler:info] GET /events-after-events 500 Internal Server Error (21ms)
+  x  5 do-atomic.spec.ts:13:6 › events: a storage failure after-events answers 500, leaves every stored row and the commit, and the change sent again counts once (116ms)
+
+
+  1) do-atomic.spec.ts:13:6 › profile: a storage failure counter answers 500, leaves every stored row and the commit, and the change sent again counts once 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+    @@ -29,11 +29,11 @@
+          "key": "CxhxLc8SrISjJJLK|-",
+          "rows": 0,
+          "rowsFrom": null,
+          "rowsTo": null,
+          "songs": 2,
+    -     "summaryProfile": false,
+    +     "summaryProfile": true,
+        },
+        "effective": Object {
+          "at": null,
+          "error": null,
+          "state": "current",
+
+      22 | 		expect(failed.status()).toBe(500);
+      23 | 		expect(f.result.ok).toBe(false);
+    > 24 | 		expect(f.after.view).toEqual(f.before.view);
+         | 		                     ^
+      25 | 		expect(f.after.stored).toBe(f.before.stored);
+      26 | 		const reopened = await (await request.get(`${path}?op=restart`)).json();
+      27 | 		expect(reopened.after.view).toEqual(f.before.view);
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r5\do\red640\do-atomic.spec.ts:24:24
+
+    Error Context: results-do-atomic\do-atomic-profile-a-storag-8b43e-ange-sent-again-counts-once\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-do-atomic\do-atomic-profile-a-storag-8b43e-ange-sent-again-counts-once\trace.zip
+    Usage:
+
+        npx playwright show-trace results-do-atomic\do-atomic-profile-a-storag-8b43e-ange-sent-again-counts-once\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) do-atomic.spec.ts:13:6 › profile: a storage failure after-profile answers 500, leaves every stored row and the commit, and the change sent again counts once 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+    @@ -1,8 +1,8 @@
+      Object {
+        "appliedAt": null,
+    -   "commit": 1,
+    +   "commit": 2,
+        "counts": Object {
+          "afterLiveRows": 0,
+          "changedSongs": 0,
+          "enabled": true,
+          "from": null,
+    @@ -29,11 +29,11 @@
+          "key": "OO5O6fdn35-X6Rfg|-",
+          "rows": 0,
+          "rowsFrom": null,
+          "rowsTo": null,
+          "songs": 2,
+    -     "summaryProfile": false,
+    +     "summaryProfile": true,
+        },
+        "effective": Object {
+          "at": null,
+          "error": null,
+          "state": "current",
+
+      22 | 		expect(failed.status()).toBe(500);
+      23 | 		expect(f.result.ok).toBe(false);
+    > 24 | 		expect(f.after.view).toEqual(f.before.view);
+         | 		                     ^
+      25 | 		expect(f.after.stored).toBe(f.before.stored);
+      26 | 		const reopened = await (await request.get(`${path}?op=restart`)).json();
+      27 | 		expect(reopened.after.view).toEqual(f.before.view);
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r5\do\red640\do-atomic.spec.ts:24:24
+
+    Error Context: results-do-atomic\do-atomic-profile-a-storag-2bf9c-ange-sent-again-counts-once\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-do-atomic\do-atomic-profile-a-storag-2bf9c-ange-sent-again-counts-once\trace.zip
+    Usage:
+
+        npx playwright show-trace results-do-atomic\do-atomic-profile-a-storag-2bf9c-ange-sent-again-counts-once\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) do-atomic.spec.ts:13:6 › events: a storage failure mid-events answers 500, leaves every stored row and the commit, and the change sent again counts once 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 11
+    + Received  + 11
+
+    @@ -3,35 +3,35 @@
+        "commit": 1,
+        "counts": Object {
+          "afterLiveRows": 0,
+          "changedSongs": 0,
+          "enabled": true,
+    -     "from": null,
+    +     "from": 1709294400000,
+          "includedPlays": 4,
+          "includedSkips": 0,
+          "includedSongs": 2,
+    -     "includedSummarySongs": 2,
+    +     "includedSummarySongs": 0,
+          "neutralRows": 0,
+          "partialPlays": 0,
+          "partialSongs": 0,
+          "plays": 4,
+    -     "rows": 0,
+    +     "rows": 4,
+          "rules": Array [],
+          "skips": 0,
+          "songs": 2,
+    -     "summaryPlays": 4,
+    -     "summarySongs": 2,
+    -     "to": null,
+    +     "summaryPlays": 0,
+    +     "summarySongs": 0,
+    +     "to": 1709294401000,
+        },
+        "dataset": Object {
+    -     "coverage": "summary",
+    +     "coverage": "events",
+          "hasImport": true,
+          "importedAt": 1791914312604,
+    -     "key": "uV0rBCrJ4GdWbltu|-",
+    -     "rows": 0,
+    -     "rowsFrom": null,
+    -     "rowsTo": null,
+    +     "key": "uV0rBCrJ4GdWbltu|g1",
+    +     "rows": 4,
+    +     "rowsFrom": 1709294400000,
+    +     "rowsTo": 1709294401000,
+          "songs": 2,
+          "summaryProfile": false,
+        },
+        "effective": Object {
+          "at": null,
+
+      22 | 		expect(failed.status()).toBe(500);
+      23 | 		expect(f.result.ok).toBe(false);
+    > 24 | 		expect(f.after.view).toEqual(f.before.view);
+         | 		                     ^
+      25 | 		expect(f.after.stored).toBe(f.before.stored);
+      26 | 		const reopened = await (await request.get(`${path}?op=restart`)).json();
+      27 | 		expect(reopened.after.view).toEqual(f.before.view);
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r5\do\red640\do-atomic.spec.ts:24:24
+
+    Error Context: results-do-atomic\do-atomic-events-a-storage-c9489-ange-sent-again-counts-once\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-do-atomic\do-atomic-events-a-storage-c9489-ange-sent-again-counts-once\trace.zip
+    Usage:
+
+        npx playwright show-trace results-do-atomic\do-atomic-events-a-storage-c9489-ange-sent-again-counts-once\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) do-atomic.spec.ts:13:6 › events: a storage failure counter answers 500, leaves every stored row and the commit, and the change sent again counts once 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 12
+    + Received  + 12
+
+    @@ -3,35 +3,35 @@
+        "commit": 1,
+        "counts": Object {
+          "afterLiveRows": 0,
+          "changedSongs": 0,
+          "enabled": true,
+    -     "from": null,
+    +     "from": 1709294400000,
+          "includedPlays": 4,
+          "includedSkips": 0,
+          "includedSongs": 2,
+    -     "includedSummarySongs": 2,
+    +     "includedSummarySongs": 0,
+          "neutralRows": 0,
+          "partialPlays": 0,
+          "partialSongs": 0,
+          "plays": 4,
+    -     "rows": 0,
+    +     "rows": 4,
+          "rules": Array [],
+          "skips": 0,
+          "songs": 2,
+    -     "summaryPlays": 4,
+    -     "summarySongs": 2,
+    -     "to": null,
+    +     "summaryPlays": 0,
+    +     "summarySongs": 0,
+    +     "to": 1709294401000,
+        },
+        "dataset": Object {
+    -     "coverage": "summary",
+    +     "coverage": "events",
+          "hasImport": true,
+          "importedAt": 1791914313146,
+    -     "key": "0VsJMR0JNUySUDQ1|-",
+    -     "rows": 0,
+    -     "rowsFrom": null,
+    -     "rowsTo": null,
+    +     "key": "0VsJMR0JNUySUDQ1|g1",
+    +     "rows": 4,
+    +     "rowsFrom": 1709294400000,
+    +     "rowsTo": 1709294401000,
+          "songs": 2,
+          "summaryProfile": false,
+        },
+        "effective": Object {
+          "at": null,
+    @@ -42,7 +42,7 @@
+        "revision": 0,
+        "selection": Object {
+          "enabled": true,
+          "rules": Array [],
+        },
+    -   "uploading": true,
+    +   "uploading": false,
+      }
+
+      22 | 		expect(failed.status()).toBe(500);
+      23 | 		expect(f.result.ok).toBe(false);
+    > 24 | 		expect(f.after.view).toEqual(f.before.view);
+         | 		                     ^
+      25 | 		expect(f.after.stored).toBe(f.before.stored);
+      26 | 		const reopened = await (await request.get(`${path}?op=restart`)).json();
+      27 | 		expect(reopened.after.view).toEqual(f.before.view);
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r5\do\red640\do-atomic.spec.ts:24:24
+
+    Error Context: results-do-atomic\do-atomic-events-a-storage-2e4e7-ange-sent-again-counts-once\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-do-atomic\do-atomic-events-a-storage-2e4e7-ange-sent-again-counts-once\trace.zip
+    Usage:
+
+        npx playwright show-trace results-do-atomic\do-atomic-events-a-storage-2e4e7-ange-sent-again-counts-once\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) do-atomic.spec.ts:13:6 › events: a storage failure after-events answers 500, leaves every stored row and the commit, and the change sent again counts once 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 13
+    + Received  + 13
+
+    @@ -1,37 +1,37 @@
+      Object {
+        "appliedAt": null,
+    -   "commit": 1,
+    +   "commit": 2,
+        "counts": Object {
+          "afterLiveRows": 0,
+          "changedSongs": 0,
+          "enabled": true,
+    -     "from": null,
+    +     "from": 1709294400000,
+          "includedPlays": 4,
+          "includedSkips": 0,
+          "includedSongs": 2,
+    -     "includedSummarySongs": 2,
+    +     "includedSummarySongs": 0,
+          "neutralRows": 0,
+          "partialPlays": 0,
+          "partialSongs": 0,
+          "plays": 4,
+    -     "rows": 0,
+    +     "rows": 4,
+          "rules": Array [],
+          "skips": 0,
+          "songs": 2,
+    -     "summaryPlays": 4,
+    -     "summarySongs": 2,
+    -     "to": null,
+    +     "summaryPlays": 0,
+    +     "summarySongs": 0,
+    +     "to": 1709294401000,
+        },
+        "dataset": Object {
+    -     "coverage": "summary",
+    +     "coverage": "events",
+          "hasImport": true,
+          "importedAt": 1791914313687,
+    -     "key": "KaUtGNEniZDv8h9k|-",
+    -     "rows": 0,
+    -     "rowsFrom": null,
+    -     "rowsTo": null,
+    +     "key": "KaUtGNEniZDv8h9k|g1",
+    +     "rows": 4,
+    +     "rowsFrom": 1709294400000,
+    +     "rowsTo": 1709294401000,
+          "songs": 2,
+          "summaryProfile": false,
+        },
+        "effective": Object {
+          "at": null,
+    @@ -42,7 +42,7 @@
+        "revision": 0,
+        "selection": Object {
+          "enabled": true,
+          "rules": Array [],
+        },
+    -   "uploading": true,
+    +   "uploading": false,
+      }
+
+      22 | 		expect(failed.status()).toBe(500);
+      23 | 		expect(f.result.ok).toBe(false);
+    > 24 | 		expect(f.after.view).toEqual(f.before.view);
+         | 		                     ^
+      25 | 		expect(f.after.stored).toBe(f.before.stored);
+      26 | 		const reopened = await (await request.get(`${path}?op=restart`)).json();
+      27 | 		expect(reopened.after.view).toEqual(f.before.view);
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r5\do\red640\do-atomic.spec.ts:24:24
+
+    Error Context: results-do-atomic\do-atomic-events-a-storage-73332-ange-sent-again-counts-once\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    results-do-atomic\do-atomic-events-a-storage-73332-ange-sent-again-counts-once\trace.zip
+    Usage:
+
+        npx playwright show-trace results-do-atomic\do-atomic-events-a-storage-73332-ange-sent-again-counts-once\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    do-atomic.spec.ts:13:6 › profile: a storage failure counter answers 500, leaves every stored row and the commit, and the change sent again counts once 
+    do-atomic.spec.ts:13:6 › profile: a storage failure after-profile answers 500, leaves every stored row and the commit, and the change sent again counts once 
+    do-atomic.spec.ts:13:6 › events: a storage failure mid-events answers 500, leaves every stored row and the commit, and the change sent again counts once 
+    do-atomic.spec.ts:13:6 › events: a storage failure counter answers 500, leaves every stored row and the commit, and the change sent again counts once 
+    do-atomic.spec.ts:13:6 › events: a storage failure after-events answers 500, leaves every stored row and the commit, and the change sent again counts once 
+
+red640 do-atomic exit=1

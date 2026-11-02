@@ -15,7 +15,7 @@ export type PackedTrack = [string, string, [string, string][], string, string | 
 export const PAGE_SIZE = 50;
 
 export function sourceKey(s: StationSource): string {
-	return s.type === "liked" ? "liked" : `pl:${s.id}`;
+	return s.type === "liked" ? "liked" : s.type === "likes" ? "likes" : `pl:${s.id}`;
 }
 
 export function packTrack(t: SpTrack): PackedTrack | null {

@@ -1,0 +1,13 @@
+import{readFileSync}from'node:fs';import{runInNewContext}from'node:vm';import ts from'typescript';import assert from'node:assert/strict';
+const source=readFileSync('/workspace/true-shuffle-PoC/src/client/components/spotify-availability.tsx','utf8');const code=source.slice(source.indexOf('const functions:'));
+let diagnostic,statesIndex;let now=Date.UTC(2026,8,30,10);class Clock extends Date{static now(){return now}};
+const h=(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity)});
+const context={exports:{},h,Fragment:'fragment',Date:Clock,Intl,Number,api:{},PageBar:()=>null,localStorage:{getItem:()=>null},useEffect:()=>{},useState:init=>{statesIndex++;return[statesIndex===1?diagnostic:typeof init==='function'?init():init,()=>{}]},num:n=>n.toLocaleString('de-DE')};
+runInNewContext(ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,jsxFactory:'h',jsxFragmentFactory:'Fragment'}}).outputText,context);
+function nodes(tree){return[tree,...(tree?.children||[]).filter(x=>x&&typeof x==='object').flatMap(nodes)]}function text(tree){return typeof tree==='string'||typeof tree==='number'?String(tree):(tree?.children||[]).map(text).join(' ')}
+
+
+const gate=until=>({until,kind:'quota',reason:'QUOTA_EXCEEDED',retryAfter:'1'});
+const cases=[{name:'global-unknown',global:null,device:now-1,disabled:true},{name:'global-future',global:now+1,device:now-1,disabled:true},{name:'family-future',device:now+1,disabled:true},{name:'family-expired',device:now-1,disabled:false},{name:'family-unknown',device:null,disabled:false}];
+for(const c of cases){diagnostic={cooldown:'global'in c?gate(c.global):null,devicesCooldown:gate(c.device),catalogQuarantine:gate(now+100),availability:{testedAt:now,outcomes:{devices:{state:'available',status:200},player:{state:'available',status:200},history:{state:'available',status:200}},controls:'untested',catalog:'held'},recentRequests:{startedAt:now,hours:[{hour:1,counts:{'read:/me/player:200:none':3,'read:/me/player:429:blocked':9,'refresh:/api/token:200:none':1,'read:/me/player/devices:429:quota':1},firstQuotaAt:now,firstQuotaEndpoint:'/me/player/devices'}]}};const tree=context.exports.SpotifyFunctionStatus({diagnostics:diagnostic,onRetry:()=>{},busy:false});const str=text(tree);const button=nodes(tree).find(n=>n.type==='button'&&text(n).includes('-Freigabe prüfen'));assert.equal(button.props.disabled,c.disabled,c.name);assert.match(str,/wurden nicht geprüft/);assert.match(str,/keine vollständige Tagesmessung/);assert.match(str,/Lokal zurückgehalten/);if(c.name.startsWith('global'))assert.match(str,/Abfrage zurückgestellt/);console.log(c.name+' PASS');}
+console.log('5 actual SpotifyFunctionStatus states PASS');

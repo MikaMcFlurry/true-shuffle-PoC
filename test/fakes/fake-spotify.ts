@@ -51,6 +51,11 @@ export interface FakeUser {
 		type: string;
 		restricted: boolean;
 		privateSession?: boolean;
+		/** Spotify documents device.id as nullable: reported as null. */
+		noId?: boolean;
+		/** P8: the device's volume (default 50); `fixedVolume`: Spotify refuses changes (403). */
+		volume?: number;
+		fixedVolume?: boolean;
 	}[];
 	/** …unless Spotify lists them after all. */
 	listPrivatePlays?: boolean;
@@ -117,6 +122,14 @@ export class FakeSpotify {
 		body?: unknown;
 		headers?: Record<string, string>;
 	} | null = null;
+
+	/** Answer one API request (method, path below /v1) with this instead, when it returns one. */
+	failWhen:
+		| ((
+				method: string,
+				path: string,
+		  ) => { status: number; body?: unknown; headers?: Record<string, string> } | null)
+		| null = null;
 
 	constructor(opts: FakeOptions = {}) {
 		this.opts = opts;
@@ -389,6 +402,13 @@ export class FakeSpotify {
 						f.headers,
 					);
 				}
+				const injected = this.failWhen?.(req.method, path.slice(3)) ?? null;
+				if (injected)
+					return json(
+						injected.body ?? { error: { status: injected.status, message: "fail" } },
+						injected.status,
+						injected.headers,
+					);
 				const auth = req.headers.get("authorization") ?? "";
 				const tok = this.tokens.get(auth.replace(/^Bearer /, ""));
 				if (!tok || tok.expiresAt < this.now()) {
@@ -602,18 +622,20 @@ export class FakeSpotify {
 				403,
 			);
 		if (m === "GET" && path === "/me/player") {
-			if (!p.deviceId) return new Response(null, { status: 204 });
+			const dev = u.devices.find((d) => d.id === p.deviceId);
+			if (!dev) return new Response(null, { status: 204 });
 			const id = this.current(u.id);
 			const t = id ? this.tracks.get(id) : undefined;
-			const dev = u.devices.find((d) => d.id === p.deviceId)!;
 			return json({
 				device: {
-					id: dev.id,
+					id: dev.noId ? null : dev.id,
 					is_active: true,
 					is_restricted: dev.restricted,
 					is_private_session: dev.privateSession === true,
 					name: dev.name,
 					type: dev.type,
+					volume_percent: dev.volume ?? 50,
+					supports_volume: dev.fixedVolume !== true,
 				},
 				shuffle_state: p.shuffle,
 				smart_shuffle: p.smartShuffle,
@@ -653,7 +675,8 @@ export class FakeSpotify {
 		if (m === "PUT" && path === "/me/player/play") {
 			if (!u.premium) return premiumOnly();
 			const deviceId = q.get("device_id") ?? p.deviceId ?? null;
-			if (!deviceId)
+			const device = u.devices.find((d) => d.id === deviceId);
+			if (!device)
 				return json(
 					{
 						error: {
@@ -664,13 +687,25 @@ export class FakeSpotify {
 					},
 					404,
 				);
+			if (device.restricted)
+				return json(
+					{
+						error: {
+							status: 403,
+							message: "Player command failed: Restriction violated",
+							reason: "RESTRICTION_VIOLATED",
+						},
+					},
+					403,
+				);
 			if (data.context_uri) {
 				const cm = /^spotify:playlist:(.+)$/.exec(String(data.context_uri));
 				if (cm && !this.playlists.has(cm[1]!)) {
 					return json({ error: { status: 404, message: "Not found." } }, 404);
 				}
 				const off = data.offset as { position?: number } | undefined;
-				this.startContext(u.id, String(data.context_uri), off?.position ?? 0, deviceId, true);
+				this.startContext(u.id, String(data.context_uri), off?.position ?? 0, device.id, true);
+				p.progressMs = Number(data.position_ms ?? 0);
 			} else if (Array.isArray(data.uris)) {
 				const ids = (data.uris as string[]).map((x) => x.replace("spotify:track:", ""));
 				p.contextUri = null;
@@ -699,6 +734,24 @@ export class FakeSpotify {
 		if (m === "PUT" && path === "/me/player/shuffle") {
 			if (!u.premium) return premiumOnly();
 			p.shuffle = q.get("state") === "true";
+			return new Response(null, { status: 204 });
+		}
+		if (m === "PUT" && path === "/me/player/volume") {
+			if (!u.premium) return premiumOnly();
+			const dev = u.devices.find((d) => d.id === (q.get("device_id") ?? p.deviceId));
+			if (!dev) return json({ error: { status: 404, message: "Device not found" } }, 404);
+			if (dev.fixedVolume)
+				return json(
+					{
+						error: {
+							status: 403,
+							message: "Cannot control device volume",
+							reason: "VOLUME_CONTROL_DISALLOW",
+						},
+					},
+					403,
+				);
+			dev.volume = Math.max(0, Math.min(100, Number(q.get("volume_percent"))));
 			return new Response(null, { status: 204 });
 		}
 		if (m === "PUT" && path === "/me/player/repeat") {
@@ -809,7 +862,53 @@ export class FakeSpotify {
 		return json({ error: 3, message: "Invalid Method" }, 400);
 	}
 
+	/**
+	 * Deezer track search (listening samples, docs/HISTORY_PREVIEW.md): extra
+	 * synthetic results first (a search may list more than 25), then the fake's own songs, or a
+	 * forced answer. Sample addresses are synthetic and never fetched by tests
+	 * that run the hub; the browser tests answer them themselves.
+	 */
+	deezerExtra: Record<string, unknown>[] = [];
+	deezerFail: { status: number; body?: unknown } | null = null;
+	/** Fake songs Deezer has no sample for. */
+	readonly deezerNoPreview = new Set<string>();
+
+	private deezerSearch(url: URL): Response {
+		if (this.deezerFail) return json(this.deezerFail.body ?? {}, this.deezerFail.status);
+		// Loose like a real search: the artist's words and the title's first word.
+		const words = (x: string) =>
+			x
+				.toLowerCase()
+				.split(/[^\p{L}\p{N}]+/u)
+				.filter(Boolean);
+		const q = new Set(words(url.searchParams.get("q") ?? ""));
+		const exp = Math.floor(this.now() / 1000) + 900;
+		const own = [...this.tracks.values()]
+			.filter((t) => words(t.artistName).every((w) => q.has(w)) && q.has(words(t.name)[0] ?? ""))
+			.map((t, i) => ({
+				id: 700_000 + i,
+				readable: true,
+				title: t.name,
+				title_short: t.name,
+				title_version: "",
+				isrc: `FAKE${t.id.slice(-8)}`,
+				link: `https://www.deezer.com/track/${700_000 + i}`,
+				duration: Math.round(t.durationMs / 1000),
+				preview: this.deezerNoPreview.has(t.id)
+					? ""
+					: `https://cdnt-preview.dzcdn.net/api/1/1/f/a/k/e/${t.id}.mp3?hdnea=exp=${exp}~acl=/fake*~hmac=fake`,
+				artist: { name: t.artistName },
+				album: { title: t.albumName },
+			}));
+		const data = [...this.deezerExtra, ...own].slice(
+			0,
+			Number(url.searchParams.get("limit") ?? "25"),
+		);
+		return json({ data, total: data.length });
+	}
+
 	private deezer(path: string, url: URL): Response {
+		if (path === "/search") return this.deezerSearch(url);
 		const artists = new Map<string, FakeTrack>();
 		for (const t of this.tracks.values())
 			if (!artists.has(t.artistName)) artists.set(t.artistName, t);

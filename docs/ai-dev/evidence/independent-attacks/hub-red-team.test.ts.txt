@@ -1,0 +1,59 @@
+import { it, expect } from 'vitest';
+import { onboarded } from './harness';
+import { RequestBudget } from '../../src/worker/spotify/client';
+import { SpotifyGate, type SpotifyGateState } from '../../src/worker/spotify/gate';
+import type { HubDeps } from '../../src/worker/hub/hub';
+it('RT-01 provider recovery must remain recovered after stale account reads', async () => {
+ let state: SpotifyGateState | null=null;
+ const gate = new SpotifyGate({get:()=>state,set:s=>{state=s}},()=>0);
+ let n=0;
+ const account=(): NonNullable<HubDeps['sharedSpotify']>=>{let token:string|null=null;return {
+ getCooldown:async()=>gate.get(token),getSnapshot:async()=>gate.snapshot(token),setCooldown:async c=>gate.block(c,token),
+ beginRecheck:async()=>{token=gate.begin(`p-${++n}`);return !!token},
+ finishRecheck:async ok=>{if(token)gate.finish(token,ok);token=null}
+ }};
+ const a=await onboarded({tracks:30,sharedSpotify:account()});
+ const b=await onboarded({tracks:30,sharedSpotify:account()});
+ a.fake.failNext={status:429,count:1,body:{error:{reason:'QUOTA_EXCEEDED'}}};
+ await expect(a.hub.devices()).rejects.toMatchObject({kind:'quota'});
+ await b.hub.retryQuota();
+ expect(gate.get()).toBeNull();
+ await b.hub.devices();
+ a.restart();
+ await a.hub.devices();
+ expect(gate.get()).toBeNull();
+});
+it('RT-02 provider-side resume must update checkpoint after failed no-device command', async()=>{
+ const h=await onboarded({tracks:60});const id=h.stationIds[0]!;
+ await h.hub.play(id);
+ h.fake.user().player.progressMs=97000;h.fake.pause();
+ await h.hub.sync(new RequestBudget(25),{force:true});
+ const devices=h.fake.user().devices;
+ h.fake.user().devices=[];
+ expect((await h.hub.play(id)).ok).toBe(false);
+ h.fake.user().devices=devices;
+ h.fake.user().player.isPlaying=true;
+ h.fake.user().player.progressMs=120000;
+ h.clock.t+=1000;
+ await h.hub.sync(new RequestBudget(25),{force:true});
+ expect(h.hub.savedSession(id)!.progressMs).toBe(120000);
+});
+it('RT-05 definitive premium rejection retains occurrence and releases controls',async()=>{
+ const h=await onboarded({tracks:60});const id=h.stationIds[0]!;await h.hub.play(id);
+ h.fake.user().player.progressMs=97000;h.fake.pause();await h.hub.sync(new RequestBudget(25),{force:true});
+ const before=h.hub.savedSession(id)!;h.fake.user().premium=false;
+ expect(await h.hub.play(id)).toMatchObject({ok:false,error:{code:'premium'}});
+ const after=h.hub.savedSession(id)!;expect(after.pending).toBeNull();expect(after.progressMs).toBe(97000);expect(after.entryIds[after.currentIndex]).toBe(before.entryIds[before.currentIndex]);
+ h.fake.user().premium=true;expect((await h.hub.play(id)).ok).toBe(true);expect(h.fake.user().player.progressMs).toBe(97000);
+});
+it('RT-06 explicit Spotify play switches controller when same context already plays',async()=>{
+ const h=await onboarded({tracks:60});const id=h.stationIds[0]!;await h.hub.play(id);
+ const native=h.hub.nativeSession(id);expect(native.controller).toBe('native');
+ const entry=native.entryIds[native.currentIndex]!;
+ h.hub.acceptSessionObservation(id,{sessionId:native.sessionId,entryId:entry,playbackEpoch:native.playbackEpoch,sequence:1,progressMs:97000,isPlaying:true});
+ h.fake.user().player.progressMs=200000;
+ expect((await h.hub.play(id)).ok).toBe(true);
+ const spotify=h.hub.savedSession(id)!;expect(spotify.controller).toBe('spotify');
+ expect(spotify.playbackEpoch).toBeGreaterThan(native.playbackEpoch);expect(spotify.entryIds[spotify.currentIndex]).toBe(entry);expect(h.fake.user().player.progressMs).toBe(97000);
+ expect(h.hub.acceptSessionObservation(id,{sessionId:native.sessionId,entryId:entry,playbackEpoch:native.playbackEpoch,sequence:2,progressMs:120000,isPlaying:true})).toBe(false);
+});

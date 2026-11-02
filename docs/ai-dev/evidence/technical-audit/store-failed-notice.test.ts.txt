@@ -1,0 +1,37 @@
+import { beforeAll, expect, it, vi } from "vitest";
+
+const states: unknown[] = [];
+vi.mock("../../src/client/api", () => ({
+	ApiError: class extends Error {},
+	api: { state: vi.fn(async () => states.shift()) },
+}));
+
+beforeAll(() => {
+	(globalThis as any).window = { setTimeout, clearTimeout, setInterval, clearInterval, addEventListener() {}, removeEventListener() {} };
+	(globalThis as any).document = { visibilityState: "visible", addEventListener() {}, removeEventListener() {} };
+});
+
+const sess = (stationId: number, sessionId: string, entryId: string) => ({
+	sessionId, stationId, entryId, orderRevision: 1, progressMs: 1000, observedAt: 100,
+	status: "paused", pending: false, queue: [],
+});
+const app = (serverTime: number, session: unknown) => ({
+	profile: { id: "p1" }, serverTime, session, nowPlaying: null, stations: [],
+});
+
+it.each([
+	["hub switches saved session to refused station (b5a1856 behaviour)", sess(2, "sB", "sB:0"), false],
+	["hub keeps previous saved session (proposed behaviour)", sess(1, "sA", "sA:0"), true],
+])("AUDIT: failed play notice after follow-up refresh: %s", async (_name, nextSession, kept) => {
+	const { store } = await import("../../src/client/store");
+	store.load = { kind: "ready", state: app(1, sess(1, "sA", "sA:0")) as any };
+	(store as any).command = null;
+	const id = store.beginCommand("play", 2, { entryId: "sA:0", position: 1000, track: null, projected: false })!;
+	expect(id).not.toBeNull();
+	store.acceptCommand(id, { ok: false, error: { code: "premium", message: "Spotify erlaubt das Starten nur mit Premium." } } as any);
+	expect(store.command?.phase).toBe("failed");
+	states.push(app(2, nextSession));
+	await store.refresh(false, true);
+	console.log(JSON.stringify({ kept: !!store.command, phase: store.command?.phase }));
+	expect(!!store.command).toBe(kept);
+});

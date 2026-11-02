@@ -1,0 +1,224 @@
+{
+  "schema": "mika.red-team-review.v1",
+  "generated_at": "2026-09-30T08:39:49.949089+00:00",
+  "independence": "FRESH",
+  "verdict": "BLOCKED",
+  "scope": "Local implementation and protected continuity/provider/native correctness; intended production-live release remains externally blocked. No live provider acceptance claimed.",
+  "reviewed_subject": {
+    "repository": "/workspace/true-shuffle-PoC",
+    "branch": "codex/implement-cloudflare-restart",
+    "base_commit": "5ffe99b929b6a8ddf93035370e156fe036fe6a83",
+    "working_source_sha256": {
+      "scripts/native/ha-bridge.mjs": "43c6f165a4cf57509e0f4dc5426c59ff9c8655013cc388766f78b2985c238c93",
+      "src/client/api.ts": "a46baff66d25f69ed4452d6f5b3749c716081484e72c7ae3648c1e6c01578aea",
+      "src/client/app.tsx": "32e8d7dc08426ab1212d965222f6cb0f3371e5ffcccbcaa742b7b96268e245b6",
+      "src/client/components/radio.tsx": "f2604949c2bd8e28bfa9ed3c29d482ba443a6f08c32cd4123c9bdf8352fae98c",
+      "src/client/components/rate.tsx": "9285539d7d8014d471eb8fb7cf59d42e6c36b862e07737193bf9872c16df1aa4",
+      "src/client/format.ts": "4cd959d9119f261c4c5c07716e17de42f39cae96f6b54269588fe24ef829bca2",
+      "src/client/index.html": "45f0a34f17f339edada20751d2a35f245b6f7c5ff188c4b92f837448908b5c72",
+      "src/client/main.tsx": "7bb4ead1d4b6b5db2e2ed1c1fef7aa2c1b317b887911dbda1ccb4a1ffa44d857",
+      "src/client/public/_headers": "c6ee3eb593b266fa4cb402cc01af94b65cab19b50e67326348c328b7168bec00",
+      "src/client/public/apple-touch-icon.png": "ead05406b6b4c55b0200fff71ab4340949be72175c2b75dbd2685ad980ff7a7b",
+      "src/client/public/apple-touch-icon.png.json": "4c1bf132343a7a1cc147a0efb7881c236268101bc43e44eb8c495e566050d0d8",
+      "src/client/public/icon-192.png": "49964f21739d12449b0ddc141a6efcc1931a52070107b46001198d78f560dfbf",
+      "src/client/public/icon-192.png.json": "4c1bf132343a7a1cc147a0efb7881c236268101bc43e44eb8c495e566050d0d8",
+      "src/client/public/icon-512.png": "aaedc1b5300d9eaa38e26811b2f0ae3a3751b301aff50e55aa97928fc0df8059",
+      "src/client/public/icon-512.png.json": "4c1bf132343a7a1cc147a0efb7881c236268101bc43e44eb8c495e566050d0d8",
+      "src/client/public/icon.svg": "82900469a9b6b4dcf37239f0cc5698219231ba247dbb5cf04c989063c14222f4",
+      "src/client/public/manifest.webmanifest": "f2d39b558bbe43ca860b8166a851e3cb6392cd0ef807decd64d060f3ed8550c5",
+      "src/client/public/tex/cloth.webp": "e2d41c476d5e90af0c1f7acf4d0c14a4959a862a90a9c9571c8271fc346dff95",
+      "src/client/public/tex/cloth.webp.json": "7427ab77f1772f70bca001829c65f2794f41d780711558bc6971d2103818c656",
+      "src/client/public/tex/walnut.webp": "3ee256e8d5c702246fc095c27f2d1bdd8fa3fba27a7565d8b48e0ad83723ab46",
+      "src/client/public/tex/walnut.webp.json": "422ef6afa373aa6037162adf5a96bdccc90cba082adcd20b0b09b23205a9aac4",
+      "src/client/router.ts": "fa22830c610804611e3a85215521c4b347cbd93024c37b26e4323693947855cd",
+      "src/client/screens/home.tsx": "7bf2a0864e5b3dfccec819e963652e72fc6b387ba8a8ae50160ce109c50c9060",
+      "src/client/screens/menu.tsx": "9f61177e7d10f8b3b1e081990c3602b455c09b2aeb2c7cd203afb3fe94d8a079",
+      "src/client/screens/remote.tsx": "d4f2e3ce2414afa1eca46d4be0cca979eff97c0025baf99eb68e9c823be30e0b",
+      "src/client/screens/scan.tsx": "2d4899f0799a643e1a56e5c2570dc8b13d6f2e1677634ce4d9ac11d267ce4c10",
+      "src/client/screens/signin.tsx": "be6c82b59265c37df85183bfa95506a962436d171c0c835f9e9299ec38bc0695",
+      "src/client/screens/station.tsx": "9f6ac6df17d9a83312dfa1a925e2a28fcffac46bedb478757037de6bb341c559",
+      "src/client/store.ts": "4989843fd106e8f171255bb40794b8628b493bc3049dccb98ce576d5357244a2",
+      "src/client/styles.css": "c925736862708c16a043364f71e259fbcaa49c20db25d1433d8667afba9ad0e8",
+      "src/core/deck.ts": "69896f284addf2def1115d726be5a7eab9118b1c136df8f2dd8d5c2e0d6f6e85",
+      "src/core/history.ts": "6e56193931187415545f487406ce7eb7b2cc34a9ec703854a88f29d34e20702e",
+      "src/core/memory.ts": "cfd3e9dd4164eb6ad8e71a1398d30e56c446bb83d24bc2d2d4b3bbde6c135c54",
+      "src/core/mix.ts": "8bf4dc74fd70fe27f2d8e3b6c12b5680492e7bcef03a0a442745a34531a2453f",
+      "src/core/planner.ts": "ccc99911c3017a8384657c553c5bb7b27ec360c7ad39d736a487f916e446211f",
+      "src/core/random.ts": "2f95ee0fe003c62c59b1ba67209ae7a19f9cd98b1c67506ddb4215ed41bc5e8c",
+      "src/core/types.ts": "de6713f2623fe0d9a1c14e8f695f2cdf910576a91e3a413ac4443161faf8aa75",
+      "src/shared/api.ts": "3a0e568091bfe26f4d11b5f1b065f5f74a37a930074b17547bb96ecceee837c6",
+      "src/worker/controllers/native.ts": "67c271d9df897b275ffe94ccbacfd63eb38f7bc5bddac6d77d9fff9005c0699a",
+      "src/worker/env.ts": "891b0f826606078f4152b3ff275dfc33ac228b8862976f0d3b7384431284361b",
+      "src/worker/hub/discovery.ts": "1cab47dd61920f52a01c518b3a7fb4d0c159ca116aa7cd4eb68271fd9914f710",
+      "src/worker/hub/hub.ts": "461abc7b7f0ed839a2e31fbe2d74c40da81b9eef03081acc67ce11fb8e6d8a5b",
+      "src/worker/hub/library.ts": "b26300aa65092f08342032564024022d84c0c75499b426ac18134853495c3a55",
+      "src/worker/hub/schema.ts": "3a1461556ec63f4467c70be9733fcc4976c0835ca9ccbe12b3a9dd88303a1da0",
+      "src/worker/index.ts": "a35182f4fc528edc76976e9a37f4cd205f7f934686075c101f02a466fdcc7e30",
+      "src/worker/lib/crypto.ts": "9248fb9ecc5d5ca573af36fb73981942b4526ee494ed4732c8f531f3d8882dc1",
+      "src/worker/lib/remote-key.ts": "da04c8cdf149e1c44037fcd05b004778d560ca7472821218ee118dbedab72d37",
+      "src/worker/lib/sql.ts": "8ead9cebc819adcd6a80b4288df04202633c2ac7d445ef5bd0ae9d203be227db",
+      "src/worker/registry.ts": "c8255728ec5a6a7c3cbc0dd43fdccdf37d5212635a8042db51763c8546f63e59",
+      "src/worker/spotify/client.ts": "36c22af1d41e04d5a9d914e9560dd0530c7e347306718e113480f84f77a1b973",
+      "src/worker/spotify/gate.ts": "40cb77b489aed58e3a313f9f899463d3b7a00d5b4023a72416bb82cc64493ddb",
+      "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
+      "src/worker/spotify/types.ts": "f9520e5ec6936825b94ff0940c9d8ea543172878e05337e25f1a045edfbaf7e5",
+      "src/worker/userhub.ts": "e0a4f45fb9f0abd1c7d779e1c18b0ba06acb55caad2d02d4a7588168db6accbc",
+      "wrangler.jsonc": "6aedb923406d1de811ec56dd64cabc017cea70e191aeafa28c39b270c61ef7a2",
+      "wrangler.preview.jsonc": "605b95881ea83061e4a29c6be80f885125aa557c56bdf4b0bd15a3a41868b2f7"
+    },
+    "source_manifest_sha256": "0526b7e98f40e3a226b645cf3ad97bf7529903f8583e069cb589da482bb1e3ba"
+  },
+  "closed_findings": [
+    {
+      "id": "RT-01",
+      "severity": "P1",
+      "title": "Stale local quota resurrected shared provider gate",
+      "status": "CLOSED",
+      "evidence": "/tmp/ts-independent-repro-final.log",
+      "details": "Independent two-account attack now passes after Registry revision protocol: owner B clears observed quota, account A eviction/read stays unblocked and does not reclose Registry."
+    },
+    {
+      "id": "RT-02",
+      "severity": "P1",
+      "title": "No-device failure suppressed provider-side checkpoint updates",
+      "status": "CLOSED",
+      "evidence": "/tmp/ts-independent-repro-final.log",
+      "details": "Independent failed no-device resume followed by Spotify own-context Play moves saved observed progress from 97 to120 seconds."
+    },
+    {
+      "id": "RT-04",
+      "severity": "P2",
+      "title": "Native append journal permanently exhausted at1024 commands in one epoch",
+      "status": "CLOSED",
+      "evidence": [
+        "/tmp/ts-independent-native-long-closed.log",
+        "/tmp/ts-independent-native-final.log"
+      ],
+      "details": "Original production-functions attack reaches1030 same-epoch native appends with journal size2; pruned stale append receives409; independently rerun production-function10000occurrence regression and native adapter7PASS."
+    },
+    {
+      "id": "RT-05",
+      "severity": "P2",
+      "title": "Definitive premium rejection must release pending controls while preserving97-second occurrence",
+      "status": "VERIFIED",
+      "evidence": "/tmp/ts-independent-extra-final.log",
+      "details": "Independent rejection and successful retry preserve occurrence and observed97s; pending cleared."
+    },
+    {
+      "id": "RT-06",
+      "severity": "P2",
+      "title": "Successful Spotify active-context shortcut retained native owner/epoch",
+      "status": "CLOSED",
+      "requirements": [
+        "NN-06",
+        "NN-10"
+      ],
+      "evidence": [
+        "/tmp/ts-independent-final-tests.log",
+        "/tmp/ts-independent-closure-attacks.log"
+      ],
+      "details": "Independent native97s versus concurrentSpotify200s attack verifies explicitSpotifyPlay restores97s at sameoccurrence/session, takes Spotify ownership, advances epoch and rejects old native events. Source guard excludes native controller from active-player shortcut."
+    },
+    {
+      "id": "RT-07",
+      "severity": "P2",
+      "title": "Successful native Pause or generic single-song Play acknowledged an unpublished reserved queue tail",
+      "status": "CLOSED",
+      "requirements": [
+        "NN-07",
+        "NN-10"
+      ],
+      "evidence": [
+        "/tmp/ts-independent-native-reservation-controls.log",
+        "/tmp/ts-independent-post-rt07.log",
+        "/tmp/mika-independent-review/test/worker/native-reservation-red-team.test.ts"
+      ],
+      "details": "Independent actual-nativePlay extraction with real HubCore/SQLite reproduced two failures: Pause and queuefalse Play cleared reservation; fullqueue Resume already acknowledged successfully. Final UserHub acknowledges only accepted queue-capable fullqueue Play, using command session/epoch/revision. All three independent controls now pass; orchestrator regression covers failedfullPlay and nextrefill."
+    }
+  ],
+  "withdrawn_suspicions": [
+    {
+      "id": "RT-03",
+      "title": "Bridge would keep repeated completed media forever",
+      "disposition": "DISPROVED; final observe already trims completed prefix after trusted unique occurrence",
+      "evidence": "/tmp/ts-independent-native-attack.log"
+    }
+  ],
+  "open_findings": [],
+  "critical_not_run": [
+    {
+      "id": "LIVE-CF",
+      "surface": "Actual Cloudflare existing version, namespaces/bindings, APP_SECRET continuity, production backup/migration/deployment/recovery",
+      "status": "NOT_RUN",
+      "blocking": true,
+      "reason": "Credentials and exact live target unavailable; no production write performed."
+    },
+    {
+      "id": "LIVE-SPOTIFY",
+      "surface": "LiveSpotify unfinished song, auto-stop, browser/device change, provider quota cause and Retry-After behavior",
+      "status": "NOT_RUN",
+      "blocking": true,
+      "reason": "No live authenticated Spotify access; fixture evidence cannot establish provider acceptance."
+    },
+    {
+      "id": "LIVE-HA-MA",
+      "surface": "Actual owner HA/MA device/media URI/service/capability and native queue continuation",
+      "status": "NOT_RUN",
+      "blocking": true,
+      "reason": "Real HA/MA unavailable; injected HA fixtures only."
+    }
+  ],
+  "independent_evidence": [
+    {
+      "path": "/tmp/ts-independent-repro-final.log",
+      "result": "32PASS across5files including independent RT01/02"
+    },
+    {
+      "path": "/tmp/ts-independent-extra-final.log",
+      "result": "9PASS incl independent definitivepremium and6native adapter checks"
+    },
+    {
+      "path": "/tmp/ts-independent-native-final.log",
+      "result": "7PASS incl10000actualproductionfunction native rolling and6adapter checks"
+    },
+    {
+      "path": "/tmp/ts-independent-native-long-closed.log",
+      "result": "1030sameepochappendsPASS; staleprunedreplay409; journal2"
+    },
+    {
+      "path": "/tmp/ts-independent-final-tests.log",
+      "result": "43/43PASS across7files on finalbackend incl independentRT01/02/05/06, nativeadapter, 10000bridgeoccurrences, migration/recovery andquota gates"
+    },
+    {
+      "path": "/tmp/ts-independent-closure-attacks.log",
+      "result": "4/4independent original/strengthened attacksPASS on finalbackend"
+    },
+    {
+      "path": "/tmp/ts-independent-post-rt07.log",
+      "result": "49/49PASS across9files on final UserHube0a4f45 source; three independently authored reservation controls and all previous closure attacks pass"
+    }
+  ],
+  "inspected_builder_evidence": [
+    {
+      "path": "/tmp/ts-tests-release-recovery.log",
+      "result": "320/320PASS priorRT04/06 repairs"
+    },
+    {
+      "path": "/tmp/ts-e2e-release.log",
+      "result": "14/14PASS priorRT04/06 repairs"
+    },
+    {
+      "path": "/tmp/ts-e2e-ambiguous-recovery.log",
+      "result": "1/1PASS explicit unconfirmed-provider replay preserves occurrence"
+    }
+  ],
+  "remaining_local_review": "Complete against refreshed exact source manifest after final RT07 repair; comprehensive final postrepair Verification rerun remains builder responsibility.",
+  "local_code_assessment": "No open blocking code finding remains in the final reviewed local implementation, including reopened RT07. Production live acceptance remains blocked.",
+  "artifact_hashes": {
+    "/tmp/mika-independent-review/test/hub/red-team.test.ts": "888514722d8dc189e02916631f7db9406055ffd2ee787fb232f6581691a24f20",
+    "/tmp/mika-native-long-attack.mjs": "c28953dd732b72521bd8cb924ddba713c86541c23545bbc591c98daf7eb7a2c5",
+    "/tmp/ts-independent-final-tests.log": "7cfd77d868e4809f1792048ab7027cc95ae94d79719405c3d0cc2b43e012a969",
+    "/tmp/mika-independent-review/test/worker/native-reservation-red-team.test.ts": "c2a7376048665ebe27e6db9c5121b82ebba17296405d95c9c4e19d4b025f1a11",
+    "/tmp/ts-independent-post-rt07.log": "c090b9fd37798c5d76bebd79dfb3b693d92ec16bbe6c43989850b97ab97009c9"
+  }
+}

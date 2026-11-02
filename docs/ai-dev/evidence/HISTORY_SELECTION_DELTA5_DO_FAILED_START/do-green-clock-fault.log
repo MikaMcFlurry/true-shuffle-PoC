@@ -1,0 +1,29 @@
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                     Resource            Mode
+[WebServer] env.PROBE (ClockProbe)      Durable Object      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] X [ERROR] *** Fatal uncaught kj::Exception: workerd/util/sqlite.c++:645: failed: unable to open database file: SQLITE_CANTOPEN
+[WebServer] 
+[WebServer] 
+[WebServer] X [ERROR] stack: 7ff7704d8414 7ff7704d781f 7ff7704d6cf5 7ff76fec2e07 7ff76faecd48 7ff76faec678 7ff76fae68f1 7ff76fba1346 7ff76e543d06 7ff76fd56123 7ff76fd55cfb 7ff76e5418c5 7ff76fd03b91 7ff76fa93970 7ff76fa9746c 7ff76e541005 7ff76fd601bf 7ff76e54105b 7ff771e1450e 7ffffd99cd86 7ffffed0caeb
+[WebServer] 
+[WebServer] 
+[WebServer] 
+[WebServer] X [ERROR] The Workers runtime failed to start. There was likely a problem with the workerd binary or your configuration.
+[WebServer] 
+[WebServer]   Runtime stderr:
+[WebServer]   *** Fatal uncaught kj::Exception: workerd/util/sqlite.c++:645: failed: unable to open database file: SQLITE_CANTOPEN
+[WebServer]   stack: 7ff7704d8414 7ff7704d781f 7ff7704d6cf5 7ff76fec2e07 7ff76faecd48 7ff76faec678 7ff76fae68f1 7ff76fba1346 7ff76e543d06 7ff76fd56123 7ff76fd55cfb 7ff76e5418c5 7ff76fd03b91 7ff76fa93970 7ff76fa9746c 7ff76e541005 7ff76fd601bf 7ff76e54105b 7ff771e1450e 7ffffd99cd86 7ffffed0caeb
+[WebServer] 
+[WebServer] 
+[WebServer] If you think this is a bug then please create an issue at https://github.com/cloudflare/workers-sdk/issues/new/choose
+[WebServer] Note that there is a newer version of Wrangler available (4.150.0). Consider checking whether upgrading resolves this error.
+[WebServer] 🪵  Logs were written to "C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\r5\do\config\.wrangler\logs\wrangler-2026-10-13_17-57-35_333.log"
+Error: Process from config.webServer was not able to start. Exit code: 1
+
+
+green clock-fault exit=1

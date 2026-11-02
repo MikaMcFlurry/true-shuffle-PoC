@@ -1,0 +1,2724 @@
+{
+  "schema": "true-shuffle.independent-review-evidence.v1",
+  "reviewed_commit": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+  "independence": "FRESH",
+  "environment": "Isolated local copy; real HubCore + SQLite + FakeSpotify for backend; real Preact Chromium render with mocked API states for client. Local wrangler and fake-server on 127.0.0.1. No real provider requests or production writes.",
+  "baseline_usage": {
+    "simulated": true,
+    "noRealSpotifyRequests": true,
+    "sourceRevision": "2d96fb6890e070af7c141e9cb59b80c704709d82",
+    "profiles": [
+      {
+        "profile": "paused_closed",
+        "simulatedHours": 24,
+        "libraryTracks": 1200,
+        "onboardingRequests": 37,
+        "playingWindowRequests": 0,
+        "totalSpotifyRequests": 856,
+        "counts": {
+          "GET /v1/me/player": 724,
+          "GET /v1/me/player/recently-played": 47,
+          "POST /accounts/api/token": 24,
+          "GET /v1/me/playlists": 2,
+          "PUT /v1/playlists/:id/items": 1,
+          "POST /v1/playlists/:id/items": 2,
+          "GET /v1/artists/:id/albums": 16,
+          "GET /v1/albums/:id": 16,
+          "GET /v1/search": 20,
+          "GET /v1/artists/:id": 4
+        },
+        "pausedWindowSpotifyRequests": 856,
+        "linearScalingEstimate": {
+          "oneUser": 856,
+          "threeUsers": 2568,
+          "fiveUsers": 4280
+        },
+        "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+      },
+      {
+        "profile": "four_hours_visible_then_paused_closed",
+        "simulatedHours": 24,
+        "libraryTracks": 1200,
+        "onboardingRequests": 37,
+        "playingWindowRequests": 510,
+        "totalSpotifyRequests": 2015,
+        "counts": {
+          "GET /v1/me/player": 1645,
+          "GET /v1/me/player/recently-played": 201,
+          "GET /v1/me/tracks": 24,
+          "PUT /v1/playlists/:id/items": 21,
+          "POST /v1/playlists/:id/items": 42,
+          "POST /accounts/api/token": 24,
+          "GET /v1/me/playlists": 2,
+          "GET /v1/artists/:id/albums": 16,
+          "GET /v1/albums/:id": 16,
+          "GET /v1/search": 20,
+          "GET /v1/artists/:id": 4
+        },
+        "pausedWindowSpotifyRequests": 1505,
+        "linearScalingEstimate": {
+          "oneUser": 2015,
+          "threeUsers": 6045,
+          "fiveUsers": 10075
+        },
+        "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+      },
+      {
+        "profile": "four_hours_closed_then_paused_closed",
+        "simulatedHours": 24,
+        "libraryTracks": 1200,
+        "onboardingRequests": 37,
+        "playingWindowRequests": 243,
+        "totalSpotifyRequests": 1748,
+        "counts": {
+          "GET /v1/me/player": 1463,
+          "GET /v1/me/player/recently-played": 120,
+          "GET /v1/me/tracks": 20,
+          "PUT /v1/playlists/:id/items": 21,
+          "POST /v1/playlists/:id/items": 42,
+          "POST /accounts/api/token": 24,
+          "GET /v1/me/playlists": 2,
+          "GET /v1/artists/:id/albums": 16,
+          "GET /v1/albums/:id": 16,
+          "GET /v1/search": 20,
+          "GET /v1/artists/:id": 4
+        },
+        "pausedWindowSpotifyRequests": 1505,
+        "linearScalingEstimate": {
+          "oneUser": 1748,
+          "threeUsers": 5244,
+          "fiveUsers": 8740
+        },
+        "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+      }
+    ],
+    "historyFeed": {
+      "ordinaryHistoryPopulatedBySync": true,
+      "deviceQuotaStopsAllEndpointsForAuditedAccount": false,
+      "deviceQuotaKeepsPlayerHistoryAvailable": true,
+      "newHistoryRecordsDuringKnownCooldown": 10,
+      "elapsedMinutes": 30
+    }
+  },
+  "final_usage": {
+    "simulated": true,
+    "noRealSpotifyRequests": true,
+    "sourceRevision": "f5c8e0f36c6cc909e3329eeec77c3a1ef672d10d",
+    "profiles": [
+      {
+        "profile": "paused_closed",
+        "simulatedHours": 24,
+        "libraryTracks": 1200,
+        "onboardingRequests": 38,
+        "playingWindowRequests": 0,
+        "totalSpotifyRequests": 269,
+        "counts": {
+          "GET /v1/me/player": 137,
+          "GET /v1/me/player/recently-played": 48,
+          "POST /accounts/api/token": 23,
+          "GET /v1/me/playlists": 2,
+          "PUT /v1/playlists/:id/items": 1,
+          "POST /v1/playlists/:id/items": 2,
+          "GET /v1/artists/:id/albums": 16,
+          "GET /v1/albums/:id": 16,
+          "GET /v1/search": 20,
+          "GET /v1/artists/:id": 4
+        },
+        "pausedWindowSpotifyRequests": 269,
+        "linearScalingEstimate": {
+          "oneUser": 269,
+          "threeUsers": 807,
+          "fiveUsers": 1345
+        },
+        "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+      },
+      {
+        "profile": "four_hours_visible_then_paused_closed",
+        "simulatedHours": 24,
+        "libraryTracks": 1200,
+        "onboardingRequests": 38,
+        "playingWindowRequests": 567,
+        "totalSpotifyRequests": 810,
+        "counts": {
+          "GET /v1/me/player": 441,
+          "GET /v1/me/player/recently-played": 201,
+          "GET /v1/me/tracks": 23,
+          "PUT /v1/playlists/:id/items": 21,
+          "POST /v1/playlists/:id/items": 42,
+          "POST /accounts/api/token": 24,
+          "GET /v1/me/playlists": 2,
+          "GET /v1/artists/:id/albums": 16,
+          "GET /v1/albums/:id": 16,
+          "GET /v1/search": 20,
+          "GET /v1/artists/:id": 4
+        },
+        "pausedWindowSpotifyRequests": 243,
+        "linearScalingEstimate": {
+          "oneUser": 810,
+          "threeUsers": 2430,
+          "fiveUsers": 4050
+        },
+        "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+      },
+      {
+        "profile": "four_hours_closed_then_paused_closed",
+        "simulatedHours": 24,
+        "libraryTracks": 1200,
+        "onboardingRequests": 38,
+        "playingWindowRequests": 244,
+        "totalSpotifyRequests": 487,
+        "counts": {
+          "GET /v1/me/player": 201,
+          "GET /v1/me/player/recently-played": 121,
+          "GET /v1/me/tracks": 20,
+          "PUT /v1/playlists/:id/items": 21,
+          "POST /v1/playlists/:id/items": 42,
+          "POST /accounts/api/token": 24,
+          "GET /v1/me/playlists": 2,
+          "GET /v1/artists/:id/albums": 16,
+          "GET /v1/albums/:id": 16,
+          "GET /v1/search": 20,
+          "GET /v1/artists/:id": 4
+        },
+        "pausedWindowSpotifyRequests": 243,
+        "linearScalingEstimate": {
+          "oneUser": 487,
+          "threeUsers": 1461,
+          "fiveUsers": 2435
+        },
+        "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+      }
+    ],
+    "historyFeed": {
+      "ordinaryHistoryPopulatedBySync": true,
+      "deviceQuotaStopsAllEndpointsForAuditedAccount": false,
+      "deviceQuotaKeepsPlayerHistoryAvailable": true,
+      "newHistoryRecordsDuringKnownCooldown": 10,
+      "elapsedMinutes": 30
+    }
+  },
+  "final_15min_pressure": {
+    "simulated": true,
+    "cadenceSeconds": 15,
+    "settlementSeconds": 7200,
+    "results": {
+      "visible": {
+        "windowSeconds": 900,
+        "total": 40,
+        "spotify": 40,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 10,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "hidden": {
+        "windowSeconds": 900,
+        "total": 20,
+        "spotify": 20,
+        "counts": {
+          "GET /v1/me/player": 5,
+          "GET /v1/me/player/recently-played": 5,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "paused": {
+        "windowSeconds": 900,
+        "total": 15,
+        "spotify": 15,
+        "counts": {
+          "GET /v1/me/player": 15
+        }
+      },
+      "device": {
+        "windowSeconds": 900,
+        "total": 55,
+        "spotify": 55,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 10,
+          "GET /v1/me/tracks": 2,
+          "GET /v1/me/player/devices": 15,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "reload": {
+        "windowSeconds": 900,
+        "total": 40,
+        "spotify": 40,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 10,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      },
+      "multiple_tabs": {
+        "windowSeconds": 900,
+        "total": 40,
+        "spotify": 40,
+        "counts": {
+          "GET /v1/me/player": 20,
+          "GET /v1/me/player/recently-played": 10,
+          "GET /v1/me/tracks": 2,
+          "PUT /v1/playlists/:id/items": 4,
+          "POST /v1/playlists/:id/items": 4
+        }
+      }
+    }
+  },
+  "final_focused_unit": {
+    "passed": 129,
+    "failed": 0,
+    "skipped": 0,
+    "start_time_epoch_ms": 1790847231430,
+    "success": true,
+    "files": [
+      {
+        "name": "observation-policy.test.ts",
+        "assertions": [
+          {
+            "name": "observation deadlines makes initial and evicted-without-cache observations due immediately",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "observation deadlines does not slide a durable deadline during repeated maintenance wakes or restart",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "observation deadlines retains earlier absolute private, guest, guard and command deadlines",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "observation deadlines paces failed reads without advancing successful freshness or sliding the retry",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "observation deadlines also paces initial failures without fabricating a successful cached observation",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 0 ms at 30000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 299999 ms at 30000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 300000 ms at 120000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 1799999 ms at 120000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 1800000 ms at 300000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 10799999 ms at 300000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 10800000 ms at 900000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 129599999 ms at 900000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 129600000 ms at 1800000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation paces idle age 31536000000 ms at 1800000 ms",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation keeps a legacy recently-heard front protected even after a long pause",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "ordinary paused observation keeps history's independent idle ceiling at 30 minutes",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "foreground freshness uses two minutes for paused playback and 45 seconds for active playback",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "foreground freshness requests one second after the observed boundary without moving it on cache reads",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "foreground freshness keeps paused and unknown-progress observations out of boundary inference",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "foreground freshness allows a one-second minimum after a real successful read at an elapsed boundary",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "observation-scheduling.test.ts",
+        "assertions": [
+          {
+            "name": "durable provider observation scheduling keeps the first short watch after an explicit Play immediately pauses before any active look",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling reuses unchanged paused observations after eviction and during maintenance wakes",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling uses two-minute visible paused freshness and coalesces fresh reopen across tabs/restarts",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling records successful unchanged GETs durably without rewriting their progress timestamp",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling queues an explicit Sync through a fresh cache and saves the provider's paused checkpoint",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling checks one second after a provider track boundary without advancing a queue on a timer",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling paces real failed reads across eviction without advancing successful freshness",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling does not turn deferred history and its confirmed hold into a one-second player loop",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling retains real failure time when a matching unknown hold suppresses later observations",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling refreshes the occurrence before extension without letting history latency discard the fresh look (false, 0 ms)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling refreshes the occurrence before extension without letting history latency discard the fresh look (true, 0 ms)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling refreshes the occurrence before extension without letting history latency discard the fresh look (false, 2000 ms)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable provider observation scheduling refills with a fresh player during a confirmed history-only hold without clearing its intent",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "quota.test.ts",
+        "assertions": [
+          {
+            "name": "durable exact operation cooldown survives restart for matching operation while playback/history/catalog continue",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable exact operation cooldown unknown next invocation makes exactly one real attempt and then succeeds without invented deadline",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable exact operation cooldown deadline expiry permits actual same-operation retry and clears only after success",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable exact operation cooldown unknown background operation does not loop alarms; explicit same operation can recheck",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable exact operation cooldown unknown job is suspended without retries and resumes only after confirmed explicit success",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "migration admits jobs delayed by old local guard without changing genuine provider or normal schedules",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "recovery.test.ts",
+        "assertions": [
+          {
+            "name": "SQLite recovery NN-02\u201304 reopens a disk snapshot with the exact unfinished occurrence and progress",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "SQLite recovery NN-02\u201304 rolls back a failed additive migration before advancing its version",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "redteam-responsiveness.test.ts",
+        "assertions": [
+          {
+            "name": "red-team: a stale Next occurrence must not skip the freshly observed successor",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "red-team: applied pause followed by provider 500 is an ambiguous result",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "redteam-scheduler.test.ts",
+        "assertions": [
+          {
+            "name": "red-team: maintenance wakes and eviction cannot postpone a long-paused player deadline",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "red-team: failed player reads cannot update success freshness or cause rapid retries",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "redteam-token-next.test.ts",
+        "assertions": [
+          {
+            "name": "red-team: definitely unexecuted Next must release its intent after token refresh fails",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "request-pressure.test.ts",
+        "assertions": [
+          {
+            "name": "NN-09 finite request-pressure measurements records visible, hidden, paused, device, reload and three-tab windows",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "session.test.ts",
+        "assertions": [
+          {
+            "name": "acknowledges pause before observation, then durably saves the stopped position",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable listening session NN-02\u201307 resumes the same unfinished occurrence at 1:37 after restart, including backwards seek",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable listening session NN-02\u201307 does not replace a paused queue on days of alarms or when listening history accounts 30 seconds",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable listening session NN-02\u201307 explicit new queue is separate and stale tabs cannot replace its session",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable listening session NN-02\u201307 unknown checkpoint repeats the same song; unrelated Spotify playback remains untouched",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "durable listening session NN-02\u201307 migrates legacy deck and retains imported history without inventing progress",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "appends rolling rounds while preserving current occurrence and restart position",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "retains the saved queue after a definite preflight failure across restart",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "recovers a partially written new queue idempotently after Worker restart",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "preserves large imported history, preferences and bans through additive migration",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "bounds rolling storage after more than 10000 ordered occurrences without changing the unfinished entry",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "fences duplicated stale skip commands and leaves unrelated music outside held queue accounting",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "keeps repeated-track occurrences ambiguous without a trustworthy provider offset",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "acknowledges Spotify-side Play after a definitely failed no-device resume (RT-02)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "reconciles an ambiguous submitted resume only from fresh own-occurrence playback",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "reserves native rolling tails durably without any Spotify request during provider cooldown",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "fences reordered native status events and retains unknown-position transitions",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "accounts native observed listening independently of queue completion and never sends Spotify dislike commands",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "bounds native storage over 10000 transport-appended occurrences without touching Spotify",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "creates a native queue only through the explicit action, preserving history without Spotify calls",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "releases a definitely rejected premium resume for retry of the same checkpoint",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "releases a definitely rejected no_device resume for retry of the same checkpoint",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "resumes the native held checkpoint when switching to an independently playing Spotify context (RT-06)",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "skips-truth.test.ts",
+        "assertions": [
+          {
+            "name": "early skips against ground truth normal listening: finds the real skips and invents none",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "early skips against ground truth car stop (the player holds the paused playlist while it is rewritten), then skips",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "early skips against ground truth long stop with no player visible, nobody skips: nothing booked (later_less)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "early skips against ground truth long stop with no player visible, nobody skips: nothing booked (ban)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "early skips after a car stop, whatever Spotify does on resume never books a song that was not skipped early (later_less)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "early skips after a car stop, whatever Spotify does on resume never books a song that was not skipped early (consume)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "early skips after a car stop, whatever Spotify does on resume never books a song that was not skipped early (ban)",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "transport.test.ts",
+        "assertions": [
+          {
+            "name": "provider acknowledgement and checkpoint integrity rejects a stale Next when its fresh preflight discovers a naturally advanced occurrence",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity revalidates the expected session after Spotify-side playback switches to another saved queue",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity does not skip a fenced occurrence when the fresh player observation fails",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity reports an applied pause with a lost server response as uncertain and observes it durably",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity reports an applied pause with a lost network response as uncertain and observes it durably",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity reports an actual 404 NO_ACTIVE_DEVICE pause rejection as definite",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity reports an actual 403 RESTRICTION_VIOLATED pause rejection as definite",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity reports an actual 429 QUOTA_EXCEEDED pause rejection as definite",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity reports an applied resume with a lost response as uncertain and reconciles without another write",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity reports an applied next with a lost response as uncertain and reconciles without another write",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity keeps a refresh network failure before pause distinct from an uncertain player write",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity releases a rejected next intent when its automatic 401 refresh fails and permits the same occurrence retry",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity releases a rejected resume intent when its automatic 401 refresh fails and permits the same occurrence retry",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity resumes through one fresh player read and one play write while observing a paused backwards seek",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity never acknowledges stale playing snapshots after the fresh player request fails",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity sets unknown repeat mode before starting without repeating a known shuffle setting",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity fences a player response captured before pause from overwriting its checkpoint or snapshot",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity keeps next as an intent until an actual observation identifies the next occurrence",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity retains checkpoint and releases a definitely rejected next for a later retry",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "provider acknowledgement and checkpoint integrity retains deferred history work through an independent actual history 429",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "bounded Spotify Connect target selection honors an explicit target absent from device discovery without switching to another device",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "bounded Spotify Connect target selection automatically uses the freshly observed iPhone even when discovery would return an empty list",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "bounded Spotify Connect target selection reuses device discovery for 60 seconds across restart and then refreshes it",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "bounded Spotify Connect target selection refreshes once after an actual stale auto-target rejection and tries a different discovered target",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "bounded Spotify Connect target selection never repeats an auto transport write after an actual 429 response",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "bounded Spotify Connect target selection never repeats an auto transport write after an actual 500 response",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "returns the current occurrence and 50 queued songs from durable order without Spotify traffic",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "usage-audit.test.ts",
+        "assertions": [
+          {
+            "name": "audits full-day Spotify pressure and continued history during a device-only quota",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "client.test.ts",
+        "assertions": [
+          {
+            "name": "NN-09 centralized provider gate records ordinary success without a redundant shared recovery write",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate still clears a genuinely expired confirmed hold through revision-fenced recovery",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate keeps long Retry-After only for the confirmed operation after recreation",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate keeps missing/invalid reset unknown (undefined)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate keeps missing/invalid reset unknown (invalid secret)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate preserves HTTP date reset and permits requests only after deadline",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate does not refresh an expired token during cooldown",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate token endpoint quota establishes the same durable gate",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate identifies quota from reason independently of message and masks resource IDs",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate retains a later durable deadline for concurrent responses",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate normalizes HTTP method once for transport, cooldown key, retry policy and metrics",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate request-local success fence cannot clear newer429 after another guard updates",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate reports transport start separately from delayed response for recovery ordering",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate bounds a hanging player command with abort and never blindly retries the write",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate does not blindly retry a player write after ambiguous server failure",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate authorization exchange obeys deployment gate before sending a code",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 centralized provider gate refuses absolute paging URLs on other origins without leaking bearer tokens",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "Retry-After parsing accepts seconds and dates without a guessed fallback",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      },
+      {
+        "name": "gate.test.ts",
+        "assertions": [
+          {
+            "name": "NN-09 deployment-wide provider gate confirmed operation survives same-user eviction without blocking untested other user",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 deployment-wide provider gate successful expired operation reset is revision fenced",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 deployment-wide provider gate enforces known deadline across accounts without early manual retry",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 deployment-wide provider gate one explicit unknown probe is exclusive and stale success cannot clear newer quota",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "NN-09 deployment-wide provider gate probe failure retains gate and explicit recovery after lease expiry fences old operation",
+            "status": "passed",
+            "failureMessages": []
+          }
+        ]
+      }
+    ]
+  },
+  "final_guard_history": {
+    "passed": 11,
+    "failed": 0,
+    "skipped": 106,
+    "start_time_epoch_ms": 1790847274518,
+    "success": true,
+    "files": [
+      {
+        "name": "robustness.test.ts",
+        "assertions": [
+          {
+            "name": "car stop: the deck is rewritten while the player is paused in it (RT-1) books nothing for a song that never played (later_less)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "car stop: the deck is rewritten while the player is paused in it (RT-1) books nothing for a song that never played (ban)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "car stop: the deck is rewritten while the player is paused in it (RT-1) books nothing for a song that never played (consume)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "car stop: the deck is rewritten while the player is paused in it (RT-1) never books a skip when nobody skipped, whatever order Spotify resumes in (650 songs)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "car stop: the deck is rewritten while the player is paused in it (RT-1) never books a skip when nobody skipped, whatever order Spotify resumes in (700 songs)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "car stop: the deck is rewritten while the player is paused in it (RT-1) never books a skip when nobody skipped, whatever order Spotify resumes in (750 songs)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "car stop: the deck is rewritten while the player is paused in it (RT-1) still books a real early skip after a car stop",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a source playlist deleted in Spotify (RT-3) plays on without it, says so, and does not keep polling",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a source playlist deleted in Spotify (RT-3) takes the playlist back when the listener follows it again",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a big playlist collection read over several invocations (RT-5) keeps every playlist read in an earlier invocation",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "plays that reach recently-played late (RT-2) counts offline listening that shows up after newer plays, exactly once",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a rewrite continues what a player may still have loaded a mix changed in the app applies at the next start from the app",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a skip booked before its play showed up is taken back exactly once when the play arrives late",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the station limit refuses more stations than the free plan's budget allows, before creating any",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the consume rule with Spotify's list lagging behind (NF-6) ends a round only when every song was heard or used up once",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "Spotify showing no player for a moment (NF-9) does not rewrite the deck under someone listening",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a song turned down that a player still has queued is moved past as soon as it comes up in a station",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a small station after a car stop (NN-03/04) retains the unfinished entry and every ordered song ahead (60 songs)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a small station after a car stop (NN-03/04) retains the unfinished entry and every ordered song ahead (100 songs)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a small station after a car stop (NN-03/04) retains the unfinished entry and every ordered song ahead (200 songs)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "a small station after a car stop (NN-03/04) retains the unfinished entry and every ordered song ahead (300 songs)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "skip rules the hub sees with the app closed (red-team 4) a thumb up lifts a ban the skip rule set",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "skip rules the hub sees with the app closed (red-team 4) under consume, only a skip seen playing uses the song up",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "songs a player brings back on its own (red-team 5) skips a song turned down while the player held the station (30 min pause)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "songs a player brings back on its own (red-team 5) skips a song turned down while the player held the station (480 min pause)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "songs a player brings back on its own (red-team 5) skips a turned-down song every time it comes up, not only the first",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the listener's own choices and long stops (red-team 6) leaves a song the listener queues alone, even one heard today",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the listener's own choices and long stops (red-team 6) leaves a song the listener queues alone, even one heard today (guest mode)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the listener's own choices and long stops (red-team 6) still skips a turned-down song an old order brings back after 13 h",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the listener's own choices and long stops (red-team 6) still skips a turned-down song an old order brings back after 20 h",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the listener's own choices and long stops (red-team 6) without Spotify access the hub looks only a few times an hour",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the seventh review's cases a guest's early skip shortly before guest mode ends stays out of memory",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighth review's cases a guest's skip 30 s before guest mode ends stays the guest's",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighth review's cases a guest's skip 150 s before guest mode ends stays the guest's",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighth review's cases a song turned down during a 40-h hold is caught after a skip by hand onto it",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighth review's cases in \"Alles\", never played before, a song the listener queues plays",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the ninth review's cases a guest's skip stays the guest's when the owner switches guest mode off and taps the station",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the ninth review's cases a turned-down song is skipped after a weekend with the phone out of sight",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the tenth look: older orders and the edges of guest time a song still playing when guest mode goes off: the guest's unless the owner hears 30 s of it (skips it)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the tenth look: older orders and the edges of guest time a song still playing when guest mode goes off: the guest's unless the owner hears 30 s of it (hears it on)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the tenth look: older orders and the edges of guest time a song that ended just as guest mode came on stays the owner's",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the tenth review's cases the owner's short plays right after guest mode goes off count",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the tenth review's cases after guest mode ran out on its own, the song running then is the guest's, the next ones count",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the tenth review's cases a guest's play of a song the owner skipped leaves the skip and the ban",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eleventh review's cases a guest who skips just before guest mode goes off: the song then playing stays the guest's when the owner leaves it",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eleventh review's cases a guest's play of a song the owner left minutes before leaves the owner's skip and ban",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twelfth review's cases a song from further down the station, queued, books no skip for the songs in between",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twelfth review's cases a guest who skips just after the last look: the next song stays the guest's when the owner leaves it",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the thirteenth review's cases guest mode off after a look at a paused player: the owner's next song counts",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the fourteenth review's cases two songs from further up, queued in order, book no skip for the songs between them",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the fourteenth review's cases skips that end right as the song seen last would have: still booked",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the fourteenth review's cases the play of the song before shows up late, after a stop: the skips booked meanwhile go",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the fourteenth review's cases a song queued from a few places ahead, then the listener stops: no skip for the songs between",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the fifteenth review's cases a private session in Spotify books no skip, not even a ban",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the sixteenth review's cases a skip never booked (guest) takes no earlier skip back when the song plays later",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the sixteenth review's cases a skip never booked (private) takes no earlier skip back when the song plays later",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the sixteenth review's cases a private session: what true-shuffle saw heard counts, once",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the sixteenth review's cases a private session Spotify lists after all: what true-shuffle saw heard counts, once",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the seventeenth review's cases a private session in a playlist of one's own: every song heard is counted",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the seventeenth review's cases a private session in a playlist of one's own, paused and resumed: what plays after counts",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the seventeenth review's cases a private session: a song left before 30 s is not counted, even after a pause",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the seventeenth review's cases a private session that ends while a song heard past 30 s is paused: it still counts",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the seventeenth review's cases a play arriving late takes back the skip it proves wrong, not the latest one",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighteenth review's cases a moment without a player does not end a private session",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighteenth review's cases a private session begun hours after the last one is seen within minutes",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighteenth review's cases a song paused after a minute does not come back when the station starts again",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighteenth review's cases a song paused after a minute in a private session does not come back when the station starts again",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighteenth review's cases a private play paused for ten minutes counts once",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighteenth review's cases a private play paused for ten minutes counts once (Spotify lists it)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the eighteenth review's cases a private session: a song seeked far and left after 20 s is not counted",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the nineteenth review's cases a station tapped again in the app: the song shown is not replayed, and never booked as a skip",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the nineteenth review's cases a start that fails leaves the song playing on untouched",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the nineteenth review's cases the guest's paused song stays out of memory when the owner starts a station later",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the nineteenth review's cases a song tapped at place 1 in Spotify, then the station started from the app: it does not come back",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the nineteenth review's cases a song tapped at place 26 in Spotify, then the station started from the app: it does not come back",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the nineteenth review's cases a private song paused for hours and heard to its end is stamped at its end",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the nineteenth review's cases a private session whose player vanishes ends after six hours: no warning, no fast looks after a week",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twentieth review's cases a song a start from the app replaced counts once and stays away",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twentieth review's cases a song a start from the app replaced counts once and stays away (Spotify lists it)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twentieth review's cases the guest's paused song stays the guest's, also when Spotify lists it at the owner's start (hand)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twentieth review's cases the guest's paused song stays the guest's, also when Spotify lists it at the owner's start (timer)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twentieth review's cases the guest's paused song, resumed by the owner after the guest time, counts",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twentieth review's cases a private song paused with seconds left is stamped when it really ended",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twentieth review's cases a private player left paused in sight ends after six hours",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-first review's cases only the one play across the end of guest time is the guest's (hand)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-first review's cases only the one play across the end of guest time is the guest's (timer)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-first review's cases two starts within minutes: both replaced songs count once",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-first review's cases two starts within minutes: both replaced songs count once (Spotify lists them)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-first review's cases once Spotify is known to list replaced songs, a song sought past 30 s is not counted",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-first review's cases once Spotify is known to list replaced songs, a song sought past 30 s is not counted (paused)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-first review's cases guest time and the two days after it write the guest record only when it changes",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases a song heard a minute and replaced by a start in Spotify (the same playlist) counts once",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases a song heard a minute and replaced by a start in Spotify (another playlist) counts once",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases a song heard a minute and replaced by a start in Spotify (the same playlist) counts once (Spotify lists it)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases a song heard a minute and replaced by a start in Spotify (another playlist) counts once (Spotify lists it)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases the guest's play across the end leaves the owner's earlier skip and ban",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases a seek after guest time does not hand the guest's play to the owner (hand)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases a seek after guest time does not hand the guest's play to the owner (timer)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases a second guest time closes the first one's last play",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases a late listing of the song's play before does not make Spotify's word decide",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases outside a station, the play across the end heard to its end counts for the owner (hand)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-second review's cases outside a station, the play across the end heard to its end counts for the owner (timer)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-third review's cases the guest's song paused out of sight and left by the owner the next day stays the guest's (app)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-third review's cases the guest's song paused out of sight and left by the owner the next day stays the guest's (spotify)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-third review's cases a song seen playing a minute, paused, then out of sight counts when a start replaces it (app)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-third review's cases a song seen playing a minute, paused, then out of sight counts when a start replaces it (spotify)",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-third review's cases a guest's song no look saw, paused across the end, stays the guest's (start)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-third review's cases a guest's song no look saw, paused across the end, stays the guest's (resume-skip)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "hearts set in Spotify a heart set in Spotify (CarPlay, a watch) makes a favourite within minutes",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "hearts set in Spotify an old heart Spotify greys out is no new heart, not even after a full import",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "hearts set in Spotify a heart seen while the full import runs survives its end",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-fourth review's cases RT24-01: the guest's song paused across the end and resumed by the owner stays the guest's",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-fourth review's cases RT24-01: listings wait for a look that shows a song (a podcast after guest time)",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-fourth review's cases RT24-02: a song played again after it ran out is a second play",
+            "status": "passed",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-sixth review's cases RT26-01: listings held after a guest time are kept, none falls out of Spotify's last 50",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-sixth review's cases RT28-02: plays lost during a guest hold (more than 50 between two reads) are logged",
+            "status": "skipped",
+            "failureMessages": []
+          },
+          {
+            "name": "the twenty-sixth review's cases RT26-04: the guest's song resumed by the owner and heard to its end counts for the owner",
+            "status": "skipped",
+            "failureMessages": []
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer_probe_sources": {
+    "test/hub/redteam-responsiveness.test.ts": {
+      "sha256": "a8d8ddfc33e51dd2a9b25a736734b7e050f098d858ff2e5d8167ef6d3f1b6089",
+      "source": "import { expect, it } from \"vitest\";\nimport { RequestBudget } from \"../../src/worker/spotify/client\";\nimport { onboarded } from \"./harness\";\n\nit(\"red-team: a stale Next occurrence must not skip the freshly observed successor\", async () => {\n  const h = await onboarded({ tracks: 60 });\n  const id = h.stationIds[0]!;\n  await h.hub.play(id);\n  await h.hub.sync(new RequestBudget(25), { force: true });\n  const before = h.hub.savedSession(id)!;\n  const expected = { sessionId: before.sessionId, entryId: before.entryIds[before.currentIndex] };\n  const player = h.fake.user().player;\n  h.fake.advance(h.fake.tracks.get(player.order[player.index]!)!.durationMs + 1000);\n  const calls = h.fake.calls.length;\n  const result = await h.hub.playerAction(\"next\", expected);\n  console.log(JSON.stringify({ expected, result, before: before.currentIndex, actualPosition: player.index, calls: h.fake.calls.slice(calls) }));\n  expect(result.ok).toBe(false);\n  expect(h.fake.calls.slice(calls)).not.toContain(\"POST /v1/me/player/next\");\n});\n\nit(\"red-team: applied pause followed by provider 500 is an ambiguous result\", async () => {\n  const h = await onboarded({ tracks: 60 });\n  const id = h.stationIds[0]!;\n  await h.hub.play(id);\n  await h.hub.sync(new RequestBudget(25), { force: true });\n  const handle = h.fake.handle.bind(h.fake);\n  h.fake.handle = async (req) => {\n    const response = await handle(req);\n    if (req.method === \"PUT\" && new URL(req.url).pathname === \"/v1/me/player/pause\")\n      return Response.json({ error: { status: 500, message: \"response interrupted\" } }, { status: 500 });\n    return response;\n  };\n  const result = await h.hub.playerAction(\"pause\");\n  console.log(JSON.stringify({ result, actualPlaying: h.fake.user().player.isPlaying, sessionStatus: h.hub.savedSession(id)?.status }));\n  expect(result).toMatchObject({ ok: false, uncertain: true, error: { code: \"unknown\" } });\n  expect(h.fake.user().player.isPlaying).toBe(false);\n});\n"
+    },
+    "test/hub/redteam-token-next.test.ts": {
+      "sha256": "b1993cb4fb8b6cd095039323fba6eb3f69f4b04e6437308ed7d5abc15ca923b8",
+      "source": "import { expect, it } from \"vitest\";\nimport { onboarded } from \"./harness\";\nimport { RequestBudget } from \"../../src/worker/spotify/client\";\n\nit(\"red-team: definitely unexecuted Next must release its intent after token refresh fails\", async () => {\n  const h = await onboarded({ tracks: 60 });\n  const id = h.stationIds[0]!;\n  await h.hub.play(id);\n  await h.hub.sync(new RequestBudget(25), { force: true });\n  const before = h.hub.savedSession(id)!;\n  const handle = h.fake.handle.bind(h.fake);\n  let rejectedWrites = 0;\n  h.fake.handle = async req => {\n    const path = new URL(req.url).pathname;\n    if (path === \"/accounts/api/token\") throw new Error(\"token refresh unavailable\");\n    if (path === \"/v1/me/player/next\") {\n      rejectedWrites++;\n      return Response.json({error: {status: 401, message: \"expired access token\"}}, {status: 401});\n    }\n    return handle(req);\n  };\n  const result = await h.hub.playerAction(\"next\", {sessionId: before.sessionId, entryId: before.entryIds[before.currentIndex]});\n  console.log(JSON.stringify({result, rejectedWrites, pending: h.hub.savedSession(id)?.pending}));\n  expect(result.uncertain).toBeUndefined();\n  expect(rejectedWrites).toBe(1);\n  expect(h.hub.savedSession(id)?.pending).toBeNull();\n});\n"
+    },
+    "test/hub/redteam-scheduler.test.ts": {
+      "sha256": "9a01e61eead2ecf9aacfb5dd74bd50ba01d440ca0934d722a5c24266f83ed75a",
+      "source": "import { expect, it } from \"vitest\";\nimport { RequestBudget } from \"../../src/worker/spotify/client\";\nimport { onboarded } from \"./harness\";\n\nconst kv = (h: Awaited<ReturnType<typeof onboarded>>, key: string) => {\n  const row = h.sql.first<{ v: string }>(\"SELECT v FROM kv WHERE k = ?\", key);\n  return row ? JSON.parse(row.v) : null;\n};\n\nit(\"red-team: maintenance wakes and eviction cannot postpone a long-paused player deadline\", async () => {\n  const h = await onboarded({ tracks: 60 });\n  const id = h.stationIds[0]!;\n  await h.hub.play(id);\n  h.fake.user().player.progressMs = 97000;\n  await h.hub.sync(new RequestBudget(25), { force: true });\n  await h.hub.playerAction(\"pause\");\n  await h.listen(4 * 60 * 60 * 1000);\n  await h.hub.sync(new RequestBudget(25), { force: true });\n  const before = h.hub.savedSession(id)!;\n  const start = h.fake.calls.length;\n  const checkedAt = kv(h, \"player_checked_at\");\n  for (let tick = 1; tick < 60; tick++) {\n    h.clock.t += 15000;\n    if (tick === 30) h.restart();\n    await h.hub.alarm();\n  }\n  expect(h.fake.calls.slice(start).filter(c => c === \"GET /v1/me/player\")).toHaveLength(0);\n  expect(kv(h, \"player_checked_at\")).toBe(checkedAt);\n  h.clock.t += 15000;\n  await h.hub.alarm();\n  expect(h.fake.calls.slice(start).filter(c => c === \"GET /v1/me/player\")).toHaveLength(1);\n  expect(h.hub.savedSession(id)).toMatchObject({ sessionId: before.sessionId, currentIndex: before.currentIndex, entryIds: before.entryIds, progressMs: before.progressMs });\n});\n\nit(\"red-team: failed player reads cannot update success freshness or cause rapid retries\", async () => {\n  const h = await onboarded({ tracks: 60 });\n  await h.hub.play(h.stationIds[0]!);\n  await h.hub.playerAction(\"pause\");\n  await h.listen(1000);\n  const checkedAt = kv(h, \"player_checked_at\");\n  const handle = h.fake.handle.bind(h.fake);\n  let attempts = 0;\n  h.fake.handle = async req => {\n    if (req.method === \"GET\" && new URL(req.url).pathname === \"/v1/me/player\") {\n      attempts++;\n      return Response.json({ error: { status: 500, message: \"unavailable\" } }, { status: 500 });\n    }\n    return handle(req);\n  };\n  h.clock.t += 6000;\n  await h.hub.sync(new RequestBudget(25), { force: true });\n  for (let second = 0; second < 14; second++) {\n    h.clock.t += 1000;\n    if (second === 7) h.restart();\n    await h.hub.state({ live: true, refresh: true });\n    await h.hub.alarm();\n  }\n  expect(attempts).toBe(2); // The existing read transport has one bounded retry.\n  expect(kv(h, \"player_checked_at\")).toBe(checkedAt);\n  h.clock.t += 1000;\n  await h.hub.alarm();\n  expect(attempts).toBe(4);\n  expect(kv(h, \"player_checked_at\")).toBe(checkedAt);\n});\n"
+    },
+    "e2e/redteam-responsiveness.spec.ts": {
+      "sha256": "8be01090701cb08fccd75c0b62f5ffefa1ab788132b88f4babc2a01d46790154",
+      "source": "/** Rendered client races use intercepted API snapshots; no provider or history writes. */\nimport { expect, type Page, type Route, test } from \"@playwright/test\";\nimport { DEFAULT_RULES } from \"../src/core/types\";\nimport type { AppState, DeviceView } from \"../src/shared/api\";\n\ntest.use({ viewport: { width: 390, height: 844 } });\n\nconst TIME = Date.UTC(2026, 9, 1, 12);\nconst tracks = [\"Erster Song\", \"Zweiter Song\", \"Dritter Song\"].map((name, index) => ({\n\tid: `track-${index}`,\n\tname,\n\tartists: \"Test Artist\",\n\talbum: \"Test Album\",\n\timageUrl: null,\n\tdurationMs: 60_000,\n\tthumb: 0 as const,\n}));\nfunction snapshot(playing = true): AppState {\n\treturn {\n\t\tprofile: { id: \"listener-a\", name: \"Test Listener\", imageUrl: null },\n\t\tonboarded: true,\n\t\tstations: [\n\t\t\t{\n\t\t\t\tid: 1,\n\t\t\t\tname: \"Test Sender\",\n\t\t\t\tkind: \"all\",\n\t\t\t\tsources: [],\n\t\t\t\trules: DEFAULT_RULES,\n\t\t\t\troundNo: 1,\n\t\t\t\tpoolSize: 3,\n\t\t\t\tfreshRemaining: 3,\n\t\t\t\tprogress: 0,\n\t\t\t\tplaylistId: null,\n\t\t\t\tready: true,\n\t\t\t\timporting: false,\n\t\t\t\tlastPlayedAt: TIME,\n\t\t\t\tplaying,\n\t\t\t\timageUrl: null,\n\t\t\t},\n\t\t],\n\t\tsession: {\n\t\t\tsessionId: \"session-a\",\n\t\t\tstationId: 1,\n\t\t\tentryId: \"entry-0\",\n\t\t\torderRevision: 1,\n\t\t\tprogressMs: 12_000,\n\t\t\tobservedAt: TIME,\n\t\t\tstatus: playing ? \"active\" : \"paused\",\n\t\t\tpending: false,\n\t\t\tqueue: tracks.map((track, index) => ({ entryId: `entry-${index}`, track })),\n\t\t},\n\t\tnowPlaying: {\n\t\t\t...tracks[0]!,\n\t\t\tisPlaying: playing,\n\t\t\tprogressMs: 12_000,\n\t\t\tstationId: 1,\n\t\t\tkind: \"fresh\",\n\t\t\tdeviceName: \"Test iPhone\",\n\t\t\torderBroken: false,\n\t\t\tsmartShuffle: false,\n\t\t\tobservedAt: TIME,\n\t\t},\n\t\tguest: { active: false, until: null },\n\t\twarnings: [],\n\t\tjobs: [],\n\t\thistory: { importedTracks: 0, importedAt: null, liveSince: TIME },\n\t\taiSource: \"off\",\n\t\tserverTime: TIME,\n\t};\n}\nfunction deferred() {\n\tlet release = () => {};\n\tconst promise = new Promise<void>((resolve) => {\n\t\trelease = resolve;\n\t});\n\treturn { promise, release };\n}\nasync function setup(page: Page, initial = snapshot()) {\n\tconst model = {\n\t\tstate: initial,\n\t\tstateCalls: 0,\n\t\tstateQueries: [] as string[],\n\t\trequests: [] as string[],\n\t\tdevices: [\n\t\t\t{ id: \"iphone\", name: \"Test iPhone\", active: true, restricted: false, type: \"Smartphone\" },\n\t\t] as DeviceView[],\n\t\tstateHandler: null as ((route: Route) => Promise<void>) | null,\n\t};\n\tawait page.clock.install({ time: TIME });\n\tawait page.clock.setFixedTime(TIME);\n\tawait page.route(\"**/api/**\", async (route) => {\n\t\tconst path = new URL(route.request().url()).pathname;\n\t\tmodel.requests.push(path);\n\t\tif (path === \"/api/state\") {\n\t\t\tmodel.stateCalls++;\n\t\t\tmodel.stateQueries.push(new URL(route.request().url()).search);\n\t\t\tif (model.stateHandler) return model.stateHandler(route);\n\t\t\treturn route.fulfill({ json: model.state });\n\t\t}\n\t\tif (path === \"/api/devices\") return route.fulfill({ json: model.devices });\n\t\tif (path === \"/api/native/devices\")\n\t\t\treturn route.fulfill({ json: { configured: false, devices: [] } });\n\t\treturn route.fulfill({\n\t\t\tstatus: 500,\n\t\t\tjson: { error: { code: \"unexpected\", message: `Unexpected ${path}` } },\n\t\t});\n\t});\n\tawait page.goto(\"/\");\n\tawait expect(page.locator(\".now-copy h2\")).toHaveText(\"Erster Song\");\n\tawait expect(\n\t\tpage.locator(\".device-select select option\", { hasText: \"Test iPhone\" }),\n\t).toHaveCount(1);\n\texpect(\n\t\tawait page.evaluate(() => document.documentElement.scrollWidth - innerWidth),\n\t).toBeLessThanOrEqual(0);\n\treturn model;\n}\nasync function advance(page: Page, milliseconds: number) {\n\tconst now = await page.evaluate(() => Date.now());\n\tawait page.clock.setFixedTime(now + milliseconds);\n\tawait page.clock.runFor(milliseconds);\n}\nasync function refresh(page: Page) {\n\tconst response = page.waitForResponse((r) => new URL(r.url()).pathname === \"/api/state\");\n\tawait page.evaluate(() => window.dispatchEvent(new Event(\"focus\")));\n\tawait response;\n}\nfunction observe(\n\tmodel: { state: AppState },\n\tpatch: Partial<NonNullable<AppState[\"session\"]>>,\n\tat: number,\n) {\n\tObject.assign(model.state.session!, patch, { observedAt: at });\n\tmodel.state.serverTime = at;\n\tif (model.state.nowPlaying)\n\t\tObject.assign(model.state.nowPlaying, {\n\t\t\tobservedAt: at,\n\t\t\tprogressMs: patch.progressMs ?? model.state.nowPlaying.progressMs,\n\t\t});\n}\n\ntest(\"red-team: ambiguous provider write must remain unconfirmed\", async ({ page }) => {\n  await setup(page);\n  await page.route(\"**/api/player/pause\", async route => route.fulfill({ json: { ok: false, uncertain: true, error: { code: \"unknown\", message: \"Spotify meldet: Spotify-Fehler 500\" } } }));\n  await page.getByRole(\"button\", { name: \"Pause\", exact: true }).click();\n  await expect(page.locator(\".session-status\")).toHaveText(\"Best\u00e4tigung steht aus\");\n});\n\ntest(\"red-team: repeated cached snapshots cannot restart the projection age\", async ({ page }) => {\n  const initial = snapshot();\n  initial.session!.progressMs = 59000;\n  initial.nowPlaying!.progressMs = 59000;\n  const model = await setup(page, initial);\n  await advance(page, 2000);\n  await expect(page.locator(\".now-copy h2\")).toHaveText(\"Zweiter Song\");\n  for (let i = 1; i <= 9; i++) {\n    await advance(page, 15000);\n    model.state.serverTime = TIME + 2000 + i * 15000;\n    await refresh(page);\n  }\n  await expect(page.locator(\".now-copy h2\")).toHaveText(\"Erster Song\");\n  await expect(page.locator(\".session-status\")).toHaveText(\"Ger\u00e4tebest\u00e4tigung steht aus\");\n  await expect(page.getByRole(\"button\", { name: \"Weiter: N\u00e4chster Song\" })).toBeDisabled();\n});\n\ntest(\"red-team: an accepted pause cannot be confirmed by a newer envelope with an old observation\", async ({ page }) => {\n  const model = await setup(page);\n  await page.route(\"**/api/player/pause\", async route => route.fulfill({ json: { ok: true, acceptedAt: TIME + 1000 } }));\n  await page.getByRole(\"button\", { name: \"Pause\", exact: true }).click();\n  model.state.serverTime = TIME + 2000;\n  model.state.session!.status = \"paused\";\n  model.state.nowPlaying!.isPlaying = false;\n  await refresh(page);\n  await expect(page.getByText(\"Befehl angenommen.\", { exact: false })).toBeVisible();\n  await expect(page.locator(\".session-status\")).not.toHaveText(\"Pausiert\");\n});\n\n test(\"red-team: another tab must not report acknowledged pause as device-confirmed\", async ({ page }) => {\n const initial = snapshot();\n initial.session!.status = \"paused\";\n await setup(page, initial);\n await expect(page.locator(\".session-status\")).toHaveText(\"Ger\u00e4tebest\u00e4tigung steht aus\");\n });\n\ntest(\"red-team: a vanished device after accepted pause retains a manual saved resume\", async ({ page }) => {\n const model = await setup(page);\n await page.route(\"**/api/player/pause\", async route => route.fulfill({ json: { ok: true, acceptedAt: TIME + 1000 } }));\n await page.getByRole(\"button\", { name: \"Pause\", exact: true }).click();\n model.state.serverTime = TIME + 2000;\n model.state.session!.status = \"disconnected\";\n model.state.nowPlaying = null;\n await refresh(page);\n await advance(page, 21000);\n await expect(page.locator(\".session-status\")).toHaveText(\"Best\u00e4tigung steht aus\");\n await expect.soft(page.getByLabel(\"Wiedergabeger\u00e4t\", { exact: true })).toBeEnabled({ timeout: 1000 });\n const recover = page.getByRole(\"button\", { name: /Gespeicherten Song.*fortsetzen/ });\n await expect.soft(recover).toBeVisible({ timeout: 1000 });\n let sent: unknown;\n await page.route(\"**/api/stations/1/play\", async route => {\n   sent = route.request().postDataJSON();\n   await route.fulfill({ json: { ok: true, acceptedAt: TIME + 23000 } });\n });\n await page.getByLabel(\"Wiedergabeger\u00e4t\", { exact: true }).selectOption(\"iphone\");\n await recover.click();\n await expect.poll(() => sent).toEqual({ deviceId: \"iphone\", newQueue: false, sessionId: \"session-a\" });\n});\n\ntest(\"red-team: confirmed native pause is independent of cached Spotify playback\", async ({ page }) => {\n const initial = snapshot(false);\n initial.nowPlaying!.isPlaying = true;\n initial.session!.controller = {kind: \"home-assistant\", deviceId: \"living-room\", deviceName: \"Wohnzimmer\"};\n await setup(page, initial);\n await expect(page.locator(\".session-status\")).toHaveText(\"Pausiert\");\n});\n\n\ntest(\"red-team: accepted start retains bounded confirmation reads after station navigation\", async ({ page }) => {\n  const model = await setup(page, snapshot(false));\n  const detail = { ...model.state.stations[0], upcoming: [], recent: [], counts: null, discoveries: { pending: 0, kept: 0, rejected: 0 } };\n  await page.route(\"**/api/stations/1\", route => route.fulfill({ json: detail }));\n  await page.route(\"**/api/stations/1/play\", route => route.fulfill({ json: { ok: true, acceptedAt: TIME + 1000 } }));\n  await page.getByRole(\"button\", { name: \"Fortsetzen\", exact: true }).click();\n  await expect(page.locator(\".session-status\")).toHaveText(\"Start angefordert \u2026\");\n  await expect.poll(() => model.stateCalls).toBeGreaterThan(1);\n  await page.getByRole(\"link\", { name: \"Test Sender: Mix und Regeln\" }).click();\n  await expect(page.getByRole(\"heading\", { name: \"Test Sender\", level: 1 })).toBeVisible();\n  model.state = snapshot(true);\n  observe(model, { status: \"active\", progressMs: 13000 }, TIME + 2000);\n  await advance(page, 4500);\n  await expect(page.getByRole(\"heading\", { name: \"L\u00e4uft gerade\", exact: true })).toBeVisible({ timeout: 1000 });\n});\n"
+    }
+  },
+  "probe_installation": "In a disposable git archive of reviewed_commit with npm ci, write each reviewer_probe_sources[name].source to that relative name. Keep application source untouched. For pressure audit redirect the usage-audit.test.ts output filename to a separate temporary path; this changes only report destination. Run the commands from the review markdown.",
+  "initial_review_source_sample": {
+    "stage": "initial defects reproduced",
+    "head": "2d96fb6890e070af7c141e9cb59b80c704709d82",
+    "files": {
+      "src/client/store.ts": "c71a37e4befadd00770e7c45e579db0f59c076c8d8f74559352648cd464fdaea",
+      "src/client/screens/home.tsx": "26960dd022f437d59b96aca644b234b309c07d7396523f6ed5adc87ed6091905",
+      "src/client/api.ts": "39646eda421a23839c230f69bb7725fb3070fbe468d7b13743ecd0b06c8d215f",
+      "src/client/playback-view.ts": "afe913741a881a8568448a33f21f0fd27c3f654edd5aee50b92b8944bbc31075",
+      "src/worker/hub/hub.ts": "2eb53082b51627447778398b9e6306557266e34337be44d6e7a9848a015d4fce",
+      "src/worker/spotify/client.ts": "88f59c4700e6c2c60cd98b208eb77531a0c89a12660c101206da7a75775889ea",
+      "src/shared/api.ts": "581d1396d41916258fbcd99e2a89ab6dfabedf387d5861a849961a88324c6bd5"
+    }
+  },
+  "initial_browser_failure_excerpt": "# Instructions\n\n- Following Playwright test failed.\n- Explain why, be concise, respect Playwright best practices.\n- Provide a snippet of code with the fix, if possible.\n\n# Test info\n\n- Name: redteam-responsiveness.spec.ts >> red-team: ambiguous provider write must remain unconfirmed\n- Location: e2e/redteam-responsiveness.spec.ts:142:1\n\n# Error details\n\n```\nError: expect(locator).toHaveText(expected) failed\n\nLocator:  locator('.session-status')\nExpected: \"Best\u00e4tigung steht aus\"\nReceived: \"Befehl fehlgeschlagen\"\nTimeout:  15000ms\n\nCall log:\n  - Expect \"toHaveText\" locator('.session-status') with timeout 15000ms\n  - waiting for locator('.session-status')\n    34 \u00d7 locator resolved to <p role=\"status\" class=\"session-status\">\u2026</p>\n       - unexpected value \"Befehl fehlgeschlagen\"\n\n```\n\n```yaml\n- status: Befehl fehlgeschlagen\n```\n\n# Test source\n\n```ts\n  46  | \t\t\tprogressMs: 12_000,\n  47  | \t\t\tobservedAt: TIME,\n  48  | \t\t\tstatus: playing ? \"active\" : \"paused\",\n  49  | \t\t\tpending: false,\n  50  | \t\t\tqueue: tracks.map((track, index) => ({ entryId: `entry-${index}`, track })),\n  51  | \t\t},\n  52  | \t\tnowPlaying: {\n  53  | \t\t\t...tracks[0]!,\n  54  | \t\t\tisPlaying: playing,\n  55  | \t\t\tprogressMs: 12_000,\n  56  | \t\t\tstationId: 1,\n  57  | \t\t\tkind: \"fresh\",\n  58  | \t\t\tdeviceName: \"Test iPhone\",\n  59  | \t\t\torderBroken: false,\n  60  | \t\t\tsmartShuffle: false,\n  61  | \t\t\tobservedAt: TIME,\n  62  | \t\t},\n  63  | \t\tguest: { active: false, until: null },\n  64  | \t\twarnings: [],\n  65  | \t\tjobs: [],\n  66  | \t\thistory: { importedTracks: 0, importedAt: null, liveSince: TIME },\n  67  | \t\taiSource: \"off\",\n  68  | \t\tserverTime: TIME,\n  69  | \t};\n  70  | }\n  71  | function deferred() {\n  72  | \tlet release = () => {};\n  73  | \tconst promise = new Promise<void>((resolve) => {\n  74  | \t\trelease = resolve;\n  75  | \t});\n  76  | \treturn { promise, release };\n  77  | }\n  78  | async function setup(page: Page, initial = snapshot()) {\n  79  | \tconst model = {\n  80  | \t\tstate: initial,\n  81  | \t\tstateCalls: 0,\n  82  | \t\tstateQueries: [] as string[],\n  83  | \t\trequests: [] as string[],\n  84  | \t\tdevices: [\n  85  | \t\t\t{ id: \"iphone\", name: \"Test iPhone\", active: true, restricted: false, type: \"Smartphone\" },\n  86  | \t\t] as DeviceView[],\n  87  | \t\tstateHandler: null as ((route: Route) => Promise<void>) | null,\n  88  | \t};\n  89  | \tawait page.clock.install({ time: TIME });\n  90  | \tawait page.clock.setFixedTime(TIME);\n  91  | \tawait page.route(\"**/api/**\", async (route) => {\n  92  | \t\tconst path = new URL(route.request().url()).pathname;\n  93  | \t\tmodel.requests.push(path);\n  94  | \t\tif (path === \"/api/state\") {\n  95  | \t\t\tmodel.stateCalls++;\n  96  | \t\t\tmodel.stateQueries.push(new URL(route.request().url()).search);\n  97  | \t\t\tif (model.stateHandler) return model.stateHandler(route);\n  98  | \t\t\treturn route.fulfill({ json: model.state });\n  99  | \t\t}\n  100 | \t\tif (path === \"/api/devices\") return route.fulfill({ json: model.devices });\n  101 | \t\tif (path === \"/api/native/devices\")\n  102 | \t\t\treturn route.fulfill({ json: { configured: false, devices: [] } });\n  103 | \t\treturn route.fulfill({\n  104 | \t\t\tstatus: 500,\n  105 | \t\t\tjson: { error: { code: \"unexpected\", message: `Unexpected ${path}` } },\n  106 | \t\t});\n  107 | \t});\n  108 | \tawait page.goto(\"/\");\n  109 | \tawait expect(page.locator(\".now-copy h2\")).toHaveText(\"Erster Song\");\n  110 | \tawait expect(\n  111 | \t\tpage.locator(\".device-select select option\", { hasText: \"Test iPhone\" }),\n  112 | \t).toHaveCount(1);\n  113 | \texpect(\n  114 | \t\tawait page.evaluate(() => document.documentElement.scrollWidth - innerWidth),\n  115 | \t).toBeLessThanOrEqual(0);\n  116 | \treturn model;\n  117 | }\n  118 | async function advance(page: Page, milliseconds: number) {\n  119 | \tconst now = await page.evaluate(() => Date.now());\n  120 | \tawait page.clock.setFixedTime(now + milliseconds);\n  121 | \tawait page.clock.runFor(milliseconds);\n  122 | }\n  123 | async function refresh(page: Page) {\n  124 | \tconst response = page.waitForResponse((r) => new URL(r.url()).pathname === \"/api/state\");\n  125 | \tawait page.evaluate(() => window.dispatchEvent(new Event(\"focus\")));\n  126 | \tawait response;\n  127 | }\n  128 | function observe(\n  129 | \tmodel: { state: AppState },\n  130 | \tpatch: Partial<NonNullable<AppState[\"session\"]>>,\n  131 | \tat: number,\n  132 | ) {\n  133 | \tObject.assign(model.state.session!, patch, { observedAt: at });\n  134 | \tmodel.state.serverTime = at;\n  135 | \tif (model.state.nowPlaying)\n  136 | \t\tObject.assign(model.state.nowPlaying, {\n  137 | \t\t\tobservedAt: at,\n  138 | \t\t\tprogressMs: patch.progressMs ?? model.state.nowPlaying.progressMs,\n  139 | \t\t});\n  140 | }\n  141 | \n  142 | test(\"red-team: ambiguous provider write must remain unconfirmed\", async ({ page }) => {\n  143 |   await setup(page);\n  144 |   await page.route(\"**/api/player/pause\", async route => route.fulfill({ json: { ok: false, error: { code: \"unknown\", message: \"Spotify meldet: Spotify-Fehler 500\" } } }));\n  145 |   await page.getByRole(\"button\", { name: \"Pause\", exact: true }).click();\n> 146 |   await expect(page.locator(\".session-status\")).toHaveText(\"Best\u00e4tigung steht aus\");\n      |                                                 ^ Error: expect(locator).toHaveText(expected) failed\n  147 | });\n  148 | \n  149 | test(\"red-team: repeated cached snapshots cannot restart the projection age\", async ({ page }) => {\n  150 |   const initial = snapshot();\n  151 |   initial.session!.progressMs = 59000;\n  152 |   initial.nowPlaying!.progressMs = 59000;\n  153 |   const model = await setup(page, initial);\n  154 |   await advance(page, 2000);\n  155 |   await expect(page.locator(\".now-copy h2\")).toHaveText(\"Zweiter Song\");\n  156 |   for (let i = 1; i <= 9; i++) {\n  157 |     await advance(page, 15000);\n  158 |     model.state.serverTime = TIME + 2000 + i * 15000;\n  159 |     await refresh(page);\n  160 |   }\n  161 |   await expect(page.locator(\".now-copy h2\")).toHaveText(\"Erster Song\");\n  162 |   await expect(page.locator(\".session-status\")).toHaveText(\"Ger\u00e4tebest\u00e4tigung steht aus\");\n  163 |   await expect(page.getByRole(\"button\", { name: \"Weiter: N\u00e4chster Song\" })).toBeDisabled();\n  164 | });\n  165 | \n  166 | test(\"red-team: an accepted pause cannot be confirmed by a newer envelope with an old observation\", async ({ page }) => {\n  167 |   const model = await setup(page);\n  168 |   await page.route(\"**/api/player/pause\", async route => route.fulfill({ json: { ok: true, acceptedAt: TIME + 1000 } }));\n  169 |   await page.getByRole(\"button\", { name: \"Pause\", exact: true }).click();\n  170 |   model.state.serverTime = TIME + 2000;\n  171 |   model.state.session!.status = \"paused\";\n  172 |   model.state.nowPlaying!.isPlaying = false;\n  173 |   await refresh(page);\n  174 |   await expect(page.getByText(\"Befehl angenommen.\", { exact: false })).toBeVisible();\n  175 |   await expect(page.locator(\".session-status\")).not.toHaveText(\"Pausiert\");\n  176 | });\n  177 | \n```",
+  "navigation_failure": {
+    "reviewed_commit": "f5c8e0f36c6cc909e3329eeec77c3a1ef672d10d",
+    "result": "FAIL",
+    "test": "red-team: accepted start retains bounded confirmation reads after station navigation",
+    "expected": "L\u00e4uft gerade heading after 4.5 seconds with actual fresh playing observation available",
+    "actual": "heading missing; Home route teardown canceled bounded confirmation reads",
+    "rendered_context": "# Instructions\n\n- Following Playwright test failed.\n- Explain why, be concise, respect Playwright best practices.\n- Provide a snippet of code with the fix, if possible.\n\n# Test info\n\n- Name: redteam-responsiveness.spec.ts >> red-team: accepted start retains bounded confirmation reads after station navigation\n- Location: e2e/redteam-responsiveness.spec.ts:217:1\n\n# Error details\n\n```\nError: expect(locator).toBeVisible() failed\n\nLocator: getByRole('heading', { name: 'L\u00e4uft gerade', exact: true })\nExpected: visible\nTimeout: 1000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByRole('heading', { name: 'L\u00e4uft gerade', exact: true }) with timeout 1000ms\n  - waiting for getByRole('heading', { name: 'L\u00e4uft gerade', exact: true })\n\n```\n\n```yaml\n- link \"Zum Inhalt\":\n  - /url: \"#content\"\n- banner:\n  - link \"true-shuffle\":\n    - /url: /\n  - navigation \"Hauptnavigation\":\n    - link \"H\u00f6ren\":\n      - /url: /\n    - link \"Verlauf\":\n      - /url: /verlauf\n    - link \"Men\u00fc\":\n      - /url: /menu\n- main:\n  - button \"Zur\u00fcck\"\n  - heading \"Test Sender\" [level=1]\n  - paragraph: Alle deine Sender und Lieblingssongs\n  - 'img \"Runde 1: 0 von 3 geh\u00f6rt, 3 offen\"'\n  - button \"Fortsetzen\"\n  - text: wird vorbereitet\n  - region \"Mischung\":\n    - heading \"Mischung\" [level=2]\n    - text: 60 % ungeh\u00f6rt \u00b7 10 % Favoriten \u00b7 30 % Entdeckungen\n    - 'group \"Klang f\u00fcr Test Sender: Entdecken oder Vertraut\"':\n      - text: \"Klang f\u00fcr Test Sender: Entdecken oder Vertraut\"\n      - radio \"Entdecker\" [checked]\n      - text: Entdecker\n      - radio \"Ausgewogen\"\n      - text: Ausgewogen\n      - radio \"Vertraut\"\n      - text: Vertraut\n  - region \"Pausiert\":\n    - heading \"Pausiert\" [level=2]\n    - list:\n      - listitem:\n        - button \"Erster Song \u2014 Test Artist bewerten\"\n        - text: Erster Song Test Artist Ungeh\u00f6rt\n  - region \"Als N\u00e4chstes\":\n    - heading \"Als N\u00e4chstes\" [level=2]\n    - paragraph: Noch keine Reihenfolge \u2014 sie entsteht, sobald der Sender eingelesen ist.\n  - region \"Neuentdeckungen\":\n    - heading \"Neuentdeckungen\" [level=2]\n    - table:\n      - rowgroup:\n        - row \"Kommen noch Gepr\u00fcfte Vorschl\u00e4ge, die dieser Sender noch spielt 0\":\n          - rowheader \"Kommen noch Gepr\u00fcfte Vorschl\u00e4ge, die dieser Sender noch spielt\"\n          - cell \"0\"\n        - row \"Gefallen dir Zweimal geh\u00f6rt oder Daumen hoch. Sie bleiben im Sender und stehen in deiner Spotify-Playlist \u201etrue-shuffle \u00b7 Entdeckungen\u201c. 0\":\n          - rowheader \"Gefallen dir Zweimal geh\u00f6rt oder Daumen hoch. Sie bleiben im Sender und stehen in deiner Spotify-Playlist \u201etrue-shuffle \u00b7 Entdeckungen\u201c.\"\n          - cell \"0\"\n        - row \"Aussortiert Fr\u00fch \u00fcbersprungen oder Daumen runter. Sie kommen nicht wieder. 0\":\n          - rowheader \"Aussortiert Fr\u00fch \u00fcbersprungen oder Daumen runter. Sie kommen nicht wieder.\"\n          - cell \"0\"\n  - group: Erweitert\n  - button \"Sender l\u00f6schen\"\n```\n\n# Test source\n\n```ts\n  130 | \tpatch: Partial<NonNullable<AppState[\"session\"]>>,\n  131 | \tat: number,\n  132 | ) {\n  133 | \tObject.assign(model.state.session!, patch, { observedAt: at });\n  134 | \tmodel.state.serverTime = at;\n  135 | \tif (model.state.nowPlaying)\n  136 | \t\tObject.assign(model.state.nowPlaying, {\n  137 | \t\t\tobservedAt: at,\n  138 | \t\t\tprogressMs: patch.progressMs ?? model.state.nowPlaying.progressMs,\n  139 | \t\t});\n  140 | }\n  141 | \n  142 | test(\"red-team: ambiguous provider write must remain unconfirmed\", async ({ page }) => {\n  143 |   await setup(page);\n  144 |   await page.route(\"**/api/player/pause\", async route => route.fulfill({ json: { ok: false, uncertain: true, error: { code: \"unknown\", message: \"Spotify meldet: Spotify-Fehler 500\" } } }));\n  145 |   await page.getByRole(\"button\", { name: \"Pause\", exact: true }).click();\n  146 |   await expect(page.locator(\".session-status\")).toHaveText(\"Best\u00e4tigung steht aus\");\n  147 | });\n  148 | \n  149 | test(\"red-team: repeated cached snapshots cannot restart the projection age\", async ({ page }) => {\n  150 |   const initial = snapshot();\n  151 |   initial.session!.progressMs = 59000;\n  152 |   initial.nowPlaying!.progressMs = 59000;\n  153 |   const model = await setup(page, initial);\n  154 |   await advance(page, 2000);\n  155 |   await expect(page.locator(\".now-copy h2\")).toHaveText(\"Zweiter Song\");\n  156 |   for (let i = 1; i <= 9; i++) {\n  157 |     await advance(page, 15000);\n  158 |     model.state.serverTime = TIME + 2000 + i * 15000;\n  159 |     await refresh(page);\n  160 |   }\n  161 |   await expect(page.locator(\".now-copy h2\")).toHaveText(\"Erster Song\");\n  162 |   await expect(page.locator(\".session-status\")).toHaveText(\"Ger\u00e4tebest\u00e4tigung steht aus\");\n  163 |   await expect(page.getByRole(\"button\", { name: \"Weiter: N\u00e4chster Song\" })).toBeDisabled();\n  164 | });\n  165 | \n  166 | test(\"red-team: an accepted pause cannot be confirmed by a newer envelope with an old observation\", async ({ page }) => {\n  167 |   const model = await setup(page);\n  168 |   await page.route(\"**/api/player/pause\", async route => route.fulfill({ json: { ok: true, acceptedAt: TIME + 1000 } }));\n  169 |   await page.getByRole(\"button\", { name: \"Pause\", exact: true }).click();\n  170 |   model.state.serverTime = TIME + 2000;\n  171 |   model.state.session!.status = \"paused\";\n  172 |   model.state.nowPlaying!.isPlaying = false;\n  173 |   await refresh(page);\n  174 |   await expect(page.getByText(\"Befehl angenommen.\", { exact: false })).toBeVisible();\n  175 |   await expect(page.locator(\".session-status\")).not.toHaveText(\"Pausiert\");\n  176 | });\n  177 | \n  178 |  test(\"red-team: another tab must not report acknowledged pause as device-confirmed\", async ({ page }) => {\n  179 |  const initial = snapshot();\n  180 |  initial.session!.status = \"paused\";\n  181 |  await setup(page, initial);\n  182 |  await expect(page.locator(\".session-status\")).toHaveText(\"Ger\u00e4tebest\u00e4tigung steht aus\");\n  183 |  });\n  184 | \n  185 | test(\"red-team: a vanished device after accepted pause retains a manual saved resume\", async ({ page }) => {\n  186 |  const model = await setup(page);\n  187 |  await page.route(\"**/api/player/pause\", async route => route.fulfill({ json: { ok: true, acceptedAt: TIME + 1000 } }));\n  188 |  await page.getByRole(\"button\", { name: \"Pause\", exact: true }).click();\n  189 |  model.state.serverTime = TIME + 2000;\n  190 |  model.state.session!.status = \"disconnected\";\n  191 |  model.state.nowPlaying = null;\n  192 |  await refresh(page);\n  193 |  await advance(page, 21000);\n  194 |  await expect(page.locator(\".session-status\")).toHaveText(\"Best\u00e4tigung steht aus\");\n  195 |  await expect.soft(page.getByLabel(\"Wiedergabeger\u00e4t\", { exact: true })).toBeEnabled({ timeout: 1000 });\n  196 |  const recover = page.getByRole(\"button\", { name: /Gespeicherten Song.*fortsetzen/ });\n  197 |  await expect.soft(recover).toBeVisible({ timeout: 1000 });\n  198 |  let sent: unknown;\n  199 |  await page.route(\"**/api/stations/1/play\", async route => {\n  200 |    sent = route.request().postDataJSON();\n  201 |    await route.fulfill({ json: { ok: true, acceptedAt: TIME + 23000 } });\n  202 |  });\n  203 |  await page.getByLabel(\"Wiedergabeger\u00e4t\", { exact: true }).selectOption(\"iphone\");\n  204 |  await recover.click();\n  205 |  await expect.poll(() => sent).toEqual({ deviceId: \"iphone\", newQueue: false, sessionId: \"session-a\" });\n  206 | });\n  207 | \n  208 | test(\"red-team: confirmed native pause is independent of cached Spotify playback\", async ({ page }) => {\n  209 |  const initial = snapshot(false);\n  210 |  initial.nowPlaying!.isPlaying = true;\n  211 |  initial.session!.controller = {kind: \"home-assistant\", deviceId: \"living-room\", deviceName: \"Wohnzimmer\"};\n  212 |  await setup(page, initial);\n  213 |  await expect(page.locator(\".session-status\")).toHaveText(\"Pausiert\");\n  214 | });\n  215 | \n  216 | \n  217 | test(\"red-team: accepted start retains bounded confirmation reads after station navigation\", async ({ page }) => {\n  218 |   const model = await setup(page, snapshot(false));\n  219 |   const detail = { ...model.state.stations[0], upcoming: [], recent: [], counts: null, discoveries: { pending: 0, kept: 0, rejected: 0 } };\n  220 |   await page.route(\"**/api/stations/1\", route => route.fulfill({ json: detail }));\n  221 |   await page.route(\"**/api/stations/1/play\", route => route.fulfill({ json: { ok: true, acceptedAt: TIME + 1000 } }));\n  222 |   await page.getByRole(\"button\", { name: \"Fortsetzen\", exact: true }).click();\n  223 |   await expect(page.locator(\".session-status\")).toHaveText(\"Start angefordert \u2026\");\n  224 |   await expect.poll(() => model.stateCalls).toBeGreaterThan(1);\n  225 |   await page.getByRole(\"link\", { name: \"Test Sender: Mix und Regeln\" }).click();\n  226 |   await expect(page.getByRole(\"heading\", { name: \"Test Sender\", level: 1 })).toBeVisible();\n  227 |   model.state = snapshot(true);\n  228 |   observe(model, { status: \"active\", progressMs: 13000 }, TIME + 2000);\n  229 |   await advance(page, 4500);\n> 230 |   await expect(page.getByRole(\"heading\", { name: \"L\u00e4uft gerade\", exact: true })).toBeVisible({ timeout: 1000 });\n      |                                                                                  ^ Error: expect(locator).toBeVisible() failed\n  231 | });\n  232 | \n```",
+    "repair_recheck": "Original reviewer probe passed unchanged in independent 25-case Chromium rerun; all 61 application bytes verified against 30ae6a2d5349e3f37bce18ab39b3c920c5543c35."
+  },
+  "backend_evidence_execution_commit": "f5c8e0f36c6cc909e3329eeec77c3a1ef672d10d",
+  "backend_evidence_content_verified_unchanged": true,
+  "carry_forward_basis": "Only src/client/store.ts, src/client/screens/home.tsx and e2e/client-playback.spec.ts differ from the backend execution commit. Worker/core/shared, all backend tests, package/lock and runtime configuration are identical. Repaired client bytes were independently rendered before seal and then matched to this exact commit.",
+  "previous_sealed_browser": {
+    "passed": 22,
+    "failed": 0,
+    "duration_seconds": 16.8,
+    "assertions": [
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "projects one known successor locally and uses the authoritative occurrence for pause",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "pause freezes immediately through a slow response, then reconciles a fresh observation",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "a poll started before pause cannot win; one fresh serialized follow-up confirms it",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "resume acceptance stays pending through old observations and exposes bounded retry",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "a rejected pause restores observed playback and provides an explicit retry",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "device refresh preserves an absent explicit device and the Spotify sentinel routing",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "projection expires without advancing further and seeks, offline and private observations correct it",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "identity change discards a pending command and its late response",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "accepted next keeps the saved occurrence until the actual successor is observed",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "an absent saved native selection keeps its native route",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "a lost transport response remains uncertain and never claims pause",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "opens and returns with a coalesced fresh read while regular polling stays cached",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "an ambiguous pause error stays frozen until a fresh paused observation confirms it",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "a reloaded paused session waits for confirmation when its cached Spotify observation still plays",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "a confirmed native pause stays authoritative over cached matching Spotify playback",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/client-playback.spec.ts",
+        "name": "an unconfirmed pause with a vanished device allows deliberate saved-song recovery elsewhere",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/redteam-responsiveness.spec.ts",
+        "name": "red-team: ambiguous provider write must remain unconfirmed",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/redteam-responsiveness.spec.ts",
+        "name": "red-team: repeated cached snapshots cannot restart the projection age",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/redteam-responsiveness.spec.ts",
+        "name": "red-team: an accepted pause cannot be confirmed by a newer envelope with an old observation",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/redteam-responsiveness.spec.ts",
+        "name": "red-team: another tab must not report acknowledged pause as device-confirmed",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/redteam-responsiveness.spec.ts",
+        "name": "red-team: a vanished device after accepted pause retains a manual saved resume",
+        "status": "passed"
+      },
+      {
+        "file": "e2e/redteam-responsiveness.spec.ts",
+        "name": "red-team: confirmed native pause is independent of cached Spotify playback",
+        "status": "passed"
+      }
+    ]
+  },
+  "final_browser": {
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "duration_seconds": 18.427802,
+    "raw_playwright_report": {
+      "config": {
+        "argv": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "/tmp/true-shuffle-redteam-final/node_modules/.bin/playwright",
+          "test",
+          "e2e/client-playback.spec.ts",
+          "e2e/redteam-responsiveness.spec.ts",
+          "--reporter=json"
+        ],
+        "configFile": "/tmp/true-shuffle-redteam-final/playwright.config.ts",
+        "rootDir": "/tmp/true-shuffle-redteam-final/e2e",
+        "failOnFlakyTests": false,
+        "forbidOnly": false,
+        "fullyParallel": false,
+        "globalSetup": null,
+        "globalTeardown": null,
+        "globalTimeout": 0,
+        "grep": {},
+        "grepInvert": null,
+        "maxFailures": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "preserveOutput": "always",
+        "projects": [
+          {
+            "outputDir": "/tmp/true-shuffle-redteam-final/e2e/.artifacts/results",
+            "repeatEach": 1,
+            "retries": 0,
+            "metadata": {
+              "actualWorkers": 1
+            },
+            "id": "",
+            "name": "",
+            "testDir": "/tmp/true-shuffle-redteam-final/e2e",
+            "testIgnore": [],
+            "testMatch": [
+              "*.spec.ts"
+            ],
+            "timeout": 90000
+          }
+        ],
+        "quiet": false,
+        "reporter": [
+          [
+            "json"
+          ]
+        ],
+        "reportSlowTests": {
+          "max": 5,
+          "threshold": 300000
+        },
+        "shard": null,
+        "tags": [],
+        "updateSnapshots": "missing",
+        "updateSourceMethod": "patch",
+        "version": "1.63.0",
+        "workers": 1,
+        "webServer": null
+      },
+      "suites": [
+        {
+          "title": "client-playback.spec.ts",
+          "file": "client-playback.spec.ts",
+          "column": 0,
+          "line": 0,
+          "specs": [
+            {
+              "title": "projects one known successor locally and uses the authoritative occurrence for pause",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 673,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:49.827Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-7d09be3f17598aea70eb",
+              "file": "client-playback.spec.ts",
+              "line": 142,
+              "column": 1
+            },
+            {
+              "title": "pause freezes immediately through a slow response, then reconciles a fresh observation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 650,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:50.742Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-bfeb82f8cb1f48472625",
+              "file": "client-playback.spec.ts",
+              "line": 171,
+              "column": 1
+            },
+            {
+              "title": "a poll started before pause cannot win; one fresh serialized follow-up confirms it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 493,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:51.401Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-b5ee0be11ccaa48d95bd",
+              "file": "client-playback.spec.ts",
+              "line": 197,
+              "column": 1
+            },
+            {
+              "title": "resume acceptance stays pending through old observations and exposes bounded retry",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 603,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:51.908Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-3a9f5b5e98110e0546a7",
+              "file": "client-playback.spec.ts",
+              "line": 230,
+              "column": 1
+            },
+            {
+              "title": "a rejected pause restores observed playback and provides an explicit retry",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 497,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:52.527Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-eb4fc10eef3f9f3a68d8",
+              "file": "client-playback.spec.ts",
+              "line": 258,
+              "column": 1
+            },
+            {
+              "title": "device refresh preserves an absent explicit device and the Spotify sentinel routing",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 632,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:53.037Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-4b63227a3c6818cddae5",
+              "file": "client-playback.spec.ts",
+              "line": 279,
+              "column": 1
+            },
+            {
+              "title": "projection expires without advancing further and seeks, offline and private observations correct it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 627,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:53.680Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-939d91919a7e229b47d8",
+              "file": "client-playback.spec.ts",
+              "line": 312,
+              "column": 1
+            },
+            {
+              "title": "identity change discards a pending command and its late response",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 520,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:54.317Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-7fde29b860be17a1ff9f",
+              "file": "client-playback.spec.ts",
+              "line": 340,
+              "column": 1
+            },
+            {
+              "title": "accepted next keeps the saved occurrence until the actual successor is observed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 680,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:54.852Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-5a8ab72fe348387684f5",
+              "file": "client-playback.spec.ts",
+              "line": 358,
+              "column": 1
+            },
+            {
+              "title": "an absent saved native selection keeps its native route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 513,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:55.542Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-c4a1bc945a27081646f8",
+              "file": "client-playback.spec.ts",
+              "line": 381,
+              "column": 1
+            },
+            {
+              "title": "a lost transport response remains uncertain and never claims pause",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 478,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:56.069Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-cc48b08c01edabfd4982",
+              "file": "client-playback.spec.ts",
+              "line": 410,
+              "column": 1
+            },
+            {
+              "title": "opens and returns with a coalesced fresh read while regular polling stays cached",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 480,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:56.559Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-912d498115f45a04052f",
+              "file": "client-playback.spec.ts",
+              "line": 420,
+              "column": 1
+            },
+            {
+              "title": "an ambiguous pause error stays frozen until a fresh paused observation confirms it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 546,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:57.048Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-e643699ed62ffd802582",
+              "file": "client-playback.spec.ts",
+              "line": 444,
+              "column": 1
+            },
+            {
+              "title": "a reloaded paused session waits for confirmation when its cached Spotify observation still plays",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 586,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:57.604Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-7e8ec81377be7bbe5834",
+              "file": "client-playback.spec.ts",
+              "line": 476,
+              "column": 1
+            },
+            {
+              "title": "a confirmed native pause stays authoritative over cached matching Spotify playback",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 395,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:58.199Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-e7204bc9bbf0d6fd9763",
+              "file": "client-playback.spec.ts",
+              "line": 501,
+              "column": 1
+            },
+            {
+              "title": "an unconfirmed pause with a vanished device allows deliberate saved-song recovery elsewhere",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 711,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:58.608Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-bc287a0e8de6d46d9bd0",
+              "file": "client-playback.spec.ts",
+              "line": 521,
+              "column": 1
+            },
+            {
+              "title": "accepted playback confirms on the station page after navigating before the device observation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 548,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:59.332Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-f69e6599d3b8a283270a",
+              "file": "client-playback.spec.ts",
+              "line": 586,
+              "column": 1
+            },
+            {
+              "title": "bounded command confirmation reads stay silent while the app is hidden",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 453,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:44:59.890Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "23726c674bcca8780adb-315373093db8c44af16b",
+              "file": "client-playback.spec.ts",
+              "line": 633,
+              "column": 1
+            }
+          ]
+        },
+        {
+          "title": "redteam-responsiveness.spec.ts",
+          "file": "redteam-responsiveness.spec.ts",
+          "column": 0,
+          "line": 0,
+          "specs": [
+            {
+              "title": "red-team: ambiguous provider write must remain unconfirmed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 448,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:45:00.364Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a499800ac554bc625147-2b76fbd7a3ca3a5c88a3",
+              "file": "redteam-responsiveness.spec.ts",
+              "line": 142,
+              "column": 1
+            },
+            {
+              "title": "red-team: repeated cached snapshots cannot restart the projection age",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 992,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:45:00.823Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a499800ac554bc625147-1460f6c6303de8b53a10",
+              "file": "redteam-responsiveness.spec.ts",
+              "line": 149,
+              "column": 1
+            },
+            {
+              "title": "red-team: an accepted pause cannot be confirmed by a newer envelope with an old observation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 552,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:45:01.823Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a499800ac554bc625147-a12aa4e4f0904a7460a5",
+              "file": "redteam-responsiveness.spec.ts",
+              "line": 166,
+              "column": 1
+            },
+            {
+              "title": "red-team: another tab must not report acknowledged pause as device-confirmed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 428,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:45:02.386Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a499800ac554bc625147-edc1ced5c8763e7814f0",
+              "file": "redteam-responsiveness.spec.ts",
+              "line": 178,
+              "column": 2
+            },
+            {
+              "title": "red-team: a vanished device after accepted pause retains a manual saved resume",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 671,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:45:02.825Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a499800ac554bc625147-2a2ffde063d68032e1e7",
+              "file": "redteam-responsiveness.spec.ts",
+              "line": 185,
+              "column": 1
+            },
+            {
+              "title": "red-team: confirmed native pause is independent of cached Spotify playback",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 428,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:45:03.515Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a499800ac554bc625147-bc1a1875d840483bf1ae",
+              "file": "redteam-responsiveness.spec.ts",
+              "line": 208,
+              "column": 1
+            },
+            {
+              "title": "red-team: accepted start retains bounded confirmation reads after station navigation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 606,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-01T09:45:03.955Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a499800ac554bc625147-f8cefb88d230c636c3c8",
+              "file": "redteam-responsiveness.spec.ts",
+              "line": 217,
+              "column": 1
+            }
+          ]
+        }
+      ],
+      "errors": [],
+      "stats": {
+        "startTime": "2026-10-01T09:44:46.280Z",
+        "duration": 18427.802,
+        "expected": 25,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    }
+  },
+  "scoped_verdict": "READY",
+  "open_findings": [],
+  "full_mission_status": "PARTIAL",
+  "completed_at": "2026-10-01T09:48:34.724064+00:00",
+  "builder_integration_gate": {
+    "reviewed_commit": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+    "classification": "Builder-run supporting evidence, not independent reviewer execution",
+    "browser_passed": 39,
+    "browser_retries": 0,
+    "browser_duration_seconds": 51.8,
+    "browser_log_sha256": "5b104be5e40f8a575e170f6ce3db9848ecd82f45ce96b8dd53de63e99d3f62ad",
+    "browser_log_tail": "  \u2713  28 e2e/client-playback.spec.ts:340:1 \u203a identity change discards a pending command and its late response (525ms)\n  \u2713  29 e2e/client-playback.spec.ts:358:1 \u203a accepted next keeps the saved occurrence until the actual successor is observed (587ms)\n  \u2713  30 e2e/client-playback.spec.ts:381:1 \u203a an absent saved native selection keeps its native route (471ms)\n  \u2713  31 e2e/client-playback.spec.ts:410:1 \u203a a lost transport response remains uncertain and never claims pause (490ms)\n  \u2713  32 e2e/client-playback.spec.ts:420:1 \u203a opens and returns with a coalesced fresh read while regular polling stays cached (462ms)\n  \u2713  33 e2e/client-playback.spec.ts:444:1 \u203a an ambiguous pause error stays frozen until a fresh paused observation confirms it (534ms)\n  \u2713  34 e2e/client-playback.spec.ts:476:1 \u203a a reloaded paused session waits for confirmation when its cached Spotify observation still plays (604ms)\n  \u2713  35 e2e/client-playback.spec.ts:501:1 \u203a a confirmed native pause stays authoritative over cached matching Spotify playback (468ms)\n  \u2713  36 e2e/client-playback.spec.ts:521:1 \u203a an unconfirmed pause with a vanished device allows deliberate saved-song recovery elsewhere (863ms)\n  \u2713  37 e2e/client-playback.spec.ts:586:1 \u203a accepted playback confirms on the station page after navigating before the device observation (673ms)\n  \u2713  38 e2e/client-playback.spec.ts:633:1 \u203a bounded command confirmation reads stay silent while the app is hidden (493ms)\n  \u2713  39 e2e/recovery.spec.ts:11:1 \u203a deliberately recovers an unconfirmed Spotify resume without changing its occurrence (5.3s)\n\n  39 passed (51.8s)",
+    "static_type_lint_build": "PASS (reported by builder)",
+    "backend_full_suite_passed": 428,
+    "backend_execution_commit": "f5c8e0f36c6cc909e3329eeec77c3a1ef672d10d",
+    "backend_binding": "Verified identical backend/core/shared/test/config source; no additional rerun counted."
+  }
+}

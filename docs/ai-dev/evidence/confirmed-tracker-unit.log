@@ -1,0 +1,13 @@
+
+> true-shuffle@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.2 /workspace/true-shuffle-PoC
+
+
+ Test Files  24 passed (24)
+      Tests  358 passed (358)
+   Start at  18:40:30
+   Duration  82.48s (tests 98%, import 1%, transform 1%)
+

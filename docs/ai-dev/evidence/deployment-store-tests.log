@@ -1,0 +1,1 @@
+{"result":"PASS","checks":5,"subject":"actual transpiled Store.refresh","cases":["initial online401=>signed-out withoutfalseoffline","ready networkfailure=>stale retains97s/session","ready503=>stale retainssnapshot","successfulrecovery=>online exactsnapshot","expired401=>signed-out privacyclear; heldstate objectunchanged"]}

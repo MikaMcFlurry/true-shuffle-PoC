@@ -7,12 +7,17 @@
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
-import type { RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
+import type { ObservedTarget, RemoteAction, RemoteKeyView, StationSource } from "../shared/api";
+import { RELEASE } from "../shared/release";
 import { type Env, endpoints } from "./env";
+import type { Occurrence } from "./hub/hub";
 import { Keys, randomToken, sha256b64url } from "./lib/crypto";
 import { readRemoteKey, remoteKeyFor } from "./lib/remote-key";
+import { isStorageLimit, STORAGE_LIMIT_CODE, storageLimitMessage } from "./lib/storage-limit";
 import { RequestBudget, SpotifyClient, SpotifyError, type SpotifyTokens } from "./spotify/client";
+import { boundedSpotifyRpc } from "./spotify/rpc";
 import type { RpcResult, UserHub } from "./userhub";
 
 export { Registry } from "./registry";
@@ -106,6 +111,21 @@ app.get("/auth/callback", async (c) => {
 	const code = url.searchParams.get("code");
 	if (!code) return c.redirect("/?login=denied");
 	const e = endpoints(c.env);
+	const registry = c.env.REGISTRY.get(c.env.REGISTRY.idFromName("registry"));
+	const flowKey = `@signin:${await sha256b64url(state)}`;
+	const spotifyPolicy = {
+		getCooldown: () => null,
+		setCooldown: () => {},
+		getOperationSnapshot: (operation: string) =>
+			boundedSpotifyRpc(registry.spotifyOperationSnapshot(flowKey, operation)),
+		setOperationCooldown: async (cooldown: import("./spotify/client").SpotifyCooldown) => {
+			await boundedSpotifyRpc(registry.spotifyOperationBlocked(flowKey, cooldown));
+		},
+		finishOperation: (operation: string, revision: number) =>
+			boundedSpotifyRpc(registry.finishSpotifyOperation(flowKey, operation, revision)),
+		record: (metric: import("./spotify/client").SpotifyRequestMetric) =>
+			boundedSpotifyRpc(registry.recordSpotifyUsage(flowKey, metric)),
+	};
 	let tokens: SpotifyTokens;
 	try {
 		tokens = await SpotifyClient.exchangeCode(
@@ -115,6 +135,7 @@ app.get("/auth/callback", async (c) => {
 			`${origin(c)}/auth/callback`,
 			verifier,
 			Date.now(),
+			spotifyPolicy,
 		);
 	} catch {
 		return c.redirect("/?login=failed");
@@ -131,6 +152,7 @@ app.get("/auth/callback", async (c) => {
 		budget: new RequestBudget(5),
 		fetch: (r) => fetch(r),
 		now: () => Date.now(),
+		policy: spotifyPolicy,
 	});
 	let me: Awaited<ReturnType<SpotifyClient["me"]>>;
 	try {
@@ -207,7 +229,12 @@ app.all("/remote/*", (c) =>
 // ---------------------------------------------------------------------------
 
 app.get("/api/health", (c) =>
-	c.json({ ok: true, version: "1.0.0", configured: configured(c.env) === null }),
+	c.json({
+		ok: true,
+		version: RELEASE.version,
+		released: RELEASE.date,
+		configured: configured(c.env) === null,
+	}),
 );
 
 app.use("/api/*", async (c, next) => {
@@ -249,7 +276,11 @@ async function body<T>(c: { req: { json: () => Promise<unknown> } }): Promise<T>
 }
 
 app.get("/api/state", async (c) => {
-	const r = (await c.var.hub.state(c.var.epoch, c.req.query("live") === "1")) as RpcResult<{
+	const r = (await c.var.hub.state(
+		c.var.epoch,
+		c.req.query("live") === "1",
+		c.req.query("refresh") === "1",
+	)) as RpcResult<{
 		profile: { id: string };
 	}>;
 	if (r.ok && !r.value.profile.id) {
@@ -327,31 +358,246 @@ app.get("/api/stations/:id", (c) =>
 );
 
 app.post("/api/stations/:id/play", async (c) => {
-	const b = await body<{ deviceId?: string }>(c);
+	const b = await body<{ deviceId?: string; newQueue?: boolean; sessionId?: string }>(c);
 	return unwrap(
 		c,
 		c.var.hub.play(
 			c.var.epoch,
 			Number(c.req.param("id")),
 			typeof b.deviceId === "string" ? b.deviceId : null,
+			{
+				newQueue: b.newQueue === true,
+				sessionId: typeof b.sessionId === "string" ? b.sessionId : undefined,
+			},
 		),
 	);
 });
 
-app.post("/api/player/:action", (c) => {
+app.post("/api/player/:action", async (c) => {
+	const expected = await body<{ sessionId?: string; entryId?: string; target?: unknown }>(c);
 	const action = c.req.param("action");
 	if (action !== "pause" && action !== "resume" && action !== "next") {
 		return c.json({ error: { code: "bad_action", message: "Unbekannte Aktion" } }, 400);
 	}
-	return unwrap(c, c.var.hub.playerAction(c.var.epoch, action));
+	// "Next" on an observed play (NP06): the target alone, never with a true-shuffle occurrence.
+	if (expected && typeof expected === "object" && "target" in expected) {
+		if (action !== "next" || Object.keys(expected).length !== 1) return c.json(BAD_TARGET, 400);
+		const target = observedTarget(expected.target, c.var.uid);
+		if (target === "bad") return c.json(BAD_TARGET, 400);
+		if (target === "stale") return c.json(STALE_TARGET, 409);
+		return unwrap(c, c.var.hub.observedNext(c.var.epoch, target));
+	}
+	return unwrap(
+		c,
+		c.var.hub.playerAction(c.var.epoch, action, {
+			sessionId: typeof expected.sessionId === "string" ? expected.sessionId : undefined,
+			entryId: typeof expected.entryId === "string" ? expected.entryId : undefined,
+		}),
+	);
 });
+
+app.get("/api/native/devices", (c) => unwrap(c, c.var.hub.nativeDevices(c.var.epoch, c.var.uid)));
+app.post("/api/native/cancel", async (c) => {
+	const b = await body<{ sessionId?: string; entryId?: string }>(c);
+	return unwrap(
+		c,
+		c.var.hub.nativeCancel(c.var.epoch, {
+			sessionId: typeof b.sessionId === "string" ? b.sessionId : undefined,
+			entryId: typeof b.entryId === "string" ? b.entryId : undefined,
+		}),
+	);
+});
+app.get("/api/native/state", (c) => unwrap(c, c.var.hub.nativeState(c.var.epoch, c.var.uid)));
+app.post("/api/native/play", async (c) => {
+	const b = await body<{
+		stationId?: number;
+		deviceId?: string;
+		sessionId?: string;
+		entryId?: string;
+		orderRevision?: number;
+		newQueue?: boolean;
+	}>(c);
+	if (!Number.isSafeInteger(b.stationId) || typeof b.deviceId !== "string")
+		return c.json(
+			{ error: { code: "bad_native", message: "Gerät und Warteschlange fehlen." } },
+			400,
+		);
+	return unwrap(
+		c,
+		c.var.hub.nativePlay(c.var.epoch, c.var.uid, b.stationId!, b.deviceId, "resume", {
+			sessionId: typeof b.sessionId === "string" ? b.sessionId : undefined,
+			entryId: typeof b.entryId === "string" ? b.entryId : undefined,
+			orderRevision: typeof b.orderRevision === "number" ? b.orderRevision : undefined,
+			newQueue: b.newQueue === true,
+		}),
+	);
+});
+app.post("/api/native/player", async (c) => {
+	const b = await body<{
+		stationId?: number;
+		deviceId?: string;
+		action?: string;
+		sessionId?: string;
+		entryId?: string;
+		orderRevision?: number;
+	}>(c);
+	if (
+		!Number.isSafeInteger(b.stationId) ||
+		typeof b.deviceId !== "string" ||
+		!["resume", "pause", "next"].includes(b.action ?? "")
+	)
+		return c.json({ error: { code: "bad_native", message: "Ungültiger Native Befehl." } }, 400);
+	return unwrap(
+		c,
+		c.var.hub.nativePlay(
+			c.var.epoch,
+			c.var.uid,
+			b.stationId!,
+			b.deviceId,
+			b.action as "resume" | "pause" | "next",
+			{
+				sessionId: typeof b.sessionId === "string" ? b.sessionId : undefined,
+				entryId: typeof b.entryId === "string" ? b.entryId : undefined,
+				orderRevision: typeof b.orderRevision === "number" ? b.orderRevision : undefined,
+			},
+		),
+	);
+});
+app.post("/api/spotify/availability-test", (c) =>
+	unwrap(c, c.var.hub.testSpotifyAvailability(c.var.epoch)),
+);
+app.post("/api/spotify/retry", async (c) => {
+	const b = await body<{ scope?: unknown }>(c);
+	if (
+		!b ||
+		typeof b !== "object" ||
+		Array.isArray(b) ||
+		(b.scope !== undefined &&
+			(typeof b.scope !== "string" ||
+				!["artist-albums", "devices", "player", "history"].includes(b.scope)))
+	)
+		return c.json({ error: { code: "bad_request", message: "Unbekannte Spotify-Funktion." } }, 400);
+	const scope = b.scope as "artist-albums" | "devices" | "player" | "history" | undefined;
+	return unwrap(c, c.var.hub.retryQuota(c.var.epoch, scope));
+});
+app.get("/api/spotify/usage", (c) => unwrap(c, c.var.hub.spotifyUsage(c.var.epoch)));
+app.get("/api/spotify/diagnostics", (c) => unwrap(c, c.var.hub.spotifyDiagnostics(c.var.epoch)));
 
 app.get("/api/devices", (c) => unwrap(c, c.var.hub.devices(c.var.epoch)));
 
+/**
+ * The occurrence an answer from Home was given on (optional, CTO playback
+ * boundary 2026-10-15): with it "Nie wieder" / "Eher nicht" may skip exactly
+ * that one; without it the answer only rates. A malformed one is refused.
+ */
+function occurrence(v: unknown): Occurrence | null | "bad" {
+	if (v === undefined || v === null) return null;
+	const o = v as { sessionId?: unknown; entryId?: unknown };
+	const ok = (s: unknown) => typeof s === "string" && s.length > 0 && s.length <= 200;
+	// A true-shuffle occurrence never carries an observed target's fields (NP06).
+	if (typeof v === "object" && OBSERVED_KEYS.some((k) => k !== "trackId" && k in o)) return "bad";
+	return typeof v === "object" && ok(o.sessionId) && ok(o.entryId)
+		? { sessionId: o.sessionId as string, entryId: o.entryId as string }
+		: "bad";
+}
+
+const OBSERVED_KEYS = [
+	"kind",
+	"account",
+	"trackId",
+	"deviceId",
+	"observationId",
+	"playId",
+] as const;
+
+/**
+ * The observed play an answer or an external "next" names (NP06): exactly
+ * these fields, nothing of a true-shuffle occurrence mixed in, the song of the
+ * route where there is one. Another account's (a page left open over a change
+ * of account) is stale. The hub checks everything else against a fresh look.
+ */
+function observedTarget(
+	v: unknown,
+	uid: string,
+	trackId?: string,
+): ObservedTarget | "bad" | "stale" {
+	if (!v || typeof v !== "object" || Array.isArray(v)) return "bad";
+	const o = v as Record<string, unknown>;
+	const ok = (s: unknown) => typeof s === "string" && s.length > 0 && s.length <= 200;
+	if (
+		Object.keys(o).length !== OBSERVED_KEYS.length ||
+		!OBSERVED_KEYS.every((k) => k in o) ||
+		o.kind !== "observed" ||
+		!ok(o.account) ||
+		typeof o.trackId !== "string" ||
+		!/^[A-Za-z0-9]{22}$/.test(o.trackId) ||
+		(trackId !== undefined && o.trackId !== trackId) ||
+		(o.deviceId !== null && !ok(o.deviceId)) ||
+		typeof o.observationId !== "string" ||
+		!/^\d{1,16}$/.test(o.observationId) ||
+		!ok(o.playId)
+	)
+		return "bad";
+	if (o.account !== uid) return "stale";
+	return {
+		kind: "observed",
+		account: o.account as string,
+		trackId: o.trackId,
+		deviceId: o.deviceId as string | null,
+		observationId: o.observationId,
+		playId: o.playId as string,
+	};
+}
+
+const BAD_TARGET = { error: { code: "bad_request", message: "Ungültige Wiedergabe-Angabe" } };
+const STALE_TARGET = {
+	error: { code: "stale_target", message: "Die Ansicht ist veraltet. Bitte aktualisieren." },
+};
+
 app.post("/api/tracks/:id/thumb", async (c) => {
-	const b = await body<{ value?: number }>(c);
+	const b = (await body<{ value?: number; expected?: unknown }>(c)) ?? {};
 	const v = b.value === 1 ? 1 : b.value === -1 ? -1 : 0;
-	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v));
+	const observed =
+		!!b.expected && typeof b.expected === "object" && "kind" in (b.expected as object);
+	const bound = observed
+		? observedTarget(b.expected, c.var.uid, c.req.param("id"))
+		: occurrence(b.expected);
+	if (bound === "bad") return c.json(BAD_TARGET, 400);
+	if (bound === "stale") return c.json(STALE_TARGET, 409);
+	return unwrap(c, c.var.hub.thumb(c.var.epoch, c.req.param("id"), v, bound));
+});
+
+// A rating from the Verlauf with its receipt: asked again by the page's own
+// id after a lost answer, and taken back exactly (see docs/HISTORY_RATINGS.md).
+app.post("/api/history/ratings", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(c, c.var.hub.rateFromHistory(c.var.epoch, b));
+});
+app.get("/api/history/ratings/:id", (c) => {
+	const basis = c.req.query("basis");
+	return unwrap(
+		c,
+		c.var.hub.historyRatingReceipt(
+			c.var.epoch,
+			c.req.param("id"),
+			c.req.query("track"),
+			basis === undefined ? undefined : Number(basis),
+		),
+	);
+});
+app.post("/api/history/ratings/:id/undo", (c) =>
+	unwrap(c, c.var.hub.undoHistoryRating(c.var.epoch, c.req.param("id"))),
+);
+
+// The answer to a retest ("Nachprüfung"): keep true = "Gern wieder".
+app.post("/api/tracks/:id/retest", async (c) => {
+	const b = await body<{ keep?: unknown; expected?: unknown }>(c);
+	if (typeof b.keep !== "boolean")
+		return c.json({ error: { code: "bad_verdict", message: "Ungültige Antwort" } }, 400);
+	const bound = occurrence(b.expected);
+	if (bound === "bad")
+		return c.json({ error: { code: "bad_request", message: "Ungültige Wiedergabe-Angabe" } }, 400);
+	return unwrap(c, c.var.hub.retestVerdict(c.var.epoch, c.req.param("id"), b.keep, bound));
 });
 
 async function remoteView(
@@ -397,9 +643,23 @@ app.post("/api/guest", async (c) => {
 	);
 });
 
+app.put("/api/guest/devices", async (c) => {
+	const b = await body<{ devices?: { id: string; name: string }[] }>(c);
+	return unwrap(
+		c,
+		c.var.hub.setGuestDevices(c.var.epoch, Array.isArray(b.devices) ? b.devices : []),
+	);
+});
+
 app.post("/api/history/import", async (c) => {
-	const b = await body<{ rows?: unknown; part?: number; parts?: number }>(c);
-	const rows = Array.isArray(b.rows) ? (b.rows as [string, number, number, number][]) : [];
+	const b = await body<{
+		rows?: unknown;
+		part?: number;
+		parts?: number;
+		upload?: unknown;
+		start?: unknown;
+	}>(c);
+	const rows = Array.isArray(b.rows) ? (b.rows as HistoryRow[]) : [];
 	const part = Number(b.part ?? 0);
 	const parts = Number(b.parts ?? 1);
 	if (
@@ -411,7 +671,51 @@ app.post("/api/history/import", async (c) => {
 	) {
 		return c.json({ error: { code: "bad_import", message: "Ungültiger Import-Block" } }, 400);
 	}
-	return unwrap(c, c.var.hub.importHistory(c.var.epoch, rows, part, parts));
+	return unwrap(c, c.var.hub.importHistory(c.var.epoch, rows, part, parts, b.upload, b.start));
+});
+
+// Beginning an import on purpose: the first block names the epoch it began in.
+app.post("/api/history/begin", (c) => unwrap(c, c.var.hub.startImport(c.var.epoch)));
+
+// The listener's selection of the imported history (see core/import-selection).
+app.get("/api/history/selection", (c) => unwrap(c, c.var.hub.historySelection(c.var.epoch)));
+
+// A look under a draft selection: read-only.
+app.post("/api/history/selection/preview", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(
+		c,
+		c.var.hub.previewSelection(c.var.epoch, { enabled: b.enabled, rules: b.rules, query: b.query }),
+	);
+});
+
+// Taking a selection over (also switching the import off or on again).
+app.post("/api/history/selection", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(
+		c,
+		c.var.hub.applySelection(c.var.epoch, {
+			baseRevision: b.baseRevision,
+			enabled: b.enabled,
+			rules: b.rules,
+			dataset: b.dataset,
+		}),
+	);
+});
+
+// Deleting the stored import: `dataset` names the one the listener confirmed.
+app.post("/api/history/delete", async (c) => {
+	const b = await body<{ dataset?: unknown }>(c);
+	return unwrap(c, c.var.hub.deleteImport(c.var.epoch, b.dataset));
+});
+
+// Songs across the listener's own playlists: the count so far, and counting again.
+app.get("/api/playlist-counts", (c) => unwrap(c, c.var.hub.playlistCounts(c.var.epoch)));
+app.post("/api/playlist-counts", (c) => unwrap(c, c.var.hub.countPlaylists(c.var.epoch)));
+
+app.get("/api/history/search", (c) => {
+	const since = Number(c.req.query("since") ?? 0);
+	return unwrap(c, c.var.hub.historySearch(c.var.epoch, Number.isFinite(since) ? since : 0));
 });
 
 app.get("/api/history", (c) => {
@@ -426,7 +730,91 @@ app.get("/api/history", (c) => {
 	);
 });
 
+// A listening sample of one Verlauf row, on a tap only: the row's song and
+// time, nothing else; the answer is Deezer's sample address or why there is
+// none (docs/HISTORY_PREVIEW.md). Never sent to Spotify, never stored.
+app.post("/api/history/preview", async (c) => {
+	const b = await body<{ trackId?: unknown; playedAt?: unknown }>(c);
+	const r = (await c.var.hub.historyPreview(
+		c.var.epoch,
+		b.trackId,
+		b.playedAt,
+	)) as RpcResult<unknown>;
+	if (!r.ok)
+		return c.json(
+			{ error: { code: r.error.code, message: r.error.message } },
+			r.error.status as ContentfulStatusCode,
+		);
+	return c.json(r.value, 200, { "cache-control": "no-store" });
+});
+
+app.post("/api/history/profile", async (c) => {
+	const b = await body<{ profile?: unknown }>(c);
+	return unwrap(c, c.var.hub.setImportedProfile(c.var.epoch, b.profile ?? null));
+});
+
+// Every play of an imported history for the Hörprofil, block by block (see core/listens).
+app.post("/api/history/listens", async (c) => {
+	const b = await body<Record<string, unknown>>(c);
+	return unwrap(
+		c,
+		c.var.hub.importListens(c.var.epoch, {
+			upload: b.upload,
+			importId: b.importId,
+			part: b.part,
+			parts: b.parts,
+			tracks: b.tracks,
+			kind: b.kind,
+			data: b.data,
+		}),
+	);
+});
+
+app.post("/api/profile/genres", (c) => unwrap(c, c.var.hub.estimateGenres(c.var.epoch)));
+
+app.get("/api/profile", (c) => {
+	// A period: from inclusive, to exclusive (ms); from left out = everything.
+	const time = (v: string | undefined) => {
+		const n = v ? Number(v) : Number.NaN;
+		return Number.isFinite(n) && n >= 0 && n <= 8.64e15 ? Math.floor(n) : null;
+	};
+	return unwrap(
+		c,
+		c.var.hub.listeningProfile(c.var.epoch, (c.req.query("tz") ?? "UTC").slice(0, 64), {
+			from: time(c.req.query("from")),
+			to: time(c.req.query("to")),
+			// The period it is compared with starts here (a calendar year: the year before).
+			previousFrom: time(c.req.query("prev")),
+		}),
+	);
+});
+
 app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow(c.var.epoch)));
+
+app.post("/api/likes/sync", (c) => unwrap(c, c.var.hub.likesSync(c.var.epoch)));
+
+app.post("/api/volume", async (c) => {
+	const b = await body<{ deviceId?: unknown; step?: unknown }>(c);
+	return unwrap(c, c.var.hub.changeVolume(c.var.epoch, { deviceId: b?.deviceId, step: b?.step }));
+});
+
+app.post("/api/history/play", async (c) => {
+	const b = await body<{ trackId?: unknown; playedAt?: unknown; deviceId?: unknown }>(c);
+	return unwrap(
+		c,
+		c.var.hub.playFromHistory(c.var.epoch, {
+			trackId: b?.trackId,
+			playedAt: b?.playedAt,
+			deviceId: b?.deviceId,
+		}),
+	);
+});
+
+app.post("/api/continue-after", async (c) => {
+	const b = await body<{ trackId?: unknown }>(c);
+	return unwrap(c, c.var.hub.continueAfter(c.var.epoch, b?.trackId));
+});
+app.delete("/api/continue-after", (c) => unwrap(c, c.var.hub.cancelContinueAfter(c.var.epoch)));
 
 app.delete("/api/account", async (c) => {
 	const r = (await c.var.hub.deleteAccount(c.var.epoch)) as RpcResult<{ stuck: string[] }>;
@@ -440,7 +828,13 @@ app.delete("/api/account", async (c) => {
 app.notFound((c) => c.json({ error: { code: "not_found", message: "Nicht gefunden" } }, 404));
 app.onError((err, c) => {
 	console.error(err);
-	return c.json({ error: { code: "internal", message: "Interner Fehler" } }, 500);
+	// The Durable Object itself refused (its daily limit): say so, not "Interner Fehler".
+	if (isStorageLimit(err))
+		return c.json({ error: { code: STORAGE_LIMIT_CODE, message: storageLimitMessage() } }, 503);
+	return c.json(
+		{ error: { code: "internal", message: "Interner Fehler — bitte nochmal versuchen." } },
+		500,
+	);
 });
 
 export default {

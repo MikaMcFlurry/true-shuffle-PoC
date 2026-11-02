@@ -1,0 +1,14 @@
+
+> true-shuffle@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.2 C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf
+
+SIZE import 435 ms, profile cold 3085 ms, warm 1250 ms, held after 0 MB (no gc)
+
+ Test Files  48 passed (48)
+      Tests  636 passed (636)
+   Start at  14:58:47
+   Duration  98.29s (tests 93%, import 4%, transform 3%)
+

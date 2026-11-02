@@ -1,0 +1,61 @@
+
+> true-shuffle@1.0.0 test:e2e
+> playwright test
+
+[WebServer] (node:127510) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:127526) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:127539) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:127572) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.
+[WebServer] 
+[WebServer] 
+
+Running 39 tests using 1 worker
+
+(node:127630) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 e2e/app.spec.ts:103:2 › a listener's day › shows signed-out users as online after a normal authentication response (405ms)
+  ✓   2 e2e/app.spec.ts:113:2 › a listener's day › signs in with Spotify and saves playlists as stations (2.7s)
+  ✓   3 e2e/app.spec.ts:132:2 › a listener's day › starts a station in Spotify, in true-shuffle's order (2.7s)
+  ✓   4 e2e/app.spec.ts:154:2 › a listener's day › counts song time locally without additional API requests (2.6s)
+  ✓   5 e2e/app.spec.ts:172:2 › a listener's day › skips and bans a song from the transport keys (2.7s)
+  ✓   6 e2e/app.spec.ts:190:2 › a listener's day › shows the station with its round, mix and next songs (1.1s)
+  ✓   7 e2e/app.spec.ts:218:2 › a listener's day › guest mode keeps someone else's music out of the memory (1.0s)
+  ✓   8 e2e/app.spec.ts:232:2 › a listener's day › a personal key likes the playing song from Siri or a widget (1.9s)
+  ✓   9 e2e/app.spec.ts:266:2 › a listener's day › every page reads well on a phone (5.1s)
+  ✓  10 e2e/app.spec.ts:404:2 › a listener's day › a station held paused plays on from its page, never starts over (859ms)
+  ✓  11 e2e/app.spec.ts:432:2 › a listener's day › says clearly when Spotify refuses: no Premium, no device (1.0s)
+  ✓  12 e2e/app.spec.ts:455:2 › a listener's day › signs out and keeps the memory (1.0s)
+  ✓  13 e2e/app.spec.ts:476:2 › calm player › shows current music and ordered queue beside the library (1.0s)
+  ✓  14 e2e/app.spec.ts:487:2 › calm player › keeps saved song, progress and queue across reload and another browser (4.0s)
+  ✓  15 e2e/app.spec.ts:524:2 › calm player › handles offline state, light and dark mobile, keyboard and deliberate new queue (1.3s)
+  ✓  16 e2e/app.spec.ts:644:2 › confirmed Spotify operations and shared usage › shows app-wide observations without exposing identities or inventing remaining capacity (1.3s)
+  ✓  17 e2e/app.spec.ts:702:2 › confirmed Spotify operations and shared usage › holds only confirmed operations and never revives a legacy inferred global gate (873ms)
+  ✓  18 e2e/app.spec.ts:776:2 › confirmed Spotify operations and shared usage › shows tracking failure with a retry and does not turn it into a Spotify block (881ms)
+  ✓  19 e2e/app.spec.ts:806:2 › confirmed Spotify operations and shared usage › requires authentication and request protection for the availability trial (42ms)
+  ✓  20 e2e/capture.spec.ts:3:1 › captures the real Worker player and saved occurrence in both themes (2.0s)
+  ✓  21 e2e/client-playback.spec.ts:142:1 › projects one known successor locally and uses the authoritative occurrence for pause (684ms)
+  ✓  22 e2e/client-playback.spec.ts:171:1 › pause freezes immediately through a slow response, then reconciles a fresh observation (710ms)
+  ✓  23 e2e/client-playback.spec.ts:197:1 › a poll started before pause cannot win; one fresh serialized follow-up confirms it (580ms)
+  ✓  24 e2e/client-playback.spec.ts:230:1 › resume acceptance stays pending through old observations and exposes bounded retry (630ms)
+  ✓  25 e2e/client-playback.spec.ts:258:1 › a rejected pause restores observed playback and provides an explicit retry (543ms)
+  ✓  26 e2e/client-playback.spec.ts:279:1 › device refresh preserves an absent explicit device and the Spotify sentinel routing (767ms)
+  ✓  27 e2e/client-playback.spec.ts:312:1 › projection expires without advancing further and seeks, offline and private observations correct it (745ms)
+  ✓  28 e2e/client-playback.spec.ts:340:1 › identity change discards a pending command and its late response (593ms)
+  ✓  29 e2e/client-playback.spec.ts:358:1 › accepted next keeps the saved occurrence until the actual successor is observed (970ms)
+  ✓  30 e2e/client-playback.spec.ts:381:1 › an absent saved native selection keeps its native route (657ms)
+  ✓  31 e2e/client-playback.spec.ts:410:1 › a lost transport response remains uncertain and never claims pause (623ms)
+  ✓  32 e2e/client-playback.spec.ts:420:1 › opens and returns with a coalesced fresh read while regular polling stays cached (519ms)
+  ✓  33 e2e/client-playback.spec.ts:444:1 › an ambiguous pause error stays frozen until a fresh paused observation confirms it (638ms)
+  ✓  34 e2e/client-playback.spec.ts:476:1 › a reloaded paused session waits for confirmation when its cached Spotify observation still plays (722ms)
+  ✓  35 e2e/client-playback.spec.ts:501:1 › a confirmed native pause stays authoritative over cached matching Spotify playback (512ms)
+  ✓  36 e2e/client-playback.spec.ts:521:1 › an unconfirmed pause with a vanished device allows deliberate saved-song recovery elsewhere (837ms)
+  ✓  37 e2e/client-playback.spec.ts:586:1 › accepted playback confirms on the station page after navigating before the device observation (621ms)
+  ✓  38 e2e/client-playback.spec.ts:633:1 › bounded command confirmation reads stay silent while the app is hidden (555ms)
+  ✓  39 e2e/recovery.spec.ts:11:1 › deliberately recovers an unconfirmed Spotify resume without changing its occurrence (5.2s)
+
+  39 passed (56.2s)

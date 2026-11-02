@@ -1,0 +1,53 @@
+[WebServer] (node:39944) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:32092) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:21080) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\app.spec.ts:319:2 › a listener's day › signs in with Spotify and saves playlists as stations (2.5s)
+  x  2 e2e\app.spec.ts:1603:2 › a listener's day › an older reload failure never replaces a newer failure or answer, and a new import works (17.4s)
+
+
+  1) e2e\app.spec.ts:1603:2 › a listener's day › an older reload failure never replaces a newer failure or answer, and a new import works 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('alert').filter({ hasText: 'ließ sich nicht laden' })
+    Expected substring: "Neuere Antwort"
+    Received string:    "Der aktuelle Stand ließ sich nicht laden: Ältere Antwort: nicht erreichbar. Dein Entwurf bleibt erhalten.Neu laden"
+    Timeout: 15000ms
+
+    Call log:
+      - Expect "toContainText" getByRole('alert').filter({ hasText: 'ließ sich nicht laden' }) with timeout 15000ms
+      - waiting for getByRole('alert').filter({ hasText: 'ließ sich nicht laden' })
+        33 × locator resolved to <div role="alert" class="notice notice--error">…</div>
+           - unexpected value "Der aktuelle Stand ließ sich nicht laden: Ältere Antwort: nicht erreichbar. Dein Entwurf bleibt erhalten.Neu laden"
+
+
+      1617 | 		older.open();
+      1618 | 		await page.waitForTimeout(500);
+    > 1619 | 		await expect(ui.loadFailed).toContainText("Neuere Antwort");
+           | 		                            ^
+      1620 | 		await expect(ui.loadFailed).not.toContainText("Ältere Antwort");
+      1621 | 		// After a newer answer.
+      1622 | 		const stale = r.gate();
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\c898\e2e\app.spec.ts:1619:31
+
+    Error Context: e2e\.artifacts\results\app-a-listener-s-day-an-ol-38750-swer-and-a-new-import-works\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e\.artifacts\results\app-a-listener-s-day-an-ol-38750-swer-and-a-new-import-works\trace.zip
+    Usage:
+
+        npx playwright show-trace e2e\.artifacts\results\app-a-listener-s-day-an-ol-38750-swer-and-a-new-import-works\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e\app.spec.ts:1603:2 › a listener's day › an older reload failure never replaces a newer failure or answer, and a new import works 
+  1 passed (24.5s)
+
+an older reload failure never replaces exit=1

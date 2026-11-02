@@ -1,0 +1,180 @@
+
+ RUN  v5.0.2 C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/c898
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > counts up with taking over, switching off, deleting and importing again — also where the revision stays
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > counts up with taking over, switching off, deleting and importing again — also where the revision stays
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > counts up with taking over, switching off, deleting and importing again — also where the revision stays
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > counts up with taking over, switching off, deleting and importing again — also where the revision stays
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 30 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 152 Wiedergaben"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > is kept when the same hub is opened again, and goes on from there
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > is kept when the same hub is opened again, and goes on from there
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > is kept when the same hub is opened again, and goes on from there
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > is kept when the same hub is opened again, and goes on from there
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 30 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 152 Wiedergaben"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > is kept when the same hub is opened again, and goes on from there
+{"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > stays for reads, unchanged selections, refused or stale requests and a repeated summary
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > stays for reads, unchanged selections, refused or stale requests and a repeated summary
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > stays for reads, unchanged selections, refused or stale requests and a repeated summary
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > stays for reads, unchanged selections, refused or stale requests and a repeated summary
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 30 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 152 Wiedergaben"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > stays for reads, unchanged selections, refused or stale requests and a repeated summary
+{"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 30 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 152 Wiedergaben"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 30 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 152 Wiedergaben"}
+
+stdout | test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+{"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+{"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 30 Songs, 162 einzelne Wiedergaben"}
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 30 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 152 Wiedergaben"}
+
+ ❯ test/hub/history-selection.test.ts (22 tests | 4 failed | 18 skipped) 226ms
+   ❯ the commit number of the import and the selection (4)
+     × counts up with taking over, switching off, deleting and importing again — also where the revision stays 81ms
+     × is kept when the same hub is opened again, and goes on from there 53ms
+     × stays for reads, unchanged selections, refused or stale requests and a repeated summary 33ms
+     × belongs to one listener: another's changes never move it 56ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/history-selection.test.ts > the commit number of the import and the selection > counts up with taking over, switching off, deleting and importing again — also where the revision stays
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ test/hub/history-selection.test.ts:668:19
+    666|   const { h, entries } = await setup();
+    667|   const seen = [commit(h)];
+    668|   expect(seen[0]).toBeGreaterThan(0);
+       |                   ^
+    669|   apply(h, [Y2024]);
+    670|   seen.push(commit(h));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/hub/history-selection.test.ts > the commit number of the import and the selection > is kept when the same hub is opened again, and goes on from there
+AssertionError: expected { revision: 1, …(7) } to match object { Object (commit, revision, ...) }
+(30 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "commit": undefined,
+    "dataset": {
+      "key": "a2NXZiuVqseMVVcv|g1",
+    },
+    "revision": 1,
+  }
+
+ ❯ test/hub/history-selection.test.ts:697:33
+    695|   const stored = h.hub.selectionView();
+    696|   h.restart();
+    697|   expect(h.hub.selectionView()).toMatchObject({
+       |                                 ^
+    698|    commit: stored.commit,
+    699|    revision: stored.revision,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/hub/history-selection.test.ts > the commit number of the import and the selection > stays for reads, unchanged selections, refused or stale requests and a repeated summary
+AssertionError: expected { revision: 1, …(7) } to match object { commit: undefined, revision: 1 }
+(40 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "commit": undefined,
+    "revision": 1,
+  }
+
+ ❯ test/hub/history-selection.test.ts:721:33
+    719|   // The selection in force sent again: nothing stored.
+    720|   apply(h, [Y2024]);
+    721|   expect(h.hub.selectionView()).toMatchObject({ commit: at, revision: …
+       |                                 ^
+    722|   // Refused: an older revision, another or no import named, a deletio…
+    723|   const change = (o: Record<string, unknown>) => () =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/hub/history-selection.test.ts > the commit number of the import and the selection > belongs to one listener: another's changes never move it
+AssertionError: expected { revision: +0, appliedAt: null, …(6) } to match object { commit: undefined, …(2) }
+(30 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "commit": undefined,
+    "dataset": {
+      "key": "pQXHd9drcIb34MVP|g1",
+    },
+    "revision": 0,
+  }
+
+ ❯ test/hub/history-selection.test.ts:764:35
+    762|   a.h.hub.deleteImport(a.h.hub.selectionView().dataset.key);
+    763|   importFiles(a.h, a.entries);
+    764|   expect(b.h.hub.selectionView()).toMatchObject({
+       |                                   ^
+    765|    commit: bView.commit,
+    766|    revision: bView.revision,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 18 skipped (22)
+   Start at  18:39:05
+   Duration  839ms (transform 49%, tests 32%, import 18%, worker 1%)
+
+exit=1

@@ -16,7 +16,9 @@
  *  - favourites repeat only after their cooldown;
  *  - the fresh / favourite / discovery shares follow the mix, and unused
  *    share flows to whatever is still available;
- *  - songs by the same artist are spread apart when the pool allows it.
+ *  - songs by the same artist are spread apart when the pool allows it;
+ *  - with `retestEnabled`, one song early skips keep rare is placed on
+ *    purpose every PROBE_EVERY places (kind "probe", outside the shares).
  */
 
 import {
@@ -25,6 +27,8 @@ import {
 	heardInRound,
 	isBlocked,
 	isFavorite,
+	lastNo,
+	probeDue,
 	stalenessBoost,
 	tasteWeight,
 } from "./memory";
@@ -38,6 +42,10 @@ import {
 	type TrackId,
 	type TrackMemory,
 } from "./types";
+
+/** One retest ("Nachprüfung") every this many places, at the PROBE_AT-th of each. */
+export const PROBE_EVERY = 30;
+export const PROBE_AT = 14;
 
 export interface PoolEntry {
 	id: TrackId;
@@ -105,6 +113,7 @@ export function planQueue(input: PlanInput): PlanResult {
 	const favorites: Candidate[] = [];
 	const nextRound: Candidate[] = [];
 	const memo = new Map<TrackId, TrackMemory>();
+	const candidates = new Map<TrackId, Candidate>();
 
 	const seen = new Set<TrackId>();
 	let poolSize = 0;
@@ -116,6 +125,7 @@ export function planQueue(input: PlanInput): PlanResult {
 		poolSize++;
 		memo.set(entry.id, m);
 		const c: Candidate = { id: entry.id, artistId: entry.artistId };
+		candidates.set(entry.id, c);
 		const cooling = coolingDown(m, now);
 		if (!heardInRound(m, roundStartedAt, policy)) {
 			(cooling ? freshCooling : fresh).push(c);
@@ -133,7 +143,7 @@ export function planQueue(input: PlanInput): PlanResult {
 
 	const freshOrdered = weightedShuffle(
 		fresh,
-		(c) => tasteWeight(mem(c.id), policy) * stalenessBoost(mem(c.id), now),
+		(c) => tasteWeight(mem(c.id), policy, now) * stalenessBoost(mem(c.id), now),
 		rng,
 	);
 	const favoritesOrdered = weightedShuffle(
@@ -141,7 +151,7 @@ export function planQueue(input: PlanInput): PlanResult {
 		(c) => {
 			const m = mem(c.id);
 			const days = m.lastPlayedAt === null ? 60 : (now - m.lastPlayedAt) / DAY_MS;
-			return tasteWeight(m, policy) * (1 + Math.min(1, days / 60));
+			return tasteWeight(m, policy, now) * (1 + Math.min(1, days / 60));
 		},
 		rng,
 	);
@@ -150,11 +160,15 @@ export function planQueue(input: PlanInput): PlanResult {
 		(c) => {
 			const m = mem(c.id);
 			const days = m.lastPlayedAt === null ? 30 : (now - m.lastPlayedAt) / DAY_MS;
-			return tasteWeight(m, policy) * (1 + days / 7);
+			return tasteWeight(m, policy, now) * (1 + days / 7);
 		},
 		rng,
 	);
-	const coolingOrdered = weightedShuffle(freshCooling, (c) => tasteWeight(mem(c.id), policy), rng);
+	const coolingOrdered = weightedShuffle(
+		freshCooling,
+		(c) => tasteWeight(mem(c.id), policy, now),
+		rng,
+	);
 
 	const discoveryCandidates: Candidate[] = [];
 	if (rules.discoveryEnabled) {
@@ -170,6 +184,24 @@ export function planQueue(input: PlanInput): PlanResult {
 		for (const d of ordered) discoveryCandidates.push({ id: d.id, artistId: d.artistId });
 	}
 
+	// Retests ("Nachprüfung"): songs early skips keep rare, played now and then
+	// on purpose; those heard often before come first, then the long unasked.
+	const probes: Candidate[] =
+		rules.retestEnabled && policy !== "consume"
+			? weightedShuffle(
+					[...memo.entries()]
+						.filter(([, m]) => !coolingDown(m, now) && probeDue(m, now))
+						.map(([id]) => ({ ...candidates.get(id)!, overflow: false })),
+					(c) => {
+						const m = mem(c.id);
+						const no = lastNo(m);
+						const months = no === null ? 12 : Math.min(12, (now - no) / (30 * DAY_MS));
+						return (1 + Math.min(50, m.plays)) * (1 + months);
+					},
+					rng,
+				)
+			: [];
+
 	// The fresh lane continues into the next round once this round is used up:
 	// nothing of the next round is ever placed before a song of this round.
 	const lanes: Record<SlotKind, Candidate[]> = {
@@ -180,11 +212,12 @@ export function planQueue(input: PlanInput): PlanResult {
 		],
 		favorite: favoritesOrdered,
 		discovery: discoveryCandidates,
+		probe: probes,
 	};
 
 	const shares = sharesForRules(rules);
-	const taken: Record<SlotKind, number> = { fresh: 0, favorite: 0, discovery: 0 };
-	const kinds: SlotKind[] = ["fresh", "favorite", "discovery"];
+	const taken: Record<SlotKind, number> = { fresh: 0, favorite: 0, discovery: 0, probe: 0 };
+	const kinds: Exclude<SlotKind, "probe">[] = ["fresh", "favorite", "discovery"];
 	const used = new Set<TrackId>();
 	const recentArtists: string[] = [];
 	const slots: PlannedSlot[] = [];
@@ -194,10 +227,25 @@ export function planQueue(input: PlanInput): PlanResult {
 	for (const id of input.exclude ?? []) used.add(id);
 
 	for (let i = 0; slots.length < input.size; i++) {
+		// One retest every PROBE_EVERY places, outside the mix's shares.
+		if (slots.length % PROBE_EVERY === PROBE_AT && lanes.probe.length > 0) {
+			const pick = takeSpaced(lanes.probe, recentArtists, rules.artistSpacing, used);
+			if (pick) {
+				used.add(pick.id);
+				taken.probe++;
+				slots.push({ trackId: pick.id, kind: "probe" });
+				if (rules.artistSpacing > 0) {
+					recentArtists.push(pick.artistId);
+					if (recentArtists.length > rules.artistSpacing) recentArtists.shift();
+				}
+				continue;
+			}
+			lanes.probe = [];
+		}
 		// Deficit round robin: the lane furthest behind its share goes next. A
 		// lane that ran dry hands its share to the others in proportion, so
 		// "Vertraut" without favourites yet does not turn into discoveries.
-		let best: SlotKind | null = null;
+		let best: Exclude<SlotKind, "probe"> | null = null;
 		let bestDeficit = Number.NEGATIVE_INFINITY;
 		const live = kinds.filter((k) => lanes[k].length > 0 && shares[k] > 0);
 		const liveShare = live.reduce((sum, k) => sum + shares[k], 0);

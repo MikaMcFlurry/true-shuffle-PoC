@@ -1,0 +1,16 @@
+
+Running 9 tests using 1 worker
+
+(node:131455) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 e2e/independent-release.spec.ts:143:1 › independent themes, 320px long content, keyboard and 50 locally revealed successors (1.5s)
+  ✓  2 e2e/independent-release.spec.ts:170:1 › independent requested versus accepted versus observed signal and frozen pause clock (475ms)
+  ✓  3 e2e/independent-release.spec.ts:182:1 › independent display projection never sends rating or skip and does not chain (569ms)
+  ✓  4 e2e/independent-release.spec.ts:191:1 › independent offline disables transports while saved queue and rating recovery remain visible (516ms)
+  ✓  5 e2e/independent-release.spec.ts:200:1 › independent accepted play survives route change and settles only on newer actual observation (666ms)
+  ✓  6 e2e/independent-release.spec.ts:211:1 › independent guest and confirmed native pause never borrow cached Spotify active state (396ms)
+  ✓  7 e2e/independent-release.spec.ts:220:1 › independent desktop sender wall materializes when scrolled and can select without replacing saved occurrence (692ms)
+  ✓  8 e2e/independent-release.spec.ts:228:1 › independent definitively refused otherstation keeps prior visible song and persistent error then permits one explicit retry (616ms)
+  ✓  9 e2e/independent-release.spec.ts:241:1 › independent failed notice accountisolation survives real renderedprofile switch (527ms)
+
+  9 passed (6.9s)

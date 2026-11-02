@@ -1,0 +1,24 @@
+{
+  "name": "author-clock-fault-copy",
+  "main": "C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/red640/clock-fault-worker.ts",
+  "compatibility_date": "2026-09-20",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PROBE",
+        "class_name": "ClockProbe"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "probe-v1",
+      "new_sqlite_classes": [
+        "ClockProbe"
+      ]
+    }
+  ]
+}

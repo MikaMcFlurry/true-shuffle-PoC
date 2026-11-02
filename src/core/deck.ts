@@ -186,6 +186,8 @@ export function position(deck: Deck): number | null {
 }
 
 export interface PlayerObservation {
+	/** Provider supplied playlist occurrence offset, when available. */
+	contextOffset?: number;
 	at: number;
 	contextUri: string | null;
 	trackId: TrackId | null;

@@ -1,0 +1,7 @@
+future actual function status PASS
+expired actual function status PASS
+boundary actual function status PASS
+unknown actual function status PASS
+pending actual shared tracker PASS
+recovered actual shared tracker PASS
+6 actual component render cases PASS

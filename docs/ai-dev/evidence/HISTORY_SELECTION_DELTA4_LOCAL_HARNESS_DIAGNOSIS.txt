@@ -1,0 +1,11 @@
+e2e-fix-1/e2e-fix-2 (both kept unchanged): sign-in test fails, landing page shows
+"Spotify hat die Anmeldung nicht bestätigt. Bitte nochmal versuchen."
+Cause: the local adapter copied into lf for these runs was the stale scratch copy
+($S/playwright.local.config.ts) whose persistence is lf/e2e/.artifacts/state under the
+long scratchpad path. Miniflare SQLite files there already reach 228-230 chars before
+the Durable Object id file names (e.g. .../state/v3/do/true-shuffle-e2e-Registry/metadata.sqlite = 229),
+so object databases exceed Windows MAX_PATH and the OAuth callback cannot store the session
+(the same known local cause as earlier rounds). Its cmd cleanup "rmdir e2e.artifactsstate" also
+never matched. Not caused by app code, auth, FakeSpotify, scopes or secrets; nothing of those changed.
+Fix (local only, uncommitted): use the r3 gate adapter (r3/gates/playwright.local.config.ts),
+persistence at the short git-ignored path <main checkout>/e2e/.artifacts/l-lf.

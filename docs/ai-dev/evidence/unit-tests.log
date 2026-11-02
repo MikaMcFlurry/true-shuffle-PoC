@@ -1,0 +1,18 @@
+
+> true-shuffle@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.2 /workspace/true-shuffle-PoC
+
+
+ Test Files  20 passed (20)
+      Tests  325 passed (325)
+   Start at  08:39:34
+   Duration  78.56s (tests 98%, import 1%, transform 1%)
+
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.1.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
+npm notice To update run: npm install -g npm@12.1.0
+npm notice

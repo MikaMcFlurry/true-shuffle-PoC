@@ -1,0 +1,137 @@
+{
+	"config": {
+		"configFile": "e2e/.artifacts/rsr-261016-r6/playwright.fixture.config.ts",
+		"rootDir": "e2e",
+		"projects": [
+			{
+				"id": "",
+				"name": "",
+				"retries": 0,
+				"repeatEach": 1,
+				"testDir": "e2e",
+				"testMatch": ["*.spec.ts"]
+			}
+		]
+	},
+	"suites": [
+		{
+			"title": "r6-fixture.spec.ts",
+			"file": "r6-fixture.spec.ts",
+			"line": 0,
+			"column": 0,
+			"specs": [],
+			"suites": [
+				{
+					"title": "Group B",
+					"file": "r6-fixture.spec.ts",
+					"line": 3,
+					"column": 1,
+					"specs": [
+						{
+							"title": "gamma shows the sheet",
+							"ok": true,
+							"tags": [],
+							"tests": [
+								{
+									"timeout": 90000,
+									"annotations": [],
+									"expectedStatus": "passed",
+									"projectId": "",
+									"projectName": "",
+									"results": [
+										{
+											"workerIndex": 0,
+											"status": "passed",
+											"duration": 10,
+											"errors": [],
+											"retry": 0,
+											"annotations": []
+										}
+									],
+									"status": "expected"
+								}
+							],
+							"id": "f00d0000000000000000-c3c3c3c3c3c3c3c3c3c3",
+							"file": "r6-fixture.spec.ts",
+							"line": 15,
+							"column": 2
+						}
+					]
+				},
+				{
+					"title": "Group A",
+					"file": "r6-fixture.spec.ts",
+					"line": 3,
+					"column": 1,
+					"specs": [
+						{
+							"title": "beta sends the retry",
+							"ok": true,
+							"tags": [],
+							"tests": [
+								{
+									"timeout": 90000,
+									"annotations": [],
+									"expectedStatus": "passed",
+									"projectId": "",
+									"projectName": "",
+									"results": [
+										{
+											"workerIndex": 0,
+											"status": "passed",
+											"duration": 10,
+											"errors": [],
+											"retry": 0,
+											"annotations": []
+										}
+									],
+									"status": "expected"
+								}
+							],
+							"id": "f00d0000000000000000-b2b2b2b2b2b2b2b2b2b2",
+							"file": "r6-fixture.spec.ts",
+							"line": 9,
+							"column": 2
+						},
+						{
+							"title": "alpha keeps its value",
+							"ok": true,
+							"tags": [],
+							"tests": [
+								{
+									"timeout": 90000,
+									"annotations": [],
+									"expectedStatus": "passed",
+									"projectId": "",
+									"projectName": "",
+									"results": [
+										{
+											"workerIndex": 0,
+											"status": "passed",
+											"duration": 10,
+											"errors": [],
+											"retry": 0,
+											"annotations": []
+										}
+									],
+									"status": "expected"
+								}
+							],
+							"id": "f00d0000000000000000-a1a1a1a1a1a1a1a1a1a1",
+							"file": "r6-fixture.spec.ts",
+							"line": 5,
+							"column": 2
+						}
+					]
+				}
+			]
+		}
+	],
+	"errors": [],
+	"stats": {
+		"expected": 3,
+		"skipped": 0,
+		"unexpected": 0,
+		"flaky": 0
+	}
+}

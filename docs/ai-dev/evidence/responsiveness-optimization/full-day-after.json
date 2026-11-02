@@ -1,0 +1,97 @@
+{
+  "simulated": true,
+  "noRealSpotifyRequests": true,
+  "sourceRevision": "30ae6a2d5349e3f37bce18ab39b3c920c5543c35",
+  "profiles": [
+    {
+      "profile": "paused_closed",
+      "simulatedHours": 24,
+      "libraryTracks": 1200,
+      "onboardingRequests": 38,
+      "playingWindowRequests": 0,
+      "totalSpotifyRequests": 269,
+      "counts": {
+        "GET /v1/me/player": 137,
+        "GET /v1/me/player/recently-played": 48,
+        "POST /accounts/api/token": 23,
+        "GET /v1/me/playlists": 2,
+        "PUT /v1/playlists/:id/items": 1,
+        "POST /v1/playlists/:id/items": 2,
+        "GET /v1/artists/:id/albums": 16,
+        "GET /v1/albums/:id": 16,
+        "GET /v1/search": 20,
+        "GET /v1/artists/:id": 4
+      },
+      "pausedWindowSpotifyRequests": 269,
+      "linearScalingEstimate": {
+        "oneUser": 269,
+        "threeUsers": 807,
+        "fiveUsers": 1345
+      },
+      "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+    },
+    {
+      "profile": "four_hours_visible_then_paused_closed",
+      "simulatedHours": 24,
+      "libraryTracks": 1200,
+      "onboardingRequests": 38,
+      "playingWindowRequests": 567,
+      "totalSpotifyRequests": 810,
+      "counts": {
+        "GET /v1/me/player": 441,
+        "GET /v1/me/player/recently-played": 201,
+        "GET /v1/me/tracks": 23,
+        "PUT /v1/playlists/:id/items": 21,
+        "POST /v1/playlists/:id/items": 42,
+        "POST /accounts/api/token": 24,
+        "GET /v1/me/playlists": 2,
+        "GET /v1/artists/:id/albums": 16,
+        "GET /v1/albums/:id": 16,
+        "GET /v1/search": 20,
+        "GET /v1/artists/:id": 4
+      },
+      "pausedWindowSpotifyRequests": 243,
+      "linearScalingEstimate": {
+        "oneUser": 810,
+        "threeUsers": 2430,
+        "fiveUsers": 4050
+      },
+      "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+    },
+    {
+      "profile": "four_hours_closed_then_paused_closed",
+      "simulatedHours": 24,
+      "libraryTracks": 1200,
+      "onboardingRequests": 38,
+      "playingWindowRequests": 244,
+      "totalSpotifyRequests": 487,
+      "counts": {
+        "GET /v1/me/player": 201,
+        "GET /v1/me/player/recently-played": 121,
+        "GET /v1/me/tracks": 20,
+        "PUT /v1/playlists/:id/items": 21,
+        "POST /v1/playlists/:id/items": 42,
+        "POST /accounts/api/token": 24,
+        "GET /v1/me/playlists": 2,
+        "GET /v1/artists/:id/albums": 16,
+        "GET /v1/albums/:id": 16,
+        "GET /v1/search": 20,
+        "GET /v1/artists/:id": 4
+      },
+      "pausedWindowSpotifyRequests": 243,
+      "linearScalingEstimate": {
+        "oneUser": 487,
+        "threeUsers": 1461,
+        "fiveUsers": 2435
+      },
+      "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals."
+    }
+  ],
+  "historyFeed": {
+    "ordinaryHistoryPopulatedBySync": true,
+    "deviceQuotaStopsAllEndpointsForAuditedAccount": false,
+    "deviceQuotaKeepsPlayerHistoryAvailable": true,
+    "newHistoryRecordsDuringKnownCooldown": 10,
+    "elapsedMinutes": 30
+  }
+}

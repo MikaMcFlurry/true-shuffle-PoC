@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "categories": {
+    "docs": ["**/*.md", "docs/**", "handoffs/**", ".impeccable/**"],
+    "lockfile": ["package-lock.json"],
+    "shared": [".github/**", "package.json", "tsconfig*.json", "biome.json", "vite*.ts", "vitest.config.ts", "playwright.config.ts", "wrangler*.jsonc", "worker-configuration.d.ts", "scripts/**"],
+    "app": ["src/**"],
+    "tests": ["test/**", "e2e/**"]
+  },
+  "docs_categories": ["docs"],
+  "full_categories": ["lockfile", "shared"],
+  "full_events": ["workflow_dispatch", "schedule", "merge_group"],
+  "unknown": "full",
+  "jobs": {
+    "checks": { "when_any": ["app", "tests"] },
+    "browser": { "when_any": ["app", "tests"] }
+  }
+}

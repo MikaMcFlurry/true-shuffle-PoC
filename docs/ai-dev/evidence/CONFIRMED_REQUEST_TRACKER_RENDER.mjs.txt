@@ -1,0 +1,20 @@
+import fs from 'node:fs';import vm from 'node:vm';import ts from 'typescript';import assert from 'node:assert/strict';
+const path='/workspace/true-shuffle-PoC/src/client/components/spotify-availability.tsx';
+const now=Date.UTC(2026,8,30,12);class Clock extends Date{static now(){return now}}
+const h=(type,props,...children)=>typeof type==='function'?type({...props,children:children.flat(Infinity)}):({type,props:props||{},children:children.flat(Infinity)});
+const context={exports:{},require:()=>({num:n=>n.toLocaleString('de-DE')}),h,Fragment:'fragment',Date:Clock,Intl,Object,Number};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,jsxFactory:'h',jsxFragmentFactory:'Fragment'}}).outputText,context);
+const text=t=>typeof t==='string'||typeof t==='number'?String(t):(t?.children||[]).map(text).join(' ');
+const nodes=t=>[t,...(t?.children||[]).filter(x=>x&&typeof x==='object').flatMap(nodes)];
+for(const c of [{name:'future',until:now+30363000,disabled:true},{name:'expired',until:now-1,disabled:false},{name:'boundary',until:now,disabled:false},{name:'unknown',until:null,disabled:false}]){
+ const diagnostics={operationCooldowns:[{operation:'GET /me/player/devices',until:c.until,kind:'quota',reason:'QUOTA_EXCEEDED',retryAfter:c.until===null?null:'30363'}],availability:{testedAt:now,outcomes:{devices:{state:'available',status:200},player:{state:'not_tested'},history:{state:'not_tested'}},controls:'untested'}};
+ const tree=context.exports.SpotifyFunctionStatus({diagnostics,onRetry:()=>{},busy:false});
+ const button=nodes(tree).find(x=>x.type==='button'&&text(x).includes('Freigabe prüfen'));assert.equal(button.props.disabled,c.disabled,c.name);
+ const copy=text(tree);assert.match(copy,/kein Countdown/);assert.match(copy,/Starten, Pausieren und Übertragen wurden nicht geprüft/);if(c.name==='expired'||c.name==='boundary')assert.match(copy,/Wartefrist ist abgelaufen/);if(c.name==='future')assert.match(copy,/8 Stunden, 26 Minuten, 3 Sekunden/);if(c.name==='unknown')assert.match(copy,/keine Reset-Zeit/);console.log(c.name+' actual function status PASS');
+}
+const empty={sent:0,read:0,write:0,refresh:0,blocked:0,quota:0,rate:0,network:0};
+for(const recovered of [false,true]){
+ const report={generatedAt:now,startedAt:now-1000,retentionHours:720,listenerCapacity:5,registeredListeners:3,observedListeners:2,overflowObserved:true,totals:{...empty,read:3,refresh:1,blocked:9,quota:1},hours:[{hour:Math.floor(now/3600000),totals:{...empty,read:3,refresh:1,blocked:9,quota:1}}],operations:[],listeners:[{listener:'Nutzer 1',totals:empty}],episodes:[{id:1,listener:'Nutzer 1',operation:'GET /me/player/devices',firstFailureAt:now-500,lastFailureAt:now-500,firstSuccessAt:recovered?now:null,reason:'QUOTA_EXCEEDED',retryAfter:'60',earliestRetryAt:now+60000,attempts:recovered?2:1,lastAttemptAt:now,lastStatus:recovered?200:429}]};
+ const copy=text(context.exports.SpotifyUsageTracker({report}));assert.match(copy,/720\s+Stundenblöcke/);assert.match(copy,/Andere Apps und deren Anfragen/);assert.match(copy,/ältere Daten fehlen/);assert.match(copy,/genauen Reset-Zeitpunkt/);assert.match(copy,recovered?/Erfolg danach beobachtet/:/Noch kein anschließender Erfolg/);assert.match(copy,/Token-Erneuerung/);assert.match(copy,/lokal zurückgehalten/);console.log((recovered?'recovered':'pending')+' actual shared tracker PASS');
+}
+console.log('6 actual component render cases PASS');

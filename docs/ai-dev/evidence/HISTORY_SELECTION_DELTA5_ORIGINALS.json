@@ -1,0 +1,21 @@
+{
+ "sealed_checked": 206,
+ "sealed_ok": 206,
+ "problems": [],
+ "read_files_sha256_now": {
+  "FINAL_REPAIR_HANDOFF.txt": "dbb984ffc2a0ea2135d2f2e9ea4b5ebeaedbbd4aa9651d20744eedb365b0aba6",
+  "COMMIT_ERROR_ORDER_REVIEW.txt": "6496a25438b9298c320aa7e938f07c9a018c2cadec0c08fa05baced8255b15ed",
+  "COMMIT_ERROR_ORDER_REVIEW.json": "ddf057e3fd0e253d89fb2e96f66a8d0a2051e55d617cf563c9c8260091ec4eb4",
+  "finding-D4-R8-MUTATION-ERROR.txt": "1336b74af6da3f0f3f17d4000d8c2e929e1b04b3e40e7df993716a6f95370b81",
+  "finding-D4-CLOCK-ATOMIC.txt": "f1f7a24f9c73c98a13e762b5760aa68cb17434b70a3bcd9213477842f7446f34",
+  "adjacent-order.spec.ts": "37b2a2a923877a92a9f9d6506d65dd81ce9d9e3940863d0bb59a0fdf02811e52",
+  "mutation-error-confirm.corrected.spec.ts": "f1ea6ca063d9cffa49a49a3915f85ac611ced21666fcb83bed50ad9f47f8f30c",
+  "clock-fault-worker.ts": "b9e7a42b90c890026eaabc24e8da5a0724be95137b7bf42746769a06332a41ec",
+  "clock-fault.spec.ts": "05a9d3e901d281a9eb9be12fdbb7458d82d3606a3a4672bfea4d0687fcf1f1ff",
+  "clock-shell-worker.ts": "c4fdbdd5101dfa5d87e24d0930081d673100d115021c06440a6bb661e818370f",
+  "clock-shell.spec.ts": "5620f738683f6812ba79003e6a59a6864d459e526b4ced47204b6b767ef6dd8b",
+  "CLOCK_FAULT_SCOPE.txt": "ca0989175e8433f4aa5076aaf4f550e67ecb519e0982abccad4cfd1b8e06b81c",
+  "CLOCK_SHELL_SCOPE.txt": "c708d5cafe789b82b26a8681fcae36bcec7a81c0f5a0ed9767f962c894bbdaf2",
+  "ARTIFACT_HASHES.json": "70087b3d244f62f1563605b0973d141f24ad40fd3c96cdbef7d5c5839224a0ef"
+ }
+}

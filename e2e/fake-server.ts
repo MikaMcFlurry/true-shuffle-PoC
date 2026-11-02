@@ -159,6 +159,7 @@ setInterval(() => {
 	last = now;
 }, 1000);
 
+let failPlay = false;
 const server = createServer(async (req, res) => {
 	const url = `http://127.0.0.1:${PORT}${req.url}`;
 	const chunks: Buffer[] = [];
@@ -169,21 +170,81 @@ const server = createServer(async (req, res) => {
 		const u = new URL(url);
 		const user = fake.user("mika");
 		switch (u.pathname) {
+			case "/__control/fail-play":
+				failPlay = u.searchParams.get("on") === "1";
+				break;
 			case "/__control/advance":
 				fake.advance(Number(u.searchParams.get("ms") ?? 60_000), "mika");
 				break;
 			case "/__control/skip":
 				fake.skip("mika");
 				break;
+			case "/__control/finish": {
+				// The song playing ends now: exactly its rest is heard (played_at = now).
+				const id = fake.current("mika");
+				const track = id ? fake.tracks.get(id) : undefined;
+				if (track) fake.advance(track.durationMs - user.player.progressMs, "mika");
+				break;
+			}
+			case "/__control/play-song": {
+				// ?id=…: the listener plays this one song in Spotify, outside any station;
+				// &context=…: from that album or playlist (none: no context).
+				const id = u.searchParams.get("id");
+				if (id && fake.tracks.has(id)) {
+					fake.playSong("mika", id);
+					user.player.contextUri = u.searchParams.get("context");
+				}
+				break;
+			}
 			case "/__control/pause":
 				fake.pause("mika");
 				break;
+			case "/__control/resume":
+				user.player.isPlaying = true;
+				break;
+			case "/__control/position": {
+				const ms = Number(u.searchParams.get("ms"));
+				if (Number.isFinite(ms) && ms >= 0) user.player.progressMs = ms;
+				if (u.searchParams.get("paused") === "1") fake.pause("mika");
+				break;
+			}
 			case "/__control/smart-shuffle":
 				user.player.smartShuffle = u.searchParams.get("on") === "1";
 				break;
 			case "/__control/premium":
 				user.premium = u.searchParams.get("on") === "1";
 				break;
+			case "/__control/deezer": {
+				// Listening samples (docs/HISTORY_PREVIEW.md): ?fail=<status>, ?none=<song id>,
+				// ?twin=<song id> (a second, different recording that fits equally, album and all), ?reset=1.
+				const fail = u.searchParams.get("fail");
+				const none = u.searchParams.get("none");
+				const twin = u.searchParams.get("twin");
+				if (u.searchParams.get("reset") === "1") {
+					fake.deezerFail = null;
+					fake.deezerNoPreview.clear();
+					fake.deezerExtra = [];
+				}
+				if (fail) fake.deezerFail = { status: Number(fail) };
+				if (none) fake.deezerNoPreview.add(none);
+				const t = twin ? fake.tracks.get(twin) : undefined;
+				if (t)
+					fake.deezerExtra.push({
+						id: 900_000 + fake.deezerExtra.length,
+						readable: true,
+						title: t.name,
+						title_short: t.name,
+						title_version: "",
+						isrc: `TWIN${fake.deezerExtra.length}`,
+						link: "https://www.deezer.com/track/900000",
+						duration: Math.round(t.durationMs / 1000),
+						preview:
+							"https://cdnt-preview.dzcdn.net/api/1/1/t/w/i/n/x.mp3?hdnea=exp=9999999999~acl=/t*~hmac=fake",
+						artist: { name: t.artistName },
+						album: { title: t.albumName }, // e.g. a reissue: same album, new ISRC
+					});
+				break;
+			}
 			case "/__control/devices": {
 				// ?none=1: no devices; ?name=…: the first device carries that name.
 				const name = u.searchParams.get("name");
@@ -199,8 +260,21 @@ const server = createServer(async (req, res) => {
 			context: user.player.contextUri,
 			playing: user.player.isPlaying,
 			shuffle: user.player.shuffle,
+			progressMs: user.player.progressMs,
+			index: user.player.index,
+			calls: fake.calls.length,
 			recent: user.recent.length,
+			// ?since=N on /__control/calls: every request to the stand-in from N on.
+			...(u.pathname === "/__control/calls"
+				? { log: fake.calls.slice(Number(u.searchParams.get("since") ?? 0)) }
+				: {}),
 		});
+	} else if (failPlay && req.method === "PUT" && new URL(url).pathname === "/v1/me/player/play") {
+		failPlay = false;
+		response = Response.json(
+			{ error: { status: 503, message: "Synthetic ambiguous play failure" } },
+			{ status: 503 },
+		);
 	} else {
 		response = await fake.handle(
 			new Request(url, {

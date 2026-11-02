@@ -38,6 +38,35 @@ import {
 } from "../../core/deck";
 import { fromRow, type HistoryRow } from "../../core/history";
 import {
+	applyOverrides,
+	artistKeys,
+	cleanSelection,
+	defaultSelection,
+	type ImportSelection,
+	type InspectGroup,
+	type InspectQuery,
+	type InspectSort,
+	type InspectStatus,
+	inspectImport,
+	matcher,
+	partialTracks,
+	type SelectionCounts,
+	SelectionError,
+	type SelectionResult,
+	sameSelection,
+	selectImport,
+} from "../../core/import-selection";
+import {
+	countsAsPlay,
+	isEarlySkip,
+	isListenRow,
+	isListenTrack,
+	LISTEN_FLAG,
+	LISTEN_PAGE,
+	type ListenRow,
+	type ListenTrack,
+} from "../../core/listens";
+import {
 	coolingDown,
 	heardInRound,
 	type ImportedStats,
@@ -45,6 +74,7 @@ import {
 	mergeMemory,
 	RECENT_GUARD_MS,
 } from "../../core/memory";
+import { type ListenEvent, localTimes, periodProfile } from "../../core/period-profile";
 import { type DiscoveryEntry, type PoolEntry, planQueue } from "../../core/planner";
 import type { Rng } from "../../core/random";
 import {
@@ -63,14 +93,31 @@ import {
 } from "../../core/types";
 import type {
 	AppState,
+	ContinueAfterView,
 	DeviceView,
 	HistoryEntry,
+	HistoryRateAnswer,
+	HistoryRatingLookup,
+	HistoryRatingReceipt,
+	HistorySearchAnswer,
+	HistorySelectionView,
+	ImportedProfile,
 	JobView,
+	LikesSyncState,
+	LikesView,
+	ListeningProfile,
 	NowPlaying,
+	ObservedPlayer,
+	ObservedSkip,
+	ObservedTarget,
 	PlayErrorCode,
+	PlaylistCount,
+	PlaylistCountsView,
 	PlaylistView,
 	PlayResult,
 	RemoteAction,
+	SelectionPreview,
+	SongFacts,
 	StationDetail,
 	StationKind,
 	StationSource,
@@ -82,15 +129,28 @@ import { type Keys, randomToken } from "../lib/crypto";
 import type { SqlDb } from "../lib/sql";
 import {
 	type Fetcher,
+	publicCooldown,
 	RequestBudget,
+	SPOTIFY_COOLDOWN_SCOPES,
 	SpotifyClient,
+	type SpotifyCooldown,
+	type SpotifyCooldownScope,
 	type SpotifyEndpoints,
 	SpotifyError,
+	type SpotifyRequestMetric,
 	type SpotifyTokens,
 	type TokenStore,
+	validArtistAlbumsProbe,
 } from "../spotify/client";
 import type { SpPlaybackState, SpTrack } from "../spotify/types";
 import { type AiRunner, type DiscoveryState, discoverStep } from "./discovery";
+import {
+	estimateGenres,
+	GENRE_EVERY_MS,
+	type GenreAnswer,
+	type GenreEstimate,
+	type GenreRequest,
+} from "./genres";
 import {
 	artistLine,
 	PAGE_SIZE,
@@ -100,6 +160,12 @@ import {
 	sourceKey,
 	toPoolEntry,
 } from "./library";
+import {
+	foregroundObservationDeadline,
+	MAX_RECENT_INTERVAL_MS,
+	observationDeadline,
+	pausedObservationPace,
+} from "./observation-policy";
 import { migrate } from "./schema";
 
 // ---------------------------------------------------------------------------
@@ -163,8 +229,12 @@ export const MAX_STATIONS = 30;
 /** How far back a play may arrive late in recently-played and still count. */
 const LATE_PLAY_WINDOW_MS = 24 * HOUR_MS;
 /** Single plays are kept this long (memory keeps the totals for good). */
-const PLAYS_KEEP_MS = 180 * DAY_MS;
-const PRUNE_PER_DAY = 500;
+/** The lanes a play may be stamped with (see `laneOf`). */
+/** How long a lane note waits for its play: pauses may stretch a play over hours. */
+const LANE_NOTE_MS = 2 * DAY_MS;
+const LANES: ReadonlySet<SlotKind> = new Set<SlotKind>(["fresh", "favorite", "discovery", "probe"]);
+/** Slack between Spotify's stamp and our clock when a listing says a song is over. */
+const LISTED_SLACK_MS = 15_000;
 
 /**
  * How long a player that last played a station may still hold (a loaded
@@ -174,10 +244,27 @@ const PRUNE_PER_DAY = 500;
  */
 const HOLD_WATCH_MS = 36 * HOUR_MS;
 const CONTINUE_WITHIN_MS = HOLD_WATCH_MS;
+/** P1: how long after the last activity a turned-down song further on keeps the 20 s player look. */
+const HELD_ANYWHERE_QUICK_MS = 30 * MINUTE_MS;
 
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
+/** A look older than this (or failed since) says nothing about what plays now (NP06). */
+const OBSERVED_FRESH_MS = 3 * MINUTE_MS;
+/**
+ * A start or skip Spotify never confirmed stops holding the saved place after
+ * this long: an unanswered command must not freeze the queue until the next
+ * start, which then replays from wherever it froze.
+ */
+const PENDING_EXPIRE_MS = 5 * MINUTE_MS;
+/**
+ * How long after a play counted from the looks Spotify's listing of the same
+ * song is still that play, not a second one.
+ */
+const SAME_PLAY_SLACK_MS = 10 * MINUTE_MS;
 /** How old a look may be to say which song was playing as guest mode went off. */
+/** How long one look at a guest device keeps its guest time open (looks come every ≤ 10 min). */
+const GUEST_DEVICE_HOLD_MS = 15 * MINUTE_MS;
 const GUEST_TAIL_FRESH_MS = 2_000;
 /** How long after a guest time its last play is followed. */
 const GUEST_FOLLOW_MS = 2 * DAY_MS;
@@ -206,6 +293,56 @@ const LEGACY_DECK_NAME_PREFIX = "True Shuffle · ";
 const DECK_DESCRIPTION = (name: string) =>
 	`Dein true-shuffle-Sender „${name}“. Einfach abspielen — Shuffle bleibt aus. true-shuffle befüllt diese Playlist automatisch neu.`;
 const DISCOVERIES_NAME = `${DECK_NAME_PREFIX}Entdeckungen`;
+/** P4 (E3): the Kassette and the private Spotify playlist of every thumb up. */
+export const LIKES_NAME = "TrueShuffle Likes";
+/** S1: at most this many plays go to the search at once (newest first). */
+const HISTORY_SEARCH_MAX_PLAYS = 20_000;
+
+interface PlayRow {
+	played_at: number;
+	track_id: string;
+	meta: string | null;
+	station_id: number | null;
+	ignored: number;
+	lane: string | null;
+}
+const LIKES_SOURCE = "likes";
+const LIKES_DESCRIPTION =
+	"Jeder Song, dem du in true-shuffle einen Daumen hoch gegeben hast, einmal. true-shuffle hält sie aktuell.";
+/** P5: an armed „Nach diesem Song fortsetzen“ gives up after this (a song on repeat, a long mix). */
+const CONTINUE_AFTER_MAX_MS = 45 * MINUTE_MS;
+/** A song seen playing to within this of its end, then gone, counts as ended. */
+const CONTINUE_AFTER_END_SLACK_MS = 20_000;
+/** A song seen with at most this much progress right after the end just began on its own. */
+const CONTINUE_AFTER_NEW_SONG_MS = 30_000;
+/** The Likes playlist is made again at most this often, and never this soon after it was made. */
+const LIKES_REMAKE_GAP_MS = 24 * HOUR_MS;
+const LIKES_FRESH_MS = 10 * MINUTE_MS;
+
+interface ContinueAfter {
+	stationId: number;
+	sessionId: string;
+	trackId: TrackId;
+	deviceId: string | null;
+	armedAt: number;
+	/** A look saw the song left: the alarm resumes. */
+	due?: boolean;
+	/** The last look at the song itself (whether it ran to its end). */
+	seen?: { playing: boolean; progressMs: number; durationMs: number; at: number };
+}
+
+/** Playlist writes per step of the Likes sync (each takes one of the invocation's requests). */
+const LIKES_SYNC_WRITES_PER_STEP = 8;
+/** A change waits this long, so a few thumbs in a row become one write to Spotify. */
+const LIKES_SYNC_DELAY_MS = 20_000;
+
+/** Every song with a thumb up here, in the order they got it (kv 'likes'). */
+interface LikesList {
+	v: 1;
+	/** Bumped on every change, so a sync under way notices one (absent before it had any). */
+	rev?: number;
+	items: { id: TrackId; at: number; meta?: PackedTrack }[];
+}
 const DISCOVERIES_DESCRIPTION =
 	"Neuentdeckungen, die dir in true-shuffle gefallen haben. Wird automatisch ergänzt.";
 
@@ -218,6 +355,9 @@ export interface HubEnv {
 	anthropicModel: string;
 }
 
+/** Whether a statement comes from a hub (tests tell their own writes apart by it). */
+export const hubSql = { depth: 0 };
+
 export interface HubDeps {
 	sql: SqlDb;
 	fetch: Fetcher;
@@ -228,6 +368,44 @@ export interface HubDeps {
 	alarms: { set(at: number): Promise<void>; get(): Promise<number | null> };
 	ai: AiRunner | null;
 	wipe?: () => Promise<void>;
+	sharedSpotify?: {
+		getOperationSnapshot?(
+			operation: string,
+		): Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
+		setOperationCooldown?(cooldown: SpotifyCooldown): Promise<number>;
+		finishOperation?(operation: string, revision: number): Promise<void>;
+		recordRequest?(metric: SpotifyRequestMetric): Promise<void>;
+		getCooldown(scope?: SpotifyCooldownScope): Promise<SpotifyCooldown | null>;
+		getSnapshot(
+			scope?: SpotifyCooldownScope,
+		): Promise<{ revision: number; cooldown: SpotifyCooldown | null }>;
+		setCooldown(value: SpotifyCooldown): Promise<number>;
+		quarantineLegacyGlobal?(
+			expected: SpotifyCooldown,
+			revision: number,
+		): Promise<{ quarantined: boolean; globalRevision: number; catalogRevision: number }>;
+		beginRecheck(scope?: SpotifyCooldownScope): Promise<boolean>;
+		finishRecheck(success: boolean, scope?: SpotifyCooldownScope): Promise<void>;
+	};
+}
+
+export interface SpotifyAvailabilityExperiment {
+	testedAt: number;
+	cached?: boolean;
+	outcomes: Record<
+		"devices" | "player" | "history",
+		{
+			state: "available" | "held" | "failed" | "not_tested";
+			status?: number;
+			kind?: string;
+			reason?: string;
+			retryAfter?: string | null;
+		}
+	>;
+	controls: "untested";
+	catalog: "held" | "untested";
+	stopped: boolean;
+	devices?: DeviceView[];
 }
 
 interface StationRow {
@@ -257,7 +435,64 @@ interface MemoryRow {
 	last_skipped_at: number | null;
 	consumed_at: number | null;
 	thumb: number;
+	/** Answer to a retest: 1 "Gern wieder", -1 "Eher nicht" (schema v7). */
+	verdict?: number | null;
+	verdict_at?: number | null;
 }
+
+/**
+ * Everything one rating changed in stored data (see `applyThumb`): enough to
+ * put back exactly that, and to see what changed again since.
+ */
+interface ThumbEffects {
+	trackId: TrackId;
+	value: -1 | 0 | 1;
+	prev: -1 | 0 | 1;
+	at: number;
+	/** The song had no memory row: the rating made it. */
+	created: boolean;
+	/** Its memory row right after, the rating aside. */
+	rowAfter: string;
+	/** Every discovery row of the song it rewrote, before and after. */
+	discoveries: {
+		station: number;
+		before: { status: string; updated_at: number };
+		after: { status: string; updated_at: number };
+		/** The whole row right after: anything changed since (even in the same millisecond) shows. */
+		row: string;
+	}[];
+	/** Station bans it lifted ("Favorit"). */
+	bans: { station: number; at: number }[];
+	/** Decks whose former-version watch list it extended ("Nie wieder"), at their version then. */
+	formerOff: { station: number; writtenAt: number; plan: string }[];
+	/** Stations it asked to plan anew. */
+	dirtied: number[];
+	/** It put the song on the way into the Spotify discoveries playlist (a job none was waiting before). */
+	keepJob: boolean;
+	/** That job's own stamps: a job replaced or touched since is not this one any more. */
+	keepJobAt?: { created: number; updated: number };
+}
+
+/** A rating from the Verlauf with what it changed (see HistoryRatingReceipt). */
+interface RatingReceipt extends Omit<HistoryRatingReceipt, "lasting"> {
+	effects: ThumbEffects;
+	/** A song already handed to the Spotify discoveries playlist when it was taken back. */
+	keptOut?: boolean;
+}
+
+/**
+ * Every rating write counts up `seq`; `touched` holds the latest one of the
+ * 500 songs rated last, `floor` the newest number that fell out of it (an
+ * upper bound for every song not listed).
+ */
+interface RatingClock {
+	seq: number;
+	floor: number;
+	touched: Record<string, number>;
+}
+
+const RATING_TOUCHED_MAX = 500;
+const RATING_RECEIPTS_MAX = 100;
 
 interface JobRow {
 	key: string;
@@ -308,12 +543,69 @@ interface SeenPlay {
 	end: number;
 	contextUri: string | null;
 	track: PackedTrack;
+	/**
+	 * Still on the player when counted, its rest unplayed (default: by its
+	 * duration). Only such a play may be listed minutes later — after a pause.
+	 */
+	open?: boolean;
+}
+
+/**
+ * A play counted from the looks; Spotify's listing of it is not a second play.
+ * Up to `to` any listing of the song is it (the original window). Up to
+ * `until` only a listing in the same context, before any other song was heard
+ * and before Spotify listed it at all: a pause can delay the end of a play
+ * that was still on, never that of one that was over. Entries written before
+ * `until` existed have the original window only.
+ */
+interface SeenEntry {
+	id: TrackId;
+	from: number;
+	to: number;
+	at?: number;
+	ctx?: string | null;
+	until?: number;
+	listed?: boolean;
+}
+
+/** A song seen starting on a station, with its lane (see `noteLane`). */
+interface LaneNote {
+	station: number;
+	id: TrackId;
+	/** The deck's one reason for the song; null once a deck gave it another (or several). */
+	kind: SlotKind | null;
+	seenAt: number;
 }
 
 interface PlayerSnapshot {
 	obs: PlayerObservation | null;
 	track: PackedTrack | null;
-	device: { id: string | null; name: string; restricted: boolean } | null;
+	device: {
+		id: string | null;
+		name: string;
+		restricted: boolean;
+		/** P8: absent in snapshots stored before 1.3.0. */
+		volume?: number | null;
+		supportsVolume?: boolean;
+	} | null;
+	repeat?: SpPlaybackState["repeat_state"];
+	at: number;
+}
+
+/**
+ * A "next" sent for one observed play (NP06), held until a look shows that
+ * play over: accepted, unclear or lost, it is never sent again for the same
+ * play — from "Weiter", "Nie wieder", a reload or another tab alike. A clear
+ * refusal by Spotify frees it (nothing happened). A look showing no player,
+ * or the play on another device, does not show it over: back on that device,
+ * it holds again. One per device (stored as a list): the play on another
+ * device is its own target, and its "next" leaves this one in place.
+ */
+interface ObservedNextSent {
+	account: string;
+	trackId: TrackId;
+	deviceId: string | null;
+	playId: string;
 	at: number;
 }
 
@@ -387,8 +679,20 @@ interface GuestPeriod {
 	 * the first one listed after the end has been taken as the guest's.
 	 */
 	firstTaken?: true;
+	/**
+	 * Opened because a guest device (`guest_devices`) was seen playing: held
+	 * open while looks keep seeing it, ended when they see another device or
+	 * nothing playing. A period opened by hand has none.
+	 */
+	device?: string;
 	from: number;
 	to: number;
+}
+
+/** A Spotify device whose music never counts, as if guest mode were on. */
+export interface GuestDevice {
+	id: string;
+	name: string;
 }
 
 /**
@@ -446,25 +750,197 @@ export class HubError extends Error {
 
 // ---------------------------------------------------------------------------
 
+/** Bounds of one imported history: a heavy listener's decade fits well within. */
+const LISTEN_MAX_SONGS = 100_000;
+const LISTEN_MAX_ROWS = 300_000;
+const LISTEN_MAX_PARTS = 400;
+
+/** Imported plays held compact in memory (see `listenData`). */
+interface ListenColumns {
+	tracks: ListenTrack[];
+	rows: number;
+	at: Uint32Array;
+	track: Uint32Array;
+	ms: Uint32Array;
+	/** Flags and platform, two bytes a play. */
+	meta: Uint8Array;
+}
+
+/** The current imported plays (kv 'listens', see `importListens`). */
+interface ListenMeta {
+	gen: number;
+	at: number;
+	/**
+	 * The upload of song totals these plays belong to (see importHistory);
+	 * absent or null in plays stored by an app from before that did not name it.
+	 */
+	importId?: string | null;
+	from: number | null;
+	to: number | null;
+	rows: number;
+	plays: number;
+	tracks: number;
+}
+
+/** An upload of imported plays under way (kv 'listens_upload'). */
+interface ListenUpload {
+	/** Every block of an upload carries this id; a block of another upload is refused. */
+	id: string;
+	/** The upload of song totals it belongs to, as its first block named it. */
+	importId?: string | null;
+	gen: number;
+	parts: number;
+	tracks: number;
+	next: number;
+	/** Songs received so far; plays come only once all of them are in. */
+	songs: number;
+	rows: number;
+	/** The latest play so far (seconds): plays come oldest first. */
+	lastSec: number;
+}
+
+/** The listener's selection of the import in force (kv 'history_selection'). */
+interface AppliedSelection extends ImportSelection {
+	revision: number;
+	appliedAt: number | null;
+}
+
+/**
+ * What the selection in force changes in the song totals (kv
+ * 'history_effective'): computed for one revision of the selection over one
+ * stored import (`dataset`), kept in hist_effective under `gen`.
+ */
+interface EffectiveMeta {
+	gen: number;
+	revision: number;
+	dataset: string;
+	at: number;
+	counts: SelectionCounts | null;
+	/** Why it could not be computed: then the import counts for nothing. */
+	error?: string;
+}
+
+/** An upload of song totals under way (kv 'hist_upload', see importHistory). */
+interface HistUpload {
+	id: string;
+	parts: number;
+	next: number;
+}
+
+/** A count of songs across the listener's own playlists (kv 'playlist_counts'). */
+interface PlaylistCountsMeta {
+	state: "running" | "done";
+	startedAt: number;
+	finishedAt: number | null;
+	listAt: number | null;
+	/** Own playlists to read, decided once the list was fresh; null until then. */
+	targets: string[] | null;
+	failed: { id: string; name: string; reason: string }[];
+	unclear: { id: string; name: string }[];
+	trueShuffle: number;
+	foreign: number;
+	/**
+	 * The playlist list this count used was not read in full for it (the walk
+	 * failed or was given up): own playlists may be missing, so no count is
+	 * complete. Absent in counts from before this was kept.
+	 */
+	listIncomplete?: boolean;
+	/** The list was to be read again for this count (it was older than ten minutes). */
+	needList?: boolean;
+}
+
+interface PlaylistCountsState {
+	phase?: "wait" | "read";
+	i?: number;
+	offset?: number;
+}
+
+/**
+ * One occurrence of a song in a saved queue: what an answer given on Home is
+ * about (CTO playback boundary, 2026-10-15). See `thumb` and `skipOccurrence`.
+ */
+export interface Occurrence {
+	sessionId: string;
+	entryId: string;
+}
+
+/** A note of spareRunningPlay: the song, when, and the saved queue entry then playing it. */
+interface SpareNote {
+	id: TrackId;
+	at: number;
+	sessionId?: string;
+	entryId?: string;
+}
+
+export interface SavedSession {
+	sessionId: string;
+	stationId: number;
+	orderRevision: number;
+	entryIds: string[];
+	currentIndex: number;
+	progressMs: number | null;
+	observedAt: number | null;
+	playbackEpoch: number;
+	contextUri: string;
+	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
+	sequence?: number;
+	controller?: "native" | "spotify";
+	pending: {
+		operationId: string;
+		kind: "resume" | "publish" | "next";
+		deviceId?: string | null;
+		phase?: "prepared" | "submitted";
+		startedAt?: number;
+	} | null;
+}
+
 export class HubCore {
 	private readonly db: SqlDb;
 	private sourceCache = new Map<string, PackedTrack[]>();
 	private histCache: Map<TrackId, ImportedStats> | null = null;
+	private rawHistCache: Map<TrackId, ImportedStats> | null = null;
+	/** What the selection in force makes of the import, by revision and data (see selectionView). */
+	private countsCache: { key: string; counts: SelectionCounts | null } | null = null;
+	private playlistCountCache: { map: Map<TrackId, number>; complete: boolean } | null = null;
 	private likedCache: Set<TrackId> | null = null;
 	private indexCache: Map<TrackId, PackedTrack> | null = null;
 
 	constructor(private readonly d: HubDeps) {
 		const raw = d.sql;
 		const cache = this.cache;
+		// A transaction within one runs as part of it: the outer one decides.
+		let depth = 0;
+		const transaction = <R>(fn: () => R): R => {
+			if (depth > 0) return fn();
+			depth++;
+			try {
+				return raw.transaction(fn);
+			} catch (err) {
+				// Rolled back: what this instance remembers may not be stored.
+				cache.kv.clear();
+				cache.stations = null;
+				throw err;
+			} finally {
+				depth--;
+			}
+		};
 		// Every write to the stations table drops the cached list of stations.
+		const own = <R>(fn: () => R): R => {
+			hubSql.depth++;
+			try {
+				return fn();
+			} finally {
+				hubSql.depth--;
+			}
+		};
 		this.db = {
-			all: (q, ...p) => raw.all(q, ...p),
-			first: (q, ...p) => raw.first(q, ...p),
+			all: (q, ...p) => own(() => raw.all(q, ...p)),
+			first: (q, ...p) => own(() => raw.first(q, ...p)),
 			run: (q, ...p) => {
 				if (/\bstations\b/i.test(q)) cache.stations = null;
-				raw.run(q, ...p);
+				own(() => raw.run(q, ...p));
 			},
-			transaction: (fn) => raw.transaction(fn),
+			transaction: (fn) => own(() => transaction(fn)),
 		};
 		migrate(this.db);
 	}
@@ -473,38 +949,65 @@ export class HubCore {
 	 * The stations, read once until one of them changes (handed out as copies:
 	 * callers may edit). Shared with the write path above, which clears it.
 	 */
-	private readonly cache: { stations: StationRow[] | null } = { stations: null };
+	private readonly cache: { stations: StationRow[] | null; kv: Map<string, string | null> } = {
+		stations: null,
+		kv: new Map(),
+	};
 	/** When this instance last looked at the player (also when nothing changed). */
 	private lastLookAt = 0;
+	/** Reject observations that began before a transport command changed the player. */
+	private transportRevision = 0;
 
 	private now(): number {
 		return this.d.now();
+	}
+
+	/**
+	 * Forget what this instance remembers of its storage. Only for a writer
+	 * outside the object (tests that plant legacy rows); in production the
+	 * object is the only writer of its SQLite.
+	 */
+	forgetStorageCaches(): void {
+		this.cache.kv.clear();
+		this.cache.stations = null;
 	}
 
 	// =======================================================================
 	// Key/value and small helpers
 	// =======================================================================
 
+	/**
+	 * The object is the only writer of its kv table, so a value read once stays
+	 * true until this instance writes it (P1: a poll read ~50 keys, each a
+	 * billed row). Every caller gets its own parsed copy.
+	 */
 	private kvGet<T>(k: string): T | null {
-		const row = this.db.first<{ v: string }>(`SELECT v FROM kv WHERE k = ?`, k);
-		if (!row) return null;
+		let text = this.cache.kv.get(k);
+		if (text === undefined) {
+			text = this.db.first<{ v: string }>(`SELECT v FROM kv WHERE k = ?`, k)?.v ?? null;
+			this.cache.kv.set(k, text);
+		}
+		if (text === null) return null;
 		try {
-			return JSON.parse(row.v) as T;
+			return JSON.parse(text) as T;
 		} catch {
 			return null;
 		}
 	}
 
 	private kvSet(k: string, v: unknown): void {
+		const text = JSON.stringify(v);
 		this.db.run(
 			`INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v`,
 			k,
-			JSON.stringify(v),
+			text,
 		);
+		this.cache.kv.set(k, text);
 	}
 
 	private kvDel(k: string): void {
 		this.db.run(`DELETE FROM kv WHERE k = ?`, k);
+		this.cache.kv.set(k, null);
 	}
 
 	private log(level: "info" | "warn" | "error", kind: string, message: string): void {
@@ -521,7 +1024,7 @@ export class HubCore {
 	}
 
 	private syncState(): SyncState {
-		return {
+		const s: SyncState = {
 			recentCursor: 0,
 			lastRecentAt: 0,
 			lastPlayerAt: 0,
@@ -532,6 +1035,9 @@ export class HubCore {
 			lastLikedAt: 0,
 			...(this.kvGet<Partial<SyncState>>("sync") ?? {}),
 		};
+		s.lastPlayerAt = this.kvGet<number>("player_checked_at") ?? s.lastPlayerAt;
+		s.lastRecentAt = this.kvGet<number>("history_checked_at") ?? s.lastRecentAt;
+		return s;
 	}
 
 	/**
@@ -570,14 +1076,298 @@ export class HubCore {
 		};
 	}
 
-	private client(budget: RequestBudget): SpotifyClient {
+	private client(
+		budget: RequestBudget,
+		singleTransport = false,
+		allowUnknownRetry = true,
+	): SpotifyClient {
 		return new SpotifyClient({
+			singleTransport,
+			allowUnknownRetry,
 			endpoints: this.d.env.endpoints,
 			tokens: this.tokenStore(),
 			budget,
 			fetch: this.d.fetch,
 			now: () => this.now(),
+			policy: {
+				getCooldown: () => null,
+				setCooldown: () => {},
+				getOperationSnapshot: (operation) => this.operationSnapshot(operation),
+				setOperationCooldown: async (cooldown) => {
+					if (
+						cooldown.operation === "GET /artists/:id/albums" &&
+						validArtistAlbumsProbe(cooldown.probePath)
+					)
+						this.kvSet("spotify_artist_probe_source", cooldown.probePath);
+					const revision = await this.d.sharedSpotify?.setOperationCooldown?.(cooldown);
+					const states = this.operationStates();
+					states[cooldown.operation!] = {
+						revision: revision ?? (states[cooldown.operation!]?.revision ?? 0) + 1,
+						cooldown,
+					};
+					this.kvSet("spotify_operation_cooldowns", states);
+				},
+				finishOperation: async (operation, revision) => {
+					await this.d.sharedSpotify?.finishOperation?.(operation, revision);
+					if (this.d.sharedSpotify?.getOperationSnapshot) {
+						const snapshot = await this.operationSnapshot(operation);
+						if (!snapshot.cooldown) this.resumeOperationJobs(operation);
+					} else {
+						const states = this.operationStates();
+						if (states[operation]?.revision === revision) {
+							states[operation] = { revision: revision + 1, cooldown: null };
+							this.kvSet("spotify_operation_cooldowns", states);
+							this.resumeOperationJobs(operation);
+						}
+					}
+				},
+				record: (metric) => this.recordSpotifyRequest(metric),
+			},
 		});
+	}
+
+	private activateOperationPolicy(): void {
+		if (this.kvGet("spotify_operation_policy") === 2) return;
+		const legacy: Record<string, unknown> = {};
+		for (const key of [
+			"spotify_cooldown",
+			"backoff",
+			...SPOTIFY_COOLDOWN_SCOPES.map((scope) => this.cooldownKey(scope)),
+		]) {
+			const value = this.kvGet(key);
+			if (value !== null) legacy[key] = value;
+			this.kvDel(key);
+			this.kvDel(`${key}_revision`);
+		}
+		// Old guard errors have no confirmed provider response for this job's operation.
+		// Admit those jobs once under the new policy; genuine provider failures keep their schedule.
+		this.db.run(
+			"UPDATE jobs SET run_after=MIN(run_after,?),error=NULL,updated_at=? WHERE error=?",
+			this.now(),
+			this.now(),
+			"Spotify wartet auf die Freigabe weiterer Anfragen",
+		);
+		this.kvSet("spotify_operation_policy_backup", { at: this.now(), legacy });
+		this.kvDel("spotify_availability_experiment");
+		this.kvSet("spotify_operation_policy", 2);
+	}
+	private operationStates(): Record<
+		string,
+		{ revision: number; cooldown: SpotifyCooldown | null }
+	> {
+		this.activateOperationPolicy();
+		return this.kvGet("spotify_operation_cooldowns") ?? {};
+	}
+	private resumeOperationJobs(operation: string): void {
+		const paused = this.kvGet<Record<string, string>>("spotify_unknown_jobs") ?? {};
+		let changed = false;
+		for (const [key, blocked] of Object.entries(paused))
+			if (blocked === operation) {
+				this.db.run("UPDATE jobs SET run_after=? WHERE key=?", this.now(), key);
+				delete paused[key];
+				changed = true;
+			}
+		if (changed) this.kvSet("spotify_unknown_jobs", paused);
+	}
+	private async operationSnapshot(
+		operation: string,
+	): Promise<{ revision: number; cooldown: SpotifyCooldown | null }> {
+		const states = this.operationStates();
+		const shared = await this.d.sharedSpotify?.getOperationSnapshot?.(operation);
+		if (shared) {
+			const previous = states[operation];
+			if (JSON.stringify(states[operation]) !== JSON.stringify(shared)) {
+				states[operation] = shared;
+				this.kvSet("spotify_operation_cooldowns", states);
+				if (previous?.cooldown && !shared.cooldown && shared.revision > previous.revision)
+					this.resumeOperationJobs(operation);
+			}
+			return shared;
+		}
+		return states[operation] ?? { revision: 0, cooldown: null };
+	}
+
+	private cooldownKey(scope?: SpotifyCooldownScope): string {
+		return scope ? `spotify_${scope.replaceAll("-", "_")}_cooldown` : "spotify_cooldown";
+	}
+
+	private async reconcileSharedCooldown(_scope?: SpotifyCooldownScope): Promise<void> {
+		this.activateOperationPolicy();
+	}
+
+	private providerCooldown(_scope?: SpotifyCooldownScope): SpotifyCooldown | null {
+		return null;
+	}
+
+	/** Explicit owner recheck for an unknown provider reset; known deadlines stay enforced. */
+	async retryQuota(
+		requestedScope?: Exclude<SpotifyCooldownScope, "legacy-catalog">,
+	): Promise<void> {
+		this.activateOperationPolicy();
+		const family = requestedScope ?? "player";
+		const path = {
+			devices: "/me/player/devices",
+			player: "/me/player",
+			history: "/me/player/recently-played",
+			"artist-albums": "/artists/:id/albums",
+		}[family];
+		let target = path;
+		if (family === "artist-albums") {
+			const saved = (await this.operationSnapshot(`GET ${path}`)).cooldown;
+			const source = saved?.probePath ?? this.kvGet<string>("spotify_artist_probe_source");
+			if (!validArtistAlbumsProbe(source))
+				throw new HubError("quota", "Die Quelle der Künstleralben-Abfrage fehlt.", 409);
+			target = source;
+		}
+		await this.client(new RequestBudget(2), true).request("GET", target, { query: { limit: 1 } });
+	}
+
+	private availabilityFlight: Promise<SpotifyAvailabilityExperiment> | null = null;
+	testSpotifyAvailability(): Promise<SpotifyAvailabilityExperiment> {
+		if (this.availabilityFlight) return this.availabilityFlight;
+		const task = this.performAvailabilityTest();
+		this.availabilityFlight = task;
+		void task
+			.finally(() => {
+				this.availabilityFlight = null;
+			})
+			.catch(() => undefined);
+		return task;
+	}
+	private async performAvailabilityTest(): Promise<SpotifyAvailabilityExperiment> {
+		this.activateOperationPolicy();
+		const previous = this.kvGet<SpotifyAvailabilityExperiment>("spotify_availability_experiment");
+		if (previous && this.now() - previous.testedAt >= 0 && this.now() - previous.testedAt < 60000) {
+			const cached = { ...previous, cached: true, outcomes: { ...previous.outcomes } };
+			for (const family of ["devices", "player", "history"] as const) {
+				const endpoint = {
+					devices: "/me/player/devices",
+					player: "/me/player",
+					history: "/me/player/recently-played",
+				}[family];
+				const hold = (await this.operationSnapshot(`GET ${endpoint}`)).cooldown;
+				if (hold?.until !== null && (hold?.until ?? 0) > this.now())
+					cached.outcomes[family] = {
+						state: "held",
+						status: 429,
+						kind: hold!.kind,
+						reason: hold!.reason,
+						retryAfter: hold!.retryAfter,
+					};
+			}
+			return cached;
+		}
+		const result: SpotifyAvailabilityExperiment = {
+			testedAt: this.now(),
+			outcomes: {
+				devices: { state: "not_tested" },
+				player: { state: "not_tested" },
+				history: { state: "not_tested" },
+			},
+			controls: "untested",
+			catalog: "untested",
+			stopped: false,
+		};
+		const client = this.client(new RequestBudget(4), true);
+		for (const family of ["devices", "player", "history"] as const) {
+			try {
+				if (family === "devices") {
+					const devices = await client.devices();
+					result.devices = devices
+						.filter((d) => d.id)
+						.map((d) => ({
+							id: d.id!,
+							name: d.name,
+							type: d.type,
+							active: d.is_active,
+							restricted: d.is_restricted,
+						}));
+				} else if (family === "player") await client.player();
+				else await client.request("GET", "/me/player/recently-played", { query: { limit: 1 } });
+				result.outcomes[family] = {
+					state: "available",
+					status:
+						this.kvGet<{ latest: SpotifyRequestMetric }>("spotify_request_metrics")?.latest
+							.status ?? 200,
+				};
+			} catch (e) {
+				if (!(e instanceof SpotifyError)) throw e;
+				result.outcomes[family] = {
+					state: e.status === 429 ? "held" : "failed",
+					status: e.status,
+					kind: e.kind,
+					reason: e.reason,
+					retryAfter: e.retryAfter,
+				};
+				if ((e.kind !== "rate" && e.kind !== "quota") || e.operation === "POST /api/token") {
+					result.stopped = true;
+					break;
+				}
+			}
+		}
+		const { devices: _devices, ...saved } = result;
+		this.kvSet("spotify_availability_experiment", saved);
+		return result;
+	}
+
+	async spotifyDiagnostics(): Promise<unknown> {
+		const states = this.operationStates();
+		for (const operation of Object.keys(states)) await this.operationSnapshot(operation);
+		const current = this.operationStates();
+		return {
+			policyVersion: 2,
+			operationCooldowns: Object.values(current).flatMap((s) =>
+				s.cooldown ? [publicCooldown(s.cooldown)] : [],
+			),
+			cooldown: null,
+			artistAlbumsCooldown: null,
+			devicesCooldown: null,
+			playerCooldown: null,
+			historyCooldown: null,
+			catalogQuarantine: null,
+			availability: this.kvGet("spotify_availability_experiment"),
+			requests: this.kvGet("spotify_request_metrics"),
+			recentRequests: this.kvGet("spotify_recent_requests"),
+		};
+	}
+
+	/** Bounded, account-owned aggregates: no URLs, IDs, tokens or listener history. */
+	private async recordSpotifyRequest(metric: SpotifyRequestMetric): Promise<void> {
+		const hour = Math.floor(metric.at / HOUR_MS);
+		const previous = this.kvGet<{
+			hour: number;
+			counts: Record<string, number>;
+			latest: SpotifyRequestMetric;
+		}>("spotify_request_metrics");
+		const counts = previous?.hour === hour ? previous.counts : {};
+		const key = `${metric.category}:${metric.endpoint}:${metric.status}:${metric.retryCategory}`;
+		counts[key] = (counts[key] ?? 0) + 1;
+		this.kvSet("spotify_request_metrics", { hour, counts, latest: metric });
+		type Hour = {
+			hour: number;
+			counts: Record<string, number>;
+			firstQuotaAt?: number;
+			firstQuotaEndpoint?: string;
+			firstQuotaReason?: string;
+		};
+		const recent = this.kvGet<{ startedAt: number; hours: Hour[] }>("spotify_recent_requests") ?? {
+			startedAt: metric.at,
+			hours: [],
+		};
+		recent.hours = recent.hours.filter((h) => h.hour >= hour - 23 && h.hour <= hour);
+		let bucket = recent.hours.find((h) => h.hour === hour);
+		if (!bucket) {
+			bucket = { hour, counts: {} };
+			recent.hours.push(bucket);
+		}
+		bucket.counts[key] = (bucket.counts[key] ?? 0) + 1;
+		if (metric.retryCategory === "quota" && bucket.firstQuotaAt === undefined) {
+			bucket.firstQuotaAt = metric.at;
+			bucket.firstQuotaEndpoint = metric.endpoint;
+			bucket.firstQuotaReason = metric.reason;
+		}
+		this.kvSet("spotify_recent_requests", recent);
+		await this.d.sharedSpotify?.recordRequest?.(metric);
 	}
 
 	isConnected(): boolean {
@@ -668,8 +1458,9 @@ export class HubCore {
 	}
 
 	private async runJobs(budget: RequestBudget): Promise<void> {
-		const client = this.client(budget);
+		const client = this.client(budget, false, false);
 		for (let guard = 0; guard < 50; guard++) {
+			await this.reconcileSharedCooldown();
 			if (this.backoffUntil() > this.now()) return;
 			if (budget.left < 6) return;
 			const job = this.db.first<JobRow>(
@@ -705,10 +1496,16 @@ export class HubCore {
 		const msg = err instanceof Error ? err.message : String(err);
 		if (err instanceof SpotifyError) {
 			if (err.kind === "rate" || err.kind === "quota") {
-				this.setBackoff(err.retryAfterMs, err.kind);
+				if (err.retryAfter === null && err.operation) {
+					const paused = this.kvGet<Record<string, string>>("spotify_unknown_jobs") ?? {};
+					paused[job.key] = err.operation;
+					this.kvSet("spotify_unknown_jobs", paused);
+				}
 				this.db.run(
-					`UPDATE jobs SET run_after = ?, error = ? WHERE key = ?`,
-					this.now() + err.retryAfterMs,
+					"UPDATE jobs SET run_after=?,error=? WHERE key=?",
+					err.retryAfter === null
+						? Number.MAX_SAFE_INTEGER
+						: this.now() + Math.max(1000, err.retryAfterMs),
 					msg,
 					job.key,
 				);
@@ -744,18 +1541,11 @@ export class HubCore {
 	}
 
 	private backoffUntil(): number {
-		return this.kvGet<{ until: number }>("backoff")?.until ?? 0;
+		this.activateOperationPolicy();
+		return 0;
 	}
-
-	private setBackoff(ms: number, kind: string): void {
-		const until = this.now() + Math.max(1000, ms);
-		this.kvSet("backoff", { until, kind });
-		if (kind === "quota")
-			this.log(
-				"warn",
-				"quota",
-				"Spotify-Kontingent aufgebraucht — true-shuffle pausiert eine Stunde",
-			);
+	private setBackoff(_ms: number, _kind: string): void {
+		this.activateOperationPolicy();
 	}
 
 	private async step(
@@ -767,14 +1557,21 @@ export class HubCore {
 		switch (job.kind) {
 			case "playlists":
 				return this.stepPlaylists(client, state as { offset?: number; seen?: string[] }, budget);
+			case "playlist-counts":
+				return this.stepPlaylistCounts(client, state as PlaylistCountsState, budget);
 			case "import":
 				return this.stepImport(client, state as unknown as ImportState, budget);
 			case "deck":
 				return this.stepDeck(client, budget, Number(state.stationId));
 			case "extend":
-				return this.stepExtend(client, Number(state.stationId));
+				return this.stepExtend(client, Number(state.stationId), budget);
 			case "keep":
 				return this.stepKeep(client, String(state.trackId));
+			case "likes-sync":
+				return this.stepLikesSync(
+					client,
+					state as { rev?: number; offset?: number; remade?: boolean },
+				);
 			case "unfollow":
 				await client.unfollowPlaylist(String(state.playlistId)).catch((e) => {
 					if (!(e instanceof SpotifyError && e.kind === "not_found")) throw e;
@@ -1126,6 +1923,11 @@ export class HubCore {
 	private loadSource(key: string): PackedTrack[] {
 		const cached = this.sourceCache.get(key);
 		if (cached) return cached;
+		if (key === LIKES_SOURCE) {
+			const out = this.likesList().items.flatMap((x) => (x.meta ? [x.meta] : []));
+			this.sourceCache.set(key, out);
+			return out;
+		}
 		const rows = this.db.all<{ data: string }>(
 			`SELECT data FROM pages WHERE source = ? ORDER BY page`,
 			key,
@@ -1138,7 +1940,7 @@ export class HubCore {
 
 	/** A source playlist that is no longer in the listener's Spotify. */
 	private sourceGone(key: string): boolean {
-		if (key === "liked") return false;
+		if (key === "liked" || key === LIKES_SOURCE) return false;
 		const row = this.db.first<{ gone_at: number | null }>(
 			`SELECT gone_at FROM playlists WHERE id = ?`,
 			key.slice(3),
@@ -1154,6 +1956,7 @@ export class HubCore {
 	private sourceImported(key: string): boolean {
 		if (this.jobExists(`import:${key}`)) return false;
 		if (key === "liked") return this.kvGet("liked_import") !== null;
+		if (key === LIKES_SOURCE) return true;
 		const row = this.db.first<{ imported_at: number | null }>(
 			`SELECT imported_at FROM playlists WHERE id = ?`,
 			key.slice(3),
@@ -1256,13 +2059,16 @@ export class HubCore {
 			last_skipped_at: null,
 			consumed_at: null,
 			thumb: 0,
+			verdict: null,
+			verdict_at: null,
 		};
 		const next = fn({ ...cur });
 		this.db.run(
-			`INSERT INTO memory (id, last_played_at, plays, early_skips, last_skipped_at, consumed_at, thumb) VALUES (?, ?, ?, ?, ?, ?, ?)
+			`INSERT INTO memory (id, last_played_at, plays, early_skips, last_skipped_at, consumed_at, thumb, verdict, verdict_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 			 ON CONFLICT(id) DO UPDATE SET last_played_at = excluded.last_played_at, plays = excluded.plays,
 			   early_skips = excluded.early_skips, last_skipped_at = excluded.last_skipped_at,
-			   consumed_at = excluded.consumed_at, thumb = excluded.thumb`,
+			   consumed_at = excluded.consumed_at, thumb = excluded.thumb,
+			   verdict = excluded.verdict, verdict_at = excluded.verdict_at`,
 			id,
 			next.last_played_at,
 			next.plays,
@@ -1270,8 +2076,11 @@ export class HubCore {
 			next.last_skipped_at,
 			next.consumed_at ?? null,
 			next.thumb,
+			next.verdict ?? null,
+			next.verdict_at ?? null,
 		);
 		this.liveLookups.set(id, next);
+		if ((cur.thumb === 1) !== (next.thumb === 1)) this.noteLike(id, next.thumb === 1);
 	}
 
 	private livePlay(id: TrackId, at: number): void {
@@ -1290,15 +2099,40 @@ export class HubCore {
 		}));
 	}
 
-	private hist(): Map<TrackId, ImportedStats> {
-		if (!this.histCache) {
-			this.histCache = new Map();
+	/** The song totals of the stored import, as uploaded (see importHistory). */
+	private rawHist(): Map<TrackId, ImportedStats> {
+		if (!this.rawHistCache) {
+			this.rawHistCache = new Map();
 			for (const r of this.db.all<{ data: string }>(`SELECT data FROM hist_pages ORDER BY page`)) {
 				for (const row of JSON.parse(r.data) as HistoryRow[]) {
 					const [id, s] = fromRow(row);
-					this.histCache.set(id, s);
+					this.rawHistCache.set(id, s);
 				}
 			}
+		}
+		return this.rawHistCache;
+	}
+
+	/**
+	 * The imported history that shapes the memory: the stored totals under the
+	 * listener's selection (see core/import-selection). Switched off, nothing;
+	 * without rules, the totals as they are; with rules, the totals with the
+	 * songs the rules change counted again (kept in hist_effective). A selection
+	 * that cannot be computed lets the import count for nothing, never for all.
+	 */
+	private hist(): Map<TrackId, ImportedStats> {
+		if (this.histCache) return this.histCache;
+		const sel = this.appliedSelection();
+		if (!sel.enabled) this.histCache = new Map();
+		else if (sel.rules.length === 0) this.histCache = this.rawHist();
+		else {
+			let eff = this.kvGet<EffectiveMeta>("history_effective");
+			if (!eff || eff.revision !== sel.revision || eff.dataset !== this.datasetKey()) {
+				// Not computed for this selection of these data yet (a new import came).
+				eff = this.materializeSelection(sel);
+			}
+			if (!eff || eff.error) this.histCache = new Map();
+			else this.histCache = applyOverrides(this.rawHist(), this.effectiveOverrides(eff.gen));
 		}
 		return this.histCache;
 	}
@@ -1362,6 +2196,8 @@ export class HubCore {
 					consumedAt: r.consumed_at ?? null,
 					liked: false,
 					thumb: (r.thumb as -1 | 0 | 1) ?? 0,
+					verdict: r.verdict === 1 ? 1 : r.verdict === -1 ? -1 : 0,
+					verdictAt: r.verdict_at ?? null,
 				}
 			: emptyMemory(id);
 		const merged = mergeMemory(live, this.hist().get(id));
@@ -1406,6 +2242,9 @@ export class HubCore {
 	}
 
 	private saveDeck(stationId: number, deck: Deck): void {
+		const row = this.stationRow(stationId);
+		if (row && this.deckOf(row)?.writtenAt !== deck.writtenAt)
+			this.reconcileLaneNotes(stationId, deck);
 		this.db.run(`UPDATE stations SET deck = ? WHERE id = ?`, JSON.stringify(deck), stationId);
 	}
 
@@ -1587,6 +2426,7 @@ export class HubCore {
 		const st = this.stationRow(id);
 		if (!st) return;
 		this.db.run(`DELETE FROM stations WHERE id = ?`, id);
+		this.heardOnStation.delete(id);
 		this.db.run(`DELETE FROM bans WHERE station_id = ?`, id);
 		this.db.run(`DELETE FROM discoveries WHERE station_id = ? AND status != 'kept'`, id);
 		for (const k of [`deck:${id}`, `extend:${id}`, `discover:${id}`, `rename:${id}`]) {
@@ -1661,6 +2501,7 @@ export class HubCore {
 		// Planning reads every candidate's memory: fetch them in one sweep.
 		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
 		const prev = this.deckOf(st);
+		if (mode === "background" && prev && this.savedSession(st.id)) return prev;
 		// Continue, rather than replan, when a player may still hold this
 		// playlist (paused in it, or gone quiet while in it) and resume it.
 		const lastUse = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
@@ -1767,25 +2608,44 @@ export class HubCore {
 		// Never half a playlist: the whole write must fit this invocation.
 		if (client.requestsLeft < Math.ceil(uris.length / 100) + 2)
 			throw new SpotifyError("budget", "Anfragebudget reicht nicht für die ganze Playlist");
+		const savedIntent = this.kvGet<{ layout: PlannedSlot[]; version: number; writtenAt: number }>(
+			`deck_intent:${st.id}`,
+		);
+		if (savedIntent) layout = savedIntent.layout;
+		const intent = savedIntent ?? {
+			layout,
+			version: (prev?.version ?? 0) + 1,
+			writtenAt: this.now(),
+		};
 		let playlistId = await this.ensurePlaylist(client, st);
+		this.kvSet(`deck_intent:${st.id}`, intent);
+		const draft = newDeck(intent.layout, intent.version, intent.writtenAt);
+		this.saveDeck(st.id, draft);
+		st.deck = JSON.stringify(draft);
+		if (mode === "start") {
+			const publishing = this.createSession(st, draft);
+			publishing.pending = { operationId: crypto.randomUUID(), kind: "publish" };
+			this.saveSession(publishing);
+		}
+		const intendedUris = intent.layout.map((slot) => `spotify:track:${slot.trackId}`);
 		try {
-			await client.replaceItems(playlistId, uris.slice(0, 100));
+			await client.replaceItems(playlistId, intendedUris.slice(0, 100));
 		} catch (err) {
 			if (err instanceof SpotifyError && (err.kind === "not_found" || err.kind === "forbidden")) {
 				// The listener deleted the playlist in Spotify — make a new one.
 				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, st.id);
 				st.playlist_id = null;
 				playlistId = await this.ensurePlaylist(client, st);
-				await client.replaceItems(playlistId, uris.slice(0, 100));
+				await client.replaceItems(playlistId, intendedUris.slice(0, 100));
 			} else {
 				throw err;
 			}
 		}
-		for (let i = 100; i < uris.length; i += 100) {
-			await client.addItems(playlistId, uris.slice(i, i + 100));
+		for (let i = 100; i < intendedUris.length; i += 100) {
+			await client.addItems(playlistId, intendedUris.slice(i, i + 100));
 		}
 		if (prev) this.carryPasses(st.id, prev);
-		const deck = newDeck(layout, (prev?.version ?? 0) + 1, this.now());
+		const deck = newDeck(layout, intent.version, intent.writtenAt);
 		// Positions stay trustworthy only through a continuation of an order we
 		// trusted. A fresh plan nobody started is not ours until true-shuffle
 		// starts it: a player may still carry on with what it had loaded.
@@ -1911,6 +2771,8 @@ export class HubCore {
 				]),
 			];
 		}
+		// A new deck: a noted song with another reason in it keeps no lane.
+		this.reconcileLaneNotes(st.id, deck);
 		this.db.run(
 			`UPDATE stations SET deck = ?, deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
 			JSON.stringify(deck),
@@ -1921,6 +2783,7 @@ export class HubCore {
 		);
 		st.deck = JSON.stringify(deck);
 		st.deck_dirty = 0;
+		this.kvDel(`deck_intent:${st.id}`);
 		return deck;
 	}
 
@@ -1930,6 +2793,7 @@ export class HubCore {
 		stationId: number,
 	): Promise<StepResult> {
 		const st = this.stationRow(stationId);
+		if (this.savedSession(stationId)) return { done: true };
 		if (!st) return { done: true };
 		if (!this.stationReady(st)) {
 			// Waiting is only worth it while something is being read in; otherwise
@@ -1967,48 +2831,171 @@ export class HubCore {
 	}
 
 	/** Append more songs to a deck that is running out while it plays. */
-	private async stepExtend(client: SpotifyClient, stationId: number): Promise<StepResult> {
+	private async stepExtend(
+		client: SpotifyClient,
+		stationId: number,
+		budget: RequestBudget = new RequestBudget(8),
+	): Promise<StepResult> {
+		// A maintenance alarm no longer guarantees a preceding player/history read.
+		// Capture a real current occurrence before planning or trimming its prefix.
+		if (!this.playerFresh(1000)) {
+			await this.sync(budget, { playerOnly: true });
+			if (!this.playerFresh(1000)) return { done: false, state: { stationId }, delayMs: MINUTE_MS };
+		}
+		try {
+			await this.freshenMemory(client);
+		} catch (err) {
+			// A confirmed history-only wait leaves fresh player observations and
+			// playlist writes available. Preserve the old best-known-memory refill.
+			if (
+				!(err instanceof SpotifyError) ||
+				err.operation !== "GET /me/player/recently-played" ||
+				err.status !== 429 ||
+				!this.operationStates()[err.operation]?.cooldown
+			)
+				throw err;
+			this.handleSyncError(err);
+			this.kvSet("history_due", 1);
+			if (this.kvGet("history_due_at") === null) this.kvSet("history_due_at", this.now());
+		}
 		const st = this.stationRow(stationId);
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck || !st.playlist_id) return { done: true };
-		if (remainingAhead(deck) >= EXTEND_BELOW) return { done: true };
-		// Never a song twice in one playlist: positions must stay unambiguous.
-		const inDeck = new Set(deck.items.map((i) => i.id));
-		const banned = new Set([...this.bans(st.id), ...inDeck]);
-		const pool = this.stationPool(st);
-		const discoveries = this.discoveryEntries(st);
-		this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
-		const res = planQueue({
-			now: this.now(),
-			roundStartedAt: st.round_started_at,
-			rules: this.rulesOf(st),
-			pool,
-			memory: (id) => this.memory(id),
-			banned,
-			discoveries,
-			size: 100,
-			rng: this.d.rng,
-		});
-		if (res.slots.length === 0) return { done: true };
-		await client.addItems(
-			st.playlist_id,
-			res.slots.map((s) => `spotify:track:${s.trackId}`),
-		);
-		deck.items.push(
-			...res.slots.map((s) => ({
-				id: s.trackId,
-				kind: s.kind,
-				state: "pending" as const,
-				at: null,
-			})),
-		);
-		this.saveDeck(st.id, deck);
+		const session = this.savedSession(stationId);
+		const from = session?.currentIndex ?? position(deck) ?? 0;
+		if (deck.items.length - from - 1 >= EXTEND_BELOW) return { done: true };
+		const intentKey = `extend_intent:${stationId}`;
+		let intent = this.kvGet<{ items: Deck["items"]; entryIds: string[]; trim: number }>(intentKey);
+		if (!intent) {
+			const held = new Set(deck.items.slice(session ? from : 0).map((it) => it.id));
+			const pool = this.stationPool(st);
+			const discoveries = this.discoveryEntries(st);
+			this.preloadMemory([...pool.map((e) => e.id), ...discoveries.map((d) => d.id)]);
+			const input = {
+				now: this.now(),
+				roundStartedAt: st.round_started_at,
+				rules: this.rulesOf(st),
+				pool,
+				memory: (id: TrackId) => this.memory(id),
+				banned: new Set([...this.bans(st.id), ...held]),
+				discoveries,
+				size: 100,
+				rng: this.d.rng,
+			};
+			let res = planQueue(input);
+			if (res.slots.length === 0 && session) {
+				// Reserve the next round; history alone advances the completed round counter.
+				res = planQueue({ ...input, roundStartedAt: this.now() + 1 });
+			}
+			if (!res.slots.length) return { done: true };
+			const repeatsCompleted = res.slots.some((slot) =>
+				deck.items.slice(0, from).some((it) => it.id === slot.trackId),
+			);
+			const trim = session && (deck.items.length > 800 || repeatsCompleted) ? from : 0;
+			const items = [
+				...deck.items.slice(trim),
+				...res.slots.map((slot) => ({
+					id: slot.trackId,
+					kind: slot.kind,
+					state: "pending" as const,
+					at: null,
+				})),
+			];
+			const entryIds = [
+				...(session?.entryIds.slice(trim) ?? []),
+				...res.slots.map(() => crypto.randomUUID()),
+			];
+			intent = { items, entryIds, trim };
+			this.kvSet(intentKey, intent);
+		}
+		// Restart a complete replacement on retry. POST append alone cannot be retried safely.
+		const uris = intent.items.map((it) => `spotify:track:${it.id}`);
+		if (client.requestsLeft < Math.ceil(uris.length / 100) + (intent.trim > 0 ? 2 : 0))
+			return { done: false, state: { stationId }, delayMs: MINUTE_MS };
+		if (session && intent.trim > 0 && !session.pending) {
+			session.currentIndex = 0;
+			session.entryIds = intent.entryIds;
+			session.pending = { operationId: crypto.randomUUID(), kind: "publish" };
+			this.saveSession(session);
+			deck.items = intent.items;
+			deck.lastIndex = 0;
+			deck.lastTrackId = deck.items[0]?.id ?? null;
+			deck.version += 1;
+			this.saveDeck(stationId, deck);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: intent.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+		}
+		await client.replaceItems(st.playlist_id, uris.slice(0, 100));
+		for (let i = 100; i < uris.length; i += 100)
+			await client.addItems(st.playlist_id, uris.slice(i, i + 100));
+		deck.items = intent.items;
+		this.saveDeck(stationId, deck);
+		if (session) {
+			session.entryIds = intent.entryIds;
+			if (intent.trim > 0) {
+				const observed = toObservation(await client.player(), this.now());
+				if (
+					observed?.contextUri === session.contextUri &&
+					observed.isPlaying &&
+					observed.trackId === deck.items[0]?.id
+				) {
+					session.progressMs = observed.progressMs;
+					session.observedAt = observed.at;
+					await client.play({
+						contextUri: session.contextUri,
+						position: 0,
+						progressMs: session.progressMs ?? 0,
+					});
+					session.pending = null;
+					session.playbackEpoch += 1;
+				}
+				session.pending = null;
+				this.kvDel(`deck_intent:${stationId}`);
+			}
+			session.orderRevision += 1;
+			this.saveSession(session);
+		}
+		this.kvDel(intentKey);
 		return { done: true };
 	}
 
-	private playerFresh(): boolean {
+	private playerCheckedAt(): number | null {
+		return (
+			this.kvGet<number>("player_checked_at") ?? this.kvGet<PlayerSnapshot>("player")?.at ?? null
+		);
+	}
+
+	private playerFresh(maxAge = PLAYER_FRESH_MS): boolean {
 		const snap = this.kvGet<PlayerSnapshot>("player");
-		return !!snap && this.now() - snap.at <= PLAYER_FRESH_MS;
+		const checkedAt = this.playerCheckedAt();
+		return (
+			!!snap &&
+			checkedAt !== null &&
+			!this.kvGet("player_stale") &&
+			this.now() - checkedAt <= maxAge
+		);
+	}
+
+	/** Only an actual failed GET advances this clock; a local 429 hold does not. */
+	private noteReadFailure(endpoint: string, startedAt: number): void {
+		const metric = this.kvGet<{ latest: SpotifyRequestMetric }>("spotify_request_metrics")?.latest;
+		if (
+			metric?.method === "GET" &&
+			metric.endpoint === endpoint &&
+			metric.at >= startedAt &&
+			metric.retryCategory !== "blocked" &&
+			(metric.status === 0 || metric.status >= 400)
+		)
+			this.kvSet(endpoint === "/me/player" ? "player_failed_at" : "history_failed_at", metric.at);
+	}
+
+	/** Scheduling reads a confirmed hold for this operation only; it never creates one. */
+	private automaticReadAt(operation: string, at: number): number {
+		const hold = this.operationStates()[operation]?.cooldown;
+		return hold ? (hold.until === null ? Number.POSITIVE_INFINITY : Math.max(at, hold.until)) : at;
 	}
 
 	/** Is the listener in this station's playlist right now (or was, moments ago)? */
@@ -2032,19 +3019,58 @@ export class HubCore {
 	// Sync — read Spotify, update memory and decks
 	// =======================================================================
 
-	async sync(budget: RequestBudget, opts: { force?: boolean } = {}): Promise<void> {
-		if (!this.isConnected()) return;
-		if (this.backoffUntil() > this.now()) return;
-		const client = this.client(budget);
+	async sync(
+		budget: RequestBudget,
+		opts: { force?: boolean; observationOnly?: boolean; playerOnly?: boolean } = {},
+	): Promise<boolean> {
+		if (!this.isConnected()) return false;
+		await this.reconcileSharedCooldown();
+		if (this.backoffUntil() > this.now()) return false;
+		const client = this.client(budget, false, opts.force === true);
 		const s = this.syncState();
+		// Paused snapshots may not be rewritten. Preserve the actual previous look
+		// across eviction for private/guest listening accounting as well as pacing.
+		s.lastPlayerAt = this.playerCheckedAt() ?? s.lastPlayerAt;
+		const observationAt = this.now();
+		const transportRevision = this.transportRevision;
+		const epochs = new Map(
+			this.stations().map((st) => {
+				const session = this.savedSession(st.id);
+				return [st.id, session ? `${session.sessionId}:${session.playbackEpoch}` : null];
+			}),
+		);
 		let state: SpPlaybackState | null;
 		try {
 			state = await client.player();
 		} catch (err) {
+			this.noteReadFailure("/me/player", observationAt);
+			// Token/budget failures also need bounded local scheduling, but cannot
+			// claim that a provider player request was sent or succeeded.
+			this.kvSet("player_retry_at", this.now() + 15_000);
 			this.handleSyncError(err);
-			return;
+			if (
+				!opts.playerOnly &&
+				err instanceof SpotifyError &&
+				err.operation === "GET /me/player" &&
+				err.status === 429
+			) {
+				const previouslyActive = s.idleSince === null && s.lastActivityAt > 0;
+				if (opts.force || this.historyReadAt(previouslyActive) <= this.now()) {
+					try {
+						await this.readRecent(client, s);
+						this.setSyncState(s);
+					} catch (historyError) {
+						this.handleSyncError(historyError);
+					}
+				}
+			}
+			return false;
 		}
-		const obs = toObservation(state, this.now());
+		if (transportRevision !== this.transportRevision) return false;
+		this.kvSet("player_checked_at", this.now());
+		if (this.kvGet("player_failed_at") !== null) this.kvDel("player_failed_at");
+		if (this.kvGet("player_retry_at") !== null) this.kvDel("player_retry_at");
+		const obs = toObservation(state, observationAt);
 		this.notePrivate(
 			state?.device ? state.device.is_private_session === true : null,
 			s.lastPlayerAt,
@@ -2056,11 +3082,13 @@ export class HubCore {
 			s.lastPlayerAt,
 		);
 		const shown = this.kvGet<PlayerSnapshot>("player");
+		this.noteLane(obs, shown);
 		const heard = this.noteHeardSong(
 			obs,
 			s.lastPlayerAt,
 			state?.item ? packTrack(state.item) : null,
 		);
+		this.followGuestDevice(state?.device ?? null, obs);
 		this.noteGuestLast(
 			heard,
 			!!obs?.trackId && !this.inPrivateNow(),
@@ -2073,10 +3101,26 @@ export class HubCore {
 			obs,
 			track: state?.item ? packTrack(state.item) : null,
 			device: state?.device
-				? { id: state.device.id, name: state.device.name, restricted: state.device.is_restricted }
+				? {
+						id: state.device.id,
+						name: state.device.name,
+						restricted: state.device.is_restricted,
+						volume:
+							typeof state.device.volume_percent === "number" ? state.device.volume_percent : null,
+						supportsVolume: state.device.supports_volume !== false,
+					}
 				: null,
+			repeat: state?.repeat_state,
 			at: this.now(),
 		};
+		// A look showing the play a "next" was sent for over ends that hold; no
+		// player, or the play on another device, says nothing about it.
+		const held = this.observedNextHeld();
+		if (held.length > 0) {
+			const open = held.filter((sent) => !this.observedPlayOver(sent, snap));
+			if (open.length === 0) this.kvDel("observed_next_sent");
+			else if (open.length !== held.length) this.kvSet("observed_next_sent", open);
+		}
 		// The same picture as a few minutes ago (a paused player): not stored again.
 		const before = this.kvGet<PlayerSnapshot>("player");
 		const same =
@@ -2084,8 +3128,13 @@ export class HubCore {
 			this.now() - before.at < 3 * MINUTE_MS &&
 			JSON.stringify({ ...before, at: 0, obs: before.obs ? { ...before.obs, at: 0 } : null }) ===
 				JSON.stringify({ ...snap, at: 0, obs: snap.obs ? { ...snap.obs, at: 0 } : null });
-		if (!same) this.kvSet("player", snap);
+		if (!same || this.kvGet("player_stale") || this.kvGet("player_observation_due"))
+			this.kvSet("player", snap);
+		this.noteContinueAfter(snap);
 		this.lastLookAt = this.now();
+		const observationDue = this.kvGet<number>("player_observation_due");
+		if (observationDue !== null && observationAt >= observationDue - 1000)
+			this.kvDel("player_observation_due");
 		if (this.kvGet("player_stale")) this.kvDel("player_stale");
 		if (obs?.contextUri && obs.contextUri !== this.kvGet<string>("last_context"))
 			this.kvSet("last_context", obs.contextUri);
@@ -2097,27 +3146,52 @@ export class HubCore {
 			s.idleSince = this.now();
 		}
 
-		// Recently played: while something plays, right after it stopped, and
-		// otherwise every 30 min. The moment playback stops matters most: the
-		// last songs of a session must be in memory before any deck is rewritten.
+		// Read fresh history on a provider transition, backwards seek/repeat, stop,
+		// or every 90 seconds of unchanged active playback. Player observations
+		// and queue checkpoints still run independently at their existing cadence.
 		const justStopped = !obs?.isPlaying && wasPlaying;
+		const changedPlayback =
+			!!obs &&
+			(obs.trackId !== before?.obs?.trackId ||
+				obs.contextUri !== before?.obs?.contextUri ||
+				(obs.progressMs !== null &&
+					before?.obs?.progressMs !== null &&
+					before?.obs?.progressMs !== undefined &&
+					obs.progressMs < before.obs.progressMs));
 		const recentDue =
-			opts.force || obs?.isPlaying || justStopped || this.now() - s.lastRecentAt >= 30 * MINUTE_MS;
+			opts.force ||
+			!!this.kvGet("history_due") ||
+			justStopped ||
+			(!!obs?.isPlaying && (changedPlayback || this.now() - s.lastRecentAt >= 90_000)) ||
+			this.now() - s.lastRecentAt >= MAX_RECENT_INTERVAL_MS;
 		let plays: RecentPlay[] = [];
-		if (recentDue) {
+		if (recentDue && opts.playerOnly) {
+			this.kvSet("history_due", 1);
+			if (this.kvGet("history_due_at") === null) this.kvSet("history_due_at", this.now() + 1000);
+		}
+		if (
+			recentDue &&
+			!opts.playerOnly &&
+			(opts.force ||
+				this.automaticReadAt(
+					"GET /me/player/recently-played",
+					this.kvGet<number>("history_retry_at") ?? 0,
+				) <= this.now())
+		) {
 			try {
 				plays = await this.readRecent(client, s);
 			} catch (err) {
 				this.handleSyncError(err);
 			}
 		}
-		if (obs?.isPlaying) {
+		if (obs?.isPlaying && !opts.playerOnly) {
 			try {
 				await this.peekLiked(client, s);
 			} catch (err) {
 				this.handleSyncError(err);
 			}
 		}
+		if (transportRevision !== this.transportRevision) return false;
 
 		if (heardPrivately) {
 			const own = this.recordSeenPlay(heardPrivately);
@@ -2144,6 +3218,14 @@ export class HubCore {
 			let deck = this.deckOf(st);
 			const uri = this.deckUri(st);
 			if (!deck || !uri) continue;
+			const currentSession = this.savedSession(st.id);
+			const epoch = currentSession
+				? `${currentSession.sessionId}:${currentSession.playbackEpoch}`
+				: null;
+			if (epochs.get(st.id) === epoch) {
+				this.checkpoint(st, deck, obs);
+				if (plays.length > 0) this.advanceListed(st, deck, plays, obs);
+			}
 			let changed = false;
 			if (plays.length > 0) {
 				const r = applyPlays(deck, plays, uri);
@@ -2166,7 +3248,12 @@ export class HubCore {
 				inStation = { st: st.id, uri, inDeck: r.index !== null, index: r.index };
 				if (obs.isPlaying && this.now() - (st.last_played_at ?? 0) >= 5 * MINUTE_MS)
 					this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), st.id);
-				if (r.orderBroken && obs.shuffle && this.now() - s.shuffleFixAt > 10 * MINUTE_MS) {
+				if (
+					!opts.observationOnly &&
+					r.orderBroken &&
+					obs.shuffle &&
+					this.now() - s.shuffleFixAt > 10 * MINUTE_MS
+				) {
 					s.shuffleFixAt = this.now();
 					try {
 						await client.setShuffle(false);
@@ -2179,7 +3266,13 @@ export class HubCore {
 						/* Free account or restricted device: the warning below says it. */
 					}
 				}
-				if (obs.isPlaying && remainingAhead(deck) < EXTEND_BELOW && deck.items.length > 0) {
+				if (
+					obs.isPlaying &&
+					(this.savedSession(st.id)
+						? deck.items.length - this.savedSession(st.id)!.currentIndex - 1
+						: remainingAhead(deck)) < EXTEND_BELOW &&
+					deck.items.length > 0
+				) {
 					this.enqueue(`extend:${st.id}`, "extend", { stationId: st.id }, 1);
 				}
 			}
@@ -2203,14 +3296,18 @@ export class HubCore {
 			// Rewrite a deck once nobody has listened to it for a while.
 			const consumed = consumedCount(deck) > 0;
 			const stale = this.now() - deck.writtenAt > DECK_MAX_AGE_MS;
-			if ((consumed || st.deck_dirty || stale) && !this.jobExists(`deck:${st.id}`)) {
+			if (
+				!this.savedSession(st.id) &&
+				(consumed || st.deck_dirty || stale) &&
+				!this.jobExists(`deck:${st.id}`)
+			) {
 				const lastActive = activity[String(st.id)] ?? 0;
 				const wait = Math.max(0, lastActive + IDLE_BEFORE_REBUILD_MS - this.now());
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3, wait);
 			}
 		}
 		this.watchCurrent(obs, inStation);
-		await this.guardStation(client, obs, inStation);
+		if (!opts.observationOnly) await this.guardStation(client, obs, inStation);
 		for (const st of this.stations()) {
 			if (!st.deck && this.stationReady(st) && !this.jobExists(`deck:${st.id}`)) {
 				this.enqueue(`deck:${st.id}`, "deck", { stationId: st.id }, 3);
@@ -2229,39 +3326,34 @@ export class HubCore {
 		if (this.kvGet("onboarded") && this.now() - s.lastLikedAt > 3 * DAY_MS) {
 			this.enqueue("import:liked", "import", { source: "liked", offset: 0 }, 6);
 		}
-		this.prune();
 		this.setSyncState(s);
-	}
-
-	/**
-	 * Once a day, drop single plays older than half a year (memory keeps every
-	 * song's totals) so the table — and every read of it — stays small. At most
-	 * a few hundred per day: every deleted row counts against the day's writes.
-	 */
-	private prune(): void {
-		const last = this.kvGet<number>("pruned_at") ?? 0;
-		if (this.now() - last < DAY_MS) return;
-		this.kvSet("pruned_at", this.now());
-		this.db.run(
-			`DELETE FROM plays WHERE (played_at, track_id) IN
-			 (SELECT played_at, track_id FROM plays WHERE played_at < ? ORDER BY played_at LIMIT ?)`,
-			this.now() - PLAYS_KEEP_MS,
-			PRUNE_PER_DAY,
-		);
+		return true;
 	}
 
 	private async readRecent(client: SpotifyClient, s: SyncState): Promise<RecentPlay[]> {
-		const page = await client.recentlyPlayed();
+		const startedAt = this.now();
+		let page: Awaited<ReturnType<SpotifyClient["recentlyPlayed"]>>;
+		try {
+			page = await client.recentlyPlayed();
+		} catch (err) {
+			this.noteReadFailure("/me/player/recently-played", startedAt);
+			this.kvSet("history_retry_at", this.now() + 15_000);
+			throw err;
+		}
+		if (this.kvGet("history_due")) this.kvDel("history_due");
+		for (const key of ["history_due_at", "history_retry_at", "history_failed_at"])
+			if (this.kvGet(key) !== null) this.kvDel(key);
 		s.lastRecentAt = this.now();
+		this.kvSet("history_checked_at", this.now());
 		const plays = this.recordPlays(page?.items ?? [], s);
 		this.takeBackQueuedSkips(plays);
 		return plays;
 	}
 
 	/** Make memory current before planning: read recently-played unless just read. */
-	private async freshenMemory(client: SpotifyClient): Promise<void> {
+	private async freshenMemory(client: SpotifyClient, force = false): Promise<void> {
 		const s = this.syncState();
-		if (this.now() - s.lastRecentAt < 60_000) return;
+		if (!force && this.now() - s.lastRecentAt < 60_000) return;
 		const plays = await this.readRecent(client, s);
 		this.setSyncState(s);
 		if (plays.length === 0) return;
@@ -2314,6 +3406,19 @@ export class HubCore {
 	 * within its first 30 s (after that its play counts anyway). A song the
 	 * listener picks inside the current version is left alone.
 	 */
+	/**
+	 * The play of this song running now is the one an unattributed "Nie
+	 * wieder" of it found running (see spareRunningPlay): it runs out. That is
+	 * the saved queue's entry noted then, still current; or, without one, a play
+	 * that began no later than the note. When that play's start is not known,
+	 * it is not moved either ("bei nicht sicher zuordenbarer Wiedergabe kein
+	 * automatisches Next"). A play begun after the note is a future one: the
+	 * note has done its part and goes.
+	 */
+	private spared(trackId: TrackId): boolean {
+		return this.spareNotes().some((n) => n.id === trackId);
+	}
+
 	private async guardStation(
 		client: SpotifyClient,
 		obs: PlayerObservation | null,
@@ -2327,11 +3432,15 @@ export class HubCore {
 		const deck = st ? this.deckOf(st) : null;
 		if (!st || !deck) return;
 		const m = this.memory(obs.trackId);
-		if (m.thumb !== -1 && obs.progressMs >= 30_000) return;
+		// Turned down — unless the rating came while this very play already ran
+		// and was not given on it (see spareRunningPlay): that play runs out.
+		const rejected = m.thumb === -1 && !this.spared(obs.trackId);
+		if (this.savedSession(st.id) && !rejected) return;
+		if (!rejected && obs.progressMs >= 30_000) return;
 		const heardToday = m.lastPlayedAt !== null && this.now() - m.lastPlayedAt < RECENT_GUARD_MS;
 		let to: number | null = null;
 		let why: string;
-		if (m.thumb === -1) why = "abgelehnt";
+		if (rejected) why = "abgelehnt";
 		else if (heardToday && at.index === null && formerNow(deck, this.now()).has(obs.trackId))
 			why = "heute schon gehört";
 		else if (
@@ -2489,7 +3598,7 @@ export class HubCore {
 		if (err instanceof SpotifyError) {
 			if (err.kind === "budget") return;
 			if (err.kind === "rate" || err.kind === "quota") {
-				this.setBackoff(err.retryAfterMs, err.kind);
+				if (!err.scope) this.setBackoff(err.retryAfterMs, err.kind);
 				return;
 			}
 			if (err.kind === "auth") {
@@ -3088,6 +4197,8 @@ export class HubCore {
 				end: Math.max(at, e.at),
 				contextUri: e.contextUri,
 				track: e.track,
+				// Replaced or left: over, no later end for a pause to delay.
+				open: false,
 			});
 			if (!r) continue;
 			out.push(r);
@@ -3118,32 +4229,42 @@ export class HubCore {
 	 */
 	private recordSeenPlay(e: SeenPlay): RecentPlay | null {
 		// It was over by now (paused on the way, later than it would have been).
+		// Before its start, a listing is the play before (RT24-02).
 		const from = e.after ?? e.start - MINUTE_MS;
-		const to = Math.max(e.end, this.now()) + MINUTE_MS;
-		if (
-			this.db.first(
-				`SELECT 1 FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ? LIMIT 1`,
-				from,
-				to,
-				e.id,
-			)
-		)
+		const anchor = Math.max(e.end, this.now());
+		const to = anchor + MINUTE_MS;
+		// A play still on when counted may end minutes later after a pause, and
+		// Spotify stamps it then: in its own context that listing is still this
+		// play. A play that was over has no later end to wait for.
+		const durationMs = e.track[5];
+		const open = e.open ?? !(durationMs > 0 && e.start + durationMs - e.end <= 5_000);
+		const until = open ? anchor + SAME_PLAY_SLACK_MS : to;
+		const entry: SeenEntry = { id: e.id, from, to, at: e.at, ctx: e.contextUri, until };
+		const listed = this.db.all<{ played_at: number; context_uri: string | null }>(
+			`SELECT played_at, context_uri FROM plays WHERE played_at >= ? AND played_at <= ? AND track_id = ?`,
+			from,
+			until,
+			e.id,
+		);
+		if (listed.some((r) => this.isSeenListing(entry, e.id, r.played_at, r.context_uri)))
 			return null;
 		const st = e.contextUri
 			? this.stations().find((x) => this.deckUri(x) === e.contextUri)
 			: undefined;
 		this.db.run(
-			`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta) VALUES (?, ?, ?, ?, 0, ?)`,
+			`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta, lane) VALUES (?, ?, ?, ?, 0, ?, ?)`,
 			e.at,
 			e.id,
 			e.contextUri,
 			st?.id ?? null,
 			JSON.stringify(e.track),
+			st && e.contextUri === this.deckUri(st) ? this.laneFor(st.id, e.id, e.at) : null,
 		);
-		const seen = (
-			this.kvGet<{ id: TrackId; from: number; to: number }[]>("seen_plays") ?? []
-		).filter((x) => x.to > this.now() - LATE_PLAY_WINDOW_MS);
-		seen.push({ id: e.id, from, to });
+		this.noteHeard(st?.id, e.id);
+		const seen = (this.kvGet<SeenEntry[]>("seen_plays") ?? []).filter(
+			(x) => Math.max(x.to, x.until ?? 0) > this.now() - LATE_PLAY_WINDOW_MS,
+		);
+		seen.push(entry);
 		this.kvSet("seen_plays", seen.slice(-200));
 		const before = this.memory(e.id);
 		this.livePlay(e.id, e.at);
@@ -3151,6 +4272,27 @@ export class HubCore {
 		this.noteDiscoveryHeard(e.id);
 		this.dirtyDecksHolding(e.id, st?.id ?? null);
 		return { trackId: e.id, playedAt: e.at, contextUri: e.contextUri };
+	}
+
+	/**
+	 * Whether Spotify's listing (played at `at` in `ctx`) is the play a seen
+	 * entry counted. Track and time alone do not tell a delayed listing from a
+	 * new play of the same song: past the original window only one listing, in
+	 * the same context, with nothing else heard since, is that play.
+	 */
+	private isSeenListing(e: SeenEntry, id: TrackId, at: number, ctx: string | null): boolean {
+		if (e.id !== id || at < e.from) return false;
+		if (at <= e.to) return true;
+		if (e.until === undefined || at > e.until || e.listed || e.ctx === undefined) return false;
+		// Spotify lists some plays without their context (API starts among them):
+		// a context-less listing may still be this play; another context never is.
+		if (ctx !== null && e.ctx !== ctx) return false;
+		return !this.db.first(
+			`SELECT 1 FROM plays WHERE played_at > ? AND played_at < ? AND track_id != ? LIMIT 1`,
+			e.at ?? e.to,
+			at,
+			id,
+		);
 	}
 
 	/**
@@ -3256,7 +4398,8 @@ export class HubCore {
 		// it still counts, once — the plays table has the final say.
 		const known = new Set(this.kvGet<string[]>("recent_keys") ?? []);
 		// Plays true-shuffle counted itself in a private session: listed late, not again.
-		const seen = this.kvGet<{ id: TrackId; from: number; to: number }[]>("seen_plays") ?? [];
+		const seen = this.kvGet<SeenEntry[]>("seen_plays") ?? [];
+		let seenListed = false;
 		// Never reaching back before the first sign-in: that belongs to the import.
 		const lateFrom = Math.max(
 			s.recentCursor - LATE_PLAY_WINDOW_MS,
@@ -3342,7 +4485,13 @@ export class HubCore {
 			}
 			// Counted already from the looks in a private session: it still tells
 			// the decks it was heard, and memory nothing new.
-			if (seen.some((e) => e.id === id && at >= e.from && at <= e.to)) {
+			const counted = seen.find((e) => this.isSeenListing(e, id, at, ctx));
+			if (counted) {
+				// Listed now: a further listing of the song is a play of its own.
+				if (!counted.listed) {
+					counted.listed = true;
+					seenListed = true;
+				}
 				s.recentCursor = Math.max(s.recentCursor, at);
 				out.push({ trackId: id, playedAt: at, contextUri: ctx });
 				continue;
@@ -3362,14 +4511,16 @@ export class HubCore {
 			const station = ctx ? deckByUri.get(ctx) : deckHolding(id, at);
 			const packed = packTrack(i.track);
 			this.db.run(
-				`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta) VALUES (?, ?, ?, ?, ?, ?)`,
+				`INSERT OR IGNORE INTO plays (played_at, track_id, context_uri, station_id, ignored, meta, lane) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 				at,
 				id,
 				ctx,
 				station?.id ?? null,
 				ignored ? 1 : 0,
 				packed ? JSON.stringify(packed) : null,
+				station && ctx === this.deckUri(station) ? this.laneFor(station.id, id, at) : null,
 			);
+			if (!ignored) this.noteHeard(station?.id, id);
 			s.recentCursor = Math.max(s.recentCursor, at);
 			out.push({
 				trackId: id,
@@ -3397,6 +4548,7 @@ export class HubCore {
 			// Heard somewhere else: every other deck still holding it is stale.
 			this.dirtyDecksHolding(id, station?.id ?? null);
 		}
+		if (seenListed) this.kvSet("seen_plays", seen);
 		if (notes.length < noted) {
 			if (notes.length > 0) this.kvSet("shown_pending", notes);
 			else this.kvDel("shown_pending");
@@ -3497,14 +4649,17 @@ export class HubCore {
 	}
 
 	/** Decks that still plan to play `id` must be rewritten when idle. */
-	private dirtyDecksHolding(id: TrackId, exceptStation: number | null): void {
+	private dirtyDecksHolding(id: TrackId, exceptStation: number | null): number[] {
+		const marked: number[] = [];
 		for (const other of this.stations()) {
 			if (other.id === exceptStation || other.deck_dirty === 1) continue;
 			const d = this.deckOf(other);
 			if (d?.items.some((it) => it.id === id && it.state === "pending")) {
 				this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, other.id);
+				marked.push(other.id);
 			}
 		}
+		return marked;
 	}
 
 	/**
@@ -3642,6 +4797,477 @@ export class HubCore {
 	}
 
 	// =======================================================================
+	// Volume of the active device (P8)
+	// =======================================================================
+
+	/**
+	 * Louder or quieter on the device Spotify plays on, in steps of five. One
+	 * request; the shown volume follows at once and the next look confirms it.
+	 * A device Spotify does not let the app control says so in plain words.
+	 */
+	async changeVolume(input: { deviceId: unknown; step: unknown }): Promise<{
+		deviceName: string;
+		volume: number;
+	}> {
+		const { deviceId, step } = input;
+		if (typeof deviceId !== "string" || !deviceId || (step !== 1 && step !== -1))
+			throw new HubError("bad_request", "Ungültige Angabe", 400);
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const device = snap?.device;
+		if (!snap || !device || device.id !== deviceId)
+			throw new HubError(
+				"stale_device",
+				"Das Gerät hat sich geändert. Die Ansicht wird aktualisiert.",
+				409,
+			);
+		if (device.restricted || device.supportsVolume === false)
+			throw new HubError(
+				"no_volume",
+				`Die Lautstärke von „${device.name}“ lässt sich nicht aus true-shuffle regeln. Nutze das Gerät selbst.`,
+				409,
+			);
+		const from = device.volume ?? 50;
+		const volume = Math.max(0, Math.min(100, Math.round((from + 5 * step) / 5) * 5));
+		const client = this.client(new RequestBudget(BUDGET_PER_INVOCATION));
+		try {
+			await client.setVolume(volume, deviceId);
+		} catch (err) {
+			if (err instanceof SpotifyError && (err.kind === "forbidden" || err.status === 403)) {
+				this.kvSet("player", { ...snap, device: { ...device, supportsVolume: false } });
+				throw new HubError(
+					"no_volume",
+					`Spotify lässt die Lautstärke von „${device.name}“ nicht aus der App regeln. Nutze das Gerät selbst.`,
+					409,
+				);
+			}
+			if (err instanceof SpotifyError && err.kind === "not_found")
+				throw new HubError("stale_device", `„${device.name}“ ist nicht mehr erreichbar.`, 409);
+			throw err;
+		}
+		this.kvSet("player", { ...snap, device: { ...device, volume } });
+		return { deviceName: device.name, volume };
+	}
+
+	// =======================================================================
+	// Play one Verlauf song in Spotify, on purpose (P3, step 2)
+	// =======================================================================
+
+	/**
+	 * The listener confirmed playing this Verlauf song on the named device —
+	 * it replaces what plays there (the app said so and named the device).
+	 * Only a song in this listener's Verlauf, only on the device seen playing
+	 * last, never automatically; the saved true-shuffle place stays as it is.
+	 */
+	async playFromHistory(input: {
+		trackId: unknown;
+		playedAt: unknown;
+		deviceId: unknown;
+	}): Promise<{ deviceName: string | null }> {
+		const { trackId, playedAt, deviceId } = input;
+		if (
+			typeof trackId !== "string" ||
+			!/^[A-Za-z0-9]{22}$/.test(trackId) ||
+			typeof playedAt !== "number" ||
+			!Number.isSafeInteger(playedAt) ||
+			typeof deviceId !== "string" ||
+			!deviceId
+		)
+			throw new HubError("bad_request", "Ungültige Angabe", 400);
+		if (
+			!this.db.first(`SELECT 1 FROM plays WHERE played_at = ? AND track_id = ?`, playedAt, trackId)
+		)
+			throw new HubError("not_in_history", "Diesen Song gibt es im Verlauf nicht.", 404);
+		const device = this.kvGet<PlayerSnapshot>("player")?.device;
+		if (!device || device.id !== deviceId)
+			throw new HubError(
+				"stale_device",
+				"Das Gerät hat sich geändert. Bitte die Ansicht aktualisieren und neu bestätigen.",
+				409,
+			);
+		if (device.restricted)
+			throw new HubError(
+				"restricted",
+				`„${device.name}“ lässt sich nicht aus der App steuern.`,
+				409,
+			);
+		const client = this.client(new RequestBudget(BUDGET_PER_INVOCATION));
+		this.transportRevision += 1;
+		await client.playUris([`spotify:track:${trackId}`], deviceId);
+		this.kvSet("player_observation_due", this.now() + 2000);
+		await this.scheduleSoon(2000);
+		return { deviceName: device.name ?? null };
+	}
+
+	// =======================================================================
+	// Continue after this song (P5)
+	// =======================================================================
+
+	/**
+	 * „Nach diesem Song fortsetzen“: while a song outside true-shuffle plays,
+	 * the listener asks to go on with true-shuffle once it is over. Nothing is
+	 * sent to Spotify now (no queue entry: one could not be taken back), so the
+	 * song is never cut and cancelling has no effect at all. The hub looks
+	 * when the song should end; only a look that sees another song (or none)
+	 * resumes the saved place. No timer decides (R5).
+	 */
+	async continueAfter(trackId: unknown): Promise<ContinueAfterView> {
+		if (typeof trackId !== "string" || !/^[A-Za-z0-9]{22}$/.test(trackId))
+			throw new HubError("bad_track", "Ungültige Song-ID");
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const obs = snap?.obs;
+		if (!obs?.isPlaying || obs.trackId !== trackId)
+			throw new HubError(
+				"stale",
+				"Dieser Song läuft nicht mehr. Die Ansicht wird aktualisiert.",
+				409,
+			);
+		const stationId = this.kvGet<number>("active_session_station");
+		const session = stationId == null ? null : this.savedSession(stationId);
+		const st = stationId == null ? null : this.stationRow(stationId);
+		if (!session || !st)
+			throw new HubError("nothing", "Es gibt noch keine TrueShuffle-Stelle zum Fortsetzen.", 409);
+		if (obs.contextUri && obs.contextUri === this.deckUri(st))
+			throw new HubError("own", "Das ist schon deine TrueShuffle-Folge.", 409);
+		const intent: ContinueAfter = {
+			stationId: st.id,
+			sessionId: session.sessionId,
+			trackId,
+			deviceId: snap?.device?.id ?? null,
+			armedAt: this.now(),
+			seen: {
+				playing: obs.isPlaying,
+				progressMs: obs.progressMs,
+				durationMs: obs.durationMs,
+				at: obs.at,
+			},
+		};
+		this.kvSet("continue_after", intent);
+		this.kvDel("continue_after_result");
+		await this.scheduleNext(new RequestBudget(BUDGET_PER_INVOCATION));
+		return this.continueAfterView()!;
+	}
+
+	/** Cancel before it happened: nothing was sent, so nothing needs undoing. */
+	async cancelContinueAfter(): Promise<null> {
+		this.kvDel("continue_after");
+		await this.scheduleNext(new RequestBudget(BUDGET_PER_INVOCATION));
+		return null;
+	}
+
+	continueAfterView(): ContinueAfterView | null {
+		const c = this.kvGet<ContinueAfter>("continue_after");
+		const result = this.kvGet<ContinueAfterView["result"]>("continue_after_result");
+		if (!c) return result ? { trackId: null, armedAt: null, due: false, result } : null;
+		return { trackId: c.trackId, armedAt: c.armedAt, due: c.due === true, result: null };
+	}
+
+	/** When to look: just after the song should end; until then nothing (paused: now and then). */
+	private continueAfterLookAt(snap: PlayerSnapshot | null, base: number): number | null {
+		const c = this.kvGet<ContinueAfter>("continue_after");
+		if (!c) return null;
+		if (c.due) return base + 1000;
+		const obs = snap?.obs;
+		if (obs?.trackId === c.trackId && obs.isPlaying && obs.durationMs > 0)
+			return Math.max(base + 1000, obs.at + obs.durationMs - obs.progressMs + 1500);
+		return base + (obs?.trackId === c.trackId ? 2 * MINUTE_MS : 15_000);
+	}
+
+	/**
+	 * After every look: has the song been left? Then the alarm resumes (outside
+	 * this look). Only a look showing another song playing, or the song seen
+	 * playing up to its end and then no player, counts as its end; a pause or
+	 * a stop before the end cancels instead (red-team H2: never start music
+	 * the listener stopped).
+	 */
+	private noteContinueAfter(snap: PlayerSnapshot): void {
+		const c = this.kvGet<ContinueAfter>("continue_after");
+		if (!c || c.due) return;
+		const obs = snap.obs;
+		const st = this.stationRow(c.stationId);
+		const settle = (result: NonNullable<ContinueAfterView["result"]>): void => {
+			this.kvDel("continue_after");
+			this.kvSet("continue_after_result", result);
+		};
+		if (!st || this.savedSession(c.stationId)?.sessionId !== c.sessionId) {
+			settle({ ok: false, at: this.now(), message: "Die TrueShuffle-Stelle hat sich geändert." });
+			return;
+		}
+		if (this.now() - c.armedAt > CONTINUE_AFTER_MAX_MS) {
+			settle({
+				ok: false,
+				at: this.now(),
+				message: "Der Song lief länger als erwartet; nichts fortgesetzt.",
+			});
+			return;
+		}
+		const seen = c.seen;
+		const endReached =
+			!!seen &&
+			seen.playing &&
+			seen.durationMs > 0 &&
+			seen.progressMs + (this.now() - seen.at) >= seen.durationMs - CONTINUE_AFTER_END_SLACK_MS;
+		if (obs?.trackId === c.trackId) {
+			// Played to its end and stopped there (no autoplay): that is its end too.
+			if (!obs.isPlaying && endReached) {
+				this.kvSet("continue_after", { ...c, due: true });
+				return;
+			}
+			this.kvSet("continue_after", {
+				...c,
+				seen: {
+					playing: obs.isPlaying,
+					progressMs: obs.progressMs,
+					durationMs: obs.durationMs,
+					at: obs.at,
+				},
+			});
+			return;
+		}
+		// The listener went back to true-shuffle by hand: done, nothing to do.
+		if (obs?.contextUri && obs.contextUri === this.deckUri(st)) {
+			settle({ ok: true, at: this.now(), message: null });
+			return;
+		}
+		// Another song that just began after this one ran out (autoplay, the
+		// context's next): its end. One the listener picked mid-song, already
+		// well under way, is the listener's choice: never cut it, cancel instead.
+		const justBegan =
+			!!obs?.isPlaying && !!obs.trackId && obs.progressMs <= CONTINUE_AFTER_NEW_SONG_MS;
+		if (endReached && (justBegan || !obs?.isPlaying)) {
+			this.kvSet("continue_after", { ...c, due: true });
+			return;
+		}
+		if (obs?.isPlaying && obs.trackId) {
+			settle({
+				ok: false,
+				at: this.now(),
+				message:
+					"Du hast selbst einen anderen Song gestartet; er läuft weiter, nichts fortgesetzt.",
+			});
+			return;
+		}
+		settle({
+			ok: false,
+			at: this.now(),
+			message: "Die Wiedergabe wurde vor dem Songende angehalten; nichts fortgesetzt.",
+		});
+	}
+
+	/** The observed change came: resume the saved place on the device that played. */
+	private async runContinueAfter(): Promise<void> {
+		const c = this.kvGet<ContinueAfter>("continue_after");
+		if (!c?.due) return;
+		this.kvDel("continue_after");
+		const result = await this.play(c.stationId, c.deviceId, { sessionId: c.sessionId });
+		this.kvSet("continue_after_result", {
+			ok: result.ok,
+			at: this.now(),
+			message: result.ok ? null : (result.error?.message ?? "Fortsetzen hat nicht geklappt."),
+		});
+	}
+
+	// =======================================================================
+	// TrueShuffle Likes (P4)
+	// =======================================================================
+
+	/**
+	 * Every song with a thumb up here, in the order they got it, each once.
+	 * Built once from the stored ratings (a single scan, on the first need
+	 * after the update), then kept by every rating write (updateLive).
+	 */
+	private likesList(): LikesList {
+		const stored = this.kvGet<LikesList>("likes");
+		if (stored) return stored;
+		const ids = this.db
+			.all<{ id: string }>(
+				`SELECT id FROM memory WHERE thumb = 1 ORDER BY COALESCE(last_played_at, 0), id`,
+			)
+			.map((r) => r.id);
+		const metas = ids.length ? this.lookupTracks(ids, this.usedSources()) : new Map();
+		const list: LikesList = {
+			v: 1,
+			rev: 1,
+			items: ids.map((id) => {
+				const meta = metas.get(id);
+				return meta ? { id, at: this.now(), meta } : { id, at: this.now() };
+			}),
+		};
+		this.kvSet("likes", list);
+		// Likes from before 1.3.0 get their Kassette and playlist too (red-team M2).
+		if (list.items.length > 0) {
+			this.ensureLikesStation();
+			this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
+			this.enqueue("likes-sync", "likes-sync", {}, 6, LIKES_SYNC_DELAY_MS);
+		}
+		return list;
+	}
+
+	/** A thumb up given or taken back, by any path: the Likes follow at once, Spotify soon after. */
+	private noteLike(id: TrackId, liked: boolean): void {
+		const list = this.likesList();
+		const at = list.items.findIndex((x) => x.id === id);
+		if (liked === at >= 0) return;
+		if (liked) {
+			const meta = this.lookupTracks([id], this.usedSources()).get(id) ?? this.observedMeta(id);
+			list.items.push(meta ? { id, at: this.now(), meta } : { id, at: this.now() });
+		} else list.items.splice(at, 1);
+		list.rev = (list.rev ?? 0) + 1;
+		this.kvSet("likes", list);
+		this.sourceCache.delete(LIKES_SOURCE);
+		this.indexCache = null;
+		this.poolVersion++;
+		for (const st of this.stations())
+			if (this.sourcesOf(st).some((x) => sourceKey(x) === LIKES_SOURCE))
+				this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, st.id);
+		this.ensureLikesStation();
+		this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
+		this.enqueue("likes-sync", "likes-sync", {}, 6, LIKES_SYNC_DELAY_MS);
+	}
+
+	/** The song Spotify plays now, if it is this one (a like from Siri on a song outside the library). */
+	private observedMeta(id: TrackId): PackedTrack | null {
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		return snap?.obs?.trackId === id ? (snap.track ?? null) : null;
+	}
+
+	/** The Kassette „TrueShuffle Likes“, made once when the first like is there (the listener may delete it). */
+	private ensureLikesStation(): void {
+		if (this.kvGet("likes_station_made") !== null) return;
+		if (this.likesList().items.length === 0) return;
+		if (this.likesStation()) return;
+		if (this.stations().filter((st) => st.kind !== "all").length >= MAX_STATIONS) return;
+		const id = this.createStation({
+			name: LIKES_NAME,
+			kind: "custom",
+			sources: [{ type: "likes" }],
+		});
+		// Every liked song comes in its first round, also the ones heard lately.
+		this.db.run(`UPDATE stations SET round_started_at = ? WHERE id = ?`, this.now(), id);
+		this.kvSet("likes_station_made", this.now());
+	}
+
+	/** The Kassette of the Likes itself (not "Alles", which takes every source in). */
+	private likesStation(): StationRow | null {
+		return (
+			this.stations().find(
+				(st) => st.kind !== "all" && this.sourcesOf(st).some((x) => x.type === "likes"),
+			) ?? null
+		);
+	}
+
+	private likesSync(): LikesSyncState {
+		return (
+			this.kvGet<LikesSyncState>("likes_sync") ?? {
+				pending: false,
+				syncedAt: null,
+				count: null,
+				error: null,
+			}
+		);
+	}
+
+	/** The listener asks to write the playlist again (after a shown failure). */
+	async retryLikesSync(): Promise<LikesView> {
+		this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
+		this.enqueue("likes-sync", "likes-sync", {}, 2);
+		await this.scheduleSoon(0);
+		return this.likesView();
+	}
+
+	/**
+	 * Write the private playlist „TrueShuffle Likes“ to exactly the Likes, in
+	 * their order: replace the first hundred, then add the rest, a few
+	 * hundred per step (resumable: state.offset), so a big list finishes over
+	 * several alarms instead of starting over. Idempotent; a change of the
+	 * Likes meanwhile starts the write again from the top. One playlist: made
+	 * again only when Spotify confirms the remembered one is gone, at most once
+	 * per write (red-team B1), and every failure is shown.
+	 */
+	private async stepLikesSync(
+		client: SpotifyClient,
+		state: { rev?: number; offset?: number; remade?: boolean },
+	): Promise<StepResult> {
+		const list = this.likesList();
+		const uris = list.items.map((x) => `spotify:track:${x.id}`);
+		const rev = list.rev ?? 0;
+		let offset = state.rev === rev ? (state.offset ?? 0) : 0;
+		const remade = state.rev === rev && state.remade === true;
+		const fail = (message: string) =>
+			this.kvSet("likes_sync", {
+				...this.likesSync(),
+				pending: true,
+				error: message.slice(0, 200),
+				failedAt: this.now(),
+			} satisfies LikesSyncState);
+		try {
+			let pid = this.kvGet<string>("likes_playlist");
+			if (!pid) {
+				const pl = await client.createPlaylist(LIKES_NAME, LIKES_DESCRIPTION);
+				if (!pl?.id) throw new Error("Spotify hat keine Playlist angelegt");
+				pid = pl.id;
+				this.kvSet("likes_playlist", pid);
+				this.kvSet("likes_playlist_made_at", this.now());
+				offset = 0;
+			}
+			try {
+				for (let n = 0; n < LIKES_SYNC_WRITES_PER_STEP; n++) {
+					if (offset === 0) await client.replaceItems(pid, uris.slice(0, 100));
+					else await client.addItems(pid, uris.slice(offset, offset + 100));
+					offset = offset === 0 ? Math.min(100, uris.length) : offset + 100;
+					if (offset >= uris.length) break;
+				}
+			} catch (err) {
+				if (err instanceof SpotifyError && err.kind === "not_found" && !remade) {
+					// Gone for real, or only not visible yet? Ask before making another,
+					// never right after making it, and at most once a day (red-team B1).
+					const madeAt = this.kvGet<number>("likes_playlist_made_at") ?? 0;
+					const remadeAt = this.kvGet<number>("likes_playlist_remade_at") ?? 0;
+					if (this.now() - madeAt < LIKES_FRESH_MS || this.now() - remadeAt < LIKES_REMAKE_GAP_MS)
+						throw err;
+					const still = await client.playlist(pid).catch((e) => {
+						if (e instanceof SpotifyError && e.kind === "not_found") return null;
+						throw e;
+					});
+					if (still) throw err;
+					this.kvDel("likes_playlist");
+					this.kvSet("likes_playlist_remade_at", this.now());
+					return { done: false, state: { rev, offset: 0, remade: true }, delayMs: 1000 };
+				}
+				if (err instanceof SpotifyError && err.kind === "forbidden") {
+					fail("Spotify lässt true-shuffle die Playlist „TrueShuffle Likes“ nicht ändern.");
+					return { done: true };
+				}
+				throw err;
+			}
+			if (offset < uris.length) {
+				this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
+				return { done: false, state: { rev, offset, remade }, delayMs: 1000 };
+			}
+			this.kvSet("likes_sync", {
+				pending: false,
+				syncedAt: this.now(),
+				count: uris.length,
+				error: null,
+			} satisfies LikesSyncState);
+			return { done: true };
+		} catch (err) {
+			if (!(err instanceof SpotifyError && err.kind === "budget"))
+				fail(err instanceof Error ? err.message : String(err));
+			throw err;
+		}
+	}
+
+	/** What the app shows about the Likes (P4). */
+	likesView(): LikesView {
+		return {
+			count: this.likesList().items.length,
+			stationId: this.likesStation()?.id ?? null,
+			playlistId: this.kvGet<string>("likes_playlist"),
+			sync: this.likesSync(),
+		};
+	}
+
+	// =======================================================================
 	// Discovery
 	// =======================================================================
 
@@ -3746,100 +5372,960 @@ export class HubCore {
 	// Playback
 	// =======================================================================
 
-	async play(stationId: number, deviceId?: string | null): Promise<PlayResult> {
+	private commandTail: Promise<unknown> = Promise.resolve();
+
+	/** Serialize commands across awaited provider requests; a stale tab cannot replace a run. */
+	play(
+		stationId: number,
+		deviceId?: string | null,
+		opts: { newQueue?: boolean; sessionId?: string } = {},
+	): Promise<PlayResult> {
+		const task = this.commandTail.then(() => this.resumeSession(stationId, deviceId, opts));
+		this.commandTail = task.catch(() => undefined);
+		return task;
+	}
+
+	public savedSession(stationId?: number): SavedSession | null {
+		const id = stationId ?? this.kvGet<number>("active_session_station");
+		if (id == null) return null;
+		const row = this.db.first<{ data: string }>(
+			`SELECT data FROM playback_sessions WHERE station_id = ?`,
+			id,
+		);
+		return row ? (JSON.parse(row.data) as SavedSession) : null;
+	}
+
+	private saveSession(session: SavedSession): void {
+		this.db.run(
+			`INSERT INTO playback_sessions (station_id, data) VALUES (?, ?) ON CONFLICT(station_id) DO UPDATE SET data = excluded.data WHERE playback_sessions.data <> excluded.data`,
+			session.stationId,
+			JSON.stringify(session),
+		);
+	}
+
+	private createSession(st: StationRow, deck: Deck): SavedSession {
+		const sessionId = crypto.randomUUID();
+		const index = deck.lastTrackId ? deck.items.findIndex((it) => it.id === deck.lastTrackId) : -1;
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const trustworthy =
+			index >= 0 &&
+			snap?.obs?.contextUri === this.deckUri(st) &&
+			snap.obs.trackId === deck.lastTrackId;
+		const session: SavedSession = {
+			sessionId,
+			stationId: st.id,
+			orderRevision: deck.version,
+			entryIds: deck.items.map((_, i) => `${sessionId}:${i}`),
+			currentIndex: Math.max(0, index),
+			progressMs: trustworthy ? snap.obs!.progressMs : null,
+			observedAt: trustworthy ? snap!.obs!.at : null,
+			playbackEpoch: 0,
+			contextUri: this.deckUri(st)!,
+			status: "saved",
+			pending: null,
+		};
+		this.saveSession(session);
+		return session;
+	}
+
+	/** Deliberate local replacement; normal native resume never calls this planner. */
+	public newNativeQueue(stationId: number): SavedSession {
 		const st = this.stationRow(stationId);
-		if (!st) return fail("unknown", "Diesen Sender gibt es nicht.");
-		if (this.backoffUntil() > this.now()) {
-			const kind = this.kvGet<{ kind: string }>("backoff")?.kind === "quota" ? "quota" : "rate";
-			return fail(
-				kind,
-				kind === "quota"
-					? "Spotify-Kontingent aufgebraucht — bitte später erneut."
-					: "Spotify bremst gerade — gleich noch einmal versuchen.",
+		if (!st || !this.stationReady(st))
+			throw new HubError("not_ready", "Diese Warteschlange wird noch vorbereitet.");
+		const pool = this.stationPool(st);
+		const discoveries = this.discoveryEntries(st);
+		this.preloadMemory([...pool.map((it) => it.id), ...discoveries.map((it) => it.id)]);
+		const input = {
+			now: this.now(),
+			roundStartedAt: st.round_started_at,
+			rules: this.rulesOf(st),
+			pool,
+			memory: (id: TrackId) => this.memory(id),
+			banned: this.bans(stationId),
+			discoveries,
+			size: DECK_SIZE,
+			rng: this.d.rng,
+		};
+		let result = planQueue(input);
+		if (!result.slots.length && result.poolSize > 0)
+			result = planQueue({ ...input, roundStartedAt: this.now() + 1 });
+		if (!result.slots.length)
+			throw new HubError("empty", "Diese Warteschlange hat keine abspielbaren Songs.");
+		const deck = newDeck(result.slots, (this.deckOf(st)?.version ?? 0) + 1, this.now());
+		return this.db.transaction(() => {
+			this.saveDeck(stationId, deck);
+			st.deck = JSON.stringify(deck);
+			const session = this.createSession(st, deck);
+			session.controller = "native";
+			session.contextUri = this.deckUri(st) ?? `native:station:${stationId}`;
+			this.saveSession(session);
+			this.kvSet("active_session_station", stationId);
+			this.kvDel(`native_tail:${stationId}`);
+			this.kvDel(`extend_intent:${stationId}`);
+			this.kvDel(`native_heard:${stationId}`);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: result.slots,
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+			this.db.run(
+				`UPDATE stations SET deck_dirty = 0, fresh_remaining = ?, pool_size = ?, stats = ? WHERE id = ?`,
+				result.freshRemaining,
+				result.poolSize,
+				JSON.stringify(result.counts),
+				stationId,
 			);
+			return session;
+		});
+	}
+
+	public nativeSession(stationId: number, advance = false): SavedSession {
+		const st = this.stationRow(stationId);
+		const deck = st ? this.deckOf(st) : null;
+		if (!st || !deck?.items.length)
+			throw new HubError("not_ready", "Diese Warteschlange wird noch vorbereitet.");
+		const session = this.savedSession(stationId) ?? this.createSession(st, deck);
+		if (advance && session.currentIndex + 1 < session.entryIds.length) {
+			session.currentIndex += 1;
+			session.progressMs = 0;
+			session.observedAt = this.now();
 		}
+		session.controller = "native";
+		session.pending = null;
+		session.playbackEpoch += 1;
+		session.sequence = -1;
+		session.status = "saved";
+		this.saveSession(session);
+		this.kvSet("active_session_station", stationId);
+		return session;
+	}
+
+	/** Reserve a local ordered tail. Transport retries receive exactly the same occurrence IDs. */
+	public prepareNativeTail(
+		stationId: number,
+	): { orderRevision: number; entries: { entryId: string; mediaId: string }[] } | null {
+		const session = this.savedSession(stationId);
+		const st = this.stationRow(stationId);
+		const deck = st ? this.deckOf(st) : null;
+		if (session?.controller !== "native" || !st || !deck) return null;
+		const key = `native_tail:${stationId}`;
+		const pending = this.kvGet<{
+			sessionId: string;
+			orderRevision: number;
+			entries: { entryId: string; mediaId: string }[];
+		}>(key);
+		if (pending?.sessionId === session.sessionId)
+			return { orderRevision: pending.orderRevision, entries: pending.entries };
+		if (deck.items.length - session.currentIndex - 1 >= EXTEND_BELOW) return null;
+		const pool = this.stationPool(st);
+		const discoveries = this.discoveryEntries(st);
+		this.preloadMemory([...pool.map((it) => it.id), ...discoveries.map((it) => it.id)]);
+		const prefix = deck.items.slice(0, session.currentIndex);
+		const suffix = deck.items.slice(session.currentIndex);
+		const blocked = new Set([...this.bans(st.id), ...suffix.map((it) => it.id)]);
+		const input = {
+			now: this.now(),
+			roundStartedAt: st.round_started_at,
+			rules: this.rulesOf(st),
+			pool,
+			memory: (id: TrackId) => this.memory(id),
+			banned: new Set([...blocked, ...prefix.map((it) => it.id)]),
+			discoveries,
+			size: 100,
+			rng: this.d.rng,
+		};
+		let result = planQueue(input);
+		if (!result.slots.length)
+			result = planQueue({ ...input, banned: blocked, roundStartedAt: this.now() + 1 });
+		if (!result.slots.length) return null;
+		const appended = result.slots.map((slot) => ({
+			id: slot.trackId,
+			kind: slot.kind,
+			state: "pending" as const,
+			at: null,
+		}));
+		const entries = appended.map((it) => ({
+			entryId: crypto.randomUUID(),
+			mediaId: it.id,
+		}));
+		const trim =
+			deck.items.length > 800 || appended.some((it) => prefix.some((old) => old.id === it.id))
+				? session.currentIndex
+				: 0;
+		this.db.transaction(() => {
+			deck.items = [...deck.items.slice(trim), ...appended];
+			deck.lastIndex = session.currentIndex - trim;
+			deck.version += 1;
+			session.entryIds = [...session.entryIds.slice(trim), ...entries.map((it) => it.entryId)];
+			session.currentIndex -= trim;
+			session.orderRevision += 1;
+			this.saveDeck(stationId, deck);
+			this.saveSession(session);
+			this.kvSet(`deck_intent:${stationId}`, {
+				layout: deck.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+				version: deck.version,
+				writtenAt: deck.writtenAt,
+			});
+			this.kvSet(key, {
+				sessionId: session.sessionId,
+				orderRevision: session.orderRevision,
+				entries,
+			});
+		});
+		return { orderRevision: session.orderRevision, entries };
+	}
+
+	public acknowledgeNativeTail(stationId: number, revision: number): boolean {
+		const key = `native_tail:${stationId}`;
+		const intent = this.kvGet<{ sessionId: string; orderRevision: number }>(key);
+		if (
+			!intent ||
+			intent.orderRevision !== revision ||
+			this.savedSession(stationId)?.sessionId !== intent.sessionId
+		)
+			return false;
+		this.kvDel(key);
+		return true;
+	}
+
+	/** Compare-and-swap native command recovery; trusted events win over stale intents. */
+	public commitNativeSession(
+		snapshot: SavedSession,
+		expectedEpoch: number,
+		expectedSequence = -1,
+	): boolean {
+		const current = this.savedSession(snapshot.stationId);
+		if (
+			!current ||
+			current.sessionId !== snapshot.sessionId ||
+			current.playbackEpoch !== expectedEpoch ||
+			(current.sequence ?? -1) !== expectedSequence
+		)
+			return false;
+		this.saveSession({
+			...snapshot,
+			playbackEpoch: current.playbackEpoch,
+			sequence: current.sequence,
+			controller: "native",
+		});
+		return true;
+	}
+
+	public nativeObservationStatus(
+		stationId: number,
+		sessionId: string,
+		playbackEpoch: number,
+		status: "active" | "paused" | "disconnected" | "external" | "ambiguous",
+		sequence?: number,
+	): boolean {
+		const session = this.savedSession(stationId);
+		if (
+			session?.controller !== "native" ||
+			session.sessionId !== sessionId ||
+			session.playbackEpoch !== playbackEpoch
+		)
+			return false;
+		if (sequence != null && (!Number.isInteger(sequence) || sequence <= (session.sequence ?? -1)))
+			return false;
+		if (sequence != null) session.sequence = sequence;
+		session.status = status;
+		this.saveSession(session);
+		return true;
+	}
+
+	private noteNativeSample(
+		session: SavedSession,
+		entryId: string,
+		progress: number | null,
+		playing: boolean,
+	): void {
+		const key = `native_heard:${session.stationId}`;
+		type Sample = {
+			entryId: string;
+			epoch: number;
+			at: number;
+			progress: number | null;
+			playing: boolean;
+			listened: number;
+			start: number;
+			ignored: boolean;
+			recorded: boolean;
+		};
+		const now = this.now();
+		const prev = this.kvGet<Sample>(key);
+		const sameEntry = prev?.entryId === entryId;
+		const same = sameEntry && prev.epoch === session.playbackEpoch;
+		const sample: Sample = sameEntry
+			? { ...prev, epoch: session.playbackEpoch }
+			: {
+					entryId,
+					epoch: session.playbackEpoch,
+					at: now,
+					progress,
+					playing,
+					listened: 0,
+					start: now,
+					ignored: this.inGuest(now),
+					recorded: false,
+				};
+		if (same && prev.playing && progress != null && prev.progress != null) {
+			const delta = progress - prev.progress;
+			const elapsed = now - prev.at;
+			// Provider movement corroborates heard time. A seek or wall time alone counts nothing.
+			if (delta >= 0 && elapsed >= 0 && delta <= elapsed + 2000)
+				sample.listened += Math.min(delta, elapsed);
+		}
+		sample.ignored ||=
+			this.inGuest(now) ||
+			this.guestPeriods().some((period) => period.from <= now && period.to > sample.at);
+		sample.at = now;
+		sample.progress = progress;
+		sample.playing = playing;
+		if (sample.listened >= 30_000 && !sample.recorded) {
+			const st = this.stationRow(session.stationId);
+			const deck = st ? this.deckOf(st) : null;
+			const index = session.entryIds.indexOf(entryId);
+			const id = index >= 0 ? deck?.items[index]?.id : null;
+			const track = id ? this.lookupTracks([id], this.usedSources()).get(id) : null;
+			if (id && track) {
+				if (sample.ignored)
+					this.db.run(
+						`INSERT OR IGNORE INTO plays (played_at,track_id,context_uri,station_id,ignored,meta) VALUES (?,?,?,?,1,?)`,
+						now,
+						id,
+						session.contextUri,
+						session.stationId,
+						JSON.stringify(track),
+					);
+				else
+					this.recordSeenPlay({
+						id,
+						at: now,
+						start: sample.start,
+						end: now,
+						after: sample.start,
+						contextUri: session.contextUri,
+						track,
+					});
+				sample.recorded = true;
+			}
+		}
+		this.kvSet(key, sample);
+	}
+
+	/** Native events are fenced by account, session, occurrence, epoch and sequence. */
+	public acceptSessionObservation(
+		stationId: number,
+		obs: {
+			sessionId: string;
+			entryId: string;
+			playbackEpoch: number;
+			sequence: number;
+			progressMs: number | null;
+			isPlaying: boolean;
+		},
+	): boolean {
+		const session = this.savedSession(stationId);
+		if (
+			!session ||
+			session.sessionId !== obs.sessionId ||
+			session.playbackEpoch !== obs.playbackEpoch ||
+			obs.sequence <= (session.sequence ?? -1)
+		)
+			return false;
+		const index = session.entryIds.indexOf(obs.entryId);
+		if (
+			index < 0 ||
+			(obs.progressMs != null && (!Number.isFinite(obs.progressMs) || obs.progressMs < 0))
+		)
+			return false;
+		this.noteNativeSample(session, obs.entryId, obs.progressMs, obs.isPlaying);
+		if (index !== session.currentIndex || obs.progressMs != null)
+			session.progressMs = obs.progressMs;
+		session.currentIndex = index;
+		session.sequence = obs.sequence;
+		session.controller = "native";
+		session.observedAt = this.now();
+		session.status = obs.isPlaying ? "active" : "paused";
+		this.saveSession(session);
+		return true;
+	}
+
+	/**
+	 * Songs heard on each station (non-guest plays), kept per Durable Object so
+	 * a poll never scans the plays log: a station is read once, then every new
+	 * counted play is added where it is recorded (`noteHeard`). A label only:
+	 * the set matches the plays table as of the last wake, so plays pruned after
+	 * half a year (or a write rolled back) drop out of it at the next wake.
+	 */
+	private heardOnStation = new Map<number, Set<TrackId>>();
+
+	private stationHeard(stationId: number): Set<TrackId> {
+		let ids = this.heardOnStation.get(stationId);
+		if (!ids) {
+			ids = new Set(
+				this.db
+					.all<{ track_id: string }>(
+						`SELECT DISTINCT track_id FROM plays WHERE station_id = ? AND ignored = 0`,
+						stationId,
+					)
+					.map((r) => r.track_id),
+			);
+			this.heardOnStation.set(stationId, ids);
+		}
+		return ids;
+	}
+
+	/** A counted play was recorded: keep `stationHeard` current without reading. */
+	private noteHeard(stationId: number | null | undefined, id: TrackId): void {
+		if (stationId != null) this.heardOnStation.get(stationId)?.add(id);
+	}
+
+	/**
+	 * A song seen starting on a station (see `noteLane`): its lane, frozen at
+	 * that look, waits for the play to be recorded.
+	 */
+	private laneNotes(): LaneNote[] {
+		return this.kvGet<LaneNote[]>("lane_notes") ?? [];
+	}
+
+	/**
+	 * Notes why a song is on its station when a look first sees it as a new
+	 * song in the station's own playlist: the look before showed another song
+	 * (or another context), and the deck in that playlist was written before
+	 * that look, so this play began from this deck. The lane is the deck's one
+	 * reason for the song (null when it holds the song for several).
+	 *
+	 * The lane is a fact about the deck, not about one play: every play of the
+	 * song in that playlist from this deck has this reason. Which play a later
+	 * listing is cannot be proven (an unseen skip, repeat, pause or seek can
+	 * make any position fit), so no attempt is made — a new deck that gives
+	 * the song another reason makes the note unsure instead (see
+	 * `reconcileLaneNotes`).
+	 */
+	private noteLane(obs: PlayerObservation | null, shown: PlayerSnapshot | null): void {
+		const now = this.now();
+		let notes = this.laneNotes().filter((n) => now - n.seenAt < LANE_NOTE_MS);
+		const before = JSON.stringify(notes);
+		const isNew =
+			obs?.trackId &&
+			obs.contextUri &&
+			shown &&
+			!(shown.obs?.trackId === obs.trackId && shown.obs?.contextUri === obs.contextUri);
+		const st = isNew ? this.stations().find((x) => this.deckUri(x) === obs.contextUri) : undefined;
+		const deck = st ? this.deckOf(st) : null;
+		if (st && deck && shown && obs?.trackId && deck.writtenAt <= shown.at) {
+			const kinds = new Set(deck.items.filter((it) => it.id === obs.trackId).map((it) => it.kind));
+			// One note per song and station: the newest look stands for it.
+			notes = notes.filter((n) => !(n.station === st.id && n.id === obs.trackId));
+			notes.push({
+				station: st.id,
+				id: obs.trackId,
+				kind: kinds.size === 1 ? ([...kinds][0] ?? null) : null,
+				seenAt: now,
+			});
+		}
+		notes = notes.slice(-50);
+		if (JSON.stringify(notes) !== before) this.kvSet("lane_notes", notes);
+	}
+
+	/**
+	 * A new deck on a station: a noted song it holds for the same one reason
+	 * keeps its lane (any play of it has that reason, from either deck); one
+	 * it holds for another reason, for several or not at all can no longer
+	 * tell which deck a play came from, and keeps no lane.
+	 */
+	private reconcileLaneNotes(stationId: number, deck: Deck): void {
+		const notes = this.laneNotes();
+		let changed = false;
+		for (const n of notes) {
+			if (n.station !== stationId || n.kind === null) continue;
+			const kinds = new Set(deck.items.filter((it) => it.id === n.id).map((it) => it.kind));
+			if (kinds.size === 1 && kinds.has(n.kind)) continue;
+			n.kind = null;
+			changed = true;
+		}
+		if (changed) this.kvSet("lane_notes", notes);
+	}
+
+	/**
+	 * The lane for a play being recorded in a station's playlist: the note of
+	 * this song on this station seen before the play's stamp and not too long
+	 * ago, used once, when every deck since gave the song that same one
+	 * reason. No note, no lane.
+	 */
+	private laneFor(stationId: number, id: TrackId, at: number): SlotKind | null {
+		const notes = this.laneNotes();
+		const i = notes.findIndex(
+			(n) =>
+				n.station === stationId && n.id === id && n.seenAt <= at && at - n.seenAt <= LANE_NOTE_MS,
+		);
+		if (i < 0) return null;
+		const [note] = notes.splice(i, 1);
+		this.kvSet("lane_notes", notes);
+		if (!note?.kind) return null;
+		// The deck now must still hold the song for that one reason.
+		const row = this.stationRow(stationId);
+		const deck = row ? this.deckOf(row) : null;
+		const kinds = new Set(deck?.items.filter((it) => it.id === id).map((it) => it.kind) ?? []);
+		return kinds.size === 1 && kinds.has(note.kind) ? note.kind : null;
+	}
+
+	/**
+	 * Read-only labels for songs in a queue (see `SongFacts`). `plays` and
+	 * `lastPlayedAt` come from `memory()`: the live memory table — which only
+	 * guest-free counted plays (>= 30 s) ever reach — merged with imported
+	 * history, cut off at `live_since` so nothing is counted twice.
+	 * `inStation` comes from `stationHeard` (non-guest plays on this station).
+	 */
+	private songFacts(
+		stationId: number,
+		items: readonly { id: TrackId; kind: SlotKind }[],
+	): (it: { id: TrackId; kind: SlotKind }) => SongFacts {
+		this.preloadMemory(new Set(items.map((it) => it.id)));
+		const heardHere = this.stationHeard(stationId);
+		const pc = this.playlistCountOf();
+		const counted = this.kvGet("playlist_counts") !== null;
+		return (it) => {
+			const m = this.memory(it.id);
+			return {
+				plays: m.plays,
+				lastPlayedAt: m.lastPlayedAt,
+				inStation: heardHere.has(it.id),
+				// Per deck item: the same song could sit in a deck twice for different reasons.
+				kind: it.kind ?? null,
+				// Only once the own playlists were ever counted.
+				...(counted ? { playlists: pc(it.id) } : {}),
+			};
+		};
+	}
+
+	public sessionView(stationId?: number, limit = 51) {
+		const session = this.savedSession(stationId);
+		const st = session ? this.stationRow(session.stationId) : null;
+		const deck = st ? this.deckOf(st) : null;
+		if (!session || !deck) return null;
+		const upcoming = deck.items.slice(
+			session.currentIndex,
+			session.currentIndex + Math.min(1000, Math.max(1, limit)),
+		);
+		const tracks = this.lookupTracks(
+			upcoming.map((it) => it.id),
+			this.usedSources(),
+		);
+		const facts = this.songFacts(session.stationId, upcoming);
+		// Every song's rating and its write number read together, once for the whole queue.
+		const clock = this.ratingClock();
+		const queue = upcoming.flatMap((it, n) => {
+			const track = tracks.get(it.id);
+			return track
+				? [
+						{
+							entryId: session.entryIds[session.currentIndex + n]!,
+							track: this.view(track, clock),
+							facts: facts(it),
+						},
+					]
+				: [];
+		});
+		return {
+			sessionId: session.sessionId,
+			stationId: session.stationId,
+			entryId: session.entryIds[session.currentIndex]!,
+			orderRevision: session.orderRevision,
+			progressMs: session.progressMs,
+			observedAt: session.observedAt,
+			status: session.status,
+			pending:
+				session.pending !== null ||
+				(session.controller !== "native" && !!this.kvGet(`deck_intent:${session.stationId}`)),
+			queue,
+		};
+	}
+
+	private checkpoint(st: StationRow, deck: Deck, obs: PlayerObservation | null): void {
+		let session = this.savedSession(st.id);
+		if (!session && (deck.lastTrackId || obs?.contextUri === this.deckUri(st)))
+			session = this.createSession(st, deck);
+		// An unconfirmed command expires instead of freezing the saved place. A
+		// playlist write still being retried keeps its hold: until it lands,
+		// positions in the player mean the order before it.
+		if (
+			session?.pending &&
+			session.controller !== "native" &&
+			this.now() - (session.pending.startedAt ?? 0) > PENDING_EXPIRE_MS &&
+			(session.pending.kind !== "publish" ||
+				(!this.kvGet(`deck_intent:${st.id}`) && !this.kvGet(`extend_intent:${st.id}`)))
+		) {
+			this.log(
+				"info",
+				"session",
+				`„${st.name}“: unbestätigter Befehl (${session.pending.kind}) verworfen — die Stelle wird wieder mitgeschrieben`,
+			);
+			session.pending = null;
+			this.saveSession(session);
+		}
+		if (
+			session?.pending?.kind === "resume" &&
+			session.controller !== "native" &&
+			obs?.contextUri === session.contextUri &&
+			obs.isPlaying &&
+			obs.at >= (session.pending.startedAt ?? session.observedAt ?? 0)
+		) {
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const index =
+				obs.contextOffset != null && matches.includes(obs.contextOffset)
+					? obs.contextOffset
+					: matches.length === 1
+						? matches[0]!
+						: -1;
+			// A fresh own-context observation confirms the desired state. Unrelated
+			// playback and ambiguous occurrences cannot acknowledge the operation.
+			if (index >= 0 && (session.pending.phase === "prepared" || index === session.currentIndex))
+				session.pending = null;
+		}
+		if (session?.pending?.kind === "next" && obs?.contextUri === session.contextUri) {
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const index =
+				obs.contextOffset != null && matches.includes(obs.contextOffset)
+					? obs.contextOffset
+					: matches.length === 1
+						? matches[0]!
+						: -1;
+			if (index > session.currentIndex) {
+				session.pending = null;
+				session.currentIndex = index;
+				session.progressMs = obs.progressMs;
+				session.observedAt = obs.at;
+				this.saveSession(session);
+			}
+		}
+		if (
+			!session ||
+			(session.pending &&
+				!(session.pending.kind === "resume" && session.pending.phase === "prepared")) ||
+			session.controller === "native"
+		)
+			return;
+		if (!obs) session.status = "disconnected";
+		else if (obs.contextUri !== session.contextUri) session.status = "external";
+		else if (session.observedAt == null || obs.at >= session.observedAt) {
+			if (this.kvGet<number>("active_session_station") !== st.id)
+				this.kvSet("active_session_station", st.id);
+			const matches = deck.items
+				.map((it, i) => (it.id === obs.trackId ? i : -1))
+				.filter((i) => i >= 0);
+			const offset = obs.contextOffset;
+			if (matches.length > 1 && offset == null) {
+				session.status = "ambiguous";
+				this.saveSession(session);
+				return;
+			}
+			const index =
+				offset != null && matches.includes(offset)
+					? offset
+					: matches.length === 1
+						? matches[0]!
+						: matches.includes(session.currentIndex)
+							? session.currentIndex
+							: -1;
+			if (index >= 0 && index < session.currentIndex) {
+				// A player in this playlist at an earlier place: another device
+				// resuming what it had loaded days ago, or a tap in Spotify itself.
+				// The saved place is where true-shuffle's order got to, and it
+				// never moves back — the station waits there until it is its turn.
+				session.status = "external";
+			} else if (index >= 0) {
+				session.currentIndex = index;
+				// Within the current song the latest observation wins, including a
+				// backwards seek; across songs only forward (see above).
+				session.progressMs =
+					Number.isFinite(obs.progressMs) && obs.progressMs >= 0 ? obs.progressMs : null;
+				session.observedAt = obs.at;
+				session.status = obs.isPlaying ? "active" : "paused";
+			} else session.status = "ambiguous";
+		}
+		this.saveSession(session);
+	}
+
+	/**
+	 * Spotify listed the song at the saved place, in this playlist, stamped
+	 * after the look that saved the place: that occurrence is over while no
+	 * look saw the player — heard to its end or left after 30 s or more —
+	 * and the place moves on to the next song, from its start (owner
+	 * decision 2026-10-09: an occurrence Spotify lists as played is never
+	 * started again; Spotify cannot tell a finished play from a late skip).
+	 * The stamp must come more than the clock slack after that look, so a
+	 * listing of an earlier play never moves it; another context moves
+	 * nothing, and a look at this playlist right now decides by itself.
+	 * Listings are taken in order, so unseen songs played one after another
+	 * move it along.
+	 */
+	private advanceListed(
+		st: StationRow,
+		deck: Deck,
+		plays: readonly RecentPlay[],
+		obs: PlayerObservation | null,
+	): void {
+		const session = this.savedSession(st.id);
+		if (!session || session.pending || session.controller === "native") return;
+		if (obs?.contextUri === session.contextUri) return;
+		let moved = false;
+		for (const p of plays.slice().sort((a, b) => a.playedAt - b.playedAt)) {
+			if (p.contextUri !== session.contextUri || session.observedAt == null) continue;
+			const item = deck.items[session.currentIndex];
+			if (!item || item.id !== p.trackId || session.currentIndex + 1 >= deck.items.length) continue;
+			if (p.playedAt <= session.observedAt + LISTED_SLACK_MS) continue;
+			session.currentIndex += 1;
+			session.progressMs = 0;
+			session.observedAt = p.playedAt;
+			moved = true;
+		}
+		if (!moved) return;
+		this.log(
+			"info",
+			"session",
+			`„${st.name}“: Spotify meldet den Song als gespielt — es geht mit dem nächsten weiter`,
+		);
+		this.saveSession(session);
+	}
+
+	private async resumeSession(
+		stationId: number,
+		deviceId?: string | null,
+		opts: { newQueue?: boolean; sessionId?: string } = {},
+	): Promise<PlayResult> {
+		const st = this.stationRow(stationId);
+		if (!st) return fail("unknown", "Diese Warteschlange gibt es nicht.");
+		// Any explicit start supersedes a waiting „Nach diesem Song fortsetzen“ (P5).
+		if (this.kvGet("continue_after") !== null) this.kvDel("continue_after");
+		let session = this.savedSession(stationId);
+		if (opts.sessionId && session?.sessionId !== opts.sessionId)
+			return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
 		const budget = new RequestBudget(BUDGET_PER_INVOCATION);
 		const client = this.client(budget);
+		let transportAttempted = false;
 		try {
-			await this.sync(budget, { force: true });
-			const shown = this.shownHeardSong();
+			this.transportRevision += 1;
+			const intent = this.kvGet<{ layout: PlannedSlot[] }>(`deck_intent:${stationId}`);
+			if (intent && st.playlist_id) {
+				const uris = intent.layout.map((slot) => `spotify:track:${slot.trackId}`);
+				await client.replaceItems(st.playlist_id, uris.slice(0, 100));
+				for (let i = 100; i < uris.length; i += 100)
+					await client.addItems(st.playlist_id, uris.slice(i, i + 100));
+				this.kvDel(`deck_intent:${stationId}`);
+				this.kvDel(`extend_intent:${stationId}`);
+			}
+			// Capture the checkpoint without running automatic playback repair
+			// ahead of this explicit start/device-selection command.
+			const observed = await this.sync(budget, {
+				force: true,
+				observationOnly: true,
+				// Replanning still needs fresh history; a stable resume only needs
+				// the actual unfinished occurrence and provider mode/device sample.
+				playerOnly: !!session && !opts.newQueue && !!st.deck && !!st.playlist_id && !intent,
+			});
 			const fresh = this.stationRow(stationId)!;
-			let deck = this.deckOf(fresh);
-			const needsRebuild =
-				!deck ||
-				fresh.deck_dirty === 1 ||
-				consumedCount(deck) > 0 ||
-				deck.continued === true ||
-				this.now() - deck.writtenAt > DECK_MAX_AGE_MS ||
-				!fresh.playlist_id ||
-				// The song the player shows, heard 30 s or more, still waits in it.
-				(shown !== null && deck.items.some((it) => it.id === shown && it.state === "pending"));
-			if (needsRebuild) deck = await this.rebuildDeck(client, fresh, "start", shown);
-			const target = await this.pickDevice(client, deviceId ?? null);
-			if (!target)
-				return fail(
-					"no_device",
-					"Öffne Spotify auf einem Gerät (Handy, PC, Box) — dann nochmal tippen.",
+			if (!session && this.stationOrphaned(fresh))
+				throw new HubError(
+					"gone",
+					"Die Playlist dieses Senders gibt es in deinem Spotify nicht mehr. Wähle unter Quellen eine andere.",
 				);
-			// Our order only holds with the service's own shuffle and repeat off.
-			for (const fix of [
-				() => client.setShuffle(false, target.id),
-				() => client.setRepeat("off", target.id),
-			]) {
-				try {
-					await fix();
-				} catch (err) {
-					if (err instanceof SpotifyError && (err.kind === "premium" || err.kind === "restricted"))
-						throw err;
+			let deck = this.deckOf(fresh);
+			if (
+				(opts.newQueue && !intent) ||
+				(!session && fresh.deck_dirty === 1) ||
+				!deck ||
+				!fresh.playlist_id
+			) {
+				if (opts.newQueue)
+					this.db.run(`DELETE FROM playback_sessions WHERE station_id = ?`, stationId);
+				deck = await this.rebuildDeck(
+					client,
+					fresh,
+					"start",
+					opts.newQueue ? this.shownHeardSong() : null,
+				);
+				session = this.savedSession(stationId);
+			}
+			if (!deck?.items.length) return fail("empty", "Diese Warteschlange hat keine Songs.");
+			session = session ? this.savedSession(stationId) : null;
+			session ??= this.createSession(fresh, deck);
+			// Journal the candidate without replacing the visible saved station.
+			// A definitive refusal must leave the previous station available.
+			// Submitted ambiguous commands still become visible for reconciliation.
+			session.pending = {
+				operationId: session.pending?.operationId ?? crypto.randomUUID(),
+				kind: "resume",
+				deviceId,
+				phase: "prepared",
+				startedAt: this.now(),
+			};
+			this.saveSession(session);
+			let target = await this.pickDevice(client, deviceId ?? null, { observed });
+			if (!target) {
+				const current = this.savedSession(stationId);
+				if (
+					current?.sessionId === session.sessionId &&
+					current.pending?.operationId === session.pending?.operationId
+				) {
+					current.pending = null;
+					current.status = "disconnected";
+					this.saveSession(current);
 				}
+				return fail("no_device", "Öffne Spotify auf einem Gerät und setze dann fort.");
 			}
+			const snapshot = this.kvGet<PlayerSnapshot>("player");
+			if (
+				observed &&
+				!opts.newQueue &&
+				session.controller !== "native" &&
+				snapshot?.obs?.isPlaying &&
+				!snapshot.obs.shuffle &&
+				snapshot.repeat === "off" &&
+				snapshot.obs.contextUri === session.contextUri &&
+				snapshot.obs.trackId === deck.items[session.currentIndex]?.id &&
+				target.id === snapshot.device?.id
+			) {
+				session.pending = null;
+				session.controller = "spotify";
+				session.playbackEpoch += 1;
+				session.status = "active";
+				this.saveSession(session);
+				this.kvSet("active_session_station", stationId);
+				await this.deferPlayerObservation();
+				return { ok: true, deviceName: target.name, acceptedAt: this.now() };
+			}
+			const replacedSong = this.shownHeardSong();
+			const start = async (device: { id: string; name: string }) => {
+				// Only a successful observation from this command can avoid mode writes.
+				// Unknown modes and a different target retain the ordered-start sequence.
+				const sameDevice = observed && snapshot?.device?.id === device.id;
+				if (!sameDevice || !snapshot?.obs || snapshot.obs.shuffle)
+					await client.setShuffle(false, device.id);
+				if (!sameDevice || snapshot?.repeat !== "off") await client.setRepeat("off", device.id);
+				session!.pending = { ...session!.pending!, phase: "submitted" };
+				this.saveSession(session!);
+				transportAttempted = true;
+				await client.play({
+					contextUri: session!.contextUri,
+					position: session!.currentIndex,
+					progressMs: session!.progressMs ?? 0,
+					deviceId: device.id,
+				});
+			};
 			try {
-				await client.play({
-					contextUri: `spotify:playlist:${fresh.playlist_id}`,
-					position: 0,
-					deviceId: target.id,
-				});
+				try {
+					await start(target);
+				} catch (err) {
+					if (!(err instanceof SpotifyError && err.kind === "no_device")) throw err;
+					this.kvDel("spotify_devices");
+					if (deviceId) throw err;
+					// One definitive device rejection permits one fresh discovery; never
+					// retry the vanished device or silently redirect an explicit selection.
+					const fallback = await this.pickDevice(client, null, { exclude: target.id });
+					if (!fallback) throw err;
+					target = fallback;
+					await start(target);
+				}
 			} catch (err) {
-				if (!(err instanceof SpotifyError && err.kind === "not_found")) throw err;
-				// The listener deleted the station's playlist in Spotify: make a new one.
-				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, fresh.id);
+				if (
+					!(
+						err instanceof SpotifyError &&
+						err.kind === "not_found" &&
+						err.operation === "PUT /me/player/play"
+					)
+				)
+					throw err;
+				this.db.run(`UPDATE stations SET playlist_id = NULL WHERE id = ?`, stationId);
 				fresh.playlist_id = null;
-				deck = await this.rebuildDeck(client, fresh, "start", shown);
+				const playlistId = await this.ensurePlaylist(client, fresh);
+				session.contextUri = `spotify:playlist:${playlistId}`;
+				this.saveSession(session);
+				this.kvSet(`deck_intent:${stationId}`, {
+					layout: deck.items.map((it) => ({ trackId: it.id, kind: it.kind })),
+					version: deck.version,
+					writtenAt: deck.writtenAt,
+				});
+				const uris = deck.items.map((it) => `spotify:track:${it.id}`);
+				await client.replaceItems(playlistId, uris.slice(0, 100));
+				for (let i = 100; i < uris.length; i += 100)
+					await client.addItems(playlistId, uris.slice(i, i + 100));
+				this.kvDel(`deck_intent:${stationId}`);
 				await client.play({
-					contextUri: `spotify:playlist:${fresh.playlist_id}`,
-					position: 0,
+					contextUri: session.contextUri,
+					position: session.currentIndex,
+					progressMs: session.progressMs ?? 0,
 					deviceId: target.id,
 				});
 			}
-			if (deck) {
-				// We started it at the top: positions from here on are ours.
-				deck.lastIndex = null;
-				deck.lastTrackId = null;
-				deck.lastObservedAt = null;
-				deck.ours = true;
-				deck.top = true;
-				deck.inOrder = true;
-				delete deck.strayedUntil;
-				this.saveDeck(fresh.id, deck);
-			}
-			this.noteShownPending(shown);
-			const activity = this.kvGet<Record<string, number>>("deck_activity") ?? {};
-			activity[String(fresh.id)] = this.now();
-			this.kvSet("deck_activity", activity);
-			this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), fresh.id);
-			this.log("info", "play", `„${fresh.name}“ gestartet auf ${target.name}`);
+			if (replacedSong && replacedSong !== deck.items[session.currentIndex]?.id)
+				this.noteShownPending(replacedSong);
+			session.pending = null;
+			session.controller = "spotify";
+			session.playbackEpoch += 1;
+			session.status = "active";
+			this.saveSession(session);
+			this.kvSet("active_session_station", stationId);
+			this.transportRevision += 1;
+			deck.ours = true;
+			deck.inOrder = true;
+			deck.top = session.currentIndex === 0;
+			this.saveDeck(stationId, deck);
 			this.kvSet("player_stale", 1);
-			// The deck is current now: a rewrite queued before would only wait on
-			// its own clock and come late after the next stop.
-			this.db.run(`DELETE FROM jobs WHERE key = ?`, `deck:${fresh.id}`);
-			await this.scheduleSoon(20_000);
-			return { ok: true, deviceName: target.name };
+			this.db.run(`UPDATE stations SET last_played_at = ? WHERE id = ?`, this.now(), stationId);
+			await this.deferPlayerObservation();
+			return { ok: true, deviceName: target.name, acceptedAt: this.now() };
 		} catch (err) {
-			return this.playError(err);
+			if (err instanceof SpotifyError && ["no_device", "restricted"].includes(err.kind))
+				this.kvDel("spotify_devices");
+			const current = this.savedSession(stationId);
+			const result = this.playError(err, transportAttempted);
+			// Rejected commands and preflight failures did not start playback. Keep
+			// the checkpoint, but release the pending control so the listener can retry.
+			// This includes a rejected 401 followed by a failed token refresh: the
+			// refresh operation is distinct from an ambiguous player-write outcome.
+			if (
+				current?.pending?.kind === "resume" &&
+				current.sessionId === session?.sessionId &&
+				current.pending.operationId === session.pending?.operationId &&
+				(current.pending.phase === "prepared" || !result.uncertain)
+			) {
+				current.pending = null;
+				this.saveSession(current);
+			}
+			if (result.uncertain) {
+				this.kvSet("active_session_station", stationId);
+				this.transportRevision += 1;
+			}
+			if (result.uncertain || this.savedSession(stationId)?.pending?.phase === "submitted") {
+				this.kvSet("player_stale", 1);
+				await this.deferPlayerObservation();
+			}
+			return result;
 		}
 	}
 
-	private playError(err: unknown): PlayResult {
+	private playError(err: unknown, transportAttempted = false): PlayResult {
+		if (
+			transportAttempted &&
+			!(err instanceof HubError) &&
+			(!(err instanceof SpotifyError) ||
+				((err.kind === "network" || err.kind === "server") &&
+					(!err.operation || /^(PUT|POST) \/me\/player\/(play|pause|next)$/.test(err.operation))))
+		)
+			return {
+				...fail(
+					"unknown",
+					"Spotify hat den Befehl noch nicht bestätigt. Der Zustand wird geprüft.",
+				),
+				uncertain: true,
+			};
 		if (err instanceof HubError) {
 			const code: PlayErrorCode =
 				err.code === "not_ready" || err.code === "empty" ? err.code : "unknown";
@@ -3863,7 +6349,7 @@ export class HubCore {
 					this.setBackoff(err.retryAfterMs, "rate");
 					return fail("rate", "Spotify bremst gerade — gleich noch einmal versuchen.");
 				case "quota":
-					this.setBackoff(err.retryAfterMs, "quota");
+					if (!err.scope) this.setBackoff(err.retryAfterMs, "quota");
 					return fail("quota", "Spotify-Kontingent aufgebraucht — bitte später erneut.");
 				case "auth":
 					this.markAuthLost();
@@ -3881,23 +6367,67 @@ export class HubCore {
 	private async pickDevice(
 		client: SpotifyClient,
 		wanted: string | null,
+		opts: { observed?: boolean; exclude?: string } = {},
 	): Promise<{ id: string; name: string } | null> {
-		const devices = await client.devices();
-		if (wanted) {
-			const d = devices.find((x) => x.id === wanted);
-			if (d?.id) return { id: d.id, name: d.name };
+		const snapshot = this.kvGet<PlayerSnapshot>("player");
+		const known = snapshot?.device;
+		const cached = this.kvGet<{ at: number; devices: DeviceView[] }>("spotify_devices");
+		if (wanted)
+			return {
+				id: wanted,
+				name:
+					known?.id === wanted
+						? known.name
+						: (cached?.devices.find((d) => d.id === wanted)?.name ?? "Spotify"),
+			};
+		if (!opts.exclude && opts.observed && known?.id && !known.restricted)
+			return { id: known.id, name: known.name };
+		const usable = (devices: DeviceView[]) => {
+			const candidates = devices.filter((d) => !d.restricted && d.id !== opts.exclude);
+			return (
+				candidates.find((d) => d.active) ??
+				candidates.find((d) => d.type === "Smartphone") ??
+				candidates[0] ??
+				null
+			);
+		};
+		if (!opts.exclude && cached && this.now() - cached.at < 60_000) {
+			const pick = usable(cached.devices);
+			if (pick) return pick;
 		}
-		const usable = devices.filter((d) => d.id && !d.is_restricted);
-		const active = usable.find((d) => d.is_active);
-		const pick = active ?? usable.find((d) => d.type === "Smartphone") ?? usable[0];
-		return pick?.id ? { id: pick.id, name: pick.name } : null;
+		try {
+			return usable(await this.readDevices(client));
+		} catch (e) {
+			if (
+				!(e instanceof SpotifyError) ||
+				e.operation !== "GET /me/player/devices" ||
+				e.status !== 429
+			)
+				throw e;
+			if (
+				snapshot &&
+				this.now() - snapshot.at < 60_000 &&
+				known?.id &&
+				!known.restricted &&
+				known.id !== opts.exclude
+			)
+				return { id: known.id, name: known.name };
+			return null;
+		}
 	}
 
 	async devices(): Promise<DeviceView[]> {
-		const budget = new RequestBudget(4);
-		const list = await this.client(budget).devices();
-		return list
+		const cached = this.kvGet<{ at: number; devices: DeviceView[] }>("spotify_devices");
+		if (cached && this.now() - cached.at < (cached.devices.length ? 60_000 : 5000))
+			return cached.devices;
+		return this.readDevices(this.client(new RequestBudget(4)));
+	}
+
+	private async readDevices(client: SpotifyClient): Promise<DeviceView[]> {
+		const list = await client.devices();
+		const devices = list
 			.filter((d) => d.id)
+			.slice(0, 100)
 			.map((d) => ({
 				id: d.id!,
 				name: d.name,
@@ -3905,22 +6435,263 @@ export class HubCore {
 				active: d.is_active,
 				restricted: d.is_restricted,
 			}));
+		this.kvSet("spotify_devices", { at: this.now(), devices });
+		return devices;
 	}
 
-	async playerAction(action: "pause" | "resume" | "next"): Promise<PlayResult> {
+	private async deferPlayerObservation(): Promise<void> {
+		this.kvSet("player_observation_due", this.now() + 1000);
+		await this.scheduleSoon(1000);
+	}
+
+	playerAction(
+		action: "pause" | "resume" | "next",
+		expected: { sessionId?: string; entryId?: string } = {},
+	): Promise<PlayResult> {
+		const task = this.commandTail.then(() => this.performPlayerAction(action, expected));
+		this.commandTail = task.catch(() => undefined);
+		return task;
+	}
+	private async performPlayerAction(
+		action: "pause" | "resume" | "next",
+		expected: { sessionId?: string; entryId?: string },
+	): Promise<PlayResult> {
+		let current = this.savedSession();
+		let nextObserved = false;
+		// Unfenced remotes can request the next song immediately after a skip.
+		// Reconcile the previous intent first; replaying an old entry stays rejected.
+		if (action === "next" && current?.pending?.kind === "next" && !expected.entryId) {
+			nextObserved = await this.sync(new RequestBudget(8), {
+				force: true,
+				observationOnly: true,
+				playerOnly: true,
+			});
+			current = this.savedSession();
+		}
+		if (
+			(expected.sessionId && current?.sessionId !== expected.sessionId) ||
+			(expected.entryId && current?.entryIds[current.currentIndex] !== expected.entryId)
+		)
+			return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
+		if (action === "next" && current?.pending?.kind === "next")
+			return fail(
+				"unknown",
+				"Spotify hat den letzten Sprung noch nicht bestätigt. Die Warteschlange bleibt gespeichert.",
+			);
 		const budget = new RequestBudget(6);
 		const client = this.client(budget);
+		let transportAttempted = false;
 		try {
-			if (action === "pause") await client.pause();
-			else if (action === "resume") await client.resume();
-			else await client.next();
+			if (action === "resume") {
+				const session = this.savedSession();
+				if (session) return this.resumeSession(session.stationId);
+			}
+			if (action === "pause") {
+				this.transportRevision += 1;
+				transportAttempted = true;
+				await client.pause();
+				this.transportRevision += 1;
+				// Acknowledgement changes transport status, never observed position.
+				// The durable alarm reads the stopped position after this response.
+				const session = this.savedSession();
+				if (
+					session &&
+					session.controller !== "native" &&
+					this.kvGet<PlayerSnapshot>("player")?.obs?.contextUri === session.contextUri
+				) {
+					session.status = "paused";
+					session.playbackEpoch += 1;
+					this.saveSession(session);
+				}
+			} else if (action === "resume") {
+				this.transportRevision += 1;
+				transportAttempted = true;
+				await client.resume();
+				this.transportRevision += 1;
+			} else {
+				this.transportRevision += 1;
+				const observed =
+					nextObserved ||
+					(await this.sync(new RequestBudget(8), {
+						force: true,
+						observationOnly: true,
+						playerOnly: true,
+					}));
+				const session = this.savedSession();
+				// The player can advance naturally after the UI was drawn. Check the
+				// newly observed occurrence before journaling or sending a skip.
+				if (
+					(expected.sessionId && session?.sessionId !== expected.sessionId) ||
+					(expected.entryId && session?.entryIds[session.currentIndex] !== expected.entryId)
+				)
+					return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
+				const obs = this.kvGet<PlayerSnapshot>("player")?.obs;
+				const row = session ? this.stationRow(session.stationId) : null;
+				const deck = row ? this.deckOf(row) : null;
+				// The station's context alone is no proof (NP06): a song queued in
+				// Spotify plays inside it too. Only the saved entry's song is its own.
+				const own =
+					observed &&
+					session &&
+					session.controller !== "native" &&
+					obs?.contextUri === session.contextUri &&
+					!!obs.trackId &&
+					deck?.items[session.currentIndex]?.id === obs.trackId;
+				if (expected.entryId && (!own || session.status === "ambiguous"))
+					return fail("unknown", "Der angezeigte Song ist nicht bestätigt. Bitte aktualisieren.");
+				if (own) {
+					session.pending = {
+						operationId: crypto.randomUUID(),
+						kind: "next",
+						phase: "submitted",
+						startedAt: this.now(),
+					};
+					this.saveSession(session);
+				}
+				transportAttempted = true;
+				await client.next();
+				this.transportRevision += 1;
+				if (own) {
+					session.pending = { ...session.pending!, phase: "submitted" };
+					session.playbackEpoch += 1;
+					this.saveSession(session);
+				}
+			}
 			// The next look at the interface must read the player, not the old snapshot.
 			this.kvSet("player_stale", 1);
-			await this.scheduleSoon(4000);
-			return { ok: true };
+			await this.deferPlayerObservation();
+			return { ok: true, acceptedAt: this.now() };
 		} catch (err) {
-			return this.playError(err);
+			const result = this.playError(err, transportAttempted);
+			const pending = this.savedSession();
+			if (action === "next" && pending?.pending?.kind === "next" && !result.uncertain) {
+				pending.pending = null;
+				this.saveSession(pending);
+			}
+			if (result.uncertain) {
+				this.transportRevision += 1;
+				this.kvSet("player_stale", 1);
+				await this.deferPlayerObservation();
+			}
+			return result;
 		}
+	}
+
+	/**
+	 * "Next" on a song Spotify plays outside true-shuffle's confirmed order
+	 * (NP06), in the same command line as every other player command. A fresh
+	 * look first: only while it still shows exactly the named play on the named
+	 * device for this account is Spotify's device-bound "next" sent — once,
+	 * never repeated; an unclear answer is said, and the next look tells. No
+	 * true-shuffle journal, epoch or saved place is touched, no playlist written,
+	 * no true-shuffle playback started; the existing reconciliation reads what
+	 * follows. Spotify's "next" names no song: a player moved by someone else
+	 * between that look and the request cannot be excluded.
+	 */
+	observedNext(target: ObservedTarget): Promise<PlayResult> {
+		const task = this.commandTail.then(() => this.performObservedNext(target));
+		this.commandTail = task.catch(() => undefined);
+		return task;
+	}
+
+	private async performObservedNext(target: ObservedTarget): Promise<PlayResult> {
+		const changed = (): PlayResult => ({
+			...fail("unknown", "Der angezeigte Song läuft so nicht mehr. Es wurde nichts übersprungen."),
+			observedChanged: true,
+		});
+		if (target.account !== this.kvGet<{ id: string }>("profile")?.id) return changed();
+		let transportAttempted = false;
+		let sent: ObservedNextSent | null = null;
+		try {
+			this.transportRevision += 1;
+			const observed = await this.sync(new RequestBudget(8), {
+				force: true,
+				observationOnly: true,
+				playerOnly: true,
+			});
+			if (!observed)
+				return fail(
+					"unknown",
+					"Spotify ließ sich gerade nicht lesen. Es wurde nichts übersprungen.",
+				);
+			const snap = this.kvGet<PlayerSnapshot>("player");
+			const seen = this.observedPlayer(snap).target;
+			if (
+				!seen ||
+				seen.trackId !== target.trackId ||
+				seen.deviceId !== target.deviceId ||
+				seen.playId !== target.playId ||
+				!/^\d{1,16}$/.test(target.observationId) ||
+				Number(target.observationId) > (snap?.at ?? 0)
+			)
+				return changed();
+			// Sent already for this very play and no look has shown it over: never again.
+			if (this.observedNextSent(snap))
+				return {
+					...fail(
+						"unknown",
+						"Weiter ist für diesen Song schon an Spotify gesendet und noch nicht bestätigt. Es wird nicht wiederholt; die nächste Meldung von Spotify zeigt es.",
+					),
+					observedPending: true,
+				};
+			if (!target.deviceId)
+				return fail(
+					"restricted",
+					"Spotify nennt kein Gerät für diesen Song. Es wurde nichts übersprungen.",
+				);
+			const client = this.client(new RequestBudget(6));
+			// Held before Spotify is asked: an answer lost after it acted holds it too.
+			// Another device's open "next" stays; one left for this device is over.
+			sent = {
+				account: target.account,
+				trackId: target.trackId,
+				deviceId: target.deviceId,
+				playId: seen.playId,
+				at: this.now(),
+			};
+			this.kvSet("observed_next_sent", [
+				...this.observedNextHeld().filter((x) => x.deviceId !== target.deviceId),
+				sent,
+			]);
+			transportAttempted = true;
+			await client.next(target.deviceId);
+			this.transportRevision += 1;
+			this.kvSet("player_stale", 1);
+			await this.deferPlayerObservation();
+			// Spotify's acknowledgement only; a later look confirms the change.
+			return { ok: true, acceptedAt: this.now() };
+		} catch (err) {
+			const result = this.playError(err, transportAttempted);
+			if (result.uncertain) {
+				this.transportRevision += 1;
+				this.kvSet("player_stale", 1);
+				await this.deferPlayerObservation();
+			} else if (transportAttempted && sent) {
+				// Refused: only this "next" is freed, another device's stays held.
+				const mine = sent;
+				const open = this.observedNextHeld().filter(
+					(x) => !(x.deviceId === mine.deviceId && x.playId === mine.playId && x.at === mine.at),
+				);
+				if (open.length > 0) this.kvSet("observed_next_sent", open);
+				else this.kvDel("observed_next_sent");
+			}
+			return result;
+		}
+	}
+
+	/** The skip a "Nie wieder" on an observed play may cause (see `observedNext`). */
+	private async skipObserved(
+		t: ObservedTarget,
+	): Promise<{ skipped: boolean; skipError?: string; observedSkip: ObservedSkip }> {
+		const r = await this.observedNext(t);
+		if (r.ok) return { skipped: true, observedSkip: "skipped" };
+		if (r.observedPending) return { skipped: false, observedSkip: "pending" };
+		if (r.observedChanged) return { skipped: false, observedSkip: "over" };
+		return {
+			skipped: false,
+			skipError: r.error?.message ?? "Spotify hat abgelehnt.",
+			observedSkip: r.uncertain ? "uncertain" : "failed",
+		};
 	}
 
 	// =======================================================================
@@ -3928,82 +6699,631 @@ export class HubCore {
 	// =======================================================================
 
 	/**
-	 * `playing` says whether the song plays right now, when the caller just
-	 * read the player; otherwise the last snapshot decides.
+	 * `bound` (CTO playback boundary, 2026-10-15): an occurrence — "Nie wieder"
+	 * skips exactly that one, if it is still the one playing (`skipOccurrence`).
+	 * `null` or left out — an answer that names none (an HTTP call without
+	 * `expected`, the rating sheet, an old direct call): it only rates and never
+	 * skips, since a late one could reach a newer play ("kein automatisches Next
+	 * aus alter Bewertung"). Not attributed to the play running now, a stored
+	 * "Nie wieder" spares that play from the station guard too (`spareRunningPlay`);
+	 * every play that begins after it is moved on as before. `playing` is no
+	 * longer read (kept so old callers compile).
+	 *
+	 * An observed target (NP06): the song Spotify was seen playing, also outside
+	 * every station and the library. The rating holds song-wide as any other; it
+	 * is attributed to no true-shuffle play (spared like an answer naming none).
+	 * "Nie wieder" then moves on exactly that observed play while a fresh look
+	 * still shows it (`observedNext`); over by then, it says so ("over") and
+	 * nothing is skipped. A target of another song or account stores nothing.
 	 */
 	async thumb(
 		trackId: TrackId,
 		value: -1 | 0 | 1,
 		playing?: boolean,
-	): Promise<{ skipped: boolean; skipError?: string }> {
+		bound?: Occurrence | ObservedTarget | null,
+	): Promise<{ skipped: boolean; skipError?: string; observedSkip?: ObservedSkip }> {
 		let skipped = false;
 		let skipError: string | undefined;
+		let observedSkip: ObservedSkip | undefined;
 		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
-		this.updateLive(trackId, (r) => ({ ...r, thumb: value }));
-		if (value === -1) {
-			this.db.run(
-				`UPDATE discoveries SET status = 'rejected', updated_at = ? WHERE id = ?`,
-				this.now(),
-				trackId,
-			);
-			// Stations planning to play it leave it out next time.
-			this.dirtyDecksHolding(trackId, null);
-			// Stations whose older versions held it watch for it more closely.
-			for (const st of this.stations()) {
-				const d = this.deckOf(st);
-				if (!d || d.formerOff?.includes(trackId) || !formerNow(d, this.now()).has(trackId))
-					continue;
-				d.formerOff = [...(d.formerOff ?? []), trackId];
-				this.saveDeck(st.id, d);
-			}
-			// Skip it only while it plays. The stored picture of the player can be
-			// a minute old: when it says so, a fresh look confirms it, or a song the
-			// listener already left would take the next one with it.
-			let now = playing;
-			if (now === undefined) {
-				const snap = this.kvGet<PlayerSnapshot>("player");
-				if (snap?.obs?.isPlaying && snap.obs.trackId === trackId) {
-					try {
-						const st = await this.client(new RequestBudget(3)).player();
-						now = !!st?.is_playing && st.item?.id === trackId;
-					} catch {
-						now = false;
-					}
-				}
-			}
-			if (now) {
-				const r = await this.playerAction("next");
-				skipped = r.ok;
-				// Our move: a look that still shows the song (Spotify catches up a
-				// moment later) must not skip it a second time. A skip that failed
-				// is left to the station guard to try again.
-				if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
-				else skipError = r.error?.message;
-			}
-		}
-		if (value === 1) {
-			// "Nie wieder auf diesem Sender" ends with a thumb up, on every station.
-			this.db.run(`DELETE FROM bans WHERE track_id = ?`, trackId);
-			const rows = this.db.all<{ status: string }>(
-				`SELECT status FROM discoveries WHERE id = ?`,
-				trackId,
-			);
-			if (rows.some((r) => r.status !== "kept")) {
-				this.db.run(
-					`UPDATE discoveries SET status = 'kept', updated_at = ? WHERE id = ?`,
-					this.now(),
-					trackId,
-				);
-				this.keepDiscovery(trackId);
-			}
-		}
+		const observed = bound && "kind" in bound && bound.kind === "observed" ? bound : null;
+		const occurrence = observed ? null : (bound as Occurrence | null | undefined);
+		if (observed && observed.trackId !== trackId)
+			throw new HubError("bad_target", "Die Wiedergabe-Angabe passt nicht zu diesem Song.", 400);
+		if (observed && observed.account !== this.kvGet<{ id: string }>("profile")?.id)
+			throw new HubError("stale_target", "Die Ansicht ist veraltet. Bitte aktualisieren.", 409);
+		// The rating and the note sparing a play it is not attributed to commit
+		// together, before any wait: a failure stores neither (spareRunningPlay).
+		this.ratingTransaction(() => {
+			this.applyThumb(trackId, value);
+			if (value === -1) this.spareRunningPlay(trackId, occurrence);
+		});
+		if (value === -1 && observed)
+			({ skipped, skipError, observedSkip } = await this.skipObserved(observed));
+		else if (value === -1)
+			({ skipped, skipError } = await this.skipAnswered(trackId, playing, occurrence));
 		this.log(
 			"info",
 			"thumb",
 			`${value === 1 ? "Daumen hoch" : value === -1 ? "Daumen runter" : "Daumen zurückgesetzt"}: ${this.describe(trackId)}`,
 		);
 		await this.scheduleSoon(2000);
-		return skipError ? { skipped, skipError } : { skipped };
+		const answer = skipError ? { skipped, skipError } : { skipped };
+		return observedSkip ? { ...answer, observedSkip } : answer;
+	}
+
+	/**
+	 * What a thumb changes in stored data, all at once, and what exactly it
+	 * changed. Down: the song's discoveries are rejected, decks planning it are
+	 * planned anew, decks whose older versions held it watch for it (the skip,
+	 * if it plays, comes after, see `thumb`). Up: every station ban of it goes,
+	 * its discoveries are kept (and it is put into the Spotify discoveries
+	 * playlist). Every rating write counts in the rating clock, and makes any
+	 * earlier rating of the song from the Verlauf one that can no longer be
+	 * taken back.
+	 */
+	private applyThumb(trackId: TrackId, value: -1 | 0 | 1): ThumbEffects {
+		return this.ratingTransaction(() => {
+			const at = this.now();
+			const before = this.liveRow(trackId);
+			this.updateLive(trackId, (r) => ({ ...r, thumb: value }));
+			const eff: ThumbEffects = {
+				trackId,
+				value,
+				prev: (before?.thumb ?? 0) as -1 | 0 | 1,
+				at,
+				created: before === null,
+				rowAfter: this.rowRest(this.liveRow(trackId)),
+				discoveries: [],
+				bans: [],
+				formerOff: [],
+				dirtied: [],
+				keepJob: false,
+			};
+			const discoveries = () =>
+				this.db.all<{ station_id: number; status: string; updated_at: number }>(
+					`SELECT station_id, status, updated_at FROM discoveries WHERE id = ?`,
+					trackId,
+				);
+			if (value === -1) {
+				const rows = discoveries();
+				this.db.run(
+					`UPDATE discoveries SET status = 'rejected', updated_at = ? WHERE id = ?`,
+					at,
+					trackId,
+				);
+				eff.discoveries = rows.map((r) => ({
+					station: r.station_id,
+					before: { status: r.status, updated_at: r.updated_at },
+					after: { status: "rejected", updated_at: at },
+					row: this.discoveryRow(r.station_id, trackId),
+				}));
+				// Stations planning to play it leave it out next time.
+				eff.dirtied = this.dirtyDecksHolding(trackId, null);
+				// Stations whose older versions held it watch for it more closely.
+				for (const st of this.stations()) {
+					const d = this.deckOf(st);
+					if (!d || d.formerOff?.includes(trackId) || !formerNow(d, at).has(trackId)) continue;
+					d.formerOff = [...(d.formerOff ?? []), trackId];
+					this.saveDeck(st.id, d);
+					eff.formerOff.push({ station: st.id, writtenAt: d.writtenAt, plan: planKey(d) });
+				}
+			}
+			if (value === 1) {
+				// "Nie wieder auf diesem Sender" ends with a thumb up, on every station.
+				eff.bans = this.db
+					.all<{ station_id: number; at: number }>(
+						`SELECT station_id, at FROM bans WHERE track_id = ?`,
+						trackId,
+					)
+					.map((b) => ({ station: b.station_id, at: b.at }));
+				this.db.run(`DELETE FROM bans WHERE track_id = ?`, trackId);
+				const rows = discoveries();
+				if (rows.some((r) => r.status !== "kept")) {
+					this.db.run(
+						`UPDATE discoveries SET status = 'kept', updated_at = ? WHERE id = ?`,
+						at,
+						trackId,
+					);
+					eff.discoveries = rows.map((r) => ({
+						station: r.station_id,
+						before: { status: r.status, updated_at: r.updated_at },
+						after: { status: "kept", updated_at: at },
+						row: this.discoveryRow(r.station_id, trackId),
+					}));
+					eff.keepJob = !this.jobExists(`keep:${trackId}`);
+					this.keepDiscovery(trackId);
+					if (eff.keepJob) {
+						const job = this.db.first<{ created_at: number; updated_at: number }>(
+							`SELECT created_at, updated_at FROM jobs WHERE key = ?`,
+							`keep:${trackId}`,
+						);
+						if (job) eff.keepJobAt = { created: job.created_at, updated: job.updated_at };
+					}
+				}
+			}
+			this.ratingWritten(trackId);
+			return eff;
+		});
+	}
+
+	/** A discovery row as stored, whole. */
+	private discoveryRow(stationId: number, id: TrackId): string {
+		return JSON.stringify(
+			this.db.first(`SELECT * FROM discoveries WHERE station_id = ? AND id = ?`, stationId, id),
+		);
+	}
+
+	/** A memory row as stored, the rating aside: to see whether anything else changed since. */
+	private rowRest(r: MemoryRow | null): string {
+		if (!r) return "";
+		const { thumb: _thumb, ...rest } = r;
+		return JSON.stringify([
+			rest.last_played_at,
+			rest.plays,
+			rest.early_skips,
+			rest.last_skipped_at,
+			rest.consumed_at ?? null,
+			rest.verdict ?? null,
+			rest.verdict_at ?? null,
+		]);
+	}
+
+	// =======================================================================
+	// Ratings from the Verlauf: receipts and taking back
+	// =======================================================================
+
+	/**
+	 * A rating change and its bookkeeping: all of it stored, or — on any
+	 * failure — none of it, and nothing read into memory during it survives:
+	 * memory rows and stations are read again, pools counted again.
+	 */
+	private ratingTransaction<R>(fn: () => R): R {
+		try {
+			return this.db.transaction(fn);
+		} catch (err) {
+			this.liveLookups.clear();
+			this.cache.stations = null;
+			this.poolVersion++;
+			throw err;
+		}
+	}
+
+	private ratingClock(): RatingClock {
+		return this.kvGet<RatingClock>("rating_clock") ?? { seq: 0, floor: 0, touched: {} };
+	}
+
+	/** The song's latest rating write number (an upper bound once it fell out of the clock). */
+	private ratedSeq(id: TrackId, clock = this.ratingClock()): number {
+		return clock.touched[id] ?? clock.floor;
+	}
+
+	/** A rating of the song was written (by any path): count it, and end earlier receipts' undo. */
+	private ratingWritten(id: TrackId): number {
+		const c = this.ratingClock();
+		c.seq += 1;
+		c.touched[id] = c.seq;
+		const entries = Object.entries(c.touched);
+		if (entries.length > RATING_TOUCHED_MAX) {
+			entries.sort((a, b) => a[1] - b[1]);
+			for (const [k, v] of entries.slice(0, entries.length - RATING_TOUCHED_MAX)) {
+				c.floor = Math.max(c.floor, v);
+				delete c.touched[k];
+			}
+		}
+		this.kvSet("rating_clock", c);
+		const receipts = this.ratingReceipts();
+		let changed = false;
+		for (const r of receipts)
+			if (r.trackId === id && !r.superseded) {
+				r.superseded = true;
+				changed = true;
+			}
+		if (changed) this.kvSet("rating_receipts", receipts);
+		return c.seq;
+	}
+
+	private ratingReceipts(): RatingReceipt[] {
+		return this.kvGet<RatingReceipt[]>("rating_receipts") ?? [];
+	}
+
+	private saveReceipt(rc: RatingReceipt): void {
+		const rest = this.ratingReceipts().filter((r) => r.id !== rc.id);
+		this.kvSet("rating_receipts", [rc, ...rest].slice(0, RATING_RECEIPTS_MAX));
+	}
+
+	/** Rated since by any path — or its exact number no longer known (the clock forgot the song). */
+	private outdated(rc: RatingReceipt): boolean {
+		return rc.superseded || this.ratedSeq(rc.trackId) !== rc.seq;
+	}
+
+	private receiptView(rc: RatingReceipt): HistoryRatingReceipt {
+		const { effects: _effects, keptOut: _keptOut, ...rest } = rc;
+		const view = { ...rest, superseded: rc.undo ? rc.superseded : this.outdated(rc) };
+		const lasting: string[] = [];
+		if (rc.skip === "skipped")
+			lasting.push(
+				"Der Song wurde dabei übersprungen. Das bleibt so, auch wenn du die Bewertung zurücknimmst.",
+			);
+		if (rc.skip === "pending")
+			lasting.push(
+				"Ob der laufende Song dabei übersprungen wurde, ist unbekannt. Es wird nicht noch einmal versucht.",
+			);
+		return { ...view, lasting };
+	}
+
+	/**
+	 * A rating from the Verlauf. `actionId` is the page's own id for this
+	 * decision: sent again (its answer got lost), it is answered from the
+	 * receipt and nothing is stored or skipped twice. `basis` is the song's
+	 * rating write number the page knows: rated again since (another tab,
+	 * Siri, the sheet), nothing is stored and the rating now is answered.
+	 * The Verlauf rates only: "Nie wieder" never skips the song playing
+	 * (CTO-04, 2026-10-15); the receipt says so ("none"). Receipts stored
+	 * before still carry their skip outcome.
+	 */
+	async rateFromHistory(input: {
+		actionId?: unknown;
+		trackId?: unknown;
+		value?: unknown;
+		basis?: unknown;
+	}): Promise<HistoryRateAnswer> {
+		const { actionId, trackId, value, basis } = input;
+		if (typeof actionId !== "string" || !/^[A-Za-z0-9_-]{8,64}$/.test(actionId))
+			throw new HubError("bad_rating", "Ungültige Bewertung: Kennung fehlt.");
+		if (typeof trackId !== "string" || !/^[A-Za-z0-9]{22}$/.test(trackId))
+			throw new HubError("bad_track", "Ungültige Song-ID");
+		if (value !== -1 && value !== 0 && value !== 1)
+			throw new HubError("bad_rating", "Ungültige Bewertung.");
+		if (typeof basis !== "number" || !Number.isInteger(basis) || basis < 0)
+			throw new HubError("bad_rating", "Ungültige Bewertung: Stand fehlt.");
+		const known = this.ratingReceipts().find((r) => r.id === actionId);
+		if (known) {
+			if (known.trackId !== trackId || known.value !== value)
+				throw new HubError(
+					"rating_reused",
+					"Diese Bewertung wurde schon für etwas anderes verwendet. Bitte die Seite neu laden.",
+					409,
+				);
+			return { kind: "done", receipt: this.receiptView(known) };
+		}
+		const clock = this.ratingClock();
+		const seq = this.ratedSeq(trackId, clock);
+		// Only on exactly the song's rating as the page read it: rated since, or
+		// a number the song never had (another account's page, a reset, a
+		// made-up one), nothing is stored.
+		if (seq !== basis)
+			return {
+				kind: "changed",
+				current: { value: (this.liveRow(trackId)?.thumb ?? 0) as -1 | 0 | 1, seq },
+			};
+		const rc = this.ratingTransaction((): RatingReceipt => {
+			const effects = this.applyThumb(trackId, value);
+			const receipt: RatingReceipt = {
+				id: actionId,
+				trackId,
+				value,
+				prev: effects.prev,
+				at: effects.at,
+				seq: this.ratedSeq(trackId),
+				skip: "none",
+				skipError: null,
+				superseded: false,
+				undo: null,
+				effects,
+			};
+			this.saveReceipt(receipt);
+			// Rates only (CTO-04): never attributed to a play, so a play of the song
+			// already running is spared from the station guard as well — noted in
+			// the same transaction as the rating and its receipt. A receipt sent
+			// again (above) returns before this and notes nothing anew.
+			if (value === -1) this.spareRunningPlay(trackId, null);
+			return receipt;
+		});
+		this.log(
+			"info",
+			"thumb",
+			`${value === 1 ? "Favorit" : value === -1 ? "Nie wieder" : "Bewertung entfernt"} (Verlauf): ${this.describe(trackId)}`,
+		);
+		await this.scheduleSoon(2000);
+		const done = this.ratingReceipts().find((x) => x.id === actionId) ?? rc;
+		return { kind: "done", receipt: this.receiptView(done) };
+	}
+
+	/**
+	 * The receipt of a rating from the Verlauf (after a lost answer). Receipts
+	 * are kept for the last ones only, so "none" alone proves nothing: it is
+	 * "no" (not stored) only when the song's rating number shows no write since
+	 * the `basis` the page sent with it; otherwise "unknown".
+	 */
+	historyRatingReceipt(actionId: string, trackId?: string, basis?: number): HistoryRatingLookup {
+		const clock = this.ratingClock();
+		const named = typeof trackId === "string" && /^[A-Za-z0-9]{22}$/.test(trackId);
+		// What holds now for the song (a receipt only proves its own action).
+		const current = named
+			? {
+					current: {
+						value: (this.liveRow(trackId)?.thumb ?? 0) as -1 | 0 | 1,
+						seq: this.ratedSeq(trackId, clock),
+					},
+				}
+			: {};
+		const rc = this.ratingReceipts().find((r) => r.id === actionId);
+		if (rc) return { receipt: this.receiptView(rc), stored: "yes", ...current };
+		// A rating stored on `basis` would have moved the song's number past it;
+		// the number still at exactly `basis` proves nothing was stored. Any
+		// other basis (passed, or never the song's) proves nothing.
+		const proof = named && typeof basis === "number" && this.ratedSeq(trackId, clock) === basis;
+		return { receipt: null, stored: proof ? "no" : "unknown", ...current };
+	}
+
+	/**
+	 * Takes back a rating from the Verlauf: exactly what it changed and what
+	 * has not changed again since. The rating before comes back (a memory row
+	 * it made, still untouched, goes again); discoveries it rewrote get their
+	 * state before while they still hold its state; station bans it lifted
+	 * come back unless a newer one stands; decks whose watch list it extended
+	 * lose that entry while they are still the same version; a song not yet
+	 * handed to the Spotify discoveries playlist is not handed over. Stations
+	 * it asked to plan anew are asked again (with the rating back) — a request
+	 * to plan anew is never withdrawn, it may be someone else's too. A skip
+	 * that happened stays, and so does a song already in the Spotify playlist.
+	 * Rated again since (here, another tab, Siri), nothing changes: a conflict.
+	 * Asked again, the same answer.
+	 */
+	async undoHistoryRating(actionId: string): Promise<{ receipt: HistoryRatingReceipt | null }> {
+		const rc = this.ratingReceipts().find((r) => r.id === actionId);
+		if (!rc) return { receipt: null };
+		if (rc.undo) return { receipt: this.receiptView(rc) };
+		const id = rc.trackId;
+		const eff = rc.effects;
+		this.ratingTransaction(() => {
+			const notes: string[] = [];
+			const at = this.now();
+			if (this.outdated(rc)) {
+				const rated = rc.superseded;
+				rc.superseded = true;
+				rc.undo = {
+					at,
+					outcome: "conflict",
+					notes: [
+						rated
+							? "Der Song wurde inzwischen anders bewertet (hier, in einem anderen Tab oder per Kurzbefehl). Es wurde nichts zurückgenommen."
+							: "Ob der Song inzwischen anders bewertet wurde, lässt sich nicht mehr genau sagen (seitdem wurden sehr viele Songs bewertet). Es wurde nichts zurückgenommen.",
+					],
+					value: (this.liveRow(id)?.thumb ?? 0) as -1 | 0 | 1,
+					seq: this.ratedSeq(id),
+				};
+				this.saveReceipt(rc);
+				return;
+			}
+			// The rating.
+			const row = this.liveRow(id);
+			if (eff.created && row && this.rowRest(row) === eff.rowAfter) {
+				this.db.run(`DELETE FROM memory WHERE id = ?`, id);
+				this.liveLookups.set(id, null);
+				if (row.thumb === 1) this.noteLike(id, false);
+			} else this.updateLive(id, (r) => ({ ...r, thumb: eff.prev }));
+			// Discoveries: back where they were, unless they moved on since.
+			for (const d of eff.discoveries) {
+				const cur = this.discoveryRow(d.station, id);
+				if (cur === "null") continue;
+				if (cur === d.row)
+					this.db.run(
+						`UPDATE discoveries SET status = ?, updated_at = ? WHERE station_id = ? AND id = ?`,
+						d.before.status,
+						d.before.updated_at,
+						d.station,
+						id,
+					);
+				else
+					notes.push(
+						`Die Neuentdeckung auf der Kassette „${this.stationRow(d.station)?.name ?? d.station}“ hat sich inzwischen weiterentwickelt und bleibt so.`,
+					);
+			}
+			// Station bans it lifted.
+			for (const b of eff.bans) {
+				if (!this.stationRow(b.station)) continue;
+				const cur = this.db.first(
+					`SELECT 1 FROM bans WHERE station_id = ? AND track_id = ?`,
+					b.station,
+					id,
+				);
+				if (!cur)
+					this.db.run(
+						`INSERT INTO bans (station_id, track_id, at) VALUES (?, ?, ?)`,
+						b.station,
+						id,
+						b.at,
+					);
+			}
+			// Watch lists of former deck versions.
+			for (const f of eff.formerOff) {
+				const st = this.stationRow(f.station);
+				const d = st ? this.deckOf(st) : null;
+				if (!st || !d) continue;
+				if (planKey(d) === f.plan && d.formerOff?.includes(id)) {
+					d.formerOff = d.formerOff.filter((x) => x !== id);
+					this.saveDeck(st.id, d);
+				} else if (planKey(d) !== f.plan)
+					notes.push(
+						`Die Kassette „${st.name}“ hat ihre Reihenfolge inzwischen neu geplant; sie plant mit der zurückgenommenen Bewertung erneut.`,
+					);
+			}
+			// Plans: asked again, never withdrawn.
+			for (const sid of eff.dirtied)
+				if (this.stationRow(sid))
+					this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, sid);
+			for (const f of eff.formerOff)
+				if (this.stationRow(f.station))
+					this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, f.station);
+			// The Spotify discoveries playlist: a hand-over never tried is called
+			// off; one tried already may have reached Spotify (an answer can get
+			// lost), one done has — that stays, and is said.
+			if (eff.keepJob) {
+				const job = this.db.first<{ attempts: number; created_at: number; updated_at: number }>(
+					`SELECT attempts, created_at, updated_at FROM jobs WHERE key = ?`,
+					`keep:${id}`,
+				);
+				const own = !!job && job.created_at === eff.keepJobAt?.created;
+				const untouched = own && job.attempts === 0 && job.updated_at === eff.keepJobAt?.updated;
+				if (own) this.db.run(`DELETE FROM jobs WHERE key = ?`, `keep:${id}`);
+				if (!untouched) {
+					rc.keptOut = true;
+					notes.push(
+						own
+							? "Der Song sollte schon in deine Spotify-Playlist mit den Neuentdeckungen; ob er dort angekommen ist, ist unklar. Er wird nicht noch einmal hinzugefügt, aber dort auch nicht entfernt."
+							: job
+								? "Der Song steht schon in deiner Spotify-Playlist mit den Neuentdeckungen und bleibt dort; die spätere Übernahme, die noch wartet, gehört nicht zu dieser Bewertung und bleibt."
+								: "Der Song steht schon in deiner Spotify-Playlist mit den Neuentdeckungen und bleibt dort; true-shuffle entfernt dort nichts.",
+					);
+				}
+			}
+			// Pools are counted anew with the discoveries as they are now.
+			if (eff.discoveries.length > 0) this.poolVersion++;
+			const seq = this.ratingWritten(id);
+			rc.superseded = true;
+			rc.undo = {
+				at,
+				outcome: notes.length > 0 ? "partial" : "undone",
+				notes,
+				value: eff.prev,
+				seq,
+			};
+			this.saveReceipt(rc);
+		});
+		const done = this.ratingReceipts().find((r) => r.id === actionId) ?? rc;
+		if (done.undo && done.undo.outcome !== "conflict") {
+			this.log("info", "thumb", `Bewertung zurückgenommen (Verlauf): ${this.describe(id)}`);
+			await this.scheduleSoon(2000);
+		}
+		return { receipt: this.receiptView(done) };
+	}
+
+	/** The skip an answer may cause, by what it is bound to (see `thumb`). */
+	private skipAnswered(
+		trackId: TrackId,
+		playing: boolean | undefined,
+		bound: Occurrence | null | undefined,
+	): Promise<{ skipped: boolean; skipError?: string }> {
+		void playing;
+		if (!bound) return Promise.resolve({ skipped: false });
+		return this.skipOccurrence(trackId, bound);
+	}
+
+	/**
+	 * A "Nie wieder" not attributed to the play running now (an earlier play's
+	 * answer arriving late, or one naming no play) must not move a play of the
+	 * song already running on — not at once and not at a later look of the
+	 * station guard, also when the hub has not observed that play yet. Noted
+	 * is when it was stored (`guard_spare`: song and time, kept with the other
+	 * kv state, so it holds over a restart): the guard spares a play of the song
+	 * that began no later than that (`spared`); a play that begins after it is
+	 * moved on as before, and the note goes. Attributed — the answer named
+	 * exactly the occurrence still current in the saved queue — nothing is
+	 * noted: a skip of that play that failed stays the guard's to retry.
+	 */
+	private spareRunningPlay(trackId: TrackId, bound: Occurrence | null | undefined): void {
+		const s = this.savedSession();
+		const attributed =
+			!!bound &&
+			!!s &&
+			s.sessionId === bound.sessionId &&
+			s.entryIds[s.currentIndex] === bound.entryId;
+		if (attributed) return;
+		const now = this.now();
+		// The saved queue's entry playing now, if it is this song: that occurrence is
+		// spared while it stays current, even before the hub has observed it playing.
+		const row = s ? this.stationRow(s.stationId) : null;
+		const deck = row ? this.deckOf(row) : null;
+		const entry =
+			s && deck?.items[s.currentIndex]?.id === trackId
+				? { sessionId: s.sessionId, entryId: s.entryIds[s.currentIndex]! }
+				: {};
+		const notes = this.spareNotes().filter((n) => n.id !== trackId);
+		this.kvSet("guard_spare", [...notes, { id: trackId, at: now, ...entry }]);
+	}
+
+	/**
+	 * The notes of `spareRunningPlay` whose play may still run — never dropped
+	 * for age (a pause, a restart) or for other ratings: a note goes only once a
+	 * play has begun after it and its queue entry is no longer current, which
+	 * proves the play it protects is over. At most the ratings given during one
+	 * play stay noted.
+	 */
+	private spareNotes(): SpareNote[] {
+		const v = this.kvGet<unknown>("guard_spare");
+		if (!Array.isArray(v)) return [];
+		const notes = v.filter(
+			(n): n is SpareNote => !!n && typeof n.id === "string" && typeof n.at === "number",
+		);
+		const s = this.savedSession();
+		const heard = this.kvGet<HeardSong>("heard_song");
+		const live = notes.filter(
+			(n) =>
+				(!!n.entryId &&
+					!!s &&
+					s.sessionId === n.sessionId &&
+					s.entryIds[s.currentIndex] === n.entryId) ||
+				!heard ||
+				heard.start <= n.at,
+		);
+		if (live.length !== v.length) this.kvSet("guard_spare", live);
+		return live;
+	}
+
+	/**
+	 * Skips exactly the occurrence an answer was given on, and only while it is
+	 * the one playing: the same saved session, its current entry, this song,
+	 * not a Home Assistant player. The decisive check runs in the serialized
+	 * command (`playerAction` with `expected`), after a fresh read of the player
+	 * and after any command queued before it; a newer occurrence — even of the
+	 * same song — is never skipped from here. Not playing any more: nothing to
+	 * skip and nothing said. Refused or unclear at the moment of the skip: not
+	 * skipped, and why. A player moved by someone else between that final check
+	 * and Spotify's "next" cannot be excluded: Spotify's "next" names no entry.
+	 */
+	private async skipOccurrence(
+		trackId: TrackId,
+		o: Occurrence,
+	): Promise<{ skipped: boolean; skipError?: string }> {
+		const s = this.savedSession();
+		if (!s || s.controller === "native" || s.sessionId !== o.sessionId) return { skipped: false };
+		const st = this.stationRow(s.stationId);
+		const deck = st ? this.deckOf(st) : null;
+		const at = s.entryIds.indexOf(o.entryId);
+		if (at < 0 || at !== s.currentIndex || deck?.items[at]?.id !== trackId)
+			return { skipped: false };
+		const r = await this.playerAction("next", o);
+		if (r.ok) this.kvSet("guard_try", { id: trackId, at: this.now() });
+		return r.ok
+			? { skipped: true }
+			: { skipped: false, skipError: r.error?.message ?? "Spotify hat abgelehnt." };
+	}
+
+	/**
+	 * The listener's answer to a retest ("Nachprüfung", see core/memory
+	 * skipsWeigh): "Gern wieder" (keep) ends what the early skips say; "Eher
+	 * nicht" counts as one more skip and moves on to the next song (bound as
+	 * in `thumb`).
+	 */
+	async retestVerdict(
+		trackId: TrackId,
+		keep: boolean,
+		playing?: boolean,
+		bound?: Occurrence | null,
+	): Promise<{ skipped: boolean; skipError?: string }> {
+		if (!/^[A-Za-z0-9]{22}$/.test(trackId)) throw new HubError("bad_track", "Ungültige Song-ID");
+		const at = this.now();
+		this.updateLive(trackId, (r) => ({ ...r, verdict: keep ? 1 : -1, verdict_at: at }));
+		this.log(
+			"info",
+			"retest",
+			`Nachprüfung: ${keep ? "gern wieder" : "eher nicht"}: ${this.describe(trackId)}`,
+		);
+		const result = keep ? { skipped: false } : await this.skipAnswered(trackId, playing, bound);
+		await this.scheduleSoon(2000);
+		return result;
 	}
 
 	// =======================================================================
@@ -4089,11 +7409,113 @@ export class HubCore {
 			await this.thumb(t.id, 1);
 			return `${song} ist jetzt Favorit.`;
 		}
-		const r = await this.thumb(t.id, -1, state.is_playing);
+		// Bound to the saved queue's entry playing now, if that is this very song;
+		// otherwise there is no play to attribute it to: rated, not skipped.
+		const s = this.savedSession();
+		const row = s ? this.stationRow(s.stationId) : null;
+		const deck = row ? this.deckOf(row) : null;
+		const bound: Occurrence | null =
+			state.is_playing && s && s.controller !== "native" && deck?.items[s.currentIndex]?.id === t.id
+				? { sessionId: s.sessionId, entryId: s.entryIds[s.currentIndex]! }
+				: null;
+		const r = await this.thumb(t.id, -1, state.is_playing, bound);
 		if (!state.is_playing) return `${song} kommt nie wieder.`;
+		if (!bound) return `${song} kommt nie wieder. Er läuft noch zu Ende.`;
 		return r.skipped
 			? `${song} kommt nie wieder. Nächster Song.`
 			: `${song} kommt nie wieder. Weiterspringen ging nicht: ${r.skipError ?? "Spotify hat abgelehnt."}`;
+	}
+
+	private guestDevices(): GuestDevice[] {
+		return this.kvGet<GuestDevice[]>("guest_devices") ?? [];
+	}
+
+	/** The listener's guest devices; at most 20, ids and names as Spotify gives them. */
+	setGuestDevices(list: GuestDevice[]): GuestDevice[] {
+		if (!Array.isArray(list) || list.length > 20)
+			throw new HubError("bad_devices", "Ungültige Geräteliste");
+		const seen = new Set<string>();
+		const clean: GuestDevice[] = [];
+		for (const d of list) {
+			if (
+				!d ||
+				typeof d.id !== "string" ||
+				typeof d.name !== "string" ||
+				d.id.length < 1 ||
+				d.id.length > 200 ||
+				d.name.trim().length < 1 ||
+				d.name.length > 200
+			)
+				throw new HubError("bad_devices", "Ungültige Geräteliste");
+			if (seen.has(d.id)) continue;
+			seen.add(d.id);
+			clean.push({ id: d.id, name: d.name.trim() });
+		}
+		this.kvSet("guest_devices", clean);
+		// A device taken off the list stops counting as guest right away.
+		const now = this.now();
+		const periods = this.guestPeriods();
+		const open = periods.find((p) => now >= p.from && now < p.to);
+		if (open?.device !== undefined && !clean.some((d) => d.id === open.device)) {
+			this.endDevicePeriod(open, now);
+			this.kvSet("guest", periods);
+		}
+		return clean;
+	}
+
+	/**
+	 * Ends guest time a guest device held open, at a look that saw another
+	 * device play or nothing play: what ends after now is the owner's. No tail
+	 * and no play across the end, so the song seen now is not taken as the
+	 * guest's last one.
+	 */
+	private endDevicePeriod(p: GuestPeriod, now: number): void {
+		p.to = now;
+		p.tail = null;
+		p.last = null;
+	}
+
+	/**
+	 * A guest device seen playing opens guest time from the start of its song,
+	 * or holds it open; the next look that shows another device or nothing
+	 * playing ends it, and the song then playing is not the guest's. Guest time
+	 * switched on by hand is left alone. Only what looks see: a song that came
+	 * and went on the device between two looks is not known to be its.
+	 */
+	private followGuestDevice(
+		device: { id: string | null; name: string } | null,
+		obs: PlayerObservation | null,
+	): void {
+		const list = this.guestDevices();
+		const now = this.now();
+		const periods = this.guestPeriods().filter((p) => p.to > now - 90 * DAY_MS);
+		const open = periods.find((p) => now >= p.from && now < p.to);
+		// By id only: two devices may share a name ("iPhone"), and only the
+		// chosen one counts as a guest.
+		const match =
+			device?.id && obs?.isPlaying && obs.trackId
+				? list.find((d) => d.id === device.id)
+				: undefined;
+		if (match) {
+			const to = now + GUEST_DEVICE_HOLD_MS;
+			if (open) {
+				if (open.device === undefined) return;
+				open.to = Math.max(open.to, to);
+			} else {
+				const prev = periods.at(-1)?.last;
+				if (prev && prev.over === null) prev.over = now;
+				const started = obs ? now - obs.progressMs - 1_000 : now;
+				periods.push({ from: Math.min(now, started), to, device: match.id });
+				this.log("info", "guest", `Gast-Modus an — „${match.name}“ spielt`);
+			}
+		} else if (open?.device !== undefined) {
+			// Music plays on a device Spotify did not name (no id): not proof of a
+			// switch. The guest time runs to its own end and is not held longer.
+			if (obs?.isPlaying && obs.trackId && !device?.id) return;
+			this.endDevicePeriod(open, now);
+			this.log("info", "guest", "Gast-Modus aus — das Gast-Gerät spielt nicht mehr");
+		} else return;
+		this.kvSet("guest", periods.slice(-50));
 	}
 
 	async setGuest(on: boolean, hours = GUEST_DEFAULT_HOURS): Promise<void> {
@@ -4114,8 +7536,11 @@ export class HubCore {
 		const open = periods.find((p) => now >= p.from && now < p.to);
 		if (on) {
 			const to = now + Math.min(48, Math.max(1, hours)) * HOUR_MS;
-			if (open) open.to = to;
-			else {
+			if (open) {
+				open.to = to;
+				// Switched on by hand: it now ends by hand or by time, not with the device.
+				delete open.device;
+			} else {
 				// An earlier guest time's last play still followed: the new one takes over.
 				const prev = periods.at(-1)?.last;
 				if (prev && prev.over === null) prev.over = now;
@@ -4143,7 +7568,29 @@ export class HubCore {
 		if (this.isConnected()) await this.scheduleNext(new RequestBudget(8));
 	}
 
-	importHistory(rows: HistoryRow[], part: number, parts: number): { stored: number } {
+	/**
+	 * Takes one block of an import's song totals. The blocks of one upload go
+	 * to hist_stage and replace the stored totals only with the last block, in
+	 * one transaction; every block after the first must belong to the upload
+	 * under way (its id, its place), so a block of an upload the listener
+	 * deleted or replaced since is refused instead of bringing data back.
+	 */
+	/**
+	 * Begins an import on purpose: the answer names the import epoch, which the
+	 * first block must carry. A deletion moves the epoch on, so a first block
+	 * sent before it (late, from another tab) cannot bring the history back.
+	 */
+	startImport(): { start: number } {
+		return { start: this.kvGet<number>("history_epoch") ?? 0 };
+	}
+
+	importHistory(
+		rows: HistoryRow[],
+		part: number,
+		parts: number,
+		uploadId?: unknown,
+		start?: unknown,
+	): { stored: number; upload: string } {
 		if (
 			!Array.isArray(rows) ||
 			rows.length > 5000 ||
@@ -4160,43 +7607,918 @@ export class HubCore {
 		for (const r of rows) {
 			if (
 				!Array.isArray(r) ||
-				r.length !== 4 ||
+				r.length < 4 ||
+				r.length > 6 ||
 				typeof r[0] !== "string" ||
 				!/^[A-Za-z0-9]{22}$/.test(r[0]) ||
 				!count(r[1]) ||
 				!count(r[2]) ||
-				!Number.isInteger(r[3]) ||
-				r[3] < 0 ||
-				r[3] > latest
+				r
+					.slice(3, 5)
+					.some((t) => !Number.isInteger(t) || (t as number) < 0 || (t as number) > latest) ||
+				(r.length === 6 && (!count(r[5]) || (r[5] as number) > (r[1] as number)))
 			) {
 				throw new HubError("bad_import", "Ungültige Zeile im Import");
 			}
 		}
-		if (part === 0) this.db.run(`DELETE FROM hist_pages`);
+		let up = this.kvGet<HistUpload>("hist_upload");
+		if (part === 0) {
+			// Begun for the current epoch (see startImport). An app from before
+			// names none: it is taken only as long as nothing was ever deleted.
+			const epoch = this.kvGet<number>("history_epoch") ?? 0;
+			if (start !== undefined ? start !== epoch : this.kvGet("history_deleted_at") !== null)
+				throw new HubError(
+					"import_superseded",
+					"Dieser Import wurde begonnen, bevor der gespeicherte gelöscht wurde — bitte die Seite neu laden und noch einmal importieren.",
+					409,
+				);
+			this.db.run(`DELETE FROM hist_stage`);
+			up = { id: randomToken(12), parts, next: 0 };
+		} else if (
+			// Every later block names its upload: place and count alone are no
+			// identity (a late block of a deleted or replaced upload can match them).
+			!up ||
+			uploadId !== up.id ||
+			up.parts !== parts ||
+			up.next !== part
+		)
+			throw new HubError(
+				"import_superseded",
+				"Dieser Import wurde abgelöst, gelöscht oder unterbrochen — bitte noch einmal von vorn.",
+				409,
+			);
 		const base =
-			(this.db.first<{ m: number | null }>(`SELECT MAX(page) AS m FROM hist_pages`)?.m ?? -1) + 1;
+			(this.db.first<{ m: number | null }>(`SELECT MAX(page) AS m FROM hist_stage`)?.m ?? -1) + 1;
 		for (let i = 0; i < rows.length; i += 500) {
 			this.db.run(
-				`INSERT INTO hist_pages (page, data) VALUES (?, ?)`,
+				`INSERT INTO hist_stage (page, data) VALUES (?, ?)`,
 				base + i / 500,
 				JSON.stringify(rows.slice(i, i + 500)),
 			);
 		}
-		this.histCache = null;
-		if (part === parts - 1) {
-			const total = this.hist().size;
-			this.kvSet("history_import", { at: this.now(), tracks: total });
-			this.db.run(`UPDATE stations SET deck_dirty = 1`);
-			this.log("info", "history", `Hörverlauf übernommen: ${total} Songs mit Vorgeschichte`);
+		up.next++;
+		if (up.next < up.parts) {
+			this.kvSet("hist_upload", up);
+			return { stored: rows.length, upload: up.id };
 		}
-		return { stored: rows.length };
+		const done = up;
+		this.importTransaction(() => {
+			// Single plays still on their way belong to the totals replaced now:
+			// their remaining blocks are refused (another upload, see importListens).
+			this.kvDel("listens_upload");
+			this.db.run(`DELETE FROM hist_pages`);
+			this.db.run(`INSERT INTO hist_pages (page, data) SELECT page, data FROM hist_stage`);
+			this.db.run(`DELETE FROM hist_stage`);
+			this.kvDel("hist_upload");
+			this.rawHistCache = null;
+			this.kvSet("history_import", { at: this.now(), tracks: this.rawHist().size, id: done.id });
+			this.importChanged();
+		});
+		const total = this.rawHist().size;
+		this.log("info", "history", `Hörverlauf übernommen: ${total} Songs mit Vorgeschichte`);
+		return { stored: rows.length, upload: done.id };
+	}
+
+	// =======================================================================
+	// The listener's selection of the import (see core/import-selection)
+	// =======================================================================
+
+	private appliedSelection(): AppliedSelection {
+		return (
+			this.kvGet<AppliedSelection>("history_selection") ?? {
+				revision: 0,
+				appliedAt: null,
+				...defaultSelection(),
+			}
+		);
+	}
+
+	/**
+	 * The stored single plays, if they belong to the stored song totals: named
+	 * for them, or (stored by an app from before) uploaded after totals that
+	 * were stored before uploads were named. Plays of an older import, left
+	 * when a newer one came as totals only, belong to nothing current: no
+	 * consumer reads them (they go with a deletion). Plays without any totals
+	 * are an import of their own.
+	 */
+	private currentListens(): ListenMeta | null {
+		const l = this.kvGet<ListenMeta>("listens");
+		if (!l) return null;
+		const h = this.kvGet<{ at: number; id?: string }>("history_import");
+		if (!h) return l;
+		if (l.importId) return l.importId === h.id ? l : null;
+		return h.id === undefined && l.at >= h.at ? l : null;
+	}
+
+	/** The stored import: its totals and its single plays, each by the upload that brought it. */
+	private datasetKey(): string {
+		const h = this.kvGet<{ at: number; id?: string }>("history_import");
+		const l = this.currentListens();
+		return `${h ? (h.id ?? `at${h.at}`) : "-"}|${l ? `g${l.gen}` : "-"}`;
+	}
+
+	/** The artist key of each imported song, once per stored generation of plays. */
+	private artistCache: { gen: number; keys: string[] } | null = null;
+	private listenArtists(): string[] | undefined {
+		const data = this.listenData();
+		const meta = this.currentListens();
+		if (!data || !meta) return undefined;
+		if (this.artistCache?.gen !== meta.gen)
+			this.artistCache = { gen: meta.gen, keys: artistKeys(data.tracks) };
+		return this.artistCache.keys;
+	}
+
+	/** Songs decided as a whole: their single plays do not account for their totals. */
+	private partialCache: { key: string; set: Set<number> } | null = null;
+	private partialSongs(): Set<number> {
+		const key = `${this.datasetKey()}:${this.kvGet<number>("live_since") ?? ""}`;
+		if (this.partialCache?.key !== key)
+			this.partialCache = {
+				key,
+				set: partialTracks(this.listenData(), this.rawHist(), this.kvGet<number>("live_since")),
+			};
+		return this.partialCache.set;
+	}
+
+	/** What a selection makes of the stored import (a pure computation, nothing written). */
+	private computeSelection(sel: ImportSelection): SelectionResult {
+		return selectImport({
+			events: this.listenData(),
+			artists: this.listenArtists(),
+			partial: this.partialSongs(),
+			aggregate: this.rawHist(),
+			selection: sel,
+			liveSince: this.kvGet<number>("live_since"),
+		});
+	}
+
+	private effectiveOverrides(gen: number): Map<TrackId, ImportedStats | null> {
+		const out = new Map<TrackId, ImportedStats | null>();
+		for (const r of this.db.all<{ data: string }>(
+			`SELECT data FROM hist_effective WHERE gen = ? ORDER BY page`,
+			gen,
+		))
+			for (const row of JSON.parse(r.data) as (HistoryRow | [TrackId])[]) {
+				if (row.length === 1) out.set(row[0], null);
+				else {
+					const [id, st] = fromRow(row as HistoryRow);
+					out.set(id, st);
+				}
+			}
+		return out;
+	}
+
+	/**
+	 * Computes the selection over the stored import and keeps what it changes,
+	 * as the next generation, switched over in one transaction. A failure is
+	 * kept too, so the interface can say it — and the import counts for nothing
+	 * meanwhile (see hist). Only for a selection with rules; others need nothing.
+	 */
+	private materializeSelection(sel: AppliedSelection, result?: SelectionResult): EffectiveMeta {
+		const prev = this.kvGet<EffectiveMeta>("history_effective");
+		const gen = (prev?.gen ?? 0) + 1;
+		const dataset = this.datasetKey();
+		let r: SelectionResult;
+		try {
+			r = result ?? this.computeSelection(sel);
+		} catch (err) {
+			const failed: EffectiveMeta = {
+				gen,
+				revision: sel.revision,
+				dataset,
+				at: this.now(),
+				counts: null,
+				error: err instanceof Error ? err.message : String(err),
+			};
+			this.db.transaction(() => {
+				this.db.run(`DELETE FROM hist_effective`);
+				this.kvSet("history_effective", failed);
+			});
+			this.log("error", "history", `Auswahl des Hörverlaufs nicht berechnet: ${failed.error}`);
+			return failed;
+		}
+		const meta: EffectiveMeta = {
+			gen,
+			revision: sel.revision,
+			dataset,
+			at: this.now(),
+			counts: r.counts,
+		};
+		const rows: (HistoryRow | [TrackId])[] = [...r.overrides].map(([id, st]) =>
+			st === null
+				? [id]
+				: [
+						id,
+						st.plays,
+						st.earlySkips,
+						st.lastPlayedAt ?? 0,
+						st.lastSkippedAt ?? 0,
+						st.playedBeforeSkips ?? st.plays,
+					],
+		);
+		this.db.transaction(() => {
+			for (let i = 0; i < rows.length; i += 500)
+				this.db.run(
+					`INSERT INTO hist_effective (gen, page, data) VALUES (?, ?, ?)`,
+					gen,
+					i / 500,
+					JSON.stringify(rows.slice(i, i + 500)),
+				);
+			this.kvSet("history_effective", meta);
+			this.db.run(`DELETE FROM hist_effective WHERE gen <> ?`, gen);
+		});
+		return meta;
+	}
+
+	/**
+	 * The stored import or the selection changed: every cache built from them
+	 * goes, decks are written anew once nobody listens (a saved queue keeps its
+	 * order), a selection with rules is computed again over the new data (unless
+	 * `computed` already is), and a genre estimate made from (or on its way for)
+	 * the old history is dropped.
+	 */
+	private importChanged(computed = false): void {
+		this.importCommitted();
+		this.histCache = null;
+		this.partialCache = null;
+		this.rawHistCache = null;
+		this.countsCache = null;
+		this.liveLookups.clear();
+		this.db.run(`UPDATE stations SET deck_dirty = 1`);
+		const sel = this.appliedSelection();
+		if (sel.enabled && sel.rules.length > 0) {
+			if (!computed) this.materializeSelection(sel);
+		} else if (this.kvGet("history_effective") !== null) {
+			this.db.run(`DELETE FROM hist_effective`);
+			this.kvDel("history_effective");
+		}
+		this.kvDel("genre_estimate");
+		const pending = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		if (pending && !pending.id.endsWith("-stale"))
+			this.kvSet("genre_attempt", { ...pending, id: `${pending.id}-stale` });
+	}
+
+	/** What the selection in force makes of the import (null without an import). */
+	private appliedCounts(): SelectionCounts | null {
+		const sel = this.appliedSelection();
+		const key = `${sel.revision}:${this.datasetKey()}`;
+		if (this.countsCache?.key === key) return this.countsCache.counts;
+		let counts: SelectionCounts | null = null;
+		if (this.hasImport()) {
+			const eff = this.kvGet<EffectiveMeta>("history_effective");
+			if (
+				sel.enabled &&
+				sel.rules.length > 0 &&
+				eff &&
+				!eff.error &&
+				eff.revision === sel.revision &&
+				eff.dataset === this.datasetKey()
+			)
+				counts = eff.counts;
+			else {
+				try {
+					counts = this.computeSelection(sel).counts;
+				} catch {
+					counts = null;
+				}
+			}
+		}
+		this.countsCache = { key, counts };
+		return counts;
+	}
+
+	/**
+	 * Counts up with every stored change of the import or of the selection in
+	 * force (see HistorySelectionView.commit). Unlike the selection revision it
+	 * also counts a new import, a deletion and a new summary — those change the
+	 * import while the revision stays — so a page can tell which of two answers
+	 * holds the later stored state, in whatever order they reach it.
+	 */
+	private importCommitted(): void {
+		this.kvSet("history_commit", this.importCommit() + 1);
+	}
+
+	private importCommit(): number {
+		return this.kvGet<number>("history_commit") ?? 0;
+	}
+
+	/**
+	 * One stored change of the import or the selection together with its
+	 * commit number: all of it is stored, or — on any failure — none of it, and
+	 * nothing kept in memory from it survives either (what was cached during
+	 * the change is read anew from what is stored).
+	 */
+	private importTransaction<R>(fn: () => R): R {
+		try {
+			return this.db.transaction(fn);
+		} catch (err) {
+			this.histCache = null;
+			this.partialCache = null;
+			this.rawHistCache = null;
+			this.countsCache = null;
+			this.listenCache = null;
+			this.artistCache = null;
+			this.liveLookups.clear();
+			this.cache.stations = null;
+			throw err;
+		}
+	}
+
+	private hasImport(): boolean {
+		return this.kvGet("history_import") !== null || this.kvGet("listens") !== null;
+	}
+
+	selectionView(): HistorySelectionView {
+		const sel = this.appliedSelection();
+		const ruled = sel.enabled && sel.rules.length > 0;
+		// The history in force is computed when a selection with rules needs it.
+		if (ruled) this.hist();
+		const hist = this.kvGet<{ at: number; tracks: number }>("history_import");
+		const listens = this.currentListens();
+		const eff = this.kvGet<EffectiveMeta>("history_effective");
+		const failed = ruled && !!eff?.error;
+		const counts = failed ? null : this.appliedCounts();
+		const summarySongs = counts?.summarySongs ?? 0;
+		return {
+			revision: sel.revision,
+			commit: this.importCommit(),
+			appliedAt: sel.appliedAt,
+			selection: { enabled: sel.enabled, rules: sel.rules },
+			counts,
+			effective: {
+				state: failed ? "failed" : "current",
+				error: failed ? (eff?.error ?? null) : null,
+				at: ruled ? (eff?.at ?? null) : sel.appliedAt,
+			},
+			dataset: {
+				key: this.datasetKey(),
+				hasImport: this.hasImport(),
+				importedAt: hist?.at ?? listens?.at ?? null,
+				songs: hist?.tracks ?? 0,
+				rows: listens?.rows ?? 0,
+				rowsFrom: listens?.from ?? null,
+				rowsTo: listens?.to ?? null,
+				summaryProfile: this.kvGet("history_profile") !== null,
+				coverage: !this.hasImport()
+					? "none"
+					: !listens
+						? "summary"
+						: summarySongs + (counts?.partialSongs ?? 0) > 0
+							? "mixed"
+							: "events",
+			},
+			uploading: this.kvGet("hist_upload") !== null || this.kvGet("listens_upload") !== null,
+			liveSince: this.kvGet<number>("live_since"),
+		};
+	}
+
+	/**
+	 * A look at the import under a draft selection: counts and one page of a
+	 * search. Read-only — searching, sorting and drafting change nothing; only
+	 * applySelection does.
+	 */
+	previewSelection(input: {
+		enabled?: unknown;
+		rules?: unknown;
+		query?: unknown;
+	}): SelectionPreview {
+		let draft: ImportSelection;
+		try {
+			draft = cleanSelection({ enabled: input.enabled, rules: input.rules });
+		} catch (err) {
+			if (err instanceof SelectionError)
+				throw new HubError("bad_selection", `Ungültige Auswahl: ${err.message}`);
+			throw err;
+		}
+		const q = (input.query ?? {}) as Record<string, unknown>;
+		const time = (v: unknown) =>
+			typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 8.64e15 ? Math.floor(v) : null;
+		const pick = <T extends string>(v: unknown, all: readonly T[], fallback: T): T =>
+			all.includes(v as T) ? (v as T) : fallback;
+		const query: InspectQuery = {
+			q: typeof q.q === "string" ? q.q.slice(0, 100) : "",
+			group: pick<InspectGroup>(q.group, ["track", "artist"], "track"),
+			status: pick<InspectStatus>(
+				q.status,
+				["all", "included", "excluded", "partial", "neutral"],
+				"all",
+			),
+			sort: pick<InspectSort>(q.sort, ["plays", "name", "recent"], "plays"),
+			from: time(q.from),
+			to: time(q.to),
+			offset:
+				typeof q.offset === "number" && Number.isInteger(q.offset) && q.offset >= 0
+					? Math.min(q.offset, 1_000_000)
+					: 0,
+			limit:
+				typeof q.limit === "number" && Number.isInteger(q.limit)
+					? Math.min(100, Math.max(1, q.limit))
+					: 50,
+		};
+		const has = this.hasImport();
+		const index = has ? this.trackIndex() : new Map<TrackId, PackedTrack>();
+		const counts = has ? this.computeSelection(draft).counts : null;
+		const page = has
+			? inspectImport({
+					events: this.listenData(),
+					artists: this.listenArtists(),
+					partial: this.partialSongs(),
+					aggregate: this.rawHist(),
+					selection: draft,
+					liveSince: this.kvGet<number>("live_since"),
+					query,
+					names: (id) => {
+						const t = index.get(id);
+						return t ? { name: t[1], artist: artistLine(t), album: t[3] } : null;
+					},
+				})
+			: { total: 0, items: [], matchIds: [], matchArtists: [] };
+		const pc = this.playlistCountOf();
+		return {
+			selection: draft,
+			counts,
+			applied: this.appliedCounts(),
+			revision: this.appliedSelection().revision,
+			dataset: this.datasetKey(),
+			page: {
+				...page,
+				items: page.items.map((it) =>
+					query.group === "track" && it.key ? { ...it, playlists: pc(it.key) } : it,
+				),
+			},
+			query,
+		};
+	}
+
+	/**
+	 * Takes a selection over: the explicit step after a preview. It must be
+	 * made on the revision in force (`baseRevision`): a tab that shows an older
+	 * one is refused, so it cannot bring back what was left out since. The same
+	 * selection again changes nothing. It is computed before anything is
+	 * written; a failure leaves the selection before in force.
+	 */
+	applySelection(input: {
+		baseRevision?: unknown;
+		enabled?: unknown;
+		rules?: unknown;
+		/**
+		 * The stored import the change was made on (a preview's or the page's
+		 * dataset key): required, and it must still be the stored one.
+		 */
+		dataset?: unknown;
+	}): HistorySelectionView {
+		let next: ImportSelection;
+		try {
+			next = cleanSelection({ enabled: input.enabled, rules: input.rules });
+		} catch (err) {
+			if (err instanceof SelectionError)
+				throw new HubError("bad_selection", `Ungültige Auswahl: ${err.message}`);
+			throw err;
+		}
+		// A change names the stored import it was made on; without one it is not
+		// known what was looked at, so nothing is taken.
+		if (typeof input.dataset !== "string" || input.dataset.length === 0)
+			throw new HubError(
+				"bad_selection",
+				"Ungültige Auswahl: der Import, auf den sie sich bezieht, fehlt — bitte die Seite neu laden.",
+			);
+		// Made on another stored import (replaced or deleted since, another tab or
+		// a new upload): its preview's numbers do not hold, nothing is taken.
+		if (input.dataset !== this.datasetKey())
+			throw new HubError(
+				"dataset_conflict",
+				"Dein Import hat sich seit der Vorschau geändert (anderer Tab oder neuer Import). Die Vorschau wird neu berechnet — prüfe sie und übernimm dann noch einmal.",
+				409,
+			);
+		const cur = this.appliedSelection();
+		if (sameSelection({ enabled: cur.enabled, rules: cur.rules }, next))
+			return this.selectionView();
+		if (input.baseRevision !== cur.revision)
+			throw new HubError(
+				"selection_conflict",
+				"Die Auswahl wurde inzwischen geändert (anderer Tab oder anderes Gerät). Sieh dir den aktuellen Stand an und übernimm deine Änderung dann noch einmal.",
+				409,
+			);
+		const applied: AppliedSelection = {
+			...next,
+			revision: cur.revision + 1,
+			appliedAt: this.now(),
+		};
+		let result: SelectionResult | undefined;
+		if (applied.enabled && applied.rules.length > 0) {
+			try {
+				result = this.computeSelection(applied);
+			} catch (err) {
+				const why = err instanceof Error ? err.message : String(err);
+				this.log("error", "history", `Auswahl nicht übernommen: ${why}`);
+				throw new HubError(
+					"selection_failed",
+					`Die Auswahl konnte nicht berechnet werden (${why}). Es gilt weiter die bisherige.`,
+					500,
+				);
+			}
+		}
+		this.importTransaction(() => {
+			this.kvSet("history_selection", applied);
+			if (result) this.materializeSelection(applied, result);
+			this.importChanged(true);
+		});
+		this.log(
+			"info",
+			"history",
+			!applied.enabled
+				? "Hörverlauf-Import deaktiviert: er zählt jetzt nicht mehr"
+				: `Auswahl des Hörverlaufs übernommen (Stand ${applied.revision}, ${applied.rules.length} Regeln)`,
+		);
+		return this.selectionView();
+	}
+
+	/** What deleting the stored import would remove (see deleteImport). */
+	private deletableScope(): { songs: number; rows: number; summaryProfile: boolean } {
+		return {
+			songs: this.kvGet<{ tracks: number }>("history_import")?.tracks ?? 0,
+			rows: this.kvGet<ListenMeta>("listens")?.rows ?? 0,
+			summaryProfile: this.kvGet("history_profile") !== null,
+		};
+	}
+
+	/**
+	 * Deletes the stored import — its song totals, single plays, the old
+	 * summary, uploads under way and everything computed from them — and only
+	 * that: live plays, thumbs, hearts, bans, stations and the saved queue
+	 * stay, and so does the selection (it applies to a later import). `dataset`
+	 * must name the import the listener confirmed; a newer one is not deleted.
+	 */
+	deleteImport(dataset: unknown): {
+		deleted: { songs: number; rows: number; summaryProfile: boolean };
+		/** The stored state after the deletion (see HistorySelectionView.commit). */
+		commit: number;
+	} {
+		if (!this.hasImport() && this.kvGet("history_profile") === null)
+			throw new HubError("not_found", "Es ist kein Import gespeichert.", 404);
+		if (dataset !== this.datasetKey())
+			throw new HubError(
+				"import_changed",
+				"Der gespeicherte Import hat sich inzwischen geändert. Prüfe den Umfang noch einmal, bevor du löschst.",
+				409,
+			);
+		const deleted = this.deletableScope();
+		this.importTransaction(() => {
+			for (const t of ["hist_pages", "hist_stage", "hist_effective", "listen_pages"])
+				this.db.run(`DELETE FROM ${t}`);
+			for (const k of [
+				"history_import",
+				"listens",
+				"listens_upload",
+				"hist_upload",
+				"history_profile",
+				"history_effective",
+			])
+				this.kvDel(k);
+			this.listenCache = null;
+			this.artistCache = null;
+			// Uploads begun before (and plays that name no import) are refused from
+			// now on (see importHistory, importListens).
+			this.kvSet("history_deleted_at", this.now());
+			this.kvSet("history_epoch", (this.kvGet<number>("history_epoch") ?? 0) + 1);
+			this.importChanged();
+		});
+		this.log(
+			"info",
+			"history",
+			`Hörverlauf-Import gelöscht: ${deleted.songs} Songs, ${deleted.rows} einzelne Wiedergaben`,
+		);
+		return { deleted, commit: this.importCommit() };
+	}
+
+	// =======================================================================
+	// Songs across the listener's own playlists
+	// =======================================================================
+
+	/**
+	 * Which playlists of the stored list count as the listener's own: owned by
+	 * them, not made by true-shuffle (a station's playlist, the discoveries
+	 * playlist), not of unclear origin (named like true-shuffle's, but none it
+	 * knows: not counted, and said so). Playlists of others — followed or
+	 * collaborative — never count; neither does one whose owner is unknown.
+	 * Independent of which playlists feed stations.
+	 */
+	private ownPlaylists(): {
+		own: string[];
+		unclear: { id: string; name: string }[];
+		trueShuffle: number;
+		foreign: number;
+	} {
+		const me = this.kvGet<{ id: string }>("profile")?.id ?? "";
+		const known = new Set(this.stations().flatMap((s) => (s.playlist_id ? [s.playlist_id] : [])));
+		const discoveries = this.kvGet<string>("discoveries_playlist");
+		if (discoveries) known.add(discoveries);
+		const out = {
+			own: [] as string[],
+			unclear: [] as { id: string; name: string }[],
+			trueShuffle: 0,
+			foreign: 0,
+		};
+		for (const r of this.db.all<{
+			id: string;
+			name: string;
+			owner_id: string | null;
+			ours: number;
+		}>(`SELECT id, name, owner_id, ours FROM playlists WHERE gone_at IS NULL ORDER BY sort, id`)) {
+			if (known.has(r.id)) out.trueShuffle++;
+			else if (!me || !r.owner_id) out.unclear.push({ id: r.id, name: r.name });
+			else if (r.owner_id !== me) out.foreign++;
+			else if (
+				r.ours === 1 ||
+				r.name.startsWith(DECK_NAME_PREFIX) ||
+				r.name.startsWith(LEGACY_DECK_NAME_PREFIX)
+			)
+				out.unclear.push({ id: r.id, name: r.name });
+			else out.own.push(r.id);
+		}
+		return out;
+	}
+
+	/**
+	 * Count again: the playlist list is read first (unless that just happened),
+	 * then every own playlist whose snapshot changed since it was last read,
+	 * page by page, through the same job queue, request budget and Spotify
+	 * waits as everything else. Only on request; never by itself.
+	 */
+	async requestPlaylistCounts(): Promise<PlaylistCountsView> {
+		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
+		if (!(meta?.state === "running" && this.jobExists("playlist-counts"))) {
+			this.db.run(`DELETE FROM jobs WHERE key = 'playlist-counts'`);
+			const needList = this.now() - this.syncState().lastPlaylistsAt >= 10 * MINUTE_MS;
+			this.kvSet("playlist_counts", {
+				needList,
+				state: "running",
+				startedAt: this.now(),
+				finishedAt: null,
+				listAt: null,
+				targets: null,
+				failed: [],
+				unclear: [],
+				trueShuffle: 0,
+				foreign: 0,
+			} satisfies PlaylistCountsMeta);
+			this.playlistCountCache = null;
+			if (needList) this.enqueue("playlists", "playlists", {}, 1);
+			this.enqueue("playlist-counts", "playlist-counts", { phase: "wait" }, 7);
+			this.log("info", "playlists", "Zählung der eigenen Playlists gestartet");
+			if (this.isConnected()) await this.scheduleSoon(1000);
+		}
+		return this.playlistCountsView();
+	}
+
+	private async stepPlaylistCounts(
+		client: SpotifyClient,
+		state: PlaylistCountsState,
+		budget: RequestBudget,
+	): Promise<StepResult> {
+		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
+		if (meta?.state !== "running") return { done: true };
+		if (state.phase !== "read" || !meta.targets) {
+			// The playlist list first: what it holds decides what is read.
+			if (this.jobExists("playlists")) return { done: false, state, delayMs: 15_000 };
+			const plan = this.ownPlaylists();
+			meta.targets = plan.own;
+			meta.unclear = plan.unclear;
+			meta.trueShuffle = plan.trueShuffle;
+			meta.foreign = plan.foreign;
+			meta.listAt = this.syncState().lastPlaylistsAt || null;
+			// The walk this count asked for must have finished since it began; a
+			// walk given up leaves an older list, which may lack own playlists.
+			meta.listIncomplete =
+				meta.listAt === null || (meta.needList === true && meta.listAt < meta.startedAt);
+			const keep = new Set(plan.own);
+			for (const r of this.db.all<{ playlist_id: string }>(`SELECT playlist_id FROM playlist_scan`))
+				if (!keep.has(r.playlist_id)) {
+					this.db.run(`DELETE FROM playlist_scan WHERE playlist_id = ?`, r.playlist_id);
+					this.db.run(`DELETE FROM playlist_member_pages WHERE playlist_id = ?`, r.playlist_id);
+				}
+			this.kvSet("playlist_counts", meta);
+			this.playlistCountCache = null;
+			state = { phase: "read", i: 0, offset: 0 };
+		}
+		let i = state.i ?? 0;
+		let offset = state.offset ?? 0;
+		const failed = (id: string, reason: string) => {
+			const name = this.playlistName(id) ?? id;
+			meta.failed = [...meta.failed.filter((f) => f.id !== id), { id, name, reason }];
+			this.db.run(
+				`UPDATE playlist_scan SET complete = 0, error = ?, read_at = ? WHERE playlist_id = ?`,
+				reason,
+				this.now(),
+				id,
+			);
+			this.kvSet("playlist_counts", meta);
+			this.playlistCountCache = null;
+		};
+		while (budget.left > 4) {
+			const id = meta.targets[i];
+			if (id === undefined) {
+				meta.state = "done";
+				meta.finishedAt = this.now();
+				this.kvSet("playlist_counts", meta);
+				this.playlistCountCache = null;
+				this.log(
+					"info",
+					"playlists",
+					`Eigene Playlists gezählt: ${meta.targets.length - meta.failed.length} von ${meta.targets.length} gelesen`,
+				);
+				return { done: true };
+			}
+			if (offset === 0) {
+				const snap =
+					this.db.first<{ snapshot_id: string | null }>(
+						`SELECT snapshot_id FROM playlists WHERE id = ?`,
+						id,
+					)?.snapshot_id ?? null;
+				const scan = this.db.first<{ snapshot_id: string | null; complete: number }>(
+					`SELECT snapshot_id, complete FROM playlist_scan WHERE playlist_id = ?`,
+					id,
+				);
+				// Unchanged since it was read to its end: what was read stands.
+				if (scan?.complete === 1 && snap !== null && scan.snapshot_id === snap) {
+					i++;
+					continue;
+				}
+				this.db.run(`DELETE FROM playlist_member_pages WHERE playlist_id = ?`, id);
+				this.db.run(
+					`INSERT INTO playlist_scan (playlist_id, snapshot_id, pages, complete, error, read_at)
+					 VALUES (?, ?, 0, 0, NULL, NULL)
+					 ON CONFLICT(playlist_id) DO UPDATE SET snapshot_id = excluded.snapshot_id,
+					   pages = 0, complete = 0, error = NULL`,
+					id,
+					snap,
+				);
+				this.playlistCountCache = null;
+			}
+			let page: Awaited<ReturnType<SpotifyClient["playlistItems"]>>;
+			try {
+				page = await client.playlistItems(id, offset);
+			} catch (err) {
+				if (err instanceof SpotifyError && (err.kind === "forbidden" || err.kind === "not_found")) {
+					failed(id, err.kind === "forbidden" ? "kein Zugriff" : "nicht gefunden");
+					i++;
+					offset = 0;
+					continue;
+				}
+				throw err;
+			}
+			if (!page) {
+				failed(id, "keine Antwort von Spotify");
+				i++;
+				offset = 0;
+				continue;
+			}
+			// Each song once per page (and once per playlist when counted); local
+			// files and podcast episodes are no songs of the library.
+			const ids = [
+				...new Set(
+					page.items.flatMap((it) =>
+						!it?.is_local && it?.item?.id && (it.item.type ?? "track") === "track"
+							? [it.item.id]
+							: [],
+					),
+				),
+			];
+			// Empty while Spotify announces more (a next page, or a total beyond
+			// this offset): a missing page, not the end.
+			if (page.items.length === 0 && (page.next || (page.total ?? 0) > offset)) {
+				failed(id, "eine Seite fehlte");
+				i++;
+				offset = 0;
+				continue;
+			}
+			const pageNo = Math.floor(offset / PAGE_SIZE);
+			this.db.run(
+				`INSERT INTO playlist_member_pages (playlist_id, page, data) VALUES (?, ?, ?)
+				 ON CONFLICT(playlist_id, page) DO UPDATE SET data = excluded.data`,
+				id,
+				pageNo,
+				JSON.stringify(ids),
+			);
+			offset += page.items.length || PAGE_SIZE;
+			if (!page.next && (page.total ?? 0) > offset) {
+				// The last page ends before the total Spotify announced.
+				failed(id, "Seiten fehlten");
+				i++;
+				offset = 0;
+				continue;
+			}
+			if (!page.next) {
+				this.db.run(
+					`UPDATE playlist_scan SET pages = ?, complete = 1, error = NULL, read_at = ? WHERE playlist_id = ?`,
+					pageNo + 1,
+					this.now(),
+					id,
+				);
+				meta.failed = meta.failed.filter((f) => f.id !== id);
+				this.kvSet("playlist_counts", meta);
+				i++;
+				offset = 0;
+			} else
+				this.db.run(`UPDATE playlist_scan SET pages = ? WHERE playlist_id = ?`, pageNo + 1, id);
+			this.playlistCountCache = null;
+		}
+		return { done: false, state: { phase: "read", i, offset } };
+	}
+
+	/** Per song: in how many own playlists it is, from every own playlist read to its end. */
+	private playlistCountMap(): { map: Map<TrackId, number>; complete: boolean } | null {
+		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
+		if (!meta) return null;
+		if (this.playlistCountCache) return this.playlistCountCache;
+		const targets = meta.targets ?? [];
+		const done = new Set(
+			this.db
+				.all<{ playlist_id: string }>(`SELECT playlist_id FROM playlist_scan WHERE complete = 1`)
+				.map((r) => r.playlist_id),
+		);
+		const map = new Map<TrackId, number>();
+		for (const id of targets) {
+			if (!done.has(id)) continue;
+			const songs = new Set<TrackId>();
+			for (const r of this.db.all<{ data: string }>(
+				`SELECT data FROM playlist_member_pages WHERE playlist_id = ? ORDER BY page`,
+				id,
+			))
+				for (const t of JSON.parse(r.data) as TrackId[]) songs.add(t);
+			for (const t of songs) map.set(t, (map.get(t) ?? 0) + 1);
+		}
+		// Complete only when every own playlist of a fresh list was read to its
+		// end and none is of unclear origin (it may be the listener's own).
+		const complete =
+			meta.state === "done" &&
+			meta.targets !== null &&
+			meta.listIncomplete !== true &&
+			meta.failed.length === 0 &&
+			meta.unclear.length === 0 &&
+			targets.every((id) => done.has(id));
+		this.playlistCountCache = { map, complete };
+		return this.playlistCountCache;
+	}
+
+	/** A lookup for SongFacts: null while nothing was ever counted. */
+	private playlistCountOf(): (id: TrackId) => PlaylistCount | null {
+		const c = this.playlistCountMap();
+		if (!c) return () => null;
+		return (id) => ({ count: c.map.get(id) ?? 0, complete: c.complete });
+	}
+
+	playlistCountsView(): PlaylistCountsView {
+		const meta = this.kvGet<PlaylistCountsMeta>("playlist_counts");
+		const job = this.db.first<{ error: string | null }>(
+			`SELECT error FROM jobs WHERE key = 'playlist-counts'`,
+		);
+		const c = this.playlistCountMap();
+		const read =
+			meta?.targets && meta.targets.length > 0
+				? (this.db.first<{ n: number }>(
+						`SELECT COUNT(*) AS n FROM playlist_scan WHERE complete = 1 AND playlist_id IN (${meta.targets.map(() => "?").join(",")})`,
+						...meta.targets,
+					)?.n ?? 0)
+				: 0;
+		const top = c
+			? [...c.map.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 20)
+			: [];
+		const found = this.lookupTracks(
+			top.map(([id]) => id),
+			this.usedSources(),
+		);
+		return {
+			state: !meta ? "never" : meta.state === "done" ? "done" : job ? "running" : "stopped",
+			startedAt: meta?.startedAt ?? null,
+			finishedAt: meta?.finishedAt ?? null,
+			listAt: meta?.listAt ?? null,
+			complete: c?.complete ?? false,
+			listIncomplete: meta?.listIncomplete === true,
+			playlists: {
+				own: meta?.targets?.length ?? 0,
+				read,
+				failed: meta?.failed ?? [],
+				unclear: meta?.unclear ?? [],
+				trueShuffle: meta?.trueShuffle ?? 0,
+				foreign: meta?.foreign ?? 0,
+			},
+			songs: c?.map.size ?? 0,
+			error: job?.error ?? null,
+			top: top.flatMap(([id, n]) => {
+				const t = found.get(id);
+				return t ? [{ ...this.view(t), playlists: { count: n, complete: c!.complete } }] : [];
+			}),
+		};
 	}
 
 	// =======================================================================
 	// Reading for the interface
 	// =======================================================================
 
-	async state(opts: { live?: boolean } = {}): Promise<AppState> {
+	async state(opts: { live?: boolean; refresh?: boolean } = {}): Promise<AppState> {
+		await this.reconcileSharedCooldown();
+		await this.reconcileSharedCooldown("artist-albums");
 		const profile = this.kvGet<{ id: string; name: string; imageUrl: string | null }>(
 			"profile",
 		) ?? {
@@ -4205,16 +8527,35 @@ export class HubCore {
 			imageUrl: null,
 		};
 		if (opts.live && this.isConnected()) {
-			// An open app looks at Spotify when the picture may have changed: after
-			// a tap, when the song should have ended, and otherwise every 45 s — the
-			// display runs the progress on by itself in between.
 			const snap = this.kvGet<PlayerSnapshot>("player");
-			const age = snap ? this.now() - Math.max(snap.at, this.lastLookAt) : Number.POSITIVE_INFINITY;
-			const ended =
-				!!snap?.obs?.isPlaying &&
-				snap.obs.durationMs > 0 &&
-				snap.obs.progressMs + age > snap.obs.durationMs + 2000;
-			if (!snap || this.kvGet("player_stale") || age > 45_000 || (ended && age > 5_000)) {
+			const now = this.now();
+			const checkedAt = this.playerCheckedAt();
+			// Reopen/focus within the shared five-second window still asks for a
+			// new look. Keep one durable deadline rather than dropping that intent.
+			if (opts.refresh && checkedAt !== null && now - checkedAt < 5000) {
+				const due = checkedAt + 5000;
+				const requested = this.kvGet<number>("player_observation_due");
+				if (requested === null || requested > due) this.kvSet("player_observation_due", due);
+				await this.scheduleSoon(Math.max(1, due - now));
+			}
+			const foregroundAt = foregroundObservationDeadline({
+				now,
+				checkedAt,
+				playing: snap?.obs?.isPlaying === true,
+				observedAt: snap?.obs?.at,
+				durationMs: snap?.obs?.durationMs,
+				progressMs: snap?.obs?.progressMs,
+				failedAt: this.kvGet<number>("player_failed_at"),
+			}).at;
+			const refreshAt = opts.refresh ? (checkedAt ?? now - 5000) + 5000 : Infinity;
+			const at = this.automaticReadAt(
+				"GET /me/player",
+				Math.max(
+					Math.min(foregroundAt, refreshAt, this.backgroundObservationAt()),
+					this.kvGet<number>("player_retry_at") ?? 0,
+				),
+			);
+			if (at <= now) {
 				const budget = new RequestBudget(8);
 				await this.sync(budget);
 				// What this look saw decides the next one (a song end, a held station).
@@ -4235,8 +8576,10 @@ export class HubCore {
 				code: backoff.kind,
 				message:
 					backoff.kind === "quota"
-						? "Spotify-Kontingent aufgebraucht — true-shuffle macht kurz Pause."
-						: "Spotify bremst gerade — true-shuffle wartet kurz.",
+						? this.providerCooldown()?.until === null
+							? "Spotify-Kontingent aufgebraucht — die Warteschlange bleibt gespeichert; der Freigabezeitpunkt ist unbekannt."
+							: "Spotify-Kontingent aufgebraucht — die Warteschlange bleibt gespeichert; weitere Anfragen warten bis zur gemeldeten Freigabe."
+						: "Spotify bremst gerade — die Warteschlange bleibt gespeichert; true-shuffle wartet auf die Freigabe.",
 			});
 		}
 		if (this.inPrivateNow())
@@ -4303,13 +8646,27 @@ export class HubCore {
 			onboarded: this.kvGet<boolean>("onboarded") === true,
 			stations,
 			nowPlaying: np,
-			guest: { active: !!guestNow, until: guestNow?.to ?? null },
+			observed: this.observedPlayer(snap),
+			session: this.sessionView(),
+			likes: this.likesView(),
+			continueAfter: this.continueAfterView(),
+			guest: {
+				active: !!guestNow,
+				until: guestNow?.to ?? null,
+				devices: this.guestDevices(),
+				device: guestNow?.device
+					? (this.guestDevices().find((d) => d.id === guestNow.device)?.name ?? null)
+					: null,
+			},
 			warnings,
 			jobs: this.jobViews(),
 			history: {
 				importedTracks: hist?.tracks ?? 0,
 				importedAt: hist?.at ?? null,
 				liveSince: this.kvGet<number>("live_since"),
+				effectiveTracks: this.hist().size,
+				enabled: this.appliedSelection().enabled,
+				rules: this.appliedSelection().rules.length,
 			},
 			aiSource: this.d.env.anthropicKey ? "anthropic" : this.d.ai ? "workers-ai" : "off",
 			serverTime: this.now(),
@@ -4367,7 +8724,8 @@ export class HubCore {
 		}
 		const elapsed = snap.obs.isPlaying ? this.now() - snap.at : 0;
 		return {
-			...this.view(t),
+			// The rating and its write number as one pair, from the same read.
+			...this.view(t, this.ratingClock()),
 			isPlaying: snap.obs.isPlaying,
 			progressMs: Math.min(t[5], snap.obs.progressMs + elapsed),
 			stationId,
@@ -4375,12 +8733,161 @@ export class HubCore {
 			deviceName: snap.device?.name ?? null,
 			orderBroken: stationId !== null && (snap.obs.shuffle || snap.obs.smartShuffle),
 			smartShuffle: stationId !== null && snap.obs.smartShuffle,
-			thumb: this.memory(t[0]).thumb,
 			observedAt: snap.at,
 		};
 	}
 
-	private view(t: PackedTrack): TrackView {
+	/**
+	 * What the latest look at Spotify saw, also outside true-shuffle (NP06):
+	 * only from the stored snapshot, never a request. "station" only where the
+	 * existing reconciliation (`checkpoint`) confirmed this very look as the
+	 * saved queue's current entry; a station's context alone never makes a
+	 * song the station's. No target there: true-shuffle's own controls act on
+	 * its occurrence. A failed or old look says nothing about now ("unknown").
+	 */
+	private observedPlayer(snap: PlayerSnapshot | null): ObservedPlayer {
+		const now = this.now();
+		const checkedAt = this.playerCheckedAt();
+		const failedAt = this.kvGet<number>("player_failed_at");
+		const nothing = {
+			checkedAt,
+			track: null,
+			progressMs: null,
+			device: null,
+			attribution: null,
+			stationId: null,
+			target: null,
+		};
+		if (
+			!snap ||
+			checkedAt === null ||
+			now - checkedAt > OBSERVED_FRESH_MS ||
+			(failedAt !== null && failedAt >= checkedAt)
+		)
+			return { state: "unknown", ...nothing };
+		const obs = snap.obs;
+		if (!obs) return { state: "none", ...nothing };
+		const device = snap.device
+			? {
+					id: snap.device.id,
+					name: snap.device.name,
+					volume: snap.device.volume ?? null,
+					volumeControl:
+						!snap.device.restricted && snap.device.supportsVolume !== false && !!snap.device.id,
+				}
+			: null;
+		// Episodes, ads, local files and unplayable items are not packed as songs.
+		const t = snap.track;
+		if (!obs.trackId || !t || t[0] !== obs.trackId)
+			return { state: "unsupported", ...nothing, device };
+		let attribution: "station" | "outside" | "unconfirmed" = "outside";
+		let stationId: number | null = null;
+		const st = obs.contextUri
+			? this.stations().find((x) => this.deckUri(x) === obs.contextUri)
+			: undefined;
+		if (st) {
+			stationId = st.id;
+			attribution = "unconfirmed";
+			const s = this.savedSession(st.id);
+			const deck = this.deckOf(st);
+			if (
+				s &&
+				s.controller !== "native" &&
+				!s.pending &&
+				s.contextUri === obs.contextUri &&
+				(s.status === "active" || s.status === "paused") &&
+				s.observedAt !== null &&
+				s.observedAt >= obs.at &&
+				deck?.items[s.currentIndex]?.id === obs.trackId
+			)
+				attribution = "station";
+		}
+		const account = this.kvGet<{ id: string }>("profile")?.id ?? "";
+		const target: ObservedTarget | null =
+			attribution === "station" || !account
+				? null
+				: {
+						kind: "observed",
+						account,
+						trackId: obs.trackId,
+						deviceId: snap.device?.id ?? null,
+						observationId: String(snap.at),
+						playId: this.observedPlayId(snap) ?? `${obs.trackId}@${snap.at}`,
+					};
+		const pending = target !== null && this.observedNextSent(snap) !== null;
+		return {
+			state: obs.isPlaying ? "playing" : "paused",
+			checkedAt,
+			track: this.view(t, this.ratingClock()),
+			// Like nowPlaying: the time since the look is in it already.
+			progressMs: Math.min(t[5], obs.progressMs + (obs.isPlaying ? now - snap.at : 0)),
+			device,
+			attribution,
+			stationId,
+			target,
+			// A "next" sent for this very play, not yet shown done: not sent again.
+			...(pending ? { nextPending: true } : {}),
+		};
+	}
+
+	/**
+	 * The play a look shows, as the looks followed it (see noteHeardSong);
+	 * without that record (a private session) every look is its own play.
+	 */
+	private observedPlayId(snap: PlayerSnapshot): string | null {
+		const id = snap.obs?.trackId;
+		if (!id) return null;
+		const heard = this.kvGet<HeardSong>("heard_song");
+		return heard && heard.id === id ? `${id}:${heard.start}` : `${id}@${snap.at}`;
+	}
+
+	/**
+	 * The "next" sent for the very play this look shows (ObservedNextSent): the
+	 * same account, song and device, and no sign of another play of the song —
+	 * both plays followed by the looks and begun at different times. A play the
+	 * looks did not follow (a private session) is held as the same one until a
+	 * look shows something else.
+	 */
+	private observedNextSent(snap: PlayerSnapshot | null): ObservedNextSent | null {
+		if (!snap?.obs?.trackId) return null;
+		const account = this.kvGet<{ id: string }>("profile")?.id;
+		const device = snap.device?.id ?? null;
+		return (
+			this.observedNextHeld().find(
+				(sent) =>
+					sent.account === account &&
+					sent.deviceId === device &&
+					!this.observedPlayOver(sent, snap),
+			) ?? null
+		);
+	}
+
+	/** Every open "next" (ObservedNextSent), one per device; one stored alone before reads as one. */
+	private observedNextHeld(): ObservedNextSent[] {
+		const held = this.kvGet<ObservedNextSent | ObservedNextSent[]>("observed_next_sent");
+		return held === null ? [] : Array.isArray(held) ? held : [held];
+	}
+
+	/**
+	 * A look showing the play a "next" was sent for over: something else plays,
+	 * or another play of the song — both followed by the looks and begun at
+	 * different times — or the account is another. No player, or the play on
+	 * another device, does not show it over.
+	 */
+	private observedPlayOver(sent: ObservedNextSent, snap: PlayerSnapshot): boolean {
+		if (sent.account !== this.kvGet<{ id: string }>("profile")?.id) return true;
+		if (!snap.obs) return false;
+		if (snap.obs.trackId !== sent.trackId) return true;
+		const play = this.observedPlayId(snap);
+		return !!play && play !== sent.playId && play.includes(":") && sent.playId.includes(":");
+	}
+
+	/**
+	 * A song as the page shows it. With the rating clock (read once by the
+	 * caller), its rating comes with the write number it stands at, read
+	 * together: the page orders what it hears by that number.
+	 */
+	private view(t: PackedTrack, clock?: RatingClock): TrackView {
 		return {
 			id: t[0],
 			name: t[1],
@@ -4389,6 +8896,7 @@ export class HubCore {
 			imageUrl: t[4],
 			durationMs: t[5],
 			thumb: (this.liveRow(t[0])?.thumb ?? 0) as -1 | 0 | 1,
+			...(clock ? { rated: this.ratedSeq(t[0], clock) } : {}),
 		};
 	}
 
@@ -4489,9 +8997,10 @@ export class HubCore {
 				next.map((it) => it.id),
 				this.liveSources(st).map(sourceKey),
 			);
+			const facts = this.songFacts(st.id, next);
 			for (const it of next) {
 				const t = found.get(it.id);
-				if (t) upcoming.push({ ...this.view(t), kind: it.kind });
+				if (t) upcoming.push({ ...this.view(t), kind: it.kind, facts: facts(it) });
 			}
 		}
 		const recentRows = this.db.all<{ played_at: number; track_id: string; meta: string | null }>(
@@ -4526,33 +9035,588 @@ export class HubCore {
 		};
 	}
 
+	/**
+	 * Prepares a genre estimate (see `requestGenres`): at most one attempt every
+	 * six hours, failed ones included, kept across restarts. Returns the stored
+	 * estimate and, when an attempt is due, the artists to send — most-played
+	 * from the import and live plays, weighted by listening time.
+	 */
+	prepareGenres(): { answer: GenreAnswer; request: GenreRequest | null } {
+		const now = this.now();
+		const estimate = this.kvGet<GenreEstimate>("genre_estimate");
+		const last = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		if (last && now - last.at < GENRE_EVERY_MS)
+			return {
+				answer: { estimate, retryAt: last.at + GENRE_EVERY_MS, failed: false },
+				request: null,
+			};
+		// The whole timeline, by listening time.
+		const p = periodProfile(this.timeline(), { from: null, to: now + 1 }, localTimes("UTC"));
+		const weight = new Map(p.topArtists.map((a) => [a.name, a.minutes || a.plays * 3.5]));
+		const total = [...weight.values()].reduce((a, b) => a + b, 0);
+		if (total <= 0) throw new HubError("no_artists", "Noch zu wenig gehört für eine Einschätzung");
+		const attempt = { at: now, id: randomToken(8) };
+		this.kvSet("genre_attempt", attempt);
+		return {
+			answer: { estimate, retryAt: now + GENRE_EVERY_MS, failed: false },
+			request: {
+				attempt: attempt.id,
+				artists: [...weight.entries()]
+					.sort((a, b) => b[1] - a[1])
+					.slice(0, 50)
+					.map(([name, w]) => ({ name, share: (w / total) * 100 })),
+			},
+		};
+	}
+
+	/**
+	 * Stores what an attempt brought back, only if it is still the latest one
+	 * (a newer attempt or an import since makes it stale). Nothing usable
+	 * leaves the stored estimate as it was.
+	 */
+	storeGenres(attempt: string, est: GenreEstimate | null): GenreAnswer {
+		const last = this.kvGet<{ at: number; id: string }>("genre_attempt");
+		const current = last?.id === attempt;
+		if (current && est) this.kvSet("genre_estimate", est);
+		return {
+			estimate: this.kvGet<GenreEstimate>("genre_estimate"),
+			retryAt: last ? last.at + GENRE_EVERY_MS : null,
+			failed: !est,
+		};
+	}
+
+	/** The AI call for a prepared request, outside any lock (see `requestGenres`). */
+	runGenreEstimate(artists: GenreRequest["artists"]): Promise<GenreEstimate | null> {
+		return estimateGenres(this.d.env, this.d.fetch, this.d.ai, artists, this.now());
+	}
+
+	/**
+	 * Stores the summary of an imported streaming history (see `ImportedProfile`),
+	 * replacing the one before — what an app from before the period profile
+	 * sends. The Hörprofil reads the imported plays (see `importListens`); the
+	 * summary only tells that importing again would show every period. It
+	 * comes from the browser: only well-formed, bounded numbers and short
+	 * names are kept.
+	 */
+	setImportedProfile(input: unknown): void {
+		const bad = () => new HubError("bad_profile", "Ungültiges Hörprofil");
+		// A summary belongs to stored song totals: after a deletion it brings nothing back.
+		if (this.kvGet("history_import") === null)
+			throw new HubError("no_import", "Es ist kein Import gespeichert.", 409);
+		const p = input as ImportedProfile;
+		const n = (v: unknown, max = 1e9) =>
+			typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= max;
+		const str = (v: unknown) => typeof v === "string" && v.length <= 200;
+		const latest = this.now() + DAY_MS;
+		if (
+			!p ||
+			typeof p !== "object" ||
+			!n(p.from, latest) ||
+			!n(p.to, latest) ||
+			p.from > p.to ||
+			!n(p.plays) ||
+			!n(p.minutes) ||
+			!n(p.songs) ||
+			!n(p.artists) ||
+			!n(p.earlySkips) ||
+			!Array.isArray(p.hourWeek) ||
+			p.hourWeek.length !== 168 ||
+			!p.hourWeek.every((v) => n(v)) ||
+			!Array.isArray(p.months) ||
+			p.months.length > 240 ||
+			!p.months.every(
+				(m) => /^\d{4}-\d{2}$/.test(String(m?.month)) && n(m.plays) && n(m.minutes),
+			) ||
+			!Array.isArray(p.topArtists) ||
+			p.topArtists.length > 50 ||
+			!p.topArtists.every((a) => str(a?.name) && n(a.plays) && n(a.minutes)) ||
+			!Array.isArray(p.topSongs) ||
+			p.topSongs.length > 50 ||
+			!p.topSongs.every(
+				(x) =>
+					/^[A-Za-z0-9]{22}$/.test(String(x?.id)) && str(x.name) && str(x.artist) && n(x.plays),
+			)
+		)
+			throw bad();
+		const clean: ImportedProfile = {
+			at: this.now(),
+			from: p.from,
+			to: p.to,
+			plays: p.plays,
+			minutes: p.minutes,
+			songs: p.songs,
+			artists: p.artists,
+			earlySkips: p.earlySkips,
+			hourWeek: p.hourWeek.slice(),
+			months: p.months.map((m) => ({ month: m.month, plays: m.plays, minutes: m.minutes })),
+			topArtists: p.topArtists.map((a) => ({ name: a.name, plays: a.plays, minutes: a.minutes })),
+			topSongs: p.topSongs.map((x) => ({
+				id: x.id,
+				name: x.name,
+				artist: x.artist,
+				plays: x.plays,
+			})),
+		};
+		// The page shows whether a summary is stored, not what it says: only a
+		// first one changes what it shows (see HistorySelectionView.commit) —
+		// stored together with its commit number, or not at all.
+		this.importTransaction(() => {
+			const first = this.kvGet("history_profile") === null;
+			this.kvSet("history_profile", clean);
+			if (first) this.importCommitted();
+			// A pending estimate was asked from the old summary: it must not land.
+			const attempt = this.kvGet<{ at: number; id: string }>("genre_attempt");
+			if (attempt) this.kvSet("genre_attempt", { ...attempt, id: `${attempt.id}-stale` });
+		});
+	}
+
+	/**
+	 * The current imported plays (see core/listens), read once per generation
+	 * and held compact: four numbers a play in typed arrays (about 13 bytes),
+	 * so even the largest history stays a few megabytes in the object's memory.
+	 */
+	private listenCache: (ListenColumns & { gen: number }) | null = null;
+	private listenData(): ListenColumns | null {
+		const meta = this.currentListens();
+		if (!meta) return null;
+		if (this.listenCache?.gen !== meta.gen) {
+			const pages = (kind: string) =>
+				this.db.all<{ data: string }>(
+					`SELECT data FROM listen_pages WHERE gen = ? AND kind = ? ORDER BY page`,
+					meta.gen,
+					kind,
+				);
+			const tracks = pages("tracks").flatMap((r) => JSON.parse(r.data) as ListenTrack[]);
+			const at = new Uint32Array(meta.rows);
+			const track = new Uint32Array(meta.rows);
+			const ms = new Uint32Array(meta.rows);
+			const meta2 = new Uint8Array(meta.rows * 2);
+			let n = 0;
+			for (const r of pages("rows"))
+				for (const row of JSON.parse(r.data) as ListenRow[]) {
+					if (n >= meta.rows) break;
+					at[n] = row[0];
+					track[n] = row[1];
+					ms[n] = row[2];
+					meta2[n * 2] = row[3];
+					meta2[n * 2 + 1] = row[4];
+					n++;
+				}
+			this.listenCache = { gen: meta.gen, tracks, at, track, ms, meta: meta2, rows: n };
+		}
+		return this.listenCache;
+	}
+
+	/**
+	 * Takes one block of an imported history's plays (see core/listens): the
+	 * song list first, then the plays, in order. They are written as the next
+	 * generation; only the last block switches over to it, so a broken upload
+	 * leaves the plays before in place. Everything comes from the browser and
+	 * is checked: shapes, bounds, sizes, order.
+	 */
+	importListens(input: {
+		upload?: unknown;
+		/** The upload of song totals these plays belong to (see importHistory). */
+		importId?: unknown;
+		part: unknown;
+		parts: unknown;
+		tracks: unknown;
+		kind: unknown;
+		data: unknown;
+	}): { stored: number; upload: string } {
+		const bad = (why: string) => new HubError("bad_listens", `Ungültiger Hörverlauf: ${why}`);
+		const { part, parts, tracks, kind, data } = input;
+		const int = (v: unknown, max: number) =>
+			typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= max;
+		if (!int(parts, LISTEN_MAX_PARTS) || (parts as number) < 1 || !int(part, (parts as number) - 1))
+			throw bad("Block");
+		if (!int(tracks, LISTEN_MAX_SONGS) || (kind !== "tracks" && kind !== "rows"))
+			throw bad("Block");
+		if (!Array.isArray(data) || data.length === 0 || data.length > LISTEN_PAGE)
+			throw bad("Blockgröße");
+		const current = this.kvGet<ListenMeta>("listens");
+		let upload = this.kvGet<ListenUpload>("listens_upload");
+		if (part === 0) {
+			// The plays belong to the song totals uploaded just before (the import
+			// page names them): once those were deleted or replaced, a late upload
+			// of the old plays must not bring them back. Plays that name no import
+			// (an app from before) are taken only where they cannot cross either:
+			// with totals stored before uploads were named, or with no totals at
+			// all and never a deletion.
+			const hist = this.kvGet<{ id?: string }>("history_import");
+			const named = input.importId !== undefined && input.importId !== null;
+			if (
+				named
+					? !hist || input.importId !== hist.id
+					: hist
+						? hist.id !== undefined
+						: this.kvGet("history_deleted_at") !== null
+			)
+				throw new HubError(
+					"import_superseded",
+					"Ungültiger Hörverlauf: der Import, zu dem diese Wiedergaben gehören, wurde gelöscht oder ersetzt — bitte die Dateien noch einmal importieren.",
+					409,
+				);
+			// A new upload: whatever an unfinished one left behind goes first; a
+			// block of that one is refused from now on (another id).
+			this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, current?.gen ?? -1);
+			upload = {
+				id: randomToken(12),
+				importId: typeof input.importId === "string" ? input.importId : null,
+				gen: Math.max(current?.gen ?? 0, upload?.gen ?? 0) + 1,
+				parts: parts as number,
+				tracks: tracks as number,
+				next: 0,
+				songs: 0,
+				rows: 0,
+				lastSec: 0,
+			};
+		} else if (!upload || input.upload !== upload.id)
+			throw bad("dieser Import wurde abgelöst — bitte noch einmal von vorn");
+		if (upload.next !== part || upload.parts !== parts || upload.tracks !== tracks)
+			throw bad("Reihenfolge — bitte noch einmal von vorn");
+		const latest = Math.floor((this.now() + DAY_MS) / 1000);
+		if (kind === "tracks") {
+			if (upload.songs + data.length > upload.tracks) throw bad("Songliste");
+			if (upload.rows > 0) throw bad("Songliste zuerst");
+			if (!data.every(isListenTrack)) throw bad("Song");
+			upload.songs += data.length;
+		} else {
+			if (upload.songs !== upload.tracks) throw bad("Songliste unvollständig");
+			if (upload.rows + data.length > LISTEN_MAX_ROWS) throw bad("zu viele Wiedergaben");
+			for (const r of data) {
+				if (!isListenRow(r, upload.tracks, latest)) throw bad("Wiedergabe");
+				// Oldest first, across blocks too.
+				if (r[0] < upload.lastSec) throw bad("Reihenfolge der Wiedergaben");
+				upload.lastSec = r[0];
+			}
+			upload.rows += data.length;
+		}
+		// The last block: everything declared came, or the plays before stay.
+		if (part === upload.parts - 1 && (upload.songs !== upload.tracks || upload.rows === 0))
+			throw bad("unvollständig — bitte noch einmal von vorn");
+		const store = () =>
+			this.db.run(
+				`INSERT OR REPLACE INTO listen_pages (gen, kind, page, data) VALUES (?, ?, ?, ?)`,
+				upload.gen,
+				kind,
+				part,
+				JSON.stringify(data),
+			);
+		upload.next++;
+		if (upload.next < upload.parts) {
+			store();
+			this.kvSet("listens_upload", upload);
+			return { stored: data.length, upload: upload.id };
+		}
+		// Complete: the last block, the switch-over to its generation, dropping
+		// the one before and the commit number are stored together or not at
+		// all. On a failure the upload stays as it was: the same block can be
+		// sent again.
+		const plays = this.importTransaction(() => {
+			store();
+			let from: number | null = null;
+			let to: number | null = null;
+			let rows = 0;
+			let plays = 0;
+			for (const r of this.db.all<{ data: string }>(
+				`SELECT data FROM listen_pages WHERE gen = ? AND kind = 'rows'`,
+				upload.gen,
+			))
+				for (const row of JSON.parse(r.data) as ListenRow[]) {
+					rows++;
+					if (!countsAsPlay(row)) continue;
+					plays++;
+					from = from === null ? row[0] * 1000 : Math.min(from, row[0] * 1000);
+					to = to === null ? row[0] * 1000 : Math.max(to, row[0] * 1000);
+				}
+			this.kvSet("listens", {
+				gen: upload.gen,
+				at: this.now(),
+				importId: upload.importId ?? null,
+				from,
+				to,
+				rows,
+				plays,
+				tracks: upload.tracks,
+			} satisfies ListenMeta);
+			this.kvDel("listens_upload");
+			this.db.run(`DELETE FROM listen_pages WHERE gen <> ?`, upload.gen);
+			this.listenCache = null;
+			this.artistCache = null;
+			// A new history: the selection is computed over it, a genre estimate on the way belongs to the old one.
+			this.importChanged();
+			return plays;
+		});
+		this.log("info", "history", `Hörverlauf für das Hörprofil übernommen: ${plays} Wiedergaben`);
+		return { stored: data.length, upload: upload.id };
+	}
+
+	/**
+	 * The listener's timeline, oldest first (see `ListeningProfile`): imported
+	 * plays up to the first sign-in, true-shuffle's own count (guest time left
+	 * out) from then on.
+	 */
+	private timeline(): () => Iterable<ListenEvent> {
+		const liveSince = this.kvGet<number>("live_since") ?? Number.POSITIVE_INFINITY;
+		// The listener's selection of the import holds here as in the memory.
+		const sel = this.appliedSelection();
+		const imported = sel.enabled ? this.listenData() : null;
+		const pick = imported && sel.rules.length > 0 ? matcher(sel) : null;
+		const artists = pick ? this.listenArtists() : undefined;
+		// A song decided as a whole is in or out of the Hörprofil as a whole too.
+		const partial = pick ? this.partialSongs() : null;
+		const rows = this.db.all<{ played_at: number; track_id: string; meta: string | null }>(
+			`SELECT played_at, track_id, meta FROM plays WHERE ignored = 0 AND played_at >= ? ORDER BY played_at`,
+			Number.isFinite(liveSince) ? liveSince : 0,
+		);
+		const bare = [...new Set(rows.filter((r) => !r.meta).map((r) => r.track_id))];
+		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
+		// Walked lazily: one event at a time, never the whole timeline at once.
+		return function* () {
+			if (imported)
+				for (let i = 0; i < imported.rows; i++) {
+					const at = imported.at[i]! * 1000;
+					if (at >= liveSince) continue;
+					const row: ListenRow = [
+						imported.at[i]!,
+						imported.track[i]!,
+						imported.ms[i]!,
+						imported.meta[i * 2]!,
+						imported.meta[i * 2 + 1]!,
+					];
+					const play = countsAsPlay(row);
+					const early = !play && isEarlySkip(row);
+					if (!play && !early) continue;
+					const t = imported.tracks[row[1]];
+					if (!t) continue;
+					if (
+						pick &&
+						!pick.included(
+							partial!.has(row[1]) ? pick.summary(t[0]) : pick.event(at, t[0], artists![row[1]]!),
+						)
+					)
+						continue;
+					yield {
+						at,
+						song: t[0],
+						name: t[1] || "Unbekannter Song",
+						artist: t[2],
+						album: t[3] || null,
+						ms: row[2],
+						exact: true,
+						play,
+						earlySkip: early,
+						// Told by the import (see core/listens startTracker); older rows: never.
+						opener: early && (row[3] & LISTEN_FLAG.opener) !== 0,
+						rated: (row[3] & LISTEN_FLAG.rated) !== 0,
+						platform: row[4],
+						shuffle: (row[3] & LISTEN_FLAG.shuffle) !== 0,
+						offline: (row[3] & LISTEN_FLAG.offline) !== 0,
+						imageUrl: null,
+					};
+				}
+			for (const r of rows) {
+				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
+				yield {
+					at: r.played_at,
+					song: r.track_id,
+					name: t?.[1] ?? "Unbekannter Song",
+					artist: t?.[2][0]?.[1] ?? "",
+					album: t?.[3] || null,
+					ms: t?.[5] ?? 0,
+					exact: false,
+					play: true,
+					earlySkip: false,
+					opener: false,
+					rated: false,
+					platform: null,
+					shuffle: null,
+					offline: null,
+					imageUrl: t?.[4] ?? null,
+				};
+			}
+		};
+	}
+
+	/**
+	 * The Hörprofil of a period (see `ListeningProfile`): from inclusive, to
+	 * exclusive, from null for everything. Covers of imported songs come from
+	 * the library where known; nothing is written and Spotify is not asked.
+	 */
+	listeningProfile(
+		timeZone: string,
+		period: { from?: number | null; to?: number | null; previousFrom?: number | null } = {},
+	): ListeningProfile {
+		let zone = "UTC";
+		try {
+			new Intl.DateTimeFormat("en-US", { timeZone });
+			zone = timeZone;
+		} catch {
+			// An unknown zone: hours in UTC rather than none.
+		}
+		const to = period.to ?? this.now() + 1;
+		const from = period.from ?? null;
+		// A start of comparison only within reason: before the period, at most as far back again.
+		const prev = period.previousFrom ?? null;
+		const previousFrom =
+			from !== null && prev !== null && prev < from && from - prev <= 2 * (to - from) ? prev : null;
+		const stats = periodProfile(
+			this.timeline(),
+			{ from, to, previousFrom: previousFrom ?? undefined },
+			localTimes(zone),
+		);
+		const missing = stats.topSongs.filter((x) => !x.imageUrl && x.id).map((x) => x.id!);
+		if (missing.length > 0) {
+			const known = this.lookupTracks(missing, this.usedSources());
+			for (const x of [...stats.topSongs, ...stats.comebacks])
+				if (!x.imageUrl && x.id) x.imageUrl = known.get(x.id)?.[4] ?? null;
+		}
+		const meta = this.currentListens();
+		const count = (sql: string) => this.db.first<{ n: number }>(sql)?.n ?? 0;
+		return {
+			...stats,
+			coverage: {
+				importedFrom: meta?.from ?? null,
+				importedTo: meta?.to ?? null,
+				importedPlays: meta?.plays ?? 0,
+				liveSince: this.kvGet<number>("live_since"),
+				summaryOnly: !meta && !!this.kvGet("history_profile"),
+				...(() => {
+					const sel = this.appliedSelection();
+					if (sel.revision === 0 || (sel.enabled && sel.rules.length === 0)) return {};
+					const c = this.appliedCounts();
+					return {
+						selection: {
+							enabled: sel.enabled,
+							rules: sel.rules.length,
+							excludedPlays: c ? c.plays - c.includedPlays : 0,
+						},
+					};
+				})(),
+			},
+			genres: this.kvGet<GenreEstimate>("genre_estimate"),
+			canEstimate: !!this.d.env.anthropicKey || !!this.d.ai,
+			genresRetryAt: (() => {
+				const a = this.kvGet<{ at: number }>("genre_attempt");
+				return a && this.now() - a.at < GENRE_EVERY_MS ? a.at + GENRE_EVERY_MS : null;
+			})(),
+			learned: {
+				favorites: count(`SELECT COUNT(*) AS n FROM memory WHERE thumb = 1`),
+				neverAgain: count(`SELECT COUNT(DISTINCT track_id) AS n FROM bans`),
+				recommendationsKept: count(
+					`SELECT COUNT(DISTINCT id) AS n FROM discoveries WHERE status = 'kept'`,
+				),
+				recommendationsDropped: count(
+					`SELECT COUNT(DISTINCT id) AS n FROM discoveries WHERE status = 'rejected'`,
+				),
+				earlySkips: count(`SELECT COALESCE(SUM(early_skips), 0) AS n FROM memory`),
+			},
+		};
+	}
+
 	history(limit = 50, before?: number): HistoryEntry[] {
-		const rows = this.db.all<{
-			played_at: number;
-			track_id: string;
-			meta: string | null;
-			station_id: number | null;
-			ignored: number;
-		}>(
-			`SELECT played_at, track_id, meta, station_id, ignored FROM plays WHERE played_at < ? ORDER BY played_at DESC LIMIT ?`,
+		const rows = this.db.all<PlayRow>(
+			`SELECT played_at, track_id, meta, station_id, ignored, lane FROM plays WHERE played_at < ? ORDER BY played_at DESC LIMIT ?`,
 			before ?? Number.MAX_SAFE_INTEGER,
 			Math.min(200, Math.max(1, limit)),
 		);
+		return this.historyEntries(rows);
+	}
+
+	/**
+	 * S1: the Verlauf for the search, grouped by song — read once per app
+	 * session, then only what was played after `since` (a range on the plays'
+	 * primary key). The search itself runs in the app: no read per keystroke.
+	 */
+	historySearch(since = 0): HistorySearchAnswer {
+		const rows = this.db.all<PlayRow>(
+			`SELECT played_at, track_id, meta, station_id, ignored, lane FROM plays WHERE played_at > ? ORDER BY played_at DESC LIMIT ?`,
+			Math.max(0, Number.isFinite(since) ? since : 0),
+			HISTORY_SEARCH_MAX_PLAYS,
+		);
+		const latest: PlayRow[] = [];
+		const plays = new Map<string, number[]>();
+		for (const r of rows) {
+			const list = plays.get(r.track_id);
+			if (list) list.push(r.played_at);
+			else {
+				plays.set(r.track_id, [r.played_at]);
+				latest.push(r);
+			}
+		}
+		return {
+			through: rows[0]?.played_at ?? since,
+			complete: rows.length < HISTORY_SEARCH_MAX_PLAYS,
+			songs: this.historyEntries(latest).map((entry) => ({
+				entry,
+				plays: plays.get(entry.id) ?? [entry.playedAt],
+			})),
+		};
+	}
+
+	private historyEntries(rows: PlayRow[]): HistoryEntry[] {
 		const names = new Map(this.stations().map((s) => [s.id, s.name]));
 		const bare = rows.filter((r) => !r.meta).map((r) => r.track_id);
 		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();
+		this.preloadMemory(new Set(rows.map((r) => r.track_id)));
+		const pc = this.playlistCountOf();
+		const counted = this.kvGet("playlist_counts") !== null;
+		const clock = this.ratingClock();
 		return rows
 			.map((r) => {
 				const t = (r.meta ? (JSON.parse(r.meta) as PackedTrack) : null) ?? index.get(r.track_id);
 				if (!t) return null;
-				return {
-					...this.view(t),
+				const m = this.memory(r.track_id);
+				const entry: HistoryEntry = {
+					...this.view(t, clock),
 					playedAt: r.played_at,
 					stationName: r.station_id !== null ? (names.get(r.station_id) ?? null) : null,
 					ignored: r.ignored === 1,
+					facts: {
+						plays: m.plays,
+						lastPlayedAt: m.lastPlayedAt,
+						inStation: true,
+						// Only the lane stamped when this very play was recorded; plays from
+						// before, or recorded in doubt, claim none.
+						kind: LANES.has(r.lane as SlotKind) ? (r.lane as SlotKind) : null,
+						...(counted ? { playlists: pc(r.track_id) } : {}),
+					},
+					rated: this.ratedSeq(r.track_id, clock),
 				};
+				return entry;
 			})
 			.filter((x): x is HistoryEntry => x !== null);
+	}
+
+	/**
+	 * What a listening sample of one Verlauf row may look up (see
+	 * docs/HISTORY_PREVIEW.md): only a play stored in this listener's Verlauf,
+	 * named by song and time, and only its title, artists, album and length.
+	 * Reads only — nothing is written, cached or asked of Spotify.
+	 */
+	previewSubject(
+		trackId: unknown,
+		playedAt: unknown,
+	): { name: string; artists: string[]; album: string; durationMs: number } {
+		if (
+			typeof trackId !== "string" ||
+			!/^[A-Za-z0-9:_-]{1,64}$/.test(trackId) ||
+			typeof playedAt !== "number" ||
+			!Number.isSafeInteger(playedAt)
+		)
+			throw new HubError("bad_request", "Ungültige Angabe", 400);
+		const row = this.db.first<{ meta: string | null }>(
+			`SELECT meta FROM plays WHERE track_id = ? AND played_at = ? LIMIT 1`,
+			trackId,
+			playedAt,
+		);
+		if (!row) throw new HubError("not_in_history", "Diesen Song gibt es im Verlauf nicht.", 404);
+		const t =
+			(row.meta ? (JSON.parse(row.meta) as PackedTrack) : null) ??
+			this.lookupTracks([trackId], this.usedSources()).get(trackId);
+		if (!t) throw new HubError("not_in_history", "Diesen Song gibt es im Verlauf nicht.", 404);
+		return { name: t[1], artists: t[2].map(([, n]) => n), album: t[3], durationMs: t[5] };
 	}
 
 	// =======================================================================
@@ -4594,8 +9658,16 @@ export class HubCore {
 		const budget = new RequestBudget(BUDGET_PER_INVOCATION);
 		try {
 			this.renameLegacyPlaylists();
-			// Sync first: memory must be current before any deck is planned.
-			await this.sync(budget);
+			// Jobs, player observations and history have independent deadlines.
+			if (this.backgroundObservationAt() <= this.now()) await this.sync(budget);
+			await this.runContinueAfter();
+			if (this.historyReadAt() <= this.now()) {
+				try {
+					await this.freshenMemory(this.client(budget, false, false), true);
+				} catch (err) {
+					this.handleSyncError(err);
+				}
+			}
 			await this.runJobs(budget);
 		} catch (err) {
 			this.log("error", "alarm", err instanceof Error ? err.message : String(err));
@@ -4604,102 +9676,110 @@ export class HubCore {
 		}
 	}
 
-	private async scheduleNext(budget: RequestBudget): Promise<void> {
+	/** An independent history deadline cannot force repeated player requests. */
+	private historyReadAt(
+		active = !!this.operationStates()["GET /me/player"]?.cooldown &&
+			this.kvGet<PlayerSnapshot>("player")?.obs?.isPlaying === true,
+	): number {
+		const checkedAt = this.syncState().lastRecentAt;
+		let at = checkedAt + (active ? 90_000 : MAX_RECENT_INTERVAL_MS);
+		if (this.kvGet("history_due"))
+			at = Math.min(
+				at,
+				this.kvGet<number>("history_due_at") ?? (this.playerCheckedAt() ?? this.now()) + 1000,
+			);
+		return this.automaticReadAt(
+			"GET /me/player/recently-played",
+			Math.max(at, this.kvGet<number>("history_retry_at") ?? 0),
+		);
+	}
+
+	/** Every interval is anchored to a successful GET, never an unrelated job wake. */
+	private backgroundObservationAt(): number {
 		const now = this.now();
+		const checkedAt = this.playerCheckedAt();
+		const base = checkedAt ?? now;
 		const candidates: number[] = [];
-		const backoff = this.backoffUntil();
-		// Spotify access gone: nothing can be read or written until the listener
-		// connects again (which wakes the hub at once). One try an hour.
-		if (this.kvGet("auth_lost")) {
-			await this.d.alarms.set(Math.max(now + HOUR_MS, backoff + 1000));
-			return;
-		}
-		const job =
-			this.db.first<{ t: number | null }>(`SELECT MIN(run_after) AS t FROM jobs`)?.t ?? null;
-		if (job !== null) {
-			// Work left over because the budget ran out: continue almost at once.
-			candidates.push(budget.left < 6 && job <= now ? now + 2000 : Math.max(job, now + 1000));
-		}
 		const s = this.syncState();
-		// Only a look that worked sets a quick pace: without one (Spotify access
-		// lost, a pause Spotify asked for) the picture is old and the slow pace holds.
-		const seen = this.kvGet<PlayerSnapshot>("player");
-		const snap =
-			seen &&
-			this.isConnected() &&
-			!this.kvGet("auth_lost") &&
-			now - Math.max(seen.at, this.lastLookAt) <= PLAYER_FRESH_MS
-				? seen
-				: null;
+		const snap = this.kvGet<PlayerSnapshot>("player");
 		const inDeck = snap?.obs?.contextUri
 			? this.stations().some((st) => this.deckUri(st) === snap.obs?.contextUri)
 			: false;
-		// Just moved the player (a tap, or past a song): see where it went.
-		if (snap && this.kvGet("player_stale")) candidates.push(now + 15_000);
-		// A few songs ahead the player may meet one true-shuffle would not play
-		// (turned down, or replaced since the player loaded the playlist): look
-		// every 20 s, so a skip by hand onto it is caught too.
+		const requested = this.kvGet<number>("player_observation_due");
+		if (requested !== null) candidates.push(requested);
+		else if (this.kvGet("player_stale")) candidates.push(base + 1000);
 		if (snap?.obs?.isPlaying && this.guardedAhead(snap.obs.contextUri))
-			candidates.push(now + 20_000);
-		// A station playing a song its playlist no longer holds: the player
-		// follows an older order, and what comes next is unknown — look often.
-		if (snap?.obs?.isPlaying && this.olderOrder(snap.obs)) candidates.push(now + 30_000);
-		// In a private session Spotify may never list a play: see every song
-		// once it has played 30 s, wherever it plays — that look counts it.
+			candidates.push(base + 20_000);
+		if (snap?.obs?.isPlaying && this.olderOrder(snap.obs)) candidates.push(base + 30_000);
 		const privately = snap?.obs?.isPlaying === true && this.inPrivateNow();
 		if (privately && snap!.obs!.progressMs < 30_000)
-			candidates.push(Math.max(now + 15_000, snap!.at + 32_000 - snap!.obs!.progressMs));
-		// …and a song skipped into is seen within 30 s, so its own look is timed.
-		if (privately) candidates.push(now + 30_000);
-		// A private session lately: the next one is seen within 2 minutes.
-		if (this.privateLately()) candidates.push(now + 2 * MINUTE_MS);
-		// The end of guest time: a look right after it finds the play across it.
+			candidates.push(Math.max(base + 15_000, snap!.obs!.at + 32_000 - snap!.obs!.progressMs));
+		if (privately) candidates.push(base + 30_000);
+		if (this.privateLately()) candidates.push(base + 2 * MINUTE_MS);
+		const continueAt = this.continueAfterLookAt(snap, base);
+		if (continueAt !== null) candidates.push(continueAt);
 		const gp = this.guestPeriods().at(-1);
-		if (gp && now < gp.to) candidates.push(gp.to + 2_000);
+		if (gp && base < gp.to) candidates.push(gp.to + 2000);
 		else if (gp && gp.last === undefined && now - gp.to < 10 * MINUTE_MS)
-			candidates.push(now + 15_000);
-		// The guest's last play, still on the player: seen right after its end
-		// (a run to its end is the owner's), and paused, within 2 minutes of a
-		// resume — up to 6 hours.
-		// The same for the first play seen after the end when it may be the guest's:
-		// what the owner hears of it to its end is seen, and counts for the owner.
+			candidates.push(base + 15_000);
 		const last = this.guestLastOpen() ?? this.guestNextOpen();
 		if (last && snap?.obs?.trackId === last.id) {
 			const left = snap.obs.durationMs - snap.obs.progressMs;
 			if (snap.obs.isPlaying && left > 0)
-				candidates.push(Math.max(now + 15_000, snap.at + left + 2000));
+				candidates.push(Math.max(base + 15_000, snap.obs.at + left + 2000));
 			else if (!snap.obs.isPlaying && now - last.to < 6 * HOUR_MS)
-				candidates.push(now + 2 * MINUTE_MS);
+				candidates.push(base + 2 * MINUTE_MS);
 		}
+		let interval: number;
 		if (snap?.obs?.isPlaying && (inDeck || privately)) {
-			// Look right after the song ends: the next one is then seen in its
-			// first seconds — a song turned down is skipped before it is heard,
-			// and a skip is seen rather than inferred. Songs longer than a few
-			// minutes get a look in between.
 			const left = snap.obs.durationMs - snap.obs.progressMs;
-			const end = snap.at + left + 2000;
+			const end = snap.obs.at + left + 1000;
 			const aligned =
 				snap.obs.durationMs > 0 &&
 				left > 0 &&
-				now - snap.at <= PLAYER_FRESH_MS &&
-				end - now <= 4 * MINUTE_MS;
-			candidates.push(aligned ? Math.max(now + 15_000, end) : now + 3 * MINUTE_MS);
-		} else if (snap?.obs?.isPlaying) candidates.push(now + 10 * MINUTE_MS);
-		else if (this.inPrivateNow() && s.idleSince !== null && now - s.idleSince < 6 * HOUR_MS)
-			// A private session paused anywhere, or its player out of sight for a
-			// moment: whatever plays on must be seen at 30 s — nothing else will
-			// list it.
-			candidates.push(now + (now - s.idleSince < 30 * MINUTE_MS ? 30_000 : 2 * MINUTE_MS));
-		else if (snap && this.heldPace(snap) !== null)
-			// A player holds a station (paused, or out of sight): whatever it plays
-			// on resume is seen within its first seconds.
-			candidates.push(now + this.heldPace(snap)!);
-		else if (s.idleSince !== null && now - s.idleSince > 6 * HOUR_MS)
-			candidates.push(now + 60 * MINUTE_MS);
-		else candidates.push(now + 20 * MINUTE_MS);
-		let at = Math.min(...candidates);
-		if (backoff > now) at = Math.max(at, backoff + 1000);
-		await this.d.alarms.set(at);
+				base - snap.obs.at <= PLAYER_FRESH_MS &&
+				end - base <= 4 * MINUTE_MS;
+			interval = aligned ? Math.max(1000, end - base) : 3 * MINUTE_MS;
+			if (aligned) candidates.push(Math.max(base + 1000, end));
+		} else if (snap?.obs?.isPlaying) interval = 10 * MINUTE_MS;
+		else if (this.inPrivateNow() && s.idleSince !== null && base - s.idleSince < 6 * HOUR_MS)
+			interval = base - s.idleSince < 30 * MINUTE_MS ? 30_000 : 2 * MINUTE_MS;
+		else
+			interval =
+				this.heldPace(snap, base) ??
+				(s.idleSince === null ? 20 * MINUTE_MS : pausedObservationPace(base - s.idleSince));
+		const deadline = observationDeadline({
+			now,
+			checkedAt,
+			intervalMs: interval,
+			earlierAt: candidates,
+			failedAt: this.kvGet<number>("player_failed_at"),
+		});
+		return this.automaticReadAt(
+			"GET /me/player",
+			Math.max(deadline.at, this.kvGet<number>("player_retry_at") ?? 0),
+		);
+	}
+
+	private async scheduleNext(budget: RequestBudget): Promise<void> {
+		const now = this.now();
+		if (this.kvGet("auth_lost")) {
+			await this.d.alarms.set(now + HOUR_MS);
+			return;
+		}
+		const candidates = [this.backgroundObservationAt(), this.historyReadAt()];
+		const job =
+			this.db.first<{ t: number | null }>(`SELECT MIN(run_after) AS t FROM jobs`)?.t ?? null;
+		if (job !== null)
+			candidates.push(
+				budget.left < 6 && job <= now
+					? now + 2000
+					: Math.min(Math.max(job, now + 1000), now + HOUR_MS),
+			);
+		const at = Math.min(...candidates);
+		// Unknown operation waits do not generate provider probes. A slow local
+		// wake can still discover configuration/auth changes and pending jobs.
+		await this.d.alarms.set(Number.isFinite(at) ? (at > now ? at : now + 1000) : now + HOUR_MS);
 	}
 
 	private olderOrder(obs: PlayerObservation): boolean {
@@ -4735,30 +9815,49 @@ export class HubCore {
 		return false;
 	}
 
-	/** A player paused in a station's playlist, or gone quiet in it, within the last 36 h. */
-	/**
-	 * How often to look while a player holds a station, or null if none does:
-	 * every 30 s in the first hours after the last listening (a car stop, a
-	 * restart from the top soon after), then every minute up to 36 h, and
-	 * beyond that every 2 min for as long as Spotify still shows the player
-	 * paused in the station.
-	 */
-	private heldPace(snap: PlayerSnapshot | null): number | null {
+	/** Ordinary pauses slow down; legacy recently-heard fronts retain their guard. */
+	private heldPace(snap: PlayerSnapshot | null, checkedAt: number): number | null {
 		const uri = snap?.obs ? snap.obs.contextUri : this.kvGet<string>("last_context");
 		if (!uri) return null;
 		const st = this.stations().find((x) => this.deckUri(x) === uri);
 		if (!st) return null;
-		const active = this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0;
-		const since = this.now() - active;
-		// A continued playlist whose front holds today's songs: a restart from
-		// the top must be seen before the second song is 30 s in.
+		const active = Math.max(
+			this.kvGet<Record<string, number>>("deck_activity")?.[String(st.id)] ?? 0,
+			st.last_played_at ?? 0,
+		);
 		const deck = this.deckOf(st);
-		if (since < 3 * HOUR_MS || (deck?.frontHeardUntil ?? 0) > this.now()) return 30_000;
-		if (since < HOLD_WATCH_MS) return MINUTE_MS;
-		// Longer: while Spotify still shows the player paused there, or for a
-		// long weekend while the station was the last thing played.
-		if (snap?.obs || since < 72 * HOUR_MS) return 2 * MINUTE_MS;
-		return null;
+		const idle = checkedAt - active;
+		// A song turned down right ahead, or among the first three (a restart
+		// from the top): the guard looks every 20 s, however long the pause —
+		// a resumed or restarted order reaches it within a song.
+		if (deck && (this.guardedAhead(uri) || this.holdsTurnedDown(deck, 3))) return 20_000;
+		// One anywhere else in the deck or a former order can only come much
+		// later: the quick look for half an hour, then the ordinary paused pace.
+		// 1.2.0 looked every 20 s all night with a full scan of the deck, and
+		// on 22.10. that used up the account's daily Durable Object reads (P1).
+		if (deck && idle < HELD_ANYWHERE_QUICK_MS && this.holdsTurnedDown(deck)) return 20_000;
+		return pausedObservationPace(idle, (deck?.frontHeardUntil ?? 0) > this.now());
+	}
+
+	/** A song of the deck (its first `first`, or all and a former order's) is turned down — from memory, no scan. */
+	private holdsTurnedDown(deck: Deck, first?: number): boolean {
+		const ids =
+			first === undefined
+				? [...deck.items.map((it) => it.id), ...(deck.formerOff ?? [])]
+				: deck.items.slice(0, first).map((it) => it.id);
+		this.preloadMemory(ids);
+		return ids.some((id) => this.liveRow(id)?.thumb === -1);
+	}
+
+	/** Explicit Sync queues observations even when the ordinary cache is fresh. */
+	async requestSync(): Promise<void> {
+		const now = this.now();
+		for (const key of ["player_observation_due", "history_due_at"]) {
+			const due = this.kvGet<number>(key);
+			if (due === null || due > now) this.kvSet(key, now);
+		}
+		this.kvSet("history_due", 1);
+		await this.scheduleSoon(0);
 	}
 
 	async scheduleSoon(ms: number): Promise<void> {
@@ -4783,6 +9882,7 @@ export class HubCore {
 		const ids = [
 			...this.stations().map((s) => s.playlist_id),
 			this.kvGet<string>("discoveries_playlist"),
+			this.kvGet<string>("likes_playlist"),
 		].filter((x): x is string => !!x);
 		const stuck: string[] = [];
 		for (const id of ids) {
@@ -4793,6 +9893,8 @@ export class HubCore {
 			}
 		}
 		if (this.d.wipe) await this.d.wipe();
+		this.cache.kv.clear();
+		this.cache.stations = null;
 		return { stuck };
 	}
 }
@@ -4811,6 +9913,11 @@ interface ImportState {
 }
 
 /** Songs of earlier versions a player may still hold, as of `now`. */
+/** A deck's plan: its version, its songs in order, its former versions' songs (not what was heard of it). */
+function planKey(deck: Deck): string {
+	return JSON.stringify([deck.writtenAt, deck.items.map((i) => i.id), deck.former ?? []]);
+}
+
 function formerNow(deck: Deck, now: number): Set<TrackId> {
 	return new Set((deck.former ?? []).filter(([, until]) => until > now).map(([id]) => id));
 }
@@ -4836,6 +9943,7 @@ function fail(code: PlayErrorCode, message: string): PlayResult {
 
 function sourceLabel(source: string, hub: HubCore): string {
 	if (source === "liked") return "Lieblingssongs";
+	if (source === LIKES_SOURCE) return `„${LIKES_NAME}“`;
 	return `„${hub.playlistName(source.slice(3)) ?? "Playlist"}“`;
 }
 

@@ -1,0 +1,51 @@
+Exact tool results of this conversation (transcript b3717cfc...jsonl), in order. The file hub-atomic-green.log was later overwritten by the corrected run;
+attempt 1: first green attempt after the hub fix, 3 failed / 25 passed (fixture expected coverage 'events', synthetic totals 2 plays/song vs 1 play/song in the block -> 'mixed');
+detail: the failure detail of that attempt; attempt 2 (python fixture edit aborted by an assertion, tests re-run unchanged) produced the same 3 failed / 25 passed.
+
+===== tool_result toolu_01JqRRr7RQMjKxngdyv5FHSq at 2026-10-13T17:51:08.831Z
+ok
+tc=0
+exit=1
+     × the last block of plays failing while switching over (ending the upload) changes nothing and can be sent again, counting once 35ms
+     × the last block of plays failing at the commit number (after the plays were switched over) changes nothing and can be sent again, counting once 29ms
+     × the last block of plays failing after the commit number (marking decks for rewriting) changes nothing and can be sent again, counting once 31ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 25 passed (28)
+
+===== tool_result toolu_012oAAHawJWr7i7cHKCM8Hh4 at 2026-10-13T17:51:13.471Z
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  test/hub/history-selection.test.ts > a failure while storing a summary or the last block of plays > the last block of plays failing while switching over (ending the upload) changes nothing and can be sent again, counting once
+ FAIL  test/hub/history-selection.test.ts > a failure while storing a summary or the last block of plays > the last block of plays failing at the commit number (after the plays were switched over) changes nothing and can be sent again, counting once
+ FAIL  test/hub/history-selection.test.ts > a failure while storing a summary or the last block of plays > the last block of plays failing after the commit number (marking decks for rewriting) changes nothing and can be sent again, counting once
+AssertionError: expected { revision: +0, commit: 2, …(7) } to match object { commit: 2, uploading: false, …(1) }
+(37 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "commit": 2,
+    "dataset": {
+-     "coverage": "events",
++     "coverage": "mixed",
+      "rows": 2,
+    },
+    "uploading": false,
+  }
+ ❯ test/hub/history-selection.test.ts:926:18
+    924|    last();
+    925|    const after = h.hub.selectionView();
+    926|    expect(after).toMatchObject({
+       |                  ^
+    927|     commit: before.commit + 1,
+    928|     uploading: false,
+
+===== tool_result toolu_01XPyzrhi6t6f6MNq2wCf6AT at 2026-10-13T17:51:27.756Z
+Traceback (most recent call last):
+  File "<stdin>", line 14, in <module>
+AssertionError
+exit=1
+     × the last block of plays failing while switching over (ending the upload) changes nothing and can be sent again, counting once 34ms
+     × the last block of plays failing at the commit number (after the plays were switched over) changes nothing and can be sent again, counting once 27ms
+     × the last block of plays failing after the commit number (marking decks for rewriting) changes nothing and can be sent again, counting once 28ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 25 passed (28)
+

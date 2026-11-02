@@ -1,0 +1,43 @@
+{
+	"branch": "claude/impeccable-ux-concepts",
+	"base": "claude/impeccable-rebrand @ d2e0d8b (live via codex/implement-cloudflare-restart since 2026-10-07)",
+	"date": "2026-10-07",
+	"status": "RELEASED 2026-10-07 on explicit owner instruction: codex/implement-cloudflare-restart fast-forwarded d2e0d8b -> f6285bf, then hotfix 826c1ec (Leuchttisch welcome/scan film strip); Cloudflare Workers Builds deployed both.",
+	"owner_request": "After the four-skin release the owner said it looked like the old version with different colours and asked for completely new operating surfaces: four offered concepts plus two new unique ones, switchable in settings.",
+	"scope": "Client presentation only. Six layouts (kontakt Leuchttisch default, linie Fahrt, strich Notizblock, klassik Player, umlauf Umlauf, fahrmodus Fahrmodus) in src/client/screens/home-layouts.tsx over shared parts built in home.tsx; new worlds umlauf.css and fahrmodus.css; icons for the two new designs.",
+	"unchanged": [
+		"src/worker, src/core, src/shared, wrangler configs, migrations, bindings, secrets",
+		"store/playback-view/api/router logic and every control label/handler",
+		"stored identity, history, queue occurrences and saved progress"
+	],
+	"new_reads": "Fahrt reads GET /api/history (stored history, no Spotify request) only when the saved occurrence changes; never for a display-only estimate (covered by the projection request-count test)",
+	"checks": {
+		"typecheck": "PASS",
+		"lint": "PASS (no warnings in src/client)",
+		"browser": "full Playwright suite, 42 tests, PASS under each of the six designs via TS_DESIGN (6 x 42)",
+		"unit_worker": "443/444 in the full run; test/hub/robustness.test.ts 'a turned-down song is skipped after a weekend with the phone out of sight' is a pre-existing near-timeout (19.1 s of 20 s on the untouched live base, intermittent on this branch with identical worker code)"
+	},
+	"impeccable": {
+		"finish_review": "disposition fix (8 material fixes) -> verdict passes: fixes resolved, 3 regressions then 1 regression found and fixed -> final disposition ship (scope: scored fixes, not a fresh full review)",
+		"captures": ".impeccable/review/designs/ (overview-mobile.png, overview-mobile-dark.png, overview-desktop.png, per-design files, strich-longtitle-mobile.png); Fahrt captures use three synthetic heard songs routed into /api/history, display only"
+	},
+	"not_run": [
+		"live Spotify",
+		"physical iPhone",
+		"Home Assistant / Music Assistant",
+		"Cloudflare version/deployment id readback (no Cloudflare credentials in this session)"
+	],
+	"pre_release_checks": "build, typecheck, lint, wrangler dry-run (bindings USER_HUB/UserHub, REGISTRY/Registry unchanged); local build assets index-Bb5fgyLz.js, index-NUgv7ZaN.css",
+	"public_readback": {
+		"checked_at": "2026-10-07T09:00Z",
+		"url": "https://true-shuffle.mikahertler-72c.workers.dev",
+		"assets": "index-CBRWbVnt.js and index-Bw4J5KW2.css served, identical to the local build of 826c1ec",
+		"api": {
+			"/api/health": 200,
+			"/api/state (signed out)": 401
+		},
+		"brand_assets": "/brand/<id>/ icons and manifest 200 for all six designs",
+		"anonymous_browser": "welcome renders in all six designs with correct data-design, own face and favicon; no console errors besides the expected signed-out 401; Leuchttisch welcome stage background rgb(20,18,16) after hotfix",
+		"found_in_readback": "first release f6285bf showed the Leuchttisch welcome without its film strip (layout rule leaked); fixed in 826c1ec, Leuchttisch suite 42/42 PASS"
+	}
+}

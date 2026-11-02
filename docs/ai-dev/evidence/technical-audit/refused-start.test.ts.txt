@@ -1,0 +1,24 @@
+import { expect, it } from "vitest";
+import { RequestBudget } from "../../src/worker/spotify/client";
+import { onboarded } from "../hub/harness";
+
+it.each(["premium", "no_device"] as const)("AUDIT: refused %s start on another station switches visible saved session", async (rejection) => {
+	const h = await onboarded({ playlists: [300, 300] });
+	const [a, b] = h.stationIds as [number, number];
+	expect(await h.hub.play(a)).toMatchObject({ ok: true });
+	await h.hub.sync(new RequestBudget(25), { force: true });
+	await h.hub.playerAction("pause");
+	const before = (await h.hub.state()).session!;
+	expect(before.stationId).toBe(a);
+	const writesBefore = h.fake.calls.filter((c) => !c.startsWith("GET"));
+	if (rejection === "premium") h.fake.user().premium = false;
+	else h.fake.user().devices = [];
+	const res = await h.hub.play(b);
+	expect(res).toMatchObject({ ok: false, error: { code: rejection } });
+	const after = (await h.hub.state()).session!;
+	const writesAfter = h.fake.calls.filter((c) => !c.startsWith("GET"));
+	console.log(JSON.stringify({ rejection, beforeStation: before.stationId, afterStation: after.stationId, beforeEntry: before.entryId, afterEntry: after.entryId, afterStatus: after.status, savedA: h.hub.savedSession(a)?.status, newWrites: writesAfter.slice(writesBefore.length) }));
+	// Observed behaviour at b5a1856 (assertion documents the finding):
+	expect(after.stationId).toBe(b);
+	expect(after.entryId).not.toBe(before.entryId);
+});

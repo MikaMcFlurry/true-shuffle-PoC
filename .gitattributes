@@ -1,0 +1,10 @@
+# Check out text files with LF on every platform. Biome (npm run lint) enforces
+# LF line endings, so a Windows checkout with core.autocrlf=true must not turn
+# source files into CRLF. Git still detects binary files on its own.
+* text=auto eol=lf
+
+# Windows batch scripts keep CRLF in the working tree.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+*.png binary

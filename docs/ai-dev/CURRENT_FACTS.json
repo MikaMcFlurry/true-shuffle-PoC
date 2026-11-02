@@ -1,0 +1,59 @@
+{
+  "schema_version": "true-shuffle.current-facts.v1",
+  "facts": [
+    {
+      "id": "CF-SPOTIFY-RATE",
+      "claim": "App-level rate limit uses rolling30s; development quota is a separate enforcement mechanism;429 normally includes Retry-After seconds. No precise quota reset is inferred.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/rate-limits",
+      "decisions": [
+        "durable provider cooldown",
+        "shared deployment Registry gate",
+        "no Client-ID cycling"
+      ],
+      "limits": "No signed-in production response or developer usage available.",
+      "retrieved_at": "2026-09-30T07:00:33.418479+00:00",
+      "observed_http_status": 200,
+      "revalidate_on": "Before live provider/integration deployment and when provider version/API or credentials change"
+    },
+    {
+      "id": "CF-HA-REST",
+      "claim": "Home Assistant REST services and state endpoints require Bearer token; a successful service response is not proof of physical playback.",
+      "source": "https://developers.home-assistant.io/docs/api/rest/",
+      "decisions": [
+        "authenticated local bridge",
+        "trusted state observation separate from transport success"
+      ],
+      "limits": "No owner HA instance or supported player inspected.",
+      "retrieved_at": "2026-09-30T07:00:33.418479+00:00",
+      "observed_http_status": 200,
+      "revalidate_on": "Before live provider/integration deployment and when provider version/API or credentials change"
+    },
+    {
+      "id": "CF-MA-CONNECT",
+      "claim": "MA documents Spotify Connect plugin and explicit setup; route must be exposed only for actual advertised controllable Spotify devices.",
+      "source": "https://www.music-assistant.io/plugins/spotify-connect/",
+      "decisions": [
+        "distinct Spotify Connect and native player capabilities"
+      ],
+      "limits": "Documentation currently labels MA2.10.4; owner version/network unknown.",
+      "retrieved_at": "2026-09-30T07:00:33.418479+00:00",
+      "observed_http_status": 200,
+      "revalidate_on": "Before live provider/integration deployment and when provider version/API or credentials change"
+    },
+    {
+      "id": "CF-MA-NATIVE-QUEUE",
+      "claim": "HA music_assistant.play_media accepts media_id string or list and enqueue options; explicit Music Assistant provider supports native ordered queue transport separately from Spotify Connect. Entity/provider support must still be verified live.",
+      "source": "https://www.home-assistant.io/actions/music_assistant.play_media/",
+      "secondary_source": "https://www.home-assistant.io/integrations/music_assistant/",
+      "retrieved_at": "2026-09-30T07:09:18.334397+00:00",
+      "observed_http_status": 200,
+      "decisions": [
+        "explicit native MA route with ordered list",
+        "no generic HA Spotify URI claim",
+        "provider state must prove current media occurrence"
+      ],
+      "limits": "No owner entity or username/provider library inspected; queued transport and observed progress are separate evidence.",
+      "revalidate_on": "Before native deployment and on HA/MA integration version change"
+    }
+  ]
+}

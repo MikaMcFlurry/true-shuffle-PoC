@@ -1,0 +1,39 @@
+import { expect, it } from "vitest";
+import { RequestBudget } from "../../src/worker/spotify/client";
+import { onboarded } from "../hub/harness";
+
+// Real Spotify often reports the previous player state for a short while after
+// an accepted PUT /me/player/play. FakeSpotify reflects writes instantly.
+it("AUDIT: one stale post-command observation leaves the start unconfirmed beyond the client's 20 s window", async () => {
+	const h = await onboarded();
+	const id = h.stationIds[0]!;
+	expect(await h.hub.play(id)).toMatchObject({ ok: true });
+	await h.hub.sync(new RequestBudget(25), { force: true });
+	expect(await h.hub.playerAction("pause")).toMatchObject({ ok: true });
+	await h.listen(10 * 60_000); // long paused
+	const handle = h.fake.handle.bind(h.fake);
+	let staleReads = 0;
+	let lagUntil = 0;
+	const pausedBody = await (await handle(new Request("https://fake/v1/me/player", { headers: { authorization: `Bearer ${h.fake.issueToken("mika")}` } }))).text();
+	h.fake.handle = async (request) => {
+		const path = new URL(request.url).pathname;
+		if (request.method === "GET" && path.endsWith("/me/player") && h.clock.t < lagUntil) {
+			staleReads++;
+			await handle(request);
+			return new Response(pausedBody, { status: 200, headers: { "content-type": "application/json" } });
+		}
+		return handle(request);
+	};
+	const res = await h.hub.play(id);
+	expect(res.ok).toBe(true);
+	const acceptedAt = res.acceptedAt!;
+	lagUntil = acceptedAt + 1500; // provider shows the old paused picture for 1.5 s only
+	const timeline: unknown[] = [];
+	for (const t of [1500, 4000, 15_000, 20_000, 30_000, 45_000, 60_000, 120_000]) {
+		await h.listen(acceptedAt + t - h.clock.t);
+		const live = t % 15_000 === 0; // client: 1.5 s / 4 s reads are live=false, 15 s ticks live=true
+		const st = await h.hub.state({ live });
+		timeline.push({ t, live, observedAt: st.session?.observedAt, newer: (st.session?.observedAt ?? 0) >= acceptedAt, np: st.nowPlaying?.isPlaying ?? null, npAt: st.nowPlaying ? st.nowPlaying.observedAt - acceptedAt : null });
+	}
+	console.log(JSON.stringify({ staleReads, timeline }));
+});

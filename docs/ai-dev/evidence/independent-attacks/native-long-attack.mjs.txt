@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+process.env.BRIDGE_TOKEN='test-native-bearer-string-at-least32';process.env.HA_TOKEN='test';process.env.HA_URL='https://fixture';process.env.BRIDGE_STATE_FILE='/tmp/mika-native-long-state.json';
+const d={id:'media_player.ma',name:'MA',mediaTemplate:'spotify://track/{id}',service:'music_assistant.play_media',pause:true};process.env.BRIDGE_DEVICES=JSON.stringify([d]);
+let current='spotify://track/a';globalThis.__ha=async(path,body)=>body?[]:{state:'playing',attributes:{media_content_id:current,media_position:12}};
+const {command,observe,state}=await import('./mika-native-extracted.mjs');
+const base={deviceId:d.id,sessionId:'s',entryId:'s:0',playbackEpoch:1,orderRevision:1};
+assert.equal((await command({...base,operationId:'play',action:'play',mediaId:'a',queue:[{entryId:'s:0',mediaId:'a'}]}))[0],200);
+for(let n=1;n<=1030;n++) {
+ const id=`a${n}`; const result=await command({...base,entryId:`s:${n-1}`,orderRevision:n+1,operationId:`append${n}`,action:'append',queue:[{entryId:`s:${n}`,mediaId:id}]});
+ if(result[0]!==200){console.log(JSON.stringify({iteration:n,result,queueSize:state.devices[d.id].queue.length,journalSize:Object.keys(state.commands).length}));assert.equal(result[0],200,'RT-04 durable native continuation must not permanently exhaust completed append journal');}
+ current=`spotify://track/${id}`;await observe(d);
+}
+const replay=await command({...base,entryId:'s:0',orderRevision:2,operationId:'append1',action:'append',queue:[{entryId:'s:1',mediaId:'a1'}]});
+assert.equal(replay[0],409);assert.equal(replay[1].error,'stale_append');assert.ok(Object.keys(state.commands).length<=3);
+console.log(JSON.stringify({result:'1030 rolling append iterations passed; pruned replay rejected',replay,journalSize:Object.keys(state.commands).length}));

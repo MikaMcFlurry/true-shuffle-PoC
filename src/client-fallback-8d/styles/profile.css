@@ -1,0 +1,407 @@
+/* Dein Hörprofil: figures and small charts on the inlay card. One data hue
+   (the ballpoint blue), stepped light to dark; text stays in ink tokens. */
+
+.profile {
+	--data: var(--pen);
+	--data-1: color-mix(in oklab, var(--pen) 26%, var(--paper));
+	--data-2: color-mix(in oklab, var(--pen) 46%, var(--paper));
+	--data-3: color-mix(in oklab, var(--pen) 66%, var(--paper));
+	--data-4: color-mix(in oklab, var(--pen) 84%, var(--paper));
+	--data-5: var(--pen);
+	--grid: var(--rule);
+}
+
+.figures {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	margin: 0 0 8px;
+}
+
+.figure {
+	display: grid;
+	gap: 2px;
+	align-content: start;
+	margin: 0;
+	padding: 12px;
+	border-radius: var(--r-lg);
+	background: var(--paper);
+}
+
+.figure--hero {
+	grid-column: 1 / -1;
+}
+
+.figure__value {
+	font-family: var(--font-display);
+	font-size: 1.5rem;
+	font-weight: 750;
+	line-height: 1.1;
+	color: var(--ink);
+	overflow-wrap: anywhere;
+}
+
+.figure--hero .figure__value {
+	font-size: clamp(2.5rem, 11vw, 3.5rem);
+}
+
+.figure__label {
+	font-size: 0.875rem;
+	color: var(--ink-3);
+}
+
+.profile__sub {
+	margin: 16px 0 8px;
+	font-size: 1rem;
+}
+
+/* Weekday × hour */
+.heat {
+	display: grid;
+	grid-template-columns: 2.25rem repeat(24, minmax(0, 1fr));
+	gap: 2px;
+	align-items: center;
+}
+
+.heat__hour,
+.heat__day {
+	font-size: 0.75rem;
+	color: var(--ink-3);
+	font-variant-numeric: tabular-nums;
+}
+
+.heat__hour {
+	white-space: nowrap;
+}
+
+.heat__cell {
+	display: block;
+	aspect-ratio: 1;
+	min-height: 8px;
+	border-radius: 2px;
+	background: color-mix(in oklab, var(--ink) 4%, var(--paper));
+}
+
+.heat__cell--1 {
+	background: var(--data-1);
+}
+.heat__cell--2 {
+	background: var(--data-2);
+}
+.heat__cell--3 {
+	background: var(--data-3);
+}
+.heat__cell--4 {
+	background: var(--data-4);
+}
+.heat__cell--5 {
+	background: var(--data-5);
+}
+
+.heat__legend {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 4px;
+	margin: 8px 0 0;
+	font-size: 0.75rem;
+	color: var(--ink-3);
+}
+
+.heat__legend .heat__cell {
+	width: 12px;
+}
+
+.profile__table {
+	min-width: 0;
+	max-width: 100%;
+	margin-top: 12px;
+}
+
+/* Hours per month or year: bars on one baseline, labels hung below it. */
+.cols {
+	position: relative;
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(0, 1fr);
+	gap: 2px;
+	align-items: end;
+	height: 180px;
+	margin-bottom: 24px;
+	padding-top: 20px;
+	border-bottom: 1px solid var(--grid);
+}
+
+.cols__col {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	min-width: 0;
+	height: 100%;
+}
+
+.cols__bar {
+	position: relative;
+	display: block;
+	flex: none;
+	width: min(100%, 24px);
+	border-radius: 4px 4px 0 0;
+	background: var(--data);
+}
+
+.cols__value {
+	position: absolute;
+	bottom: calc(100% + 2px);
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: var(--ink-2);
+	white-space: nowrap;
+}
+
+.cols__label {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	font-size: 0.6875rem;
+	color: var(--ink-3);
+	white-space: nowrap;
+}
+
+/* Top artists */
+.hbars {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.hbars__row {
+	display: grid;
+	gap: 2px;
+}
+
+.hbars__name {
+	font-weight: 650;
+	overflow-wrap: anywhere;
+}
+
+.hbars__track {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.hbars__bar {
+	display: block;
+	height: 12px;
+	min-width: 4px;
+	border-radius: 0 4px 4px 0;
+	background: var(--data);
+}
+
+.hbars__value {
+	flex: none;
+	white-space: nowrap;
+	font-size: 0.8125rem;
+	color: var(--ink-2);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Top songs */
+.profile-song {
+	display: grid;
+	grid-template-columns: 1.5rem auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 0;
+}
+
+.profile-song__n {
+	color: var(--ink-3);
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.profile-song__main {
+	display: grid;
+	min-width: 0;
+}
+
+.profile-song__title {
+	font-weight: 700;
+	overflow-wrap: anywhere;
+}
+
+.profile-song__sub {
+	font-size: 0.875rem;
+	color: var(--ink-3);
+	overflow-wrap: anywhere;
+}
+
+.profile-song__plays {
+	font-variant-numeric: tabular-nums;
+	color: var(--ink-2);
+}
+
+/* What true-shuffle knows */
+.learned {
+	display: grid;
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.learned li {
+	display: grid;
+	grid-template-columns: 4.5rem minmax(0, 1fr);
+	gap: 12px;
+	align-items: baseline;
+}
+
+.learned__n {
+	font-family: var(--font-display);
+	font-size: 1.25rem;
+	font-weight: 750;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.profile__which {
+	margin: 0 0 8px;
+}
+
+.profile__source {
+	margin: 0 0 12px;
+}
+
+.profile__summary {
+	margin: 0 0 12px;
+	font-size: 1.0625rem;
+	line-height: 1.5;
+}
+
+/* The tables behind the charts: compact, numbers right-aligned, scrolls inside on narrow phones. */
+.table-wrap {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.profile__table .table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.profile__table .table th,
+.profile__table .table td {
+	padding: 4px 3px;
+	border-bottom: 1px solid var(--grid);
+	text-align: left;
+	white-space: nowrap;
+}
+
+.profile__table .table thead th {
+	color: var(--ink-3);
+	font-weight: 600;
+}
+
+.profile__table .table .num {
+	text-align: right;
+}
+
+.profile__table .table thead th:not(:first-child) {
+	text-align: right;
+}
+
+.profile__table .table abbr {
+	text-decoration: none;
+}
+
+.profile__table .table tfoot th,
+.profile__table .table tfoot td {
+	font-weight: 600;
+	border-bottom: 0;
+}
+
+/* The row label stays in view while a wide table scrolls sideways. */
+.profile__table .table th:first-child {
+	position: sticky;
+	left: 0;
+	background: var(--paper);
+}
+
+/* The period: presets and years as chips that wrap, a custom range below. */
+.periods {
+	display: grid;
+	gap: 12px;
+	margin: 0 0 16px;
+}
+
+.periods__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 4px;
+	border-radius: var(--r-lg);
+	background: var(--sunk);
+}
+
+.periods__row .segmented__opt {
+	flex: 1 1 auto;
+	min-width: 4.5rem;
+}
+
+.periods__legend {
+	margin-bottom: 6px;
+	padding: 0;
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: var(--ink-2);
+}
+
+.periods__custom {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px 12px;
+	align-items: end;
+}
+
+.periods__custom .key {
+	grid-column: 1 / -1;
+}
+
+.periods__custom .input {
+	width: 100%;
+	min-width: 0;
+}
+
+.profile__body--loading {
+	opacity: 0.55;
+	transition: opacity 160ms var(--ease);
+}
+
+.profile__highlights {
+	margin: 8px 0 0;
+}
+
+.hbars__sub {
+	font-weight: 400;
+	color: var(--ink-3);
+}
+
+.profile__more {
+	margin-top: 8px;
+}
+
+/* The period's content keeps the page's rhythm between its sections. */
+.profile__body {
+	display: grid;
+	gap: 28px;
+}

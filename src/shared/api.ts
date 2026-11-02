@@ -2,11 +2,29 @@
  * Wire types between the Worker API and the Preact client.
  */
 
+import type {
+	ImportSelection,
+	InspectItem,
+	InspectQuery,
+	SelectionCounts,
+} from "../core/import-selection";
 import type { SlotKind, StationRules } from "../core/types";
+
+export type {
+	ImportSelection,
+	InspectItem,
+	InspectQuery,
+	SelectionCounts,
+	SelectionRule,
+} from "../core/import-selection";
 
 export type StationKind = "playlist" | "all" | "custom";
 
-export type StationSource = { type: "playlist"; id: string } | { type: "liked" };
+/** "likes": every song with a thumb up in true-shuffle (P4, the Kassette „TrueShuffle Likes“). */
+export type StationSource =
+	| { type: "playlist"; id: string }
+	| { type: "liked" }
+	| { type: "likes" };
 
 export interface StationSummary {
 	id: number;
@@ -36,6 +54,12 @@ export interface TrackView {
 	durationMs: number;
 	/** Thumb in true-shuffle: -1 never again, 1 favourite, 0 none. */
 	thumb: -1 | 0 | 1;
+	/**
+	 * The song's rating write number `thumb` was read at (see
+	 * HistoryRatingReceipt.seq), where the server sends it: the page keeps the
+	 * newest by this number. Absent in older answers and where not sent.
+	 */
+	rated?: number;
 }
 
 export interface NowPlaying extends TrackView {
@@ -50,6 +74,76 @@ export interface NowPlaying extends TrackView {
 	observedAt: number;
 }
 
+/**
+ * Exactly the play Spotify was seen playing, for an answer or an external
+ * "next" given on it (NP06, 2026-10-17) — never a true-shuffle occurrence.
+ * The hub acts on it only while a fresh look still shows this play on this
+ * device for this account; anything else is refused before Spotify is asked.
+ */
+export interface ObservedTarget {
+	kind: "observed";
+	/** The signed-in account the page showed it for. */
+	account: string;
+	trackId: string;
+	/** The device it played on; Spotify reports some without an id (then nothing is skipped). */
+	deviceId: string | null;
+	/** The hub's look the page showed (its time, as a string). */
+	observationId: string;
+	/** This play of the song: begun again, repeated or sought back, it is another one. */
+	playId: string;
+}
+
+/**
+ * What the hub's latest look at Spotify saw (NP06). Read-only: never a
+ * true-shuffle checkpoint, and no Spotify request is made to build it.
+ */
+export interface ObservedPlayer {
+	/**
+	 * "playing"/"paused": a song; "none": no active device; "unsupported": an
+	 * episode, an ad, a local file or nothing readable; "unknown": no fresh
+	 * successful look (failed, or too long ago).
+	 */
+	state: "playing" | "paused" | "none" | "unsupported" | "unknown";
+	/** The last successful look. */
+	checkedAt: number | null;
+	track: TrackView | null;
+	/** Position at `serverTime`: it already holds the time since the look; never add that again. */
+	progressMs: number | null;
+	/** `volume`/`volumeControl` (P8): absent in older answers; volumeControl false: the device refuses. */
+	device: {
+		id: string | null;
+		name: string;
+		volume?: number | null;
+		volumeControl?: boolean;
+	} | null;
+	/**
+	 * "station": the existing reconciliation confirmed it as the saved queue's
+	 * current entry; "outside": another context than any station's;
+	 * "unconfirmed": a station's context, but not confirmed as its entry (a song
+	 * queued in Spotify, a pending command, an ambiguous place). Never a claim
+	 * of where a song came from beyond that.
+	 */
+	attribution: "station" | "outside" | "unconfirmed" | null;
+	stationId: number | null;
+	/** What an answer or an external "next" names; null where nothing may be done from here. */
+	target: ObservedTarget | null;
+	/**
+	 * A "next" was sent for this very play and no look has shown it done yet
+	 * (accepted, unclear or lost): it is not sent again — from any tab.
+	 */
+	nextPending?: boolean;
+}
+
+/**
+ * Additions to a thumb's answer given with an observed target: "skipped"
+ * (Spotify acknowledged the next; a later look confirms it), "over" (that play
+ * was no longer running: stored, nothing skipped, nothing to try again),
+ * "failed" (not skipped, see skipError), "uncertain" (Spotify's answer got
+ * lost: never repeated; a new look tells), "pending" (a "next" for this play
+ * was sent before and is not confirmed yet: not sent again).
+ */
+export type ObservedSkip = "skipped" | "over" | "failed" | "uncertain" | "pending";
+
 export interface Warning {
 	code: string;
 	message: string;
@@ -63,16 +157,96 @@ export interface JobView {
 	error: string | null;
 }
 
+/**
+ * Read-only labels for one song in a queue, so the listener can see whether
+ * it is new to them, new to this station, or how often they have heard it.
+ * Derived from stored memory only — never from a Spotify request.
+ */
+export interface SongFacts {
+	/**
+	 * Counted plays (>= 30 s) known for this song in total: live true-shuffle
+	 * plays (any station or outside a station, guest-mode plays excluded) plus
+	 * plays from an imported Spotify streaming history (which only covers time
+	 * before true-shuffle started counting live, so nothing is counted twice).
+	 */
+	plays: number;
+	/** Last counted play anywhere, live or imported, or null if never heard. */
+	lastPlayedAt: number | null;
+	/**
+	 * A non-guest play on this station is in the plays log. The log keeps at
+	 * least the last 180 days, so `false` means "not here in half a year".
+	 */
+	inStation: boolean;
+	/** Why the planner put it here, when known. */
+	kind: SlotKind | null;
+	/**
+	 * In how many of the listener's own playlists the song is (see
+	 * PlaylistCount); null or absent: never counted.
+	 */
+	playlists?: PlaylistCount | null;
+}
+
+/**
+ * The listener's own playlists holding a song, each counted once however
+ * often the song is in it. Playlists true-shuffle made, playlists of others
+ * (followed or collaborative) and playlists of unclear origin do not count.
+ * `complete` false: not every own playlist could be read (yet), so the count
+ * is a lower bound — and a 0 then means "unknown", not "none".
+ */
+export interface PlaylistCount {
+	count: number;
+	complete: boolean;
+}
+
+export interface SessionView {
+	controller?: { kind: "spotify" | "home-assistant"; deviceId: string; deviceName?: string };
+	sessionId: string;
+	stationId: number;
+	entryId: string;
+	orderRevision: number;
+	progressMs: number | null;
+	observedAt: number | null;
+	status: "active" | "paused" | "disconnected" | "external" | "ambiguous" | "saved";
+	pending: boolean;
+	queue: { entryId: string; track: TrackView; facts?: SongFacts }[];
+}
+
 export interface AppState {
+	session?: SessionView | null;
+	/** The Likes (P4; absent in older answers). */
+	likes?: LikesView;
+	/** „Nach diesem Song fortsetzen“ (P5; absent in older answers). */
+	continueAfter?: ContinueAfterView | null;
 	profile: { id: string; name: string; imageUrl: string | null };
 	onboarded: boolean;
 	stations: StationSummary[];
 	nowPlaying: NowPlaying | null;
-	guest: { active: boolean; until: number | null };
+	/** The latest look at Spotify, also outside true-shuffle (absent in older answers). */
+	observed?: ObservedPlayer;
+	guest: {
+		active: boolean;
+		until: number | null;
+		/** Devices whose music never counts, as if guest mode were on. */
+		devices?: { id: string; name: string }[];
+		/** Name of the guest device that holds guest time open right now, if any. */
+		device?: string | null;
+	};
 	warnings: Warning[];
 	jobs: JobView[];
-	/** `liveSince`: from here on true-shuffle counts live; an import covers what came before. */
-	history: { importedTracks: number; importedAt: number | null; liveSince: number | null };
+	/**
+	 * `liveSince`: from here on true-shuffle counts live; an import covers what
+	 * came before. `importedTracks` are the songs of the import, `effectiveTracks`
+	 * those that shape the memory under the listener's selection (`enabled`
+	 * false: the import is kept but counts for nothing; `rules`: how many).
+	 */
+	history: {
+		importedTracks: number;
+		importedAt: number | null;
+		liveSince: number | null;
+		effectiveTracks?: number;
+		enabled?: boolean;
+		rules?: number;
+	};
 	aiSource: "anthropic" | "workers-ai" | "off";
 	serverTime: number;
 }
@@ -90,7 +264,7 @@ export interface PlaylistView {
 }
 
 export interface StationDetail extends StationSummary {
-	upcoming: (TrackView & { kind: SlotKind })[];
+	upcoming: (TrackView & { kind: SlotKind; facts?: SongFacts })[];
 	recent: (TrackView & { playedAt: number })[];
 	counts: Record<SlotKind, number> | null;
 	discoveries: { pending: number; kept: number; rejected: number };
@@ -100,7 +274,86 @@ export interface HistoryEntry extends TrackView {
 	playedAt: number;
 	stationName: string | null;
 	ignored: boolean;
+	/**
+	 * Same read-only counts as in a queue. `kind` is the lane stamped when this
+	 * very play was recorded (its station's playlist, a deck written before
+	 * the song began, one reason only); null for older plays and anything in
+	 * doubt. `inStation` is always true: the song was heard there.
+	 */
+	facts?: SongFacts;
+	/**
+	 * The song's rating write number when this list was read (see
+	 * HistoryRatingReceipt.seq): a rating from the Verlauf names it, and is
+	 * refused when the song was rated again since (another tab, Siri, the
+	 * player's sheet).
+	 */
+	rated?: number;
 }
+
+/**
+ * A rating given in the Verlauf (see docs/HISTORY_RATINGS.md): stored together
+ * with a receipt of everything it changed, so the page can ask again after a
+ * lost answer and take it back without touching anything newer.
+ */
+export interface HistoryRatingReceipt {
+	/** The page's id for this decision: sent again, it is answered from here, never stored twice. */
+	id: string;
+	trackId: string;
+	value: -1 | 0 | 1;
+	/** The rating before it. */
+	prev: -1 | 0 | 1;
+	at: number;
+	/** The song's rating write number after it. */
+	seq: number;
+	/**
+	 * "Nie wieder" skips the song when it plays right now: "none" (it did not
+	 * play, or plays on a Home Assistant player, which is never skipped from
+	 * here), "skipped", "failed" (not skipped; the rating is stored all the
+	 * same — see `skipStage`), "pending" (the result never came back). A skip
+	 * is never repeated nor taken back.
+	 */
+	skip: "none" | "pending" | "skipped" | "failed";
+	skipError: string | null;
+	/**
+	 * Where a failed skip stopped: "read" — whether the song still plays could
+	 * not be read (nothing skipped, nothing tried again); "next" — Spotify
+	 * refused the skip. Absent for receipts without a failed skip.
+	 */
+	skipStage?: "read" | "next";
+	/** The song was rated again since (here or elsewhere): this one can no longer be taken back. */
+	superseded: boolean;
+	/** Taking it back, once asked for. */
+	undo: {
+		at: number;
+		/** "partial": what changed since stays, the rest is back; "conflict": nothing changed. */
+		outcome: "undone" | "partial" | "conflict";
+		/** What stayed, and why. */
+		notes: string[];
+		/** The rating afterwards, and its write number. */
+		value: -1 | 0 | 1;
+		seq: number;
+	} | null;
+	/** What taking it back cannot change by its nature (a skip that happened). */
+	lasting: string[];
+}
+
+/** A receipt read after a lost answer, with the song's rating now (see HistoryRatingReceipt). */
+export interface HistoryRatingLookup {
+	receipt: HistoryRatingReceipt | null;
+	/** Without a receipt: "no" only when provably not stored (yet); see docs/HISTORY_RATINGS.md. */
+	stored: "yes" | "no" | "unknown";
+	/**
+	 * The song's rating and its write number at this read, when the song was
+	 * named: a receipt proves its action happened, this tells what holds now.
+	 */
+	current?: { value: -1 | 0 | 1; seq: number };
+}
+
+export type HistoryRateAnswer =
+	/** Stored (or stored before, under the same id). */
+	| { kind: "done"; receipt: HistoryRatingReceipt }
+	/** Rated again since the page read it: nothing stored; this is the rating now. */
+	| { kind: "changed"; current: { value: -1 | 0 | 1; seq: number } };
 
 /** What a personal remote key can do (Siri, CarPlay, a watch, a widget). */
 export type RemoteAction = "like" | "dislike" | "skip";
@@ -132,11 +385,338 @@ export type PlayErrorCode =
 	| "unknown";
 
 export interface PlayResult {
+	/** Transport outcome cannot be established from a lost or server-error response. */
+	uncertain?: boolean;
 	ok: boolean;
+	/** Server time of a successful provider acknowledgment, not a playback observation. */
+	acceptedAt?: number;
 	error?: { code: PlayErrorCode; message: string };
 	deviceName?: string;
+	/** An observed target no longer matched a fresh look: nothing was sent; look again, never repeat. */
+	observedChanged?: boolean;
+	/** A "next" for this observed play was sent before and is not confirmed yet: nothing sent again. */
+	observedPending?: boolean;
 }
 
 export interface ApiError {
 	error: { code: string; message: string };
+}
+
+/** A song, artist or album in a listening profile. */
+export interface ProfileItem {
+	/** A song's Spotify id. */
+	id?: string;
+	name: string;
+	/** A song's or album's artist; empty for an artist. */
+	sub: string;
+	plays: number;
+	minutes: number;
+	imageUrl: string | null;
+}
+
+/**
+ * The listener's music in one period (from inclusive, to exclusive; from
+ * null: everything). The timeline is the imported Spotify history up to the
+ * first sign-in and true-shuffle's own count after it (guest time left out),
+ * so nothing counts twice. A play is 30 s or more. Calendar values are in
+ * the time zone asked for. Read-only.
+ */
+export interface ListeningProfile {
+	period: { from: number | null; to: number };
+	/** What the timeline is made of. */
+	coverage: {
+		importedFrom: number | null;
+		importedTo: number | null;
+		importedPlays: number;
+		/** From then on true-shuffle counted itself. */
+		liveSince: number | null;
+		/** Only the older import summary is stored: importing again shows every period. */
+		summaryOnly: boolean;
+		/**
+		 * The listener's selection of the import: imported plays left out
+		 * (all of them when the import is switched off). Absent: everything counts.
+		 */
+		selection?: { enabled: boolean; rules: number; excludedPlays: number };
+	};
+	/** Calendar years with music, over the whole timeline. */
+	years: number[];
+	/** First and last play in the period. */
+	first: number | null;
+	last: number | null;
+	plays: number;
+	minutes: number;
+	/** All of it exact (imported ms_played); else counted plays add their song's length. */
+	minutesExact: boolean;
+	songs: number;
+	artists: number;
+	albums: number;
+	activeDays: number;
+	/** Days the period spans (for an open one: since its first play). */
+	days: number;
+	/** The same length just before, for comparison; null for everything. */
+	previous: { plays: number; minutes: number } | null;
+	/** Plays per weekday (0 = Monday) and hour, 7 × 24, row by row. */
+	hourWeek: number[];
+	/** Plays and minutes per day, week (key: its Monday) or month, oldest first. */
+	series: {
+		unit: "day" | "week" | "month";
+		points: { key: string; plays: number; minutes: number }[];
+	};
+	topArtists: ProfileItem[];
+	topSongs: ProfileItem[];
+	topAlbums: ProfileItem[];
+	/** Left within 30 s, from imported plays only (live counting cannot see them). */
+	/**
+	 * Early skips (under 30 s, by choice) of imported plays. `early`, its share
+	 * and `top` leave out the first song after a start; those are `openers`:
+	 * Spotify's shuffle opens with the same few songs, so they say little.
+	 * Nor do they count songs heard often before they were skipped.
+	 */
+	skips: {
+		early: number;
+		share: number;
+		top: ProfileItem[];
+		openers: number;
+		topOpeners: ProfileItem[];
+		/**
+		 * Early skips of overplayed songs (heard often first, skipped later:
+		 * see core/memory isOverplayed), also left out of `early`.
+		 */
+		overplayed: number;
+		topOverplayed: ProfileItem[];
+	} | null;
+	/** First ever heard in this period. */
+	newSongs: number;
+	newArtists: number;
+	topNewArtists: ProfileItem[];
+	/** Heard again after a year or more. */
+	comebacks: (ProfileItem & { gapDays: number })[];
+	/** Days in a row with music (keys YYYY-MM-DD). */
+	streak: { days: number; from: string; to: string } | null;
+	/** Songs one after another, no gap over ten minutes. */
+	longestSession: { minutes: number; at: number } | null;
+	/** From imported plays only. */
+	platforms: { name: string; plays: number }[];
+	shuffleShare: number | null;
+	offlineShare: number | null;
+	/** The AI's estimate of the listener's genre mix, if one was made. */
+	genres: {
+		at: number;
+		source: "anthropic" | "workers-ai";
+		artists: number;
+		genres: { name: string; share: number }[];
+		summary: string;
+	} | null;
+	/** An AI is set up, so an estimate can be asked for. */
+	canEstimate: boolean;
+	/** The next estimate may be asked for from then (also after a failed one); null: now. */
+	genresRetryAt: number | null;
+	/** What true-shuffle keeps about the listener, from its own records. */
+	learned: {
+		favorites: number;
+		neverAgain: number;
+		recommendationsKept: number;
+		recommendationsDropped: number;
+		earlySkips: number;
+	};
+}
+
+/**
+ * A summary of an imported Spotify streaming history, built in the browser
+ * from the export files (which never reach the server). Counted plays are
+ * >= 30 s; hours are in the zone of the browser that imported it.
+ */
+export interface ImportedProfile {
+	/** When the import was made. */
+	at: number;
+	from: number;
+	to: number;
+	plays: number;
+	/** Real listening time, from Spotify's own ms_played. */
+	minutes: number;
+	songs: number;
+	artists: number;
+	earlySkips: number;
+	hourWeek: number[];
+	months: { month: string; plays: number; minutes: number }[];
+	topArtists: { name: string; plays: number; minutes: number }[];
+	topSongs: { id: string; name: string; artist: string; plays: number }[];
+}
+
+/** The answer to asking for a genre estimate. */
+export interface GenreAnswer {
+	estimate: ListeningProfile["genres"];
+	/** The next attempt is allowed from then (failed attempts count too). */
+	retryAt: number | null;
+	/** This request asked the AI and got nothing usable. */
+	failed: boolean;
+}
+
+/** The stored import and what the listener selected of it (see core/import-selection). */
+export interface HistorySelectionView {
+	/** Counts up with every change taken over; 0: never changed (everything counts). */
+	revision: number;
+	/**
+	 * Counts up with every stored change of the import or the selection: a
+	 * change taken over, a new import or summary, a deletion. Of two answers the
+	 * one with the higher number holds the later stored state, whichever came
+	 * first; equal numbers hold the same import and selection.
+	 */
+	commit: number;
+	appliedAt: number | null;
+	/** The selection in force. */
+	selection: ImportSelection;
+	/** What it makes of the import; null without an import. */
+	counts: SelectionCounts | null;
+	/** The computed history in force: "failed" means the import counts for nothing until fixed. */
+	effective: { state: "current" | "failed"; error: string | null; at: number | null };
+	dataset: {
+		/** Identity of the stored import: a deletion names it, so it removes exactly that. */
+		key: string;
+		hasImport: boolean;
+		importedAt: number | null;
+		/** Songs with stored totals. */
+		songs: number;
+		/** Single plays stored (every row, also those that count for nothing). */
+		rows: number;
+		rowsFrom: number | null;
+		rowsTo: number | null;
+		/** The old summary for the Hörprofil, from before single plays were kept. */
+		summaryProfile: boolean;
+		/** What the import holds: single plays, only totals, both, or nothing. */
+		coverage: "events" | "summary" | "mixed" | "none";
+	};
+	/** An upload of a new import is under way. */
+	uploading: boolean;
+	liveSince: number | null;
+}
+
+/** A look at the import under a draft selection: nothing is changed by it. */
+export interface SelectionPreview {
+	/** The draft, as the server reads it. */
+	selection: ImportSelection;
+	counts: SelectionCounts | null;
+	/** The selection in force, for comparison. */
+	applied: SelectionCounts | null;
+	revision: number;
+	/** The stored import counted (see HistorySelectionView.dataset.key): taking over names it. */
+	dataset: string;
+	page: {
+		total: number;
+		items: (InspectItem & { playlists?: PlaylistCount | null })[];
+		matchIds: string[];
+		matchArtists: string[];
+	};
+	query: InspectQuery;
+}
+
+/** Counting songs across the listener's own playlists (see PlaylistCount). */
+export interface PlaylistCountsView {
+	/** never: not counted yet; running; done; stopped: given up or paused (see error). */
+	state: "never" | "running" | "done" | "stopped";
+	startedAt: number | null;
+	finishedAt: number | null;
+	/** When the list of playlists it used was read from Spotify. */
+	listAt: number | null;
+	/**
+	 * Every own playlist of a freshly read list was read to its end, and no
+	 * playlist is of unclear origin: only then is a count (and a 0) certain.
+	 */
+	complete: boolean;
+	/** The playlist list could not be read again for this count: own playlists may be missing. */
+	listIncomplete: boolean;
+	playlists: {
+		own: number;
+		read: number;
+		failed: { id: string; name: string; reason: string }[];
+		/** Owned, named like a true-shuffle playlist, but none true-shuffle knows: not counted. */
+		unclear: { id: string; name: string }[];
+		trueShuffle: number;
+		foreign: number;
+	};
+	/** Different songs in the playlists read. */
+	songs: number;
+	/** Why it waits or stopped, when Spotify said. */
+	error: string | null;
+	top: (TrackView & { playlists: PlaylistCount })[];
+}
+
+/**
+ * A short listening sample of one Verlauf row, asked for by a tap on that row
+ * only (see docs/HISTORY_PREVIEW.md). Separate from everything Spotify: it
+ * never plays, pauses or queues anything there and changes nothing stored.
+ * The sample comes from Deezer's public catalogue; its address is signed and
+ * runs out (`expiresAt`), so the page asks again rather than keeping it.
+ */
+export type PreviewResult =
+	| {
+			status: "ready";
+			source: "deezer";
+			/** HTTPS address of the provider's short sample, exactly as Deezer sent it. */
+			url: string;
+			/** When the signed address runs out (ms), when Deezer says; null when not. */
+			expiresAt: number | null;
+			/** The recording Deezer named, for the attribution under the player. */
+			title: string;
+			artist: string;
+			album: string;
+			/** Deezer's own page of that recording (linkback), when it sent a valid one. */
+			link: string | null;
+	  }
+	| {
+			status: "unavailable";
+			/**
+			 * missing: Deezer has no song of this title by these artists;
+			 * no_match: only other versions (live, remix, another length);
+			 * ambiguous: several different ones fit; no_preview: no sample.
+			 */
+			reason: "missing" | "no_match" | "ambiguous" | "no_preview";
+			message: string;
+	  }
+	| {
+			status: "error";
+			/** denied: 401/403; rate: 429 or Deezer's quota; timeout; upstream: anything else. */
+			reason: "denied" | "rate" | "timeout" | "upstream";
+			message: string;
+	  };
+
+/** Writing the private playlist „TrueShuffle Likes“ (P4). */
+export interface LikesSyncState {
+	/** A change is waiting to be written (or a failed write to be retried). */
+	pending: boolean;
+	syncedAt: number | null;
+	/** Songs in the playlist after the last good write. */
+	count: number | null;
+	/** Why the last write failed; null after a good one. */
+	error: string | null;
+	failedAt?: number;
+}
+
+/** The Likes as the app shows them (P4). */
+export interface LikesView {
+	count: number;
+	/** The Kassette „TrueShuffle Likes“, null if there is none (yet, or deleted). */
+	stationId: number | null;
+	playlistId: string | null;
+	sync: LikesSyncState;
+}
+
+/** S1: the Verlauf grouped by song for the search (GET /api/history/search). */
+export interface HistorySearchAnswer {
+	/** The newest play included: ask again with `since` = this for only what came after. */
+	through: number;
+	/** False when only the newest plays fit (see HISTORY_SEARCH_MAX_PLAYS). */
+	complete: boolean;
+	songs: { entry: HistoryEntry; plays: number[] }[];
+}
+
+/** P5: „Nach diesem Song fortsetzen“, armed or how it ended. */
+export interface ContinueAfterView {
+	/** The song outside true-shuffle it waits for (null once it ended). */
+	trackId: string | null;
+	armedAt: number | null;
+	/** The song was seen left; true-shuffle is being resumed. */
+	due: boolean;
+	/** How the last one ended; null while armed. */
+	result: { ok: boolean; at: number; message: string | null } | null;
 }

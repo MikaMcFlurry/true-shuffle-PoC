@@ -1,0 +1,6 @@
+Copies of reviewer probes (originals read only, delta4-evidence-6408961; 206 sealed artifacts re-verified unchanged, see _ORIGINALS.json).
+UI: adjacent-order.spec.ts, mutation-error-confirm.corrected.spec.ts byte-identical except line 1 (@playwright/test import path). Own ports 19391-19403, own outputDir, short persistence <main>/e2e/.artifacts/rv5-*, reviewer limits 45 s / 5 s, trace on.
+DO: clock-fault/clock-shell worker+spec: only the candidate path '../delta4-candidate-6408961/' replaced by the checkout (2 lines per worker, 1 per spec); own wrangler json (same bindings/migration tag/vars), own ports 19371-19385, short persistence and TEMP (<main>/e2e/.artifacts/do).
+
+81a0e72a5cffabd86478e47aa8047fb89afdbbeda25d243a63073748b83829be *races-adj.spec.ts
+3e8105604d64ad91c9b91808452cd19d5046ede581ed5bb454e4917fcba7e721 *races-merr.spec.ts

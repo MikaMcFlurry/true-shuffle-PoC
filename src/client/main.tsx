@@ -1,16 +1,18 @@
-// Jost: a Futura-like geometric, the type of 1950s German program magazines.
-// It is also the face of the cast brass emblem on the cloth. Barlow
-// Condensed: the condensed caps printed on the dial glass and engraved on
-// keys and plates.
-import "@fontsource-variable/jost/wght.css";
-import "@fontsource/barlow-condensed/latin-500.css";
-import "@fontsource/barlow-condensed/latin-600.css";
-import "./styles.css";
+import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
+import "@fontsource/permanent-marker/latin-400.css";
+import "@fontsource-variable/bricolage-grotesque/standard.css";
+import "./styles/app.css";
+import "./styles/sender.css";
+import "./styles/mehr.css";
+import "./styles/profile.css";
 import { render } from "preact";
 import { App } from "./app";
 import { onLink } from "./router";
 import { applyIllumination } from "./store";
+import { syncThemeColor } from "./theme";
 
+// Earlier versions offered several designs; a remembered choice is simply ignored now.
 applyIllumination();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncThemeColor);
 document.addEventListener("click", onLink);
 render(<App />, document.getElementById("app")!);
