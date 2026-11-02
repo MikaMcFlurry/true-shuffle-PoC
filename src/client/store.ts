@@ -642,7 +642,9 @@ class Store {
 		const returned = () => {
 			if (document.visibilityState === "visible") {
 				this.interactedAt = Date.now();
-				void this.refresh(true, false, true).finally(() => this.schedulePoll());
+				// After any read already on its way: it may have been asked before the
+				// listener came back (1.2.0's fixed 15 s tick hid this; 1.3.0 polls slower).
+				void this.refresh(true, true, true).finally(() => this.schedulePoll());
 			}
 		};
 		this.tick = returned;
