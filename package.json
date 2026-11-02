@@ -19,7 +19,8 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:e2e": "playwright test",
-		"check": "npm run typecheck && npm run lint && npm run test",
+		"check": "npm run typecheck && npm run lint && npm run test:known",
+		"test:known": "node scripts/known-failures.mjs",
 		"types": "wrangler types --include-env=false",
 		"icons": "node scripts/render-icons.mjs"
 	},

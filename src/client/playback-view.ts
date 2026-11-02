@@ -258,6 +258,10 @@ export function upcomingEntries<E extends { entryId: string; track: { id: string
 ): E[] {
 	const after = view.entryId ?? view.checkpoint?.entryId ?? null;
 	let list = queue.slice(Math.max(0, queue.findIndex((e) => e.entryId === after) + 1));
-	if (view.track && list[0]?.track.id === view.track.id) list = list.slice(1);
+	// Only when the view shows a song other than its own entry's (the next one,
+	// already playing): the same song twice in a row stays listed twice.
+	const own = queue.find((e) => e.entryId === view.entryId)?.track.id;
+	if (view.track && list[0]?.track.id === view.track.id && own !== view.track.id)
+		list = list.slice(1);
 	return list.filter((e) => e.entryId !== view.entryId).slice(0, limit);
 }

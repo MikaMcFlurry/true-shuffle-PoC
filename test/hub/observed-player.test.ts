@@ -86,7 +86,7 @@ it("external B in another context: B shown with device, progress once, target; A
 	expect(o.attribution).toBe("outside");
 	expect(o.track?.id).toBe(b);
 	expect(o.track?.imageUrl).toMatch(/^https:\/\/img\.example\//);
-	expect(o.device).toEqual({ id: "mika-phone", name: "iPhone" });
+	expect(o.device).toEqual({ id: "mika-phone", name: "iPhone", volume: 50, volumeControl: true });
 	// The hub's position already holds the time since the look: 40 s seen + 7 s since,
 	// once (added twice it would read 54 s).
 	expect(o.progressMs).toBe(47_000);

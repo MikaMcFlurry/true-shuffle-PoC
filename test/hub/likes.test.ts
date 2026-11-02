@@ -104,13 +104,79 @@ describe("TrueShuffle Likes (P4)", () => {
 		for (const e of view.session?.queue ?? []) expect(liked).toContain(e.track.id);
 	});
 
-	it("thumbs given before the update are taken over once", async () => {
-		const { h, ids } = await setup();
+	it("thumbs given before the update are taken over once, with Kassette and playlist (red-team M2)", async () => {
+		const { h, ids, likesPlaylists } = await setup();
 		await h.hub.thumb(ids[11]!, 1);
 		await h.hub.thumb(ids[12]!, 1);
-		// As if they were stored by 1.2.0: no Likes list yet.
-		h.sql.run(`DELETE FROM kv WHERE k IN ('likes', 'likes_station_made')`);
+		await h.listen(60_000);
+		await h.settle();
+		// As if they were stored by 1.2.0: no Likes, no Kassette, no playlist yet.
+		const st0 = await h.hub.state();
+		await h.hub.deleteStation(st0.likes!.stationId!);
+		for (const p of likesPlaylists()) h.fake.playlists.delete(p.id);
+		h.sql.run(
+			`DELETE FROM kv WHERE k IN ('likes', 'likes_station_made', 'likes_playlist', 'likes_sync')`,
+		);
 		h.restart();
-		expect((await h.hub.state()).likes?.count).toBe(2);
+		const st = await h.hub.state();
+		expect(st.likes?.count).toBe(2);
+		expect(st.likes?.stationId).not.toBeNull();
+		await h.listen(60_000);
+		await h.settle();
+		expect(likesPlaylists()).toHaveLength(1);
+		expect(new Set(likesPlaylists()[0]!.items)).toEqual(new Set([ids[11], ids[12]]));
 	});
+
+	it("a playlist Spotify refuses to change: one playlist, no new ones, the failure shown (red-team B1)", async () => {
+		const { h, ids, likesPlaylists } = await setup();
+		await h.hub.thumb(ids[2]!, 1);
+		await h.listen(60_000);
+		await h.settle();
+		expect(likesPlaylists()).toHaveLength(1);
+		h.fake.failWhen = (method, path) =>
+			method === "PUT" && /^\/playlists\/[^/]+\/items$/.test(path)
+				? { status: 403, body: { error: { status: 403, message: "Forbidden" } } }
+				: null;
+		await h.hub.thumb(ids[3]!, 1);
+		await h.listen(10 * 60_000);
+		await h.settle();
+		expect(likesPlaylists()).toHaveLength(1);
+		const st = await h.hub.state();
+		expect(st.likes?.sync.error).toMatch(/nicht ändern/);
+		expect(st.likes?.sync.pending).toBe(true);
+		h.fake.failWhen = null;
+		await h.hub.retryLikesSync();
+		await h.settle();
+		expect(likesPlaylists()).toHaveLength(1);
+		expect(likesPlaylists()[0]!.items).toEqual([ids[2], ids[3]]);
+	});
+
+	it("a playlist that is really gone is made again once (red-team B1)", async () => {
+		const { h, ids, likesPlaylists } = await setup();
+		await h.hub.thumb(ids[2]!, 1);
+		await h.listen(60_000);
+		await h.settle();
+		h.fake.playlists.delete(likesPlaylists()[0]!.id);
+		await h.hub.thumb(ids[4]!, 1);
+		await h.listen(60_000);
+		await h.settle();
+		expect(likesPlaylists()).toHaveLength(1);
+		expect(likesPlaylists()[0]!.items).toEqual([ids[2], ids[4]]);
+	});
+
+	it("4 500 likes: written over several steps, finished, exactly once each (red-team H1)", async () => {
+		const h = await onboarded({ tracks: 4600 });
+		const ids = [...h.fake.tracks.keys()].slice(0, 4500);
+		for (const id of ids) await h.hub.thumb(id, 1);
+		for (let i = 0; i < 40; i++) {
+			await h.listen(60_000);
+			await h.settle();
+			if ((await h.hub.state()).likes?.sync.pending === false) break;
+		}
+		const pls = [...h.fake.playlists.values()].filter((p) => p.name === LIKES_NAME);
+		expect(pls).toHaveLength(1);
+		expect(pls[0]!.items).toHaveLength(4500);
+		expect(new Set(pls[0]!.items).size).toBe(4500);
+		expect((await h.hub.state()).likes?.sync).toMatchObject({ pending: false, count: 4500 });
+	}, 300_000);
 });

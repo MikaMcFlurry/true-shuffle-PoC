@@ -8,11 +8,13 @@
  * exceeded, SQLITE_FULL) and never a Spotify error (those are typed earlier).
  */
 const LIMIT =
-	/exceeded|rows?[ _-]?(read|written)|daily (free )?(tier )?limit|SQLITE_FULL|storage (operation|limit)|over (the )?limit|limit (reached|exceeded)/i;
+	/rows?[ _-]?(read|written)|SQLITE_FULL|durable objects?.*(limit|exceeded|quota)|storage (operation|limit|quota)|daily (free )?(tier )?(limit|quota)|free tier/i;
+/** Worker runtime limits and provider rate limits are transient, never "the day's limit". */
+const NOT_STORAGE = /call stack|memory limit|subrequest|cpu time|rate limit|spotify/i;
 
 export function isStorageLimit(err: unknown): boolean {
 	const text = err instanceof Error ? `${err.name} ${err.message}` : String(err);
-	return LIMIT.test(text);
+	return LIMIT.test(text) && !NOT_STORAGE.test(text);
 }
 
 /** The next reset (00:00 UTC) on the listener's clock in Germany. */

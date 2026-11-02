@@ -311,6 +311,8 @@ const LIKES_DESCRIPTION =
 	"Jeder Song, dem du in true-shuffle einen Daumen hoch gegeben hast, einmal. true-shuffle hält sie aktuell.";
 /** P5: an armed „Nach diesem Song fortsetzen“ gives up after this (a song on repeat, a long mix). */
 const CONTINUE_AFTER_MAX_MS = 45 * MINUTE_MS;
+/** A song seen playing to within this of its end, then gone, counts as ended. */
+const CONTINUE_AFTER_END_SLACK_MS = 20_000;
 
 interface ContinueAfter {
 	stationId: number;
@@ -320,14 +322,20 @@ interface ContinueAfter {
 	armedAt: number;
 	/** A look saw the song left: the alarm resumes. */
 	due?: boolean;
+	/** The last look at the song itself (whether it ran to its end). */
+	seen?: { playing: boolean; progressMs: number; durationMs: number; at: number };
 }
 
+/** Playlist writes per step of the Likes sync (each takes one of the invocation's requests). */
+const LIKES_SYNC_WRITES_PER_STEP = 8;
 /** A change waits this long, so a few thumbs in a row become one write to Spotify. */
 const LIKES_SYNC_DELAY_MS = 20_000;
 
 /** Every song with a thumb up here, in the order they got it (kv 'likes'). */
 interface LikesList {
 	v: 1;
+	/** Bumped on every change, so a sync under way notices one (absent before it had any). */
+	rev?: number;
 	items: { id: TrackId; at: number; meta?: PackedTrack }[];
 }
 const DISCOVERIES_DESCRIPTION =
@@ -1555,7 +1563,10 @@ export class HubCore {
 			case "keep":
 				return this.stepKeep(client, String(state.trackId));
 			case "likes-sync":
-				return this.stepLikesSync(client);
+				return this.stepLikesSync(
+					client,
+					state as { rev?: number; offset?: number; remade?: boolean },
+				);
 			case "unfollow":
 				await client.unfollowPlaylist(String(state.playlistId)).catch((e) => {
 					if (!(e instanceof SpotifyError && e.kind === "not_found")) throw e;
@@ -4950,33 +4961,66 @@ export class HubCore {
 		return base + (obs?.trackId === c.trackId ? 2 * MINUTE_MS : 15_000);
 	}
 
-	/** After every look: has the song been left? Then the alarm resumes (outside this look). */
+	/**
+	 * After every look: has the song been left? Then the alarm resumes (outside
+	 * this look). Only a look showing another song playing, or the song seen
+	 * playing up to its end and then no player, counts as its end; a pause or
+	 * a stop before the end cancels instead (red-team H2: never start music
+	 * the listener stopped).
+	 */
 	private noteContinueAfter(snap: PlayerSnapshot): void {
 		const c = this.kvGet<ContinueAfter>("continue_after");
 		if (!c || c.due) return;
 		const obs = snap.obs;
 		const st = this.stationRow(c.stationId);
-		const settle = (result: NonNullable<ContinueAfterView["result"]>) => {
+		const settle = (result: NonNullable<ContinueAfterView["result"]>): void => {
 			this.kvDel("continue_after");
 			this.kvSet("continue_after_result", result);
 		};
-		if (!st || this.savedSession(c.stationId)?.sessionId !== c.sessionId)
-			return settle({
-				ok: false,
-				at: this.now(),
-				message: "Die TrueShuffle-Stelle hat sich geändert.",
-			});
-		if (this.now() - c.armedAt > CONTINUE_AFTER_MAX_MS)
-			return settle({
+		if (!st || this.savedSession(c.stationId)?.sessionId !== c.sessionId) {
+			settle({ ok: false, at: this.now(), message: "Die TrueShuffle-Stelle hat sich geändert." });
+			return;
+		}
+		if (this.now() - c.armedAt > CONTINUE_AFTER_MAX_MS) {
+			settle({
 				ok: false,
 				at: this.now(),
 				message: "Der Song lief länger als erwartet; nichts fortgesetzt.",
 			});
-		if (obs?.trackId === c.trackId) return;
+			return;
+		}
+		if (obs?.trackId === c.trackId) {
+			this.kvSet("continue_after", {
+				...c,
+				seen: {
+					playing: obs.isPlaying,
+					progressMs: obs.progressMs,
+					durationMs: obs.durationMs,
+					at: obs.at,
+				},
+			});
+			return;
+		}
 		// The listener went back to true-shuffle by hand: done, nothing to do.
-		if (obs?.contextUri && obs.contextUri === this.deckUri(st))
-			return settle({ ok: true, at: this.now(), message: null });
-		this.kvSet("continue_after", { ...c, due: true });
+		if (obs?.contextUri && obs.contextUri === this.deckUri(st)) {
+			settle({ ok: true, at: this.now(), message: null });
+			return;
+		}
+		const seen = c.seen;
+		const ended =
+			!!seen &&
+			seen.playing &&
+			seen.durationMs > 0 &&
+			seen.progressMs + (this.now() - seen.at) >= seen.durationMs - CONTINUE_AFTER_END_SLACK_MS;
+		if ((obs?.isPlaying && obs.trackId) || ended) {
+			this.kvSet("continue_after", { ...c, due: true });
+			return;
+		}
+		settle({
+			ok: false,
+			at: this.now(),
+			message: "Die Wiedergabe wurde vor dem Songende angehalten; nichts fortgesetzt.",
+		});
 	}
 
 	/** The observed change came: resume the saved place on the device that played. */
@@ -5005,17 +5049,26 @@ export class HubCore {
 		const stored = this.kvGet<LikesList>("likes");
 		if (stored) return stored;
 		const ids = this.db
-			.all<{ id: string }>(`SELECT id FROM memory WHERE thumb = 1`)
+			.all<{ id: string }>(
+				`SELECT id FROM memory WHERE thumb = 1 ORDER BY COALESCE(last_played_at, 0), id`,
+			)
 			.map((r) => r.id);
 		const metas = ids.length ? this.lookupTracks(ids, this.usedSources()) : new Map();
 		const list: LikesList = {
 			v: 1,
+			rev: 1,
 			items: ids.map((id) => {
 				const meta = metas.get(id);
 				return meta ? { id, at: this.now(), meta } : { id, at: this.now() };
 			}),
 		};
 		this.kvSet("likes", list);
+		// Likes from before 1.3.0 get their Kassette and playlist too (red-team M2).
+		if (list.items.length > 0) {
+			this.ensureLikesStation();
+			this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
+			this.enqueue("likes-sync", "likes-sync", {}, 6, LIKES_SYNC_DELAY_MS);
+		}
 		return list;
 	}
 
@@ -5028,6 +5081,7 @@ export class HubCore {
 			const meta = this.lookupTracks([id], this.usedSources()).get(id) ?? this.observedMeta(id);
 			list.items.push(meta ? { id, at: this.now(), meta } : { id, at: this.now() });
 		} else list.items.splice(at, 1);
+		list.rev = (list.rev ?? 0) + 1;
 		this.kvSet("likes", list);
 		this.sourceCache.delete(LIKES_SOURCE);
 		this.indexCache = null;
@@ -5092,12 +5146,29 @@ export class HubCore {
 
 	/**
 	 * Write the private playlist „TrueShuffle Likes“ to exactly the Likes, in
-	 * their order: replace the first hundred, add the rest. Idempotent, so a
-	 * retry or a second write never makes a song appear twice; one playlist,
-	 * made once and remembered (made again only when it is gone).
+	 * their order: replace the first hundred, then add the rest, a few
+	 * hundred per step (resumable: state.offset), so a big list finishes over
+	 * several alarms instead of starting over. Idempotent; a change of the
+	 * Likes meanwhile starts the write again from the top. One playlist: made
+	 * again only when Spotify confirms the remembered one is gone, at most once
+	 * per write (red-team B1), and every failure is shown.
 	 */
-	private async stepLikesSync(client: SpotifyClient): Promise<StepResult> {
-		const uris = this.likesList().items.map((x) => `spotify:track:${x.id}`);
+	private async stepLikesSync(
+		client: SpotifyClient,
+		state: { rev?: number; offset?: number; remade?: boolean },
+	): Promise<StepResult> {
+		const list = this.likesList();
+		const uris = list.items.map((x) => `spotify:track:${x.id}`);
+		const rev = list.rev ?? 0;
+		let offset = state.rev === rev ? (state.offset ?? 0) : 0;
+		const remade = state.rev === rev && state.remade === true;
+		const fail = (message: string) =>
+			this.kvSet("likes_sync", {
+				...this.likesSync(),
+				pending: true,
+				error: message.slice(0, 200),
+				failedAt: this.now(),
+			} satisfies LikesSyncState);
 		try {
 			let pid = this.kvGet<string>("likes_playlist");
 			if (!pid) {
@@ -5105,17 +5176,35 @@ export class HubCore {
 				if (!pl?.id) throw new Error("Spotify hat keine Playlist angelegt");
 				pid = pl.id;
 				this.kvSet("likes_playlist", pid);
+				offset = 0;
 			}
 			try {
-				await client.replaceItems(pid, uris.slice(0, 100));
-				for (let i = 100; i < uris.length; i += 100)
-					await client.addItems(pid, uris.slice(i, i + 100));
+				for (let n = 0; n < LIKES_SYNC_WRITES_PER_STEP; n++) {
+					if (offset === 0) await client.replaceItems(pid, uris.slice(0, 100));
+					else await client.addItems(pid, uris.slice(offset, offset + 100));
+					offset = offset === 0 ? Math.min(100, uris.length) : offset + 100;
+					if (offset >= uris.length) break;
+				}
 			} catch (err) {
-				if (err instanceof SpotifyError && (err.kind === "not_found" || err.kind === "forbidden")) {
+				if (err instanceof SpotifyError && err.kind === "not_found" && !remade) {
+					// Gone for real, or only not visible yet? Ask once before making another.
+					const still = await client.playlist(pid).catch((e) => {
+						if (e instanceof SpotifyError && e.kind === "not_found") return null;
+						throw e;
+					});
+					if (still) throw err;
 					this.kvDel("likes_playlist");
-					return { done: false, state: {}, delayMs: 1000 };
+					return { done: false, state: { rev, offset: 0, remade: true }, delayMs: 1000 };
+				}
+				if (err instanceof SpotifyError && err.kind === "forbidden") {
+					fail("Spotify lässt true-shuffle die Playlist „TrueShuffle Likes“ nicht ändern.");
+					return { done: true };
 				}
 				throw err;
+			}
+			if (offset < uris.length) {
+				this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
+				return { done: false, state: { rev, offset, remade }, delayMs: 1000 };
 			}
 			this.kvSet("likes_sync", {
 				pending: false,
@@ -5126,12 +5215,7 @@ export class HubCore {
 			return { done: true };
 		} catch (err) {
 			if (!(err instanceof SpotifyError && err.kind === "budget"))
-				this.kvSet("likes_sync", {
-					...this.likesSync(),
-					pending: true,
-					error: err instanceof Error ? err.message.slice(0, 200) : String(err),
-					failedAt: this.now(),
-				} satisfies LikesSyncState);
+				fail(err instanceof Error ? err.message : String(err));
 			throw err;
 		}
 	}
@@ -9761,6 +9845,7 @@ export class HubCore {
 		const ids = [
 			...this.stations().map((s) => s.playlist_id),
 			this.kvGet<string>("discoveries_playlist"),
+			this.kvGet<string>("likes_playlist"),
 		].filter((x): x is string => !!x);
 		const stuck: string[] = [];
 		for (const id of ids) {

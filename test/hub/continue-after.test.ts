@@ -80,3 +80,17 @@ it("the listener goes back to true-shuffle by hand: done, nothing sent twice", a
 	await h.listen(60_000);
 	expect(h.fake.calls.slice(calls).filter((c) => c.startsWith(PLAY))).toEqual([]);
 });
+
+it("paused before the end, then no player: nothing is started (red-team H2)", async () => {
+	const { h, b } = await outsidePlaying();
+	await h.hub.continueAfter(b);
+	const calls = h.fake.calls.length;
+	h.fake.user("mika").player.isPlaying = false;
+	await h.hub.sync(new RequestBudget(8), { force: true });
+	// Spotify forgets the paused player: a look shows none.
+	h.fake.user("mika").player.deviceId = null as never;
+	await h.listen(10 * 60_000);
+	expect(h.fake.calls.slice(calls).filter((c) => c.startsWith(PLAY))).toEqual([]);
+	const st = await h.hub.state();
+	expect(st.continueAfter?.result).toMatchObject({ ok: false });
+});

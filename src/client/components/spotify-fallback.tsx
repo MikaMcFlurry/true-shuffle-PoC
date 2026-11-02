@@ -34,7 +34,8 @@ export function SpotifyFallback({ t }: { t: HistoryEntry }) {
 	return (
 		<div class="spotify-fallback">
 			{asking && device ? (
-				<div class="stack" role="group" aria-label="In Spotify abspielen?">
+				<fieldset class="stack">
+					<legend class="sr-only">In Spotify abspielen?</legend>
 					<p>
 						Spielt „{t.name}“ in Spotify auf <strong>{device.name}</strong>. Was dort gerade läuft,
 						wird unterbrochen; deine TrueShuffle-Stelle bleibt gespeichert.
@@ -47,7 +48,7 @@ export function SpotifyFallback({ t }: { t: HistoryEntry }) {
 							Auf {device.name} abspielen
 						</button>
 					</div>
-				</div>
+				</fieldset>
 			) : (
 				<div class="row-actions">
 					{device ? (

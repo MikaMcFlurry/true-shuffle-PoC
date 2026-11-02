@@ -1,19 +1,61 @@
+# CI nach github-actions-budget: lokal zuerst (npm run check), hier gezielt.
+# Klassifikation (docs / Code / Lockfile / gemeinsame Konfiguration) -> selektive
+# Jobs -> ein ehrliches Gate. Nur "gate" ist als Pflichtcheck gedacht (Branch-Schutz
+# ändert nur Mika). Kein push-Trigger: Arbeitsbranches laufen über pull_request,
+# der Produktionsbranch deployt über Workers Builds (das ist keine CI).
 name: Cloudflare application checks
 
 on:
   pull_request:
-    branches: [codex/cloudflare-restart-plan, codex/implement-cloudflare-restart]
+    branches: [codex/cloudflare-restart-plan, codex/implement-cloudflare-restart, "release/**"]
   workflow_dispatch:
+    inputs:
+      full:
+        description: Vollprüfung erzwingen (alle Jobs)
+        type: boolean
+        default: true
+      visual:
+        description: U1-Visual-Specs (alle Viewports, drei Engines) zusätzlich
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Nur veraltete PR-Validierung abbrechen; manuelle Vollprüfungen laufen zu Ende.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
+env:
+  WRANGLER_SEND_METRICS: "false"
+  BUDGET_SCRIPTS: .github/ci-budget
+
 jobs:
-  verify:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      plan: ${{ steps.classify.outputs.plan }}
+      checks: ${{ steps.classify.outputs.checks }}
+      browser: ${{ steps.classify.outputs.browser }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: classify
+        run: >
+          python3 "$BUDGET_SCRIPTS/classify_changes.py" --config .github/ci-budget.json
+          --base "${{ github.event.pull_request.base.sha }}"
+          --head "${{ github.event.pull_request.head.sha || github.sha }}"
+          ${{ (github.event_name == 'workflow_dispatch' && inputs.full) && '--full' || '' }}
+
+  checks:
+    needs: changes
+    if: needs.changes.outputs.checks == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      WRANGLER_SEND_METRICS: "false"
       GOMAXPROCS: "2"
     steps:
       - uses: actions/checkout@v4
@@ -25,13 +67,65 @@ jobs:
       - run: npm run build
       - run: npm run typecheck
       - run: npm run lint
-      - run: npm test
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      # Fails on any new failure and on a known one that passes now (test/known-failures.json).
+      - run: npm run test:known
       - run: npx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker
+
+  browser:
+    needs: changes
+    if: needs.changes.outputs.browser == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GOMAXPROCS: "2"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # The functional suite; the U1 visual matrix is milestone-only (visual job).
+      - run: npx playwright test --grep-invert @visual
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: browser-failure-evidence
           path: e2e/.artifacts/results
           retention-days: 7
+
+  visual:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' && inputs.visual
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright test -c playwright.visual.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: u1-visual
+          path: e2e/.artifacts/visual
+          retention-days: 7
+
+  gate:
+    if: always()
+    needs: [changes, checks, browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/ci-budget
+      - env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          PLAN_JSON: ${{ needs.changes.outputs.plan }}
+        run: python3 "$BUDGET_SCRIPTS/ci_gate.py" --always-required changes

@@ -39,7 +39,8 @@ export function VolumeKeys({
 			</p>
 		);
 	return (
-		<div class="volume" role="group" aria-label={`Lautstärke von ${device.name}`}>
+		<fieldset class="volume">
+			<legend class="sr-only">Lautstärke von {device.name}</legend>
 			<button
 				type="button"
 				class="tkey volume__key"
@@ -61,6 +62,6 @@ export function VolumeKeys({
 			>
 				<Plus aria-hidden="true" />
 			</button>
-		</div>
+		</fieldset>
 	);
 }

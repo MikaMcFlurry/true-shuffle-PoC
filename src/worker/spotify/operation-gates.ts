@@ -38,10 +38,10 @@ export class SpotifyOperationGates {
 	constructor(private readonly sql: SqlDb) {}
 	init() {
 		if (this.ready) return;
-		this.ready = true;
 		this.sql.run(
 			"CREATE TABLE IF NOT EXISTS spotify_operation_gates (listener TEXT NOT NULL, operation TEXT NOT NULL, revision INTEGER NOT NULL, cooldown TEXT, PRIMARY KEY(listener,operation)) WITHOUT ROWID",
 		);
+		this.ready = true;
 	}
 	snapshot(
 		listener: string,

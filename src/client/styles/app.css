@@ -2667,3 +2667,35 @@ h1,
 	overflow-wrap: anywhere;
 	font-variant-numeric: tabular-nums;
 }
+
+/* U1-01: key labels break between words or at a German syllable ("Wieder-
+   gabe"), never inside a word as the page's overflow-wrap: anywhere allows. */
+.transport-main,
+.tkey,
+.key {
+	overflow-wrap: normal;
+	hyphens: auto;
+	-webkit-hyphens: auto;
+}
+
+@media (max-width: 359px) {
+	.walkman .transport-main {
+		font-size: 0.8125rem;
+	}
+	.walkman .tkey {
+		font-size: 0.75rem;
+	}
+}
+
+/* <search> is new; older engines treat it as an unknown inline element. */
+search {
+	display: block;
+}
+
+fieldset.volume,
+.spotify-fallback fieldset {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}

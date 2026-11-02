@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import preact from "@preact/preset-vite";
 import { defineConfig, type Plugin } from "vite";
-import { version } from "./package.json";
 
 /**
  * The build id: the commit Workers Builds builds from, else the local commit,
@@ -20,6 +20,11 @@ function buildId(): string {
 	}
 }
 const BUILD_ID = buildId();
+const { version } = JSON.parse(
+	readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+) as {
+	version: string;
+};
 
 /** /build.json: what the newest deploy is, read by open pages (never cached, see _headers). */
 function buildFile(): Plugin {

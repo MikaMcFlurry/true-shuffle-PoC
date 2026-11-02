@@ -36,6 +36,14 @@ describe("P10: Als Nächstes never repeats the song playing now", () => {
 		};
 		expect(upcomingEntries(queue, view).map((x) => x.entryId)).toEqual(["e3", "e4"]);
 	});
+	it("the same song twice in a row stays listed twice", () => {
+		const q = [e(1, "a"), e(2, "b"), e(3, "b"), e(4, "c")];
+		expect(
+			upcomingEntries(q, { entryId: "e2", track: track("b"), checkpoint: null }).map(
+				(x) => x.entryId,
+			),
+		).toEqual(["e3", "e4"]);
+	});
 	it("nothing known: the whole queue", () => {
 		expect(upcomingEntries(queue, { entryId: null, track: null, checkpoint: null })).toHaveLength(
 			4,

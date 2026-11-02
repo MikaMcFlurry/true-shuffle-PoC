@@ -22,7 +22,7 @@ const metric = (
 it("counts all five listeners, overflow and signin without exposing actor identifiers", () => {
 	const sql = nodeSql();
 	const t = new SpotifyUsageTracker(sql, () => T0);
-	for (let i = 1; i <= 7; i++) t.record("private-listener-" + i, metric(200));
+	for (let i = 1; i <= 7; i++) t.record(`private-listener-${i}`, metric(200));
 	t.record(
 		"@signin:privateflow",
 		metric(200, T0, { endpoint: "/api/token", method: "POST", category: "refresh" }),
@@ -37,7 +37,7 @@ it("counts all five listeners, overflow and signin without exposing actor identi
 });
 it("correlates recovery to same overflow listener and same OAuth flow only", () => {
 	const t = new SpotifyUsageTracker(nodeSql(), () => T0);
-	for (let i = 1; i <= 5; i++) t.record("u" + i, metric(200));
+	for (let i = 1; i <= 5; i++) t.record(`u${i}`, metric(200));
 	t.record("overflow-A", metric(429));
 	t.record("overflow-B", metric(200));
 	expect(t.report(7).episodes[0]?.firstSuccessAt).toBeNull();

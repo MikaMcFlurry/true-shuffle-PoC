@@ -543,7 +543,7 @@ export function HistoryScreen() {
 			<p class="sr-only hist-preview__said" aria-live="polite">
 				{historyPreview.said}
 			</p>
-			<div class="hist-search" role="search">
+			<search class="hist-search">
 				<label class="sr-only" for="hist-search">
 					Im Verlauf suchen
 				</label>
@@ -563,7 +563,7 @@ export function HistoryScreen() {
 						if (account) void historySearch.load(account, true).catch(() => undefined);
 					}}
 				/>
-			</div>
+			</search>
 			{asked.trim() ? (
 				<SearchResults query={asked} hits={hits} err={searchErr} playing={playing} />
 			) : null}
