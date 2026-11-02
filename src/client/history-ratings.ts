@@ -12,9 +12,9 @@
  * now. A value is always shown with the write number of the same source.
  */
 
-import { writeNumber } from "../shared/rating-number";
 import { useEffect, useState } from "preact/hooks";
 import type { HistoryEntry, HistoryRatingReceipt } from "../shared/api";
+import { writeNumber } from "../shared/rating-number";
 import { ApiError, api } from "./api";
 import { store } from "./store";
 

@@ -2585,3 +2585,9 @@ h1,
 	content: "\A";
 	white-space: pre;
 }
+
+/* "Aktualisieren": a newer deploy is live (src/client/app-update.ts). */
+.app-update {
+	min-height: 44px;
+	padding: 0 14px;
+}

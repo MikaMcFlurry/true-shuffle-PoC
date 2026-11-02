@@ -438,7 +438,12 @@ class Store {
 	): void {
 		for (const r of rows) {
 			const own = this.thumbs.get(r.id);
-			this.noteStored(r.id, r.thumb, writeNumber(r.rated), own && known.get(r.id) === own ? own : undefined);
+			this.noteStored(
+				r.id,
+				r.thumb,
+				writeNumber(r.rated),
+				own && known.get(r.id) === own ? own : undefined,
+			);
 		}
 	}
 
@@ -490,7 +495,8 @@ class Store {
 				this.keepShown(s.id, own);
 			}
 			// Only a row without a write number (an older answer) is ordered by when it was asked.
-			if (asked !== undefined && writeNumber(s.rated) === undefined) this.retell(s.id, s.thumb, asked);
+			if (asked !== undefined && writeNumber(s.rated) === undefined)
+				this.retell(s.id, s.thumb, asked);
 		}
 		if (this.shownOpen() !== shown) this.emit();
 	}

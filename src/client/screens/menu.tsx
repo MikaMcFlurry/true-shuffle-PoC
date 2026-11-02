@@ -45,7 +45,7 @@ import {
 import { DAY_MS, emptyMemory } from "../../core/types";
 import type { AppState, DeviceView, HistoryEntry } from "../../shared/api";
 import { api, type NativeDevice } from "../api";
-import { loadedLine, ReleaseNotes } from "../components/release-notes";
+import { buildLine, loadedLine, ReleaseNotes } from "../components/release-notes";
 import { factsOf, SongTags } from "../components/song-tags";
 import { SpotifyStatus } from "../components/spotify-availability";
 import { Cover, PageBar, Section } from "../components/ui";
@@ -1135,6 +1135,7 @@ export function AboutScreen() {
 
 			<Section title="Version" id="info-version" class="release">
 				<p>{loadedLine()}</p>
+				<p class="hint">{buildLine()}</p>
 				<ReleaseNotes />
 				<button type="button" class="act" onClick={() => showReleaseNotes()}>
 					Was ist neu?

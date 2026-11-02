@@ -6,6 +6,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { RELEASE, type Release } from "../../shared/release";
+import { BUILD_ID } from "../app-update";
 import { pendingMutations } from "../pending-mutations";
 import { isTyping, type Moment, mayShow, onShowReleaseNotes, releaseSeen } from "../release-notice";
 import type { Route } from "../router";
@@ -27,6 +28,11 @@ export function releaseDay(date: string): string {
 /** "Diese Seite läuft mit Version 1.2.3 vom 17. Oktober 2026." — this page, not any other tab. */
 export function loadedLine(r: Release = RELEASE): string {
 	return `Diese Seite läuft mit Version ${r.version} vom ${releaseDay(r.date)}.`;
+}
+
+/** "Build 1a2b3c4d5e6f" — the deploy this page came from (P7). */
+export function buildLine(build: string = BUILD_ID): string {
+	return `Build ${build}`;
 }
 
 /** What changed, and the limit that stays. */
