@@ -15,6 +15,7 @@ import { type Env, endpoints } from "./env";
 import type { Occurrence } from "./hub/hub";
 import { Keys, randomToken, sha256b64url } from "./lib/crypto";
 import { readRemoteKey, remoteKeyFor } from "./lib/remote-key";
+import { isStorageLimit, STORAGE_LIMIT_CODE, storageLimitMessage } from "./lib/storage-limit";
 import { RequestBudget, SpotifyClient, SpotifyError, type SpotifyTokens } from "./spotify/client";
 import { boundedSpotifyRpc } from "./spotify/rpc";
 import type { RpcResult, UserHub } from "./userhub";
@@ -797,7 +798,13 @@ app.delete("/api/account", async (c) => {
 app.notFound((c) => c.json({ error: { code: "not_found", message: "Nicht gefunden" } }, 404));
 app.onError((err, c) => {
 	console.error(err);
-	return c.json({ error: { code: "internal", message: "Interner Fehler" } }, 500);
+	// The Durable Object itself refused (its daily limit): say so, not "Interner Fehler".
+	if (isStorageLimit(err))
+		return c.json({ error: { code: STORAGE_LIMIT_CODE, message: storageLimitMessage() } }, 503);
+	return c.json(
+		{ error: { code: "internal", message: "Interner Fehler — bitte nochmal versuchen." } },
+		500,
+	);
 });
 
 export default {

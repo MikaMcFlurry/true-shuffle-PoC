@@ -324,7 +324,9 @@ test.describe("a listener's day", () => {
 		await page.goto("/");
 		expect((await response).status()).toBe(401);
 		await expect(page.getByRole("link", { name: "Mit Spotify anmelden" })).toBeVisible();
-		await expect(page.getByText("Offline oder nicht erreichbar.", { exact: false })).toBeHidden();
+		await expect(
+			page.getByText("Der letzte Stand bleibt sichtbar.", { exact: false }),
+		).toBeHidden();
 	});
 
 	test("signs in with Spotify and saves playlists as stations", async ({ page }) => {

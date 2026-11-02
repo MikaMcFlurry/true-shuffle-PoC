@@ -121,7 +121,11 @@ export function App() {
 			</header>
 			{s.stale ? (
 				<div class="notice notice--offline" role="status">
-					Offline oder nicht erreichbar. Letzter gespeicherter Stand bleibt sichtbar.{" "}
+					{s.staleReason?.kind === "limit"
+						? s.staleReason.message
+						: s.staleReason?.kind === "server"
+							? "true-shuffle antwortet gerade nicht. Der letzte Stand bleibt sichtbar."
+							: "Keine Verbindung. Der letzte Stand bleibt sichtbar."}{" "}
 					<button type="button" class="act" onClick={() => void store.refresh(true)}>
 						Erneut verbinden
 					</button>

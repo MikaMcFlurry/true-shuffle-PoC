@@ -34,8 +34,11 @@ export function safeOperation(method: string, endpoint: string): string {
 	return `${methods.has(method.toUpperCase()) ? method.toUpperCase() : "OTHER"} ${normalized.startsWith("/") ? normalized : "/other"}`;
 }
 export class SpotifyOperationGates {
+	private ready = false;
 	constructor(private readonly sql: SqlDb) {}
 	init() {
+		if (this.ready) return;
+		this.ready = true;
 		this.sql.run(
 			"CREATE TABLE IF NOT EXISTS spotify_operation_gates (listener TEXT NOT NULL, operation TEXT NOT NULL, revision INTEGER NOT NULL, cooldown TEXT, PRIMARY KEY(listener,operation)) WITHOUT ROWID",
 		);

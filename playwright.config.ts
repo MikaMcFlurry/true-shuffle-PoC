@@ -54,7 +54,7 @@ export default defineConfig({
 		},
 		{
 			command:
-				"rm -rf e2e/.artifacts/state && npx vite build && npx wrangler dev -c wrangler.e2e.jsonc --port 8787 --ip 127.0.0.1 --persist-to e2e/.artifacts/state",
+				"node -e \"require('fs').rmSync('e2e/.artifacts/state',{recursive:true,force:true})\" && npx vite build && npx wrangler dev -c wrangler.e2e.jsonc --port 8787 --ip 127.0.0.1 --persist-to e2e/.artifacts/state",
 			url: "http://127.0.0.1:8787/api/health",
 			reuseExistingServer: false,
 			timeout: 180_000,

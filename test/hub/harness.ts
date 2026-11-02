@@ -8,7 +8,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { seededRng } from "../../src/core/random";
 import type { AiRunner } from "../../src/worker/hub/discovery";
-import { HubCore, type HubDeps, type HubEnv } from "../../src/worker/hub/hub";
+import { HubCore, type HubDeps, type HubEnv, hubSql } from "../../src/worker/hub/hub";
 import { Keys } from "../../src/worker/lib/crypto";
 import type { SqlDb, SqlValue } from "../../src/worker/lib/sql";
 import { FakeSpotify } from "../fakes/fake-spotify";
@@ -69,13 +69,26 @@ export async function makeHarness(
 		seed?: number;
 		ai?: AiRunner | null;
 		sharedSpotify?: HubDeps["sharedSpotify"];
+		/** Wrap the hub's SQLite, e.g. with a rows-read meter. */
+		wrapSql?: (sql: ReturnType<typeof nodeSql>) => ReturnType<typeof nodeSql>;
 	} = {},
 ): Promise<Harness> {
 	const clock = { t: T0 };
 	const now = () => clock.t;
 	const fake = opts.fake ?? new FakeSpotify({ now });
 	fake.now = now;
-	const sql = nodeSql();
+	const sql = opts.wrapSql ? opts.wrapSql(nodeSql()) : nodeSql();
+	// The test's own writes (legacy rows planted behind the hub's back) make the
+	// hub forget what it remembers of its storage, as a fresh instance would.
+	for (const m of ["run", "all"] as const) {
+		const base = sql[m].bind(sql) as (q: string, ...p: SqlValue[]) => unknown;
+		(sql as unknown as Record<string, unknown>)[m] = (q: string, ...p: SqlValue[]) => {
+			const r = base(q, ...p);
+			if (hubSql.depth === 0 && (m === "run" || !/^\s*(?:SELECT|PRAGMA|WITH)\s/i.test(q)))
+				h.hub.forgetStorageCaches();
+			return r;
+		};
+	}
 	let alarm: number | null = null;
 	const env: HubEnv = {
 		endpoints: {
@@ -155,6 +168,7 @@ export async function onboarded(
 		ai?: AiRunner | null;
 		seed?: number;
 		sharedSpotify?: HubDeps["sharedSpotify"];
+		wrapSql?: (sql: ReturnType<typeof nodeSql>) => ReturnType<typeof nodeSql>;
 	} = {},
 ): Promise<Harness & { stationIds: number[]; allId: number }> {
 	const fake = opts.fake ?? new FakeSpotify();
@@ -179,6 +193,7 @@ export async function onboarded(
 		ai: opts.ai,
 		seed: opts.seed,
 		sharedSpotify: opts.sharedSpotify,
+		wrapSql: opts.wrapSql,
 	});
 	const refresh = "rt-seed";
 	fake.refreshTokens.set(refresh, "mika");

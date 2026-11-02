@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, ObservedTarget, PlayResult, TrackView } from "../shared/api";
+import { statePollMs } from "../shared/poll-pace";
 import { ApiError, api } from "./api";
 import type { FrozenView } from "./playback-view";
 import { syncThemeColor } from "./theme";
@@ -50,10 +51,13 @@ class Store {
 	load: Load = { kind: "loading" };
 	flash: Flash | null = null;
 	stale = false;
+	/** Why the last read failed, said in the offline notice (P1: never just "Interner Fehler"). */
+	staleReason: { kind: "offline" | "limit" | "server"; message: string } | null = null;
 	private tick: (() => void) | null = null;
 	private offline = () => {
 		this.epoch++;
 		this.stale = true;
+		this.staleReason = { kind: "offline", message: "" };
 		this.emit();
 	};
 	tuning: { stationId: number; since: number } | null = null;
@@ -545,6 +549,7 @@ class Store {
 					this.clearCommand();
 				}
 				this.stale = false;
+				this.staleReason = null;
 				this.reconcileCommand(state);
 				this.load = { kind: "ready", state };
 				if (previous?.profile.id !== state.profile.id || previous.serverTime !== state.serverTime)
@@ -569,8 +574,15 @@ class Store {
 			.catch((err: unknown) => {
 				if (epoch !== this.epoch) return;
 				this.stale = true;
+				this.staleReason =
+					err instanceof ApiError && err.code === "storage_limit"
+						? { kind: "limit", message: err.message }
+						: err instanceof ApiError && err.status > 0
+							? { kind: "server", message: "" }
+							: { kind: "offline", message: "" };
 				if (err instanceof ApiError && err.status === 401) {
 					this.stale = false;
+					this.staleReason = null;
 					this.load = { kind: "signed-out" };
 					this.thumbs.clear();
 					this.stored.clear();
@@ -591,22 +603,49 @@ class Store {
 		return this.inflight;
 	}
 
-	/** Poll every 15 s while visible; the hub itself syncs in the background. */
+	/** When the listener last touched the app (pace of the poll, see statePollMs). */
+	private interactedAt = Date.now();
+	private readonly touched = () => {
+		const quiet = Date.now() - this.interactedAt;
+		this.interactedAt = Date.now();
+		// Back from a long quiet spell: the next look comes at the quick pace.
+		if (quiet > 2 * 60_000) this.schedulePoll();
+	};
+
+	/** The next poll at the pace the current state asks for (P1; 1.2.0 asked every 15 s). */
+	private schedulePoll(): void {
+		if (this.timer !== null) window.clearTimeout(this.timer);
+		if (!this.running) return;
+		const state = this.load.kind === "ready" ? this.load.state : null;
+		const wait = statePollMs({
+			playing: state?.nowPlaying?.isPlaying === true,
+			sinceInteractionMs: Date.now() - this.interactedAt,
+		});
+		this.timer = window.setTimeout(() => {
+			this.timer = null;
+			if (document.visibilityState === "visible")
+				void this.refresh(true).finally(() => this.schedulePoll());
+			else this.schedulePoll();
+		}, wait);
+	}
+
+	/** Poll while visible at an adaptive pace; the hub itself syncs in the background. */
 	start(): void {
 		this.running = true;
-		const tick = () => {
-			if (document.visibilityState === "visible") void this.refresh(true);
-		};
 		const returned = () => {
-			if (document.visibilityState === "visible") void this.refresh(true, false, true);
+			if (document.visibilityState === "visible") {
+				this.interactedAt = Date.now();
+				void this.refresh(true, false, true).finally(() => this.schedulePoll());
+			}
 		};
 		this.tick = returned;
-		void this.refresh(true, false, true);
-		this.timer = window.setInterval(tick, 15_000);
+		void this.refresh(true, false, true).finally(() => this.schedulePoll());
 		document.addEventListener("visibilitychange", returned);
 		window.addEventListener("focus", returned);
 		window.addEventListener("online", returned);
 		window.addEventListener("offline", this.offline);
+		window.addEventListener("pointerdown", this.touched, { passive: true });
+		window.addEventListener("keydown", this.touched);
 	}
 
 	say(text: string, tone: Flash["tone"] = "info", ms = 7000): void {
@@ -624,7 +663,10 @@ class Store {
 		this.running = false;
 		for (const timer of this.commandReads) window.clearTimeout(timer);
 		this.commandReads = [];
-		if (this.timer !== null) window.clearInterval(this.timer);
+		if (this.timer !== null) window.clearTimeout(this.timer);
+		this.timer = null;
+		window.removeEventListener("pointerdown", this.touched);
+		window.removeEventListener("keydown", this.touched);
 		if (this.tick) {
 			document.removeEventListener("visibilitychange", this.tick);
 			window.removeEventListener("focus", this.tick);
