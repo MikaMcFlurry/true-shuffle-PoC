@@ -1,7 +1,7 @@
 /**
  * The shared release record (TS-RELEASE-NOTICE-261017): one version for the
  * loaded page and the Worker's health, read from package.json and written
- * nowhere else; a date that is a day; at most three short changes.
+ * nowhere else; a date that is a day; at most four short changes.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -36,7 +36,8 @@ it("finds what is wrong with a release record", () => {
 	expect(releaseProblems({ ...ok, date: "2026-02-30" })).toHaveLength(1);
 	expect(releaseProblems({ ...ok, date: "17.10.2026" })).toHaveLength(1);
 	expect(releaseProblems({ ...ok, changes: [] })).toHaveLength(1);
-	expect(releaseProblems({ ...ok, changes: ["a", "b", "c", "d"] })).toHaveLength(1);
+	expect(releaseProblems({ ...ok, changes: ["a", "b", "c", "d"] })).toEqual([]);
+	expect(releaseProblems({ ...ok, changes: ["a", "b", "c", "d", "e"] })).toHaveLength(1);
 	expect(releaseProblems({ ...ok, changes: ["x".repeat(141)] })).toHaveLength(1);
 	expect(releaseProblems({ ...ok, changes: [" "] })).toHaveLength(1);
 });

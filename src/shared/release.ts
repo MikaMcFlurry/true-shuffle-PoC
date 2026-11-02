@@ -13,24 +13,25 @@ export interface Release {
 	version: string;
 	/** The day this release was put together (YYYY-MM-DD). */
 	date: string;
-	/** What changed for the listener: at most three short lines. */
+	/** What changed for the listener: at most four short lines. */
 	changes: readonly string[];
 	/** A known limit that stays with this release, said plainly. */
 	known: string | null;
 }
 
 /** A notice is short: never more changes than this. */
-export const MAX_CHANGES = 3;
+export const MAX_CHANGES = 4;
 /** A change is one short line. */
 export const MAX_CHANGE_LENGTH = 140;
 
 export const RELEASE: Release = Object.freeze({
 	version,
-	date: "2026-10-18",
+	date: "2026-11-02",
 	changes: Object.freeze([
-		"Im Verlauf spielt „Hörprobe“ auf Tipp eine kurze Vorschau des Songs von Deezer, höchstens 30 Sekunden.",
-		"Spotify wird dabei nicht gesteuert, und nichts im Verlauf, in Bewertungen oder Kassetten ändert sich.",
-		"Passt bei Deezer keine eindeutige Aufnahme, gibt es keine Hörprobe statt einer falschen; Fehler werden angezeigt.",
+		"Läuft den ganzen Tag: true-shuffle fragt viel seltener nach und kommt mit einem Bruchteil der Server- und Spotify-Abfragen aus.",
+		"Im Verlauf suchen: Titel oder Künstler tippen, auch ohne Akzente – mit allen Wiedergaben und Favorit direkt am Treffer.",
+		"TrueShuffle Likes: Jeder Daumen hoch landet einmal in einer eigenen Kassette und in deiner privaten Spotify-Playlist.",
+		"Nach diesem Song fortsetzen: Läuft gerade etwas anderes, hört es zu Ende, dann geht es mit deiner Kassette weiter.",
 	]),
 	known:
 		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
