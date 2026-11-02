@@ -66,6 +66,7 @@ import {
 	useHistoryRatings,
 } from "../history-ratings";
 import { playbackHint, ratingLine } from "../history-ratings-text";
+import { HistorySearch, type SearchSong, search } from "../history-search";
 import { showReleaseNotes } from "../release-notice";
 import { navigate } from "../router";
 import { getIllumination, type Illumination, setIllumination, store, useStore } from "../store";
@@ -427,6 +428,42 @@ export function HistoryScreen() {
 		: null;
 	const [items, setItems] = useState<HistoryEntry[] | null>(null);
 	const [more, setMore] = useState(true);
+	// S1: the search. Typed text is searched here, 200 ms after the last key.
+	const [query, setQuery] = useState("");
+	const [asked, setAsked] = useState("");
+	const [hits, setHits] = useState<SearchSong[] | null>(null);
+	const [searchErr, setSearchErr] = useState<string | null>(null);
+	useEffect(() => {
+		const t = window.setTimeout(() => setAsked(query), 200);
+		return () => window.clearTimeout(t);
+	}, [query]);
+	useEffect(() => {
+		if (!asked.trim() || !account) {
+			setHits(null);
+			return;
+		}
+		let live = true;
+		const read = startListRead();
+		historySearch
+			.load(account)
+			.then((index) => {
+				if (!live || !current(read.gen)) return;
+				const found = search(index, asked);
+				takeListed(
+					found.map((x) => x.entry),
+					read,
+					false,
+				);
+				setSearchErr(null);
+				setHits(found);
+			})
+			.catch((e: Error) => {
+				if (live) setSearchErr(e.message);
+			});
+		return () => {
+			live = false;
+		};
+	}, [asked, account]);
 	const [loading, setLoading] = useState(false);
 	const [err, setErr] = useState<string | null>(null);
 	// A list answers only the page that asked, for the account it asked for:
@@ -505,37 +542,130 @@ export function HistoryScreen() {
 			<p class="sr-only hist-preview__said" aria-live="polite">
 				{historyPreview.said}
 			</p>
-			{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
-			{items && items.length === 0 ? (
-				<p class="empty-state">
-					Noch nichts gehört. Sobald du etwas in Spotify hörst, steht es hier, egal ob über
-					true-shuffle oder nicht.
-				</p>
+			<div class="hist-search" role="search">
+				<label class="sr-only" for="hist-search">
+					Im Verlauf suchen
+				</label>
+				<input
+					id="hist-search"
+					class="hist-search__field"
+					type="search"
+					inputMode="search"
+					enterKeyHint="search"
+					autoComplete="off"
+					spellcheck={false}
+					placeholder="Song oder Künstler suchen"
+					value={query}
+					onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+					onFocus={() => {
+						// Opening the search fetches what was played since (once, not per key).
+						if (account) void historySearch.load(account, true).catch(() => undefined);
+					}}
+				/>
+			</div>
+			{asked.trim() ? (
+				<SearchResults query={asked} hits={hits} err={searchErr} playing={playing} />
 			) : null}
-			{groups.map(([d, list], gi) => (
-				<Section key={d} title={d} id={`verlauf-${gi}`}>
-					<ol class="list hist">
-						{list.map((t) => (
-							<RatedHistoryRow
-								key={`${t.id}-${t.playedAt}`}
-								t={t}
-								playing={playing?.id === t.id ? playing : null}
-							/>
-						))}
-					</ol>
-				</Section>
-			))}
-			{err ? (
-				<p class="notice notice--error" role="alert">
-					Verlauf nicht geladen: {err}
-				</p>
-			) : null}
-			{items && items.length > 0 && more ? (
-				<button type="button" class="key key--wide" disabled={loading} onClick={loadMore}>
-					{loading ? "Lädt …" : "Ältere laden"}
-				</button>
-			) : null}
+			{asked.trim() ? null : (
+				<>
+					{!items && !err ? <div class="skeleton" style={{ height: "300px" }} /> : null}
+					{items && items.length === 0 ? (
+						<p class="empty-state">
+							Noch nichts gehört. Sobald du etwas in Spotify hörst, steht es hier, egal ob über
+							true-shuffle oder nicht.
+						</p>
+					) : null}
+					{groups.map(([d, list], gi) => (
+						<Section key={d} title={d} id={`verlauf-${gi}`}>
+							<ol class="list hist">
+								{list.map((t) => (
+									<RatedHistoryRow
+										key={`${t.id}-${t.playedAt}`}
+										t={t}
+										playing={playing?.id === t.id ? playing : null}
+									/>
+								))}
+							</ol>
+						</Section>
+					))}
+					{err ? (
+						<p class="notice notice--error" role="alert">
+							Verlauf nicht geladen: {err}
+						</p>
+					) : null}
+					{items && items.length > 0 && more ? (
+						<button type="button" class="key key--wide" disabled={loading} onClick={loadMore}>
+							{loading ? "Lädt …" : "Ältere laden"}
+						</button>
+					) : null}
+				</>
+			)}
 		</div>
+	);
+}
+
+/** S1: one Verlauf for the whole app session (see history-search.ts). */
+const historySearch = new HistorySearch((since) => api.historySearch(since));
+
+const BERLIN = new Intl.DateTimeFormat("de-DE", {
+	timeZone: "Europe/Berlin",
+	weekday: "short",
+	day: "numeric",
+	month: "short",
+	year: "numeric",
+	hour: "2-digit",
+	minute: "2-digit",
+});
+
+function SearchResults({
+	query,
+	hits,
+	err,
+	playing,
+}: {
+	query: string;
+	hits: SearchSong[] | null;
+	err: string | null;
+	playing: { id: string; native: boolean } | null;
+}) {
+	if (err)
+		return (
+			<p class="notice notice--error" role="alert">
+				Suche nicht möglich: {err}
+			</p>
+		);
+	if (!hits) return <div class="skeleton" style={{ height: "120px" }} />;
+	if (hits.length === 0)
+		return (
+			<p class="empty-state" role="status">
+				Nichts gefunden für „{query.trim()}“. Gesucht wird in Titel und Künstler.
+			</p>
+		);
+	return (
+		<Section title={hits.length === 1 ? "1 Song" : `${num(hits.length)} Songs`} id="hist-hits">
+			<ol class="list hist hist--hits">
+				{hits.map((h) => (
+					<li key={h.entry.id} class="hist-hit">
+						<ol class="list hist">
+							<RatedHistoryRow t={h.entry} playing={playing?.id === h.entry.id ? playing : null} />
+						</ol>
+						<details class="hist-hit__plays">
+							<summary>
+								{h.plays.length === 1 ? "1-mal gehört" : `${num(h.plays.length)}-mal gehört`},
+								zuletzt {BERLIN.format(h.plays[0]!)}
+							</summary>
+							<ul class="hist-hit__times">
+								{h.plays.map((at) => (
+									<li key={at}>
+										<time dateTime={new Date(at).toISOString()}>{BERLIN.format(at)}</time>
+									</li>
+								))}
+							</ul>
+						</details>
+					</li>
+				))}
+			</ol>
+		</Section>
 	);
 }
 

@@ -691,3 +691,12 @@ export interface LikesView {
 	playlistId: string | null;
 	sync: LikesSyncState;
 }
+
+/** S1: the Verlauf grouped by song for the search (GET /api/history/search). */
+export interface HistorySearchAnswer {
+	/** The newest play included: ask again with `since` = this for only what came after. */
+	through: number;
+	/** False when only the newest plays fit (see HISTORY_SEARCH_MAX_PLAYS). */
+	complete: boolean;
+	songs: { entry: HistoryEntry; plays: number[] }[];
+}

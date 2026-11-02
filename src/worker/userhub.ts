@@ -628,6 +628,9 @@ export class UserHub extends DurableObject<Env> {
 	history(epoch: number, limit: number, before?: number) {
 		return this.session(epoch, () => this.hub().history(limit, before));
 	}
+	historySearch(epoch: number, since?: number) {
+		return this.session(epoch, () => this.hub().historySearch(since));
+	}
 	/** Lookups of listening samples in the last minute (see historyPreview). */
 	private previewTimes: number[] = [];
 	/**

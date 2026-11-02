@@ -2591,3 +2591,49 @@ h1,
 	min-height: 44px;
 	padding: 0 14px;
 }
+
+/* S1: the Verlauf search stays in reach while the list scrolls (and above the keyboard). */
+.hist-search {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	padding: 8px 0;
+	background: var(--paper);
+}
+
+.hist-search__field {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 48px;
+	padding: 0 14px;
+	border: 1px solid var(--rule-strong);
+	border-radius: var(--r);
+	background: var(--paper);
+	color: var(--ink);
+	/* 16 px: iOS does not zoom into the field. */
+	font: inherit;
+	font-size: 16px;
+}
+
+.hist-search__field:focus-visible {
+	outline: 3px solid var(--ink);
+	outline-offset: 2px;
+}
+
+.hist-hit {
+	list-style: none;
+}
+
+.hist-hit__plays summary {
+	display: flex;
+	align-items: center;
+	min-height: 44px;
+	cursor: pointer;
+	color: var(--ink-2);
+}
+
+.hist-hit__times {
+	margin: 0 0 8px;
+	padding-left: 18px;
+	color: var(--ink-2);
+}

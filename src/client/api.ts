@@ -8,6 +8,7 @@ import type {
 	HistoryRateAnswer,
 	HistoryRatingLookup,
 	HistoryRatingReceipt,
+	HistorySearchAnswer,
 	HistorySelectionView,
 	ImportSelection,
 	InspectQuery,
@@ -330,6 +331,8 @@ export const api = {
 		),
 	playlistCounts: () => call<PlaylistCountsView>("GET", "/api/playlist-counts"),
 	countPlaylists: () => call<PlaylistCountsView>("POST", "/api/playlist-counts"),
+	historySearch: (since = 0) =>
+		call<HistorySearchAnswer>("GET", `/api/history/search${since ? `?since=${since}` : ""}`),
 	history: (before?: number) =>
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),
 	/**

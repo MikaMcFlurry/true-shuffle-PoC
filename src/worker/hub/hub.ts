@@ -98,6 +98,7 @@ import type {
 	HistoryRateAnswer,
 	HistoryRatingLookup,
 	HistoryRatingReceipt,
+	HistorySearchAnswer,
 	HistorySelectionView,
 	ImportedProfile,
 	JobView,
@@ -293,6 +294,17 @@ const DECK_DESCRIPTION = (name: string) =>
 const DISCOVERIES_NAME = `${DECK_NAME_PREFIX}Entdeckungen`;
 /** P4 (E3): the Kassette and the private Spotify playlist of every thumb up. */
 export const LIKES_NAME = "TrueShuffle Likes";
+/** S1: at most this many plays go to the search at once (newest first). */
+const HISTORY_SEARCH_MAX_PLAYS = 20_000;
+
+interface PlayRow {
+	played_at: number;
+	track_id: string;
+	meta: string | null;
+	station_id: number | null;
+	ignored: number;
+	lane: string | null;
+}
 const LIKES_SOURCE = "likes";
 const LIKES_DESCRIPTION =
 	"Jeder Song, dem du in true-shuffle einen Daumen hoch gegeben hast, einmal. true-shuffle hält sie aktuell.";
@@ -9134,18 +9146,46 @@ export class HubCore {
 	}
 
 	history(limit = 50, before?: number): HistoryEntry[] {
-		const rows = this.db.all<{
-			played_at: number;
-			track_id: string;
-			meta: string | null;
-			station_id: number | null;
-			ignored: number;
-			lane: string | null;
-		}>(
+		const rows = this.db.all<PlayRow>(
 			`SELECT played_at, track_id, meta, station_id, ignored, lane FROM plays WHERE played_at < ? ORDER BY played_at DESC LIMIT ?`,
 			before ?? Number.MAX_SAFE_INTEGER,
 			Math.min(200, Math.max(1, limit)),
 		);
+		return this.historyEntries(rows);
+	}
+
+	/**
+	 * S1: the Verlauf for the search, grouped by song — read once per app
+	 * session, then only what was played after `since` (a range on the plays'
+	 * primary key). The search itself runs in the app: no read per keystroke.
+	 */
+	historySearch(since = 0): HistorySearchAnswer {
+		const rows = this.db.all<PlayRow>(
+			`SELECT played_at, track_id, meta, station_id, ignored, lane FROM plays WHERE played_at > ? ORDER BY played_at DESC LIMIT ?`,
+			Math.max(0, Number.isFinite(since) ? since : 0),
+			HISTORY_SEARCH_MAX_PLAYS,
+		);
+		const latest: PlayRow[] = [];
+		const plays = new Map<string, number[]>();
+		for (const r of rows) {
+			const list = plays.get(r.track_id);
+			if (list) list.push(r.played_at);
+			else {
+				plays.set(r.track_id, [r.played_at]);
+				latest.push(r);
+			}
+		}
+		return {
+			through: rows[0]?.played_at ?? since,
+			complete: rows.length < HISTORY_SEARCH_MAX_PLAYS,
+			songs: this.historyEntries(latest).map((entry) => ({
+				entry,
+				plays: plays.get(entry.id) ?? [entry.playedAt],
+			})),
+		};
+	}
+
+	private historyEntries(rows: PlayRow[]): HistoryEntry[] {
 		const names = new Map(this.stations().map((s) => [s.id, s.name]));
 		const bare = rows.filter((r) => !r.meta).map((r) => r.track_id);
 		const index = bare.length > 0 ? this.lookupTracks(bare, this.usedSources()) : new Map();

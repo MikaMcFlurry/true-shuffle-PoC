@@ -713,6 +713,11 @@ app.post("/api/history/delete", async (c) => {
 app.get("/api/playlist-counts", (c) => unwrap(c, c.var.hub.playlistCounts(c.var.epoch)));
 app.post("/api/playlist-counts", (c) => unwrap(c, c.var.hub.countPlaylists(c.var.epoch)));
 
+app.get("/api/history/search", (c) => {
+	const since = Number(c.req.query("since") ?? 0);
+	return unwrap(c, c.var.hub.historySearch(c.var.epoch, Number.isFinite(since) ? since : 0));
+});
+
 app.get("/api/history", (c) => {
 	const before = c.req.query("before");
 	return unwrap(
