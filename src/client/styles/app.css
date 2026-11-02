@@ -2699,3 +2699,10 @@ fieldset.volume,
 	border: 0;
 	min-width: 0;
 }
+
+/* U1-03: the volume keys keep their 44 px and stay in the row at 320 px. */
+.volume__key {
+	flex: 0 0 44px;
+	width: 44px;
+	padding: 0;
+}

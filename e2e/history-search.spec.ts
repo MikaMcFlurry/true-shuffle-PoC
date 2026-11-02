@@ -81,9 +81,11 @@ for (const [label, viewport] of [
 			await field.pressSequentially(part, { delay: 40 });
 			const hits = page.locator(".hist-hit");
 			await expect(hits.first()).toBeVisible();
-			await expect(
-				hits.filter({ has: page.locator(".hist-row__title", { hasText: song.name }) }),
-			).toHaveCount(1);
+			// The demo library has several songs of one title: the one by its artists.
+			const mine = hits
+				.filter({ has: page.locator(".hist-row__title", { hasText: song.name }) })
+				.filter({ has: page.locator(".hist-row__sub", { hasText: song.artists }) });
+			await expect(mine.first()).toBeVisible();
 			// One request for the opening (and maybe the first query), never one per key.
 			expect(searches.length).toBeLessThanOrEqual(2);
 
@@ -91,9 +93,10 @@ for (const [label, viewport] of [
 			await field.fill("zzzz kein solcher song");
 			await expect(page.getByText(/^Nichts gefunden für/)).toBeVisible();
 			await field.fill(song.artists.split(",")[0]!.toLowerCase());
-			const hit = hits.filter({
-				has: page.locator(".hist-row__title", { hasText: song.name }),
-			});
+			const hit = hits
+				.filter({ has: page.locator(".hist-row__title", { hasText: song.name }) })
+				.filter({ has: page.locator(".hist-row__sub", { hasText: song.artists }) });
+			// Grouped by song: exactly one hit for it, however often it was heard.
 			await expect(hit).toHaveCount(1);
 			await expect(hit.locator("summary")).toContainText(/-mal gehört, zuletzt/);
 			expect(searches.length).toBeLessThanOrEqual(2);
