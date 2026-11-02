@@ -240,6 +240,8 @@ const LISTED_SLACK_MS = 15_000;
  */
 const HOLD_WATCH_MS = 36 * HOUR_MS;
 const CONTINUE_WITHIN_MS = HOLD_WATCH_MS;
+/** P1: how long after the last activity a turned-down song further on keeps the 20 s player look. */
+const HELD_ANYWHERE_QUICK_MS = 30 * MINUTE_MS;
 
 /** A player snapshot older than this cannot vouch that nobody is listening. */
 const PLAYER_FRESH_MS = 5 * MINUTE_MS;
@@ -298,6 +300,9 @@ export interface HubEnv {
 	anthropicKey: string | null;
 	anthropicModel: string;
 }
+
+/** Whether a statement comes from a hub (tests tell their own writes apart by it). */
+export const hubSql = { depth: 0 };
 
 export interface HubDeps {
 	sql: SqlDb;
@@ -849,19 +854,32 @@ export class HubCore {
 			depth++;
 			try {
 				return raw.transaction(fn);
+			} catch (err) {
+				// Rolled back: what this instance remembers may not be stored.
+				cache.kv.clear();
+				cache.stations = null;
+				throw err;
 			} finally {
 				depth--;
 			}
 		};
 		// Every write to the stations table drops the cached list of stations.
+		const own = <R>(fn: () => R): R => {
+			hubSql.depth++;
+			try {
+				return fn();
+			} finally {
+				hubSql.depth--;
+			}
+		};
 		this.db = {
-			all: (q, ...p) => raw.all(q, ...p),
-			first: (q, ...p) => raw.first(q, ...p),
+			all: (q, ...p) => own(() => raw.all(q, ...p)),
+			first: (q, ...p) => own(() => raw.first(q, ...p)),
 			run: (q, ...p) => {
 				if (/\bstations\b/i.test(q)) cache.stations = null;
-				raw.run(q, ...p);
+				own(() => raw.run(q, ...p));
 			},
-			transaction,
+			transaction: (fn) => own(() => transaction(fn)),
 		};
 		migrate(this.db);
 	}
@@ -870,7 +888,10 @@ export class HubCore {
 	 * The stations, read once until one of them changes (handed out as copies:
 	 * callers may edit). Shared with the write path above, which clears it.
 	 */
-	private readonly cache: { stations: StationRow[] | null } = { stations: null };
+	private readonly cache: { stations: StationRow[] | null; kv: Map<string, string | null> } = {
+		stations: null,
+		kv: new Map(),
+	};
 	/** When this instance last looked at the player (also when nothing changed). */
 	private lastLookAt = 0;
 	/** Reject observations that began before a transport command changed the player. */
@@ -880,30 +901,52 @@ export class HubCore {
 		return this.d.now();
 	}
 
+	/**
+	 * Forget what this instance remembers of its storage. Only for a writer
+	 * outside the object (tests that plant legacy rows); in production the
+	 * object is the only writer of its SQLite.
+	 */
+	forgetStorageCaches(): void {
+		this.cache.kv.clear();
+		this.cache.stations = null;
+	}
+
 	// =======================================================================
 	// Key/value and small helpers
 	// =======================================================================
 
+	/**
+	 * The object is the only writer of its kv table, so a value read once stays
+	 * true until this instance writes it (P1: a poll read ~50 keys, each a
+	 * billed row). Every caller gets its own parsed copy.
+	 */
 	private kvGet<T>(k: string): T | null {
-		const row = this.db.first<{ v: string }>(`SELECT v FROM kv WHERE k = ?`, k);
-		if (!row) return null;
+		let text = this.cache.kv.get(k);
+		if (text === undefined) {
+			text = this.db.first<{ v: string }>(`SELECT v FROM kv WHERE k = ?`, k)?.v ?? null;
+			this.cache.kv.set(k, text);
+		}
+		if (text === null) return null;
 		try {
-			return JSON.parse(row.v) as T;
+			return JSON.parse(text) as T;
 		} catch {
 			return null;
 		}
 	}
 
 	private kvSet(k: string, v: unknown): void {
+		const text = JSON.stringify(v);
 		this.db.run(
 			`INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v`,
 			k,
-			JSON.stringify(v),
+			text,
 		);
+		this.cache.kv.set(k, text);
 	}
 
 	private kvDel(k: string): void {
 		this.db.run(`DELETE FROM kv WHERE k = ?`, k);
+		this.cache.kv.set(k, null);
 	}
 
 	private log(level: "info" | "warn" | "error", kind: string, message: string): void {
@@ -9187,19 +9230,27 @@ export class HubCore {
 			st.last_played_at ?? 0,
 		);
 		const deck = this.deckOf(st);
-		// A resumed old order or a restart from the top can reach any held
-		// turned-down song. Keep the guard responsive even after a long pause.
-		if (
-			deck &&
-			(this.guardedAhead(uri) ||
-				this.db.first(
-					`SELECT 1 FROM json_each(?) held JOIN memory ON memory.id = held.value
-					 WHERE memory.thumb = -1 LIMIT 1`,
-					JSON.stringify([...deck.items.map((it) => it.id), ...(deck.formerOff ?? [])]),
-				))
-		)
-			return 20_000;
-		return pausedObservationPace(checkedAt - active, (deck?.frontHeardUntil ?? 0) > this.now());
+		const idle = checkedAt - active;
+		// A song turned down right ahead, or among the first three (a restart
+		// from the top): the guard looks every 20 s, however long the pause —
+		// a resumed or restarted order reaches it within a song.
+		if (deck && (this.guardedAhead(uri) || this.holdsTurnedDown(deck, 3))) return 20_000;
+		// One anywhere else in the deck or a former order can only come much
+		// later: the quick look for half an hour, then the ordinary paused pace.
+		// 1.2.0 looked every 20 s all night with a full scan of the deck, and
+		// on 22.10. that used up the account's daily Durable Object reads (P1).
+		if (deck && idle < HELD_ANYWHERE_QUICK_MS && this.holdsTurnedDown(deck)) return 20_000;
+		return pausedObservationPace(idle, (deck?.frontHeardUntil ?? 0) > this.now());
+	}
+
+	/** A song of the deck (its first `first`, or all and a former order's) is turned down — from memory, no scan. */
+	private holdsTurnedDown(deck: Deck, first?: number): boolean {
+		const ids =
+			first === undefined
+				? [...deck.items.map((it) => it.id), ...(deck.formerOff ?? [])]
+				: deck.items.slice(0, first).map((it) => it.id);
+		this.preloadMemory(ids);
+		return ids.some((id) => this.liveRow(id)?.thumb === -1);
 	}
 
 	/** Explicit Sync queues observations even when the ordinary cache is fresh. */
@@ -9245,6 +9296,8 @@ export class HubCore {
 			}
 		}
 		if (this.d.wipe) await this.d.wipe();
+		this.cache.kv.clear();
+		this.cache.stations = null;
 		return { stuck };
 	}
 }

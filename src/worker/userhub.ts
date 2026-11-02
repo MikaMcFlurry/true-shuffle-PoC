@@ -30,6 +30,7 @@ import { type GenreAnswer, requestGenres } from "./hub/genres";
 import { HubCore, HubError, type Occurrence } from "./hub/hub";
 import { Keys } from "./lib/crypto";
 import type { SqlDb, SqlValue } from "./lib/sql";
+import { isStorageLimit, STORAGE_LIMIT_CODE, storageLimitMessage } from "./lib/storage-limit";
 import { resolveDeezerPreview } from "./preview/deezer";
 import { type SpotifyCooldownScope, SpotifyError, type SpotifyTokens } from "./spotify/client";
 import { boundedSpotifyRpc } from "./spotify/rpc";
@@ -121,6 +122,11 @@ export class UserHub extends DurableObject<Env> {
 						error: { code: err.kind, message: err.message, status: err.status || 502 },
 					};
 				console.error("hub error", err);
+				if (isStorageLimit(err))
+					return {
+						ok: false,
+						error: { code: STORAGE_LIMIT_CODE, message: storageLimitMessage(), status: 503 },
+					};
 				return {
 					ok: false,
 					error: {

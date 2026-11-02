@@ -29,11 +29,16 @@ interface Bucket {
 }
 /** SQLite-only aggregate recorder; never causes Spotify requests or inferred quota limits. */
 export class SpotifyUsageTracker {
+	/** Schema set up once per instance (P1: it ran, with a full table update, on every request). */
+	private ready = false;
+	/** The hour whose retention already ran on this instance. */
+	private prunedHour = -1;
 	constructor(
 		private readonly sql: SqlDb,
 		private readonly now: () => number,
 	) {}
 	init() {
+		if (this.ready) return;
 		this.sql.run(
 			"CREATE TABLE IF NOT EXISTS spotify_usage_meta (id INTEGER PRIMARY KEY CHECK(id=1), started_at INTEGER NOT NULL)",
 		);
@@ -55,6 +60,13 @@ export class SpotifyUsageTracker {
 		this.sql.run(
 			"UPDATE spotify_usage_episodes SET first_success_at=NULL WHERE actor IS NULL AND first_success_at IS NOT NULL",
 		);
+		this.sql.run(
+			"CREATE INDEX IF NOT EXISTS spotify_usage_episodes_open ON spotify_usage_episodes(actor, operation, first_success_at, id)",
+		);
+		this.sql.run(
+			"CREATE INDEX IF NOT EXISTS spotify_usage_episodes_attempt ON spotify_usage_episodes(last_attempt_at)",
+		);
+		this.ready = true;
 	}
 	private slot(privateKey: string): number {
 		if (privateKey === "@signin" || privateKey.startsWith("@signin:")) return 0;
@@ -81,11 +93,14 @@ export class SpotifyUsageTracker {
 			const now = this.now();
 			const at = Math.min(now, Math.max(0, metric.at));
 			const hour = Math.floor(at / HOUR);
-			this.sql.run("INSERT OR IGNORE INTO spotify_usage_meta(id,started_at) VALUES(1,?)", at);
-			this.sql.run(
-				"DELETE FROM spotify_usage_hours WHERE hour < ?",
-				Math.floor(now / HOUR) - USAGE_RETENTION_HOURS + 1,
-			);
+			const pruning = this.prunedHour !== Math.floor(now / HOUR);
+			if (pruning) {
+				this.sql.run("INSERT OR IGNORE INTO spotify_usage_meta(id,started_at) VALUES(1,?)", at);
+				this.sql.run(
+					"DELETE FROM spotify_usage_hours WHERE hour < ?",
+					Math.floor(now / HOUR) - USAGE_RETENTION_HOURS + 1,
+				);
+			}
 			const slot = this.slot(privateKey);
 			const method = (metric.method ?? (metric.category === "read" ? "GET" : "POST")).toUpperCase();
 			// Client already sanitizes paths; independently refuse dynamic/raw data at this storage boundary.
@@ -120,6 +135,7 @@ export class SpotifyUsageTracker {
 				slot,
 				JSON.stringify(bucket),
 			);
+			let inserted = false;
 			if (metric.retryCategory !== "blocked") {
 				const pending = this.sql.first<{ id: number; last_failure_at: number }>(
 					"SELECT id,last_failure_at FROM spotify_usage_episodes WHERE actor=? AND operation=? AND first_success_at IS NULL ORDER BY id DESC LIMIT 1",
@@ -144,7 +160,8 @@ export class SpotifyUsageTracker {
 							metric.status,
 							pending.id,
 						);
-					else
+					else {
+						inserted = true;
 						this.sql.run(
 							"INSERT INTO spotify_usage_episodes(slot,actor,operation,first_failure_at,last_failure_at,reason,retry_after,earliest_retry_at,attempts,last_attempt_at,last_status) VALUES(?,?,?,?,?,?,?,?,1,?,?)",
 							slot,
@@ -158,6 +175,7 @@ export class SpotifyUsageTracker {
 							at,
 							metric.status,
 						);
+					}
 				} else if (pending)
 					this.sql.run(
 						"UPDATE spotify_usage_episodes SET attempts=attempts+1,last_attempt_at=?,last_status=?,first_success_at=? WHERE id=?",
@@ -172,14 +190,18 @@ export class SpotifyUsageTracker {
 						pending.id,
 					);
 			}
-			this.sql.run(
-				"DELETE FROM spotify_usage_episodes WHERE id NOT IN (SELECT id FROM spotify_usage_episodes ORDER BY id DESC LIMIT 200)",
-			);
-			this.sql.run(
-				"DELETE FROM spotify_usage_episodes WHERE last_attempt_at < ?",
-				now - USAGE_RETENTION_HOURS * HOUR,
-			);
+			// The cap can only be passed by a new episode; age only once an hour.
+			if (inserted)
+				this.sql.run(
+					"DELETE FROM spotify_usage_episodes WHERE id <= (SELECT MAX(id) - 200 FROM spotify_usage_episodes)",
+				);
+			if (pruning)
+				this.sql.run(
+					"DELETE FROM spotify_usage_episodes WHERE last_attempt_at < ?",
+					now - USAGE_RETENTION_HOURS * HOUR,
+				);
 		});
+		this.prunedHour = Math.floor(this.now() / HOUR);
 	}
 	report(registeredListeners: number): SpotifyUsageReport {
 		this.init();

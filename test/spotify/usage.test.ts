@@ -56,7 +56,42 @@ it("never treats an uncorrelated old signin or migrated episode as proven recove
 	t.record("@signin", metric(200));
 	expect(t.report(0).episodes[0]?.firstSuccessAt).toBeNull();
 	sql.run("UPDATE spotify_usage_episodes SET actor=NULL,first_success_at=?", T0);
-	expect(t.report(0).episodes[0]?.firstSuccessAt).toBeNull();
+	// A migrated row comes from an older version: the next instance (a wake) clears it.
+	const woken = new SpotifyUsageTracker(sql, () => T0);
+	expect(woken.report(0).episodes[0]?.firstSuccessAt).toBeNull();
+});
+it("sets its schema up once per instance and prunes once an hour, not on every request (P1)", () => {
+	const inner = nodeSql();
+	const seen: string[] = [];
+	const sql = {
+		...inner,
+		run: (q: string, ...p: never[]) => {
+			seen.push(q);
+			inner.run(q, ...p);
+		},
+	};
+	let now = T0;
+	const t = new SpotifyUsageTracker(sql, () => now);
+	for (let i = 0; i < 50; i++) t.record("u1", { ...metric(200), at: now });
+	const count = (re: RegExp) => seen.filter((q) => re.test(q)).length;
+	expect(count(/CREATE TABLE/)).toBe(4);
+	expect(count(/DELETE FROM spotify_usage_hours/)).toBe(1);
+	expect(count(/DELETE FROM spotify_usage_episodes WHERE last_attempt_at/)).toBe(1);
+	now += 3_600_000;
+	t.record("u1", { ...metric(200), at: now });
+	expect(count(/DELETE FROM spotify_usage_hours/)).toBe(2);
+	expect(count(/CREATE TABLE/)).toBe(4);
+});
+it("keeps the newest 200 episodes", () => {
+	const sql = nodeSql();
+	let now = T0;
+	const t = new SpotifyUsageTracker(sql, () => now);
+	for (let i = 0; i < 230; i++) {
+		now += 1000;
+		t.record(`op${i}`, { ...metric(429), at: now });
+	}
+	const n = sql.first<{ n: number }>("SELECT COUNT(*) AS n FROM spotify_usage_episodes")!.n;
+	expect(n).toBe(200);
 });
 it("keeps a failure pending when stale inflight success predates its confirmed429", () => {
 	let now = T0;

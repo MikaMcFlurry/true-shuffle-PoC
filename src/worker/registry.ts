@@ -119,20 +119,32 @@ export class Registry extends DurableObject<Env> {
 			transaction: (fn) => storage.transactionSync(fn),
 		};
 	}
+	/** One instance, so its schema statement runs once, not on every Spotify request (P1). */
+	private operationGates: SpotifyOperationGates | null = null;
+	private gates(): SpotifyOperationGates {
+		this.operationGates ??= new SpotifyOperationGates(this.database());
+		return this.operationGates;
+	}
 	spotifyOperationSnapshot(listener: string, operation: string) {
-		return new SpotifyOperationGates(this.database()).snapshot(listener, operation);
+		return this.gates().snapshot(listener, operation);
 	}
 	spotifyOperationBlocked(listener: string, cooldown: SpotifyCooldown) {
-		return new SpotifyOperationGates(this.database()).block(listener, cooldown);
+		return this.gates().block(listener, cooldown);
 	}
 	finishSpotifyOperation(listener: string, operation: string, revision: number) {
-		new SpotifyOperationGates(this.database()).finish(listener, operation, revision);
+		this.gates().finish(listener, operation, revision);
+	}
+	/** One tracker per instance, so its schema setup and hourly retention run once (P1). */
+	private usage: SpotifyUsageTracker | null = null;
+	private tracker(): SpotifyUsageTracker {
+		this.usage ??= new SpotifyUsageTracker(this.database(), () => Date.now());
+		return this.usage;
 	}
 	recordSpotifyUsage(listener: string, metric: SpotifyRequestMetric) {
-		new SpotifyUsageTracker(this.database(), () => Date.now()).record(listener, metric);
+		this.tracker().record(listener, metric);
 	}
 	spotifyUsage() {
-		return new SpotifyUsageTracker(this.database(), () => Date.now()).report(this.list().length);
+		return this.tracker().report(this.list().length);
 	}
 
 	register(uid: string): void {
