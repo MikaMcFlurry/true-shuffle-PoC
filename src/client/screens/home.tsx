@@ -24,6 +24,7 @@ import type {
 } from "../../shared/api";
 import { ApiError, api, type NativeDevice, type PlayingOccurrence } from "../api";
 import { Cassette, type ReelState, shellOf } from "../components/cassette";
+import { ContinueAfter } from "../components/continue-after";
 import { RateHit, ThumbMark } from "../components/rate";
 import { SongProgress } from "../components/song-progress";
 import { factsOf, type SongFactsView, SongTags } from "../components/song-tags";
@@ -867,6 +868,16 @@ export function Home({ state }: { state: AppState }) {
 							„TrueShuffle fortsetzen“ spielt dort weiter. Songs außerhalb deiner TrueShuffle-Folge
 							verschieben sie nicht.
 						</p>
+						{view.source === "observed" && view.playing && view.track ? (
+							<ContinueAfter
+								trackId={view.track.id}
+								armed={state.continueAfter ?? null}
+								disabled={s.stale}
+							/>
+						) : null}
+						{state.continueAfter?.result && !state.continueAfter.result.ok ? (
+							<p class="notice notice--warn">{state.continueAfter.result.message}</p>
+						) : null}
 					</section>
 				) : null}
 

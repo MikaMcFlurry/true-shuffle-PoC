@@ -2,6 +2,7 @@ import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
 import type {
 	AppState,
+	ContinueAfterView,
 	DeviceView,
 	GenreAnswer,
 	HistoryEntry,
@@ -371,6 +372,9 @@ export const api = {
 		),
 	sync: () => call<unknown>("POST", "/api/sync"),
 	likesSync: () => call<LikesView>("POST", "/api/likes/sync"),
+	continueAfter: (trackId: string) =>
+		call<ContinueAfterView>("POST", "/api/continue-after", { trackId }),
+	cancelContinueAfter: () => call<null>("DELETE", "/api/continue-after"),
 	logout: () => call<unknown>("POST", "/auth/logout"),
 	deleteAccount: () => call<{ stuck: string[] }>("DELETE", "/api/account"),
 };

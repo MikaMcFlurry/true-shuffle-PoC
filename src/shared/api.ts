@@ -209,6 +209,8 @@ export interface AppState {
 	session?: SessionView | null;
 	/** The Likes (P4; absent in older answers). */
 	likes?: LikesView;
+	/** „Nach diesem Song fortsetzen“ (P5; absent in older answers). */
+	continueAfter?: ContinueAfterView | null;
 	profile: { id: string; name: string; imageUrl: string | null };
 	onboarded: boolean;
 	stations: StationSummary[];
@@ -699,4 +701,15 @@ export interface HistorySearchAnswer {
 	/** False when only the newest plays fit (see HISTORY_SEARCH_MAX_PLAYS). */
 	complete: boolean;
 	songs: { entry: HistoryEntry; plays: number[] }[];
+}
+
+/** P5: „Nach diesem Song fortsetzen“, armed or how it ended. */
+export interface ContinueAfterView {
+	/** The song outside true-shuffle it waits for (null once it ended). */
+	trackId: string | null;
+	armedAt: number | null;
+	/** The song was seen left; true-shuffle is being resumed. */
+	due: boolean;
+	/** How the last one ended; null while armed. */
+	result: { ok: boolean; at: number; message: string | null } | null;
 }

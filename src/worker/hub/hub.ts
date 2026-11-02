@@ -93,6 +93,7 @@ import {
 } from "../../core/types";
 import type {
 	AppState,
+	ContinueAfterView,
 	DeviceView,
 	HistoryEntry,
 	HistoryRateAnswer,
@@ -308,6 +309,19 @@ interface PlayRow {
 const LIKES_SOURCE = "likes";
 const LIKES_DESCRIPTION =
 	"Jeder Song, dem du in true-shuffle einen Daumen hoch gegeben hast, einmal. true-shuffle hält sie aktuell.";
+/** P5: an armed „Nach diesem Song fortsetzen“ gives up after this (a song on repeat, a long mix). */
+const CONTINUE_AFTER_MAX_MS = 45 * MINUTE_MS;
+
+interface ContinueAfter {
+	stationId: number;
+	sessionId: string;
+	trackId: TrackId;
+	deviceId: string | null;
+	armedAt: number;
+	/** A look saw the song left: the alarm resumes. */
+	due?: boolean;
+}
+
 /** A change waits this long, so a few thumbs in a row become one write to Spotify. */
 const LIKES_SYNC_DELAY_MS = 20_000;
 
@@ -3086,6 +3100,7 @@ export class HubCore {
 				JSON.stringify({ ...snap, at: 0, obs: snap.obs ? { ...snap.obs, at: 0 } : null });
 		if (!same || this.kvGet("player_stale") || this.kvGet("player_observation_due"))
 			this.kvSet("player", snap);
+		this.noteContinueAfter(snap);
 		this.lastLookAt = this.now();
 		const observationDue = this.kvGet<number>("player_observation_due");
 		if (observationDue !== null && observationAt >= observationDue - 1000)
@@ -4752,6 +4767,116 @@ export class HubCore {
 	}
 
 	// =======================================================================
+	// Continue after this song (P5)
+	// =======================================================================
+
+	/**
+	 * „Nach diesem Song fortsetzen“: while a song outside true-shuffle plays,
+	 * the listener asks to go on with true-shuffle once it is over. Nothing is
+	 * sent to Spotify now (no queue entry: one could not be taken back), so the
+	 * song is never cut and cancelling has no effect at all. The hub looks
+	 * when the song should end; only a look that sees another song (or none)
+	 * resumes the saved place. No timer decides (R5).
+	 */
+	async continueAfter(trackId: unknown): Promise<ContinueAfterView> {
+		if (typeof trackId !== "string" || !/^[A-Za-z0-9]{22}$/.test(trackId))
+			throw new HubError("bad_track", "Ungültige Song-ID");
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const obs = snap?.obs;
+		if (!obs?.isPlaying || obs.trackId !== trackId)
+			throw new HubError(
+				"stale",
+				"Dieser Song läuft nicht mehr. Die Ansicht wird aktualisiert.",
+				409,
+			);
+		const stationId = this.kvGet<number>("active_session_station");
+		const session = stationId == null ? null : this.savedSession(stationId);
+		const st = stationId == null ? null : this.stationRow(stationId);
+		if (!session || !st)
+			throw new HubError("nothing", "Es gibt noch keine TrueShuffle-Stelle zum Fortsetzen.", 409);
+		if (obs.contextUri && obs.contextUri === this.deckUri(st))
+			throw new HubError("own", "Das ist schon deine TrueShuffle-Folge.", 409);
+		const intent: ContinueAfter = {
+			stationId: st.id,
+			sessionId: session.sessionId,
+			trackId,
+			deviceId: snap?.device?.id ?? null,
+			armedAt: this.now(),
+		};
+		this.kvSet("continue_after", intent);
+		this.kvDel("continue_after_result");
+		await this.scheduleNext(new RequestBudget(BUDGET_PER_INVOCATION));
+		return this.continueAfterView()!;
+	}
+
+	/** Cancel before it happened: nothing was sent, so nothing needs undoing. */
+	async cancelContinueAfter(): Promise<null> {
+		this.kvDel("continue_after");
+		await this.scheduleNext(new RequestBudget(BUDGET_PER_INVOCATION));
+		return null;
+	}
+
+	continueAfterView(): ContinueAfterView | null {
+		const c = this.kvGet<ContinueAfter>("continue_after");
+		const result = this.kvGet<ContinueAfterView["result"]>("continue_after_result");
+		if (!c) return result ? { trackId: null, armedAt: null, due: false, result } : null;
+		return { trackId: c.trackId, armedAt: c.armedAt, due: c.due === true, result: null };
+	}
+
+	/** When to look: just after the song should end; until then nothing (paused: now and then). */
+	private continueAfterLookAt(snap: PlayerSnapshot | null, base: number): number | null {
+		const c = this.kvGet<ContinueAfter>("continue_after");
+		if (!c) return null;
+		if (c.due) return base + 1000;
+		const obs = snap?.obs;
+		if (obs?.trackId === c.trackId && obs.isPlaying && obs.durationMs > 0)
+			return Math.max(base + 1000, obs.at + obs.durationMs - obs.progressMs + 1500);
+		return base + (obs?.trackId === c.trackId ? 2 * MINUTE_MS : 15_000);
+	}
+
+	/** After every look: has the song been left? Then the alarm resumes (outside this look). */
+	private noteContinueAfter(snap: PlayerSnapshot): void {
+		const c = this.kvGet<ContinueAfter>("continue_after");
+		if (!c || c.due) return;
+		const obs = snap.obs;
+		const st = this.stationRow(c.stationId);
+		const settle = (result: NonNullable<ContinueAfterView["result"]>) => {
+			this.kvDel("continue_after");
+			this.kvSet("continue_after_result", result);
+		};
+		if (!st || this.savedSession(c.stationId)?.sessionId !== c.sessionId)
+			return settle({
+				ok: false,
+				at: this.now(),
+				message: "Die TrueShuffle-Stelle hat sich geändert.",
+			});
+		if (this.now() - c.armedAt > CONTINUE_AFTER_MAX_MS)
+			return settle({
+				ok: false,
+				at: this.now(),
+				message: "Der Song lief länger als erwartet; nichts fortgesetzt.",
+			});
+		if (obs?.trackId === c.trackId) return;
+		// The listener went back to true-shuffle by hand: done, nothing to do.
+		if (obs?.contextUri && obs.contextUri === this.deckUri(st))
+			return settle({ ok: true, at: this.now(), message: null });
+		this.kvSet("continue_after", { ...c, due: true });
+	}
+
+	/** The observed change came: resume the saved place on the device that played. */
+	private async runContinueAfter(): Promise<void> {
+		const c = this.kvGet<ContinueAfter>("continue_after");
+		if (!c?.due) return;
+		this.kvDel("continue_after");
+		const result = await this.play(c.stationId, c.deviceId, { sessionId: c.sessionId });
+		this.kvSet("continue_after_result", {
+			ok: result.ok,
+			at: this.now(),
+			message: result.ok ? null : (result.error?.message ?? "Fortsetzen hat nicht geklappt."),
+		});
+	}
+
+	// =======================================================================
 	// TrueShuffle Likes (P4)
 	// =======================================================================
 
@@ -4801,11 +4926,8 @@ export class HubCore {
 
 	/** The song Spotify plays now, if it is this one (a like from Siri on a song outside the library). */
 	private observedMeta(id: TrackId): PackedTrack | null {
-		const obs = this.kvGet<PlayerSnapshot>("player")?.obs as
-			| (PlayerObservation & { track?: unknown })
-			| undefined;
-		if (!obs || obs.trackId !== id || !obs.track) return null;
-		return packTrack(obs.track as never);
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		return snap?.obs?.trackId === id ? (snap.track ?? null) : null;
 	}
 
 	/** The Kassette „TrueShuffle Likes“, made once when the first like is there (the listener may delete it). */
@@ -5743,6 +5865,8 @@ export class HubCore {
 	): Promise<PlayResult> {
 		const st = this.stationRow(stationId);
 		if (!st) return fail("unknown", "Diese Warteschlange gibt es nicht.");
+		// Any explicit start supersedes a waiting „Nach diesem Song fortsetzen“ (P5).
+		if (this.kvGet("continue_after") !== null) this.kvDel("continue_after");
 		let session = this.savedSession(stationId);
 		if (opts.sessionId && session?.sessionId !== opts.sessionId)
 			return fail("unknown", "Die Ansicht ist veraltet. Bitte aktualisieren.");
@@ -8288,6 +8412,7 @@ export class HubCore {
 			observed: this.observedPlayer(snap),
 			session: this.sessionView(),
 			likes: this.likesView(),
+			continueAfter: this.continueAfterView(),
 			guest: {
 				active: !!guestNow,
 				until: guestNow?.to ?? null,
@@ -9290,6 +9415,7 @@ export class HubCore {
 			this.renameLegacyPlaylists();
 			// Jobs, player observations and history have independent deadlines.
 			if (this.backgroundObservationAt() <= this.now()) await this.sync(budget);
+			await this.runContinueAfter();
 			if (this.historyReadAt() <= this.now()) {
 				try {
 					await this.freshenMemory(this.client(budget, false, false), true);
@@ -9345,6 +9471,8 @@ export class HubCore {
 			candidates.push(Math.max(base + 15_000, snap!.obs!.at + 32_000 - snap!.obs!.progressMs));
 		if (privately) candidates.push(base + 30_000);
 		if (this.privateLately()) candidates.push(base + 2 * MINUTE_MS);
+		const continueAt = this.continueAfterLookAt(snap, base);
+		if (continueAt !== null) candidates.push(continueAt);
 		const gp = this.guestPeriods().at(-1);
 		if (gp && base < gp.to) candidates.push(gp.to + 2000);
 		else if (gp && gp.last === undefined && now - gp.to < 10 * MINUTE_MS)

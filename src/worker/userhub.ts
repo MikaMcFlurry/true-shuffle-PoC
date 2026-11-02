@@ -718,6 +718,14 @@ export class UserHub extends DurableObject<Env> {
 	) {
 		return this.session(epoch, () => this.hub().listeningProfile(timeZone, period));
 	}
+	/** P5: go on with true-shuffle once this song outside it is over. */
+	continueAfter(epoch: number, trackId: unknown) {
+		return this.session(epoch, () => this.hub().continueAfter(trackId));
+	}
+	cancelContinueAfter(epoch: number) {
+		return this.session(epoch, () => this.hub().cancelContinueAfter());
+	}
+
 	/** P4: write the playlist „TrueShuffle Likes“ again (after a failure shown). */
 	likesSync(epoch: number) {
 		return this.session(epoch, () => this.hub().retryLikesSync());
