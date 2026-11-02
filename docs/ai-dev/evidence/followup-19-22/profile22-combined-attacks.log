@@ -1,0 +1,308 @@
+
+ RUN  v5.0.2 /tmp/profile22-combined-check
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > failed estimates are bounded by six-hour attempt gate
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > failed estimates are bounded by six-hour attempt gate
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > failed estimates are bounded by six-hour attempt gate
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > slow optional AI does not block owner transport through actual UserHub session queue
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > slow optional AI does not block owner transport through actual UserHub session queue
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > slow optional AI does not block owner transport through actual UserHub session queue
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > rejects non-string months before persisting data that crashes profile rendering
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > rejects non-string months before persisting data that crashes profile rendering
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/profile22-independent.test.ts > PR22 independent backend attacks > rejects non-string months before persisting data that crashes profile rendering
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+ ❯ test/hub/profile22-independent.test.ts (9 tests | 4 failed) 328ms
+   ❯ PR22 independent backend attacks (9)
+     × failed estimates are bounded by six-hour attempt gate 91ms
+     × slow optional AI does not block owner transport through actual UserHub session queue 125ms
+     × rejects non-string months before persisting data that crashes profile rendering 20ms
+     × rejects infinite played milliseconds rather than producing non-JSON import summary 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/profile22-independent.test.ts > PR22 independent backend attacks > failed estimates are bounded by six-hour attempt gate
+AssertionError: expected 3 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ test/hub/profile22-independent.test.ts:17:17
+     15|   h.hub.setImportedProfile(good());
+     16|   for(let i=0;i<3;i++) {await h.hub.estimateGenres().catch(()=>undefin…
+     17|   expect(calls).toBe(1);
+       |                 ^
+     18|  });
+     19|  it('slow optional AI does not block owner transport through actual Us…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/hub/profile22-independent.test.ts > PR22 independent backend attacks > slow optional AI does not block owner transport through actual UserHub session queue
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/profile22-independent.test.ts:38:19
+     36|   const p=await pause;
+     37|   expect(p.ok).toBe(true);
+     38|   expect(blocked).toBe(false);
+       |                   ^
+     39|  });
+     40|  it('rejects non-string months before persisting data that crashes pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/hub/profile22-independent.test.ts > PR22 independent backend attacks > rejects non-string months before persisting data that crashes profile rendering
+AssertionError: expected [Function] to throw an error
+ ❯ test/hub/profile22-independent.test.ts:43:43
+     41|   const h=await onboarded({tracks:40});
+     42|   const p={...good(),months:[{month:['2023-11'],plays:10,minutes:300}]…
+     43|   expect(()=>h.hub.setImportedProfile(p)).toThrow();
+       |                                           ^
+     44|  });
+     45|  it('normal imported profile remains isolated across two accounts',asy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/hub/profile22-independent.test.ts > PR22 independent backend attacks > rejects infinite played milliseconds rather than producing non-JSON import summary
+AssertionError: expected { at: 1791532395159, …(11) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "artists": 0,
+  "at": 1791532395159,
+  "earlySkips": 0,
+  "from": 1672531200000,
+  "hourWeek": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+  ],
+  "minutes": Infinity,
+  "months": [
+    {
+      "minutes": Infinity,
+      "month": "2023-01",
+      "plays": 1,
+    },
+  ],
+  "plays": 1,
+  "songs": 1,
+  "to": 1672531200000,
+  "topArtists": [],
+  "topSongs": [
+    {
+      "artist": "",
+      "id": "AAAAAAAAAAAAAAAAAAAAAA",
+      "name": "Unbekannter Song",
+      "plays": 1,
+    },
+  ],
+}
+
+ ❯ test/hub/profile22-independent.test.ts:91:39
+     89|  it('rejects infinite played milliseconds rather than producing non-JS…
+     90|   const p=newProfile();addToProfile([{ts:'2023-01-01T00:00:00Z',spotif…
+     91|   expect(finishProfile(p,Date.now())).toBeNull();
+       |                                       ^
+     92|  });
+     93| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  07:53:14
+   Duration  972ms (transform 44%, tests 40%, import 15%, worker 1%)

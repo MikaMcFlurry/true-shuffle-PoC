@@ -1,0 +1,14 @@
+
+> true-shuffle@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.2 /workspace/pr30-review-oct13
+
+SIZE import 613 ms, profile cold 3072 ms, warm 1317 ms, held after 0 MB (no gc)
+
+ Test Files  47 passed (47)
+      Tests  618 passed (618)
+   Start at  10:29:14
+   Duration  133.78s (tests 96%, import 2%, transform 1%)
+

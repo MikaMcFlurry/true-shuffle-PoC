@@ -1,0 +1,64 @@
+{
+  "schema_version": "pr18.fresh-independent-backend.v1",
+  "generated_at": "2026-10-08T19:56:38.158191+00:00",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "PR18 c2f9 historical facts, read-only/isolation and backend continuity regressions; local real HubCore + FakeSpotify simulation",
+  "subject_revision": "c2f9dcbfa3be806ad503aef7ea4a8b3bd7ccb4d8",
+  "production_baseline": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+  "previous_review": "2d741cb434e3b36063c9bd7997dce7136f5543cb",
+  "application_changes": false,
+  "external_writes": false,
+  "findings": [
+    {
+      "id": "PR18-C2-HISTORY-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Reachable later guest occurrence relabels an earlier owner history play",
+      "surface": "src/worker/hub/hub.ts:6185-6190; src/client/screens/menu.tsx:426-433",
+      "preconditions": "Signed-in owner with station and actual discovery candidates; ordinary owner play and thumb-up keep actions; change station source to already-imported liked source while kept discoveries remain",
+      "reproduction": [
+        "onboarded tracks600/playlists300; run ordinary discovery alarms for3h",
+        "Play generated station deck; start actual discovery via Spotify-client playlist position; listen5min; capture nonignored history row kind discovery",
+        "Keep first and second actual discovery via thumb; listen to second5min; set station sources to liked (empty imported source), preserving kept pool",
+        "Enable guest, explicit newQueue plans new round with two kept songs as fresh; start first at actual playlist position",
+        "Poll actual state live+refresh every30s until guest replay completes; disable guest; read original owner row"
+      ],
+      "expected": "Old owner row retains discovery reason or becomes null when exact provenance is unavailable",
+      "actual": "Old owner row becomes fresh by borrowing later guest occurrence within2h; it is nonignored and client renders Aus der Kassette instead of Empfehlung",
+      "exact_evidence": {
+        "track_id": "T00000000000000000007n",
+        "station_name": "Playlist 1",
+        "old_played_at": 1790327041500,
+        "old_ignored": false,
+        "old_kind": "discovery",
+        "new_deck_at": 1790327641500,
+        "delta_ms": 600000,
+        "after_kind": "fresh",
+        "owner_plays": 1,
+        "owner_last_played_at": 1790327041500
+      },
+      "cause": "historyKinds uses track+station and absolute2h proximity without proving matching occurrence or deck generation",
+      "repair_direction": "Return null unless a current deck item proves this exact stored play (e.g. exact played stamp); remove approximate cross-occurrence borrowing without introducing incidental state writes",
+      "required_regression": "Run final-owner-repro test against repair; earlier nonignored play must not relabel after later guest/newQueue occurrence; retain live exact provenance and read-only invariants",
+      "artifacts": [
+        "/tmp/pr18-c2-history-independent/final-owner-repro.test.ts",
+        "/tmp/pr18-c2-history-independent/final-owner-repro.log"
+      ]
+    }
+  ],
+  "verification": {
+    "independent_protected": "6/6PASS: future discovery/kept replacement >=25h, cold+warm no durable writes/provider/alarm/session mutation, genuine history429 localread, crossstation/instance isolation, private actual listening, native checkpoint preservation",
+    "regressions": "59/59PASS across songfacts,quota,session,skipstruth,observation scheduling",
+    "initial_helper_failure": "4 initial helper failures due ORDER BY rowid on WITHOUT ROWID tables; corrected temporary snapshot helper; 6/6PASS",
+    "ignored_only_repro": "Also reproduced ignored-row API mismatch but does not independently establish visible impact since ignored rows hide tags"
+  },
+  "not_run": [
+    "actual rendered browser in this child review (parent owns integrated browser checks)",
+    "liveSpotify",
+    "physicaliPhone",
+    "privateHA/MA",
+    "populatedproductionrestore"
+  ],
+  "artifacts_root": "/tmp/pr18-c2-history-independent"
+}

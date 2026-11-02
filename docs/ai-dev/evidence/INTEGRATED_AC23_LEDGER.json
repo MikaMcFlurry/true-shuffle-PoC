@@ -1,0 +1,397 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-09T16:25:25.728291+00:00",
+  "project": "true-shuffle externalPR27→28 integrated release review",
+  "subject": {
+    "revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+    "artifact_ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+    "environment": "Actual externalCloudflaref9364da0/2d3927f7 and isolated156ba/78fc/ac23 RealWorkerFakeSpotify",
+    "environment_class": "PRODUCTION"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "BLOCKED",
+  "material_release": true,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA",
+    "AI_TOOL_SIDE_EFFECTS",
+    "PERFORMANCE_CRITICAL"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "BLOCKED",
+  "required_categories": [
+    "accessibility",
+    "build",
+    "critical_journey",
+    "data_invariants",
+    "independent_review",
+    "migration",
+    "operations",
+    "performance_reliability",
+    "post_deploy",
+    "recovery",
+    "security_privacy",
+    "ui_runtime"
+  ],
+  "external_blockers": [
+    {
+      "id": "B-SPOTIFY",
+      "type": "CREDENTIAL",
+      "description": "Owner reports working queue and playlist resume; agent cannot independently access physical owner Spotify/iPhone for current wake, latency and transport acceptance or actual quota capacity.",
+      "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
+    },
+    {
+      "id": "B-HA",
+      "type": "CREDENTIAL",
+      "description": "Private owner HA/MA installation and real Spotify Connect/native devices unavailable.",
+      "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
+    },
+    {
+      "id": "B-STORAGE",
+      "type": "TOOL_UNAVAILABLE",
+      "description": "Actual populated object bookmark/restore and history/migration-invariant acceptance have not been executed; existing app exposes no isolated authenticated recovery interface. SQLitePITR is documented, not verified by restore.",
+      "evidence_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
+    }
+  ],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR24-LANE-07",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Returning to a retained older Spotify queue can assign replacement-deck reason to the old occurrence"
+    },
+    {
+      "id": "PR26-PROFILE-RANK",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Inexact artist/album display ranks by duration while showing play counts"
+    },
+    {
+      "id": "PR25-RESUME-OWNER-CONFLICT",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Current preserved unfinished-instance/progress requirement conflicts intentionally advancing listed partial plays"
+    },
+    {
+      "id": "PR28-REST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "90-day overplayed rest is bypassed by cooling fallback in normal deck planning"
+    },
+    {
+      "id": "PR28-OVERLAP-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "First-win aggregate deduplication disagrees with last-win profile classification for overlapping exports"
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-BUILD-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "Integratedac23 type/lint/build/dryPASS. ExactheadUnit560PASS/1parallel-load timeout;117RobustnessrerunPASSdefault20s, no fabricatedsinglefull561PASS."
+    },
+    {
+      "id": "G-COMBINED",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-COMBINED-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "46standard+4extra candidatebrowserPASS;67unchangedprotectedPASS, inheritedcontinuity conflict remains."
+    },
+    {
+      "id": "G-NEW-BEHAVIOR",
+      "category": "data_invariants",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "G-NEW-BEHAVIOR-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "OriginalPodcastclosed; new90dayrest bypass andoverlapdedupFAIL; inheritedLANE07/Resumeconflictopen."
+    },
+    {
+      "id": "G-UI",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-UI-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "Actuallocal profile390/1440lightdark longmetadata keyboard/nav4PASS;46standarderror/offline/pendingPASS;actualanonymousproduction4rendersPASS."
+    },
+    {
+      "id": "G-A11Y",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-A11Y-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "Bounded existinglabel/keyboard/focus assertionsPASS; no completeWCAG orphysicalSafari claim."
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-MIGRATION-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "AdditiveJSON6fieldcompatibility andold4/5 validationPASS; noSQLschema orCloudflare migrationchange;actualpopulatedrestoreNOTRUN."
+    },
+    {
+      "id": "G-LOCAL-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-LOCAL-RECOVERY-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "Existinglocalretry/recovery/account/guest/native checksPASS; datedbefore>playsrejected."
+    },
+    {
+      "id": "G-SECURITY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-SECURITY-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "Publicactual401/CSRF403PASS;existingaccount/private/guest/native regressionsPASS; no authchanges."
+    },
+    {
+      "id": "G-REVIEW",
+      "category": "independent_review",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "G-REVIEW-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "FreshscopedNOT_READY withtwoP2s;overallBLOCKED alsoinheritsP1Resume productauthorityconflict."
+    },
+    {
+      "id": "G-CI",
+      "category": "operations",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-CI-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:25:07.654438+00:00"
+        }
+      ],
+      "rationale": "Exactintegratedverify37958130063 success, exacthead37956572049success;27head/integratedCI success."
+    },
+    {
+      "id": "G-LIVE",
+      "category": "post_deploy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "G-LIVE-AC23",
+          "kind": "current-source-runtime-and-review",
+          "ref": "docs/ai-dev/evidence/INTEGRATED_AC23_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+          "observed_at": "2026-10-09T16:24:15.868374+00:00"
+        }
+      ],
+      "rationale": "Externallyactivatedf9364da0/2d3927f7100%;compiledWorker/assets/auth/browser/resources actualverified; notfunctionalacceptance."
+    },
+    {
+      "id": "G-AI-RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "NOT_RUN",
+      "rationale": "Physicalprovider/privateHA/filledrestore/liveCloudflarecapacityNOTRUN.",
+      "evidence": []
+    }
+  ]
+}

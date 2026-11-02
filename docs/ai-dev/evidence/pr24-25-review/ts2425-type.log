@@ -1,0 +1,3 @@
+
+> true-shuffle@1.0.0 typecheck
+> tsc -p tsconfig.worker.json && tsc -p tsconfig.client.json && tsc -p tsconfig.test.json

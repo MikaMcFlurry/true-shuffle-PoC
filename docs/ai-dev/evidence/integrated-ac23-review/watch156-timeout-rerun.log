@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/ts-review-156ba
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 116 skipped (117)
+   Start at  16:22:28
+   Duration  8.88s (tests 95%, transform 4%, import 1%)
+

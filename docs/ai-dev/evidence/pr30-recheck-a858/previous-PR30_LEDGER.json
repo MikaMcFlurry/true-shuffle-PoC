@@ -1,0 +1,400 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-13T17:20:16.855210+00:00",
+  "project": "true-shuffle",
+  "subject": {
+    "revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+    "artifact_ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
+    "environment": "isolatedLinuxcheckout realHubSQLite/Worker/FakeSpotify and interceptedUI; not production",
+    "environment_class": "LOCAL"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "BLOCKED",
+  "material_release": false,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA",
+    "PERFORMANCE_CRITICAL"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "BLOCKED",
+  "required_categories": [
+    "accessibility",
+    "build",
+    "critical_journey",
+    "data_invariants",
+    "independent_review",
+    "migration",
+    "operations",
+    "performance_reliability",
+    "post_deploy",
+    "recovery",
+    "security_privacy",
+    "ui_runtime"
+  ],
+  "external_blockers": [
+    {
+      "id": "B-CLOUDFLARE-ACCESS",
+      "type": "CREDENTIAL",
+      "description": "ExistingauthorizedCFaccess unavailable;whoamiunauthenticated",
+      "evidence_ref": "docs/ai-dev/evidence/PR_WATCH_2026_10_10.json"
+    }
+  ],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-CRITICAL_JOURNEY",
+        "G-DATA_INVARIANTS",
+        "G-SECURITY_PRIVACY",
+        "G-UI_RUNTIME"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR24-LANE-07",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Returning to a retained older Spotify queue can assign replacement-deck reason to the old occurrence"
+    },
+    {
+      "id": "PR26-PROFILE-RANK",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Inexact artist/album display ranks by duration while showing play counts"
+    },
+    {
+      "id": "PR25-RESUME-OWNER-CONFLICT",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Current preserved unfinished-instance/progress requirement conflicts intentionally advancing listed partial plays"
+    },
+    {
+      "id": "PR28-REST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "90-day overplayed rest is bypassed by cooling fallback in normal deck planning"
+    },
+    {
+      "id": "PR28-OVERLAP-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "First-win aggregate deduplication disagrees with last-win profile classification for overlapping exports"
+    },
+    {
+      "id": "PR29-REPEAT-NO-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Repeated negative retest answers do not accumulate the stated further skip or doubled recheck interval"
+    },
+    {
+      "id": "PR29-VERDICT-ORDER",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unfenced concurrent opposite verdicts let late acknowledgement contradict last accepted answer"
+    },
+    {
+      "id": "PR29-VERDICT-TRANSPORT",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Successful verdict response discards failed playback advance result"
+    },
+    {
+      "id": "PR29-VERDICT-OCCURRENCE",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Prior answer hides the next probe of the same song in a continuously open Home"
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": [
+        {
+          "id": "G-BUILD-PR30",
+          "kind": "source-review-and-runtime",
+          "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+        }
+      ]
+    },
+    {
+      "id": "G-CRITICAL_JOURNEY",
+      "category": "critical_journey",
+      "required": true,
+      "status": "FAIL",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": [
+        {
+          "id": "G-CRITICAL_JOURNEY-PR30",
+          "kind": "source-review-and-runtime",
+          "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+        }
+      ]
+    },
+    {
+      "id": "G-DATA_INVARIANTS",
+      "category": "data_invariants",
+      "required": true,
+      "status": "FAIL",
+      "rationale": "PR30 scoped backend repair PASS; overall release FAIL because inherited PR24\u201329 protected-contract blockers remain open. See PR29_REVIEW.json.",
+      "evidence": [
+        {
+          "id": "G-DATA_INVARIANTS-PR30",
+          "kind": "source-review-and-runtime",
+          "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+        }
+      ]
+    },
+    {
+      "id": "G-INDEPENDENT_REVIEW",
+      "category": "independent_review",
+      "required": true,
+      "status": "FAIL",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": [
+        {
+          "id": "G-INDEPENDENT_REVIEW-PR30",
+          "kind": "source-review-and-runtime",
+          "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+        }
+      ]
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": [
+        {
+          "id": "G-MIGRATION-PR30",
+          "kind": "source-review-and-runtime",
+          "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
+          "result": "PASS",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+        }
+      ]
+    },
+    {
+      "id": "G-OPERATIONS",
+      "category": "operations",
+      "required": true,
+      "status": "NOT_RUN",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": []
+    },
+    {
+      "id": "G-POST_DEPLOY",
+      "category": "post_deploy",
+      "required": true,
+      "status": "NOT_RUN",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": []
+    },
+    {
+      "id": "G-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "NOT_RUN",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": []
+    },
+    {
+      "id": "G-SECURITY_PRIVACY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "FAIL",
+      "rationale": "PR30 scoped backend repair PASS; overall release FAIL because inherited PR24\u201329 protected-contract blockers remain open. See PR29_REVIEW.json.",
+      "evidence": [
+        {
+          "id": "G-SECURITY_PRIVACY-PR30",
+          "kind": "source-review-and-runtime",
+          "ref": "docs/ai-dev/evidence/PR30_REVIEW.json",
+          "result": "FAIL",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+        }
+      ]
+    },
+    {
+      "id": "G-PERFORMANCE_RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "NOT_RUN",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": []
+    },
+    {
+      "id": "G-UI_RUNTIME",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "rationale": "New storedcommit ordering independently repairs exact deletion precommitGET repro; other scoped UI ordering/runtime checksPASS. Inherited essential findings and completion/access remain blocking.",
+      "evidence": [
+        {
+          "id": "G-UI_RUNTIME-PR30",
+          "kind": "actual-browser-render-and-API-interception",
+          "ref": "docs/ai-dev/evidence/pr30-recheck-640/pr30-640-ui.md",
+          "result": "PASS",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+        }
+      ]
+    },
+    {
+      "id": "G-ACCESSIBILITY",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "rationale": "PR30 draft/source review; exact tests and limits in PR30_REVIEW. No positive release claim.",
+      "evidence": [
+        {
+          "id": "G-ACCESSIBILITY-PR30",
+          "kind": "actual-browser-render-and-API-interception",
+          "ref": "docs/ai-dev/evidence/pr30-recheck-640/pr30-640-ui.md",
+          "result": "PASS",
+          "subject_revision": "6408961aecaf9c4717077a4499b8aa750256bb0e",
+          "observed_at": "2026-10-13T17:20:16.855210+00:00"
+        }
+      ]
+    }
+  ]
+}

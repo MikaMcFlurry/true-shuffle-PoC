@@ -1,0 +1,18 @@
+[
+  {
+    "kind": "apply",
+    "fault": "after_commit/deck_dirty",
+    "fault_http": 500,
+    "all_rows_unchanged": true,
+    "retry_commit": 2,
+    "status": "PASS"
+  },
+  {
+    "kind": "delete",
+    "fault": "after_commit/deck_dirty",
+    "fault_http": 500,
+    "all_rows_unchanged": true,
+    "retry_commit": 2,
+    "status": "PASS"
+  }
+]

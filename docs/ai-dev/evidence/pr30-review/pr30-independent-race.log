@@ -1,0 +1,132 @@
+
+ RUN  v5.0.2 /workspace/pr30-review-oct13
+
+stdout | test/hub/pr30-independent-race.test.ts > new totals must not use old listens as their own selection evidence
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-race.test.ts > new totals must not use old listens as their own selection evidence
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-race.test.ts > new totals must not use old listens as their own selection evidence
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-race.test.ts > new totals must not use old listens as their own selection evidence
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 2 Wiedergaben"}
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+OLD_EVENTS_NEW_TOTALS 1 {
+  key: 'URVwUAVDgplnKHws|g1',
+  hasImport: true,
+  importedAt: 1790316061500,
+  songs: 1,
+  rows: 2,
+  rowsFrom: 1709294400000,
+  rowsTo: 1740830400000,
+  summaryProfile: false,
+  coverage: 'events'
+}
+
+stdout | test/hub/pr30-independent-race.test.ts > new totals supersede the older in-flight event upload
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-race.test.ts > new totals supersede the older in-flight event upload
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-race.test.ts > new totals supersede the older in-flight event upload
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-race.test.ts > new totals supersede the older in-flight event upload
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+UPLOAD_IDENTITIES_DIFFER true
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 2 Wiedergaben"}
+
+stdout | test/hub/pr30-independent-race.test.ts > legacy first listens block cannot recreate a deleted import
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-race.test.ts > legacy first listens block cannot recreate a deleted import
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-race.test.ts > legacy first listens block cannot recreate a deleted import
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-race.test.ts > legacy first listens block cannot recreate a deleted import
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 1 Songs, 0 einzelne Wiedergaben"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 2 Wiedergaben"}
+RESURRECTED {
+  key: '-|g1',
+  hasImport: true,
+  importedAt: 1790316061500,
+  songs: 0,
+  rows: 2,
+  rowsFrom: 1709294400000,
+  rowsTo: 1740830400000,
+  summaryProfile: false,
+  coverage: 'events'
+}
+
+ ❯ test/hub/pr30-independent-race.test.ts (3 tests | 3 failed) 158ms
+   × new totals must not use old listens as their own selection evidence 101ms
+   × new totals supersede the older in-flight event upload 35ms
+   × legacy first listens block cannot recreate a deleted import 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr30-independent-race.test.ts > new totals must not use old listens as their own selection evidence
+AssertionError: expected 1 to be 10 // Object.is equality
+
+- Expected
++ Received
+
+- 10
++ 1
+
+ ❯ test/hub/pr30-independent-race.test.ts:14:35
+     12|  h.hub.applySelection({baseRevision:0,enabled:true,rules:[rule]});
+     13|  console.log('OLD_EVENTS_NEW_TOTALS',h.hub.memory(t.id).plays,h.hub.se…
+     14|  expect(h.hub.memory(t.id).plays).toBe(10);
+       |                                   ^
+     15| });
+     16| it('new totals supersede the older in-flight event upload',async()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  test/hub/pr30-independent-race.test.ts > new totals supersede the older in-flight event upload
+AssertionError: expected [Function] to throw an error
+ ❯ test/hub/pr30-independent-race.test.ts:22:108
+     20|  const newer=h.hub.importHistory([row(t.id,10)],0,1).upload;
+     21|  console.log('UPLOAD_IDENTITIES_DIFFER',old!==newer);
+     22|  expect(()=>h.hub.importListens({upload:u,importId:old,part:1,parts:2,…
+       |                                                                                                            ^
+     23| });
+     24| it('legacy first listens block cannot recreate a deleted import',async…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  test/hub/pr30-independent-race.test.ts > legacy first listens block cannot recreate a deleted import
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/pr30-independent-race.test.ts:31:50
+     29|  h.hub.importListens({upload:u,part:1,parts:2,tracks:1,kind:'rows',dat…
+     30|  console.log('RESURRECTED',h.hub.selectionView().dataset);
+     31|  expect(h.hub.selectionView().dataset.hasImport).toBe(false);
+       |                                                  ^
+     32| });
+     33|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  10:30:31
+   Duration  857ms (transform 66%, tests 21%, import 12%)
+

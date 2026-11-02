@@ -1,0 +1,33 @@
+{
+  "unchanged": [
+    "_headers",
+    "apple-touch-icon.png.json",
+    "icon-192.png.json",
+    "icon-512.png",
+    "manifest.webmanifest",
+    "apple-touch-icon.png",
+    "icon.svg",
+    "icon-192.png",
+    "icon-512.png.json",
+    "assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2",
+    "assets/permanent-marker-latin-400-normal-BnZj5c41.woff",
+    "assets/atkinson-hyperlegible-next-latin-ext-wght-normal-C6vrW8VD.woff2",
+    "assets/bricolage-grotesque-latin-ext-standard-normal-qp-RdZgh.woff2",
+    "assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2",
+    "assets/bricolage-grotesque-vietnamese-standard-normal-Br4FGdAc.woff2",
+    "assets/permanent-marker-latin-400-normal-BF23djCy.woff2"
+  ],
+  "changed": [
+    "index.html"
+  ],
+  "added": [
+    "assets/index-VQ3kyE_6.js",
+    "assets/index-Bw6NFXkp.css",
+    "assets/index-VQ3kyE_6.js.map"
+  ],
+  "removed": [
+    "assets/index-DJ3UCLbU.js",
+    "assets/index-DJ3UCLbU.js.map",
+    "assets/index-Btfb1YB8.css"
+  ]
+}

@@ -1,0 +1,279 @@
+{
+  "schema_version": "true-shuffle.pr24-26-review.v1",
+  "generated_at": "2026-10-09T12:37:47.213728+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_source": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+  "combined_review_source": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+  "heads": {
+    "24": "c6b644a28116754c0d0519e7559ca0544d78309b",
+    "25": "62aa03c9fb073999ed30cafbea88dff51340a278",
+    "26": "e6d08a3a0130c23d7c7487dcad57ab4840e6e0ff"
+  },
+  "provenance": "Actual GitHub author MikaMcFlurry; all three git commits Claude <noreply@anthropic.com>, Co-Authored-By Claude Opus5.5 and same session_01LuiFYFqenEVR9agywkDkAX. No invented Claude username.",
+  "inventory_ref": "pr24-26-review/ts242526-github.json",
+  "dependencies": "All baseCEE. Local order24→25→26. One26 constants conflict resolved only by retaining LISTED_SLACK_MS and deleting26 obsolete PLAYS_KEEP_MS/PRUNE_PER_DAY. No app fix. No remote integration.",
+  "completion": {
+    "24": 6080813170,
+    "25": 6080815485,
+    "26": false,
+    "coherent_release_ready": false
+  },
+  "verdict": "BLOCKED",
+  "independence": "FRESH",
+  "closed_prior_findings": [
+    "Original PR24-LANE-05 reproduction fixed on exact and combined; LANE03/04 tests PASS",
+    "PR25 old end-time claim removed, but preserved-queue assertion remains violated; owner exception pending"
+  ],
+  "findings": [
+    {
+      "id": "PR24-LANE-06",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unseen repeat and forward seek spoof previous occurrence start proof",
+      "files": [
+        "src/worker/hub/hub.ts:4938",
+        "src/worker/hub/hub.ts:5003",
+        "src/worker/hub/hub.ts:5046"
+      ],
+      "preconditions": "Real HubCore with FakeSpotify, controlled deck replacement through actual saveDeck, no SQL mutation of production state, no extra provider calls introduced",
+      "reproduction": [
+        "Observe newly started 180 s station song T; observe it again at 6 s with fresh provenance.",
+        "Skip T at 6 s (not listed), play another song for 60 s without Hub looks.",
+        "Publish same IDs/order deck with T favorite through saveDeck, restart Hub.",
+        "Insert T as next station playlist occurrence, skip to it, listen 40 s without Hub looks.",
+        "Use an ordinary forward seek to 106 s so observation time minus position equals original start. Either remain playing or pause at 106 s.",
+        "Refresh player state, one second later skip T, refresh and ingest normal history."
+      ],
+      "expected": "The new 40/41 s counted occurrence has kind null: no observation established its identity with old occurrence. A forward seek cannot prove occurrence start.",
+      "actual": "Both playing→playing and playing→paused branches renew original fresh note, lastAt 1790316887500/progress106000/start1790316781500, then persist fresh on the later repeat instead of null. Two assertions fail on exact PR24 and combined source.",
+      "impact": "Persistent false provenance under strict owner requirement, including after changed deck and Hub restart. Seek behavior is user/device-controlled and allowed by preserved requirements.",
+      "cause": "obs.at - progress is seekable media position arithmetic, not stable instance identity. Same-start arithmetic and progress > elapsed bounds are spoofable by forward seek after unseen replay.",
+      "repair_direction": "Do not promote numerical start agreement to proof of occurrence identity across gaps that permit an unseen seek/replay. Preserve unknown/null provenance for ambiguous observations without extra requests. Keep observed continuous play, pause, app-skip and guest/native behavior intact.",
+      "required_checks": [
+        "Exact and combined reproductions for both playing→playing and playing→paused seek spoof cases",
+        "Retain original LANE03/04/05 and observed pause/app-skip positive assertions",
+        "Stable occurrence/resume/guest/native regressions"
+      ]
+    },
+    {
+      "id": "PR26-IMPORT-GENERATION-01",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Concurrent history uploads publish rows against the wrong song dictionary",
+      "affected_files": [
+        "src/worker/hub/hub.ts:6656-6684",
+        "src/worker/index.ts:563",
+        "src/client/api.ts:214",
+        "src/client/screens/menu.tsx:1094"
+      ],
+      "preconditions": "Authenticated owner importing their own history; no cross-account or auth bypass.",
+      "reproduction": [
+        "Tab A starts part0/parts2/tracks1 dictionary A.",
+        "Tab B starts identical-size part0 with dictionary B, replacing pending generation.",
+        "Tab A sends part1 row [previous-day-second,0,120000,0,1]."
+      ],
+      "actual": "Part1 accepted; current Hörprofil reports B with two minutes actually heard for A. Published generation mixes independent imports and replaces the prior history.",
+      "expected": "Each chunk proves the upload identity/generation. Stale tab A must fail without publishing or harming tab B/current history.",
+      "repair_direction": "Issue an unguessable or caller-provided unique upload id and bind all chunks to it, stored alongside progression; check on final publish; reject stale attempts.",
+      "required_regression": "Parallel imports with equal counts, different dictionaries/order, reordered blocks, cancel/restart, logout/re-sign-in, old-current survival until complete.",
+      "evidence": [
+        "/tmp/pr26-independent-attacks.test.ts",
+        "/tmp/pr26-independent-observed.test.ts",
+        "/tmp/pr26-exact-backend-attacks.log"
+      ]
+    },
+    {
+      "id": "PR26-IMPORT-VALIDATION-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Declared track count is trusted instead of the actual dictionary length",
+      "affected_files": [
+        "src/worker/hub/hub.ts:6671-6677",
+        "src/worker/hub/hub.ts:6743"
+      ],
+      "preconditions": "Authenticated owner importing their own history; no cross-account or auth bypass.",
+      "reproduction": [
+        "Upload part0/parts2/tracks2 containing only dictionary A.",
+        "Upload part1 row index1 with valid time and120000ms."
+      ],
+      "actual": "Server accepts completion, importedPlays=1 but profile plays=0 because index1 has no track. Previous generation already removed.",
+      "expected": "Reject incomplete dictionaries/references to absent tracks before publication. Retain previous current import.",
+      "repair_direction": "Track actual accepted dictionary entries, exact final count and page lengths, verify row references against real count.",
+      "required_regression": "Short nonfinal/final dictionary pages, empty dictionary, declared count mismatch, malformed row index, restart and current generation intact.",
+      "evidence": [
+        "/tmp/pr26-independent-attacks.test.ts",
+        "/tmp/pr26-independent-observed.test.ts",
+        "/tmp/pr26-exact-backend-attacks.log"
+      ]
+    },
+    {
+      "id": "PR26-IMPORT-ORDER-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Accepted unsorted rows silently hide older imported history",
+      "affected_files": [
+        "src/worker/hub/hub.ts:6677",
+        "src/worker/hub/hub.ts:6737"
+      ],
+      "preconditions": "Authenticated owner importing their own history; no cross-account or auth bypass.",
+      "reproduction": [
+        "Dictionary A then row at current clock followed by row one day earlier, both valid shapes."
+      ],
+      "actual": "Upload accepted, coverage importedPlays=2, profile plays=0: timeline breaks on first row >= live_since and never examines later older row.",
+      "expected": "Reject unsorted rows within/across blocks, or sort and safely filter every row before using ordered timeline assumptions; publication must not silently lose valid older plays.",
+      "repair_direction": "Validate monotonic timestamp through upload progression and on publication, or remove break in favor of filter plus safe ordering.",
+      "required_regression": "Descending rows within/across blocks, duplicate timestamps/duplicates policy, liveSince crossing, matching coverage, previous-generation survival.",
+      "evidence": [
+        "/tmp/pr26-independent-attacks.test.ts",
+        "/tmp/pr26-independent-observed.test.ts",
+        "/tmp/pr26-exact-backend-attacks.log"
+      ]
+    },
+    {
+      "id": "PR26-PROFILE-DST-04",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Fall DST places a Sunday listen into a Tuesday weekly bucket",
+      "affected_files": [
+        "src/core/period-profile.ts:192"
+      ],
+      "preconditions": "Authenticated owner importing their own history; no cross-account or auth bypass.",
+      "reproduction": [
+        "period Aug1-Nov1 2026 makes series weekly.",
+        "Events2026-10-19T10:00Z and2026-10-25T22:30Z, timezoneEurope/Berlin.",
+        "Second is SundayOct25 23:30 local after DST ends."
+      ],
+      "actual": "Two series points: Monday2026-10-19 and Tuesday2026-10-20, rather than same Monday bucket. Subtracting6 fixed24h days crosses offset change and reaches Tuesday00:30 local.",
+      "expected": "Both local-calendar-week events in Monday2026-10-19 bucket with2plays.",
+      "repair_direction": "Compute week start from local calendar date/day index rather than subtracting UTC milliseconds then reformatting in zone.",
+      "required_regression": "Spring/fall DST near local midnight Europe/Berlin and other real zones, all points Monday, same-week events combine, totals preserved.",
+      "evidence": [
+        "/tmp/pr26-independent-attacks.test.ts",
+        "/tmp/pr26-independent-observed.test.ts",
+        "/tmp/pr26-exact-backend-attacks.log"
+      ]
+    },
+    {
+      "id": "PR26-PROFILE-YEAR-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Calendar-year comparison counts the wrong preceding calendar range",
+      "files": [
+        "src/core/period-profile.ts:106",
+        "src/core/period-profile.ts:161",
+        "src/client/screens/profile.tsx:147"
+      ],
+      "reproduction": "Select 2024 (Jan 1 2024 through Jan 1 2025) with imported plays at Dec 31 2022 noon and Jan 1 2023 noon. periodProfile previous counts both because it subtracts 366 days; UI labels the result im Jahr 2023.",
+      "expected": "Comparison labelled 2023 counts only Jan 1 2023 through Jan 1 2024, or label explicitly says equal-length preceding window rather than calendar year.",
+      "actual": "previous.plays=2 instead of 1; 2022 event contaminates 2023 comparison. 2025 vs leap-year2024 conversely omits Jan1 2024.",
+      "impact": "False annual listening metrics and changes.",
+      "repair": "Carry an explicit prior calendar interval for year choices or make the current equal-span label accurate; preserve custom/rolling semantics.",
+      "required_checks": [
+        "2024 vs2023 boundary",
+        "2025 vs2024 leap-year boundary",
+        "UTC and Europe/Berlin calendar-year boundaries",
+        "rendered comparison label matches interval"
+      ]
+    },
+    {
+      "id": "PR26-PROFILE-SESSION-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Session highlight claims uninterrupted listening across known pauses",
+      "files": [
+        "src/core/period-profile.ts:86",
+        "src/core/period-profile.ts:231",
+        "src/client/screens/profile.tsx:512"
+      ],
+      "reproduction": "Two exact imported plays of 30 minutes end at Jan1 2024 12:00 and12:39 UTC. Second starts12:09: known9-minute silence. periodProfile returns longestSession60min; actual ProfileScreen displays 1 Stunden ohne Pause.",
+      "expected": "Describe a session allowing gaps of up to10min, or compute genuinely uninterrupted duration; exact listening minutes alone do not prove continuous playback. Live estimates must also be qualified.",
+      "actual": "60-minute session with known9-minute pause labelled ohne Pause.",
+      "impact": "Trust contract: claimed listening evidence exceeds known timeline.",
+      "repair": "Use truthful qualified session label and definition, without changing playback state or inventing continuous listening.",
+      "required_checks": [
+        "known9-minute pause",
+        "10-minute session boundary",
+        "mixed exact/estimated live event",
+        "actual rendered highlight copy"
+      ]
+    },
+    {
+      "id": "PR26-PROFILE-RANK-03",
+      "severity": "P2",
+      "blocking": false,
+      "title": "Most-heard artist label disagrees with displayed play-count ranking",
+      "files": [
+        "src/core/period-profile.ts:282",
+        "src/client/screens/profile.tsx:425",
+        "src/client/screens/profile.tsx:518"
+      ],
+      "reproduction": "Mixed/live period: Long has1 play30 estimated minutes, Frequent10 plays totaling10 estimated minutes. minutesExactfalse. topArtists ranks Long first by estimated time; rendered bars show Long1× first and Frequent10× second, and calls Long most-heard with9% share.",
+      "expected": "State explicitly that ranking uses estimated listening time, or rank consistently by displayed plays; do not imply first has most plays.",
+      "actual": "Confirmed in real browser and core attack.",
+      "repair": "Align ranking, displayed units and most-heard claim.",
+      "required_checks": [
+        "one long vs many short plays",
+        "mixed imported/live durations",
+        "top50 truncation consistent with selected ranking"
+      ]
+    },
+    {
+      "id": "PR25-RESUME-OWNER-CONFLICT",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Final rule advances listed partial plays contrary to current preserved unfinished occurrence requirement",
+      "status": "Owner clarification pending; separate-chat reported exception not silently substituted",
+      "evidence": "pr24-26-review/resume-attacks.log"
+    }
+  ],
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS (two advisory infos)",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit_worker": "538/538 PASS default20s timeout",
+    "real_worker_fake_spotify_browser": "46/46 PASS",
+    "unchanged_resume": "11/11 PASS",
+    "unchanged_partial_play_attacks": "3/3 FAIL",
+    "exact_head_verify": {
+      "24": 37929282010,
+      "25": 37928518577,
+      "26": 37927708231
+    },
+    "independent_lane": "50 regressions exact+combined PASS; two new seek-spoof assertions FAIL both",
+    "independent_backend": "49 regressions+2 migration/readback PASS;4 attacks FAIL exact26 and combined",
+    "independent_ui": "9 original tests PASS;3 adversarial FAIL (one nonblocking rank),2 supporting PASS;6 actual Chromium renders320/390/1440 light/dark0overflow/noerrors withmockedprofileAPI. Pending, keyboard, customdates andvisible503 checked; no fullWCAG orretry-semantic acceptance claim",
+    "mechanical_detector": "Advisory findings only, not promoted to blocking style errors"
+  },
+  "production": {
+    "source": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+    "version": "473f96c8-35ad-486b-9592-b7005d0f40b9",
+    "deployment": "7150626c-6af6-45fb-9326-4118d829dd03",
+    "traffic": 100,
+    "readback": "Wrangler deployments and authenticated safe snapshot current;settings,namespaces,secretsmetadata,schedules,fullversion identical prior11:59 snapshot",
+    "previous_readback": "18/19 assets exact;sourcemap sourcespaths only;sourcesContent same;prior public health/authCSRF/browser evidence retains baseCEE binding",
+    "known_live_finding": "PR20-LANE-03 remains actualCEE;newcandidate defects NOT deployed"
+  },
+  "comments": {
+    "24": 6080990256,
+    "25": 6080977483,
+    "26": 6081010497
+  },
+  "operations": {
+    "application_fix_by_root": false,
+    "merge_by_root": false,
+    "upload_by_root": false,
+    "activation_by_root": false,
+    "rollback_by_root": false
+  },
+  "not_run": [
+    "Physical iPhone/liveSpotify latency and quota",
+    "Private HA/MA",
+    "Actual populated production restore",
+    "CloudflareCPU/memory/quota scaling for unbounded retention and whole timeline scans",
+    "PR26 postdeployment because unmerged and blocked"
+  ],
+  "prior_review": "PR24_25_REVIEW.json source6b historical; findings and checks not relabelled as current",
+  "historical_snapshot": true,
+  "superseded_current_review": "INTEGRATED_932_REVIEW.json"
+}

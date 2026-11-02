@@ -1,0 +1,1 @@
+export default {test:{include:['/tmp/pr23-lane-parent.test.ts'],environment:'node',testTimeout:20000,silent:'passed-only'}};

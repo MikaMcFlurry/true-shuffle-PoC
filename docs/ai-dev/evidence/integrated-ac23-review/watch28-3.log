@@ -1,0 +1,45 @@
+
+> true-shuffle@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.2 /workspace/ts-review-78fc
+
+stdout | test/hub/robustness.test.ts > the listener's own choices and long stops (red-team 6) > still skips a turned-down song an old order brings back after 20 h
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/robustness.test.ts > the listener's own choices and long stops (red-team 6) > still skips a turned-down song an old order brings back after 20 h
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/robustness.test.ts > the listener's own choices and long stops (red-team 6) > still skips a turned-down song an old order brings back after 20 h
+{"level":"info","kind":"import","message":"„Playlist 1“: 600 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/robustness.test.ts > the listener's own choices and long stops (red-team 6) > still skips a turned-down song an old order brings back after 20 h
+{"level":"info","kind":"thumb","message":"Daumen runter: Song 547 — Artist 67"}
+
+SIZE import 677 ms, profile cold 6153 ms, warm 3900 ms, held after 0 MB (no gc)
+ ❯ test/hub/robustness.test.ts (117 tests | 1 failed) 204474ms
+   ❯ the listener's own choices and long stops (red-team 6) (5)
+     × still skips a turned-down song an old order brings back after 20 h 20051ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/robustness.test.ts > the listener's own choices and long stops (red-team 6) > still skips a turned-down song an old order brings back after 20 h
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/hub/robustness.test.ts:525:3
+    523|
+    524|  for (const hours of [13, 20])
+    525|   it(`still skips a turned-down song an old order brings back after ${…
+       |   ^
+    526|    const h = await onboarded({ tracks: 600 });
+    527|    const sid = h.stationIds[0]!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 40 passed (41)
+      Tests  1 failed | 560 passed (561)
+   Start at  16:15:52
+   Duration  206.12s (tests 96%, import 3%, transform 1%)
+

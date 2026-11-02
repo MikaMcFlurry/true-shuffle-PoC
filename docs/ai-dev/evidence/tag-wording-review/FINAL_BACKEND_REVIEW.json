@@ -1,0 +1,143 @@
+{
+  "verdict": "READY",
+  "independence": "FRESH",
+  "scope": "Scoped independent PR18 backend/API historical-facts and protected continuity release review; no deployment claim",
+  "subject": {
+    "revision": "4b0a2a21f64474416eaeda780e38b3c3585a2004",
+    "baseline": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+    "repository": "/workspace/ts-review-4b0a",
+    "environment": "local node:sqlite real HubCore/FakeSpotify; native bridge simulations",
+    "environment_class": "TEST"
+  },
+  "generated_at": "2026-10-08T21:10:21.937004+00:00",
+  "open_findings": [],
+  "conclusion": "Historical lane provenance is now honestly unknown (kind=null) for every play. Actual public owner-to-guest-to-owner attack retains the old owner row identity, timestamp, ignored flag and total count. Later discovery insertion and explicit queue replacement cannot retrospectively assign a lane or inflate counts. Reads preserve all persisted tables, provider calls, alarm deadline and durable session in cold and warm instances.",
+  "static_review": {
+    "status": "PASS",
+    "details": [
+      "Exact SHA and baseline verified. Combined diff reviewed; worker net change only history read projection/preloadMemory, 12 additions/1 deletion.",
+      "No historyKinds references remain. No schema, migration, registry/object identity, bindings, account routing, scheduler, transport or provider code changes.",
+      "Existing /api/history to UserHub session(epoch) fence unchanged. Memory preloading is bounded in 100-ID chunks; history remains capped at 200.",
+      "History facts are live aggregate counts, not per-row attribution. Ignored rows remain ignored and client suppresses their fact tags.",
+      "git diff --check passed; reviewer made no application edits. Screenshot workspace changes belong to concurrent browser review."
+    ]
+  },
+  "tests": [
+    {
+      "id": "independent-public-owner-guest-owner-and-isolation",
+      "status": "PASS",
+      "tests": 3,
+      "artifacts": [
+        "/tmp/final18-backend/owner-repro.test.ts",
+        "/tmp/final18-backend/invariants.test.ts",
+        "/tmp/final18-backend/vitest.config.mjs",
+        "/tmp/final18-backend/independent.log"
+      ],
+      "details": "Reused original reachable public repro, changed only initial provenance expectation discovery -> null, strengthened final identity/count/unique occurrence assertions. Added separate future-discovery/deck replacement and cold/warm all-table/provider/alarm/session/pagination assertions; no removed private method invoked."
+    },
+    {
+      "id": "protected-backend-native-regression",
+      "status": "PASS",
+      "tests": 69,
+      "files": 8,
+      "artifact": "/tmp/final18-backend/protected-bounded.log",
+      "command": "vitest run --testTimeout=120000 test/hub/song-facts.test.ts test/hub/session.test.ts test/hub/recovery.test.ts test/hub/quota.test.ts test/hub/observation-scheduling.test.ts test/worker/native.test.ts test/worker/native-bridge.test.ts test/worker/native-orchestrator.test.ts"
+    },
+    {
+      "id": "account-deletion-session-and-guest",
+      "status": "PASS",
+      "tests": 3,
+      "skipped": 31,
+      "artifact": "/tmp/final18-backend/account-guest.log",
+      "command": "vitest run test/hub/hub.test.ts -t 'sessions after deleting the account|isolat|another account|private|guest mode'"
+    },
+    {
+      "id": "selected-private-guest-weekend",
+      "status": "PASS",
+      "tests": 3,
+      "skipped": 114,
+      "artifact": "/tmp/final18-backend/robustness-bounded.log",
+      "command": "vitest run --testTimeout=120000 test/hub/robustness.test.ts -t 'a turned-down song is skipped after a weekend|a private session in Spotify books no skip|a guest.s play of a song the owner skipped leaves the skip and the ban'"
+    }
+  ],
+  "actual_passed_tests": 78,
+  "interrupted_attempt": {
+    "status": "NOT_RUN",
+    "artifact": "/tmp/final18-backend/protected.log",
+    "reason": "Duplicate nine-file broad run at default20s interrupted to keep bounded review. Weekend case emitted failure-context logs under concurrent full-suite/browser load; no functional assertion result claimed. Same weekend case plus relevant protected files rerun at120s all PASS."
+  },
+  "protected_requirements": {
+    "NN-01": "exact source identity; no live changes",
+    "NN-02": "all-table read immutability; account deletion/session fence; aggregate counts stable in guest replay",
+    "NN-03": "session regression PASS",
+    "NN-04": "observed-position and unknown-checkpoint regressions PASS",
+    "NN-05": "unrelated Spotify and own-context resume regressions PASS",
+    "NN-06": "stale epoch/session/device regressions PASS",
+    "NN-07": "rolling 10000-occurrence and disk recovery regressions PASS",
+    "NN-08": "future discovery, deck replacement, guest and private skip/ban regressions PASS",
+    "NN-09": "matching-method/endpoint quota and observation scheduling regressions PASS",
+    "NN-10": "native authorization/capability/queue/seek/epoch regressions PASS in simulation",
+    "NN-11": "backend/API truth inspected; rendered UI delegated to separate fresh reviewer"
+  },
+  "not_run": [
+    {
+      "surface": "Physical iPhone and live Spotify transport/latency/recovery",
+      "status": "NOT_RUN",
+      "reason": "No live provider/device test in this scoped review"
+    },
+    {
+      "surface": "Owner private HA/MA hardware",
+      "status": "NOT_RUN",
+      "reason": "Native simulated integrations only"
+    },
+    {
+      "surface": "Actual populated production storage restore and production deploy identity",
+      "status": "NOT_RUN",
+      "reason": "No production access or external writes in review; local disk snapshot recovery passed"
+    },
+    {
+      "surface": "Rendered UI/accessibility and full build/typecheck/lint/all-suite matrix",
+      "status": "NOT_RUN",
+      "reason": "Owned by root verification and separate UI reviewer; not claimed independently here"
+    }
+  ],
+  "boundaries": "READY applies to identified backend/API change and protected simulated invariants. Does not convert previous live NOT_RUN acceptance into PASS or authorize deployment.",
+  "skills_read": [
+    ".agents/skills/mika-red-team/SKILL.md",
+    ".agents/skills/mika-red-team/references/independent-review-contract.md",
+    ".agents/skills/mika-red-team/references/attack-catalog.md",
+    ".agents/skills/mika-verification/SKILL.md",
+    ".agents/skills/mika-verification/references/verification-matrix.md",
+    ".agents/skills/mika-verification/references/evidence-ledger.md",
+    ".agents/skills/mika-verification/references/release-state-contract.md"
+  ],
+  "integration_applicability": {
+    "observed_at": "2026-10-08T21:14:24.899920+00:00",
+    "status": "PASS",
+    "verdict": "READY",
+    "independence": "FRESH",
+    "integrated_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "reviewed_revision": "4b0a2a21f64474416eaeda780e38b3c3585a2004",
+    "tree_hash": "ce731196c7eecaf1ccf39c58201a221ac36a2396",
+    "source_equivalence": "Independent git HEAD verification, identical git tree hashes and empty full diff, not merely empty application diff. Original78 PASS remain applicable; no rerun necessary for unchanged contents.",
+    "release_identity": {
+      "version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+      "deployment": "238016d2-534e-4a34-a49d-93088b03ba17",
+      "traffic_percent": 100,
+      "migration_tag": "v1"
+    },
+    "active_proof_review": {
+      "status": "PASS",
+      "artifact": "/tmp/ts-cf-private/18-active-proof.json",
+      "details": "Examined only bounded safe proof fields; active version/deployment/traffic and preserved runtime/bindings/migration/etag assertions internally coherent. Cloudflare account readback supplied by root; no independent authenticated Cloudflare API request by this reviewer."
+    },
+    "assets": {
+      "status": "PASS",
+      "count": 19,
+      "parent_artifact": "/tmp/18-public-assets.json",
+      "independent_artifact": "/tmp/final18-backend/public-integration-readback.json",
+      "details": "All19 supplied hashes match local dist/client bytes and independent actual public curl readbacks. Canonical / used for index.html redirect. Initial Python urllib attempt403 was replaced with successful curl readback."
+    },
+    "limits": "Does not independently prove root authenticated Cloudflare claims beyond supplied bounded proof. Physical iPhone/live Spotify/private HA/production populated restore remain NOT_RUN."
+  }
+}

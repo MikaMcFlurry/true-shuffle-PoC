@@ -1,0 +1,71 @@
+
+ RUN  v5.0.2 /workspace/ts-review-19-22
+
+stdout | ../../tmp/profile22-parent.test.ts > PR22 independent backend attacks > failed estimates are bounded by six-hour attempt gate
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/profile22-parent.test.ts > PR22 independent backend attacks > failed estimates are bounded by six-hour attempt gate
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/profile22-parent.test.ts > PR22 independent backend attacks > failed estimates are bounded by six-hour attempt gate
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/profile22-parent.test.ts > PR22 independent backend attacks > slow optional AI does not block owner transport through actual UserHub session queue
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/profile22-parent.test.ts > PR22 independent backend attacks > slow optional AI does not block owner transport through actual UserHub session queue
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/profile22-parent.test.ts > PR22 independent backend attacks > slow optional AI does not block owner transport through actual UserHub session queue
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+ ❯ ../../tmp/profile22-parent.test.ts (9 tests | 2 failed | 7 skipped) 211ms
+   ❯ PR22 independent backend attacks (9)
+     × failed estimates are bounded by six-hour attempt gate 85ms
+     × slow optional AI does not block owner transport through actual UserHub session queue 125ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tmp/profile22-parent.test.ts > PR22 independent backend attacks > failed estimates are bounded by six-hour attempt gate
+AssertionError: expected 3 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ ../../tmp/profile22-parent.test.ts:17:17
+     15|   h.hub.setImportedProfile(good());
+     16|   for(let i=0;i<3;i++) {await h.hub.estimateGenres().catch(()=>undefin…
+     17|   expect(calls).toBe(1);
+       |                 ^
+     18|  });
+     19|  it('slow optional AI does not block owner transport through actual Us…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  ../../tmp/profile22-parent.test.ts > PR22 independent backend attacks > slow optional AI does not block owner transport through actual UserHub session queue
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ ../../tmp/profile22-parent.test.ts:38:19
+     36|   const p=await pause;
+     37|   expect(p.ok).toBe(true);
+     38|   expect(blocked).toBe(false);
+       |                   ^
+     39|  });
+     40|  it('rejects non-string months before persisting data that crashes pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 skipped (9)
+   Start at  07:52:40
+   Duration  759ms (transform 50%, tests 33%, import 16%, worker 1%)

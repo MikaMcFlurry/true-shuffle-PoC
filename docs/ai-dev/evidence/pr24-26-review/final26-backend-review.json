@@ -1,0 +1,148 @@
+{
+  "reviewer": "profile26_backend_fresh",
+  "independence": "FRESH",
+  "verdict": "BLOCKED",
+  "subject_revision": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+  "pr26_revision": "e6d08a3a0130c23d7c7487dcad57ab4840e6e0ff",
+  "baseline": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+  "environment": "isolated node:sqlite real HubCore/FakeSpotify, no live user data",
+  "recorded_at": "2026-10-09T12:34:18.019003+00:00",
+  "app_changes_by_reviewer": false,
+  "remote_operations_by_reviewer": false,
+  "checks": [
+    {
+      "name": "existing targeted profile/session/recovery/genre-session regressions",
+      "status": "PASS",
+      "tests": 49,
+      "evidence": "/tmp/pr26-independent-regressions.log"
+    },
+    {
+      "name": "fresh adversarial contract assertions",
+      "status": "FAIL",
+      "failed": 4,
+      "evidence": "/tmp/pr26-independent-attacks.log"
+    },
+    {
+      "name": "observed defect readback and additive schema5 to6 restart",
+      "status": "PASS",
+      "tests": 2,
+      "evidence": "/tmp/pr26-independent-observed.log"
+    },
+    {
+      "name": "exact PR26 reproduced identical attacks",
+      "status": "FAIL",
+      "failed": 4,
+      "passed": 2,
+      "evidence": "/tmp/pr26-exact-backend-attacks.log"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PR26-IMPORT-GENERATION-01",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Concurrent history uploads publish rows against the wrong song dictionary",
+      "affected_files": [
+        "src/worker/hub/hub.ts:6656-6684",
+        "src/worker/index.ts:563",
+        "src/client/api.ts:214",
+        "src/client/screens/menu.tsx:1094"
+      ],
+      "preconditions": "Authenticated owner importing their own history; no cross-account or auth bypass.",
+      "reproduction": [
+        "Tab A starts part0/parts2/tracks1 dictionary A.",
+        "Tab B starts identical-size part0 with dictionary B, replacing pending generation.",
+        "Tab A sends part1 row [previous-day-second,0,120000,0,1]."
+      ],
+      "actual": "Part1 accepted; current H\u00f6rprofil reports B with two minutes actually heard for A. Published generation mixes independent imports and replaces the prior history.",
+      "expected": "Each chunk proves the upload identity/generation. Stale tab A must fail without publishing or harming tab B/current history.",
+      "repair_direction": "Issue an unguessable or caller-provided unique upload id and bind all chunks to it, stored alongside progression; check on final publish; reject stale attempts.",
+      "required_regression": "Parallel imports with equal counts, different dictionaries/order, reordered blocks, cancel/restart, logout/re-sign-in, old-current survival until complete.",
+      "evidence": [
+        "/tmp/pr26-independent-attacks.test.ts",
+        "/tmp/pr26-independent-observed.test.ts",
+        "/tmp/pr26-exact-backend-attacks.log"
+      ]
+    },
+    {
+      "id": "PR26-IMPORT-VALIDATION-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Declared track count is trusted instead of the actual dictionary length",
+      "affected_files": [
+        "src/worker/hub/hub.ts:6671-6677",
+        "src/worker/hub/hub.ts:6743"
+      ],
+      "preconditions": "Authenticated owner importing their own history; no cross-account or auth bypass.",
+      "reproduction": [
+        "Upload part0/parts2/tracks2 containing only dictionary A.",
+        "Upload part1 row index1 with valid time and120000ms."
+      ],
+      "actual": "Server accepts completion, importedPlays=1 but profile plays=0 because index1 has no track. Previous generation already removed.",
+      "expected": "Reject incomplete dictionaries/references to absent tracks before publication. Retain previous current import.",
+      "repair_direction": "Track actual accepted dictionary entries, exact final count and page lengths, verify row references against real count.",
+      "required_regression": "Short nonfinal/final dictionary pages, empty dictionary, declared count mismatch, malformed row index, restart and current generation intact.",
+      "evidence": [
+        "/tmp/pr26-independent-attacks.test.ts",
+        "/tmp/pr26-independent-observed.test.ts",
+        "/tmp/pr26-exact-backend-attacks.log"
+      ]
+    },
+    {
+      "id": "PR26-IMPORT-ORDER-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Accepted unsorted rows silently hide older imported history",
+      "affected_files": [
+        "src/worker/hub/hub.ts:6677",
+        "src/worker/hub/hub.ts:6737"
+      ],
+      "preconditions": "Authenticated owner importing their own history; no cross-account or auth bypass.",
+      "reproduction": [
+        "Dictionary A then row at current clock followed by row one day earlier, both valid shapes."
+      ],
+      "actual": "Upload accepted, coverage importedPlays=2, profile plays=0: timeline breaks on first row >= live_since and never examines later older row.",
+      "expected": "Reject unsorted rows within/across blocks, or sort and safely filter every row before using ordered timeline assumptions; publication must not silently lose valid older plays.",
+      "repair_direction": "Validate monotonic timestamp through upload progression and on publication, or remove break in favor of filter plus safe ordering.",
+      "required_regression": "Descending rows within/across blocks, duplicate timestamps/duplicates policy, liveSince crossing, matching coverage, previous-generation survival.",
+      "evidence": [
+        "/tmp/pr26-independent-attacks.test.ts",
+        "/tmp/pr26-independent-observed.test.ts",
+        "/tmp/pr26-exact-backend-attacks.log"
+      ]
+    },
+    {
+      "id": "PR26-PROFILE-DST-04",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Fall DST places a Sunday listen into a Tuesday weekly bucket",
+      "affected_files": [
+        "src/core/period-profile.ts:192"
+      ],
+      "preconditions": "Authenticated owner importing their own history; no cross-account or auth bypass.",
+      "reproduction": [
+        "period Aug1-Nov1 2026 makes series weekly.",
+        "Events2026-10-19T10:00Z and2026-10-25T22:30Z, timezoneEurope/Berlin.",
+        "Second is SundayOct25 23:30 local after DST ends."
+      ],
+      "actual": "Two series points: Monday2026-10-19 and Tuesday2026-10-20, rather than same Monday bucket. Subtracting6 fixed24h days crosses offset change and reaches Tuesday00:30 local.",
+      "expected": "Both local-calendar-week events in Monday2026-10-19 bucket with2plays.",
+      "repair_direction": "Compute week start from local calendar date/day index rather than subtracting UTC milliseconds then reformatting in zone.",
+      "required_regression": "Spring/fall DST near local midnight Europe/Berlin and other real zones, all points Monday, same-week events combine, totals preserved.",
+      "evidence": [
+        "/tmp/pr26-independent-attacks.test.ts",
+        "/tmp/pr26-independent-observed.test.ts",
+        "/tmp/pr26-exact-backend-attacks.log"
+      ]
+    }
+  ],
+  "scope_and_limits": [
+    "This is a backend/data/migration scope beyond cosmetic UI; user requests separate investigation, performed here.",
+    "No explicit PR26 completion comment is present per parent metadata; no release acceptance.",
+    "API new routes retain existing auth/session/CSRF middleware and UserHub.session(epoch); session/AI fencing regressions PASS. No authenticated malformed-input finding is an authentication bypass.",
+    "Schema5 to6 additive empty listen_pages migration preserves existing plays, memory, stations, pages, sessions through restart in node SQLite; physical populated Cloudflare restore NOT_RUN.",
+    "History upload current-generation survival on interrupted standard upload and genre late-answer import/session protections covered by existing passing tests.",
+    "No live Spotify/iPhone/privateHA, Cloudflare quota/memory/CPU/resource capacity, exact public deployment, or real populated restore measured. Unlimited retention increases unbounded whole-timeline scan/allocation; packing rows is not proof of quota or runtime capacity. Treat as remaining operational check, no invented measured failure.",
+    "Parent owns PR24/PR25 findings and full checks. No independent acceptance of owner functional exception in PR25."
+  ]
+}

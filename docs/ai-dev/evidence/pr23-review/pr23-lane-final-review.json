@@ -1,0 +1,59 @@
+{
+  "reviewed_revision": "8921702e666d6da06d941364af5a219691057318",
+  "target_revision": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+  "at": "2026-10-09T10:29:54.461196+00:00",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "Independent verification of restored lane behavior, not genre-auth review",
+  "checkout": "/workspace/ts-pr23-lane-final-independent",
+  "source_diff": "Only src/worker/userhub.ts and test/worker/genre-userhub.test.ts differ from base; lane code and original song-facts assertions restored unchanged.",
+  "findings": [
+    {
+      "id": "PR20-LANE-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Restored lane code attributes unobserved repeat to old short occurrence",
+      "status": "OPEN_REPRODUCED",
+      "steps": [
+        "Start station, observe next track at1s, capturing fresh lane.",
+        "Skip this track after6s total; another track plays60s without observation.",
+        "Save valid replacement deck with target favorite while stale snapshot still shows target; restart HubCore.",
+        "Play target again within same context for45s entirely between observations, skip, synchronize."
+      ],
+      "expected": "One counted repeat with provenance null.",
+      "actual": "One counted repeat with facts.kind fresh, from original unlisted short occurrence.",
+      "files": [
+        "src/worker/hub/hub.ts:laneFor",
+        "src/worker/hub/hub.ts:noteLane"
+      ],
+      "evidence": [
+        "/tmp/pr23-lane-final-repro.log",
+        "/workspace/ts-pr23-lane-final-independent/test/hub/pr23-final-independent.test.ts"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "Original LANE-03 reproduction against exact final head",
+      "status": "FAIL",
+      "count": 1,
+      "ref": "/tmp/pr23-lane-final-repro.log"
+    },
+    {
+      "name": "Lane code and original song-facts tracked assertions unchanged from bcb2463",
+      "status": "PASS",
+      "ref": "git diff bcb246371ba47546e16bbc466362fb21f6ff716d 8921702e666d6da06d941364af5a219691057318 -- src/worker/hub/hub.ts test/hub/song-facts.test.ts"
+    }
+  ],
+  "not_run": [
+    "Physical iPhone and live Spotify latency/quota",
+    "Private HA/MA",
+    "Actual populated restore",
+    "Production release"
+  ],
+  "notes": [
+    "No additional provider quota gates introduced. No existing assertions weakened; only isolated new reproduction file created.",
+    "PR23-LANE-04 belongs to abandoned 91c94c6 patch; this final head restores original LANE-03 rather than fixing it.",
+    "Scoped auth-only acceptance must not be presented as fully repaired combined release."
+  ]
+}

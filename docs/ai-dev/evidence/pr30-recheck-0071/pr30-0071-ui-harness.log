@@ -1,0 +1,1606 @@
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+CONSOLE Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+CONSOLE Failed to load resource: the server responded with a status of 401 (Unauthorized)
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+CONSOLE Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+CONSOLE Failed to load resource: the server responded with a status of 409 (Conflict)
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+CONSOLE Failed to load resource: the server responded with a status of 401 (Unauthorized)
+RESP http://127.0.0.1:4201/auswahl 200 text/html
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/e2e/.artifacts/pr30-ui-harness.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/styles/app.css 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/styles/mehr.css 200 text/javascript
+RESP http://127.0.0.1:4201/screens/selection.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/@vite/client 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/utils/src/index.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_devtools.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_hooks.js?v=37184a2c 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/import-selection.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-dev-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/vite/dist/client/env.mjs 200 text/javascript
+RESP http://127.0.0.1:4201/api.ts 200 text/javascript
+RESP http://127.0.0.1:4201/store.ts 200 text/javascript
+RESP http://127.0.0.1:4201/components/ui.tsx 200 text/javascript
+RESP http://127.0.0.1:4201/format.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/catchError.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/debounceRendering.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnode.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/unmount.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/constants.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/computeKey.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/vnodesForComponent.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/runtime/signaturesForType.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/listens.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/types.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/preact_jsx-runtime.js?v=4140d1a8 200 text/javascript
+RESP http://127.0.0.1:4201/theme.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/src/core/mix.ts 200 text/javascript
+RESP http://127.0.0.1:4201/router.ts 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-review-oct13/node_modules/@prefresh/core/src/utils.js?v=3f1ca44d 200 text/javascript
+RESP http://127.0.0.1:4201/@fs/workspace/pr30-0071-ui/node_modules/.vite/deps/lucide-preact.js?v=5c9c3e95 200 text/javascript
+CONSOLE [vite] connecting...
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE WebSocket connection to 'ws://127.0.0.1:4201/?token=RdJ7nBLHqNhZ' failed: Error in connection establishment: net::ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS
+CONSOLE [vite] failed to connect to websocket.
+your current setup:
+  (browser) 127.0.0.1:4201/ <--[HTTP]--> 127.0.0.1:4201/ (server)
+  (browser) 127.0.0.1:4201/ <--[WebSocket (failing)]--> 127.0.0.1:4201/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+CONSOLE Failed to send error to Vite server: TypeError: Cannot read properties of undefined (reading 'send')
+    at Object.send (http://127.0.0.1:4201/@vite/client:251:7)
+    at Object.send (http://127.0.0.1:4201/@vite/client:931:16)
+    at Object.send (http://127.0.0.1:4201/@vite/client:110:21)
+    at Object.send (http://127.0.0.1:4201/@vite/client:190:30)
+    at sendError (http://127.0.0.1:4201/@vite/client:260:19)
+    at sendLog (http://127.0.0.1:4201/@vite/client:288:11)
+BODY Zurück
+Hörverlauf auswählen
+
+Welche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.
+
+Dein Import
+
+20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Bisher nie geändert: alles zählt.
+
+Import ausschalten
+
+Ausschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.
+
+Regeln
+
+Es entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.
+
+Favoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.
+
+Keine Regeln: alles aus dem Import zählt.
+
+Zeitraum ausschließen
+Von (einschließlich)
+Bis (einschließlich)
+
+Ganze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.
+
+Zeitraum hinzufügen
+Vorschau und übernehmen
+
+Mit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Jetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.
+
+Entwurf verwerfen
+Auswahl übernehmen
+
+Der Entwurf entspricht dem, was gilt.
+
+Durchsehen
+
+Suchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.
+
+Song, Künstler oder Album
+Gruppieren
+Songs
+Künstler
+Zeigen
+Alle
+Zählt
+Zählt teilweise
+Ausgeschlossen
+Ohne Wirkung
+Sortieren
+Meistgehört
+Zuletzt gehört
+Name
+
+1–2 von 2. Status nach deinem Entwurf.
+
+Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel
+Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername
+zählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025
+Ausschließen
+In deinen Playlists
+
+Für jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.
+
+Noch nicht gezählt.
+
+Jetzt zählen
+
+Liest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.
+
+Import löschen
+Import löschen …
+CONSOLE Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[
+  {
+    case: 'render',
+    width: 390,
+    theme: 'light',
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: []
+  },
+  {
+    case: 'delete-keyboard-cancel',
+    width: 390,
+    theme: 'light',
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: undefined
+  },
+  {
+    case: 'render',
+    width: 390,
+    theme: 'dark',
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: []
+  },
+  {
+    case: 'delete-keyboard-cancel',
+    width: 390,
+    theme: 'dark',
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: undefined
+  },
+  {
+    case: 'render',
+    width: 1440,
+    theme: 'light',
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: []
+  },
+  {
+    case: 'delete-keyboard-cancel',
+    width: 1440,
+    theme: 'light',
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: undefined
+  },
+  {
+    case: 'render',
+    width: 1440,
+    theme: 'dark',
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: []
+  },
+  {
+    case: 'delete-keyboard-cancel',
+    width: 1440,
+    theme: 'dark',
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: undefined
+  },
+  {
+    case: 'stale-search-bulk',
+    width: undefined,
+    theme: undefined,
+    enabled: undefined,
+    overflow: false,
+    posted: [],
+    errors: undefined
+  },
+  {
+    case: 'failed-preview-apply',
+    width: undefined,
+    theme: undefined,
+    enabled: false,
+    overflow: false,
+    posted: undefined,
+    errors: undefined
+  },
+  {
+    case: 'edit-during-apply',
+    width: undefined,
+    theme: undefined,
+    enabled: undefined,
+    overflow: false,
+    posted: [ [Object] ],
+    errors: undefined
+  },
+  {
+    case: 'apply-error-retains-draft',
+    width: undefined,
+    theme: undefined,
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: undefined
+  },
+  {
+    case: 'apply-error-retains-draft',
+    width: undefined,
+    theme: undefined,
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: undefined
+  },
+  {
+    case: 'toggle-retains-draft',
+    width: undefined,
+    theme: undefined,
+    enabled: undefined,
+    overflow: false,
+    posted: [ [Object] ],
+    errors: undefined
+  },
+  {
+    case: 'delete-error-honest',
+    width: undefined,
+    theme: undefined,
+    enabled: undefined,
+    overflow: false,
+    posted: undefined,
+    errors: undefined
+  }
+]

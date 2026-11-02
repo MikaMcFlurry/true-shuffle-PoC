@@ -1,0 +1,14 @@
+
+> true-shuffle@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.2 /workspace/ts-review-pr29
+
+SIZE import 226 ms, profile cold 2053 ms, warm 1165 ms, held after 0 MB (no gc)
+
+ Test Files  43 passed (43)
+      Tests  570 passed (570)
+   Start at  17:52:12
+   Duration  122.94s (tests 97%, import 2%, transform 1%)
+

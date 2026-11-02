@@ -1,0 +1,109 @@
+
+ RUN  v5.0.2 /workspace/ts-review-c2f9
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+{"level":"info","kind":"import","message":"„Playlist 1“: 300 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+{"level":"info","kind":"discovery","message":"Neuentdeckung behalten: T00000000000000000007n"}
+{"level":"info","kind":"thumb","message":"Daumen hoch: T00000000000000000007n"}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+{"level":"info","kind":"discovery","message":"Neuentdeckung behalten: T00000000000000000005o"}
+{"level":"info","kind":"thumb","message":"Daumen hoch: T00000000000000000005o"}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+{"level":"info","kind":"guest","message":"Gast-Modus an — nichts zählt ins Gedächtnis"}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+{"level":"info","kind":"round","message":"„Playlist 1“: Runde 2 beginnt — alle Songs wurden gehört"}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+BOUNDARY 0 null {
+  id: 'T00000000000000000007n',
+  kind: 'fresh',
+  state: 'pending',
+  at: null
+}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+BOUNDARY 1 null {
+  id: 'T00000000000000000007n',
+  kind: 'fresh',
+  state: 'pending',
+  at: null
+}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+BOUNDARY 2 null {
+  id: 'T00000000000000000007n',
+  kind: 'fresh',
+  state: 'pending',
+  at: null
+}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+BOUNDARY 3 null {
+  id: 'T00000000000000000007n',
+  kind: 'fresh',
+  state: 'pending',
+  at: null
+}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+BOUNDARY 4 null {
+  id: 'T00000000000000000007n',
+  kind: 'fresh',
+  state: 'pending',
+  at: null
+}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+BOUNDARY 5 fresh {
+  id: 'T00000000000000000007n',
+  kind: 'fresh',
+  state: 'played',
+  at: 1790327641500
+}
+{"level":"info","kind":"guest","message":"Gast-Modus aus"}
+
+stdout | ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+PROVENANCE {"id":"T00000000000000000007n","old":{"id":"T00000000000000000007n","name":"Song 483","artists":"Artist 3","album":"Album 48","imageUrl":"https://img.example/L00000000000000000000m.jpg","durationMs":180000,"thumb":0,"playedAt":1790327041500,"stationName":"Playlist 1","ignored":false,"facts":{"plays":1,"lastPlayedAt":1790327041500,"inStation":true,"kind":"discovery"}},"after":{"id":"T00000000000000000007n","name":"Song 483","artists":"Artist 3","album":"Album 48","imageUrl":"https://img.example/L00000000000000000000m.jpg","durationMs":180000,"thumb":1,"playedAt":1790327041500,"stationName":"Playlist 1","ignored":false,"facts":{"plays":1,"lastPlayedAt":1790327041500,"inStation":true,"kind":"fresh"}},"oldDeckItem":{"id":"T00000000000000000007n","kind":"discovery","state":"pending","at":null},"newDeckItem":{"id":"T00000000000000000007n","kind":"fresh","state":"played","at":1790327641500}}
+
+ ❯ ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts (1 test | 1 failed) 333ms
+   ❯ Independent reachable temporal provenance attack (1)
+     × owner history reason changes after reachable guest replay and returning to owner mode 332ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts > Independent reachable temporal provenance attack > owner history reason changes after reachable guest replay and returning to owner mode
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ ../../tmp/pr18-c2-history-independent/final-owner-repro.test.ts:33:72
+     31|  const after=h.hub.history(100).find(e=>e.id===id&&e.playedAt===old.pl…
+     32|  console.log('PROVENANCE',JSON.stringify({id,old,after,oldDeckItem:ini…
+     33|  expect(after.facts!.kind===null||after.facts!.kind===old.facts!.kind)…
+       |                                                                        ^
+     34|  });
+     35| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  19:55:39
+   Duration  806ms (tests 47%, transform 39%, import 14%)
+

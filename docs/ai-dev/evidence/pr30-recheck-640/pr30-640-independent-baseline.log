@@ -1,0 +1,154 @@
+
+ RUN  v5.0.2 /workspace/pr30-backend-baseline-898
+
+stdout | test/hub/pr30-independent-commit.test.ts > one frozen-clock listener orders stored changes, while staging/noops/errors cannot create commits
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > one frozen-clock listener orders stored changes, while staging/noops/errors cannot create commits
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > one frozen-clock listener orders stored changes, while staging/noops/errors cannot create commits
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > individual listen publication is one later commit, never a staged block; restart retains it
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > individual listen publication is one later commit, never a staged block; restart retains it
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > individual listen publication is one later commit, never a staged block; restart retains it
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > individual listen publication is one later commit, never a staged block; restart retains it
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 1 Wiedergaben"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > a rolled-back totals promotion cannot advance commit or replace stored data
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > a rolled-back totals promotion cannot advance commit or replace stored data
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > a rolled-back totals promotion cannot advance commit or replace stored data
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > a rolled-back totals promotion cannot advance commit or replace stored data
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > first summary advances only its own listener and deletion removes it with a later commit
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > first summary advances only its own listener and deletion removes it with a later commit
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > first summary advances only its own listener and deletion removes it with a later commit
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > first summary advances only its own listener and deletion removes it with a later commit
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > first summary advances only its own listener and deletion removes it with a later commit
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > first summary advances only its own listener and deletion removes it with a later commit
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr30-independent-commit.test.ts > first summary advances only its own listener and deletion removes it with a later commit
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+
+ ❯ test/hub/pr30-independent-commit.test.ts (4 tests | 4 failed) 437ms
+   × one frozen-clock listener orders stored changes, while staging/noops/errors cannot create commits 201ms
+   × individual listen publication is one later commit, never a staged block; restart retains it 87ms
+   × a rolled-back totals promotion cannot advance commit or replace stored data 58ms
+   × first summary advances only its own listener and deletion removes it with a later commit 88ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr30-independent-commit.test.ts > one frozen-clock listener orders stored changes, while staging/noops/errors cannot create commits
+AssertionError: expected undefined to be +0 // Object.is equality
+
+- Expected:
+0
+
++ Received:
+undefined
+
+ ❯ test/hub/pr30-independent-commit.test.ts:8:55
+      6| it('one frozen-clock listener orders stored changes, while staging/noo…
+      7|  const h=await onboarded({tracks:50});const t=[...h.fake.tracks.values…
+      8|  const v=()=>h.hub.selectionView();expect(v().commit).toBe(0);
+       |                                                       ^
+      9|  const u=h.hub.importHistory([row(t.id,2)],0,2);expect(v().commit).toB…
+     10|  expect(()=>h.hub.importHistory([],1,2,'other')).toThrow();expect(v().…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/hub/pr30-independent-commit.test.ts > individual listen publication is one later commit, never a staged block; restart retains it
+AssertionError: expected undefined to be NaN // Object.is equality
+
+- Expected:
+NaN
+
++ Received:
+undefined
+
+ ❯ test/hub/pr30-independent-commit.test.ts:26:39
+     24|  expect(h.hub.selectionView().commit).toBe(v.commit);h.restart();
+     25|  h.hub.importListens({upload:first.upload,part:1,parts:2,tracks:1,kind…
+     26|  expect(h.hub.selectionView().commit).toBe(v.commit+1);h.restart();exp…
+       |                                       ^
+     27| });
+     28| it('a rolled-back totals promotion cannot advance commit or replace st…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/hub/pr30-independent-commit.test.ts > a rolled-back totals promotion cannot advance commit or replace stored data
+AssertionError: expected { revision: +0, appliedAt: null, …(6) } to match object { commit: undefined, …(1) }
+(31 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "commit": undefined,
+    "dataset": {
+      "key": "kMxOm_lLxoFAzIy7|-",
+    },
+  }
+
+ ❯ test/hub/pr30-independent-commit.test.ts:33:32
+     31|  const run=h.sql.run.bind(h.sql);h.sql.run=(q,...args)=>{if(q.startsWi…
+     32|  expect(()=>h.hub.importHistory([row(t.id,99)],0,1)).toThrow(/injected…
+     33|  expect(h.hub.selectionView()).toMatchObject({commit:before.commit,dat…
+       |                                ^
+     34| });
+     35| it('first summary advances only its own listener and deletion removes …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/hub/pr30-independent-commit.test.ts > first summary advances only its own listener and deletion removes it with a later commit
+AssertionError: expected undefined to be NaN // Object.is equality
+
+- Expected:
+NaN
+
++ Received:
+undefined
+
+ ❯ test/hub/pr30-independent-commit.test.ts:39:39
+     37|  a.hub.importHistory([row(id,1)],0,1);b.hub.importHistory([row(id,1)],…
+     38|  const old=a.hub.selectionView();const other=b.hub.selectionView();a.h…
+     39|  expect(a.hub.selectionView().commit).toBe(old.commit+1);expect(b.hub.…
+       |                                       ^
+     40|  a.hub.setImportedProfile({...profile,plays:5});expect(a.hub.selection…
+     41|  a.restart();expect(a.hub.selectionView().commit).toBe(old.commit+1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  17:17:41
+   Duration  1.52s (transform 48%, tests 34%, import 18%)
+

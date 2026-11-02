@@ -1,0 +1,1 @@
+export default {test:{include:['/tmp/integrated932-pr24-independent.test.ts','/tmp/integrated932-final24-attacks.test.ts','/tmp/integrated932-parent-lane.test.ts'],environment:'node',testTimeout:20000,silent:'passed-only'}}

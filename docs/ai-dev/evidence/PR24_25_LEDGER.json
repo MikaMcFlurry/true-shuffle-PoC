@@ -1,0 +1,360 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-09T11:59:40.148225+00:00",
+  "project": "true-shuffle combinedPR24/25review",
+  "subject": {
+    "revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+    "artifact_ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+    "environment": "Isolatedcleanlocalintegration24then25onactualcee; candidatesnotmerged/deployed",
+    "environment_class": "LOCAL"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "BLOCKED",
+  "material_release": true,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA",
+    "AI_TOOL_SIDE_EFFECTS",
+    "PERFORMANCE_CRITICAL"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "BLOCKED",
+  "required_categories": [
+    "accessibility",
+    "build",
+    "critical_journey",
+    "data_invariants",
+    "independent_review",
+    "migration",
+    "operations",
+    "performance_reliability",
+    "post_deploy",
+    "recovery",
+    "security_privacy",
+    "ui_runtime"
+  ],
+  "external_blockers": [],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-LIVE"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-COMBINED",
+        "G-NEW-BEHAVIOR",
+        "G-UI"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "PR24-LANE-05",
+      "title": "Ambiguous same-track replay refreshes an older occurrence lane",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR25-RESUME-01",
+      "title": "Recent listing plus elapsed wall time advances an unfinished saved occurrence",
+      "severity": "P1",
+      "blocking": true
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-BUILD",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-BUILD evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-BUILD evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks."
+    },
+    {
+      "id": "G-COMBINED",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-COMBINED",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-COMBINED evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-COMBINED evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks."
+    },
+    {
+      "id": "G-NEW-BEHAVIOR",
+      "category": "data_invariants",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-NEW-BEHAVIOR",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "FreshLANE05P2 andRESUME01P1 reproducedonexactheadsandcombined; noidentity/completionproof. CombinedreleaseBLOCKED.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "FreshLANE05P2 andRESUME01P1 reproducedonexactheadsandcombined; noidentity/completionproof. CombinedreleaseBLOCKED."
+    },
+    {
+      "id": "G-UI",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-UI",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-UI evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-UI evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks."
+    },
+    {
+      "id": "G-A11Y",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-A11Y",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-A11Y evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-A11Y evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks."
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-MIGRATION",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-MIGRATION evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-MIGRATION evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks."
+    },
+    {
+      "id": "G-LOCAL-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-RECOVERY",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-LOCAL-RECOVERY evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-LOCAL-RECOVERY evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks."
+    },
+    {
+      "id": "G-SECURITY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-SECURITY",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-SECURITY evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-SECURITY evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks."
+    },
+    {
+      "id": "G-REVIEW",
+      "category": "independent_review",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-G-REVIEW",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "FreshLANE05P2 andRESUME01P1 reproducedonexactheadsandcombined; noidentity/completionproof. CombinedreleaseBLOCKED.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "FreshLANE05P2 andRESUME01P1 reproducedonexactheadsandcombined; noidentity/completionproof. CombinedreleaseBLOCKED."
+    },
+    {
+      "id": "G-CI",
+      "category": "operations",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-CI",
+          "kind": "direct_checks_and_fresh_independent_review",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-CI evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ],
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-CI evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks."
+    },
+    {
+      "id": "G-LIVE",
+      "category": "post_deploy",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Candidatesunmergedundeployed; noexplicitcompletion24/25. Actualexternalcee/473f/715100%verifiedseparately."
+    },
+    {
+      "id": "G-AI-RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "PASS",
+      "rationale": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-AI-RELIABILITY evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+      "evidence": [
+        {
+          "id": "EV-G-AI-RELIABILITY",
+          "kind": "actual_userhub_mutex_and_stub_ai",
+          "ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+          "result": "Combinedsource526Unit/46WorkerFakeSpotifybrowser/11unchangedResume/type/lint/build/dryPASS; scoped55/36existingregressionsandactualexactheadCIgreen. G-AI-RELIABILITY evidenceandlimitsinPR24_25_REVIEW; these standardchecks do not close newattacks.",
+          "subject_revision": "6b091d64f4ccc879718a113bda89d15d9365035b",
+          "observed_at": "2026-10-09T11:59:40.148225+00:00"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,421 @@
+[
+  {
+    "case": "render",
+    "width": 390,
+    "theme": "light",
+    "metrics": {
+      "width": 390,
+      "scroll": 390,
+      "controls": [
+        {
+          "label": "Zurück",
+          "h": 44,
+          "w": 93.1875
+        },
+        {
+          "label": "Import ausschalten",
+          "h": 48,
+          "w": 202.40625
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "Zeitraum hinzufügen",
+          "h": 48,
+          "w": 215.109375
+        },
+        {
+          "label": "Entwurf verwerfen",
+          "h": 48,
+          "w": 196.0625
+        },
+        {
+          "label": "Auswahl übernehmen",
+          "h": 48,
+          "w": 222.9375
+        },
+        {
+          "label": "search",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "SongsKünstler",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "AlleZähltZählt teilweiseAusgeschlossenOhne Wirkung",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "MeistgehörtZuletzt gehörtName",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "Ausschließen: Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel ",
+          "h": 44,
+          "w": 326
+        },
+        {
+          "label": "Ausschließen: Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel ",
+          "h": 44,
+          "w": 326
+        },
+        {
+          "label": "Jetzt zählen",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "Import löschen …",
+          "h": 48,
+          "w": 358
+        }
+      ],
+      "labels": true
+    },
+    "errors": []
+  },
+  {
+    "case": "delete-keyboard-cancel",
+    "width": 390,
+    "theme": "light",
+    "confirmationRemoved": true
+  },
+  {
+    "case": "render",
+    "width": 390,
+    "theme": "dark",
+    "metrics": {
+      "width": 390,
+      "scroll": 390,
+      "controls": [
+        {
+          "label": "Zurück",
+          "h": 44,
+          "w": 93.1875
+        },
+        {
+          "label": "Import ausschalten",
+          "h": 48,
+          "w": 202.40625
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "Zeitraum hinzufügen",
+          "h": 48,
+          "w": 215.109375
+        },
+        {
+          "label": "Entwurf verwerfen",
+          "h": 48,
+          "w": 196.0625
+        },
+        {
+          "label": "Auswahl übernehmen",
+          "h": 48,
+          "w": 222.9375
+        },
+        {
+          "label": "search",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "SongsKünstler",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "AlleZähltZählt teilweiseAusgeschlossenOhne Wirkung",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "MeistgehörtZuletzt gehörtName",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "Ausschließen: Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel ",
+          "h": 44,
+          "w": 326
+        },
+        {
+          "label": "Ausschließen: Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel ",
+          "h": 44,
+          "w": 326
+        },
+        {
+          "label": "Jetzt zählen",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "Import löschen …",
+          "h": 48,
+          "w": 358
+        }
+      ],
+      "labels": true
+    },
+    "errors": []
+  },
+  {
+    "case": "delete-keyboard-cancel",
+    "width": 390,
+    "theme": "dark",
+    "confirmationRemoved": true
+  },
+  {
+    "case": "render",
+    "width": 1440,
+    "theme": "light",
+    "metrics": {
+      "width": 1440,
+      "scroll": 1440,
+      "controls": [
+        {
+          "label": "Zurück",
+          "h": 44,
+          "w": 93.1875
+        },
+        {
+          "label": "Import ausschalten",
+          "h": 48,
+          "w": 202.40625
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "Zeitraum hinzufügen",
+          "h": 48,
+          "w": 215.109375
+        },
+        {
+          "label": "Entwurf verwerfen",
+          "h": 48,
+          "w": 196.0625
+        },
+        {
+          "label": "Auswahl übernehmen",
+          "h": 48,
+          "w": 222.9375
+        },
+        {
+          "label": "search",
+          "h": 48,
+          "w": 760
+        },
+        {
+          "label": "SongsKünstler",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "AlleZähltZählt teilweiseAusgeschlossenOhne Wirkung",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "MeistgehörtZuletzt gehörtName",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "Ausschließen: Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel ",
+          "h": 44,
+          "w": 137.4375
+        },
+        {
+          "label": "Ausschließen: Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel ",
+          "h": 44,
+          "w": 137.4375
+        },
+        {
+          "label": "Jetzt zählen",
+          "h": 48,
+          "w": 760
+        },
+        {
+          "label": "Import löschen …",
+          "h": 48,
+          "w": 760
+        }
+      ],
+      "labels": true
+    },
+    "errors": []
+  },
+  {
+    "case": "delete-keyboard-cancel",
+    "width": 1440,
+    "theme": "light",
+    "confirmationRemoved": true
+  },
+  {
+    "case": "render",
+    "width": 1440,
+    "theme": "dark",
+    "metrics": {
+      "width": 1440,
+      "scroll": 1440,
+      "controls": [
+        {
+          "label": "Zurück",
+          "h": 44,
+          "w": 93.1875
+        },
+        {
+          "label": "Import ausschalten",
+          "h": 48,
+          "w": 202.40625
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "Zeitraum hinzufügen",
+          "h": 48,
+          "w": 215.109375
+        },
+        {
+          "label": "Entwurf verwerfen",
+          "h": 48,
+          "w": 196.0625
+        },
+        {
+          "label": "Auswahl übernehmen",
+          "h": 48,
+          "w": 222.9375
+        },
+        {
+          "label": "search",
+          "h": 48,
+          "w": 760
+        },
+        {
+          "label": "SongsKünstler",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "AlleZähltZählt teilweiseAusgeschlossenOhne Wirkung",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "MeistgehörtZuletzt gehörtName",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "Ausschließen: Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel ",
+          "h": 44,
+          "w": 137.4375
+        },
+        {
+          "label": "Ausschließen: Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel ",
+          "h": 44,
+          "w": 137.4375
+        },
+        {
+          "label": "Jetzt zählen",
+          "h": 48,
+          "w": 760
+        },
+        {
+          "label": "Import löschen …",
+          "h": 48,
+          "w": 760
+        }
+      ],
+      "labels": true
+    },
+    "errors": []
+  },
+  {
+    "case": "delete-keyboard-cancel",
+    "width": 1440,
+    "theme": "dark",
+    "confirmationRemoved": true
+  },
+  {
+    "case": "stale-search-bulk",
+    "search": "Beta",
+    "draftText": "Song „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen",
+    "applied": [
+      {
+        "baseRevision": 0,
+        "enabled": true,
+        "rules": [
+          {
+            "type": "track",
+            "kind": "exclude",
+            "id": "aaaaaaaaaaaaaaaaaaaaaa",
+            "label": "Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel "
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "case": "failed-preview-apply",
+    "enabled": true,
+    "counts": "Vorschau und übernehmen"
+  },
+  {
+    "case": "edit-during-apply",
+    "before": "Song „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen",
+    "after": "Song „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts\nEntfernen",
+    "posted": [
+      {
+        "baseRevision": 0,
+        "enabled": true,
+        "rules": [
+          {
+            "type": "track",
+            "kind": "exclude",
+            "id": "aaaaaaaaaaaaaaaaaaaaaa",
+            "label": "Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel "
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,106 @@
+{
+  "schema": "mika.independent-review.scoped.v1",
+  "reviewed_source": "8d62138184be9397ea22d55170928a4edbbc0725",
+  "baseline": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+  "reviewer": "pr29_backend_fresh",
+  "INDEPENDENCE": "FRESH",
+  "verdict": "NOT_READY",
+  "generated_at": "2026-10-09T17:55:42.370184+00:00",
+  "scope": [
+    "planner probe eligibility/exclusions",
+    "verdict memory persistence and repeated answers",
+    "additive schema6-to7 recovery",
+    "observed occurrence/queue transport",
+    "account/epoch route isolation",
+    "inherited PR28 rest and import overlap"
+  ],
+  "application_edits": false,
+  "remote_mutations": false,
+  "findings": [
+    {
+      "id": "PR29-REPEAT-NO-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Repeated negative retest answers do not accumulate the stated further skip or doubled recheck interval",
+      "files": [
+        "src/worker/hub/hub.ts:5823",
+        "src/core/memory.ts:84"
+      ],
+      "preconditions": "Imported nonoverplayed song: plays2, earlySkips3, lastPlay400 days ago, lastSkip40 days ago; counted-before-first-skip absent/0. probeDue true at each answer.",
+      "reproduction": [
+        "onboarded tracks40; importHistory([[id,2,3,now-400*DAY_MS,now-40*DAY_MS]],0,1)",
+        "Assert probeDue(memory,now). retestVerdict(id,false).",
+        "Advance simulated clock31days. Assert probeDue(memory,now) again; retestVerdict(id,false) on second legitimate due retest.",
+        "At second verdict+240 days assert skipsWeigh remains true, because second extra skip should extend retestAfter(5) to365-day cap."
+      ],
+      "expected": "Two distinct eligible negative retests accumulate two extra skips; retain history facts separately if desired, but effective retest count/taste must reflect both, and duplicate delivery must not inflate them.",
+      "actual": "Stored earlySkips still3 and one overwritten verdict=-1; skipsWeigh uses earlySkips+1 forever while verdict staysnegative. Interval remains240 days; assertion expecting suppressed weight atday240 fails.",
+      "impact": "After repeated deliberate rejections, planner restores normal weight125days earlier than the stated doubled/capped retest semantics. Further negatives beyond the first never increase effective count.",
+      "repair_direction": "Track durable accumulated effective verdict count with occurrence/idempotence fences, or equivalent explicit state preserving real play/skip provenance; do not rewrite imported history or count repeated delivery as separate answers.",
+      "required_regressions": [
+        "Distinct due negative retests with3 initial skips yield240 then365days; subsequent capped",
+        "negative duplicate retry countedonce",
+        "positive thenlaternegative/observedplay resolvescorrectly",
+        "migration defaultpreservesexistingmemory/history",
+        "native andSpotify occurrencefences"
+      ],
+      "evidence": [
+        "/workspace/ts-pr29-backend/test/hub/pr29-independent.test.ts",
+        "/tmp/pr29-independent-repro.log"
+      ]
+    }
+  ],
+  "inherited_findings": [
+    {
+      "id": "PR28-REST-01",
+      "status": "OPEN_UNCHANGED",
+      "actual": "Pure planner and actual40songnativequeue include resting song atday40; both original assertionsFAIL",
+      "evidence": "/tmp/pr29-inherited-repro.log"
+    },
+    {
+      "id": "PR28-OVERLAP-02",
+      "status": "OPEN_UNCHANGED",
+      "actual": "Original overlapping export fold counts aggregate skipped0/openers1 vs profileearly1/openers0; original assertionFAIL",
+      "evidence": "/tmp/pr29-inherited-repro.log"
+    }
+  ],
+  "integration_evidence": [
+    {
+      "id": "native-negative-transport",
+      "status": "FAIL",
+      "summary": "Real Hub native deck containing probe; accept valid session observation for actual probe atindex14; retestVerdict false returns skippedfalse, leaves14, sends noSpotifycalls. This is correct nativebackend isolation but must have corresponding client native transport to satisfy negative-action move-on; current Home only calls retest API. Combine with independent UI review to classify full integration finding.",
+      "evidence": "/tmp/pr29-independent-repro.log"
+    },
+    {
+      "id": "schema6-v7-fault-recovery",
+      "status": "PASS",
+      "summary": "Populate memory/liveobserved queue; strip7columns/resetversion6; inject crash aftersecondALTER; transactionrollsback bothcolumns/version/data. Retry/restart preserves allpreviousmemorycols and exactsavedoccurrence/progress."
+    },
+    {
+      "id": "concurrent-identical-negative",
+      "status": "PASS",
+      "summary": "Two concurrent negative answers on one actuallyobserved Spotifytrack leave integratedsession advancing byonlyone afterfreshreconciliation; no double skip finding inthisfixture."
+    },
+    {
+      "id": "protected-suite",
+      "status": "PASS",
+      "tests": 103,
+      "files": 9,
+      "command": "npx vitest run test/core/retest.test.ts test/hub/retest.test.ts test/core/planner.test.ts test/core/memory-mix-history.test.ts test/hub/recovery.test.ts test/hub/session.test.ts test/hub/guest-device.test.ts test/hub/quota.test.ts test/hub/song-facts.test.ts",
+      "evidence": "/tmp/pr29-protected-tests.log"
+    }
+  ],
+  "static_review": {
+    "auth_account": "New API is insideexistingauth/CSRF boundary, dispatches hubFor uid; UserHub retest usesexisting session(epoch) wrapper. No routeauth/secret/accountnamespace change inrevieweddiff. Not realOAuth/browserproof.",
+    "migration": "Append-onlySQLcolumns; noCloudflarebinding/migrationtagchange",
+    "transport": "Existingthumb skipIfPlaying extractionsemanticallyidentical; new retest callerusesit and sharesnewAPI semantics. Normalplay/resume/provider scheduler unchanged beyonddeliberate2sretest schedule."
+  },
+  "not_run": [
+    "Physical iPhone",
+    "realSpotifylatency/quota",
+    "privateHA/nativeactualdevice",
+    "populatedproductionstorageRestore",
+    "liveOAuthaccountinteraction",
+    "root-ownedcomprehensivepublicbrowser/staticchecks reviewedbyroot, notselfclaimed"
+  ]
+}
