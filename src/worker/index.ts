@@ -786,6 +786,8 @@ app.get("/api/profile", (c) => {
 
 app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow(c.var.epoch)));
 
+app.post("/api/likes/sync", (c) => unwrap(c, c.var.hub.likesSync(c.var.epoch)));
+
 app.delete("/api/account", async (c) => {
 	const r = (await c.var.hub.deleteAccount(c.var.epoch)) as RpcResult<{ stuck: string[] }>;
 	if (!r.ok) return c.json({ error: r.error }, r.error.status as ContentfulStatusCode);

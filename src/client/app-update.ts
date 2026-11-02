@@ -9,6 +9,8 @@
 
 import { useEffect, useState } from "preact/hooks";
 
+/** The commit this page was built from (vite.config.ts replaces it; tests have none). */
+declare const __BUILD_ID__: string | undefined;
 export const BUILD_ID: string = typeof __BUILD_ID__ === "string" ? __BUILD_ID__ : "dev";
 
 export interface LiveBuild {

@@ -101,6 +101,8 @@ import type {
 	HistorySelectionView,
 	ImportedProfile,
 	JobView,
+	LikesSyncState,
+	LikesView,
 	ListeningProfile,
 	NowPlaying,
 	ObservedPlayer,
@@ -289,6 +291,19 @@ const LEGACY_DECK_NAME_PREFIX = "True Shuffle · ";
 const DECK_DESCRIPTION = (name: string) =>
 	`Dein true-shuffle-Sender „${name}“. Einfach abspielen — Shuffle bleibt aus. true-shuffle befüllt diese Playlist automatisch neu.`;
 const DISCOVERIES_NAME = `${DECK_NAME_PREFIX}Entdeckungen`;
+/** P4 (E3): the Kassette and the private Spotify playlist of every thumb up. */
+export const LIKES_NAME = "TrueShuffle Likes";
+const LIKES_SOURCE = "likes";
+const LIKES_DESCRIPTION =
+	"Jeder Song, dem du in true-shuffle einen Daumen hoch gegeben hast, einmal. true-shuffle hält sie aktuell.";
+/** A change waits this long, so a few thumbs in a row become one write to Spotify. */
+const LIKES_SYNC_DELAY_MS = 20_000;
+
+/** Every song with a thumb up here, in the order they got it (kv 'likes'). */
+interface LikesList {
+	v: 1;
+	items: { id: TrackId; at: number; meta?: PackedTrack }[];
+}
 const DISCOVERIES_DESCRIPTION =
 	"Neuentdeckungen, die dir in true-shuffle gefallen haben. Wird automatisch ergänzt.";
 
@@ -1506,6 +1521,8 @@ export class HubCore {
 				return this.stepExtend(client, Number(state.stationId), budget);
 			case "keep":
 				return this.stepKeep(client, String(state.trackId));
+			case "likes-sync":
+				return this.stepLikesSync(client);
 			case "unfollow":
 				await client.unfollowPlaylist(String(state.playlistId)).catch((e) => {
 					if (!(e instanceof SpotifyError && e.kind === "not_found")) throw e;
@@ -1857,6 +1874,11 @@ export class HubCore {
 	private loadSource(key: string): PackedTrack[] {
 		const cached = this.sourceCache.get(key);
 		if (cached) return cached;
+		if (key === LIKES_SOURCE) {
+			const out = this.likesList().items.flatMap((x) => (x.meta ? [x.meta] : []));
+			this.sourceCache.set(key, out);
+			return out;
+		}
 		const rows = this.db.all<{ data: string }>(
 			`SELECT data FROM pages WHERE source = ? ORDER BY page`,
 			key,
@@ -1869,7 +1891,7 @@ export class HubCore {
 
 	/** A source playlist that is no longer in the listener's Spotify. */
 	private sourceGone(key: string): boolean {
-		if (key === "liked") return false;
+		if (key === "liked" || key === LIKES_SOURCE) return false;
 		const row = this.db.first<{ gone_at: number | null }>(
 			`SELECT gone_at FROM playlists WHERE id = ?`,
 			key.slice(3),
@@ -1885,6 +1907,7 @@ export class HubCore {
 	private sourceImported(key: string): boolean {
 		if (this.jobExists(`import:${key}`)) return false;
 		if (key === "liked") return this.kvGet("liked_import") !== null;
+		if (key === LIKES_SOURCE) return true;
 		const row = this.db.first<{ imported_at: number | null }>(
 			`SELECT imported_at FROM playlists WHERE id = ?`,
 			key.slice(3),
@@ -2008,6 +2031,7 @@ export class HubCore {
 			next.verdict_at ?? null,
 		);
 		this.liveLookups.set(id, next);
+		if ((cur.thumb === 1) !== (next.thumb === 1)) this.noteLike(id, next.thumb === 1);
 	}
 
 	private livePlay(id: TrackId, at: number): void {
@@ -4716,6 +4740,163 @@ export class HubCore {
 	}
 
 	// =======================================================================
+	// TrueShuffle Likes (P4)
+	// =======================================================================
+
+	/**
+	 * Every song with a thumb up here, in the order they got it, each once.
+	 * Built once from the stored ratings (a single scan, on the first need
+	 * after the update), then kept by every rating write (updateLive).
+	 */
+	private likesList(): LikesList {
+		const stored = this.kvGet<LikesList>("likes");
+		if (stored) return stored;
+		const ids = this.db
+			.all<{ id: string }>(`SELECT id FROM memory WHERE thumb = 1`)
+			.map((r) => r.id);
+		const metas = ids.length ? this.lookupTracks(ids, this.usedSources()) : new Map();
+		const list: LikesList = {
+			v: 1,
+			items: ids.map((id) => {
+				const meta = metas.get(id);
+				return meta ? { id, at: this.now(), meta } : { id, at: this.now() };
+			}),
+		};
+		this.kvSet("likes", list);
+		return list;
+	}
+
+	/** A thumb up given or taken back, by any path: the Likes follow at once, Spotify soon after. */
+	private noteLike(id: TrackId, liked: boolean): void {
+		const list = this.likesList();
+		const at = list.items.findIndex((x) => x.id === id);
+		if (liked === at >= 0) return;
+		if (liked) {
+			const meta = this.lookupTracks([id], this.usedSources()).get(id) ?? this.observedMeta(id);
+			list.items.push(meta ? { id, at: this.now(), meta } : { id, at: this.now() });
+		} else list.items.splice(at, 1);
+		this.kvSet("likes", list);
+		this.sourceCache.delete(LIKES_SOURCE);
+		this.indexCache = null;
+		this.poolVersion++;
+		for (const st of this.stations())
+			if (this.sourcesOf(st).some((x) => sourceKey(x) === LIKES_SOURCE))
+				this.db.run(`UPDATE stations SET deck_dirty = 1 WHERE id = ?`, st.id);
+		this.ensureLikesStation();
+		this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
+		this.enqueue("likes-sync", "likes-sync", {}, 6, LIKES_SYNC_DELAY_MS);
+	}
+
+	/** The song Spotify plays now, if it is this one (a like from Siri on a song outside the library). */
+	private observedMeta(id: TrackId): PackedTrack | null {
+		const obs = this.kvGet<PlayerSnapshot>("player")?.obs as
+			| (PlayerObservation & { track?: unknown })
+			| undefined;
+		if (!obs || obs.trackId !== id || !obs.track) return null;
+		return packTrack(obs.track as never);
+	}
+
+	/** The Kassette „TrueShuffle Likes“, made once when the first like is there (the listener may delete it). */
+	private ensureLikesStation(): void {
+		if (this.kvGet("likes_station_made") !== null) return;
+		if (this.likesList().items.length === 0) return;
+		if (this.likesStation()) return;
+		if (this.stations().filter((st) => st.kind !== "all").length >= MAX_STATIONS) return;
+		const id = this.createStation({
+			name: LIKES_NAME,
+			kind: "custom",
+			sources: [{ type: "likes" }],
+		});
+		// Every liked song comes in its first round, also the ones heard lately.
+		this.db.run(`UPDATE stations SET round_started_at = ? WHERE id = ?`, this.now(), id);
+		this.kvSet("likes_station_made", this.now());
+	}
+
+	/** The Kassette of the Likes itself (not "Alles", which takes every source in). */
+	private likesStation(): StationRow | null {
+		return (
+			this.stations().find(
+				(st) => st.kind !== "all" && this.sourcesOf(st).some((x) => x.type === "likes"),
+			) ?? null
+		);
+	}
+
+	private likesSync(): LikesSyncState {
+		return (
+			this.kvGet<LikesSyncState>("likes_sync") ?? {
+				pending: false,
+				syncedAt: null,
+				count: null,
+				error: null,
+			}
+		);
+	}
+
+	/** The listener asks to write the playlist again (after a shown failure). */
+	async retryLikesSync(): Promise<LikesView> {
+		this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
+		this.enqueue("likes-sync", "likes-sync", {}, 2);
+		await this.scheduleSoon(0);
+		return this.likesView();
+	}
+
+	/**
+	 * Write the private playlist „TrueShuffle Likes“ to exactly the Likes, in
+	 * their order: replace the first hundred, add the rest. Idempotent, so a
+	 * retry or a second write never makes a song appear twice; one playlist,
+	 * made once and remembered (made again only when it is gone).
+	 */
+	private async stepLikesSync(client: SpotifyClient): Promise<StepResult> {
+		const uris = this.likesList().items.map((x) => `spotify:track:${x.id}`);
+		try {
+			let pid = this.kvGet<string>("likes_playlist");
+			if (!pid) {
+				const pl = await client.createPlaylist(LIKES_NAME, LIKES_DESCRIPTION);
+				if (!pl?.id) throw new Error("Spotify hat keine Playlist angelegt");
+				pid = pl.id;
+				this.kvSet("likes_playlist", pid);
+			}
+			try {
+				await client.replaceItems(pid, uris.slice(0, 100));
+				for (let i = 100; i < uris.length; i += 100)
+					await client.addItems(pid, uris.slice(i, i + 100));
+			} catch (err) {
+				if (err instanceof SpotifyError && (err.kind === "not_found" || err.kind === "forbidden")) {
+					this.kvDel("likes_playlist");
+					return { done: false, state: {}, delayMs: 1000 };
+				}
+				throw err;
+			}
+			this.kvSet("likes_sync", {
+				pending: false,
+				syncedAt: this.now(),
+				count: uris.length,
+				error: null,
+			} satisfies LikesSyncState);
+			return { done: true };
+		} catch (err) {
+			if (!(err instanceof SpotifyError && err.kind === "budget"))
+				this.kvSet("likes_sync", {
+					...this.likesSync(),
+					pending: true,
+					error: err instanceof Error ? err.message.slice(0, 200) : String(err),
+					failedAt: this.now(),
+				} satisfies LikesSyncState);
+			throw err;
+		}
+	}
+
+	/** What the app shows about the Likes (P4). */
+	likesView(): LikesView {
+		return {
+			count: this.likesList().items.length,
+			stationId: this.likesStation()?.id ?? null,
+			playlistId: this.kvGet<string>("likes_playlist"),
+			sync: this.likesSync(),
+		};
+	}
+
+	// =======================================================================
 	// Discovery
 	// =======================================================================
 
@@ -6548,6 +6729,7 @@ export class HubCore {
 			if (eff.created && row && this.rowRest(row) === eff.rowAfter) {
 				this.db.run(`DELETE FROM memory WHERE id = ?`, id);
 				this.liveLookups.set(id, null);
+				if (row.thumb === 1) this.noteLike(id, false);
 			} else this.updateLive(id, (r) => ({ ...r, thumb: eff.prev }));
 			// Discoveries: back where they were, unless they moved on since.
 			for (const d of eff.discoveries) {
@@ -8093,6 +8275,7 @@ export class HubCore {
 			nowPlaying: np,
 			observed: this.observedPlayer(snap),
 			session: this.sessionView(),
+			likes: this.likesView(),
 			guest: {
 				active: !!guestNow,
 				until: guestNow?.to ?? null,
@@ -9346,6 +9529,7 @@ function fail(code: PlayErrorCode, message: string): PlayResult {
 
 function sourceLabel(source: string, hub: HubCore): string {
 	if (source === "liked") return "Lieblingssongs";
+	if (source === LIKES_SOURCE) return `„${LIKES_NAME}“`;
 	return `„${hub.playlistName(source.slice(3)) ?? "Playlist"}“`;
 }
 

@@ -715,6 +715,11 @@ export class UserHub extends DurableObject<Env> {
 	) {
 		return this.session(epoch, () => this.hub().listeningProfile(timeZone, period));
 	}
+	/** P4: write the playlist „TrueShuffle Likes“ again (after a failure shown). */
+	likesSync(epoch: number) {
+		return this.session(epoch, () => this.hub().retryLikesSync());
+	}
+
 	syncNow(epoch: number) {
 		return this.session(epoch, async () => {
 			await this.hub().requestSync();

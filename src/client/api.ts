@@ -11,6 +11,7 @@ import type {
 	HistorySelectionView,
 	ImportSelection,
 	InspectQuery,
+	LikesView,
 	ListeningProfile,
 	ObservedSkip,
 	ObservedTarget,
@@ -366,6 +367,7 @@ export const api = {
 			}`,
 		),
 	sync: () => call<unknown>("POST", "/api/sync"),
+	likesSync: () => call<LikesView>("POST", "/api/likes/sync"),
 	logout: () => call<unknown>("POST", "/auth/logout"),
 	deleteAccount: () => call<{ stuck: string[] }>("DELETE", "/api/account"),
 };

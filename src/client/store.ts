@@ -655,6 +655,11 @@ class Store {
 		window.addEventListener("keydown", this.touched);
 	}
 
+	/** The Likes of the last snapshot (P4), null before one or from an older server. */
+	loadedLikes(): import("../shared/api").LikesView | null {
+		return this.load.kind === "ready" ? (this.load.state.likes ?? null) : null;
+	}
+
 	say(text: string, tone: Flash["tone"] = "info", ms = 7000): void {
 		this.flash = { text, tone, until: Date.now() + ms };
 		this.emit();

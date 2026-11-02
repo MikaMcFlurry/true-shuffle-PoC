@@ -20,7 +20,11 @@ export type {
 
 export type StationKind = "playlist" | "all" | "custom";
 
-export type StationSource = { type: "playlist"; id: string } | { type: "liked" };
+/** "likes": every song with a thumb up in true-shuffle (P4, the Kassette „TrueShuffle Likes“). */
+export type StationSource =
+	| { type: "playlist"; id: string }
+	| { type: "liked" }
+	| { type: "likes" };
 
 export interface StationSummary {
 	id: number;
@@ -203,6 +207,8 @@ export interface SessionView {
 
 export interface AppState {
 	session?: SessionView | null;
+	/** The Likes (P4; absent in older answers). */
+	likes?: LikesView;
 	profile: { id: string; name: string; imageUrl: string | null };
 	onboarded: boolean;
 	stations: StationSummary[];
@@ -664,3 +670,24 @@ export type PreviewResult =
 			reason: "denied" | "rate" | "timeout" | "upstream";
 			message: string;
 	  };
+
+/** Writing the private playlist „TrueShuffle Likes“ (P4). */
+export interface LikesSyncState {
+	/** A change is waiting to be written (or a failed write to be retried). */
+	pending: boolean;
+	syncedAt: number | null;
+	/** Songs in the playlist after the last good write. */
+	count: number | null;
+	/** Why the last write failed; null after a good one. */
+	error: string | null;
+	failedAt?: number;
+}
+
+/** The Likes as the app shows them (P4). */
+export interface LikesView {
+	count: number;
+	/** The Kassette „TrueShuffle Likes“, null if there is none (yet, or deleted). */
+	stationId: number | null;
+	playlistId: string | null;
+	sync: LikesSyncState;
+}
