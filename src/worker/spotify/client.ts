@@ -752,6 +752,13 @@ export class SpotifyClient {
 		});
 	}
 
+	/** P8: the volume of one device, 0 to 100. */
+	setVolume(percent: number, deviceId: string): Promise<unknown> {
+		return this.request("PUT", "/me/player/volume", {
+			query: { volume_percent: String(Math.round(percent)), device_id: deviceId },
+		});
+	}
+
 	/** P3: play exactly these songs (no context), on purpose, on one device. */
 	playUris(uris: string[], deviceId: string): Promise<unknown> {
 		return this.request("PUT", "/me/player/play", {

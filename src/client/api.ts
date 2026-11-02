@@ -375,6 +375,8 @@ export const api = {
 	continueAfter: (trackId: string) =>
 		call<ContinueAfterView>("POST", "/api/continue-after", { trackId }),
 	cancelContinueAfter: () => call<null>("DELETE", "/api/continue-after"),
+	changeVolume: (deviceId: string, step: 1 | -1) =>
+		call<{ deviceName: string; volume: number }>("POST", "/api/volume", { deviceId, step }),
 	playFromHistory: (trackId: string, playedAt: number, deviceId: string) =>
 		call<{ deviceName: string | null }>("POST", "/api/history/play", {
 			trackId,

@@ -29,6 +29,7 @@ import { RateHit, ThumbMark } from "../components/rate";
 import { SongProgress } from "../components/song-progress";
 import { factsOf, type SongFactsView, SongTags } from "../components/song-tags";
 import { Cover } from "../components/ui";
+import { VolumeKeys } from "../components/volume";
 import { duration, num, pct } from "../format";
 import { Answers } from "../home-answers";
 import { playbackView, upcomingEntries } from "../playback-view";
@@ -765,6 +766,10 @@ export function Home({ state }: { state: AppState }) {
 								<span aria-hidden="true">Nie wieder</span>
 							</button>
 						</div>
+						{state.observed?.device &&
+						(state.observed.state === "playing" || state.observed.state === "paused") ? (
+							<VolumeKeys device={state.observed.device} disabled={s.stale} />
+						) : null}
 						{observedSkip === "over" ||
 						observedSkip === "uncertain" ||
 						observedSkip === "pending" ? (

@@ -567,7 +567,14 @@ interface LaneNote {
 interface PlayerSnapshot {
 	obs: PlayerObservation | null;
 	track: PackedTrack | null;
-	device: { id: string | null; name: string; restricted: boolean } | null;
+	device: {
+		id: string | null;
+		name: string;
+		restricted: boolean;
+		/** P8: absent in snapshots stored before 1.3.0. */
+		volume?: number | null;
+		supportsVolume?: boolean;
+	} | null;
 	repeat?: SpPlaybackState["repeat_state"];
 	at: number;
 }
@@ -3078,7 +3085,14 @@ export class HubCore {
 			obs,
 			track: state?.item ? packTrack(state.item) : null,
 			device: state?.device
-				? { id: state.device.id, name: state.device.name, restricted: state.device.is_restricted }
+				? {
+						id: state.device.id,
+						name: state.device.name,
+						restricted: state.device.is_restricted,
+						volume:
+							typeof state.device.volume_percent === "number" ? state.device.volume_percent : null,
+						supportsVolume: state.device.supports_volume !== false,
+					}
 				: null,
 			repeat: state?.repeat_state,
 			at: this.now(),
@@ -4764,6 +4778,58 @@ export class HubCore {
 			throw err;
 		}
 		return { done: true };
+	}
+
+	// =======================================================================
+	// Volume of the active device (P8)
+	// =======================================================================
+
+	/**
+	 * Louder or quieter on the device Spotify plays on, in steps of five. One
+	 * request; the shown volume follows at once and the next look confirms it.
+	 * A device Spotify does not let the app control says so in plain words.
+	 */
+	async changeVolume(input: { deviceId: unknown; step: unknown }): Promise<{
+		deviceName: string;
+		volume: number;
+	}> {
+		const { deviceId, step } = input;
+		if (typeof deviceId !== "string" || !deviceId || (step !== 1 && step !== -1))
+			throw new HubError("bad_request", "Ungültige Angabe", 400);
+		const snap = this.kvGet<PlayerSnapshot>("player");
+		const device = snap?.device;
+		if (!snap || !device || device.id !== deviceId)
+			throw new HubError(
+				"stale_device",
+				"Das Gerät hat sich geändert. Die Ansicht wird aktualisiert.",
+				409,
+			);
+		if (device.restricted || device.supportsVolume === false)
+			throw new HubError(
+				"no_volume",
+				`Die Lautstärke von „${device.name}“ lässt sich nicht aus true-shuffle regeln. Nutze das Gerät selbst.`,
+				409,
+			);
+		const from = device.volume ?? 50;
+		const volume = Math.max(0, Math.min(100, Math.round((from + 5 * step) / 5) * 5));
+		const client = this.client(new RequestBudget(BUDGET_PER_INVOCATION));
+		try {
+			await client.setVolume(volume, deviceId);
+		} catch (err) {
+			if (err instanceof SpotifyError && (err.kind === "forbidden" || err.status === 403)) {
+				this.kvSet("player", { ...snap, device: { ...device, supportsVolume: false } });
+				throw new HubError(
+					"no_volume",
+					`Spotify lässt die Lautstärke von „${device.name}“ nicht aus der App regeln. Nutze das Gerät selbst.`,
+					409,
+				);
+			}
+			if (err instanceof SpotifyError && err.kind === "not_found")
+				throw new HubError("stale_device", `„${device.name}“ ist nicht mehr erreichbar.`, 409);
+			throw err;
+		}
+		this.kvSet("player", { ...snap, device: { ...device, volume } });
+		return { deviceName: device.name, volume };
 	}
 
 	// =======================================================================
@@ -8580,7 +8646,15 @@ export class HubCore {
 			return { state: "unknown", ...nothing };
 		const obs = snap.obs;
 		if (!obs) return { state: "none", ...nothing };
-		const device = snap.device ? { id: snap.device.id, name: snap.device.name } : null;
+		const device = snap.device
+			? {
+					id: snap.device.id,
+					name: snap.device.name,
+					volume: snap.device.volume ?? null,
+					volumeControl:
+						!snap.device.restricted && snap.device.supportsVolume !== false && !!snap.device.id,
+				}
+			: null;
 		// Episodes, ads, local files and unplayable items are not packed as songs.
 		const t = snap.track;
 		if (!obs.trackId || !t || t[0] !== obs.trackId)

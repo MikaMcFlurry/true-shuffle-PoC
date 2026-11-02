@@ -793,6 +793,11 @@ app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow(c.var.epoch)));
 
 app.post("/api/likes/sync", (c) => unwrap(c, c.var.hub.likesSync(c.var.epoch)));
 
+app.post("/api/volume", async (c) => {
+	const b = await body<{ deviceId?: unknown; step?: unknown }>(c);
+	return unwrap(c, c.var.hub.changeVolume(c.var.epoch, { deviceId: b?.deviceId, step: b?.step }));
+});
+
 app.post("/api/history/play", async (c) => {
 	const b = await body<{ trackId?: unknown; playedAt?: unknown; deviceId?: unknown }>(c);
 	return unwrap(

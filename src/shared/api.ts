@@ -109,7 +109,13 @@ export interface ObservedPlayer {
 	track: TrackView | null;
 	/** Position at `serverTime`: it already holds the time since the look; never add that again. */
 	progressMs: number | null;
-	device: { id: string | null; name: string } | null;
+	/** `volume`/`volumeControl` (P8): absent in older answers; volumeControl false: the device refuses. */
+	device: {
+		id: string | null;
+		name: string;
+		volume?: number | null;
+		volumeControl?: boolean;
+	} | null;
 	/**
 	 * "station": the existing reconciliation confirmed it as the saved queue's
 	 * current entry; "outside": another context than any station's;

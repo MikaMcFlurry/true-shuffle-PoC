@@ -2646,3 +2646,24 @@ h1,
 .spotify-fallback .row-actions {
 	flex-wrap: wrap;
 }
+
+/* P8: the active device's volume, under the transport keys. */
+.volume {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.volume__key {
+	min-width: 44px;
+	min-height: 44px;
+}
+
+.volume__value {
+	flex: 1;
+	min-width: 0;
+	text-align: center;
+	overflow-wrap: anywhere;
+	font-variant-numeric: tabular-nums;
+}

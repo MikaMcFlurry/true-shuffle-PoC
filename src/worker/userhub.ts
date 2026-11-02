@@ -718,6 +718,11 @@ export class UserHub extends DurableObject<Env> {
 	) {
 		return this.session(epoch, () => this.hub().listeningProfile(timeZone, period));
 	}
+	/** P8: louder (+1) or quieter (-1) on the active device. */
+	changeVolume(epoch: number, input: { deviceId: unknown; step: unknown }) {
+		return this.session(epoch, () => this.hub().changeVolume(input));
+	}
+
 	/** P3: play one Verlauf song in Spotify after the listener confirmed the device. */
 	playFromHistory(
 		epoch: number,

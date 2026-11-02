@@ -87,6 +87,7 @@ export interface SpDevice {
 	name: string;
 	type: string;
 	volume_percent?: number | null;
+	supports_volume?: boolean;
 }
 
 export interface SpPlaybackState {
