@@ -221,7 +221,10 @@ function Stepper(props: {
 }
 
 const sameSource = (a: StationSource, b: StationSource) =>
-	a.type === b.type && (a.type === "liked" || (b.type === "playlist" && a.id === b.id));
+	a.type === b.type &&
+	(a.type === "liked" ||
+		a.type === "likes" ||
+		(a.type === "playlist" && b.type === "playlist" && a.id === b.id));
 
 /** Tick the playlists (and/or Lieblingssongs) a cassette plays from. */
 export function SourcePicker(props: {

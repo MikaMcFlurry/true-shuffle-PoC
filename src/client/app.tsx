@@ -1,5 +1,6 @@
-import { History, House, ListMusic, Menu } from "lucide-preact";
+import { History, House, ListMusic, Menu, RefreshCw } from "lucide-preact";
 import { useEffect, useRef } from "preact/hooks";
+import { useUpdateReady } from "./app-update";
 import { Mark } from "./components/mark";
 import { RateSheet } from "./components/rate";
 import { ReleaseNotice } from "./components/release-notes";
@@ -24,6 +25,7 @@ import { store, useStore } from "./store";
 export function App() {
 	const s = useStore();
 	const route = useRoute();
+	const update = useUpdateReady();
 	const first = useRef(true);
 	useEffect(() => {
 		store.start();
@@ -118,6 +120,17 @@ export function App() {
 					<Mark />
 					<span class="brand__word">true-shuffle</span>
 				</a>
+				{update ? (
+					<button
+						type="button"
+						class="key key--lit app-update"
+						onClick={() => window.location.reload()}
+						title={update.version ? `Version ${update.version} ist da` : "Neue Version ist da"}
+					>
+						<RefreshCw size={18} aria-hidden="true" />
+						Aktualisieren
+					</button>
+				) : null}
 			</header>
 			{s.stale ? (
 				<div class="notice notice--offline" role="status">

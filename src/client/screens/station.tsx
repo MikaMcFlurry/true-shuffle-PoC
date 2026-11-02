@@ -12,6 +12,7 @@ import type {
 } from "../../shared/api";
 import { api } from "../api";
 import { Cassette, shellOf } from "../components/cassette";
+import { LikesStatus } from "../components/likes";
 import { RateHit, ThumbMark } from "../components/rate";
 import { factsOf, SongTags } from "../components/song-tags";
 import { Cover, MixFine, MixScale, PageBar, Section } from "../components/ui";
@@ -221,7 +222,10 @@ function Stepper(props: {
 }
 
 const sameSource = (a: StationSource, b: StationSource) =>
-	a.type === b.type && (a.type === "liked" || (b.type === "playlist" && a.id === b.id));
+	a.type === b.type &&
+	(a.type === "liked" ||
+		a.type === "likes" ||
+		(a.type === "playlist" && b.type === "playlist" && a.id === b.id));
 
 /** Tick the playlists (and/or Lieblingssongs) a cassette plays from. */
 export function SourcePicker(props: {
@@ -627,6 +631,12 @@ export function Station({
 				<MixExplained rules={rules} mix={value} />
 			</Section>
 
+			{d.sources.some((x) => x.type === "likes") && store.loadedLikes() ? (
+				<Section title="TrueShuffle Likes" id="likes">
+					<LikesStatus likes={store.loadedLikes()!} />
+				</Section>
+			) : null}
+
 			{d.kind !== "all" ? (
 				<Section title="Playlists auf dieser Kassette" id="src">
 					{editSources ? (
@@ -659,19 +669,23 @@ export function Station({
 								{d.sources.map((s) => {
 									const p = s.type === "playlist" ? names?.get(s.id) : null;
 									return (
-										<li key={s.type === "playlist" ? s.id : "liked"} class="row">
+										<li key={s.type === "playlist" ? s.id : s.type} class="row">
 											<span class="row__main">
 												<span class="row__title">
 													{s.type === "liked"
 														? "Lieblingssongs"
-														: (p?.name ?? (names ? "Playlist nicht mehr da" : "Playlist"))}
+														: s.type === "likes"
+															? "Deine Favoriten in true-shuffle"
+															: (p?.name ?? (names ? "Playlist nicht mehr da" : "Playlist"))}
 												</span>
 												<span class="row__sub">
 													{s.type === "liked"
 														? "Deine Herzen in Spotify"
-														: p && p.total !== null
-															? `${num(p.total)} Songs`
-															: "Playlist aus Spotify"}
+														: s.type === "likes"
+															? "Jeder Daumen hoch, einmal pro Song"
+															: p && p.total !== null
+																? `${num(p.total)} Songs`
+																: "Playlist aus Spotify"}
 												</span>
 											</span>
 										</li>

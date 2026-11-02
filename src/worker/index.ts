@@ -713,6 +713,11 @@ app.post("/api/history/delete", async (c) => {
 app.get("/api/playlist-counts", (c) => unwrap(c, c.var.hub.playlistCounts(c.var.epoch)));
 app.post("/api/playlist-counts", (c) => unwrap(c, c.var.hub.countPlaylists(c.var.epoch)));
 
+app.get("/api/history/search", (c) => {
+	const since = Number(c.req.query("since") ?? 0);
+	return unwrap(c, c.var.hub.historySearch(c.var.epoch, Number.isFinite(since) ? since : 0));
+});
+
 app.get("/api/history", (c) => {
 	const before = c.req.query("before");
 	return unwrap(
@@ -785,6 +790,31 @@ app.get("/api/profile", (c) => {
 });
 
 app.post("/api/sync", (c) => unwrap(c, c.var.hub.syncNow(c.var.epoch)));
+
+app.post("/api/likes/sync", (c) => unwrap(c, c.var.hub.likesSync(c.var.epoch)));
+
+app.post("/api/volume", async (c) => {
+	const b = await body<{ deviceId?: unknown; step?: unknown }>(c);
+	return unwrap(c, c.var.hub.changeVolume(c.var.epoch, { deviceId: b?.deviceId, step: b?.step }));
+});
+
+app.post("/api/history/play", async (c) => {
+	const b = await body<{ trackId?: unknown; playedAt?: unknown; deviceId?: unknown }>(c);
+	return unwrap(
+		c,
+		c.var.hub.playFromHistory(c.var.epoch, {
+			trackId: b?.trackId,
+			playedAt: b?.playedAt,
+			deviceId: b?.deviceId,
+		}),
+	);
+});
+
+app.post("/api/continue-after", async (c) => {
+	const b = await body<{ trackId?: unknown }>(c);
+	return unwrap(c, c.var.hub.continueAfter(c.var.epoch, b?.trackId));
+});
+app.delete("/api/continue-after", (c) => unwrap(c, c.var.hub.cancelContinueAfter(c.var.epoch)));
 
 app.delete("/api/account", async (c) => {
 	const r = (await c.var.hub.deleteAccount(c.var.epoch)) as RpcResult<{ stuck: string[] }>;

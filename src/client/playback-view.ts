@@ -243,3 +243,25 @@ function stationView(
 		awaitingObservation: false,
 	};
 }
+
+/**
+ * The songs under "Als Nächstes" (P10): after true-shuffle's own song, or
+ * after its saved place while Spotify plays another. Never the song shown as
+ * playing right now: after a skip the view can already show the next song
+ * (observed, or held by the command) while the saved place still points at
+ * the one before, and 1.2.0 then listed the playing song a second time.
+ */
+export function upcomingEntries<E extends { entryId: string; track: { id: string } }>(
+	queue: readonly E[],
+	view: Pick<PlaybackView, "entryId" | "track" | "checkpoint">,
+	limit = 50,
+): E[] {
+	const after = view.entryId ?? view.checkpoint?.entryId ?? null;
+	let list = queue.slice(Math.max(0, queue.findIndex((e) => e.entryId === after) + 1));
+	// Only when the view shows a song other than its own entry's (the next one,
+	// already playing): the same song twice in a row stays listed twice.
+	const own = queue.find((e) => e.entryId === view.entryId)?.track.id;
+	if (view.track && list[0]?.track.id === view.track.id && own !== view.track.id)
+		list = list.slice(1);
+	return list.filter((e) => e.entryId !== view.entryId).slice(0, limit);
+}

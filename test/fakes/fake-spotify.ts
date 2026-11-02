@@ -53,6 +53,9 @@ export interface FakeUser {
 		privateSession?: boolean;
 		/** Spotify documents device.id as nullable: reported as null. */
 		noId?: boolean;
+		/** P8: the device's volume (default 50); `fixedVolume`: Spotify refuses changes (403). */
+		volume?: number;
+		fixedVolume?: boolean;
 	}[];
 	/** …unless Spotify lists them after all. */
 	listPrivatePlays?: boolean;
@@ -631,6 +634,8 @@ export class FakeSpotify {
 					is_private_session: dev.privateSession === true,
 					name: dev.name,
 					type: dev.type,
+					volume_percent: dev.volume ?? 50,
+					supports_volume: dev.fixedVolume !== true,
 				},
 				shuffle_state: p.shuffle,
 				smart_shuffle: p.smartShuffle,
@@ -729,6 +734,24 @@ export class FakeSpotify {
 		if (m === "PUT" && path === "/me/player/shuffle") {
 			if (!u.premium) return premiumOnly();
 			p.shuffle = q.get("state") === "true";
+			return new Response(null, { status: 204 });
+		}
+		if (m === "PUT" && path === "/me/player/volume") {
+			if (!u.premium) return premiumOnly();
+			const dev = u.devices.find((d) => d.id === (q.get("device_id") ?? p.deviceId));
+			if (!dev) return json({ error: { status: 404, message: "Device not found" } }, 404);
+			if (dev.fixedVolume)
+				return json(
+					{
+						error: {
+							status: 403,
+							message: "Cannot control device volume",
+							reason: "VOLUME_CONTROL_DISALLOW",
+						},
+					},
+					403,
+				);
+			dev.volume = Math.max(0, Math.min(100, Number(q.get("volume_percent"))));
 			return new Response(null, { status: 204 });
 		}
 		if (m === "PUT" && path === "/me/player/repeat") {

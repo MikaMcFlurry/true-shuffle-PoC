@@ -20,7 +20,11 @@ export type {
 
 export type StationKind = "playlist" | "all" | "custom";
 
-export type StationSource = { type: "playlist"; id: string } | { type: "liked" };
+/** "likes": every song with a thumb up in true-shuffle (P4, the Kassette „TrueShuffle Likes“). */
+export type StationSource =
+	| { type: "playlist"; id: string }
+	| { type: "liked" }
+	| { type: "likes" };
 
 export interface StationSummary {
 	id: number;
@@ -105,7 +109,13 @@ export interface ObservedPlayer {
 	track: TrackView | null;
 	/** Position at `serverTime`: it already holds the time since the look; never add that again. */
 	progressMs: number | null;
-	device: { id: string | null; name: string } | null;
+	/** `volume`/`volumeControl` (P8): absent in older answers; volumeControl false: the device refuses. */
+	device: {
+		id: string | null;
+		name: string;
+		volume?: number | null;
+		volumeControl?: boolean;
+	} | null;
 	/**
 	 * "station": the existing reconciliation confirmed it as the saved queue's
 	 * current entry; "outside": another context than any station's;
@@ -203,6 +213,10 @@ export interface SessionView {
 
 export interface AppState {
 	session?: SessionView | null;
+	/** The Likes (P4; absent in older answers). */
+	likes?: LikesView;
+	/** „Nach diesem Song fortsetzen“ (P5; absent in older answers). */
+	continueAfter?: ContinueAfterView | null;
 	profile: { id: string; name: string; imageUrl: string | null };
 	onboarded: boolean;
 	stations: StationSummary[];
@@ -652,10 +666,11 @@ export type PreviewResult =
 	| {
 			status: "unavailable";
 			/**
-			 * no_match: no recording of this song; ambiguous: several different
-			 * ones fit; no_preview: the recording has no sample.
+			 * missing: Deezer has no song of this title by these artists;
+			 * no_match: only other versions (live, remix, another length);
+			 * ambiguous: several different ones fit; no_preview: no sample.
 			 */
-			reason: "no_match" | "ambiguous" | "no_preview";
+			reason: "missing" | "no_match" | "ambiguous" | "no_preview";
 			message: string;
 	  }
 	| {
@@ -664,3 +679,44 @@ export type PreviewResult =
 			reason: "denied" | "rate" | "timeout" | "upstream";
 			message: string;
 	  };
+
+/** Writing the private playlist „TrueShuffle Likes“ (P4). */
+export interface LikesSyncState {
+	/** A change is waiting to be written (or a failed write to be retried). */
+	pending: boolean;
+	syncedAt: number | null;
+	/** Songs in the playlist after the last good write. */
+	count: number | null;
+	/** Why the last write failed; null after a good one. */
+	error: string | null;
+	failedAt?: number;
+}
+
+/** The Likes as the app shows them (P4). */
+export interface LikesView {
+	count: number;
+	/** The Kassette „TrueShuffle Likes“, null if there is none (yet, or deleted). */
+	stationId: number | null;
+	playlistId: string | null;
+	sync: LikesSyncState;
+}
+
+/** S1: the Verlauf grouped by song for the search (GET /api/history/search). */
+export interface HistorySearchAnswer {
+	/** The newest play included: ask again with `since` = this for only what came after. */
+	through: number;
+	/** False when only the newest plays fit (see HISTORY_SEARCH_MAX_PLAYS). */
+	complete: boolean;
+	songs: { entry: HistoryEntry; plays: number[] }[];
+}
+
+/** P5: „Nach diesem Song fortsetzen“, armed or how it ended. */
+export interface ContinueAfterView {
+	/** The song outside true-shuffle it waits for (null once it ended). */
+	trackId: string | null;
+	armedAt: number | null;
+	/** The song was seen left; true-shuffle is being resumed. */
+	due: boolean;
+	/** How the last one ended; null while armed. */
+	result: { ok: boolean; at: number; message: string | null } | null;
+}

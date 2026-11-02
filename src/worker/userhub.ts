@@ -628,6 +628,9 @@ export class UserHub extends DurableObject<Env> {
 	history(epoch: number, limit: number, before?: number) {
 		return this.session(epoch, () => this.hub().history(limit, before));
 	}
+	historySearch(epoch: number, since?: number) {
+		return this.session(epoch, () => this.hub().historySearch(since));
+	}
 	/** Lookups of listening samples in the last minute (see historyPreview). */
 	private previewTimes: number[] = [];
 	/**
@@ -715,6 +718,32 @@ export class UserHub extends DurableObject<Env> {
 	) {
 		return this.session(epoch, () => this.hub().listeningProfile(timeZone, period));
 	}
+	/** P8: louder (+1) or quieter (-1) on the active device. */
+	changeVolume(epoch: number, input: { deviceId: unknown; step: unknown }) {
+		return this.session(epoch, () => this.hub().changeVolume(input));
+	}
+
+	/** P3: play one Verlauf song in Spotify after the listener confirmed the device. */
+	playFromHistory(
+		epoch: number,
+		input: { trackId: unknown; playedAt: unknown; deviceId: unknown },
+	) {
+		return this.session(epoch, () => this.hub().playFromHistory(input));
+	}
+
+	/** P5: go on with true-shuffle once this song outside it is over. */
+	continueAfter(epoch: number, trackId: unknown) {
+		return this.session(epoch, () => this.hub().continueAfter(trackId));
+	}
+	cancelContinueAfter(epoch: number) {
+		return this.session(epoch, () => this.hub().cancelContinueAfter());
+	}
+
+	/** P4: write the playlist „TrueShuffle Likes“ again (after a failure shown). */
+	likesSync(epoch: number) {
+		return this.session(epoch, () => this.hub().retryLikesSync());
+	}
+
 	syncNow(epoch: number) {
 		return this.session(epoch, async () => {
 			await this.hub().requestSync();

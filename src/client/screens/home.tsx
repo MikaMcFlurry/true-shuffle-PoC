@@ -24,13 +24,15 @@ import type {
 } from "../../shared/api";
 import { ApiError, api, type NativeDevice, type PlayingOccurrence } from "../api";
 import { Cassette, type ReelState, shellOf } from "../components/cassette";
+import { ContinueAfter } from "../components/continue-after";
 import { RateHit, ThumbMark } from "../components/rate";
 import { SongProgress } from "../components/song-progress";
 import { factsOf, type SongFactsView, SongTags } from "../components/song-tags";
 import { Cover } from "../components/ui";
+import { VolumeKeys } from "../components/volume";
 import { duration, num, pct } from "../format";
 import { Answers } from "../home-answers";
-import { playbackView } from "../playback-view";
+import { playbackView, upcomingEntries } from "../playback-view";
 import { type PlaybackAction, store, useStore } from "../store";
 
 /**
@@ -564,13 +566,8 @@ export function Home({ state }: { state: AppState }) {
 				: statusText === "Gerätebestätigung steht aus"
 					? { level: 2, tone: "wait" }
 					: { level: 3, tone: "ok" };
-	// After true-shuffle's own song, or after its saved place while Spotify plays another.
-	const after = view.entryId ?? view.checkpoint?.entryId ?? null;
-	const successors = session?.queue.length
-		? session.queue
-				.slice(Math.max(0, session.queue.findIndex((e) => e.entryId === after) + 1))
-				.slice(0, 50)
-		: [];
+	// After true-shuffle's own song, or after its saved place; never the song playing now (P10).
+	const successors = session?.queue.length ? upcomingEntries(session.queue, view) : [];
 	const where =
 		ownNow?.deviceName ??
 		nativeController?.deviceName ??
@@ -618,6 +615,13 @@ export function Home({ state }: { state: AppState }) {
 		posterStation && posterStation.poolSize !== null && posterStation.freshRemaining !== null
 			? posterStation.poolSize - posterStation.freshRemaining
 			: null;
+	/** U1-08: soft hyphens where the start key's long words may break, in every engine. */
+	const syllables = (t: string) =>
+		t
+			.replace(/Wiedergabe/g, "Wieder­gabe")
+			.replace(/angenommen/g, "an­ge­nom­men")
+			.replace(/(F|f)ortsetzen/g, "$1ort­setzen")
+			.replace(/TrueShuffle/g, "True­Shuffle");
 	const mainLabel = unsettled
 		? keyLabel(commandLabel)
 		: playing
@@ -715,9 +719,15 @@ export function Home({ state }: { state: AppState }) {
 								(playing && !!nativeController && !activeNative?.pause)
 							}
 							onClick={() => void act(playing ? "pause" : "play")}
+							aria-label={typeof mainLabel === "string" ? mainLabel : undefined}
 						>
 							{playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
-							{mainLabel}
+							<span
+								class="transport-main__label"
+								aria-hidden={typeof mainLabel === "string" ? "true" : undefined}
+							>
+								{typeof mainLabel === "string" ? syllables(mainLabel) : mainLabel}
+							</span>
 						</button>
 						<div class="transport-keys">
 							<button
@@ -769,6 +779,10 @@ export function Home({ state }: { state: AppState }) {
 								<span aria-hidden="true">Nie wieder</span>
 							</button>
 						</div>
+						{state.observed?.device &&
+						(state.observed.state === "playing" || state.observed.state === "paused") ? (
+							<VolumeKeys device={state.observed.device} disabled={s.stale} />
+						) : null}
 						{observedSkip === "over" ||
 						observedSkip === "uncertain" ||
 						observedSkip === "pending" ? (
@@ -872,6 +886,16 @@ export function Home({ state }: { state: AppState }) {
 							„TrueShuffle fortsetzen“ spielt dort weiter. Songs außerhalb deiner TrueShuffle-Folge
 							verschieben sie nicht.
 						</p>
+						{view.source === "observed" && view.playing && view.track ? (
+							<ContinueAfter
+								trackId={view.track.id}
+								armed={state.continueAfter ?? null}
+								disabled={s.stale}
+							/>
+						) : null}
+						{state.continueAfter?.result && !state.continueAfter.result.ok ? (
+							<p class="notice notice--warn">{state.continueAfter.result.message}</p>
+						) : null}
 					</section>
 				) : null}
 

@@ -130,6 +130,9 @@ body {
 	font-variant-numeric: tabular-nums;
 	-webkit-font-smoothing: antialiased;
 	overflow-wrap: anywhere;
+	/* U1-07: German words break at syllables ("Wasser-farben") before anywhere. */
+	hyphens: auto;
+	-webkit-hyphens: auto;
 }
 
 ::selection {
@@ -250,7 +253,8 @@ svg {
 
 .app-shell {
 	min-height: 100dvh;
-	padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom));
+	/* U1-04: room below the last line, also where the bar is taller (landscape phones). */
+	padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + 16px);
 }
 
 .app-header {
@@ -2584,4 +2588,156 @@ h1,
 .tags--row .tag:not(.tag--fact) + .tag--fact::before {
 	content: "\A";
 	white-space: pre;
+}
+
+/* "Aktualisieren": a newer deploy is live (src/client/app-update.ts). */
+.app-update {
+	min-height: 44px;
+	padding: 0 14px;
+}
+
+/* S1: the Verlauf search stays in reach while the list scrolls (and above the keyboard). */
+.hist-search {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	padding: 8px 0;
+	background: var(--paper);
+}
+
+.hist-search__field {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 48px;
+	padding: 0 14px;
+	border: 1px solid var(--rule-strong);
+	border-radius: var(--r);
+	background: var(--paper);
+	color: var(--ink);
+	/* 16 px: iOS does not zoom into the field. */
+	font: inherit;
+	font-size: 16px;
+}
+
+.hist-search__field:focus-visible {
+	outline: 3px solid var(--ink);
+	outline-offset: 2px;
+}
+
+.hist-hit {
+	list-style: none;
+}
+
+.hist-hit__plays summary {
+	display: flex;
+	align-items: center;
+	min-height: 44px;
+	cursor: pointer;
+	color: var(--ink-2);
+}
+
+.hist-hit__times {
+	margin: 0 0 8px;
+	padding-left: 18px;
+	color: var(--ink-2);
+}
+
+/* P3: the deliberate Spotify ways on, under a missing sample. */
+.spotify-fallback {
+	margin-top: 8px;
+}
+
+.spotify-fallback .row-actions {
+	flex-wrap: wrap;
+}
+
+/* P8: the active device's volume, under the transport keys. */
+.volume {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.volume__value {
+	flex: 1;
+	min-width: 0;
+	text-align: center;
+	overflow-wrap: anywhere;
+	font-variant-numeric: tabular-nums;
+}
+
+/* U1-01: key labels break between words or at a German syllable ("Wieder-
+   gabe"), never inside a word as the page's overflow-wrap: anywhere allows. */
+.transport-main,
+.tkey,
+.key {
+	/* A word wider than the key still breaks (better than clipped). */
+	overflow-wrap: break-word;
+	hyphens: auto;
+	-webkit-hyphens: auto;
+}
+
+@media (max-width: 359px) {
+	.walkman .transport-main {
+		font-size: 0.8125rem;
+	}
+	.walkman .tkey {
+		font-size: 0.75rem;
+	}
+}
+
+/* <search> is new; older engines treat it as an unknown inline element. */
+search {
+	display: block;
+}
+
+fieldset.volume,
+.spotify-fallback fieldset {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+/* U1-03: the volume keys keep their 44 px and stay in the row at 320 px. */
+.volume__key {
+	box-sizing: border-box;
+	display: inline-flex;
+	flex: 0 0 44px;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 1px solid var(--rule);
+	border-radius: var(--r);
+	background: var(--paper);
+	color: var(--ink);
+	-webkit-tap-highlight-color: transparent;
+	touch-action: manipulation;
+}
+
+.volume__key:disabled {
+	opacity: 0.45;
+}
+
+.volume__key svg {
+	width: 20px;
+	height: 20px;
+}
+
+/* The volume row spans the whole transport, also in its two-column designs. */
+.transport > .volume {
+	grid-column: 1 / -1;
+}
+
+/* U1-08: the start key's label may shrink to the key and break there ("an-
+   genommen"), instead of overflowing and being cut at both sides. */
+.transport-main__label {
+	min-width: 0;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+	hyphens: auto;
+	-webkit-hyphens: auto;
 }

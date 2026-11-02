@@ -570,6 +570,30 @@ test.describe("a listener's day", () => {
 		expect(res.headers()["content-type"]).toMatch(/^text\/plain/);
 		expect(await res.text()).toMatch(/ist jetzt Favorit\.$/);
 
+		// P14: the three Shortcuts the owner uses ("Favorit", "Nie wieder",
+		// "Weiter") keep their exact URL, method, header and spoken answers.
+		const before = (await fake("status")).current;
+		const never = await page.request.post("/remote/dislike", {
+			headers: { authorization: `bearer ${key}` },
+		});
+		expect(never.status()).toBe(200);
+		expect(await never.text()).toMatch(/kommt nie wieder\. Nächster Song\.$/);
+		await expect.poll(async () => (await fake("status")).current).not.toBe(before);
+		const skipped = (await fake("status")).current;
+		const next = await page.request.post("/remote/skip", {
+			headers: { authorization: `Bearer ${key}` },
+		});
+		expect(next.status()).toBe(200);
+		expect(await next.text()).toBe("Nächster Song.");
+		await expect.poll(async () => (await fake("status")).current).not.toBe(skipped);
+		expect((await page.request.get("/remote/skip")).status()).toBe(405);
+		expect(
+			(
+				await page.request.post("/remote/play", { headers: { authorization: `Bearer ${key}` } })
+			).status(),
+		).toBe(404);
+		expect((await page.request.post("/remote/like")).status()).toBe(401);
+
 		// A new key ends the old one.
 		await page.getByRole("button", { name: "Neuer Schlüssel" }).click();
 		await page.getByRole("button", { name: "Neu erstellen" }).click();

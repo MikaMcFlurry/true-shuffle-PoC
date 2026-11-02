@@ -6,6 +6,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, ObservedTarget, PlayResult, TrackView } from "../shared/api";
 import { statePollMs } from "../shared/poll-pace";
+import { writeNumber } from "../shared/rating-number";
 import { ApiError, api } from "./api";
 import type { FrozenView } from "./playback-view";
 import { syncThemeColor } from "./theme";
@@ -46,6 +47,9 @@ export interface PlaybackCommand {
 }
 
 type Listener = () => void;
+
+/** Return signals within this of a fresh read share it (see refresh). */
+const FRESH_BURST_MS = 1000;
 
 class Store {
 	load: Load = { kind: "loading" };
@@ -437,7 +441,12 @@ class Store {
 	): void {
 		for (const r of rows) {
 			const own = this.thumbs.get(r.id);
-			this.noteStored(r.id, r.thumb, r.rated, own && known.get(r.id) === own ? own : undefined);
+			this.noteStored(
+				r.id,
+				r.thumb,
+				writeNumber(r.rated),
+				own && known.get(r.id) === own ? own : undefined,
+			);
 		}
 	}
 
@@ -489,7 +498,8 @@ class Store {
 				this.keepShown(s.id, own);
 			}
 			// Only a row without a write number (an older answer) is ordered by when it was asked.
-			if (asked !== undefined && s.rated === undefined) this.retell(s.id, s.thumb, asked);
+			if (asked !== undefined && writeNumber(s.rated) === undefined)
+				this.retell(s.id, s.thumb, asked);
 		}
 		if (this.shownOpen() !== shown) this.emit();
 	}
@@ -503,7 +513,16 @@ class Store {
 	refresh(live = true, afterInflight = false, fresh = false): Promise<void> {
 		if (this.inflight) {
 			if (!afterInflight && !fresh) return this.followup ?? this.inflight;
-			if (!afterInflight && this.inflightFresh && !this.followup) return this.inflight;
+			// A burst (focus, visibility, online at once) shares one fresh read; a
+			// return later than a fresh read already on its way asks again after it:
+			// that read may predate what changed (1.2.0's fixed 15 s tick hid this).
+			if (
+				!afterInflight &&
+				this.inflightFresh &&
+				!this.followup &&
+				Date.now() - this.inflightAt < FRESH_BURST_MS
+			)
+				return this.inflight;
 			this.followupLive ||= live;
 			this.followupFresh ||= fresh;
 			if (!this.followup) {
@@ -519,6 +538,7 @@ class Store {
 			return this.followup;
 		}
 		const started = Date.now();
+		this.inflightAt = started;
 		const asked = ++this.readsAsked;
 		const epoch = this.epoch;
 		this.inflightFresh = fresh;
@@ -566,10 +586,10 @@ class Store {
 					state.nowPlaying,
 					...(state.session?.queue.map((entry) => entry.track) ?? []),
 				];
-				for (const t of read) if (t) this.noteStored(t.id, t.thumb, t.rated);
+				for (const t of read) if (t) this.noteStored(t.id, t.thumb, writeNumber(t.rated));
 				const open = this.rating;
 				const told = open ? read.find((t) => t?.id === open.id) : undefined;
-				if (told && told.rated === undefined) this.retell(told.id, told.thumb, asked);
+				if (told && writeNumber(told.rated) === undefined) this.retell(told.id, told.thumb, asked);
 			})
 			.catch((err: unknown) => {
 				if (epoch !== this.epoch) return;
@@ -603,6 +623,8 @@ class Store {
 		return this.inflight;
 	}
 
+	/** When the read on its way was asked. */
+	private inflightAt = 0;
 	/** When the listener last touched the app (pace of the poll, see statePollMs). */
 	private interactedAt = Date.now();
 	private readonly touched = () => {
@@ -646,6 +668,11 @@ class Store {
 		window.addEventListener("offline", this.offline);
 		window.addEventListener("pointerdown", this.touched, { passive: true });
 		window.addEventListener("keydown", this.touched);
+	}
+
+	/** The Likes of the last snapshot (P4), null before one or from an older server. */
+	loadedLikes(): import("../shared/api").LikesView | null {
+		return this.load.kind === "ready" ? (this.load.state.likes ?? null) : null;
 	}
 
 	say(text: string, tone: Flash["tone"] = "info", ms = 7000): void {

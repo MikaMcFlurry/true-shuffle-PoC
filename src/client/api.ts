@@ -2,15 +2,18 @@ import type { HistoryRow } from "../core/history";
 import type { StationRules } from "../core/types";
 import type {
 	AppState,
+	ContinueAfterView,
 	DeviceView,
 	GenreAnswer,
 	HistoryEntry,
 	HistoryRateAnswer,
 	HistoryRatingLookup,
 	HistoryRatingReceipt,
+	HistorySearchAnswer,
 	HistorySelectionView,
 	ImportSelection,
 	InspectQuery,
+	LikesView,
 	ListeningProfile,
 	ObservedSkip,
 	ObservedTarget,
@@ -329,6 +332,8 @@ export const api = {
 		),
 	playlistCounts: () => call<PlaylistCountsView>("GET", "/api/playlist-counts"),
 	countPlaylists: () => call<PlaylistCountsView>("POST", "/api/playlist-counts"),
+	historySearch: (since = 0) =>
+		call<HistorySearchAnswer>("GET", `/api/history/search${since ? `?since=${since}` : ""}`),
 	history: (before?: number) =>
 		call<HistoryEntry[]>("GET", `/api/history?limit=60${before ? `&before=${before}` : ""}`),
 	/**
@@ -366,6 +371,18 @@ export const api = {
 			}`,
 		),
 	sync: () => call<unknown>("POST", "/api/sync"),
+	likesSync: () => call<LikesView>("POST", "/api/likes/sync"),
+	continueAfter: (trackId: string) =>
+		call<ContinueAfterView>("POST", "/api/continue-after", { trackId }),
+	cancelContinueAfter: () => call<null>("DELETE", "/api/continue-after"),
+	changeVolume: (deviceId: string, step: 1 | -1) =>
+		call<{ deviceName: string; volume: number }>("POST", "/api/volume", { deviceId, step }),
+	playFromHistory: (trackId: string, playedAt: number, deviceId: string) =>
+		call<{ deviceName: string | null }>("POST", "/api/history/play", {
+			trackId,
+			playedAt,
+			deviceId,
+		}),
 	logout: () => call<unknown>("POST", "/auth/logout"),
 	deleteAccount: () => call<{ stuck: string[] }>("DELETE", "/api/account"),
 };

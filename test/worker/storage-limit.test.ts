@@ -11,7 +11,19 @@ describe("P1 storage limit", () => {
 			"SQLITE_FULL: database or disk is full",
 		])
 			expect(isStorageLimit(new Error(text)), text).toBe(true);
-		for (const text of ["boom", "Cannot read properties of undefined", "Ungültige Song-ID"])
+		for (const text of [
+			"boom",
+			"Cannot read properties of undefined",
+			"Ungültige Song-ID",
+			"Maximum call stack size exceeded",
+			"Worker exceeded its memory limit",
+			"Subrequest limit exceeded",
+			"Exceeded CPU time limit",
+			"Spotify rate limit reached",
+			"Too many requests: rate limit exceeded",
+			"Durable Object storage operation exceeded timeout which caused object to be reset.",
+			"Durable Object is overloaded. Requests queued for too long.",
+		])
 			expect(isStorageLimit(new Error(text)), text).toBe(false);
 	});
 
