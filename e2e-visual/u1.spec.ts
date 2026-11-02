@@ -107,8 +107,11 @@ test("U1 every screen", async ({ page, context }, info) => {
 	await audit(page, "player", findings, shot("03-player"));
 
 	// Playing, so the queue (and its rating buttons) is there.
-	const start = page.getByRole("button", { name: /^(Wiedergabe starten|Fortsetzen|TrueShuffle fortsetzen)/ });
-	if (await start.first().isEnabled().catch(() => false)) await start.first().click();
+	const start = page
+		.getByRole("button", { name: /^(Wiedergabe starten|Fortsetzen|TrueShuffle fortsetzen)/ })
+		.first();
+	if ((await start.count()) > 0 && (await start.isEnabled({ timeout: 2_000 }).catch(() => false)))
+		await start.click();
 	await page.locator(".queue-row").first().waitFor({ timeout: 30_000 }).catch(() => undefined);
 	await audit(page, "player-spielt", findings, shot("03b-player-spielt"));
 	// The rating sheet from the queue.
@@ -138,12 +141,19 @@ test("U1 every screen", async ({ page, context }, info) => {
 	const guest = page.getByRole("switch", { name: /Gast-Modus/ });
 	await expect(guest).toBeVisible();
 	await audit(page, "menu", findings, shot("09-menu"));
-	await guest.check();
-	await expect(page.getByText(/Gast-Modus an/)).toBeVisible();
+	// A run that stopped midway may have left it on: start from off.
+	if (await guest.isChecked()) {
+		await guest.click();
+		await expect(guest).not.toBeChecked();
+	}
+	await guest.click();
+	await expect(guest).toBeChecked();
 	await page.goto("/");
 	await audit(page, "gastmodus", findings, shot("10-gastmodus"));
 	await page.goto("/mehr");
-	await page.getByRole("switch", { name: /Gast-Modus/ }).uncheck();
+	const off = page.getByRole("switch", { name: /Gast-Modus/ });
+	await off.click();
+	await expect(off).not.toBeChecked();
 
 	// Offline.
 	await page.goto("/");

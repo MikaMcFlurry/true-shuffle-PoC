@@ -17,7 +17,13 @@ import { readFileSync } from "node:fs";
 import { type BrowserContext, expect, type Page, type Route, test } from "@playwright/test";
 import { DEFAULT_RULES } from "../src/core/types";
 import type { AppState } from "../src/shared/api";
-import { RELEASE } from "../src/shared/release";
+
+/** The release's change lines, read from its record (a JSON import needs attributes here). */
+const CHANGES = (() => {
+	const src = readFileSync("src/shared/release.ts", "utf8");
+	const block = /changes: Object\.freeze\(\[([\s\S]*?)\]\)/.exec(src)?.[1] ?? "";
+	return block.split("\n").filter((l) => /^\s*"/.test(l)).length;
+})();
 
 const VERSION = (JSON.parse(readFileSync("package.json", "utf8")) as { version: string }).version;
 const KEY = "ts-release-seen";
@@ -210,7 +216,7 @@ test.describe("phone", () => {
 		// Open, not yet closed: nothing kept.
 		expect(await stored(page)).toBeNull();
 		const n = notice(page);
-		await expect(n.locator(".release-notes li")).toHaveCount(RELEASE.changes.length);
+		await expect(n.locator(".release-notes li")).toHaveCount(CHANGES);
 		await expect(n).toContainText(`Diese Seite läuft mit Version ${VERSION} vom`);
 		await expect(n).toContainText("Bekannte Grenze:");
 		await expect(n).toContainText("von Hand");
@@ -477,7 +483,7 @@ test.describe("desktop", () => {
 		const line = (await section.locator("p").first().textContent()) ?? "";
 		const m = /^Diese Seite läuft mit Version (\S+) vom (.+)\.$/.exec(line);
 		expect(m, line).not.toBeNull();
-		await expect(section.locator(".release-notes li")).toHaveCount(RELEASE.changes.length);
+		await expect(section.locator(".release-notes li")).toHaveCount(CHANGES);
 		await expect(section).toContainText("Bekannte Grenze:");
 
 		// The built Worker's own answer (not intercepted: the page's routes do not reach it).

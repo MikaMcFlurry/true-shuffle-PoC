@@ -250,7 +250,8 @@ svg {
 
 .app-shell {
 	min-height: 100dvh;
-	padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom));
+	/* U1-04: room below the last line, also where the bar is taller (landscape phones). */
+	padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + 16px);
 }
 
 .app-header {
