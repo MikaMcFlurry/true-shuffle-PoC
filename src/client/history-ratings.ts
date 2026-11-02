@@ -12,6 +12,7 @@
  * now. A value is always shown with the write number of the same source.
  */
 
+import { writeNumber } from "../shared/rating-number";
 import { useEffect, useState } from "preact/hooks";
 import type { HistoryEntry, HistoryRatingReceipt } from "../shared/api";
 import { ApiError, api } from "./api";
@@ -166,7 +167,7 @@ export function noteListed(
 	if (gen !== generation) return;
 	const asked = known instanceof Map ? known : null;
 	for (const r of rows) {
-		const row = { seq: r.rated ?? 0, numbered: r.rated !== undefined };
+		const row = { seq: writeNumber(r.rated) ?? 0, numbered: writeNumber(r.rated) !== undefined };
 		const cur = listed.get(r.id);
 		const o = store.thumbOverride(r.id);
 		const seen = o && row.numbered && (!asked || asked.get(r.id) === o) ? o : undefined;
@@ -190,7 +191,7 @@ function outranks(
 /** The newest write number known for a song (a list read, a confirmation, or any read in the app). */
 function knownSeq(t: HistoryEntry): number {
 	return Math.max(
-		listed.get(t.id)?.seq ?? t.rated ?? 0,
+		listed.get(t.id)?.seq ?? writeNumber(t.rated) ?? 0,
 		songs.get(t.id)?.seq ?? 0,
 		store.storedOf(t.id)?.seq ?? 0,
 	);
@@ -222,8 +223,8 @@ function known(t: HistoryEntry): { value: Value; seq: number; numbered: boolean;
 	const s = songs.get(t.id);
 	const l = listed.get(t.id) ?? {
 		value: t.thumb,
-		seq: t.rated ?? 0,
-		numbered: t.rated !== undefined,
+		seq: writeNumber(t.rated) ?? 0,
+		numbered: writeNumber(t.rated) !== undefined,
 		seen: undefined,
 	};
 	const here =

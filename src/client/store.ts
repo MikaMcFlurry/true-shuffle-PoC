@@ -6,6 +6,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { AppState, ObservedTarget, PlayResult, TrackView } from "../shared/api";
 import { statePollMs } from "../shared/poll-pace";
+import { writeNumber } from "../shared/rating-number";
 import { ApiError, api } from "./api";
 import type { FrozenView } from "./playback-view";
 import { syncThemeColor } from "./theme";
@@ -437,7 +438,7 @@ class Store {
 	): void {
 		for (const r of rows) {
 			const own = this.thumbs.get(r.id);
-			this.noteStored(r.id, r.thumb, r.rated, own && known.get(r.id) === own ? own : undefined);
+			this.noteStored(r.id, r.thumb, writeNumber(r.rated), own && known.get(r.id) === own ? own : undefined);
 		}
 	}
 
@@ -489,7 +490,7 @@ class Store {
 				this.keepShown(s.id, own);
 			}
 			// Only a row without a write number (an older answer) is ordered by when it was asked.
-			if (asked !== undefined && s.rated === undefined) this.retell(s.id, s.thumb, asked);
+			if (asked !== undefined && writeNumber(s.rated) === undefined) this.retell(s.id, s.thumb, asked);
 		}
 		if (this.shownOpen() !== shown) this.emit();
 	}
@@ -566,10 +567,10 @@ class Store {
 					state.nowPlaying,
 					...(state.session?.queue.map((entry) => entry.track) ?? []),
 				];
-				for (const t of read) if (t) this.noteStored(t.id, t.thumb, t.rated);
+				for (const t of read) if (t) this.noteStored(t.id, t.thumb, writeNumber(t.rated));
 				const open = this.rating;
 				const told = open ? read.find((t) => t?.id === open.id) : undefined;
-				if (told && told.rated === undefined) this.retell(told.id, told.thumb, asked);
+				if (told && writeNumber(told.rated) === undefined) this.retell(told.id, told.thumb, asked);
 			})
 			.catch((err: unknown) => {
 				if (epoch !== this.epoch) return;
