@@ -130,6 +130,9 @@ body {
 	font-variant-numeric: tabular-nums;
 	-webkit-font-smoothing: antialiased;
 	overflow-wrap: anywhere;
+	/* U1-07: German words break at syllables ("Wasser-farben") before anywhere. */
+	hyphens: auto;
+	-webkit-hyphens: auto;
 }
 
 ::selection {
@@ -2656,11 +2659,6 @@ h1,
 	margin-top: 8px;
 }
 
-.volume__key {
-	min-width: 44px;
-	min-height: 44px;
-}
-
 .volume__value {
 	flex: 1;
 	min-width: 0;
@@ -2674,7 +2672,8 @@ h1,
 .transport-main,
 .tkey,
 .key {
-	overflow-wrap: normal;
+	/* A word wider than the key still breaks (better than clipped). */
+	overflow-wrap: break-word;
 	hyphens: auto;
 	-webkit-hyphens: auto;
 }
@@ -2703,7 +2702,42 @@ fieldset.volume,
 
 /* U1-03: the volume keys keep their 44 px and stay in the row at 320 px. */
 .volume__key {
+	box-sizing: border-box;
+	display: inline-flex;
 	flex: 0 0 44px;
+	align-items: center;
+	justify-content: center;
 	width: 44px;
+	height: 44px;
 	padding: 0;
+	border: 1px solid var(--rule);
+	border-radius: var(--r);
+	background: var(--paper);
+	color: var(--ink);
+	-webkit-tap-highlight-color: transparent;
+	touch-action: manipulation;
+}
+
+.volume__key:disabled {
+	opacity: 0.45;
+}
+
+.volume__key svg {
+	width: 20px;
+	height: 20px;
+}
+
+/* The volume row spans the whole transport, also in its two-column designs. */
+.transport > .volume {
+	grid-column: 1 / -1;
+}
+
+/* U1-08: the start key's label may shrink to the key and break there ("an-
+   genommen"), instead of overflowing and being cut at both sides. */
+.transport-main__label {
+	min-width: 0;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+	hyphens: auto;
+	-webkit-hyphens: auto;
 }

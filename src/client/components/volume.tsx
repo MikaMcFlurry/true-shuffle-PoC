@@ -43,7 +43,7 @@ export function VolumeKeys({
 			<legend class="sr-only">Lautstärke von {device.name}</legend>
 			<button
 				type="button"
-				class="tkey volume__key"
+				class="volume__key"
 				aria-label="Leiser"
 				disabled={busy || disabled || volume === 0}
 				onClick={() => void step(-1)}
@@ -55,7 +55,7 @@ export function VolumeKeys({
 			</span>
 			<button
 				type="button"
-				class="tkey volume__key"
+				class="volume__key"
 				aria-label="Lauter"
 				disabled={busy || disabled || volume === 100}
 				onClick={() => void step(1)}

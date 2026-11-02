@@ -615,6 +615,13 @@ export function Home({ state }: { state: AppState }) {
 		posterStation && posterStation.poolSize !== null && posterStation.freshRemaining !== null
 			? posterStation.poolSize - posterStation.freshRemaining
 			: null;
+	/** U1-08: soft hyphens where the start key's long words may break, in every engine. */
+	const syllables = (t: string) =>
+		t
+			.replace(/Wiedergabe/g, "Wieder­gabe")
+			.replace(/angenommen/g, "an­ge­nom­men")
+			.replace(/(F|f)ortsetzen/g, "$1ort­setzen")
+			.replace(/TrueShuffle/g, "True­Shuffle");
 	const mainLabel = unsettled
 		? keyLabel(commandLabel)
 		: playing
@@ -712,9 +719,15 @@ export function Home({ state }: { state: AppState }) {
 								(playing && !!nativeController && !activeNative?.pause)
 							}
 							onClick={() => void act(playing ? "pause" : "play")}
+							aria-label={typeof mainLabel === "string" ? mainLabel : undefined}
 						>
 							{playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
-							{mainLabel}
+							<span
+								class="transport-main__label"
+								aria-hidden={typeof mainLabel === "string" ? "true" : undefined}
+							>
+								{typeof mainLabel === "string" ? syllables(mainLabel) : mainLabel}
+							</span>
 						</button>
 						<div class="transport-keys">
 							<button
