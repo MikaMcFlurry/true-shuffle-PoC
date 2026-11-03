@@ -1,0 +1,20 @@
+[
+  {
+    "name": "index-D3G4Few3.js",
+    "matches": true,
+    "public_bytes": 250509,
+    "local_bytes": 250509,
+    "public_sha256": "49663a7882e34cab31d255101bc9e038a9594c749270b2cec775548be8ae5a4e",
+    "local_sha256": "49663a7882e34cab31d255101bc9e038a9594c749270b2cec775548be8ae5a4e",
+    "first_diff": null
+  },
+  {
+    "name": "index-pMhZpQAY.css",
+    "matches": true,
+    "public_bytes": 59284,
+    "local_bytes": 59284,
+    "public_sha256": "c22f9ca512cd58730bc4378f257865f813b34e74789099c4ca5c99c8f3029557",
+    "local_sha256": "c22f9ca512cd58730bc4378f257865f813b34e74789099c4ca5c99c8f3029557",
+    "first_diff": null
+  }
+]
