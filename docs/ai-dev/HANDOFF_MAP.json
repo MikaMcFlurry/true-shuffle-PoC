@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-01T14:33:44.836488+00:00",
+  "generated_at": "2026-11-03T12:33:01.290541+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -108,7 +108,7 @@
       "path": "docs/ai-dev/PROJECT_CONTEXT.md",
       "treatment": "CREATE",
       "authority": "GENERATED_VIEW",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Current9341 runtime/review binding is recorded in the canonical ledger and PR32_REVIEW.json; historical intelligence baseline retained, not asserted current.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -126,7 +126,7 @@
       "path": "docs/ai-dev/PROJECT_CONTEXT.md",
       "treatment": "CREATE",
       "authority": "GENERATED_VIEW",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Current9341 runtime/review binding is recorded in the canonical ledger and PR32_REVIEW.json; historical intelligence baseline retained, not asserted current.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -144,7 +144,7 @@
       "path": "docs/ai-dev/PROJECT_CONTEXT.md",
       "treatment": "CREATE",
       "authority": "GENERATED_VIEW",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Current9341 runtime/review binding is recorded in the canonical ledger and PR32_REVIEW.json; historical intelligence baseline retained, not asserted current.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -162,7 +162,7 @@
       "path": "docs/ai-dev/PROJECT_CONTEXT.md",
       "treatment": "CREATE",
       "authority": "GENERATED_VIEW",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Current9341 runtime/review binding is recorded in the canonical ledger and PR32_REVIEW.json; historical intelligence baseline retained, not asserted current.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -248,7 +248,7 @@
       "path": "docs/ai-dev/EXECUTION_PLAN.md",
       "treatment": "CREATE",
       "authority": "CANONICAL",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Current9341 runtime/review binding is recorded in the canonical ledger and PR32_REVIEW.json; historical intelligence baseline retained, not asserted current.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -266,7 +266,7 @@
       "path": "docs/ai-dev/EXECUTION_PLAN.md",
       "treatment": "CREATE",
       "authority": "CANONICAL",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Current9341 runtime/review binding is recorded in the canonical ledger and PR32_REVIEW.json; historical intelligence baseline retained, not asserted current.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -284,7 +284,7 @@
       "path": "docs/ai-dev/EVIDENCE.json",
       "treatment": "CREATE",
       "authority": "SUPPORTING",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Current9341 runtime/review binding is recorded in the canonical ledger and PR32_REVIEW.json; historical intelligence baseline retained, not asserted current.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -296,7 +296,7 @@
         "D-04",
         "D-05"
       ],
-      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims."
+      "freshness_trigger": "Current9341ledger references PR32_REVIEW.json and pr32-9341-runtime evidence; historical packet remains navigation only. Refresh after source/deployment/repair."
     },
     "evidence_manifest": {
       "path": "docs/ai-dev/EVIDENCE_MANIFEST.json",

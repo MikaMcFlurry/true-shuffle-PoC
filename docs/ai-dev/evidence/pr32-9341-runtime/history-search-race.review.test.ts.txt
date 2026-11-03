@@ -1,0 +1,19 @@
+import { expect, it } from "vitest";
+import { HistorySearch } from "../../src/client/history-search";
+import type { HistorySearchAnswer } from "../../src/shared/api";
+const answer: HistorySearchAnswer = {through: 123, complete:true, songs: [{entry:{id:"private-a", name:"Alice private listening", artists:"Alice Artist", album:"A", imageUrl:null,durationMs:180000, thumb:0,playedAt:123,stationName:null,ignored:false},plays:[123]}]};
+it("a B load must never join an in-flight A request", async()=>{
+ let resolve!: (a:HistorySearchAnswer)=>void;
+ let calls=0; const hs=new HistorySearch(()=>++calls===1?new Promise(r=>{resolve=r}):Promise.resolve({...answer,songs:[]}));
+ const a=hs.load("A"); const b=hs.load("B"); resolve(answer); await a;
+ const got=await b;
+ expect(got.account).toBe("B");
+ expect(got.songs.has("private-a")).toBe(false);
+});
+it("forget must invalidate an old request",async()=>{
+ let resolve!: (a:HistorySearchAnswer)=>void;
+ let calls=0; const hs=new HistorySearch(()=>++calls===1?new Promise(r=>{resolve=r}):Promise.resolve({...answer,songs:[]}));
+ const a=hs.load("A"); hs.forget(); resolve(answer); await a;
+ const got=await hs.load("A");
+ expect(got.songs.has("private-a")).toBe(false);
+});
