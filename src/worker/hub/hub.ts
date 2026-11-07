@@ -321,8 +321,12 @@ const CONTINUE_AFTER_NEW_SONG_MS = 30_000;
  * must have ended. A pause anywhere else is the listener's (B9341-02).
  */
 const CONTINUE_AFTER_AT_END_MS = 2_000;
-/** A new song further along than the time since the predicted end allows (plus this) was picked by hand. */
-const CONTINUE_AFTER_PICKED_MS = 5_000;
+/**
+ * A new song further along than the time since the predicted end allows (plus
+ * this) was picked by hand. Spotify's crossfade starts the next song up to 12 s
+ * before the end, so that much earlier still counts as its own start.
+ */
+const CONTINUE_AFTER_PICKED_MS = 12_000;
 /** The Likes playlist is made again at most this often, and never this soon after it was made. */
 const LIKES_REMAKE_GAP_MS = 24 * HOUR_MS;
 const LIKES_FRESH_MS = 10 * MINUTE_MS;
@@ -5267,13 +5271,14 @@ export class HubCore {
 			// the end of the step: a failure later in the step (or a step cut short)
 			// never sends an acknowledged append again (B9341-01).
 			const progress = this.kvGet<LikesSyncProgress>("likes_sync_progress");
-			if (progress?.rev === rev && progress.pid === pid) {
-				offset = progress.offset;
-				if (progress.sent) offset = await this.settleLikesWrite(client, pid, progress.sent);
-			}
 			const keep = (sent: LikesSyncProgress["sent"]) =>
 				this.kvSet("likes_sync_progress", { rev, pid, offset, sent } satisfies LikesSyncProgress);
 			try {
+				// Asking what arrived meets a gone playlist like a write does (made again below).
+				if (progress?.rev === rev && progress.pid === pid) {
+					offset = progress.offset;
+					if (progress.sent) offset = await this.settleLikesWrite(client, pid, progress.sent);
+				}
 				// Already all there (cut short right after the last write): nothing to send.
 				for (
 					let n = 0;
@@ -5310,6 +5315,7 @@ export class HubCore {
 					});
 					if (still) throw err;
 					this.kvDel("likes_playlist");
+					this.kvDel("likes_sync_progress");
 					this.kvSet("likes_playlist_remade_at", this.now());
 					return { done: false, state: { rev, offset: 0, remade: true }, delayMs: 1000 };
 				}

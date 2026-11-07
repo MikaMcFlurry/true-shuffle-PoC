@@ -189,3 +189,20 @@ it("ends on its own and Spotify's autoplay begins another: true-shuffle goes on 
 	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toHaveLength(1);
 	expect(h.fake.user("mika").player.contextUri).toBe(s.contextUri);
 });
+
+for (const early of [8_000, 12_000]) {
+	it(`crossfade: the next song begins ${early / 1000} s before the end, true-shuffle still goes on once`, async () => {
+		const { h, b, s } = await outsidePlaying();
+		await h.hub.continueAfter(b);
+		const calls = h.fake.calls.length;
+		const d = h.fake.tracks.get(b)!.durationMs;
+		await h.listen(d - 60_000 - early);
+		const next = [...h.fake.tracks.keys()].find(
+			(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
+		)!;
+		h.fake.playSong("mika", next);
+		await h.listen(3 * 60_000);
+		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toHaveLength(1);
+		expect((await h.hub.state()).continueAfter).toMatchObject({ result: { ok: true } });
+	});
+}

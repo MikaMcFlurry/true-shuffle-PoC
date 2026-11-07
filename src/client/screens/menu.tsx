@@ -432,16 +432,23 @@ export function HistoryScreen() {
 	// S1: the search. Typed text is searched here, 200 ms after the last key.
 	const [query, setQuery] = useState("");
 	const [asked, setAsked] = useState("");
-	const [hits, setHits] = useState<SearchSong[] | null>(null);
-	const [searchErr, setSearchErr] = useState<string | null>(null);
+	// Hits and errors belong to the account (and sign-in) that asked: after
+	// another account or signing out and in, none of them shows, not even once.
+	const whose = `${account}:${ratingsGeneration()}`;
+	const [found, setFound] = useState<{
+		whose: string;
+		hits: SearchSong[] | null;
+		err: string | null;
+	} | null>(null);
+	const mine = found?.whose === whose ? found : null;
+	const hits = mine?.hits ?? null;
+	const searchErr = mine?.err ?? null;
 	useEffect(() => {
 		const t = window.setTimeout(() => setAsked(query), 200);
 		return () => window.clearTimeout(t);
 	}, [query]);
 	useEffect(() => {
-		// Another account (or signing out and in): no hit or error of the one before stays.
-		setHits(null);
-		setSearchErr(null);
+		setFound(null);
 		if (!asked.trim() || !account) return;
 		let live = true;
 		const read = startListRead();
@@ -449,22 +456,21 @@ export function HistoryScreen() {
 			.load(account)
 			.then((index) => {
 				if (!live || !current(read.gen) || index.account !== account) return;
-				const found = search(index, asked);
+				const list = search(index, asked);
 				takeListed(
-					found.map((x) => x.entry),
+					list.map((x) => x.entry),
 					read,
 					false,
 				);
-				setSearchErr(null);
-				setHits(found);
+				setFound({ whose, hits: list, err: null });
 			})
 			.catch((e: Error) => {
-				if (live && current(read.gen)) setSearchErr(e.message);
+				if (live && current(read.gen)) setFound({ whose, hits: null, err: e.message });
 			});
 		return () => {
 			live = false;
 		};
-	}, [asked, account, ratingsGeneration()]);
+	}, [asked, whose]);
 	const [loading, setLoading] = useState(false);
 	const [err, setErr] = useState<string | null>(null);
 	// A list answers only the page that asked, for the account it asked for:

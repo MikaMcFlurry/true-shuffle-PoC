@@ -286,6 +286,31 @@ describe("TrueShuffle Likes (P4)", () => {
 			}
 		}, 120_000);
 
+		it("lost answer, then the playlist is deleted in Spotify: made again once, exactly the Likes", async () => {
+			const { h, ids, append, finish } = await many();
+			let lost = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (lost || p?.items.length !== 900) return null;
+				lost++;
+				p.items.push(...ids.slice(900, 1000));
+				h.fake.playlists.delete(p.id); // gone before the next try
+				// Made long ago: not the fresh one Spotify may not show yet (red-team B1).
+				h.sql.run(
+					`UPDATE kv SET v=? WHERE k='likes_playlist_made_at'`,
+					JSON.stringify(h.clock.t - 60 * 60_000),
+				);
+				return { status: 502 };
+			};
+			await h.hub.retryLikesSync();
+			const { items, sync } = await finish();
+			const pls = [...h.fake.playlists.values()].filter((p) => p.name === LIKES_NAME);
+			expect(lost).toBe(1);
+			expect(pls).toHaveLength(1);
+			expect(items).toEqual(ids);
+			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+		}, 120_000);
+
 		it("a Like changes before the failed write is sent again: the playlist is exactly the new Likes", async () => {
 			const { h, ids, append, finish } = await many();
 			let failed = 0;
