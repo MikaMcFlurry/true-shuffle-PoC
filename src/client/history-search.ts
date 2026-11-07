@@ -53,37 +53,50 @@ export function search(index: SearchIndex, query: string, limit = 50): SearchSon
 /**
  * The index of this account: the first call reads the whole Verlauf, later
  * ones (opening the search again) only plays after the newest one known.
+ * A request belongs to the account it was sent for: another account never
+ * joins it, and an answer arriving after `forget` (signing out) or after
+ * another account asked changes nothing.
  */
 export class HistorySearch {
 	private index: SearchIndex | null = null;
-	private loading: Promise<SearchIndex> | null = null;
+	private loading: { account: string; promise: Promise<SearchIndex> } | null = null;
+	/** Counts every `forget` and account change: an older request's answer is dropped. */
+	private generation = 0;
 	/** Requests sent, for the P1 measurement. */
 	requests = 0;
 	constructor(private readonly fetcher: Fetch) {}
 
 	load(account: string, again = false): Promise<SearchIndex> {
-		if (this.index && this.index.account !== account) this.index = null;
-		if (this.loading) return this.loading;
+		if (
+			(this.index && this.index.account !== account) ||
+			(this.loading && this.loading.account !== account)
+		)
+			this.forget();
+		if (this.loading) return this.loading.promise;
 		if (this.index && !again) return Promise.resolve(this.index);
-		const base: SearchIndex = this.index ?? {
-			account,
-			through: 0,
-			complete: true,
-			songs: new Map(),
-		};
+		const gen = this.generation;
+		const base: SearchIndex = this.index
+			? { ...this.index, songs: new Map(this.index.songs) }
+			: { account, through: 0, complete: true, songs: new Map() };
 		this.requests++;
-		this.loading = this.fetcher(base.through)
+		const promise = this.fetcher(base.through)
 			.then((answer) => {
-				this.index = merge(base, answer);
-				return this.index;
+				// Only the account that asked gets it; nothing is kept for later.
+				const index = merge(base, answer);
+				if (gen === this.generation) this.index = index;
+				return index;
 			})
 			.finally(() => {
-				this.loading = null;
+				if (this.loading?.promise === promise) this.loading = null;
 			});
-		return this.loading;
+		this.loading = { account, promise };
+		return promise;
 	}
 
+	/** Signing out, or another account: nothing known or on its way counts any more. */
 	forget(): void {
+		this.generation++;
 		this.index = null;
+		this.loading = null;
 	}
 }

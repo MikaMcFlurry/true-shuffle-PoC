@@ -439,16 +439,16 @@ export function HistoryScreen() {
 		return () => window.clearTimeout(t);
 	}, [query]);
 	useEffect(() => {
-		if (!asked.trim() || !account) {
-			setHits(null);
-			return;
-		}
+		// Another account (or signing out and in): no hit or error of the one before stays.
+		setHits(null);
+		setSearchErr(null);
+		if (!asked.trim() || !account) return;
 		let live = true;
 		const read = startListRead();
 		historySearch
 			.load(account)
 			.then((index) => {
-				if (!live || !current(read.gen)) return;
+				if (!live || !current(read.gen) || index.account !== account) return;
 				const found = search(index, asked);
 				takeListed(
 					found.map((x) => x.entry),
@@ -459,12 +459,12 @@ export function HistoryScreen() {
 				setHits(found);
 			})
 			.catch((e: Error) => {
-				if (live) setSearchErr(e.message);
+				if (live && current(read.gen)) setSearchErr(e.message);
 			});
 		return () => {
 			live = false;
 		};
-	}, [asked, account]);
+	}, [asked, account, ratingsGeneration()]);
 	const [loading, setLoading] = useState(false);
 	const [err, setErr] = useState<string | null>(null);
 	// A list answers only the page that asked, for the account it asked for:
@@ -607,6 +607,14 @@ export function HistoryScreen() {
 
 /** S1: one Verlauf for the whole app session (see history-search.ts). */
 const historySearch = new HistorySearch((since) => api.historySearch(since));
+// Signing out, or another account signed in, keeps nothing of the Verlauf
+// before, also while this page is closed (a request on its way included).
+let searchGeneration = ratingsGeneration();
+store.subscribe(() => {
+	if (ratingsGeneration() === searchGeneration) return;
+	searchGeneration = ratingsGeneration();
+	historySearch.forget();
+});
 
 const BERLIN = new Intl.DateTimeFormat("de-DE", {
 	timeZone: "Europe/Berlin",
