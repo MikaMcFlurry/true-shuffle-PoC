@@ -5,8 +5,9 @@
  * be sent again.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { LIKES_NAME } from "../../src/worker/hub/hub";
+import { SpotifyClient, SpotifyError } from "../../src/worker/spotify/client";
 import { onboarded } from "./harness";
 
 async function setup() {
@@ -181,4 +182,127 @@ describe("TrueShuffle Likes (P4)", () => {
 		expect(new Set(pls[0]!.items).size).toBe(4500);
 		expect((await h.hub.state()).likes?.sync).toMatchObject({ pending: false, count: 4500 });
 	}, 300_000);
+	describe("a write fails after others were confirmed: each Like stays exactly once (B9341-01)", () => {
+		/** 1 700 Likes, so the write spans steps; the first step ends at 800. */
+		async function many() {
+			const h = await onboarded({ tracks: 1800 });
+			const ids = [...h.fake.tracks.keys()].slice(0, 1700);
+			h.sql.run(
+				`INSERT INTO kv(k,v) VALUES('likes',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v`,
+				JSON.stringify({ v: 1, rev: 2, items: ids.map((id) => ({ id, at: h.clock.t })) }),
+			);
+			const playlist = () => [...h.fake.playlists.values()].find((p) => p.name === LIKES_NAME);
+			const append = (method: string, path: string) => {
+				const p = playlist();
+				return p && method === "POST" && path === `/playlists/${p.id}/items` ? p : null;
+			};
+			const finish = async () => {
+				for (let i = 0; i < 10; i++) {
+					await h.listen(60_000);
+					await h.settle();
+				}
+				return { items: playlist()!.items, sync: (await h.hub.state()).likes?.sync };
+			};
+			return { h, ids, playlist, append, finish };
+		}
+
+		for (const status of [500, 503, 429]) {
+			it(`refused with ${status} after 100 were confirmed in the step: no Like twice`, async () => {
+				const { h, ids, append, finish } = await many();
+				let failed = 0;
+				h.fake.failWhen = (m, path) => {
+					if (failed || append(m, path)?.items.length !== 900) return null;
+					failed++;
+					return { status, headers: status === 429 ? { "retry-after": "60" } : undefined };
+				};
+				await h.hub.retryLikesSync();
+				const { items, sync } = await finish();
+				expect(failed).toBe(1);
+				expect(items).toEqual(ids);
+				expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+			}, 120_000);
+		}
+
+		it("written, but the answer is lost: Spotify is asked once, the write is not sent again", async () => {
+			const { h, ids, append, finish } = await many();
+			let lost = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (lost || p?.items.length !== 900) return null;
+				lost++;
+				p.items.push(...ids.slice(900, 1000)); // arrived, but no answer came back
+				return { status: 502 };
+			};
+			const calls = h.fake.calls.length;
+			await h.hub.retryLikesSync();
+			const { items } = await finish();
+			expect(lost).toBe(1);
+			expect(items).toEqual(ids);
+			const asked = h.fake.calls
+				.slice(calls)
+				.filter((c) => /^GET \/v1\/playlists\/[^/]+(\?|$)/.test(c));
+			expect(asked).toHaveLength(1);
+		}, 120_000);
+
+		it("lost answer and the playlist changed elsewhere meanwhile: written again from the top, exactly", async () => {
+			const { h, ids, append, finish } = await many();
+			let lost = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (lost || p?.items.length !== 900) return null;
+				lost++;
+				p.items.push(...ids.slice(900, 1000), ids[0]!); // and someone added a song by hand
+				return { status: 500 };
+			};
+			await h.hub.retryLikesSync();
+			const { items, sync } = await finish();
+			expect(items).toEqual(ids);
+			expect(sync).toMatchObject({ pending: false, count: 1700 });
+		}, 120_000);
+
+		it("the invocation's budget runs out mid-step: the next goes on where Spotify confirmed", async () => {
+			const { h, ids, playlist, finish } = await many();
+			const add = SpotifyClient.prototype.addItems;
+			let cut = 0;
+			const spy = vi.spyOn(SpotifyClient.prototype, "addItems").mockImplementation(function (
+				this: SpotifyClient,
+				...args
+			) {
+				if (!cut && playlist()?.items.length === 900) {
+					cut++;
+					return Promise.reject(
+						new SpotifyError("budget", "Anfragebudget dieses Aufrufs erschöpft"),
+					);
+				}
+				return add.apply(this, args);
+			});
+			try {
+				await h.hub.retryLikesSync();
+				const { items } = await finish();
+				expect(cut).toBe(1);
+				expect(items).toEqual(ids);
+			} finally {
+				spy.mockRestore();
+			}
+		}, 120_000);
+
+		it("a Like changes before the failed write is sent again: the playlist is exactly the new Likes", async () => {
+			const { h, ids, append, finish } = await many();
+			let failed = 0;
+			h.fake.failWhen = (m, path) => {
+				if (failed || append(m, path)?.items.length !== 900) return null;
+				failed++;
+				return { status: 500 };
+			};
+			await h.hub.retryLikesSync();
+			await h.listen(1_000);
+			await h.settle();
+			expect(failed).toBe(1);
+			const extra = [...h.fake.tracks.keys()][1750]!;
+			await h.hub.thumb(extra, 1);
+			const { items, sync } = await finish();
+			expect(items).toEqual([...ids, extra]);
+			expect(sync).toMatchObject({ pending: false, count: 1701 });
+		}, 120_000);
+	});
 });

@@ -315,9 +315,38 @@ const CONTINUE_AFTER_MAX_MS = 45 * MINUTE_MS;
 const CONTINUE_AFTER_END_SLACK_MS = 20_000;
 /** A song seen with at most this much progress right after the end just began on its own. */
 const CONTINUE_AFTER_NEW_SONG_MS = 30_000;
+/**
+ * A paused song counts as ended only when Spotify shows it there: at most this
+ * far before its end, or rewound to at most this far after its start once it
+ * must have ended. A pause anywhere else is the listener's (B9341-02).
+ */
+const CONTINUE_AFTER_AT_END_MS = 2_000;
+/** A new song further along than the time since the predicted end allows (plus this) was picked by hand. */
+const CONTINUE_AFTER_PICKED_MS = 5_000;
 /** The Likes playlist is made again at most this often, and never this soon after it was made. */
 const LIKES_REMAKE_GAP_MS = 24 * HOUR_MS;
 const LIKES_FRESH_MS = 10 * MINUTE_MS;
+
+/** Spotify refused a Likes write before doing anything: no need to ask what arrived. */
+const LIKES_WRITE_REFUSED: ReadonlySet<string> = new Set([
+	"auth",
+	"rate",
+	"quota",
+	"forbidden",
+	"not_found",
+	"bad_request",
+	"budget",
+]);
+
+/** The Likes sync's place, kept after every write (kv 'likes_sync_progress'). */
+interface LikesSyncProgress {
+	rev: number;
+	pid: string;
+	/** Confirmed by Spotify: the playlist holds the first `offset` Likes. */
+	offset: number;
+	/** A write sent without an answer yet: the Likes [from, to). */
+	sent?: { from: number; to: number };
+}
 
 interface ContinueAfter {
 	stationId: number;
@@ -4974,10 +5003,11 @@ export class HubCore {
 
 	/**
 	 * After every look: has the song been left? Then the alarm resumes (outside
-	 * this look). Only a look showing another song playing, or the song seen
-	 * playing up to its end and then no player, counts as its end; a pause or
-	 * a stop before the end cancels instead (red-team H2: never start music
-	 * the listener stopped).
+	 * this look). Only what Spotify shows counts as its end: another song that
+	 * just began, or the song (or the next one) stopped at its end. Elapsed time
+	 * alone never does: a pause before the end keeps waiting, a stop or no
+	 * player cancels (red-team H2, B9341-02: never start music the listener
+	 * stopped).
 	 */
 	private noteContinueAfter(snap: PlayerSnapshot): void {
 		const c = this.kvGet<ContinueAfter>("continue_after");
@@ -5001,14 +5031,23 @@ export class HubCore {
 			return;
 		}
 		const seen = c.seen;
+		// Where the song would be had it played on since the last look. Time
+		// alone never ends it: a paused (or vanished) player also needs Spotify
+		// to show the end itself, or the song must be past its end outright.
+		const predicted =
+			seen?.playing && seen.durationMs > 0 ? seen.progressMs + (this.now() - seen.at) : null;
 		const endReached =
-			!!seen &&
-			seen.playing &&
-			seen.durationMs > 0 &&
-			seen.progressMs + (this.now() - seen.at) >= seen.durationMs - CONTINUE_AFTER_END_SLACK_MS;
+			predicted != null && predicted >= seen!.durationMs - CONTINUE_AFTER_END_SLACK_MS;
+		const surelyOver = predicted != null && predicted >= seen!.durationMs;
 		if (obs?.trackId === c.trackId) {
-			// Played to its end and stopped there (no autoplay): that is its end too.
-			if (!obs.isPlaying && endReached) {
+			// Played to its end and stopped there (no autoplay): that is its end too,
+			// shown at the end or rewound to the start. Paused anywhere else is the
+			// listener's pause: only a later look may still see the end.
+			const shownAtEnd =
+				obs.durationMs > 0 &&
+				(obs.progressMs >= obs.durationMs - CONTINUE_AFTER_AT_END_MS ||
+					(surelyOver && obs.progressMs <= CONTINUE_AFTER_AT_END_MS));
+			if (!obs.isPlaying && endReached && shownAtEnd) {
 				this.kvSet("continue_after", { ...c, due: true });
 				return;
 			}
@@ -5031,9 +5070,24 @@ export class HubCore {
 		// Another song that just began after this one ran out (autoplay, the
 		// context's next): its end. One the listener picked mid-song, already
 		// well under way, is the listener's choice: never cut it, cancel instead.
+		// It began no earlier than this one's predicted end (a later end, after
+		// an unseen pause, only makes it younger): one picked before that end is
+		// older than that, however young.
+		const sinceEnd =
+			predicted == null || !obs
+				? 0
+				: Math.max(0, predicted - seen!.durationMs - (this.now() - obs.at));
 		const justBegan =
-			!!obs?.isPlaying && !!obs.trackId && obs.progressMs <= CONTINUE_AFTER_NEW_SONG_MS;
-		if (endReached && (justBegan || !obs?.isPlaying)) {
+			!!obs?.isPlaying &&
+			!!obs.trackId &&
+			obs.progressMs <= CONTINUE_AFTER_NEW_SONG_MS &&
+			obs.progressMs <= sinceEnd + CONTINUE_AFTER_PICKED_MS;
+		// Another song paused right at its start once this one was surely over:
+		// Spotify loaded what came next. No player at all shows no end (the
+		// listener may have stopped it): that cancels below, never plays.
+		const stoppedAfter =
+			surelyOver && !!obs?.trackId && !obs.isPlaying && obs.progressMs <= CONTINUE_AFTER_AT_END_MS;
+		if ((endReached && justBegan) || stoppedAfter) {
 			this.kvSet("continue_after", { ...c, due: true });
 			return;
 		}
@@ -5209,11 +5263,37 @@ export class HubCore {
 				this.kvSet("likes_playlist_made_at", this.now());
 				offset = 0;
 			}
+			// What Spotify confirmed so far is kept after every write, not only at
+			// the end of the step: a failure later in the step (or a step cut short)
+			// never sends an acknowledged append again (B9341-01).
+			const progress = this.kvGet<LikesSyncProgress>("likes_sync_progress");
+			if (progress?.rev === rev && progress.pid === pid) {
+				offset = progress.offset;
+				if (progress.sent) offset = await this.settleLikesWrite(client, pid, progress.sent);
+			}
+			const keep = (sent: LikesSyncProgress["sent"]) =>
+				this.kvSet("likes_sync_progress", { rev, pid, offset, sent } satisfies LikesSyncProgress);
 			try {
-				for (let n = 0; n < LIKES_SYNC_WRITES_PER_STEP; n++) {
-					if (offset === 0) await client.replaceItems(pid, uris.slice(0, 100));
-					else await client.addItems(pid, uris.slice(offset, offset + 100));
-					offset = offset === 0 ? Math.min(100, uris.length) : offset + 100;
+				// Already all there (cut short right after the last write): nothing to send.
+				for (
+					let n = 0;
+					n < LIKES_SYNC_WRITES_PER_STEP && (offset === 0 || offset < uris.length);
+					n++
+				) {
+					const to =
+						offset === 0 ? Math.min(100, uris.length) : Math.min(offset + 100, uris.length);
+					keep({ from: offset, to });
+					try {
+						if (offset === 0) await client.replaceItems(pid, uris.slice(0, 100));
+						else await client.addItems(pid, uris.slice(offset, to));
+					} catch (err) {
+						// Refused outright: nothing was written. Otherwise (no answer, a
+						// server error) the next try asks Spotify what arrived.
+						if (err instanceof SpotifyError && LIKES_WRITE_REFUSED.has(err.kind)) keep(undefined);
+						throw err;
+					}
+					offset = to;
+					keep(undefined);
 					if (offset >= uris.length) break;
 				}
 			} catch (err) {
@@ -5243,6 +5323,7 @@ export class HubCore {
 				this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
 				return { done: false, state: { rev, offset, remade }, delayMs: 1000 };
 			}
+			this.kvDel("likes_sync_progress");
 			this.kvSet("likes_sync", {
 				pending: false,
 				syncedAt: this.now(),
@@ -5255,6 +5336,24 @@ export class HubCore {
 				fail(err instanceof Error ? err.message : String(err));
 			throw err;
 		}
+	}
+
+	/**
+	 * A write whose answer never came: did it arrive? The playlist's length
+	 * tells: without it, the same write again; with it, on after it. Any other
+	 * length (changed elsewhere meanwhile) starts over from the top, which
+	 * replaces the playlist and so is right whatever it holds.
+	 */
+	private async settleLikesWrite(
+		client: SpotifyClient,
+		pid: string,
+		sent: { from: number; to: number },
+	): Promise<number> {
+		if (sent.from === 0) return 0;
+		const total = (await client.playlist(pid))?.items?.total;
+		if (total === sent.from) return sent.from;
+		if (total === sent.to) return sent.to;
+		return 0;
 	}
 
 	/** What the app shows about the Likes (P4). */

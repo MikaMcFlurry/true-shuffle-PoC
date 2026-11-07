@@ -126,3 +126,66 @@ it("played to its end, then stopped there (no autoplay): true-shuffle goes on (r
 	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toHaveLength(1);
 	expect(h.fake.user("mika").player.contextUri).toBe(s.contextUri);
 });
+
+it("paused by hand five seconds before the end: nothing is started, it waits (B9341-02)", async () => {
+	const { h, b, s } = await outsidePlaying();
+	await h.hub.continueAfter(b);
+	const calls = h.fake.calls.length;
+	const d = h.fake.tracks.get(b)!.durationMs;
+	await h.listen(d - 60_000 - 5_000);
+	h.fake.pause("mika");
+	await h.listen(10 * 60_000);
+	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
+	expect(h.fake.user("mika").player.progressMs).toBe(d - 5_000);
+	expect(h.fake.current()).toBe(b);
+	// Still waiting for the song's real end: the listener plays it on, it ends, true-shuffle goes on.
+	expect((await h.hub.state()).continueAfter).toMatchObject({ trackId: b, due: false });
+	h.fake.user("mika").player.isPlaying = true;
+	await h.hub.sync(new RequestBudget(8), { force: true });
+	await h.listen(10_000);
+	await h.hub.sync(new RequestBudget(8), { force: true });
+	await h.listen(3 * 60_000);
+	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toHaveLength(1);
+	expect(h.fake.user("mika").player.contextUri).toBe(s.contextUri);
+});
+
+it("paused by hand just before the end, then no player: nothing is started (B9341-02)", async () => {
+	const { h, b } = await outsidePlaying();
+	await h.hub.continueAfter(b);
+	const calls = h.fake.calls.length;
+	const d = h.fake.tracks.get(b)!.durationMs;
+	await h.listen(d - 60_000 - 5_000);
+	// Paused, and Spotify drops the player before the hub looks again.
+	h.fake.pause("mika");
+	h.fake.user("mika").player.deviceId = null as never;
+	await h.listen(10 * 60_000);
+	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
+	expect((await h.hub.state()).continueAfter?.result).toMatchObject({ ok: false });
+});
+
+it("a song picked by hand fifteen seconds before the end is never cut (B9341-02)", async () => {
+	const { h, b, s } = await outsidePlaying();
+	await h.hub.continueAfter(b);
+	const d = h.fake.tracks.get(b)!.durationMs;
+	await h.listen(d - 60_000 - 15_000);
+	const c = [...h.fake.tracks.keys()].find(
+		(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
+	)!;
+	h.fake.playSong("mika", c);
+	const calls = h.fake.calls.length;
+	await h.listen(h.fake.tracks.get(c)!.durationMs - 10_000);
+	expect(h.fake.current()).toBe(c);
+	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
+	expect((await h.hub.state()).continueAfter?.result).toMatchObject({ ok: false });
+});
+
+it("ends on its own and Spotify's autoplay begins another: true-shuffle goes on once", async () => {
+	const { h, b, s } = await outsidePlaying();
+	h.fake.user("mika").player.autoplay = true;
+	await h.hub.continueAfter(b);
+	const calls = h.fake.calls.length;
+	await h.listen(h.fake.tracks.get(b)!.durationMs);
+	await h.listen(60_000);
+	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toHaveLength(1);
+	expect(h.fake.user("mika").player.contextUri).toBe(s.contextUri);
+});
