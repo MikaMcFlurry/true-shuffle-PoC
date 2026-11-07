@@ -1474,6 +1474,11 @@ main {
 	color: #f1e4cb;
 }
 
+/* UI-02: the volume readout sits in the dark bay too (day: 1.05:1 without this). */
+.walkman .volume__value {
+	color: #f1e4cb;
+}
+
 /* ------------------------------------------------------------ cassette */
 
 .cassette {
