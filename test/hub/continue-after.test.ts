@@ -206,3 +206,25 @@ for (const early of [8_000, 12_000]) {
 		expect((await h.hub.state()).continueAfter).toMatchObject({ result: { ok: true } });
 	});
 }
+
+for (const before of [15_000, 20_000]) {
+	it(`a song picked ${before / 1000} s before the end and seen 3 s later is never cut (red-team T3)`, async () => {
+		const { h, b, s } = await outsidePlaying();
+		await h.hub.continueAfter(b);
+		const d = h.fake.tracks.get(b)!.durationMs;
+		await h.listen(d - 60_000 - before);
+		const c = [...h.fake.tracks.keys()].find(
+			(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
+		)!;
+		h.fake.playSong("mika", c);
+		await h.listen(3_000);
+		const calls = h.fake.calls.length;
+		// The app is open: a look sees C three seconds in, well before B's end.
+		await h.hub.sync(new RequestBudget(8), { force: true });
+		await h.listen(60_000);
+		expect(h.fake.current()).toBe(c);
+		await h.listen(3 * 60_000);
+		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
+		expect((await h.hub.state()).continueAfter?.result).toMatchObject({ ok: false });
+	});
+}

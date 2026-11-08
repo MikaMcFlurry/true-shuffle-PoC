@@ -5074,13 +5074,12 @@ export class HubCore {
 		// Another song that just began after this one ran out (autoplay, the
 		// context's next): its end. One the listener picked mid-song, already
 		// well under way, is the listener's choice: never cut it, cancel instead.
-		// It began no earlier than this one's predicted end (a later end, after
-		// an unseen pause, only makes it younger): one picked before that end is
-		// older than that, however young.
+		// It began no earlier than this one's predicted end, or a crossfade before
+		// it (a later end, after an unseen pause, only makes it younger). Seen
+		// before that end, it may be no older than the fade: one picked earlier
+		// is the listener's, however young (signed, not clamped: red-team T3).
 		const sinceEnd =
-			predicted == null || !obs
-				? 0
-				: Math.max(0, predicted - seen!.durationMs - (this.now() - obs.at));
+			predicted == null || !obs ? 0 : predicted - seen!.durationMs - (this.now() - obs.at);
 		const justBegan =
 			!!obs?.isPlaying &&
 			!!obs.trackId &&
