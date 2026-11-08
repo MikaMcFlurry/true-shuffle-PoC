@@ -28,13 +28,13 @@ export const RELEASE: Release = Object.freeze({
 	version,
 	date: "2026-11-08",
 	changes: Object.freeze([
-		"Die Suche im Verlauf zeigt nur deine eigenen Songs, auch direkt nach Ab- und Anmelden oder einem Kontowechsel.",
-		"Pausierst du kurz vor Songende selbst, bleibt es still: „Nach diesem Song fortsetzen“ startet dann nichts von allein.",
-		"TrueShuffle Likes: Hakt Spotify beim Speichern, landet trotzdem jeder Song genau einmal in deiner Playlist.",
-		"Lautstärke und Gerätename sind am Tag wieder gut lesbar.",
+		"Pausierst du selbst, bleibt es still – auch in der letzten Sekunde: „Nach diesem Song fortsetzen“ wartet auf das echte Ende.",
+		"Startest du kurz vor dem Ende selbst einen anderen Song, läuft er weiter. true-shuffle schneidet ihn nicht mehr ab.",
+		"TrueShuffle Likes: Nach einem Spotify-Aussetzer schreibt true-shuffle die Playlist neu, statt einer Zählung zu trauen.",
+		"Ist der Speicher des Servers voll, sagt die App das ehrlich, ohne eine Uhrzeit zu versprechen.",
 	]),
 	known:
-		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Pausierst du und springst danach in Spotify zurück oder weiter, kann „Nach diesem Song fortsetzen“ trotzdem fortsetzen; nach langem Crossfade oder Vorspulen setzt es manchmal nicht fort und sagt das. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
+		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Pausierst du und springst danach in Spotify zurück oder weiter, kann „Nach diesem Song fortsetzen“ trotzdem fortsetzen. Mit Crossfade oder nach Vorspulen setzt es oft nicht fort und sagt das, weil sich das nicht von einem selbst gewählten Song unterscheiden lässt. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
 });
 
 /** "1.2.3" as numbers; anything else (a pre-release, a word) is no version here. */
