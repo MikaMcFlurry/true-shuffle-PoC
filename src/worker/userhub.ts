@@ -30,7 +30,14 @@ import { type GenreAnswer, requestGenres } from "./hub/genres";
 import { HubCore, HubError, type Occurrence } from "./hub/hub";
 import { Keys } from "./lib/crypto";
 import type { SqlDb, SqlValue } from "./lib/sql";
-import { isStorageLimit, STORAGE_LIMIT_CODE, storageLimitMessage } from "./lib/storage-limit";
+import {
+	isStorageFull,
+	isStorageLimit,
+	STORAGE_FULL_CODE,
+	STORAGE_LIMIT_CODE,
+	storageFullMessage,
+	storageLimitMessage,
+} from "./lib/storage-limit";
 import { resolveDeezerPreview } from "./preview/deezer";
 import { type SpotifyCooldownScope, SpotifyError, type SpotifyTokens } from "./spotify/client";
 import { boundedSpotifyRpc } from "./spotify/rpc";
@@ -126,6 +133,11 @@ export class UserHub extends DurableObject<Env> {
 					return {
 						ok: false,
 						error: { code: STORAGE_LIMIT_CODE, message: storageLimitMessage(), status: 503 },
+					};
+				if (isStorageFull(err))
+					return {
+						ok: false,
+						error: { code: STORAGE_FULL_CODE, message: storageFullMessage(), status: 503 },
 					};
 				return {
 					ok: false,

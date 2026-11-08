@@ -595,7 +595,7 @@ class Store {
 				if (epoch !== this.epoch) return;
 				this.stale = true;
 				this.staleReason =
-					err instanceof ApiError && err.code === "storage_limit"
+					err instanceof ApiError && (err.code === "storage_limit" || err.code === "storage_full")
 						? { kind: "limit", message: err.message }
 						: err instanceof ApiError && err.status > 0
 							? { kind: "server", message: "" }

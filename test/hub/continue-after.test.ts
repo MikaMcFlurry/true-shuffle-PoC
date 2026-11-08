@@ -190,8 +190,11 @@ it("ends on its own and Spotify's autoplay begins another: true-shuffle goes on 
 	expect(h.fake.user("mika").player.contextUri).toBe(s.contextUri);
 });
 
+// A crossfade of more than a moment looks exactly like a song picked by hand
+// just before the end: never cut, cancelled with a plain message (PR36 review).
+// Before 1.3.2 these went on; the stricter rule is deliberate.
 for (const early of [8_000, 12_000]) {
-	it(`crossfade: the next song begins ${early / 1000} s before the end, true-shuffle still goes on once`, async () => {
+	it(`crossfade: the next song begins ${early / 1000} s before the end: nothing is cut, it says so`, async () => {
 		const { h, b, s } = await outsidePlaying();
 		await h.hub.continueAfter(b);
 		const calls = h.fake.calls.length;
@@ -201,9 +204,62 @@ for (const early of [8_000, 12_000]) {
 			(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
 		)!;
 		h.fake.playSong("mika", next);
-		await h.listen(3 * 60_000);
-		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toHaveLength(1);
-		expect((await h.hub.state()).continueAfter).toMatchObject({ result: { ok: true } });
+		await h.listen(60_000);
+		expect(h.fake.current()).toBe(next);
+		await h.listen(2 * 60_000);
+		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
+		const r = (await h.hub.state()).continueAfter?.result;
+		expect(r).toMatchObject({ ok: false });
+		expect(r?.message).toMatch(/vor dem Songende/);
+		expect(r?.message).not.toMatch(/Du hast selbst/);
+	});
+}
+
+it("a next song that begins at the end (half a second early at most): true-shuffle goes on once", async () => {
+	const { h, b, s } = await outsidePlaying();
+	await h.hub.continueAfter(b);
+	const calls = h.fake.calls.length;
+	const d = h.fake.tracks.get(b)!.durationMs;
+	await h.listen(d - 60_000 - 500);
+	const next = [...h.fake.tracks.keys()].find(
+		(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
+	)!;
+	h.fake.playSong("mika", next);
+	await h.listen(3 * 60_000);
+	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY)).length).toBeGreaterThanOrEqual(
+		1,
+	);
+	expect((await h.hub.state()).continueAfter).toMatchObject({ result: { ok: true } });
+});
+
+for (const before of [2_001, 2_000, 1_999, 1_000]) {
+	it(`paused by hand ${before} ms before the end: nothing is started (PR36 review R131-PAUSE)`, async () => {
+		const { h, b } = await outsidePlaying();
+		await h.hub.continueAfter(b);
+		const d = h.fake.tracks.get(b)!.durationMs;
+		await h.listen(d - 60_000 - before);
+		h.fake.pause("mika");
+		const calls = h.fake.calls.length;
+		await h.listen(60_000);
+		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
+		expect(h.fake.user("mika").player.progressMs).toBe(d - before);
+	});
+}
+
+for (const before of [5_000, 12_000]) {
+	it(`a song picked by hand ${before / 1000} s before the end is never cut (PR36 review R131-PICK)`, async () => {
+		const { h, b, s } = await outsidePlaying();
+		await h.hub.continueAfter(b);
+		const d = h.fake.tracks.get(b)!.durationMs;
+		await h.listen(d - 60_000 - before);
+		const chosen = [...h.fake.tracks.keys()].find(
+			(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
+		)!;
+		h.fake.playSong("mika", chosen);
+		const calls = h.fake.calls.length;
+		await h.listen(60_000);
+		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
+		expect(h.fake.current()).toBe(chosen);
 	});
 }
 

@@ -15,7 +15,14 @@ import { type Env, endpoints } from "./env";
 import type { Occurrence } from "./hub/hub";
 import { Keys, randomToken, sha256b64url } from "./lib/crypto";
 import { readRemoteKey, remoteKeyFor } from "./lib/remote-key";
-import { isStorageLimit, STORAGE_LIMIT_CODE, storageLimitMessage } from "./lib/storage-limit";
+import {
+	isStorageFull,
+	isStorageLimit,
+	STORAGE_FULL_CODE,
+	STORAGE_LIMIT_CODE,
+	storageFullMessage,
+	storageLimitMessage,
+} from "./lib/storage-limit";
 import { RequestBudget, SpotifyClient, SpotifyError, type SpotifyTokens } from "./spotify/client";
 import { boundedSpotifyRpc } from "./spotify/rpc";
 import type { RpcResult, UserHub } from "./userhub";
@@ -831,6 +838,9 @@ app.onError((err, c) => {
 	// The Durable Object itself refused (its daily limit): say so, not "Interner Fehler".
 	if (isStorageLimit(err))
 		return c.json({ error: { code: STORAGE_LIMIT_CODE, message: storageLimitMessage() } }, 503);
+	// Full or another storage limit: said as such, with no promised end.
+	if (isStorageFull(err))
+		return c.json({ error: { code: STORAGE_FULL_CODE, message: storageFullMessage() } }, 503);
 	return c.json(
 		{ error: { code: "internal", message: "Interner Fehler — bitte nochmal versuchen." } },
 		500,

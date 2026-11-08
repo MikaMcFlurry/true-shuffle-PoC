@@ -316,17 +316,19 @@ const CONTINUE_AFTER_END_SLACK_MS = 20_000;
 /** A song seen with at most this much progress right after the end just began on its own. */
 const CONTINUE_AFTER_NEW_SONG_MS = 30_000;
 /**
- * A paused song counts as ended only when Spotify shows it there: at most this
- * far before its end, or rewound to at most this far after its start once it
- * must have ended. A pause anywhere else is the listener's (B9341-02).
+ * A paused song counts as ended only when Spotify shows it there: at its end
+ * itself, or rewound to at most this far after its start once it must have
+ * ended. A pause anywhere before the end, however close, is the listener's
+ * (B9341-02, PR36 review: no window before the end).
  */
-const CONTINUE_AFTER_AT_END_MS = 2_000;
+const CONTINUE_AFTER_AT_START_MS = 2_000;
 /**
- * A new song further along than the time since the predicted end allows (plus
- * this) was picked by hand. Spotify's crossfade starts the next song up to 12 s
- * before the end, so that much earlier still counts as its own start.
+ * A new song began on its own only if it began at this one's predicted end:
+ * no older than the time since then, plus this for a slightly late reading of
+ * the song's place. One that began earlier (picked by hand, or a crossfade)
+ * cannot be told apart and is never cut (PR36 review).
  */
-const CONTINUE_AFTER_PICKED_MS = 12_000;
+const CONTINUE_AFTER_PICKED_MS = 1_000;
 /** The Likes playlist is made again at most this often, and never this soon after it was made. */
 const LIKES_REMAKE_GAP_MS = 24 * HOUR_MS;
 const LIKES_FRESH_MS = 10 * MINUTE_MS;
@@ -5049,8 +5051,8 @@ export class HubCore {
 			// listener's pause: only a later look may still see the end.
 			const shownAtEnd =
 				obs.durationMs > 0 &&
-				(obs.progressMs >= obs.durationMs - CONTINUE_AFTER_AT_END_MS ||
-					(surelyOver && obs.progressMs <= CONTINUE_AFTER_AT_END_MS));
+				(obs.progressMs >= obs.durationMs ||
+					(surelyOver && obs.progressMs <= CONTINUE_AFTER_AT_START_MS));
 			if (!obs.isPlaying && endReached && shownAtEnd) {
 				this.kvSet("continue_after", { ...c, due: true });
 				return;
@@ -5071,13 +5073,11 @@ export class HubCore {
 			settle({ ok: true, at: this.now(), message: null });
 			return;
 		}
-		// Another song that just began after this one ran out (autoplay, the
-		// context's next): its end. One the listener picked mid-song, already
-		// well under way, is the listener's choice: never cut it, cancel instead.
-		// It began no earlier than this one's predicted end, or a crossfade before
-		// it (a later end, after an unseen pause, only makes it younger). Seen
-		// before that end, it may be no older than the fade: one picked earlier
-		// is the listener's, however young (signed, not clamped: red-team T3).
+		// Another song that began when this one ran out (autoplay, the context's
+		// next): its end. It is no older than the time since this one's predicted
+		// end (a later end, after an unseen pause, only makes it younger). One
+		// that began before that end was picked by hand or faded in: the two
+		// cannot be told apart, so it is never cut; cancel instead.
 		const sinceEnd =
 			predicted == null || !obs ? 0 : predicted - seen!.durationMs - (this.now() - obs.at);
 		const justBegan =
@@ -5089,7 +5089,10 @@ export class HubCore {
 		// Spotify loaded what came next. No player at all shows no end (the
 		// listener may have stopped it): that cancels below, never plays.
 		const stoppedAfter =
-			surelyOver && !!obs?.trackId && !obs.isPlaying && obs.progressMs <= CONTINUE_AFTER_AT_END_MS;
+			surelyOver &&
+			!!obs?.trackId &&
+			!obs.isPlaying &&
+			obs.progressMs <= CONTINUE_AFTER_AT_START_MS;
 		if ((endReached && justBegan) || stoppedAfter) {
 			this.kvSet("continue_after", { ...c, due: true });
 			return;
@@ -5099,7 +5102,7 @@ export class HubCore {
 				ok: false,
 				at: this.now(),
 				message:
-					"Du hast selbst einen anderen Song gestartet; er läuft weiter, nichts fortgesetzt.",
+					"Ein anderer Song lief schon vor dem Songende; er läuft weiter, nichts fortgesetzt.",
 			});
 			return;
 		}
@@ -5273,11 +5276,12 @@ export class HubCore {
 			const keep = (sent: LikesSyncProgress["sent"]) =>
 				this.kvSet("likes_sync_progress", { rev, pid, offset, sent } satisfies LikesSyncProgress);
 			try {
-				// Asking what arrived meets a gone playlist like a write does (made again below).
-				if (progress?.rev === rev && progress.pid === pid) {
-					offset = progress.offset;
-					if (progress.sent) offset = await this.settleLikesWrite(client, pid, progress.sent);
-				}
+				// A write whose answer never came: what arrived is unknown, and no
+				// count proves the content (the listener may have changed the playlist
+				// too). Start over from the top: replacing makes it exactly the Likes
+				// whatever it holds now (PR36 review, B9341-01).
+				if (progress?.rev === rev && progress.pid === pid)
+					offset = progress.sent ? 0 : progress.offset;
 				// Already all there (cut short right after the last write): nothing to send.
 				for (
 					let n = 0;
@@ -5341,24 +5345,6 @@ export class HubCore {
 				fail(err instanceof Error ? err.message : String(err));
 			throw err;
 		}
-	}
-
-	/**
-	 * A write whose answer never came: did it arrive? The playlist's length
-	 * tells: without it, the same write again; with it, on after it. Any other
-	 * length (changed elsewhere meanwhile) starts over from the top, which
-	 * replaces the playlist and so is right whatever it holds.
-	 */
-	private async settleLikesWrite(
-		client: SpotifyClient,
-		pid: string,
-		sent: { from: number; to: number },
-	): Promise<number> {
-		if (sent.from === 0) return 0;
-		const total = (await client.playlist(pid))?.items?.total;
-		if (total === sent.from) return sent.from;
-		if (total === sent.to) return sent.to;
-		return 0;
 	}
 
 	/** What the app shows about the Likes (P4). */

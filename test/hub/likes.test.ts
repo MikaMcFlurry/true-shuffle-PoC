@@ -223,7 +223,10 @@ describe("TrueShuffle Likes (P4)", () => {
 			}, 120_000);
 		}
 
-		it("written, but the answer is lost: Spotify is asked once, the write is not sent again", async () => {
+		// A lost answer proves nothing about what arrived: written again from the
+		// top (one replace, then the rest), never trusted by a count (PR36 review;
+		// 1.3.1 asked the length and went on after it).
+		it("written, but the answer is lost: started over with a replace, exactly the Likes", async () => {
 			const { h, ids, append, finish } = await many();
 			let lost = 0;
 			h.fake.failWhen = (m, path) => {
@@ -235,13 +238,69 @@ describe("TrueShuffle Likes (P4)", () => {
 			};
 			const calls = h.fake.calls.length;
 			await h.hub.retryLikesSync();
+			const { items, sync } = await finish();
+			expect(lost).toBe(1);
+			expect(items).toEqual(ids);
+			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+			const after = h.fake.calls.slice(calls);
+			const lostAt = after.findIndex(
+				(c) => c.startsWith("POST /v1/playlists/") && c.includes("/items"),
+			);
+			expect(after.filter((c) => c.startsWith("PUT /v1/playlists/")).length).toBe(2);
+			expect(after.some((c) => /^GET \/v1\/playlists\/[^/]+(\?|$)/.test(c))).toBe(false);
+			expect(lostAt).toBeGreaterThanOrEqual(0);
+		}, 120_000);
+
+		for (const [name, change] of [
+			[
+				"one entry replaced (R131-LIKES)",
+				(items: string[], ids: string[]) => {
+					items[950] = ids[0]!;
+				},
+			],
+			[
+				"two entries swapped",
+				(items: string[]) => {
+					const x = items[910]!;
+					items[910] = items[960]!;
+					items[960] = x;
+				},
+			],
+		] as const) {
+			it(`lost answer plus a same-length change elsewhere (${name}): exactly the Likes, in order`, async () => {
+				const { h, ids, append, finish } = await many();
+				let lost = 0;
+				h.fake.failWhen = (m, path) => {
+					const p = append(m, path);
+					if (lost || p?.items.length !== 900) return null;
+					lost++;
+					p.items.push(...ids.slice(900, 1000));
+					change(p.items, ids);
+					return { status: 502 };
+				};
+				await h.hub.retryLikesSync();
+				const { items, sync } = await finish();
+				expect(lost).toBe(1);
+				expect(items).toEqual(ids);
+				expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+			}, 120_000);
+		}
+
+		it("a write that never arrived plus as many songs added by hand: exactly the Likes, in order", async () => {
+			const { h, ids, append, finish } = await many();
+			const others = [...h.fake.tracks.keys()].slice(1700, 1800);
+			let lost = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (lost || p?.items.length !== 900) return null;
+				lost++;
+				p.items.push(...others); // not ours: the same count, other songs
+				return { status: 502 };
+			};
+			await h.hub.retryLikesSync();
 			const { items } = await finish();
 			expect(lost).toBe(1);
 			expect(items).toEqual(ids);
-			const asked = h.fake.calls
-				.slice(calls)
-				.filter((c) => /^GET \/v1\/playlists\/[^/]+(\?|$)/.test(c));
-			expect(asked).toHaveLength(1);
 		}, 120_000);
 
 		it("lost answer and the playlist changed elsewhere meanwhile: written again from the top, exactly", async () => {
