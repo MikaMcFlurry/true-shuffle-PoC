@@ -1,0 +1,14 @@
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+import {Hono} from 'hono';
+import {expect,it} from 'vitest';
+import {isStorageFull,isStorageLimit,STORAGE_FULL_CODE,STORAGE_LIMIT_CODE,storageFullMessage,storageLimitMessage} from '../../src/worker/lib/storage-limit';
+const source=readFileSync('src/worker/index.ts','utf8');
+const start=source.indexOf('app.onError(')+'app.onError('.length;
+const end=source.indexOf('\n});',start);
+const actual=runInNewContext(source.slice(start,end+2),{console:{error(){}},isStorageFull,isStorageLimit,STORAGE_FULL_CODE,STORAGE_LIMIT_CODE,storageFullMessage,storageLimitMessage});
+for(const [message,code,status,promises] of [['SQLITE_FULL: database or disk is full','storage_full',503,false],['storage operation exceeded limits','storage_full',503,false],['Exceeded allowed rows read in Durable Objects free tier.','storage_limit',503,true],['boom','internal',500,false]]as const){
+ it(`actual Worker onError -> Hono HTTP: ${message}`,async()=>{
+  const app=new Hono();app.get('/',()=>{throw new Error(message)});app.onError(actual);const r=await app.request('http://local/');const body=await r.json();expect(r.status).toBe(status);expect(body.error.code).toBe(code);expect(/Ab \d\d:\d\d Uhr/.test(body.error.message)).toBe(promises);
+ });
+}

@@ -1,12 +1,12 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-11-08T16:43:03.430640+00:00",
-  "project": "true-shuffle1.3.1 independent re-review",
+  "generated_at": "2026-11-08T22:32:44.826207+00:00",
+  "project": "true-shuffle1.3.2 candidate independent review",
   "subject": {
-    "revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-    "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
-    "environment": "Externallydeployed1.3.1;isolatedNode24/SQLite/Worker/FakeSpotify,actualclient/publicChromium;noauthenticatedlivejourneys",
-    "environment_class": "PRODUCTION"
+    "revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+    "artifact_ref": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/39",
+    "environment": "Isolated exact candidate Node24/SQLite/Worker/FakeSpotify/Chromium; live remains2c6118f1.3.1",
+    "environment_class": "PREVIEW"
   },
   "mode": "AUTONOMOUS_BUILD",
   "delivery_target": "PRODUCTION_LIVE",
@@ -42,7 +42,7 @@
       "id": "B-LIVE-PROVIDER",
       "type": "CREDENTIAL",
       "description": "PhysicaliPhone/privateHA/populatedrestore access unavailable",
-      "evidence_ref": "docs/ai-dev/evidence/PR36_REVIEW.json"
+      "evidence_ref": "docs/ai-dev/evidence/PR39_REVIEW.json"
     }
   ],
   "requirements_snapshot": {
@@ -74,8 +74,9 @@
       "id": "NN-02",
       "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
       "gate_ids": [
-        "G-JOURNEY",
-        "G-LIVE"
+        "G-SECURITY",
+        "G-DATA",
+        "G-BROWSER"
       ]
     },
     {
@@ -83,7 +84,7 @@
       "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
       "gate_ids": [
         "G-JOURNEY",
-        "G-LIVE"
+        "G-BROWSER"
       ]
     },
     {
@@ -91,7 +92,7 @@
       "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
       "gate_ids": [
         "G-JOURNEY",
-        "G-LIVE"
+        "G-BROWSER"
       ]
     },
     {
@@ -99,38 +100,39 @@
       "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
       "gate_ids": [
         "G-JOURNEY",
-        "G-LIVE"
+        "G-REVIEW"
       ]
     },
     {
       "id": "NN-06",
       "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
       "gate_ids": [
-        "G-JOURNEY",
-        "G-LIVE"
+        "G-SECURITY",
+        "G-BROWSER"
       ]
     },
     {
       "id": "NN-07",
       "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
       "gate_ids": [
-        "G-JOURNEY",
-        "G-LIVE"
+        "G-DATA",
+        "G-BROWSER"
       ]
     },
     {
       "id": "NN-08",
       "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
       "gate_ids": [
-        "G-JOURNEY",
-        "G-LIVE"
+        "G-DATA",
+        "G-UI",
+        "G-BROWSER"
       ]
     },
     {
       "id": "NN-09",
       "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
       "gate_ids": [
-        "G-JOURNEY",
+        "G-PERF",
         "G-LIVE"
       ]
     },
@@ -138,37 +140,32 @@
       "id": "NN-10",
       "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
       "gate_ids": [
-        "G-JOURNEY",
-        "G-LIVE"
+        "G-LIVE",
+        "G-BROWSER"
       ]
     },
     {
       "id": "NN-11",
       "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
       "gate_ids": [
-        "G-JOURNEY",
-        "G-LIVE"
+        "G-UI",
+        "G-A11Y",
+        "G-BROWSER"
       ]
     }
   ],
   "open_findings": [
     {
       "id": "B9341-02",
-      "title": "Residual automatic play after manual pause within two seconds of end or unrelated manual song selection inside crossfade window",
       "severity": "P1",
-      "blocking": true
+      "blocking": true,
+      "title": "Residual automatic playback overrides manual final-second song choice and paused rewind/next-at-zero"
     },
     {
-      "id": "B9341-01",
-      "title": "Ambiguous Likes append plus same-length provider edit loses ordered exact contents while reporting success",
+      "id": "R132-LIKES-RETRY",
       "severity": "P2",
-      "blocking": true
-    },
-    {
-      "id": "PR31-STORAGE-CLASSIFICATION",
-      "title": "Unchanged SQLITE_FULL classified daily quota with guaranteed reset",
-      "severity": "P2",
-      "blocking": true
+      "blocking": true,
+      "title": "Explicit retry clears durable progress but retains job offset, appending duplicate Likes and reporting success"
     }
   ],
   "gates": [
@@ -181,13 +178,13 @@
         {
           "id": "EV-G-BUILD",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/build.log",
-          "result": "Exact integratedsource build and dryrun succeed; no upload",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/build.log",
+          "result": "Exact candidate build and dryrun pass; no upload",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Exact integratedsource build and dryrun succeed; no upload"
+      "rationale": "Exact candidate build and dryrun pass; no upload"
     },
     {
       "id": "G-STATIC",
@@ -198,13 +195,13 @@
         {
           "id": "EV-G-STATIC",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/check.log",
-          "result": "Typecheck/Biome284files pass",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/check.log",
+          "result": "Typecheck and Biome285files pass",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Typecheck/Biome284files pass"
+      "rationale": "Typecheck and Biome285files pass"
     },
     {
       "id": "G-UNIT",
@@ -215,13 +212,13 @@
         {
           "id": "EV-G-UNIT",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/check.log",
-          "result": "Raw1299PASS/3knownL2/L7FAIL; knownwrapper exits0; no rawgreen claim",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/check.log",
+          "result": "Raw1314PASS/3knownL2/L7FAIL; known-wrapper separatePASS",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Raw1299PASS/3knownL2/L7FAIL; knownwrapper exits0; no rawgreen claim"
+      "rationale": "Raw1314PASS/3knownL2/L7FAIL; known-wrapper separatePASS"
     },
     {
       "id": "G-JOURNEY",
@@ -232,13 +229,13 @@
         {
           "id": "EV-G-JOURNEY",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-review.md",
-          "result": "Residual manualpause/manualselection causes unwantedplay",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-review.md",
+          "result": "Manual finalsecondpick and pausedrewind/next0 triggerplay",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Residual manualpause/manualselection causes unwantedplay"
+      "rationale": "Manual finalsecondpick and pausedrewind/next0 triggerplay"
     },
     {
       "id": "G-DATA",
@@ -249,13 +246,13 @@
         {
           "id": "EV-G-DATA",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-boundaries.log",
-          "result": "AmbiguousLikes+same-length edit produces1700entries/1699unique,false success",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-review.md",
+          "result": "Explicit retry appends duplicate Likes while reporting exact successful count",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "AmbiguousLikes+same-length edit produces1700entries/1699unique,false success"
+      "rationale": "Explicit retry appends duplicate Likes while reporting exact successful count"
     },
     {
       "id": "G-SECURITY",
@@ -266,13 +263,13 @@
         {
           "id": "EV-G-SECURITY",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui-review.md",
-          "result": "Scoped accountsearch races11module and actual UI fixture/race/degraded probes pass;publicauth401/CSRF403. BroaderliveaccountjourneysNOT_RUN",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui-review.md",
+          "result": "Scoped error/RPC/client account privacy checks; see UI scope/limits",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Scoped accountsearch races11module and actual UI fixture/race/degraded probes pass;publicauth401/CSRF403. BroaderliveaccountjourneysNOT_RUN"
+      "rationale": "Scoped error/RPC/client account privacy checks; see UI scope/limits"
     },
     {
       "id": "G-UI",
@@ -283,13 +280,13 @@
         {
           "id": "EV-G-UI",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui-review.md",
-          "result": "Actualfonts/client, scopedaccount/volume/longcontent/pendingerror/navigation probes pass; public4renders",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui-review.md",
+          "result": "Actual scoped error/recovery rendering; fresh separate UI report",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Actualfonts/client, scopedaccount/volume/longcontent/pendingerror/navigation probes pass; public4renders"
+      "rationale": "Actual scoped error/recovery rendering; fresh separate UI report"
     },
     {
       "id": "G-A11Y",
@@ -300,13 +297,13 @@
         {
           "id": "EV-G-A11Y",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui-review.md",
-          "result": "Scopedday/night contrast12.579/14.891,keyboardSkiplink,navtargets>=44,nowrapoverflow",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui-review.md",
+          "result": "Scoped mobile/desktopdaynight/keyboard/longmessage checks",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Scopedday/night contrast12.579/14.891,keyboardSkiplink,navtargets>=44,nowrapoverflow"
+      "rationale": "Scoped mobile/desktopdaynight/keyboard/longmessage checks"
     },
     {
       "id": "G-REVIEW",
@@ -317,13 +314,13 @@
         {
           "id": "EV-G-REVIEW",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-review.md",
-          "result": "Fresh separatebackendBLOCKED, scopedUIREADY",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-review.md",
+          "result": "Fresh independentbackendBLOCKED",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Fresh separatebackendBLOCKED, scopedUIREADY"
+      "rationale": "Fresh independentbackendBLOCKED"
     },
     {
       "id": "G-PERF",
@@ -334,13 +331,13 @@
         {
           "id": "EV-G-PERF",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-review.md",
-          "result": "AmbiguousLike recovery misreports verifiedcontents;storagecause promise remainsfalse",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-adversarial.log",
+          "result": "Explicit Likesretry bypasses checkpoint; wrong repeated writes",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "AmbiguousLike recovery misreports verifiedcontents;storagecause promise remainsfalse"
+      "rationale": "Explicit Likesretry bypasses checkpoint; wrong repeated writes"
     },
     {
       "id": "G-MIGRATION",
@@ -370,35 +367,26 @@
       "id": "G-DEPLOY",
       "category": "deployment",
       "required": true,
-      "status": "PASS",
-      "evidence": [
-        {
-          "id": "EV-G-DEPLOY",
-          "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/PR36_REVIEW.json",
-          "result": "Read-only externalfc236a78 at100%;19/19filesmatch;resourcebindings/runtimeequal;no reviewerrollout",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
-        }
-      ],
-      "rationale": "Read-only externalfc236a78 at100%;19/19filesmatch;resourcebindings/runtimeequal;no reviewerrollout"
+      "status": "NOT_RUN",
+      "evidence": [],
+      "rationale": "Candidate not deployed; existing live1.3.1 unchanged"
     },
     {
       "id": "G-BROWSER",
       "category": "browser",
       "required": true,
-      "status": "FAIL",
+      "status": "PASS",
       "evidence": [
         {
           "id": "EV-G-BROWSER",
           "kind": "direct runtime/review evidence",
-          "ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime/playwright-full.log",
-          "result": "Full actualWorker/FakeSpotify suite exactsource; rawlog authoritative",
-          "subject_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-          "observed_at": "2026-11-08T16:43:03.430640+00:00"
+          "ref": "docs/ai-dev/evidence/pr39-39edfed-runtime/playwright-full.log",
+          "result": "Full unchanged Worker/FakeSpotify suite; actual rawlog",
+          "subject_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+          "observed_at": "2026-11-08T22:32:44.826207+00:00"
         }
       ],
-      "rationale": "Full actualWorker/FakeSpotify suite exactsource; rawlog authoritative"
+      "rationale": "Full unchanged Worker/FakeSpotify suite; actual rawlog"
     }
   ]
 }

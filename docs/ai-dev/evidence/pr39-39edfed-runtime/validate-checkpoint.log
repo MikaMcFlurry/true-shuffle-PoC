@@ -1,0 +1,11 @@
+{
+  "valid": true,
+  "errors": [],
+  "summary": {
+    "phase": "REVIEW",
+    "status": "BLOCKED",
+    "checkpoint_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+    "current_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+    "stale": false
+  }
+}

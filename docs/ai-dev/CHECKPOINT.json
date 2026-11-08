@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "project": "true-shuffle",
   "subject": {
-    "revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
-    "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/"
+    "revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+    "artifact_ref": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/39"
   },
   "phase": "REVIEW",
   "status": "BLOCKED",
@@ -13,28 +13,27 @@
     "Codex:read-only verification/review evidence; no application edits"
   ],
   "completed": [
-    "ExactGitHubPR36/37metadata/currentcomments/provenance and combinedsource",
-    "Freshindependentbackend/UIreview",
-    "Exactintegratedtypecheck/lint/build/dryrun/unitknownandfullbrowser",
-    "Externaldeployment/resourceequality/19assets/health/auth/publicbrowserreadback"
+    "Read all actual currentPRmetadata/comments/dependencies/sourceheads",
+    "Exact candidate static/build/unit/browser checks in rawlogs",
+    "Fresh separate backend/UI adversarial reviews",
+    "Authenticated unchanged production deployment identity"
   ],
   "in_progress": [],
   "blocked": [
-    "B9341-02: Residual automatic play after manual pause within two seconds of end or unrelated manual song selection inside crossfade window",
-    "B9341-01: Ambiguous Likes append plus same-length provider edit loses ordered exact contents while reporting success",
-    "PR31-STORAGE-CLASSIFICATION: Unchanged SQLITE_FULL classified daily quota with guaranteed reset"
+    "B9341-02: Residual automatic playback overrides manual final-second song choice and paused rewind/next-at-zero",
+    "R132-LIKES-RETRY: Explicit retry clears durable progress but retains job offset, appending duplicate Likes and reporting success"
   ],
   "capability_blockers": [
     "Physical iPhone/liveSpotify/privateHA/populatedrestore access unavailable"
   ],
   "recovery_state": [
-    "No reviewer appfix/merge/deploy/rollback",
-    "External1.3.1 versionfc236a78;previous467a9df2 retained,historicalnotrestoreaccepted"
+    "Candidate1.3.2 not merged or deployed byreviewer",
+    "Live1.3.1 source2c6118f/versionfc236a78/deployment3e9f79b5 unchanged"
   ],
   "next_actions": [
-    "Claude repairs residualB9341-02/B9341-01 and existingstorageclassification",
-    "Preserve strictassertions;explicitfullscopecompletionperPRcomment;fresh exactheadreview",
-    "Do not repeat externalmerge/deploy;revalidateactualsource/runtime"
+    "Claude repairs remainingmanualownership and new explicitLikesretry defect",
+    "Retain strict assertions and exact-head checks; explicit full-scope completion comment",
+    "Integrate only into codex/implement-cloudflare-restart after all material gates pass; no duplicate release"
   ],
-  "updated_at": "2026-11-08T16:43:03.430640+00:00"
+  "updated_at": "2026-11-08T22:32:44.826207+00:00"
 }
