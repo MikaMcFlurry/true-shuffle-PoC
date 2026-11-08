@@ -26,15 +26,15 @@ export const MAX_CHANGE_LENGTH = 140;
 
 export const RELEASE: Release = Object.freeze({
 	version,
-	date: "2026-11-02",
+	date: "2026-11-08",
 	changes: Object.freeze([
-		"Läuft den ganzen Tag: true-shuffle fragt viel seltener nach und kommt mit einem Bruchteil der Server- und Spotify-Abfragen aus.",
-		"Im Verlauf suchen: Titel oder Künstler tippen, auch ohne Akzente – mit allen Wiedergaben und Favorit direkt am Treffer.",
-		"TrueShuffle Likes: Jeder Daumen hoch landet einmal in einer eigenen Kassette und in deiner privaten Spotify-Playlist.",
-		"Nach diesem Song fortsetzen: Läuft gerade etwas anderes, hört es zu Ende, dann geht es mit deiner Kassette weiter.",
+		"Die Suche im Verlauf zeigt nur deine eigenen Songs, auch direkt nach Ab- und Anmelden oder einem Kontowechsel.",
+		"Pausierst du kurz vor Songende selbst, bleibt es still: „Nach diesem Song fortsetzen“ startet dann nichts von allein.",
+		"TrueShuffle Likes: Hakt Spotify beim Speichern, landet trotzdem jeder Song genau einmal in deiner Playlist.",
+		"Lautstärke und Gerätename sind am Tag wieder gut lesbar.",
 	]),
 	known:
-		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
+		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Pausierst du und springst danach in Spotify zurück oder weiter, kann „Nach diesem Song fortsetzen“ trotzdem fortsetzen; nach langem Crossfade oder Vorspulen setzt es manchmal nicht fort und sagt das. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
 });
 
 /** "1.2.3" as numbers; anything else (a pre-release, a word) is no version here. */
