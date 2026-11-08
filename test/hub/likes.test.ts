@@ -286,6 +286,38 @@ describe("TrueShuffle Likes (P4)", () => {
 			}, 120_000);
 		}
 
+		it("a write that never gets an answer: a few starts from the top, then it stops and says so (PR36 re-review)", async () => {
+			const { h, ids, playlist, append, finish } = await many();
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				return p && p.items.length >= 1600 ? { status: 502 } : null;
+			};
+			const calls = h.fake.calls.length;
+			await h.hub.retryLikesSync();
+			for (let i = 0; i < 6 * 60; i++) await h.listen(60_000);
+			await h.settle();
+			const writes = h.fake.calls
+				.slice(calls)
+				.filter((c) => /^(PUT|POST) \/v1\/playlists\/[^/]+\/items/.test(c));
+			// 1.3.2 before this fix: thousands of writes over 6 h, never ending.
+			expect(writes.length).toBeLessThan(80);
+			const sync = (await h.hub.state()).likes?.sync;
+			expect(sync?.pending).toBe(true);
+			expect(sync?.error).toMatch(/nicht bestätigt/);
+			const quiet = h.fake.calls.length;
+			await h.listen(60 * 60_000);
+			expect(
+				h.fake.calls.slice(quiet).filter((c) => /^(PUT|POST) \/v1\/playlists\//.test(c)),
+			).toEqual([]);
+			// Spotify answers again and the listener sends again: exactly the Likes.
+			h.fake.failWhen = null;
+			await h.hub.retryLikesSync();
+			const { items, sync: after } = await finish();
+			expect(items).toEqual(ids);
+			expect(after).toMatchObject({ pending: false, count: 1700, error: null });
+			expect(playlist()).toBeDefined();
+		}, 300_000);
+
 		it("a write that never arrived plus as many songs added by hand: exactly the Likes, in order", async () => {
 			const { h, ids, append, finish } = await many();
 			const others = [...h.fake.tracks.keys()].slice(1700, 1800);

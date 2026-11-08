@@ -10,8 +10,7 @@
  * (SQLITE_FULL) or another storage limit says what happened and promises no
  * time: nothing proves it ends at midnight (PR31-STORAGE-CLASSIFICATION).
  */
-const DAILY =
-	/rows?[ _-]?(read|written)|daily (free )?(tier )?(limit|quota)|free tier/i;
+const DAILY = /rows?[ _-]?(read|written)|daily (free )?(tier )?(limit|quota)|free tier/i;
 const OTHER =
 	/SQLITE_FULL|database or disk is full|durable objects?.*(limit|exceeded|quota)|storage (operation|limit|quota)/i;
 /** Worker runtime limits and provider rate limits are transient, never a storage limit. */

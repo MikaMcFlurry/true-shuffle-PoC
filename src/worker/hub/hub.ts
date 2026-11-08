@@ -352,7 +352,12 @@ interface LikesSyncProgress {
 	offset: number;
 	/** A write sent without an answer yet: the Likes [from, to). */
 	sent?: { from: number; to: number };
+	/** Times written again from the top after such a write, for these Likes. */
+	restarts?: number;
 }
+
+/** After this many starts from the top for the same Likes, the sync stops and says so. */
+const LIKES_AMBIGUOUS_RESTARTS = 3;
 
 interface ContinueAfter {
 	stationId: number;
@@ -5228,6 +5233,8 @@ export class HubCore {
 
 	/** The listener asks to write the playlist again (after a shown failure). */
 	async retryLikesSync(): Promise<LikesView> {
+		// Sent again by hand: a stopped run (too many unanswered writes) starts fresh.
+		this.kvDel("likes_sync_progress");
 		this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
 		this.enqueue("likes-sync", "likes-sync", {}, 2);
 		await this.scheduleSoon(0);
@@ -5273,15 +5280,32 @@ export class HubCore {
 			// the end of the step: a failure later in the step (or a step cut short)
 			// never sends an acknowledged append again (B9341-01).
 			const progress = this.kvGet<LikesSyncProgress>("likes_sync_progress");
+			let restarts = progress?.rev === rev && progress.pid === pid ? (progress.restarts ?? 0) : 0;
 			const keep = (sent: LikesSyncProgress["sent"]) =>
-				this.kvSet("likes_sync_progress", { rev, pid, offset, sent } satisfies LikesSyncProgress);
+				this.kvSet("likes_sync_progress", {
+					rev,
+					pid,
+					offset,
+					sent,
+					restarts,
+				} satisfies LikesSyncProgress);
 			try {
 				// A write whose answer never came: what arrived is unknown, and no
 				// count proves the content (the listener may have changed the playlist
 				// too). Start over from the top: replacing makes it exactly the Likes
 				// whatever it holds now (PR36 review, B9341-01).
-				if (progress?.rev === rev && progress.pid === pid)
+				if (progress?.rev === rev && progress.pid === pid) {
 					offset = progress.sent ? 0 : progress.offset;
+					// Never without end: a write that keeps going unanswered would
+					// otherwise rewrite the playlist again and again (PR36 re-review).
+					if (progress.sent && ++restarts > LIKES_AMBIGUOUS_RESTARTS) {
+						this.kvSet("likes_sync_progress", { ...progress, restarts });
+						fail(
+							"Spotify hat mehrmals nicht bestätigt, ob die Likes gespeichert wurden. Bitte später nochmal senden.",
+						);
+						return { done: true };
+					}
+				}
 				// Already all there (cut short right after the last write): nothing to send.
 				for (
 					let n = 0;

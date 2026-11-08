@@ -34,7 +34,7 @@ export const RELEASE: Release = Object.freeze({
 		"Ist der Speicher des Servers voll, sagt die App das ehrlich, ohne eine Uhrzeit zu versprechen.",
 	]),
 	known:
-		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Pausierst du und springst danach in Spotify zurück oder weiter, kann „Nach diesem Song fortsetzen“ trotzdem fortsetzen. Mit Crossfade oder nach Vorspulen setzt es oft nicht fort und sagt das, weil sich das nicht von einem selbst gewählten Song unterscheiden lässt. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
+		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Pausierst du und springst danach in Spotify zurück oder weiter, kann „Nach diesem Song fortsetzen“ trotzdem fortsetzen. Mit Crossfade oder nach Vorspulen setzt es oft nicht fort und sagt das, weil sich das nicht von einem selbst gewählten Song unterscheiden lässt; einen Song, den du erst in der letzten Sekunde wählst, kann es dagegen noch ablösen. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
 });
 
 /** "1.2.3" as numbers; anything else (a pre-release, a word) is no version here. */
