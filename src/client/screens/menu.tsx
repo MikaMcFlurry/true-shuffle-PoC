@@ -432,39 +432,45 @@ export function HistoryScreen() {
 	// S1: the search. Typed text is searched here, 200 ms after the last key.
 	const [query, setQuery] = useState("");
 	const [asked, setAsked] = useState("");
-	const [hits, setHits] = useState<SearchSong[] | null>(null);
-	const [searchErr, setSearchErr] = useState<string | null>(null);
+	// Hits and errors belong to the account (and sign-in) that asked: after
+	// another account or signing out and in, none of them shows, not even once.
+	const whose = `${account}:${ratingsGeneration()}`;
+	const [found, setFound] = useState<{
+		whose: string;
+		hits: SearchSong[] | null;
+		err: string | null;
+	} | null>(null);
+	const mine = found?.whose === whose ? found : null;
+	const hits = mine?.hits ?? null;
+	const searchErr = mine?.err ?? null;
 	useEffect(() => {
 		const t = window.setTimeout(() => setAsked(query), 200);
 		return () => window.clearTimeout(t);
 	}, [query]);
 	useEffect(() => {
-		if (!asked.trim() || !account) {
-			setHits(null);
-			return;
-		}
+		setFound(null);
+		if (!asked.trim() || !account) return;
 		let live = true;
 		const read = startListRead();
 		historySearch
 			.load(account)
 			.then((index) => {
-				if (!live || !current(read.gen)) return;
-				const found = search(index, asked);
+				if (!live || !current(read.gen) || index.account !== account) return;
+				const list = search(index, asked);
 				takeListed(
-					found.map((x) => x.entry),
+					list.map((x) => x.entry),
 					read,
 					false,
 				);
-				setSearchErr(null);
-				setHits(found);
+				setFound({ whose, hits: list, err: null });
 			})
 			.catch((e: Error) => {
-				if (live) setSearchErr(e.message);
+				if (live && current(read.gen)) setFound({ whose, hits: null, err: e.message });
 			});
 		return () => {
 			live = false;
 		};
-	}, [asked, account]);
+	}, [asked, whose]);
 	const [loading, setLoading] = useState(false);
 	const [err, setErr] = useState<string | null>(null);
 	// A list answers only the page that asked, for the account it asked for:
@@ -607,6 +613,14 @@ export function HistoryScreen() {
 
 /** S1: one Verlauf for the whole app session (see history-search.ts). */
 const historySearch = new HistorySearch((since) => api.historySearch(since));
+// Signing out, or another account signed in, keeps nothing of the Verlauf
+// before, also while this page is closed (a request on its way included).
+let searchGeneration = ratingsGeneration();
+store.subscribe(() => {
+	if (ratingsGeneration() === searchGeneration) return;
+	searchGeneration = ratingsGeneration();
+	historySearch.forget();
+});
 
 const BERLIN = new Intl.DateTimeFormat("de-DE", {
 	timeZone: "Europe/Berlin",

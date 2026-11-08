@@ -78,4 +78,96 @@ describe("S1 search over the Verlauf", () => {
 		expect(other.account).toBe("you");
 		expect(hs.requests).toBe(2);
 	});
+	describe("an answer on its way belongs to the account that asked (PR35 UI-01)", () => {
+		const of = (who: string, through = 100): HistorySearchAnswer => ({
+			through,
+			complete: true,
+			songs: [{ entry: entry(`${who}-song`, `Song of ${who}`, "X", through), plays: [through] }],
+		});
+		/** A fetcher whose answers are held until the test lets them go. */
+		function held() {
+			const open: { since: number; answer: (a: HistorySearchAnswer) => void }[] = [];
+			const hs = new HistorySearch(
+				(since) => new Promise((answer) => open.push({ since, answer })),
+			);
+			return { hs, open };
+		}
+
+		it("B never joins A's request, and A's late answer never becomes B's", async () => {
+			const { hs, open } = held();
+			const a = hs.load("A");
+			const b = hs.load("B");
+			expect(open).toHaveLength(2);
+			open[0]!.answer(of("A"));
+			open[1]!.answer(of("B"));
+			expect((await a).account).toBe("A");
+			const got = await b;
+			expect(got.account).toBe("B");
+			expect([...got.songs.keys()]).toEqual(["B-song"]);
+			// And nothing of A is kept for B afterwards.
+			expect([...(await hs.load("B")).songs.keys()]).toEqual(["B-song"]);
+		});
+
+		it("A's answer arriving after B's: B's index stays B's", async () => {
+			const { hs, open } = held();
+			const a = hs.load("A");
+			const b = hs.load("B");
+			open[1]!.answer(of("B"));
+			await b;
+			open[0]!.answer(of("A"));
+			await a;
+			const now = await hs.load("B");
+			expect(now.account).toBe("B");
+			expect(now.songs.has("A-song")).toBe(false);
+			expect(hs.requests).toBe(2);
+		});
+
+		it("signing out (forget) while a request is on its way: its answer is not kept", async () => {
+			const { hs, open } = held();
+			const a = hs.load("A");
+			hs.forget();
+			open[0]!.answer(of("A"));
+			await a;
+			const again = hs.load("A");
+			expect(open).toHaveLength(2);
+			expect(open[1]!.since).toBe(0);
+			open[1]!.answer(of("A", 200));
+			expect((await again).through).toBe(200);
+		});
+
+		it("forget during an update: the index from before is not changed by the late answer", async () => {
+			const { hs, open } = held();
+			const first = hs.load("A");
+			open[0]!.answer(of("A"));
+			const index = await first;
+			const update = hs.load("A", true);
+			hs.forget();
+			open[1]!.answer({
+				...of("A", 300),
+				songs: [{ entry: entry("late", "Late", "X", 300), plays: [300] }],
+			});
+			await update;
+			expect(index.songs.has("late")).toBe(false);
+		});
+
+		it("the same account still shares one request (P1 unchanged)", async () => {
+			const { hs, open } = held();
+			const one = hs.load("A");
+			const two = hs.load("A");
+			expect(open).toHaveLength(1);
+			open[0]!.answer(of("A"));
+			expect(await one).toBe(await two);
+		});
+
+		it("a failed request for A leaves B free to ask", async () => {
+			let n = 0;
+			const hs = new HistorySearch((since) =>
+				++n === 1
+					? Promise.reject(new Error("offline"))
+					: Promise.resolve({ ...of("B"), through: since + 1 }),
+			);
+			await expect(hs.load("A")).rejects.toThrow("offline");
+			expect((await hs.load("B")).account).toBe("B");
+		});
+	});
 });

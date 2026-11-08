@@ -130,22 +130,54 @@ export function seed(fake: FakeSpotify): void {
 			`${WORDS[(Math.floor(i / 10) * 3) % WORDS.length]} ${["EP", "", "LP", "Sessions"][i % 4]}`.trim();
 		(t as { cover?: string }).cover = cover(Math.floor(i / 10));
 	});
-	fake.addUser("mika", { name: "Mika" });
-	fake.user("mika").devices = [...DEVICES];
-	const ids = tracks.map((t) => t.id);
-	fake.addPlaylist("mika", "Alles, was ich mag", ids.slice(0, 1200), fakeId("P", 101));
-	fake.addPlaylist("mika", "Indie & Gitarren", ids.slice(300, 700), fakeId("P", 102));
-	fake.addPlaylist("mika", "Deutschrap & Pop", ids.slice(700, 1050), fakeId("P", 103));
-	fake.addPlaylist("mika", "Lange Autofahrt", ids.slice(900, 1500), fakeId("P", 104));
-	fake.addPlaylist("mika", "Ruhig am Abend", ids.slice(1200, 1350), fakeId("P", 105));
+	listener(fake, "mika", "Mika", 101);
 	const foreign = fake.addPlaylist(
 		"spotify",
 		"Today's Top Hits",
-		ids.slice(0, 50),
+		tracks.slice(0, 50).map((t) => t.id),
 		fakeId("P", 106),
 	);
 	foreign.followedBy.add("mika");
-	fake.user("mika").liked = ids.filter((_, i) => i % 9 === 0).slice(0, 160);
+}
+
+/**
+ * A synthetic listener: devices, five playlists, likes. "mika" is the one
+ * every spec signs in as. A spec that needs a Verlauf of its own (no plays of
+ * earlier specs in it) signs in as another (/__control/listener); that one's
+ * playlists hold one song per title (128 here), so every row of its Verlauf
+ * names a song once and a test can find it by its title.
+ */
+function listener(fake: FakeSpotify, id: string, name: string, firstPlaylist: number): void {
+	const ids = [...fake.tracks.keys()].slice(0, 1500);
+	fake.addUser(id, { name });
+	fake.user(id).devices = DEVICES.map((d) => ({ ...d }));
+	const lists: [string, string[]][] = [];
+	if (id === "mika") {
+		lists.push(
+			["Alles, was ich mag", ids.slice(0, 1200)],
+			["Indie & Gitarren", ids.slice(300, 700)],
+			["Deutschrap & Pop", ids.slice(700, 1050)],
+			["Lange Autofahrt", ids.slice(900, 1500)],
+			["Ruhig am Abend", ids.slice(1200, 1350)],
+		);
+	} else {
+		const titled = new Map<string, string>();
+		for (const t of ids) {
+			const name = fake.tracks.get(t)!.name;
+			if (!titled.has(name)) titled.set(name, t);
+		}
+		const once = [...titled.values()];
+		lists.push(
+			["Alles, was ich mag", once],
+			["Indie & Gitarren", once],
+			["Deutschrap & Pop", once.slice(0, 64)],
+			["Lange Autofahrt", once.slice(64)],
+			["Ruhig am Abend", once.slice(0, 32)],
+		);
+	}
+	for (const [k, [title, songs]] of lists.entries())
+		fake.addPlaylist(id, title, songs, fakeId("P", firstPlaylist + k));
+	fake.user(id).liked = ids.filter((_, i) => i % 9 === 0).slice(0, 160);
 }
 
 const fake = new FakeSpotify();
@@ -168,22 +200,36 @@ const server = createServer(async (req, res) => {
 	let response: Response;
 	if (req.url?.startsWith("/__control/")) {
 		const u = new URL(url);
-		const user = fake.user("mika");
+		// Every control acts on the listener signing in now (/__control/listener).
+		let active = fake.defaultUserId;
+		let user = fake.user(active);
 		switch (u.pathname) {
+			case "/__control/listener": {
+				// ?id=…: from now on sign-ins (and these controls) are this synthetic
+				// listener, made with the same library on first use; ?id=mika goes back.
+				const id = u.searchParams.get("id");
+				if (id && /^[a-z0-9-]{1,40}$/.test(id)) {
+					if (!fake.users.has(id)) listener(fake, id, id, 1000 + 10 * fake.users.size);
+					fake.defaultUserId = id;
+					active = id;
+					user = fake.user(id);
+				}
+				break;
+			}
 			case "/__control/fail-play":
 				failPlay = u.searchParams.get("on") === "1";
 				break;
 			case "/__control/advance":
-				fake.advance(Number(u.searchParams.get("ms") ?? 60_000), "mika");
+				fake.advance(Number(u.searchParams.get("ms") ?? 60_000), active);
 				break;
 			case "/__control/skip":
-				fake.skip("mika");
+				fake.skip(active);
 				break;
 			case "/__control/finish": {
 				// The song playing ends now: exactly its rest is heard (played_at = now).
-				const id = fake.current("mika");
+				const id = fake.current(active);
 				const track = id ? fake.tracks.get(id) : undefined;
-				if (track) fake.advance(track.durationMs - user.player.progressMs, "mika");
+				if (track) fake.advance(track.durationMs - user.player.progressMs, active);
 				break;
 			}
 			case "/__control/play-song": {
@@ -191,13 +237,13 @@ const server = createServer(async (req, res) => {
 				// &context=…: from that album or playlist (none: no context).
 				const id = u.searchParams.get("id");
 				if (id && fake.tracks.has(id)) {
-					fake.playSong("mika", id);
+					fake.playSong(active, id);
 					user.player.contextUri = u.searchParams.get("context");
 				}
 				break;
 			}
 			case "/__control/pause":
-				fake.pause("mika");
+				fake.pause(active);
 				break;
 			case "/__control/resume":
 				user.player.isPlaying = true;
@@ -205,7 +251,7 @@ const server = createServer(async (req, res) => {
 			case "/__control/position": {
 				const ms = Number(u.searchParams.get("ms"));
 				if (Number.isFinite(ms) && ms >= 0) user.player.progressMs = ms;
-				if (u.searchParams.get("paused") === "1") fake.pause("mika");
+				if (u.searchParams.get("paused") === "1") fake.pause(active);
 				break;
 			}
 			case "/__control/smart-shuffle":
@@ -256,7 +302,8 @@ const server = createServer(async (req, res) => {
 			}
 		}
 		response = Response.json({
-			current: fake.current("mika"),
+			listener: active,
+			current: fake.current(active),
 			context: user.player.contextUri,
 			playing: user.player.isPlaying,
 			shuffle: user.player.shuffle,

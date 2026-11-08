@@ -51,7 +51,7 @@ export function VolumeKeys({
 				<Minus aria-hidden="true" />
 			</button>
 			<span class="volume__value" aria-live="polite">
-				{device.name} · {volume === null ? "?" : `${volume} %`}
+				{device.name} · {volume === null ? "?" : `${volume} %`}
 			</span>
 			<button
 				type="button"

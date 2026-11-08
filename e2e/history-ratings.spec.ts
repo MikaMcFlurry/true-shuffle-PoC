@@ -35,6 +35,7 @@ test.beforeEach(({ context }) => acknowledgeRelease(context));
 const FAKE = `http://127.0.0.1:${process.env.FAKE_PORT ?? 8788}/__control`;
 
 interface FakeStatus {
+	listener: string;
 	current: string | null;
 	playing: boolean;
 	calls: number;
@@ -109,6 +110,9 @@ function watch(page: Page) {
 	return { writes, audio };
 }
 
+/** One page of the Verlauf, as the app asks for it (limit=60 in src/client/api.ts). */
+const PAGE = 60;
+
 const literal = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const rows = (page: Page) => page.locator(".hist-row");
 const rowsOf = (page: Page, name: string) =>
@@ -150,6 +154,25 @@ async function currentSeq(page: Page, id: string): Promise<number> {
 
 test.describe.configure({ mode: "serial" });
 
+/**
+ * This group has a Verlauf of its own: it signs in as a synthetic listener no
+ * other spec plays as, so earlier specs' plays never decide which songs it
+ * picks or where their rows land (the cause of :283, :811 and :844 timing out
+ * on a song that was not on the first page in a full run). Back to "mika" after.
+ */
+const LISTENER = "e2e-ratings";
+test.beforeAll(async () => {
+	expect((await fake(`listener?id=${LISTENER}`)).listener).toBe(LISTENER);
+});
+test.afterAll(async () => {
+	expect((await fake("listener?id=mika")).listener).toBe("mika");
+});
+
+/** Songs are picked from the newest PAGE - HEADROOM rows (the seed adds a few after picking). */
+const HEADROOM = 20;
+/** Rows a song acted on stays from the end of the first page: later tests add 2–6 plays. */
+const SPARE = 10;
+
 test.describe("ratings right in the Verlauf", () => {
 	test("plays heard in the stand-in fill the Verlauf: a station, outside, as a guest, more than a page", async ({
 		page,
@@ -177,9 +200,15 @@ test.describe("ratings right in the Verlauf", () => {
 			all = await heard(page, before + 10);
 		}
 		expect(all.length).toBeGreaterThan(60);
+		// Only this listener's own plays are here (no earlier spec's).
+		expect(await account(page)).toBe(LISTENER);
 		const counts = new Map<string, number>();
 		for (const e of all) counts.set(e.name, (counts.get(e.name) ?? 0) + 1);
-		const unique = all.filter((e) => counts.get(e.name) === 1 && e.stationName);
+		// Picked from the newest rows only, so every song acted on stays on the first page.
+		const unique = all
+			.slice(0, PAGE - HEADROOM)
+			.filter((e) => counts.get(e.name) === 1 && e.stationName);
+		expect(unique.length).toBeGreaterThanOrEqual(14);
 		// Outside any station, twice: the same song in three rows. Played from an
 		// album in Spotify (a context no station has): without one, the Worker
 		// rightly counts a song for the one station deck holding it (e2e-hr-9/10).
@@ -221,7 +250,26 @@ test.describe("ratings right in the Verlauf", () => {
 		expect(all.filter((e) => e.id === twice.id && !e.stationName)).toHaveLength(2);
 		songs.twice = { id: twice.id, name: twice.name };
 		songs.guest = { id: guest.id, name: guest.name };
-		songs.plain = unique.slice(2, 12).map((e) => ({ id: e.id, name: e.name }));
+		// unique[2] and [3] stay untouched: R-HUI-02 needs a song among a deck's
+		// newest plays that no other test acts on.
+		songs.plain = unique.slice(4, 14).map((e) => ({ id: e.id, name: e.name }));
+		// What :283, :811 and :844 rely on: each song acted on is on the first page,
+		// with room to spare for the plays later tests add.
+		const firstPage = (await (
+			await page.request.get(`/api/history?limit=${PAGE}`)
+		).json()) as HistoryEntry[];
+		expect(firstPage).toHaveLength(PAGE);
+		console.log(
+			"seed rows on page 1",
+			JSON.stringify(
+				[songs.twice, ...songs.plain].map((x) => firstPage.findIndex((e) => e.id === x.id)),
+			),
+		);
+		for (const song of [songs.twice, ...songs.plain]) {
+			const at = firstPage.findIndex((e) => e.id === song.id);
+			expect(at, `${song.name} on the first page`).toBeGreaterThanOrEqual(0);
+			expect(at, `${song.name} far enough from its end`).toBeLessThan(PAGE - SPARE);
+		}
 		await fake("pause");
 	});
 
