@@ -1,0 +1,114 @@
+{
+  "schema_version": "true-shuffle.review.v1",
+  "observed_at": "2026-11-03T12:33:01.290541+00:00",
+  "source_revision": "9341e0d3305778210adbf89e165ec3f66459a956",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "release_branch_revision": "30795cb5e3ec61c8bbaaf9d75649e892b1b2807a",
+  "verdict": "BLOCKED",
+  "application_changes_by_reviewer": false,
+  "deployment": {
+    "actor": "EXTERNAL",
+    "source_annotation": "9341e0d3305778210adbf89e165ec3f66459a956",
+    "version_id": "467a9df2-9525-4236-ad52-b9ac5d9b56a6",
+    "deployment_id": "317684ee-095d-48db-afa4-7f730766abb4",
+    "percentage": 100,
+    "namespace_ids": {
+      "USER_HUB": "59222ef9f3a642d4b90776fafa0eac84",
+      "REGISTRY": "2ccba352966f46a3b289eb159ccb3bc4"
+    },
+    "migration_tag": "v1",
+    "compatibility_date": "2026-09-20",
+    "compatibility_flags": [
+      "nodejs_compat"
+    ],
+    "secret_values": "NOT_READ_OR_CHANGED"
+  },
+  "checks": {
+    "static": [
+      {
+        "name": "typecheck",
+        "exit": 0,
+        "seconds": 27.31
+      },
+      {
+        "name": "lint",
+        "exit": 0,
+        "seconds": 2.09
+      },
+      {
+        "name": "build",
+        "exit": 0,
+        "seconds": 3.63
+      },
+      {
+        "name": "dry-run",
+        "exit": 0,
+        "seconds": 7.37
+      }
+    ],
+    "unit_worker": {
+      "status": "FAIL",
+      "passed": 1277,
+      "failed": 3,
+      "baseline_comparison": "same three L2/L7 failures independently reproduced at b2aac5bd; baseline has 15 passed/3 failed"
+    },
+    "browser": {
+      "status": "FAIL",
+      "tail": "ie wieder) send no second next; C operable (1.9s)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n  ✘  152 e2e/spotify-observed-playback.spec.ts:490:1 › COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload (15.9s)\n(node:10045) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  153 e2e/spotify-observed-playback.spec.ts:522:1 › COR1: Nie wieder whose answer is lost after Spotify accepted, saved again, then Weiter: one next only (1.1s)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen hoch: Song 7 — Artist 1\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  154 e2e/spotify-observed-playback.spec.ts:557:1 › COR1: B's held Nie wieder released after C was confirmed as Favorit: C's message, rating and play stay; B's result named for B (1.1s)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  155 e2e/spotify-observed-playback.spec.ts:608:1 › COR2: accepted next on B, then no player, D2 and back to B on D: Weiter stays closed for D, also after a reload and in a second tab; D2 once; C operable (2.0s)\n\n\n  1) e2e/history-ratings.spec.ts:811:2 › ratings right in the Verlauf › R-HUI-03: a lost answer to taking back is unclear (said so, also aloud), never 'nicht zurückgenommen'; looking again finds it \n\n    Test timeout of 90000ms exceeded.\n\n    Error: locator.click: Test timeout of 90000ms exceeded.\n    Call log:\n      - waiting for locator('.hist-row').filter({ has: locator('.hist-row__title').filter({ hasText: /^Satellit – Live$/ }) }).first().getByRole('button', { name: 'Favorit', exact: true })\n\n\n      816 | \t\tconst song = songs.plain[8]!;\n      817 | \t\tconst row = rowsOf(page, song.name).first();\n    > 818 | \t\tawait fav(row).click();\n          | \t\t               ^\n      819 | \t\tawait expect(line(row)).toHaveText(/^Gespeichert: Favorit\\./);\n      820 | \t\tconst undos: string[] = [];\n      821 | \t\tpage.on(\"request\", (r) => {\n        at /workspace/true-shuffle-review-9341/e2e/history-ratings.spec.ts:818:18\n\n    Error Context: e2e/.artifacts/results/history-ratings-ratings-ri-32573-mmen-looking-again-finds-it/error-context.md\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    e2e/.artifacts/results/history-ratings-ratings-ri-32573-mmen-looking-again-finds-it/trace.zip\n    Usage:\n\n        npx playwright show-trace e2e/.artifacts/results/history-ratings-ratings-ri-32573-mmen-looking-again-finds-it/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  2) e2e/spotify-observed-playback.spec.ts:490:1 › COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload \n\n    Error: expect(locator).toHaveText(expected) failed\n\n    Locator:  locator('.now-copy h2')\n    Expected: \"Song 6\"\n    Received: \"Song 1\"\n    Timeout:  15000ms\n\n    Call log:\n      - Expect \"toHaveText\" locator('.now-copy h2') with timeout 15000ms\n      - waiting for locator('.now-copy h2')\n        - found getByRole('dialog', { name: /^Neu in Version / }), intercepting action to run the handler\n        - locator handler has finished, waiting for getByRole('dialog', { name: /^Neu in Version / }) to be hidden\n        - interception handler has finished, continuing\n        33 × locator resolved to <h2>Song 1</h2>\n           - unexpected value \"Song 1\"\n\n\n      498 | \tawait look(h);\n      499 | \tawait reread(page);\n    > 500 | \tawait expect(title(page)).toHaveText(name(b));\n          | \t                          ^\n      501 | \tconst nexts = calls(h, NEXT);\n      502 | \th.fake.failWhen = (m, p) => (m === \"POST\" && p === \"/me/player/next\" ? { status: 503 } : null);\n      503 | \tawait weiter(page).click();\n        at /workspace/true-shuffle-review-9341/e2e/spotify-observed-playback.spec.ts:500:28\n\n    Error Context: e2e/.artifacts/results/spotify-observed-playback--5f6ec--closed-also-after-a-reload/error-context.md\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    e2e/.artifacts/results/spotify-observed-playback--5f6ec--closed-also-after-a-reload/trace.zip\n    Usage:\n\n        npx playwright show-trace e2e/.artifacts/results/spotify-observed-playback--5f6ec--closed-also-after-a-reload/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  2 failed\n    e2e/history-ratings.spec.ts:811:2 › ratings right in the Verlauf › R-HUI-03: a lost answer to taking back is unclear (said so, also aloud), never 'nicht zurückgenommen'; looking again finds it \n    e2e/spotify-observed-playback.spec.ts:490:1 › COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload \n  2 did not run\n  151 passed (11.5m)\n"
+    },
+    "focused_retry_tail": "ce-warnings ...` to show where the warning was created)\n[WebServer] (node:10312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)\n[WebServer] (node:10325) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)\n[WebServer] (node:10359) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)\n[WebServer] ▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.\n[WebServer] \n[WebServer] \n\nRunning 3 tests using 1 worker\n\n(node:10417) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\noutside-seed finish 1793709102576 {\"current\":\"T000000000000000000000\",\"context\":null,\"playing\":true,\"shuffle\":false,\"progressMs\":0,\"index\":0,\"calls\":56,\"recent\":69}\noutside-seed finish 1793709112692 {\"current\":\"T000000000000000000000\",\"context\":null,\"playing\":true,\"shuffle\":false,\"progressMs\":0,\"index\":0,\"calls\":60,\"recent\":70}\nguest-seed finish 1793709122839 {\"current\":\"T000000000000000000000\",\"context\":null,\"playing\":true,\"shuffle\":false,\"progressMs\":0,\"index\":0,\"calls\":64,\"recent\":71}\nguest-seed look 1793709122874 [[false,1793708704353]]\nguest-seed look 1793709128908 [[true,1793709122843],[false,1793708704353]]\n  ✓  1 e2e/history-ratings.spec.ts:154:2 › ratings right in the Verlauf › plays heard in the stand-in fill the Verlauf: a station, outside, as a guest, more than a page (58.3s)\n  ✓  2 e2e/history-ratings.spec.ts:811:2 › ratings right in the Verlauf › R-HUI-03: a lost answer to taking back is unclear (said so, also aloud), never 'nicht zurückgenommen'; looking again finds it (1.4s)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n  ✓  3 e2e/spotify-observed-playback.spec.ts:490:1 › COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload (984ms)\n\n  3 passed (1.1m)\n",
+    "public": {
+      "assets": "19/19 byte-identical to built source",
+      "health": 200,
+      "anonymous_state": 401,
+      "cross_origin_mutation": 403,
+      "browser": "four actual anonymous Chromium renders,390x844/1440x1000,day/night; no horizontal overflow/pageerror; skip link first"
+    },
+    "independent": {
+      "backend": "FRESH/BLOCKED; three strict adversarial assertions FAIL,30 existing targeted checks PASS",
+      "ui": "FRESH/BLOCKED; two strict module assertions FAIL; actual client cross-account exploit reproduced; three day/night/width render probes PASS"
+    }
+  },
+  "open_findings": [
+    {
+      "id": "PR32-SEARCH-ACCOUNT",
+      "title": "Delayed history search exposes prior account data under the next account",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "B9341-02",
+      "title": "Manual pause five seconds before song end triggers autonomous TrueShuffle playback",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "B9341-01",
+      "title": "Likes continuation replay duplicates acknowledged appends after 500 or 429 and reports success",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "UI-02",
+      "title": "Day-mode volume/device readout has 1.046:1 contrast",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR31-STORAGE-CLASSIFICATION",
+      "title": "SQLITE_FULL is still labeled as a daily quota with an unproven midnight recovery guarantee",
+      "severity": "P2",
+      "blocking": true
+    }
+  ],
+  "not_run": [
+    "physical iPhone/PWA",
+    "reviewer live Spotify latency/quota/playlist writes",
+    "private HA/MA",
+    "populated production restore",
+    "complete current revalidation of historical PR24-29 findings"
+  ],
+  "release_gate": "No explicit full-scope completion comment; no reviewer merge/upload/deployment/rollback; existing source failures are not accepted by a green known-failure wrapper.",
+  "evidence_ref": "docs/ai-dev/evidence/pr32-9341-runtime",
+  "historical_packet": "HANDOFF_MAP historical analysis baseline09d772e is retained, not misrepresented as current source intelligence. Current review is bounded, not a full new architecture packet."
+}

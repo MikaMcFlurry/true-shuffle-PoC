@@ -1,0 +1,202 @@
+
+ RUN  v5.0.2 /workspace/true-shuffle-backend-review-131
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 2000 ms before end must stay stopped
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 2000 ms before end must stay stopped
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 2000 ms before end must stay stopped
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 2000 ms before end must stay stopped
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 2000 ms before end must stay stopped
+R131-PAUSE {"before":2000,"plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1999 ms before end must stay stopped
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1999 ms before end must stay stopped
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1999 ms before end must stay stopped
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1999 ms before end must stay stopped
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1999 ms before end must stay stopped
+R131-PAUSE {"before":1999,"plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1000 ms before end must stay stopped
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1000 ms before end must stay stopped
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1000 ms before end must stay stopped
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1000 ms before end must stay stopped
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1000 ms before end must stay stopped
+R131-PAUSE {"before":1000,"plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-STORAGE: SQLITE_FULL must not promise daily reset
+R131-STORAGE {"classified":true,"message":"Das Tageslimit des Servers (Cloudflare) ist erreicht. Ab 01:00 Uhr geht es weiter, deine Daten bleiben erhalten."}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-LIKES: ambiguous append and same-length external edit must reconcile exact content
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-LIKES: ambiguous append and same-length external edit must reconcile exact content
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-LIKES: ambiguous append and same-length external edit must reconcile exact content
+{"level":"info","kind":"import","message":"„Playlist 1“: 1800 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-LIKES: ambiguous append and same-length external edit must reconcile exact content
+{"level":"warn","kind":"job","message":"likes-sync fehlgeschlagen (Versuch 1): Spotify-Fehler 502"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-LIKES: ambiguous append and same-length external edit must reconcile exact content
+R131-LIKES {"injected":true,"count":1700,"unique":1699,"at950":"T000000000000000000000","expected950":"T0000000000000000000FK","sync":{"pending":false,"syncedAt":1790316125000,"count":1700,"error":null}}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 5000 ms before end must not be cut
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 5000 ms before end must not be cut
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 5000 ms before end must not be cut
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 5000 ms before end must not be cut
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 5000 ms before end must not be cut
+R131-PICK {"before":5000,"chosen":"T000000000000000000007","current":"T000000000000000000001","plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 12000 ms before end must not be cut
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 12000 ms before end must not be cut
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 12000 ms before end must not be cut
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 12000 ms before end must not be cut
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 12000 ms before end must not be cut
+R131-PICK {"before":12000,"chosen":"T000000000000000000007","current":"T000000000000000000001","plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+ ❯ test/hub/review131-boundaries.test.ts (8 tests | 7 failed) 571ms
+   × R131-PAUSE: manual stop 2000 ms before end must stay stopped 46ms
+   × R131-PAUSE: manual stop 1999 ms before end must stay stopped 37ms
+   × R131-PAUSE: manual stop 1000 ms before end must stay stopped 41ms
+   × R131-STORAGE: SQLITE_FULL must not promise daily reset 13ms
+   × R131-LIKES: ambiguous append and same-length external edit must reconcile exact content 166ms
+   × R131-PICK: manual song choice 5000 ms before end must not be cut 31ms
+   × R131-PICK: manual song choice 12000 ms before end must not be cut 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 2000 ms before end must stay stopped
+ FAIL  test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1999 ms before end must stay stopped
+ FAIL  test/hub/review131-boundaries.test.ts > R131-PAUSE: manual stop 1000 ms before end must stay stopped
+AssertionError: expected [ 'PUT /v1/me/player/play' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "PUT /v1/me/player/play",
++ ]
+
+ ❯ test/hub/review131-boundaries.test.ts:26:116
+     24|  await h.listen(d-60000-before); h.fake.pause('mika'); const calls=h.f…
+     25|  await h.listen(60000); const plays=h.fake.calls.slice(calls).filter(c…
+     26|  console.log('R131-PAUSE',JSON.stringify({before,plays,result:(await h…
+       |                                                                                                                    ^
+     27| });
+     28| it('R131-STORAGE: SQLITE_FULL must not promise daily reset',()=>{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  test/hub/review131-boundaries.test.ts > R131-STORAGE: SQLITE_FULL must not promise daily reset
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/hub/review131-boundaries.test.ts:30:77
+     28| it('R131-STORAGE: SQLITE_FULL must not promise daily reset',()=>{
+     29|  console.log('R131-STORAGE',JSON.stringify({classified:isStorageLimit(…
+     30|  expect(isStorageLimit(new Error('SQLITE_FULL: database or disk is ful…
+       |                                                                             ^
+     31| });
+     32| it('R131-LIKES: ambiguous append and same-length external edit must re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  test/hub/review131-boundaries.test.ts > R131-LIKES: ambiguous append and same-length external edit must reconcile exact content
+AssertionError: expected [ 'T000000000000000000000', …(1699) ] to deeply equal [ 'T000000000000000000000', …(1699) ]
+
+- Expected
++ Received
+
+@@ -947,11 +947,11 @@
+    "T0000000000000000000FF",
+    "T0000000000000000000FG",
+    "T0000000000000000000FH",
+    "T0000000000000000000FI",
+    "T0000000000000000000FJ",
+-   "T0000000000000000000FK",
++   "T000000000000000000000",
+    "T0000000000000000000FL",
+    "T0000000000000000000FM",
+    "T0000000000000000000FN",
+    "T0000000000000000000FO",
+    "T0000000000000000000FP",
+
+ ❯ test/hub/review131-boundaries.test.ts:41:46
+     39|  const p=[...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME)!;
+     40|  console.log('R131-LIKES',JSON.stringify({injected,count:p.items.lengt…
+     41|  expect(injected).toBe(true);expect(p.items).toEqual(ids);
+       |                                              ^
+     42| },120000);
+     43| it.each([5000,12000])('R131-PICK: manual song choice %i ms before end …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 5000 ms before end must not be cut
+ FAIL  test/hub/review131-boundaries.test.ts > R131-PICK: manual song choice 12000 ms before end must not be cut
+AssertionError: expected [ 'PUT /v1/me/player/play' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "PUT /v1/me/player/play",
++ ]
+
+ ❯ test/hub/review131-boundaries.test.ts:47:147
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  16:32:23
+   Duration  2.17s (transform 60%, tests 28%, import 12%)
+

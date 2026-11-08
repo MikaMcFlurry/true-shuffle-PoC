@@ -1,0 +1,50 @@
+
+ RUN  v5.0.2 /workspace/true-shuffle-ui-review-9341
+
+ ❯ test/client/history-search-race.review.test.ts (2 tests | 2 failed) 10ms
+   × a B load must never join an in-flight A request 7ms
+   × forget must invalidate an old request 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/client/history-search-race.review.test.ts > a B load must never join an in-flight A request
+AssertionError: expected 'A' to be 'B' // Object.is equality
+
+Expected: "B"
+Received: "A"
+
+ ❯ test/client/history-search-race.review.test.ts:10:22
+      8|  const a=hs.load("A"); const b=hs.load("B"); resolve(answer); await a;
+      9|  const got=await b;
+     10|  expect(got.account).toBe("B");
+       |                      ^
+     11|  expect(got.songs.has("private-a")).toBe(false);
+     12| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/client/history-search-race.review.test.ts > forget must invalidate an old request
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/client/history-search-race.review.test.ts:18:37
+     16|  const a=hs.load("A"); hs.forget(); resolve(answer); await a;
+     17|  const got=await hs.load("A");
+     18|  expect(got.songs.has("private-a")).toBe(false);
+       |                                     ^
+     19| });
+     20|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  12:21:43
+   Duration  222ms (transform 63%, import 20%, tests 13%, worker 4%)
+

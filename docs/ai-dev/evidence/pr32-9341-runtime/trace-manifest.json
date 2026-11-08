@@ -1,0 +1,12 @@
+[
+  {
+    "path": "/workspace/review-evidence-9341/full-browser-failures/history-ratings-ratings-ri-32573-mmen-looking-again-finds-it/trace.zip",
+    "sha256": "a055ca94ff1d2c47f64415f81c65d96b6a23f9e9466501d7307c1cf45375e9b3",
+    "bytes": 1341767
+  },
+  {
+    "path": "/workspace/review-evidence-9341/full-browser-failures/spotify-observed-playback--5f6ec--closed-also-after-a-reload/trace.zip",
+    "sha256": "1d49dd61b6eab093725812fc257e2a51ea1b071b7bbaa05852f30d03f6a014d0",
+    "bytes": 4739596
+  }
+]

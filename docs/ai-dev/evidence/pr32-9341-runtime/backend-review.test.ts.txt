@@ -1,0 +1,55 @@
+import { expect, it } from 'vitest';
+import { LIKES_NAME } from '../../src/worker/hub/hub';
+import { RequestBudget } from '../../src/worker/spotify/client';
+import { onboarded } from './harness';
+
+it.each([500,429])('B9341-01: partial continuation %i failure must not duplicate liked tracks', async (status) => {
+ const h = await onboarded({tracks: 1800});
+ const ids = [...h.fake.tracks.keys()].slice(0,1700);
+ // Plant the exact persisted Likes schema to avoid 1700 unrelated UI writes.
+ h.sql.run(`INSERT INTO kv(k,v) VALUES('likes',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v`, JSON.stringify({v:1, rev:2, items:ids.map(id=>({id,at:h.clock.t}))}));
+ let injected = false;
+ h.fake.failWhen = (method,path) => {
+   const p = [...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME);
+   if(!injected && p && method==='POST' && path===`/playlists/${p.id}/items` && p.items.length===900) {
+    injected=true; return {status, headers:status===429?{'retry-after':'60'}:undefined};
+   }
+   return null;
+ };
+ await h.hub.retryLikesSync();
+ for(let i=0;i<10;i++){ await h.listen(60_000); await h.settle(); }
+ const p=[...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME)!;
+ console.log('B9341-01 evidence',JSON.stringify({status, injected, expected:ids.length,actual:p.items.length,unique:new Set(p.items).size,sync:(await h.hub.state()).likes?.sync}));
+ expect(injected).toBe(true);
+ expect(p.items).toEqual(ids);
+}, 120000);
+
+async function outside() {
+ const h=await onboarded({tracks:12,playlists:[6,6]});
+ const sid=h.stationIds[0]!;
+ expect(await h.hub.play(sid)).toMatchObject({ok:true});
+ await h.listen(20_000);
+ await h.hub.sync(new RequestBudget(8),{force:true});
+ const s=h.hub.savedSession(sid)!;
+ const deck=h.fake.playlists.get(s.contextUri.split(':')[2]!)!;
+ const b=[...h.fake.tracks.keys()].find(id=>!deck.items.includes(id))!;
+ h.fake.playSong('mika',b);
+ h.fake.user('mika').player.progressMs=60_000;
+ await h.hub.sync(new RequestBudget(8),{force:true});
+ await h.hub.continueAfter(b);
+ return {h,b};
+}
+it('B9341-02: a manual pause before the end must not start TrueShuffle',async()=>{
+ const {h,b}=await outside();
+ const d=h.fake.tracks.get(b)!.durationMs;
+ const calls=h.fake.calls.length;
+ // Pause manually five seconds before the song ends; Spotify still has it loaded.
+ await h.listen(d-60_000-5_000);
+ h.fake.user('mika').player.isPlaying=false;
+ const manuallyPausedAt=h.fake.user('mika').player.progressMs;
+ expect(manuallyPausedAt).toBe(d-5_000);
+ await h.listen(60_000);
+ const plays=h.fake.calls.slice(calls).filter(c=>c.startsWith('PUT /v1/me/player/play'));
+ console.log('B9341-02 evidence',JSON.stringify({duration:d, manuallyPausedAt, pausedProgress:h.fake.user('mika').player.progressMs,plays,result:(await h.hub.state()).continueAfter}));
+ expect(plays).toEqual([]);
+});

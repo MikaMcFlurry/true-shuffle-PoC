@@ -1,0 +1,208 @@
+
+ RUN  v5.0.2 /tmp/backend-review-9341
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 500 failure must not duplicate liked tracks
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 500 failure must not duplicate liked tracks
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 500 failure must not duplicate liked tracks
+{"level":"info","kind":"import","message":"„Playlist 1“: 1800 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 500 failure must not duplicate liked tracks
+{"level":"warn","kind":"job","message":"likes-sync fehlgeschlagen (Versuch 1): Spotify-Fehler 500"}
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 500 failure must not duplicate liked tracks
+B9341-01 evidence {"status":500,"injected":true,"expected":1700,"actual":1800,"unique":1700,"sync":{"pending":false,"syncedAt":1790316126000,"count":1700,"error":null}}
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 429 failure must not duplicate liked tracks
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 429 failure must not duplicate liked tracks
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 429 failure must not duplicate liked tracks
+{"level":"info","kind":"import","message":"„Playlist 1“: 1800 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/backend-review.test.ts > B9341-01: partial continuation 429 failure must not duplicate liked tracks
+B9341-01 evidence {"status":429,"injected":true,"expected":1700,"actual":1800,"unique":1700,"sync":{"pending":false,"syncedAt":1790316126000,"count":1700,"error":null}}
+
+stdout | test/hub/backend-review.test.ts > B9341-02: a manual pause before the end must not start TrueShuffle
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/backend-review.test.ts > B9341-02: a manual pause before the end must not start TrueShuffle
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/backend-review.test.ts > B9341-02: a manual pause before the end must not start TrueShuffle
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/backend-review.test.ts > B9341-02: a manual pause before the end must not start TrueShuffle
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/backend-review.test.ts > B9341-02: a manual pause before the end must not start TrueShuffle
+B9341-02 evidence {"duration":240000,"manuallyPausedAt":235000,"pausedProgress":73500,"plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+ ❯ test/hub/backend-review.test.ts (3 tests | 3 failed) 1133ms
+   × B9341-01: partial continuation 500 failure must not duplicate liked tracks 631ms
+   × B9341-01: partial continuation 429 failure must not duplicate liked tracks 319ms
+   × B9341-02: a manual pause before the end must not start TrueShuffle 181ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/backend-review.test.ts > B9341-01: partial continuation 500 failure must not duplicate liked tracks
+ FAIL  test/hub/backend-review.test.ts > B9341-01: partial continuation 429 failure must not duplicate liked tracks
+AssertionError: expected [ 'T000000000000000000000', …(1799) ] to deeply equal [ 'T000000000000000000000', …(1699) ]
+
+- Expected
++ Received
+
+@@ -897,10 +897,110 @@
+    "T0000000000000000000ER",
+    "T0000000000000000000ES",
+    "T0000000000000000000ET",
+    "T0000000000000000000EU",
+    "T0000000000000000000EV",
++   "T0000000000000000000Cu",
++   "T0000000000000000000Cv",
++   "T0000000000000000000Cw",
++   "T0000000000000000000Cx",
++   "T0000000000000000000Cy",
++   "T0000000000000000000Cz",
++   "T0000000000000000000D0",
++   "T0000000000000000000D1",
++   "T0000000000000000000D2",
++   "T0000000000000000000D3",
++   "T0000000000000000000D4",
++   "T0000000000000000000D5",
++   "T0000000000000000000D6",
++   "T0000000000000000000D7",
++   "T0000000000000000000D8",
++   "T0000000000000000000D9",
++   "T0000000000000000000DA",
++   "T0000000000000000000DB",
++   "T0000000000000000000DC",
++   "T0000000000000000000DD",
++   "T0000000000000000000DE",
++   "T0000000000000000000DF",
++   "T0000000000000000000DG",
++   "T0000000000000000000DH",
++   "T0000000000000000000DI",
++   "T0000000000000000000DJ",
++   "T0000000000000000000DK",
++   "T0000000000000000000DL",
++   "T0000000000000000000DM",
++   "T0000000000000000000DN",
++   "T0000000000000000000DO",
++   "T0000000000000000000DP",
++   "T0000000000000000000DQ",
++   "T0000000000000000000DR",
++   "T0000000000000000000DS",
++   "T0000000000000000000DT",
++   "T0000000000000000000DU",
++   "T0000000000000000000DV",
++   "T0000000000000000000DW",
++   "T0000000000000000000DX",
++   "T0000000000000000000DY",
++   "T0000000000000000000DZ",
++   "T0000000000000000000Da",
++   "T0000000000000000000Db",
++   "T0000000000000000000Dc",
++   "T0000000000000000000Dd",
++   "T0000000000000000000De",
++   "T0000000000000000000Df",
++   "T0000000000000000000Dg",
++   "T0000000000000000000Dh",
++   "T0000000000000000000Di",
++   "T0000000000000000000Dj",
++   "T0000000000000000000Dk",
++   "T0000000000000000000Dl",
++   "T0000000000000000000Dm",
++   "T0000000000000000000Dn",
++   "T0000000000000000000Do",
++   "T0000000000000000000Dp",
++   "T0000000000000000000Dq",
++   "T0000000000000000000Dr",
++   "T0000000000000000000Ds",
++   "T0000000000000000000Dt",
++   "T0000000000000000000Du",
++   "T0000000000000000000Dv",
++   "T0000000000000000000Dw",
++   "T0000000000000000000Dx",
++   "T0000000000000000000Dy",
++   "T0000000000000000000Dz",
++   "T0000000000000000000E0",
++   "T0000000000000000000E1",
++   "T0000000000000000000E2",
++   "T0000000000000000000E3",
++   "T0000000000000000000E4",
++   "T0000000000000000000E5",
++   "T0000000000000000000E6",
++   "T0000000000000000000E7",
++   "T0000000000000000000E8",
++   "T0000000000000000000E9",
++   "T0000000000000000000EA",
++   "T0000000000000000000EB",
++   "T0000000000000000000EC",
++   "T0000000000000000000ED",
++   "T0000000000000000000EE",
++   "T0000000000000000000EF",
++   "T0000000000000000000EG",
++   "T0000000000000000000EH",
++   "T0000000000000000000EI",
++   "T0000000000000000000EJ",
++   "T0000000000000000000EK",
++   "T0000000000000000000EL",
++   "T0000000000000000000EM",
++   "T0000000000000000000EN",
++   "T0000000000000000000EO",
++   "T0000000000000000000EP",
++   "T0000000000000000000EQ",
++   "T0000000000000000000ER",
++   "T0000000000000000000ES",
++   "T0000000000000000000ET",
++   "T0000000000000000000EU",
++   "T0000000000000000000EV",
+    "T0000000000000000000EW",
+    "T0000000000000000000EX",
+    "T0000000000000000000EY",
+    "T0000000000000000000EZ",
+    "T0000000000000000000Ea",
+
+ ❯ test/hub/backend-review.test.ts:24:18
+     22|  console.log('B9341-01 evidence',JSON.stringify({status, injected, exp…
+     23|  expect(injected).toBe(true);
+     24|  expect(p.items).toEqual(ids);
+       |                  ^
+     25| }, 120000);
+     26|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  test/hub/backend-review.test.ts > B9341-02: a manual pause before the end must not start TrueShuffle
+AssertionError: expected [ 'PUT /v1/me/player/play' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "PUT /v1/me/player/play",
++ ]
+
+ ❯ test/hub/backend-review.test.ts:54:16
+     52|  const plays=h.fake.calls.slice(calls).filter(c=>c.startsWith('PUT /v1…
+     53|  console.log('B9341-02 evidence',JSON.stringify({duration:d, manuallyP…
+     54|  expect(plays).toEqual([]);
+       |                ^
+     55| });
+     56|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  12:19:34
+   Duration  2.30s (tests 54%, transform 38%, import 8%)
+

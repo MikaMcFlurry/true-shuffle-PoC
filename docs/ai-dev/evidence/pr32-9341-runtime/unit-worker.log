@@ -1,0 +1,82 @@
+
+> true-shuffle@1.3.0 test
+> vitest run
+
+
+ RUN  v5.0.2 /workspace/true-shuffle-review-9341
+
+SIZE import 434 ms, profile cold 5059 ms, warm 2101 ms, held after 0 MB (no gc)
+ ❯ test/client/rating-legacy/read-compat.test.ts (18 tests | 3 failed) 162ms
+   ❯ legacy reads without a write number (18)
+     × L2 first page −1 without `rated` after a thumb +1 here, sheet opened between ask and answer: sheet and Verlauf agree 31ms
+     × L2 first page −1 without `rated` after a thumb +1 here, sheet opened after the answer: sheet and Verlauf agree 8ms
+     × L7 snapshot −1 without `rated` after a thumb +1 here (ordered milliseconds), sheet open: sheet and Verlauf agree 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/client/rating-legacy/read-compat.test.ts > legacy reads without a write number > L2 first page −1 without `rated` after a thumb +1 here, sheet opened between ask and answer: sheet and Verlauf agree
+AssertionError: sheet and Verlauf for track-x: {"sheet":1,"verlauf":-1}: expected 1 to be -1 // Object.is equality
+
+- Expected
++ Received
+
+- -1
++ 1
+
+ ❯ expectAgree test/client/rating-legacy/read-compat.test.ts:57:71
+     55| function expectAgree(id: string) {
+     56|  const v = view(id);
+     57|  expect(v.sheet, `sheet and Verlauf for ${id}: ${JSON.stringify(v)}`).…
+       |                                                                       ^
+     58|  return v;
+     59| }
+ ❯ test/client/rating-legacy/read-compat.test.ts:139:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  test/client/rating-legacy/read-compat.test.ts > legacy reads without a write number > L2 first page −1 without `rated` after a thumb +1 here, sheet opened after the answer: sheet and Verlauf agree
+AssertionError: sheet and Verlauf for track-x: {"sheet":0,"verlauf":-1}: expected +0 to be -1 // Object.is equality
+
+- Expected
++ Received
+
+- -1
++ 0
+
+ ❯ expectAgree test/client/rating-legacy/read-compat.test.ts:57:71
+     55| function expectAgree(id: string) {
+     56|  const v = view(id);
+     57|  expect(v.sheet, `sheet and Verlauf for ${id}: ${JSON.stringify(v)}`).…
+       |                                                                       ^
+     58|  return v;
+     59| }
+ ❯ test/client/rating-legacy/read-compat.test.ts:139:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  test/client/rating-legacy/read-compat.test.ts > legacy reads without a write number > L7 snapshot −1 without `rated` after a thumb +1 here (ordered milliseconds), sheet open: sheet and Verlauf agree
+AssertionError: sheet and Verlauf for track-x: {"sheet":-1,"verlauf":0}: expected -1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ -1
+
+ ❯ expectAgree test/client/rating-legacy/read-compat.test.ts:57:71
+     55| function expectAgree(id: string) {
+     56|  const v = view(id);
+     57|  expect(v.sheet, `sheet and Verlauf for ${id}: ${JSON.stringify(v)}`).…
+       |                                                                       ^
+     58|  return v;
+     59| }
+ ❯ test/client/rating-legacy/read-compat.test.ts:201:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 91 passed (92)
+      Tests  3 failed | 1277 passed (1280)
+   Start at  12:17:53
+   Duration  107.23s (tests 94%, import 5%, transform 2%)
+
