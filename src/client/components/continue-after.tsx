@@ -37,7 +37,7 @@ export function ContinueAfter({
 		<div class="stack continue-after" role="status">
 			<p>
 				<strong>Nach diesem Song geht es mit TrueShuffle weiter.</strong> Der Song läuft ganz zu
-				Ende.
+				Ende. Läuft danach etwas anderes oder hältst du an, startet true-shuffle nichts von selbst.
 			</p>
 			<button
 				type="button"
