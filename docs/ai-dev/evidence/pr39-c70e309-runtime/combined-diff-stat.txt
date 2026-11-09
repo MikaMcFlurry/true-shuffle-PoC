@@ -1,0 +1,17 @@
+ AGENTS.md                                 |   2 +-
+ docs/releases/1.3.1.md                    |   8 +-
+ docs/releases/1.3.2.md                    |  40 +++++
+ package-lock.json                         |   4 +-
+ package.json                              |   2 +-
+ src/client/components/continue-after.tsx  |   8 +-
+ src/client/store.ts                       |   2 +-
+ src/shared/release.ts                     |  10 +-
+ src/worker/hub/hub.ts                     | 186 ++++++++++++------------
+ src/worker/index.ts                       |  12 +-
+ src/worker/lib/storage-limit.ts           |  35 ++++-
+ src/worker/userhub.ts                     |  14 +-
+ test/hub/continue-after.test.ts           | 174 +++++++++++++++++++---
+ test/hub/likes.test.ts                    | 234 +++++++++++++++++++++++++++++-
+ test/worker/storage-limit-userhub.test.ts |  75 ++++++++++
+ test/worker/storage-limit.test.ts         |  32 +++-
+ 16 files changed, 691 insertions(+), 147 deletions(-)

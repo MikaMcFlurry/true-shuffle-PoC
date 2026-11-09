@@ -1,0 +1,191 @@
+/**
+ * The song Spotify actually plays, rendered (NP06, 2026-10-17). Every /api
+ * request of the page is answered by the real HubCore against the synthetic
+ * Spotify stand-in (test/hub/harness.ts, node:sqlite, simulated clock), so the
+ * page, the hub's own validation and the provider calls are the real ones;
+ * nothing reaches a live Spotify. The listener's moves in Spotify are made on
+ * the stand-in; the hub looks at the player only where the test says so, and
+ * the page reads the hub on focus. Before/after records of the saved
+ * true-shuffle session and the provider calls are attached to each test.
+ */
+import {
+	type BrowserContext,
+	expect,
+	type Page,
+	type Route,
+	type TestInfo,
+	test,
+} from "@playwright/test";
+import type { ObservedTarget } from "../src/shared/api";
+import { HubError, type Occurrence } from "../src/worker/hub/hub";
+import { RequestBudget } from "../src/worker/spotify/client";
+import { onboarded } from "../test/hub/harness";
+
+/** The release notice (e2e/release-notes.spec.ts) is closed the normal way, by its own key, wherever it opens. */
+function acknowledgeRelease(context: BrowserContext): void {
+	const handle = (p: Page) =>
+		void p.addLocatorHandler(p.getByRole("dialog", { name: /^Neu in Version / }), (d) =>
+			d.getByRole("button", { name: "Verstanden" }).click(),
+		);
+	for (const p of context.pages()) handle(p);
+	context.on("page", handle);
+}
+test.beforeEach(({ context }) => acknowledgeRelease(context));
+
+test.use({ viewport: { width: 390, height: 844 } });
+
+type H = Awaited<ReturnType<typeof onboarded>>;
+const NEXT = "POST /v1/me/player/next";
+
+async function world() {
+	const h = await onboarded({ tracks: 12, playlists: [6, 6] });
+	const sid = h.stationIds[0]!;
+	expect(await h.hub.play(sid)).toMatchObject({ ok: true });
+	await look(h);
+	const s = h.hub.savedSession(sid)!;
+	const own = h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items;
+	const outside = [...h.fake.tracks.keys()].filter((id) => !own.includes(id));
+	const name = (id: string) => h.fake.tracks.get(id)!.name;
+	// Artwork as the e2e stand-in gives it (e2e/fake-server.ts): a data: URL the page's CSP allows.
+	for (const id of outside)
+		(h.fake.tracks.get(id) as { cover?: string }).cover =
+			`data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'><title>${id}</title><rect width='4' height='4'/></svg>`)}`;
+	const cover = (id: string) => (h.fake.tracks.get(id) as { cover?: string }).cover!;
+	return { h, sid, a: h.fake.current()!, outside, name, cover };
+}
+
+/** One look of the hub at the player (what its alarm would do). */
+async function look(h: H, ms = 1000) {
+	h.clock.t += ms;
+	await h.hub.sync(new RequestBudget(25), { force: true, observationOnly: true, playerOnly: true });
+}
+
+/** What only the existing reconciliation and explicit ratings may change. */
+function ts(h: H, sid: number) {
+	const s = h.hub.savedSession(sid)!;
+	return {
+		sessionId: s.sessionId,
+		entryIds: s.entryIds,
+		currentIndex: s.currentIndex,
+		progressMs: s.progressMs,
+		observedAt: s.observedAt,
+		pending: s.pending,
+		orderRevision: s.orderRevision,
+		playbackEpoch: s.playbackEpoch,
+		status: s.status,
+	};
+}
+
+interface Served {
+	requests: { method: string; path: string; body: unknown }[];
+	/** Hold the next answer to this path until released. */
+	hold: Map<string, Promise<void>>;
+	/** Let the hub act on the next request to this path, then lose its answer (COR1). */
+	lose: Set<string>;
+}
+
+async function serve(page: Page, h: H): Promise<Served> {
+	const served: Served = { requests: [], hold: new Map(), lose: new Set() };
+	await page.clock.install({ time: h.clock.t });
+	await page.clock.setFixedTime(h.clock.t);
+	await page.route("**/api/**", async (route: Route) => {
+		const req = route.request();
+		const url = new URL(req.url());
+		const path = url.pathname;
+		const body = req.postData() ? (JSON.parse(req.postData()!) as Record<string, unknown>) : {};
+		served.requests.push({ method: req.method(), path, body });
+		const held = served.hold.get(path);
+		if (held) {
+			served.hold.delete(path);
+			await held;
+		}
+		try {
+			if (path === "/api/state")
+				return await route.fulfill({ json: await h.hub.state({ live: false }) });
+			if (path === "/api/devices") return await route.fulfill({ json: await h.hub.devices() });
+			if (path === "/api/native/devices")
+				return await route.fulfill({ json: { configured: false, devices: [] } });
+			if (path === "/api/continue-after") return await route.fulfill({json:req.method()==="DELETE"?await h.hub.cancelContinueAfter():await h.hub.continueAfter(body.trackId)});
+			const thumb = /^\/api\/tracks\/([^/]+)\/thumb$/.exec(path);
+			if (thumb && req.method() === "POST") {
+				const v = body.value === 1 ? 1 : body.value === -1 ? -1 : 0;
+				const bound = (body.expected ?? null) as Occurrence | ObservedTarget | null;
+				const answer = await h.hub.thumb(thumb[1]!, v, undefined, bound);
+				if (served.lose.delete(path)) return await route.abort("connectionreset");
+				return await route.fulfill({ json: answer });
+			}
+			if (path === "/api/player/next" && req.method() === "POST")
+				return await route.fulfill({
+					json: body.target
+						? await h.hub.observedNext(body.target as ObservedTarget)
+						: await h.hub.playerAction("next", body as unknown as Occurrence),
+				});
+			const play = /^\/api\/stations\/(\d+)\/play$/.exec(path);
+			if (play && req.method() === "POST")
+				return await route.fulfill({
+					json: await h.hub.play(Number(play[1]), (body.deviceId as string) ?? null, {
+						sessionId: body.sessionId as string | undefined,
+					}),
+				});
+			return await route.fulfill({
+				status: 500,
+				json: { error: { code: "unexpected", message: `Unexpected ${path}` } },
+			});
+		} catch (e) {
+			if (e instanceof HubError)
+				return route.fulfill({
+					status: e.status,
+					json: { error: { code: e.code, message: e.message } },
+				});
+			throw e;
+		}
+	});
+	return served;
+}
+
+/** The page reads the hub again (as on returning to it). */
+const reread = (page: Page) => page.evaluate(() => window.dispatchEvent(new Event("focus")));
+const title = (page: Page) => page.locator(".now-copy h2");
+const status = (page: Page) => page.locator(".session-status");
+const checkpoint = (page: Page) =>
+	page.getByRole("region", { name: "Gespeicherte TrueShuffle-Stelle" });
+const weiter = (page: Page) => page.getByRole("button", { name: "Weiter: Nächster Song" });
+const calls = (h: H, call: string) => h.fake.calls.filter((c) => c === call).length;
+const writes = (h: H) =>
+	h.fake.calls.filter((c) =>
+		/^(PUT|POST|DELETE) \/v1\/(playlists|me\/playlists|me\/player\/play)/.test(c),
+	).length;
+
+async function record(info: TestInfo, name: string, data: unknown) {
+	await info.attach(name, { body: JSON.stringify(data, null, 2), contentType: "application/json" });
+}
+
+
+const OUT="/workspace/review-evidence-132b/ui";
+const PLAY="PUT /v1/me/player/play";
+const refresh=async(page:Page)=>page.evaluate(async()=>{const path="/store.ts";const {store}=await import(path);await store.refresh(true,true);});
+for(const [width,height,theme]of [[390,844,"day"],[390,844,"night"],[1440,1000,"day"],[1440,1000,"night"]]as const){
+ test(`continue-after honest arm/cancel/abort/positive-end ${width}-${theme}`,async({page})=>{
+  await page.setViewportSize({width,height});await page.emulateMedia({reducedMotion:"reduce"});
+  await page.addInitScript(t=>{localStorage.setItem("ts-release-seen","9.9.9");localStorage.setItem("ts-illumination",t);},theme);
+  const {h,sid,outside}=await world();const b=outside[0]!;h.fake.tracks.get(b)!.name="Außerhalb "+"SehrLangerSongtitel".repeat(6);h.fake.playSong("mika",b);h.fake.user("mika").player.progressMs=60000;await look(h);
+  const saved=ts(h,sid);const baseline=h.fake.calls.length;const errors:string[]=[];const badfonts:string[]=[];page.on("pageerror",e=>errors.push(e.message));page.on("response",r=>{if(/woff/.test(r.url())&&r.status()>=400)badfonts.push(r.url());});
+  const served=await serve(page,h);await page.goto("/");await expect(checkpoint(page)).toBeVisible();await page.keyboard.press("Tab");await expect(page.getByRole("link",{name:"Zum Inhalt"})).toBeFocused();await page.keyboard.press("Enter");
+  let release!:()=>void;served.hold.set("/api/continue-after",new Promise<void>(r=>release=r));
+  const arm=page.getByRole("button",{name:"Nach diesem Song fortsetzen",exact:true});await arm.click();await expect(arm).toBeDisabled();expect(served.requests.filter(r=>r.method==="POST"&&r.path==="/api/continue-after")).toHaveLength(1);expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toEqual([]);release();
+  const banner=page.locator(".continue-after");await expect(banner).toContainText("soll es mit TrueShuffle weitergehen");await expect(banner).toContainText("nur, wenn Spotify ihn angehalten an seinem Ende zeigt");await expect(banner).toHaveAttribute("role","status");expect(ts(h,sid)).toEqual(saved);
+  await page.getByRole("link",{name:"Kassetten",exact:true}).click();await page.getByRole("link",{name:"Jetzt",exact:true}).click();await expect(banner).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);await page.screenshot({path:`${OUT}/continue-armed-${width}-${theme}.png`,fullPage:true});
+  await page.getByRole("button",{name:"Abbrechen",exact:true}).click();await expect(banner).toHaveCount(0);expect((await h.hub.state()).continueAfter??null).toBeNull();expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toEqual([]);
+  await arm.click();await expect(banner).toBeVisible();const c=outside[1]!;h.fake.playSong("mika",c);await look(h);await refresh(page);await expect(banner).toHaveCount(0);await expect(checkpoint(page)).toContainText("true-shuffle startet nichts von selbst");await expect(checkpoint(page)).toContainText("TrueShuffle fortsetzen");expect(ts(h,sid)).toEqual(saved);expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toEqual([]);
+  await page.screenshot({path:`${OUT}/continue-aborted-${width}-${theme}.png`,fullPage:true});
+  await arm.click();await expect(banner).toBeVisible();const p=h.fake.user("mika").player;p.isPlaying=false;p.progressMs=h.fake.tracks.get(c)!.durationMs;await h.listen(60000);await refresh(page);await expect(checkpoint(page)).toHaveCount(0);expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toHaveLength(1);expect(h.hub.savedSession(sid)!.sessionId).toBe(saved.sessionId);expect(h.hub.savedSession(sid)!.entryIds).toEqual(saved.entryIds);expect(h.hub.savedSession(sid)!.currentIndex).toBe(0);expect(errors).toEqual([]);expect(badfonts).toEqual([]);
+  console.log("R132B-CONTINUE",JSON.stringify({width,theme,armRequests:served.requests.filter(r=>r.method==="POST"&&r.path==="/api/continue-after").length,savedSession:saved.sessionId,errors,badfonts}));
+ });
+}
+test("private Spotify observation stays named; native route never offers Spotify continue-after",async({page})=>{
+ await page.addInitScript(()=>localStorage.setItem("ts-release-seen","9.9.9"));const {h,sid,outside}=await world();const b=outside[0]!;h.fake.playSong("mika",b);h.fake.user("mika").devices.forEach(d=>d.privateSession=true);await look(h);const saved=ts(h,sid);await serve(page,h);await page.goto("/");await expect(page.getByRole("button",{name:"Nach diesem Song fortsetzen",exact:true})).toBeVisible();await expect(checkpoint(page)).toBeVisible();expect(ts(h,sid)).toEqual(saved);
+ // Existing client projection contract: a native controller belongs to its own route,
+ // never to the outside Spotify playback checkpoint. Synthetic snapshot only.
+ await page.route("**/api/state",async route=>{const state=await h.hub.state({live:false});state.session={...state.session!,controller:{kind:"home-assistant",deviceId:"native-test"}};await route.fulfill({json:state});});await refresh(page);await expect(checkpoint(page)).toHaveCount(0);await expect(page.getByRole("button",{name:"Nach diesem Song fortsetzen",exact:true})).toHaveCount(0);expect(ts(h,sid)).toEqual(saved);
+});

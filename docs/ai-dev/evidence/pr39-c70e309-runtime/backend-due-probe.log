@@ -1,0 +1,48 @@
+
+ RUN  v5.0.2 /workspace/true-shuffle-backend-review-132b
+
+stdout | test/hub/review132b-new.test.ts > R132B-DUE: a newer observed listener song cancels a due automatic continuation
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132b-new.test.ts > R132B-DUE: a newer observed listener song cancels a due automatic continuation
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132b-new.test.ts > R132B-DUE: a newer observed listener song cancels a due automatic continuation
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132b-new.test.ts > R132B-DUE: a newer observed listener song cancels a due automatic continuation
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132b-new.test.ts > R132B-DUE: a newer observed listener song cancels a due automatic continuation
+R132B-DUE-OBS {"state":"playing","checkedAt":1790316081500,"track":{"id":"T000000000000000000007","name":"Song 7","artists":"Artist 1","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":180000,"thumb":0,"rated":0},"progressMs":0,"device":{"id":"mika-phone","name":"iPhone","volume":50,"volumeControl":true},"attribution":"outside","stationId":null,"target":{"kind":"observed","account":"mika","trackId":"T000000000000000000007","deviceId":"mika-phone","observationId":"1790316081500","playId":"T000000000000000000007:1790316081500"}}
+
+stdout | test/hub/review132b-new.test.ts > R132B-DUE: a newer observed listener song cancels a due automatic continuation
+R132B-DUE {"c":"T000000000000000000007","before":{"trackId":"T000000000000000000006","armedAt":1790316081500,"due":true,"result":null},"plays":["PUT /v1/me/player/play"],"after":"T000000000000000000001","result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316082500,"message":null}}}
+
+ ❯ test/hub/review132b-new.test.ts (4 tests | 1 failed | 3 skipped) 110ms
+   × R132B-DUE: a newer observed listener song cancels a due automatic continuation 109ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/review132b-new.test.ts > R132B-DUE: a newer observed listener song cancels a due automatic continuation
+AssertionError: expected [ 'PUT /v1/me/player/play' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "PUT /v1/me/player/play",
++ ]
+
+ ❯ test/hub/review132b-new.test.ts:9:1323
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  11:47:09
+   Duration  835ms (transform 67%, import 16%, tests 16%, worker 1%)
+

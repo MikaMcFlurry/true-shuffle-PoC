@@ -1,0 +1,53 @@
+import { expect, it } from 'vitest';
+import { LIKES_NAME } from '../../src/worker/hub/hub';
+import { RequestBudget } from '../../src/worker/spotify/client';
+import { isStorageLimit, storageLimitMessage } from '../../src/worker/lib/storage-limit';
+import { onboarded } from './harness';
+async function outside() {
+ const h=await onboarded({tracks:12,playlists:[6,6]});
+ const sid=h.stationIds[0]!;
+ expect(await h.hub.play(sid)).toMatchObject({ok:true});
+ await h.listen(20_000);
+ await h.hub.sync(new RequestBudget(8),{force:true});
+ const s=h.hub.savedSession(sid)!;
+ const deck=h.fake.playlists.get(s.contextUri.split(':')[2]!)!;
+ const b=[...h.fake.tracks.keys()].find(id=>!deck.items.includes(id))!;
+ h.fake.playSong('mika',b);
+ h.fake.user('mika').player.progressMs=60_000;
+ await h.hub.sync(new RequestBudget(8),{force:true});
+ await h.hub.continueAfter(b);
+ return {h,b};
+}
+
+
+it.each([1001,1000,999,500,1])('R132-PICK: new listener selection %i ms before end stays theirs',async(before)=>{
+ const {h,b}=await outside(); const d=h.fake.tracks.get(b)!.durationMs;
+ await h.listen(d-60000-before);const s=h.hub.savedSession(h.stationIds[0]!)!;const deck=h.fake.playlists.get(s.contextUri.split(':')[2]!)!;const chosen=[...h.fake.tracks.keys()].find(id=>id!==b&&!deck.items.includes(id))!;
+ h.fake.playSong('mika',chosen);const calls=h.fake.calls.length;
+ await h.listen(60000);const plays=h.fake.calls.slice(calls).filter(c=>c.startsWith('PUT /v1/me/player/play'));
+ console.log('R132-PICK',JSON.stringify({before,chosen,current:h.fake.current(),plays,result:(await h.hub.state()).continueAfter}));expect(plays).toEqual([]);
+});
+it.each(['same','other'])('R132-PAUSED-REWIND: a manually paused %s song at zero stays paused',async(which)=>{
+ const {h,b}=await outside();const d=h.fake.tracks.get(b)!.durationMs;
+ await h.listen(d-60000-5000); const p=h.fake.user('mika').player;
+ if(which==='other'){const s=h.hub.savedSession(h.stationIds[0]!)!;const deck=h.fake.playlists.get(s.contextUri.split(':')[2]!)!;const chosen=[...h.fake.tracks.keys()].find(id=>id!==b&&!deck.items.includes(id))!;h.fake.playSong('mika',chosen);}
+ h.fake.pause('mika');p.progressMs=0;const calls=h.fake.calls.length;
+ await h.listen(60000);const plays=h.fake.calls.slice(calls).filter(c=>c.startsWith('PUT /v1/me/player/play'));
+ console.log('R132-PAUSED-REWIND',JSON.stringify({which,plays,current:h.fake.current(),playing:p.isPlaying,result:(await h.hub.state()).continueAfter}));expect(plays).toEqual([]);expect(p.isPlaying).toBe(false);
+});
+
+it.each([false,true])('R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=%s)',async(accepted)=>{
+ const h=await onboarded({tracks:1800});const ids=[...h.fake.tracks.keys()].slice(0,1700);
+ h.sql.run(`INSERT INTO kv(k,v) VALUES('likes',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v`,JSON.stringify({v:1,rev:2,items:ids.map(id=>({id,at:h.clock.t}))}));
+ let injected=false;h.fake.failWhen=(method,path)=>{
+ const p=[...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME);
+ if(!injected&&p&&method==='POST'&&path===`/playlists/${p.id}/items`&&p.items.length===900){injected=true;if(accepted)p.items.push(...ids.slice(900,1000));return{status:502};}return null;};
+ await h.hub.retryLikesSync();await h.settle();await h.listen(1000);
+ const error=(await h.hub.state()).likes?.sync.error;
+ const job=h.sql.first<{state:string}>(`SELECT state FROM jobs WHERE key='likes-sync'`);
+ const progress=h.sql.first<{v:string}>(`SELECT v FROM kv WHERE k='likes_sync_progress'`);
+ expect(injected).toBe(true);expect(error).toBeTruthy();
+ await h.hub.retryLikesSync();for(let i=0;i<10;i++){await h.listen(60000);await h.settle();}
+ const p=[...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME)!;
+ console.log('R132-LIKES-RETRY',JSON.stringify({accepted,error,job,progress,count:p.items.length,unique:new Set(p.items).size,sync:(await h.hub.state()).likes?.sync}));expect(p.items).toEqual(ids);
+},120000);

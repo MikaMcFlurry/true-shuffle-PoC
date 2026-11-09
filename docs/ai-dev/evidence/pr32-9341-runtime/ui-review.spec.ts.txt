@@ -1,0 +1,129 @@
+import { test, expect } from "@playwright/test";
+import { DEFAULT_RULES } from "../src/core/types";
+import type { AppState } from "../src/shared/api";
+const TIME = Date.UTC(2026, 9, 1, 12);
+const song = (id: string, name: string) => ({
+	id,
+	name,
+	artists: "Test Artist",
+	album: "Test Album",
+	imageUrl: null,
+	durationMs: 180_000,
+	thumb: 0 as -1 | 0 | 1,
+});
+const A = song("track-a", "Song A");
+const B = song("track-b", "Song B");
+const C = song("track-c", "Song C");
+
+function snapshot(profile = "listener-a"): AppState {
+	return {
+		profile: { id: profile, name: "Test Listener", imageUrl: null },
+		onboarded: true,
+		stations: [
+			{
+				id: 1,
+				name: "Test Sender",
+				kind: "all",
+				sources: [],
+				rules: DEFAULT_RULES,
+				roundNo: 1,
+				poolSize: 3,
+				freshRemaining: 3,
+				progress: 0,
+				playlistId: null,
+				ready: true,
+				importing: false,
+				lastPlayedAt: TIME,
+				playing: true,
+				imageUrl: null,
+			},
+		],
+		session: {
+			sessionId: "session-a",
+			stationId: 1,
+			entryId: "entry-0",
+			orderRevision: 1,
+			progressMs: 12_000,
+			observedAt: TIME,
+			status: "active",
+			pending: false,
+			queue: [
+				{ entryId: "entry-0", track: { ...A } },
+				{ entryId: "entry-1", track: { ...B } },
+				{ entryId: "entry-2", track: { ...C } },
+			],
+		},
+		nowPlaying: {
+			...A,
+			isPlaying: true,
+			progressMs: 12_000,
+			stationId: 1,
+			kind: "fresh",
+			deviceName: "Test iPhone",
+			orderBroken: false,
+			smartShuffle: false,
+			observedAt: TIME,
+		},
+		guest: { active: false, until: null },
+		warnings: [],
+		jobs: [],
+		history: { importedTracks: 0, importedAt: null, liveSince: TIME },
+		aiSource: "off",
+		serverTime: TIME,
+	};
+}
+
+const privateSong={...A,id:"private-a",name:"Alice private listening",playedAt:TIME,stationName:null,ignored:false};
+test("in-flight search renders A private history to B",async({page})=>{
+ let state=snapshot("A"); let searchCalls=0;
+ let release!:()=>void; const wait=new Promise<void>(r=>release=r);
+ await page.addInitScript(()=>localStorage.setItem("ts-release-seen","1.3.0"));
+ await page.route("**/api/**",async route=>{
+ const path=new URL(route.request().url()).pathname;
+ if(path==="/api/state")return route.fulfill({json:state});
+ if(path==="/api/history/search") {searchCalls++;await wait;return route.fulfill({json:{through:TIME,complete:true,songs:[{entry:privateSong,plays:[TIME]}]}})}
+ if(path==="/api/history")return route.fulfill({json:[]});
+ return route.fulfill({json:[]});
+ });
+ await page.goto("/verlauf");
+ const notice=page.getByRole("dialog",{name:/Neu in Version/});
+ if(await notice.isVisible()) await notice.getByRole("button",{name:"Verstanden"}).click();
+ const field=page.getByRole("searchbox");await field.fill("Alice");
+ await expect.poll(()=>searchCalls).toBe(1);
+ state=snapshot("B");
+ await page.evaluate(async()=>{const {store}=await import("/store.ts");await store.refresh(true,true)});
+ await page.waitForTimeout(400);release();
+ await expect(page.locator(".hist-hit")).toContainText("Alice private listening");
+ await page.screenshot({path:"/workspace/review-evidence-9341/account-race-mobile.png",fullPage:true});
+ console.log("CROSS_ACCOUNT_DISCLOSURE",JSON.stringify({activeAccount:state.profile.id,searchCalls,shown:await page.locator(".hist-hit").innerText()}));
+});
+
+for(const [label,width,light] of [["mobile-light",320,"light"],["mobile-dark",375,"dark"],["desktop-light",1280,"light"]] as const){
+ test(`render search + external playback ${label}`,async({page})=>{
+ await page.setViewportSize({width,height:900});
+ await page.addInitScript((light)=>{localStorage.setItem("ts-release-seen","1.3.0");localStorage.setItem("ts-illumination",light==="dark"?"night":"day")},light);
+ const state=snapshot();
+ state.observed={state:"playing",checkedAt:TIME,track:{...C,name:"Ein ungewöhnlich langer Songtitel mit Wasserfarben und Erinnerungen"},progressMs:30000,device:{id:"device-a",name:"Wohnzimmer Lautsprecher",volume:35,volumeControl:true},attribution:"outside",stationId:null,target:null};
+ state.continueAfter={trackId:C.id,armedAt:TIME,due:false,result:null};
+ await page.route("**/api/**",async r=>{
+ const path=new URL(r.request().url()).pathname;
+ if(path==="/api/state")return r.fulfill({json:state});
+ if(path.includes("native")||path.includes("home-assistant"))return r.fulfill({json:{devices:[]}});
+ if(path==="/api/history/search")return r.fulfill({json:{through:TIME,complete:true,songs:[{entry:privateSong,plays:[TIME,TIME-86400000]}]}});
+ return r.fulfill({json:[]});
+ });
+ await page.goto("/verlauf");await page.getByRole("searchbox").fill("Alice");await expect(page.locator(".hist-hit")).toBeVisible();
+ await page.locator("summary").click();await page.evaluate(()=>document.fonts.ready);
+ const measure=async()=>page.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,targets:[...document.querySelectorAll('button,input,summary')].filter(x=>{const r=x.getBoundingClientRect();return r.width>1&&r.height>1}).map(x=>({text:x.getAttribute('aria-label')??x.textContent?.trim(),width:x.getBoundingClientRect().width,height:x.getBoundingClientRect().height}))}));
+ const search=await measure();expect(search.overflow).toBe(0);
+ await page.screenshot({path:`/workspace/review-evidence-9341/search-${label}.png`,fullPage:true});
+ await page.getByRole("link",{name:"Jetzt",exact:true}).click();
+ await expect(page.getByRole("button",{name:"Leiser"})).toBeVisible();
+ await expect(page.getByText("Nach diesem Song geht es mit TrueShuffle weiter.",{exact:true})).toBeVisible();
+ const home=await measure();expect(home.overflow).toBe(0);
+ const volumeColors=await page.locator('.volume__value').evaluate(el=>{const text=getComputedStyle(el).color;let p=el as Element|null;let bg='';while(p){bg=getComputedStyle(p).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)')break;p=p.parentElement}return {text,bg,theme:document.documentElement.getAttribute('data-illumination')}});
+ console.log('VOLUME_CONTRAST_COLORS',label,JSON.stringify(volumeColors));
+ await page.screenshot({path:`/workspace/review-evidence-9341/player-${label}.png`,fullPage:true});
+ console.log("RENDER_MEASURE",JSON.stringify({label,search,home}));
+ });
+}

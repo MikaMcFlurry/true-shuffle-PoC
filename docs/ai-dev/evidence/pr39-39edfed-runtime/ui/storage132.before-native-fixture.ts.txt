@@ -1,0 +1,128 @@
+/**
+ * PR35 UI-01 and UI-02, strict: a search answer for account A never shows
+ * under account B, and the volume readout is readable in day and night.
+ * Synthetic accounts and devices only (see pr35.config.ts).
+ */
+import { mkdirSync } from "node:fs";
+import { expect, type Page, test } from "@playwright/test";
+import { DEFAULT_RULES } from "../../src/core/types";
+import type { AppState } from "../../src/shared/api";
+
+const OUT = "/workspace/review-evidence-132/ui";
+mkdirSync(OUT, { recursive: true });
+const TIME = Date.UTC(2026, 9, 1, 12);
+const A = {
+	id: "track-a",
+	name: "Song A",
+	artists: "Test Artist",
+	album: "Test Album",
+	imageUrl: null,
+	durationMs: 180_000,
+	thumb: 0 as -1 | 0 | 1,
+};
+
+function snapshot(profile: string): AppState {
+	return {
+		profile: { id: profile, name: `Listener ${profile}`, imageUrl: null },
+		onboarded: true,
+		stations: [
+			{
+				id: 1,
+				name: "Test Sender",
+				kind: "all",
+				sources: [],
+				rules: DEFAULT_RULES,
+				roundNo: 1,
+				poolSize: 3,
+				freshRemaining: 3,
+				progress: 0,
+				playlistId: null,
+				ready: true,
+				importing: false,
+				lastPlayedAt: TIME,
+				playing: true,
+				imageUrl: null,
+			},
+		],
+		session: {
+			sessionId: "session-a",
+			stationId: 1,
+			entryId: "entry-0",
+			orderRevision: 1,
+			progressMs: 12_000,
+			observedAt: TIME,
+			status: "active",
+			pending: false,
+			queue: [{ entryId: "entry-0", track: { ...A } }],
+		},
+		nowPlaying: {
+			...A,
+			isPlaying: true,
+			progressMs: 12_000,
+			stationId: 1,
+			kind: "fresh",
+			deviceName: "Test iPhone",
+			orderBroken: false,
+			smartShuffle: false,
+			observedAt: TIME,
+		},
+		guest: { active: false, until: null },
+		warnings: [],
+		jobs: [],
+		history: { importedTracks: 0, importedAt: null, liveSince: TIME },
+		aiSource: "off",
+		serverTime: TIME,
+	} as unknown as AppState;
+}
+
+
+const FULL = "Der Speicher des Servers (Cloudflare) nimmt gerade nichts mehr an. Was schon gespeichert ist, bleibt erhalten; wann es wieder geht, ist nicht bekannt.";
+const DAILY = "Das Tageslimit des Servers (Cloudflare) ist erreicht. Ab 01:00 Uhr geht es weiter, deine Daten bleiben erhalten.";
+async function refresh(page: Page) {
+ await page.evaluate(async () => { const path="/store.ts"; const {store}=await import(path); await store.refresh(true,true); });
+}
+for (const [width,height,light] of [[390,844,"day"],[390,844,"night"],[1440,1000,"day"],[1440,1000,"night"]] as const) {
+ test(`storage-full/daily/recovery ${width}-${light}`,async({page})=>{
+  await page.setViewportSize({width,height});
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.addInitScript((v)=>{localStorage.setItem("ts-release-seen","9.9.9");localStorage.setItem("ts-illumination",v);},light);
+  let mode="ready";const errors:string[]=[];const fonts:string[]=[];page.on("pageerror",e=>errors.push(e.message));page.on("response",r=>{if(/woff/.test(r.url())&&r.status()>=400)fonts.push(r.url());});
+  await page.route("**/api/**",async route=>{
+   const path=new URL(route.request().url()).pathname;
+   if(path==="/api/state") {
+    if(mode==="full"||mode==="daily")return route.fulfill({status:503,json:{error:{code:mode==="full"?"storage_full":"storage_limit",message:mode==="full"?FULL:DAILY}}});
+    return route.fulfill({json:snapshot("A")});
+   }
+   return route.fulfill({json:[]});
+  });
+  await page.goto("/");await expect(page.getByText("Song A",{exact:true}).first()).toBeVisible();
+  await page.keyboard.press("Tab");await expect(page.getByRole("link",{name:"Zum Inhalt"})).toBeFocused();await page.keyboard.press("Enter");
+  mode="full";await refresh(page);
+  const notice=page.locator(".notice--offline");await expect(notice).toContainText(FULL);await expect(notice).not.toContainText(/Uhr|Tageslimit|morgen/);
+  await expect(notice).toHaveAttribute("role","status");await expect(page.getByText("Song A",{exact:true}).first()).toBeVisible();
+  await expect(page.getByRole("button",{name:"Erneut verbinden"})).toBeVisible();
+  await page.getByRole("link",{name:"Kassetten",exact:true}).click();await expect(page.getByRole("link",{name:"Jetzt",exact:true})).toBeVisible();
+  await page.getByRole("link",{name:"Jetzt",exact:true}).click();await expect(notice).toContainText(FULL);
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);expect(overflow).toBe(false);
+  await page.screenshot({path:`${OUT}/storage-full-${width}-${light}.png`,fullPage:true});
+  mode="daily";await refresh(page);await expect(notice).toContainText(DAILY);await expect(notice).not.toContainText("nicht bekannt");
+  await page.screenshot({path:`${OUT}/storage-daily-${width}-${light}.png`,fullPage:true});
+  mode="ready";await page.getByRole("button",{name:"Erneut verbinden"}).click();await expect(notice).toHaveCount(0);await expect(page.getByText("Song A",{exact:true}).first()).toBeVisible();
+  expect(errors).toEqual([]);expect(fonts).toEqual([]);
+  console.log("R132-STORAGE",JSON.stringify({width,light,overflow,errors,fonts}));
+ });
+}
+test("cold start full then recovery, account change and late error before offline fence",async({page})=>{
+ await page.addInitScript(()=>localStorage.setItem("ts-release-seen","9.9.9"));let mode="full";let who="A";let hold=false;let finish!:()=>void;let asked=0;
+ await page.route("**/api/**",async route=>{
+  if(new URL(route.request().url()).pathname!=="/api/state")return route.fulfill({json:[]});asked++;
+  if(hold){hold=false;await new Promise<void>(r=>finish=r);return route.fulfill({status:503,json:{error:{code:"storage_full",message:"OLD ACCOUNT FULL"}}});}
+  return mode==="full"?route.fulfill({status:503,json:{error:{code:"storage_full",message:FULL}}}):route.fulfill({json:snapshot(who)});
+ });
+ await page.goto("/");await expect(page.locator(".notice--offline")).toContainText(FULL);mode="ready";await page.getByRole("button",{name:"Erneut verbinden"}).click();await expect(page.getByText("Song A",{exact:true}).first()).toBeVisible();await expect(page.locator(".notice--offline")).toHaveCount(0);
+ // The real offline event increments the epoch: a late error before it is no longer current.
+ hold=true;await page.evaluate(()=>{const path="/store.ts";void import(path).then(({store})=>store.refresh(true,true));});await expect.poll(()=>typeof finish).toBe("function");
+ await page.evaluate(()=>window.dispatchEvent(new Event("offline")));
+ who="B";finish();await refresh(page);await expect(page.locator(".notice--offline")).toHaveCount(0);await expect(page.getByText("OLD ACCOUNT FULL")).toHaveCount(0);
+ const id=await page.evaluate(async()=>{const path="/store.ts";const {store}=await import(path);return store.load.kind==="ready"?store.load.state.profile.id:null;});expect(id).toBe("B");console.log("R132-ACCOUNT",JSON.stringify({asked,id}));
+});

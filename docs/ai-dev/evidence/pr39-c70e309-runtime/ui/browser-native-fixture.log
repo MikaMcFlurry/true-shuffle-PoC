@@ -1,0 +1,69 @@
+[WebServer] (node:29896) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:29909) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:29935) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+R132B-CONTINUE {"width":390,"theme":"day","armRequests":3,"savedSession":"0e9e74c8-c8c0-4c8c-a87c-04a74299088c","errors":[],"badfonts":[]}
+  ✓  1 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-day (1.7s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+R132B-CONTINUE {"width":390,"theme":"night","armRequests":3,"savedSession":"45381e1e-ea5c-43c8-a055-e4cb8aa31ae2","errors":[],"badfonts":[]}
+  ✓  2 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-night (1.7s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+R132B-CONTINUE {"width":1440,"theme":"day","armRequests":3,"savedSession":"5f63cd15-0b39-4dcf-89c0-75317a68c616","errors":[],"badfonts":[]}
+  ✓  3 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 1440-day (1.6s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+R132B-CONTINUE {"width":1440,"theme":"night","armRequests":3,"savedSession":"5d54d28b-a289-4104-9806-db3399557fa1","errors":[],"badfonts":[]}
+  ✓  4 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 1440-night (1.4s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✘  5 e2e/review132b.fixture.ts:186:1 › private Spotify observation stays named; native route never offers Spotify continue-after (5.8s)
+
+
+  1) e2e/review132b.fixture.ts:186:1 › private Spotify observation stays named; native route never offers Spotify continue-after 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' })
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' }) with timeout 5000ms
+      - waiting for getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' })
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      188 |  // Existing client projection contract: a native controller belongs to its own route,
+      189 |  // never to the outside Spotify playback checkpoint. Synthetic snapshot only.
+    > 190 |  await page.route("**/api/state",async route=>{const state=await h.hub.state({live:false});state.session={...state.session!,controller:{kind:"home-assistant",deviceId:"native-test"}};await route.fulfill({json:state});});await refresh(page);await expect(checkpoint(page)).toHaveCount(0);await expect(page.getByRole("button",{name:"Nach diesem Song fortsetzen",exact:true})).toHaveCount(0);expect(ts(h,sid)).toEqual(saved);
+          |                                                                                                                                                                                                                                                                                ^
+      191 | });
+      192 |
+        at /workspace/true-shuffle-ui-review-132b/e2e/review132b.fixture.ts:190:272
+
+    Error Context: e2e/.artifacts/review132b/review132b.fixture.ts-priv-affae-fers-Spotify-continue-after/error-context.md
+
+  1 failed
+    e2e/review132b.fixture.ts:186:1 › private Spotify observation stays named; native route never offers Spotify continue-after 
+  4 passed (14.4s)

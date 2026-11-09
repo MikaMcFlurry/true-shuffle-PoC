@@ -1,0 +1,12 @@
+{
+  "date": "Mon, 09 Nov 2026 11:45:07 GMT",
+  "content-type": "application/json",
+  "content-length": "71",
+  "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=X%2FMstxZnYJCQ7%2BmIhc0DA1tIdtRA5ipOtIsWyKqSpsgFkPYaf%2Flh6LeFgeSchr56JlaZQF6dvPvXcjCH8s2SV7TLvKfdJsAgn2JouiakJHA%2B1sRQnuZ9ntnLRSSc0%2B4BtLhJuNpkQGhqWIcrDZBvJJcjZnZUlR37Gi4r\"}]}",
+  "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+  "server": "envoy",
+  "cf-ray": "a57c91c68c006d8d-ORD",
+  "alt-svc": "h3=\":443\"; ma=86400",
+  "x-envoy-upstream-service-time": "30",
+  "connection": "close"
+}

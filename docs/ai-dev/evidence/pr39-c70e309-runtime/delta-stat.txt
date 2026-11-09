@@ -1,0 +1,7 @@
+ docs/releases/1.3.2.md                   |  29 +++---
+ src/client/components/continue-after.tsx |   8 +-
+ src/shared/release.ts                    |   8 +-
+ src/worker/hub/hub.ts                    | 138 +++++++++++++--------------
+ test/hub/continue-after.test.ts          | 154 +++++++++++++++++++++++--------
+ test/hub/likes.test.ts                   | 133 ++++++++++++++++++++++++++
+ 6 files changed, 337 insertions(+), 133 deletions(-)

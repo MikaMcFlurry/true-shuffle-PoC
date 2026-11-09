@@ -1,0 +1,538 @@
+
+ RUN  v5.0.2 /workspace/true-shuffle-backend-review-132
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1000 ms before end stays theirs
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1000 ms before end stays theirs
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1000 ms before end stays theirs
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1000 ms before end stays theirs
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1000 ms before end stays theirs
+R132-PICK {"before":1000,"chosen":"T000000000000000000007","current":"T000000000000000000001","plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 999 ms before end stays theirs
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 999 ms before end stays theirs
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 999 ms before end stays theirs
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 999 ms before end stays theirs
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 999 ms before end stays theirs
+R132-PICK {"before":999,"chosen":"T000000000000000000007","current":"T000000000000000000001","plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 500 ms before end stays theirs
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 500 ms before end stays theirs
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 500 ms before end stays theirs
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 500 ms before end stays theirs
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 500 ms before end stays theirs
+R132-PICK {"before":500,"chosen":"T000000000000000000007","current":"T000000000000000000001","plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1 ms before end stays theirs
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1 ms before end stays theirs
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1 ms before end stays theirs
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1 ms before end stays theirs
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1 ms before end stays theirs
+R132-PICK {"before":1,"chosen":"T000000000000000000007","current":"T000000000000000000001","plays":["PUT /v1/me/player/play"],"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused same song at zero stays paused
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused same song at zero stays paused
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused same song at zero stays paused
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused same song at zero stays paused
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused same song at zero stays paused
+R132-PAUSED-REWIND {"which":"same","plays":["PUT /v1/me/player/play"],"current":"T000000000000000000001","playing":true,"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused other song at zero stays paused
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused other song at zero stays paused
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused other song at zero stays paused
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused other song at zero stays paused
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused other song at zero stays paused
+R132-PAUSED-REWIND {"which":"other","plays":["PUT /v1/me/player/play"],"current":"T000000000000000000001","playing":true,"result":{"trackId":null,"armedAt":null,"due":false,"result":{"ok":true,"at":1790316263000,"message":null}}}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=false)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=false)
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=false)
+{"level":"info","kind":"import","message":"„Playlist 1“: 1800 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=false)
+{"level":"warn","kind":"job","message":"likes-sync fehlgeschlagen (Versuch 1): Spotify-Fehler 502"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=false)
+R132-LIKES-RETRY {"accepted":false,"error":"Spotify-Fehler 502","job":{"state":"{\"rev\":2,\"offset\":800,\"remade\":false}"},"progress":{"v":"{\"rev\":2,\"pid\":\"P000000000000000000004\",\"offset\":900,\"sent\":{\"from\":900,\"to\":1000},\"restarts\":0}"},"count":1800,"unique":1700,"sync":{"pending":false,"syncedAt":1790316066500,"count":1700,"error":null}}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=true)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=true)
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=true)
+{"level":"info","kind":"import","message":"„Playlist 1“: 1800 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=true)
+{"level":"warn","kind":"job","message":"likes-sync fehlgeschlagen (Versuch 1): Spotify-Fehler 502"}
+
+stdout | test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=true)
+R132-LIKES-RETRY {"accepted":true,"error":"Spotify-Fehler 502","job":{"state":"{\"rev\":2,\"offset\":800,\"remade\":false}"},"progress":{"v":"{\"rev\":2,\"pid\":\"P000000000000000000004\",\"offset\":900,\"sent\":{\"from\":900,\"to\":1000},\"restarts\":0}"},"count":1900,"unique":1700,"sync":{"pending":false,"syncedAt":1790316066500,"count":1700,"error":null}}
+
+ ❯ test/hub/review132-adversarial.test.ts (9 tests | 8 failed) 1767ms
+   × R132-PICK: new listener selection 1000 ms before end stays theirs 157ms
+   × R132-PICK: new listener selection 999 ms before end stays theirs 90ms
+   × R132-PICK: new listener selection 500 ms before end stays theirs 184ms
+   × R132-PICK: new listener selection 1 ms before end stays theirs 66ms
+   × R132-PAUSED-REWIND: a manually paused same song at zero stays paused 67ms
+   × R132-PAUSED-REWIND: a manually paused other song at zero stays paused 86ms
+   × R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=false) 506ms
+   × R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=true) 261ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1000 ms before end stays theirs
+ FAIL  test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 999 ms before end stays theirs
+ FAIL  test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 500 ms before end stays theirs
+ FAIL  test/hub/review132-adversarial.test.ts > R132-PICK: new listener selection 1 ms before end stays theirs
+AssertionError: expected [ 'PUT /v1/me/player/play' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "PUT /v1/me/player/play",
++ ]
+
+ ❯ test/hub/review132-adversarial.test.ts:28:147
+     26|  h.fake.playSong('mika',chosen);const calls=h.fake.calls.length;
+     27|  await h.listen(60000);const plays=h.fake.calls.slice(calls).filter(c=…
+     28|  console.log('R132-PICK',JSON.stringify({before,chosen,current:h.fake.…
+       |                                                                                                                                                   ^
+     29| });
+     30| it.each(['same','other'])('R132-PAUSED-REWIND: a manually paused %s so…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused same song at zero stays paused
+ FAIL  test/hub/review132-adversarial.test.ts > R132-PAUSED-REWIND: a manually paused other song at zero stays paused
+AssertionError: expected [ 'PUT /v1/me/player/play' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "PUT /v1/me/player/play",
++ ]
+
+ ❯ test/hub/review132-adversarial.test.ts:36:168
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=false)
+AssertionError: expected [ 'T000000000000000000000', …(1799) ] to deeply equal [ 'T000000000000000000000', …(1699) ]
+
+- Expected
++ Received
+
+@@ -897,10 +897,110 @@
+    "T0000000000000000000ER",
+    "T0000000000000000000ES",
+    "T0000000000000000000ET",
+    "T0000000000000000000EU",
+    "T0000000000000000000EV",
++   "T0000000000000000000Cu",
++   "T0000000000000000000Cv",
++   "T0000000000000000000Cw",
++   "T0000000000000000000Cx",
++   "T0000000000000000000Cy",
++   "T0000000000000000000Cz",
++   "T0000000000000000000D0",
++   "T0000000000000000000D1",
++   "T0000000000000000000D2",
++   "T0000000000000000000D3",
++   "T0000000000000000000D4",
++   "T0000000000000000000D5",
++   "T0000000000000000000D6",
++   "T0000000000000000000D7",
++   "T0000000000000000000D8",
++   "T0000000000000000000D9",
++   "T0000000000000000000DA",
++   "T0000000000000000000DB",
++   "T0000000000000000000DC",
++   "T0000000000000000000DD",
++   "T0000000000000000000DE",
++   "T0000000000000000000DF",
++   "T0000000000000000000DG",
++   "T0000000000000000000DH",
++   "T0000000000000000000DI",
++   "T0000000000000000000DJ",
++   "T0000000000000000000DK",
++   "T0000000000000000000DL",
++   "T0000000000000000000DM",
++   "T0000000000000000000DN",
++   "T0000000000000000000DO",
++   "T0000000000000000000DP",
++   "T0000000000000000000DQ",
++   "T0000000000000000000DR",
++   "T0000000000000000000DS",
++   "T0000000000000000000DT",
++   "T0000000000000000000DU",
++   "T0000000000000000000DV",
++   "T0000000000000000000DW",
++   "T0000000000000000000DX",
++   "T0000000000000000000DY",
++   "T0000000000000000000DZ",
++   "T0000000000000000000Da",
++   "T0000000000000000000Db",
++   "T0000000000000000000Dc",
++   "T0000000000000000000Dd",
++   "T0000000000000000000De",
++   "T0000000000000000000Df",
++   "T0000000000000000000Dg",
++   "T0000000000000000000Dh",
++   "T0000000000000000000Di",
++   "T0000000000000000000Dj",
++   "T0000000000000000000Dk",
++   "T0000000000000000000Dl",
++   "T0000000000000000000Dm",
++   "T0000000000000000000Dn",
++   "T0000000000000000000Do",
++   "T0000000000000000000Dp",
++   "T0000000000000000000Dq",
++   "T0000000000000000000Dr",
++   "T0000000000000000000Ds",
++   "T0000000000000000000Dt",
++   "T0000000000000000000Du",
++   "T0000000000000000000Dv",
++   "T0000000000000000000Dw",
++   "T0000000000000000000Dx",
++   "T0000000000000000000Dy",
++   "T0000000000000000000Dz",
++   "T0000000000000000000E0",
++   "T0000000000000000000E1",
++   "T0000000000000000000E2",
++   "T0000000000000000000E3",
++   "T0000000000000000000E4",
++   "T0000000000000000000E5",
++   "T0000000000000000000E6",
++   "T0000000000000000000E7",
++   "T0000000000000000000E8",
++   "T0000000000000000000E9",
++   "T0000000000000000000EA",
++   "T0000000000000000000EB",
++   "T0000000000000000000EC",
++   "T0000000000000000000ED",
++   "T0000000000000000000EE",
++   "T0000000000000000000EF",
++   "T0000000000000000000EG",
++   "T0000000000000000000EH",
++   "T0000000000000000000EI",
++   "T0000000000000000000EJ",
++   "T0000000000000000000EK",
++   "T0000000000000000000EL",
++   "T0000000000000000000EM",
++   "T0000000000000000000EN",
++   "T0000000000000000000EO",
++   "T0000000000000000000EP",
++   "T0000000000000000000EQ",
++   "T0000000000000000000ER",
++   "T0000000000000000000ES",
++   "T0000000000000000000ET",
++   "T0000000000000000000EU",
++   "T0000000000000000000EV",
+    "T0000000000000000000EW",
+    "T0000000000000000000EX",
+    "T0000000000000000000EY",
+    "T0000000000000000000EZ",
+    "T0000000000000000000Ea",
+
+ ❯ test/hub/review132-adversarial.test.ts:52:185
+     50|  await h.hub.retryLikesSync();for(let i=0;i<10;i++){await h.listen(600…
+     51|  const p=[...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME)!;
+     52|  console.log('R132-LIKES-RETRY',JSON.stringify({accepted,error,job,pro…
+       |                                                                                                                                                                                         ^
+     53| },120000);
+     54|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  test/hub/review132-adversarial.test.ts > R132-LIKES-RETRY: visible-error retry keeps exact content (provider accepted=true)
+AssertionError: expected [ 'T000000000000000000000', …(1899) ] to deeply equal [ 'T000000000000000000000', …(1699) ]
+
+- Expected
++ Received
+
+@@ -997,10 +997,210 @@
+    "T0000000000000000000G3",
+    "T0000000000000000000G4",
+    "T0000000000000000000G5",
+    "T0000000000000000000G6",
+    "T0000000000000000000G7",
++   "T0000000000000000000Cu",
++   "T0000000000000000000Cv",
++   "T0000000000000000000Cw",
++   "T0000000000000000000Cx",
++   "T0000000000000000000Cy",
++   "T0000000000000000000Cz",
++   "T0000000000000000000D0",
++   "T0000000000000000000D1",
++   "T0000000000000000000D2",
++   "T0000000000000000000D3",
++   "T0000000000000000000D4",
++   "T0000000000000000000D5",
++   "T0000000000000000000D6",
++   "T0000000000000000000D7",
++   "T0000000000000000000D8",
++   "T0000000000000000000D9",
++   "T0000000000000000000DA",
++   "T0000000000000000000DB",
++   "T0000000000000000000DC",
++   "T0000000000000000000DD",
++   "T0000000000000000000DE",
++   "T0000000000000000000DF",
++   "T0000000000000000000DG",
++   "T0000000000000000000DH",
++   "T0000000000000000000DI",
++   "T0000000000000000000DJ",
++   "T0000000000000000000DK",
++   "T0000000000000000000DL",
++   "T0000000000000000000DM",
++   "T0000000000000000000DN",
++   "T0000000000000000000DO",
++   "T0000000000000000000DP",
++   "T0000000000000000000DQ",
++   "T0000000000000000000DR",
++   "T0000000000000000000DS",
++   "T0000000000000000000DT",
++   "T0000000000000000000DU",
++   "T0000000000000000000DV",
++   "T0000000000000000000DW",
++   "T0000000000000000000DX",
++   "T0000000000000000000DY",
++   "T0000000000000000000DZ",
++   "T0000000000000000000Da",
++   "T0000000000000000000Db",
++   "T0000000000000000000Dc",
++   "T0000000000000000000Dd",
++   "T0000000000000000000De",
++   "T0000000000000000000Df",
++   "T0000000000000000000Dg",
++   "T0000000000000000000Dh",
++   "T0000000000000000000Di",
++   "T0000000000000000000Dj",
++   "T0000000000000000000Dk",
++   "T0000000000000000000Dl",
++   "T0000000000000000000Dm",
++   "T0000000000000000000Dn",
++   "T0000000000000000000Do",
++   "T0000000000000000000Dp",
++   "T0000000000000000000Dq",
++   "T0000000000000000000Dr",
++   "T0000000000000000000Ds",
++   "T0000000000000000000Dt",
++   "T0000000000000000000Du",
++   "T0000000000000000000Dv",
++   "T0000000000000000000Dw",
++   "T0000000000000000000Dx",
++   "T0000000000000000000Dy",
++   "T0000000000000000000Dz",
++   "T0000000000000000000E0",
++   "T0000000000000000000E1",
++   "T0000000000000000000E2",
++   "T0000000000000000000E3",
++   "T0000000000000000000E4",
++   "T0000000000000000000E5",
++   "T0000000000000000000E6",
++   "T0000000000000000000E7",
++   "T0000000000000000000E8",
++   "T0000000000000000000E9",
++   "T0000000000000000000EA",
++   "T0000000000000000000EB",
++   "T0000000000000000000EC",
++   "T0000000000000000000ED",
++   "T0000000000000000000EE",
++   "T0000000000000000000EF",
++   "T0000000000000000000EG",
++   "T0000000000000000000EH",
++   "T0000000000000000000EI",
++   "T0000000000000000000EJ",
++   "T0000000000000000000EK",
++   "T0000000000000000000EL",
++   "T0000000000000000000EM",
++   "T0000000000000000000EN",
++   "T0000000000000000000EO",
++   "T0000000000000000000EP",
++   "T0000000000000000000EQ",
++   "T0000000000000000000ER",
++   "T0000000000000000000ES",
++   "T0000000000000000000ET",
++   "T0000000000000000000EU",
++   "T0000000000000000000EV",
++   "T0000000000000000000EW",
++   "T0000000000000000000EX",
++   "T0000000000000000000EY",
++   "T0000000000000000000EZ",
++   "T0000000000000000000Ea",
++   "T0000000000000000000Eb",
++   "T0000000000000000000Ec",
++   "T0000000000000000000Ed",
++   "T0000000000000000000Ee",
++   "T0000000000000000000Ef",
++   "T0000000000000000000Eg",
++   "T0000000000000000000Eh",
++   "T0000000000000000000Ei",
++   "T0000000000000000000Ej",
++   "T0000000000000000000Ek",
++   "T0000000000000000000El",
++   "T0000000000000000000Em",
++   "T0000000000000000000En",
++   "T0000000000000000000Eo",
++   "T0000000000000000000Ep",
++   "T0000000000000000000Eq",
++   "T0000000000000000000Er",
++   "T0000000000000000000Es",
++   "T0000000000000000000Et",
++   "T0000000000000000000Eu",
++   "T0000000000000000000Ev",
++   "T0000000000000000000Ew",
++   "T0000000000000000000Ex",
++   "T0000000000000000000Ey",
++   "T0000000000000000000Ez",
++   "T0000000000000000000F0",
++   "T0000000000000000000F1",
++   "T0000000000000000000F2",
++   "T0000000000000000000F3",
++   "T0000000000000000000F4",
++   "T0000000000000000000F5",
++   "T0000000000000000000F6",
++   "T0000000000000000000F7",
++   "T0000000000000000000F8",
++   "T0000000000000000000F9",
++   "T0000000000000000000FA",
++   "T0000000000000000000FB",
++   "T0000000000000000000FC",
++   "T0000000000000000000FD",
++   "T0000000000000000000FE",
++   "T0000000000000000000FF",
++   "T0000000000000000000FG",
++   "T0000000000000000000FH",
++   "T0000000000000000000FI",
++   "T0000000000000000000FJ",
++   "T0000000000000000000FK",
++   "T0000000000000000000FL",
++   "T0000000000000000000FM",
++   "T0000000000000000000FN",
++   "T0000000000000000000FO",
++   "T0000000000000000000FP",
++   "T0000000000000000000FQ",
++   "T0000000000000000000FR",
++   "T0000000000000000000FS",
++   "T0000000000000000000FT",
++   "T0000000000000000000FU",
++   "T0000000000000000000FV",
++   "T0000000000000000000FW",
++   "T0000000000000000000FX",
++   "T0000000000000000000FY",
++   "T0000000000000000000FZ",
++   "T0000000000000000000Fa",
++   "T0000000000000000000Fb",
++   "T0000000000000000000Fc",
++   "T0000000000000000000Fd",
++   "T0000000000000000000Fe",
++   "T0000000000000000000Ff",
++   "T0000000000000000000Fg",
++   "T0000000000000000000Fh",
++   "T0000000000000000000Fi",
++   "T0000000000000000000Fj",
++   "T0000000000000000000Fk",
++   "T0000000000000000000Fl",
++   "T0000000000000000000Fm",
++   "T0000000000000000000Fn",
++   "T0000000000000000000Fo",
++   "T0000000000000000000Fp",
++   "T0000000000000000000Fq",
++   "T0000000000000000000Fr",
++   "T0000000000000000000Fs",
++   "T0000000000000000000Ft",
++   "T0000000000000000000Fu",
++   "T0000000000000000000Fv",
++   "T0000000000000000000Fw",
++   "T0000000000000000000Fx",
++   "T0000000000000000000Fy",
++   "T0000000000000000000Fz",
++   "T0000000000000000000G0",
++   "T0000000000000000000G1",
++   "T0000000000000000000G2",
++   "T0000000000000000000G3",
++   "T0000000000000000000G4",
++   "T0000000000000000000G5",
++   "T0000000000000000000G6",
++   "T0000000000000000000G7",
+    "T0000000000000000000G8",
+    "T0000000000000000000G9",
+    "T0000000000000000000GA",
+    "T0000000000000000000GB",
+    "T0000000000000000000GC",
+
+ ❯ test/hub/review132-adversarial.test.ts:52:185
+     50|  await h.hub.retryLikesSync();for(let i=0;i<10;i++){await h.listen(600…
+     51|  const p=[...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME)!;
+     52|  console.log('R132-LIKES-RETRY',JSON.stringify({accepted,error,job,pro…
+       |                                                                                                                                                                                         ^
+     53| },120000);
+     54|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  22:23:47
+   Duration  3.53s (tests 54%, transform 39%, import 7%)
+

@@ -1,0 +1,101 @@
+{
+  "schema_version": "true-shuffle.review.v1",
+  "observed_at": "2026-11-08T16:43:03.430640+00:00",
+  "source_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
+  "pr_head": "99869b3f2d6e73fba7395022d847ab4474fad9b0",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "release_branch_revision": "8c5243b9376c68e4ac3ad0d0678a47e647c139c8",
+  "dependency_order": [
+    {
+      "pr": 36,
+      "base": "30795cb5e3ec61c8bbaaf9d75649e892b1b2807a",
+      "head": "99869b3f2d6e73fba7395022d847ab4474fad9b0",
+      "externally_merged_as": "2c6118f69c7671ea9efe506377f28d5d0376737b"
+    },
+    {
+      "pr": 37,
+      "base": "2c6118f69c7671ea9efe506377f28d5d0376737b",
+      "head": "3b357631f479bcd15ce115a1da57849392ba10b7",
+      "externally_merged_as": "8c5243b9376c68e4ac3ad0d0678a47e647c139c8",
+      "scope": "AGENTS and release docs only"
+    }
+  ],
+  "provenance": "GitHub MikaMcFlurry; git author Mika Hertler; actual commit coauthor Claude Opus 5.5. No separate Claude GitHub login inferred.",
+  "verdict": "BLOCKED",
+  "application_changes_by_reviewer": false,
+  "reviewer_merged": false,
+  "reviewer_deployed": false,
+  "deployment": {
+    "actor": "EXTERNAL",
+    "version": "1.3.1",
+    "source_annotation": "2c6118f69c7671ea9efe506377f28d5d0376737b",
+    "version_id": "fc236a78-e8d1-4704-8c9c-b54886725c5c",
+    "deployment_id": "3e9f79b5-b131-4622-ba45-ec81093ef7de",
+    "percentage": 100,
+    "namespace_ids": {
+      "USER_HUB": "59222ef9f3a642d4b90776fafa0eac84",
+      "REGISTRY": "2ccba352966f46a3b289eb159ccb3bc4"
+    },
+    "runtime_bindings_variables": "version API resources compare equal to prior467a9df2; no values output",
+    "migration_tag": "v1",
+    "compatibility_date": "2026-09-20",
+    "compatibility_flags": [
+      "nodejs_compat"
+    ],
+    "secrets": "Names/types equal; values not exposed by version API and not read or changed. Equality of secret values not proven.",
+    "previous_version": "467a9df2-9525-4236-ad52-b9ac5d9b56a6",
+    "rollback": "Not performed; prior version has same-or-worse transport risk. No live outage proven. Populated rollback/forward not accepted."
+  },
+  "closed_prior_repros": [
+    "PR32-SEARCH-ACCOUNT: account/forget module and actual browser races pass",
+    "UI-02: day contrast12.579, night14.891",
+    "B9341-02: previous5second pause probe passes; residual remains",
+    "B9341-01: previous acknowledgedappend500/429 probes pass; residual remains"
+  ],
+  "open_findings": [
+    {
+      "id": "B9341-02",
+      "title": "Residual automatic play after manual pause within two seconds of end or unrelated manual song selection inside crossfade window",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "B9341-01",
+      "title": "Ambiguous Likes append plus same-length provider edit loses ordered exact contents while reporting success",
+      "severity": "P2",
+      "blocking": true
+    },
+    {
+      "id": "PR31-STORAGE-CLASSIFICATION",
+      "title": "Unchanged SQLITE_FULL classified daily quota with guaranteed reset",
+      "severity": "P2",
+      "blocking": true
+    }
+  ],
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "wrangler_dry_run": "PASS; no upload",
+    "known_failure_gate": "PASS exit0; raw1299PASS/3FAIL exactly knownL2/L7; unchanged allowlist/wrapper",
+    "browser": {
+      "status": "FAIL",
+      "tail": "ks still show the same play: Weiter stays closed, also after a reload (883ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  153 e2e/spotify-observed-playback.spec.ts:522:1 › COR1: Nie wieder whose answer is lost after Spotify accepted, saved again, then Weiter: one next only (842ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen hoch: Song 7 — Artist 1\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  154 e2e/spotify-observed-playback.spec.ts:557:1 › COR1: B's held Nie wieder released after C was confirmed as Favorit: C's message, rating and play stay; B's result named for B (883ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  155 e2e/spotify-observed-playback.spec.ts:608:1 › COR2: accepted next on B, then no player, D2 and back to B on D: Weiter stays closed for D, also after a reload and in a second tab; D2 once; C operable (1.6s)\n\n\n  1) e2e/app.spec.ts:549:2 › a listener's day › a personal key likes the playing song from Siri or a widget \n\n    Error: page.goto: net::ERR_HTTP_RESPONSE_CODE_FAILURE at http://127.0.0.1:8787/\n    Call log:\n      - navigating to \"http://127.0.0.1:8787/\", waiting until \"load\"\n\n\n      33 |\n      34 | async function signIn(page: Page): Promise<void> {\n    > 35 | \tawait page.goto(\"/\");\n         | \t           ^\n      36 | \tawait page.getByRole(\"link\", { name: \"Mit Spotify anmelden\" }).click();\n      37 | }\n      38 |\n        at signIn (/workspace/true-shuffle-review-131/e2e/app.spec.ts:35:13)\n        at /workspace/true-shuffle-review-131/e2e/app.spec.ts:550:9\n\n    Error Context: e2e/.artifacts/results/app-a-listener-s-day-a-per-10724--song-from-Siri-or-a-widget/error-context.md\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    e2e/.artifacts/results/app-a-listener-s-day-a-per-10724--song-from-Siri-or-a-widget/trace.zip\n    Usage:\n\n        npx playwright show-trace e2e/.artifacts/results/app-a-listener-s-day-a-per-10724--song-from-Siri-or-a-widget/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/app.spec.ts:549:2 › a listener's day › a personal key likes the playing song from Siri or a widget \n  26 did not run\n  128 passed (8.1m)\n",
+      "followup": "Unchanged app.spec.ts rerun36/36PASS (2.1m), including failed and26skipped cases. Initial root page.goto HTTP failure not reproduced; cause unproven. Original fullrun128PASS/1FAIL/26NOT_RUN retained; no clean155PASS fullrun claim."
+    },
+    "independent_backend": "FRESH/BLOCKED;49targetedPASS, own8probes1PASS/7FAIL",
+    "independent_ui": "FRESH/scopedREADY;11modulePASS,7originalfixturePASS,4mobile/desktopdaynightPASS,2pendingerroraccountPASS,1offline/recoveryPASS (14unique browsercases)",
+    "ci": "Actual integratedSHA Actions42498921522 checks/browser/gate success; visualskipped. WorkerBuild128787240284 failure, not a runtime outage proof. Author CI NOT_RUN statement stale.",
+    "public": "19/19 shippedfiles byteidentical to exact2c6118f build;health200 version1.3.1;state401;hostileoriginmutation403;4actualpublicChromiumrenders,skiplinkfirst,nooverflow/pageerror"
+  },
+  "not_run": [
+    "Physical iPhone/Safari/PWA",
+    "realSpotify latency/quota/writes/crossfade",
+    "privateHA/MA",
+    "populated production restore/rollback-forward",
+    "complete rereview of historical PR24-29 findings"
+  ],
+  "release_gate": "No explicit full-scope completion comment in currentPR36/37 discussions (bot only); no reviewer merge/deploy. Three material findings remain. External merge/deploy is not reviewer acceptance.",
+  "evidence_ref": "docs/ai-dev/evidence/pr36-2c6118f-runtime",
+  "historical_packet": "09d772e architecture packet retained as historical navigation only, not current architecture acceptance."
+}

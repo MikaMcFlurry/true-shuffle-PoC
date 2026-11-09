@@ -1,0 +1,86 @@
+[WebServer] (node:27244) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:27257) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:27319) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✘  1 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-day (7.1s)
+(node:27603) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✘  2 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-night (6.4s)
+(node:27772) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  3 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 1440-day (115ms)
+
+
+  1) e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-day ─
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' })
+    Expected substring: "nichts fortgesetzt"
+    Received string:    "Deine TrueShuffle-Stelle: Song 1 · Artist 1 · bei 0:00„TrueShuffle fortsetzen“ spielt dort weiter. Songs außerhalb deiner TrueShuffle-Folge verschieben sie nicht.Nach diesem Song fortsetzenJetzt läuft ein anderer Song; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter."
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' }) with timeout 5000ms
+      - waiting for getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' })
+        14 × locator resolved to <section class="notice" aria-label="Gespeicherte TrueShuffle-Stelle">…</section>
+           - unexpected value "Deine TrueShuffle-Stelle: Song 1 · Artist 1 · bei 0:00„TrueShuffle fortsetzen“ spielt dort weiter. Songs außerhalb deiner TrueShuffle-Folge verschieben sie nicht.Nach diesem Song fortsetzenJetzt läuft ein anderer Song; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter."
+
+
+      178 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);await page.screenshot({path:`${OUT}/continue-armed-${width}-${theme}.png`,fullPage:true});
+      179 |   await page.getByRole("button",{name:"Abbrechen",exact:true}).click();await expect(banner).toHaveCount(0);expect((await h.hub.state()).continueAfter??null).toBeNull();expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toEqual([]);
+    > 180 |   await arm.click();await expect(banner).toBeVisible();const c=outside[1]!;h.fake.playSong("mika",c);await look(h);await refresh(page);await expect(banner).toHaveCount(0);await expect(checkpoint(page)).toContainText("nichts fortgesetzt");await expect(checkpoint(page)).toContainText("TrueShuffle fortsetzen");expect(ts(h,sid)).toEqual(saved);expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toEqual([]);
+          |                                                                                                                                                                                                           ^
+      181 |   await page.screenshot({path:`${OUT}/continue-aborted-${width}-${theme}.png`,fullPage:true});
+      182 |   await arm.click();await expect(banner).toBeVisible();const p=h.fake.user("mika").player;p.isPlaying=false;p.progressMs=h.fake.tracks.get(c)!.durationMs;await h.listen(60000);await refresh(page);await expect(checkpoint(page)).toHaveCount(0);expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toHaveLength(1);expect(h.hub.savedSession(sid)!.sessionId).toBe(saved.sessionId);expect(h.hub.savedSession(sid)!.entryIds).toEqual(saved.entryIds);expect(h.hub.savedSession(sid)!.currentIndex).toBe(0);expect(errors).toEqual([]);expect(badfonts).toEqual([]);
+      183 |   console.log("R132B-CONTINUE",JSON.stringify({width,theme,armRequests:served.requests.filter(r=>r.method==="POST"&&r.path==="/api/continue-after").length,savedSession:saved.sessionId,errors,badfonts}));
+        at /workspace/true-shuffle-ui-review-132b/e2e/review132b.fixture.ts:180:203
+
+    Error Context: e2e/.artifacts/review132b/review132b.fixture.ts-cont-9cfcf--abort-positive-end-390-day/error-context.md
+
+  2) e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-night 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' })
+    Expected substring: "nichts fortgesetzt"
+    Received string:    "Deine TrueShuffle-Stelle: Song 1 · Artist 1 · bei 0:00„TrueShuffle fortsetzen“ spielt dort weiter. Songs außerhalb deiner TrueShuffle-Folge verschieben sie nicht.Nach diesem Song fortsetzenJetzt läuft ein anderer Song; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter."
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' }) with timeout 5000ms
+      - waiting for getByRole('region', { name: 'Gespeicherte TrueShuffle-Stelle' })
+        14 × locator resolved to <section class="notice" aria-label="Gespeicherte TrueShuffle-Stelle">…</section>
+           - unexpected value "Deine TrueShuffle-Stelle: Song 1 · Artist 1 · bei 0:00„TrueShuffle fortsetzen“ spielt dort weiter. Songs außerhalb deiner TrueShuffle-Folge verschieben sie nicht.Nach diesem Song fortsetzenJetzt läuft ein anderer Song; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter."
+
+
+      178 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);await page.screenshot({path:`${OUT}/continue-armed-${width}-${theme}.png`,fullPage:true});
+      179 |   await page.getByRole("button",{name:"Abbrechen",exact:true}).click();await expect(banner).toHaveCount(0);expect((await h.hub.state()).continueAfter??null).toBeNull();expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toEqual([]);
+    > 180 |   await arm.click();await expect(banner).toBeVisible();const c=outside[1]!;h.fake.playSong("mika",c);await look(h);await refresh(page);await expect(banner).toHaveCount(0);await expect(checkpoint(page)).toContainText("nichts fortgesetzt");await expect(checkpoint(page)).toContainText("TrueShuffle fortsetzen");expect(ts(h,sid)).toEqual(saved);expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toEqual([]);
+          |                                                                                                                                                                                                           ^
+      181 |   await page.screenshot({path:`${OUT}/continue-aborted-${width}-${theme}.png`,fullPage:true});
+      182 |   await arm.click();await expect(banner).toBeVisible();const p=h.fake.user("mika").player;p.isPlaying=false;p.progressMs=h.fake.tracks.get(c)!.durationMs;await h.listen(60000);await refresh(page);await expect(checkpoint(page)).toHaveCount(0);expect(h.fake.calls.slice(baseline).filter(c=>c.startsWith(PLAY))).toHaveLength(1);expect(h.hub.savedSession(sid)!.sessionId).toBe(saved.sessionId);expect(h.hub.savedSession(sid)!.entryIds).toEqual(saved.entryIds);expect(h.hub.savedSession(sid)!.currentIndex).toBe(0);expect(errors).toEqual([]);expect(badfonts).toEqual([]);
+      183 |   console.log("R132B-CONTINUE",JSON.stringify({width,theme,armRequests:served.requests.filter(r=>r.method==="POST"&&r.path==="/api/continue-after").length,savedSession:saved.sessionId,errors,badfonts}));
+        at /workspace/true-shuffle-ui-review-132b/e2e/review132b.fixture.ts:180:203
+
+    Error Context: e2e/.artifacts/review132b/review132b.fixture.ts-cont-7d634-bort-positive-end-390-night/error-context.md
+
+  2 failed
+    e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-day ──
+    e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-night 
+  1 interrupted
+    e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 1440-day ─
+  2 did not run

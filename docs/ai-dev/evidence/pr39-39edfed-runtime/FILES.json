@@ -1,0 +1,222 @@
+[
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/README.md",
+    "sha256": "6ef7f8ed2ae5edab7e577e2c02e56d46e686313866569bdbc6d985b3a9826be9",
+    "bytes": 338
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-adversarial.log",
+    "sha256": "a29315f105fc1af4bef6ef1d317a2c32b853be7d49951b1170ea734f6bf21702",
+    "bytes": 24131
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-adversarial.test.ts.txt",
+    "sha256": "488013d3b1cb682922d8908fc02418b4fd20d5462882e74ce5a7c39777f9bf61",
+    "bytes": 3949
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-prior-and-current.log",
+    "sha256": "80ea2d3a8cfa3400520135d3fa129a2594b5f60a48f398cd1ad247e0b082bbb8",
+    "bytes": 193
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-prior.test.ts.txt",
+    "sha256": "339df33ac7a8d2f1d60d104e7f4b27fbb73978a2615e3ad84af65a548f48a3df",
+    "bytes": 3575
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-retry-baseline.log",
+    "sha256": "d7aa93a0cec571f1f7bfa13886fb2db1061874c4a685134f663a6f82f29b7953",
+    "bytes": 213
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/backend-review.md",
+    "sha256": "6d6d89bd69d83b26bc0c1fe8bb67d1cb8f3de354b194bee4f1f10614b320fb7a",
+    "bytes": 8999
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/build.log",
+    "sha256": "c1f57799050d27c81eb1d293364fb8c971801f8611a26e4f5a8ad4a5085d5af4",
+    "bytes": 1397
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/check.log",
+    "sha256": "eac3c7a1278ecbc502457032b12548fe3cf2f4c72766e8ace3ad91e729324255",
+    "bytes": 21445
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ci-jobs.json",
+    "sha256": "e623306ab0cbba761c58adf417e0229c21feefd20373d452a5bfcc3a46c3904f",
+    "bytes": 14231
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ci-readback.json",
+    "sha256": "d3eaccd7c011630e87e027a93234e0460b9f3a8e048f180e2cc19b0b2b333f11",
+    "bytes": 82502
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/combined-diff-stat.txt",
+    "sha256": "811bfdf49192f85927d814e31d9a820a33475042f6d27649e9213973c316d735",
+    "bytes": 957
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/commit-provenance.txt",
+    "sha256": "d7f8c4aa6aaaa7541bfe31f117a4cf9eea90f849f5f4ff799e721ffb06d81b3f",
+    "bytes": 3660
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/dryrun.log",
+    "sha256": "f57fdcc3f19c0b82aa31f732844c916307d4a65ff9440af2db7e75866fb1d86d",
+    "bytes": 684
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/github-readback.json",
+    "sha256": "6780aa760a63cd90c7e688e9ecc74080fe806847dde678847dd60b29c96613aa",
+    "bytes": 2126674
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/npm-ci.log",
+    "sha256": "1cef3c5d945ee8a5685d0a990a46c7a1b2043e4f70863ee5ad50857d7576e2a0",
+    "bytes": 26
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/playwright-full.log",
+    "sha256": "c5967937cfb723934ceadb57839ac35383f3933c83cee001747b4e2b9ce4e105",
+    "bytes": 33370
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/test-diff.txt",
+    "sha256": "29b9374942f5e8a93fae1ae3f3494206791a6c4d3144b9c2452b05cbb18d4ae5",
+    "bytes": 13924
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/impeccable-context.log",
+    "sha256": "74f13b193fec6b70cda4178c933ab5d7bcdb7fa56b57c75098eff93525e46c8a",
+    "bytes": 31075
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/impeccable-detector.json",
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "bytes": 3
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/impeccable-references.txt",
+    "sha256": "7c23921fe1871f59b91959e317ba966994b3c853cc5e7719a55b53c0b4e429c9",
+    "bytes": 12018
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-browser-accepted.log",
+    "sha256": "86cd8d1a9342f72f70eef4211507f245aa1eb97550e664f91c59e58312a20f39",
+    "bytes": 1483
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-browser-final.log",
+    "sha256": "71114164f56de1c06c9dea9b60297145a530c9e4e17631f8458fd35ac6c091b2",
+    "bytes": 1480
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-browser.log",
+    "sha256": "5aa1f2281cdb8014ed90e2fdfe92731cd9543502d12c240e7fe17c57d8e4c918",
+    "bytes": 2178
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-daily-1440-day.png",
+    "sha256": "b49e0802d791c9c36ac1b22d126630429f0661488bf6fe9f0725217fac12fd83",
+    "bytes": 217265
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-daily-1440-night.png",
+    "sha256": "0981eb9c5cbcecd672503c71bf61cd051bc386bf4272145466b22dd1ebc6bd81",
+    "bytes": 216220
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-daily-390-day.png",
+    "sha256": "08108aa6d66825213c83175bb48e257db528521ae0de0325c233c6cb7b287778",
+    "bytes": 186856
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-daily-390-night.png",
+    "sha256": "5ec4ae3f12fe4af63e7d9aa61efa543cf1d64c00ec80a4c6716babd0a865aa96",
+    "bytes": 186171
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-full-1440-day.png",
+    "sha256": "9bc4b852a9216591807a1d79063788d0547b5f00ef59371f67d547dc3663faa2",
+    "bytes": 218461
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-full-1440-night.png",
+    "sha256": "a3903f78dcebab51d787c8acb2626b20cf03c5bfa989c9228351fb4fd3d3bbcc",
+    "bytes": 217422
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-full-390-day.png",
+    "sha256": "4b0330057aeafab170a5fbf9e6bd79db358c1ffe9008a599efb0b3e8f0c405c3",
+    "bytes": 188513
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-full-390-night.png",
+    "sha256": "569b6216d79a0f5cad069cc5874511dbf3e795fa718451d2ad018f1e94495411",
+    "bytes": 187449
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-http.log",
+    "sha256": "e0fbe0670b10cc745c67d7ac4c4c939f9091dd914c820916a92e49aa9ed087c5",
+    "bytes": 198
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage-worker.log",
+    "sha256": "9026b33d204c757368bdcefd2d67a85d4573dd499c53a85dfdea9cfa85e7ed02",
+    "bytes": 186
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage132-worker.review.test.ts.txt",
+    "sha256": "fa300c29a647442d031d2caf784bd43f20c94c5f57c79d54a78bdd7b088e2eff",
+    "bytes": 1307
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage132.before-native-fixture.ts.txt",
+    "sha256": "1a85f0ee14196d76d462e078f6f04a5fc4cea62e6b6f6cd2edd01a16c3dfce1f",
+    "bytes": 6758
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage132.config.ts.txt",
+    "sha256": "eed6480aca1fa651cb250ad1304c86b4196f400cc21040fa402060ab71f0855e",
+    "bytes": 485
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/storage132.fixture.ts.txt",
+    "sha256": "c3aca14e3fedaf082997cbcd792a0c2a6bb3ecae23bd297e713ad85c6335cc07",
+    "bytes": 6853
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui/vite.storage132.config.ts.txt",
+    "sha256": "db41fff6c543840112746c86cd51047a5960bc89c8610f1ea4f89ca92ab1121c",
+    "bytes": 123
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/ui-review.md",
+    "sha256": "1589a7bc4fff6b52a96e202a7f7cf2bf8038928c44f5d07b5d4c22b5bd8acff6",
+    "bytes": 6331
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/validate-checkpoint.log",
+    "sha256": "e57b1a3e1034b31e42fc0d995bb45b62d9ec88895162fdf51bd9bcb2aee0e12a",
+    "bytes": 262
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/validate-evidence.log",
+    "sha256": "2e66929285f7b6f17ba8e014dfb86b85e41a055b1ba55c68fee8e01ed6e23417",
+    "bytes": 627
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/validate-handoff.log",
+    "sha256": "58a5c320a487fee3612d819199923c423a7245f70ce0f2fcf1bcb95a1204dbd3",
+    "bytes": 97
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-39edfed-runtime/validators.json",
+    "sha256": "48d8b24fbe2510ab645c19f7f20174ebee28ad59966905a167e8a2b7075cf145",
+    "bytes": 1732
+  }
+]

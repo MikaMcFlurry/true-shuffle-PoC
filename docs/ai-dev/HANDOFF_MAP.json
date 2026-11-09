@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-map.v2",
-  "generated_at": "2026-10-01T14:33:44.836488+00:00",
+  "generated_at": "2026-11-09T11:54:07.510759+00:00",
   "map_path": "docs/ai-dev/HANDOFF_MAP.json",
   "profiles": [
     "LEAN",
@@ -108,7 +108,7 @@
       "path": "docs/ai-dev/PROJECT_CONTEXT.md",
       "treatment": "CREATE",
       "authority": "GENERATED_VIEW",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Currentc70integratedreview in PR39_INTEGRATED_REVIEW/canonicalledger; priorcandidate39edfed/production2c historical;09d772eintelligencehistoricalonly.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -126,7 +126,7 @@
       "path": "docs/ai-dev/PROJECT_CONTEXT.md",
       "treatment": "CREATE",
       "authority": "GENERATED_VIEW",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Currentc70integratedreview in PR39_INTEGRATED_REVIEW/canonicalledger; priorcandidate39edfed/production2c historical;09d772eintelligencehistoricalonly.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -144,7 +144,7 @@
       "path": "docs/ai-dev/PROJECT_CONTEXT.md",
       "treatment": "CREATE",
       "authority": "GENERATED_VIEW",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Currentc70integratedreview in PR39_INTEGRATED_REVIEW/canonicalledger; priorcandidate39edfed/production2c historical;09d772eintelligencehistoricalonly.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -162,7 +162,7 @@
       "path": "docs/ai-dev/PROJECT_CONTEXT.md",
       "treatment": "CREATE",
       "authority": "GENERATED_VIEW",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Currentc70integratedreview in PR39_INTEGRATED_REVIEW/canonicalledger; priorcandidate39edfed/production2c historical;09d772eintelligencehistoricalonly.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -248,7 +248,7 @@
       "path": "docs/ai-dev/EXECUTION_PLAN.md",
       "treatment": "CREATE",
       "authority": "CANONICAL",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Currentc70integratedreview in PR39_INTEGRATED_REVIEW/canonicalledger; priorcandidate39edfed/production2c historical;09d772eintelligencehistoricalonly.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -266,7 +266,7 @@
       "path": "docs/ai-dev/EXECUTION_PLAN.md",
       "treatment": "CREATE",
       "authority": "CANONICAL",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Currentc70integratedreview in PR39_INTEGRATED_REVIEW/canonicalledger; priorcandidate39edfed/production2c historical;09d772eintelligencehistoricalonly.",
       "evidence_ids": [
         "EV-01",
         "EV-02"
@@ -284,7 +284,7 @@
       "path": "docs/ai-dev/EVIDENCE.json",
       "treatment": "CREATE",
       "authority": "SUPPORTING",
-      "reason": "Single mapped source for this responsibility; preserve incumbent evidence and distinguish target from runtime.",
+      "reason": "Currentc70integratedreview in PR39_INTEGRATED_REVIEW/canonicalledger; priorcandidate39edfed/production2c historical;09d772eintelligencehistoricalonly.",
       "evidence_ids": [
         "EV-01",
         "EV-02"

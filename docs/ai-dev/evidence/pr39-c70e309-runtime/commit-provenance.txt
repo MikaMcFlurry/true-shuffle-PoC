@@ -1,0 +1,65 @@
+commit c70e309a2893891d918bd061e3165a4d19071d90
+Merge: 8c5243b9 a4a06d4f
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Mon Nov 9 11:19:07 2026 +0000
+Commit:     GitHub <noreply@github.com>
+CommitDate: Mon Nov 9 11:19:07 2026 +0000
+
+    Merge pull request #39 from MikaMcFlurry/fix/1.3.2-review-blockers
+    
+    1.3.2: Pause und eigene Songwahl bleiben, Likes exakt, ehrliche Speichermeldung
+
+commit a4a06d4fb5cc3b88692e45e3b95ff88df9f48f85
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Mon Nov 9 08:08:03 2026 +0100
+Commit:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+CommitDate: Mon Nov 9 08:08:03 2026 +0100
+
+    docs(release): 1.3.2 Prüfstand e20f80c, Grenzen aus der unabhängigen Prüfung
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit e20f80cebd9b4dbc5067ab2163a506bfd2724be2
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Mon Nov 9 07:51:20 2026 +0100
+Commit:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+CommitDate: Mon Nov 9 07:51:20 2026 +0100
+
+    fix(review 245ce3e): ehrlicher Sofort-Abbruch bei Song auf 0, 429-Wartezeit hält bei jedem Druck
+    
+    Unabhängige Prüfung von 245ce3e (NOT_READY), zwei P2:
+    - F1: Ein Song, der endet und bei 0 stehen bleibt, wurde erst nach 45 min
+      mit „lief länger als erwartet“ abgebrochen. Jetzt sofort mit „Die
+      Wiedergabe steht …“; ebenso nach langer Pause. Banner, Bestätigung,
+      Notizen und Release-Bericht sagen, dass nur ein von Spotify am Ende
+      angehaltener Song fortgesetzt wird.
+    - F2: Ein zweites „Erneut abgleichen“ löschte den Merker der bestätigten
+      429-Wartezeit und schrieb nach 61 s. Der Merker bleibt bis zum Ablauf.
+    Regressionstests für beide (rot auf 245ce3e, grün jetzt).
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit 245ce3e86da05311abad94c0b663780f33b275f0
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Mon Nov 9 07:31:53 2026 +0100
+Commit:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+CommitDate: Mon Nov 9 07:31:53 2026 +0100
+
+    fix(review PR39): Fortsetzen nur bei belegtem Songende, Likes-Wiederholung exakt
+    
+    Unabhängige Prüfung von 39edfed (BLOCKED):
+    - P1 B9341-02: Eine Songwahl in der letzten Sekunde sowie Pause mit
+      Zurück/Weiter auf Position 0 führten noch zu einem automatischen Start.
+      „Nach diesem Song fortsetzen“ wertet jetzt nur noch einen positiven
+      Beleg als Ende: Spotify zeigt den Song angehalten an seinem Ende. Ein
+      anderer Song (gewählt, Autoplay, Crossfade), Pause bei 0 oder kein
+      Player brechen ab, starten nichts und verweisen auf „TrueShuffle
+      fortsetzen“. Bewusste Verhaltensänderung, Tests entsprechend umgestellt.
+    - P2 R132-LIKES-RETRY: „Erneut abgleichen“ löschte den Stand, der Job
+      behielt seinen Offset (1800/1900 Einträge bei gemeldetem Erfolg). Jetzt
+      werden beide zusammen zurückgesetzt, Neustart mit Ersetzen; eine
+      bestätigte 429-Wartezeit gilt auch für die Wiederholung.
+    Strenge Proben aus PR #38 b609784 unverändert 17/17 (vorher 9/17).
+    Notizen, App-Hinweis und docs/releases/1.3.2.md an das Verhalten angepasst.
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>

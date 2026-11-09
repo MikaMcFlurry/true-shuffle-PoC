@@ -1,0 +1,25 @@
+ AGENTS.md                                          |   2 +-
+ docs/qa/1.3.0-pr35-fixes.md                        | 113 ++++++++++
+ .../screenshots/pr35-fix/ui01-account-b-after.png  | Bin 0 -> 51541 bytes
+ .../screenshots/pr35-fix/ui01-account-b-before.png | Bin 0 -> 38060 bytes
+ .../qa/screenshots/pr35-fix/ui02-day-320-after.png | Bin 0 -> 66206 bytes
+ .../screenshots/pr35-fix/ui02-day-320-before.png   | Bin 0 -> 51960 bytes
+ docs/releases/1.3.0.md                             |  37 +++-
+ docs/releases/1.3.1.md                             |  50 +++++
+ e2e/fake-server.ts                                 |  85 ++++++--
+ e2e/history-ratings.spec.ts                        |  52 ++++-
+ e2e/review/pr35.config.ts                          |  28 +++
+ e2e/review/pr35.fixture.ts                         | 228 +++++++++++++++++++++
+ e2e/review/vite.pr35.config.ts                     |   4 +
+ package-lock.json                                  |   4 +-
+ package.json                                       |   2 +-
+ src/client/components/volume.tsx                   |   2 +-
+ src/client/history-search.ts                       |  41 ++--
+ src/client/screens/menu.tsx                        |  40 ++--
+ src/client/styles/app.css                          |   5 +
+ src/shared/release.ts                              |  12 +-
+ src/worker/hub/hub.ts                              | 136 ++++++++++--
+ test/client/history-search.test.ts                 |  92 +++++++++
+ test/hub/continue-after.test.ts                    | 102 +++++++++
+ test/hub/likes.test.ts                             | 151 +++++++++++++-
+ 24 files changed, 1109 insertions(+), 77 deletions(-)

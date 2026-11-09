@@ -1,0 +1,1 @@
+Exact PR39 candidate39edfed. Not deployed. Live remains2c6118f1.3.1. Fresh reports and raw logs bind scope; probes archived as .ts.txt belong in indicated test/e2e paths. Synthetic accounts only, no liveSpotify/iPhone/privateHA/filledrestore acceptance. Original historical evidence retained separately. Raw emitted whitespace preserved.

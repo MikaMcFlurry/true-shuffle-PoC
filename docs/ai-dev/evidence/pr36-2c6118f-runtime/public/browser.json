@@ -1,0 +1,38 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "title": "true-shuffle",
+    "overflow": false,
+    "focus": "Zum Inhalt",
+    "login": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "title": "true-shuffle",
+    "overflow": false,
+    "focus": "Zum Inhalt",
+    "login": true,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "title": "true-shuffle",
+    "overflow": false,
+    "focus": "Zum Inhalt",
+    "login": true,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "title": "true-shuffle",
+    "overflow": false,
+    "focus": "Zum Inhalt",
+    "login": true,
+    "errors": []
+  }
+]

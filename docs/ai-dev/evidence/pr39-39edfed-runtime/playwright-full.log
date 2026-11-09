@@ -1,0 +1,251 @@
+[WebServer] (node:13418) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:13441) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:13454) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:13533) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.
+[WebServer] 
+[WebServer] 
+
+Running 155 tests using 1 worker
+
+(node:13727) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    1 e2e/app.spec.ts:320:2 › a listener's day › shows signed-out users as online after a normal authentication response (1.1s)
+  ✓    2 e2e/app.spec.ts:332:2 › a listener's day › signs in with Spotify and saves playlists as stations (3.6s)
+  ✓    3 e2e/app.spec.ts:351:2 › a listener's day › starts a station in Spotify, in true-shuffle's order (3.7s)
+  ✓    4 e2e/app.spec.ts:374:2 › a listener's day › counts song time locally without additional API requests (2.9s)
+  ✓    5 e2e/app.spec.ts:392:2 › a listener's day › skips and bans a song from the transport keys (4.1s)
+  ✓    6 e2e/app.spec.ts:410:2 › a listener's day › shows the station with its round, mix and next songs (3.2s)
+  ✓    7 e2e/app.spec.ts:448:2 › a listener's day › the favourite share keeps every step, also past 60 % and when a save fails (6.5s)
+  ✓    8 e2e/app.spec.ts:519:2 › a listener's day › guest mode keeps someone else's music out of the memory (2.0s)
+  ✓    9 e2e/app.spec.ts:533:2 › a listener's day › a device can count as guest for good, and back (1.6s)
+  ✓   10 e2e/app.spec.ts:549:2 › a listener's day › a personal key likes the playing song from Siri or a widget (2.7s)
+  ✓   11 e2e/app.spec.ts:607:2 › a listener's day › an imported history becomes a Hörprofil for any period, with hours, months and top artists (2.8s)
+  ✓   12 e2e/app.spec.ts:664:2 › a listener's day › an export from after the first sign-in says there is nothing new to take (1.1s)
+[WebServer] ✘ [ERROR] kj::getCaughtExceptionAsKj() = rust/cxx/kj-rs-io/ffi.rs:164: disconnected: write(): Broken pipe (os error 32)
+[WebServer] 
+[WebServer]   stack: /workspace/true-shuffle-review-132/node_modules/@cloudflare/workerd-linux-64/bin/workerd@57472b3 /workspace/true-shuffle-review-132/node_modules/@cloudflare/workerd-linux-64/bin/workerd@574aea7 /workspace/true-shuffle-review-132/node_modules/@cloudflare/workerd-linux-64/bin/workerd@574b1f4 /workspace/true-shuffle-review-132/node_modules/@cloudflare/workerd-linux-64/bin/workerd@310b960 /workspace/true-shuffle-review-132/node_modules/@cloudflare/workerd-linux-64/bin/workerd@226b757
+[WebServer] 
+[WebServer] 
+  ✓   13 e2e/app.spec.ts:696:2 › a listener's day › a Hörprofil that could not be saved says so and is sent again alone (2.1s)
+  ✓   14 e2e/app.spec.ts:743:2 › a listener's day › the imported history can be looked through, narrowed, switched off and deleted (7.1s)
+  ✓   15 e2e/app.spec.ts:950:2 › a listener's day › the selection page acts only on what it shows, keeps newer edits and refuses a replaced import (6.1s)
+  ✓   16 e2e/app.spec.ts:1181:2 › a listener's day › the selection page never lets an older answer bring back a deleted import or claim a success (14.6s)
+  ✓   17 e2e/app.spec.ts:1482:2 › a listener's day › a takeover answered after a reload read the state before it still shows what is in force (5.2s)
+  ✓   18 e2e/app.spec.ts:1516:2 › a listener's day › switching off answered after a reload read the state before it shows the import off (3.3s)
+  ✓   19 e2e/app.spec.ts:1546:2 › a listener's day › a deletion answered after a reload read the state before it leaves nothing of the import (3.1s)
+  ✓   20 e2e/app.spec.ts:1588:2 › a listener's day › an import replaced meanwhile keeps an older takeover's answer, refusal or loss from claiming anything (7.2s)
+  ✓   21 e2e/app.spec.ts:1640:2 › a listener's day › an older reload failure never replaces a newer failure or answer, and a new import works (8.3s)
+  ✓   22 e2e/app.spec.ts:1703:3 › a listener's day › a takeover refused or lost after a reload of the same stored state says so, and can be sent again (6.4s)
+  ✓   23 e2e/app.spec.ts:1703:3 › a listener's day › a switch refused or lost after a reload of the same stored state says so, and can be sent again (2.4s)
+  ✓   24 e2e/app.spec.ts:1703:3 › a listener's day › a delete refused or lost after a reload of the same stored state says so, and can be sent again (2.3s)
+  ✓   25 e2e/app.spec.ts:1779:2 › a listener's day › every page reads well on a phone (4.9s)
+  ✓   26 e2e/app.spec.ts:1921:2 › a listener's day › every cassette name stays on its label, whatever script or font draws it (2.4s)
+  ✓   27 e2e/app.spec.ts:1969:2 › a listener's day › a station held paused plays on from its page, never starts over (924ms)
+  ✓   28 e2e/app.spec.ts:1997:2 › a listener's day › says clearly when Spotify refuses: no Premium, no device (1.1s)
+  ✓   29 e2e/app.spec.ts:2020:2 › a listener's day › signs out and keeps the memory (1.1s)
+  ✓   30 e2e/app.spec.ts:2041:2 › calm player › shows current music and ordered queue beside the library (926ms)
+  ✓   31 e2e/app.spec.ts:2052:2 › calm player › keeps saved song, progress and queue across reload and another browser (34.1s)
+  ✓   32 e2e/app.spec.ts:2090:2 › calm player › handles offline state, light and dark mobile, keyboard and deliberate new queue (1.5s)
+  ✓   33 e2e/app.spec.ts:2210:2 › confirmed Spotify operations and shared usage › shows app-wide observations without exposing identities or inventing remaining capacity (1.6s)
+  ✓   34 e2e/app.spec.ts:2268:2 › confirmed Spotify operations and shared usage › holds only confirmed operations and never revives a legacy inferred global gate (1.0s)
+  ✓   35 e2e/app.spec.ts:2342:2 › confirmed Spotify operations and shared usage › shows tracking failure with a retry and does not turn it into a Spotify block (882ms)
+  ✓   36 e2e/app.spec.ts:2372:2 › confirmed Spotify operations and shared usage › requires authentication and request protection for the availability trial (47ms)
+  ✓   37 e2e/capture.spec.ts:14:1 › captures the real Worker player and saved occurrence in both themes (2.2s)
+  ✓   38 e2e/client-playback.spec.ts:154:1 › projects one known successor locally and uses the authoritative occurrence for pause (790ms)
+  ✓   39 e2e/client-playback.spec.ts:183:1 › pause freezes immediately through a slow response, then reconciles a fresh observation (786ms)
+  ✓   40 e2e/client-playback.spec.ts:209:1 › a poll started before pause cannot win; one fresh serialized follow-up confirms it (611ms)
+  ✓   41 e2e/client-playback.spec.ts:242:1 › resume acceptance stays pending through old observations and exposes bounded retry (730ms)
+  ✓   42 e2e/client-playback.spec.ts:270:1 › a rejected pause restores observed playback and provides an explicit retry (610ms)
+  ✓   43 e2e/client-playback.spec.ts:291:1 › device refresh preserves an absent explicit device and the Spotify sentinel routing (861ms)
+  ✓   44 e2e/client-playback.spec.ts:324:1 › projection expires without advancing further and seeks, offline and private observations correct it (758ms)
+  ✓   45 e2e/client-playback.spec.ts:352:1 › identity change discards a pending command and its late response (595ms)
+  ✓   46 e2e/client-playback.spec.ts:370:1 › accepted next keeps the saved occurrence until the actual successor is observed (754ms)
+  ✓   47 e2e/client-playback.spec.ts:393:1 › an absent saved native selection keeps its native route (554ms)
+  ✓   48 e2e/client-playback.spec.ts:422:1 › a lost transport response remains uncertain and never claims pause (577ms)
+  ✓   49 e2e/client-playback.spec.ts:432:1 › opens and returns with a coalesced fresh read while regular polling stays cached (520ms)
+  ✓   50 e2e/client-playback.spec.ts:456:1 › an ambiguous pause error stays frozen until a fresh paused observation confirms it (641ms)
+  ✓   51 e2e/client-playback.spec.ts:488:1 › a reloaded paused session waits for confirmation when its cached Spotify observation still plays (791ms)
+  ✓   52 e2e/client-playback.spec.ts:513:1 › a confirmed native pause stays authoritative over cached matching Spotify playback (572ms)
+  ✓   53 e2e/client-playback.spec.ts:533:1 › an unconfirmed pause with a vanished device allows deliberate saved-song recovery elsewhere (876ms)
+  ✓   54 e2e/client-playback.spec.ts:598:1 › accepted playback confirms on the station page after navigating before the device observation (706ms)
+  ✓   55 e2e/client-playback.spec.ts:645:1 › bounded command confirmation reads stay silent while the app is hidden (583ms)
+  ✓   56 e2e/client-playback.spec.ts:661:1 › very long unbroken song metadata wraps without page overflow on desktop and phone (963ms)
+  ✓   57 e2e/client-playback.spec.ts:700:1 › a retest asks once and sends the answer (599ms)
+  ✓   58 e2e/client-playback.spec.ts:729:1 › a song from the cassette asks nothing (483ms)
+  ✓   59 e2e/cto-history-import.spec.ts:110:2 › CTO acceptance, real Worker › seed: plays heard in the stand-in fill the Verlauf; one song twice (13.9s)
+  ✓   60 e2e/cto-history-import.spec.ts:143:2 › CTO acceptance, real Worker › HTTP boundary: a payload without an occurrence only rates; the current one skips once; an old one never; a bad one is refused (5.0s)
+  ✓   61 e2e/cto-history-import.spec.ts:234:2 › CTO acceptance, real Worker › CTO-04 Nie wieder from the Verlauf on the song playing rates only: playback stays (12.6s)
+  ✓   62 e2e/cto-history-import.spec.ts:265:2 › CTO acceptance, real Worker › CTO-05 taking back from the song's other row, once; a reload never revives an old undo (1.3s)
+  ✓   63 e2e/cto-history-import.spec.ts:300:2 › CTO acceptance, real Worker › CTO-05 delayed answer, another tab and Siri's route: the newer rating is never overwritten (2.2s)
+  ✓   64 e2e/cto-history-import.spec.ts:353:2 › CTO acceptance, real Worker › CTO-06 a rule's effect is shown only when counted for the draft shown, through held and reordered previews (2.4s)
+  ✓   65 e2e/cto-history-import.spec.ts:402:2 › CTO acceptance, real Worker › CTO-06 switching the import off, reloading and on again keeps its data and rules (2.0s)
+  ✓   66 e2e/cto-history-import.spec.ts:441:2 › CTO acceptance, real Worker › restore: the ratings this story changed are put back as the seed found them (740ms)
+classify Nie mehr Satellit – Live ready
+classify Nordsee ready
+classify Nie mehr Tanzfläche ready
+classify Satellit ready
+classify Nie mehr Golden Hour ready
+classify Nie mehr Nordsee – Live ready
+twice classify ready
+  ✓   67 e2e/history-preview.spec.ts:166:2 › listening samples in the Verlauf › setup: plays heard in the stand-in fill the Verlauf; a song twice (14.0s)
+  ✓   68 e2e/history-preview.spec.ts:258:2 › listening samples in the Verlauf › A: without a tap, nothing — viewing, more rows, rating and undo send no sample request and load no audio (2.5s)
+  ✓   69 e2e/history-preview.spec.ts:295:2 › listening samples in the Verlauf › B: a tap plays, stop, natural end, again; A→B→A; two rows of one song; a refused play() asks for a tap (59.0s)
+  ✓   70 e2e/history-preview.spec.ts:397:2 › listening samples in the Verlauf › C: no sample, ambiguous, Deezer refusing, offline, broken media — said honestly, never Spotify (9.2s)
+  ✓   71 e2e/history-preview.spec.ts:460:2 › listening samples in the Verlauf › D: leaving, background, signing out while loading or playing — silent, nothing comes back; another session starts clean (55.0s)
+  ✓   72 e2e/history-preview.spec.ts:557:2 › listening samples in the Verlauf › D2 (review P2-01): a start still on its way when the tab hides or the same key is tapped never plays later (4.5s)
+  ✓   73 e2e/history-preview.spec.ts:632:2 › listening samples in the Verlauf › F: named key, keyboard focus after the rating keys, ≥44 px, small screens and large text (1.6s)
+  ✓   74 e2e/history-preview.spec.ts:678:2 › listening samples in the Verlauf › G: only signed-in, only a Verlauf row, no URL proxy; the page may load media only from Deezer's sample host (763ms)
+outside-seed finish 1794176958972 {"listener":"e2e-ratings","current":"T000000000000000000000","context":null,"playing":true,"shuffle":false,"progressMs":0,"index":0,"calls":726,"recent":69}
+outside-seed finish 1794176969065 {"listener":"e2e-ratings","current":"T000000000000000000000","context":null,"playing":true,"shuffle":false,"progressMs":0,"index":0,"calls":731,"recent":70}
+guest-seed finish 1794176979157 {"listener":"e2e-ratings","current":"T000000000000000000000","context":null,"playing":true,"shuffle":false,"progressMs":0,"index":0,"calls":735,"recent":71}
+guest-seed look 1794176979176 [[false,1794176840783]]
+guest-seed look 1794176985200 [[true,1794176979158],[false,1794176840783]]
+seed rows on page 1 [1,7,8,9,10,11,12,13,14,15,16]
+  ✓   75 e2e/history-ratings.spec.ts:177:2 › ratings right in the Verlauf › plays heard in the stand-in fill the Verlauf: a station, outside, as a guest, more than a page (58.2s)
+  ✓   76 e2e/history-ratings.spec.ts:276:2 › ratings right in the Verlauf › always there: by default, whatever the old switch stored, on another device; viewing writes nothing (3.9s)
+  ✓   77 e2e/history-ratings.spec.ts:331:2 › ratings right in the Verlauf › a browser that keeps nothing (storage blocked) still rates: keys, save, undo and a conflict — no playback, no audio (1.6s)
+  ✓   78 e2e/history-ratings.spec.ts:383:2 › ratings right in the Verlauf › every row rates: older pages, outside, guest, every occurrence alike; ratings stay over a reload (2.3s)
+  ✓   79 e2e/history-ratings.spec.ts:450:2 › ratings right in the Verlauf › slow, double, refused, lost: one write at a time, never a false 'stored', never twice (19.1s)
+  ✓   80 e2e/history-ratings.spec.ts:642:2 › ratings right in the Verlauf › a lost answer whose receipt was pushed out since stays unclear: never 'not stored', never a second write (2.7s)
+  ✓   81 e2e/history-ratings.spec.ts:699:2 › ratings right in the Verlauf › taking back brings the rating before; a rating changed elsewhere since is a conflict (1.9s)
+  ✓   82 e2e/history-ratings.spec.ts:738:2 › ratings right in the Verlauf › Nie wieder on the song playing rates only: said first, never skips, also without Premium (17.6s)
+  ✓   83 e2e/history-ratings.spec.ts:798:2 › ratings right in the Verlauf › R-HUI-02: rated with the old sheet meanwhile (same app, a deck's page), the Verlauf shows that rating (1.8s)
+  ✓   84 e2e/history-ratings.spec.ts:859:2 › ratings right in the Verlauf › R-HUI-03: a lost answer to taking back is unclear (said so, also aloud), never 'nicht zurückgenommen'; looking again finds it (1.2s)
+R-HUI-04 rating held across sign-out {"before":0,"stored":0}
+  ✓   85 e2e/history-ratings.spec.ts:892:2 › ratings right in the Verlauf › R-HUI-04: answers on their way when signing out (Verlauf closed) count for nothing after signing in again (3.6s)
+  ✓   86 e2e/history-ratings.spec.ts:945:2 › ratings right in the Verlauf › phone, desktop and 200 % zoom: labelled keys of about 44 px, nothing laid over them, keyboard order (2.3s)
+  ✓   87 e2e/history-search.spec.ts:61:3 › phone › S1 search by title or artist, any case and accents, then Favorit with undo (phone) (2.2s)
+  ✓   88 e2e/history-search.spec.ts:61:3 › desktop › S1 search by title or artist, any case and accents, then Favorit with undo (desktop) (2.2s)
+  ✓   89 e2e/history-zero-follow.spec.ts:217:1 › HISTORY-ZERO-FOLLOW S sheet open: the confirmed −1 (rated 0) on the first page, then the separately asked older page +1 without rated: sheet and every Song B row stay −1 (2.1s)
+  ✓   90 e2e/history-zero-follow.spec.ts:255:1 › HISTORY-ZERO-FOLLOW V sheet closed, real clicks: rated 0 on the first page, the older page +1 without rated: both Song B rows −1, and the sheet opened afterwards −1 (1.3s)
+  ✓   91 e2e/history-zero-follow.spec.ts:277:1 › HISTORY-ZERO-FOLLOW O a thumb +1 given here first: the older page confirms −1 (rated 0) after it, the oldest page +1 without rated: both Song B rows −1, the sheet −1 (1.8s)
+  ✓   92 e2e/home-answers.spec.ts:222:1 › CTO-01 Favorit then Nie wieder, answered in reverse: the newer choice stays, sent in order (1.9s)
+  ✓   93 e2e/home-answers.spec.ts:243:1 › CTO-01 Ja then Nein on a retest, answered in reverse: the newer answer stays (1.9s)
+  ✓   94 e2e/home-answers.spec.ts:256:1 › CTO-01/02 Favorit stored, the newer Nie wieder refused: the stored Favorit shows, the refusal is said (2.0s)
+  ✓   95 e2e/home-answers.spec.ts:282:1 › CTO-01/02 Favorit stored, the newer Nie wieder refused, no fresh read meanwhile: the stored Favorit still shows (1.9s)
+  ✓   96 e2e/home-answers.spec.ts:304:1 › CTO-02 a double tap, a 503 and an explicit retry: one write each, no false success (3.3s)
+  ✓   97 e2e/home-answers.spec.ts:336:1 › CTO-03 A, B, then A again: a late answer for the first A changes neither B nor the new A (1.7s)
+  ✓   98 e2e/home-answers.spec.ts:359:1 › CTO-04 a failed skip is said apart from the stored rating, and retried only on that occurrence (940ms)
+  ✓   99 e2e/home-answers.spec.ts:391:1 › CTO-04 a late answer with a failed skip for A never offers to skip B (1.6s)
+  ✓  100 e2e/import-cutoff.spec.ts:149:2 › Import cutoff at the first sign-in › plays before the cutoff count as before; at, after, the same day and never-live songs stay out (1.3s)
+  ✓  101 e2e/import-cutoff.spec.ts:228:2 › Import cutoff at the first sign-in › files from after the cutoff only are explained, never uploaded, and keep the import in force (1.1s)
+  ✓  102 e2e/import-cutoff.spec.ts:270:2 › Import cutoff at the first sign-in › a file that cannot be read or an upload that fails keeps the import in force (1.2s)
+  ✓  103 e2e/import-cutoff.spec.ts:326:2 › Import cutoff at the first sign-in › a file from the cutoff moment on, the first play exactly at it, is explained as later only (771ms)
+  ✓  104 e2e/import-cutoff.spec.ts:348:2 › Import cutoff at the first sign-in › a play exactly at the cutoff stays out of the Hörprofil as it stays out of the weighting (895ms)
+  ✓  105 e2e/rate-sheet-list-freshness.repro.spec.ts:106:1 › RATE-SHEET-FRESHNESS browser: Verlauf list (+1, write 5) answered after an older snapshot (−1): Verlauf and the open sheet both show +1 (901ms)
+  ✓  106 e2e/rate-sheet-retry-values.spec.ts:255:3 › RATE-SHEET-RETRY stored 0 → chosen -1, first request refused: the retry sends -1 again and nothing else (1.2s)
+  ✓  107 e2e/rate-sheet-retry-values.spec.ts:255:3 › RATE-SHEET-RETRY stored 0 → chosen -1, first request lost: the retry sends -1 again and nothing else (1.2s)
+  ✓  108 e2e/rate-sheet-retry-values.spec.ts:255:3 › RATE-SHEET-RETRY stored 1 → chosen 0, first request refused: the retry sends 0 again and nothing else (1.2s)
+  ✓  109 e2e/rate-sheet-retry-values.spec.ts:255:3 › RATE-SHEET-RETRY stored 1 → chosen 0, first request lost: the retry sends 0 again and nothing else (1.2s)
+  ✓  110 e2e/rate-sheet-retry-values.spec.ts:255:3 › RATE-SHEET-RETRY stored -1 → chosen 0, first request refused: the retry sends 0 again and nothing else (1.2s)
+  ✓  111 e2e/rate-sheet-retry-values.spec.ts:255:3 › RATE-SHEET-RETRY stored -1 → chosen 0, first request lost: the retry sends 0 again and nothing else (1.2s)
+  ✓  112 e2e/rate-sheet-shared-revision.spec.ts:216:1 › RATE-SHEET-SHARED-REVISION a snapshot at write 4 (−1) answers before the Verlauf list at write 5 (+1): sheet and Verlauf both +1 (1.1s)
+  ✓  113 e2e/rate-sheet-shared-revision.spec.ts:233:1 › RATE-SHEET-SHARED-REVISION the Verlauf list at write 5 (+1) first, then a newer snapshot at write 6 (0): sheet and Verlauf both 0 (1.0s)
+  ✓  114 e2e/rate-sheet-shared-revision.spec.ts:250:1 › RATE-SHEET-SHARED-REVISION an older snapshot (write 4, −1) after the Verlauf list at write 5 (+1) changes nothing (852ms)
+  ✓  115 e2e/rate-sheet.spec.ts:208:2 › RATE-SHEET a 503 failure keeps the sheet, the song and the choice, says so, and retries on request (678ms)
+  ✓  116 e2e/rate-sheet.spec.ts:208:2 › RATE-SHEET a offline failure keeps the sheet, the song and the choice, says so, and retries on request (707ms)
+  ✓  117 e2e/rate-sheet.spec.ts:239:1 › RATE-SHEET pending: a double tap writes once; the sheet stays until the rating is stored (962ms)
+  ✓  118 e2e/rate-sheet.spec.ts:256:1 › RATE-SHEET a late answer after the sheet moved on to another song neither closes nor changes the newer sheet (1.1s)
+  ✓  119 e2e/rate-sheet.spec.ts:277:1 › RATE-SHEET a late answer for the account before a switch changes nothing for the new account (972ms)
+  ✓  120 e2e/rate-sheet.spec.ts:297:1 › RATE-SHEET a stored rating whose skip failed is said apart from a storage failure (670ms)
+  ✓  121 e2e/rate-sheet.spec.ts:314:2 › RATE-SHEET cancelled while on its way, the same song reopened: the late stored answer neither closes nor fills the new sheet (1.0s)
+  ✓  122 e2e/rate-sheet.spec.ts:314:2 › RATE-SHEET cancelled while on its way, the same song reopened: the late 503 answer neither closes nor fills the new sheet (1.1s)
+  ✓  123 e2e/rate-sheet.spec.ts:341:1 › RATE-SHEET signed out and back in as the same account: a late answer from before neither closes nor fills the new sheet (1.1s)
+  ✓  124 e2e/rate-sheet.spec.ts:367:1 › RATE-SHEET stored, but the answer is lost on its way back: not said as failed, not as stored; the retry confirms it (740ms)
+  ✓  125 e2e/rate-sheet.spec.ts:387:1 › RATE-SHEET another account opens the same song while the previous account's rating is on its way: usable at once, its own pending kept (1.2s)
+  ✓  126 e2e/recovery.spec.ts:22:1 › deliberately recovers an unconfirmed Spotify resume without changing its occurrence (5.3s)
+  ✓  127 e2e/release-notes.spec.ts:202:2 › phone › RELEASE a first release: only after the first snapshot, focus on Verstanden, kept only once closed, not again for the same release (2.4s)
+  ✓  128 e2e/release-notes.spec.ts:250:2 › phone › RELEASE a newer release or an unreadable value asks again; a later acknowledgement does not (2.4s)
+  ✓  129 e2e/release-notes.spec.ts:286:2 › phone › RELEASE storage that fails: the notice closes, the app goes on, this page does not ask again; the next page load may (1.7s)
+  ✓  130 e2e/release-notes.spec.ts:329:2 › phone › RELEASE a change of account does not bring the notice back, on the page or after a reload (2.4s)
+  ✓  131 e2e/release-notes.spec.ts:353:2 › phone › RELEASE never over the real rating sheet: a delayed answer goes through untouched, then the notice, with no further request (3.1s)
+  ✓  132 e2e/release-notes.spec.ts:391:2 › phone › RELEASE not while a field is in use: the device choice keeps its focus until let go (1.3s)
+  ✓  133 e2e/release-notes.spec.ts:411:2 › phone › RELEASE two tabs: one acknowledges, the other closes by itself and writes nothing; a third never asks (1.9s)
+  ✓  134 e2e/release-notes.spec.ts:453:2 › desktop › RELEASE Escape closes and acknowledges; a small dialog in the middle (524ms)
+  ✓  135 e2e/release-notes.spec.ts:469:2 › desktop › RELEASE Mehr → Über keeps version, notes, the known limit and Was ist neu?; the loaded page and the built Worker name one release (1.7s)
+  ✓  136 e2e/release-notes.spec.ts:601:3 › phone, a write on its way › RELEASE COR1 the rating sheet closed by Abbrechen before its answer: no notice until the answer has gone through, then once (3.1s)
+  ✓  137 e2e/release-notes.spec.ts:601:3 › phone, a write on its way › RELEASE COR1 the rating sheet closed by Escape before its answer: no notice until the answer has gone through, then once (3.1s)
+  ✓  138 e2e/release-notes.spec.ts:645:2 › phone, a write on its way › RELEASE COR1 a thumb sent straight from Home: no notice while it is on its way; said as always, then the notice (2.2s)
+  ✓  139 e2e/release-notes.spec.ts:669:2 › phone, a write on its way › RELEASE COR1 a second answer that waited for the first: held back throughout, a refusal included, then once (3.2s)
+  ✓  140 e2e/release-notes.spec.ts:705:2 › phone, a write on its way › RELEASE COR1 a rename on its way (no busy mark on the page): no notice until its answer has gone through (2.3s)
+  ✓  141 e2e/release-notes.spec.ts:732:2 › phone, a write on its way › RELEASE COR1 control: an answer that has gone through does not open the notice over a field in use (1.4s)
+  ✓  142 e2e/selection-layout.spec.ts:151:2 › date ranges and rule help on phones › filled date ranges fit at 320, 375 and 390 px, with normal and larger text: no overlap, nothing outside, no sideways scroll (4.0s)
+  ✓  143 e2e/selection-layout.spec.ts:191:2 › date ranges and rule help on phones › the rule explanations open on request, by keyboard too; the rules and their state stay, nothing is saved (941ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✓  144 e2e/spotify-observed-playback.spec.ts:162:1 › A, external B, C, back to true-shuffle: shown as observed, saved place kept, no extra writes (839ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✓  145 e2e/spotify-observed-playback.spec.ts:215:1 › B queued in the station's own context: unconfirmed, external next journals nothing (605ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✓  146 e2e/spotify-observed-playback.spec.ts:251:1 › a stale B click after C: refused, nothing skipped, a new look shows C; double tap sends once (729ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✓  147 e2e/spotify-observed-playback.spec.ts:274:1 › an unclear answer to next is said and never sent again (645ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"thumb","message":"Daumen hoch: Song 6 — Artist 0"}
+{"level":"info","kind":"thumb","message":"Daumen zurückgesetzt: Song 6 — Artist 0"}
+{"level":"info","kind":"thumb","message":"Daumen runter: Song 6 — Artist 0"}
+  ✓  148 e2e/spotify-observed-playback.spec.ts:293:1 › Favorit and Nie wieder on B: stored song-wide, B skipped once; toggled off; no library write (795ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"thumb","message":"Daumen runter: Song 6 — Artist 0"}
+  ✓  149 e2e/spotify-observed-playback.spec.ts:321:1 › a late Nie wieder on B after C: stored for B, said as no longer applicable, C untouched (641ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"warn","kind":"sync","message":"Abgleich fehlgeschlagen: Spotify-Fehler 503"}
+  ✓  150 e2e/spotify-observed-playback.spec.ts:357:1 › paused, no device, an episode, a failed look: never A as current, A as the saved place (657ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"thumb","message":"Daumen runter: Song 6 — Artist 0"}
+  ✓  151 e2e/spotify-observed-playback.spec.ts:433:1 › COR1: an accepted next Spotify has not shown yet: the same tab, a reload and a second tab (Weiter, Nie wieder) send no second next; C operable (1.5s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✓  152 e2e/spotify-observed-playback.spec.ts:490:1 › COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload (858ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"thumb","message":"Daumen runter: Song 6 — Artist 0"}
+{"level":"info","kind":"thumb","message":"Daumen runter: Song 6 — Artist 0"}
+  ✓  153 e2e/spotify-observed-playback.spec.ts:522:1 › COR1: Nie wieder whose answer is lost after Spotify accepted, saved again, then Weiter: one next only (837ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"thumb","message":"Daumen hoch: Song 7 — Artist 1"}
+{"level":"info","kind":"thumb","message":"Daumen runter: Song 6 — Artist 0"}
+  ✓  154 e2e/spotify-observed-playback.spec.ts:557:1 › COR1: B's held Nie wieder released after C was confirmed as Favorit: C's message, rating and play stay; B's result named for B (874ms)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"thumb","message":"Daumen runter: Song 6 — Artist 0"}
+  ✓  155 e2e/spotify-observed-playback.spec.ts:608:1 › COR2: accepted next on B, then no player, D2 and back to B on D: Weiter stays closed for D, also after a reload and in a second tab; D2 once; C operable (1.6s)
+
+  155 passed (9.8m)

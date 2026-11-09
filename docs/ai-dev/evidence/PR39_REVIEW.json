@@ -1,0 +1,69 @@
+{
+  "schema_version": "true-shuffle.review.v1",
+  "observed_at": "2026-11-08T22:32:44.826207+00:00",
+  "candidate_revision": "39edfed25987525f03d4f94006b12e7e532ea563",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
+  "pr": 39,
+  "pr_base": "release/1.3.0",
+  "pr_base_revision": "8c5243b9376c68e4ac3ad0d0678a47e647c139c8",
+  "dependency_order": [
+    "1b8b4e5ad2e0d01c4589ccbcf7ea5d51d4473659",
+    "ef6c5a8a035c2425ef1266c030756108293a1f36",
+    "39edfed25987525f03d4f94006b12e7e532ea563"
+  ],
+  "provenance": "GitHub MikaMcFlurry, author Mika Hertler, all three commits Co-Authored-By Claude Opus5.5. No separate Claude login inferred.",
+  "verdict": "BLOCKED",
+  "independence": "FRESH separate backend and UI reviewers; no reviewer application fixes",
+  "open_findings": [
+    {
+      "id": "B9341-02",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Residual automatic playback overrides manual final-second song choice and paused rewind/next-at-zero"
+    },
+    {
+      "id": "R132-LIKES-RETRY",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Explicit retry clears durable progress but retains job offset, appending duplicate Likes and reporting success"
+    }
+  ],
+  "repaired_previous_repros": [
+    "Unchanged eight PR38 boundary assertions pass8/8",
+    "Prior length-only Likes false success repaired for automatic retry",
+    "SQLITE_FULL now storage_full with no reset time; daily-limit separate",
+    "Final2s pause and manualpick5/12s original repros pass; narrower ambiguity still fails"
+  ],
+  "checks": {
+    "static": "Typecheck/Biome285 files PASS",
+    "build_dryrun": "PASS; no upload",
+    "unit": "1314PASS/3knownL2/L7FAIL; unchanged known-wrapper exit0",
+    "browser_status": "PASS",
+    "browser_tail": "st 0\"}\n  ✓  151 e2e/spotify-observed-playback.spec.ts:433:1 › COR1: an accepted next Spotify has not shown yet: the same tab, a reload and a second tab (Weiter, Nie wieder) send no second next; C operable (1.5s)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n  ✓  152 e2e/spotify-observed-playback.spec.ts:490:1 › COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload (858ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  153 e2e/spotify-observed-playback.spec.ts:522:1 › COR1: Nie wieder whose answer is lost after Spotify accepted, saved again, then Weiter: one next only (837ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen hoch: Song 7 — Artist 1\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  154 e2e/spotify-observed-playback.spec.ts:557:1 › COR1: B's held Nie wieder released after C was confirmed as Favorit: C's message, rating and play stay; B's result named for B (874ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  155 e2e/spotify-observed-playback.spec.ts:608:1 › COR2: accepted next on B, then no player, D2 and back to B on D: Weiter stays closed for D, also after a reload and in a second tab; D2 once; C operable (1.6s)\n\n  155 passed (9.8m)\n",
+    "backend": "59prior/currentPASS; own9adversarial1PASS/8FAIL",
+    "ui": "FRESH scoped READY:8classifier/UserHubPASS,4actualHonoHTTPPASS,5actualPreact/ChromiumPASS; phone/desktopdaynight,keyboard,longmessage,offline/recovery; reports preserve fixture corrections",
+    "ci": "Actions42522857295 checks/browser/gate success; visual skipped; Workers Builds failure root directory not found (actual log)"
+  },
+  "release_gate": "No explicit author full-scope completion comment in current PR39 discussion (bot only). PR39 targets release/1.3.0, must integrate into codex/implement-cloudflare-restart only after gates/completion. No merge/deploy.",
+  "production": {
+    "source_revision": "2c6118f69c7671ea9efe506377f28d5d0376737b",
+    "version": "1.3.1",
+    "version_id": "fc236a78-e8d1-4704-8c9c-b54886725c5c",
+    "deployment_id": "3e9f79b5-b131-4622-ba45-ec81093ef7de",
+    "percentage": 100,
+    "fresh_readback": "GitHub refs and authenticated Cloudflare deployment unchanged; candidate1.3.2 NOT_DEPLOYED",
+    "previous_resource_asset_acceptance": "PR36_REVIEW.json and pr36-2c6118f-runtime retain19/19 exact assets/resources/runtime/auth/public visual evidence; not rerun against candidate as live",
+    "reviewer_merged": false,
+    "reviewer_deployed": false,
+    "rollback": "No rollout or outage established; no rollback performed"
+  },
+  "not_run": [
+    "physicaliPhone/Safari/PWA",
+    "realSpotify latency/quota/writes/crossfade",
+    "privateHA/MA",
+    "populatedproductionrestore/rollback-forward"
+  ],
+  "evidence_ref": "docs/ai-dev/evidence/pr39-39edfed-runtime",
+  "historical_packet": "09d772e architecture/handoff packet remains historical navigation, not current architecture acceptance"
+}

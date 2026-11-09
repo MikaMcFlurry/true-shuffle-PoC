@@ -1,0 +1,400 @@
+{
+  "total_count": 5,
+  "jobs": [
+    {
+      "id": 129129097874,
+      "run_id": 42608090593,
+      "workflow_name": "Cloudflare application checks",
+      "head_branch": "codex/implement-cloudflare-restart",
+      "run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593",
+      "run_attempt": 1,
+      "node_id": "CR_kwDORVx7EM8AAAAeELGqkg",
+      "head_sha": "c70e309a2893891d918bd061e3165a4d19071d90",
+      "url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/jobs/129129097874",
+      "html_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593/job/129129097874",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-09T11:19:19Z",
+      "started_at": "2026-11-09T11:19:21Z",
+      "completed_at": "2026-11-09T11:19:31Z",
+      "name": "changes",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-09T11:19:22Z",
+          "completed_at": "2026-11-09T11:19:22Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-09T11:19:22Z",
+          "completed_at": "2026-11-09T11:19:28Z"
+        },
+        {
+          "name": "Run python3 \"$BUDGET_SCRIPTS/classify_changes.py\" --config .github/ci-budget.json --base \"5ffe99b929b6a8ddf93035370e156fe036fe6a83\" --head \"c70e309a2893891d918bd061e3165a4d19071d90\" ",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-09T11:19:28Z",
+          "completed_at": "2026-11-09T11:19:28Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-09T11:19:28Z",
+          "completed_at": "2026-11-09T11:19:29Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-09T11:19:29Z",
+          "completed_at": "2026-11-09T11:19:29Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/check-runs/129129097874",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000005870,
+      "runner_name": "GitHub Actions 1000005870",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 129129194828,
+      "run_id": 42608090593,
+      "workflow_name": "Cloudflare application checks",
+      "head_branch": "codex/implement-cloudflare-restart",
+      "run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593",
+      "run_attempt": 1,
+      "node_id": "CR_kwDORVx7EM8AAAAeELMlTA",
+      "head_sha": "c70e309a2893891d918bd061e3165a4d19071d90",
+      "url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/jobs/129129194828",
+      "html_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593/job/129129194828",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-09T11:19:31Z",
+      "started_at": "2026-11-09T11:19:33Z",
+      "completed_at": "2026-11-09T11:29:50Z",
+      "name": "browser",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-09T11:19:34Z",
+          "completed_at": "2026-11-09T11:19:35Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-09T11:19:35Z",
+          "completed_at": "2026-11-09T11:19:38Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-09T11:19:38Z",
+          "completed_at": "2026-11-09T11:19:39Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-09T11:19:39Z",
+          "completed_at": "2026-11-09T11:19:50Z"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-09T11:19:50Z",
+          "completed_at": "2026-11-09T11:20:10Z"
+        },
+        {
+          "name": "Run npx playwright test --grep-invert @visual",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-09T11:20:10Z",
+          "completed_at": "2026-11-09T11:29:46Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-11-09T11:29:46Z",
+          "completed_at": "2026-11-09T11:29:46Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-11-09T11:29:46Z",
+          "completed_at": "2026-11-09T11:29:47Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-11-09T11:29:47Z",
+          "completed_at": "2026-11-09T11:29:47Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-11-09T11:29:47Z",
+          "completed_at": "2026-11-09T11:29:47Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/check-runs/129129194828",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000005872,
+      "runner_name": "GitHub Actions 1000005872",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 129129194840,
+      "run_id": 42608090593,
+      "workflow_name": "Cloudflare application checks",
+      "head_branch": "codex/implement-cloudflare-restart",
+      "run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593",
+      "run_attempt": 1,
+      "node_id": "CR_kwDORVx7EM8AAAAeELMlWA",
+      "head_sha": "c70e309a2893891d918bd061e3165a4d19071d90",
+      "url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/jobs/129129194840",
+      "html_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593/job/129129194840",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-09T11:19:31Z",
+      "started_at": "2026-11-09T11:19:33Z",
+      "completed_at": "2026-11-09T11:21:15Z",
+      "name": "checks",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-09T11:19:33Z",
+          "completed_at": "2026-11-09T11:19:34Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-09T11:19:34Z",
+          "completed_at": "2026-11-09T11:19:36Z"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-09T11:19:36Z",
+          "completed_at": "2026-11-09T11:19:37Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-09T11:19:37Z",
+          "completed_at": "2026-11-09T11:19:46Z"
+        },
+        {
+          "name": "Run npm run build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-09T11:19:46Z",
+          "completed_at": "2026-11-09T11:19:47Z"
+        },
+        {
+          "name": "Run npm run typecheck",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-09T11:19:47Z",
+          "completed_at": "2026-11-09T11:19:58Z"
+        },
+        {
+          "name": "Run npm run lint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-09T11:19:58Z",
+          "completed_at": "2026-11-09T11:19:59Z"
+        },
+        {
+          "name": "Run npm run test:known",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-09T11:19:59Z",
+          "completed_at": "2026-11-09T11:21:10Z"
+        },
+        {
+          "name": "Run npx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-09T11:21:10Z",
+          "completed_at": "2026-11-09T11:21:12Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-09T11:21:12Z",
+          "completed_at": "2026-11-09T11:21:14Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-09T11:21:14Z",
+          "completed_at": "2026-11-09T11:21:14Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-09T11:21:14Z",
+          "completed_at": "2026-11-09T11:21:14Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/check-runs/129129194840",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000005871,
+      "runner_name": "GitHub Actions 1000005871",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 129129198296,
+      "run_id": 42608090593,
+      "workflow_name": "Cloudflare application checks",
+      "head_branch": "codex/implement-cloudflare-restart",
+      "run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593",
+      "run_attempt": 1,
+      "node_id": "CR_kwDORVx7EM8AAAAeELMy2A",
+      "head_sha": "c70e309a2893891d918bd061e3165a4d19071d90",
+      "url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/jobs/129129198296",
+      "html_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593/job/129129198296",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-11-09T11:19:32Z",
+      "started_at": "2026-11-09T11:19:32Z",
+      "completed_at": "2026-11-09T11:19:31Z",
+      "name": "visual",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/check-runs/129129198296",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    },
+    {
+      "id": 129133948277,
+      "run_id": 42608090593,
+      "workflow_name": "Cloudflare application checks",
+      "head_branch": "codex/implement-cloudflare-restart",
+      "run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593",
+      "run_attempt": 1,
+      "node_id": "CR_kwDORVx7EM8AAAAeEPutdQ",
+      "head_sha": "c70e309a2893891d918bd061e3165a4d19071d90",
+      "url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/actions/jobs/129133948277",
+      "html_url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/42608090593/job/129133948277",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-09T11:29:50Z",
+      "started_at": "2026-11-09T11:29:53Z",
+      "completed_at": "2026-11-09T11:29:59Z",
+      "name": "gate",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-09T11:29:54Z",
+          "completed_at": "2026-11-09T11:29:55Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-09T11:29:55Z",
+          "completed_at": "2026-11-09T11:29:56Z"
+        },
+        {
+          "name": "Run python3 \"$BUDGET_SCRIPTS/ci_gate.py\" --always-required changes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-09T11:29:56Z",
+          "completed_at": "2026-11-09T11:29:56Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-09T11:29:56Z",
+          "completed_at": "2026-11-09T11:29:56Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-09T11:29:56Z",
+          "completed_at": "2026-11-09T11:29:56Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/MikaMcFlurry/true-shuffle-PoC/check-runs/129133948277",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000005875,
+      "runner_name": "GitHub Actions 1000005875",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

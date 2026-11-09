@@ -1,0 +1,101 @@
+{
+  "schema_version": "true-shuffle.review.v1",
+  "observed_at": "2026-11-09T11:54:07.510759+00:00",
+  "source_revision": "c70e309a2893891d918bd061e3165a4d19071d90",
+  "pr_head": "a4a06d4fb5cc3b88692e45e3b95ff88df9f48f85",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_revision": "c70e309a2893891d918bd061e3165a4d19071d90",
+  "release_branch_revision": "7c508712d8a0e6352e743fc85eea6a24aaebbd17",
+  "dependency_order": [
+    {
+      "pr": 39,
+      "base": "8c5243b9376c68e4ac3ad0d0678a47e647c139c8",
+      "head": "a4a06d4fb5cc3b88692e45e3b95ff88df9f48f85",
+      "externally_merged_as": "c70e309a2893891d918bd061e3165a4d19071d90",
+      "commits": [
+        "1b8b4e5",
+        "ef6c5a8",
+        "39edfed",
+        "245ce3e",
+        "e20f80c",
+        "a4a06d4"
+      ]
+    },
+    {
+      "pr": 40,
+      "base": "c70e309a2893891d918bd061e3165a4d19071d90",
+      "head": "4aa2dfd1c9a8a3b50647dcca37b0ef75dc8cde81",
+      "externally_merged_as": "7c508712d8a0e6352e743fc85eea6a24aaebbd17",
+      "scope": "AGENTS and release documentation only"
+    }
+  ],
+  "provenance": "Actual GitHub user MikaMcFlurry, author Mika Hertler, Claude Opus5.5 commit coauthor. No separate Claude GitHub login inferred.",
+  "author_completion": {
+    "comment_id": 6738530814,
+    "revision": "a4a06d4fb5cc3b88692e45e3b95ff88df9f48f85",
+    "scope": "Six ordered commits for1.3.2; real completion comment read, unlike earlier PRbody alone"
+  },
+  "verdict": "BLOCKED",
+  "independence": "FRESH separate backend/UI contexts; no reviewer application changes",
+  "reviewer_merged": false,
+  "reviewer_deployed": false,
+  "closed_prior_repros": [
+    "Previous17 strict assertions PASS17/17 including narrow manual-pick/paused0 and explicit Likesretry corruption",
+    "Original automatic Likes length-only ambiguity repaired",
+    "SQLITE_FULL truthful cause separation retained",
+    "Two fresh confirmedendpoint429 tests PASS, including newLike+repeatedretry; distinctPUT is not a violation of heldPOST"
+  ],
+  "open_findings": [
+    {
+      "id": "B9341-02",
+      "severity": "P1",
+      "blocking": true,
+      "title": "Queued continue-after starts despite a newer explicitly observed unrelated song (due-state race)"
+    },
+    {
+      "id": "R132B-LIKES-UNKNOWN-RETRY",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Explicit Likes retry after append429 without deadline cannot probe/recover the held endpoint and truncates partial playlist"
+    }
+  ],
+  "checks": {
+    "typecheck_lint": "PASS; Biome285 files",
+    "build_dryrun": "PASS; no upload",
+    "unit_worker": "Raw1331PASS/3knownL2/L7FAIL; unchanged known-wrapperPASS",
+    "browser": {
+      "status": "PASS",
+      "tail": "nfo\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n  ✓  152 e2e/spotify-observed-playback.spec.ts:490:1 › COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload (964ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  153 e2e/spotify-observed-playback.spec.ts:522:1 › COR1: Nie wieder whose answer is lost after Spotify accepted, saved again, then Weiter: one next only (855ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen hoch: Song 7 — Artist 1\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  154 e2e/spotify-observed-playback.spec.ts:557:1 › COR1: B's held Nie wieder released after C was confirmed as Favorit: C's message, rating and play stay; B's result named for B (972ms)\n{\"level\":\"info\",\"kind\":\"connect\",\"message\":\"Mit Spotify verbunden als Mika\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"Lieblingssongs: 0 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 1“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"import\",\"message\":\"„Playlist 2“: 6 Songs übernommen, 0 übersprungen\"}\n{\"level\":\"info\",\"kind\":\"thumb\",\"message\":\"Daumen runter: Song 6 — Artist 0\"}\n  ✓  155 e2e/spotify-observed-playback.spec.ts:608:1 › COR2: accepted next on B, then no player, D2 and back to B on D: Weiter stays closed for D, also after a reload and in a second tab; D2 once; C operable (1.8s)\n\n  155 passed (9.9m)\n"
+    },
+    "independent_backend": "See backend-review.md for exact fresh suites/adversarialfailures and baselinecontrols",
+    "independent_ui": "See ui-review.md for actualHub/Preact changedflow phone/desktopdaynight and preserved exploratoryattempts",
+    "ci": "IntegratedSHA Actions42608090593 checks/browser/gatePASS, visualskipped; WorkersBuildrootdirectorylookupFAIL (actual log)",
+    "public": "19/19 files byteequal exactc70build;health2001.3.2,state401,hostileoriginPOST403;4actualpublicChromium day/night390/1440,firstTabskiplink,nooverflow/pageerrors"
+  },
+  "deployment": {
+    "actor": "EXTERNAL",
+    "source_annotation": "c70e309a2893891d918bd061e3165a4d19071d90",
+    "version": "1.3.2",
+    "version_id": "6e3a9e8f-c217-49c2-8475-d1ac38cc2b06",
+    "deployment_id": "6125571b-ef13-431f-bc07-e9e47f8eae1a",
+    "percentage": 100,
+    "previous_version": "fc236a78-e8d1-4704-8c9c-b54886725c5c",
+    "resources": "Bindings/plainvars and runtime equal previous by authenticated version API comparison; migrationv1/compatibility2026-09-20/nodejs_compat retained",
+    "namespaces": {
+      "USER_HUB": "59222ef9f3a642d4b90776fafa0eac84",
+      "REGISTRY": "2ccba352966f46a3b289eb159ccb3bc4"
+    },
+    "secrets": "Names/types equal; secret values unexposed and not read/changed; equality of values not proven",
+    "rollback": "Not performed; no live outage established; priorversion has previously reproduced material defects. Synthetic repros alone do not establish safe rollback."
+  },
+  "not_run": [
+    "physicaliPhone/Safari/PWA",
+    "realSpotify latency/quota/writes/endsemantics/crossfade",
+    "privateHA/MA",
+    "populatedproductionrestore/migration/rollbackforward"
+  ],
+  "release_gate": "Explicit completion now present, but fresh material findings prevent acceptance. External merge/deploy not reviewer acceptance. Do not duplicate integration/rollout.",
+  "evidence_ref": "docs/ai-dev/evidence/pr39-c70e309-runtime",
+  "historical_packet": "09d772e architecturepacket remains historical navigation, not currentarchitectureacceptance",
+  "exploratory_readback": "DefaultPython useragent was rejected403Cloudflare1010; actualChromium and browserUA readbackPASS. Initial attempt retained, not app-outage claim."
+}
