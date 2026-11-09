@@ -223,7 +223,10 @@ describe("TrueShuffle Likes (P4)", () => {
 			}, 120_000);
 		}
 
-		it("written, but the answer is lost: Spotify is asked once, the write is not sent again", async () => {
+		// A lost answer proves nothing about what arrived: written again from the
+		// top (one replace, then the rest), never trusted by a count (PR36 review;
+		// 1.3.1 asked the length and went on after it).
+		it("written, but the answer is lost: started over with a replace, exactly the Likes", async () => {
 			const { h, ids, append, finish } = await many();
 			let lost = 0;
 			h.fake.failWhen = (m, path) => {
@@ -235,13 +238,234 @@ describe("TrueShuffle Likes (P4)", () => {
 			};
 			const calls = h.fake.calls.length;
 			await h.hub.retryLikesSync();
+			const { items, sync } = await finish();
+			expect(lost).toBe(1);
+			expect(items).toEqual(ids);
+			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+			const after = h.fake.calls.slice(calls);
+			const lostAt = after.findIndex(
+				(c) => c.startsWith("POST /v1/playlists/") && c.includes("/items"),
+			);
+			expect(after.filter((c) => c.startsWith("PUT /v1/playlists/")).length).toBe(2);
+			expect(after.some((c) => /^GET \/v1\/playlists\/[^/]+(\?|$)/.test(c))).toBe(false);
+			expect(lostAt).toBeGreaterThanOrEqual(0);
+		}, 120_000);
+
+		for (const [name, change] of [
+			[
+				"one entry replaced (R131-LIKES)",
+				(items: string[], ids: string[]) => {
+					items[950] = ids[0]!;
+				},
+			],
+			[
+				"two entries swapped",
+				(items: string[]) => {
+					const x = items[910]!;
+					items[910] = items[960]!;
+					items[960] = x;
+				},
+			],
+		] as const) {
+			it(`lost answer plus a same-length change elsewhere (${name}): exactly the Likes, in order`, async () => {
+				const { h, ids, append, finish } = await many();
+				let lost = 0;
+				h.fake.failWhen = (m, path) => {
+					const p = append(m, path);
+					if (lost || p?.items.length !== 900) return null;
+					lost++;
+					p.items.push(...ids.slice(900, 1000));
+					change(p.items, ids);
+					return { status: 502 };
+				};
+				await h.hub.retryLikesSync();
+				const { items, sync } = await finish();
+				expect(lost).toBe(1);
+				expect(items).toEqual(ids);
+				expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+			}, 120_000);
+		}
+
+		it("a write that never gets an answer: a few starts from the top, then it stops and says so (PR36 re-review)", async () => {
+			const { h, ids, playlist, append, finish } = await many();
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				return p && p.items.length >= 1600 ? { status: 502 } : null;
+			};
+			const calls = h.fake.calls.length;
+			await h.hub.retryLikesSync();
+			for (let i = 0; i < 6 * 60; i++) await h.listen(60_000);
+			await h.settle();
+			const writes = h.fake.calls
+				.slice(calls)
+				.filter((c) => /^(PUT|POST) \/v1\/playlists\/[^/]+\/items/.test(c));
+			// 1.3.2 before this fix: thousands of writes over 6 h, never ending.
+			expect(writes.length).toBeLessThan(80);
+			const sync = (await h.hub.state()).likes?.sync;
+			expect(sync?.pending).toBe(true);
+			expect(sync?.error).toMatch(/nicht bestätigt/);
+			const quiet = h.fake.calls.length;
+			await h.listen(60 * 60_000);
+			expect(
+				h.fake.calls.slice(quiet).filter((c) => /^(PUT|POST) \/v1\/playlists\//.test(c)),
+			).toEqual([]);
+			// Spotify answers again and the listener sends again: exactly the Likes.
+			h.fake.failWhen = null;
+			await h.hub.retryLikesSync();
+			const { items, sync: after } = await finish();
+			expect(items).toEqual(ids);
+			expect(after).toMatchObject({ pending: false, count: 1700, error: null });
+			expect(playlist()).toBeDefined();
+		}, 300_000);
+
+		// „Erneut abgleichen“ while an error shows (the job still waits with its own
+		// offset): starts over from the top, exactly the Likes (PR39 re-review
+		// R132-LIKES-RETRY; 1.3.2 before this fix ended with 1800 or 1900 entries).
+		for (const arrived of [false, true]) {
+			it(`sent again by hand while a failed write (${arrived ? "arrived" : "lost"}) shows: exactly the Likes, honest state`, async () => {
+				const { h, ids, append, finish } = await many();
+				let failed = 0;
+				h.fake.failWhen = (m, path) => {
+					const p = append(m, path);
+					if (failed || p?.items.length !== 900) return null;
+					failed++;
+					if (arrived) p.items.push(...ids.slice(900, 1000));
+					return { status: 502 };
+				};
+				await h.hub.retryLikesSync();
+				await h.settle();
+				await h.listen(1_000);
+				const shown = (await h.hub.state()).likes?.sync;
+				expect(failed).toBe(1);
+				expect(shown?.error).toBeTruthy();
+				expect(shown?.pending).toBe(true);
+				await h.hub.retryLikesSync();
+				const { items, sync } = await finish();
+				expect(items).toEqual(ids);
+				expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+			}, 120_000);
+		}
+
+		it("sent again by hand after Spotify confirmed a 429: no write before the wait, then exactly the Likes", async () => {
+			const { h, ids, append, finish } = await many();
+			let refused = 0;
+			let refusedAt = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (refused || p?.items.length !== 900) return null;
+				refused++;
+				refusedAt = h.clock.t;
+				return { status: 429, headers: { "retry-after": "120" } };
+			};
+			await h.hub.retryLikesSync();
+			await h.settle();
+			await h.listen(1_000);
+			expect(refused).toBe(1);
+			const calls = h.fake.calls.length;
+			await h.hub.retryLikesSync();
+			await h.settle();
+			// Within the wait Spotify asked for, no playlist write goes out.
+			const early = h.fake.calls
+				.slice(calls)
+				.filter((c) => /^(PUT|POST) \/v1\/playlists\/[^/]+\/items/.test(c));
+			expect(h.clock.t - refusedAt).toBeLessThan(120_000);
+			expect(early).toEqual([]);
+			const { items, sync } = await finish();
+			expect(items).toEqual(ids);
+			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+		}, 120_000);
+
+		it("a confirmed 429 of an hour, then „Erneut abgleichen“ pressed again and again: no write before the hour (PR39 re-review F2)", async () => {
+			const { h, ids, append, finish } = await many();
+			let refusedAt = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (refusedAt || p?.items.length !== 900) return null;
+				refusedAt = h.clock.t;
+				return { status: 429, headers: { "retry-after": "3600" } };
+			};
+			await h.hub.retryLikesSync();
+			await h.settle();
+			await h.listen(1_000);
+			expect(refusedAt).toBeGreaterThan(0);
+			const calls = h.fake.calls.length;
+			for (let press = 0; press < 4; press++) {
+				await h.hub.retryLikesSync();
+				await h.settle();
+				await h.listen(60_000);
+			}
+			for (let i = 0; i < 50; i++) await h.listen(60_000);
+			expect(h.clock.t - refusedAt).toBeLessThan(3_600_000);
+			const early = h.fake.calls
+				.slice(calls)
+				.filter((c) => /^(PUT|POST) \/v1\/playlists\/[^/]+\/items/.test(c));
+			expect(early).toEqual([]);
+			await h.listen(10 * 60_000);
+			const { items, sync } = await finish();
+			expect(items).toEqual(ids);
+			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+		}, 300_000);
+
+		it("sent again by hand while a run is pending and after its first confirmed step: exactly the Likes", async () => {
+			const { h, ids, append, playlist, finish } = await many();
+			// The first step is confirmed (800), then one write fails (503, shown)
+			// and the run waits to try again; the listener sends again twice.
+			let refused = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (refused || p?.items.length !== 800) return null;
+				refused++;
+				return { status: 503 };
+			};
+			await h.hub.retryLikesSync();
+			await h.hub.retryLikesSync(); // pressed again before anything ran
+			await h.settle();
+			await h.listen(1_000);
+			expect(refused).toBe(1);
+			expect(playlist()?.items.length).toBe(800);
+			await h.hub.retryLikesSync();
+			await h.hub.retryLikesSync();
+			const { items, sync } = await finish();
+			expect(items).toEqual(ids);
+			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+		}, 120_000);
+
+		it("sent again by hand while writes keep going unanswered: still bounded, the error stays honest", async () => {
+			const { h, append } = await many();
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				return p && p.items.length >= 1600 ? { status: 502 } : null;
+			};
+			const calls = h.fake.calls.length;
+			for (let round = 0; round < 3; round++) {
+				await h.hub.retryLikesSync();
+				for (let i = 0; i < 120; i++) await h.listen(60_000);
+				await h.settle();
+			}
+			const writes = h.fake.calls
+				.slice(calls)
+				.filter((c) => /^(PUT|POST) \/v1\/playlists\/[^/]+\/items/.test(c));
+			expect(writes.length).toBeLessThan(3 * 80);
+			const sync = (await h.hub.state()).likes?.sync;
+			expect(sync?.pending).toBe(true);
+			expect(sync?.error).toBeTruthy();
+		}, 300_000);
+
+		it("a write that never arrived plus as many songs added by hand: exactly the Likes, in order", async () => {
+			const { h, ids, append, finish } = await many();
+			const others = [...h.fake.tracks.keys()].slice(1700, 1800);
+			let lost = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (lost || p?.items.length !== 900) return null;
+				lost++;
+				p.items.push(...others); // not ours: the same count, other songs
+				return { status: 502 };
+			};
+			await h.hub.retryLikesSync();
 			const { items } = await finish();
 			expect(lost).toBe(1);
 			expect(items).toEqual(ids);
-			const asked = h.fake.calls
-				.slice(calls)
-				.filter((c) => /^GET \/v1\/playlists\/[^/]+(\?|$)/.test(c));
-			expect(asked).toHaveLength(1);
 		}, 120_000);
 
 		it("lost answer and the playlist changed elsewhere meanwhile: written again from the top, exactly", async () => {

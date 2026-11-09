@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { statePollMs } from "../../src/shared/poll-pace";
-import { isStorageLimit, storageLimitMessage } from "../../src/worker/lib/storage-limit";
+import {
+	isStorageFull,
+	isStorageLimit,
+	storageFullMessage,
+	storageLimitMessage,
+} from "../../src/worker/lib/storage-limit";
 
 describe("P1 storage limit", () => {
-	it("tells Cloudflare's limit errors apart from ordinary failures", () => {
+	it("tells Cloudflare's daily limit apart from ordinary failures", () => {
 		for (const text of [
 			"Exceeded allowed rows read in Durable Objects free tier.",
 			"Your account has exceeded the daily free tier limit for rows_read",
-			"storage operation exceeded limits",
-			"SQLITE_FULL: database or disk is full",
+			"Exceeded allowed rows written in Durable Objects free tier.",
 		])
 			expect(isStorageLimit(new Error(text)), text).toBe(true);
 		for (const text of [
@@ -23,8 +27,26 @@ describe("P1 storage limit", () => {
 			"Too many requests: rate limit exceeded",
 			"Durable Object storage operation exceeded timeout which caused object to be reset.",
 			"Durable Object is overloaded. Requests queued for too long.",
-		])
+		]) {
 			expect(isStorageLimit(new Error(text)), text).toBe(false);
+			expect(isStorageFull(new Error(text)), text).toBe(false);
+		}
+	});
+
+	it("a full database or another storage limit is no daily limit: no reset is promised (PR31-STORAGE)", () => {
+		for (const text of [
+			"SQLITE_FULL: database or disk is full",
+			"database or disk is full",
+			"storage operation exceeded limits",
+			"Durable Object storage limit exceeded",
+		]) {
+			expect(isStorageLimit(new Error(text)), text).toBe(false);
+			expect(isStorageFull(new Error(text)), text).toBe(true);
+		}
+		const said = storageFullMessage();
+		expect(said).not.toMatch(/Uhr|Tageslimit|morgen|Mitternacht/);
+		expect(said).toMatch(/bleibt erhalten/);
+		expect(said).toMatch(/nicht bekannt/);
 	});
 
 	it("names when it ends on the German clock (00:00 UTC)", () => {

@@ -28,13 +28,13 @@ export const RELEASE: Release = Object.freeze({
 	version,
 	date: "2026-11-08",
 	changes: Object.freeze([
-		"Die Suche im Verlauf zeigt nur deine eigenen Songs, auch direkt nach Ab- und Anmelden oder einem Kontowechsel.",
-		"Pausierst du kurz vor Songende selbst, bleibt es still: „Nach diesem Song fortsetzen“ startet dann nichts von allein.",
-		"TrueShuffle Likes: Hakt Spotify beim Speichern, landet trotzdem jeder Song genau einmal in deiner Playlist.",
-		"Lautstärke und Gerätename sind am Tag wieder gut lesbar.",
+		"Pausierst du selbst, bleibt es still – bis zur letzten Sekunde: „Nach diesem Song fortsetzen“ startet nichts von allein.",
+		"Startest du selbst einen anderen Song, läuft er weiter, auch kurz vor dem Ende. true-shuffle schneidet ihn nicht ab.",
+		"TrueShuffle Likes: Nach einem Spotify-Aussetzer oder „Erneut abgleichen“ landet jeder Song genau einmal in der Playlist.",
+		"Ist der Speicher des Servers voll, sagt die App das ehrlich, ohne eine Uhrzeit zu versprechen.",
 	]),
 	known:
-		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. Pausierst du und springst danach in Spotify zurück oder weiter, kann „Nach diesem Song fortsetzen“ trotzdem fortsetzen; nach langem Crossfade oder Vorspulen setzt es manchmal nicht fort und sagt das. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
+		"Reihst du in Spotify von Hand einen späteren Song deiner Kassette ein, hält true-shuffle ihn für die Fortsetzung und rückt deine gespeicherte Stelle dorthin vor. „Nach diesem Song fortsetzen“ setzt nur fort, wenn Spotify den Song angehalten an seinem Ende zeigt, und das tut Spotify nicht immer. Läuft danach ein anderer Song (auch Autoplay oder Crossfade) oder steht die Wiedergabe, startet es nichts und sagt dir, dass du mit „TrueShuffle fortsetzen“ weitermachen kannst. Bei manchen alten Bewertungsdaten können Listen und Bewertungsfenster noch unterschiedliche Werte zeigen. Nicht jeder Song hat eine Hörprobe; sie ist nur zum privaten Anhören gedacht, und ob andere Audio-Apps dabei pausieren, entscheidet dein Gerät.",
 });
 
 /** "1.2.3" as numbers; anything else (a pre-release, a word) is no version here. */

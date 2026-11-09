@@ -311,22 +311,8 @@ const LIKES_DESCRIPTION =
 	"Jeder Song, dem du in true-shuffle einen Daumen hoch gegeben hast, einmal. true-shuffle hält sie aktuell.";
 /** P5: an armed „Nach diesem Song fortsetzen“ gives up after this (a song on repeat, a long mix). */
 const CONTINUE_AFTER_MAX_MS = 45 * MINUTE_MS;
-/** A song seen playing to within this of its end, then gone, counts as ended. */
-const CONTINUE_AFTER_END_SLACK_MS = 20_000;
-/** A song seen with at most this much progress right after the end just began on its own. */
-const CONTINUE_AFTER_NEW_SONG_MS = 30_000;
-/**
- * A paused song counts as ended only when Spotify shows it there: at most this
- * far before its end, or rewound to at most this far after its start once it
- * must have ended. A pause anywhere else is the listener's (B9341-02).
- */
-const CONTINUE_AFTER_AT_END_MS = 2_000;
-/**
- * A new song further along than the time since the predicted end allows (plus
- * this) was picked by hand. Spotify's crossfade starts the next song up to 12 s
- * before the end, so that much earlier still counts as its own start.
- */
-const CONTINUE_AFTER_PICKED_MS = 12_000;
+/** A song stopped at most this far after its start once it must be over stands still: cancelled at once. */
+const CONTINUE_AFTER_AT_START_MS = 2_000;
 /** The Likes playlist is made again at most this often, and never this soon after it was made. */
 const LIKES_REMAKE_GAP_MS = 24 * HOUR_MS;
 const LIKES_FRESH_MS = 10 * MINUTE_MS;
@@ -350,7 +336,12 @@ interface LikesSyncProgress {
 	offset: number;
 	/** A write sent without an answer yet: the Likes [from, to). */
 	sent?: { from: number; to: number };
+	/** Times written again from the top after such a write, for these Likes. */
+	restarts?: number;
 }
+
+/** After this many starts from the top for the same Likes, the sync stops and says so. */
+const LIKES_AMBIGUOUS_RESTARTS = 3;
 
 interface ContinueAfter {
 	stationId: number;
@@ -5007,11 +4998,12 @@ export class HubCore {
 
 	/**
 	 * After every look: has the song been left? Then the alarm resumes (outside
-	 * this look). Only what Spotify shows counts as its end: another song that
-	 * just began, or the song (or the next one) stopped at its end. Elapsed time
-	 * alone never does: a pause before the end keeps waiting, a stop or no
-	 * player cancels (red-team H2, B9341-02: never start music the listener
-	 * stopped).
+	 * this look). Only one thing proves its end: Spotify shows the song itself
+	 * stopped at its end. Everything else the listener could have done too,
+	 * however close to the end: another song (picked, faded in or autoplayed),
+	 * the song or another one paused at its start, no player. Those cancel and
+	 * say so; nothing is started (red-team H2, B9341-02, PR39 re-review: never
+	 * start music the listener stopped, never cut a song they chose).
 	 */
 	private noteContinueAfter(snap: PlayerSnapshot): void {
 		const c = this.kvGet<ContinueAfter>("continue_after");
@@ -5026,35 +5018,45 @@ export class HubCore {
 			settle({ ok: false, at: this.now(), message: "Die TrueShuffle-Stelle hat sich geändert." });
 			return;
 		}
+		const seen = c.seen;
 		if (this.now() - c.armedAt > CONTINUE_AFTER_MAX_MS) {
 			settle({
 				ok: false,
 				at: this.now(),
-				message: "Der Song lief länger als erwartet; nichts fortgesetzt.",
+				// Waited this long on a paused song: it stands, it did not run long.
+				message:
+					seen && !seen.playing
+						? "Die Wiedergabe steht; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter."
+						: "Der Song lief länger als erwartet; nichts fortgesetzt.",
 			});
 			return;
 		}
-		const seen = c.seen;
-		// Where the song would be had it played on since the last look. Time
-		// alone never ends it: a paused (or vanished) player also needs Spotify
-		// to show the end itself, or the song must be past its end outright.
-		const predicted =
-			seen?.playing && seen.durationMs > 0 ? seen.progressMs + (this.now() - seen.at) : null;
-		const endReached =
-			predicted != null && predicted >= seen!.durationMs - CONTINUE_AFTER_END_SLACK_MS;
-		const surelyOver = predicted != null && predicted >= seen!.durationMs;
+		// Where the song would be had it played on since the last look.
+		const over =
+			!!seen?.playing &&
+			seen.durationMs > 0 &&
+			seen.progressMs + (this.now() - seen.at) >= seen.durationMs;
 		if (obs?.trackId === c.trackId) {
-			// Played to its end and stopped there (no autoplay): that is its end too,
-			// shown at the end or rewound to the start. Paused anywhere else is the
-			// listener's pause: only a later look may still see the end.
-			const shownAtEnd =
-				obs.durationMs > 0 &&
-				(obs.progressMs >= obs.durationMs - CONTINUE_AFTER_AT_END_MS ||
-					(surelyOver && obs.progressMs <= CONTINUE_AFTER_AT_END_MS));
-			if (!obs.isPlaying && endReached && shownAtEnd) {
+			// Stopped at its very end (no autoplay): its end.
+			if (!obs.isPlaying && obs.durationMs > 0 && obs.progressMs >= obs.durationMs) {
 				this.kvSet("continue_after", { ...c, due: true });
 				return;
 			}
+			// Once it must be over, the song stopped back at its start: it ended
+			// on its own or the listener went back and paused; either way nothing
+			// is started, and the listener is told now, not after the wait
+			// (PR39 re-review F1).
+			if (!obs.isPlaying && over && obs.progressMs <= CONTINUE_AFTER_AT_START_MS) {
+				settle({
+					ok: false,
+					at: this.now(),
+					message:
+						"Die Wiedergabe steht; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter.",
+				});
+				return;
+			}
+			// Paused anywhere else is or may be the listener's: keep waiting, a
+			// later look may still see it play on to its end.
 			this.kvSet("continue_after", {
 				...c,
 				seen: {
@@ -5071,42 +5073,15 @@ export class HubCore {
 			settle({ ok: true, at: this.now(), message: null });
 			return;
 		}
-		// Another song that just began after this one ran out (autoplay, the
-		// context's next): its end. One the listener picked mid-song, already
-		// well under way, is the listener's choice: never cut it, cancel instead.
-		// It began no earlier than this one's predicted end, or a crossfade before
-		// it (a later end, after an unseen pause, only makes it younger). Seen
-		// before that end, it may be no older than the fade: one picked earlier
-		// is the listener's, however young (signed, not clamped: red-team T3).
-		const sinceEnd =
-			predicted == null || !obs ? 0 : predicted - seen!.durationMs - (this.now() - obs.at);
-		const justBegan =
-			!!obs?.isPlaying &&
-			!!obs.trackId &&
-			obs.progressMs <= CONTINUE_AFTER_NEW_SONG_MS &&
-			obs.progressMs <= sinceEnd + CONTINUE_AFTER_PICKED_MS;
-		// Another song paused right at its start once this one was surely over:
-		// Spotify loaded what came next. No player at all shows no end (the
-		// listener may have stopped it): that cancels below, never plays.
-		const stoppedAfter =
-			surelyOver && !!obs?.trackId && !obs.isPlaying && obs.progressMs <= CONTINUE_AFTER_AT_END_MS;
-		if ((endReached && justBegan) || stoppedAfter) {
-			this.kvSet("continue_after", { ...c, due: true });
-			return;
-		}
-		if (obs?.isPlaying && obs.trackId) {
-			settle({
-				ok: false,
-				at: this.now(),
-				message:
-					"Du hast selbst einen anderen Song gestartet; er läuft weiter, nichts fortgesetzt.",
-			});
-			return;
-		}
+		// Another song, or none: whether this one ran out or the listener moved
+		// on cannot be told from here. Nothing is started; the saved place waits.
+		const ended = over;
 		settle({
 			ok: false,
 			at: this.now(),
-			message: "Die Wiedergabe wurde vor dem Songende angehalten; nichts fortgesetzt.",
+			message: obs?.trackId
+				? `${ended ? "Der Song ist vorbei, jetzt läuft ein anderer" : "Jetzt läuft ein anderer Song"}; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter.`
+				: "Die Wiedergabe steht; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter.",
 		});
 	}
 
@@ -5225,8 +5200,23 @@ export class HubCore {
 
 	/** The listener asks to write the playlist again (after a shown failure). */
 	async retryLikesSync(): Promise<LikesView> {
+		// Sent again by hand: starts fresh from the top, both halves together.
+		// The saved place and the job's own offset go at once; a job left
+		// waiting with its old offset would otherwise append from there onto a
+		// playlist that already holds more (PR39 re-review R132-LIKES-RETRY).
+		// A replacing first write makes it exactly the Likes whatever it holds.
+		this.kvDel("likes_sync_progress");
 		this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
-		this.enqueue("likes-sync", "likes-sync", {}, 2);
+		// Never sooner than a wait Spotify asked for (a 429): the retry waits too.
+		// Kept until it has passed: pressing again never shortens it (PR39 re-review F2).
+		const waitUntil = this.kvGet<number | null>("likes_sync_wait_until") ?? 0;
+		if (waitUntil <= this.now()) this.kvDel("likes_sync_wait_until");
+		const delay = Math.max(0, waitUntil - this.now());
+		this.enqueue("likes-sync", "likes-sync", {}, 2, delay);
+		this.db.run(
+			`UPDATE jobs SET state = '{}', attempts = 0, run_after = MAX(run_after, ?) WHERE key = 'likes-sync'`,
+			this.now() + delay,
+		);
 		await this.scheduleSoon(0);
 		return this.likesView();
 	}
@@ -5270,13 +5260,31 @@ export class HubCore {
 			// the end of the step: a failure later in the step (or a step cut short)
 			// never sends an acknowledged append again (B9341-01).
 			const progress = this.kvGet<LikesSyncProgress>("likes_sync_progress");
+			let restarts = progress?.rev === rev && progress.pid === pid ? (progress.restarts ?? 0) : 0;
 			const keep = (sent: LikesSyncProgress["sent"]) =>
-				this.kvSet("likes_sync_progress", { rev, pid, offset, sent } satisfies LikesSyncProgress);
+				this.kvSet("likes_sync_progress", {
+					rev,
+					pid,
+					offset,
+					sent,
+					restarts,
+				} satisfies LikesSyncProgress);
 			try {
-				// Asking what arrived meets a gone playlist like a write does (made again below).
+				// A write whose answer never came: what arrived is unknown, and no
+				// count proves the content (the listener may have changed the playlist
+				// too). Start over from the top: replacing makes it exactly the Likes
+				// whatever it holds now (PR36 review, B9341-01).
 				if (progress?.rev === rev && progress.pid === pid) {
-					offset = progress.offset;
-					if (progress.sent) offset = await this.settleLikesWrite(client, pid, progress.sent);
+					offset = progress.sent ? 0 : progress.offset;
+					// Never without end: a write that keeps going unanswered would
+					// otherwise rewrite the playlist again and again (PR36 re-review).
+					if (progress.sent && ++restarts > LIKES_AMBIGUOUS_RESTARTS) {
+						this.kvSet("likes_sync_progress", { ...progress, restarts });
+						fail(
+							"Spotify hat mehrmals nicht bestätigt, ob die Likes gespeichert wurden. Bitte später nochmal senden.",
+						);
+						return { done: true };
+					}
 				}
 				// Already all there (cut short right after the last write): nothing to send.
 				for (
@@ -5339,26 +5347,14 @@ export class HubCore {
 		} catch (err) {
 			if (!(err instanceof SpotifyError && err.kind === "budget"))
 				fail(err instanceof Error ? err.message : String(err));
+			// A wait Spotify asked for holds for a retry by hand too.
+			if (err instanceof SpotifyError && (err.kind === "rate" || err.kind === "quota"))
+				this.kvSet(
+					"likes_sync_wait_until",
+					err.retryAfter === null ? null : this.now() + Math.max(1000, err.retryAfterMs),
+				);
 			throw err;
 		}
-	}
-
-	/**
-	 * A write whose answer never came: did it arrive? The playlist's length
-	 * tells: without it, the same write again; with it, on after it. Any other
-	 * length (changed elsewhere meanwhile) starts over from the top, which
-	 * replaces the playlist and so is right whatever it holds.
-	 */
-	private async settleLikesWrite(
-		client: SpotifyClient,
-		pid: string,
-		sent: { from: number; to: number },
-	): Promise<number> {
-		if (sent.from === 0) return 0;
-		const total = (await client.playlist(pid))?.items?.total;
-		if (total === sent.from) return sent.from;
-		if (total === sent.to) return sent.to;
-		return 0;
 	}
 
 	/** What the app shows about the Likes (P4). */
