@@ -258,6 +258,36 @@ for (const before of [1_001, 1_000, 999, 500, 1]) {
 	});
 }
 
+// The song ends on its own and Spotify leaves it paused at its start (no
+// autoplay): nothing is started, and the listener is told at once, not after
+// a 45-minute wait with a wrong reason (PR39 re-review F1).
+it("ends on its own, Spotify leaves it paused at its start: cancelled at once, honestly", async () => {
+	const { h, b, s, sid } = await outsidePlaying();
+	h.fake.user("mika").player.autoplay = false;
+	await h.hub.continueAfter(b);
+	const calls = h.fake.calls.length;
+	await h.listen(h.fake.tracks.get(b)!.durationMs - 60_000 + 5_000);
+	expect(h.fake.current()).toBe(b);
+	expect(h.fake.user("mika").player.isPlaying).toBe(false);
+	await h.listen(3 * 60_000);
+	await cancelled(h, calls, s, sid);
+	expect((await h.hub.state()).continueAfter?.result?.message).toMatch(/Die Wiedergabe steht/);
+});
+
+it("paused by hand 200 ms before the end and left: after the wait it says it stands, not that it ran long", async () => {
+	const { h, b, s, sid } = await outsidePlaying();
+	await h.hub.continueAfter(b);
+	const d = h.fake.tracks.get(b)!.durationMs;
+	await h.listen(d - 60_000 - 200);
+	h.fake.pause("mika");
+	const calls = h.fake.calls.length;
+	await h.listen(50 * 60_000);
+	await cancelled(h, calls, s, sid);
+	const message = (await h.hub.state()).continueAfter?.result?.message;
+	expect(message).toMatch(/Die Wiedergabe steht/);
+	expect(message).not.toMatch(/länger als erwartet/);
+});
+
 for (const which of ["same", "other"] as const) {
 	for (const looked of [false, true]) {
 		it(`paused by hand, then the ${which} song paused at its start (${looked ? "seen in between" : "unseen"}): nothing is started (PR39 re-review R132-PAUSED-REWIND)`, async () => {

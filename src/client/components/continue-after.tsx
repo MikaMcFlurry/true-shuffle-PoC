@@ -36,8 +36,10 @@ export function ContinueAfter({
 	return waiting ? (
 		<div class="stack continue-after" role="status">
 			<p>
-				<strong>Nach diesem Song geht es mit TrueShuffle weiter.</strong> Der Song läuft ganz zu
-				Ende. Läuft danach etwas anderes oder hältst du an, startet true-shuffle nichts von selbst.
+				<strong>Gemerkt: Nach diesem Song soll es mit TrueShuffle weitergehen.</strong> Der Song
+				läuft ganz zu Ende. Fortgesetzt wird nur, wenn Spotify ihn angehalten an seinem Ende zeigt.
+				Läuft danach etwas anderes oder steht die Wiedergabe, startet true-shuffle nichts und sagt
+				dir Bescheid.
 			</p>
 			<button
 				type="button"
@@ -61,7 +63,7 @@ export function ContinueAfter({
 			onClick={() =>
 				void act(
 					() => api.continueAfter(trackId),
-					"Gemerkt: Nach diesem Song geht es mit TrueShuffle weiter.",
+					"Gemerkt: Nach diesem Song soll es mit TrueShuffle weitergehen.",
 				)
 			}
 		>

@@ -311,6 +311,8 @@ const LIKES_DESCRIPTION =
 	"Jeder Song, dem du in true-shuffle einen Daumen hoch gegeben hast, einmal. true-shuffle hält sie aktuell.";
 /** P5: an armed „Nach diesem Song fortsetzen“ gives up after this (a song on repeat, a long mix). */
 const CONTINUE_AFTER_MAX_MS = 45 * MINUTE_MS;
+/** A song stopped at most this far after its start once it must be over stands still: cancelled at once. */
+const CONTINUE_AFTER_AT_START_MS = 2_000;
 /** The Likes playlist is made again at most this often, and never this soon after it was made. */
 const LIKES_REMAKE_GAP_MS = 24 * HOUR_MS;
 const LIKES_FRESH_MS = 10 * MINUTE_MS;
@@ -5016,23 +5018,45 @@ export class HubCore {
 			settle({ ok: false, at: this.now(), message: "Die TrueShuffle-Stelle hat sich geändert." });
 			return;
 		}
+		const seen = c.seen;
 		if (this.now() - c.armedAt > CONTINUE_AFTER_MAX_MS) {
 			settle({
 				ok: false,
 				at: this.now(),
-				message: "Der Song lief länger als erwartet; nichts fortgesetzt.",
+				// Waited this long on a paused song: it stands, it did not run long.
+				message:
+					seen && !seen.playing
+						? "Die Wiedergabe steht; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter."
+						: "Der Song lief länger als erwartet; nichts fortgesetzt.",
 			});
 			return;
 		}
-		const seen = c.seen;
+		// Where the song would be had it played on since the last look.
+		const over =
+			!!seen?.playing &&
+			seen.durationMs > 0 &&
+			seen.progressMs + (this.now() - seen.at) >= seen.durationMs;
 		if (obs?.trackId === c.trackId) {
-			// Stopped at its very end (no autoplay): its end. Paused anywhere
-			// before, or at its start, is or may be the listener's: keep waiting,
-			// a later look may still see it play on to the end.
+			// Stopped at its very end (no autoplay): its end.
 			if (!obs.isPlaying && obs.durationMs > 0 && obs.progressMs >= obs.durationMs) {
 				this.kvSet("continue_after", { ...c, due: true });
 				return;
 			}
+			// Once it must be over, the song stopped back at its start: it ended
+			// on its own or the listener went back and paused; either way nothing
+			// is started, and the listener is told now, not after the wait
+			// (PR39 re-review F1).
+			if (!obs.isPlaying && over && obs.progressMs <= CONTINUE_AFTER_AT_START_MS) {
+				settle({
+					ok: false,
+					at: this.now(),
+					message:
+						"Die Wiedergabe steht; true-shuffle startet nichts von selbst. Mit „TrueShuffle fortsetzen“ geht es an deiner Stelle weiter.",
+				});
+				return;
+			}
+			// Paused anywhere else is or may be the listener's: keep waiting, a
+			// later look may still see it play on to its end.
 			this.kvSet("continue_after", {
 				...c,
 				seen: {
@@ -5051,10 +5075,7 @@ export class HubCore {
 		}
 		// Another song, or none: whether this one ran out or the listener moved
 		// on cannot be told from here. Nothing is started; the saved place waits.
-		const ended =
-			!!seen?.playing &&
-			seen.durationMs > 0 &&
-			seen.progressMs + (this.now() - seen.at) >= seen.durationMs;
+		const ended = over;
 		settle({
 			ok: false,
 			at: this.now(),
@@ -5187,8 +5208,9 @@ export class HubCore {
 		this.kvDel("likes_sync_progress");
 		this.kvSet("likes_sync", { ...this.likesSync(), pending: true });
 		// Never sooner than a wait Spotify asked for (a 429): the retry waits too.
+		// Kept until it has passed: pressing again never shortens it (PR39 re-review F2).
 		const waitUntil = this.kvGet<number | null>("likes_sync_wait_until") ?? 0;
-		this.kvDel("likes_sync_wait_until");
+		if (waitUntil <= this.now()) this.kvDel("likes_sync_wait_until");
 		const delay = Math.max(0, waitUntil - this.now());
 		this.enqueue("likes-sync", "likes-sync", {}, 2, delay);
 		this.db.run(

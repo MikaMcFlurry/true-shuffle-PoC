@@ -375,6 +375,37 @@ describe("TrueShuffle Likes (P4)", () => {
 			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
 		}, 120_000);
 
+		it("a confirmed 429 of an hour, then „Erneut abgleichen“ pressed again and again: no write before the hour (PR39 re-review F2)", async () => {
+			const { h, ids, append, finish } = await many();
+			let refusedAt = 0;
+			h.fake.failWhen = (m, path) => {
+				const p = append(m, path);
+				if (refusedAt || p?.items.length !== 900) return null;
+				refusedAt = h.clock.t;
+				return { status: 429, headers: { "retry-after": "3600" } };
+			};
+			await h.hub.retryLikesSync();
+			await h.settle();
+			await h.listen(1_000);
+			expect(refusedAt).toBeGreaterThan(0);
+			const calls = h.fake.calls.length;
+			for (let press = 0; press < 4; press++) {
+				await h.hub.retryLikesSync();
+				await h.settle();
+				await h.listen(60_000);
+			}
+			for (let i = 0; i < 50; i++) await h.listen(60_000);
+			expect(h.clock.t - refusedAt).toBeLessThan(3_600_000);
+			const early = h.fake.calls
+				.slice(calls)
+				.filter((c) => /^(PUT|POST) \/v1\/playlists\/[^/]+\/items/.test(c));
+			expect(early).toEqual([]);
+			await h.listen(10 * 60_000);
+			const { items, sync } = await finish();
+			expect(items).toEqual(ids);
+			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
+		}, 300_000);
+
 		it("sent again by hand while a run is pending and after its first confirmed step: exactly the Likes", async () => {
 			const { h, ids, append, playlist, finish } = await many();
 			// The first step is confirmed (800), then one write fails (503, shown)
