@@ -1,0 +1,97 @@
+[
+  {
+    "path": "index.html",
+    "match": true,
+    "sha256": "8690b580baabc1b66f3411a8e7eaee59da9c3bc8fbcf9c173ec86ef0626cd41e"
+  },
+  {
+    "path": "apple-touch-icon.png.json",
+    "match": true,
+    "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+  },
+  {
+    "path": "icon-192.png.json",
+    "match": true,
+    "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+  },
+  {
+    "path": "icon-512.png",
+    "match": true,
+    "sha256": "be005a6b78f252856fae4b61908c697e81d11e43ed4d2a39cf070ee9087bc5d2"
+  },
+  {
+    "path": "manifest.webmanifest",
+    "match": true,
+    "sha256": "1c9028febad670d002c66d3f42a95c561ce6690dc31b6ac9a63d1c27819f73bf"
+  },
+  {
+    "path": "apple-touch-icon.png",
+    "match": true,
+    "sha256": "8231c332bb95ca4cc0fc9128fec4e9be1ed7898bc4a502b39cffb1fef6c566ea"
+  },
+  {
+    "path": "icon.svg",
+    "match": true,
+    "sha256": "a6f2d7214c22802f88380f049973eb5745afbe0fc501b151d83d59b32dcfbcf1"
+  },
+  {
+    "path": "icon-192.png",
+    "match": true,
+    "sha256": "bfa0a92a3752f97acc58ada50bb53b09f36fe83b77f7b39cf7d559b137bf8cec"
+  },
+  {
+    "path": "icon-512.png.json",
+    "match": true,
+    "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+  },
+  {
+    "path": "assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2",
+    "match": true,
+    "sha256": "18b2a1a39a2fa298b0ba5390aca68462669826c90925656f1c1f6796e0e1bbaf"
+  },
+  {
+    "path": "assets/permanent-marker-latin-400-normal-BnZj5c41.woff",
+    "match": true,
+    "sha256": "ab8ac2bb72d48e089e37d8eefbacdfe2d74ccd48ae786d952fce9874837d2b2b"
+  },
+  {
+    "path": "assets/index-o2CZ2a3l.js.map",
+    "match": false,
+    "sha256": "c7a44f2093abeb662f5827be7c92973a3c57a63c97e1acf3d754fb507ebf9870"
+  },
+  {
+    "path": "assets/atkinson-hyperlegible-next-latin-ext-wght-normal-C6vrW8VD.woff2",
+    "match": true,
+    "sha256": "7dae0c6c66af1aec82e096186aeb1f0e6fa36ab8061ed65422f2b7daf4dd93f3"
+  },
+  {
+    "path": "assets/bricolage-grotesque-latin-ext-standard-normal-qp-RdZgh.woff2",
+    "match": true,
+    "sha256": "e1a04c169c022f63ad24fc1b6fbd932dee1ded62ac08734eeb1d5d51afee38dd"
+  },
+  {
+    "path": "assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2",
+    "match": true,
+    "sha256": "a756882d8a7802ebd4663b4544a62ebedafc7227c1c159ab95eea61393af3f8e"
+  },
+  {
+    "path": "assets/index-D1jbtiFZ.css",
+    "match": true,
+    "sha256": "4ac4a6dc799922ca8702c6f3514990a301835f7ff644be8542f1c5bb086cdba1"
+  },
+  {
+    "path": "assets/bricolage-grotesque-vietnamese-standard-normal-Br4FGdAc.woff2",
+    "match": true,
+    "sha256": "ee5fe4a5cec44fe749450889c91b3bccdb0254f9a103619ee92fa7be08653639"
+  },
+  {
+    "path": "assets/index-o2CZ2a3l.js",
+    "match": true,
+    "sha256": "3bdd1c7eff4a8edb03ddb575ce53cfd298ac48acdb6c186bcc0b2b7e69cc7259"
+  },
+  {
+    "path": "assets/permanent-marker-latin-400-normal-BF23djCy.woff2",
+    "match": true,
+    "sha256": "4884fec2c73aa52a2461073c1b87d1ceb80f400520391b43f97ca7d3c39eeb24"
+  }
+]

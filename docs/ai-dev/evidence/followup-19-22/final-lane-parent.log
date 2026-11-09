@@ -1,0 +1,44 @@
+
+ RUN  v5.0.2 /workspace/ts-review-19-22
+
+stdout | ../../tmp/final-lane-parent.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../../tmp/final-lane-parent.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/final-lane-parent.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+{"level":"info","kind":"import","message":"„Playlist 1“: 200 Songs übernommen, 0 übersprungen"}
+
+stdout | ../../tmp/final-lane-parent.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+{"id":"T00000000000000000001k","oldKind":"fresh","newKind":"favorite","actual":"fresh"}
+
+ ❯ ../../tmp/final-lane-parent.test.ts (3 tests | 1 failed | 2 skipped) 107ms
+   × independent: unlisted short occurrence must not donate its lane to a later unobserved repeat 106ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tmp/final-lane-parent.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+AssertionError: expected 'fresh' to be null
+
+- Expected:
+null
+
++ Received:
+"fresh"
+
+ ❯ ../../tmp/final-lane-parent.test.ts:37:58
+     35|  const row=h.hub.history(20).find((x:any)=>x.id===id)!;
+     36|  console.log(JSON.stringify({id,oldKind,newKind,actual:row?.facts?.kin…
+     37|  expect(row).toBeDefined();expect(row.facts?.kind??null).toBeNull();
+       |                                                          ^
+     38| });
+     39| it('independent: public new mix plus Spotify repeat cannot reuse a ski…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  07:53:42
+   Duration  610ms (transform 59%, tests 21%, import 18%, worker 1%)

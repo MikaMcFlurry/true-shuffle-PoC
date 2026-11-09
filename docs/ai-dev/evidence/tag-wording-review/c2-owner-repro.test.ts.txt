@@ -1,0 +1,35 @@
+import {describe,it,expect} from '/workspace/ts-review-c2f9/node_modules/vitest/dist/index.js';
+import {onboarded} from '/workspace/ts-review-c2f9/test/hub/harness.ts';
+import {HOUR_MS,MINUTE_MS} from '/workspace/ts-review-c2f9/src/core/types.ts';
+function deck(h:any,sid:number){return JSON.parse(h.sql.first('SELECT deck FROM stations WHERE id=?',sid).deck)}
+function playlist(h:any,sid:number){return h.sql.first('SELECT playlist_id FROM stations WHERE id=?',sid).playlist_id}
+describe('Independent reachable temporal provenance attack',()=>{
+ it('owner history reason changes after reachable guest replay and returning to owner mode',async()=>{
+ const h=await onboarded({tracks:600,playlists:[300]}); const sid=h.stationIds[0]!;
+ await h.listen(3*HOUR_MS);
+ // Normal owner mode; no guest writes or fixture deck mutations.
+ expect(await h.hub.play(sid,null,{newQueue:true})).toMatchObject({ok:true});
+ const initial=deck(h,sid); const index=initial.items.findIndex((i:any)=>i.kind==='discovery');expect(index).toBeGreaterThanOrEqual(0);const id=initial.items[index].id;
+ h.fake.startContext('mika','spotify:playlist:'+playlist(h,sid),index,'mika-phone',false);
+ await h.listen(5*MINUTE_MS);
+ const old=h.hub.history(100).find(e=>e.id===id)!;expect(old).toBeDefined();expect(old.ignored).toBe(false);expect(old.facts!.kind).toBe('discovery');
+ await h.hub.thumb(id,1);
+ const companion=initial.items.find((i:any)=>i.kind==='discovery'&&i.id!==id).id;
+ const ci=deck(h,sid).items.findIndex((i:any)=>i.id===companion);
+ h.fake.startContext('mika','spotify:playlist:'+playlist(h,sid),ci,'mika-phone',false);
+ await h.listen(5*MINUTE_MS);
+ await h.hub.thumb(companion,1);
+ // An ordinary station source change to the already-imported empty liked source;
+ // the kept discovery remains this station's pool, so a new round is available.
+ h.hub.updateStation(sid,{sources:[{type:'liked'}]});
+ await h.hub.setGuest(true,2);
+ expect(await h.hub.play(sid,null,{newQueue:true})).toMatchObject({ok:true});
+ const replacement=deck(h,sid);const ix=replacement.items.findIndex((i:any)=>i.id===id);expect(ix).toBeGreaterThanOrEqual(0);expect(replacement.items[ix].kind).toBe('fresh');
+ h.fake.startContext('mika','spotify:playlist:'+playlist(h,sid),ix,'mika-phone',false);
+ for(let n=0;n<10;n++){await h.listen(30_000);await h.hub.state({live:true,refresh:true});const check=h.hub.history(100).find(e=>e.id===id&&e.playedAt===old.playedAt)!;console.log('BOUNDARY',n,check.facts!.kind,deck(h,sid).items.find((i:any)=>i.id===id));if(check.facts!.kind!==null&&check.facts!.kind!==old.facts!.kind)break;}
+ await h.hub.setGuest(false);
+ const after=h.hub.history(100).find(e=>e.id===id&&e.playedAt===old.playedAt)!;
+ console.log('PROVENANCE',JSON.stringify({id,old,after,oldDeckItem:initial.items[index],newDeckItem:deck(h,sid).items.find((i:any)=>i.id===id)}));
+ expect(after.facts!.kind===null||after.facts!.kind===old.facts!.kind).toBe(true);
+ });
+});

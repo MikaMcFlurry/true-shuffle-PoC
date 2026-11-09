@@ -1,0 +1,37 @@
+[
+  {
+    "case": "health",
+    "http": "200",
+    "body": "{\"ok\":true,\"version\":\"1.0.0\",\"configured\":true}"
+  },
+  {
+    "case": "state",
+    "http": "401",
+    "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+  },
+  {
+    "case": "devices",
+    "http": "401",
+    "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+  },
+  {
+    "case": "history",
+    "http": "401",
+    "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+  },
+  {
+    "case": "protected_command",
+    "http": "403",
+    "body": "{\"error\":{\"code\":\"csrf\",\"message\":\"Ung\u00fcltige Anfrage\"}}"
+  },
+  {
+    "case": "foreign_origin",
+    "http": "403",
+    "body": "{\"error\":{\"code\":\"csrf\",\"message\":\"Ung\u00fcltige Anfrage\"}}"
+  },
+  {
+    "case": "native",
+    "http": "401",
+    "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+  }
+]

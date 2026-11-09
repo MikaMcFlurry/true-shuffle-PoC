@@ -1,0 +1,109 @@
+{
+  "schema_version": "true-shuffle.four-design-review.v1",
+  "observed_at": "2026-10-07T07:26:38.003504+00:00",
+  "source_sha": "d2e0d8b0010f7e4675f8b3c8f54753cb22c0e7a4",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "baseline_sha": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
+  "release_verdict": "NOT_READY",
+  "provenance": {
+    "author": "Claude <noreply@anthropic.com>",
+    "session": "https://claude.ai/code/session_01GfrWhVD3PNTtGAxyXcbJSX",
+    "branch": "claude/impeccable-rebrand",
+    "github_author_assumption": null,
+    "completion_comment": "No new explicit completion comment on related PRs 10-13. Source evidence reports separate owner-directed fast-forward; deployment already performed externally."
+  },
+  "prs": {
+    "10": {
+      "head": "d2e0d8b0010f7e4675f8b3c8f54753cb22c0e7a4",
+      "state": "open draft",
+      "base": "codex/cloudflare-restart-plan",
+      "role": "target implementation umbrella; not UI integration destination"
+    },
+    "11": {
+      "head": "d4baa0e973423ba4f96208f09f19d26fbf94b20b",
+      "state": "merged",
+      "role": "historical Claude UI"
+    },
+    "12": {
+      "head": "f7d95e5a1a3268f4a71356072e5ce1fede2e95af",
+      "state": "merged",
+      "role": "historical corrective prerequisite"
+    },
+    "13": {
+      "head": "54493f5cb934f7a29b4857d906c956ab4bf53776",
+      "state": "open draft",
+      "role": "historical restoration documentation"
+    }
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS (two preexisting informational findings)",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit_full": "443 PASS; 1 robustness timeout at 20s under parallel load",
+    "unit_isolated_repeat": "117/117 robustness PASS in 94.73s; do not rewrite full run as 444/444 PASS",
+    "browser_local": "42/42 PASS on real local Worker plus FakeSpotify",
+    "independent_matrix": "24 PASS: four designs, light/dark, 320/390/1440, long unbroken text, transport target sizes; keyboard radio PASS; synthetic API, Chromium151",
+    "ci": {
+      "run": 37582414151,
+      "tested_sha": "fc991432eb78de9f4bc2612f98d516788da821b0",
+      "kind": "PR10 synthetic merge with plan base5ffe99b929b6a8ddf93035370e156fe036fe6a83",
+      "result": "FAIL:41/42 browsers, klassik phone overflow28px in Chromium153 at e2e/designs.spec.ts:115; build/static/unitPASS; dry-run skipped"
+    },
+    "public_browser": "16/16 cases rendered: four designs x light/dark x390/1440; no overflow/pageerrors; klassik dark sign-in contrastFAIL"
+  },
+  "findings": [
+    {
+      "id": "FOUR-DESIGN-STORAGE",
+      "priority": "P2",
+      "files": [
+        "src/client/design.ts:46",
+        "src/client/design.ts:98"
+      ],
+      "reproduction": "Make Storage.prototype.getItem/setItem throw SecurityError; open ?design=linie. Root data-design=linie, BrandMark/filmstrip/meter stay kontakt. Menu choice and newly mounted components disagree after navigation.",
+      "expected": "Active in-memory design remains authoritative when persistence fails; protect query/menu/navigation with browser regression."
+    },
+    {
+      "id": "FOUR-DESIGN-CI",
+      "priority": "P2",
+      "files": [
+        "e2e/designs.spec.ts:115",
+        "src/client/styles/design-klassik.css"
+      ],
+      "reproduction": "CI37582414151 job112664859414 on Chromium153 reports klassik phone scrollWidth-innerWidth=28. Local Chromium151 passing does not close this.",
+      "expected": "No horizontal overflow after fonts and layout settle; reproduce CI browser and retain functional assertions."
+    },
+    {
+      "id": "FOUR-DESIGN-CONTRAST",
+      "priority": "P2",
+      "files": [
+        "src/client/styles/klassik.css:85",
+        "src/client/styles/klassik.css:500"
+      ],
+      "reproduction": "Public klassik dark welcome at390px: sign-in button 16.8px bold700 #fff on #8f7bff, measured contrast3.258:1, below WCAGAA small-text4.5:1.",
+      "expected": "Sign-in text >=4.5:1; verify button tokens across four designs and both themes."
+    }
+  ],
+  "protected_scope": "Worker/core/shared/API/router/playback state machine/config/migrations unchanged against0d; only presentation and theme color synchronization changed. No live Spotify latency or quota acceptance.",
+  "deployment": {
+    "performed_by_this_run": false,
+    "version_id": "6366323b-b835-4bf4-8d7b-f81fd793c475",
+    "deployment_id": "46d439b9-fed6-43f1-ba6f-0f9afaf1f6ad",
+    "traffic_percent": 100,
+    "prior_version_id": "d85912fa-57b2-4a66-a5b4-8b1d9444595d",
+    "runtime_bindings_script_comparison": "All exact equal to authenticated previous-version JSON; USER_HUB/REGISTRY namespace identity, migrationv1, variables and secret bindings preserved",
+    "asset_readback": "52/52 content assets byte identical, including JS CSS fonts icons and map; root / byte identical to built index. /index.html differs by server routing; _headers is upload control, not expected public content.",
+    "health": "200 configured true",
+    "anonymous_auth": "401",
+    "unsafe_post_no_csrf": "403",
+    "foreign_origin_post": "403"
+  },
+  "not_run": [
+    "physical iPhone Safari",
+    "authenticated production Spotify latency/quota/playback",
+    "private HA/MA",
+    "populated Durable Object restore"
+  ],
+  "actions": "No duplicate merge/deployment/rollback. Request bounded corrections and explicit completion comment before future release.",
+  "handoff_note": "Mapped repository intelligence remains historical09d772; do not infer current source/UI freshness from that old binding. Current review is this file."
+}

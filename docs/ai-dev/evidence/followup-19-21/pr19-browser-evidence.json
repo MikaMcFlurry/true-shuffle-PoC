@@ -1,0 +1,141 @@
+{
+  "checks": [
+    "0..100 native mix values/readouts, one debounced PATCH, server saved100",
+    "other rules preserved by partial mix PATCH",
+    "keyboard Home/ArrowRight and immediate navigation flush saved1",
+    "favourite pointer input stages locally; change commits37% once",
+    "favourite0/1/60% persists",
+    "automatic favourite null persists",
+    "mix failed PATCH error visible and rollback to server mix",
+    "phone390/desktop1440 light/dark long-label render; range44px target/no pageoverflow",
+    "offline favourite PATCH cannot change server state",
+    "new cassette arbitrarymix37 saved through real API"
+  ],
+  "observations": [
+    {
+      "scenario": "rapid keyboard increments with 1200ms delayed PATCH",
+      "start": 37,
+      "firstDisplayed": "37",
+      "secondDisplayed": "37",
+      "requests": [
+        {
+          "rules": {
+            "favoriteShare": 0.38
+          }
+        },
+        {
+          "rules": {
+            "favoriteShare": 0.38
+          }
+        }
+      ],
+      "saved": 0.38
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "measured": {
+        "overflow": 0,
+        "ranges": [
+          {
+            "value": "1",
+            "width": 358,
+            "height": 44,
+            "name": "Genau einstellen 1",
+            "aria": "52 % ungehört, 10 % Favoriten, 38 % Entdeckungen",
+            "accent": "rgb(194, 65, 42)"
+          },
+          {
+            "value": "10",
+            "width": 324,
+            "height": 44,
+            "name": "Fester Anteil 10 %",
+            "aria": "10 Prozent Favoriten",
+            "accent": "rgb(194, 65, 42)"
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "measured": {
+        "overflow": 0,
+        "ranges": [
+          {
+            "value": "1",
+            "width": 358,
+            "height": 44,
+            "name": "Genau einstellen 1",
+            "aria": "52 % ungehört, 10 % Favoriten, 38 % Entdeckungen",
+            "accent": "rgb(239, 107, 74)"
+          },
+          {
+            "value": "10",
+            "width": 324,
+            "height": 44,
+            "name": "Fester Anteil 10 %",
+            "aria": "10 Prozent Favoriten",
+            "accent": "rgb(239, 107, 74)"
+          }
+        ]
+      }
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "measured": {
+        "overflow": 0,
+        "ranges": [
+          {
+            "value": "1",
+            "width": 760,
+            "height": 44,
+            "name": "Genau einstellen 1",
+            "aria": "52 % ungehört, 10 % Favoriten, 38 % Entdeckungen",
+            "accent": "rgb(194, 65, 42)"
+          },
+          {
+            "value": "10",
+            "width": 726,
+            "height": 44,
+            "name": "Fester Anteil 10 %",
+            "aria": "10 Prozent Favoriten",
+            "accent": "rgb(194, 65, 42)"
+          }
+        ]
+      }
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "measured": {
+        "overflow": 0,
+        "ranges": [
+          {
+            "value": "1",
+            "width": 760,
+            "height": 44,
+            "name": "Genau einstellen 1",
+            "aria": "52 % ungehört, 10 % Favoriten, 38 % Entdeckungen",
+            "accent": "rgb(239, 107, 74)"
+          },
+          {
+            "value": "10",
+            "width": 726,
+            "height": 44,
+            "name": "Fester Anteil 10 %",
+            "aria": "10 Prozent Favoriten",
+            "accent": "rgb(239, 107, 74)"
+          }
+        ]
+      }
+    },
+    {
+      "scenario": "offline favourite",
+      "display": "10",
+      "body": "nn passiert:\n\nSpäter nochmal, dann seltener\nDer Song kommt in diesem Durchgang noch einmal, aber seltener. Nach drei frühen Sprüngen kommt er kaum noch.\nZählt als gehört\nDer Song ist für diesen Durchgang erledigt. Was du magst, ändert sich dadurch nicht.\nNie wieder auf dieser Kassette\nDer Song kommt hier nicht mehr, sobald true-shuffle den Sprung sieht. Rückgängig: Daumen hoch, auch später im Verlauf.\nAbstand bei gleichen Künstlern\n4 Songs\n\nZwischen zwei Songs desselben Künstlers liegen mindestens 4 andere Songs.\n\nNeue Entdeckungen\n\nAn: ungefähr 4 von 10 Songs sind neue Songs, die nicht in deinen Playlists stehen.\n\nName\nName der Kassette\nUmbenennen\n\nIn Spotify heißt die Playlist dazu „true-shuffle · Eine ungewöhnlich lange deutsche Kassettenbezeichnung für Fahrten am Wochenende“.\n\nKassette löschen\n\nDie Kassette verschwindet. Was du gehört hast, bleibt gezählt und gilt auf allen anderen Kassetten weiter.\n\nKassette löschen …\nJetzt\nKassetten\nVerlauf\nMehr\nKeine Verbindung — bist du online?"
+    }
+  ],
+  "errors": []
+}

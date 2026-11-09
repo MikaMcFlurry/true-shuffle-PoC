@@ -1,0 +1,27 @@
+[
+  {
+    "scenario": "pre-existing85% saved value",
+    "server": 0.85,
+    "domValue": "60",
+    "aria": "85 Prozent Favoriten",
+    "max": "60",
+    "label": "Fester Anteil\n85 %"
+  },
+  {
+    "scenario": "one ArrowLeft from saved85",
+    "server": 0.59,
+    "domValue": "59",
+    "aria": "59 Prozent Favoriten"
+  },
+  {
+    "scenario": "actual pointer drag pending",
+    "during": "37",
+    "afterRelease": "37",
+    "serverBeforeAcknowledgment": 0.37
+  },
+  {
+    "scenario": "actual pointer drag acknowledged",
+    "server": 0.37,
+    "range": "37"
+  }
+]

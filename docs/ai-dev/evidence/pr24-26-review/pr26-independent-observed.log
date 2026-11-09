@@ -1,0 +1,35 @@
+
+ RUN  v5.0.2 /workspace/ts-pr26-backend-fresh
+
+stdout | test/hub/pr26-independent-observed.test.ts > records actual corruption and omissions after accepted upload payloads
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr26-independent-observed.test.ts > records actual corruption and omissions after accepted upload payloads
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-observed.test.ts > records actual corruption and omissions after accepted upload payloads
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-observed.test.ts > records actual corruption and omissions after accepted upload payloads
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 1 Wiedergaben"}
+CONCURRENT_CORRUPTION [{"id":"Bxxxxxxxxxxxxxxxxxxxxx","name":"B","sub":"B","plays":1,"minutes":2,"imageUrl":null}]
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 1 Wiedergaben"}
+MISSING_TRACK {"coverage":{"importedFrom":1790229661000,"importedTo":1790229661000,"importedPlays":1,"liveSince":1790305200000,"summaryOnly":false},"plays":0}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 2 Wiedergaben"}
+UNSORTED_LOSS {"coverage":{"importedFrom":1790229661000,"importedTo":1790316061000,"importedPlays":2,"liveSince":1790305200000,"summaryOnly":false},"plays":0}
+
+stdout | test/hub/pr26-independent-observed.test.ts > migration 5 to 6 is additive, retains existing tables, and can restart
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr26-independent-observed.test.ts > migration 5 to 6 is additive, retains existing tables, and can restart
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr26-independent-observed.test.ts > migration 5 to 6 is additive, retains existing tables, and can restart
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  12:32:41
+   Duration  888ms (transform 61%, import 20%, tests 18%)
+

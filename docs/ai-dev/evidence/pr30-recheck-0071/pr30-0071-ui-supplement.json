@@ -1,0 +1,31 @@
+[
+  {
+    "case": "reverse-query-current-bulk",
+    "query": "Beta",
+    "draft": "Song „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen"
+  },
+  {
+    "case": "group-pending-row-lock",
+    "disabled": true,
+    "bulkCount": 0
+  },
+  {
+    "case": "dataset-reload-current-apply",
+    "posted": [
+      {
+        "baseRevision": 1,
+        "enabled": true,
+        "rules": [
+          {
+            "type": "track",
+            "kind": "exclude",
+            "id": "bbbbbbbbbbbbbbbbbbbbbb",
+            "label": "Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel "
+          }
+        ],
+        "dataset": "dataset-two"
+      }
+    ],
+    "message": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDein Import\n\n20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nStand 2.\n\nImport ausschalten\n\nAusschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.\n\nRegeln\n\nEs entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.\n\nFavoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.\n\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts\nEntfernen\nZeitraum ausschließen\nVon (einschließlich)\nBis (einschließlich)\n\nGanze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.\n\nZeitraum hinzufügen\nVorschau und übernehmen\n\nWird gezählt …\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nEntwurf verwerfen\nAuswahl übernehmen\n\nDer Entwurf entspricht dem, was gilt.\n\nÜbernommen (Stand 2). Neue Warteschlangen und Empfehlungen planen ab jetzt damit; eine gespeicherte Warteschlange behält ihre Reihenfolge.\n\nDurchsehen\n\nSuchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.\n\nSong, Künstler oder Album\nGruppieren\nSongs\nKünstler\nZeigen\nAlle\nZählt\nZählt teilweise\nAusgeschlossen\nOhne Wirkung\nSortieren\nMeistgehört\nZuletzt gehört\nName\n\nDie Liste wird für deine Suche und deinen Entwurf aktualisiert — bis dahin lassen sich Einträge nicht ausschließen oder einbeziehen. Deine Änderungen bleiben erhalten.\n\n1–1 von 1. Status nach deinem Entwurf.\n\nBeta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nRegel entfernen\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.\n\nImport löschen\nImport löschen …"
+  }
+]

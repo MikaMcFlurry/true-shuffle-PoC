@@ -1,0 +1,22 @@
+
+> true-shuffle@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.2 /workspace/pr30-recheck-9e8d
+
+SIZE import 282 ms, profile cold 1926 ms, warm 1501 ms, held after 0 MB (no gc)
+ ❯ test/hub/pr30-independent-race.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr30-independent-race.test.ts [ test/hub/pr30-independent-race.test.ts ]
+Error: Cannot find module '/workspace/pr30-recheck-9e8d/test/hub/pr30-independent-race.test.ts'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 48 passed (49)
+      Tests  631 passed (631)
+   Start at  12:25:13
+   Duration  151.22s (tests 96%, import 3%, transform 2%)
+

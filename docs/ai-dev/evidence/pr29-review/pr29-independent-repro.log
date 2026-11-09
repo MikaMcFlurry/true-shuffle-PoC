@@ -1,0 +1,113 @@
+
+ RUN  v5.0.2 /workspace/ts-pr29-backend
+
+stdout | test/hub/pr29-independent.test.ts > two concurrent answers against the same observed track do not skip its successor
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr29-independent.test.ts > two concurrent answers against the same observed track do not skip its successor
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr29-independent.test.ts > two concurrent answers against the same observed track do not skip its successor
+{"level":"info","kind":"import","message":"„Playlist 1“: 60 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr29-independent.test.ts > two concurrent answers against the same observed track do not skip its successor
+{"level":"info","kind":"retest","message":"Nachprüfung: eher nicht: Song 18 — Artist 6"}
+{"level":"info","kind":"retest","message":"Nachprüfung: eher nicht: Song 18 — Artist 6"}
+
+stdout | test/hub/pr29-independent.test.ts > two concurrent answers against the same observed track do not skip its successor
+DOUBLE_ANSWER {"song":"T00000000000000000000I","start":0,"results":[{"skipped":true},{"skipped":true}],"after":1,"current":"T00000000000000000000W"}
+
+stdout | test/hub/pr29-independent.test.ts > native answer against observed song advances through native transport
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr29-independent.test.ts > native answer against observed song advances through native transport
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr29-independent.test.ts > native answer against observed song advances through native transport
+{"level":"info","kind":"import","message":"„Playlist 1“: 200 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr29-independent.test.ts > native answer against observed song advances through native transport
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 20 Songs mit Vorgeschichte"}
+{"level":"info","kind":"retest","message":"Nachprüfung: eher nicht: Song 8 — Artist 8"}
+
+stdout | test/hub/pr29-independent.test.ts > native answer against observed song advances through native transport
+NATIVE_ANSWER {"song":"T000000000000000000008","kind":"probe","result":{"skipped":false},"before":14,"after":14,"providerCalls":0}
+
+stdout | test/hub/pr29-independent.test.ts > v6 to v7 migration crash rolls back and preserves incumbent memory and observed queue
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr29-independent.test.ts > v6 to v7 migration crash rolls back and preserves incumbent memory and observed queue
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr29-independent.test.ts > v6 to v7 migration crash rolls back and preserves incumbent memory and observed queue
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr29-independent.test.ts > successive negative answers each double the next check
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr29-independent.test.ts > successive negative answers each double the next check
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr29-independent.test.ts > successive negative answers each double the next check
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr29-independent.test.ts > successive negative answers each double the next check
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"retest","message":"Nachprüfung: eher nicht: Song 0 — Artist 0"}
+
+stdout | test/hub/pr29-independent.test.ts > successive negative answers each double the next check
+{"level":"info","kind":"retest","message":"Nachprüfung: eher nicht: Song 0 — Artist 0"}
+
+stdout | test/hub/pr29-independent.test.ts > successive negative answers each double the next check
+REPEATED_NO {"memory":{"id":"T000000000000000000000","lastPlayedAt":1755756061500,"plays":2,"earlySkips":3,"lastSkippedAt":1786860061500,"consumedAt":null,"liked":false,"thumb":0,"verdict":-1,"verdictAt":1792994461500,"playedBeforeSkips":0},"four":20736000000,"five":31536000000}
+
+ ❯ test/hub/pr29-independent.test.ts (4 tests | 2 failed) 349ms
+   × native answer against observed song advances through native transport 67ms
+   × successive negative answers each double the next check 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr29-independent.test.ts > native answer against observed song advances through native transport
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/hub/pr29-independent.test.ts:28:25
+     26|  const result=await h.hub.retestVerdict(probe.track.id,false);
+     27|  console.log('NATIVE_ANSWER',JSON.stringify({song:probe.track.id,kind:…
+     28|  expect(result.skipped).toBe(true);
+       |                         ^
+     29| });
+     30| it('v6 to v7 migration crash rolls back and preserves incumbent memory…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/hub/pr29-independent.test.ts > successive negative answers each double the next check
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/hub/pr29-independent.test.ts:53:54
+     51|  const memory=h.hub.memory(id);
+     52|  console.log('REPEATED_NO',JSON.stringify({memory,four:retestAfter(4),…
+     53|  expect(skipsWeigh(memory,h.clock.t+retestAfter(4))).toBe(true);
+       |                                                      ^
+     54| });
+     55|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  17:54:58
+   Duration  1.00s (transform 47%, tests 41%, import 11%, worker 1%)
+

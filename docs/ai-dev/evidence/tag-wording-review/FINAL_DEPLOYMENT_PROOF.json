@@ -1,0 +1,16 @@
+{
+  "version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+  "deployment": "238016d2-534e-4a34-a49d-93088b03ba17",
+  "traffic": [
+    {
+      "version_id": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+      "percentage": 100
+    }
+  ],
+  "bindings_exact_preserved": true,
+  "runtime_exact_preserved": true,
+  "migration_tag": "v1",
+  "etag_same_as_verified_upload": true,
+  "etag": "dbf9e0c905f381bffd32be40c0a48235d39e164d1b769157cc5e2c6367ef9a1f",
+  "origin": "automatic Workers Builds after authorized PR merge; own uploadedbbcaa remains unactivated to avoid duplicate release"
+}

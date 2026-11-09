@@ -1,0 +1,122 @@
+{
+  "reviewer": "/root/lane24_fresh_final",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "PR24 lane provenance correctness; no PR25 owner-rule acceptance conclusion",
+  "subject": {
+    "pr24": "c6b644a28116754c0d0519e7559ca0544d78309b",
+    "combined": "4c0514f98eef86e75b11ea250b8911e162bd9656",
+    "base": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af"
+  },
+  "authority": [
+    "Latest user preservation of stable occurrence, truthful observed states and honest provenance",
+    "AGENTS.md preservation invariants",
+    "Mika Red Team independent-review-contract.md"
+  ],
+  "app_edits": false,
+  "remote_actions": false,
+  "checks": {
+    "original_LANE05": {
+      "exact": "PASS",
+      "combined": "PASS",
+      "test": "/tmp/pr24-independent.test.ts"
+    },
+    "four_branch_repeat_seek_attack": {
+      "exact": {
+        "pass": 2,
+        "fail": 2
+      },
+      "combined": {
+        "pass": 2,
+        "fail": 2
+      },
+      "test": "/tmp/final24-attacks.test.ts",
+      "sha256": "318630c4f50274efb8b0f4df38df74bfeec9014edcfa9f95b285afc18d31ff48",
+      "logs": [
+        "/tmp/final24-exact-attacks.log",
+        "/tmp/final24-combined.log"
+      ]
+    },
+    "existing_song_facts_guest_session_native": {
+      "exact": {
+        "pass": 50,
+        "fail": 0,
+        "log": "/tmp/final24-exact-regression.log"
+      },
+      "combined": {
+        "pass": 50,
+        "fail": 0,
+        "log": "/tmp/final24-combined-regression.log"
+      },
+      "includes": [
+        "PR20-LANE-03",
+        "PR23-LANE-04",
+        "observed pause/new deck/app skip",
+        "native queue/status/listening",
+        "guest-device isolation",
+        "stable resume backwards seek"
+      ]
+    },
+    "historical_parent_test_attempt": {
+      "exact": {
+        "pass": 2,
+        "fail": 1
+      },
+      "combined": {
+        "pass": 2,
+        "fail": 1
+      },
+      "logs": [
+        "/tmp/final24-exact-parent.log",
+        "/tmp/final24-combined-parent.log"
+      ],
+      "interpretation": "Third fixture aborts on new-queue favorite precondition (actual fresh); not a valid product failure and no assertion weakened. First two provenance probes pass."
+    }
+  },
+  "closed_prior_findings": [
+    {
+      "id": "PR24-LANE-05",
+      "status": "Original reproduction fixed at exact and combined heads; does not establish all ambiguity safe"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PR24-LANE-06",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unseen repeat and forward seek spoof previous occurrence start proof",
+      "files": [
+        "src/worker/hub/hub.ts:4938",
+        "src/worker/hub/hub.ts:5003",
+        "src/worker/hub/hub.ts:5046"
+      ],
+      "preconditions": "Real HubCore with FakeSpotify, controlled deck replacement through actual saveDeck, no SQL mutation of production state, no extra provider calls introduced",
+      "reproduction": [
+        "Observe newly started 180 s station song T; observe it again at 6 s with fresh provenance.",
+        "Skip T at 6 s (not listed), play another song for 60 s without Hub looks.",
+        "Publish same IDs/order deck with T favorite through saveDeck, restart Hub.",
+        "Insert T as next station playlist occurrence, skip to it, listen 40 s without Hub looks.",
+        "Use an ordinary forward seek to 106 s so observation time minus position equals original start. Either remain playing or pause at 106 s.",
+        "Refresh player state, one second later skip T, refresh and ingest normal history."
+      ],
+      "expected": "The new 40/41 s counted occurrence has kind null: no observation established its identity with old occurrence. A forward seek cannot prove occurrence start.",
+      "actual": "Both playing\u2192playing and playing\u2192paused branches renew original fresh note, lastAt 1790316887500/progress106000/start1790316781500, then persist fresh on the later repeat instead of null. Two assertions fail on exact PR24 and combined source.",
+      "impact": "Persistent false provenance under strict owner requirement, including after changed deck and Hub restart. Seek behavior is user/device-controlled and allowed by preserved requirements.",
+      "cause": "obs.at - progress is seekable media position arithmetic, not stable instance identity. Same-start arithmetic and progress > elapsed bounds are spoofable by forward seek after unseen replay.",
+      "repair_direction": "Do not promote numerical start agreement to proof of occurrence identity across gaps that permit an unseen seek/replay. Preserve unknown/null provenance for ambiguous observations without extra requests. Keep observed continuous play, pause, app-skip and guest/native behavior intact.",
+      "required_checks": [
+        "Exact and combined reproductions for both playing\u2192playing and playing\u2192paused seek spoof cases",
+        "Retain original LANE03/04/05 and observed pause/app-skip positive assertions",
+        "Stable occurrence/resume/guest/native regressions"
+      ]
+    }
+  ],
+  "not_run": [
+    "Physical iPhone/Spotify latency or quota",
+    "Private HA/MA",
+    "Populated production restore",
+    "UI/browser comprehensive checks delegated to root",
+    "Provider authenticity of synthetic timestamps beyond existing FakeSpotify contract"
+  ],
+  "limitations": "Focused independent review, not comprehensive root verification. No claim that two passing paused-source branches prove all paused repeats safe."
+}

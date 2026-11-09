@@ -1,0 +1,277 @@
+{
+  "schema_version": "true-shuffle.followup-review.v1",
+  "generated_at": "2026-10-09T09:27:34.140708+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_source": "e348e838f9526bc83b92070302ba15831a87d7b8",
+  "reviewed_heads": {
+    "19": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
+    "20": "efee7e7c8a2fda0608cdc2f311f2b2fd5a87355e",
+    "21": "728d276a614b4fd46640efb61aa9a0f25a2444b3",
+    "22": "fd267446fddc556bc6254b146d6a224a13571e23"
+  },
+  "provenance": {
+    "github_pr_author": "MikaMcFlurry",
+    "git_author": "Claude <noreply@anthropic.com>",
+    "claude_session": "session_01LuiFYFqenEVR9agywkDkAX",
+    "evidence": "Actual PR bodies, commit author/coauthor/session trailers, exact current comments; no separate Claude GitHub account assumed."
+  },
+  "scope": {
+    "19": "Precise mix/favourite UI and corrected pending save sequencing; bounded existing test timeout.",
+    "20": "Explicit separate persistence scope: additive migration5 plays.lane and observation lane_notes.",
+    "21": "Explicit separate functional guest-device state scope and configuration.",
+    "22": "Explicit separate profile API, durable import summary, optional AI genre estimate and client charts; owner request recorded in real PR metadata, external owner chat not independently accessed."
+  },
+  "release_scope": {
+    "complete": false,
+    "reference_comment": 6076229569,
+    "pr": 22,
+    "order": [
+      19,
+      20,
+      21,
+      22
+    ],
+    "functional_dependencies": "Claude explicitly reports independent sibling PRs; actual common base is e348, local merge in requested order has no conflicts. No partial release.",
+    "historical_completion_heads": {
+      "19": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
+      "20": "d716055ab27caa18bfc42639278e6b9976f9cdbd",
+      "21": "edc36e944e4cd881c7bdeb80ce443db0a212eede",
+      "22": "f228c76f82e0382184333a1745579651c838f332"
+    },
+    "reason": "Comment6076229569 completes older heads only; new repair comments6077103811/6077105744/6077428773 do not renew complete scope for current heads. Require renewed explicit final scope after repairs."
+  },
+  "combined_review": {
+    "revision": "955071016d7adf6bebf408317a271ae1e571f5b7",
+    "tree": "6a332d16c5e99b2f2ca137c629f6ce6d7b1b8c3e",
+    "remote_merge": false,
+    "merge_conflicts": false,
+    "application_edits_by_codex": false
+  },
+  "independence": {
+    "level": "FRESH",
+    "reports": [
+      "docs/ai-dev/evidence/followup-19-22/next-9550710/next1921-backend-review.json",
+      "docs/ai-dev/evidence/followup-19-22/next-9550710/next22-backend-review.json",
+      "docs/ai-dev/evidence/followup-19-22/next-9550710/next1922-ui-review.json"
+    ],
+    "verdict": "NOT_READY"
+  },
+  "verdict": "NOT_READY",
+  "delivery_state": "PARTIAL",
+  "closed_findings": [
+    "PR19-UI-01",
+    "PR19-UI-02",
+    "PR20-LANE-01",
+    "PR21-GUEST-01",
+    "PR21-GUEST-02",
+    "PR20-LANE-02",
+    "PR21-GUEST-03",
+    "PR22-AI-01",
+    "PR22-AI-02",
+    "PR22-IMPORT-RECENT",
+    "PR22-IMPORT-SILENT",
+    "PR22-CHART-A11Y"
+  ],
+  "findings": [
+    {
+      "id": "PR20-LANE-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Missed departure observation leaves short-play note available to label a later independent play",
+      "files": [
+        "src/worker/hub/hub.ts:4917",
+        "src/worker/hub/hub.ts:4948",
+        "src/worker/hub/hub.ts:4965"
+      ],
+      "test": "/workspace/ts-next1921-independent/test/hub/next-boundary-attacks.test.ts:6",
+      "reproduction": [
+        "Real HubCore onboarded 200 tracks of 180 s; app observes initial song, then arrival of T after a skip at progress 1 s, recording fresh lane note.",
+        "T is skipped after 6 s total so FakeSpotify does not list T. Another song plays 60 s without app player look. Cached snapshot remains T.",
+        "Controlled replacement deck fixture changes T reason to favorite and writtenAt, preserving track/order. Invoke actual HubCore.saveDeck so closeLaneNotes executes; restart HubCore over same sqlite.",
+        "Spotify plays T again in same playlist for 45 s entirely between app looks; skip, force real HubCore sync. Spotify listing creates one counted T history row."
+      ],
+      "expected": "The later occurrence has no proven link to the short earlier arrival. Return null for its lane rather than asserting fresh or inferring favorite from current deck. Retain observed paused long-occurrence lane where a matching occurrence is established.",
+      "actual": {
+        "old_note_kind": "fresh",
+        "replacement_kind": "favorite",
+        "history_kind": "fresh",
+        "history_T_rows": 1,
+        "history_ignored": false,
+        "played_at": 1790316182500
+      },
+      "cause": "closeLaneNotes compares only track id to cached player and exempts T even when snapshot is stale. Next closing look sets goneAt to now, so the listing ending before now passes the stamp bound and consumes old note. Missing intermediate look defeats occurrence binding.",
+      "impact": "False reason-of-play label in persisted History; no demonstrated changed queue/count/transport effect.",
+      "repair_direction": "Fence lane note consumption to the actual observed occurrence and provenance; ambiguous unobserved departures/repeats must yield null. Do not use wall time alone to fabricate completion or close genuine paused occurrence.",
+      "required_checks": [
+        "This missed-look/restart controlled replacement regression",
+        "Original PR20-LANE-02 with departure look",
+        "Original paused same-occurrence across long pause/replacement",
+        "Listing dedup/count, read-only history, native/private/guest and stable queue regressions"
+      ],
+      "evidence": "/tmp/next1921-fullregression.log",
+      "limits": "Controlled deck publication fixture invokes real persistence/closure logic; no claim this exact replacement was reproduced through public rebuild workflow or live Spotify. FakeSpotify is simulation, not live latency/quota evidence."
+    },
+    {
+      "id": "PR22-AUTH-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Coalesced genre request bypasses the callers session epoch validation",
+      "files": [
+        {
+          "path": "src/worker/userhub.ts",
+          "line": 564
+        },
+        {
+          "path": "src/worker/index.ts",
+          "line": 562
+        }
+      ],
+      "preconditions": "A valid current listener session has an active genre estimate; another still correctly signed/unexpired cookie for the same account has a revoked epoch. No cross-account forgery is involved.",
+      "reproduction": [
+        "Create actual UserHub around onboarded HubCore with imported profile and hold optional AI promise.",
+        "Start estimateGenres(currentEpoch).",
+        "Call estimateGenres(currentEpoch-1) before provider resolves: it returns same promise without running session(epoch).",
+        "Release usable provider response: stale RPC returns ok:true and private genre result.",
+        "Repeat through actual Worker.fetch POST/api/profile/genres, x-ts:1 and correctly signed test cookie whose epoch is currentEpoch-1: HTTP200 with current profile estimate/summary instead of401."
+      ],
+      "expected": "Every caller validates its own session epoch even when joining an active flight, and revoked-session requests cannot read current private result. Keep optional provider await outside playback lock.",
+      "actual": "RPC ok:true; HTTP200 JSON contains current estimate {source:workers-ai,genres:[{name:Pop,share:100}],summary:Sensitive taste}.",
+      "cause": "genreFlight is checked/returned before session(epoch); only first caller supplies epoch used for prepare/store gates.",
+      "impact": "Account logout/revocation contract is bypassed for a previously revoked session while another current session has an active genre estimate. This is a material auth/privacy regression, not an unauthenticated route or cross-account-ID bypass.",
+      "repair_direction": "Validate each caller independently before joining scoped flight, retain coalescing and result/store fencing, and ensure old epoch cannot reuse a new epoch flight.",
+      "required_tests": [
+        "Current and revoked signed cookie concurrent POSTs must produce200/401 respectively.",
+        "Valid concurrent requests still share exactly1provider call.",
+        "Pause remains unblocked during provider await.",
+        "Logout/new epoch and delayed provider result tests retain authorization/store fencing."
+      ],
+      "evidence": [
+        "/tmp/next22-backend-test2.log",
+        "/tmp/next22-backend-check/test/hub/next22-independent.test.ts:93",
+        "/tmp/next22-backend-check/test/hub/next22-independent.test.ts:110"
+      ]
+    }
+  ],
+  "nonblocking_historical_findings": [
+    {
+      "id": "PR22-INPUT-01",
+      "severity": "P3",
+      "blocking": false,
+      "title": "Imported month validation coerces non-string JSON values and persists client-incompatible shape",
+      "files": [
+        "src/worker/hub/hub.ts:6199",
+        "src/client/screens/profile.tsx:24"
+      ],
+      "reproduction": [
+        "Send otherwise valid profile with months:[{month:[\"2023-11\"],plays:10,minutes:300}].",
+        "setImportedProfile accepts and persists the array because String(month) matches regex.",
+        "Client monthLabel calls month.split on that stored array."
+      ],
+      "expected": "Reject non-string month before storage; preserve prior valid summary.",
+      "actual": "Assertion expecting bad_profile rejection fails. Static client split/slice usage shows incompatible stored shape. Actual malformed-data rendered browser was not run by this reviewer.",
+      "impact": "Malformed authenticated self-supplied API payload can break that account profile display; normal browser builder generates strings, so not promoted release-blocking.",
+      "evidence": [
+        "/tmp/profile22-attacks.log"
+      ],
+      "repair_direction": "Use strict typeof month string plus valid1..12 month and unique/order validation."
+    },
+    {
+      "id": "PR22-INPUT-02",
+      "severity": "P3",
+      "blocking": false,
+      "title": "Malformed extended-history infinite ms yields nonfinite summary which server rejects and upload flow silently discards",
+      "files": [
+        "src/client/history-profile.ts:52",
+        "src/client/screens/menu.tsx:931"
+      ],
+      "reproduction": [
+        "Supply valid trackURI/timestamp with ms_played Infinity (JSON exponent1e400 also parses to Infinity).",
+        "finishProfile returns minutes Infinity instead of refusing; JSON upload yields null and server validation rejects."
+      ],
+      "actual": "Independent malformed-input assertion fails; normal Spotify export has finite ms. UI upload catches summary errors and reports completed legacy import; actual rendered error flow delegated to separate UI review.",
+      "evidence": [
+        "/tmp/profile22-attacks.log"
+      ],
+      "repair_direction": "Validate finite/bounded played milliseconds; show summary failure explicitly while retaining legacy import result."
+    }
+  ],
+  "checks_current": {
+    "unit_worker": {
+      "status": "PASS",
+      "count": 511,
+      "default_timeout": true
+    },
+    "browser": {
+      "status": "PASS",
+      "count": 46,
+      "environment": "Real Worker/FakeSpotify local isolated E2E"
+    },
+    "resume_assertions": {
+      "status": "PASS",
+      "count": 11,
+      "original_assertions_unchanged": true
+    },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "independent_backend_20_21": {
+      "pass": 161,
+      "fail": 1,
+      "additional_native_pass": 17
+    },
+    "independent_backend_22": {
+      "pass": 18,
+      "fail": 2,
+      "known_nonblocking_input_skipped": 2
+    },
+    "independent_ui": {
+      "pass": 20,
+      "fail": 0
+    },
+    "parent_reproductions": {
+      "lane_fail": 1,
+      "auth_fail": 2
+    },
+    "github_exact_heads": {
+      "19": 37896493278,
+      "20": 37903181474,
+      "21": 37902477002,
+      "22": 37905877931
+    },
+    "github_all_verify": "PASS",
+    "preview_workers_builds": "FAIL; immediate cause unconfirmed, not a claimed production deployment",
+    "artifact_directory": "docs/ai-dev/evidence/followup-19-22/next-9550710"
+  },
+  "read_only_production_current": {
+    "source": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+    "deployment": "238016d2-534e-4a34-a49d-93088b03ba17",
+    "traffic_percent": 100,
+    "observed_at": "2026-10-09T09:27:34.140708+00:00",
+    "authenticated_deployment_listing": "PASS",
+    "exact_public_assets": {
+      "pass": 19,
+      "fail": 0
+    },
+    "health_auth_csrf": "PASS",
+    "anonymous_browser": "390/1440 light/dark PASS; no JS errors; protected profile shows sign-in",
+    "unchanged": true,
+    "full_runtime_bindings_secrets_snapshot": "NOT_RERUN; previous verified release evidence retained, no release mutation this run"
+  },
+  "communication_current": {
+    "20": 6078170512,
+    "21": 6078176836,
+    "22": 6078155613,
+    "19": "No duplicate comment; prior correction remains closed, unchanged head."
+  },
+  "historical_review_ref": "docs/ai-dev/evidence/followup-19-22/prior-4dc3377-FOLLOWUP_19_22_REVIEW.json",
+  "not_run": [
+    "Physical iPhone Safari",
+    "Live Spotify latency/quota/real second device",
+    "Private HA/MA",
+    "Actual populated DurableObject restore",
+    "Live owner export",
+    "Live AI provider"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "settings_same": true,
+  "namespaces_same": true,
+  "secrets_same": true,
+  "runtime_same": true,
+  "full_bindings_same": true,
+  "cron_unchanged": true
+}

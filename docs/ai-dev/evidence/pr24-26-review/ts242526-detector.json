@@ -1,0 +1,123 @@
+[
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 37,
+    "snippet": "font-size: 1.5rem is off the DESIGN.md type ramp",
+    "ignoreValue": "1.5rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 45,
+    "snippet": "font-size: clamp(2.5rem, 11vw, 3.5rem) has fluid endpoints 2.5rem and 3.5rem off the DESIGN.md type ramp",
+    "ignoreValue": "2.5rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 49,
+    "snippet": "font-size: 0.875rem is off the DESIGN.md type ramp",
+    "ignoreValue": "0.875rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 55,
+    "snippet": "font-size: 1rem is off the DESIGN.md type ramp",
+    "ignoreValue": "1rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 68,
+    "snippet": "font-size: 0.75rem is off the DESIGN.md type ramp",
+    "ignoreValue": "0.75rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 107,
+    "snippet": "font-size: 0.75rem is off the DESIGN.md type ramp",
+    "ignoreValue": "0.75rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 159,
+    "snippet": "font-size: 0.75rem is off the DESIGN.md type ramp",
+    "ignoreValue": "0.75rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 169,
+    "snippet": "font-size: 0.6875rem is off the DESIGN.md type ramp",
+    "ignoreValue": "0.6875rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 241,
+    "snippet": "font-size: 0.875rem is off the DESIGN.md type ramp",
+    "ignoreValue": "0.875rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 298,
+    "snippet": "font-size: 0.75rem is off the DESIGN.md type ramp",
+    "ignoreValue": "0.75rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/workspace/ts-review-242526/src/client/styles/profile.css",
+    "line": 364,
+    "snippet": "font-size: 0.875rem is off the DESIGN.md type ramp",
+    "ignoreValue": "0.875rem"
+  }
+]

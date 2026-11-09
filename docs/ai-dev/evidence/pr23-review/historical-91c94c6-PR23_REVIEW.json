@@ -1,0 +1,200 @@
+{
+  "schema_version": "true-shuffle.pr23-review.v1",
+  "generated_at": "2026-10-09T10:25:19.448783+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_source": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+  "candidate_head": "91c94c616e233f82135355c3fd47376276d88ad2",
+  "provenance": {
+    "github_author": "MikaMcFlurry",
+    "git_author": "Claude <noreply@anthropic.com>",
+    "claude_session": "session_01LuiFYFqenEVR9agywkDkAX",
+    "basis": "Actual PR bodies/heads, commit author/session trailers and actual current comments; no separate Claude GitHub user assumed."
+  },
+  "related_prs": {
+    "19": {
+      "head": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
+      "merged": true,
+      "merge_sha": "c67b603d63c22499938d6545600d9527d271aba0"
+    },
+    "20": {
+      "head": "efee7e7c8a2fda0608cdc2f311f2b2fd5a87355e",
+      "merged": true,
+      "merge_sha": "04121bb7a5ebb6ec92b2d517e1eed85ddc6991e0"
+    },
+    "21": {
+      "head": "728d276a614b4fd46640efb61aa9a0f25a2444b3",
+      "merged": true,
+      "merge_sha": "6d54ffd0d57c372b0b20dcbb9ea5f9f7f904bc15"
+    },
+    "22": {
+      "head": "fd267446fddc556bc6254b146d6a224a13571e23",
+      "merged": true,
+      "merge_sha": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+      "auth_fix_7991bee_in_pr22_branch_not_integrated": true
+    },
+    "23": {
+      "head": "91c94c616e233f82135355c3fd47376276d88ad2",
+      "base": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+      "merged": false,
+      "auth_cherry_pick": "11d27cc",
+      "lane_commit": "91c94c6",
+      "depends_on": "actual integrated19→20→21→22 atbcb2463; no redundant remerge"
+    }
+  },
+  "external_integration": "All19–22 merges and initial bcb deployments happened outside this root run after priorNOT_READY; not claimed as root-reviewed releases. GitHubtarget and activeCloudflare runtime intentionally differ after security rollback.",
+  "release_scope": {
+    "complete_for_current_head": false,
+    "old_comment": 6076229569,
+    "superseding_comment": 6078305655,
+    "superseding_comment_retracted_by": 6078449085,
+    "reason": "Matching explicit final #23 scope comment not present; body/check summary and Preview explanation are not a final comment."
+  },
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "delivery_state": "PARTIAL",
+  "closed_findings": [
+    "PR22-AUTH-01",
+    "PR20-LANE-03 exact original reproduction"
+  ],
+  "findings": [
+    {
+      "id": "PR23-LANE-04",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Unobserved replay matching the projected original end still consumes original lane",
+      "files": [
+        "src/worker/hub/hub.ts:4949",
+        "src/worker/hub/hub.ts:4953",
+        "src/worker/hub/hub.ts:5034"
+      ],
+      "preconditions": "Real HubCore, SQLite and FakeSpotify; initial play 180 s track, first observed new occurrence at 1 s; valid controlled replacement deck changes target fresh to favorite, stored snapshot still target, restart; no observations during intervening skips.",
+      "steps": [
+        "Start onboarded station, advance10s+sync, skip, advance1s+sync: target begins and receives fresh lane note at progress1000ms.",
+        "Advance5s and skip target under30s (not listed), advance60s without observing.",
+        "Replace persisted deck target lane with favorite via saveDeck and restart.",
+        "Insert target after current song in actual fake playlist order and skip into it (same playlist context).",
+        "Advance114s, skip target, sync while adjacent song starts at0s; total time is exactly original predicted end."
+      ],
+      "expected": "One actual listed target replay, kind null because no observed occurrence identifies its lane.",
+      "actual": "One listed target replay, facts.kind fresh. lane note gets endAt1790316251500 and is consumed for replay listing with that same timestamp, despite target originally skipped after6s.",
+      "cause": "noteLane projects lastAt+duration-progress and interprets coincident adjacent-song start as proof original occurrence completed; intervening unobserved replay remains possible.",
+      "repair_direction": "Do not publish definitive lane from projected end plus neighboring timestamp alone when occurrence continuity is ambiguous; preserve observed honest provenance or null.",
+      "required_regressions": [
+        "Unobserved replay with completion coinciding with old predicted end and +/-slack boundaries",
+        "Original LANE-03 and prior LANE-02 closure",
+        "Long observed pause/resume, application next, restart, same-id replay, immutable past history and queue"
+      ],
+      "evidence": [
+        "/workspace/ts-pr23-lane-independent/test/hub/pr23-independent.test.ts",
+        "/tmp/pr23-lane-repro.log"
+      ]
+    }
+  ],
+  "reports": [
+    "docs/ai-dev/evidence/pr23-review/pr23-auth-review.json",
+    "docs/ai-dev/evidence/pr23-review/pr23-lane-review.json",
+    "docs/ai-dev/evidence/pr23-review/pr23-rollback-compat-review.json"
+  ],
+  "checks": {
+    "unit_worker": {
+      "status": "PASS",
+      "count": 517,
+      "default_limits": true
+    },
+    "browser": {
+      "status": "PASS",
+      "count": 46,
+      "environment": "Real local Worker/FakeSpotify, fresh isolated state"
+    },
+    "original_resume": {
+      "status": "PASS",
+      "count": 11,
+      "assertions_unchanged": true
+    },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "github_exact_head_verify": {
+      "run": 37913226589,
+      "job": 113763116815,
+      "head": "91c94c616e233f82135355c3fd47376276d88ad2",
+      "status": "PASS",
+      "unit": 517,
+      "browser": 46
+    },
+    "independent_auth": {
+      "pass": 27,
+      "historical_nonblocking_skipped": 2,
+      "verdict": "READY",
+      "actual_original_attacks_on_bcb": "FAIL as expected; directRPC and signedCookieWorker leak remain in integrated source"
+    },
+    "independent_lane": {
+      "regression_pass": 81,
+      "old_attack_pass": 3,
+      "new_attack_fail": 1,
+      "verdict": "NOT_READY"
+    },
+    "parent_lane_repro": "FAIL expectednull gotfresh",
+    "ui_carry_forward": {
+      "ref": "docs/ai-dev/evidence/followup-19-22/next-9550710/next1922-ui-review.json",
+      "count": 20,
+      "basis": "No client/shared/config changes from reviewed9550710 application tree to actualbcb and no client/shared/config changes inPR23. Fresh root46Worker/browser suite run; previous20UIcases are carry-forward, not a new independentUIreview."
+    }
+  },
+  "runtime_before": {
+    "source": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+    "version": "02a3c025-a9f6-4da5-b6ce-d176d1c9f71c",
+    "deployment": "c9eea1af-fb1c-49ba-9952-cc1aff711630",
+    "traffic": [
+      {
+        "version_id": "02a3c025-a9f6-4da5-b6ce-d176d1c9f71c",
+        "percentage": 100
+      }
+    ],
+    "worker_source_proof": "docs/ai-dev/evidence/pr23-review/pr23-active-module-proof.json",
+    "assets": "18/19 exact; source map only differs due symlinked local dependency path prefix,18 otherassets exact; no claim all19bcbassets exact"
+  },
+  "runtime_after": {
+    "source": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+    "deployment": "ff729fef-8700-4362-94c1-787addf3e65c",
+    "traffic": [
+      {
+        "version_id": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+        "percentage": 100
+      }
+    ],
+    "rollback": true,
+    "created_at": "2026-10-09T10:19:16.198822Z",
+    "preservation": "docs/ai-dev/evidence/pr23-review/pr23-rollback-preservation.json",
+    "assets": "19/19 exact",
+    "health_auth_csrf": "PASS",
+    "anonymous_browser": "390/1440 light/dark PASS; protected SPA signin only; no JSerrors/overflow",
+    "worker_identity": "Immutable previouslyverifieddd344 version etag matches; fullversionresources compared before/after. Optional fresh fullworkercontent read returned401; not claimed fresh downloadedbyteproof afterrollback."
+  },
+  "rollback_compatibility": {
+    "independence": "FRESH",
+    "status": "PASS",
+    "count": 2,
+    "environment": "Actual olde348HubCore with populatedbcbSchema5SQLite in Node/FakeSpotify; forward reopening alsochecked",
+    "limits": "Simulation only; actual production populatedrestore NOT_RUN. Older runtime temporarily lacks newprofile/laneUI and automaticguestdevicefollow; additive data retained."
+  },
+  "communications": {
+    "finding": 6078933197,
+    "rollback_result": 6078971389,
+    "new_correspondence_required": "New correction heads and explicit finalscope; no unchanged duplicate comments."
+  },
+  "application_edits_by_codex": false,
+  "application_merge_by_codex": false,
+  "upload_by_codex": false,
+  "activation_by_codex": "Only security rollback to verified immutable dd344",
+  "not_run": [
+    "Physical iPhone Safari",
+    "LiveSpotify latency/quota/real seconddevice",
+    "PrivateHA/MA",
+    "Actual populatedproductionrestore",
+    "LiveAI provider",
+    "Real owner export"
+  ]
+}

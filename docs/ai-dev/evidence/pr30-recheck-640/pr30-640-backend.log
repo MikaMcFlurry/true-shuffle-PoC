@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/pr30-backend-640
+
+
+ Test Files  4 passed (4)
+      Tests  62 passed (62)
+   Start at  17:16:41
+   Duration  12.59s (tests 70%, transform 23%, import 7%)
+

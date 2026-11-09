@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/pr30-recheck-9e8d
+
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  12:25:50
+   Duration  3.40s (tests 68%, transform 26%, import 7%)
+

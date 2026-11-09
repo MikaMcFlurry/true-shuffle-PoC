@@ -1,0 +1,66 @@
+{
+  "schema_version": "true-shuffle.deployment.v1",
+  "recorded_at": "2026-10-08T21:18:56.237579+00:00",
+  "source_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+  "worker": "true-shuffle",
+  "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
+  "version_id": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+  "deployment_id": "238016d2-534e-4a34-a49d-93088b03ba17",
+  "percentage": 100,
+  "deployed_at": "2026-10-08T21:11:39.498533Z",
+  "previous_version": "3499c219-0265-4798-9e7b-4b3c81b5efd5",
+  "previous_deployment": "c4096de7-3e02-443a-9b89-53037835b9a7",
+  "migration_tag": "v1",
+  "namespaces": {
+    "USER_HUB": {
+      "id": "59222ef9f3a642d4b90776fafa0eac84",
+      "class_name": "UserHub",
+      "sqlite": true
+    },
+    "REGISTRY": {
+      "id": "2ccba352966f46a3b289eb159ccb3bc4",
+      "class_name": "Registry",
+      "sqlite": true
+    }
+  },
+  "existing_bindings_preserved": true,
+  "existing_secret_bindings_preserved": true,
+  "existing_variable_values_preserved": true,
+  "runtime_preserved": true,
+  "deployment_authority": "Permanent explicit owner PR merge/release authority; actual authorized GitHub PR18 merge triggered automatic Workers Builds. Wrangler staging uploaded but unactivated after concurrent automatic release; no duplicate activation.",
+  "worker_sha256": "e61902724515496b7dcd0035d354d4100823838e13fcd5c24580d73f5ffe6530",
+  "worker_etag": "dbf9e0c905f381bffd32be40c0a48235d39e164d1b769157cc5e2c6367ef9a1f",
+  "public_readback": {
+    "tested_at": "2026-10-08T21:16:38.606698+00:00",
+    "source_commit": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "exact_assets": "19/19",
+    "assets_ref": "tag-wording-review/FINAL_PUBLIC_ASSETS.json",
+    "auth_csrf_ref": "tag-wording-review/FINAL_PUBLIC_AUTH.json",
+    "browser_ref": "tag-wording-review/FINAL_PUBLIC_BROWSER.json",
+    "runtime_ref": "tag-wording-review/FINAL_DEPLOYMENT_PROOF.json",
+    "authenticated_provider_journeys": "NOT_RUN"
+  },
+  "browser_smoke": {
+    "status": 200,
+    "phone": 390,
+    "desktop": 1440,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "pageErrors": [],
+    "horizontalOverflow": false
+  },
+  "recovery": {
+    "prior_verified_worker_version_retained": true,
+    "actual_populated_restore": "NOT_RUN",
+    "rollback_this_release": false,
+    "bindings_namespace_and_schema_unchanged": true
+  },
+  "acceptance_claim": "PARTIAL: actualrelease/runtime/assets verified; requiredintegratedCIknown20ssimulationtimeoutFAIL twice; fullmissionliveprovider/device/restoreNOTRUN.",
+  "github_ci": "37844932181 FAIL twice: jobs113543321791/113544666152;485PASS/1known61h simulation20stimeout; downstreambrowser/dryskipped. SourceequivalentCI37836787868PASS486/41; localfull486PASS120s andisolatedintegratedweekend15.57sPASS. Required integratedCI remainsFAIL; correctionrequested6069239435.",
+  "review_ref": "TAG_WORDING_REVIEW.json",
+  "historical_records": "tag-wording-review/DEPLOYMENT_HISTORY_BEFORE_PR18.json",
+  "inactive_staged_version": "bbcaa84c-3d73-4913-8ed4-7e5207788078",
+  "release_comment": 6069239435
+}

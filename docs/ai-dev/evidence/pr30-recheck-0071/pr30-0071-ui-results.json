@@ -1,0 +1,441 @@
+[
+  {
+    "case": "render",
+    "width": 390,
+    "theme": "light",
+    "metrics": {
+      "width": 390,
+      "scroll": 390,
+      "controls": [
+        {
+          "label": "Zurück",
+          "h": 44,
+          "w": 93.1875
+        },
+        {
+          "label": "Import ausschalten",
+          "h": 48,
+          "w": 202.40625
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "Zeitraum hinzufügen",
+          "h": 48,
+          "w": 215.109375
+        },
+        {
+          "label": "Entwurf verwerfen",
+          "h": 48,
+          "w": 196.0625
+        },
+        {
+          "label": "Auswahl übernehmen",
+          "h": 48,
+          "w": 222.9375
+        },
+        {
+          "label": "search",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "SongsKünstler",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "AlleZähltZählt teilweiseAusgeschlossenOhne Wirkung",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "MeistgehörtZuletzt gehörtName",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "Ausschließen: Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel ",
+          "h": 44,
+          "w": 326
+        },
+        {
+          "label": "Ausschließen: Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel ",
+          "h": 44,
+          "w": 326
+        },
+        {
+          "label": "Jetzt zählen",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "Import löschen …",
+          "h": 48,
+          "w": 358
+        }
+      ],
+      "labels": true
+    },
+    "errors": []
+  },
+  {
+    "case": "delete-keyboard-cancel",
+    "width": 390,
+    "theme": "light",
+    "confirmationRemoved": true
+  },
+  {
+    "case": "render",
+    "width": 390,
+    "theme": "dark",
+    "metrics": {
+      "width": 390,
+      "scroll": 390,
+      "controls": [
+        {
+          "label": "Zurück",
+          "h": 44,
+          "w": 93.1875
+        },
+        {
+          "label": "Import ausschalten",
+          "h": 48,
+          "w": 202.40625
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "Zeitraum hinzufügen",
+          "h": 48,
+          "w": 215.109375
+        },
+        {
+          "label": "Entwurf verwerfen",
+          "h": 48,
+          "w": 196.0625
+        },
+        {
+          "label": "Auswahl übernehmen",
+          "h": 48,
+          "w": 222.9375
+        },
+        {
+          "label": "search",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "SongsKünstler",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "AlleZähltZählt teilweiseAusgeschlossenOhne Wirkung",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "MeistgehörtZuletzt gehörtName",
+          "h": 48,
+          "w": 173
+        },
+        {
+          "label": "Ausschließen: Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel ",
+          "h": 44,
+          "w": 326
+        },
+        {
+          "label": "Ausschließen: Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel ",
+          "h": 44,
+          "w": 326
+        },
+        {
+          "label": "Jetzt zählen",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "Import löschen …",
+          "h": 48,
+          "w": 358
+        }
+      ],
+      "labels": true
+    },
+    "errors": []
+  },
+  {
+    "case": "delete-keyboard-cancel",
+    "width": 390,
+    "theme": "dark",
+    "confirmationRemoved": true
+  },
+  {
+    "case": "render",
+    "width": 1440,
+    "theme": "light",
+    "metrics": {
+      "width": 1440,
+      "scroll": 1440,
+      "controls": [
+        {
+          "label": "Zurück",
+          "h": 44,
+          "w": 93.1875
+        },
+        {
+          "label": "Import ausschalten",
+          "h": 48,
+          "w": 202.40625
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "Zeitraum hinzufügen",
+          "h": 48,
+          "w": 215.109375
+        },
+        {
+          "label": "Entwurf verwerfen",
+          "h": 48,
+          "w": 196.0625
+        },
+        {
+          "label": "Auswahl übernehmen",
+          "h": 48,
+          "w": 222.9375
+        },
+        {
+          "label": "search",
+          "h": 48,
+          "w": 760
+        },
+        {
+          "label": "SongsKünstler",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "AlleZähltZählt teilweiseAusgeschlossenOhne Wirkung",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "MeistgehörtZuletzt gehörtName",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "Ausschließen: Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel ",
+          "h": 44,
+          "w": 137.4375
+        },
+        {
+          "label": "Ausschließen: Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel ",
+          "h": 44,
+          "w": 137.4375
+        },
+        {
+          "label": "Jetzt zählen",
+          "h": 48,
+          "w": 760
+        },
+        {
+          "label": "Import löschen …",
+          "h": 48,
+          "w": 760
+        }
+      ],
+      "labels": true
+    },
+    "errors": []
+  },
+  {
+    "case": "delete-keyboard-cancel",
+    "width": 1440,
+    "theme": "light",
+    "confirmationRemoved": true
+  },
+  {
+    "case": "render",
+    "width": 1440,
+    "theme": "dark",
+    "metrics": {
+      "width": 1440,
+      "scroll": 1440,
+      "controls": [
+        {
+          "label": "Zurück",
+          "h": 44,
+          "w": 93.1875
+        },
+        {
+          "label": "Import ausschalten",
+          "h": 48,
+          "w": 202.40625
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "date",
+          "h": 48,
+          "w": 358
+        },
+        {
+          "label": "Zeitraum hinzufügen",
+          "h": 48,
+          "w": 215.109375
+        },
+        {
+          "label": "Entwurf verwerfen",
+          "h": 48,
+          "w": 196.0625
+        },
+        {
+          "label": "Auswahl übernehmen",
+          "h": 48,
+          "w": 222.9375
+        },
+        {
+          "label": "search",
+          "h": 48,
+          "w": 760
+        },
+        {
+          "label": "SongsKünstler",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "AlleZähltZählt teilweiseAusgeschlossenOhne Wirkung",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "MeistgehörtZuletzt gehörtName",
+          "h": 48,
+          "w": 181
+        },
+        {
+          "label": "Ausschließen: Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel ",
+          "h": 44,
+          "w": 137.4375
+        },
+        {
+          "label": "Ausschließen: Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel ",
+          "h": 44,
+          "w": 137.4375
+        },
+        {
+          "label": "Jetzt zählen",
+          "h": 48,
+          "w": 760
+        },
+        {
+          "label": "Import löschen …",
+          "h": 48,
+          "w": 760
+        }
+      ],
+      "labels": true
+    },
+    "errors": []
+  },
+  {
+    "case": "delete-keyboard-cancel",
+    "width": 1440,
+    "theme": "dark",
+    "confirmationRemoved": true
+  },
+  {
+    "case": "stale-search-bulk",
+    "staleBulk": 0,
+    "staleRows": true,
+    "applyEnabled": false,
+    "search": "Beta",
+    "draftText": "",
+    "applied": []
+  },
+  {
+    "case": "failed-preview-apply",
+    "enabled": false,
+    "counts": "Für deinen aktuellen Entwurf gibt es noch keine Vorschau.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs."
+  },
+  {
+    "case": "edit-during-apply",
+    "before": "Song „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen",
+    "after": "Song „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts\nEntfernen\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen",
+    "posted": [
+      {
+        "baseRevision": 0,
+        "enabled": true,
+        "rules": [
+          {
+            "type": "track",
+            "kind": "exclude",
+            "id": "aaaaaaaaaaaaaaaaaaaaaa",
+            "label": "Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel "
+          }
+        ],
+        "dataset": "dataset-one"
+      }
+    ]
+  },
+  {
+    "case": "apply-error-retains-draft",
+    "status": 503,
+    "draft": "Song „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen",
+    "message": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDein Import\n\n20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nBisher nie geändert: alles zählt.\n\nImport ausschalten\n\nAusschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.\n\nRegeln\n\nEs entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.\n\nFavoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.\n\nSong „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nZeitraum ausschließen\nVon (einschließlich)\nBis (einschließlich)\n\nGanze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.\n\nZeitraum hinzufügen\nVorschau und übernehmen\n\nMit deinem Entwurf: 10 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nÄndert die Zahlen von 2 Songs. Live gezählte Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange bleiben, wie sie sind.\n\nEntwurf verwerfen\nAuswahl übernehmen\n\nNicht übernommen: Apply unavailable\n\nDurchsehen\n\nSuchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.\n\nSong, Künstler oder Album\nGruppieren\nSongs\nKünstler\nZeigen\nAlle\nZählt\nZählt teilweise\nAusgeschlossen\nOhne Wirkung\nSortieren\nMeistgehört\nZuletzt gehört\nName\n\n1–2 von 2. Status nach deinem Entwurf.\n\nAlpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nRegel entfernen\nBeta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nRegel entfernen\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.\n\nImport löschen\nImport löschen …"
+  },
+  {
+    "case": "apply-error-retains-draft",
+    "status": 409,
+    "draft": "Song „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen",
+    "message": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDein Import\n\n20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nBisher nie geändert: alles zählt.\n\nImport ausschalten\n\nAusschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.\n\nRegeln\n\nEs entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.\n\nFavoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.\n\nSong „Alpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nZeitraum ausschließen\nVon (einschließlich)\nBis (einschließlich)\n\nGanze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.\n\nZeitraum hinzufügen\nVorschau und übernehmen\n\nWird gezählt …\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nEntwurf verwerfen\nAuswahl übernehmen\n\nHTTP 409 selection changed Deine Änderungen hier bleiben als Entwurf stehen.\n\nDurchsehen\n\nSuchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.\n\nSong, Künstler oder Album\nGruppieren\nSongs\nKünstler\nZeigen\nAlle\nZählt\nZählt teilweise\nAusgeschlossen\nOhne Wirkung\nSortieren\nMeistgehört\nZuletzt gehört\nName\n\nDie Liste wird für deine Suche und deinen Entwurf aktualisiert — bis dahin lassen sich Einträge nicht ausschließen oder einbeziehen. Deine Änderungen bleiben erhalten.\n\n1–2 von 2. Status nach deinem Entwurf.\n\nAlpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nRegel entfernen\nBeta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nRegel entfernen\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.\n\nImport löschen\nImport löschen …"
+  },
+  {
+    "case": "toggle-retains-draft",
+    "draft": "Song „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen",
+    "message": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDein Import\n\n20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nStand 1.\n\nImport wieder einschalten\n\nAusgeschaltet: der Import zählt nicht. Einschalten verwendet deine gespeicherten Regeln wieder.\n\nRegeln\n\nEs entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.\n\nFavoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.\n\nSong „Beta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel “ ausgeschlossen\nBetrifft derzeit nichts · neu, noch nicht übernommen\nEntfernen\nZeitraum ausschließen\nVon (einschließlich)\nBis (einschließlich)\n\nGanze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.\n\nZeitraum hinzufügen\nVorschau und übernehmen\n\nMit deinem Entwurf: 10 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nÄndert die Zahlen von 1 Songs. Live gezählte Wiedergaben, Bewertungen, Herzen, Kassetten und die Warteschlange bleiben, wie sie sind.\n\nEntwurf verwerfen\nAuswahl übernehmen\n\nImport ausgeschaltet. Er bleibt gespeichert und zählt nicht, bis du ihn wieder einschaltest. Deine Änderungen von danach sind noch nicht übernommen — sie stehen als Entwurf bereit.\n\nDurchsehen\n\nSuchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.\n\nSong, Künstler oder Album\nGruppieren\nSongs\nKünstler\nZeigen\nAlle\nZählt\nZählt teilweise\nAusgeschlossen\nOhne Wirkung\nSortieren\nMeistgehört\nZuletzt gehört\nName\n\n1–2 von 2. Status nach deinem Entwurf.\n\nAlpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nAusschließen\nBeta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nRegel entfernen\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.\n\nImport löschen\nImport löschen …",
+    "posted": [
+      {
+        "baseRevision": 0,
+        "enabled": false,
+        "rules": [],
+        "dataset": "dataset-one"
+      }
+    ]
+  },
+  {
+    "case": "delete-error-honest",
+    "message": "Zurück\nHörverlauf auswählen\n\nWelche Teile deines importierten Spotify-Verlaufs dein Hörprofil, die Analyse und neue Empfehlungen prägen.\n\nDein Import\n\n20 Wiedergaben einzeln gespeichert, 14. November 2023 bis 15. Juni 2025; 2 Songs mit Summen.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nBisher nie geändert: alles zählt.\n\nImport ausschalten\n\nAusschalten setzt den Einfluss des Imports auf null. Daten und Regeln bleiben; Live-Wiedergaben, Bewertungen und Herzen zählen weiter.\n\nRegeln\n\nEs entscheidet die genaueste Regel: ein Song vor einem Künstler, ein Künstler vor einem Zeitraum. Ein Ausschluss nimmt nur den importierten Wiedergaben ihren Einfluss — der Song bleibt spielbar, deine Bewertungen und spätere Live-Wiedergaben zählen weiter.\n\nFavoriten: Daumen hoch und Spotify-Herzen bleiben immer Favoriten. Durch dein Hören wird ein Song Favorit, wenn du ihn mindestens fünfmal gehört und selten früh übersprungen hast — dafür zählen importierte Wiedergaben nur, soweit deine Auswahl sie berücksichtigt. Wie oft Favoriten kommen, regelt weiter der Mix jeder Kassette.\n\nKeine Regeln: alles aus dem Import zählt.\n\nZeitraum ausschließen\nVon (einschließlich)\nBis (einschließlich)\n\nGanze Kalendertage in deiner Zeitzone (UTC). Maßgeblich ist, wann eine Wiedergabe laut Spotify endete.\n\nZeitraum hinzufügen\nVorschau und übernehmen\n\nMit deinem Entwurf: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nJetzt in Kraft: 20 von 20 Wiedergaben zählen, aus 2 von 2 Songs.\n\nEntwurf verwerfen\nAuswahl übernehmen\n\nDer Entwurf entspricht dem, was gilt.\n\nNicht gelöscht: Kein Konto\n\nDurchsehen\n\nSuchen, sortieren und filtern ändert nichts. Ausschließen und Einbeziehen ändern nur den Entwurf oben, bis du ihn übernimmst.\n\nSong, Künstler oder Album\nGruppieren\nSongs\nKünstler\nZeigen\nAlle\nZählt\nZählt teilweise\nAusgeschlossen\nOhne Wirkung\nSortieren\nMeistgehört\nZuletzt gehört\nName\n\n1–2 von 2. Status nach deinem Entwurf.\n\nAlpha Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel Langer Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nAusschließen\nBeta Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel Noch ein Titel\nEin langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername Ein langer Künstlername\nzählt 10 von 10 Wiedergaben · zuletzt 15. Juni 2025\nAusschließen\nIn deinen Playlists\n\nFür jeden Song: in wie vielen deiner eigenen Playlists er steht — jede Playlist zählt einmal. Playlists von true-shuffle und von anderen zählen nicht. Unabhängig von der Auswahl oben, und es ändert keine Gewichtung.\n\nNoch nicht gezählt.\n\nJetzt zählen\n\nLiest deine Playlist-Liste und jede geänderte eigene Playlist bei Spotify — mit den üblichen Wartezeiten, wenn Spotify bremst.\n\nImport löschen\n\nGelöscht werden nur die in true-shuffle gespeicherten Importdaten: 2 Songsummen, 20 Wiedergaben einzeln und alles, was daraus berechnet wurde. Das lässt sich nicht rückgängig machen — nur durch einen neuen Import deiner Dateien.\n\nEs bleiben: deine Spotify-Dateien, live gezählte Wiedergaben, Bewertungen, Herzen, Kassetten, Sperren, Gast-Regeln, die Warteschlange und deine 0 Auswahlregeln (sie gelten für einen späteren Import).\n\nAbbrechen\nEndgültig löschen"
+  }
+]

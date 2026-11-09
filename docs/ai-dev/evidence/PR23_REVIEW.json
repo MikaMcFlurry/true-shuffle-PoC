@@ -1,0 +1,221 @@
+{
+  "schema_version": "true-shuffle.pr23-review.v1",
+  "generated_at": "2026-10-09T10:33:18.770809+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_source": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+  "candidate_head": "8921702e666d6da06d941364af5a219691057318",
+  "provenance": {
+    "github_author": "MikaMcFlurry",
+    "git_author": "Claude <noreply@anthropic.com>",
+    "claude_session": "session_01LuiFYFqenEVR9agywkDkAX",
+    "basis": "Actual PR bodies/heads, commit author/session trailers and actual current comments; no separate Claude GitHub user assumed."
+  },
+  "related_prs": {
+    "19": {
+      "head": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
+      "merged": true,
+      "merge_sha": "c67b603d63c22499938d6545600d9527d271aba0"
+    },
+    "20": {
+      "head": "efee7e7c8a2fda0608cdc2f311f2b2fd5a87355e",
+      "merged": true,
+      "merge_sha": "04121bb7a5ebb6ec92b2d517e1eed85ddc6991e0"
+    },
+    "21": {
+      "head": "728d276a614b4fd46640efb61aa9a0f25a2444b3",
+      "merged": true,
+      "merge_sha": "6d54ffd0d57c372b0b20dcbb9ea5f9f7f904bc15"
+    },
+    "22": {
+      "head": "fd267446fddc556bc6254b146d6a224a13571e23",
+      "merged": true,
+      "merge_sha": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+      "auth_fix_7991bee_in_pr22_branch_not_integrated": true
+    },
+    "23": {
+      "head": "8921702e666d6da06d941364af5a219691057318",
+      "base": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+      "merged": false,
+      "auth_cherry_pick": "11d27cc",
+      "lane_commit": "91c94c6 reverted by8921702; auth-only netdiff",
+      "depends_on": "actual integrated19→20→21→22 atbcb2463; no redundant remerge"
+    }
+  },
+  "external_integration": "All19–22 merges and initial bcb deployments happened outside this root run after priorNOT_READY; not claimed as root-reviewed releases. GitHubtarget and activeCloudflare runtime intentionally differ after security rollback.",
+  "release_scope": {
+    "complete_for_current_head": true,
+    "comment": 6079018689,
+    "scope": "Explicit auth-only final; inherited blockingLANE03 is not repaired. Owner requested coherent deployment with no essentialopenfindings. Currentactiveversion was rolledback and is no longer leaking, contrary to stale PRbody live-auth premise."
+  },
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "delivery_state": "PARTIAL",
+  "closed_findings": [
+    "PR22-AUTH-01",
+    "PR23-LANE-04 removedwithheuristic; not a fix ofLANE03"
+  ],
+  "findings": [
+    {
+      "id": "PR20-LANE-03",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Restored lane code attributes unobserved repeat to old short occurrence",
+      "status": "OPEN_REPRODUCED",
+      "steps": [
+        "Start station, observe next track at1s, capturing fresh lane.",
+        "Skip this track after6s total; another track plays60s without observation.",
+        "Save valid replacement deck with target favorite while stale snapshot still shows target; restart HubCore.",
+        "Play target again within same context for45s entirely between observations, skip, synchronize."
+      ],
+      "expected": "One counted repeat with provenance null.",
+      "actual": "One counted repeat with facts.kind fresh, from original unlisted short occurrence.",
+      "files": [
+        "src/worker/hub/hub.ts:laneFor",
+        "src/worker/hub/hub.ts:noteLane"
+      ],
+      "evidence": [
+        "/tmp/pr23-lane-final-repro.log",
+        "/workspace/ts-pr23-lane-final-independent/test/hub/pr23-final-independent.test.ts"
+      ]
+    }
+  ],
+  "reports": [
+    "docs/ai-dev/evidence/pr23-review/pr23-auth-review.json",
+    "docs/ai-dev/evidence/pr23-review/pr23-lane-review.json",
+    "docs/ai-dev/evidence/pr23-review/pr23-rollback-compat-review.json",
+    "docs/ai-dev/evidence/pr23-review/pr23-auth-final-review.json",
+    "docs/ai-dev/evidence/pr23-review/pr23-lane-final-review.json"
+  ],
+  "checks": {
+    "unit_worker": {
+      "status": "PASS",
+      "count": 515,
+      "default_limits": true
+    },
+    "browser": {
+      "status": "PASS",
+      "count": 46,
+      "environment": "Real local Worker/FakeSpotify, fresh isolated state"
+    },
+    "original_resume": {
+      "status": "PASS",
+      "count": 11,
+      "assertions_unchanged": true,
+      "source_binding": "Fresh rerun /tmp/pr23-final-resume imports exact8921702; prior /tmp/pr23-final-resume.log imported historical91 and is not used as finalsourceproof"
+    },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "github_exact_head_verify": {
+      "run": 37917338673,
+      "job": 113776634618,
+      "head": "8921702e666d6da06d941364af5a219691057318",
+      "status": "PASS",
+      "unit": 515,
+      "browser": 46
+    },
+    "independent_auth": {
+      "pass": 27,
+      "historical_nonblocking_skipped": 2,
+      "verdict": "READY",
+      "actual_original_attacks_on_bcb": "FAIL as expected; directRPC and signedCookieWorker leak remain in integrated source"
+    },
+    "independent_lane": {
+      "original_attack_fail": 1,
+      "verdict": "NOT_READY",
+      "source": "Exact final8921702; restoredbase lane erroneouslylabels45srepeatfresh"
+    },
+    "parent_lane_repro": "Historical91c94c6 only; final originalLANE03 reproduced by independentreviewer",
+    "ui_carry_forward": {
+      "ref": "docs/ai-dev/evidence/followup-19-22/next-9550710/next1922-ui-review.json",
+      "count": 20,
+      "basis": "No client/shared/config changes from reviewed9550710 application tree to actualbcb and no client/shared/config changes inPR23. Fresh root46Worker/browser suite run; previous20UIcases are carry-forward, not a new independentUIreview."
+    },
+    "final_source_validation": {
+      "source": "8921702e666d6da06d941364af5a219691057318",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "unit_worker": 515,
+      "browser": 46,
+      "original_resume": 11,
+      "build": "PASS",
+      "worker_dry_run": "PASS",
+      "source_unchanged": true,
+      "logs": "pr23-review/pr23-final-*.log and final-resume-checks.log",
+      "finished_at": "2026-10-09T10:33:18.770809+00:00"
+    },
+    "historical_regression_limits": "81 regression passes and20UI checks are historical scoped evidence; freshfinal515/46/11 and27independentauth run separately. OriginalLANE03FAIL is intentionally outside standardgreenSuite."
+  },
+  "runtime_before": {
+    "source": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+    "version": "02a3c025-a9f6-4da5-b6ce-d176d1c9f71c",
+    "deployment": "c9eea1af-fb1c-49ba-9952-cc1aff711630",
+    "traffic": [
+      {
+        "version_id": "02a3c025-a9f6-4da5-b6ce-d176d1c9f71c",
+        "percentage": 100
+      }
+    ],
+    "worker_source_proof": "docs/ai-dev/evidence/pr23-review/pr23-active-module-proof.json",
+    "assets": "18/19 exact; source map only differs due symlinked local dependency path prefix,18 otherassets exact; no claim all19bcbassets exact"
+  },
+  "runtime_after": {
+    "source": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+    "deployment": "ff729fef-8700-4362-94c1-787addf3e65c",
+    "traffic": [
+      {
+        "version_id": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+        "percentage": 100
+      }
+    ],
+    "rollback": true,
+    "created_at": "2026-10-09T10:19:16.198822Z",
+    "preservation": "docs/ai-dev/evidence/pr23-review/pr23-rollback-preservation.json",
+    "assets": "19/19 exact",
+    "health_auth_csrf": "PASS",
+    "anonymous_browser": "390/1440 light/dark PASS; protected SPA signin only; no JSerrors/overflow",
+    "worker_identity": "Immutable previouslyverifieddd344 version etag matches; fullversionresources compared before/after. Optional fresh fullworkercontent read returned401; not claimed fresh downloadedbyteproof afterrollback."
+  },
+  "rollback_compatibility": {
+    "independence": "FRESH",
+    "status": "PASS",
+    "count": 2,
+    "environment": "Actual olde348HubCore with populatedbcbSchema5SQLite in Node/FakeSpotify; forward reopening alsochecked",
+    "limits": "Simulation only; actual production populatedrestore NOT_RUN. Older runtime temporarily lacks newprofile/laneUI and automaticguestdevicefollow; additive data retained."
+  },
+  "communications": {
+    "finding": 6078933197,
+    "rollback_result": 6078971389,
+    "new_correspondence_required": "New correction heads and explicit finalscope; no unchanged duplicate comments.",
+    "final_scope_response": 6079128084
+  },
+  "application_edits_by_codex": false,
+  "application_merge_by_codex": false,
+  "upload_by_codex": false,
+  "activation_by_codex": "Only security rollback to verified immutable dd344",
+  "not_run": [
+    "Physical iPhone Safari",
+    "LiveSpotify latency/quota/real seconddevice",
+    "PrivateHA/MA",
+    "Actual populatedproductionrestore",
+    "LiveAI provider",
+    "Real owner export"
+  ],
+  "historical_review": "docs/ai-dev/evidence/pr23-review/historical-91c94c6-PR23_REVIEW.json",
+  "product_decision": {
+    "status": "PENDING",
+    "question": "Unknown provenance without newSpotifycalls (recommended) versus separatelyreviewed extra pre-endobservations withquotaimpact. This is a functional tradeoff, not renewed releasepermission.",
+    "authorization": "Permanent release authorization remains valid; no deployment whileknownessentialLANE03open."
+  },
+  "validator_note": "EvidenceLedger/canonicalproduction/checkpointandstandardHandoffvalidatorsPASS. OptionalHandoff--git-check fails historical09dpacket app/documentation drift and archivefilesoutsideoriginalhandoff-onlyallowlist; packetnot refreshed orclaimedcurrentapplicationanalysis. Rootdiffthisrun is docs-only.",
+  "historical_snapshot": true,
+  "superseded_current_state_ref": "docs/ai-dev/evidence/PR24_25_REVIEW.json",
+  "later_external_integration": {
+    "merged_source": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+    "runtime_version": "473f96c8-35ad-486b-9592-b7005d0f40b9",
+    "deployment": "7150626c-6af6-45fb-9326-4118d829dd03",
+    "root_action": false
+  }
+}

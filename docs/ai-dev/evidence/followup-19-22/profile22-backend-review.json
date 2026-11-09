@@ -1,0 +1,166 @@
+{
+  "schema_version": "review.v1",
+  "generated_at": "2026-10-09T07:54:26.500313+00:00",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "subject": {
+    "repository": "MikaMcFlurry/true-shuffle-PoC",
+    "pr": 22,
+    "head_sha": "f228c76f82e0382184333a1745579651c838f332",
+    "target_sha": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "combined_sha": "4dc337731c6d998a946c08142f5811821e26e939"
+  },
+  "scope": "Fresh backend/security/data/AI review. No application code changed. Separate isolated test worktrees; no GitHub comments, merges, deployment or live-provider calls.",
+  "skills": [
+    "mika-red-team",
+    "mika-verification"
+  ],
+  "findings": [
+    {
+      "id": "PR22-AI-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Optional genre AI blocks playback and every other listener operation while waiting for external inference",
+      "files": [
+        "src/worker/userhub.ts:558",
+        "src/worker/userhub.ts:97",
+        "src/worker/hub/hub.ts:6151",
+        "src/worker/hub/genres.ts:97",
+        "src/worker/hub/genres.ts:116"
+      ],
+      "preconditions": "Authenticated onboarded listener with nonempty imported artist summary and Workers AI configured; playback active.",
+      "reproduction": [
+        "Use actual UserHub class, stubbing only cloudflare:workers DurableObject constructor for Node, and inject real HubCore/FakeSpotify harness.",
+        "Start u.estimateGenres(sessionEpoch) with AI run Promise held unresolved.",
+        "After AI is entered call u.playerAction(epoch,pause).",
+        "After100ms pause still unresolved and provider transport untouched. Release AI promise; estimate completes, then pause succeeds."
+      ],
+      "expected": "Optional profile inference must not own the account-wide player/state lock for an unbounded remote wait; owner pause/device actions and observation must remain responsive, with fenced publication of the eventual estimate.",
+      "actual": "estimateGenres uses session→exclusive and awaits the entire provider call. All later operations queue behind it. Workers AI path has no deadline; installed Anthropic SDK constructor here uses defaults timeout10minutes and maxRetries2 (source-read, not a live latency measurement).",
+      "evidence": [
+        "/tmp/profile22-attacks.log",
+        "/tmp/profile22-combined-attacks.log",
+        "/tmp/profile22-backend-check/test/hub/profile22-independent.test.ts"
+      ],
+      "repair_direction": "Move optional inference off critical per-listener lock with bounded attempt/publish lifecycle, retain epoch/account/generation fencing and cache/coalescing; add bounded provider timeout/retry policy.",
+      "required_regressions": [
+        "Held/slow AI while pause/resume/next/state/device/logout operate",
+        "AI timeout/failure and eventual stale completion",
+        "Concurrent requests coalesce; newer import/account state prevents stale publication"
+      ]
+    },
+    {
+      "id": "PR22-AI-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Six-hour genre gate disappears on provider failures/refusals and permits immediate repeated paid requests",
+      "files": [
+        "src/worker/hub/hub.ts:6133",
+        "src/worker/hub/hub.ts:6151"
+      ],
+      "reproduction": [
+        "Store valid imported summary with positive artist minutes.",
+        "Use Workers AI returning response refused (unusable JSON).",
+        "Call estimateGenres three times at unchanged clock, restarting HubCore between attempts."
+      ],
+      "expected": "Documented at-most-every-six-hours inference/request policy must cover failed or refused attempts durably, preserve old successful result and provide honest retry timing.",
+      "actual": "Three AI calls occur (test expected1, observed3). Only successful genre_estimate.at is stored. No successful estimate, or an expired previous result, leaves each retry immediately eligible; persists across restart.",
+      "evidence": [
+        "/tmp/profile22-attacks.log",
+        "/tmp/profile22-combined-attacks.log",
+        "/tmp/profile22-backend-check/test/hub/profile22-independent.test.ts"
+      ],
+      "repair_direction": "Store bounded durable attempt deadline before issuing inference, with concurrency protection; retain previous result, distinguish attempt/retry from successful-estimate age and provider429 if provided.",
+      "required_regressions": [
+        "Initial failure/refusal/malformed/timeout repeated clicks",
+        "Expired successful estimate then repeated failures",
+        "Concurrent requests/restart six-hour boundary",
+        "Provider429 and prior estimate retention"
+      ]
+    },
+    {
+      "id": "PR22-INPUT-01",
+      "severity": "P3",
+      "blocking": false,
+      "title": "Imported month validation coerces non-string JSON values and persists client-incompatible shape",
+      "files": [
+        "src/worker/hub/hub.ts:6199",
+        "src/client/screens/profile.tsx:24"
+      ],
+      "reproduction": [
+        "Send otherwise valid profile with months:[{month:[\"2023-11\"],plays:10,minutes:300}].",
+        "setImportedProfile accepts and persists the array because String(month) matches regex.",
+        "Client monthLabel calls month.split on that stored array."
+      ],
+      "expected": "Reject non-string month before storage; preserve prior valid summary.",
+      "actual": "Assertion expecting bad_profile rejection fails. Static client split/slice usage shows incompatible stored shape. Actual malformed-data rendered browser was not run by this reviewer.",
+      "impact": "Malformed authenticated self-supplied API payload can break that account profile display; normal browser builder generates strings, so not promoted release-blocking.",
+      "evidence": [
+        "/tmp/profile22-attacks.log"
+      ],
+      "repair_direction": "Use strict typeof month string plus valid1..12 month and unique/order validation."
+    },
+    {
+      "id": "PR22-INPUT-02",
+      "severity": "P3",
+      "blocking": false,
+      "title": "Malformed extended-history infinite ms yields nonfinite summary which server rejects and upload flow silently discards",
+      "files": [
+        "src/client/history-profile.ts:52",
+        "src/client/screens/menu.tsx:931"
+      ],
+      "reproduction": [
+        "Supply valid trackURI/timestamp with ms_played Infinity (JSON exponent1e400 also parses to Infinity).",
+        "finishProfile returns minutes Infinity instead of refusing; JSON upload yields null and server validation rejects."
+      ],
+      "actual": "Independent malformed-input assertion fails; normal Spotify export has finite ms. UI upload catches summary errors and reports completed legacy import; actual rendered error flow delegated to separate UI review.",
+      "evidence": [
+        "/tmp/profile22-attacks.log"
+      ],
+      "repair_direction": "Validate finite/bounded played milliseconds; show summary failure explicitly while retaining legacy import result."
+    }
+  ],
+  "checks": [
+    {
+      "status": "PASS",
+      "claim": "11 existing profile/genre/import tests on exactPR22 head",
+      "command": "npx vitest run test/hub/listening-profile.test.ts test/hub/genres.test.ts test/client/history-profile.test.ts --testTimeout120000",
+      "evidence": "/tmp/profile22-existing.log"
+    },
+    {
+      "status": "FAIL",
+      "claim": "Independent9 attacks/controls:4FAIL5PASS, including2blocking and2nonblocking malformed-input notes; same result on combined19–22",
+      "evidence": [
+        "/tmp/profile22-attacks.log",
+        "/tmp/profile22-combined-attacks.log"
+      ]
+    },
+    {
+      "status": "PASS",
+      "claim": "Actual Worker HTTP handlers (NodeCFbase stub, real Hono/Keys/UserHub/HubCore): all3new routes anonymous401; both POST missingmarker403; signed UID resolves own account; profile write succeeds; staleepoch401."
+    },
+    {
+      "status": "PASS",
+      "claim": "Successful concurrent actualUserHubRPCs coalesce by serialization:1provider call and equal cached results; failure after7h preserves old estimate."
+    },
+    {
+      "status": "PASS",
+      "claim": "Two independently isolated actualHubCore databases: importing intoA leavesB profile null."
+    },
+    {
+      "status": "PASS",
+      "claim": "Europe/Berlin DST month-boundary controlled SQLite plays fixture:1owner counted/1ignored omitted, April and Wednesday00bucket correct, stationnull and KV unchanged. This is metadata-fixture/native-shaped row, not actual native-controller/live acceptance."
+    },
+    {
+      "status": "PASS",
+      "claim": "Malformed/no usable genre JSON returns null."
+    }
+  ],
+  "limits": [
+    "No actual Cloudflare DurableObject execution in Node shell tests; only superclass stubbed, production UserHub session mutex executed unchanged.",
+    "No live Anthropic/WorkersAI inference, provider quota/latency, physical iPhone, privateHA or populatedCloudflare restore:NOT_RUN.",
+    "No claim full PR22 build/typecheck/browser suite independently rerun here; rootVerification owns combined full gates.",
+    "Profile summary30s threshold applied consistently by documented counted-play definition; not treated as a standalone material minutes defect.",
+    "Import-only-post-first-signin upload gate and swallowed summary-save error sent to separate UI reviewer for actual-user-flow assessment."
+  ]
+}

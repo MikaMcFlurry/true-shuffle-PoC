@@ -1,0 +1,79 @@
+{
+  "subject": "955071016d7adf6bebf408317a271ae1e571f5b7",
+  "environment": "Actual combined Preact client via local Vite built preview; all API responses mocked; no backend/live Spotify acceptance",
+  "checks": [
+    "Large999999count chart stays bounded and actually horizontally scrolls via keyboard320/390 both themes; focused region",
+    "Unusable AI response honest alert and durable retry deadline shown no immediate request button",
+    "Annual accessible table all3year aggregated hours and song counts exact"
+  ],
+  "renders": [
+    {
+      "width": 320,
+      "scheme": "light",
+      "metrics": {
+        "left": 40,
+        "client": 286,
+        "scroll": 589,
+        "focus": true,
+        "outline": "solid"
+      }
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "metrics": {
+        "left": 40,
+        "client": 286,
+        "scroll": 589,
+        "focus": true,
+        "outline": "solid"
+      }
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "metrics": {
+        "left": 40,
+        "client": 356,
+        "scroll": 589,
+        "focus": true,
+        "outline": "solid"
+      }
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "metrics": {
+        "left": 40,
+        "client": 356,
+        "scroll": 589,
+        "focus": true,
+        "outline": "solid"
+      }
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "metrics": {
+        "left": 0,
+        "client": 758,
+        "scroll": 758,
+        "focus": true,
+        "outline": "solid"
+      }
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "metrics": {
+        "left": 0,
+        "client": 758,
+        "scroll": 758,
+        "focus": true,
+        "outline": "solid"
+      }
+    }
+  ],
+  "observations": [],
+  "errors": []
+}

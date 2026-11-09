@@ -1,0 +1,96 @@
+{
+  "schema_version": "independent-review.v1",
+  "subject_sha": "93241a7129e18689f5ea664bad5273f6613552a0",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "Fresh bounded provenance/lane review and separated resume policy verification; no app edits or remote writes",
+  "pr24_head": "148b08ba1a3af02683de259ca3d0dd61b36c5d59",
+  "pr25_head": "bc645d263f39782e114e4024c280e56c815a1780",
+  "findings": [
+    {
+      "id": "PR24-LANE-07",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Returning to a retained older Spotify queue can assign replacement-deck reason to the old occurrence",
+      "files": [
+        "src/worker/hub/hub.ts:4951",
+        "src/worker/hub/hub.ts:5002"
+      ],
+      "preconditions": "Track T played from station playlist old deck with fresh reason; Spotify retains its order across published replacement deck that gives T favorite reason. Another context is observed before returning to the retained playlist.",
+      "reproduction": [
+        "onboarded 200 tracks / 180000 ms; hub.play station; advance 10000 ms and forced real Hub sync",
+        "Capture Spotify player order/progress/context of old T (fresh). Publish replacement through actual saveDeck with newer writtenAt and T favorite.",
+        "Observe a different Spotify context for 10000 ms. Restore retained old Spotify playlist player/order and observe T for 10000 ms.",
+        "Advance 160000 ms and sync; read actual durable history SongFacts kind."
+      ],
+      "expected": "Old fresh occurrence must retain supported old reason or null; current replacement favorite is not evidence of which loaded deck produced the play.",
+      "actual": "T00000000000000000001c oldKind fresh, newKind favorite, stored actual favorite. New noteLane replaces reconciled-null note after context detour.",
+      "cause": "deck.writtenAt <= shown.at proves only publication before the previous observation, not that Spotify loaded the new deck. The latest observation can return to an older retained queue.",
+      "repair_direction": "Only recreate a positive lane when the loaded deck provenance is established; retain conservative uncertainty across deck disagreement and context detour without inferring refresh from timestamp.",
+      "required_checks": [
+        "retained old queue after changed-reason replacement, external detour and return",
+        "replacement with absent or multiple T reasons must remain null",
+        "positive normal new-deck start and unchanged-reason continuity",
+        "guest/native isolation and no extra Spotify requests"
+      ],
+      "evidence": [
+        "/tmp/integrated932-retained-lane.test.ts",
+        "/tmp/integrated932-retained-lane.log"
+      ]
+    }
+  ],
+  "policy_pending": [
+    {
+      "id": "PR25-RESUME-POLICY",
+      "status": "PENDING_OWNER_CONFLICT",
+      "requirement_ids": [
+        "NN-04",
+        "NN-07"
+      ],
+      "detail": "All 3 original tests preserving unfinished occurrence fail index 4\u21925 and progress resets 0. This matches PR25 intentional listing rule (partial >=30 s counted as over); current user explicitly preserves unfinished stable occurrence, while separate owner chat is reported to authorize every listed play advancing. Reported chat does not establish conflict resolved in current instruction.",
+      "evidence": [
+        "/tmp/integrated932-pr25-three-attacks.test.ts",
+        "/tmp/integrated932-resume-policy.log"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "original LANE05 repeat greater progress",
+      "result": "PASS",
+      "count": 1
+    },
+    {
+      "name": "original LANE06 repeat plus seek playing/paused transitions (adapted only LaneNote removed timing fields to fixture actual player/clock)",
+      "result": "PASS",
+      "count": 4
+    },
+    {
+      "name": "song-facts/resume-listed current regression suites",
+      "result": "PASS",
+      "count": 33,
+      "evidence": "/tmp/integrated932-lane-regressions.log"
+    },
+    {
+      "name": "session/guest-device regression suites including native controller contracts",
+      "result": "PASS",
+      "count": 30,
+      "evidence": "/tmp/integrated932-session-guest.log"
+    },
+    {
+      "name": "retained queue changed/absent/multiple deck reasons",
+      "result": "FAIL",
+      "passed": 2,
+      "failed": 1,
+      "evidence": "/tmp/integrated932-retained-lane.log"
+    }
+  ],
+  "limitations": [
+    "Real HubCore/FakeSpotify fixtures do not establish physical iPhone, actual Spotify retained queue behavior, latency or quota capacity. Physical iPhone/private HA/populated restore NOT_RUN.",
+    "Broader UI/import/Cloudflare review belongs to separate reviewers/root; this verdict is bounded to lane/provenance.",
+    "Legacy combined parent fixture public new mix case failed its setup expectation that a rebuilt deck must assign favorite; not counted as implementation defect.",
+    "Observed paused song changing reason now produces null intentionally; not treated as regression or weakened assertion."
+  ],
+  "changed_app_files": [],
+  "worktree": "/workspace/ts-integrated932-lane"
+}

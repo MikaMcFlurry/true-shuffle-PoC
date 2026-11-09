@@ -1,0 +1,359 @@
+{
+  "schema_version": "true-shuffle.followup-review.v1",
+  "generated_at": "2026-10-09T06:38:13.998122+00:00",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "target_source": "e348e838f9526bc83b92070302ba15831a87d7b8",
+  "reviewed_heads": {
+    "19": "976f81d70897829094e385987fc64e7fcf0ebb27",
+    "20": "2b3abfd3ec2d0afc693610b5b505dc078fd640f4",
+    "21": "0b14353f6e13fd0c4ba5a8739a0d863df92d81eb"
+  },
+  "provenance": {
+    "git_author": "Claude <noreply@anthropic.com>",
+    "github_pr_user": "MikaMcFlurry",
+    "claude_session": "session_01LuiFYFqenEVR9agywkDkAX",
+    "basis": "actual Git commit author/trailers plus fetched PR bodies and branches, not inferred separate Claude login",
+    "owner_feature_requests": "Documented in actual PR/commit metadata; external owner conversation not independently read."
+  },
+  "scope": {
+    "19": "presentation mix/favourite controls",
+    "20": "separately reviewed additive plays.lane migration5 and historical attribution",
+    "21": "separately reviewed automatic guest-device state/history behavior"
+  },
+  "release_scope": {
+    "completion_comments": null,
+    "completion_status": "NOT_RUN: no explicit scope-completion comment exists in fetched current timelines",
+    "siblings": "All three heads directly descend from e348; no encoded dependency among19/20/21. Local review order19→20→21 combines without conflict, not a claimed owner release order. Claude must declare complete scope/dependencies before release.",
+    "previous": "PR11/12/15/17/16/18 already integrated; old own release/comments read; no duplicate operations."
+  },
+  "combined_review": {
+    "revision": "44379ae75b6ac9bebf7d9e951b71273fce686035",
+    "tree": "afb62b15af70da48622c5054b511597107eb1e05",
+    "kind": "LOCAL_SYNTHETIC_MERGE_ONLY; not pushed, not deployed",
+    "order": [
+      19,
+      20,
+      21
+    ],
+    "conflicts": false
+  },
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "delivery_state": "PARTIAL",
+  "findings": [
+    {
+      "id": "PR19-UI-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Favourite slider drops successive keyboard adjustments while a save is pending",
+      "file": "src/client/screens/station.tsx",
+      "line": 71,
+      "preconditions": "Saved favouriteShare0.37, expanded advanced settings, delay outbound PATCH1200ms while allowing real Worker to handle it afterward.",
+      "steps": [
+        "Focus #r-share.",
+        "Press ArrowRight twice30ms apart, before either PATCH returns.",
+        "Inspect range value, outgoing PATCH bodies and saved station rules after both saves."
+      ],
+      "expected": "37→38→39 locally, with final favouriteShare0.39 persisted; pending save must not reset the next keyboard adjustment.",
+      "actual": "The range resets to37 after each key; both PATCH bodies are {rules:{favoriteShare:0.38}} and stored favouriteShare ends0.38.",
+      "evidence": {
+        "scenario": "rapid keyboard increments with 1200ms delayed PATCH",
+        "start": 37,
+        "firstDisplayed": "37",
+        "secondDisplayed": "37",
+        "requests": [
+          {
+            "rules": {
+              "favoriteShare": 0.38
+            }
+          },
+          {
+            "rules": {
+              "favoriteShare": 0.38
+            }
+          }
+        ],
+        "saved": 0.38
+      },
+      "cause": "onInput records the new local drag value, but onChange clears it immediately while props.value still contains the previous saved value. That render resets the native input before the next key.",
+      "impact": "Keyboard users lose repeated keypresses and receive a misleading rollback during normal network latency; violates preserved customization and keyboard-operation requirements NN-08/NN-11.",
+      "repair_direction": "Retain the selected local value through acknowledgement, and fence asynchronous save acknowledgements so an older response cannot replace a newer desired value. Restore confirmed state explicitly on failure.",
+      "required_regression_checks": [
+        "Native keyboard ArrowRight twice and held/repeated arrows with delayed responses produce every increment and persist the latest value.",
+        "Home/End and pointer commit use the chosen value while pending.",
+        "Delayed/out-of-order successful or failed writes cannot overwrite newer user intent; offline failure remains visible and confirmed state recovers.",
+        "Automatic checkbox mode and navigation do not drop the last committed preference."
+      ],
+      "pr": 19,
+      "reviewed_head": "976f81d70897829094e385987fc64e7fcf0ebb27"
+    },
+    {
+      "id": "PR19-UI-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Previously valid favourite percentages above60 are clamped in the native control",
+      "file": "src/client/screens/station.tsx",
+      "line": 66,
+      "preconditions": "Existing station favouriteShare0.85 accepted and stored by unchanged normaliseRules (0..1). Baseline dropdown includes a dynamic option for existing non-preset values.",
+      "steps": [
+        "Seed favoriteShare0.85 through the actual station API, reload and expand advanced settings.",
+        "Inspect #r-share.value, max, aria-valuetext and visible label.",
+        "Press ArrowLeft once and inspect saved rule."
+      ],
+      "expected": "Existing85% preference is faithfully represented and one decrement produces84%, or a deliberate compatible control preserves its current custom value without silently starting from60.",
+      "actual": "Server and label say85%; native range value is60 with max60 while aria-valuetext says85%. One ArrowLeft saves59%, a26-point reduction.",
+      "evidence": [
+        {
+          "scenario": "pre-existing85% saved value",
+          "server": 0.85,
+          "domValue": "60",
+          "aria": "85 Prozent Favoriten",
+          "max": "60",
+          "label": "Fester Anteil\n85 %"
+        },
+        {
+          "scenario": "one ArrowLeft from saved85",
+          "server": 0.59,
+          "domValue": "59",
+          "aria": "59 Prozent Favoriten"
+        }
+      ],
+      "impact": "Existing customization is misrepresented, and a single ordinary keyboard adjustment changes a preserved rule far more than requested. NN-02/NN-08 require preserving preferences and advanced controls.",
+      "repair_direction": "Support the preserved rule domain or retain an explicit compatible custom-value path; keep native value, bounds, visible label and accessibility value consistent.",
+      "required_regression_checks": [
+        "Existing61%,85%,100% favourite rules render consistent native/visible/ARIA values and remain unchanged on open/reload.",
+        "One decrement from85% saves84%; automatic mode can still store null.",
+        "Retain0/1/60% boundaries and ordinary pointer/keyboard behavior."
+      ],
+      "pr": 19,
+      "reviewed_head": "976f81d70897829094e385987fc64e7fcf0ebb27"
+    },
+    {
+      "id": "PR20-LANE-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "A paused older occurrence can be permanently stamped with a replacement deck lane",
+      "file": "src/worker/hub/hub.ts",
+      "line": 4060,
+      "related_lines": [
+        4863,
+        4864,
+        4865,
+        4866
+      ],
+      "preconditions": "A Spotify client retains an old station occurrence/order across a long pause; persisted current deck is replaced during that pause and holds the same track for a different lane; recent listing arrives after resume. Replacement deck/version is a controlled SQL fixture, not a live/provider publication claim.",
+      "reproduction": [
+        "Run npx vitest run test/hub/pr20-independent.test.ts in /workspace/ts-review-20.",
+        "Onboard real HubCore against FakeSpotify with 180000ms tracks; start first station and retain its current fresh occurrence.",
+        "Advance FakeSpotify playback 30000ms and pause. Advance clock30min; persist replacement deck with writtenAt=now and current id lane=favorite; restart HubCore.",
+        "Advance clock another30min, resume the existing FakeSpotify old loaded player order, advance remaining150000ms. FakeSpotify generates actual recent-list entry from that fixture playback.",
+        "Force HubCore.sync and inspect history for original track."
+      ],
+      "expected": "Use immutable provenance captured for the actual old occurrence, if available; otherwise facts.kind must be null. It must not claim the new deck favorite lane.",
+      "actual": {
+        "oldKind": "fresh",
+        "replacementKind": "favorite",
+        "historyKind": "favorite",
+        "playedAt": 1790319841500,
+        "replacementWrittenAt": 1790317891500
+      },
+      "evidence": [
+        "/workspace/ts-review-20/test/hub/pr20-independent.test.ts",
+        "/tmp/pr20-independent.test.ts",
+        "/tmp/pr20-independent-tests.log",
+        "/tmp/pr20-lane-tests.log"
+      ],
+      "cause": "played_at minus full duration is not the actual start time across pauses. laneOf then checks current deck membership and writtenAt against this later estimate, and the wrong lane is stamped permanently.",
+      "impact": "History gives a factual source claim from a different occurrence/deck, violating conservative unknown-source behavior and the change stated trust bar. Counts/checkpoints were not shown to change.",
+      "repair_direction": "Bind source provenance to a captured actual session/deck occurrence at observation/start, or retain null whenever the listing cannot establish that occurrence. Do not infer immutable source from current deck membership and at-duration alone.",
+      "required_regressions": [
+        "Delayed recently-played after long pause crossing deck replacement, lane changes fresh↔favorite/discovery.",
+        "Same track repeated across different deck versions/lanes; ambiguity returns null.",
+        "No context/user-inserted queue/external/native playback does not acquire an unproven TS lane.",
+        "Private observation fallback and later list reconciliation preserve the captured occurrence lane and do not double-count.",
+        "Guest ignored rows remain excluded from totals while preserving truthful provenance."
+      ],
+      "pr": 20,
+      "reviewed_head": "2b3abfd3ec2d0afc693610b5b505dc078fd640f4"
+    },
+    {
+      "id": "PR21-GUEST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "The first owner song after a confirmed switch away from a guest device is still recorded as guest",
+      "paths": [
+        "src/worker/hub/hub.ts:5744",
+        "src/worker/hub/hub.ts:2661",
+        "src/worker/hub/hub.ts:3335",
+        "src/worker/hub/hub.ts:3213"
+      ],
+      "preconditions": "One configured party device and a distinct unconfigured owner phone. No manual guest mode.",
+      "reproduction": [
+        "Start station on party device and observe it after 10 seconds; guest.active is true.",
+        "Start a different single song on the owner phone; after 10 seconds force a real HubCore sync. Provider observation reports the owner device and guest.active becomes false.",
+        "Listen another 35 seconds, skip in FakeSpotify, and sync history. Query plays for that owner track."
+      ],
+      "expected": "The 45-second owner song is retained as ignored=0 and participates in owner listening memory; the observation already confirmed a different unconfigured device.",
+      "actual": "The history row exists with ignored=1. Automatic closure writes tail=null, but noteGuestLast treats the observed owner song as the old manual-style guest tail with owner=0. The later listing is ignored before tail=null can exclude it.",
+      "impact": "Observed owner music silently disappears from listening memory/consumption after a core device-return journey. Violates NN-02/NN-08 and UI copy that music counts again after seeing another device.",
+      "evidence": {
+        "test": "test/hub/pr21-independent.test.ts (independent: owner short play after confirmed device transition counts)",
+        "log": "/tmp/pr21-independent-attacks.log",
+        "command": "npm test -- test/hub/pr21-independent.test.ts -t 'owner short play after confirmed device transition'",
+        "control": "Identical trace without configuring guest devices passes on exact head and archived exact baseline; /tmp/pr21-independent-baseline.log."
+      },
+      "repair_direction": "Represent a confirmed automatic-device exit separately from uncertain manual/timed guest tails so noteGuestLast cannot adopt an observed distinct owner song. Preserve actual previous guest history and manual guest semantics.",
+      "required_regressions": [
+        "Distinct owner track starts before first phone observation, is observed at 10s, and is skipped after another 35s: ignored=0 and memory updated.",
+        "Same scenario across HubCore eviction, ordinary/forced history read order, paused/no-player closure, and player 429 with successful history fallback.",
+        "Manual and timed guest-tail, private listening, unfinished queue checkpoint, and native/account isolation tests remain green."
+      ],
+      "pr": 21,
+      "reviewed_head": "0b14353f6e13fd0c4ba5a8739a0d863df92d81eb"
+    },
+    {
+      "id": "PR21-GUEST-02",
+      "severity": "P2",
+      "blocking": true,
+      "title": "A concurrently listed owner device with a distinct ID is automatically treated as the selected guest device when names collide",
+      "paths": [
+        "src/worker/hub/hub.ts:5730",
+        "src/client/screens/menu.tsx:497"
+      ],
+      "preconditions": "Two concurrently listed devices have different IDs and the same Spotify name (e.g. iPhone). Only the second device is selected as always guest.",
+      "reproduction": [
+        "Keep existing phone ID active. Add second visible device ID party with exactly the existing phone name.",
+        "Configure only party as a guest device. Start station on the phone and observe playback."
+      ],
+      "expected": "The explicitly unselected owner phone remains owner playback; the user can select the two devices independently.",
+      "actual": "Current player still has phone.id, but guest.active=true because matching uses id OR name. UI also hides the unselected same-name device, preventing separate settings.",
+      "impact": "A plausible Spotify name collision suppresses all owner history/memory on the wrong device, even while both stable IDs are simultaneously available.",
+      "qualification": "Name matching for legitimately rotated device IDs is an intended feature. This reproduction instead uses two distinct IDs both still present in the same device list; no ID rotation occurred.",
+      "evidence": {
+        "test": "test/hub/pr21-independent.test.ts (independent: a different current device id with the same name is not the configured guest device)",
+        "log": "/tmp/pr21-independent-attacks.log"
+      },
+      "repair_direction": "Use an identity/ambiguity policy that preserves explicit distinct IDs, and allow independent rows for same-name devices. Only use name recovery when identity rotation can be established without merging concurrently distinct devices.",
+      "required_regressions": [
+        "Concurrent same-name different IDs stay independently configurable and owner ID counts.",
+        "Single unambiguous genuine rotated-ID recovery still follows the explicitly chosen policy."
+      ],
+      "pr": 21,
+      "reviewed_head": "0b14353f6e13fd0c4ba5a8739a0d863df92d81eb"
+    }
+  ],
+  "nonblocking_policy_observations": [
+    {
+      "id": "PR21-GUEST-OBS-01",
+      "title": "Removing the final configured guest device leaves an existing automatic period active",
+      "status": "REPRODUCED_POLICY_AMBIGUITY",
+      "blocking": false,
+      "paths": [
+        "src/worker/hub/hub.ts:5688",
+        "src/client/screens/menu.tsx:512"
+      ],
+      "actual": "setGuestDevices([]) changes only guest_devices; state remains guest.active=true until a successful player read or the 15-minute hold expires. UI announces the device counts again immediately.",
+      "evidence": "Third exploratory assertion in test/hub/pr21-independent.test.ts fails. Not promoted to a blocker because intended timing policy is not explicit."
+    }
+  ],
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS,2preexistinginfos",
+    "build": "PASS",
+    "worker_dry_run": "PASS",
+    "unit_worker": {
+      "status": "PASS",
+      "count": 492,
+      "testTimeout": 120000,
+      "duration_seconds": 138.09,
+      "scope": "combinedoriginalsuite; no assertion changes"
+    },
+    "worker_fake_spotify_browser": {
+      "status": "PASS",
+      "count": 42,
+      "duration": "1.7m"
+    },
+    "original_resume_boundaries": {
+      "status": "PASS",
+      "count": 11,
+      "scope": "unalteredassertions except absoluteimportpaths"
+    },
+    "parent_independent_attacks": {
+      "status": "FAIL",
+      "count": 7,
+      "passed": 3,
+      "failed": 4,
+      "qualification": "Three blocking backend assertions plus one nonblocking removal-policy assertion; not four newly reported blockers."
+    },
+    "ui19": "FRESH exacthead realWorker/FakeSpotify targeted scenarios and4phone/desktoplightdarklongcontentrenders;2blockingkeyboard/domainfailures; source components/styles identical on combined",
+    "guest_ui_combined": {
+      "status": "PASS",
+      "environment": "builtcombinedclient with mockedAPI; visual/key/pending/error/offline/navigation only",
+      "renders": 4,
+      "provider_acceptance": false
+    },
+    "migration": "FRESH populated localv4→v5 crashrollback/retry/idempotence/reopenPASS, actualproductionrestoreNOT_RUN"
+  },
+  "github_ci": {
+    "19": {
+      "run": 37891410875,
+      "job": 113692942625,
+      "status": "PASS",
+      "head": "976f81d70897829094e385987fc64e7fcf0ebb27"
+    },
+    "20": {
+      "run": 37892151052,
+      "job": 113695241771,
+      "status": "PASS",
+      "head": "2b3abfd3ec2d0afc693610b5b505dc078fd640f4"
+    },
+    "21": {
+      "run": 37893167033,
+      "job": 113698428310,
+      "status": "FAIL",
+      "head": "0b14353f6e13fd0c4ba5a8739a0d863df92d81eb",
+      "result": "489PASS/1inherited20sweekendtimeout;browser/drySKIPPED"
+    },
+    "old_integrated_timeout": "Already requested6069239435 onPR18; no duplicatefinding/retry. Local120sPASS does not make actual20sCIgreen.",
+    "cloudflare_previews": "FAIL withinseconds; actualcauseunknown, Claude misconfiguration assertion unconfirmed; no successfulpreviewclaim."
+  },
+  "production": {
+    "source": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "version": "dd344c82-6ac5-4d1f-97ed-f81d6b79a891",
+    "deployment": "238016d2-534e-4a34-a49d-93088b03ba17",
+    "traffic": 100,
+    "unchanged": true,
+    "assets": "19/19 exact",
+    "health_auth": "Health200, protectedreads401, missingmarker/foreignoriginPOST403",
+    "runtime_identity": "Existing release identity preserved; no candidate upload/activation or runtime mutation. Prior detailed runtime/namespaces/bindings/migrationv1 proof remains in CLOUDFLARE_DEPLOYMENT.json; only deployment/traffic/assets/health/auth rechecked this watch."
+  },
+  "actions": {
+    "comments": {
+      "19": {
+        "id": 6075724303,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19#issuecomment-6075724303"
+      },
+      "20": {
+        "id": 6075730293,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6075730293"
+      },
+      "21": {
+        "id": 6075737117,
+        "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6075737117"
+      }
+    },
+    "application_changes": false,
+    "remote_merges": false,
+    "uploads": false,
+    "activations": false,
+    "deployments": false,
+    "rollback": false
+  },
+  "not_run": [
+    "physicaliPhone/Safari/wake",
+    "actualSpotifydevice/latency/quota/IDrotation",
+    "privateHA/MA",
+    "filledproductionrestore"
+  ],
+  "limits": "All candidate provider tests are simulated. Current production readback is not a candidate release. Blockers and absent completion preclude merge/deploy."
+}

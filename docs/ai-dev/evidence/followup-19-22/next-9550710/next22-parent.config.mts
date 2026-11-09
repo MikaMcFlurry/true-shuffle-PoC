@@ -1,0 +1,1 @@
+export default {resolve:{alias:{'cloudflare:workers':'/tmp/profile22-workers-stub.ts'}},test:{include:['/tmp/next22-parent.test.ts'],environment:'node',testTimeout:20000,silent:'passed-only'}};

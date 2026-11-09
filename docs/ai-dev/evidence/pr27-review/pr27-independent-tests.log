@@ -1,0 +1,50 @@
+
+ RUN  v5.0.2 /workspace/ts-pr27-independent
+
+stdout | test/hub/pr27-independent.test.ts > podcast directly before skipped song must have same opener classification for memory and profile
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/pr27-independent.test.ts > podcast directly before skipped song must have same opener classification for memory and profile
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr27-independent.test.ts > podcast directly before skipped song must have same opener classification for memory and profile
+{"level":"info","kind":"import","message":"„Playlist 1“: 40 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/pr27-independent.test.ts > podcast directly before skipped song must have same opener classification for memory and profile
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 1 Wiedergaben"}
+
+stdout | test/hub/pr27-independent.test.ts > podcast directly before skipped song must have same opener classification for memory and profile
+PODCAST_CLASSIFICATION {"aggregate":{"skipped":1,"openers":0},"profile":{"early":0,"share":0,"top":[],"openers":1,"topOpeners":[{"id":"ssssssssssssssssssssss","name":"Unbekannter Song","sub":"","plays":1,"minutes":0,"imageUrl":null}]},"weight":0.5}
+
+ ❯ test/hub/pr27-independent.test.ts (3 tests | 1 failed) 141ms
+   × podcast directly before skipped song must have same opener classification for memory and profile 105ms
+SIZE import 210 ms, profile cold 1906 ms, warm 1226 ms, held after 0 MB (no gc)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/pr27-independent.test.ts > podcast directly before skipped song must have same opener classification for memory and profile
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ test/hub/pr27-independent.test.ts:29:33
+     27|  expect(tasteWeight(r.memory,'later_less',r.now)).toBe(0.5);
+     28|  console.log('PODCAST_CLASSIFICATION',JSON.stringify({aggregate:{skipp…
+     29|  expect(r.profile.skips?.early).toBe(r.aggregate.skipped);
+       |                                 ^
+     30|  expect(r.profile.skips?.openers).toBe(r.aggregate.openers);
+     31| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 45 passed (46)
+   Start at  15:13:03
+   Duration  5.15s (tests 83%, transform 10%, import 6%)
+

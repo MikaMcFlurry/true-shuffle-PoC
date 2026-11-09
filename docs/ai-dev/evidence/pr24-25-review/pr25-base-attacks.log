@@ -1,0 +1,8 @@
+
+ RUN  v5.0.2 /workspace/ts-pr25-base-independent
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  11:53:55
+   Duration  1.76s (tests 65%, transform 26%, import 8%, worker 1%)

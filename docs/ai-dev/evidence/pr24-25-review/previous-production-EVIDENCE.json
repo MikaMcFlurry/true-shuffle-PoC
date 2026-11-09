@@ -1,0 +1,705 @@
+{
+  "schema_version": "1.2",
+  "generated_at": "2026-10-09T10:31:26.522070+00:00",
+  "project": "true-shuffle Cloudflare implementation",
+  "subject": {
+    "revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+    "artifact_ref": "https://true-shuffle.mikahertler-72c.workers.dev/",
+    "environment": "Securityrollbackrestoredactuale348/dd344/newdeploymentff729fef100%;GitHubtargetbcb2463containsknownauthleakandmustnotredeployuntilcoherentfixaccepted. PR23candidate8921702auth-onlyfinal6079018689NOT_READY/inheritedLANE03; authfixREADY. Freshrollbackcompat2simulationchecks,19assets/authCSRF/publicbrowserandpreservedruntime/bindings/namespaces/vars/secretsmetadata/schedulesPASS. Fullphysical/liveSpotify/HA/productionrestoreNOT_RUN; historicale348integratedCI remainsFAIL.",
+    "environment_class": "PRODUCTION"
+  },
+  "mode": "AUTONOMOUS_BUILD",
+  "delivery_target": "PRODUCTION_LIVE",
+  "claim": "BLOCKED",
+  "material_release": true,
+  "change_profiles": [
+    "USER_FACING",
+    "PERSISTENT_STATE_CHANGE",
+    "AUTHORIZATION_OR_SENSITIVE_DATA",
+    "PERFORMANCE_CRITICAL"
+  ],
+  "independent_review_level": "FRESH",
+  "independent_review_verdict": "BLOCKED",
+  "required_categories": [
+    "build",
+    "static",
+    "critical_journey",
+    "migration",
+    "recovery",
+    "quota",
+    "ui_runtime",
+    "independent_review",
+    "live_provider",
+    "deployment",
+    "accessibility",
+    "data_invariants",
+    "performance_reliability",
+    "security_privacy"
+  ],
+  "external_blockers": [
+    {
+      "id": "B-SPOTIFY",
+      "type": "CREDENTIAL",
+      "description": "Owner reports working queue and playlist resume; agent cannot independently access physical owner Spotify/iPhone for current wake, latency and transport acceptance or actual quota capacity.",
+      "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
+    },
+    {
+      "id": "B-HA",
+      "type": "CREDENTIAL",
+      "description": "Private owner HA/MA installation and real Spotify Connect/native devices unavailable.",
+      "evidence_ref": "docs/IMPLEMENTATION_ACCEPTANCE.md"
+    },
+    {
+      "id": "B-STORAGE",
+      "type": "TOOL_UNAVAILABLE",
+      "description": "Actual populated object bookmark/restore and history/migration-invariant acceptance have not been executed; existing app exposes no isolated authenticated recovery interface. SQLitePITR is documented, not verified by restore.",
+      "evidence_ref": "docs/ai-dev/evidence/CLOUDFLARE_DEPLOYMENT.json"
+    }
+  ],
+  "requirements_snapshot": {
+    "source_ref": "docs/ai-dev/MISSION.md",
+    "source_revision": "d360bafa639df3bfcb65c6d00f8c87e6c28c63952f22beb22934bc9c73fb823a",
+    "non_negotiable_ids": [
+      "NN-01",
+      "NN-02",
+      "NN-03",
+      "NN-04",
+      "NN-05",
+      "NN-06",
+      "NN-07",
+      "NN-08",
+      "NN-09",
+      "NN-10",
+      "NN-11"
+    ]
+  },
+  "protected_requirements": [
+    {
+      "id": "NN-01",
+      "statement": "Continue the actual Cloudflare application; establish source and deployment identity before live changes.",
+      "gate_ids": [
+        "G-LOCAL-NN-01",
+        "G-LIVE-PRODUCTION",
+        "G-CF-IDENTITY"
+      ]
+    },
+    {
+      "id": "NN-02",
+      "statement": "Preserve the existing listener history, memory, stations, preferences and account isolation.",
+      "gate_ids": [
+        "G-LOCAL-NN-02",
+        "G-LIVE-PRODUCTION"
+      ]
+    },
+    {
+      "id": "NN-03",
+      "statement": "Normal Play resumes the same durable session and ordered queue; a new queue requires a distinct explicit action.",
+      "gate_ids": [
+        "G-LOCAL-NN-03",
+        "G-LIVE-SPOTIFY"
+      ]
+    },
+    {
+      "id": "NN-04",
+      "statement": "Preserve the unfinished queue occurrence and latest observed position; if position is unavailable, replay that occurrence from its beginning.",
+      "gate_ids": [
+        "G-LOCAL-NN-04",
+        "G-LIVE-SPOTIFY"
+      ]
+    },
+    {
+      "id": "NN-05",
+      "statement": "Recognize Spotify-side Play of the same session, including after leaving the car; do not commandeer unrelated playback.",
+      "gate_ids": [
+        "G-LOCAL-NN-05",
+        "G-LIVE-SPOTIFY"
+      ]
+    },
+    {
+      "id": "NN-06",
+      "statement": "The same Spotify identity can resume on another browser/device; stale UI and stale device selection cannot replace its session.",
+      "gate_ids": [
+        "G-LOCAL-NN-06",
+        "G-LIVE-SPOTIFY"
+      ]
+    },
+    {
+      "id": "NN-07",
+      "statement": "The ordered queue can continue across rounds, app closure, pauses and restarts without losing its unfinished occurrence.",
+      "gate_ids": [
+        "G-LOCAL-NN-07",
+        "G-LIVE-SPOTIFY"
+      ]
+    },
+    {
+      "id": "NN-08",
+      "statement": "Keep discovery, old playlist resurfacing, history import, mix controls, advanced rules, favourites, bans and guest/private behavior.",
+      "gate_ids": [
+        "G-LOCAL-NN-08",
+        "G-LIVE-SPOTIFY"
+      ]
+    },
+    {
+      "id": "NN-09",
+      "statement": "Handle Spotify rate/quota limits truthfully, respect provider cooldowns on every path, and reduce measured request pressure.",
+      "gate_ids": [
+        "G-LOCAL-NN-09",
+        "G-LIVE-SPOTIFY"
+      ]
+    },
+    {
+      "id": "NN-10",
+      "statement": "Support and verify Spotify Connect through Music Assistant plus a separate capability-based route for native HA/MA players.",
+      "gate_ids": [
+        "G-LOCAL-NN-10",
+        "G-LIVE-HA-MA"
+      ]
+    },
+    {
+      "id": "NN-11",
+      "statement": "Build an independent calm music-player UI in German, retaining true-shuffle branding and making resume, device and queue state legible on mobile and desktop.",
+      "gate_ids": [
+        "G-LOCAL-NN-11",
+        "G-CF-BROWSER"
+      ]
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "LIVE-CF",
+      "title": "Populated production migration/history invariants and an actual Durable Object restore remain unverified; deployment identity/readback now verified",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "LIVE-SPOTIFY",
+      "title": "Owner quota restriction observed; actual recovery, developer-account traffic attribution and authenticated playback acceptance remain unverified",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "LIVE-HA-MA",
+      "title": "Real owner HA/MA routes not verified",
+      "severity": "P1",
+      "blocking": true
+    },
+    {
+      "id": "INTEGRATED-CI-TIMEOUT",
+      "title": "Required integrated CI fails inherited61h simulation20s ceiling; actual486local and sourceequivalentCI pass, no runtime defect reproduced",
+      "severity": "P2",
+      "blocking": true
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-LOCAL-NN-01",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-01",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-02",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-02",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-03",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-03",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-04",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-04",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-05",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-05",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-06",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-06",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-07",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-07",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-08",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-08",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-09",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-09",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-10",
+      "category": "critical_journey",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-10",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-NN-11",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-NN-11",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-BUILD",
+      "category": "build",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-BUILD",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-STATIC",
+      "category": "static",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-STATIC",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-MIGRATION",
+      "category": "migration",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-MIGRATION",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-RECOVERY",
+      "category": "recovery",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-RECOVERY",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-QUOTA",
+      "category": "quota",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-QUOTA",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-BROWSER",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-BROWSER",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-INDEPENDENT",
+      "category": "independent_review",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-INDEPENDENT",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LIVE-SPOTIFY",
+      "category": "live_provider",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [
+        {
+          "id": "EV-G-LIVE-SPOTIFY",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "NOT_RUN live owner/provider/private HA/populated restore; no acceptance inferred from simulations.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LIVE-HA-MA",
+      "category": "live_provider",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [
+        {
+          "id": "EV-G-LIVE-HA-MA",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "NOT_RUN live owner/provider/private HA/populated restore; no acceptance inferred from simulations.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LIVE-PRODUCTION",
+      "category": "recovery",
+      "required": true,
+      "status": "NOT_RUN",
+      "evidence": [
+        {
+          "id": "EV-G-LIVE-PRODUCTION",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "NOT_RUN live owner/provider/private HA/populated restore; no acceptance inferred from simulations.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-LOCAL-INDEPENDENT",
+      "category": "independent_review",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-LOCAL-INDEPENDENT",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-ACCESSIBILITY",
+      "category": "accessibility",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-ACCESSIBILITY",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-DATA_INVARIANTS",
+      "category": "data_invariants",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-DATA_INVARIANTS",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-PERFORMANCE_RELIABILITY",
+      "category": "performance_reliability",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-PERFORMANCE_RELIABILITY",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-SECURITY_PRIVACY",
+      "category": "security_privacy",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-SECURITY_PRIVACY",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/TAG_WORDING_REVIEW.json",
+          "result": "Exact486unit/41Workerbrowser and11RESUME; fresh78backend/44UIroutes/60Unicode/504contrastmin5.117/14scenariosPASS; unchangedprotectedcore/store/auth/config and actual19assets/Worker/runtime/namespaces/migrationv1/authCSRF/public4browsercellsPASS. ScopedPR18releaseverified; fullmissionlivegatesremainNOT_RUN.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:14:59.432984+00:00"
+        }
+      ],
+      "rationale": "Current e348 application and actual production readback; inherited historical pressure/live evidence remains simulation, not live quota/latency/HA/restore acceptance."
+    },
+    {
+      "id": "G-CF-IDENTITY",
+      "category": "deployment",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-CF-IDENTITY",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-09T10:25:19.448783+00:00"
+        }
+      ],
+      "rationale": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved."
+    },
+    {
+      "id": "G-CF-PUBLIC",
+      "category": "deployment",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-CF-PUBLIC",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-09T10:25:19.448783+00:00"
+        }
+      ],
+      "rationale": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved."
+    },
+    {
+      "id": "G-CF-BROWSER",
+      "category": "ui_runtime",
+      "required": true,
+      "status": "PASS",
+      "evidence": [
+        {
+          "id": "EV-G-CF-BROWSER",
+          "kind": "actualintegratedsource andfreshindependentreview plusproductionreadback",
+          "ref": "docs/ai-dev/evidence/PR23_REVIEW.json",
+          "result": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-09T10:25:19.448783+00:00"
+        }
+      ],
+      "rationale": "Actualsecurityrollbackruntimee348/dd344/ff729fef100% verified;19exactassets/authCSRF/publicbrowserPASS;settings/runtime/namespaces/bindings/vars/secretsmetadata/schedulespreserved."
+    },
+    {
+      "id": "G-INTEGRATED-CI",
+      "category": "build",
+      "required": true,
+      "status": "FAIL",
+      "evidence": [
+        {
+          "id": "EV-INTEGRATED-CI",
+          "kind": "actualGitHubActionsintegratedrun/joblogs",
+          "ref": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/37844932181",
+          "result": "37844932181 FAIL twice: jobs113543321791/113544666152;485PASS/1known61h simulation20stimeout; downstreambrowser/dryskipped. SourceequivalentCI37836787868PASS486/41; localfull486PASS120s andisolatedintegratedweekend15.57sPASS. Required integratedCI remainsFAIL; correctionrequested6069239435.",
+          "subject_revision": "e348e838f9526bc83b92070302ba15831a87d7b8",
+          "observed_at": "2026-10-08T21:18:56.237579+00:00"
+        }
+      ],
+      "rationale": "Actual integratedCI job failure cannot be labeled PASS from identical-tree source CI or localtimeoutbudget; concreteboundedharnesscorrection requested."
+    }
+  ]
+}

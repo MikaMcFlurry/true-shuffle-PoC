@@ -1,0 +1,184 @@
+
+> true-shuffle@1.0.0 lint
+> biome check .
+
+test/spotify/usage.test.ts:25:40 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    23 │ 	const sql = nodeSql();
+    24 │ 	const t = new SpotifyUsageTracker(sql, () => T0);
+  > 25 │ 	for (let i = 1; i <= 7; i++) t.record("private-listener-" + i, metric(200));
+       │ 	                                      ^^^^^^^^^^^^^^^^^^^^^^^
+    26 │ 	t.record(
+    27 │ 		"@signin:privateflow",
+  
+  i Unsafe fix: Use a template literal.
+  
+     23  23 │     const sql = nodeSql();
+     24  24 │     const t = new SpotifyUsageTracker(sql, () => T0);
+     25     │ - → for·(let·i·=·1;·i·<=·7;·i++)·t.record("private-listener-"·+·i,·metric(200));
+         25 │ + → for·(let·i·=·1;·i·<=·7;·i++)·t.record(`private-listener-${i}`,·metric(200));
+     26  26 │     t.record(
+     27  27 │       "@signin:privateflow",
+  
+
+test/spotify/usage.test.ts:40:40 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    38 │ it("correlates recovery to same overflow listener and same OAuth flow only", () => {
+    39 │ 	const t = new SpotifyUsageTracker(nodeSql(), () => T0);
+  > 40 │ 	for (let i = 1; i <= 5; i++) t.record("u" + i, metric(200));
+       │ 	                                      ^^^^^^^
+    41 │ 	t.record("overflow-A", metric(429));
+    42 │ 	t.record("overflow-B", metric(200));
+  
+  i Unsafe fix: Use a template literal.
+  
+     38  38 │   it("correlates recovery to same overflow listener and same OAuth flow only", () => {
+     39  39 │     const t = new SpotifyUsageTracker(nodeSql(), () => T0);
+     40     │ - → for·(let·i·=·1;·i·<=·5;·i++)·t.record("u"·+·i,·metric(200));
+         40 │ + → for·(let·i·=·1;·i·<=·5;·i++)·t.record(`u${i}`,·metric(200));
+     41  41 │     t.record("overflow-A", metric(429));
+     42  42 │     t.record("overflow-B", metric(200));
+  
+
+test/hub/pr30-independent-race.test.ts:3:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━
+
+  × This statement must be preceded by a blank line. Add a newline before this statement.
+  
+    1 │ import { expect,it } from 'vitest';
+    2 │ import { onboarded } from './harness';
+  > 3 │ const row = (id:string,n:number): any => [id,n,0,Date.parse('2025-04-01T12:00:00Z'),0,n];
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    4 │ const oldRows:any[] = [[Date.parse('2024-03-01T12:00:00Z')/1000,0,200000,0,0],[Date.parse('2025-03-01T12:00:00Z')/1000,0,200000,0,0]];
+    5 │ const rule:any = {type:'period',kind:'exclude',from:'2024-01-01',to:'2024-12-31',zone:'UTC'};
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     1  1 │   import { expect,it } from 'vitest';
+     2  2 │   import { onboarded } from './harness';
+        3 │ + 
+     3  4 │   const row = (id:string,n:number): any => [id,n,0,Date.parse('2025-04-01T12:00:00Z'),0,n];
+     4  5 │   const oldRows:any[] = [[Date.parse('2024-03-01T12:00:00Z')/1000,0,200000,0,0],[Date.parse('2025-03-01T12:00:00Z')/1000,0,200000,0,0]];
+  
+
+test/hub/pr30-independent-race.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     1    │ - import·{·expect,it·}·from·'vitest';
+     2    │ - import·{·onboarded·}·from·'./harness';
+     3    │ - const·row·=·(id:string,n:number):·any·=>·[id,n,0,Date.parse('2025-04-01T12:00:00Z'),0,n];
+     4    │ - const·oldRows:any[]·=·[[Date.parse('2024-03-01T12:00:00Z')/1000,0,200000,0,0],[Date.parse('2025-03-01T12:00:00Z')/1000,0,200000,0,0]];
+     5    │ - const·rule:any·=·{type:'period',kind:'exclude',from:'2024-01-01',to:'2024-12-31',zone:'UTC'};
+     6    │ - it('new·totals·must·not·use·old·listens·as·their·own·selection·evidence',async()=>{
+     7    │ - ·const·h=await·onboarded({tracks:50});·const·t=[...h.fake.tracks.values()][0]!;
+     8    │ - ·const·old=h.hub.importHistory([row(t.id,2)],0,1).upload;
+     9    │ - ·const·u=h.hub.importListens({importId:old,part:0,parts:2,tracks:1,kind:'tracks',data:[[t.id,t.name,t.artistName,t.albumName]]}).upload;
+    10    │ - ·h.hub.importListens({upload:u,part:1,parts:2,tracks:1,kind:'rows',data:oldRows});
+    11    │ - ·h.hub.importHistory([row(t.id,10)],0,1);
+    12    │ - ·h.hub.applySelection({baseRevision:0,enabled:true,rules:[rule]});
+    13    │ - ·console.log('OLD_EVENTS_NEW_TOTALS',h.hub.memory(t.id).plays,h.hub.selectionView().dataset);
+    14    │ - ·expect(h.hub.memory(t.id).plays).toBe(10);
+        1 │ + import·{·expect,·it·}·from·"vitest";
+        2 │ + import·{·onboarded·}·from·"./harness";
+        3 │ + const·row·=·(id:·string,·n:·number):·any·=>·[id,·n,·0,·Date.parse("2025-04-01T12:00:00Z"),·0,·n];
+        4 │ + const·oldRows:·any[]·=·[
+        5 │ + → [Date.parse("2024-03-01T12:00:00Z")·/·1000,·0,·200000,·0,·0],
+        6 │ + → [Date.parse("2025-03-01T12:00:00Z")·/·1000,·0,·200000,·0,·0],
+        7 │ + ];
+        8 │ + const·rule:·any·=·{
+        9 │ + → type:·"period",
+       10 │ + → kind:·"exclude",
+       11 │ + → from:·"2024-01-01",
+       12 │ + → to:·"2024-12-31",
+       13 │ + → zone:·"UTC",
+       14 │ + };
+       15 │ + it("new·totals·must·not·use·old·listens·as·their·own·selection·evidence",·async·()·=>·{
+       16 │ + → const·h·=·await·onboarded({·tracks:·50·});
+       17 │ + → const·t·=·[...h.fake.tracks.values()][0]!;
+       18 │ + → const·old·=·h.hub.importHistory([row(t.id,·2)],·0,·1).upload;
+       19 │ + → const·u·=·h.hub.importListens({
+       20 │ + → → importId:·old,
+       21 │ + → → part:·0,
+       22 │ + → → parts:·2,
+       23 │ + → → tracks:·1,
+       24 │ + → → kind:·"tracks",
+       25 │ + → → data:·[[t.id,·t.name,·t.artistName,·t.albumName]],
+       26 │ + → }).upload;
+       27 │ + → h.hub.importListens({·upload:·u,·part:·1,·parts:·2,·tracks:·1,·kind:·"rows",·data:·oldRows·});
+       28 │ + → h.hub.importHistory([row(t.id,·10)],·0,·1);
+       29 │ + → h.hub.applySelection({·baseRevision:·0,·enabled:·true,·rules:·[rule]·});
+       30 │ + → console.log("OLD_EVENTS_NEW_TOTALS",·h.hub.memory(t.id).plays,·h.hub.selectionView().dataset);
+       31 │ + → expect(h.hub.memory(t.id).plays).toBe(10);
+    15 32 │   });
+    16    │ - it('new·totals·supersede·the·older·in-flight·event·upload',async()=>{
+    17    │ - ·const·h=await·onboarded({tracks:50});·const·t=[...h.fake.tracks.values()][0]!;
+    18    │ - ·const·old=h.hub.importHistory([row(t.id,2)],0,1).upload;
+    19    │ - ·const·u=h.hub.importListens({importId:old,part:0,parts:2,tracks:1,kind:'tracks',data:[[t.id,t.name,t.artistName,t.albumName]]}).upload;
+    20    │ - ·const·newer=h.hub.importHistory([row(t.id,10)],0,1).upload;
+    21    │ - ·console.log('UPLOAD_IDENTITIES_DIFFER',old!==newer);
+    22    │ - ·expect(()=>h.hub.importListens({upload:u,importId:old,part:1,parts:2,tracks:1,kind:'rows',data:oldRows})).toThrow();
+       33 │ + it("new·totals·supersede·the·older·in-flight·event·upload",·async·()·=>·{
+       34 │ + → const·h·=·await·onboarded({·tracks:·50·});
+       35 │ + → const·t·=·[...h.fake.tracks.values()][0]!;
+       36 │ + → const·old·=·h.hub.importHistory([row(t.id,·2)],·0,·1).upload;
+       37 │ + → const·u·=·h.hub.importListens({
+       38 │ + → → importId:·old,
+       39 │ + → → part:·0,
+       40 │ + → → parts:·2,
+       41 │ + → → tracks:·1,
+       42 │ + → → kind:·"tracks",
+       43 │ + → → data:·[[t.id,·t.name,·t.artistName,·t.albumName]],
+       44 │ + → }).upload;
+       45 │ + → const·newer·=·h.hub.importHistory([row(t.id,·10)],·0,·1).upload;
+       46 │ + → console.log("UPLOAD_IDENTITIES_DIFFER",·old·!==·newer);
+       47 │ + → expect(()·=>
+       48 │ + → → h.hub.importListens({
+       49 │ + → → → upload:·u,
+       50 │ + → → → importId:·old,
+       51 │ + → → → part:·1,
+       52 │ + → → → parts:·2,
+       53 │ + → → → tracks:·1,
+       54 │ + → → → kind:·"rows",
+       55 │ + → → → data:·oldRows,
+       56 │ + → → }),
+       57 │ + → ).toThrow();
+    23 58 │   });
+    24    │ - it('legacy·first·listens·block·cannot·recreate·a·deleted·import',async()=>{
+    25    │ - ·const·h=await·onboarded({tracks:50});·const·t=[...h.fake.tracks.values()][0]!;
+    26    │ - ·h.hub.importHistory([row(t.id,2)],0,1);
+    27    │ - ·h.hub.deleteImport(h.hub.selectionView().dataset.key);
+    28    │ - ·expect(()=>h.hub.importListens({part:0,parts:2,tracks:1,kind:'tracks',data:[[t.id,t.name,t.artistName,t.albumName]]})).toThrow();
+    29    │ - ·console.log('RESURRECTED',h.hub.selectionView().dataset);
+    30    │ - ·expect(h.hub.selectionView().dataset.hasImport).toBe(false);
+       59 │ + it("legacy·first·listens·block·cannot·recreate·a·deleted·import",·async·()·=>·{
+       60 │ + → const·h·=·await·onboarded({·tracks:·50·});
+       61 │ + → const·t·=·[...h.fake.tracks.values()][0]!;
+       62 │ + → h.hub.importHistory([row(t.id,·2)],·0,·1);
+       63 │ + → h.hub.deleteImport(h.hub.selectionView().dataset.key);
+       64 │ + → expect(()·=>
+       65 │ + → → h.hub.importListens({
+       66 │ + → → → part:·0,
+       67 │ + → → → parts:·2,
+       68 │ + → → → tracks:·1,
+       69 │ + → → → kind:·"tracks",
+       70 │ + → → → data:·[[t.id,·t.name,·t.artistName,·t.albumName]],
+       71 │ + → → }),
+       72 │ + → ).toThrow();
+       73 │ + → console.log("RESURRECTED",·h.hub.selectionView().dataset);
+       74 │ + → expect(h.hub.selectionView().dataset.hasImport).toBe(false);
+    31 75 │   });
+    32 76 │   
+  
+
+Checked 142 files in 1929ms. No fixes applied.
+Found 2 errors.
+Found 2 infos.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

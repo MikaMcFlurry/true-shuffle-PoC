@@ -1,0 +1,14 @@
+import {it,expect} from '/workspace/ts-review-19-22/node_modules/vitest/dist/index.js';import {onboarded} from '/workspace/ts-review-19-22/test/hub/harness.ts';import {RequestBudget} from '/workspace/ts-review-19-22/src/worker/spotify/client';
+const sync=(h:any)=>h.hub.sync(new RequestBudget(20),{force:true});
+const step=(h:any,ms:number)=>{h.clock.t+=ms;h.fake.advance(ms);};
+it('independent: playing snapshot with null device id does not prove exit from known guest device',async()=>{
+ const h=await onboarded({tracks:80});const u=h.fake.user();u.devices.push({id:'party',name:'Party',type:'Speaker',restricted:false});
+ h.hub.setGuestDevices([{id:'party',name:'Party'}]);await h.hub.play(h.stationIds[0]!);u.player.deviceId='party';step(h,10000);await sync(h);
+ expect((await h.hub.state()).guest.active).toBe(true);
+ // Provider's documented nullable device id; music and all other device fields remain observed.
+ const handle=h.fake.handle.bind(h.fake);h.fake.handle=async req=>{const r=await handle(req);if(req.method==='GET'&&new URL(req.url).pathname.endsWith('/me/player')&&r.status===200){const b=await r.json() as any;b.device.id=null;return Response.json(b);}return r;};
+ step(h,10000);await sync(h);const st=await h.hub.state();console.log(JSON.stringify({guest:st.guest,nowPlaying:st.nowPlaying?.id}));
+ const current=h.fake.current()!;step(h,35000);h.fake.skip();await sync(h);
+ const row=h.sql.first<{ignored:number}>('SELECT ignored FROM plays WHERE track_id=? ORDER BY played_at DESC LIMIT 1',current);console.log(JSON.stringify({current,ignored:row?.ignored}));
+ expect(row).not.toBeNull();expect(row!.ignored).toBe(1);expect(st.guest.active).toBe(true);
+});

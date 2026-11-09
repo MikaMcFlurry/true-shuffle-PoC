@@ -1,0 +1,104 @@
+{
+  "subject": "955071016d7adf6bebf408317a271ae1e571f5b7",
+  "environment": "Actual combined Preact client via local Vite built preview; all API responses mocked; no backend/live Spotify acceptance",
+  "checks": [
+    "Profile 390/1440 light/dark, long artist/song text, zero page overflow",
+    "Heat table keyboard Enter, all168 weekday/hour values and seven totals; monthly all periods/hours/songs; keyboard horizontal scroll at320/390, desktop; both themes no page overflow",
+    "Live song-length total explicitly upper estimate",
+    "Sixhour gate visible after success; Genre estimation pending disable,503 visible error, retry success, AI source/estimate visibly honest",
+    "Imported profile switches via keyboard to live; import genuine-time label and annual grouping; live estimate label retained",
+    "Profile503 visible alert",
+    "Offline/reconnect page navigation recovers profile",
+    "FixedPR19 rapid37→38→39 keyboard retains latestpending and serial writes",
+    "FixedPR19 fullrange85→84 persisted, no60 clamp",
+    "FavShare503 rolls back latestpending, displays save error",
+    "FavShare pending save survives immediate navigation",
+    "FavShareoffline preserves confirmed stored share",
+    "Older stationGET delayed900ms after earlier serialPATCH cannot overwrite latest83",
+    "Native Home/End queued0→100 retained and persisted"
+  ],
+  "renders": [
+    {
+      "width": 390,
+      "scheme": "light",
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "overflow": 0
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "overflow": 0
+    },
+    {
+      "width": 320,
+      "scheme": "light",
+      "overflow": 0,
+      "tableScroll": {
+        "left": 0,
+        "client": 286,
+        "scroll": 286
+      }
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "overflow": 0,
+      "tableScroll": {
+        "left": 0,
+        "client": 286,
+        "scroll": 286
+      }
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "overflow": 0,
+      "tableScroll": {
+        "left": 0,
+        "client": 356,
+        "scroll": 356
+      }
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "overflow": 0,
+      "tableScroll": {
+        "left": 0,
+        "client": 356,
+        "scroll": 356
+      }
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "overflow": 0,
+      "tableScroll": {
+        "left": 0,
+        "client": 758,
+        "scroll": 758
+      }
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "overflow": 0,
+      "tableScroll": {
+        "left": 0,
+        "client": 758,
+        "scroll": 758
+      }
+    }
+  ],
+  "observations": [],
+  "errors": []
+}

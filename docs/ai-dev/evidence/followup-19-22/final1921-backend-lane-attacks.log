@@ -1,0 +1,80 @@
+
+ RUN  v5.0.2 /workspace/ts-final1921-independent
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+{"level":"info","kind":"import","message":"„Playlist 1“: 200 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+{"id":"T00000000000000000001k","oldKind":"fresh","newKind":"favorite","actual":"fresh"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"import","message":"„Playlist 1“: 200 Songs übernommen, 0 übersprungen"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"thumb","message":"Daumen hoch: Song 108 — Artist 28"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"warn","kind":"gap","message":"Mehr als 50 Songs seit dem letzten Abgleich — ältere konnten nicht gelesen werden"}
+
+stdout | test/hub/final-lane-attacks.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+{"level":"info","kind":"skip","message":"Früh übersprungen auf „Playlist 1“: Song 100 — Artist 20"}
+{"level":"info","kind":"skip","message":"Früh übersprungen auf „Playlist 1“: Song 108 — Artist 28"}
+
+ ❯ test/hub/final-lane-attacks.test.ts (3 tests | 2 failed) 197ms
+   × independent: unlisted short occurrence must not donate its lane to a later unobserved repeat 42ms
+   × independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane 59ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/hub/final-lane-attacks.test.ts > independent: unlisted short occurrence must not donate its lane to a later unobserved repeat
+AssertionError: expected 'fresh' to be null
+
+- Expected:
+null
+
++ Received:
+"fresh"
+
+ ❯ test/hub/final-lane-attacks.test.ts:37:58
+     35|  const row=h.hub.history(20).find((x:any)=>x.id===id)!;
+     36|  console.log(JSON.stringify({id,oldKind,newKind,actual:row?.facts?.kin…
+     37|  expect(row).toBeDefined();expect(row.facts?.kind??null).toBeNull();
+       |                                                          ^
+     38| });
+     39| it('independent: public new mix plus Spotify repeat cannot reuse a ski…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/hub/final-lane-attacks.test.ts > independent: public new mix plus Spotify repeat cannot reuse a skipped occurrence lane
+AssertionError: expected 'fresh' to be 'favorite' // Object.is equality
+
+Expected: "favorite"
+Received: "fresh"
+
+ ❯ test/hub/final-lane-attacks.test.ts:47:68
+     45|  step(h,25*60*60000);await h.hub.play(sid,null,{newQueue:true});
+     46|  const q=h.hub.sessionView(sid,1000)!.queue;const pos=q.findIndex(x=>x…
+     47|  expect(pos).toBeGreaterThanOrEqual(0);expect(q[pos]!.facts!.kind).toB…
+       |                                                                    ^
+     48|  const context=u.player.contextUri!;h.fake.startContext('mika',context…
+     49|  step(h,45000);h.fake.skip();await sync(h);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  07:52:39
+   Duration  733ms (transform 49%, tests 33%, import 17%, worker 1%)

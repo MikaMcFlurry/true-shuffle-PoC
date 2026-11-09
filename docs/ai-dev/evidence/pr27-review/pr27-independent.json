@@ -1,0 +1,93 @@
+{
+  "schema": "independent-review",
+  "reviewed_at": "2026-10-09T15:13:46.027921+00:00",
+  "source_sha": "29d1b2d1f5d8a57656b9fbe02903e9e1987cdd28",
+  "base_sha": "93241a7129e18689f5ea664bad5273f6613552a0",
+  "independence": "FRESH",
+  "verdict": "NOT_READY",
+  "scope": "PR27 substantive import/listens/memory/planner changes independently reviewed, existing inherited PR24/25 findings excluded",
+  "implementation_changes": false,
+  "remote_actions": false,
+  "method": [
+    "read exact git diff and actual implementations",
+    "read AGENTS.md CODEX_START.md HANDOFF_MAP UI_UX_START and Mika Verification/Red Team skills/contracts",
+    "isolated worktree /workspace/ts-pr27-independent",
+    "Real HubCore/node sqlite with FakeSpotify fixture, actual aggregateHistory/addListens/finishListens/importHistory/importListens/listeningProfile/tasteWeight"
+  ],
+  "checks": [
+    {
+      "command": "npx vitest run test/hub/pr27-independent.test.ts test/core/memory-mix-history.test.ts test/core/period-profile.test.ts test/hub/listening-profile.test.ts test/hub/skip-retest.test.ts",
+      "status": "FAIL",
+      "passed": 45,
+      "failed": 1,
+      "existing_regressions_passed": 43,
+      "fresh_attack_checks_passed": 2,
+      "evidence": "/tmp/pr27-independent-tests.log"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PR27-OPENER-PODCAST-01",
+      "severity": "P2",
+      "blocking": true,
+      "title": "Hörprofil erklärt echten gewichteten Skip nach Podcast fälschlich als folgenlosen Opener",
+      "files": [
+        "src/core/history.ts:91",
+        "src/core/listens.ts:124",
+        "src/worker/hub/hub.ts:6760",
+        "src/client/screens/profile.tsx:496"
+      ],
+      "preconditions": "One legitimate extended-history file in chronological order. Music play followed by an approximately58min podcast followed immediately by music skipped after3s. All entries before liveSince. reason_start=trackdone (no restart).",
+      "steps": [
+        "onboarded({tracks:40}) real HubCore",
+        "Import music play ended2026-09-25T01:59:54Z(ms180000), podcast ended02:59:54Z(ms3500000, spotify_track_uri:null), skipped song ended02:59:57Z(ms3000, reason_start:trackdone, reason_end:fwdbtn)",
+        "Run aggregateHistory and importHistory(toRows(aggregate),0,1), then addListens/finishListens and actual two-block importListens",
+        "Read hub.memory(skippedId), tasteWeight(...,later_less,clock.t), hub.listeningProfile(UTC)"
+      ],
+      "expected": "One consistent classification. Under explicit podcast-keeps-listening rule this is ordinary early skip; profile early1/openers0 and actual memory weight0.5. UI must not claim skippedId is exempt from downweighting.",
+      "actual": {
+        "aggregate": {
+          "skipped": 1,
+          "openers": 0
+        },
+        "memory_weight": 0.5,
+        "profile": {
+          "early": 0,
+          "share": 0,
+          "openers": 1,
+          "topOpeners": [
+            "ssssssssssssssssssssss"
+          ]
+        }
+      },
+      "cause": "aggregateHistory tracks any finite-timestamp entry including podcast. addListens drops podcasts. Hub.timeline recomputes silence using music-only rows and infers opener from the artificial hour gap.",
+      "impact": "Owner-facing profile reports a false exemption from taste suppression; same imported event drives ordinary skip reduction in planner while UI promises no reduction. This is correctness/honest-state regression introduced by new opener classification.",
+      "repair_direction": "Preserve shared opener classification/activity continuity before dropping nonmusic entries; do not infer genuine silence from lossy music-only rows. Keep old-row compatibility and file-boundary policy explicit.",
+      "required_regressions": [
+        "music->podcast->immediate skip coherence acrossaggregate/memory/profile",
+        "true silence->skip remains exempt",
+        "explicit restart reason remains exempt",
+        "old imported rows and multiple files remain compatible"
+      ],
+      "test": "/workspace/ts-pr27-independent/test/hub/pr27-independent.test.ts",
+      "log": "/tmp/pr27-independent-tests.log"
+    }
+  ],
+  "non_findings": [
+    {
+      "topic": "Date/file boundary",
+      "detail": "First skip in eachfile intentionally assumes unknown prior activity, so aggregated opener can differ from globally joined music profile. Reproduced discrepancy; not claimed separately as defect because PR explicitly states this policy."
+    },
+    {
+      "topic": "Retest memory",
+      "detail": "Fresh direct assertions PASS for dated imported/live skip precedence, play reset, next skip reenabling penalty, retest deadline boundary, cooling guard, consume ignoring skip taste, ban exclusion, legacy undated skip weighting."
+    }
+  ],
+  "limitations": [
+    "No physical iPhone or live Spotify latency/quota/private HA/populated restore tested",
+    "No production mutation or Cloudflare deployment",
+    "No fresh broad UI/browser audit in this scoped reviewer; root owns those gates",
+    "No explicit completion comment or separate-chat owner authority independently verified in this scoped reviewer"
+  ],
+  "authoritative_release_boundary": "No positive material release claim; parent must separately evaluate completion, scope authorization, inherited findings and required full checks."
+}
