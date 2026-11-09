@@ -1,6 +1,6 @@
 {
   "schema_version": "mika.repo-handoff-evidence.v2",
-  "generated_at": "2026-10-01T14:33:44.836488+00:00",
+  "generated_at": "2026-11-03T12:33:01.290541+00:00",
   "analysis_baseline": {
     "repository_id": "R-1",
     "ref": "codex/implement-cloudflare-restart",
@@ -185,7 +185,7 @@
         "D-04",
         "D-05"
       ],
-      "freshness_trigger": "Material source, deployment, owner intent or verification change; refresh binding before new claims.",
+      "freshness_trigger": "Current9341ledger references PR32_REVIEW.json and pr32-9341-runtime evidence; historical packet remains navigation only. Refresh after source/deployment/repair.",
       "roles": [
         "verification_ledger"
       ]

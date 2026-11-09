@@ -1,0 +1,1250 @@
+{
+  "target": "9341e0d3305778210adbf89e165ec3f66459a956",
+  "release": "30795cb5e3ec61c8bbaaf9d75649e892b1b2807a",
+  "inventory": [
+    {
+      "number": 34,
+      "head": "75ac1a97dd989759a9e0aa6284a768ae563e5f33",
+      "base": "release/1.3.0",
+      "base_sha": "ad66005a66d5a07ce9f0474c8208070299989c8e",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/34"
+    },
+    {
+      "number": 33,
+      "head": "6a9d9628dfa8e954de29446bfb846d7f39541a77",
+      "base": "release/1.3.0",
+      "base_sha": "9341e0d3305778210adbf89e165ec3f66459a956",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/33"
+    },
+    {
+      "number": 32,
+      "head": "5cc1a74a66c73cbb4dfdf067adf1e9ae91dfb3fc",
+      "base": "release/1.3.0",
+      "base_sha": "26371042b8d212adb921cf03cc173e8367c8baa3",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/32"
+    },
+    {
+      "number": 31,
+      "head": "5349195ef0eaa62705e3bff384611578ac9866ca",
+      "base": "release/1.3.0",
+      "base_sha": "b2aac5bd85bc9be16fcf13fe51adf80025bb9d19",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/31"
+    },
+    {
+      "number": 30,
+      "head": "a858098dc278492870ad04699e9d5c33cb1c43a0",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "8d62138184be9397ea22d55170928a4edbbc0725",
+      "state": "closed",
+      "merged": true,
+      "draft": true,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30"
+    },
+    {
+      "number": 29,
+      "head": "27197dc5abbfdbb4fbd4d9ee6f874edb3becc6e6",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "ac23aec48717ac22ef5348aeb04f6c042d091be2",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/29"
+    },
+    {
+      "number": 28,
+      "head": "78fcdf90425b5a800c18fb2dca0093a9436cc466",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "156ba06e232bd8f2f63335a19bea54c87d238f77",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/28"
+    },
+    {
+      "number": 27,
+      "head": "1da5d55e49d67abd391ce17d0be27081c8a7d50b",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "93241a7129e18689f5ea664bad5273f6613552a0",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27"
+    },
+    {
+      "number": 26,
+      "head": "e94d9da9cca5799a546efa982531ca1c38f995cc",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "d4fda283c59e1faba40f04153a9168cf48215aa7",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26"
+    },
+    {
+      "number": 25,
+      "head": "bc645d263f39782e114e4024c280e56c815a1780",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25"
+    },
+    {
+      "number": 24,
+      "head": "148b08ba1a3af02683de259ca3d0dd61b36c5d59",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "cee86fd0ad0b4ef45d862e0106de04ba6616f2af",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24"
+    },
+    {
+      "number": 23,
+      "head": "8921702e666d6da06d941364af5a219691057318",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "bcb246371ba47546e16bbc466362fb21f6ff716d",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23"
+    },
+    {
+      "number": 22,
+      "head": "fd267446fddc556bc6254b146d6a224a13571e23",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "e348e838f9526bc83b92070302ba15831a87d7b8",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22"
+    },
+    {
+      "number": 21,
+      "head": "728d276a614b4fd46640efb61aa9a0f25a2444b3",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "e348e838f9526bc83b92070302ba15831a87d7b8",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21"
+    },
+    {
+      "number": 20,
+      "head": "efee7e7c8a2fda0608cdc2f311f2b2fd5a87355e",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "e348e838f9526bc83b92070302ba15831a87d7b8",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20"
+    },
+    {
+      "number": 19,
+      "head": "65c30a1db447542dc14f73a7f31b9eb4eb3b77c3",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "e348e838f9526bc83b92070302ba15831a87d7b8",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19"
+    },
+    {
+      "number": 18,
+      "head": "4b0a2a21f64474416eaeda780e38b3c3585a2004",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "97e6c0058f7885ad1e6e59e1d342b298d8e3c5d2",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18"
+    },
+    {
+      "number": 17,
+      "head": "74f3252536d5d353353aaa15130c3faca93ea46c",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/17"
+    },
+    {
+      "number": 16,
+      "head": "ff1409c71d57d095a27bede954bb5d18780d73f1",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16"
+    },
+    {
+      "number": 15,
+      "head": "5ea6f6d702487832b6c70157843c1bc7cbbbf67f",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "c05ae42216fd6d011d955e89de11198fef28b6e5",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/15"
+    },
+    {
+      "number": 14,
+      "head": "d7b4cb4ad23e10639107baaa438649b5b7e526f6",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "e348e838f9526bc83b92070302ba15831a87d7b8",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/14"
+    },
+    {
+      "number": 13,
+      "head": "54493f5cb934f7a29b4857d906c956ab4bf53776",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "0d2799a1afa76a6c01c5b3e4c32258bd20682aa0",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/13"
+    },
+    {
+      "number": 12,
+      "head": "f7d95e5a1a3268f4a71356072e5ce1fede2e95af",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "b5a18561f8316ad83a2cfb09150fe7b3fb6b35ce",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/12"
+    },
+    {
+      "number": 11,
+      "head": "d4baa0e973423ba4f96208f09f19d26fbf94b20b",
+      "base": "codex/implement-cloudflare-restart",
+      "base_sha": "b5a18561f8316ad83a2cfb09150fe7b3fb6b35ce",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11"
+    },
+    {
+      "number": 10,
+      "head": "9341e0d3305778210adbf89e165ec3f66459a956",
+      "base": "codex/cloudflare-restart-plan",
+      "base_sha": "5ffe99b929b6a8ddf93035370e156fe036fe6a83",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/10"
+    },
+    {
+      "number": 9,
+      "head": "5ffe99b929b6a8ddf93035370e156fe036fe6a83",
+      "base": "claude/true-shuffle-spotify-95zw0m",
+      "base_sha": "c9bd08246487df1edcb5d19d39ec96c93f04fb9d",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/9"
+    },
+    {
+      "number": 8,
+      "head": "8e48cb7d4c315320a752016ed139f4b0ea2a0fc3",
+      "base": "claude/true-shuffle-spotify-95zw0m",
+      "base_sha": "c9bd08246487df1edcb5d19d39ec96c93f04fb9d",
+      "state": "closed",
+      "merged": false,
+      "draft": true,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/8"
+    },
+    {
+      "number": 7,
+      "head": "02f1b5d2d8b863be16a72ec4ece3e5dbd9790648",
+      "base": "main",
+      "base_sha": "db73bc522b847289405ce095a8ddc29080ebd0bd",
+      "state": "closed",
+      "merged": false,
+      "draft": true,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/7"
+    },
+    {
+      "number": 6,
+      "head": "4710cfa1c83757e37285430ddabbcb2cd8732d56",
+      "base": "main",
+      "base_sha": "b3c04240ccceebe05af0561000b40a4d3b5e524a",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/6"
+    },
+    {
+      "number": 4,
+      "head": "4dacb7148ee3c978d603d20bfd46cf962266e1cd",
+      "base": "main",
+      "base_sha": "572c8822d0b75066542add3a1b6daffaf0f18eec",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/4"
+    },
+    {
+      "number": 3,
+      "head": "019f29c34e976a01e825dd9aa077bb94fd0ce4de",
+      "base": "claude/true-shuffle-mvp-streaming-52jofw",
+      "base_sha": "4e8acf83079e88dbe277da8dfc68f08a7857ca51",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/3"
+    },
+    {
+      "number": 1,
+      "head": "d0d3337f787f97bf543a1de09cfce5a318301427",
+      "base": "main",
+      "base_sha": "e848a4703d8836a2afb88c8dd8f477fb6cb625a9",
+      "state": "closed",
+      "merged": true,
+      "draft": false,
+      "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/1"
+    }
+  ],
+  "comments": [
+    {
+      "pr": 34,
+      "comments": [
+        {
+          "id": 6584746764,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/34#issuecomment-6584746764",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-11-02T18:17:42Z",
+          "body": "<!-- codex-pull-request-review-summary -->\n<!-- codex-review-state:v1 {\"code_review\":{\"commit_sha\":null,\"has_any_findings\":null,\"has_unresolved_findings\":null,\"status\":null},\"security_review\":{\"commit_sha\":\"75ac1a97dd989759a9e0aa6284a768ae563e5f33\",\"has_any_findings\":null,\"has_unresolved_findings\":null,\"status\":\"completed\"}} -->\n<!-- codex-security-review:v1 {\"blockingSeverityThreshold\":\"P0\",\"headSha\":\"75ac1a97dd989759a9e0aa6284a768ae563e5f33\",\"mergeGateEnabled\":false,\"pullRequestNumber\":34,\"repository\":\"MikaMcFlurry/true-shuffle-PoC\",\"status\":\"completed\"} -->\n## Codex Review Summary\n\nThis comment shows the latest Codex review activity on this pull request.\n\n| Review | Status | Commit | Review trigger |\n| --- | --- | --- | --- |\n| 🔒 **Security Review** | ✅ **Completed** <relative-time datetime=\"2026-11-02T18:17:41.991283Z\">2026-11-02T18:17:41.991283Z</relative-time> | `75ac1a9` | PR opened |\n\n\n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\" or \"@codex security review\".\n\nCodex reacts with 👀 while any review is running, comments if it has suggestions, and reacts with 👍 once all reviews finish with no findings.\n\n</details>"
+        }
+      ]
+    },
+    {
+      "pr": 33,
+      "comments": [
+        {
+          "id": 6584725482,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/33#issuecomment-6584725482",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-11-02T18:17:07Z",
+          "body": "<!-- codex-pull-request-review-summary -->\n<!-- codex-review-state:v1 {\"code_review\":{\"commit_sha\":null,\"has_any_findings\":null,\"has_unresolved_findings\":null,\"status\":null},\"security_review\":{\"commit_sha\":\"6a9d9628dfa8e954de29446bfb846d7f39541a77\",\"has_any_findings\":null,\"has_unresolved_findings\":null,\"status\":\"completed\"}} -->\n<!-- codex-security-review:v1 {\"blockingSeverityThreshold\":\"P0\",\"headSha\":\"6a9d9628dfa8e954de29446bfb846d7f39541a77\",\"mergeGateEnabled\":false,\"pullRequestNumber\":33,\"repository\":\"MikaMcFlurry/true-shuffle-PoC\",\"status\":\"completed\"} -->\n## Codex Review Summary\n\nThis comment shows the latest Codex review activity on this pull request.\n\n| Review | Status | Commit | Review trigger |\n| --- | --- | --- | --- |\n| 🔒 **Security Review** | ✅ **Completed** <relative-time datetime=\"2026-11-02T18:17:06.196240Z\">2026-11-02T18:17:06.196240Z</relative-time> | `6a9d962` | PR opened |\n\n\n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\" or \"@codex security review\".\n\nCodex reacts with 👀 while any review is running, comments if it has suggestions, and reacts with 👍 once all reviews finish with no findings.\n\n</details>"
+        }
+      ]
+    },
+    {
+      "pr": 32,
+      "comments": [
+        {
+          "id": 6583612463,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/32#issuecomment-6583612463",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-11-02T18:48:01Z",
+          "body": "Review-Zwischenstand zu `8716b28b74796cae3238d19a7a53da6e41b413bf`: **BLOCKED**. Keine vollständige Runtime-/Releaseabnahme.\n\n**P1 · PR32-SEARCH-ACCOUNT — überlappende Suche gibt dem nächsten Konto die vorige Historie.**\nDateien: `src/client/history-search.ts` (`HistorySearch.load/forget`), Singleton und Such-Effekt in `src/client/screens/menu.tsx`; fehlender Gegenfall in `test/client/history-search.test.ts`.\nReproduktion: Fetcher für A verzögert halten; `const pa = hs.load(\"A\"); const pb = hs.load(\"B\");`; dann A-Antwort mit exklusivem Song freigeben. Ergebnis mit den aktuellen load-/merge-Funktionen: `pa === pb`, nur 1 Request, `(await pb).account === \"A\"`, B bekommt A-Song. Ich habe dafür den aktuellen GitHub-Quelltext in einer isolierten JavaScript-Ausführung nach Entfernen der Typannotationen ausgeführt, mit verzögertem Fetcher; keine Browser-/Worker-Abnahme behauptet.\nUrsache: Vor `if (this.loading) return this.loading` wird nur ein vorhandener Index nach Konto geprüft. Die laufende Anfrage trägt weder Konto noch Generation; auch `forget()` verwirft nur den Index. Der neue B-Such-Effekt kann die A-Promise selbst abonnieren und sein eigener `current(read.gen)`-Check bestätigt dann nur die B-Generation, nicht die Herkunft des Index.\nErwartet: Cache UND Inflight nach Konto/Generation binden; verspätete Antworten nach Konto-/Sessionwechsel oder forget dürfen weder veröffentlicht noch an neue Verbraucher weitergereicht werden. Benötigt: Deferred-Unitfälle A→B mit A zuerst/zuletzt, forget während Fetch, A→B→A und Browserfall mit aktivem Suchtext/Accountwechsel; keine fremden Songs/Zeitpunkte/Bewertungen anzeigen oder übernehmen.\n\n**PR31-STORAGE-CLASSIFICATION: Teilkorrektur, weiterhin offen.**\nDie neuen NOT_STORAGE-Gegenfälle behandeln CPU/Timeout/Overload, das ist eine konkrete Verbesserung. Der bereits auf [PR31 gemeldete Befund](https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/31#issuecomment-6581144974) ist aber nicht geschlossen: `SQLITE_FULL: database or disk is full` bleibt im Matcher und positiven Test und erzeugt weiterhin die tägliche Reset-Zusage. Bitte den verbleibenden Storage-vs.-Tagesquota-Fall dort gezielt korrigieren und Worker/RPC-/UI-Negativnachweis ergänzen; kein neuer Duplikatbefund.\n\n**Abhängigkeiten und Freigabe:** GitHub bestätigt PR31-Merge durch MikaMcFlurry als `26371042b8d212adb921cf03cc173e8367c8baa3` in `release/1.3.0`. PR32 baut darauf auf; `codex/implement-cloudflare-restart` bleibt `8d62138184be9397ea22d55170928a4edbbc0725`. Der gemeinsame Release enthält zusätzlich den zuvor ermittelten PR30-Verlauf und die weiteren 1.2.0-Rating/Playback/Deezer-Commits. Ich habe weder PR31 gemergt noch daraus ein Deployment abgeleitet. Backend-/Scheduler-/DB-/Client-Zustandsänderungen sind eigenständiger technischer Umfang, keine beiläufige Designfreigabe.\nIn der tatsächlichen PR32-Diskussion gibt es vor diesem Kommentar keine Fertigmeldung. Die Beschreibung nennt selbst noch offene/fehlgeschlagene Checks und lokale Evidenz auf `96b61a9`; der neueste Store-Fix ist `8716b28`. Bitte am Schluss per Kommentar den vollständigen gemeinsam fertigen Releaseumfang samt Abhängigkeiten nennen und aktuelle Head-gebundene Evidenz liefern. „READY_WITH_FIXES“ aus der PR-Beschreibung ersetzt keine hier reproduzierte frische unabhängige Abnahme.\n\n**Aktuelle Checks:** `changes` success; `checks` 125430870421 und `browser` 125430870533 noch in_progress; `visual` skipped; Workers-Build 125430487741 failure (Build `610b1123-98b1-400d-82a9-5f08464669b1`). Ohne Log keine Buildursache oder Produktionsstörung behauptet. Bekannte Testfehler brauchen exakten Baselinevergleich; die zwei roten funktionalen Browserfälle bleiben für die Abnahme zu prüfen. Erforderlich bleiben Build/Typen/Lint/Unit-/Worker/funktionale Browser, Darstellung Mobile/Desktop/Hell/Dunkel, Offline/Pending/Fehler, Tastatur und geschützte Queue-/Occurrence-/Progress-/private/guest/native-/429-Verträge.\n\n**Werkzeuggrenze:** sauberer Checkout, lokale vollständige Checks, echte Browserdarstellung sowie kanonische Datei-/Validator-Aktualisierung aktuell NOT_RUN: „No usable execution environment is available“. Kein eigener Appfix, Merge, Upload oder Deployment. Aktuelle authentifizierte Cloudflare-Version/Traffic/Bindings/Secrets und physisches iPhone/live Spotify/private HA/gefüllter Produktionsrestore sind nicht verifiziert. Die 1.2.0-Live-Aussage in docs/releases/1.3.0.md ist hier eine zu revalidierende Fremdevidenz, kein eigener neuer Deploymentnachweis.\n\n---\n\n**Nachprüfung 02.11.2026 nach externem Merge — weiterhin BLOCKED.**\nGitHub meldet PR32 als durch MikaMcFlurry gemergt (17:47:05 UTC), Merge `9341e0d3305778210adbf89e165ec3f66459a956`; `release/1.3.0` und `codex/implement-cloudflare-restart` stehen nun beide dort. Kein Merge durch diesen Reviewer. Letzter Feature-Head `5cc1a74a66c73cbb4dfdf067adf1e9ae91dfb3fc` ändert gegenüber dem geprüften `8716b28` nur Store/Fokus-Burst-Coalescing, nicht die beiden oben benannten Reparaturstellen.\nPR32-SEARCH-ACCOUNT am tatsächlich integrierten `9341e0d` erneut mit den aktuellen load-/merge-Funktionen isoliert ausgeführt: A/B erhalten dieselbe Promise, 1 Request, B-Ergebnis account A mit A-only-Song. Browser/Worker-Nachweis weiterhin NOT_RUN. `SQLITE_FULL` bleibt in aktuellem Storage-Matcher positiv. Kein doppelter Befund; die bestehenden Befunde bleiben offen. In der tatsächlichen Diskussion weiterhin keine Claude-Antwort oder vollständige Fertigmeldung.\n\n**Head-CI jetzt abgeschlossen, nicht grün:** `checks`125439522660 success, `browser`125439522622 failure, `gate`125444905406 failure, visual skipped; Workers-Build125439818306 failure. Tatsächlichen Browserjob-Log gelesen: Lauf41492623203, **145 passed / 1 failed / 9 did not run** (9.5m). Fehler `e2e/history-ratings.spec.ts:283`, storage-blocked-Fall, 90s Timeout bei Zeile313 auf Favorit der Zeile „Sternschnuppe & Wasserfarben – Live“. [Lauf/Artefakt](https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/41492623203/artifacts/13165048027). Das ist keine vollständige Browserabnahme. Benötigt: Ursache/Trace prüfen und reparieren bzw. belastbare identische Baselineabgrenzung liefern, dabei Funktionsassertions erhalten; danach betroffene Fälle und vollständigen erforderlichen Lauf am neuen exakten Head prüfen.\n\n**Neuer tatsächlicher Betriebsnachweis:** Cloudflare-Konnektor jetzt callable und authentifiziert; read-only API bestätigt aktive Version `7b0a619f-b51b-4855-8a86-6c819858737b`, Deployment `47f2df81-1863-4b4c-83e0-e08675106177`, **100 %**, erstellt18.10.2026 17:00:02 UTC. Versionsannotation bezeichnet 1.2.0 aus `b2aac5bd85bc9be16fcf13fe51adf80025bb9d19`; kein 1.3.0-Rollout in der aktuellen Deploymentidentität. Bindings/Namespaces bestätigt: USER_HUB `59222ef9f3a642d4b90776fafa0eac84`, REGISTRY `2ccba352966f46a3b289eb159ccb3bc4`, beide SQLite; migration_tag v1; compatibility_date2026-09-20/nodejs_compat; bestehende Secret-Bindings vorhanden, Werte nicht ausgegeben oder verändert. Frühere Annahme „Cloudflare nicht zugänglich“ gilt für diesen API-Lesezugriff damit nicht mehr. Exakte öffentliche Assets/Health/Auth-/CSRF-/Browserdarstellung in diesem Lauf nicht frisch verifiziert; keine neue Freigabe daraus ableiten.\n\nKein Upload, Aktivieren, Deployment oder Rollback durch diesen Reviewer. Die letzte aktive 1.2.0-Version wird nicht wegen eines roten Feature-Builds zurückgerollt. Lokale Ausführungsumgebung weiterhin „No usable execution environment is available“: integrierter Build, lokale Gates, kanonische Datei-/Handoff-Aktualisierung und Validatoren NOT_RUN. Der revisionsgebundene Review-/Deploymentnachweis steht bis zur Wiederherstellung hier. Bitte die offenen Reparaturen und die vollständige Fertigmeldung im betroffenen Release nachreichen.\n\nZusätzlicher GitHub-Abgleich: Auch PR30 ist jetzt durch MikaMcFlurry als bereits integrierter Commit `a858098` geschlossen/merged markiert (17:47:16 UTC), ohne neue Fertigmeldung/Antwort. Keine zusätzliche Integration erforderlich.\n\n**Aktueller Produktionsbranch-Build konkret diagnostiziert:** Der neue Cloudflare-Konnektor konnte Build und Logs zu `9341e0d` lesen: Build `6b45dd3b-3c9d-4fd3-a0d3-ba49b8466807` scheitert beim Klonen mit **„Failed: root directory not found“**. Damit ist die Ursache dieses konkreten Builds belegt; kein Hinweis auf eine fehlerhaft aktivierte 1.3.0-Version. Bitte das konfigurierte Workers-Build-Root-Verzeichnis gegen den tatsächlichen Repo-Pfad prüfen/korrigieren und einen erfolgreichen Build samt geprüfter Artefaktidentität nachweisen. Ein bloßes Wiederholen oder Verbergen des Checks behebt die Konfiguration nicht. Bis zur Behebung der P1-/Gate-Befunde keine Veröffentlichung auslösen. Kein Buildtrigger/Config/Traffic durch mich geändert.\n\n---\n\n**Betriebsabgleich 02.11.2026 nach externem 1.3.0-Deployment — keine Freigabe durch diesen Reviewer.**\nNeu gelesen: PR33 (Head `6a9d9628dfa8e954de29446bfb846d7f39541a77`, AGENTS/Releasebericht) und PR34 (Head `75ac1a97dd989759a9e0aa6284a768ae563e5f33`, Protokollpfad). Beide extern nach `release/1.3.0` integriert; dessen Head jetzt `30795cb5e3ec61c8bbaaf9d75649e892b1b2807a`. Tatsächlicher GitHub-Compare gegen `9341e0d`: 4 Commits, ausschließlich AGENTS.md und docs/releases/1.3.0.md geändert. Zielbranch bleibt `9341e0d3305778210adbf89e165ec3f66459a956`. Keine Codekorrektur der bestehenden Befunde, keine neue Antwort/Fertigmeldung in PR31/32; Codex-Security-Bot-Zusammenfassungen auf den Doku-PRs sind keine Claude-Fertigmeldung und keine funktionale Releaseabnahme.\n\nCloudflare-API bestätigt nun **extern aktivierte 1.3.0**, Version `467a9df2-9525-4236-ad52-b9ac5d9b56a6`, Deployment `317684ee-095d-48db-afa4-7f730766abb4`,100 %, erstellt02.11.2026 17:56:47.649 UTC; Annotation nennt Quelle `9341e0d`. USER_HUB/REGISTRY-Namespace-IDs stimmen mit dem vorigen API-Readback überein; migration_tag v1,2026-09-20/nodejs_compat und die vorhandenen Binding-/Secret-Namen ebenfalls. Secretwerte weder ausgegeben noch verändert; Namensgleichheit allein ist kein Beweis identischer Secretwerte.\nAktive Vorgängerversion1.2.0: `7b0a619f-b51b-4855-8a86-6c819858737b`, Deployment `47f2df81-1863-4b4c-83e0-e08675106177` (jetzt historisch).\n\nÖffentlicher Nachweis über authentifiziertes Cloudflare Browser Rendering, ohne Spotify-Anmeldung: Health-Body meldet ok:true/version1.3.0/configured:true; build.json meldet9341e0d33057; state-Body verweigert anonym mit code auth. Reales mobiles Chromium390×844 rendert im DOM den Spotify-Anmeldelink, deutsche Anmeldeseite und Assets `index-D3G4Few3.js`/`index-pMhZpQAY.css`, keinen Offline-Hinweis. Screenshot wurde erzeugt, hier aber vom Bildwerkzeug nicht darstellbar, daher keine visuelle Screenshot-Abnahme behauptet. Der zusätzliche instrumentierte Hash-/HTTP-Status-Readback scheiterte am 5s-Selector-Timeout (HTTP422 des Renderingdiensts); exakte Assethashes/Headers/CSRF und vollständige Mobile/Desktop/Hell/Dunkel-/authentifizierte Journeys bleiben in diesem Lauf NOT_RUN. Der Web-Fetcher konnte die Domain nicht öffnen; das ist kein App-Ausfallbeleg.\n\nDie neuen Desktop-Spotify-Messwerte im Releasebericht sind **Autoren-/Fremdevidenz** mit nicht im Repo zugänglichem Windows-Protokoll; keine unabhängige physische iPhone-/Spotify-Latenz-/Quota-/privateHA-/gefüllteRestore-Abnahme durch mich. P5-Ende und Siri sind dort selbst offen. Der Bericht erkennt den roten Browser-/Gate-Stand an; das schließt ihn nicht. Die bestehenden P1-Kontoisolations- und P2-Fehlerklassifizierungsbefunde betreffen nun die als aktiv ausgewiesene Quellrevision. Bitte priorisiert als Hotfix mit den bereits verlangten Regressionen bearbeiten; keine neue unveränderte Befundliste.\n\nKein Merge, Upload, Deployment, Secret-/Bindingwechsel oder Rollback von mir. Keine Wiederholung des externen Rollouts. Eine gesunde anonyme Startseite schließt die Kontoisolationslücke nicht; daraus folgt keine nachträgliche READY-Abnahme. Lokaler Checkout, integrierter Build/Tests und kanonische Datei-/Validator-Aktualisierung bleiben wegen der fehlgeschlagenen Ausführungsumgebung NOT_RUN; dieser Kommentar hält den tatsächlich nachgelesenen Betriebsstand fest."
+        }
+      ]
+    },
+    {
+      "pr": 31,
+      "comments": [
+        {
+          "id": 6580697278,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/31#issuecomment-6580697278",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-11-02T15:14:03Z",
+          "body": "## 🚀 Deploying Preview to Cloudflare 🚀\n<!-- Preview URL -->\n\n<!-- Preview Deployments -->\n### Preview Deployments by commit\n\n<table>\n  <thead>\n    <tr>\n      <th align=\"left\">Status</th>\n      <th align=\"left\">Deployment URL</th>\n      <th align=\"left\">Commit</th>\n      <th align=\"left\">Updated (UTC)</th>\n      <th align=\"left\">See this deployment's details</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td><ul><li><b>Build:</b> Failed ❌</li></ul><br/>\n        <a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/525ea051-de4a-4d33-84d0-91b59b70305d\">View logs ↗</a></td>\n      <td></td>\n      <td>5349195</td>\n      <td>2026-11-02T15:12:42.146Z</td>\n      <td><a href=\"https://dash.cloudflare.com/?to=/72c36b58b6a708fb6ddb61d30d2e2049/workers/services/view/true-shuffle/production/builds/525ea051-de4a-4d33-84d0-91b59b70305d\">View logs ↗</a></td>\n    </tr>\n  </tbody>\n</table>\n"
+        },
+        {
+          "id": 6581144974,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/31#issuecomment-6581144974",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-11-02T15:33:37Z",
+          "body": "Quellprüfung zu Head `5349195ef0eaa62705e3bff384611578ac9866ca`: **BLOCKED**, keine Merge-/Releasefreigabe.\n\n**P2 · PR31-STORAGE-CLASSIFICATION — falsche Ursache und unbelegte Reset-Zusage.**\nBetroffen: `src/worker/lib/storage-limit.ts` (`LIMIT`, `isStorageLimit`, `storageLimitMessage`), Aufrufer in `src/worker/index.ts` und `src/worker/userhub.ts`, `test/worker/storage-limit.test.ts`.\nReproduktion direkt aus dem aktuellen Matcher: `isStorageLimit(new Error(\"CPU time limit exceeded\")) === true`; auch `new Error(\"SQLITE_FULL: database or disk is full\")` ergibt true. Der zweite Fall wird im neuen Test sogar ausdrücklich als Tageslimit akzeptiert. Der globale Fehlerpfad macht daraus `storage_limit`/503 und „Ab 01:00/02:00 Uhr geht es weiter“. Ein volles SQLite-/Speicherlimit ist aber kein Nachweis für ein tägliches Rows-Limit oder dessen Behebung um 00:00 UTC; das Wort „exceeded“ allein identifiziert nicht einmal Storage. So wird die neue Offline-Ursachenanzeige irreführend.\nErwartet: Nur eindeutig belegte tägliche DO-Rows-Quota darf die tägliche Reset-Erklärung erhalten. Volle Datenbank, sonstige Ressourcenlimits und unbekannte Fehler getrennt bzw. mit ehrlicher unbestätigter Ursache melden; keine garantierte Wiederherstellung aus einem generischen Text ableiten. Benötigt: negative Klassifizierungstests für CPU-/sonstige exceeded-Fehler und SQLITE_FULL, positive Tests für tatsächlich belegte tägliche Rows-Limit-Meldungen, Worker-/RPC- und Browsernachweis der jeweiligen Fehleranzeige.\n\n**Releaseumfang/Abhängigkeiten:** PR31 zielt auf `release/1.3.0` bei `b2aac5bd85bc9be16fcf13fe51adf80025bb9d19`, nicht auf den beauftragten `codex/implement-cloudflare-restart` bei `8d62138184be9397ea22d55170928a4edbbc0725`. Laut GitHub-Compare liegt diese Basis 38 Commits voraus, enthält den gesamten PR30-Verlauf bis a858098 sowie weitere Rating-/Playback-/Deezer-/Release-Änderungen. Der isolierte 17-Dateien-Diff ist deshalb keine Prüfung des kombinierten Integrationsumfangs. Bitte den zusammengehörigen vollständigen Releaseumfang und seine Abhängigkeiten ausdrücklich per Kommentar benennen und erst nach Abschluss klar fertigmelden. Nicht einfach die Basis wechseln und damit ungeprüfte Zwischenstände freigeben. Backend-/Scheduler-/Cache-/funktionale Polling-Änderungen werden gesondert vom UI-Designauftrag geprüft.\n\n**Checks/Evidenz:** Aktuell gelesen: beide PR-Commits, tatsächlicher Diff, Basisvergleich und PR-/Review-Diskussion; Commit-Metadaten nennen Mika Hertler und Claude Opus 5.5 als Coautor. Noch keine ausdrückliche Fertigmeldung in der Diskussion. Der aktuelle Head hat den fehlgeschlagenen Cloudflare-Check `125358476671` / Build `525ea051-de4a-4d33-84d0-91b59b70305d`; ohne Buildlog keine Ursachendiagnose und kein Produktionsausfallbeleg. Die im PR genannten 1241 bestandenen/3 bekannten fehlgeschlagenen Tests sind Builderangaben, hier nicht unabhängig reproduziert. Bitte exakte Head-gebundene Typecheck/Lint/Build/Unit-/Worker-/Browserergebnisse einschließlich unveränderter Altfehler-Vergleichsevidenz und geschützter Funktionsassertions liefern. Rows-Read-Modell bleibt Simulation, keine Cloudflare-/Live-Spotify-Quota-Abnahme.\n\nLokaler Checkout, eigene Runtime-/Browserchecks und kanonische Datei-/Validator-Aktualisierung sind in diesem Lauf **NOT_RUN**: die Ausführungsumgebung meldet „No usable execution environment is available“. Frische authentifizierte Cloudflare-Identität/Bindings/Traffic ebenfalls nicht verifiziert; physisches iPhone, private HA und gefüllter Produktionsrestore NOT_RUN. Dieser Kommentar hält den neuen revisionsgebundenen Befund fest; bestehende unveränderte PR24–30-Befunde werden nicht erneut kommentiert. Kein Appfix, Merge, Upload oder Deployment ausgeführt."
+        }
+      ]
+    },
+    {
+      "pr": 30,
+      "comments": [
+        {
+          "id": 6143509401,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30#issuecomment-6143509401",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-13T18:10:53Z"
+        },
+        {
+          "id": 6143664484,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30#issuecomment-6143664484",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-13T13:35:14Z"
+        },
+        {
+          "id": 6149917891,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/30#issuecomment-6149917891",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-13T18:28:35Z"
+        }
+      ]
+    },
+    {
+      "pr": 29,
+      "comments": [
+        {
+          "id": 6085633574,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/29#issuecomment-6085633574",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T17:10:36Z"
+        },
+        {
+          "id": 6085783985,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/29#issuecomment-6085783985",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T17:21:03Z"
+        },
+        {
+          "id": 6085805336,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/29#issuecomment-6085805336",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T17:21:44Z"
+        },
+        {
+          "id": 6086388418,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/29#issuecomment-6086388418",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T17:57:15Z"
+        }
+      ]
+    },
+    {
+      "pr": 28,
+      "comments": [
+        {
+          "id": 6084634378,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/28#issuecomment-6084634378",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T16:08:02Z"
+        },
+        {
+          "id": 6084796234,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/28#issuecomment-6084796234",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T16:17:41Z"
+        },
+        {
+          "id": 6084827924,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/28#issuecomment-6084827924",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T16:19:39Z"
+        },
+        {
+          "id": 6084847874,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/28#issuecomment-6084847874",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T16:25:24Z"
+        }
+      ]
+    },
+    {
+      "pr": 27,
+      "comments": [
+        {
+          "id": 6083123121,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6083123121",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T15:26:23Z"
+        },
+        {
+          "id": 6083149819,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6083149819",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T14:40:42Z"
+        },
+        {
+          "id": 6083736398,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6083736398",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T15:14:35Z"
+        },
+        {
+          "id": 6083855324,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6083855324",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T15:21:22Z"
+        },
+        {
+          "id": 6084056950,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6084056950",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T15:33:23Z"
+        },
+        {
+          "id": 6084873769,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/27#issuecomment-6084873769",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T16:22:29Z"
+        }
+      ]
+    },
+    {
+      "pr": 26,
+      "comments": [
+        {
+          "id": 6080520400,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26#issuecomment-6080520400",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-09T12:13:54Z"
+        },
+        {
+          "id": 6080524036,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26#issuecomment-6080524036",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T13:34:29Z"
+        },
+        {
+          "id": 6080821507,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26#issuecomment-6080821507",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:24:37Z"
+        },
+        {
+          "id": 6081010497,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26#issuecomment-6081010497",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:36:02Z"
+        },
+        {
+          "id": 6081067820,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26#issuecomment-6081067820",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:39:43Z"
+        },
+        {
+          "id": 6081413671,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26#issuecomment-6081413671",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T13:01:45Z"
+        },
+        {
+          "id": 6082145533,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26#issuecomment-6082145533",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T13:43:28Z"
+        },
+        {
+          "id": 6083002216,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/26#issuecomment-6083002216",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T14:32:10Z"
+        }
+      ]
+    },
+    {
+      "pr": 25,
+      "comments": [
+        {
+          "id": 6079970078,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25#issuecomment-6079970078",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T12:40:03Z"
+        },
+        {
+          "id": 6079970522,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25#issuecomment-6079970522",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-09T11:33:34Z"
+        },
+        {
+          "id": 6080361930,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25#issuecomment-6080361930",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T11:56:17Z"
+        },
+        {
+          "id": 6080815485,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25#issuecomment-6080815485",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:24:14Z"
+        },
+        {
+          "id": 6080821099,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25#issuecomment-6080821099",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:24:35Z"
+        },
+        {
+          "id": 6080977483,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25#issuecomment-6080977483",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:33:50Z"
+        },
+        {
+          "id": 6081065351,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/25#issuecomment-6081065351",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:39:33Z"
+        }
+      ]
+    },
+    {
+      "pr": 24,
+      "comments": [
+        {
+          "id": 6079872807,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24#issuecomment-6079872807",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T12:48:53Z"
+        },
+        {
+          "id": 6079872925,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24#issuecomment-6079872925",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-09T11:25:14Z"
+        },
+        {
+          "id": 6080361746,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24#issuecomment-6080361746",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T11:56:16Z"
+        },
+        {
+          "id": 6080813170,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24#issuecomment-6080813170",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:24:06Z"
+        },
+        {
+          "id": 6080820523,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24#issuecomment-6080820523",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:24:33Z"
+        },
+        {
+          "id": 6080990256,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24#issuecomment-6080990256",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:34:41Z"
+        },
+        {
+          "id": 6081410642,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24#issuecomment-6081410642",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T13:01:34Z"
+        },
+        {
+          "id": 6082948911,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/24#issuecomment-6082948911",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T14:29:19Z"
+        }
+      ]
+    },
+    {
+      "pr": 23,
+      "comments": [
+        {
+          "id": 6078452628,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23#issuecomment-6078452628",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T10:24:13Z"
+        },
+        {
+          "id": 6078455178,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23#issuecomment-6078455178",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T09:45:09Z"
+        },
+        {
+          "id": 6078933197,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23#issuecomment-6078933197",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T10:18:08Z"
+        },
+        {
+          "id": 6078971389,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23#issuecomment-6078971389",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T10:20:50Z"
+        },
+        {
+          "id": 6079018689,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23#issuecomment-6079018689",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T10:24:06Z"
+        },
+        {
+          "id": 6079128084,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23#issuecomment-6079128084",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T10:31:47Z"
+        },
+        {
+          "id": 6079569801,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23#issuecomment-6079569801",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T11:01:37Z"
+        },
+        {
+          "id": 6080444575,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/23#issuecomment-6080444575",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T12:00:32Z"
+        }
+      ]
+    },
+    {
+      "pr": 22,
+      "comments": [
+        {
+          "id": 6075858635,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22#issuecomment-6075858635",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T08:35:33Z"
+        },
+        {
+          "id": 6076229569,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22#issuecomment-6076229569",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T07:10:27Z"
+        },
+        {
+          "id": 6076234437,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22#issuecomment-6076234437",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T07:10:50Z"
+        },
+        {
+          "id": 6076875688,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22#issuecomment-6076875688",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T07:57:53Z"
+        },
+        {
+          "id": 6077428773,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22#issuecomment-6077428773",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T08:35:35Z"
+        },
+        {
+          "id": 6078155613,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22#issuecomment-6078155613",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T09:25:55Z"
+        },
+        {
+          "id": 6078305655,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22#issuecomment-6078305655",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T09:34:54Z"
+        },
+        {
+          "id": 6078449085,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/22#issuecomment-6078449085",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T09:44:45Z"
+        }
+      ]
+    },
+    {
+      "pr": 21,
+      "comments": [
+        {
+          "id": 6075568056,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6075568056",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T08:02:21Z"
+        },
+        {
+          "id": 6075569977,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6075569977",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-09T06:26:47Z"
+        },
+        {
+          "id": 6075737117,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6075737117",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T06:35:45Z"
+        },
+        {
+          "id": 6075979726,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6075979726",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T06:52:26Z"
+        },
+        {
+          "id": 6076234028,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6076234028",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T07:10:48Z"
+        },
+        {
+          "id": 6076860537,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6076860537",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T07:55:57Z"
+        },
+        {
+          "id": 6077105744,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6077105744",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T08:13:03Z"
+        },
+        {
+          "id": 6078176836,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/21#issuecomment-6078176836",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T09:25:56Z"
+        }
+      ]
+    },
+    {
+      "pr": 20,
+      "comments": [
+        {
+          "id": 6075403123,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6075403123",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T08:09:26Z"
+        },
+        {
+          "id": 6075406021,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6075406021",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-09T06:13:46Z"
+        },
+        {
+          "id": 6075410839,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6075410839",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T06:10:57Z"
+        },
+        {
+          "id": 6075730293,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6075730293",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T06:35:14Z"
+        },
+        {
+          "id": 6076169140,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6076169140",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T07:05:52Z"
+        },
+        {
+          "id": 6076860367,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6076860367",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T07:55:56Z"
+        },
+        {
+          "id": 6077103811,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6077103811",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T08:12:55Z"
+        },
+        {
+          "id": 6078170512,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6078170512",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T09:25:31Z"
+        },
+        {
+          "id": 6078448360,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/20#issuecomment-6078448360",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T09:44:42Z"
+        }
+      ]
+    },
+    {
+      "pr": 19,
+      "comments": [
+        {
+          "id": 6075283638,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19#issuecomment-6075283638",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T06:59:51Z"
+        },
+        {
+          "id": 6075285008,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19#issuecomment-6075285008",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-09T06:05:14Z"
+        },
+        {
+          "id": 6075410398,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19#issuecomment-6075410398",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T06:10:55Z"
+        },
+        {
+          "id": 6075724303,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19#issuecomment-6075724303",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T06:34:51Z"
+        },
+        {
+          "id": 6076081177,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19#issuecomment-6076081177",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T06:59:37Z"
+        },
+        {
+          "id": 6076864105,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/19#issuecomment-6076864105",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-09T07:56:13Z"
+        }
+      ]
+    },
+    {
+      "pr": 18,
+      "comments": [
+        {
+          "id": 6065523671,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6065523671",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-08T20:12:33Z"
+        },
+        {
+          "id": 6066054755,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6066054755",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T18:05:41Z"
+        },
+        {
+          "id": 6066405296,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6066405296",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T18:26:28Z"
+        },
+        {
+          "id": 6067090616,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6067090616",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T19:07:08Z"
+        },
+        {
+          "id": 6067294995,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6067294995",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T19:18:22Z"
+        },
+        {
+          "id": 6067978239,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6067978239",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T19:59:34Z"
+        },
+        {
+          "id": 6068070766,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6068070766",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T20:05:13Z"
+        },
+        {
+          "id": 6069144182,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6069144182",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T21:12:17Z"
+        },
+        {
+          "id": 6069239435,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/18#issuecomment-6069239435",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T21:18:10Z"
+        }
+      ]
+    },
+    {
+      "pr": 17,
+      "comments": [
+        {
+          "id": 6064811271,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/17#issuecomment-6064811271",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-08T16:52:40Z"
+        },
+        {
+          "id": 6064813531,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/17#issuecomment-6064813531",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T16:52:48Z"
+        },
+        {
+          "id": 6066059988,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/17#issuecomment-6066059988",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T18:06:00Z"
+        }
+      ]
+    },
+    {
+      "pr": 16,
+      "comments": [
+        {
+          "id": 6063741577,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6063741577",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T15:51:51Z"
+        },
+        {
+          "id": 6063806995,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6063806995",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-08T16:54:26Z"
+        },
+        {
+          "id": 6063850471,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6063850471",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T15:57:54Z"
+        },
+        {
+          "id": 6063927303,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6063927303",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T16:02:12Z"
+        },
+        {
+          "id": 6064643688,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6064643688",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T16:42:50Z"
+        },
+        {
+          "id": 6064744665,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6064744665",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T16:48:47Z"
+        },
+        {
+          "id": 6064928704,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6064928704",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T16:59:27Z"
+        },
+        {
+          "id": 6066055100,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/16#issuecomment-6066055100",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T18:05:43Z"
+        }
+      ]
+    },
+    {
+      "pr": 15,
+      "comments": [
+        {
+          "id": 6057891767,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/15#issuecomment-6057891767",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-08T10:36:49Z"
+        },
+        {
+          "id": 6057912498,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/15#issuecomment-6057912498",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T10:30:43Z"
+        },
+        {
+          "id": 6058883035,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/15#issuecomment-6058883035",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-08T11:30:07Z"
+        }
+      ]
+    },
+    {
+      "pr": 14,
+      "comments": [
+        {
+          "id": 6033131551,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/14#issuecomment-6033131551",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-13T18:33:06Z"
+        }
+      ]
+    },
+    {
+      "pr": 13,
+      "comments": [
+        {
+          "id": 5983346444,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/13#issuecomment-5983346444",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-04T19:03:01Z"
+        }
+      ]
+    },
+    {
+      "pr": 12,
+      "comments": [
+        {
+          "id": 5933289771,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/12#issuecomment-5933289771",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-01T14:19:37Z"
+        },
+        {
+          "id": 5933320771,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/12#issuecomment-5933320771",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T14:16:29Z"
+        },
+        {
+          "id": 5933338741,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/12#issuecomment-5933338741",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-01T14:17:33Z"
+        },
+        {
+          "id": 5933666938,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/12#issuecomment-5933666938",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T14:35:55Z"
+        }
+      ]
+    },
+    {
+      "pr": 11,
+      "comments": [
+        {
+          "id": 5931890821,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5931890821",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-01T14:13:00Z"
+        },
+        {
+          "id": 5931996351,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5931996351",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T13:00:32Z"
+        },
+        {
+          "id": 5932034632,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5932034632",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T13:02:57Z"
+        },
+        {
+          "id": 5932040636,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5932040636",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-01T13:14:01Z"
+        },
+        {
+          "id": 5932110519,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5932110519",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-01T13:08:14Z"
+        },
+        {
+          "id": 5932149132,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5932149132",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T13:10:24Z"
+        },
+        {
+          "id": 5932210424,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5932210424",
+          "author": "chatgpt-codex-connector[bot]",
+          "updated_at": "2026-10-01T13:13:57Z"
+        },
+        {
+          "id": 5932941256,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5932941256",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T13:56:07Z"
+        },
+        {
+          "id": 5933119607,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5933119607",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T14:05:49Z"
+        },
+        {
+          "id": 5933233811,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5933233811",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T14:11:43Z"
+        },
+        {
+          "id": 5933321053,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5933321053",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T14:16:30Z"
+        },
+        {
+          "id": 5933327912,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5933327912",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T14:16:53Z"
+        },
+        {
+          "id": 5933666601,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5933666601",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-01T14:35:53Z"
+        }
+      ]
+    },
+    {
+      "pr": 10,
+      "comments": [
+        {
+          "id": 5907847854,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/10#issuecomment-5907847854",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-11-02T18:59:51Z"
+        },
+        {
+          "id": 5981065475,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/10#issuecomment-5981065475",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-04T14:29:57Z"
+        },
+        {
+          "id": 5983242141,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/10#issuecomment-5983242141",
+          "author": "cloudflare-workers-and-pages[bot]",
+          "updated_at": "2026-10-09T17:31:09Z"
+        },
+        {
+          "id": 5983349150,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/10#issuecomment-5983349150",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-04T19:03:21Z"
+        },
+        {
+          "id": 6033156378,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/10#issuecomment-6033156378",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-07T07:29:42Z"
+        },
+        {
+          "id": 6035728506,
+          "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/10#issuecomment-6035728506",
+          "author": "MikaMcFlurry",
+          "updated_at": "2026-10-07T10:09:29Z"
+        }
+      ]
+    }
+  ]
+}
