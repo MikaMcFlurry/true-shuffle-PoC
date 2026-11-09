@@ -1,0 +1,25 @@
+[WebServer] (node:3641) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:3669) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 1 worker
+
+(node:3796) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+UI01 {"how":"another","active":"B","asked":["A","B"],"shown":["14:00\nAlice for B\nTest Artist\naußerhalb von true-shuffle\nBewertung von „Alice for B“\nFavorit\nNie wieder\nHörprobe\n– „Alice for B“ von Test Artist\n1-mal gehört, zuletzt Do., 1. Okt. 2026, 14:00"]}
+  ✓  1 e2e/review/pr35.fixture.ts:106:2 › UI-01: A's search answer on its way never shows (another) (3.8s)
+UI01 {"how":"same-again","active":"A","asked":["A","A"],"shown":["14:00\nAlice for A\nTest Artist\naußerhalb von true-shuffle\nBewertung von „Alice for A“\nFavorit\nNie wieder\nHörprobe\n– „Alice for A“ von Test Artist\n1-mal gehört, zuletzt Do., 1. Okt. 2026, 14:00"]}
+  ✓  2 e2e/review/pr35.fixture.ts:106:2 › UI-01: A's search answer on its way never shows (same-again) (2.1s)
+UI02 day-320 {"raw":["rgb(241, 228, 203)","rgb(42, 33, 22)"],"ratio":12.579,"overflow":0}
+  ✓  3 e2e/review/pr35.fixture.ts:179:2 › UI-02: the volume readout is readable (day-320) (1.0s)
+UI02 day-1280-long {"raw":["rgb(241, 228, 203)","rgb(42, 33, 22)"],"ratio":12.579,"overflow":0}
+  ✓  4 e2e/review/pr35.fixture.ts:179:2 › UI-02: the volume readout is readable (day-1280-long) (1.3s)
+UI02 day-375-fixed {"raw":["rgb(241, 228, 203)","rgb(42, 33, 22)"],"ratio":12.579,"overflow":0}
+  ✓  5 e2e/review/pr35.fixture.ts:179:2 › UI-02: the volume readout is readable (day-375-fixed) (1.2s)
+UI02 night-375 {"raw":["rgb(241, 228, 203)","rgb(23, 17, 11)"],"ratio":14.891,"overflow":0}
+  ✓  6 e2e/review/pr35.fixture.ts:179:2 › UI-02: the volume readout is readable (night-375) (1.0s)
+UI02 night-375-fixed {"raw":["rgb(241, 228, 203)","rgb(23, 17, 11)"],"ratio":14.891,"overflow":0}
+  ✓  7 e2e/review/pr35.fixture.ts:179:2 › UI-02: the volume readout is readable (night-375-fixed) (1.4s)
+
+  7 passed (15.4s)

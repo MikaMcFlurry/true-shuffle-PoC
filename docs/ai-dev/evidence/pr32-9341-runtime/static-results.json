@@ -1,0 +1,22 @@
+[
+  {
+    "name": "typecheck",
+    "exit": 0,
+    "seconds": 27.31
+  },
+  {
+    "name": "lint",
+    "exit": 0,
+    "seconds": 2.09
+  },
+  {
+    "name": "build",
+    "exit": 0,
+    "seconds": 3.63
+  },
+  {
+    "name": "dry-run",
+    "exit": 0,
+    "seconds": 7.37
+  }
+]

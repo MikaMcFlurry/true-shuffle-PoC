@@ -1,0 +1,322 @@
+[
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/README.md",
+    "sha256": "c165c6692cfbeb0f29b44cc2efa34439b3a5ba84f519a5d019d5ef354d19e32a",
+    "bytes": 461
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-boundaries.log",
+    "sha256": "406ba1289d2e43f23415bf56679e890a94bb49828ee76a42e0f490be3c001826",
+    "bytes": 11594
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-boundaries.test.ts.txt",
+    "sha256": "339df33ac7a8d2f1d60d104e7f4b27fbb73978a2615e3ad84af65a548f48a3df",
+    "bytes": 3575
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-existing-and-prior-probes.log",
+    "sha256": "b982abdbd640f2f4b0e683494718a1ef0aeff6d1bdcc909e01beae898fd00405",
+    "bytes": 193
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-prior-probes.test.ts.txt",
+    "sha256": "0ff1c9ccd6e278c59d957b0f29df9dd9a9a66567a456b6b099fac9ae234b7426",
+    "bytes": 2814
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/backend-review.md",
+    "sha256": "ce3b3cadbb7999858efdd9328ef2e44214acb41bd09d0b963efa99fc41c2fe52",
+    "bytes": 7951
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/build.log",
+    "sha256": "1318c9bb0485403b6888507b87ef19d0b83eef1b50b797e3c0f814ff22250fdd",
+    "bytes": 1397
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/check.log",
+    "sha256": "3ff84eb0cd4c8e4fcbb6f16108a274ee63b0fb2a58c1ce94e143d5cd9aa9f3ea",
+    "bytes": 21380
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/cloudflare-build-log.json",
+    "sha256": "1880f6e84bd78c54a41dd476285aa59c576abd318d475719344636d55b08033c",
+    "bytes": 909
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/cloudflare-equality.json",
+    "sha256": "72cbd2b0c2965686aaa6317ce74204b24d4ebcc6ccd4b9fdf69771862bdcff85",
+    "bytes": 907
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/cloudflare-versions.json",
+    "sha256": "96428d99296f7f47919bcfeedb457d08ed37a0d0135ce7c01e5f044f28e557f3",
+    "bytes": 10115
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/combined-diff-stat.txt",
+    "sha256": "418c5dadeb0422c51a7a30c68bc009d4450cf72ea1308560303b6a9cdd608150",
+    "bytes": 1655
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/commit-provenance.txt",
+    "sha256": "5e7bbdeec379d92db0cd8e7ddcb89ec8b22516034a9231a585f4375a2e38b9de",
+    "bytes": 6614
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/dryrun.log",
+    "sha256": "ce4bc1a5c6de86b378cfe71777dc295a854c6d9dc88217056813755f952b35d4",
+    "bytes": 684
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/github-readback.json",
+    "sha256": "4d38c5923f07b207afe4df78a106bf622a0ffdc94d7fc1a81a0a71b0680d249c",
+    "bytes": 600151
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/npm-ci.log",
+    "sha256": "ad6189db6a3897c214bdb864b256aca251035bb61fbe16fae1840785223b600b",
+    "bytes": 26
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/playwright-app-rerun.log",
+    "sha256": "0ed5ab0c6d3690ac7f0c497c2589cfcd267b511e99bf3c163b2e220483b8d2b8",
+    "bytes": 6137
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/playwright-full.log",
+    "sha256": "8a29cdc1d70fe7315f0a87f52e6029fa65b22c94065be99c810163bf9a1522ff",
+    "bytes": 34303
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/apple-touch-icon.png",
+    "sha256": "8231c332bb95ca4cc0fc9128fec4e9be1ed7898bc4a502b39cffb1fef6c566ea",
+    "bytes": 3666
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/apple-touch-icon.png.json",
+    "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529",
+    "bytes": 328
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/browser.json",
+    "sha256": "a40e5b9cf048b47f906d1c8b36fc5b997534fe72391337a79fb85499212eaca5",
+    "bytes": 658
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/build.json",
+    "sha256": "5dea9db9605af087d16a8be12e125927399873d6e2b99a0be28743eea4f68252",
+    "bytes": 43
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/comparison.json",
+    "sha256": "b40475da8c427b8cf4651ce4d36eb04c95bbaf2f48587de000e920a3fd1d38cb",
+    "bytes": 4231
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/csrf.body",
+    "sha256": "39c73525b991f3370311baef508ac9b061ee03ea6b0ce118eebee2dc7b3974a7",
+    "bytes": 56
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/csrf.headers",
+    "sha256": "e961d61391acc452f11f628cc4b3bd57aab01cd9fd4f99e6b6e30d9af1266728",
+    "bytes": 631
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/health.body",
+    "sha256": "2823f9425223cdadf12289c24b083cae01382b26262c79f14d287f909889eac8",
+    "bytes": 71
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/health.headers",
+    "sha256": "32dee803ce7b969bc1cc4d31f929e3a400ce1a68216dfc52b7847bfade009259",
+    "bytes": 622
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/icon-192.png",
+    "sha256": "bfa0a92a3752f97acc58ada50bb53b09f36fe83b77f7b39cf7d559b137bf8cec",
+    "bytes": 3132
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/icon-192.png.json",
+    "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529",
+    "bytes": 328
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/icon-512.png",
+    "sha256": "be005a6b78f252856fae4b61908c697e81d11e43ed4d2a39cf070ee9087bc5d2",
+    "bytes": 8271
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/icon-512.png.json",
+    "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529",
+    "bytes": 328
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/public-1440-dark.png",
+    "sha256": "0e88208d9298c3dc6ab32a731fe90f0daf66e18336e03dcc11f7ae5ac75c0540",
+    "bytes": 88907
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/public-1440-light.png",
+    "sha256": "ce2a4654309e5cb425c4fdca265d3239c01a6cda173755b25e8992366393173a",
+    "bytes": 89111
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/public-390-dark.png",
+    "sha256": "91d7c363c6d8197b926b6e06aab05806d6f095b04bdeede7a64ce15b090f3a0b",
+    "bytes": 69077
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/public-390-light.png",
+    "sha256": "d08161684de89e31be251e72c434cfdec1534a7b0397bbaff42f3f7338d73b26",
+    "bytes": 69429
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/state.body",
+    "sha256": "075003119a672280ed5b001ae797b1213e7c8119dc302a849357968854ec2a19",
+    "bytes": 65
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/public/state.headers",
+    "sha256": "1c2b00e0f32f31509da24771e217cfe6e650a2464a52d41a9a8997f584b980e5",
+    "bytes": 634
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/adversarial-browser-retry.log",
+    "sha256": "d4a988c40f1be42c5dd9e77ef0216bf3632c99b108b7257011eef760f74b5ef7",
+    "bytes": 799
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/adversarial-browser.log",
+    "sha256": "ff706448aa41d925592a135fa0adbf718ebf4115d1c33622d9f19f8bf083d29e",
+    "bytes": 397
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/degraded-browser.log",
+    "sha256": "93fffff6b22af906ba1942b703a978a524a8b482d694c4328bdf6e1f98c6f7c9",
+    "bytes": 711
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/history-search.log",
+    "sha256": "eb9f3244762c73cc9c35490a288b9ee52b3829d381c02d958c91ea7536dc8b0c",
+    "bytes": 199
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/impeccable-audit-refs.txt",
+    "sha256": "7c23921fe1871f59b91959e317ba966994b3c853cc5e7719a55b53c0b4e429c9",
+    "bytes": 12018
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/impeccable-context.txt",
+    "sha256": "04b725b902945d1f103d64b546b1d6a91c36f2372e57908641d420b9aacacf7a",
+    "bytes": 31088
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/impeccable-detector.json",
+    "sha256": "5929563d878422b6d2a82f06be9c3576d87d1e98cd18f06d5e69bf693bddb30c",
+    "bytes": 24017
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/independent-1440-day.png",
+    "sha256": "103c44d3098ac54f509449cc5447bc91f1e972a40d16c1e240d845d263857009",
+    "bytes": 239664
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/independent-1440-night.png",
+    "sha256": "c63578d6df27e9c30d3ce061b94d31b4e9b2cfd1b1f7ee1ff33c91ee3390de3e",
+    "bytes": 237266
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/independent-390-day.png",
+    "sha256": "4d7ff835f9a1fc65c6b6138b9cdb0f204fd528a4d1631d756243d824f2068de3",
+    "bytes": 189373
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/independent-390-night.png",
+    "sha256": "9dd240bfcd82d69d6b2fe9a199671519e6513e132ef8ff3f5a3bd17712c2ad14",
+    "bytes": 187881
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/independent-browser.log",
+    "sha256": "77cd0e5ed72acfec866d2afd7078545e72f90c8815d20b947927437abd8e8ab1",
+    "bytes": 4068
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/independent.config.ts.txt",
+    "sha256": "d5acbc5228946bdee3ae66eb62ee952eac59b06920c5878fa8b62bf23e162f02",
+    "bytes": 789
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/independent.fixture.ts.txt",
+    "sha256": "201e09eb29c49071d59ead781f2156b9d9f7494f8ae2a75f771e05551becdea1",
+    "bytes": 13710
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/offline-search.png",
+    "sha256": "ac2619acf883c05a95609c04b14f9b2ce7cbf422974924b78216376c0efd2d36",
+    "bytes": 29063
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/pending-search.png",
+    "sha256": "952bceb56c572e09671b75a2f13cacd0daf2c6a47f2827c463785b5d6d82caf3",
+    "bytes": 25449
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/pr35-browser-fonts.log",
+    "sha256": "3aae13122dcd8edccaf824b87b2db452b223d65c93320accd7d400487854761d",
+    "bytes": 2377
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/pr35-browser.log",
+    "sha256": "f34a9b7ad2b7bbc5b204768fdab6774ddca64d8b355c146be3f7f28bba618241",
+    "bytes": 7981
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/recovered-search.png",
+    "sha256": "3d46cf9c574c99d7ebd281905c1952160bc286788fc0fbdce63b60b5c8cfa028",
+    "bytes": 45453
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/screenshots.json",
+    "sha256": "fc9765edd7eb58f95f80e10f57df44a232b9fa35abc69a9e6ad4d7b799a25277",
+    "bytes": 2700
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/ui01-another.png",
+    "sha256": "ddbc6b371a27d513754bffaf4d0fc91c61cbeaa98e2a9d45196230ece6658d23",
+    "bytes": 45997
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/ui01-same-again.png",
+    "sha256": "11875f691c70c64e26ed76178c28c1f409108b39174ab26f294a70124dc5d0bc",
+    "bytes": 45802
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/ui02-day-1280-long-page.png",
+    "sha256": "d51322a9194290baed390c0466611b33dccc1363d7e48fe1feaefbd1e15a6c54",
+    "bytes": 179751
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/ui02-day-320-page.png",
+    "sha256": "c93773303a6a13edabe87d6be789ff4ea4ee9fb28a5bf39e4d2195d473f2af3d",
+    "bytes": 60724
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui/ui02-night-375-fixed-page.png",
+    "sha256": "d488347c2afa9665784b5bee19b7b9286da51905d622a628f7e80b973ca69e0a",
+    "bytes": 62919
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/ui-review.md",
+    "sha256": "64ed78bd05694602e75b61d794f0d98c1ba286c9db5999ff54f6ff5cc7fa0252",
+    "bytes": 6257
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr36-2c6118f-runtime/validators.json",
+    "sha256": "b470d5c625e1911d8d861371479a5902a959d5fd766eeccc85590b1186e064a5",
+    "bytes": 2157
+  }
+]

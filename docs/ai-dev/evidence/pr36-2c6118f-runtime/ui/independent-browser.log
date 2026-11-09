@@ -1,0 +1,33 @@
+[WebServer] (node:5360) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:5401) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 11 tests using 1 worker
+
+(node:5576) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+UI01 {"how":"another","active":"B","asked":["A","B"],"shown":["14:00\nAlice for B\nTest Artist\naußerhalb von true-shuffle\nBewertung von „Alice for B“\nFavorit\nNie wieder\nHörprobe\n– „Alice for B“ von Test Artist\n1-mal gehört, zuletzt Do., 1. Okt. 2026, 14:00"]}
+  ✓   1 e2e/review/independent.fixture.ts:106:2 › UI-01: A's search answer on its way never shows (another) (2.9s)
+UI01 {"how":"same-again","active":"A","asked":["A","A"],"shown":["14:00\nAlice for A\nTest Artist\naußerhalb von true-shuffle\nBewertung von „Alice for A“\nFavorit\nNie wieder\nHörprobe\n– „Alice for A“ von Test Artist\n1-mal gehört, zuletzt Do., 1. Okt. 2026, 14:00"]}
+  ✓   2 e2e/review/independent.fixture.ts:106:2 › UI-01: A's search answer on its way never shows (same-again) (2.3s)
+UI02 day-320 {"raw":["rgb(241, 228, 203)","rgb(42, 33, 22)"],"ratio":12.579,"overflow":0}
+  ✓   3 e2e/review/independent.fixture.ts:179:2 › UI-02: the volume readout is readable (day-320) (749ms)
+UI02 day-1280-long {"raw":["rgb(241, 228, 203)","rgb(42, 33, 22)"],"ratio":12.579,"overflow":0}
+  ✓   4 e2e/review/independent.fixture.ts:179:2 › UI-02: the volume readout is readable (day-1280-long) (858ms)
+UI02 day-375-fixed {"raw":["rgb(241, 228, 203)","rgb(42, 33, 22)"],"ratio":12.579,"overflow":0}
+  ✓   5 e2e/review/independent.fixture.ts:179:2 › UI-02: the volume readout is readable (day-375-fixed) (753ms)
+UI02 night-375 {"raw":["rgb(241, 228, 203)","rgb(23, 17, 11)"],"ratio":14.891,"overflow":0}
+  ✓   6 e2e/review/independent.fixture.ts:179:2 › UI-02: the volume readout is readable (night-375) (746ms)
+UI02 night-375-fixed {"raw":["rgb(241, 228, 203)","rgb(23, 17, 11)"],"ratio":14.891,"overflow":0}
+  ✓   7 e2e/review/independent.fixture.ts:179:2 › UI-02: the volume readout is readable (night-375-fixed) (636ms)
+INDEPENDENT {"width":390,"illumination":"day","focused":"Zum Inhalt","targets":[{"name":"Jetzt","rect":{"width":89,"height":56}},{"name":"Kassetten","rect":{"width":89,"height":59}},{"name":"Verlauf","rect":{"width":89,"height":59}},{"name":"Mehr","rect":{"width":89,"height":59}}]}
+  ✓   8 e2e/review/independent.fixture.ts:231:2 › independent: long content keyboard and navigation 390 day (1.1s)
+INDEPENDENT {"width":390,"illumination":"night","focused":"Zum Inhalt","targets":[{"name":"Jetzt","rect":{"width":89,"height":56}},{"name":"Kassetten","rect":{"width":89,"height":59}},{"name":"Verlauf","rect":{"width":89,"height":59}},{"name":"Mehr","rect":{"width":89,"height":59}}]}
+  ✓   9 e2e/review/independent.fixture.ts:231:2 › independent: long content keyboard and navigation 390 night (1.1s)
+INDEPENDENT {"width":1440,"illumination":"day","focused":"Zum Inhalt","targets":[{"name":"Jetzt","rect":{"width":184,"height":56}},{"name":"Kassetten","rect":{"width":184,"height":56}},{"name":"Verlauf","rect":{"width":184,"height":56}},{"name":"Mehr","rect":{"width":184,"height":56}}]}
+  ✓  10 e2e/review/independent.fixture.ts:231:2 › independent: long content keyboard and navigation 1440 day (1.6s)
+INDEPENDENT {"width":1440,"illumination":"night","focused":"Zum Inhalt","targets":[{"name":"Jetzt","rect":{"width":184,"height":56}},{"name":"Kassetten","rect":{"width":184,"height":56}},{"name":"Verlauf","rect":{"width":184,"height":56}},{"name":"Mehr","rect":{"width":184,"height":56}}]}
+  ✓  11 e2e/review/independent.fixture.ts:231:2 › independent: long content keyboard and navigation 1440 night (1.1s)
+
+  11 passed (17.2s)

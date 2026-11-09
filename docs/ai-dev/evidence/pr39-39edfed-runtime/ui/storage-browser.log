@@ -1,0 +1,34 @@
+[WebServer] (node:15074) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:15087) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:15170) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+R132-STORAGE {"width":390,"light":"day","overflow":false,"errors":[],"fonts":[]}
+  ✓  1 e2e/review/storage132.fixture.ts:85:2 › storage-full/daily/recovery 390-day (3.1s)
+R132-STORAGE {"width":390,"light":"night","overflow":false,"errors":[],"fonts":[]}
+  ✓  2 e2e/review/storage132.fixture.ts:85:2 › storage-full/daily/recovery 390-night (2.5s)
+R132-STORAGE {"width":1440,"light":"day","overflow":false,"errors":[],"fonts":[]}
+  ✓  3 e2e/review/storage132.fixture.ts:85:2 › storage-full/daily/recovery 1440-day (2.1s)
+R132-STORAGE {"width":1440,"light":"night","overflow":false,"errors":[],"fonts":[]}
+  ✓  4 e2e/review/storage132.fixture.ts:85:2 › storage-full/daily/recovery 1440-night (2.4s)
+  ✘  5 e2e/review/storage132.fixture.ts:115:1 › cold start full then recovery, account change and late previous full error (1.4s)
+
+
+  1) e2e/review/storage132.fixture.ts:115:1 › cold start full then recovery, account change and late previous full error 
+
+    Error: page.evaluate: TypeError: store.reset is not a function
+        at eval (eval at evaluate (:311:30), <anonymous>:6:11)
+        at async <anonymous>:337:30
+        at eval (eval at evaluate (:311:30), <anonymous>:6:11)
+        at async <anonymous>:337:30
+        at /workspace/true-shuffle-ui-review-132/e2e/review/storage132.fixture.ts:125:13
+
+    Error Context: e2e/.artifacts/storage132/storage132.fixture.ts-cold-6a4a2-nd-late-previous-full-error/error-context.md
+
+  1 failed
+    e2e/review/storage132.fixture.ts:115:1 › cold start full then recovery, account change and late previous full error 
+  4 passed (14.9s)

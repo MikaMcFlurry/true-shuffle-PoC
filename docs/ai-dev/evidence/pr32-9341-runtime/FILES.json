@@ -1,0 +1,232 @@
+[
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/README.md",
+    "sha256": "5de7070ef5c15d0d19ca3f09ff5d8252387f529237001cdbde6529f8c42a70eb",
+    "bytes": 4605
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/account-race-mobile.png",
+    "sha256": "c67ee490866336640e7fbca9dec43b0a157e805a0f8cd7681a46425c40b6f839",
+    "bytes": 53007
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/backend-existing-tests.log",
+    "sha256": "c1ea87d2fcfdc8b7056f1b91c7d5eed57bdf84fe3ff90c3d45efcd61523ff74e",
+    "bytes": 175
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/backend-probes.log",
+    "sha256": "c98aaf58e36af13c41316451bb01dd5758bdbcc5c1c3fdf09a977ce97c7bfc2f",
+    "bytes": 8450
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/backend-review.md",
+    "sha256": "731b8bf025f0310ba87b6c8f6a36a16d479d1457fdef5039ce67292b942c9049",
+    "bytes": 7630
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/backend-review.test.ts.txt",
+    "sha256": "0ff1c9ccd6e278c59d957b0f29df9dd9a9a66567a456b6b099fac9ae234b7426",
+    "bytes": 2814
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/baseline-legacy.log",
+    "sha256": "0527acaa8402dd0e54c53055eecb75b4f92cfbe98ece63bf8c9084ea556502e5",
+    "bytes": 3287
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/browser-failure-history-ratings-ratings-ri-32573-mmen-looking-again-finds-it.md",
+    "sha256": "ce91926ffa427a8b904a436f57561a6d543e4b492bec2767183f26197134d2cc",
+    "bytes": 63655
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/browser-failure-spotify-observed-playback--5f6ec--closed-also-after-a-reload.md",
+    "sha256": "c3dc95d2da8180bfa3c59515097d8766f6362ec0bcfceb7f26afa1c58265d486",
+    "bytes": 10703
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/browser-focused-retry.log",
+    "sha256": "4a68a943890f720c55020b446733aab144c8bc549a385af65bc1f59a5a45a734",
+    "bytes": 2665
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/browser.log",
+    "sha256": "cf2be80d521a823e6a3faea69183d1e430f3b1cc1f605329394e1d1cfbb7d3f1",
+    "bytes": 37142
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/build.log",
+    "sha256": "13becb01c66de1e0d7a19677649aeb5131c6b382abd9bb4ff40fde2a58b9a815",
+    "bytes": 1397
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/cloudflare-identity.json",
+    "sha256": "45307992b3f1bcdb1a21ba6261530c1eb6780d02b447e3a9e41e0300d9ca0d58",
+    "bytes": 2506
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/combined-diff-stat.txt",
+    "sha256": "eec0dd95d5d22c112831328b574cc35629f1f26687b46c85840e39552c86b92f",
+    "bytes": 24053
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/dry-run.log",
+    "sha256": "03636501cb4a661da0661d84dbc00b0caf035d969971df213cb7c6795d9f53b6",
+    "bytes": 853
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/github-readback.json",
+    "sha256": "631564b26188bf49912b937b9913287bb630743b0168494144346dabb9b4d4ad",
+    "bytes": 64007
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/historical-evidence-before-9341.json",
+    "sha256": "0aa13c84474715f196ef0db6fdfdc7724c9c545d52a4cd5b66437f20a577e5ae",
+    "bytes": 43861
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/history-search-race.review.test.ts.txt",
+    "sha256": "efa397d1ae690a5b0edf98126b6ad0232b8eb11e5b6d14856d9944577aaf93ac",
+    "bytes": 1217
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/impeccable-detector.json",
+    "sha256": "c7c86920b52083a0cf5ac343d0b186c09bbf93088aabed7a5e116f70966f691a",
+    "bytes": 24062
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/lint.log",
+    "sha256": "5c7bbf661f04307e7e3ec032361d57df8bbf662ddf58ff8df6f60471ac76415d",
+    "bytes": 91
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/player-desktop-light.png",
+    "sha256": "9d2a86d41faa920566f37967886d03c7033e4f5e5d93979133e0f3546e916b38",
+    "bytes": 271078
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/player-mobile-dark.png",
+    "sha256": "de285d7c651fc2e8b9229fb289ef2d10c90372a72b6a5b7c24fb8e2976c38f7c",
+    "bytes": 229373
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/player-mobile-light.png",
+    "sha256": "e0e849a5d2f717694154d582a391032b6227a21cfbbaab7aa6ed83f81d6f56b5",
+    "bytes": 231482
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/playwright.review.config.ts.txt",
+    "sha256": "b4fe71d9bda1626454dc089230a466f9ee2f549d6944e6164daa2be61e1fa48c",
+    "bytes": 452
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/public-all-assets-comparison.json",
+    "sha256": "2e61531f9d59b39cecdca5c17fd2f1d6db99c57dc39d60c246c82bae58225a31",
+    "bytes": 3856
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/public-asset-comparison.json",
+    "sha256": "f3cbfec0034d2ac2ef98b65f0c04f682ae75a6cccedf88be60a4eb087019ae49",
+    "bytes": 637
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/public-browser.json",
+    "sha256": "3a2addd8fca21739d91ae099364a2e210b01b0f96e767f6de0502d22560d82ba",
+    "bytes": 976
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/public-desktop-dark.png",
+    "sha256": "045c5f0d62d6c42182c5a489b450f0e559dffeb47fe8b7d423a0ae8977a38b11",
+    "bytes": 88568
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/public-desktop-light.png",
+    "sha256": "21e14efeba586c4a1f82f14ab0b4e7ae0732d8c7acdd19eecfe87a5843e7b9c8",
+    "bytes": 88833
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/public-mobile-dark.png",
+    "sha256": "369ec9ede888809a10f6ab7c5ae412c357ccd552356caefee674701510578bde",
+    "bytes": 68885
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/public-mobile-light.png",
+    "sha256": "3e5c21c4341540e25845ddf89341b2b0e28986fc073bcd7af5eee3103c176180",
+    "bytes": 69291
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/public-readback.json",
+    "sha256": "28ea1a87b7724844d08208aa8f51c65bdd1c61ada3df7415b91f6ef5aea8bf1f",
+    "bytes": 713
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/search-desktop-light.png",
+    "sha256": "7f20a36647200634b6f055b2993ac7dc8010e1e69974162cfdba79750257f415",
+    "bytes": 68830
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/search-mobile-dark.png",
+    "sha256": "45de97ce3678ce3ffeccc7383bfdf762a41f504cab6cb5072efc2841d3e507a2",
+    "bytes": 57054
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/search-mobile-light.png",
+    "sha256": "8cdc2861e135c2bc531c0b9d73893a5090f17ee7650bda7db7d7389a04775bbf",
+    "bytes": 57744
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/search-race-unit.log",
+    "sha256": "7c26cce127899043d2ec3cd385c61eeb196bfbbf58323d003960b1e76bd7d472",
+    "bytes": 1610
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/static-results.json",
+    "sha256": "abd4fcb23b2f80b4931b99fc310b0d9895aada9dc4242254078ec9f12ea5f173",
+    "bytes": 268
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/trace-manifest.json",
+    "sha256": "6fbca848acdde70afdeeda27a282c66e5c7691bafabf2e09aacd1a4233d2cd9d",
+    "bytes": 506
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/typecheck.log",
+    "sha256": "af7be78cf77e481a2f6054b68dd1bca909f72657451606d9af11597f8293f69d",
+    "bytes": 163
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/ui-browser-second.log",
+    "sha256": "b3db709ef6cb8aa87936869d77f9a7cbdabfdaa77d1b999ec174806aea2164a6",
+    "bytes": 150
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/ui-browser.log",
+    "sha256": "30c9172a15bf8492bcae7dfb96d86f4268e77666faa9e8b594247aad84bed8bf",
+    "bytes": 5096
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/ui-review.md",
+    "sha256": "f9840084c054766df3949f60390821d461a53ef9d0e506f7f4c21888b1eeda0b",
+    "bytes": 9382
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/ui-review.spec.ts.txt",
+    "sha256": "84a473f583d462c274b64cbf7d9f23f5b7e9c4f598f6c455a6138b1a32f43b4d",
+    "bytes": 6169
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/unit-worker.log",
+    "sha256": "e0ce2a5f7b636f64d59303a0a74857e99d329acb048fda0d73b7a04c0b67af63",
+    "bytes": 3417
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/validators.json",
+    "sha256": "5a1c1cf90a31abc1eac5bdb7eeb6d16a7f30dba19c4c5e47cd78c0a38fc7f2eb",
+    "bytes": 1824
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr32-9341-runtime/vite.review.config.ts.txt",
+    "sha256": "3b7b808be465e5505acd70a015cbe438f51b0a4e91af50a9f27a426ec5f5c568",
+    "bytes": 208
+  }
+]

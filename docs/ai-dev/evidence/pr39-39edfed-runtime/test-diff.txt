@@ -1,0 +1,341 @@
+diff --git a/test/hub/continue-after.test.ts b/test/hub/continue-after.test.ts
+index 5292b4b..caf45a3 100644
+--- a/test/hub/continue-after.test.ts
++++ b/test/hub/continue-after.test.ts
+@@ -190,8 +190,11 @@ it("ends on its own and Spotify's autoplay begins another: true-shuffle goes on
+ 	expect(h.fake.user("mika").player.contextUri).toBe(s.contextUri);
+ });
+ 
++// A crossfade of more than a moment looks exactly like a song picked by hand
++// just before the end: never cut, cancelled with a plain message (PR36 review).
++// Before 1.3.2 these went on; the stricter rule is deliberate.
+ for (const early of [8_000, 12_000]) {
+-	it(`crossfade: the next song begins ${early / 1000} s before the end, true-shuffle still goes on once`, async () => {
++	it(`crossfade: the next song begins ${early / 1000} s before the end: nothing is cut, it says so`, async () => {
+ 		const { h, b, s } = await outsidePlaying();
+ 		await h.hub.continueAfter(b);
+ 		const calls = h.fake.calls.length;
+@@ -201,9 +204,62 @@ for (const early of [8_000, 12_000]) {
+ 			(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
+ 		)!;
+ 		h.fake.playSong("mika", next);
+-		await h.listen(3 * 60_000);
+-		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toHaveLength(1);
+-		expect((await h.hub.state()).continueAfter).toMatchObject({ result: { ok: true } });
++		await h.listen(60_000);
++		expect(h.fake.current()).toBe(next);
++		await h.listen(2 * 60_000);
++		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
++		const r = (await h.hub.state()).continueAfter?.result;
++		expect(r).toMatchObject({ ok: false });
++		expect(r?.message).toMatch(/vor dem Songende/);
++		expect(r?.message).not.toMatch(/Du hast selbst/);
++	});
++}
++
++it("a next song that begins at the end (half a second early at most): true-shuffle goes on once", async () => {
++	const { h, b, s } = await outsidePlaying();
++	await h.hub.continueAfter(b);
++	const calls = h.fake.calls.length;
++	const d = h.fake.tracks.get(b)!.durationMs;
++	await h.listen(d - 60_000 - 500);
++	const next = [...h.fake.tracks.keys()].find(
++		(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
++	)!;
++	h.fake.playSong("mika", next);
++	await h.listen(3 * 60_000);
++	expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY)).length).toBeGreaterThanOrEqual(
++		1,
++	);
++	expect((await h.hub.state()).continueAfter).toMatchObject({ result: { ok: true } });
++});
++
++for (const before of [2_001, 2_000, 1_999, 1_000]) {
++	it(`paused by hand ${before} ms before the end: nothing is started (PR36 review R131-PAUSE)`, async () => {
++		const { h, b } = await outsidePlaying();
++		await h.hub.continueAfter(b);
++		const d = h.fake.tracks.get(b)!.durationMs;
++		await h.listen(d - 60_000 - before);
++		h.fake.pause("mika");
++		const calls = h.fake.calls.length;
++		await h.listen(60_000);
++		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
++		expect(h.fake.user("mika").player.progressMs).toBe(d - before);
++	});
++}
++
++for (const before of [5_000, 12_000]) {
++	it(`a song picked by hand ${before / 1000} s before the end is never cut (PR36 review R131-PICK)`, async () => {
++		const { h, b, s } = await outsidePlaying();
++		await h.hub.continueAfter(b);
++		const d = h.fake.tracks.get(b)!.durationMs;
++		await h.listen(d - 60_000 - before);
++		const chosen = [...h.fake.tracks.keys()].find(
++			(id) => id !== b && !h.fake.playlists.get(s.contextUri.split(":")[2]!)!.items.includes(id),
++		)!;
++		h.fake.playSong("mika", chosen);
++		const calls = h.fake.calls.length;
++		await h.listen(60_000);
++		expect(h.fake.calls.slice(calls).filter((x) => x.startsWith(PLAY))).toEqual([]);
++		expect(h.fake.current()).toBe(chosen);
+ 	});
+ }
+ 
+diff --git a/test/hub/likes.test.ts b/test/hub/likes.test.ts
+index 1a3e11e..bfa1e95 100644
+--- a/test/hub/likes.test.ts
++++ b/test/hub/likes.test.ts
+@@ -223,7 +223,10 @@ describe("TrueShuffle Likes (P4)", () => {
+ 			}, 120_000);
+ 		}
+ 
+-		it("written, but the answer is lost: Spotify is asked once, the write is not sent again", async () => {
++		// A lost answer proves nothing about what arrived: written again from the
++		// top (one replace, then the rest), never trusted by a count (PR36 review;
++		// 1.3.1 asked the length and went on after it).
++		it("written, but the answer is lost: started over with a replace, exactly the Likes", async () => {
+ 			const { h, ids, append, finish } = await many();
+ 			let lost = 0;
+ 			h.fake.failWhen = (m, path) => {
+@@ -235,13 +238,101 @@ describe("TrueShuffle Likes (P4)", () => {
+ 			};
+ 			const calls = h.fake.calls.length;
+ 			await h.hub.retryLikesSync();
+-			const { items } = await finish();
++			const { items, sync } = await finish();
+ 			expect(lost).toBe(1);
+ 			expect(items).toEqual(ids);
+-			const asked = h.fake.calls
++			expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
++			const after = h.fake.calls.slice(calls);
++			const lostAt = after.findIndex(
++				(c) => c.startsWith("POST /v1/playlists/") && c.includes("/items"),
++			);
++			expect(after.filter((c) => c.startsWith("PUT /v1/playlists/")).length).toBe(2);
++			expect(after.some((c) => /^GET \/v1\/playlists\/[^/]+(\?|$)/.test(c))).toBe(false);
++			expect(lostAt).toBeGreaterThanOrEqual(0);
++		}, 120_000);
++
++		for (const [name, change] of [
++			[
++				"one entry replaced (R131-LIKES)",
++				(items: string[], ids: string[]) => {
++					items[950] = ids[0]!;
++				},
++			],
++			[
++				"two entries swapped",
++				(items: string[]) => {
++					const x = items[910]!;
++					items[910] = items[960]!;
++					items[960] = x;
++				},
++			],
++		] as const) {
++			it(`lost answer plus a same-length change elsewhere (${name}): exactly the Likes, in order`, async () => {
++				const { h, ids, append, finish } = await many();
++				let lost = 0;
++				h.fake.failWhen = (m, path) => {
++					const p = append(m, path);
++					if (lost || p?.items.length !== 900) return null;
++					lost++;
++					p.items.push(...ids.slice(900, 1000));
++					change(p.items, ids);
++					return { status: 502 };
++				};
++				await h.hub.retryLikesSync();
++				const { items, sync } = await finish();
++				expect(lost).toBe(1);
++				expect(items).toEqual(ids);
++				expect(sync).toMatchObject({ pending: false, count: 1700, error: null });
++			}, 120_000);
++		}
++
++		it("a write that never gets an answer: a few starts from the top, then it stops and says so (PR36 re-review)", async () => {
++			const { h, ids, playlist, append, finish } = await many();
++			h.fake.failWhen = (m, path) => {
++				const p = append(m, path);
++				return p && p.items.length >= 1600 ? { status: 502 } : null;
++			};
++			const calls = h.fake.calls.length;
++			await h.hub.retryLikesSync();
++			for (let i = 0; i < 6 * 60; i++) await h.listen(60_000);
++			await h.settle();
++			const writes = h.fake.calls
+ 				.slice(calls)
+-				.filter((c) => /^GET \/v1\/playlists\/[^/]+(\?|$)/.test(c));
+-			expect(asked).toHaveLength(1);
++				.filter((c) => /^(PUT|POST) \/v1\/playlists\/[^/]+\/items/.test(c));
++			// 1.3.2 before this fix: thousands of writes over 6 h, never ending.
++			expect(writes.length).toBeLessThan(80);
++			const sync = (await h.hub.state()).likes?.sync;
++			expect(sync?.pending).toBe(true);
++			expect(sync?.error).toMatch(/nicht bestätigt/);
++			const quiet = h.fake.calls.length;
++			await h.listen(60 * 60_000);
++			expect(
++				h.fake.calls.slice(quiet).filter((c) => /^(PUT|POST) \/v1\/playlists\//.test(c)),
++			).toEqual([]);
++			// Spotify answers again and the listener sends again: exactly the Likes.
++			h.fake.failWhen = null;
++			await h.hub.retryLikesSync();
++			const { items, sync: after } = await finish();
++			expect(items).toEqual(ids);
++			expect(after).toMatchObject({ pending: false, count: 1700, error: null });
++			expect(playlist()).toBeDefined();
++		}, 300_000);
++
++		it("a write that never arrived plus as many songs added by hand: exactly the Likes, in order", async () => {
++			const { h, ids, append, finish } = await many();
++			const others = [...h.fake.tracks.keys()].slice(1700, 1800);
++			let lost = 0;
++			h.fake.failWhen = (m, path) => {
++				const p = append(m, path);
++				if (lost || p?.items.length !== 900) return null;
++				lost++;
++				p.items.push(...others); // not ours: the same count, other songs
++				return { status: 502 };
++			};
++			await h.hub.retryLikesSync();
++			const { items } = await finish();
++			expect(lost).toBe(1);
++			expect(items).toEqual(ids);
+ 		}, 120_000);
+ 
+ 		it("lost answer and the playlist changed elsewhere meanwhile: written again from the top, exactly", async () => {
+diff --git a/test/worker/storage-limit-userhub.test.ts b/test/worker/storage-limit-userhub.test.ts
+new file mode 100644
+index 0000000..93f08d8
+--- /dev/null
++++ b/test/worker/storage-limit-userhub.test.ts
+@@ -0,0 +1,75 @@
++/**
++ * PR31-STORAGE-CLASSIFICATION through the actual UserHub method: a storage
++ * error thrown inside a listener's operation becomes the answer the app shows.
++ * Only the daily limit promises when it ends; a full database promises nothing.
++ * The method is taken from src/worker/userhub.ts as in preview-userhub.test.ts.
++ */
++
++import { readFileSync } from "node:fs";
++import { runInNewContext } from "node:vm";
++import { ScriptTarget, transpileModule } from "typescript";
++import { expect, it } from "vitest";
++import { NativeError } from "../../src/worker/controllers/native";
++import { HubError } from "../../src/worker/hub/hub";
++import {
++	isStorageFull,
++	isStorageLimit,
++	STORAGE_FULL_CODE,
++	STORAGE_LIMIT_CODE,
++	storageFullMessage,
++	storageLimitMessage,
++} from "../../src/worker/lib/storage-limit";
++import { SpotifyError } from "../../src/worker/spotify/client";
++
++const compiled = transpileModule(readFileSync("src/worker/userhub.ts", "utf8"), {
++	compilerOptions: { target: ScriptTarget.ES2022 },
++}).outputText;
++function method(name: string) {
++	const start = compiled.search(new RegExp(`\\n {4}(async )?${name}\\(`));
++	if (start < 0) throw new Error(`UserHub ${name} not found`);
++	const end = compiled.slice(start + 1).search(/\n {4}\}/);
++	return compiled.slice(start + 1, start + 1 + end + 6);
++}
++
++type Answer = { ok: boolean; error?: { code: string; message: string; status: number } };
++
++function hub() {
++	const errors: unknown[] = [];
++	const h = runInNewContext(`({ chain: Promise.resolve(), ${method("exclusive")} })`, {
++		HubError,
++		NativeError,
++		SpotifyError,
++		isStorageLimit,
++		isStorageFull,
++		STORAGE_LIMIT_CODE,
++		STORAGE_FULL_CODE,
++		storageLimitMessage,
++		storageFullMessage,
++		console: { error: (...a: unknown[]) => errors.push(a) },
++	}) as { exclusive: (fn: () => unknown) => Promise<Answer> };
++	return h;
++}
++
++it("SQLITE_FULL inside an operation: storage_full, 503, no promised time", async () => {
++	const r = await hub().exclusive(() => {
++		throw new Error("SQLITE_FULL: database or disk is full");
++	});
++	expect(r.ok).toBe(false);
++	expect(r.error).toMatchObject({ code: "storage_full", status: 503 });
++	expect(r.error!.message).not.toMatch(/Uhr|Tageslimit/);
++});
++
++it("the named daily limit still says when it ends", async () => {
++	const r = await hub().exclusive(() => {
++		throw new Error("Exceeded allowed rows read in Durable Objects free tier.");
++	});
++	expect(r.error).toMatchObject({ code: "storage_limit", status: 503 });
++	expect(r.error!.message).toMatch(/Ab \d\d:\d\d Uhr/);
++});
++
++it("an ordinary failure stays an internal error", async () => {
++	const r = await hub().exclusive(() => {
++		throw new Error("boom");
++	});
++	expect(r.error).toMatchObject({ code: "internal", status: 500 });
++});
+diff --git a/test/worker/storage-limit.test.ts b/test/worker/storage-limit.test.ts
+index 092ae08..d193e02 100644
+--- a/test/worker/storage-limit.test.ts
++++ b/test/worker/storage-limit.test.ts
+@@ -1,14 +1,18 @@
+ import { describe, expect, it } from "vitest";
+ import { statePollMs } from "../../src/shared/poll-pace";
+-import { isStorageLimit, storageLimitMessage } from "../../src/worker/lib/storage-limit";
++import {
++	isStorageFull,
++	isStorageLimit,
++	storageFullMessage,
++	storageLimitMessage,
++} from "../../src/worker/lib/storage-limit";
+ 
+ describe("P1 storage limit", () => {
+-	it("tells Cloudflare's limit errors apart from ordinary failures", () => {
++	it("tells Cloudflare's daily limit apart from ordinary failures", () => {
+ 		for (const text of [
+ 			"Exceeded allowed rows read in Durable Objects free tier.",
+ 			"Your account has exceeded the daily free tier limit for rows_read",
+-			"storage operation exceeded limits",
+-			"SQLITE_FULL: database or disk is full",
++			"Exceeded allowed rows written in Durable Objects free tier.",
+ 		])
+ 			expect(isStorageLimit(new Error(text)), text).toBe(true);
+ 		for (const text of [
+@@ -23,8 +27,26 @@ describe("P1 storage limit", () => {
+ 			"Too many requests: rate limit exceeded",
+ 			"Durable Object storage operation exceeded timeout which caused object to be reset.",
+ 			"Durable Object is overloaded. Requests queued for too long.",
+-		])
++		]) {
++			expect(isStorageLimit(new Error(text)), text).toBe(false);
++			expect(isStorageFull(new Error(text)), text).toBe(false);
++		}
++	});
++
++	it("a full database or another storage limit is no daily limit: no reset is promised (PR31-STORAGE)", () => {
++		for (const text of [
++			"SQLITE_FULL: database or disk is full",
++			"database or disk is full",
++			"storage operation exceeded limits",
++			"Durable Object storage limit exceeded",
++		]) {
+ 			expect(isStorageLimit(new Error(text)), text).toBe(false);
++			expect(isStorageFull(new Error(text)), text).toBe(true);
++		}
++		const said = storageFullMessage();
++		expect(said).not.toMatch(/Uhr|Tageslimit|morgen|Mitternacht/);
++		expect(said).toMatch(/bleibt erhalten/);
++		expect(said).toMatch(/nicht bekannt/);
+ 	});
+ 
+ 	it("names when it ends on the German clock (00:00 UTC)", () => {

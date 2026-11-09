@@ -1,0 +1,140 @@
+2c6118f69c7671ea9efe506377f28d5d0376737b Mika Hertler
+Merge pull request #36 from MikaMcFlurry/fix/1.3.0-pr35-blockers
+
+1.3.1: PR35-Befunde behoben (Suche nur eigenes Konto, Pause bleibt Pause, Likes einmal, Lautstärke lesbar)
+99869b3f2d6e73fba7395022d847ab4474fad9b0 Mika Hertler
+docs(release): 1.3.1 Gates, Prüfung, Rollback
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+c66f8ff7094120ffa98d51a263b9b841456c8266 Mika Hertler
+1.3.1: Verlaufssuche nur eigenes Konto, Pause bleibt Pause, Likes einmal, Lautstärke lesbar
+
+Patch-Release der PR35-Reparaturen: Version 1.3.1, „Was ist neu“ mit vier
+Zeilen und ehrlichem Hinweis auf die verbleibenden Grenzen (Pause dann
+Zurück/Weiter; langer Crossfade/Vorspulen), docs/releases/1.3.1.md.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+88524854d094862a8c0afbbfe302157e577b5b26 Mika Hertler
+docs(qa): Seed-Isolation belegt (e070599), Release-Pfad 1.3.1
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+e0705995832bb48efbf1ae1dad8d4e7b825341a6 Mika Hertler
+test(e2e): history-ratings mit eigenem synthetischem Hörer, deterministische Songwahl
+
+Ursache von :283/:811/:844 (je nach Lauf): die Gruppe wählte ihre Songs aus
+dem ganzen Verlauf des geteilten Kontos "mika"; Wiedergaben früherer Specs
+machten Titel mehrdeutig und schoben die gewählten Songs über Seite 1 hinaus.
+
+- fake-server: /__control/listener?id= legt einen synthetischen Hörer an
+  (Playlists mit einem Song pro Titel) und macht ihn zum Anmelde- und
+  Steuerziel; "mika" und seine Daten bleiben unverändert.
+- history-ratings: eigener Hörer e2e-ratings (beforeAll), danach zurück auf
+  mika (afterAll); Auswahl aus den neuesten 40 Zeilen, unique[2..3] bleiben
+  für R-HUI-02 frei; Vorbedingung: jeder gewählte Song steht auf Seite 1
+  mit 10 Zeilen Reserve. Kein Test entfernt, abgeschwächt oder verlängert.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+d67e19bb212319259e865122a06663c3740be210 Mika Hertler
+docs(qa): 088aaa6 unabhängig geprüft, history-ratings-Vergleich gültig wiederholt
+
+- Red Team eng auf 088aaa6: READY_WITH_NON_BLOCKING_FINDINGS; neu N1/N2
+  (P3, Abbruch statt Fortsetzen, nie ungewollte Wiedergabe), offen.
+- Alter Vergleichslauf war ungültig (Windows-Pfadlänge der Registry-DO-
+  Datei im langen Scratchpad-Worktree); gültig im selben Worktree:
+  alt 83/1/2 (:811), neu 76/1/9 (:283) und 84/1/1 (:844), alle dieselbe
+  Seed-/Seitenabhängigkeit, vorbestehend, offen.
+- Keine pauschale "keine Regression"-Aussage mehr; belegte Reichweite.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+5e36da0e360764f070e51b5a113a1d51d5d24c31 Mika Hertler
+docs(qa): PR35-Reparatur lokal belegt (vorher/nachher, Tests, Red Team, offen)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+088aaa6298b2188c5527a797066cf7ea755bbb5e Mika Hertler
+fix(red-team T3): selbst gewählter Song kurz vor dem Ende wird nicht abgeschnitten
+
+Die Zeit seit dem vorhergesagten Ende war auf 0 gekappt: ein Song, den
+der Hörer 15–20 s vor dem Ende startet und den ein Blick wenige Sekunden
+später sieht, galt als von selbst begonnen und TrueShuffle setzte fort.
+Vorzeichenbehaftet darf ein neuer Song vor dem Ende höchstens so alt sein
+wie ein Crossfade (12 s). Crossfade 8/12 s setzt weiter fort.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+1f25731297f58175ab8bc17423ba42f39a4fffb3 Mika Hertler
+fix(red-team): Crossfade setzt fort, gelöschte Likes-Playlist hängt nicht
+
+Nachprüfung der PR35-Fixes (Red Team, NOT_READY):
+- P2: Ein Song, den Spotifys Crossfade bis zu 12 s vor dem Ende startet,
+  gilt wieder als von selbst begonnen (vorher 5 s: Fortsetzen fiel aus).
+- P3: Ist die Playlist nach einer verlorenen Antwort gelöscht, führt die
+  Rückfrage in den vorhandenen Neu-Anlegen-Weg statt in einen Dauerfehler;
+  der Stand wird beim Neu-Anlegen verworfen.
+- P3: Suchtreffer gehören beim Zeichnen schon dem Konto und der Anmeldung,
+  die gefragt haben (kein Frame mit alten Treffern).
+- P3: „35 %“ bricht bei 320 px nicht mehr vor dem Prozentzeichen um.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+eb4265533dc12aac3baf6e7ac9f6210a43d0632d Mika Hertler
+fix(ui-02): Lautstärke im Tagmodus lesbar, PR35-Browserprobe
+
+Die Lautstärkezeile erbte im Tagmodus die dunkle Tastenschrift auf dem
+dunklen Fach (1,05:1). Sie bekommt die helle Fachschrift wie der Hinweis
+daneben (12,6:1 Tag, 14,9:1 Nacht). e2e/review/pr35.* prüft UI-01 und
+UI-02 gegen den Client mit synthetischen Konten (eigene Konfiguration,
+nicht Teil der *.spec.ts-Suite).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+717d1512501dd38665b6e7fbb63bba385ddee7c9 Mika Hertler
+fix(b9341): manuelle Pause bleibt stehen, Likes-Sync schreibt nichts doppelt
+
+B9341-02: „Nach diesem Song fortsetzen“ wertet ein Songende nur noch,
+wenn Spotify es zeigt (am Ende oder auf den Anfang zurückgesetzt, ein
+neuer Song, der zum erwarteten Ende passt). Eine Pause vor dem Ende
+wartet weiter, kein Player bricht ab, ein von Hand gewählter Song wird
+auch kurz vor dem Ende nicht abgeschnitten.
+
+B9341-01: Der Likes-Sync speichert seinen Stand nach jedem bestätigten
+Schreiben. Nach einer Antwort, die nie kam, fragt er einmal die Länge der
+Playlist ab statt blind zu wiederholen; eine fremde Länge schreibt von
+vorn. Gilt für 500/503/429, verlorene Antworten und erschöpftes Budget.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+cd21df68ad195725786454f29abadbc58ab7f653 Mika Hertler
+fix(ui-01): Verlaufssuche gehört dem Konto, das gefragt hat
+
+Eine laufende Suchanfrage von Konto A wurde nach einem Wechsel zu B oder
+nach Ab- und Wiederanmelden an B weitergereicht und angezeigt (PR35 UI-01).
+HistorySearch bindet die Anfrage jetzt an Konto und Generation; forget()
+sperrt späte Antworten, und die Verlaufsseite verwirft beim Kontowechsel
+Treffer, Fehler und Index. Gleiches Konto teilt weiter eine Anfrage (P1).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+30795cb5e3ec61c8bbaaf9d75649e892b1b2807a Mika Hertler
+Merge pull request #34 from MikaMcFlurry/docs/1.3.0-live-fix
+
+docs: Protokollpfad korrigiert
+75ac1a97dd989759a9e0aa6284a768ae563e5f33 Mika Hertler
+docs: Protokollpfad korrigiert
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+ad66005a66d5a07ce9f0474c8208070299989c8e Mika Hertler
+Merge pull request #33 from MikaMcFlurry/docs/1.3.0-live
+
+docs: 1.3.0 live (Deploy, Live-Test, Rollback-Ziel)
+6a9d9628dfa8e954de29446bfb846d7f39541a77 Mika Hertler
+docs: 1.3.0 live (Deploy, Live-Test, Rollback-Ziel), AGENTS-Stand
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+

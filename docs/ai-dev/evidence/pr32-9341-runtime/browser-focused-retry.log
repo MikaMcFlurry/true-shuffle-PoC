@@ -1,0 +1,30 @@
+[WebServer] (node:10296) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:10312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:10325) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:10359) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.
+[WebServer] 
+[WebServer] 
+
+Running 3 tests using 1 worker
+
+(node:10417) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+outside-seed finish 1793709102576 {"current":"T000000000000000000000","context":null,"playing":true,"shuffle":false,"progressMs":0,"index":0,"calls":56,"recent":69}
+outside-seed finish 1793709112692 {"current":"T000000000000000000000","context":null,"playing":true,"shuffle":false,"progressMs":0,"index":0,"calls":60,"recent":70}
+guest-seed finish 1793709122839 {"current":"T000000000000000000000","context":null,"playing":true,"shuffle":false,"progressMs":0,"index":0,"calls":64,"recent":71}
+guest-seed look 1793709122874 [[false,1793708704353]]
+guest-seed look 1793709128908 [[true,1793709122843],[false,1793708704353]]
+  ✓  1 e2e/history-ratings.spec.ts:154:2 › ratings right in the Verlauf › plays heard in the stand-in fill the Verlauf: a station, outside, as a guest, more than a page (58.3s)
+  ✓  2 e2e/history-ratings.spec.ts:811:2 › ratings right in the Verlauf › R-HUI-03: a lost answer to taking back is unclear (said so, also aloud), never 'nicht zurückgenommen'; looking again finds it (1.4s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✓  3 e2e/spotify-observed-playback.spec.ts:490:1 › COR1: an unclear next, then later looks still show the same play: Weiter stays closed, also after a reload (984ms)
+
+  3 passed (1.1m)
