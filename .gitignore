@@ -32,3 +32,6 @@ Thumbs.db
 .impeccable/refs/
 .impeccable/review/tour/
 .impeccable/review/walk-*.png
+
+# impeccable engine binary (downloaded on first run by the skill launcher)
+.claude/skills/impeccable/scripts/bin/

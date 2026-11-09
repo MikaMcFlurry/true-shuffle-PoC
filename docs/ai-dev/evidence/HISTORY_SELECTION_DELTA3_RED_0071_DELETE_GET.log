@@ -1,0 +1,50 @@
+[WebServer] (node:22436) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:21280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:6124) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\app.spec.ts:113:2 › a listener's day › signs in with Spotify and saves playlists as stations (2.6s)
+  x  2 e2e\app.spec.ts:938:2 › a listener's day › the selection page never lets an older answer bring back a deleted import or claim a success (16.7s)
+
+
+  1) e2e\app.spec.ts:938:2 › a listener's day › the selection page never lets an older answer bring back a deleted import or claim a success 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('alert').filter({ hasText: 'ließ sich nicht laden' })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('alert').filter({ hasText: 'ließ sich nicht laden' }) with timeout 15000ms
+      - waiting for getByRole('alert').filter({ hasText: 'ließ sich nicht laden' })
+
+
+      1045 | 		await expect(
+      1046 | 			page.getByRole("alert").filter({ hasText: "ließ sich nicht laden" }),
+    > 1047 | 		).toBeVisible();
+           | 		  ^
+      1048 | 		await expect(page.getByText("Kein Import gespeichert.", { exact: false })).toBeVisible();
+      1049 | 		await expect(switchOff).toHaveCount(0);
+      1050 | 		await expect(page.getByText("Jetzt in Kraft")).toHaveCount(0);
+        at C:\Users\mikah\AppData\Local\Temp\claude\C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC\b3717cfc-5a7e-4563-a95d-82405b75acd7\scratchpad\c0071\e2e\app.spec.ts:1047:5
+
+    Error Context: e2e\.artifacts\results\app-a-listener-s-day-the-s-104c5-d-import-or-claim-a-success\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e\.artifacts\results\app-a-listener-s-day-the-s-104c5-d-import-or-claim-a-success\trace.zip
+    Usage:
+
+        npx playwright show-trace e2e\.artifacts\results\app-a-listener-s-day-the-s-104c5-d-import-or-claim-a-success\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e\app.spec.ts:938:2 › a listener's day › the selection page never lets an older answer bring back a deleted import or claim a success 
+  1 passed (24.1s)
+exit=1

@@ -1,0 +1,15 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact",
+		"types": ["vite/client"]
+	},
+	"include": [
+		"src/client-fallback-8d/**/*.ts",
+		"src/client-fallback-8d/**/*.tsx",
+		"src/core/**/*.ts",
+		"src/shared/**/*.ts"
+	]
+}

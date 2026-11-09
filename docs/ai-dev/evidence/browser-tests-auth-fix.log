@@ -1,0 +1,48 @@
+
+> true-shuffle@1.0.0 test:e2e
+> playwright test
+
+[WebServer] (node:35604) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:35614) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:35627) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:35676) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ▲ [WARNING] Proxy environment variables detected. We'll use your proxy for fetch requests.
+[WebServer] 
+[WebServer] 
+
+Running 16 tests using 1 worker
+
+(node:35737) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 e2e/app.spec.ts:102:2 › a listener's day › shows signed-out users as online after a normal authentication response (515ms)
+  ✓   2 e2e/app.spec.ts:110:2 › a listener's day › signs in with Spotify and saves playlists as stations (2.9s)
+  ✓   3 e2e/app.spec.ts:129:2 › a listener's day › starts a station in Spotify, in true-shuffle's order (1.5s)
+  ✓   4 e2e/app.spec.ts:151:2 › a listener's day › skips and bans a song from the transport keys (838ms)
+  ✓   5 e2e/app.spec.ts:166:2 › a listener's day › shows the station with its round, mix and next songs (1.0s)
+[WebServer] ✘ [ERROR] kj::getCaughtExceptionAsKj() = rust/cxx/kj-rs-io/ffi.rs:164: disconnected: write(): Broken pipe (os error 32)
+[WebServer] 
+[WebServer]   stack: /workspace/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@57472b3 /workspace/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@574aea7 /workspace/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@574b1f4 /workspace/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@310b960 /workspace/true-shuffle-PoC/node_modules/@cloudflare/workerd-linux-64/bin/workerd@226b757
+[WebServer] 
+[WebServer] 
+  ✓   6 e2e/app.spec.ts:194:2 › a listener's day › guest mode keeps someone else's music out of the memory (856ms)
+  ✓   7 e2e/app.spec.ts:208:2 › a listener's day › a personal key likes the playing song from Siri or a widget (833ms)
+  ✓   8 e2e/app.spec.ts:242:2 › a listener's day › every page reads well on a phone (4.6s)
+  ✓   9 e2e/app.spec.ts:380:2 › a listener's day › a station held paused plays on from its page, never starts over (864ms)
+  ✓  10 e2e/app.spec.ts:408:2 › a listener's day › says clearly when Spotify refuses: no Premium, no device (888ms)
+  ✓  11 e2e/app.spec.ts:431:2 › a listener's day › signs out and keeps the memory (886ms)
+  ✓  12 e2e/app.spec.ts:452:2 › calm player › shows current music and ordered queue beside the library (795ms)
+  ✓  13 e2e/app.spec.ts:463:2 › calm player › keeps saved song, progress and queue across reload and another browser (1.8s)
+  ✓  14 e2e/app.spec.ts:500:2 › calm player › handles offline state, light and dark mobile, keyboard and deliberate new queue (1.0s)
+  ✓  15 e2e/capture.spec.ts:3:1 › captures the real Worker player and saved occurrence in both themes (1.5s)
+  ✓  16 e2e/recovery.spec.ts:11:1 › deliberately recovers an unconfirmed Spotify resume without changing its occurrence (1.4s)
+
+  16 passed (26.8s)
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.1.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
+npm notice To update run: npm install -g npm@12.1.0
+npm notice

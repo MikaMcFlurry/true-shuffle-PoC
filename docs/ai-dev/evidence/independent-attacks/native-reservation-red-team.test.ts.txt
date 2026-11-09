@@ -1,0 +1,23 @@
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+import ts from 'typescript';
+import {it,expect} from 'vitest';
+import {onboarded} from '../hub/harness';
+import {NativeError,nativeIntentCurrent} from '../../src/worker/controllers/native';
+
+it.each([{action:'pause',queue:true,published:false},{action:'resume',queue:false,published:false},{action:'resume',queue:true,published:true}])('RT-07 only accepted full native queue publication can acknowledge a reserved tail: %j',async({action,queue,published})=>{
+ const h=await onboarded({tracks:200});const id=h.stationIds[0]!;
+ const session=h.hub.nativeSession(id);session.currentIndex=session.entryIds.length-10;session.progressMs=97000;
+ h.sql.run('UPDATE playback_sessions SET data=? WHERE station_id=?',JSON.stringify(session),id);
+ const tail=h.hub.prepareNativeTail(id)!;expect(tail).not.toBeNull();
+ const source=readFileSync('src/worker/userhub.ts','utf8');
+ const method=source.slice(source.indexOf('\tnativePlay('),source.indexOf('\tprivate async observeNative',source.indexOf('\tnativePlay(')));
+ const js=ts.transpileModule(`class Subject { ${method} }; globalThis.Subject=Subject;`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
+ const context={NativeError,nativeIntentCurrent,crypto:globalThis.crypto};runInNewContext(js,context);
+ const Subject=(context as any).Subject;const subject=new Subject();const store=new Map();
+ subject.session=(_epoch:number,fn:()=>unknown)=>fn();subject.hub=()=>h.hub;
+ subject.nativeController=async()=>({devices:async()=>[{id:'media_player.ma',name:'MA',queue,seek:true,pause:true}],command:async()=>({accepted:true})});
+ subject.ctx={storage:{get:async(k:string)=>store.get(k),put:async(k:string,v:unknown)=>store.set(k,v),delete:async(k:string)=>store.delete(k),setAlarm:async()=>{}}};subject.observeNative=async()=>null;
+ await subject.nativePlay(0,'mika',id,'media_player.ma',action);
+ if(published)expect(h.hub.prepareNativeTail(id)).toBeNull();else expect(h.hub.prepareNativeTail(id)).toEqual(tail);
+});

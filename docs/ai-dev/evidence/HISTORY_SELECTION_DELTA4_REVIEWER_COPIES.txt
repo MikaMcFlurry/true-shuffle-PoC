@@ -1,0 +1,7 @@
+Copies of the reviewer's lifecycle specs (originals read only). Byte-identical except:
+ line 1: @playwright/test import path -> this worktree's node_modules
+ line 31: screenshot output dir -> own scratch dir
+Configs: own ports 19331-19333 / 19341-19343, own outputDir, own short persistence <main checkout>/e2e/.artifacts/rv-*, own wrangler json for this worktree; reviewer limits kept (45 s test / 5 s expect, trace on, screenshot on failure).
+
+1b41d008901742bca3ccc4fde180fdbc011260d4ea0883d597c59092c4b82838 *races-life.spec.ts
+72db873fadaca453c8db18b524e6f38cc11e28620d85a501c47913654d9d3915 *races-lifec.spec.ts

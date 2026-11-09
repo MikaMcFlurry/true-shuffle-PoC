@@ -1,0 +1,142 @@
+
+ RUN  v5.0.2 C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf
+
+ ✓ ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > replacement totals cannot be selected with events of the previous import 83ms
+ ✓ ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > event upload started for A must be refused after totals B replace A 17ms
+ ✓ ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > legacy delayed event upload cannot resurrect deleted history 20ms
+ ✓ ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > late first totals block cannot resurrect an explicitly deleted import 15ms
+ ✓ ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > failed playlist-list refresh cannot claim full coverage and a known zero 189ms
+ ✓ ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > empty page with a next page cannot be called fully read 101ms
+ ✓ ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > unknown provider owner cannot create a definitive zero 100ms
+stdout | ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 2 Wiedergaben"}
+{"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+partial-coverage {"dataset":{"key":"zq-th-BIQu8NuW9z|g1","hasImport":true,"importedAt":1790316061500,"songs":1,"rows":2,"rowsFrom":1709294400000,"rowsTo":1740830400000,"summaryProfile":false,"coverage":"mixed"},"counts":{"enabled":true,"rows":2,"neutralRows":0,"afterLiveRows":0,"plays":10,"skips":0,"songs":1,"includedPlays":10,"includedSkips":0,"includedSongs":1,"changedSongs":0,"summarySongs":0,"summaryPlays":0,"partialSongs":1,"partialPlays":10,"includedSummarySongs":1,"from":1709294400000,"to":1740830400000,"rules":[]},"memory":{"id":"T000000000000000000000","lastPlayedAt":1740830400000,"plays":10,"earlySkips":0,"lastSkippedAt":null,"liked":false,"thumb":0,"playedBeforeSkips":10}}
+
+ × ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions 19ms
+   → expected 10 to be 9 // Object.is equality
+ ✓ ../probes/fix-independent.test.ts > independent synthetic correctness requirements > replacement totals cannot be selected with events of the previous import 85ms
+ ✓ ../probes/fix-independent.test.ts > independent synthetic correctness requirements > event upload started for A must be refused after totals B replace A 17ms
+ ✓ ../probes/fix-independent.test.ts > independent synthetic correctness requirements > legacy delayed event upload cannot resurrect deleted history 20ms
+ ✓ ../probes/fix-independent.test.ts > independent synthetic correctness requirements > late first totals block cannot resurrect an explicitly deleted import 14ms
+ ✓ ../probes/fix-independent.test.ts > independent synthetic correctness requirements > failed playlist-list refresh cannot claim full coverage and a known zero 185ms
+ ✓ ../probes/fix-independent.test.ts > independent synthetic correctness requirements > empty page with a next page cannot be called fully read 105ms
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+{"level":"info","kind":"playlists","message":"Zählung der eigenen Playlists gestartet"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+{"level":"info","kind":"playlists","message":"Eigene Playlists gezählt: 2 von 2 gelesen"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+{"level":"info","kind":"playlists","message":"Zählung der eigenen Playlists gestartet"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+{"level":"info","kind":"playlists","message":"Eigene Playlists gezählt: 2 von 2 gelesen"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+unknown-owner {"view":{"state":"done","startedAt":1790323981500,"finishedAt":1790323982500,"listAt":1790323982500,"complete":true,"listIncomplete":false,"playlists":{"own":2,"read":2,"failed":[],"unclear":[],"trueShuffle":2,"foreign":0},"songs":50,"error":null,"top":[{"id":"T000000000000000000000","name":"Song 0","artists":"Artist 0","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":180000,"thumb":0,"playlists":{"count":2,"complete":true}},{"id":"T000000000000000000001","name":"Song 1","artists":"Artist 1","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":190000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T000000000000000000002","name":"Song 2","artists":"Artist 2","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":200000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T000000000000000000003","name":"Song 3","artists":"Artist 3","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":210000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T000000000000000000004","name":"Song 4","artists":"Artist 4","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":220000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T000000000000000000005","name":"Song 5","artists":"Artist 5","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":230000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T000000000000000000006","name":"Song 6","artists":"Artist 6","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":240000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T000000000000000000007","name":"Song 7","artists":"Artist 7","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":180000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T000000000000000000008","name":"Song 8","artists":"Artist 8","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":190000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T000000000000000000009","name":"Song 9","artists":"Artist 9","album":"Album 0","imageUrl":"https://img.example/L000000000000000000000.jpg","durationMs":200000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000A","name":"Song 10","artists":"Artist 0","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":210000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000B","name":"Song 11","artists":"Artist 1","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":220000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000C","name":"Song 12","artists":"Artist 2","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":230000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000D","name":"Song 13","artists":"Artist 3","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":240000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000E","name":"Song 14","artists":"Artist 4","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":180000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000F","name":"Song 15","artists":"Artist 5","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":190000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000G","name":"Song 16","artists":"Artist 6","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":200000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000H","name":"Song 17","artists":"Artist 7","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":210000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000I","name":"Song 18","artists":"Artist 8","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":220000,"thumb":0,"playlists":{"count":1,"complete":true}},{"id":"T00000000000000000000J","name":"Song 19","artists":"Artist 9","album":"Album 1","imageUrl":"https://img.example/L000000000000000000001.jpg","durationMs":230000,"thumb":0,"playlists":{"count":1,"complete":true}}]},"count":{"count":2,"complete":true}}
+
+ × ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count 105ms
+   → expected true to be false // Object.is equality
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+{"level":"info","kind":"import","message":"„Playlist 1“: 50 Songs übernommen, 0 übersprungen"}
+
+stdout | ../probes/fix-independent.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+{"level":"info","kind":"history","message":"Hörverlauf übernommen: 1 Songs mit Vorgeschichte"}
+{"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 2 Wiedergaben"}
+{"level":"info","kind":"history","message":"Auswahl des Hörverlaufs übernommen (Stand 1, 1 Regeln)"}
+partial-coverage {"dataset":{"key":"K893A3pYYup-4Y_U|g1","hasImport":true,"importedAt":1790316061500,"songs":1,"rows":2,"rowsFrom":1709294400000,"rowsTo":1740830400000,"summaryProfile":false,"coverage":"mixed"},"counts":{"enabled":true,"rows":2,"neutralRows":0,"afterLiveRows":0,"plays":10,"skips":0,"songs":1,"includedPlays":10,"includedSkips":0,"includedSongs":1,"changedSongs":0,"summarySongs":0,"summaryPlays":0,"partialSongs":1,"partialPlays":10,"includedSummarySongs":1,"from":1709294400000,"to":1740830400000,"rules":[]},"memory":{"id":"T000000000000000000000","lastPlayedAt":1740830400000,"plays":10,"earlySkips":0,"lastSkippedAt":null,"liked":false,"thumb":0,"playedBeforeSkips":10}}
+
+ × ../probes/fix-independent.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions 16ms
+   → expected 10 to be 9 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../probes/fix-independent-refined.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+AssertionError: expected 10 to be 9 // Object.is equality
+
+- Expected
++ Received
+
+- 9
++ 10
+
+ ❯ ../probes/fix-independent-refined.test.ts:60:171
+     58|  const es=[event(t,'2024-03-01T12:00:00Z'),event(t,'2025-03-01T12:00:0…
+     59|  const id=h.hub.importHistory([[t.id,10,0,Date.parse('2025-03-01T12:00…
+     60|  const v=apply(h,[period]);console.log('partial-coverage',JSON.stringi…
+       |                                                                                                                                                                           ^
+     61|  });
+     62| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  ../probes/fix-independent.test.ts > independent synthetic correctness requirements > unknown owner playlist prevents claiming a definitive song count
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ ../probes/fix-independent.test.ts:55:130
+     53|  const v=await count(h);h.sql.run('UPDATE playlists SET owner_id=NULL …
+     54|  h.clock.t+=MINUTE_MS;await h.hub.requestPlaylistCounts();await h.list…
+     55|  const v2=h.hub.playlistCountsView();console.log('unknown-owner',JSON.…
+       |                                                                                                                                  ^
+     56|  });
+     57|  it('partial legacy/event coverage must not silently discard unseen ag…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  ../probes/fix-independent.test.ts > independent synthetic correctness requirements > partial legacy/event coverage must not silently discard unseen aggregate contributions
+AssertionError: expected 10 to be 9 // Object.is equality
+
+- Expected
++ Received
+
+- 9
++ 10
+
+ ❯ ../probes/fix-independent.test.ts:61:171
+     59|  const es=[event(t,'2024-03-01T12:00:00Z'),event(t,'2025-03-01T12:00:0…
+     60|  const id=h.hub.importHistory([[t.id,10,0,Date.parse('2025-03-01T12:00…
+     61|  const v=apply(h,[period]);console.log('partial-coverage',JSON.stringi…
+       |                                                                                                                                                                           ^
+     62|  });
+     63| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 13 passed (16)
+   Start at  13:21:25
+   Duration  1.91s (tests 65%, transform 20%, import 15%)
+

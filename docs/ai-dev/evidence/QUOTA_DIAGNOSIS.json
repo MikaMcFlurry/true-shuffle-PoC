@@ -1,0 +1,106 @@
+{
+  "schema_version": "true-shuffle.quota-diagnosis.v1",
+  "recorded_at": "2026-09-30T18:50:25.366800+00:00",
+  "owner_report": {
+    "reason": "QUOTA_EXCEEDED",
+    "endpoint": "/me/player/devices",
+    "status": 429,
+    "retry_after_seconds": 30363,
+    "retry_duration": "8 hours 26 minutes 3 seconds",
+    "earliest_recheck_as_displayed": "2026-09-30 20:20:03; owner browser timezone not verified",
+    "hourly_record": {
+      "read:/me/player/devices:429:blocked": 11
+    },
+    "other_spotify_development_apps_same_developer_account": "Owner confirmed yes; exact apps/traffic not measured"
+  },
+  "findings": [
+    "Spotify development quota is shared across development apps owned by one developer account, with groups of endpoints sharing buckets.",
+    "A new app owned by the same developer account is not a quota reset.",
+    "No quota size or fixed monthly/daily reset window is inferred; Retry-After is the earliest recheck, not guaranteed recovery.",
+    "11 blocked records are locally prevented attempts before provider transport, not 11 new Spotify responses.",
+    "Home Assistant documents polling at least every 30 seconds, faster near track end; actual shared-budget consumption/attribution remains unmeasured.",
+    "New listening history is fed by Spotify observations; the later screenshot proves successful recent-history/player transport in its recorded hour, followed by metadata quota and local device blocking."
+  ],
+  "official_sources": [
+    {
+      "url": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes",
+      "retrieved_at": "2026-09-30T10:44:58.849329+00:00"
+    },
+    {
+      "url": "https://developer.spotify.com/documentation/web-api/concepts/rate-limits",
+      "retrieved_at": "2026-09-30T10:44:58.849329+00:00"
+    },
+    {
+      "url": "https://www.home-assistant.io/integrations/spotify/",
+      "retrieved_at": "2026-09-30T10:44:58.849329+00:00"
+    }
+  ],
+  "local_pressure_evidence": {
+    "ref": "NN-09-request-pressure.json",
+    "visible_15min": {
+      "before": 50,
+      "after": 41,
+      "reduction_percent": 18
+    },
+    "paused_15min": {
+      "before": 30,
+      "after": 15,
+      "reduction_percent": 50
+    },
+    "scope": "Synthetic local scenarios; not a measured real developer-account daily allowance or guarantee of sustainable usage."
+  },
+  "ui_followup": {
+    "known_wait": "Human duration, raw seconds and timezone shown. Future deadline disables the manual probe.",
+    "expired_wait": "Elapsed saved wait enables explicit recheck without promising provider recovery.",
+    "unknown_wait": "No reset guessed; explicit single probe remains available.",
+    "metric_label": "Stored request attempts per hour; blocked explained as local.",
+    "capture": ".impeccable/review/quota-known-mobile.png",
+    "capture_scope": "Mocked diagnostics in a real local Worker browser, not owner production session.",
+    "independent_review": "QUOTA_COPY_REVIEW.md",
+    "browser_tests": 17,
+    "isolated_browser_tests": 1,
+    "independent_render_cases": 4
+  },
+  "remaining": "Actual later provider recovery, account-wide attribution and sustained live usage NOT_RUN. Full acceptance remains PARTIAL.",
+  "historical_source_revision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+  "scope_followup": {
+    "status": "DEPLOYED_PUBLIC_READBACK_PASS_OWNER_RECOVERY_NOT_RUN",
+    "owner_screenshot_time": "2026-09-30 13:18 Europe/Berlin",
+    "provider_source": "/artists/:id/albums",
+    "provider_reason": "QUOTA_EXCEEDED",
+    "retry_after_seconds": 25902,
+    "earliest_recheck": "2026-09-30 20:20:03 Europe/Berlin",
+    "stored_hour_counts": {
+      "read:/me/player/devices:429:blocked": 9,
+      "refresh:/api/token:200:none": 1,
+      "read:/me/player:200:none": 3,
+      "read:/me/player/recently-played:200:none": 1,
+      "read:/me/tracks:200:none": 1,
+      "read:/me/player/devices:200:none": 2,
+      "read:/artists/:id/albums:429:quota": 1
+    },
+    "interpretation": "Actual artist-albums quota led to overbroad local device blocking. Hourly successes do not prove ongoing endpoint availability after that response.",
+    "home_automation": "Owner reports failures since several days; actual HA/MA traffic, quota status and recovery NOT_RUN.",
+    "source_revision": "eb09bcb5ef5ccedc9be951aa38b7042952f3c246",
+    "version_id": "1e607dc2-48a9-4724-a9df-4b0a02218219",
+    "review": "ARTIST_ALBUMS_SCOPE_REVIEW.md",
+    "browser_tests": 18
+  },
+  "source_revision": "1328f8f562adbcc7454b6ee8b7d6a224f6cdca95",
+  "availability_trial_followup": {
+    "status": "DEPLOYED_PUBLIC_READBACK_PASS_OWNER_RECOVERY_NOT_RUN",
+    "source_revision": "a46bc043717b113dc37d1989ab4323bf166d2da9",
+    "version_id": "4f5e1037-e616-4df2-9f93-15dbdaf8ee5f",
+    "review": "AVAILABILITY_TRIAL_REVIEW.md",
+    "browser_tests": 20
+  },
+  "confirmed_tracker_followup": {
+    "status": "DEPLOYED_PUBLIC_READBACK_PASS_AUTHENTICATED_OWNER_TRACKER_NOT_RUN",
+    "source_revision": "1328f8f562adbcc7454b6ee8b7d6a224f6cdca95",
+    "version_id": "cfcd030c-2004-4816-9e5d-170b0c421ac2",
+    "policy": "Confirmed429 only, perlistener/HTTPmethod/sanitizedendpoint; legacy blanket/quarantine retired with bounded localbackup. Actual RetryAfter sameoperation, bounded explicit unknownretry. Shared720hour/200episode tracker with five anonymous labels, overflow/signin aggregates, privateactor recovery and startedAt fence. No automaticstress, inferred bucket/allowance or exactreset guarantee.",
+    "review": "CONFIRMED_REQUEST_TRACKER_REVIEW.md",
+    "owner_evidence": "Owner screenshots30Sep15:30-15:33 Europe/Berlin: devices200,player204then200,history200,activeiPhone,11sentreadattempts and0newquota. These are previousapplication a46bc04 observations, not newtracker/controlacceptance.",
+    "remaining": "Otherdeveloperaccountapptraffic, actualcurrentownertracker, realcontrolresponse, sustained3/5usercapacity andexactproviderreset unverified"
+  }
+}

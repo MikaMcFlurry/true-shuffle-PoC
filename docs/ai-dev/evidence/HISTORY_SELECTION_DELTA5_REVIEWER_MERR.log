@@ -1,0 +1,85 @@
+[WebServer] fake spotify on 19402
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                                                                     Resource                  Mode
+[WebServer] env.USER_HUB (UserHub)                                                      Durable Object            local
+[WebServer] env.REGISTRY (Registry)                                                     Durable Object            local
+[WebServer] env.ASSETS                                                                  Assets                    local
+[WebServer] env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+[WebServer] env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+[WebServer] env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19402/accounts")               Environment Variable      local
+[WebServer] env.SPOTIFY_API_BASE ("http://127.0.0.1:19402/v1")                          Environment Variable      local
+[WebServer] env.LASTFM_API_BASE ("http://127.0.0.1:19402/lastfm")                       Environment Variable      local
+[WebServer] env.LASTFM_API_KEY ("e2e-lastfm")                                           Environment Variable      local
+[WebServer] env.DEEZER_API_BASE ("http://127.0.0.1:19402/deezer")                       Environment Variable      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] ✨ Parsed 2 valid header rules.
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19401
+[WebServer] [wrangler:info] GET /api/health 200 OK (247ms)
+
+Running 1 test using 1 worker
+
+(node:29388) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [wrangler:info] GET / 200 OK (7ms)
+[WebServer] [wrangler:info] GET /assets/index-zBcy567E.js 200 OK (4ms)
+[WebServer] [wrangler:info] GET /assets/index-D0-gFgkb.css 200 OK (9ms)
+[WebServer] [wrangler:info] GET /assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2 200 OK (3ms)
+[WebServer] [wrangler:info] GET /assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2 200 OK (5ms)
+[WebServer] [wrangler:info] GET /icon.svg 200 OK (4ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (7ms)
+[WebServer] [wrangler:info] GET /api/state 401 Unauthorized (9ms)
+[WebServer] [wrangler:info] GET /assets/permanent-marker-latin-400-normal-BF23djCy.woff2 200 OK (4ms)
+[WebServer] [wrangler:info] GET /auth/login 302 Found (7ms)
+[WebServer] {"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+[WebServer] [wrangler:info] GET /auth/callback 302 Found (92ms)
+[WebServer] [wrangler:info] GET / 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (4ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (88ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (80ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (12ms)
+[WebServer] [wrangler:info] GET /api/playlists 200 OK (10ms)
+[WebServer] [wrangler:info] POST /api/onboarding 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (24ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (20ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (19ms)
+[WebServer] [wrangler:info] POST /api/history/begin 200 OK (8ms)
+[WebServer] [wrangler:info] GET /api/native/devices 200 OK (12ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /api/devices 200 OK (53ms)
+[WebServer] [wrangler:info] POST /api/history/import 200 OK (50ms)
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (9ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/listens 200 OK (15ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] POST /api/history/selection 200 OK (14ms)
+[WebServer] [wrangler:info] GET /auswahl 200 OK (4ms) `Sec-Fetch-Mode: navigate` header present - using `not_found_handling` behavior
+[WebServer] [wrangler:info] GET /api/state 200 OK (17ms)
+[WebServer] [wrangler:info] GET /icon.svg 304 Not Modified (14ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/playlist-counts 200 OK (9ms)
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (24ms)
+[WebServer] {"level":"info","kind":"import","message":"„Indie & Gitarren“: 400 Songs übernommen, 0 übersprungen"}
+[WebServer] {"level":"info","kind":"import","message":"Lieblingssongs: 160 Songs übernommen, 0 übersprungen"}
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (326ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (11ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (14ms)
+repeat-failed-delete-after-precommit-read {"beforeCommit":2,"afterCommit":2,"errors":["Nicht gelöscht: Held mutation failed","Gelöscht werden nur die in true-shuffle gespeicherten Importdaten: 2 Songsummen, 4 Wiedergaben einzeln und alles, was daraus berechnet wurde. Das lässt sich nicht rückgängig machen — nur durch einen neuen Import deiner Dateien.\n\nEs bleiben: deine Spotify-Dateien, live gezählte Wiedergaben, Bewertungen, Herzen, Kassetten, Sperren, Gast-Regeln, die Warteschlange und deine 0 Auswahlregeln (sie gelten für einen späteren Import).\n\nAbbrechen\nEndgültig löschen"],"observedFailure":true,"importStillPresent":true}
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf-Import gelöscht: 2 Songs, 4 einzelne Wiedergaben"}
+[WebServer] [wrangler:info] POST /api/history/delete 200 OK (16ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (13ms)
+[WebServer] [wrangler:info] GET /api/state 200 OK (30ms)
+[WebServer] [wrangler:info] GET /api/history/selection 200 OK (22ms)
+explicit-delete-retry200 {"noImport":true,"oldActions":0}
+[WebServer] [wrangler:info] POST /api/history/selection/preview 200 OK (9ms)
+  ok 1 races-merr.spec.ts:28:5 › repeat silent failed Delete after current pre-commit reload, verify inert pending and valid retry before final error assertion (4.6s)
+
+  1 passed (8.5s)
+
+merr exit=0

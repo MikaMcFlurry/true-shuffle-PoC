@@ -40,6 +40,17 @@ export interface TrackMemory {
 	earlySkips: number;
 	lastSkippedAt: number | null;
 	/**
+	 * Counted plays known to have come before the first early skip (from
+	 * the imported history; see isOverplayed).
+	 */
+	playedBeforeSkips?: number;
+	/**
+	 * The listener's answer to a retest ("Nachprüfung"): 1 "Gern wieder",
+	 * -1 "Eher nicht", given at `verdictAt` (see core/memory skipsWeigh).
+	 */
+	verdict?: -1 | 0 | 1;
+	verdictAt?: number | null;
+	/**
 	 * Used up for the round by an early skip seen under the `consume` rule —
 	 * never by one only inferred between two looks at the player.
 	 */
@@ -63,7 +74,12 @@ export function emptyMemory(id: TrackId): TrackMemory {
 }
 
 /** Why a card is in the queue — shown to the listener as a small label. */
-export type SlotKind = "fresh" | "favorite" | "discovery";
+/**
+ * Why a song is in the deck. "probe": a song early skips keep rare, played
+ * once on purpose to see whether the listener still skips it (see
+ * core/memory probeDue); it has no share of the mix.
+ */
+export type SlotKind = "fresh" | "favorite" | "discovery" | "probe";
 
 export interface PlannedSlot {
 	trackId: TrackId;
@@ -86,6 +102,11 @@ export interface StationRules {
 	discoveryEnabled: boolean;
 	/** Minimum number of other songs between two songs of the same artist. */
 	artistSpacing: number;
+	/**
+	 * Now and then play a song early skips keep rare, to see whether the
+	 * listener still skips it ("Nachprüfung", see core/memory probeDue).
+	 */
+	retestEnabled: boolean;
 }
 
 /** "Entdecker" — the owner's chosen default (≈ 60 / 10 / 30). */
@@ -96,6 +117,7 @@ export const DEFAULT_RULES: StationRules = {
 	skipPolicy: "later_less",
 	discoveryEnabled: true,
 	artistSpacing: 4,
+	retestEnabled: true,
 };
 
 export function normaliseRules(input: Partial<StationRules> | null | undefined): StationRules {
@@ -113,5 +135,6 @@ export function normaliseRules(input: Partial<StationRules> | null | undefined):
 			: "later_less",
 		discoveryEnabled: Boolean(r.discoveryEnabled),
 		artistSpacing: clamp(Math.round(Number(r.artistSpacing) || 0), 0, 20),
+		retestEnabled: r.retestEnabled !== false,
 	};
 }

@@ -5,6 +5,16 @@
 
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./env";
+import type { SqlDb, SqlValue } from "./lib/sql";
+import type { SpotifyRequestMetric } from "./spotify/client";
+import {
+	SPOTIFY_COOLDOWN_SCOPES,
+	type SpotifyCooldown,
+	type SpotifyCooldownScope,
+} from "./spotify/client";
+import { SpotifyGate, type SpotifyGateState } from "./spotify/gate";
+import { SpotifyOperationGates } from "./spotify/operation-gates";
+import { SpotifyUsageTracker } from "./spotify/usage";
 
 export class Registry extends DurableObject<Env> {
 	private ready = false;
@@ -14,7 +24,127 @@ export class Registry extends DurableObject<Env> {
 		this.ctx.storage.sql.exec(
 			`CREATE TABLE IF NOT EXISTS users (uid TEXT PRIMARY KEY, created_at INTEGER NOT NULL) WITHOUT ROWID`,
 		);
+		this.ctx.storage.sql.exec(
+			`CREATE TABLE IF NOT EXISTS spotify_gate (id INTEGER PRIMARY KEY CHECK(id = 1), state TEXT NOT NULL)`,
+		);
+		this.ctx.storage.sql.exec(
+			`CREATE TABLE IF NOT EXISTS spotify_artist_albums_gate (id INTEGER PRIMARY KEY CHECK(id = 1), state TEXT NOT NULL)`,
+		);
+		for (const scope of SPOTIFY_COOLDOWN_SCOPES)
+			this.ctx.storage.sql.exec(
+				`CREATE TABLE IF NOT EXISTS spotify_${scope.replaceAll("-", "_")}_gate (id INTEGER PRIMARY KEY CHECK(id = 1), state TEXT NOT NULL)`,
+			);
+		this.ctx.storage.sql.exec(
+			`CREATE TABLE IF NOT EXISTS spotify_quarantine_backup (id INTEGER PRIMARY KEY CHECK(id=1), data TEXT NOT NULL)`,
+		);
 		this.ready = true;
+	}
+
+	private gate(scope?: SpotifyCooldownScope): SpotifyGate {
+		this.init();
+		if (scope && !SPOTIFY_COOLDOWN_SCOPES.includes(scope))
+			throw new Error("Invalid Spotify gate scope");
+		const table = scope ? `spotify_${scope.replaceAll("-", "_")}_gate` : "spotify_gate";
+		return new SpotifyGate(
+			{
+				get: () => {
+					const row = this.ctx.storage.sql
+						.exec<{ state: string }>(`SELECT state FROM ${table} WHERE id = 1`)
+						.toArray()[0];
+					return row ? (JSON.parse(row.state) as SpotifyGateState) : null;
+				},
+				set: (state) => {
+					this.ctx.storage.sql.exec(
+						`INSERT INTO ${table} (id, state) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET state = excluded.state`,
+						JSON.stringify(state),
+					);
+				},
+			},
+			() => Date.now(),
+		);
+	}
+
+	spotifyCooldown(
+		probeToken?: string | null,
+		scope?: SpotifyCooldownScope,
+	): SpotifyCooldown | null {
+		return this.gate(scope).get(probeToken);
+	}
+	spotifyGateSnapshot(
+		probeToken?: string | null,
+		scope?: SpotifyCooldownScope,
+	): {
+		revision: number;
+		cooldown: SpotifyCooldown | null;
+	} {
+		return this.gate(scope).snapshot(probeToken);
+	}
+	spotifyBlocked(cooldown: SpotifyCooldown, probeToken?: string | null): number {
+		return this.gate(cooldown.scope).block(cooldown, probeToken);
+	}
+	beginSpotifyRecheck(scope?: SpotifyCooldownScope): string | null {
+		return this.gate(scope).begin(crypto.randomUUID());
+	}
+	finishSpotifyRecheck(token: string, success: boolean, scope?: SpotifyCooldownScope): void {
+		this.gate(scope).finish(token, success);
+	}
+
+	quarantineSpotifyLegacy(expected: SpotifyCooldown, revision: number) {
+		this.init();
+		return this.ctx.storage.transactionSync(() => {
+			const quarantined = this.gate().quarantine(expected, revision, this.gate("legacy-catalog"));
+			if (quarantined)
+				this.ctx.storage.sql.exec(
+					`INSERT INTO spotify_quarantine_backup(id,data) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data`,
+					JSON.stringify({ at: Date.now(), cooldown: expected }),
+				);
+			return {
+				quarantined,
+				globalRevision: this.gate().snapshot().revision,
+				catalogRevision: this.gate("legacy-catalog").snapshot().revision,
+			};
+		});
+	}
+
+	private database(): SqlDb {
+		const storage = this.ctx.storage;
+		return {
+			all: <T>(query: string, ...params: SqlValue[]) =>
+				storage.sql.exec(query, ...params).toArray() as T[],
+			first: <T>(query: string, ...params: SqlValue[]) =>
+				(storage.sql.exec(query, ...params).toArray()[0] as T) ?? null,
+			run: (query, ...params) => {
+				storage.sql.exec(query, ...params);
+			},
+			transaction: (fn) => storage.transactionSync(fn),
+		};
+	}
+	/** One instance, so its schema statement runs once, not on every Spotify request (P1). */
+	private operationGates: SpotifyOperationGates | null = null;
+	private gates(): SpotifyOperationGates {
+		this.operationGates ??= new SpotifyOperationGates(this.database());
+		return this.operationGates;
+	}
+	spotifyOperationSnapshot(listener: string, operation: string) {
+		return this.gates().snapshot(listener, operation);
+	}
+	spotifyOperationBlocked(listener: string, cooldown: SpotifyCooldown) {
+		return this.gates().block(listener, cooldown);
+	}
+	finishSpotifyOperation(listener: string, operation: string, revision: number) {
+		this.gates().finish(listener, operation, revision);
+	}
+	/** One tracker per instance, so its schema setup and hourly retention run once (P1). */
+	private usage: SpotifyUsageTracker | null = null;
+	private tracker(): SpotifyUsageTracker {
+		this.usage ??= new SpotifyUsageTracker(this.database(), () => Date.now());
+		return this.usage;
+	}
+	recordSpotifyUsage(listener: string, metric: SpotifyRequestMetric) {
+		this.tracker().record(listener, metric);
+	}
+	spotifyUsage() {
+		return this.tracker().report(this.list().length);
 	}
 
 	register(uid: string): void {

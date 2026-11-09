@@ -1,0 +1,7 @@
+artist-future PASS
+artist-expired PASS
+artist-unknown PASS
+global-expired-artist-future PASS
+global-unknown-artist-future PASS
+global-future-artist-expired PASS
+6 actual DevicesScreen simultaneous-scope states PASS

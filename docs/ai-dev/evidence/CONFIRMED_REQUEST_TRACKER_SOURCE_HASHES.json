@@ -1,0 +1,19 @@
+{
+  "src/worker/spotify/client.ts": "5a656b43eea5fd99bfa08f9368274a0b200a1cdf2fb9686c86dcd7334077828f",
+  "src/worker/spotify/usage.ts": "6aa573588e901e987a3c2234d798689863d2f01f9fda4d71db563835610dddd1",
+  "src/worker/spotify/operation-gates.ts": "e7917e4c7239ad93e97240cf9ae79fdcc09d3092836c997e69fb5a06101b5c39",
+  "src/worker/hub/hub.ts": "a1f9d479d9a6eab1d10fafa0fe9a0bb0aa9fbfba71595f25ba747fcfde28369d",
+  "src/worker/registry.ts": "65da4c66f0037b5b674ca41af28fac17fad295c92e9ecafd7b608813e30fecac",
+  "src/worker/userhub.ts": "8c7b45955aaaedc2fec101ab7dcfb4ac9d4c3a71f29c9dd8deaee24b37dd5ca3",
+  "src/worker/index.ts": "5c5852940dc30b132167e5a4fc153a25a2878c3f399d581d885d2e940bc372bd",
+  "src/shared/spotify-usage.ts": "850a7e4aa5b7e7ff59c87f66a65a320ffcdc449826fa2a0d9e4319af3aacaa8c",
+  "src/client/api.ts": "954d87add42538c96d392ecda151014c2aab86b1e9242f4480b942fef3d67a03",
+  "src/client/components/spotify-availability.tsx": "49e670d19808af7a5a7828d134fe685adae47edc98e456347051307948e33286",
+  "src/client/screens/menu.tsx": "c949e1607c17986f69b5bd132f5ebbc1c35ca07db5f10a5e3001b4a87cc6cc02",
+  "test/spotify/client.test.ts": "3117589d91a95f4359e669bb66f2deb4114c5747fda306bbc323a6226288b84d",
+  "test/spotify/usage.test.ts": "b075a1413a2465f47d84dcbf715b5dd8b89416d68d4f063131abfabca48dc637",
+  "test/spotify/availability.test.ts": "51ee7aedbb15438e8ff7b7fbd8b23515f41b3272d739d57cedf6420cc81391ff",
+  "test/spotify/operation-fixture.ts": "7356e0e04a2f518f074679a56b1c0e2f835e2a706d98acbc833a15360dbd14d4",
+  "e2e/app.spec.ts": "85a1aef823350316d769be296e234c7c33249c0b47a5af132509a8c8aa80a23a",
+  "test/hub/quota.test.ts": "099dde6a6d1f98ce60c31f0ae8e41d607fca572151efecc2464eeffb56609e5a"
+}

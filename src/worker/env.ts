@@ -2,6 +2,8 @@ import type { Registry } from "./registry";
 import type { UserHub } from "./userhub";
 
 export interface Env {
+	/** Secret JSON: Spotify account ID -> {url: reachable HTTPS bridge, token}. Removing an entry revokes access. */
+	NATIVE_BRIDGES?: string;
 	ASSETS: Fetcher;
 	USER_HUB: DurableObjectNamespace<UserHub>;
 	REGISTRY: DurableObjectNamespace<Registry>;

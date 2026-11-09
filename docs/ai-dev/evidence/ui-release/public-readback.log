@@ -1,0 +1,71 @@
+{
+  "tested_at": "2026-10-01T14:31:00.501782+00:00",
+  "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+  "source_commit": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/assets/index-C8HUn-6b.js",
+      "status": 200,
+      "local_build_bytes_match": true,
+      "sha256": "85d7ab656bec66652a0c9c21a2583f7916d6ced7a7c429ed5bef98e731ba4d86"
+    },
+    {
+      "path": "/assets/index-BOGpDpEB.css",
+      "status": 200,
+      "local_build_bytes_match": true,
+      "sha256": "0fc17dbca8bbbd1ec43defa9d944b0c7587b31d23b45c2ee7067d9b0d38a9a1c"
+    },
+    {
+      "path": "/api/health",
+      "status": 200,
+      "body": {
+        "ok": true,
+        "version": "1.0.0",
+        "configured": true
+      }
+    },
+    {
+      "path": "/api/state",
+      "status": 401,
+      "authentication_required": true
+    },
+    {
+      "path": "/api/native/devices",
+      "status": 401,
+      "authentication_required": true
+    },
+    {
+      "path": "/api/spotify/diagnostics",
+      "status": 401,
+      "authentication_required": true
+    },
+    {
+      "path": "/api/spotify/usage",
+      "status": 401,
+      "authentication_required": true
+    },
+    {
+      "path": "/api/player",
+      "method": "POST without required header",
+      "status": 403,
+      "csrf_rejected": true
+    },
+    {
+      "path": "/api/spotify/availability-test",
+      "method": "POST",
+      "status": 403,
+      "authenticated_trial_protected": true
+    },
+    {
+      "path": "/api/spotify/availability-test",
+      "method": "POST",
+      "status": 401,
+      "authenticated_trial_protected": true
+    }
+  ],
+  "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+}

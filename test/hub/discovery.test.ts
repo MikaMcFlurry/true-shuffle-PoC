@@ -161,6 +161,9 @@ describe("stations and imports", () => {
 			expect(() => h.hub.importHistory(rows as never, 0, 1)).toThrow(/Ungültige Zeile/);
 		}
 		expect(() => h.hub.importHistory([[id, 1, 0, 0]], 2, 2)).toThrow(/Import-Block/);
-		expect(h.hub.importHistory([[id, 4, 1, h.clock.t - HOUR_MS]], 0, 1)).toEqual({ stored: 1 });
+		// The answer also names the upload (see importHistory's upload binding).
+		expect(h.hub.importHistory([[id, 4, 1, h.clock.t - HOUR_MS]], 0, 1)).toMatchObject({
+			stored: 1,
+		});
 	});
 });

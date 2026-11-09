@@ -1,0 +1,6 @@
+global-unknown PASS
+global-future PASS
+family-future PASS
+family-expired PASS
+family-unknown PASS
+5 actual SpotifyFunctionStatus states PASS

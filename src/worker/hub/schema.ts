@@ -126,6 +126,63 @@ const MIGRATIONS: string[][] = [
 		// round; one only inferred does not (last_skipped_at covers both).
 		`ALTER TABLE memory ADD COLUMN consumed_at INTEGER`,
 	],
+	[
+		`CREATE TABLE IF NOT EXISTS playback_sessions (station_id INTEGER PRIMARY KEY, data TEXT NOT NULL)`,
+	],
+	[
+		// Why a play was on its station ("fresh" | "favorite" | "discovery"),
+		// stamped once when the play is recorded and only when the station's
+		// deck says so without doubt; null for older plays and anything unsure.
+		`ALTER TABLE plays ADD COLUMN lane TEXT`,
+	],
+	[
+		// Every play of an imported streaming history (see core/listens):
+		// kind 'tracks' = pages of the song list, 'rows' = pages of plays.
+		// One generation is current (kv 'listens'); an upload writes the next
+		// and switches over only once complete.
+		`CREATE TABLE IF NOT EXISTS listen_pages (
+			gen INTEGER NOT NULL,
+			kind TEXT NOT NULL,
+			page INTEGER NOT NULL,
+			data TEXT NOT NULL,
+			PRIMARY KEY (gen, kind, page)
+		) WITHOUT ROWID`,
+	],
+	[
+		// The listener's answer to a retest ("Nachprüfung", see core/memory
+		// skipsWeigh): 1 "Gern wieder", -1 "Eher nicht", and when.
+		`ALTER TABLE memory ADD COLUMN verdict INTEGER`,
+		`ALTER TABLE memory ADD COLUMN verdict_at INTEGER`,
+	],
+	[
+		// The song totals of an import on its way in (see importHistory): they
+		// replace hist_pages only once the last block came, in one transaction.
+		`CREATE TABLE IF NOT EXISTS hist_stage (page INTEGER PRIMARY KEY, data TEXT NOT NULL)`,
+		// What the listener's selection of the import (core/import-selection)
+		// changes in hist_pages: one generation (kv 'history_effective') is current.
+		`CREATE TABLE IF NOT EXISTS hist_effective (
+			gen INTEGER NOT NULL,
+			page INTEGER NOT NULL,
+			data TEXT NOT NULL,
+			PRIMARY KEY (gen, page)
+		) WITHOUT ROWID`,
+		// Counting the listener's own playlists per song: how far each playlist
+		// was read, at which snapshot, and the song ids of each page read.
+		`CREATE TABLE IF NOT EXISTS playlist_scan (
+			playlist_id TEXT PRIMARY KEY,
+			snapshot_id TEXT,
+			pages INTEGER NOT NULL DEFAULT 0,
+			complete INTEGER NOT NULL DEFAULT 0,
+			error TEXT,
+			read_at INTEGER
+		) WITHOUT ROWID`,
+		`CREATE TABLE IF NOT EXISTS playlist_member_pages (
+			playlist_id TEXT NOT NULL,
+			page INTEGER NOT NULL,
+			data TEXT NOT NULL,
+			PRIMARY KEY (playlist_id, page)
+		) WITHOUT ROWID`,
+	],
 ];
 
 export function migrate(db: SqlDb): void {

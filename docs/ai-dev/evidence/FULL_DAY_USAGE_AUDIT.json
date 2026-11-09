@@ -1,0 +1,125 @@
+{
+  "simulated": true,
+  "noRealSpotifyRequests": true,
+  "sourceRevision": "b64e03c09569bb4b763980ebdb6d0d5c78e5d263",
+  "profiles": [
+    {
+      "profile": "paused_closed",
+      "simulatedHours": 24,
+      "libraryTracks": 1200,
+      "onboardingRequests": 37,
+      "playingWindowRequests": 0,
+      "totalSpotifyRequests": 856,
+      "counts": {
+        "GET /v1/me/player": 724,
+        "GET /v1/me/player/recently-played": 47,
+        "POST /accounts/api/token": 24,
+        "GET /v1/me/playlists": 2,
+        "PUT /v1/playlists/:id/items": 1,
+        "POST /v1/playlists/:id/items": 2,
+        "GET /v1/artists/:id/albums": 16,
+        "GET /v1/albums/:id": 16,
+        "GET /v1/search": 20,
+        "GET /v1/artists/:id": 4
+      },
+      "pausedWindowSpotifyRequests": 856,
+      "linearScalingEstimate": {
+        "oneUser": 856,
+        "threeUsers": 2568,
+        "fiveUsers": 4280
+      },
+      "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals.",
+      "webApiRequests": 832,
+      "tokenRequests": 24,
+      "webApiScalingEstimate": {
+        "1": 832,
+        "3": 2496,
+        "5": 4160
+      }
+    },
+    {
+      "profile": "four_hours_visible_then_paused_closed",
+      "simulatedHours": 24,
+      "libraryTracks": 1200,
+      "onboardingRequests": 37,
+      "playingWindowRequests": 510,
+      "totalSpotifyRequests": 2015,
+      "counts": {
+        "GET /v1/me/player": 1645,
+        "GET /v1/me/player/recently-played": 201,
+        "GET /v1/me/tracks": 24,
+        "PUT /v1/playlists/:id/items": 21,
+        "POST /v1/playlists/:id/items": 42,
+        "POST /accounts/api/token": 24,
+        "GET /v1/me/playlists": 2,
+        "GET /v1/artists/:id/albums": 16,
+        "GET /v1/albums/:id": 16,
+        "GET /v1/search": 20,
+        "GET /v1/artists/:id": 4
+      },
+      "pausedWindowSpotifyRequests": 1505,
+      "linearScalingEstimate": {
+        "oneUser": 2015,
+        "threeUsers": 6045,
+        "fiveUsers": 10075
+      },
+      "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals.",
+      "webApiRequests": 1991,
+      "tokenRequests": 24,
+      "webApiScalingEstimate": {
+        "1": 1991,
+        "3": 5973,
+        "5": 9955
+      }
+    },
+    {
+      "profile": "four_hours_closed_then_paused_closed",
+      "simulatedHours": 24,
+      "libraryTracks": 1200,
+      "onboardingRequests": 37,
+      "playingWindowRequests": 243,
+      "totalSpotifyRequests": 1748,
+      "counts": {
+        "GET /v1/me/player": 1463,
+        "GET /v1/me/player/recently-played": 120,
+        "GET /v1/me/tracks": 20,
+        "PUT /v1/playlists/:id/items": 21,
+        "POST /v1/playlists/:id/items": 42,
+        "POST /accounts/api/token": 24,
+        "GET /v1/me/playlists": 2,
+        "GET /v1/artists/:id/albums": 16,
+        "GET /v1/albums/:id": 16,
+        "GET /v1/search": 20,
+        "GET /v1/artists/:id": 4
+      },
+      "pausedWindowSpotifyRequests": 1505,
+      "linearScalingEstimate": {
+        "oneUser": 1748,
+        "threeUsers": 5244,
+        "fiveUsers": 8740
+      },
+      "limits": "Three/five-user figures are arithmetic estimates of identical independent accounts, not a real Spotify quota test. The measured window includes background discovery/maintenance; setup imports and the initial Play command are outside it. Different libraries, further user commands, HA/MA and provider retries can change the totals.",
+      "webApiRequests": 1724,
+      "tokenRequests": 24,
+      "webApiScalingEstimate": {
+        "1": 1724,
+        "3": 5172,
+        "5": 8620
+      }
+    }
+  ],
+  "historyFeed": {
+    "ordinaryHistoryPopulatedBySync": true,
+    "deviceQuotaStopsAllEndpointsForAuditedAccount": true,
+    "newHistoryRecordsDuringKnownCooldown": 0,
+    "elapsedMinutes": 30
+  },
+  "recorded_at": "2026-09-30T11:05:37.118248+00:00",
+  "auditSource": "test/hub/usage-audit.test.ts",
+  "auditSourceSha256": "1396f1c01fac222bbd5be3bd9afb240c1514de499672b505c7cab7a1697418a5",
+  "command": "npx vitest run test/hub/usage-audit.test.ts",
+  "officialSources": [
+    "https://developer.spotify.com/documentation/web-api/concepts/quota-modes"
+  ],
+  "productionChanged": false
+}

@@ -1,0 +1,149 @@
+[WebServer] 
+[WebServer]  ⛅️ wrangler 4.141.0 (update available 4.150.0)
+[WebServer] ───────────────────────────────────────────────
+[WebServer] Your Worker has access to the following bindings:
+[WebServer] Binding                                                                     Resource                  Mode
+[WebServer] env.PROBE (AtomicProbe)                                                     Durable Object            local
+[WebServer] env.REGISTRY (Registry)                                                     Durable Object            local
+[WebServer] env.APP_SECRET ("e2e-secret-e2e-secret-e2e-secret-e2e-...")                 Environment Variable      local
+[WebServer] env.SPOTIFY_CLIENT_ID ("e2e-client")                                        Environment Variable      local
+[WebServer] env.SPOTIFY_ACCOUNTS_BASE ("http://127.0.0.1:19142/accounts")               Environment Variable      local
+[WebServer] env.SPOTIFY_API_BASE ("http://127.0.0.1:19142/v1")                          Environment Variable      local
+[WebServer] env.LASTFM_API_BASE ("http://127.0.0.1:19142/lastfm")                       Environment Variable      local
+[WebServer] env.DEEZER_API_BASE ("http://127.0.0.1:19142/deezer")                       Environment Variable      local
+[WebServer] 
+[WebServer] ⎔ Starting local server...
+[WebServer] [wrangler:info] Ready on http://127.0.0.1:19385
+[WebServer] [wrangler:info] GET /health 200 OK (79ms)
+
+Running 5 tests using 1 worker
+
+(node:32300) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /profile-counter 200 OK (45ms)
+do-atomic-fault {"kind":"profile","at":"counter","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":1}
+do-atomic-retry {"kind":"profile","at":"counter","result":true,"commit":2,"dataset":{"key":"59Ytl9xtp_4Fm26X|-","hasImport":true,"importedAt":1791914320806,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":true,"coverage":"summary"}}
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvSet (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:802:11)
+[WebServer]       at HubCore.importCommitted (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6525:8)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7639:20)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:699:19)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:755:16)
+[WebServer]       at HubCore.importTransaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6540:19)
+[WebServer]       at HubCore.setImportedProfile (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7636:8)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:81:37)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /profile-counter 500 Internal Server Error (25ms)
+[WebServer] [wrangler:info] GET /profile-counter 200 OK (19ms)
+[WebServer] [wrangler:info] GET /profile-counter 200 OK (18ms)
+[WebServer] [wrangler:info] GET /profile-counter 200 OK (19ms)
+[WebServer] [wrangler:info] GET /profile-counter 200 OK (16ms)
+  ok 1 do-atomic.spec.ts:13:6 › profile: a storage failure counter answers 500, leaves every stored row and the commit, and the change sent again counts once (209ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /profile-after-profile 200 OK (37ms)
+do-atomic-fault {"kind":"profile","at":"after-profile","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":1}
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvSet (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:802:11)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7642:22)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:699:19)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:755:16)
+[WebServer]       at HubCore.importTransaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6540:19)
+[WebServer]       at HubCore.setImportedProfile (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7636:8)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:81:37)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:102:37)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /profile-after-profile 500 Internal Server Error (22ms)
+[WebServer] [wrangler:info] GET /profile-after-profile 200 OK (16ms)
+[WebServer] [wrangler:info] GET /profile-after-profile 200 OK (19ms)
+do-atomic-retry {"kind":"profile","at":"after-profile","result":true,"commit":2,"dataset":{"key":"GqCOVzAhj9XX0PW5|-","hasImport":true,"importedAt":1791914321022,"songs":2,"rows":0,"rowsFrom":null,"rowsTo":null,"summaryProfile":true,"coverage":"summary"}}
+[WebServer] [wrangler:info] GET /profile-after-profile 200 OK (15ms)
+[WebServer] [wrangler:info] GET /profile-after-profile 200 OK (18ms)
+  ok 2 do-atomic.spec.ts:13:6 › profile: a storage failure after-profile answers 500, leaves every stored row and the commit, and the change sent again counts once (162ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /events-mid-events 200 OK (43ms)
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvDel (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:810:11)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7816:9)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:699:19)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:755:16)
+[WebServer]       at HubCore.importTransaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6540:19)
+[WebServer]       at HubCore.importListens (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7789:22)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:83:13)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:102:37)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /events-mid-events 500 Internal Server Error (23ms)
+do-atomic-fault {"kind":"events","at":"mid-events","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":1}
+[WebServer] [wrangler:info] GET /events-mid-events 200 OK (15ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] GET /events-mid-events 200 OK (23ms)
+do-atomic-retry {"kind":"events","at":"mid-events","result":true,"commit":2,"dataset":{"key":"gFoFtPqcrJSq7tCq|g1","hasImport":true,"importedAt":1791914321203,"songs":2,"rows":4,"rowsFrom":1709294400000,"rowsTo":1709294401000,"summaryProfile":false,"coverage":"events"}}
+[WebServer] [wrangler:info] GET /events-mid-events 400 Bad Request (18ms)
+[WebServer] [wrangler:info] GET /events-mid-events 200 OK (18ms)
+  ok 3 do-atomic.spec.ts:13:6 › events: a storage failure mid-events answers 500, leaves every stored row and the commit, and the change sent again counts once (175ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /events-counter 200 OK (43ms)
+do-atomic-fault {"kind":"events","at":"counter","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":1}
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.kvSet (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:802:11)
+[WebServer]       at HubCore.importCommitted (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6525:8)
+[WebServer]       at HubCore.importChanged (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6468:8)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7821:9)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:699:19)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:755:16)
+[WebServer]       at HubCore.importTransaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6540:19)
+[WebServer]       at HubCore.importListens (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7789:22)
+[WebServer] 
+[WebServer] 
+[WebServer] [wrangler:info] GET /events-counter 500 Internal Server Error (20ms)
+[WebServer] [wrangler:info] GET /events-counter 200 OK (18ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] GET /events-counter 200 OK (24ms)
+do-atomic-retry {"kind":"events","at":"counter","result":true,"commit":2,"dataset":{"key":"OMIStDy133rvvJgm|g1","hasImport":true,"importedAt":1791914321403,"songs":2,"rows":4,"rowsFrom":1709294400000,"rowsTo":1709294401000,"summaryProfile":false,"coverage":"events"}}
+[WebServer] [wrangler:info] GET /events-counter 400 Bad Request (15ms)
+[WebServer] [wrangler:info] GET /events-counter 200 OK (18ms)
+  ok 4 do-atomic.spec.ts:13:6 › events: a storage failure counter answers 500, leaves every stored row and the commit, and the change sent again counts once (169ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf übernommen: 2 Songs mit Vorgeschichte"}
+[WebServer] [wrangler:info] GET /events-after-events 200 OK (46ms)
+[WebServer] X [ERROR] hub error Error: Synthetic storage failure
+[WebServer] 
+[WebServer]       at raw.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:106:12)
+[WebServer]       at Object.run (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:766:9)
+[WebServer]       at HubCore.importChanged (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6474:11)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7821:9)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:699:19)
+[WebServer]       at Object.transaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:755:16)
+[WebServer]       at HubCore.importTransaction (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:6540:19)
+[WebServer]       at HubCore.importListens (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/hub/hub.ts:7789:22)
+[WebServer]       at change (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/r5/do/green/do-atomic-worker.ts:83:13)
+[WebServer]       at null.<anonymous> (file:///C:/Users/mikah/AppData/Local/Temp/claude/C--Users-mikah-Documents-Codex-2026-10-13-task-work-true-shuffle-PoC/b3717cfc-5a7e-4563-a95d-82405b75acd7/scratchpad/lf/src/worker/userhub.ts:102:37)
+[WebServer] 
+[WebServer] 
+do-atomic-fault {"kind":"events","at":"after-events","http":500,"hit":true,"result":{"ok":false,"error":{"code":"internal","message":"Interner Fehler — bitte nochmal versuchen.","status":500}},"before":1,"after":1}
+[WebServer] [wrangler:info] GET /events-after-events 500 Internal Server Error (20ms)
+[WebServer] [wrangler:info] GET /events-after-events 200 OK (18ms)
+[WebServer] {"level":"info","kind":"history","message":"Hörverlauf für das Hörprofil übernommen: 4 Wiedergaben"}
+[WebServer] [wrangler:info] GET /events-after-events 200 OK (23ms)
+do-atomic-retry {"kind":"events","at":"after-events","result":true,"commit":2,"dataset":{"key":"IuXAwDO-YLU60xz_|g1","hasImport":true,"importedAt":1791914321587,"songs":2,"rows":4,"rowsFrom":1709294400000,"rowsTo":1709294401000,"summaryProfile":false,"coverage":"events"}}
+[WebServer] [wrangler:info] GET /events-after-events 400 Bad Request (15ms)
+[WebServer] [wrangler:info] GET /events-after-events 200 OK (17ms)
+  ok 5 do-atomic.spec.ts:13:6 › events: a storage failure after-events answers 500, leaves every stored row and the commit, and the change sent again counts once (185ms)
+
+  5 passed (3.7s)
+
+green do-atomic exit=0

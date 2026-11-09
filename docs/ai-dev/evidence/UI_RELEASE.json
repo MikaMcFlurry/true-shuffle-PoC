@@ -1,0 +1,707 @@
+{
+  "source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+  "version_id": "60e34407-fd2a-43b8-8837-d894aec2f5a6",
+  "deployment_id": "4c79c507-76a5-47e8-acc4-b08a28cc7c8c",
+  "deployed_at": "2026-10-01T14:30:43.384464Z",
+  "percentage": 100,
+  "schema_version": "true-shuffle.ui-release.v1",
+  "recorded_at": "2026-10-01T14:32:07.776089+00:00",
+  "worker": "true-shuffle",
+  "url": "https://true-shuffle.mikahertler-72c.workers.dev/",
+  "target_branch": "codex/implement-cloudflare-restart",
+  "pull_requests": [
+    {
+      "number": 12,
+      "head_sha": "f7d95e5a1a3268f4a71356072e5ce1fede2e95af",
+      "merge_sha": "4c15e21a94183712e4d4e0eee1c46287d4e7567c",
+      "scope": "Separate refused-start continuity and durable failure explanation fix; material functional fix independently reviewed"
+    },
+    {
+      "number": 11,
+      "head_sha": "d4baa0e973423ba4f96208f09f19d26fbf94b20b",
+      "merge_sha": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+      "scope": "Claude UI presentation and long-title overflow correction; completion comments 5933233811,5933327912"
+    }
+  ],
+  "github_ci": {
+    "run_id": 36876091612,
+    "url": "https://github.com/MikaMcFlurry/true-shuffle-PoC/actions/runs/36876091612",
+    "source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+    "status": "PASS",
+    "jobs": [
+      {
+        "id": 110415780598,
+        "name": "verify",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 36876091612,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run npm ci",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run npm run build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run npm run typecheck",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run npm run lint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run npm test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run npx playwright install --with-deps chromium",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Run npm run test:e2e",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Run npx wrangler deploy --dry-run --outdir /tmp/true-shuffle-worker",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 12
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25
+          }
+        ]
+      }
+    ]
+  },
+  "unit_worker_tests": {
+    "count": 444,
+    "result": "PASS",
+    "log": "ui-release/unit-worker.log",
+    "executed_source": "47c5abf688b368367432c0ae0cf0da4e406c3368",
+    "binding": "Final merged CI reruns all tests; earlier local Worker/core/shared/store/test bytes identical to actual merged source."
+  },
+  "browser_tests": {
+    "count": 40,
+    "result": "PASS",
+    "log": "ui-release/browser.log",
+    "executed_source": "cf8efc7967c4938db633df4214a695da7e4c2807",
+    "binding": "Final merged CI also PASS; exact 110-file application/test/config identity independently confirmed after merge."
+  },
+  "independent_review": {
+    "schema_version": "true-shuffle.independent-ui-release.v1",
+    "independence": "FRESH",
+    "verdict": "READY",
+    "scope": "Combined PR11 presentation redesign and separately-authorized PR12 definitive-refusal continuity repair; not full live Spotify/HA capacity acceptance",
+    "reviewed_subject_revision": "cf8efc7967c4938db633df4214a695da7e4c2807",
+    "pr11_reviewed_head": "d4baa0e973423ba4f96208f09f19d26fbf94b20b",
+    "pr12_application_source": "4b9ea7b344f79d6197c1c8fe6558c119a6ad1acc",
+    "source_sha256": {
+      "biome.json": "2c1422ab95e9958b42769668877018e9143b9c7381c4b8ecd291e7dd3844d8df",
+      "e2e/app.spec.ts": "55e99f7ddb597ea6ea8697e875926f257120d0030aa7a19a4a3e7a5a5efcd8f2",
+      "e2e/capture.spec.ts": "5d41bc4ad896366e910e109cb8d6fb8104b945283ff177153cc3d9866729371c",
+      "e2e/client-playback.spec.ts": "4ec99a0f7e964a3eca188faaa0c2332db39c4cd5b7fafe01fea63f934be49c09",
+      "e2e/fake-server.ts": "aa13e92cde8887b75a26b3af9d60b76675a253a562e9d0e27cfe951810332127",
+      "e2e/recovery.spec.ts": "52e343b9e2cc9cd82337bb8a16f3c09b64c2e4d896db09b5c9179415b478a871",
+      "package-lock.json": "8226df0d48f5c9d821f162ff74e019638deed9f851dfe8c28e86013b7c106812",
+      "package.json": "e9cd4bb11fdf5c26a4dbb2d16031db51c158fb8921f9dc36155913f4c64c41de",
+      "playwright.config.ts": "db86aee297710877b14e01276caa70999e620846eae94ea3fd721e0c7c59df51",
+      "src/client/api.ts": "39646eda421a23839c230f69bb7725fb3070fbe468d7b13743ecd0b06c8d215f",
+      "src/client/app.tsx": "6572fbf4f0f2e7c1c55451e95ee815277a752e3d67805e33cdb8835b2638bf9e",
+      "src/client/components/rate.tsx": "3c591ca0a9cc4afb3a824b3a316b8feffa88a70d4a68f51400f106be4ee00f7b",
+      "src/client/components/song-progress.tsx": "fa133710a0c29489694417a2d14ce1e97946726313d59f022cce8b781ff90fdd",
+      "src/client/components/spotify-availability.tsx": "49e670d19808af7a5a7828d134fe685adae47edc98e456347051307948e33286",
+      "src/client/components/ui.tsx": "bc2f2a83f0f7102254eef505e67ac0a25d32493aabee7f20d26633f00bf55cb9",
+      "src/client/format.ts": "4cd959d9119f261c4c5c07716e17de42f39cae96f6b54269588fe24ef829bca2",
+      "src/client/index.html": "be39111537a65f5e36896380951b0981500fd14369f43c5aa7cc35bfac71b3d0",
+      "src/client/main.tsx": "0b11335ea8dfa16647bcf9553ab6940d797373573807bbe47beaabc458597010",
+      "src/client/playback-view.ts": "afe913741a881a8568448a33f21f0fd27c3f654edd5aee50b92b8944bbc31075",
+      "src/client/progress.ts": "bca0e72292a77fc0ce9f4036cb7c44e62375d44f71faf19390c7e43a9fe64d32",
+      "src/client/public/_headers": "c6ee3eb593b266fa4cb402cc01af94b65cab19b50e67326348c328b7168bec00",
+      "src/client/public/apple-touch-icon.png": "8f60d6b320900e95d5752c226a8349efd034162f4d7657926eac311e6d390705",
+      "src/client/public/apple-touch-icon.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+      "src/client/public/icon-192.png": "6d5e9bd88a8ca56d41d8710396868fba2473d4bc8c6337b312c387b2e22eb160",
+      "src/client/public/icon-192.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+      "src/client/public/icon-512.png": "12e80a31772b667e941cc3ac03c3fd79f87898833f6dea8d5b0c462a44c79b99",
+      "src/client/public/icon-512.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+      "src/client/public/icon.svg": "92591cd271b39de92aeca1b08a8702773e5b7c7bac45740c68655ce8c7a7c9bc",
+      "src/client/public/manifest.webmanifest": "7c33a2b886639d264b6df6e24eb5afabd09e2727037cd3ce249d1ec63ec16f3e",
+      "src/client/router.ts": "fa22830c610804611e3a85215521c4b347cbd93024c37b26e4323693947855cd",
+      "src/client/screens/home.tsx": "c76533c90580c1974bed6157bfbb190128c2a0507c8cd7bf76e877a5a0583720",
+      "src/client/screens/menu.tsx": "5227058c395b1ae5b211a5e05b6da8276e1056570f90a17e3d2ee5b937b4c4fc",
+      "src/client/screens/remote.tsx": "b3557fa20625d16b1b8500f07f719d7002b859f4c12204f07eb13b47faba0089",
+      "src/client/screens/scan.tsx": "74039b916902041ce80f9a7acba7e11de33ea0bf1f430497a6349dfe1c8f35b9",
+      "src/client/screens/signin.tsx": "fa38e2963ef70eb2e067f083fcead4a284003f2c99efb9d83da8aae8c51dae68",
+      "src/client/screens/station.tsx": "9c28b0dde0ef955958bcf7772fcbc022f86926a593a534b484e2168a7716cc1e",
+      "src/client/store.ts": "f06c092471e138b56088d68171dd788db68738abd6f9192c34d53c4e47cfa351",
+      "src/client/styles.css": "eaf87a5050b992a28bcb5cdf55e73cbd828e481db8cd59970d6b48c1bf8ca6be",
+      "src/core/deck.ts": "69896f284addf2def1115d726be5a7eab9118b1c136df8f2dd8d5c2e0d6f6e85",
+      "src/core/history.ts": "6e56193931187415545f487406ce7eb7b2cc34a9ec703854a88f29d34e20702e",
+      "src/core/memory.ts": "cfd3e9dd4164eb6ad8e71a1398d30e56c446bb83d24bc2d2d4b3bbde6c135c54",
+      "src/core/mix.ts": "8bf4dc74fd70fe27f2d8e3b6c12b5680492e7bcef03a0a442745a34531a2453f",
+      "src/core/planner.ts": "ccc99911c3017a8384657c553c5bb7b27ec360c7ad39d736a487f916e446211f",
+      "src/core/random.ts": "2f95ee0fe003c62c59b1ba67209ae7a19f9cd98b1c67506ddb4215ed41bc5e8c",
+      "src/core/types.ts": "de6713f2623fe0d9a1c14e8f695f2cdf910576a91e3a413ac4443161faf8aa75",
+      "src/shared/api.ts": "581d1396d41916258fbcd99e2a89ab6dfabedf387d5861a849961a88324c6bd5",
+      "src/shared/spotify-usage.ts": "850a7e4aa5b7e7ff59c87f66a65a320ffcdc449826fa2a0d9e4319af3aacaa8c",
+      "src/worker/controllers/native.ts": "67c271d9df897b275ffe94ccbacfd63eb38f7bc5bddac6d77d9fff9005c0699a",
+      "src/worker/env.ts": "891b0f826606078f4152b3ff275dfc33ac228b8862976f0d3b7384431284361b",
+      "src/worker/hub/discovery.ts": "1cab47dd61920f52a01c518b3a7fb4d0c159ca116aa7cd4eb68271fd9914f710",
+      "src/worker/hub/hub.ts": "2f5d94e7562d4d98dd13a8f8ac74d71c6a1de9aa568e554b1c0a73ee13ae534f",
+      "src/worker/hub/library.ts": "b26300aa65092f08342032564024022d84c0c75499b426ac18134853495c3a55",
+      "src/worker/hub/observation-policy.ts": "59e43847914884a79aa7a76a343ccd6e89f2fb067eb0e85b0678c017a332f2e4",
+      "src/worker/hub/schema.ts": "3a1461556ec63f4467c70be9733fcc4976c0835ca9ccbe12b3a9dd88303a1da0",
+      "src/worker/index.ts": "c166089ad3b5232133a16115144f8c4b4f06404218178562c647b0ebd402257b",
+      "src/worker/lib/crypto.ts": "9248fb9ecc5d5ca573af36fb73981942b4526ee494ed4732c8f531f3d8882dc1",
+      "src/worker/lib/remote-key.ts": "da04c8cdf149e1c44037fcd05b004778d560ca7472821218ee118dbedab72d37",
+      "src/worker/lib/sql.ts": "8ead9cebc819adcd6a80b4288df04202633c2ac7d445ef5bd0ae9d203be227db",
+      "src/worker/registry.ts": "65da4c66f0037b5b674ca41af28fac17fad295c92e9ecafd7b608813e30fecac",
+      "src/worker/spotify/client.ts": "85a31964aae888313f878f51a2cab0615f8f07fbc2f07a8dd2325598bdfb5d88",
+      "src/worker/spotify/gate.ts": "343a95e99b22ab7f89b4d27e4f22d147b72da3b0647cd67b9bc189afae651cac",
+      "src/worker/spotify/operation-gates.ts": "e7917e4c7239ad93e97240cf9ae79fdcc09d3092836c997e69fb5a06101b5c39",
+      "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
+      "src/worker/spotify/types.ts": "f9520e5ec6936825b94ff0940c9d8ea543172878e05337e25f1a045edfbaf7e5",
+      "src/worker/spotify/usage.ts": "6aa573588e901e987a3c2234d798689863d2f01f9fda4d71db563835610dddd1",
+      "src/worker/userhub.ts": "4a2760144070d82f5de7961f4e30c9abc41c9fe74478e2be7ee398c6c7592f64",
+      "test/client/store-refusal.test.ts": "d34e1dd51dfb061d6650f0afdaa06439d07d72a2c30cce60c3b52f0a6a3df812",
+      "test/core/deck.test.ts": "48002b8b3161f5b42c46c8dbf962598194ac280985b3e88eb5d0d86553e65b55",
+      "test/core/memory-mix-history.test.ts": "f4dfadf54d702f904fa30528c75e6341c759b4ec6f10c390e84c6a754d7210ef",
+      "test/core/planner.test.ts": "16ca69b185e43e445b201cd60bc5ae65550b13c7286d0a341d6d10f70ee1d32a",
+      "test/core/song-progress.test.ts": "f32b0ae06b87f613873c27df4a0dc5e53565a9618e22033f570e5343eab8ac1c",
+      "test/fakes/fake-spotify.ts": "6c702761ba75795371cce51ab2c081ae72f52b76f8d4b986819472f568c176c5",
+      "test/hub/budget.test.ts": "10a7a127fc66161cee8e83372ca229444f0ea706e74dbc91bb94d0a4f9bbd91a",
+      "test/hub/discovery.test.ts": "d0861b7b8517d8d0d9999c66a24fae2f7c8d90ead921bd8a4920251886375e7f",
+      "test/hub/harness.ts": "47197bedf1be29a17aca0e2d254d09f33743725a3962b4fe8bbc13ca07ee4c90",
+      "test/hub/hub.test.ts": "2bcdd36d4150437aa58f5cab79a5f0ba3b14f5aec57f849e5315ae9eb3b984b0",
+      "test/hub/observation-policy.test.ts": "183511dcba471fd549276b13dce97ec5ff4e0dff14ad2195e3d23acdbdf4babc",
+      "test/hub/observation-scheduling.test.ts": "20c19f13657a0b99bb93b9cd10f2e61fc02eda98a3f9c7e1261275f61a24f89d",
+      "test/hub/quota.test.ts": "f2110d2e2be594d4838062d4ea6353ebba297f0b7dd6d92ac590b0d73d3aa770",
+      "test/hub/recovery.test.ts": "fc2d8725a24abfeece4b2662f3868642290a38a5f2a3b8c3f3d1e7a82e59ee68",
+      "test/hub/refused-start.test.ts": "8c95ceee6ce5d295486c3a7de6566deda2059435a73ad4e5c6a830c810bebdc7",
+      "test/hub/request-pressure.test.ts": "9bbf93da047d282eaf4bf0eae0d48fc5f13a2d65866bf3a6ca541a75fe4d5d4a",
+      "test/hub/robustness.test.ts": "d3068d2e408ffc2969c9835834efb5cc39833948a03f09e260d94867e30769ba",
+      "test/hub/session.test.ts": "ee9e70e3d5b37e980b48301f09fbeb1f8950a54c7448bfbf2a763e69263715d8",
+      "test/hub/skips-truth.test.ts": "7e00595d6e68911685a070ac8b6fd2cdf6ae80df417ac7ff9927ab6105fc922a",
+      "test/hub/transport.test.ts": "cda2161a1dc4007b6075d7deee8cf51a0c0e5ffeaff665c81edb9cba7f0c2a9e",
+      "test/hub/usage-audit.test.ts": "b8b6e91d0771e05ebb1e70576619212bd98f151507a93bfd1e8defffe4d8ddee",
+      "test/spotify/artist-scope.test.ts": "a5da7e9c776affc58f7426e7b83c12bb77fb59d2cfe87d58216aaaa853313168",
+      "test/spotify/availability.test.ts": "51ee7aedbb15438e8ff7b7fbd8b23515f41b3272d739d57cedf6420cc81391ff",
+      "test/spotify/client.test.ts": "78336544a388aca6086d09540fbfe7c4b7bce92e7c8b817925b6c8aa9382b48d",
+      "test/spotify/gate.test.ts": "11a20c7ff5247d212e3683b4024263e8871201a63c767a12a8016e49909433ac",
+      "test/spotify/operation-fixture.ts": "7356e0e04a2f518f074679a56b1c0e2f835e2a706d98acbc833a15360dbd14d4",
+      "test/spotify/rpc.test.ts": "051989ab25f52191f0627667670d732a418889b488dfd7a1fe9a9dc84565f84f",
+      "test/spotify/usage.test.ts": "b075a1413a2465f47d84dcbf715b5dd8b89416d68d4f063131abfabca48dc637",
+      "test/worker/native-bridge.test.ts": "b0a77ce721816a3c62a93042c5a9b409ffec12f4a4f5f46519b27faf2349e783",
+      "test/worker/native-orchestrator.test.ts": "afeb43566d5a822d0a2f58b19c3dbfade46f279f0dd2e33da001ca63ba845851",
+      "test/worker/native-rolling.test.ts": "67df7c02ccbcdb59ba25e9e5f13c7bb5968bf236c72a234e0df405f2c91bf40b",
+      "test/worker/native.test.ts": "3cdb0b6c21474f6de7ba3d159baa88d3bb672470de26dfa2b7c63a35afba625b",
+      "test/worker/remote-key.test.ts": "c61da720373f9b367af079edfe7095c309176566a228ee2708ab8c5361aa2c2d",
+      "tsconfig.base.json": "0bae03792d040ef761acc701834989e63308b25b4217cbbdf03ec8068e38584b",
+      "tsconfig.client.json": "f0acb8fb535796efb499c96141899f1835cc742ae474131e1052c9e238292d7e",
+      "tsconfig.json": "224acbce9fc25591289a70a199877c7b24c45d81fb7dc3c5b060a2cb4100b528",
+      "tsconfig.test.json": "0fd3bf19954f4214951b6b8ee5cae83c838b1425822230fdf5a585fe5676a000",
+      "tsconfig.worker.json": "1680bfc8946418b9e6e3447b9a40f9b08f3e9e41b7295edd5e8107e2a4c73b82",
+      "vite.config.ts": "b1889886145d54d36a39f6de2ef08aefb9287fd89c79632ca313ac940e5e4ff8",
+      "vitest.config.ts": "0e2df4b7cfa457db2d271b822c3b708aabaefce5dded24fd121f2407929130fc",
+      "worker-configuration.d.ts": "3927b0536720685ed62219adb3cd99a816df1c5ea996677ad1d10834e3766958",
+      "wrangler.e2e.jsonc": "d6ea87094592a4fea4023c1a5623b2cfd10f920800c79e95247aa3448feedf1b",
+      "wrangler.jsonc": "6aedb923406d1de811ec56dd64cabc017cea70e191aeafa28c39b270c61ef7a2",
+      "wrangler.preview.jsonc": "605b95881ea83061e4a29c6be80f885125aa557c56bdf4b0bd15a3a41868b2f7"
+    },
+    "application_sha256": {
+      "biome.json": "2c1422ab95e9958b42769668877018e9143b9c7381c4b8ecd291e7dd3844d8df",
+      "package-lock.json": "8226df0d48f5c9d821f162ff74e019638deed9f851dfe8c28e86013b7c106812",
+      "package.json": "e9cd4bb11fdf5c26a4dbb2d16031db51c158fb8921f9dc36155913f4c64c41de",
+      "playwright.config.ts": "db86aee297710877b14e01276caa70999e620846eae94ea3fd721e0c7c59df51",
+      "src/client/api.ts": "39646eda421a23839c230f69bb7725fb3070fbe468d7b13743ecd0b06c8d215f",
+      "src/client/app.tsx": "6572fbf4f0f2e7c1c55451e95ee815277a752e3d67805e33cdb8835b2638bf9e",
+      "src/client/components/rate.tsx": "3c591ca0a9cc4afb3a824b3a316b8feffa88a70d4a68f51400f106be4ee00f7b",
+      "src/client/components/song-progress.tsx": "fa133710a0c29489694417a2d14ce1e97946726313d59f022cce8b781ff90fdd",
+      "src/client/components/spotify-availability.tsx": "49e670d19808af7a5a7828d134fe685adae47edc98e456347051307948e33286",
+      "src/client/components/ui.tsx": "bc2f2a83f0f7102254eef505e67ac0a25d32493aabee7f20d26633f00bf55cb9",
+      "src/client/format.ts": "4cd959d9119f261c4c5c07716e17de42f39cae96f6b54269588fe24ef829bca2",
+      "src/client/index.html": "be39111537a65f5e36896380951b0981500fd14369f43c5aa7cc35bfac71b3d0",
+      "src/client/main.tsx": "0b11335ea8dfa16647bcf9553ab6940d797373573807bbe47beaabc458597010",
+      "src/client/playback-view.ts": "afe913741a881a8568448a33f21f0fd27c3f654edd5aee50b92b8944bbc31075",
+      "src/client/progress.ts": "bca0e72292a77fc0ce9f4036cb7c44e62375d44f71faf19390c7e43a9fe64d32",
+      "src/client/public/_headers": "c6ee3eb593b266fa4cb402cc01af94b65cab19b50e67326348c328b7168bec00",
+      "src/client/public/apple-touch-icon.png": "8f60d6b320900e95d5752c226a8349efd034162f4d7657926eac311e6d390705",
+      "src/client/public/apple-touch-icon.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+      "src/client/public/icon-192.png": "6d5e9bd88a8ca56d41d8710396868fba2473d4bc8c6337b312c387b2e22eb160",
+      "src/client/public/icon-192.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+      "src/client/public/icon-512.png": "12e80a31772b667e941cc3ac03c3fd79f87898833f6dea8d5b0c462a44c79b99",
+      "src/client/public/icon-512.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+      "src/client/public/icon.svg": "92591cd271b39de92aeca1b08a8702773e5b7c7bac45740c68655ce8c7a7c9bc",
+      "src/client/public/manifest.webmanifest": "7c33a2b886639d264b6df6e24eb5afabd09e2727037cd3ce249d1ec63ec16f3e",
+      "src/client/router.ts": "fa22830c610804611e3a85215521c4b347cbd93024c37b26e4323693947855cd",
+      "src/client/screens/home.tsx": "c76533c90580c1974bed6157bfbb190128c2a0507c8cd7bf76e877a5a0583720",
+      "src/client/screens/menu.tsx": "5227058c395b1ae5b211a5e05b6da8276e1056570f90a17e3d2ee5b937b4c4fc",
+      "src/client/screens/remote.tsx": "b3557fa20625d16b1b8500f07f719d7002b859f4c12204f07eb13b47faba0089",
+      "src/client/screens/scan.tsx": "74039b916902041ce80f9a7acba7e11de33ea0bf1f430497a6349dfe1c8f35b9",
+      "src/client/screens/signin.tsx": "fa38e2963ef70eb2e067f083fcead4a284003f2c99efb9d83da8aae8c51dae68",
+      "src/client/screens/station.tsx": "9c28b0dde0ef955958bcf7772fcbc022f86926a593a534b484e2168a7716cc1e",
+      "src/client/store.ts": "f06c092471e138b56088d68171dd788db68738abd6f9192c34d53c4e47cfa351",
+      "src/client/styles.css": "eaf87a5050b992a28bcb5cdf55e73cbd828e481db8cd59970d6b48c1bf8ca6be",
+      "src/core/deck.ts": "69896f284addf2def1115d726be5a7eab9118b1c136df8f2dd8d5c2e0d6f6e85",
+      "src/core/history.ts": "6e56193931187415545f487406ce7eb7b2cc34a9ec703854a88f29d34e20702e",
+      "src/core/memory.ts": "cfd3e9dd4164eb6ad8e71a1398d30e56c446bb83d24bc2d2d4b3bbde6c135c54",
+      "src/core/mix.ts": "8bf4dc74fd70fe27f2d8e3b6c12b5680492e7bcef03a0a442745a34531a2453f",
+      "src/core/planner.ts": "ccc99911c3017a8384657c553c5bb7b27ec360c7ad39d736a487f916e446211f",
+      "src/core/random.ts": "2f95ee0fe003c62c59b1ba67209ae7a19f9cd98b1c67506ddb4215ed41bc5e8c",
+      "src/core/types.ts": "de6713f2623fe0d9a1c14e8f695f2cdf910576a91e3a413ac4443161faf8aa75",
+      "src/shared/api.ts": "581d1396d41916258fbcd99e2a89ab6dfabedf387d5861a849961a88324c6bd5",
+      "src/shared/spotify-usage.ts": "850a7e4aa5b7e7ff59c87f66a65a320ffcdc449826fa2a0d9e4319af3aacaa8c",
+      "src/worker/controllers/native.ts": "67c271d9df897b275ffe94ccbacfd63eb38f7bc5bddac6d77d9fff9005c0699a",
+      "src/worker/env.ts": "891b0f826606078f4152b3ff275dfc33ac228b8862976f0d3b7384431284361b",
+      "src/worker/hub/discovery.ts": "1cab47dd61920f52a01c518b3a7fb4d0c159ca116aa7cd4eb68271fd9914f710",
+      "src/worker/hub/hub.ts": "2f5d94e7562d4d98dd13a8f8ac74d71c6a1de9aa568e554b1c0a73ee13ae534f",
+      "src/worker/hub/library.ts": "b26300aa65092f08342032564024022d84c0c75499b426ac18134853495c3a55",
+      "src/worker/hub/observation-policy.ts": "59e43847914884a79aa7a76a343ccd6e89f2fb067eb0e85b0678c017a332f2e4",
+      "src/worker/hub/schema.ts": "3a1461556ec63f4467c70be9733fcc4976c0835ca9ccbe12b3a9dd88303a1da0",
+      "src/worker/index.ts": "c166089ad3b5232133a16115144f8c4b4f06404218178562c647b0ebd402257b",
+      "src/worker/lib/crypto.ts": "9248fb9ecc5d5ca573af36fb73981942b4526ee494ed4732c8f531f3d8882dc1",
+      "src/worker/lib/remote-key.ts": "da04c8cdf149e1c44037fcd05b004778d560ca7472821218ee118dbedab72d37",
+      "src/worker/lib/sql.ts": "8ead9cebc819adcd6a80b4288df04202633c2ac7d445ef5bd0ae9d203be227db",
+      "src/worker/registry.ts": "65da4c66f0037b5b674ca41af28fac17fad295c92e9ecafd7b608813e30fecac",
+      "src/worker/spotify/client.ts": "85a31964aae888313f878f51a2cab0615f8f07fbc2f07a8dd2325598bdfb5d88",
+      "src/worker/spotify/gate.ts": "343a95e99b22ab7f89b4d27e4f22d147b72da3b0647cd67b9bc189afae651cac",
+      "src/worker/spotify/operation-gates.ts": "e7917e4c7239ad93e97240cf9ae79fdcc09d3092836c997e69fb5a06101b5c39",
+      "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
+      "src/worker/spotify/types.ts": "f9520e5ec6936825b94ff0940c9d8ea543172878e05337e25f1a045edfbaf7e5",
+      "src/worker/spotify/usage.ts": "6aa573588e901e987a3c2234d798689863d2f01f9fda4d71db563835610dddd1",
+      "src/worker/userhub.ts": "4a2760144070d82f5de7961f4e30c9abc41c9fe74478e2be7ee398c6c7592f64",
+      "tsconfig.base.json": "0bae03792d040ef761acc701834989e63308b25b4217cbbdf03ec8068e38584b",
+      "tsconfig.client.json": "f0acb8fb535796efb499c96141899f1835cc742ae474131e1052c9e238292d7e",
+      "tsconfig.json": "224acbce9fc25591289a70a199877c7b24c45d81fb7dc3c5b060a2cb4100b528",
+      "tsconfig.test.json": "0fd3bf19954f4214951b6b8ee5cae83c838b1425822230fdf5a585fe5676a000",
+      "tsconfig.worker.json": "1680bfc8946418b9e6e3447b9a40f9b08f3e9e41b7295edd5e8107e2a4c73b82",
+      "vite.config.ts": "b1889886145d54d36a39f6de2ef08aefb9287fd89c79632ca313ac940e5e4ff8",
+      "vitest.config.ts": "0e2df4b7cfa457db2d271b822c3b708aabaefce5dded24fd121f2407929130fc",
+      "worker-configuration.d.ts": "3927b0536720685ed62219adb3cd99a816df1c5ea996677ad1d10834e3766958",
+      "wrangler.e2e.jsonc": "d6ea87094592a4fea4023c1a5623b2cfd10f920800c79e95247aa3448feedf1b",
+      "wrangler.jsonc": "6aedb923406d1de811ec56dd64cabc017cea70e191aeafa28c39b270c61ef7a2",
+      "wrangler.preview.jsonc": "605b95881ea83061e4a29c6be80f885125aa557c56bdf4b0bd15a3a41868b2f7"
+    },
+    "application_manifest_sha256": "516befe73a5d2ce855358e130503ca4fc66d8ccc545c05bbc6a225523586a465",
+    "rebind_rule": "Positive scoped verdict maycarry toactualmergedSHA ONLY ifevery listed src/test/e2e/config/dependency file remainsbyte-identical; documentation/evidence-only changes permitted andmustrecord newsource/deploymentidentity. Added/removed application/test/config files require renewedassessment.",
+    "independent_browser_checks": {
+      "status": "PASS",
+      "count": 9,
+      "actual_source": "cf8efc7967c4938db633df4214a695da7e4c2807",
+      "log": "/tmp/ui-final-independent-browser.log",
+      "probe": "/tmp/ts-ui-final-independent/e2e/independent-release.spec.ts",
+      "probe_sha256": "a4d900750ec23061761ff4411ee41bb6ef09a4f06e9787f4a42fadf619e577e8",
+      "environment": "actual Chromium built client, synthetic intercepted API; real light/dark320/390/1440 rendering, keyboard, dialog, pending/offline/navigation/guest/native"
+    },
+    "independent_unit_worker_checks": {
+      "status": "PASS",
+      "count": 19,
+      "actual_source": "47c5abf688b368367432c0ae0cf0da4e406c3368",
+      "carry_evidence": "git diff 47c5abf cf8efc7 -- src/worker src/core src/shared test src/client/store.ts empty independently confirmed",
+      "log": "/tmp/f01-independent-unit.log",
+      "probe": "/tmp/ts-f01-independent/test/reviewer/f01-independent.test.ts",
+      "committed_refusal_cases": 16,
+      "reviewer_authored_cases": 3
+    },
+    "closed_findings": [
+      {
+        "id": "F01",
+        "severity": "P1",
+        "closure": "Actual definitive403/404/restricted andprovider429 keep savedpriorstation/checkpoint; uncertainapplied outcomes retain intendedcandidate; notice remains acrosssameaccountchangedsession andclears onprofilechange. Independent19tests and2focusedactualrendercases PASS."
+      },
+      {
+        "id": "R-UI-01",
+        "severity": "P2",
+        "closure": "Original140-character unbrokenname fixture unchanged; previously3861px horizontaloverflow at1440, now0 at320/390/1440 inlight/dark. Full titlepreserved,50localreveal,keyboard/dialogchecks PASS. NarrowCSSanywhere+minmaxfix independently inspected."
+      }
+    ],
+    "open_findings": [],
+    "builder_checks_observed_not_relabelled_independent": {
+      "unit_worker": "Root444PASS30files on47; exactworker/core/shared/tests/Store unchangedfinalcf8",
+      "browser": "Root40PASS oncf8",
+      "static": "Root type/lint/build/dryrunPASS oncf8"
+    },
+    "limits": [
+      "Physical iPhone wake, actual Spotify propagation/control latency and real429 are NOT_RUN",
+      "Private owner native HA/MA integration and populated production restore NOT_RUN",
+      "Synthetic API/FakeSpotify checks do not establish five-user quota capacity",
+      "Production Cloudflare activation and publicreadback remain rootrelease-task responsibilities",
+      "Impeccable mechanical scan degradedregexmode dueabsentparserdeps; no fullWCAG certification claimed"
+    ],
+    "source_audit_notes": [
+      "Protected queueoccurrences/observedprogress/history/accountisolation/native/privateguest/rating/projection contracts retained; F01 changes narrowly reviewed separately from design",
+      "Pre-existing confirmationlag/DOpriority/429message specificity risks catalogued asoperationalfollowup, not silently claimedfixed ornewdesignregressions",
+      "Desktop senderwall independently scroll/render/click PASS; offviewportblankfullpagescreenshot isnotmissingfunctionalUI"
+    ],
+    "merged_source_revision": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+    "merged_source_identity_check": {
+      "status": "PASS",
+      "files": 110,
+      "hash_mismatches": 0,
+      "added_removed_or_changed_application_test_config_files": 0,
+      "method": "SHA256110trackedfiles and exactscopedgitdiff checked independently aftermerge",
+      "source_verdict_carry": "READY"
+    }
+  },
+  "public_readback": {
+    "tested_at": "2026-10-01T14:31:00.501782+00:00",
+    "target": "https://true-shuffle.mikahertler-72c.workers.dev",
+    "source_commit": "0cad1775b0c9d7e4723b3c864eb63b2b10a86580",
+    "checks": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/assets/index-C8HUn-6b.js",
+        "status": 200,
+        "local_build_bytes_match": true,
+        "sha256": "85d7ab656bec66652a0c9c21a2583f7916d6ced7a7c429ed5bef98e731ba4d86"
+      },
+      {
+        "path": "/assets/index-BOGpDpEB.css",
+        "status": 200,
+        "local_build_bytes_match": true,
+        "sha256": "0fc17dbca8bbbd1ec43defa9d944b0c7587b31d23b45c2ee7067d9b0d38a9a1c"
+      },
+      {
+        "path": "/api/health",
+        "status": 200,
+        "body": {
+          "ok": true,
+          "version": "1.0.0",
+          "configured": true
+        }
+      },
+      {
+        "path": "/api/state",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/native/devices",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/spotify/diagnostics",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/spotify/usage",
+        "status": 401,
+        "authentication_required": true
+      },
+      {
+        "path": "/api/player",
+        "method": "POST without required header",
+        "status": 403,
+        "csrf_rejected": true
+      },
+      {
+        "path": "/api/spotify/availability-test",
+        "method": "POST",
+        "status": 403,
+        "authenticated_trial_protected": true
+      },
+      {
+        "path": "/api/spotify/availability-test",
+        "method": "POST",
+        "status": 401,
+        "authenticated_trial_protected": true
+      }
+    ],
+    "authenticated_provider_journeys": "NOT_RUN; no owner Spotify/HA credentials; no playback commands sent"
+  },
+  "browser_smoke": {
+    "status": 200,
+    "title": "true-shuffle",
+    "signinButtonVisible": true,
+    "pageErrors": [],
+    "horizontalOverflow": false
+  },
+  "source_sha256": {
+    "biome.json": "2c1422ab95e9958b42769668877018e9143b9c7381c4b8ecd291e7dd3844d8df",
+    "e2e/app.spec.ts": "55e99f7ddb597ea6ea8697e875926f257120d0030aa7a19a4a3e7a5a5efcd8f2",
+    "e2e/capture.spec.ts": "5d41bc4ad896366e910e109cb8d6fb8104b945283ff177153cc3d9866729371c",
+    "e2e/client-playback.spec.ts": "4ec99a0f7e964a3eca188faaa0c2332db39c4cd5b7fafe01fea63f934be49c09",
+    "e2e/fake-server.ts": "aa13e92cde8887b75a26b3af9d60b76675a253a562e9d0e27cfe951810332127",
+    "e2e/recovery.spec.ts": "52e343b9e2cc9cd82337bb8a16f3c09b64c2e4d896db09b5c9179415b478a871",
+    "package-lock.json": "8226df0d48f5c9d821f162ff74e019638deed9f851dfe8c28e86013b7c106812",
+    "package.json": "e9cd4bb11fdf5c26a4dbb2d16031db51c158fb8921f9dc36155913f4c64c41de",
+    "src/client/api.ts": "39646eda421a23839c230f69bb7725fb3070fbe468d7b13743ecd0b06c8d215f",
+    "src/client/app.tsx": "6572fbf4f0f2e7c1c55451e95ee815277a752e3d67805e33cdb8835b2638bf9e",
+    "src/client/components/rate.tsx": "3c591ca0a9cc4afb3a824b3a316b8feffa88a70d4a68f51400f106be4ee00f7b",
+    "src/client/components/song-progress.tsx": "fa133710a0c29489694417a2d14ce1e97946726313d59f022cce8b781ff90fdd",
+    "src/client/components/spotify-availability.tsx": "49e670d19808af7a5a7828d134fe685adae47edc98e456347051307948e33286",
+    "src/client/components/ui.tsx": "bc2f2a83f0f7102254eef505e67ac0a25d32493aabee7f20d26633f00bf55cb9",
+    "src/client/format.ts": "4cd959d9119f261c4c5c07716e17de42f39cae96f6b54269588fe24ef829bca2",
+    "src/client/index.html": "be39111537a65f5e36896380951b0981500fd14369f43c5aa7cc35bfac71b3d0",
+    "src/client/main.tsx": "0b11335ea8dfa16647bcf9553ab6940d797373573807bbe47beaabc458597010",
+    "src/client/playback-view.ts": "afe913741a881a8568448a33f21f0fd27c3f654edd5aee50b92b8944bbc31075",
+    "src/client/progress.ts": "bca0e72292a77fc0ce9f4036cb7c44e62375d44f71faf19390c7e43a9fe64d32",
+    "src/client/public/_headers": "c6ee3eb593b266fa4cb402cc01af94b65cab19b50e67326348c328b7168bec00",
+    "src/client/public/apple-touch-icon.png": "8f60d6b320900e95d5752c226a8349efd034162f4d7657926eac311e6d390705",
+    "src/client/public/apple-touch-icon.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+    "src/client/public/icon-192.png": "6d5e9bd88a8ca56d41d8710396868fba2473d4bc8c6337b312c387b2e22eb160",
+    "src/client/public/icon-192.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+    "src/client/public/icon-512.png": "12e80a31772b667e941cc3ac03c3fd79f87898833f6dea8d5b0c462a44c79b99",
+    "src/client/public/icon-512.png.json": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+    "src/client/public/icon.svg": "92591cd271b39de92aeca1b08a8702773e5b7c7bac45740c68655ce8c7a7c9bc",
+    "src/client/public/manifest.webmanifest": "7c33a2b886639d264b6df6e24eb5afabd09e2727037cd3ce249d1ec63ec16f3e",
+    "src/client/router.ts": "fa22830c610804611e3a85215521c4b347cbd93024c37b26e4323693947855cd",
+    "src/client/screens/home.tsx": "c76533c90580c1974bed6157bfbb190128c2a0507c8cd7bf76e877a5a0583720",
+    "src/client/screens/menu.tsx": "5227058c395b1ae5b211a5e05b6da8276e1056570f90a17e3d2ee5b937b4c4fc",
+    "src/client/screens/remote.tsx": "b3557fa20625d16b1b8500f07f719d7002b859f4c12204f07eb13b47faba0089",
+    "src/client/screens/scan.tsx": "74039b916902041ce80f9a7acba7e11de33ea0bf1f430497a6349dfe1c8f35b9",
+    "src/client/screens/signin.tsx": "fa38e2963ef70eb2e067f083fcead4a284003f2c99efb9d83da8aae8c51dae68",
+    "src/client/screens/station.tsx": "9c28b0dde0ef955958bcf7772fcbc022f86926a593a534b484e2168a7716cc1e",
+    "src/client/store.ts": "f06c092471e138b56088d68171dd788db68738abd6f9192c34d53c4e47cfa351",
+    "src/client/styles.css": "eaf87a5050b992a28bcb5cdf55e73cbd828e481db8cd59970d6b48c1bf8ca6be",
+    "src/core/deck.ts": "69896f284addf2def1115d726be5a7eab9118b1c136df8f2dd8d5c2e0d6f6e85",
+    "src/core/history.ts": "6e56193931187415545f487406ce7eb7b2cc34a9ec703854a88f29d34e20702e",
+    "src/core/memory.ts": "cfd3e9dd4164eb6ad8e71a1398d30e56c446bb83d24bc2d2d4b3bbde6c135c54",
+    "src/core/mix.ts": "8bf4dc74fd70fe27f2d8e3b6c12b5680492e7bcef03a0a442745a34531a2453f",
+    "src/core/planner.ts": "ccc99911c3017a8384657c553c5bb7b27ec360c7ad39d736a487f916e446211f",
+    "src/core/random.ts": "2f95ee0fe003c62c59b1ba67209ae7a19f9cd98b1c67506ddb4215ed41bc5e8c",
+    "src/core/types.ts": "de6713f2623fe0d9a1c14e8f695f2cdf910576a91e3a413ac4443161faf8aa75",
+    "src/shared/api.ts": "581d1396d41916258fbcd99e2a89ab6dfabedf387d5861a849961a88324c6bd5",
+    "src/shared/spotify-usage.ts": "850a7e4aa5b7e7ff59c87f66a65a320ffcdc449826fa2a0d9e4319af3aacaa8c",
+    "src/worker/controllers/native.ts": "67c271d9df897b275ffe94ccbacfd63eb38f7bc5bddac6d77d9fff9005c0699a",
+    "src/worker/env.ts": "891b0f826606078f4152b3ff275dfc33ac228b8862976f0d3b7384431284361b",
+    "src/worker/hub/discovery.ts": "1cab47dd61920f52a01c518b3a7fb4d0c159ca116aa7cd4eb68271fd9914f710",
+    "src/worker/hub/hub.ts": "2f5d94e7562d4d98dd13a8f8ac74d71c6a1de9aa568e554b1c0a73ee13ae534f",
+    "src/worker/hub/library.ts": "b26300aa65092f08342032564024022d84c0c75499b426ac18134853495c3a55",
+    "src/worker/hub/observation-policy.ts": "59e43847914884a79aa7a76a343ccd6e89f2fb067eb0e85b0678c017a332f2e4",
+    "src/worker/hub/schema.ts": "3a1461556ec63f4467c70be9733fcc4976c0835ca9ccbe12b3a9dd88303a1da0",
+    "src/worker/index.ts": "c166089ad3b5232133a16115144f8c4b4f06404218178562c647b0ebd402257b",
+    "src/worker/lib/crypto.ts": "9248fb9ecc5d5ca573af36fb73981942b4526ee494ed4732c8f531f3d8882dc1",
+    "src/worker/lib/remote-key.ts": "da04c8cdf149e1c44037fcd05b004778d560ca7472821218ee118dbedab72d37",
+    "src/worker/lib/sql.ts": "8ead9cebc819adcd6a80b4288df04202633c2ac7d445ef5bd0ae9d203be227db",
+    "src/worker/registry.ts": "65da4c66f0037b5b674ca41af28fac17fad295c92e9ecafd7b608813e30fecac",
+    "src/worker/spotify/client.ts": "85a31964aae888313f878f51a2cab0615f8f07fbc2f07a8dd2325598bdfb5d88",
+    "src/worker/spotify/gate.ts": "343a95e99b22ab7f89b4d27e4f22d147b72da3b0647cd67b9bc189afae651cac",
+    "src/worker/spotify/operation-gates.ts": "e7917e4c7239ad93e97240cf9ae79fdcc09d3092836c997e69fb5a06101b5c39",
+    "src/worker/spotify/rpc.ts": "f2bb0411354868f1d4b6f314fb25be7aef7a6a10365cc7173dde237aa555a9b3",
+    "src/worker/spotify/types.ts": "f9520e5ec6936825b94ff0940c9d8ea543172878e05337e25f1a045edfbaf7e5",
+    "src/worker/spotify/usage.ts": "6aa573588e901e987a3c2234d798689863d2f01f9fda4d71db563835610dddd1",
+    "src/worker/userhub.ts": "4a2760144070d82f5de7961f4e30c9abc41c9fe74478e2be7ee398c6c7592f64",
+    "test/client/store-refusal.test.ts": "d34e1dd51dfb061d6650f0afdaa06439d07d72a2c30cce60c3b52f0a6a3df812",
+    "test/core/deck.test.ts": "48002b8b3161f5b42c46c8dbf962598194ac280985b3e88eb5d0d86553e65b55",
+    "test/core/memory-mix-history.test.ts": "f4dfadf54d702f904fa30528c75e6341c759b4ec6f10c390e84c6a754d7210ef",
+    "test/core/planner.test.ts": "16ca69b185e43e445b201cd60bc5ae65550b13c7286d0a341d6d10f70ee1d32a",
+    "test/core/song-progress.test.ts": "f32b0ae06b87f613873c27df4a0dc5e53565a9618e22033f570e5343eab8ac1c",
+    "test/fakes/fake-spotify.ts": "6c702761ba75795371cce51ab2c081ae72f52b76f8d4b986819472f568c176c5",
+    "test/hub/budget.test.ts": "10a7a127fc66161cee8e83372ca229444f0ea706e74dbc91bb94d0a4f9bbd91a",
+    "test/hub/discovery.test.ts": "d0861b7b8517d8d0d9999c66a24fae2f7c8d90ead921bd8a4920251886375e7f",
+    "test/hub/harness.ts": "47197bedf1be29a17aca0e2d254d09f33743725a3962b4fe8bbc13ca07ee4c90",
+    "test/hub/hub.test.ts": "2bcdd36d4150437aa58f5cab79a5f0ba3b14f5aec57f849e5315ae9eb3b984b0",
+    "test/hub/observation-policy.test.ts": "183511dcba471fd549276b13dce97ec5ff4e0dff14ad2195e3d23acdbdf4babc",
+    "test/hub/observation-scheduling.test.ts": "20c19f13657a0b99bb93b9cd10f2e61fc02eda98a3f9c7e1261275f61a24f89d",
+    "test/hub/quota.test.ts": "f2110d2e2be594d4838062d4ea6353ebba297f0b7dd6d92ac590b0d73d3aa770",
+    "test/hub/recovery.test.ts": "fc2d8725a24abfeece4b2662f3868642290a38a5f2a3b8c3f3d1e7a82e59ee68",
+    "test/hub/refused-start.test.ts": "8c95ceee6ce5d295486c3a7de6566deda2059435a73ad4e5c6a830c810bebdc7",
+    "test/hub/request-pressure.test.ts": "9bbf93da047d282eaf4bf0eae0d48fc5f13a2d65866bf3a6ca541a75fe4d5d4a",
+    "test/hub/robustness.test.ts": "d3068d2e408ffc2969c9835834efb5cc39833948a03f09e260d94867e30769ba",
+    "test/hub/session.test.ts": "ee9e70e3d5b37e980b48301f09fbeb1f8950a54c7448bfbf2a763e69263715d8",
+    "test/hub/skips-truth.test.ts": "7e00595d6e68911685a070ac8b6fd2cdf6ae80df417ac7ff9927ab6105fc922a",
+    "test/hub/transport.test.ts": "cda2161a1dc4007b6075d7deee8cf51a0c0e5ffeaff665c81edb9cba7f0c2a9e",
+    "test/hub/usage-audit.test.ts": "b8b6e91d0771e05ebb1e70576619212bd98f151507a93bfd1e8defffe4d8ddee",
+    "test/spotify/artist-scope.test.ts": "a5da7e9c776affc58f7426e7b83c12bb77fb59d2cfe87d58216aaaa853313168",
+    "test/spotify/availability.test.ts": "51ee7aedbb15438e8ff7b7fbd8b23515f41b3272d739d57cedf6420cc81391ff",
+    "test/spotify/client.test.ts": "78336544a388aca6086d09540fbfe7c4b7bce92e7c8b817925b6c8aa9382b48d",
+    "test/spotify/gate.test.ts": "11a20c7ff5247d212e3683b4024263e8871201a63c767a12a8016e49909433ac",
+    "test/spotify/operation-fixture.ts": "7356e0e04a2f518f074679a56b1c0e2f835e2a706d98acbc833a15360dbd14d4",
+    "test/spotify/rpc.test.ts": "051989ab25f52191f0627667670d732a418889b488dfd7a1fe9a9dc84565f84f",
+    "test/spotify/usage.test.ts": "b075a1413a2465f47d84dcbf715b5dd8b89416d68d4f063131abfabca48dc637",
+    "test/worker/native-bridge.test.ts": "b0a77ce721816a3c62a93042c5a9b409ffec12f4a4f5f46519b27faf2349e783",
+    "test/worker/native-orchestrator.test.ts": "afeb43566d5a822d0a2f58b19c3dbfade46f279f0dd2e33da001ca63ba845851",
+    "test/worker/native-rolling.test.ts": "67df7c02ccbcdb59ba25e9e5f13c7bb5968bf236c72a234e0df405f2c91bf40b",
+    "test/worker/native.test.ts": "3cdb0b6c21474f6de7ba3d159baa88d3bb672470de26dfa2b7c63a35afba625b",
+    "test/worker/remote-key.test.ts": "c61da720373f9b367af079edfe7095c309176566a228ee2708ab8c5361aa2c2d",
+    "tsconfig.base.json": "0bae03792d040ef761acc701834989e63308b25b4217cbbdf03ec8068e38584b",
+    "tsconfig.test.json": "0fd3bf19954f4214951b6b8ee5cae83c838b1425822230fdf5a585fe5676a000",
+    "wrangler.jsonc": "6aedb923406d1de811ec56dd64cabc017cea70e191aeafa28c39b270c61ef7a2",
+    "wrangler.preview.jsonc": "605b95881ea83061e4a29c6be80f885125aa557c56bdf4b0bd15a3a41868b2f7"
+  },
+  "resource_readback": {
+    "bindings_variables_and_secret_descriptors_identical": true,
+    "script_runtime_identical": true,
+    "migration_tag": "v1",
+    "USER_HUB_namespace": "59222ef9f3a642d4b90776fafa0eac84",
+    "REGISTRY_namespace": "2ccba352966f46a3b289eb159ccb3bc4",
+    "traffic_verified": 100,
+    "previous_version": "bab24efb-3177-4ebf-ba9b-402322622b14"
+  },
+  "closed_findings": [
+    "F01 definite refused start keeps prior observed session and persistent error",
+    "R-UI-01 long unbroken metadata grid overflow; original 140-character repro passes"
+  ],
+  "limits": {
+    "physical_iPhone_Spotify_wake_transport_latency": "NOT_RUN",
+    "private_HA_MA": "NOT_RUN",
+    "populated_storage_restore": "NOT_RUN",
+    "real_quota_capacity_for_five_users": "NOT_RUN; budget unknown; no load-to-limit performed"
+  },
+  "acceptance_claim": "Scoped UI plus F01 release READY. Overall mission PARTIAL; no fake/live provider equivalence.",
+  "followups": [
+    "Owner weekend UI/device/playback acceptance",
+    "Analyze observed request tracker; shared budget remains unknown",
+    "Existing confirmation lag/background serialization audit F02/F04 is a separately scoped followup"
+  ],
+  "all_public_assets": {
+    "result": "PASS",
+    "count": 15,
+    "resources": [
+      {
+        "path": "/apple-touch-icon.png",
+        "sha256": "8f60d6b320900e95d5752c226a8349efd034162f4d7657926eac311e6d390705",
+        "bytes": 8244,
+        "exact": true
+      },
+      {
+        "path": "/apple-touch-icon.png.json",
+        "sha256": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+        "bytes": 319,
+        "exact": true
+      },
+      {
+        "path": "/assets/archivo-latin-ext-standard-normal-7khWdh9v.woff2",
+        "sha256": "5717f37059660ca5c899bad6c48ee22c3ac55cb3c484055241689d0f905a1a86",
+        "bytes": 86240,
+        "exact": true
+      },
+      {
+        "path": "/assets/archivo-latin-standard-normal-DY7AcnAa.woff2",
+        "sha256": "e3a28eade21a900c7155a247757f4b2834c07bb7ef07ad7efa55cebaac1e8f5e",
+        "bytes": 90104,
+        "exact": true
+      },
+      {
+        "path": "/assets/archivo-vietnamese-standard-normal-rJmnGBSt.woff2",
+        "sha256": "332e6f66de84927cdffc60894e4e186ced783f5cb4b3e88200f45b7c1d306810",
+        "bytes": 34464,
+        "exact": true
+      },
+      {
+        "path": "/assets/index-BOGpDpEB.css",
+        "sha256": "0fc17dbca8bbbd1ec43defa9d944b0c7587b31d23b45c2ee7067d9b0d38a9a1c",
+        "bytes": 32482,
+        "exact": true
+      },
+      {
+        "path": "/assets/index-C8HUn-6b.js",
+        "sha256": "85d7ab656bec66652a0c9c21a2583f7916d6ced7a7c429ed5bef98e731ba4d86",
+        "bytes": 108042,
+        "exact": true
+      },
+      {
+        "path": "/assets/index-C8HUn-6b.js.map",
+        "sha256": "70a99b2f28398ac561aef90b4e9a2a31a224222be6e803f2c4e495fe0faa6a29",
+        "bytes": 343498,
+        "exact": true
+      },
+      {
+        "path": "/icon-192.png",
+        "sha256": "6d5e9bd88a8ca56d41d8710396868fba2473d4bc8c6337b312c387b2e22eb160",
+        "bytes": 8772,
+        "exact": true
+      },
+      {
+        "path": "/icon-192.png.json",
+        "sha256": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+        "bytes": 319,
+        "exact": true
+      },
+      {
+        "path": "/icon-512.png",
+        "sha256": "12e80a31772b667e941cc3ac03c3fd79f87898833f6dea8d5b0c462a44c79b99",
+        "bytes": 24107,
+        "exact": true
+      },
+      {
+        "path": "/icon-512.png.json",
+        "sha256": "0cefa91fa1c952e32ccc8a8b86d3d7a901f0e6a2fc4790aa97482e966a92651a",
+        "bytes": 319,
+        "exact": true
+      },
+      {
+        "path": "/icon.svg",
+        "sha256": "92591cd271b39de92aeca1b08a8702773e5b7c7bac45740c68655ce8c7a7c9bc",
+        "bytes": 346,
+        "exact": true
+      },
+      {
+        "path": "/",
+        "sha256": "a8184194de23343088593629463cfc37cfc07d89e7b6c00fd2f08b8fa38a10b8",
+        "bytes": 894,
+        "exact": true
+      },
+      {
+        "path": "/manifest.webmanifest",
+        "sha256": "7c33a2b886639d264b6df6e24eb5afabd09e2727037cd3ce249d1ec63ec16f3e",
+        "bytes": 477,
+        "exact": true
+      }
+    ],
+    "index_note": "Cloudflare serves canonical /; /index.html redirects. _headers is configuration, not public content."
+  }
+}

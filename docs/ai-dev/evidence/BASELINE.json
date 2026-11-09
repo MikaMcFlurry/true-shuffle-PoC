@@ -1,0 +1,30 @@
+{
+  "schema": "true-shuffle.local-baseline.v1",
+  "observed_at": "2026-09-30T07:22:33.098377+00:00",
+  "subject": "5ffe99b929b6a8ddf93035370e156fe036fe6a83",
+  "environment": "Pristine detached worktree /tmp/true-shuffle-baseline; Node24; Chromium /usr/bin/chromium; local Worker and fake Spotify",
+  "tests": {
+    "unit": {
+      "passed": 280,
+      "log": "/tmp/ts-pristine-tests.log"
+    },
+    "browser": {
+      "passed": 12,
+      "log": "/tmp/ts-e2e-pristine.log"
+    }
+  },
+  "live_url": "https://true-shuffle.mikahertler-72c.workers.dev/",
+  "live_observation": "HTTP200; asset filenames match pristine build",
+  "deployment_identity": "UNVERIFIED: public asset match cannot establish exact Worker version",
+  "production_writes": false,
+  "external_blocks": [
+    "Cloudflare connector absent and Wrangler not authenticated",
+    "Spotify account and HA/MA credentials unavailable"
+  ],
+  "skill_update": {
+    "installed_impeccable": "4.1.2",
+    "attempted": true,
+    "result": "Network unreachable to impeccable.style; retained installed version",
+    "log": "/tmp/ts-impeccable-update.log"
+  }
+}

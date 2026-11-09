@@ -1,0 +1,14 @@
+{
+  "src/worker/spotify/client.ts": "c27117e1264164c0e961822b629fa505f89075b459ffff5b1e597824b5f02175",
+  "src/worker/spotify/gate.ts": "343a95e99b22ab7f89b4d27e4f22d147b72da3b0647cd67b9bc189afae651cac",
+  "src/worker/registry.ts": "a80c49252e48d386ed823ee030c1e5d9f3d46f6636d62358153e8c8d17f879b7",
+  "src/worker/hub/hub.ts": "1c4563507ce839fceca78da24ccd69009b497d578606fa9e72972b2b3d53b13a",
+  "src/worker/userhub.ts": "679e15aeae6f6407b878faaa4776d3465bc2b3c2fe4af8c363ddd563febbd29b",
+  "src/worker/index.ts": "ba84206af54ef450fc2d5b5c98413fbd90e908af2b4e074d9220ca51330e4662",
+  "src/client/api.ts": "53fc433d58d17ce41b8f0d9379d0240db3ae5181db874e2e3fcfe8958414e957",
+  "src/client/screens/menu.tsx": "24e231f6995caf8c6741965267e2b327cb93fd289fb4091b1bb71d113b57857b",
+  "src/client/components/spotify-availability.tsx": "9fc73ecde04f21e671a432d67a202f65438b8b1830e1f7b3eecb257e357d1c49",
+  "test/spotify/availability.test.ts": "cdc590e35d0ddd22766f49c624f49427e2ecefed6e160b8d781434ad17184228",
+  "test/spotify/artist-scope.test.ts": "17f90eddc2b009d7292c376d110abfda38db177d0ccdd79fe30ef61bae157c77",
+  "e2e/app.spec.ts": "213cefd17b2be170f7c09f8b9c3bf6614922df91cdee7da24c1643a1f6766873"
+}

@@ -1,0 +1,8 @@
+{
+	"note": "Known open unit failures (rating-legacy L2/L7, documented in docs/testing/rating-legacy.md). CI fails on any other failure, and when one of these passes (then remove it here).",
+	"tests": [
+		"legacy reads without a write number > L2 first page −1 without `rated` after a thumb +1 here, sheet opened between ask and answer: sheet and Verlauf agree",
+		"legacy reads without a write number > L2 first page −1 without `rated` after a thumb +1 here, sheet opened after the answer: sheet and Verlauf agree",
+		"legacy reads without a write number > L7 snapshot −1 without `rated` after a thumb +1 here (ordered milliseconds), sheet open: sheet and Verlauf agree"
+	]
+}

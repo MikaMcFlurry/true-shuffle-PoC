@@ -7,11 +7,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "@playwright/test";
 
-const PREINSTALLED = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-const executablePath =
-	process.env.CHROMIUM_PATH ?? (existsSync(PREINSTALLED) ? PREINSTALLED : undefined);
+const PREINSTALLED = [
+	"/opt/pw-browsers/chromium",
+	"/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+].find((path) => existsSync(path));
+const executablePath = process.env.CHROMIUM_PATH ?? PREINSTALLED;
 
-const svg = readFileSync("src/client/public/icon.svg", "utf8");
+const dir = "src/client/public";
+const svg = readFileSync(`${dir}/icon.svg`, "utf8");
 const browser = await chromium.launch(executablePath ? { executablePath } : {});
 for (const [size, name] of [
 	[192, "icon-192.png"],
@@ -20,11 +23,13 @@ for (const [size, name] of [
 ]) {
 	const ctx = await browser.newContext({ viewport: { width: size, height: size } });
 	const page = await ctx.newPage();
-	const sized = svg.replace("<svg ", `<svg width="${size}" height="${size}" `);
+	// Full-bleed square: the OS applies its own mask, so the rounded corner is dropped.
+	const sized = svg
+		.replace("<svg ", `<svg width="${size}" height="${size}" `)
+		.replace(/<rect width="64" height="64" rx="14"/g, '<rect width="64" height="64" rx="0"');
 	await page.setContent(`<html><body style="margin:0">${sized}</body></html>`);
 	await page.screenshot({
-		path: `src/client/public/${name}`,
-		omitBackground: true,
+		path: `${dir}/${name}`,
 		clip: { x: 0, y: 0, width: size, height: size },
 	});
 	await ctx.close();

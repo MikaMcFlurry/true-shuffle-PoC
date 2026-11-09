@@ -27,7 +27,9 @@ export function ago(at: number, now = Date.now()): string {
 	if (abs < 60_000) return "gerade eben";
 	if (abs < 3_600_000) return rtf.format(Math.round(diff / 60_000), "minute");
 	if (abs < 86_400_000) return rtf.format(Math.round(diff / 3_600_000), "hour");
-	return rtf.format(Math.round(diff / 86_400_000), "day");
+	if (abs < 45 * 86_400_000) return rtf.format(Math.round(diff / 86_400_000), "day");
+	if (abs < 365 * 86_400_000) return rtf.format(Math.round(diff / (30.44 * 86_400_000)), "month");
+	return rtf.format(Math.round(diff / (365.25 * 86_400_000)), "year");
 }
 
 const tf = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" });

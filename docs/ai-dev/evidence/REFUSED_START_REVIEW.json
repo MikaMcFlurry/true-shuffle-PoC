@@ -1,0 +1,65 @@
+{
+  "independence": "FRESH",
+  "verdict": "READY",
+  "scope": "PR12 definitive-refusal continuity and client explanation only; combined UI release remains NOT_READY until R-UI-01",
+  "subject_revision": "4b9ea7b344f79d6197c1c8fe6558c119a6ad1acc",
+  "actual_tested_integrated_revision": "47c5abf688b368367432c0ae0cf0da4e406c3368",
+  "changed_files_identity": "git diff 4b9ea7b 47c5abf -- four files empty (independently fetched exactremoteobject)",
+  "changed_file_sha256": {
+    "src/client/store.ts": "f06c092471e138b56088d68171dd788db68738abd6f9192c34d53c4e47cfa351",
+    "src/worker/hub/hub.ts": "2f5d94e7562d4d98dd13a8f8ac74d71c6a1de9aa568e554b1c0a73ee13ae534f",
+    "test/client/store-refusal.test.ts": "d34e1dd51dfb061d6650f0afdaa06439d07d72a2c30cce60c3b52f0a6a3df812",
+    "test/hub/refused-start.test.ts": "8c95ceee6ce5d295486c3a7de6566deda2059435a73ad4e5c6a830c810bebdc7"
+  },
+  "unit_worker_tests": {
+    "passed": 19,
+    "files": 3,
+    "log": "docs/ai-dev/evidence/refused-start-release/independent-unit.log",
+    "original_cases": 16,
+    "reviewer_authored_cases": 3
+  },
+  "browser_tests": {
+    "passed": 9,
+    "log": "docs/ai-dev/evidence/refused-start-release/independent-browser.log",
+    "probe": "docs/ai-dev/evidence/refused-start-release/reviewer-browser.spec.ts.txt",
+    "environment": "Chromium, isolatedbuiltclient, intercepted synthetic API snapshots; no live provider"
+  },
+  "open_findings": [],
+  "not_run": [
+    "physical iPhone wake and latency",
+    "live Spotify propagation/429",
+    "private owner HA/MA",
+    "populated production restore"
+  ],
+  "recorded_at": "2026-10-01T14:15:32.253202+00:00",
+  "builder_integrated_checks": {
+    "subject": "47c5abf688b368367432c0ae0cf0da4e406c3368",
+    "unit_worker": {
+      "passed": 444,
+      "files": 30
+    },
+    "browser": {
+      "passed": 39,
+      "retries": 0
+    },
+    "static": "PASS",
+    "github_ci": {
+      "source": "4b9ea7b344f79d6197c1c8fe6558c119a6ad1acc",
+      "run": 36873685208,
+      "status": "PASS"
+    }
+  },
+  "ui_release_blocker": {
+    "id": "R-UI-01",
+    "priority": "P2",
+    "subject": "670efce8a8e74b465959d0279be4422d99e6fb23",
+    "comment": "https://github.com/MikaMcFlurry/true-shuffle-PoC/pull/11#issuecomment-5933119607",
+    "status": "OPEN",
+    "measured_horizontal_overflow_px": 3861
+  },
+  "release_actions": {
+    "merged": false,
+    "deployed": false,
+    "reason": "Await Claude narrow CSS repair and independent reproduction before combined release."
+  }
+}
