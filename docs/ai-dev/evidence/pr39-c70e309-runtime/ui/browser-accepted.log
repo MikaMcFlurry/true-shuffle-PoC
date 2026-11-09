@@ -1,0 +1,40 @@
+[WebServer] (node:30697) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:30710) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:30736) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+R132B-CONTINUE {"width":390,"theme":"day","armRequests":3,"savedSession":"bfacc08b-1e04-4b89-8dd1-705151f929e8","errors":[],"badfonts":[]}
+  ✓  1 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-day (1.6s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+R132B-CONTINUE {"width":390,"theme":"night","armRequests":3,"savedSession":"9a84fb4c-7f26-4a04-b23d-53cdbf00858b","errors":[],"badfonts":[]}
+  ✓  2 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 390-night (1.5s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+R132B-CONTINUE {"width":1440,"theme":"day","armRequests":3,"savedSession":"cc0e3644-fa01-45ad-97e0-865aa63c07e5","errors":[],"badfonts":[]}
+  ✓  3 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 1440-day (1.5s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+R132B-CONTINUE {"width":1440,"theme":"night","armRequests":3,"savedSession":"11398f66-ccf6-423f-8e05-2a3843d54b6c","errors":[],"badfonts":[]}
+  ✓  4 e2e/review132b.fixture.ts:168:2 › continue-after honest arm/cancel/abort/positive-end 1440-night (1.8s)
+{"level":"info","kind":"connect","message":"Mit Spotify verbunden als Mika"}
+{"level":"info","kind":"import","message":"Lieblingssongs: 0 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 1“: 6 Songs übernommen, 0 übersprungen"}
+{"level":"info","kind":"import","message":"„Playlist 2“: 6 Songs übernommen, 0 übersprungen"}
+  ✓  5 e2e/review132b.fixture.ts:186:1 › private Spotify observation stays named; native route never offers Spotify continue-after (936ms)
+
+  5 passed (9.6s)

@@ -1,0 +1,2 @@
+import config from './vite.config.ts';
+export default {...config,server:{host:'127.0.0.1',port:8841,fs:{allow:['/workspace/true-shuffle-ui-review-9341','/workspace/true-shuffle-review-9341/node_modules']}}};

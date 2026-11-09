@@ -1,0 +1,15 @@
+import urllib.request,urllib.error,pathlib,json,hashlib,concurrent.futures,datetime
+r=pathlib.Path('/workspace/true-shuffle-review-132b/dist/client');out=pathlib.Path('/workspace/review-evidence-132b/public');out.mkdir(exist_ok=True);base='https://true-shuffle.mikahertler-72c.workers.dev'
+def fetch(path,method='GET',origin=None):
+ req=urllib.request.Request(base+path,method=method,headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36','Cache-Control':'no-cache',**({'Origin':origin}if origin else{})},data=b'{}'if method=='POST'else None)
+ try:v=urllib.request.urlopen(req,timeout=40)
+ except urllib.error.HTTPError as e:v=e
+ return v.status,dict(v.headers),v.read()
+def file(p):
+ name=p.relative_to(r).as_posix();status,headers,body=fetch('/'+name);a=hashlib.sha256(p.read_bytes()).hexdigest();b=hashlib.sha256(body).hexdigest();return{'path':name,'status':status,'local_sha256':a,'served_sha256':b,'equal':a==b,'bytes':len(body)}
+files=[p for p in r.rglob('*')if p.is_file()and p.suffix!='.map'and p.name!='_headers']
+with concurrent.futures.ThreadPoolExecutor(max_workers=5)as pool:results=list(pool.map(file,files))
+checks=[]
+for name,path,method,origin in [('health','/api/health','GET',None),('state','/api/state','GET',None),('csrf','/api/likes/sync','POST','https://example.invalid')]:
+ s,h,b=fetch(path,method,origin);(out/(name+'.body')).write_bytes(b);(out/(name+'.headers.json')).write_text(json.dumps({k:v for k,v in h.items()if k.lower()not in['set-cookie','authorization']},indent=2)+'\n');checks.append({'name':name,'status':s,'body':b.decode()})
+data={'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'source':'c70e309a2893891d918bd061e3165a4d19071d90','files':results,'checks':checks};(out/'comparison.json').write_text(json.dumps(data,indent=2)+'\n');assert all(x['equal']and x['status']==200 for x in results);assert[x['status']for x in checks]==[200,401,403];print(json.dumps({'equal':len(results),'checks':checks}))

@@ -1,0 +1,135 @@
+{
+  "source": "2c6118f69c7671ea9efe506377f28d5d0376737b",
+  "observed_at": "2026-11-08T16:31:57.681080+00:00",
+  "rows": [
+    {
+      "path": "apple-touch-icon.png",
+      "status": "200",
+      "equal": true,
+      "sha256": "8231c332bb95ca4cc0fc9128fec4e9be1ed7898bc4a502b39cffb1fef6c566ea"
+    },
+    {
+      "path": "apple-touch-icon.png.json",
+      "status": "200",
+      "equal": true,
+      "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+    },
+    {
+      "path": "assets/atkinson-hyperlegible-next-latin-ext-wght-normal-C6vrW8VD.woff2",
+      "status": "200",
+      "equal": true,
+      "sha256": "7dae0c6c66af1aec82e096186aeb1f0e6fa36ab8061ed65422f2b7daf4dd93f3"
+    },
+    {
+      "path": "assets/atkinson-hyperlegible-next-latin-wght-normal-BcXVPD7q.woff2",
+      "status": "200",
+      "equal": true,
+      "sha256": "18b2a1a39a2fa298b0ba5390aca68462669826c90925656f1c1f6796e0e1bbaf"
+    },
+    {
+      "path": "assets/bricolage-grotesque-latin-ext-standard-normal-qp-RdZgh.woff2",
+      "status": "200",
+      "equal": true,
+      "sha256": "e1a04c169c022f63ad24fc1b6fbd932dee1ded62ac08734eeb1d5d51afee38dd"
+    },
+    {
+      "path": "assets/bricolage-grotesque-latin-standard-normal-C5Lc8Qmc.woff2",
+      "status": "200",
+      "equal": true,
+      "sha256": "a756882d8a7802ebd4663b4544a62ebedafc7227c1c159ab95eea61393af3f8e"
+    },
+    {
+      "path": "assets/bricolage-grotesque-vietnamese-standard-normal-Br4FGdAc.woff2",
+      "status": "200",
+      "equal": true,
+      "sha256": "ee5fe4a5cec44fe749450889c91b3bccdb0254f9a103619ee92fa7be08653639"
+    },
+    {
+      "path": "assets/index-C-nOl_nD.css",
+      "status": "200",
+      "equal": true,
+      "sha256": "80bb7ff433c462bb40ab11d550bc2586111b013c0ae78b65110090c605143c11"
+    },
+    {
+      "path": "assets/index-DTJp2fuw.js",
+      "status": "200",
+      "equal": true,
+      "sha256": "8d987c62722fafb0cee5242ffb469998bbcf997fbb9a1f5c00d780e0065e2a35"
+    },
+    {
+      "path": "assets/permanent-marker-latin-400-normal-BF23djCy.woff2",
+      "status": "200",
+      "equal": true,
+      "sha256": "4884fec2c73aa52a2461073c1b87d1ceb80f400520391b43f97ca7d3c39eeb24"
+    },
+    {
+      "path": "assets/permanent-marker-latin-400-normal-BnZj5c41.woff",
+      "status": "200",
+      "equal": true,
+      "sha256": "ab8ac2bb72d48e089e37d8eefbacdfe2d74ccd48ae786d952fce9874837d2b2b"
+    },
+    {
+      "path": "build.json",
+      "status": "200",
+      "equal": true,
+      "sha256": "5dea9db9605af087d16a8be12e125927399873d6e2b99a0be28743eea4f68252"
+    },
+    {
+      "path": "icon-192.png",
+      "status": "200",
+      "equal": true,
+      "sha256": "bfa0a92a3752f97acc58ada50bb53b09f36fe83b77f7b39cf7d559b137bf8cec"
+    },
+    {
+      "path": "icon-192.png.json",
+      "status": "200",
+      "equal": true,
+      "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+    },
+    {
+      "path": "icon-512.png",
+      "status": "200",
+      "equal": true,
+      "sha256": "be005a6b78f252856fae4b61908c697e81d11e43ed4d2a39cf070ee9087bc5d2"
+    },
+    {
+      "path": "icon-512.png.json",
+      "status": "200",
+      "equal": true,
+      "sha256": "c2e6c1cf9b3070c4dd0aec5256252f84f119c5209fe57727b883290dbda31529"
+    },
+    {
+      "path": "icon.svg",
+      "status": "200",
+      "equal": true,
+      "sha256": "a6f2d7214c22802f88380f049973eb5745afbe0fc501b151d83d59b32dcfbcf1"
+    },
+    {
+      "path": "index.html",
+      "status": "200",
+      "equal": true,
+      "sha256": "7c2a4beeb0350952099c5a21e6033e8c1364a6e56be61f8054b7c730bda024ae"
+    },
+    {
+      "path": "manifest.webmanifest",
+      "status": "200",
+      "equal": true,
+      "sha256": "1c9028febad670d002c66d3f42a95c561ce6690dc31b6ac9a63d1c27819f73bf"
+    },
+    {
+      "probe": "health",
+      "status": "200",
+      "body": "{\"ok\":true,\"version\":\"1.3.1\",\"released\":\"2026-11-08\",\"configured\":true}"
+    },
+    {
+      "probe": "state",
+      "status": "401",
+      "body": "{\"error\":{\"code\":\"auth\",\"message\":\"Bitte mit Spotify anmelden.\"}}"
+    },
+    {
+      "probe": "csrf",
+      "status": "403",
+      "body": "{\"error\":{\"code\":\"csrf\",\"message\":\"Ung\u00fcltige Anfrage\"}}"
+    }
+  ]
+}

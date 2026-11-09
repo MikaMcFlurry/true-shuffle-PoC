@@ -1,0 +1,30 @@
+[
+  {
+    "width": 390,
+    "theme": "light",
+    "first": "Zum Inhalt",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "theme": "dark",
+    "first": "Zum Inhalt",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "theme": "light",
+    "first": "Zum Inhalt",
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "theme": "dark",
+    "first": "Zum Inhalt",
+    "overflow": false,
+    "errors": []
+  }
+]

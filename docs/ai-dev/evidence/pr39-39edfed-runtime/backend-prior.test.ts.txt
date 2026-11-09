@@ -1,0 +1,48 @@
+import { expect, it } from 'vitest';
+import { LIKES_NAME } from '../../src/worker/hub/hub';
+import { RequestBudget } from '../../src/worker/spotify/client';
+import { isStorageLimit, storageLimitMessage } from '../../src/worker/lib/storage-limit';
+import { onboarded } from './harness';
+async function outside() {
+ const h=await onboarded({tracks:12,playlists:[6,6]});
+ const sid=h.stationIds[0]!;
+ expect(await h.hub.play(sid)).toMatchObject({ok:true});
+ await h.listen(20_000);
+ await h.hub.sync(new RequestBudget(8),{force:true});
+ const s=h.hub.savedSession(sid)!;
+ const deck=h.fake.playlists.get(s.contextUri.split(':')[2]!)!;
+ const b=[...h.fake.tracks.keys()].find(id=>!deck.items.includes(id))!;
+ h.fake.playSong('mika',b);
+ h.fake.user('mika').player.progressMs=60_000;
+ await h.hub.sync(new RequestBudget(8),{force:true});
+ await h.hub.continueAfter(b);
+ return {h,b};
+}
+
+it.each([2001,2000,1999,1000])('R131-PAUSE: manual stop %i ms before end must stay stopped',async(before)=>{
+ const {h,b}=await outside(); const d=h.fake.tracks.get(b)!.durationMs;
+ await h.listen(d-60000-before); h.fake.pause('mika'); const calls=h.fake.calls.length;
+ await h.listen(60000); const plays=h.fake.calls.slice(calls).filter(c=>c.startsWith('PUT /v1/me/player/play'));
+ console.log('R131-PAUSE',JSON.stringify({before,plays,result:(await h.hub.state()).continueAfter}));expect(plays).toEqual([]);
+});
+it('R131-STORAGE: SQLITE_FULL must not promise daily reset',()=>{
+ console.log('R131-STORAGE',JSON.stringify({classified:isStorageLimit(new Error('SQLITE_FULL: database or disk is full')),message:storageLimitMessage(Date.UTC(2026,10,8,12))}));
+ expect(isStorageLimit(new Error('SQLITE_FULL: database or disk is full'))).toBe(false);
+});
+it('R131-LIKES: ambiguous append and same-length external edit must reconcile exact content',async()=>{
+ const h=await onboarded({tracks:1800});const ids=[...h.fake.tracks.keys()].slice(0,1700);
+ h.sql.run(`INSERT INTO kv(k,v) VALUES('likes',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v`,JSON.stringify({v:1,rev:2,items:ids.map(id=>({id,at:h.clock.t}))}));
+ let injected=false;h.fake.failWhen=(method,path)=>{
+ const p=[...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME);
+ if(!injected&&p&&method==='POST'&&path===`/playlists/${p.id}/items`&&p.items.length===900){injected=true;p.items.push(...ids.slice(900,1000));p.items[950]=ids[0]!;return{status:502};}return null;};
+ await h.hub.retryLikesSync();for(let i=0;i<10;i++){await h.listen(60000);await h.settle();}
+ const p=[...h.fake.playlists.values()].find(p=>p.name===LIKES_NAME)!;
+ console.log('R131-LIKES',JSON.stringify({injected,count:p.items.length,unique:new Set(p.items).size,at950:p.items[950],expected950:ids[950],sync:(await h.hub.state()).likes?.sync}));
+ expect(injected).toBe(true);expect(p.items).toEqual(ids);
+},120000);
+it.each([5000,12000])('R131-PICK: manual song choice %i ms before end must not be cut',async(before)=>{
+ const {h,b}=await outside();const d=h.fake.tracks.get(b)!.durationMs;
+ await h.listen(d-60000-before);const saved=h.hub.savedSession(h.stationIds[0]!)!;const deck=h.fake.playlists.get(saved.contextUri.split(':')[2]!)!;const chosen=[...h.fake.tracks.keys()].find(id=>id!==b&&!deck.items.includes(id))!;h.fake.playSong('mika',chosen);const calls=h.fake.calls.length;
+ await h.listen(60000);const plays=h.fake.calls.slice(calls).filter(c=>c.startsWith('PUT /v1/me/player/play'));
+ console.log('R131-PICK',JSON.stringify({before,chosen,current:h.fake.current(),plays,result:(await h.hub.state()).continueAfter}));expect(plays).toEqual([]);
+});

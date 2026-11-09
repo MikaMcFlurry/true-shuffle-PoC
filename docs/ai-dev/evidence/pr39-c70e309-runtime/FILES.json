@@ -1,0 +1,322 @@
+[
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/README.md",
+    "sha256": "5499194e71a4d21c61358643d7bca09fb7ffc5a7227e95ca084c73c1d1cf887a",
+    "bytes": 442
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-boundary-baseline.log",
+    "sha256": "afe959937ff2010e9fb9da42a830f933813bf19af113b45d0eb0e2fdd59cef75",
+    "bytes": 28051
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-cooldown-and-due-probes.log",
+    "sha256": "ae1c3da9e664f88216cce48c0b250f14408dd1b7da119a4c68b9eb81029ef0bd",
+    "bytes": 52140
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-cooldown-probes.log",
+    "sha256": "1db1077797729b84533187561b829aa344326f3a48942edf5518600e547b506c",
+    "bytes": 50261
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-due-probe.log",
+    "sha256": "155b721a9441337937811bd2fe210fcd372648644db4a2383a86c5cc728c1412",
+    "bytes": 2832
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-instructions-read.txt",
+    "sha256": "0c3aa19e20672b473be610738d387edb4c66e8e01e64d647fa3a7eb1ef75b60a",
+    "bytes": 28859
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-new-boundaries.test.ts.txt",
+    "sha256": "b4de911478528caad8ce9e3d8aa497568487ce851716799ad8610eff21c81099",
+    "bytes": 4590
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-original-and-existing.log",
+    "sha256": "49a1a722a689e40c71505421fa9de7b2cbc0dd082eaad60d0f3c63b6b8fff684",
+    "bytes": 194
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-original-unchanged.test.ts.txt",
+    "sha256": "488013d3b1cb682922d8908fc02418b4fd20d5462882e74ce5a7c39777f9bf61",
+    "bytes": 3949
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-prior-unchanged.test.ts.txt",
+    "sha256": "339df33ac7a8d2f1d60d104e7f4b27fbb73978a2615e3ad84af65a548f48a3df",
+    "bytes": 3575
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-review.md",
+    "sha256": "5b1cff8d58cb41b5816573efdf3e4cf359f909f57afb3688139ede64b49e6ede",
+    "bytes": 9980
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/backend-unknown-baseline.log",
+    "sha256": "06fdfdfcc33fa4fa55de59944c72be4b7a353b765aa2a2ee16b1bca695d11e86",
+    "bytes": 26281
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/build.log",
+    "sha256": "eba0b6e81aef6e29e6c4f2eaf67c40d750f03735ac560d048fd8170616e59a1d",
+    "bytes": 1397
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/check.log",
+    "sha256": "5edb6cf01177c972968fe7fe832964ccca7f6bbd0a20b5b369f31c97939eb15e",
+    "bytes": 21920
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ci-jobs.json",
+    "sha256": "879aaa12aa78833bdee33892bbe81793c753fe8cd691ef5714e2bca18af76bc6",
+    "bytes": 14276
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ci-readback.json",
+    "sha256": "d79f33173bcb817fa57280fa983aa3a469754162cf0b4b4ee3a0cc826299ee08",
+    "bytes": 98096
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/cloudflare-build-log.json",
+    "sha256": "ab6850fd3676706374905ecd45250b575820943467487eb31453d971df45f2c2",
+    "bytes": 951
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/cloudflare-resources.json",
+    "sha256": "211304a143811a2c1600294b338965c517b26526b970b9975b91e83e30fd9b5f",
+    "bytes": 4690
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/combined-diff-stat.txt",
+    "sha256": "6a05a55fdd57ac2ff6b77dbe3a280ee8d38e2597d3980aa6b9c7099d42136fb7",
+    "bytes": 973
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/commit-provenance.txt",
+    "sha256": "214d3f0fca7f1694457dcbadc7f9718a8973aab63c5d025ebba165400bdda726",
+    "bytes": 3421
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/delta-stat.txt",
+    "sha256": "021f22e1b9e77859ab0941fe8410726f189d8d8fef42031c9faf15e2a0319089",
+    "bytes": 442
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/dryrun.log",
+    "sha256": "2131d71a0261af882a89efeaeee5b17d6f8421b30578ebc63de717172b120f35",
+    "bytes": 685
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/github-readback.json",
+    "sha256": "1badd863ac4d707c420351537324aab3ee1125de4619d0f1eabbd71dd8b4133b",
+    "bytes": 2196726
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/hub-diff.txt",
+    "sha256": "16ebf9c5cbbc1106b77f29b9779f5b8b0f1567eeee77f0bbc7c69181ed13544a",
+    "bytes": 9735
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/npm-ci.log",
+    "sha256": "1cef3c5d945ee8a5685d0a990a46c7a1b2043e4f70863ee5ad50857d7576e2a0",
+    "bytes": 26
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/playwright-full.log",
+    "sha256": "72768572ae78c03b13e8ff18c97d54e6e831b4672f0dfd040667841b9135cf41",
+    "bytes": 32715
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/browser.json",
+    "sha256": "a889e39a1817bc96a947ccdecb18f48d62277562eea22e20dac78a9b134cd604",
+    "bytes": 467
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/comparison.json",
+    "sha256": "16cc0c4dc62313ed42d621cc42837a46458d25b44ff2e4db21fd611a504052b0",
+    "bytes": 6449
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/csrf.headers.json",
+    "sha256": "b350391fe3c97338b3eec037bfad06a2bf0dec48e752b6826b93170a34d4f5a8",
+    "bytes": 656
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/health.headers.json",
+    "sha256": "1d22a851087ee2694f8c2e99679ace04ea4b56c404ac982948b27798e480d50f",
+    "bytes": 660
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/public-1440-dark.png",
+    "sha256": "0e88208d9298c3dc6ab32a731fe90f0daf66e18336e03dcc11f7ae5ac75c0540",
+    "bytes": 88907
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/public-1440-light.png",
+    "sha256": "ce2a4654309e5cb425c4fdca265d3239c01a6cda173755b25e8992366393173a",
+    "bytes": 89111
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/public-390-dark.png",
+    "sha256": "91d7c363c6d8197b926b6e06aab05806d6f095b04bdeede7a64ce15b090f3a0b",
+    "bytes": 69077
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/public-390-light.png",
+    "sha256": "d08161684de89e31be251e72c434cfdec1534a7b0397bbaff42f3f7338d73b26",
+    "bytes": 69429
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/python-useragent-blocked.json",
+    "sha256": "91f7ef66b4d6515058172bd9346c5f4a715ad9c34974ae6d3172f1a81902deb5",
+    "bytes": 6253
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public/state.headers.json",
+    "sha256": "f71e81a457c5b8e9fefd9a64176803b160cb0b330a2931b469f870959bbde3a1",
+    "bytes": 656
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public-browser.cjs.txt",
+    "sha256": "7f1849d6af4d41675c95d8951c9172056f5404833545ba362697223d70f7399a",
+    "bytes": 1301
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/public-readback.py.txt",
+    "sha256": "d91b2cd221116f28873ecf534c1f52aeb463bdaef61cbff8fa9cd60ea85981a4",
+    "bytes": 2035
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/browser-accepted.log",
+    "sha256": "beb9bafffd2162026f22dbffe22ceaac2e7f4e0d0d223a76476dd76ab1d4df96",
+    "bytes": 3626
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/browser-error-offline.log",
+    "sha256": "39bd349c939c51dce0833ba61dc770ecd8f270d2d2093314522da44cf86bdde5",
+    "bytes": 1097
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/browser-final.log",
+    "sha256": "759c4c1507f69c36cb5768683fa10a35587eca030ec40abc66f1d9099bc9adfe",
+    "bytes": 5531
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/browser-initial.log",
+    "sha256": "fd95c64b0b1a53186a416616999232ba8da49b2fa66cd2c44d015f05d840223a",
+    "bytes": 9522
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/browser-native-fixture.log",
+    "sha256": "759c4c1507f69c36cb5768683fa10a35587eca030ec40abc66f1d9099bc9adfe",
+    "bytes": 5531
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/browser-observation-fixture.log",
+    "sha256": "1eb428192adfa6a7e689fd9da73bcca6dee8079ec0d0c6f2d5a85f5edc47d790",
+    "bytes": 15726
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/browser.log",
+    "sha256": "fd95c64b0b1a53186a416616999232ba8da49b2fa66cd2c44d015f05d840223a",
+    "bytes": 9522
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/client-release.log",
+    "sha256": "9e2a517f3c7761f647d373d93a5b84f7725069db05abacc6c902932e141e443f",
+    "bytes": 201
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue-aborted-1440-day.png",
+    "sha256": "4ae4fbc12620743c9e2314a5285d16610f274581cf5061fe83877658390588a2",
+    "bytes": 306104
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue-aborted-1440-night.png",
+    "sha256": "cc5d4043cf468ef9010e80149fc886ab7960d7a5576a5958aefbf080139be9fe",
+    "bytes": 304979
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue-aborted-390-day.png",
+    "sha256": "9485ca9a462528a20803ac3cf92cdeaf140725a2dd99725d19f3417795ccfa3c",
+    "bytes": 269790
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue-aborted-390-night.png",
+    "sha256": "f6db141919298a6aaa3a456603c63d94e9cc1957e90284c11409867f28906c09",
+    "bytes": 269762
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue-armed-1440-day.png",
+    "sha256": "0cf1a27011096b137dab25acdbf9bd7472316cc8dce1b7a0564ad150c18fe65c",
+    "bytes": 347603
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue-armed-1440-night.png",
+    "sha256": "a6e8edc680d774bda41862107e5e3e55f24cce32fec1ae0130d0693c1c1aeb34",
+    "bytes": 346354
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue-armed-390-day.png",
+    "sha256": "9d0389a1ceb8cfec6b0ae9d763f05f38c65bd799f930961c52a38f31795bd101",
+    "bytes": 288594
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue-armed-390-night.png",
+    "sha256": "d02a4bbf3146dfb86eb0940c8d8e1c88fec0516d4ab50ebf76818e477129c171",
+    "bytes": 289386
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue132b.config.ts.txt",
+    "sha256": "06cb2f2d4eeb770002e3abf5d5c96565729034ece7e980034428b0670a65e118",
+    "bytes": 484
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/continue132b.fixture.ts.txt",
+    "sha256": "c9027dc4760ddc7702a8e0f4f75526618a46a5b861014fbd47b7c23b4adc55f0",
+    "bytes": 13270
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/fixture-before-observation.ts.txt",
+    "sha256": "41146c63819048a346c3bcd7aedc11d02715385bd70e52d4376da4c97ed4a0eb",
+    "bytes": 12031
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/impeccable-context.log",
+    "sha256": "1475b2aefcc09d7de26de6b86304674df4f57c9337182288684ce86e14d649a6",
+    "bytes": 31100
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/impeccable-detector.json",
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "bytes": 3
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/impeccable-references.txt",
+    "sha256": "7c23921fe1871f59b91959e317ba966994b3c853cc5e7719a55b53c0b4e429c9",
+    "bytes": 12018
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui/vite.continue132b.config.ts.txt",
+    "sha256": "65ab6c0abcc1a44e9fed34ecf2c308ecd8eb364524b9c469dd861009316335a2",
+    "bytes": 119
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui-instructions.txt",
+    "sha256": "f69a59c071e2494cea40274647aede15ce4ed3bc0c7a4c69edf5a7a3cd6f1302",
+    "bytes": 39803
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/ui-review.md",
+    "sha256": "7e801fec0828de22ea0e55ae312166af689a7183543bdd024c15949320b6cc35",
+    "bytes": 7297
+  },
+  {
+    "path": "docs/ai-dev/evidence/pr39-c70e309-runtime/validators.json",
+    "sha256": "3fb5248bf8e41a3a1ca67e91cd5ea3c5390876884d81b7e14aeebff95c56a11d",
+    "bytes": 1732
+  }
+]

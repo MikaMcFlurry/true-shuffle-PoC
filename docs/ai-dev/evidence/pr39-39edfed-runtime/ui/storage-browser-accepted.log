@@ -1,0 +1,21 @@
+[WebServer] (node:17132) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:17145) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:17171) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+R132-STORAGE {"width":390,"light":"day","overflow":false,"errors":[],"fonts":[]}
+  ✓  1 e2e/review/storage132.fixture.ts:85:2 › storage-full/daily/recovery 390-day (1.3s)
+R132-STORAGE {"width":390,"light":"night","overflow":false,"errors":[],"fonts":[]}
+  ✓  2 e2e/review/storage132.fixture.ts:85:2 › storage-full/daily/recovery 390-night (934ms)
+R132-STORAGE {"width":1440,"light":"day","overflow":false,"errors":[],"fonts":[]}
+  ✓  3 e2e/review/storage132.fixture.ts:85:2 › storage-full/daily/recovery 1440-day (946ms)
+R132-STORAGE {"width":1440,"light":"night","overflow":false,"errors":[],"fonts":[]}
+  ✓  4 e2e/review/storage132.fixture.ts:85:2 › storage-full/daily/recovery 1440-night (979ms)
+R132-ACCOUNT {"asked":4,"id":"B"}
+  ✓  5 e2e/review/storage132.fixture.ts:116:1 › cold start full then recovery, account change and late error before offline fence (706ms)
+
+  5 passed (6.7s)

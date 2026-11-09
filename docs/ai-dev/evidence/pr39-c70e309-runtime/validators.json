@@ -1,0 +1,31 @@
+[
+  {
+    "command": [
+      "python3",
+      ".agents/skills/mika-verification/scripts/validate_evidence.py",
+      "docs/ai-dev/EVIDENCE.json"
+    ],
+    "exit_code": 0,
+    "output": "{\n  \"valid\": true,\n  \"errors\": [],\n  \"summary\": {\n    \"claim\": \"BLOCKED\",\n    \"delivery_target\": \"PRODUCTION_LIVE\",\n    \"subject_revision\": \"c70e309a2893891d918bd061e3165a4d19071d90\",\n    \"change_profiles\": [\n      \"USER_FACING\",\n      \"PERSISTENT_STATE_CHANGE\",\n      \"AUTHORIZATION_OR_SENSITIVE_DATA\",\n      \"PERFORMANCE_CRITICAL\"\n    ],\n    \"independent_review_verdict\": \"BLOCKED\",\n    \"gate_count\": 15,\n    \"required_gate_count\": 15,\n    \"status_counts\": {\n      \"FAIL\": 5,\n      \"NOT_RUN\": 3,\n      \"PASS\": 7\n    },\n    \"protected_requirement_count\": 11,\n    \"open_finding_count\": 2,\n    \"external_blocker_count\": 1\n  }\n}\n"
+  },
+  {
+    "command": [
+      "python3",
+      ".agents/skills/mika-dev-studio/scripts/validate_checkpoint.py",
+      "docs/ai-dev/CHECKPOINT.json",
+      "--current-revision",
+      "c70e309a2893891d918bd061e3165a4d19071d90"
+    ],
+    "exit_code": 0,
+    "output": "{\n  \"valid\": true,\n  \"errors\": [],\n  \"summary\": {\n    \"phase\": \"REVIEW\",\n    \"status\": \"BLOCKED\",\n    \"checkpoint_revision\": \"c70e309a2893891d918bd061e3165a4d19071d90\",\n    \"current_revision\": \"c70e309a2893891d918bd061e3165a4d19071d90\",\n    \"stale\": false\n  }\n}\n"
+  },
+  {
+    "command": [
+      "python3",
+      ".agents/skills/mika-repo-handoff/scripts/validate_handoff.py",
+      "."
+    ],
+    "exit_code": 0,
+    "output": "PASS: repository handoff validated (16 roles, baseline 09d772e0f05b0ce175777868bc07d8af53a09204)\n"
+  }
+]

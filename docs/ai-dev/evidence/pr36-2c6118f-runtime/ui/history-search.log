@@ -1,0 +1,9 @@
+
+ RUN  v5.0.2 /workspace/true-shuffle-ui-review-131
+
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  16:32:35
+   Duration  287ms (transform 74%, import 15%, tests 8%, worker 3%)
+

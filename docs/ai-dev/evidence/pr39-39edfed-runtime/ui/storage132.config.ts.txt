@@ -1,0 +1,2 @@
+import {defineConfig} from "@playwright/test";
+export default defineConfig({testDir:".",testMatch:"storage132.fixture.ts",workers:1,retries:0,reporter:[["list"]],outputDir:"../.artifacts/storage132",use:{baseURL:"http://127.0.0.1:8852",locale:"de-DE",timezoneId:"Europe/Berlin",launchOptions:{executablePath:"/usr/bin/chromium"}},webServer:{command:"npx vite -c e2e/review/vite.storage132.config.ts",cwd:"../..",url:"http://127.0.0.1:8852",reuseExistingServer:false,timeout:120000}});

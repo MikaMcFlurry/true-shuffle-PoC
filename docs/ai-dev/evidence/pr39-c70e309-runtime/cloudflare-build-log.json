@@ -1,0 +1,10 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"result\": {\n    \"cursor\": \"WzAsMjYzXQ\",\n    \"truncated\": false,\n    \"lines\": [\n      [\n        1794223154343,\n        \"Initializing build environment...\"\n      ],\n      [\n        1794223155386,\n        \"Success: Finished initializing build environment\"\n      ],\n      [\n        1794223155536,\n        \"Cloning repository...\"\n      ],\n      [\n        1794223157903,\n        \"Failed: root directory not found\"\n      ]\n    ],\n    \"events\": [\n      {\n        \"type\": \"initializing\",\n        \"started_on\": \"2026-11-09T11:19:14.343Z\",\n        \"ended_on\": \"2026-11-09T11:19:15.419Z\"\n      },\n      {\n        \"type\": \"cloning\",\n        \"started_on\": \"2026-11-09T11:19:15.419Z\"\n      }\n    ]\n  },\n  \"success\": true,\n  \"errors\": [],\n  \"messages\": []\n}"
+    }
+  ],
+  "structuredContent": null,
+  "isError": false
+}

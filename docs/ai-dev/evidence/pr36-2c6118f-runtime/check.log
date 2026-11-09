@@ -1,0 +1,340 @@
+
+> true-shuffle@1.3.1 check
+> npm run typecheck && npm run lint && npm run test:known
+
+
+> true-shuffle@1.3.1 typecheck
+> tsc -p tsconfig.worker.json && tsc -p tsconfig.client.json && tsc -p tsconfig.fallback-client.json && tsc -p tsconfig.test.json
+
+
+> true-shuffle@1.3.1 lint
+> biome check .
+
+Checked 284 files in 1115ms. No fixes applied.
+
+> true-shuffle@1.3.1 test:known
+> node scripts/known-failures.mjs
+
+
+ RUN  v5.0.2 /workspace/true-shuffle-review-131
+
+ ✓ test/hub/history-selection.test.ts (28 tests) 2678ms
+   ✓ selecting the imported history (6)
+     ✓ a left-out period leaves the raw plays findable and takes exactly their influence away 443ms
+     ✓ a saved queue keeps its order; a new queue asked for on purpose is planned anew 310ms
+   ✓ deleting an import (1)
+     ✓ names its scope; cancelling or a stale scope changes nothing; deleting removes exactly it 311ms
+ ✓ test/hub/history-ratings.test.ts (42 tests) 5470ms
+   ✓ ratings from the Verlauf: everything else moving on (R-HUI-01, CTO-04) (2)
+     ✓ a receipt whose song the rating clock forgot can no longer be taken back: a conflict, nothing changes 1257ms
+   ✓ ratings from the Verlauf: storage (8)
+     ✓ the clock and the receipts stay bounded 1364ms
+ ✓ test/core/deck.test.ts (59 tests) 49ms
+ ✓ test/hub/observed-player.test.ts (57 tests) 2792ms
+ ✓ test/hub/song-facts.test.ts (20 tests) 3456ms
+   ✓ song facts in the Verlauf (14)
+     ✓ a later recommendation, a new mix or a guest replay never changes an old play's source 380ms
+     ✓ a song paused across a new deck keeps its lane when the new deck gives the same reason, else none 378ms
+     ✓ unseen repeats, pauses and seeks: the deck's one reason, or none once a deck gave another (LANE-05/06) 661ms
+ ✓ test/hub/session.test.ts (23 tests) 2286ms
+   ✓ durable listening session NN-02–07 (5)
+     ✓ does not replace a paused queue on days of alarms or when listening history accounts 30 seconds 909ms
+ ✓ test/hub/hub.test.ts (34 tests) 6338ms
+   ✓ listening (9)
+     ✓ remembers everything heard and never rewrites the deck while it plays 604ms
+     ✓ appends songs when a deck is about to run out while playing 2462ms
+ ✓ test/client/history-ratings.test.ts (26 tests) 139ms
+ ✓ test/hub/resume-place.test.ts (21 tests) 2038ms
+ ✓ test/hub/transport.test.ts (27 tests) 1249ms
+SIZE import 169 ms, profile cold 2325 ms, warm 1794 ms, held after 0 MB (no gc)
+ ✓ test/hub/listening-profile.test.ts (13 tests) 5395ms
+   ✓ listening profile (2)
+     ✓ counts owner plays only, buckets them in the listener's zone, and writes nothing 350ms
+   ✓ size (1)
+     ✓ a history at the upper bound (300 000 plays, 100 000 songs) imports and answers in seconds 4401ms
+ ✓ test/client/history-preview.test.ts (35 tests) 244ms
+ ✓ test/core/import-selection.test.ts (21 tests) 1991ms
+   ✓ size (1)
+     ✓ selects and looks through a history at the upper bound (300 000 plays, 100 000 songs) in seconds 1935ms
+ ✓ test/client/rating-legacy/zero-follow.test.ts (16 tests) 260ms
+ ✓ test/hub/review-blockers.test.ts (16 tests) 1078ms
+ ✓ test/core/listens-cutoff.test.ts (28 tests) 393ms
+   ✓ the cut over many generated files (fixed seed) (1)
+     ✓ equals the before-only reference, keeps the no-cutoff output and tells later only 335ms
+ ✓ test/hub/station-detail/read-contract.test.ts (48 tests) 1173ms
+   ✓ station detail over actually played state (1)
+     ✓ SD-13 after real playback on A: the read matches the reference over the stored state, mid-session, without a write 570ms
+ ✓ test/client/rating-model/model.test.ts (28 tests) 573ms
+ ✓ test/hub/guard-occurrence.test.ts (13 tests) 2198ms
+   ✓ a late thumb bound to the first play, arriving while a newer play of A runs: stored, and A is moved on neither at once nor at a later look 336ms
+   ✓ the play spared runs out, also over a restart; the same song coming up again after the rating is moved on 446ms
+ ✓ test/worker/preview-deezer.test.ts (24 tests) 290ms
+ ✓ test/client/observed-playback.test.ts (18 tests) 60ms
+ ✓ test/fallback/compat.test.ts (14 tests) 675ms
+ ✓ test/client/rating-model/conformance.test.ts (114 tests) 600ms
+ ✓ test/hub/observation-scheduling.test.ts (13 tests) 1585ms
+ ✓ test/core/period-profile.test.ts (14 tests) 29ms
+ ✓ test/core/memory-mix-history.test.ts (19 tests) 14ms
+ ✓ test/spotify/client.test.ts (18 tests) 56ms
+ ✓ test/core/planner.test.ts (17 tests) 395ms
+ ✓ test/hub/resume-listed.test.ts (13 tests) 4025ms
+   ✓ Fortsetzen after a song Spotify listed as played (13)
+     ✓ a song seen at 0:01 and then played out unseen: Fortsetzen goes on with the next song 437ms
+     ✓ a song left unseen after 30 s or more, or after a pause or a seek back, is over too 408ms
+     ✓ a song not listed (paused, or under 30 s) keeps the place and its progress 417ms
+     ✓ edges (5)
+       ✓ moves only for a stamp more than 15 s after the saving look 317ms
+       ✓ unknown saved progress moves too; no saving look at all moves nothing 446ms
+       ✓ a pending command or native control keeps the place 386ms
+       ✓ guest time moves the place like a look would; a private session lists nothing and keeps it 432ms
+ ✓ test/hub/continue-after.test.ts (15 tests) 1452ms
+ ✓ test/client/rate-sheet-shared-revision.test.ts (11 tests) 56ms
+ ✓ test/hub/playlist-counts.test.ts (10 tests) 1373ms
+ ✓ test/worker/observed-player-userhub.test.ts (8 tests) 297ms
+ ✓ test/client/api-mutation-lifecycle.test.ts (9 tests) 174ms
+ ❯ test/client/rating-legacy/read-compat.test.ts (18 tests | 3 failed) 165ms
+   ❯ legacy reads without a write number (18)
+     ✓ L1 (A6) a thumb +1 given here, then a follow page asked after it lists −1 without `rated`: sheet and Verlauf agree 44ms
+     ✓ L1 (A6) with the sheet opened after the follow page was asked: the list leaves the open sheet as it was, both on +1 (control) 5ms
+     ✓ L1 (A6) with a write number on the follow page: it accounts for the thumb, both on −1 (control) 6ms
+     ✓ L2 first page −1 without `rated` after a thumb +1 here, sheet opened before the list is asked: sheet and Verlauf agree 26ms
+     × L2 first page −1 without `rated` after a thumb +1 here, sheet opened between ask and answer: sheet and Verlauf agree 20ms
+     × L2 first page −1 without `rated` after a thumb +1 here, sheet opened after the answer: sheet and Verlauf agree 13ms
+     ✓ L3 a known higher write number outranks a later snapshot and later Verlauf pages without one (control) 8ms
+     ✓ L4 known write 6 (−1) and a thumb +1 given here: a follow page −1 without `rated` leaves both on +1 (control) 2ms
+     ✓ L5 `rated: 0` is a write number, unlike a missing one: the A6 follow page with rated 0 agrees on −1 (control) 4ms
+     ✓ L6 one millisecond, first page false: a thumb +1 given after the list was asked stays above its −1 without `rated` (control) 2ms
+     ✓ L6 one millisecond, first page true: a thumb +1 given after the list was asked stays above its −1 without `rated` (control) 6ms
+     ✓ L6 ordered milliseconds, first page false: a thumb +1 given after the list was asked stays above its −1 without `rated` (control) 7ms
+     ✓ L6 ordered milliseconds, first page true: a thumb +1 given after the list was asked stays above its −1 without `rated` (control) 6ms
+     ✓ L7 snapshot −1 without `rated` after a thumb +1 here (one millisecond), sheet open: sheet and Verlauf agree 5ms
+     × L7 snapshot −1 without `rated` after a thumb +1 here (ordered milliseconds), sheet open: sheet and Verlauf agree 1ms
+     ✓ L8 after the A6 state, a younger read with a write number (a numbered first page) brings sheet and Verlauf together on it (control) 6ms
+     ✓ L8 after the A6 state, a younger read with a write number (a numbered snapshot) brings sheet and Verlauf together on it (control) 1ms
+     ✓ L9 two songs: a follow page without `rated` listing only Y tells X nothing (control) 1ms
+ ✓ test/client/rate-sheet-open-value.test.ts (14 tests) 74ms
+ ✓ test/client/history-ratings-retry.test.ts (4 tests) 394ms
+ ✓ test/spotify/usage.test.ts (10 tests) 421ms
+ ✓ test/hub/likes.test.ts (17 tests) 33342ms
+   ✓ TrueShuffle Likes (P4) (17)
+     ✓ 4 500 likes: written over several steps, finished, exactly once each (red-team H1) 31089ms
+ ✓ test/worker/native-bridge.test.ts (7 tests) 993ms
+ ✓ test/hub/occurrence-skip.test.ts (7 tests) 419ms
+ ✓ test/client/release-notice.test.ts (11 tests) 11ms
+ ✓ test/hub/guest-device.test.ts (7 tests) 1475ms
+   ✓ a device that always counts as guest (7)
+     ✓ music on it never counts; back on the phone it counts again 498ms
+     ✓ a look without a device id while music plays on is no switch: guest time runs to its own end 324ms
+ ✓ test/hub/skips-truth.test.ts (7 tests) 24487ms
+   ✓ early skips against ground truth (4)
+     ✓ normal listening: finds the real skips and invents none 1026ms
+     ✓ car stop (the player holds the paused playlist while it is rewritten), then skips 1571ms
+     ✓ long stop with no player visible, nobody skips: nothing booked (later_less) 2186ms
+     ✓ long stop with no player visible, nobody skips: nothing booked (ban) 2429ms
+   ✓ early skips after a car stop, whatever Spotify does on resume (3)
+     ✓ never books a song that was not skipped early (later_less) 5582ms
+     ✓ never books a song that was not skipped early (consume) 5857ms
+     ✓ never books a song that was not skipped early (ban) 5828ms
+ ✓ test/hub/skip-retest.test.ts (3 tests) 402ms
+ ✓ test/worker/genre-userhub.test.ts (5 tests) 280ms
+ ✓ test/client/home-answers.test.ts (9 tests) 30ms
+ ✓ test/spotify/availability.test.ts (10 tests) 317ms
+ ✓ test/hub/discovery.test.ts (10 tests) 840ms
+   ✓ discovery (5)
+     ✓ finds unknown songs by the station's artists and mixes them into the deck 341ms
+ ✓ test/client/history-search.test.ts (11 tests) 49ms
+ ✓ test/hub/refused-start.test.ts (10 tests) 576ms
+ ✓ test/hub/quota.test.ts (6 tests) 176ms
+ ✓ test/client/history-ratings-list.test.ts (5 tests) 57ms
+ ✓ test/worker/preview-userhub.test.ts (4 tests) 416ms
+ ✓ test/client/rate-sheet-override-identity.repro.test.ts (3 tests) 29ms
+ ✓ test/hub/observation-policy.test.ts (21 tests) 6ms
+ ✓ test/worker/native-orchestrator.test.ts (3 tests) 158ms
+ ✓ test/core/retest.test.ts (6 tests) 13ms
+ ✓ test/client/store-refusal.test.ts (6 tests) 18ms
+ ✓ test/worker/rating-userhub.test.ts (3 tests) 201ms
+ ✓ test/hub/history-preview.test.ts (3 tests) 450ms
+ ✓ test/fallback/compat-controller.test.ts (2 tests) 254ms
+ ✓ test/hub/do-reads-budget.test.ts (1 test) 2693ms
+   ✓ one day (4 h visible playback + 20 h paused) reads at most 10 % of what 1.2.0 read 2692ms
+ ✓ test/worker/native.test.ts (6 tests) 35ms
+ ✓ test/client/rate-sheet-override-coverage.test.ts (3 tests) 16ms
+ ✓ test/client/pending-mutations.test.ts (7 tests) 15ms
+ ✓ test/spotify/artist-scope.test.ts (8 tests) 175ms
+ ✓ test/hub/budget.test.ts (2 tests) 17708ms
+   ✓ free-plan row budget per listener-day (DO evicted between requests) (2)
+     ✓ a typical account: 9 stations, 15 000 remembered songs 6599ms
+     ✓ at the station limit: 30 stations, 25 000 songs, 300 followed playlists 11107ms
+ ✓ test/spotify/gate.test.ts (5 tests) 137ms
+ ✓ test/hub/selection-ranking.test.ts (1 test) 109ms
+ ✓ test/client/song-tags.test.ts (10 tests) 8ms
+ ✓ test/shared/release.test.ts (5 tests) 11ms
+ ✓ test/hub/retest.test.ts (3 tests) 347ms
+ ✓ test/hub/recovery.test.ts (2 tests) 123ms
+ ✓ test/client/rate-sheet-list-freshness.repro.test.ts (1 test) 14ms
+ ✓ test/worker/native-rolling.test.ts (1 test) 386ms
+   ✓ actual bridge functions keep 10000 rolling native occurrences and same-epoch journal bounded 385ms
+ ✓ test/hub/rated-pairs.test.ts (1 test) 110ms
+ ✓ test/hub/usage-audit.test.ts (1 test) 4340ms
+   ✓ audits full-day Spotify pressure and continued history during a device-only quota 4339ms
+ ✓ test/worker/storage-limit.test.ts (4 tests) 39ms
+ ✓ test/hub/request-pressure.test.ts (1 test) 1089ms
+   ✓ NN-09 finite request-pressure measurements (1)
+     ✓ records visible, hidden, paused, device, reload and three-tab windows 1085ms
+ ✓ test/client/upcoming.test.ts (6 tests) 9ms
+ ✓ test/worker/remote-key.test.ts (2 tests) 13ms
+ ✓ test/client/cassette-label.test.ts (2 tests) 5ms
+ ✓ test/hub/volume.test.ts (1 test) 84ms
+ ✓ test/hub/history-search.test.ts (1 test) 1587ms
+   ✓ 20 searches: one load of the Verlauf, then only the plays after it 1586ms
+ ✓ test/core/song-progress.test.ts (6 tests) 3ms
+ ✓ test/spotify/rpc.test.ts (2 tests) 8ms
+ ✓ test/hub/play-from-history.test.ts (1 test) 120ms
+ ✓ test/client/app-update.test.ts (3 tests) 5ms
+ ✓ test/shared/rating-number.test.ts (3 tests) 3ms
+ ✓ test/hub/genres.test.ts (2 tests) 3ms
+ ✓ test/hub/robustness.test.ts (117 tests) 90261ms
+   ✓ car stop: the deck is rewritten while the player is paused in it (RT-1) (7)
+     ✓ books nothing for a song that never played (later_less) 780ms
+     ✓ books nothing for a song that never played (ban) 558ms
+     ✓ books nothing for a song that never played (consume) 471ms
+     ✓ never books a skip when nobody skipped, whatever order Spotify resumes in (650 songs) 656ms
+     ✓ never books a skip when nobody skipped, whatever order Spotify resumes in (700 songs) 750ms
+     ✓ never books a skip when nobody skipped, whatever order Spotify resumes in (750 songs) 869ms
+     ✓ still books a real early skip after a car stop 678ms
+   ✓ a source playlist deleted in Spotify (RT-3) (2)
+     ✓ plays on without it, says so, and does not keep polling 593ms
+     ✓ takes the playlist back when the listener follows it again 518ms
+   ✓ a big playlist collection read over several invocations (RT-5) (1)
+     ✓ keeps every playlist read in an earlier invocation 313ms
+   ✓ the consume rule with Spotify's list lagging behind (NF-6) (1)
+     ✓ ends a round only when every song was heard or used up once 1107ms
+   ✓ Spotify showing no player for a moment (NF-9) (1)
+     ✓ does not rewrite the deck under someone listening 495ms
+   ✓ songs a player brings back on its own (red-team 5) (3)
+     ✓ skips a song turned down while the player held the station (30 min pause) 498ms
+     ✓ skips a song turned down while the player held the station (480 min pause) 2505ms
+   ✓ the listener's own choices and long stops (red-team 6) (5)
+     ✓ still skips a turned-down song an old order brings back after 13 h 6255ms
+     ✓ still skips a turned-down song an old order brings back after 20 h 9636ms
+   ✓ the seventh review's cases (1)
+     ✓ a guest's early skip shortly before guest mode ends stays out of memory 413ms
+   ✓ the eighth review's cases (4)
+     ✓ a guest's skip 30 s before guest mode ends stays the guest's 354ms
+     ✓ a song turned down during a 40-h hold is caught after a skip by hand onto it 2078ms
+     ✓ in "Alles", never played before, a song the listener queues plays 997ms
+   ✓ the ninth review's cases (2)
+     ✓ a turned-down song is skipped after a weekend with the phone out of sight 14334ms
+   ✓ the tenth review's cases (3)
+     ✓ after guest mode ran out on its own, the song running then is the guest's, the next ones count 301ms
+   ✓ the fifteenth review's cases (1)
+     ✓ a private session in Spotify books no skip, not even a ban 523ms
+   ✓ the sixteenth review's cases (4)
+     ✓ a skip never booked (private) takes no earlier skip back when the song plays later 395ms
+     ✓ a private session: what true-shuffle saw heard counts, once 781ms
+     ✓ a private session Spotify lists after all: what true-shuffle saw heard counts, once 536ms
+   ✓ the seventeenth review's cases (5)
+     ✓ a private session in a playlist of one's own: every song heard is counted 448ms
+     ✓ a private session in a playlist of one's own, paused and resumed: what plays after counts 332ms
+   ✓ the eighteenth review's cases (7)
+     ✓ a moment without a player does not end a private session 458ms
+     ✓ a private session begun hours after the last one is seen within minutes 753ms
+     ✓ a song paused after a minute in a private session does not come back when the station starts again 607ms
+   ✓ the nineteenth review's cases (7)
+     ✓ the guest's paused song stays out of memory when the owner starts a station later 409ms
+     ✓ a song tapped at place 1 in Spotify, then the station started from the app: it does not come back 992ms
+     ✓ a song tapped at place 26 in Spotify, then the station started from the app: it does not come back 803ms
+     ✓ a private song paused for hours and heard to its end is stamped at its end 601ms
+     ✓ a private session whose player vanishes ends after six hours: no warning, no fast looks after a week 7380ms
+   ✓ the twentieth review's cases (7)
+     ✓ a song a start from the app replaced counts once and stays away 1346ms
+     ✓ a song a start from the app replaced counts once and stays away (Spotify lists it) 1107ms
+     ✓ a private player left paused in sight ends after six hours 6474ms
+   ✓ the twenty-first review's cases (7)
+     ✓ two starts within minutes: both replaced songs count once (Spotify lists them) 307ms
+     ✓ guest time and the two days after it write the guest record only when it changes 761ms
+   ✓ the twenty-second review's cases (11)
+     ✓ a seek after guest time does not hand the guest's play to the owner (timer) 2038ms
+     ✓ a late listing of the song's play before does not make Spotify's word decide 306ms
+   ✓ the twenty-third review's cases (6)
+     ✓ the guest's song paused out of sight and left by the owner the next day stays the guest's (app) 306ms
+     ✓ a guest's song no look saw, paused across the end, stays the guest's (resume-skip) 312ms
+   ✓ hearts set in Spotify (3)
+     ✓ an old heart Spotify greys out is no new heart, not even after a full import 2659ms
+   ✓ the twenty-fourth review's cases (3)
+     ✓ RT24-01: the guest's song paused across the end and resumed by the owner stays the guest's 408ms
+     ✓ RT24-02: a song played again after it ran out is a second play 397ms
+   ✓ the twenty-sixth review's cases (3)
+     ✓ RT26-01: listings held after a guest time are kept, none falls out of Spotify's last 50 522ms
+     ✓ RT28-02: plays lost during a guest hold (more than 50 between two reads) are logged 472ms
+
+ Test Files  1 failed | 91 passed (92)
+      Tests  3 failed | 1299 passed (1302)
+   Start at  16:31:17
+   Duration  91.24s (tests 94%, import 4%, transform 2%)
+
+JSON report written to /tmp/ts-vitest-3057.json
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/client/rating-legacy/read-compat.test.ts > legacy reads without a write number > L2 first page −1 without `rated` after a thumb +1 here, sheet opened between ask and answer: sheet and Verlauf agree
+AssertionError: sheet and Verlauf for track-x: {"sheet":1,"verlauf":-1}: expected 1 to be -1 // Object.is equality
+
+- Expected
++ Received
+
+- -1
++ 1
+
+ ❯ expectAgree test/client/rating-legacy/read-compat.test.ts:57:71
+     55| function expectAgree(id: string) {
+     56|  const v = view(id);
+     57|  expect(v.sheet, `sheet and Verlauf for ${id}: ${JSON.stringify(v)}`).…
+       |                                                                       ^
+     58|  return v;
+     59| }
+ ❯ test/client/rating-legacy/read-compat.test.ts:139:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  test/client/rating-legacy/read-compat.test.ts > legacy reads without a write number > L2 first page −1 without `rated` after a thumb +1 here, sheet opened after the answer: sheet and Verlauf agree
+AssertionError: sheet and Verlauf for track-x: {"sheet":0,"verlauf":-1}: expected +0 to be -1 // Object.is equality
+
+- Expected
++ Received
+
+- -1
++ 0
+
+ ❯ expectAgree test/client/rating-legacy/read-compat.test.ts:57:71
+     55| function expectAgree(id: string) {
+     56|  const v = view(id);
+     57|  expect(v.sheet, `sheet and Verlauf for ${id}: ${JSON.stringify(v)}`).…
+       |                                                                       ^
+     58|  return v;
+     59| }
+ ❯ test/client/rating-legacy/read-compat.test.ts:139:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  test/client/rating-legacy/read-compat.test.ts > legacy reads without a write number > L7 snapshot −1 without `rated` after a thumb +1 here (ordered milliseconds), sheet open: sheet and Verlauf agree
+AssertionError: sheet and Verlauf for track-x: {"sheet":-1,"verlauf":0}: expected -1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ -1
+
+ ❯ expectAgree test/client/rating-legacy/read-compat.test.ts:57:71
+     55| function expectAgree(id: string) {
+     56|  const v = view(id);
+     57|  expect(v.sheet, `sheet and Verlauf for ${id}: ${JSON.stringify(v)}`).…
+       |                                                                       ^
+     58|  return v;
+     59| }
+ ❯ test/client/rating-legacy/read-compat.test.ts:201:4
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+known-failures: 1299 passed, 3 failed (3 known)

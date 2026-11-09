@@ -1,0 +1,73 @@
+commit 39edfed25987525f03d4f94006b12e7e532ea563
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Sun Nov 8 18:17:10 2026 +0100
+Commit:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+CommitDate: Sun Nov 8 18:17:10 2026 +0100
+
+    fix(likes): höchstens 3 Neustarts nach unbeantwortetem Schreiben, dann sichtbarer Stopp
+    
+    Unabhängige Prüfung von ef6c5a8 (NOT_READY): ein dauerhaft unbeantwortetes
+    Anhängen ließ den Sync die Playlist endlos neu schreiben (5933 Schreibaufrufe
+    in 6 h im Test; attempts wurde nach jedem Fortschritt zurückgesetzt). Jetzt
+    zählt likes_sync_progress die Neustarts je Likes-Stand; nach dem dritten
+    stoppt der Sync mit Meldung, „Erneut senden“ oder eine Like-Änderung
+    beginnt neu. Regressionstest: < 80 Schreibaufrufe, Fehler sichtbar, danach
+    exakt. Dazu Formatierung storage-limit.ts, Hinweis „letzte Sekunde“ in den
+    Notizen, Grenzen im Release-Bericht.
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit ef6c5a8a035c2425ef1266c030756108293a1f36
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Sun Nov 8 18:04:49 2026 +0100
+Commit:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+CommitDate: Sun Nov 8 18:04:49 2026 +0100
+
+    1.3.2: Pause und eigene Songwahl bleiben, Likes exakt, ehrliche Speichermeldung
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit 1b8b4e5ad2e0d01c4589ccbcf7ea5d51d4473659
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Sun Nov 8 18:04:49 2026 +0100
+Commit:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+CommitDate: Sun Nov 8 18:04:49 2026 +0100
+
+    fix(review 1.3.1): Pause und Songwahl am Ende bleiben, Likes neu nach unklarem Schreiben, SQLITE_FULL kein Tageslimit
+    
+    Restbefunde der unabhängigen Prüfung von 2c6118f (PR #36, Belege PR #38):
+    - P1: „Nach diesem Song fortsetzen“ wertet einen pausierten Song nur als
+      beendet, wenn Spotify ihn am Ende selbst zeigt; ein neuer Song gilt nur
+      als von selbst begonnen, wenn er frühestens am vorhergesagten Ende
+      startete (1 s Toleranz). Pause bis zuletzt und Songwahl 5/12 s vor dem
+      Ende werden nicht mehr übernommen. Crossfade > ~1 s bricht jetzt ab.
+    - P2: Likes-Sync ersetzt nach jedem Schreiben ohne Antwort von vorn, statt
+      einer gleichen Länge zu trauen.
+    - P2: SQLITE_FULL und andere Speichergrenzen: storage_full ohne
+      Zeitversprechen; Tageslimit nur bei ausdrücklichem Text.
+    Grenzproben aus PR #38 unverändert 8/8 (vorher 1/8); als reguläre Tests
+    übernommen, frühere Erwartungen an Crossfade und Längenabfrage bewusst
+    umgestellt.
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+commit 8c5243b9376c68e4ac3ad0d0678a47e647c139c8
+Merge: 2c6118f 3b35763
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Sun Nov 8 16:17:02 2026 +0000
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sun Nov 8 16:17:02 2026 +0000
+
+    Merge pull request #37 from MikaMcFlurry/docs/1.3.1-live
+    
+    docs: 1.3.1 live (Deploy, Live-Lesung, Rollback), AGENTS-Stand
+
+commit 3b357631f479bcd15ce115a1da57849392ba10b7
+Author:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+AuthorDate: Sun Nov 8 17:16:46 2026 +0100
+Commit:     Mika Hertler <77012401+MikaMcFlurry@users.noreply.github.com>
+CommitDate: Sun Nov 8 17:16:46 2026 +0100
+
+    docs: 1.3.1 live (Deploy, Live-Lesung, Rollback), AGENTS-Stand
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
